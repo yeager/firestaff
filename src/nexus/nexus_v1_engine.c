@@ -148,6 +148,11 @@ static uint32_t nexus_v1_dgn_read_be32(const uint8_t *data)
         ((uint32_t)data[2] << 8) | (uint32_t)data[3];
 }
 
+static uint16_t nexus_v1_dgn_read_be16(const uint8_t *data)
+{
+    return (uint16_t)(((uint16_t)data[0] << 8) | (uint16_t)data[1]);
+}
+
 static int nexus_v1_dgn_source_bytes_match(
     const Nexus_V1_DgnStructure2SourceReceipt *source,
     const uint8_t *data, int size)
@@ -4109,6 +4114,175 @@ int nexus_v1_current_level_visit_structure3_animated_materials(
         receipt.consumed_face_count == receipt.animated_face_count;
     *out_receipt = receipt;
     return receipt.complete ? 1 : 0;
+}
+
+static int nexus_v1_current_level_structure3_animated_material_image_packet(
+    const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
+    uint32_t face_ordinal, uint32_t image_instruction_ordinal,
+    Nexus_V1_DgnStructure3AnimatedMaterialImagePacket *out_packet)
+{
+    Nexus_V1_DgnStructure3AnimatedMaterialPacket face_packet;
+    Nexus_V1_DgnStructure1Layout layout;
+    const Nexus_V1_DgnStructure1GEntry *animation;
+    const uint8_t *sequence;
+    int sequence_offset;
+    int cursor;
+    uint32_t found = 0;
+
+    if (!out_packet) return -1;
+    memset(out_packet, 0, sizeof(*out_packet));
+    out_packet->level_index = -1;
+    out_packet->no_draw_only = 1;
+    out_packet->blocks_real_dgn_mesh_render = 1;
+    if (!engine ||
+        nexus_v1_current_level_structure3_animated_material_packet(
+            engine, structure3_entry_index, face_ordinal, &face_packet) != 1 ||
+        !face_packet.valid ||
+        face_packet.structure1g_entry_index < 0 ||
+        face_packet.structure1g_entry_index >=
+            engine->current_level.structure1g_entry_count ||
+        image_instruction_ordinal >= (uint32_t)face_packet.image_instruction_count ||
+        !engine->current_level_dgn_data ||
+        nexus_v1_dgn_structure1_layout(&layout, engine->current_level_dgn_data,
+                                       engine->current_level_dgn_size) != 0 ||
+        !layout.structure1g.valid) {
+        return 0;
+    }
+    animation = &engine->current_level.structure1g_entries[
+        face_packet.structure1g_entry_index];
+    sequence_offset = layout.structure1g.animation_data_relative_offset +
+        (int)animation->sequence_word_offset * 4;
+    if (sequence_offset < 0 || sequence_offset > layout.structure1g.size - 4) {
+        return 0;
+    }
+    sequence = engine->current_level_dgn_data + layout.structure1_offset +
+        layout.structure1g.relative_offset;
+    for (cursor = sequence_offset; cursor <= layout.structure1g.size - 4;
+         cursor += 4) {
+        const uint16_t instruction = nexus_v1_dgn_read_be16(sequence + cursor);
+        uint16_t local_image_id;
+        int descriptor_index;
+
+        if (instruction == 0xffffU) break;
+        if (instruction == 0xfffeU) continue;
+        if (instruction < NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX) return 0;
+        if (found++ != image_instruction_ordinal) continue;
+        local_image_id = (uint16_t)(instruction -
+            NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX);
+        for (descriptor_index = 0;
+             descriptor_index < engine->current_level.structure2_texture_count;
+             ++descriptor_index) {
+            if (engine->current_level.structure2_textures[descriptor_index]
+                    .image_id == local_image_id) break;
+        }
+        if (descriptor_index == engine->current_level.structure2_texture_count ||
+            nexus_v1_engine_build_structure2_descriptor_capture_target(
+                engine, descriptor_index, &out_packet->descriptor_target) != 1) {
+            return 0;
+        }
+        out_packet->valid = 1;
+        out_packet->source_geometry_bound = 1;
+        out_packet->animation_declaration_bound = 1;
+        out_packet->descriptor_bound = 1;
+        out_packet->level_index = face_packet.level_index;
+        out_packet->structure3_entry_index = structure3_entry_index;
+        out_packet->face_ordinal = face_ordinal;
+        out_packet->structure1g_entry_index =
+            face_packet.structure1g_entry_index;
+        out_packet->image_instruction_ordinal = image_instruction_ordinal;
+        out_packet->instruction_byte_offset = layout.structure1_offset +
+            layout.structure1g.relative_offset + cursor;
+        out_packet->instruction_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+            sequence + cursor, 4);
+        out_packet->global_image_index = instruction;
+        out_packet->structure2_image_id = local_image_id;
+        return 1;
+    }
+    return 0;
+}
+
+typedef struct {
+    const Nexus_V1_Engine *engine;
+    Nexus_V1_DgnStructure3AnimatedMaterialImageConsumer consumer;
+    void *consumer_context;
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt *receipt;
+} Nexus_V1_AnimatedMaterialImageVisitor;
+
+static int nexus_v1_visit_structure3_animated_material_images_for_face(
+    void *context, const Nexus_V1_DgnStructure3AnimatedMaterialPacket *face)
+{
+    Nexus_V1_AnimatedMaterialImageVisitor *visitor =
+        (Nexus_V1_AnimatedMaterialImageVisitor *)context;
+    uint32_t image_ordinal;
+
+    if (!visitor || !face || !face->valid || face->image_instruction_count <= 0)
+        return -1;
+    ++visitor->receipt->animated_face_count;
+    visitor->receipt->declared_image_instruction_count +=
+        face->image_instruction_count;
+    for (image_ordinal = 0;
+         image_ordinal < (uint32_t)face->image_instruction_count;
+         ++image_ordinal) {
+        Nexus_V1_DgnStructure3AnimatedMaterialImagePacket image;
+
+        if (nexus_v1_current_level_structure3_animated_material_image_packet(
+                visitor->engine, face->structure3_entry_index,
+                face->face_ordinal, image_ordinal, &image) != 1 ||
+            !image.valid || !image.source_geometry_bound ||
+            !image.animation_declaration_bound || !image.descriptor_bound ||
+            image.animation_execution_permitted ||
+            image.pixel_palette_vdp1_semantics_proven || image.decoder_permitted ||
+            !image.no_draw_only || image.fallback_visuals_permitted ||
+            !image.blocks_real_dgn_mesh_render) {
+            return -1;
+        }
+        if (visitor->consumer &&
+            visitor->consumer(visitor->consumer_context, &image) != 0) {
+            return -1;
+        }
+        ++visitor->receipt->consumed_image_instruction_count;
+    }
+    return 0;
+}
+
+int nexus_v1_current_level_visit_structure3_animated_material_images(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3AnimatedMaterialImageConsumer consumer,
+    void *context,
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt receipt;
+    Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt face_scene;
+    Nexus_V1_AnimatedMaterialImageVisitor visitor;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&face_scene, 0, sizeof(face_scene));
+    memset(&visitor, 0, sizeof(visitor));
+    visitor.engine = engine;
+    visitor.consumer = consumer;
+    visitor.consumer_context = context;
+    visitor.receipt = &receipt;
+    if (!engine || nexus_v1_current_level_visit_structure3_animated_materials(
+                       engine,
+                       nexus_v1_visit_structure3_animated_material_images_for_face,
+                       &visitor, &face_scene) != 1 || !face_scene.valid ||
+        !face_scene.complete ||
+        receipt.animated_face_count != face_scene.animated_face_count ||
+        receipt.declared_image_instruction_count <= 0 ||
+        receipt.consumed_image_instruction_count !=
+            receipt.declared_image_instruction_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.level_index = face_scene.level_index;
+    receipt.complete = 1;
+    *out_receipt = receipt;
+    return 1;
 }
 
 int nexus_v1_current_level_structure3_untextured_face_packet(
