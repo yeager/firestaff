@@ -2230,75 +2230,6 @@ static void dm2_runtime_append_creature_sprite(
                                                dst->frame_index);
 }
 
-static int dm2_runtime_creature_frame_source_from_instance(
-    const DM2_V1_CreatureInstance *inst)
-{
-    if (!inst) return 0;
-    if (inst->b_1a == DM2_CCM_CREATURE_ATTACKS_PARTY) return 2;
-    if (inst->attack_cooldown > 0) return 1;
-    return 0;
-}
-
-static void dm2_runtime_append_creature_instance_sprite(
-    DM2_V1_ViewportState *viewport,
-    const DM2_V1_CreatureInstance *inst,
-    const DM2_V1_ViewportSpritePlacement *placement,
-    const DM2_V1_BootDynamicCreatureMaterialReceipt *material)
-{
-    DM2_CreatureSprite *dst;
-    int hp_pct = 100;
-
-    if (!viewport || !inst || !placement || !material || !material->valid ||
-        !placement->visible) return;
-    if (!inst->alive || !inst->is_visible) return;
-    if (viewport->creature_count >= DM2_MAX_CREATURES_PER_SQ) return;
-
-    if (inst->hp_max > 0) {
-        hp_pct = (inst->hp_current * 100) / inst->hp_max;
-        if (hp_pct < 0) hp_pct = 0;
-        if (hp_pct > 100) hp_pct = 100;
-    }
-
-    dst = &viewport->creatures[viewport->creature_count++];
-    memset(dst, 0, sizeof(*dst));
-    dst->creature_type = (uint8_t)(inst->ai_index & 0xff);
-    dst->source_kind = 1;
-    dst->source_material_proven = 1;
-    dst->gdat_image_field = material->image_field;
-    dst->source_material_hash = material->material_hash;
-    dst->frame_index = (uint8_t)material->selected_frame;
-    dst->depth = (int16_t)placement->depth;
-    dst->screen_x = (int16_t)placement->screen_x;
-    dst->screen_y = (int16_t)placement->screen_y;
-    dst->health_pct = (uint8_t)hp_pct;
-    dst->direction = (uint8_t)(inst->direction & 3);
-
-    memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
-    g_dm2_last_creature_render.valid = 1;
-    g_dm2_last_creature_render.instance_id = inst->instance_id;
-    g_dm2_last_creature_render.thing_handle = -1;
-    g_dm2_last_creature_render.source_kind = 1;
-    g_dm2_last_creature_render.creature_type = dst->creature_type;
-    g_dm2_last_creature_render.frame_index = dst->frame_index;
-    g_dm2_last_creature_render.direction = dst->direction;
-    g_dm2_last_creature_render.hp_pct = hp_pct;
-    g_dm2_last_creature_render.ccm_primary_state = inst->b_1a;
-    g_dm2_last_creature_render.ccm_secondary_state = inst->b_17;
-    g_dm2_last_creature_render.attack_cooldown = inst->attack_cooldown;
-    g_dm2_last_creature_render.animation_tick = inst->animation_tick;
-    g_dm2_last_creature_render.render_revision = inst->render_revision;
-    g_dm2_last_creature_render.frame_source =
-        dm2_runtime_creature_frame_source_from_instance(inst);
-    g_dm2_last_creature_render.map_x = inst->world_x;
-    g_dm2_last_creature_render.map_y = inst->world_y;
-    g_dm2_last_creature_render.screen_x = placement->screen_x;
-    g_dm2_last_creature_render.screen_y = placement->screen_y;
-    g_dm2_last_creature_render.depth = placement->depth;
-    g_dm2_last_creature_render.gdat_index =
-        dm2_v1_viewport_creature_field_graphic_index(
-            dst->creature_type, material->image_field);
-}
-
 static void dm2_runtime_finish_creature_render_receipt(
     const DM2_V1_ViewportState *viewport)
 {
@@ -2492,51 +2423,6 @@ static void dm2_runtime_finish_projectile_render_receipt(
         blit->random_seed_before;
     g_dm2_last_projectile_render.random_seed_after =
         blit->random_seed_after;
-}
-
-static void dm2_runtime_populate_active_creature_instances(
-    const DM2_V1_RuntimeState *rt,
-    DM2_V1_ViewportState *viewport,
-    int party_dir,
-    int party_x,
-    int party_y)
-{
-    if (!rt || !viewport || rt->outdoor) return;
-
-    for (int slot = 0; slot < DM2_MAX_CREATURE_INSTANCES &&
-                       viewport->creature_count < DM2_MAX_CREATURES_PER_SQ;
-         ++slot) {
-        const DM2_V1_CreatureInstance *inst =
-            dm2_v1_creature_get_instance(slot);
-        DM2_V1_ViewportSpritePlacement placement;
-
-        if (!inst || !inst->alive || inst->map_index != rt->dungeon_level) {
-            continue;
-        }
-        if (!dm2_v1_viewport_project_map_to_sprite(
-                inst->world_x, inst->world_y, party_dir, party_x, party_y,
-                &placement)) {
-            continue;
-        }
-        DM2_V1_BootDynamicCreatureMaterialReceipt material;
-
-        /* skproject QUERY_CREATURE_PICST receives the live command and V5
-         * mutable animation state, then draws FD's exact CREATURES dtImage.
-         * A missing table/image receipt omits the sprite entirely. */
-        if (!rt->boot || !rt->boot->graphics_dat ||
-            !dm2_v1_creature_ai_spec(inst->ai_index) ||
-            !dm2_v1_boot_dynamic_creature_material_receipt(
-                rt->boot, inst->ai_index, inst->b_1a,
-                inst->gdat_animation_info, inst->direction, &material)) {
-            continue;
-        }
-        if (dm2_v1_creature_set_gdat_animation_state(
-                slot, material.sequence_offset, material.selected_frame) != 0) {
-            continue;
-        }
-        dm2_runtime_append_creature_instance_sprite(
-            viewport, inst, &placement, &material);
-    }
 }
 
 static void dm2_runtime_populate_creatures(
@@ -3010,8 +2896,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     viewport.random_seed = rt->weather.weather_seed;
     dm2_runtime_populate_visible_terrain(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport, party_dir, party_x, party_y);
-    dm2_runtime_populate_active_creature_instances(
-        rt, &viewport, party_dir, party_x, party_y);
+    /* skproject DRAW_MAP_CHIP dereferences a DB4 Creature record before it
+     * reads AI state or GDAT. The local CCM pool has no source-owned record
+     * handle, so it may advance simulation but must not manufacture a
+     * viewport sprite or fallback image. Direct G1 DB4 material below is the
+     * only admitted creature route until that ownership bridge exists. */
     dm2_runtime_populate_creatures(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
