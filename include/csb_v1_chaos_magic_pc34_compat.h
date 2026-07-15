@@ -212,6 +212,11 @@ typedef int (*CSB_V1_CSBWinDSAGetGeneratorDelayFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSASetGeneratorDelayFn)(void *user,
                                                     uint32_t location,
                                                     int delay);
+/* CSBWin DSA.cpp STKOP_MonsterFetch reads one loaded DB4 record into its
+ * eight-word source result. The runtime owns the decoded DB4 layout. */
+typedef int (*CSB_V1_CSBWinDSAGetMonsterInfoFn)(void *user,
+                                                uint16_t thing,
+                                                uint32_t out_values[8]);
 
 typedef struct {
     uint32_t master_location;
@@ -256,6 +261,7 @@ typedef struct {
     void *excell_user;
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
     CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
+    CSB_V1_CSBWinDSAGetMonsterInfoFn get_monster_info;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -495,6 +501,7 @@ typedef struct {
     void *excell_user;
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
     CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
+    CSB_V1_CSBWinDSAGetMonsterInfoFn get_monster_info;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
