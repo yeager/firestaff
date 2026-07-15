@@ -1361,6 +1361,11 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FTransformCaptureTarget;
 
+/* File format emitted for one source-bound direct Structure1F face. It is a
+ * capture-producer request, not an executable transform or renderer input. */
+#define NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_MAGIC \
+    "FIRESTAFF_NEXUS_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_V1"
+
 /* Admission for a future original-Saturn transform observation of one direct
  * Structure1F owner. It binds source bytes and captured state identity only;
  * it never interprets transform words or authorizes a draw. */
@@ -2454,6 +2459,9 @@ int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
 int nexus_v1_engine_build_structure1f_transform_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target);
+int nexus_v1_engine_write_structure1f_direct_face_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *path, Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target);
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,

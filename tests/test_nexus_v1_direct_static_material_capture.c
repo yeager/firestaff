@@ -213,6 +213,10 @@ int main(void)
              source_entry < engine.current_level.structure1f_entry_count;
              ++source_entry) {
             Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+            char capture_path[128];
+            char capture_text[4096];
+            FILE *capture_file;
+            size_t capture_size;
 
             memset(&target, 0, sizeof(target));
             if (nexus_v1_engine_build_structure1f_transform_capture_target(
@@ -242,6 +246,30 @@ int main(void)
                   !target.fallback_visuals_permitted &&
                   target.blocks_real_dgn_mesh_render,
                   "direct owner retains raw transform selectors without assigning semantics");
+            snprintf(capture_path, sizeof(capture_path),
+                     "/tmp/firestaff-nexus-direct-face-%d.txt", source_entry);
+            CHECK(nexus_v1_engine_write_structure1f_direct_face_capture_target(
+                      &engine, source_entry, capture_path, &target) == 1 &&
+                  target.valid && target.geometry.source_geometry_bound &&
+                  target.no_draw_only && !target.fallback_visuals_permitted &&
+                  target.blocks_real_dgn_mesh_render,
+                  "direct owner writes an authoritative no-draw face capture bridge");
+            capture_file = fopen(capture_path, "rb");
+            capture_size = capture_file ? fread(capture_text, 1U,
+                                                 sizeof(capture_text) - 1U,
+                                                 capture_file) : 0U;
+            if (capture_file) fclose(capture_file);
+            capture_text[capture_size] = '\0';
+            CHECK(capture_size > 0U &&
+                  strstr(capture_text,
+                         NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_MAGIC) &&
+                  strstr(capture_text, "face_row_fnv1a32=") &&
+                  strstr(capture_text, "referenced_vertex_rows_fnv1a32=") &&
+                  strstr(capture_text, "normal_row_fnv1a32=") &&
+                  strstr(capture_text, "original_saturn_capture_required=1") &&
+                  strstr(capture_text, "no_draw_only=1"),
+                  "direct face bridge retains package rows and remains capture-only");
+            remove(capture_path);
             break;
         }
         CHECK(transform_found,
