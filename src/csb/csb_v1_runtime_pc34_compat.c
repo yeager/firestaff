@@ -77,6 +77,9 @@ static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate);
 static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size);
 static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes);
+static int csb_v1_runtime_dsa_get_wing_talents(void *user,
+                                               uint16_t fingerprint,
+                                               uint32_t *out_talents);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -16781,6 +16784,71 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
         out_size);
 }
 
+int csb_v1_runtime_read_csbwin_wing_talents(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    uint32_t *out_talents)
+{
+    enum {
+        csbwin_edt_character = 8,
+        csbwin_character_record_count = 8,
+        csbwin_character_record_bytes = 100,
+        csbwin_character_talents_offset = 276,
+        csbwin_character_fingerprint_offset = 280
+    };
+    uint8_t character[csbwin_character_record_count *
+                      csbwin_character_record_bytes];
+    int record_index;
+
+    if (out_talents) *out_talents = 0u;
+    if (!profile || !out_talents || !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_size == 0u ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        profile->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        profile->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size)) {
+        return -1;
+    }
+    for (record_index = 0; record_index < csbwin_character_record_count;
+         ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+        uint32_t record_id = ((uint32_t)csbwin_edt_character << 24) |
+            ((uint32_t)record_index << 16) | fingerprint;
+
+        if (!csb_v1_runtime_locate_appended_expool_record_internal(
+                profile, record_id, &payload, &payload_size)) {
+            return record_index == 0 ? 0 : -1;
+        }
+        if (!payload || payload_size != csbwin_character_record_bytes) {
+            return -1;
+        }
+        memcpy(character + (size_t)record_index *
+                   csbwin_character_record_bytes,
+               payload, csbwin_character_record_bytes);
+    }
+    if (((uint16_t)character[csbwin_character_fingerprint_offset] |
+         ((uint16_t)character[csbwin_character_fingerprint_offset + 1u] << 8)) !=
+        fingerprint) {
+        return -1;
+    }
+    *out_talents = csb_v1_runtime_read_le32(
+        character + csbwin_character_talents_offset);
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_get_wing_talents(void *user,
+                                               uint16_t fingerprint,
+                                               uint32_t *out_talents)
+{
+    return csb_v1_runtime_read_csbwin_wing_talents(
+        (const CSB_V1_RuntimeProfile *)user, fingerprint, out_talents);
+}
+
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report)
@@ -19352,6 +19420,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
                 champion->CurrentHealth;
         }
     }
+    candidate.get_wing_talents = csb_v1_runtime_dsa_get_wing_talents;
+    candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
         candidate.global_variable_count =
             profile->csbwin_global_variable_count;

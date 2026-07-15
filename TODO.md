@@ -3237,11 +3237,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       the source talent-mask and living-champion wound-count results; absent or
       invalid party state rejects without any mutation or dungeon route.
     - 2026-07-15 party-query update: source `STKOP_TalentsFetch` now reads a
-      verified in-party champion or the current verified hand-character index
-      from the same profile-owned runner data. Invalid in-party indices retain
-      the source zero result. High-bit wing identifiers remain unavailable
-      until a complete authenticated `EDT_Character` EXPOOL record is decoded;
-      they reject rather than using a substitute character or value.
+      verified in-party champion, the current verified hand-character index,
+      or a high-bit wing identifier from CSBWin `CHARDESC::GetFromWings`.
+      The latter requires all eight exact 25-word `EDT_Character` EXPOOL
+      records and the serialized fingerprint at its original CHARDESC offset;
+      missing first records retain source zero, while partial, altered, or
+      unavailable tails reject rather than using a substitute character.
     - 2026-07-15 save-policy update: authenticated `STKOP_DisableSaves` now
       stages CSBWin's `disableSaves = k != 0` against the existing
       profile-owned SaveGame gate. The value commits only after the complete
@@ -3282,6 +3283,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       not persist master state or run world/filter opcodes; `LocalState=2/3`
       still reject before any runner is exposed.
   - CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. `EDBT_DisableSaves` blocks both native saves and CSBWin core export before bytes or a path are emitted; core export and every runtime EXPOOL lookup reject a marked-truncated tail or one whose stored FNV receipt no longer matches its bytes, rather than re-emitting or consuming incomplete/altered source data. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. `SETSKIN` now follows CSBWin's actual `EXPOOL::Read`/`Write` contract against a complete FNV-authenticated tail: it deletes all-zero columns and consumes an original exact-size DB11 free node for a resized column, but refuses to call `EXPOOL::enlarge` or invent new tail blocks. Every DB11 node is now structurally proven to begin at `block + 1 + n * size` before it can be read, freed, or reused, so a corrupted saved free-list cannot redirect a DSA write into a DB11 header. Other EXPOOL record restore/writeback paths remain open.
+    - 2026-07-15 wing-character restore: `Character.cpp`
+      `CHARDESC::GetFromWings` is now admitted for the read-only DSA
+      `TALENTS@` route. It assembles only the complete original eight-record
+      `EDT_Character` bundle, verifies the saved fingerprint, and exposes
+      only the source `talents` word. Wing mutation, swapping, revival, and
+      all other CHARDESC fields remain outside this bounded handoff.
     - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
       restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
       before the existing live leader-hand publication. Only the original

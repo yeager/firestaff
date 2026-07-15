@@ -652,6 +652,14 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+/* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
+ * consecutive 25-word EDT_Character records.  Return one for a complete,
+ * receipt-authenticated match, zero for an authenticated absent character,
+ * and minus one for unavailable or partial source data. */
+int csb_v1_runtime_read_csbwin_wing_talents(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    uint32_t *out_talents);
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);
