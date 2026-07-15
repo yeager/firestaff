@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 skproject startup title/menu: startup presentation now
+  consumes the original `TITLE/0` GDAT pair (`dt07/1` title and `dt07/4`
+  menu) instead of a synthetic text/rect menu. M11 advances only the startup
+  title tick while keeping runtime frozen, then consumes NEW GAME through the
+  existing boot/session boundary. Focused startup pointer and menu-action
+  contracts pass (`1/1`, `99/99`).
+
 - ✅ 2026-07-15 DM1/DM2 source-save admission: DM1 keeps manifest exclusion
   in corpus discovery while F0435 materializes an explicitly selected valid
   PC34 stream, preserving original parser errors and live C01 door/timeline

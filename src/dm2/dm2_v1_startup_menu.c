@@ -1344,22 +1344,29 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     }
     memset(out_receipt, 0, sizeof(*out_receipt));
     active = startup_menu_active ? 1 : 0;
-    (void)animation_tick;
     out_receipt->valid = 1;
     out_receipt->startup_menu_active = active;
-    out_receipt->animation_active = 0;
+    out_receipt->animation_active = active;
     snprintf(out_receipt->animation,
              sizeof(out_receipt->animation),
              "%s",
              active ? "dm2-startup-menu" : "dm2-runtime");
-    /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235) has no
-     * title-frame loop here: it owns the static TITLE/0/dt07/4 menu surface
-     * and its MessageLoop(true) input before GAME_LOAD may proceed. */
-    out_receipt->title_animation_tick = 0;
-    out_receipt->title_frame = 0;
-    out_receipt->title_frame_max = 0;
-    out_receipt->title_frame_duration_ticks = 0;
-    out_receipt->title_ready = 1;
+    /* skproject/SKWIN SHOW_MENU_SCREEN owns the real TITLE/0/dt07 startup
+     * surfaces. Firestaff keeps a short host-side title gate so M11 presents
+     * dt07/1 before handing input to the dt07/4 menu surface. */
+    out_receipt->title_animation_tick = active && animation_tick > 0
+                                            ? animation_tick
+                                            : 0;
+    out_receipt->title_frame_duration_ticks = active ? 6 : 0;
+    out_receipt->title_frame_max = active ? 7 : 0;
+    out_receipt->title_frame =
+        active ? (out_receipt->title_animation_tick /
+                  out_receipt->title_frame_duration_ticks)
+               : 0;
+    if (active && out_receipt->title_frame > out_receipt->title_frame_max) {
+        out_receipt->title_frame = out_receipt->title_frame_max;
+    }
+    out_receipt->title_ready = active ? 0 : 1;
     out_receipt->music_cue = active ? 0 : -1;
     out_receipt->music_loop = active;
     memset(&music_receipt, 0, sizeof(music_receipt));

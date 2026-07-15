@@ -784,6 +784,18 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     }
     route = &action_receipt->host_menu_route;
     if (route->valid) {
+        if (route->status_scope &&
+            strcmp(route->status_scope, "GAME_LOAD") == 0 &&
+            state->dm2BootProfile) {
+            DM2_V1_SessionState session;
+            dm2_v1_session_new(&session);
+            if (m11_dm2_startup_apply_session(state, &session)) {
+                state->dm2State.startup_menu_active = 0;
+                state->dm2State.startup_title_animation_tick = 48;
+                m11_set_status(state, "RUNTIME", "DM2 NEW GAME");
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
         if (route->close_startup_menu) {
             state->dm2State.startup_menu_active = 0;
         }
@@ -14276,10 +14288,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
             DM2_V1_MusicScheduleReceipt music_schedule;
-            /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235)
-             * keeps one static TITLE/0/dt07/4 frame in MessageLoop(true).
-             * A stale host tick must not select an invented title frame. */
-            state->dm2State.startup_title_animation_tick = 0;
+            /* DM2 startup presents the original TITLE/0/dt07/1 title surface
+             * before the TITLE/0/dt07/4 menu surface. Keep this as a host
+             * presentation tick; the DM2 runtime tick remains frozen until a
+             * real menu action leaves startup. */
+            if (state->dm2State.startup_title_animation_tick < 48) {
+                ++state->dm2State.startup_title_animation_tick;
+            }
             /* M11's idle scheduler advances only the independent MIDI
              * timeline. No due event is sent to SDL audio until a proven MIDI
              * device backend is installed. */
