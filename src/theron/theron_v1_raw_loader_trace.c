@@ -3253,6 +3253,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     memset(&loader_post_envelope, 0, sizeof(loader_post_envelope));
     loader_facts.authenticated_original_trace = 1;
     loader_facts.later_than_stage2_transfer = 1;
+    loader_facts.track02_variant = coalesced_receipt->variant;
     loader_facts.track02_record = coalesced_receipt->later_track02_record;
     /* `0x114` is the source-locked byte coordinate within record 0x0b52,
      * retained by the raw-media boundary. Do not turn it into a global file

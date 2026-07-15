@@ -16,6 +16,12 @@
   PC34/Mac capture of the full title-to-HoC handoff and an operator-staged
   external original-save corpus run; do not promote synthetic title frames or
   checksum-authenticated fixture envelopes as external evidence.
+  - 2026-07-16 update: the low-level V1 title source selector now also skips
+    malformed or missing C001 even when TITLE.DAT is available, so TITLE.DAT
+    is retained only as rejected evidence rather than a drawable fallback.
+    Focused Ninja/CTest passed. Remaining work is unchanged: real PC34/Mac
+    title-to-HoC capture plus operator-staged external original-save corpus
+    evidence.
 
 - 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
   original-PC34 part reader now rejects overflowing cursor state before
@@ -750,6 +756,11 @@
   into the existing source-bound ISO dungeon route. The launch resolver now
   matches the menu classifier's CUE contract by accepting case-insensitive
   real CUE keywords and rejecting missing or duplicate Track 02 `INDEX 01`.
+  2026-07-16 Theron update: the `$0b52` initial-envelope loader intake now
+  requires an explicit JP/US raw-BIN media variant before the complete
+  payload can hand off. ISO byte inspection remains available, but an ISO
+  CUE/2048 payload cannot borrow the raw-BIN loader/object route or promote a
+  synthetic dungeon.
   Remaining: bind a real ISO capture that proves the first level/object
   record; no raw-BIN trace, sector conversion, or synthetic dungeon may
   authorize it.

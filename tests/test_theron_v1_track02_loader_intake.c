@@ -27,7 +27,8 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t byte_count) {
 
 static Theron_V1Track02LoaderReadFacts valid_facts(void) {
     Theron_V1Track02LoaderReadFacts facts = {
-        1, 1, THERON_V1_INITIAL_ENVELOPE_RECORD,
+        1, 1, THERON_TRACK02_VARIANT_US_BIN,
+        THERON_V1_INITIAL_ENVELOPE_RECORD,
         THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
         THERON_V1_INITIAL_ENVELOPE_DESTINATION,
         THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES,
@@ -136,6 +137,11 @@ int main(void) {
     facts.later_than_stage2_transfer = 0;
     CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
     facts.later_than_stage2_transfer = 1;
+    facts.track02_variant = THERON_TRACK02_VARIANT_US_ISO;
+    CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
+    facts.track02_variant = THERON_TRACK02_VARIANT_UNKNOWN;
+    CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
+    facts.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     facts.track02_record = 0x04e0u;
     CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
     facts.track02_record = 0x04dfu;
