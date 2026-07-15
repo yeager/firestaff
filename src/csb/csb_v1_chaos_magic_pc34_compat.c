@@ -750,6 +750,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS 100
 
 typedef struct {
     uint32_t location;
@@ -823,6 +824,11 @@ typedef struct {
     int32_t volume;
     int32_t flags;
 } CSB_V1_CSBWinDSAPendingSoundRequest;
+typedef struct {
+    int32_t location;
+    int32_t index;
+    int32_t color;
+} CSB_V1_CSBWinDSAPendingDescriptionRequest;
 
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
@@ -910,7 +916,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
     int *pending_sound_request_count, int *discard_text_requested,
     int *adjust_skills_parameters_requested,
-    uint32_t pending_adjust_skills_parameters[5])
+    uint32_t pending_adjust_skills_parameters[5],
+    CSB_V1_CSBWinDSAPendingDescriptionRequest *pending_descriptions,
+    int *pending_description_count)
 {
     uint32_t v;
     uint32_t w;
@@ -942,6 +950,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
+        !pending_descriptions || !pending_description_count ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -1166,6 +1175,25 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             }
         }
         *adjust_skills_parameters_requested = 1;
+        break;
+    case 72u: /* STKOP_Describe, DSA.cpp:4639-4661; Character.cpp:3797-3832. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) {
+            goto underflow;
+        }
+        /* Character.cpp accepts only phrase slots 0..7; invalid slots are a
+         * source no-op and therefore require no DB2/phrase owner. */
+        if ((int32_t)w < 0 || w > 7u) break;
+        if (!context->describe ||
+            *pending_description_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_descriptions[*pending_description_count].location = (int32_t)count;
+        pending_descriptions[*pending_description_count].index = (int32_t)w;
+        pending_descriptions[*pending_description_count].color = (int32_t)v;
+        ++*pending_description_count;
         break;
     case 20u: /* STKOP_Shift */
     case 31u: /* STKOP_RShift */
@@ -2595,6 +2623,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
         pending_sound_requests[CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS];
+    CSB_V1_CSBWinDSAPendingDescriptionRequest pending_descriptions[
+        CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -2614,6 +2644,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
     int adjust_skills_parameters_requested = 0;
+    int pending_description_count = 0;
     uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
     int staged_saves_disabled;
     uint32_t staged_random_state;
@@ -2851,7 +2882,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_actuator_copy_count, pending_sound_requests,
                 &pending_sound_request_count, &discard_text_requested,
                 &adjust_skills_parameters_requested,
-                pending_adjust_skills_parameters);
+                pending_adjust_skills_parameters, pending_descriptions,
+                &pending_description_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2972,6 +3004,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
          !context->set_adjust_skills_parameters(
              context->dungeon_user, pending_adjust_skills_parameters))) {
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+    }
+    for (i = 0; i < pending_description_count; ++i) {
+        if (!context->describe || !context->describe(
+                context->dungeon_user, pending_descriptions[i].location,
+                pending_descriptions[i].index,
+                pending_descriptions[i].color)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
     }
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -3147,6 +3187,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;
+    context.describe = runner->describe;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

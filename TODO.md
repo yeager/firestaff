@@ -35,6 +35,12 @@
   route; do not retain parameters in a synthetic global or apply them outside
   the source skill path.
 
+- 2026-07-15 CSBWin DSA `STKOP_Describe` now preserves `DSA.cpp`'s
+  location/index/color stack order and commits only through a real
+  `Character.cpp::ModifyDescription` DB2/phrase owner. Remaining work is
+  binding that owner to loaded DB2 text plus live HUD phrase rendering; do not
+  derive text from a host string or create a substitute phrase table.
+
 - 2026-07-15 DM1 GROUP F0177 follow-up: raw adjacent C04 melee target
   selection now consumes F0175/F0176 and the original F0229/G0023 cell order.
   Remaining work is routing live M10/M11 attack consumers through effective
