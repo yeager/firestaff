@@ -7476,6 +7476,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     consumer, tile, palette, bitmap, or visual route. Remaining: authentic
     capture of this sequence followed by a proven non-self descriptor record
     consumer.
+  - Update: when that observed return instruction is itself a JSR, admission
+    now binds its immediate target from the adjacent original loader trace
+    row, retaining the same source-bound Track 02 TII receipt. Any missing,
+    reordered, or changed call-site row rejects. This proves only the next
+    invoked routine's control-flow address; it does not identify the routine,
+    its data tables, or any level/object/graphics semantics. Remaining:
+    authentic capture tying that routine to one non-self descriptor-selected
+    CD record or verified loader data-table span.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02

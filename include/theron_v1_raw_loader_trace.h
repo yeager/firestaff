@@ -351,6 +351,20 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt;
 
+/* The next routine call observed exactly at the authenticated copied-code
+ * return point. `execution.transfer` keeps the original Track 02 byte route;
+ * the called routine remains unclassified until a separate source trace
+ * proves how it consumes data. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt execution;
+    uint16_t call_pc;
+    uint32_t call_physical_pc;
+    uint16_t call_target;
+    int post_return_call_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -582,6 +596,14 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt *out);
+
+/* Requires the captured post-RTS instruction itself to be a JSR and binds
+ * its exact target from the adjacent original loader trace row. This does not
+ * identify the called routine or any payload semantics. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
