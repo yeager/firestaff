@@ -29,6 +29,9 @@ typedef struct {
     int structure3_source_packet_consumed;
     int structure3_source_geometry_bound;
     int structure3_source_no_draw;
+    int structure3_runtime_vdp1_command_framed;
+    Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt
+        structure3_runtime_vdp1_command;
     /* A package-owned Structure3 face/vertex/normal packet may be consumed
      * before any external Saturn capture exists. It is a no-draw source
      * staging lane, separate from the opaque capture packet above. */

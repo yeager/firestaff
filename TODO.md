@@ -6575,3 +6575,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   rules out selecting an indexed or direct-color decoder from descriptor bytes
   alone. A genuine Saturn trace must still establish pixel span/order, absent
   palette behavior, palette entry format, and VDP1 command mode.
+
+- 🔧 2026-07-15 Nexus Structure3 captured-VDP1 framing: an independently
+  authenticated Structure3 capture now carries its complete 32-byte VDP1
+  command through the active canonical LEV renderer and viewport receipts.
+  The documented command-table fields are parsed only after all capture lanes
+  and the exact DGN face binding have been revalidated. This does not prove
+  source-address byte semantics, colour mode, pixel order, CLUT/palette
+  addressing, transform/culling, or drawing; each remains blocked pending a
+  real retail Saturn capture with those relations.

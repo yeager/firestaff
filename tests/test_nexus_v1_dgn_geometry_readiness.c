@@ -2955,6 +2955,9 @@ static void test_structure3_entry_header_boundaries(void) {
      * certify itself by merely repeating its own DGN fingerprint. */
     memset(&candidate, 0, sizeof(candidate));
     memset(vdp1_command, 0, sizeof(vdp1_command));
+    wl16(vdp1_command, 0U);      /* normal texture primitive */
+    wl16(vdp1_command + 4, 0x20U);
+    wl16(vdp1_command + 6, 0x0101U); /* 8x1 command-table extent */
     candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
     candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
     candidate.typed_mesh_corpus_fnv1a32 = NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32;
@@ -3338,6 +3341,16 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_state_bound && active_source.transform_state_bound &&
               active_source.normal_culling_state_bound &&
               active_source.vdp1_command_bound &&
+              active_source.vdp1_command_format_framed &&
+              active_source.vdp1_command_framing.valid &&
+              active_source.vdp1_command_framing.complete_vdp1_command_record &&
+              active_source.vdp1_command_framing.command_format_parsed &&
+              active_source.vdp1_command_framing.texture_primitive_observed &&
+              active_source.vdp1_command_framing.command.texture_width == 8U &&
+              active_source.vdp1_command_framing.command.texture_height == 1U &&
+              !active_source.vdp1_command_framing.pixel_format_proven &&
+              !active_source.vdp1_command_framing.palette_format_proven &&
+              !active_source.vdp1_command_framing.decoder_permitted &&
               active_source.texture_decode_unproven &&
               active_source.palette_decode_unproven &&
               active_source.vdp1_draw_unproven &&
@@ -3354,6 +3367,15 @@ static void test_structure3_entry_header_boundaries(void) {
               viewport.last_dgn_render_receipt.structure3_source_packet_consumed &&
               viewport.last_dgn_render_receipt.structure3_source_geometry_bound &&
               viewport.last_dgn_render_receipt.structure3_source_no_draw &&
+              viewport.last_dgn_render_receipt
+                  .structure3_runtime_vdp1_command_framed &&
+              viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command.valid &&
+              viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command
+                  .command_format_parsed &&
+              viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command
+                  .command.texture_width == 8U &&
+              !viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command
+                  .decoder_permitted &&
               viewport.structure3_source_packet.vertices ==
                   engine.structure3_runtime_source.vertices &&
               viewport.structure3_source_packet.normal ==
