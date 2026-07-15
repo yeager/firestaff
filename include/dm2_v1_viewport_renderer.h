@@ -484,6 +484,17 @@ int dm2_v1_viewport_project_map_to_sprite(int map_x,
                                           int party_x,
                                           int party_y,
                                           DM2_V1_ViewportSpritePlacement *out);
+/* Maps only the source-proven centre-line static-object cells used by
+ * SKProject c_gui_vp.cpp::DM2_DRAW_STATIC_OBJECT.  Unknown side/deep cells
+ * deliberately have no route until their DRAW_ITEM placement tables are
+ * recovered. */
+int dm2_v1_viewport_static_object_cell_for_map(int map_x,
+                                               int map_y,
+                                               int party_dir,
+                                               int party_x,
+                                               int party_y,
+                                               int *out_cell,
+                                               int *out_pass);
 int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
     int possession_slot,
@@ -624,6 +635,9 @@ typedef struct {
     uint8_t source_gdat_field;
     uint8_t source_g1_weapon;
     uint8_t source_g1_container;
+    uint8_t source_static_object_admitted;
+    uint8_t source_static_object_cell;
+    int8_t source_static_object_pass;
 } DM2_ItemSprite;
 
 typedef struct {
@@ -641,6 +655,9 @@ typedef struct {
     int map_y;
     int source_g1_weapon;
     int source_g1_container;
+    int source_static_object_admitted;
+    int source_static_object_cell;
+    int source_static_object_pass;
     int flip_mirror;
     int fallback_radius;
     uint8_t fallback_color;

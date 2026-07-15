@@ -2843,10 +2843,20 @@ static void dm2_runtime_populate_g1_weapon_map_chip_items(
             &receipt->materials[i];
         DM2_V1_ViewportSpritePlacement placement;
         DM2_ItemSprite *dst;
+        int source_cell;
+        int source_pass;
 
         if (!dm2_v1_viewport_project_map_to_sprite(
                 material->x, material->y, party_dir, party_x, party_y,
                 &placement)) {
+            continue;
+        }
+        if (!dm2_v1_viewport_static_object_cell_for_map(
+                material->x, material->y, party_dir, party_x, party_y,
+                &source_cell, &source_pass)) {
+            /* The old bounded projection was not SKProject DRAW_ITEM
+             * geometry.  Do not place a real DB5 bitmap until its physical
+             * cell has an observed DM2_DRAW_STATIC_OBJECT table route. */
             continue;
         }
         dst = &viewport->items[viewport->item_count++];
@@ -2863,6 +2873,9 @@ static void dm2_runtime_populate_g1_weapon_map_chip_items(
         dst->map_y = (int16_t)material->y;
         dst->source_gdat_field = 0xf9;
         dst->source_g1_weapon = 1;
+        dst->source_static_object_admitted = 1;
+        dst->source_static_object_cell = (uint8_t)source_cell;
+        dst->source_static_object_pass = (int8_t)source_pass;
     }
 }
 
@@ -2888,10 +2901,19 @@ static void dm2_runtime_populate_g1_container_map_chip_items(
             &receipt->materials[i];
         DM2_V1_ViewportSpritePlacement placement;
         DM2_ItemSprite *dst;
+        int source_cell;
+        int source_pass;
 
         if (!dm2_v1_viewport_project_map_to_sprite(
                 material->x, material->y, party_dir, party_x, party_y,
                 &placement)) {
+            continue;
+        }
+        if (!dm2_v1_viewport_static_object_cell_for_map(
+                material->x, material->y, party_dir, party_x, party_y,
+                &source_cell, &source_pass)) {
+            /* See the DB5 path above: side/deep DRAW_ITEM placement has no
+             * recovered source table and must remain unavailable. */
             continue;
         }
         dst = &viewport->items[viewport->item_count++];
@@ -2907,6 +2929,9 @@ static void dm2_runtime_populate_g1_container_map_chip_items(
         dst->map_y = (int16_t)material->y;
         dst->source_gdat_field = 0xf9;
         dst->source_g1_container = 1;
+        dst->source_static_object_admitted = 1;
+        dst->source_static_object_cell = (uint8_t)source_cell;
+        dst->source_static_object_pass = (int8_t)source_pass;
     }
 }
 

@@ -93,6 +93,9 @@ static void setup(DM2_V1_ViewportState *viewport, uint8_t *framebuffer,
     viewport->items[0].direction = material->direction;
     viewport->items[0].source_gdat_field = 0xf9;
     viewport->items[0].source_g1_weapon = 1;
+    viewport->items[0].source_static_object_admitted = 1;
+    viewport->items[0].source_static_object_cell = 3;
+    viewport->items[0].source_static_object_pass = 17;
     dm2_v1_viewport_set_g1_weapon_map_chip_materials(viewport, receipt);
     dm2_v1_viewport_set_asset_provider(viewport, fetch_material, expected_index);
     dm2_v1_viewport_set_asset_palette_provider(viewport, fetch_palette,
@@ -129,6 +132,29 @@ int main(void)
     memset(framebuffer, 0x7e, sizeof(framebuffer));
     setup(&viewport, framebuffer, &receipt, &expected_index);
     g_pixels[1] ^= 1u;
+
+    memset(framebuffer, 0x7e, sizeof(framebuffer));
+    setup(&viewport, framebuffer, &receipt, &expected_index);
+    viewport.items[0].source_static_object_admitted = 0;
+    dm2_v1_render_items(&viewport);
+    CHECK("unproven G1 DB5 cell blocks instead of using generic projection",
+          viewport.asset_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0u &&
+              framebuffer[88 * DM2_VP_WIDTH + 96] == 0x7eu);
+
+    {
+        int cell = -1;
+        int pass = -1;
+        CHECK("D1 center maps to exact static-object source pass",
+              dm2_v1_viewport_static_object_cell_for_map(
+                  10, 8, 0, 10, 10, &cell, &pass) == 1 &&
+                  cell == 3 && pass == 17);
+        CHECK("D0 center has no generic static-object pass",
+              dm2_v1_viewport_static_object_cell_for_map(
+                  10, 9, 0, 10, 10, &cell, &pass) == 0 &&
+                  cell == -1 && pass == -1);
+    }
     dm2_v1_render_items(&viewport);
     CHECK("changed decoded G1 DB5 pixels block their source material",
           viewport.asset_item_drawn_count == 0 &&
