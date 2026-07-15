@@ -455,8 +455,12 @@
   gate now rehashes each command's local IMG3 palette alongside decoded pixels
   and QUERY_BLIT_RECT geometry. A modified palette blocks both source planes
   before any blit; the canonical G1 regression covers the no-draw result.
-  Remaining scene work is original light/weather composition, not a palette
-  substitute.
+  `DM2_DISPLAY_VIEWPORT`'s D1/D2 blocked-wall trim branch now also consumes
+  the selected GRAPHICSSET `dtWordValue` 0x70/0x71 high/low trim pair through
+  M11: ceiling consumes the low byte and floor the high byte, with D1 taking
+  precedence. A missing optional source word remains the source's zero/no-trim
+  result. Remaining scene work is original light/weather composition, not a
+  palette substitute.
 
 - 2026-07-15 DM2 scene follow-up: M11 now carries G1 MapGraphicsStyle with
   the level identity. Remaining work is source-proven light/weather compositing.
@@ -7390,8 +7394,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     its source order: ceiling `GRAPHICSSET/1` through rect `0x2bc` before
     floor `GRAPHICSSET/0` through rect `0x2bd`. The transaction binds each
     decoded image, its own local palette, geometry, and ordering hash; a
-    swapped order or changed material is callback-free no-draw. Remaining:
-    source trim values for live D1/D2 occlusion and later tile/object passes.
+    swapped order or changed material is callback-free no-draw. The live D1/D2
+    three-wall occlusion route now consumes GRAPHICSSET 0x70/0x71 low-byte
+    ceiling and high-byte floor trims; a missing optional word is the source
+    zero/no-trim result, not a borrowed control. Remaining: later tile/object
+    passes.
   - 2026-07-13 update: source-selected `DOORS` and `WALL_GFX` image fields
     now publish no-draw material receipts only after the original image,
     metadata, decoded pixels, and `QUERY_GDAT_IMAGE_LOCALPAL` palette agree.

@@ -42,6 +42,10 @@ typedef struct {
     uint16_t ambient_light;
     uint16_t highest_light_level;
     uint16_t ambient_darkness;
+    uint16_t trim_wall_d1;
+    uint16_t trim_wall_d2;
+    uint8_t trim_wall_d1_present;
+    uint8_t trim_wall_d2_present;
     uint32_t command_hash;
     DM2_V1_GdatSceneM11Command commands[2];
     /* QUERY_BLIT_RECT's source-backed destinations, indexed like commands:

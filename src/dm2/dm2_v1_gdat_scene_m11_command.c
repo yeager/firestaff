@@ -348,6 +348,12 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     (void)dm2_v1_asset_load_word_value(
         loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
         DM2_GDAT_GFXSET_AMBIANT_LIGHT, &candidate.ambient_light);
+    candidate.trim_wall_d1_present = dm2_v1_asset_load_word_value(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_GFXSET_TRIM_WALL_D1, &candidate.trim_wall_d1);
+    candidate.trim_wall_d2_present = dm2_v1_asset_load_word_value(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_GFXSET_TRIM_WALL_D2, &candidate.trim_wall_d2);
     candidate.graphicsset = graphicsset;
     if (!dm2_v1_gdat_scene_query_blit_rect_receipt(
             loader, &candidate.query_blit_rect) ||
@@ -446,6 +452,10 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     hash ^= candidate.ambient_light; hash *= 16777619u;
     hash ^= candidate.highest_light_level; hash *= 16777619u;
     hash ^= candidate.ambient_darkness; hash *= 16777619u;
+    hash ^= candidate.trim_wall_d1; hash *= 16777619u;
+    hash ^= candidate.trim_wall_d2; hash *= 16777619u;
+    hash ^= candidate.trim_wall_d1_present; hash *= 16777619u;
+    hash ^= candidate.trim_wall_d2_present; hash *= 16777619u;
     if (!hash) { dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0; }
     candidate.command_hash = hash; candidate.valid = 1; *out_plan = candidate;
     return 1;
