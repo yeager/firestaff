@@ -40,10 +40,10 @@ def main() -> int:
 
     assert "m11_draw_dm1_front_wall_inscription_text" not in ornaments, (
         "M648 cannot be emitted in the pre-palette ornament pass")
-    assert viewport.count("m11_draw_dm1_front_wall_inscription_text") == 1, (
+    assert viewport.count("m11_repaint_dm1_f0128_front_wall_inscription") == 1, (
         "D1C M648 presentation must have one post-palette owner")
     palette = viewport.find("m11_apply_dungeon_palette_level")
-    inscription = viewport.find("m11_draw_dm1_front_wall_inscription_text")
+    inscription = viewport.find("m11_repaint_dm1_f0128_front_wall_inscription")
     assert 0 <= palette < inscription
     assert "DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34" in font_loader
     for token in (
