@@ -2392,11 +2392,13 @@ static int test_original_save_candidate_live_restore(void)
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
+    DM2_V1_RuntimeRawSaveHandoffReceipt raw_handoff;
     uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
     uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
     uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
     uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    uint8_t first_frame[320 * 200];
     uint8_t *expected_dungeon = NULL;
     int creature_id;
     int result = 0;
@@ -2461,6 +2463,27 @@ static int test_original_save_candidate_live_restore(void)
         memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
         goto done;
     }
+    memset(&raw_handoff, 0, sizeof(raw_handoff));
+    if (!dm2_v1_runtime_last_raw_sksave_handoff_receipt(&raw_handoff) ||
+        !raw_handoff.valid || raw_handoff.first_frame_consumed ||
+        raw_handoff.map_count != 1u ||
+        raw_handoff.dungeon_byte_count != candidate.dungeon_size ||
+        raw_handoff.prefix_hash != candidate.dungeon_receipt.prefix_hash ||
+        raw_handoff.map_data_hash != candidate.dungeon_receipt.map_data_hash ||
+        raw_handoff.db_record_counts[0] != 1u ||
+        raw_handoff.db_record_counts[3] != 1u ||
+        raw_handoff.party_level != 0u || raw_handoff.party_x != 3u ||
+        raw_handoff.party_y != 4u || raw_handoff.party_dir != 1u) {
+        goto done;
+    }
+    memset(first_frame, 0, sizeof(first_frame));
+    if (dm2_v1_runtime_render_frame(game.party_dir, game.party_x, game.party_y,
+                                    first_frame, 320, 320, 200) != 0 ||
+        !dm2_v1_runtime_last_raw_sksave_handoff_receipt(&raw_handoff) ||
+        !raw_handoff.first_frame_consumed ||
+        raw_handoff.prefix_hash != candidate.dungeon_receipt.prefix_hash) {
+        goto done;
+    }
 
     /* Truncation must be rejected before it can mutate party, dungeon, CCM,
      * or the GDAT-bound runtime view. */
@@ -2482,7 +2505,10 @@ static int test_original_save_candidate_live_restore(void)
     if (dm2_v1_runtime_restore_save_candidate(payload, payload_size) == 0 ||
         game.party_x != 3 || game.party_y != 4 ||
         dungeon.level_widths[0] != 4 || dungeon.level_heights[0] != 5 ||
-        memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
+        memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0 ||
+        !dm2_v1_runtime_last_raw_sksave_handoff_receipt(&raw_handoff) ||
+        raw_handoff.prefix_hash != candidate.dungeon_receipt.prefix_hash ||
+        !raw_handoff.first_frame_consumed) {
         goto done;
     }
     /* A source-valid stream cannot place the party outside the exact saved

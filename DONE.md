@@ -15677,6 +15677,18 @@ ground-stack root is rejected atomically; unused pool slots remain opaque and
 cannot cause rejection. Verification: focused raw-SKSave runtime regression
 plus syntax checks for DM2 runtime and save/load test translation units.
 
+# ✅ 2026-07-15 DM2 raw SKSave load-to-first-frame handoff
+
+The DM2 runtime now retains an exact raw-SKSave map/pool receipt only after
+the source-layout dungeon and session commit together. The V1/M10 render path
+marks it consumed only when the live dungeon prefix hash, byte count, and
+party pose still match the accepted `GAME_LOAD` candidate; boot's render
+receipt carries the resulting identity for its M11 consumer. A rejected raw
+candidate leaves both the prior dungeon and prior handoff receipt intact.
+Verification: focused raw-SKSave restore test drives the accepted candidate
+through a first V1 frame, then proves malformed record-chain rejection remains
+atomic; syntax checks cover runtime, boot, and save/load test units.
+
 # ✅ 2026-07-15 DM2 raw SKSave DB0 Door receipt
 
 The corpus path can now decode `SKWIN/DME.h::Door` fields from raw DB0 `w2`

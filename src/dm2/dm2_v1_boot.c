@@ -7159,6 +7159,7 @@ int dm2_v1_boot_runtime_render_frame(
     DM2_V1_BootRuntimeReceipt runtime;
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     DM2_V1_ViewportM11FrameReceipt m11_frame;
+    DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
     int rendered = -1;
     dm2_v1_boot_runtime_render_receipt_clear(out_receipt);
     if (!profile || !profile->dm2_state || !framebuffer) {
@@ -7210,8 +7211,11 @@ int dm2_v1_boot_runtime_render_frame(
      * must not replace this frame's no-fallback/no-block decision. */
     memset(&frame_ownership, 0, sizeof(frame_ownership));
     memset(&m11_frame, 0, sizeof(m11_frame));
+    memset(&raw_sksave_handoff, 0, sizeof(raw_sksave_handoff));
     (void)dm2_v1_runtime_last_frame_ownership(&frame_ownership);
     (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_frame);
+    (void)dm2_v1_runtime_last_raw_sksave_handoff_receipt(
+        &raw_sksave_handoff);
     if (out_receipt) {
         out_receipt->render_result = rendered;
         out_receipt->startup_render_ready =
@@ -7265,6 +7269,24 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_hud_real_asset_ready;
         out_receipt->runtime_render_asset_floor_ceiling_count =
             dm2_v1_runtime_last_asset_floor_ceiling_count();
+        out_receipt->runtime_raw_sksave_handoff_consumed =
+            raw_sksave_handoff.valid &&
+            raw_sksave_handoff.first_frame_consumed;
+        out_receipt->runtime_raw_sksave_prefix_hash =
+            raw_sksave_handoff.valid ? raw_sksave_handoff.prefix_hash : 0u;
+        out_receipt->runtime_raw_sksave_map_data_hash =
+            raw_sksave_handoff.valid ? raw_sksave_handoff.map_data_hash : 0u;
+        out_receipt->runtime_raw_sksave_dungeon_byte_count =
+            raw_sksave_handoff.valid &&
+            raw_sksave_handoff.dungeon_byte_count <= UINT32_MAX
+                ? (uint32_t)raw_sksave_handoff.dungeon_byte_count : 0u;
+        if (raw_sksave_handoff.valid) {
+            int type;
+            for (type = 0; type < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++type) {
+                out_receipt->runtime_raw_sksave_db_record_count +=
+                    raw_sksave_handoff.db_record_counts[type];
+            }
+        }
         out_receipt->runtime_render_fallback_floor_ceiling_count =
             dm2_v1_runtime_last_fallback_floor_ceiling_count();
         out_receipt->runtime_render_asset_wall_count =

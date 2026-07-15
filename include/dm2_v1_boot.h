@@ -302,6 +302,13 @@ typedef struct {
     int runtime_render_no_core_fallbacks;
     /* Atomic source-required frame identity consumed by M11. */
     int runtime_m11_frame_receipt_consumed;
+    /* Raw SKSave layout identity consumed by this runtime frame, if that
+     * frame follows a validated original GAME_LOAD handoff. */
+    int runtime_raw_sksave_handoff_consumed;
+    uint32_t runtime_raw_sksave_prefix_hash;
+    uint32_t runtime_raw_sksave_map_data_hash;
+    uint32_t runtime_raw_sksave_dungeon_byte_count;
+    uint32_t runtime_raw_sksave_db_record_count;
     uint32_t runtime_m11_frame_map_load_token;
     uint32_t runtime_m11_frame_scene_control_hash;
     uint32_t runtime_m11_frame_scene_light_hash;

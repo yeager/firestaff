@@ -464,6 +464,25 @@ typedef struct {
     int rejected_original_candidate;
     char selected_path[256];
 } DM2_V1_RuntimeCorpusImportReceipt;
+
+/* Source-owned raw-SKSave dungeon handoff carried from GAME_LOAD into the
+ * first runtime frame. It exposes layout identity only, never record fields
+ * or GenericRecord links. */
+typedef struct {
+    int valid;
+    int first_frame_consumed;
+    uint8_t map_count;
+    uint16_t db_record_counts[DM2_RAW_SKSAVE_DB_POOL_COUNT];
+    size_t dungeon_byte_count;
+    uint32_t prefix_hash;
+    uint32_t map_data_hash;
+    uint16_t party_level;
+    uint16_t party_x;
+    uint16_t party_y;
+    uint8_t party_dir;
+} DM2_V1_RuntimeRawSaveHandoffReceipt;
+int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
+    DM2_V1_RuntimeRawSaveHandoffReceipt *out_receipt);
 int dm2_v1_runtime_last_door_render_receipt(
     DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_item_count(void);
