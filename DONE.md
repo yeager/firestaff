@@ -12,6 +12,11 @@
   matches the implementation: missing or unsupported title/menu surfaces stay
   unavailable. Verified TITLE.CG and WARNING.BIN routes continue consuming
   original bytes; PRS3 remains blocked without decoder evidence.
+- 2026-07-15 DM1 F0107/F0109 source-owned ornament material: active M11
+  wall, floor, and door ornament consumers now require the F0173 map-local
+  DUNGEON.DAT index table. Failed reads and missing local ordinals remain
+  unavailable/no-draw rather than selecting identity graphics. The resolver
+   accepts the real global-0 inscription slot and rejects unloaded metadata.
 
 - 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
   host-colored fallback. F0108 now draws only callback-provided original

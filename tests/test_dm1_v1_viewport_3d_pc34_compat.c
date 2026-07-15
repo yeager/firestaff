@@ -1,5 +1,6 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
+#include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
@@ -4673,6 +4674,27 @@ static void test_f0108_requires_original_graphics_dat_pixels(void)
               viewport[destination + 1], 0x24);
 }
 
+static void test_ornament_cache_requires_source_owned_map_metadata(void)
+{
+    const int source_indices[3] = { 7, 0, 12 };
+    int global_index = -1;
+
+    check_int("ornament_cache.rejects_unloaded_metadata",
+              dm1_v1_ornament_cache_global_index_pc34(
+                  0, source_indices, 3, 1, &global_index), 0);
+    check_int("ornament_cache.rejects_missing_local_ordinal",
+              dm1_v1_ornament_cache_global_index_pc34(
+                  1, source_indices, 3, 4, &global_index), 0);
+    check_int("ornament_cache.accepts_verified_global_index",
+              dm1_v1_ornament_cache_global_index_pc34(
+                  1, source_indices, 3, 1, &global_index), 1);
+    check_int("ornament_cache.verified_global_index", global_index, 7);
+    check_int("ornament_cache.accepts_source_inscription_slot",
+              dm1_v1_ornament_cache_global_index_pc34(
+                  1, source_indices, 3, 2, &global_index), 1);
+    check_int("ornament_cache.inscription_global_index", global_index, 0);
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
@@ -4719,6 +4741,7 @@ int main(void)
     test_f0103_requires_f0128_owned_temporary_bitmap();
     test_f0104_f0105_use_native_and_owned_flip_routes();
     test_f0108_requires_original_graphics_dat_pixels();
+    test_ornament_cache_requires_source_owned_map_metadata();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

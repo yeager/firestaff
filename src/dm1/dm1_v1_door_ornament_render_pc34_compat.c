@@ -1,4 +1,5 @@
 #include "dm1_v1_door_ornament_render_pc34_compat.h"
+#include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 
 enum {
     DM1_GFX_DOOR_ORNAMENT_BASE_PC34 = 441,
@@ -64,11 +65,12 @@ int dm1_v1_door_ornament_info_for_ordinal_pc34(
     if (localIndex < 0 || localIndex >= 16) {
         return 0;
     }
-    /* ReDMCSB F0096 map graphics setup resolves map-local door ornament
-     * ordinals through the current map metadata.  If no metadata is loaded,
-     * Firestaff keeps the original identity fallback used by old loose
-     * fixtures. */
-    globalIndex = (cacheLoaded && localToGlobal) ? localToGlobal[localIndex] : localIndex;
+    /* F0173 owns map-local ordinal translation. A missing DUNGEON.DAT table
+     * cannot name a graphic reliably, so callers must leave it unrendered. */
+    if (!dm1_v1_ornament_cache_global_index_pc34(
+            cacheLoaded, localToGlobal, 16, ornamentOrdinal, &globalIndex)) {
+        return 0;
+    }
     return dm1_v1_door_ornament_info_for_global_pc34(globalIndex, outInfo);
 }
 

@@ -1,9 +1,10 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-15 DM1 F0107/F0109 follow-up: F0108 now consumes only original
-  GRAPHICS.DAT floor-ornament pixels. The remaining wall-ornament alcove
-  classification and door-ornament graphic/zone owner paths need equivalent
-  source-bound runtime consumers; do not synthesize ornament pixels.
+- 2026-07-15 DM1 ornament follow-up: F0107/F0108/F0109 runtime consumers now
+  require F0173-owned DUNGEON.DAT local indices and original GRAPHICS.DAT
+  pixels. Remaining work is broader real HoC/Mac capture across all wall and
+  door-ornament views, including F0107 alcove classification; do not restore
+  identity graphics or generated ornament art.
 
 - 2026-07-15 DM1 F0104/F0105 follow-up: the native and flipped C10 bitmap
   primitives now require original caller-selected media and F0128 scratch.
