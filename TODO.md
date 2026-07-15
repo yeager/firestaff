@@ -3469,6 +3469,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     before the merge, so it consumes exactly two sequential stream bytes on
     that path. Their field layout and history/output meaning remain unproved;
     this does not authorize a PRS3 decoder or rendered surface.
+  - The exact source merge is now locked to the real SH-2 route:
+    `byte0 | ((byte1 << 4) & 0x0f00)`, with both source bytes zero-extended.
+    This proves raw byte ordering only. It does not identify a PRS3 field,
+    history-copy distance, run length, output ownership, or a pixel format;
+    an authenticated Saturn execution trace remains required.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

@@ -118,7 +118,17 @@ typedef struct {
     uint32_t zero_first_byte_read_offset;
     uint32_t zero_second_byte_read_offset;
     uint32_t zero_sequential_input_byte_count;
+    uint32_t zero_upper_mask_literal_load_offset;
+    uint32_t zero_upper_mask_literal_offset;
+    uint16_t zero_upper_mask_word;
+    uint32_t zero_second_byte_copy_offset;
+    uint32_t zero_first_shift_offset;
+    uint32_t zero_second_shift_offset;
+    uint32_t zero_upper_mask_and_offset;
     uint32_t zero_merge_or_offset;
+    uint32_t zero_low_mask_load_offset;
+    int32_t zero_low_mask_immediate;
+    uint32_t zero_low_mask_and_offset;
     uint32_t zero_index_mask_literal_offset;
     uint32_t zero_index_mask_word;
     uint32_t zero_index_mask_offset;
@@ -128,6 +138,10 @@ typedef struct {
      * source span before the zero-side merge. This assigns no field meaning
      * to either byte and does not make the span a decoder input contract. */
     int sh2_zero_side_two_byte_input_span_proven;
+    /* Exact static merge algebra: zero-extended first byte ORed with the
+     * low nibble of the zero-extended second byte shifted left four places.
+     * This proves byte order and masks, not a PRS3 field, copy, or texture. */
+    int sh2_zero_byte_merge_order_proven;
     uint32_t zero_post_read_compare_offset;
     uint32_t zero_repeat_counter_increment_offset;
     uint32_t zero_repeat_branch_offset;

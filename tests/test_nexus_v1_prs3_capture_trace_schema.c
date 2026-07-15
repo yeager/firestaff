@@ -359,7 +359,17 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.zero_first_byte_read_offset == 85484U &&
                receipt.zero_second_byte_read_offset == 85488U &&
                receipt.zero_sequential_input_byte_count == 2U &&
+               receipt.zero_upper_mask_literal_load_offset == 85420U &&
+               receipt.zero_upper_mask_literal_offset == 85640U &&
+               receipt.zero_upper_mask_word == 0x0f00U &&
+               receipt.zero_second_byte_copy_offset == 85492U &&
+               receipt.zero_first_shift_offset == 85494U &&
+               receipt.zero_second_shift_offset == 85496U &&
+               receipt.zero_upper_mask_and_offset == 85498U &&
                receipt.zero_merge_or_offset == 85500U &&
+               receipt.zero_low_mask_load_offset == 85482U &&
+               receipt.zero_low_mask_immediate == 15 &&
+               receipt.zero_low_mask_and_offset == 85502U &&
                receipt.zero_index_mask_word == 0x0fffU &&
                receipt.zero_index_mask_offset == 85520U &&
                receipt.zero_indexed_byte_read_offset == 85524U &&
@@ -387,6 +397,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_nonzero_direct_byte_path_proven &&
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_two_byte_input_span_proven &&
+               receipt.sh2_zero_byte_merge_order_proven &&
                receipt.sh2_zero_side_repeat_control_verified &&
                receipt.sh2_zero_repeat_termination_proven &&
                receipt.sh2_zero_side_linear_route_verified &&
@@ -414,6 +425,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    !receipt.sh2_control_low_bit_semantics_proven &&
                    !receipt.sh2_nonzero_direct_byte_path_proven,
                "changed low-bit mask setup rejects the source byte-path receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85498U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_zero_byte_merge_order_proven,
+               "changed zero-side merge mask rejects the byte-order receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);
