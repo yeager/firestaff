@@ -7162,7 +7162,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     hash; `DRAW_DEFAULT_DOOR_BUTTON` consumes it only after the existing
     root receipt matches. Absent or changed bytes remain no-draw. This does
     not treat `WALL_GFX/F9` or `DOORS/F9` map chips as visible door art: their
-    source placement semantics are still unproven.
+    source placement semantics are still unproven. A button-only DB2/DB3
+    route is not a DB0 door: it does not borrow a DoorType, GRAPHICSSET frame,
+    panel, or side jamb when those source owners are absent.
   - 2026-07-15 update: HUD HP, stamina, and mana bars now use the same
     source-owned `glbChampionColor[player]` value, initialized by
     `SkWinCore::INIT` as `7,11,8,14`; the prior independent `2,11,12`
