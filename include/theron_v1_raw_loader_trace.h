@@ -235,6 +235,28 @@ typedef struct {
     int level_semantics_proven;
 } Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt;
 
+#define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
+
+/* A contiguous, source-owned prefix of the initial envelope observed through
+ * one game-owned CD-to-RAM chain. The bytes remain opaque; in particular this
+ * receipt does not interpret dimensions, extension words, or any record
+ * grammar. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t track02_record;
+    size_t raw_sector;
+    unsigned int dispatch_sequence;
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    uint8_t bytes[THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES];
+    uint32_t bytes_hash;
+    int contiguous_capture_chain_verified;
+    int header_semantics_proven;
+} Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt;
+
 /* Narrow composition of two independently source-locked facts: an ordered,
  * complete-sector later $e009 receipt and the one authenticated initial-level
  * envelope. It accepts only an observed one-sector read of record 0x0b52,
@@ -387,6 +409,17 @@ int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt *out);
+
+/* Requires a complete, ordered 12-byte game-RAM capture of the initial
+ * envelope prefix from one observed CD dispatch. It is a source/capture
+ * receipt only and never decodes the header. */
+int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
+    const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
+    size_t payload_count,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt *out);
 
 /* Promotes the existing source-locked initial-level loader route only after
  * a coalesced original loader/CD receipt selects its exact one-sector record.
