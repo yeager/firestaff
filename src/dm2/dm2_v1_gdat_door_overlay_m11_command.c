@@ -3,6 +3,7 @@
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_viewport_renderer.h"
 
+#include <limits.h>
 #include <string.h>
 
 static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
@@ -14,6 +15,252 @@ static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 static uint32_t hash_u32(uint32_t hash, uint32_t value)
 {
     return hash_bytes(hash, (const uint8_t *)&value, sizeof(value));
+}
+
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} DM2_V1_DoorRawRect;
+
+static uint16_t read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+static int16_t read_le16s(const uint8_t *bytes)
+{
+    return (int16_t)read_le16(bytes);
+}
+
+static const uint8_t *find_raw4_row(const uint8_t *table, size_t table_size,
+                                    uint16_t rect_number)
+{
+    uint16_t groups;
+    size_t offset;
+
+    if (!table || table_size < 4u || read_le16(table) != 0xfc0du) return NULL;
+    groups = read_le16(table + 2u);
+    if (groups == 0u || (size_t)groups > (table_size - 4u) / 4u) return NULL;
+    offset = 4u + (size_t)groups * 4u;
+    for (uint16_t group = 0u; group < groups; ++group) {
+        uint16_t first = read_le16(table + 4u + (size_t)group * 4u);
+        uint16_t last = read_le16(table + 6u + (size_t)group * 4u);
+        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
+
+        if (count == 0u || count > (table_size - offset) / 8u) return NULL;
+        if (rect_number >= first && rect_number <= last) {
+            return table + offset + (size_t)(rect_number - first) * 8u;
+        }
+        offset += count * 8u;
+    }
+    return NULL;
+}
+
+/* c_xrect.cpp::DM2_QUERY_RECT materializes a compressed raw4 row as a
+ * c_rinfo.  Keep the table parsing local to this source-owned M11 command. */
+static int decode_raw4_rect(const uint8_t *table, size_t table_size,
+                            uint16_t rect_number, DM2_V1_DoorRawRect *out)
+{
+    const uint8_t *row;
+    uint16_t groups;
+    size_t offset;
+    uint8_t mask = 0x1fu;
+
+    if (!out || !table || table_size < 4u || read_le16(table) != 0xfc0du) return 0;
+    row = find_raw4_row(table, table_size, rect_number);
+    if (!row) return 0;
+    groups = read_le16(table + 2u);
+    offset = 4u + (size_t)groups * 4u;
+    for (uint16_t group = 0u; group < groups; ++group) {
+        uint16_t first = read_le16(table + 4u + (size_t)group * 4u);
+        uint16_t last = read_le16(table + 6u + (size_t)group * 4u);
+        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
+        if (count == 0u || count > (table_size - offset) / 8u) return 0;
+        if (rect_number >= first && rect_number <= last) {
+            uint16_t x0 = read_le16(table + offset);
+            uint16_t y0 = read_le16(table + offset + 2u);
+            for (size_t i = 0u; i < count; ++i) {
+                const uint8_t *candidate = table + offset + i * 8u;
+                int16_t width = read_le16s(candidate + 4u);
+                int16_t height = read_le16s(candidate + 6u);
+                if (read_le16(candidate) != x0) mask &= (uint8_t)~0x02u;
+                if (read_le16(candidate + 2u) != y0) mask &= (uint8_t)~0x01u;
+                if (read_le16(candidate + 2u) > 0xffu) mask &= (uint8_t)~0x04u;
+                if (width < 0 || width > 0xff || height < 0 || height > 0xff)
+                    mask &= (uint8_t)~0x10u;
+                if (width < -128 || width > 127 || height < -128 || height > 127)
+                    mask &= (uint8_t)~0x08u;
+            }
+            if (mask & 0x03u) mask &= (uint8_t)~0x04u;
+            out->x = (mask & 0x04u) ? (int)row[0] :
+                ((mask & 0x02u) ? (int)(uint8_t)x0 : (int)read_le16s(row));
+            out->y = (mask & 0x04u) ? (int)row[2] :
+                ((mask & 0x01u) ? (int)(int16_t)y0 : (int)read_le16s(row + 2u));
+            if (mask & 0x08u) {
+                out->w = (int)(int8_t)row[4]; out->h = (int)(int8_t)row[6];
+            } else if (mask & 0x10u) {
+                out->w = (int)row[4]; out->h = (int)row[6];
+            } else {
+                out->w = (int)read_le16s(row + 4u);
+                out->h = (int)read_le16s(row + 6u);
+            }
+            return 1;
+        }
+        offset += count * 8u;
+    }
+    return 0;
+}
+
+static int decode_anchor(int mode, int x0, int y0, int width, int height,
+                         int *out_x, int *out_y)
+{
+    if (!out_x || !out_y || width <= 0 || height <= 0 || mode < 0 || mode > 8)
+        return 0;
+    switch (mode) {
+    case 0: *out_x = x0 - (width + 1) / 2; *out_y = y0 - (height + 1) / 2; break;
+    case 1: *out_x = x0; *out_y = y0; break;
+    case 2: *out_x = x0 - width + 1; *out_y = y0; break;
+    case 3: *out_x = x0 - width + 1; *out_y = y0 - height + 1; break;
+    case 4: *out_x = x0; *out_y = y0 - height + 1; break;
+    case 5: *out_x = x0 - (width + 1) / 2; *out_y = y0; break;
+    case 6: *out_x = x0 - width + 1; *out_y = y0 - (height + 1) / 2; break;
+    case 7: *out_x = x0 - (width + 1) / 2; *out_y = y0 - height + 1; break;
+    default: *out_x = x0; *out_y = y0 - (height + 1) / 2; break;
+    }
+    return 1;
+}
+
+/* Exact bounded c_xrect.cpp::DM2_QUERY_BLIT_RECT subset used by the closed
+ * DRAW_DOOR panel: no signed query, no override mode and no global clip.
+ * Unsupported raw4 grammar fails closed. */
+static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
+                                uint16_t rect_number, int width, int height,
+                                DM2_V1_DoorRawRect *out)
+{
+    DM2_V1_DoorRawRect current;
+    DM2_V1_DoorRawRect clip = { -10000, -10000, 20000, 20000 };
+    int x0, y0, mode, pending_anchor = 0;
+
+    if (!out || width <= 0 || height <= 0 ||
+        !decode_raw4_rect(table, table_size, rect_number, &current) ||
+        current.x == 9 || current.x < 0 || current.x > 18) return 0;
+    mode = current.x;
+    if (mode > 8) { mode -= 10; x0 = 0; y0 = 0; }
+    else { x0 = current.w; y0 = current.h; }
+    for (int guard = 0; current.y != 0 && guard < 64; ++guard) {
+        DM2_V1_DoorRawRect next;
+        if (!decode_raw4_rect(table, table_size, (uint16_t)current.y, &next)) return 0;
+        if (current.x >= 10 && current.x <= 18) {
+            /* The canonical closed-door roots do not use c_xrect's nested
+             * clipping grammar. Keep an unproven branch fail-closed. */
+            return 0;
+        }
+        if (next.x == 1) {
+            x0 += next.w;
+            y0 += next.h;
+            clip.x += next.w;
+            clip.y += next.h;
+        } else if (next.x == 9) {
+            int dx = next.w;
+            int dy = next.h;
+            if (current.x < 0 || current.x > 8 ||
+                !decode_anchor(current.x, current.w, current.h,
+                               next.w, next.h, &dx, &dy)) return 0;
+            if (pending_anchor) {
+                x0 += dx;
+                y0 += dy;
+                clip.x += dx;
+                clip.y += dy;
+                pending_anchor = 0;
+            }
+            if (dx > clip.x) clip.x = dx;
+            if (clip.w + clip.x - 1 >= dx + next.w)
+                clip.w = next.w - clip.x + dx;
+            if (clip.y < dy) clip.y = dy;
+            dy += next.h;
+            if (clip.y + clip.h - 1 >= dy) clip.h = dy - clip.y;
+        } else if (next.x >= 0 && next.x <= 8) {
+            pending_anchor = 1;
+        } else {
+            return 0;
+        }
+        current = next;
+    }
+    if (current.y != 0 || !decode_anchor(mode, x0, y0, width, height,
+                                          &out->x, &out->y) ||
+        clip.w <= 0 || clip.h <= 0) return 0;
+    {
+        int dx = clip.x - out->x;
+        int dy = clip.y - out->y;
+        if (dx > 0) { out->x = clip.x; out->w = width - dx < clip.w ? width - dx : clip.w; }
+        else out->w = width < dx + clip.w ? width : dx + clip.w;
+        if (dy > 0) { out->y = clip.y; out->h = height - dy < clip.h ? height - dy : clip.h; }
+        else out->h = height < dy + clip.h ? height : dy + clip.h;
+    }
+    return out->x >= 0 && out->y >= 0 && out->w > 0 && out->h > 0;
+}
+
+static int door_panel_rect_number(int view_square, uint16_t *out_rect_number)
+{
+    /* SKWIN/skval1.h tlbRectnoDoorPosition, indexed by viewport cell.
+     * DRAW_DOOR admits these centre cells only on the current M11 route. */
+    if (!out_rect_number) return 0;
+    switch (view_square) {
+    case DM2_SQ_D0C: *out_rect_number = 0x0ee2u; return 1;
+    case DM2_SQ_D1C: *out_rect_number = 0x0eceu; return 1;
+    case DM2_SQ_D2C: *out_rect_number = 0x0eb0u; return 1;
+    case DM2_SQ_D3C: *out_rect_number = 0x0e92u; return 1;
+    default: return 0;
+    }
+}
+
+static int bind_closed_door_panel_geometry(
+    const DM2_V1_AssetLoader *loader, const DM2_V1_DoorRender *door,
+    DM2_V1_GdatDoorOverlayM11Command *command)
+{
+    const uint8_t *table;
+    const uint8_t *row;
+    size_t table_size = 0u;
+    DM2_V1_DoorRawRect rect;
+
+    if (!loader || !door || !command || door->door_state != 4u) return 1;
+    if (!door_panel_rect_number(door->view_square, &command->rect_number)) return 0;
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+    row = find_raw4_row(table, table_size, command->rect_number);
+    if (!table || !table_size || !row ||
+        !query_raw4_blit_rect(table, table_size, command->rect_number,
+                             command->width, command->height, &rect) ||
+        rect.x > INT16_MAX || rect.y > INT16_MAX ||
+        rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
+        return 0;
+    }
+    command->rect_x = (int16_t)rect.x;
+    command->rect_y = (int16_t)rect.y;
+    command->rect_width = (uint16_t)rect.w;
+    command->rect_height = (uint16_t)rect.h;
+    command->rect_table_hash = hash_bytes(2166136261u, table, table_size);
+    command->rect_row_hash = hash_bytes(2166136261u, row, 8u);
+    command->geometry_hash = 2166136261u;
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_number);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      (uint32_t)(uint16_t)command->rect_x);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      (uint32_t)(uint16_t)command->rect_y);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_width);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_height);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_table_hash);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_row_hash);
+    return command->rect_table_hash != 0u && command->rect_row_hash != 0u &&
+           command->geometry_hash != 0u;
 }
 
 /* SKWINSPX v0/skglobal.cpp glbTabYAxisDistance and
@@ -191,6 +438,7 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)field);
     if (kind == DM2_V1_GDAT_DOOR_PANEL) {
+        if (!bind_closed_door_panel_geometry(loader, door, command)) return 0;
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_DOORS, index,
                 DM2_V1_DOOR_GDAT_COLORKEY_FIELD, &command->color_key)) {
@@ -214,6 +462,8 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                            command->stretch_dual);
         command->selection_hash = hash_u32(command->selection_hash,
                                            command->light_palette);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->geometry_hash);
     }
     return command->raw_hash != 0u && command->decoded_hash != 0u &&
            command->selection_hash != 0u && ++plan->command_count;
@@ -250,6 +500,8 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
                           sizeof(candidate.commands[i].palette_hash));
         hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].selection_hash,
                           sizeof(candidate.commands[i].selection_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].geometry_hash,
+                          sizeof(candidate.commands[i].geometry_hash));
     }
     candidate.command_hash = hash ? hash : 1u;
     candidate.valid = 1;

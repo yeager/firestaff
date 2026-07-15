@@ -4218,6 +4218,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         uint32_t palette_hash;
         int transparent_color;
         uint8_t light_palette;
+        uint16_t rect_number;
+        DM2_V1_ViewportRect source_rect;
+        uint32_t geometry_hash;
         int required;
         int consumed;
     } DM2_V1_DoorMaterial;
@@ -4330,6 +4333,11 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                sizeof(material->palette16));
                         material->palette_hash = command->palette_hash;
                         material->light_palette = command->light_palette;
+                        material->rect_number = command->rect_number;
+                        material->source_rect = (DM2_V1_ViewportRect){
+                            command->rect_x, command->rect_y,
+                            command->rect_width, command->rect_height };
+                        material->geometry_hash = command->geometry_hash;
                         /* SKProject DRAW_DOOR obtains DOORS/entry/
                          * GDAT_IMG_COLORKEY_1 before its panel blit. Only
                          * the selected panel owns that datum. */
@@ -4367,6 +4375,18 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                  * would be a synthetic visual. */
                 if (kind == DM2_DOOR_MATERIAL_PANEL &&
                     material->light_palette != 0u) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                    return;
+                }
+                if (kind == DM2_DOOR_MATERIAL_PANEL &&
+                    door->panel_visible_rect.w > 0 &&
+                    (!material->geometry_hash || !material->rect_number ||
+                     material->source_rect.w <= 0 ||
+                     material->source_rect.h <= 0)) {
+                    /* DRAW_DOOR's panel destination is a RAW4
+                     * QUERY_BLIT_RECT result.  Do not retain the old
+                     * bounded viewport rectangle when source M11 is active. */
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
                     return;
@@ -4412,6 +4432,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
     for (int i = 0; i < plan.door_count; i++) {
         const DM2_V1_DoorRender *door = &plan.doors[i];
+        DM2_V1_DoorRender source_door;
+        const DM2_V1_DoorRender *render_door = door;
         const int source_no_frames = s->source_materials_required &&
             dm2_v1_viewport_door_m11_has_no_frames(
                 s->gdat_door_overlay_material_plan, door);
@@ -4420,8 +4442,21 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         int frame_drawn_asset = 0;
         int button_drawn_asset = 0;
 
-        if (door->panel_visible_rect.w > 0 &&
+        if (s->source_materials_required &&
+            door->panel_visible_rect.w > 0 &&
             door->panel_visible_rect.h > 0) {
+            const DM2_V1_DoorMaterial *panel =
+                &materials[i][DM2_DOOR_MATERIAL_PANEL];
+            source_door = *door;
+            source_door.panel_rect = panel->source_rect;
+            /* The only admitted current geometry route is the closed panel;
+             * partial opening/split-panel placement remains fail-closed. */
+            source_door.panel_visible_rect = panel->source_rect;
+            render_door = &source_door;
+        }
+
+        if (render_door->panel_visible_rect.w > 0 &&
+            render_door->panel_visible_rect.h > 0) {
             const uint8_t *panel_pixels = NULL;
             int panel_w = 0;
             int panel_h = 0;
@@ -4441,9 +4476,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             }
             if (((s->source_materials_required && panel_pixels &&
                   panel_w > 0 && panel_h > 0) ||
-                 (!s->source_materials_required && door->panel_gdat_index != 0 &&
+                 (!s->source_materials_required && render_door->panel_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_local_material(s,
-                                                      door->panel_gdat_index,
+                                                      render_door->panel_gdat_index,
                                                       &panel_pixels,
                                                       &panel_w,
                                                       &panel_h,
@@ -4454,7 +4489,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                  * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
                  * with image 0 for D0/D1 and image 1 for D2. Door type
                  * decoding is still boot-defaulted to index 0 here. */
-                if (dm2_v1_viewport_door_panel_asset_blit(door,
+                if (dm2_v1_viewport_door_panel_asset_blit(render_door,
                                                           panel_w,
                                                           panel_h,
                                                           panel_stride,
@@ -4502,7 +4537,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 } else {
                     dm2_v1_draw_door_panel_fallback_rect(
                         vp, stride, door->view_square,
-                        &door->panel_visible_rect, door->fallback_color);
+                        &render_door->panel_visible_rect,
+                        render_door->fallback_color);
                     ++door_fallback_count;
                 }
             }
@@ -4536,7 +4572,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 if (((s->source_materials_required && overlay_pixels &&
                       overlay_w > 0 && overlay_h > 0) ||
                      (!s->source_materials_required && overlay_indices[overlay_i] != 0 &&
-                    door->panel_rect.w > 0 && door->panel_rect.h > 0 &&
+                    render_door->panel_rect.w > 0 && render_door->panel_rect.h > 0 &&
                     dm2_v1_fetch_viewport_local_material(
                         s, overlay_indices[overlay_i], &overlay_pixels,
                         &overlay_w, &overlay_h, &overlay_stride) == 0 &&
@@ -4544,7 +4580,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     DM2_V1_DoorAssetBlit blit;
                     if (dm2_v1_viewport_full_rect_asset_blit(
                             overlay_indices[overlay_i],
-                            &door->panel_rect,
+                            &render_door->panel_rect,
                             overlay_w,
                             overlay_h,
                             overlay_stride,
