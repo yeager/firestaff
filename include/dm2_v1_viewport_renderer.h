@@ -302,6 +302,7 @@ typedef struct {
     int skproject_cell;
     int door_record_type;
     int door_gfx_index;
+    int door_gfx_admitted;
     int door_opening_dir;
     int ornament_index;
     int door_ornate_gfx_index;
@@ -474,6 +475,7 @@ typedef struct {
     uint8_t  wall_gfx_index;  /* GDAT wall graphic index */
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
+    uint8_t  door_gfx_admitted; /* map UseDoor0/UseDoor1 source gate */
     uint8_t  ornament_index;   /* DB0 Door::OrnateIndex() ordinal */
     uint8_t  door_ornate_gfx_index; /* map-local DOOR_GFX entry, or zero */
     uint8_t  creature_type;   /* creature type or 0 */

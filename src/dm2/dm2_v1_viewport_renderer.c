@@ -2023,6 +2023,12 @@ int dm2_v1_viewport_build_door_render_plan(
             out_plan->door_count >= DM2_V1_DOOR_RENDER_MAX) {
             continue;
         }
+        /* LOAD_LOCALLEVEL_DYN only admits the two map DoorType slots when
+         * Map_definitions::UseDoor0/UseDoor1 says that type is live. A DB0
+         * payload alone must not select a same-numbered DOORS image. */
+        if (s->source_materials_required && !vs->door_gfx_admitted) {
+            continue;
+        }
         if (!dm2_v1_viewport_door_panel_rect_for_square(square,
                                                         &panel_rect)) {
             continue;
@@ -2032,6 +2038,7 @@ int dm2_v1_viewport_build_door_render_plan(
         row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
         row->door_record_type = vs->door_record_type;
         row->door_gfx_index = vs->door_gfx_index;
+        row->door_gfx_admitted = vs->door_gfx_admitted;
         row->door_opening_dir = vs->door_opening_dir;
         row->ornament_index = vs->ornament_index;
         row->door_ornate_gfx_index = vs->door_ornate_gfx_index;
@@ -4260,6 +4267,19 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
     if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
         return;
+    }
+    if (s->source_materials_required) {
+        for (int square = 0; square < DM2_SQ_COUNT; ++square) {
+            const DM2_ViewSquare *vs = &s->squares[square];
+            if ((vs->flags & DM2_SQF_HAS_DOOR) && !vs->door_gfx_admitted) {
+                /* A map can contain a DB0-shaped tile while LOAD_LOCALLEVEL_DYN
+                 * did not admit its DoorType. Keep the whole source frame
+                 * blocked instead of replacing it with a generic panel. */
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                return;
+            }
+        }
     }
     memset(materials, 0, sizeof(materials));
     s->last_door_material_required_mask = 0u;

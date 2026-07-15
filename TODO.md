@@ -44,6 +44,13 @@
   `DRAW_DOOR_FRAMES`, and broader door-type routing still need direct
   skproject bindings. No generic panel/frame fallback.
 
+- 2026-07-15 DM2 `DRAW_DOOR` follow-up: map `UseDoor0/UseDoor1` now gates
+  the matching DB0 `DoorType` before a `DOORS` material plan can exist.
+  Remaining door work is source-proven horizontal split-panel crop/timing,
+  per-distance light palette execution, and the unresolved wider
+  `DRAW_DOOR_FRAMES` geometry. Do not revive an inactive type with a default
+  door panel.
+
 - 2026-07-15 DM2 `DRAW_DOOR` follow-up: DB0 `OrnateIndex` now resolves
   through the source-owned map-local `glbMapDoorOrnatesList`. Remaining door
   work is the conflicting horizontal split-panel crop sequence, source
