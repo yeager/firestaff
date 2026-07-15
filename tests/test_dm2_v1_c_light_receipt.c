@@ -80,6 +80,21 @@ int main(void)
                   &scene, &receipt, &palette_darkness) &&
                   palette_darkness == 30u);
     }
+    {
+        uint8_t floor_darkness = 0xffu;
+        uint8_t ceiling_darkness = 0xffu;
+        CHECK("_32cb_0804 keeps the c_light parameter for stationary floor/ceiling",
+              dm2_v1_gdat_scene_m11_plane_palette_darkness(
+                  DM2_GDAT_GFXSET_FLOOR, 30u, &floor_darkness) &&
+                  dm2_v1_gdat_scene_m11_plane_palette_darkness(
+                      DM2_GDAT_GFXSET_CEIL, 30u, &ceiling_darkness) &&
+                  floor_darkness == 30u && ceiling_darkness == 30u);
+        CHECK("plane lighting rejects non-plane fields and out-of-range input",
+              !dm2_v1_gdat_scene_m11_plane_palette_darkness(
+                  2u, 30u, &floor_darkness) && floor_darkness == 0u &&
+                  !dm2_v1_gdat_scene_m11_plane_palette_darkness(
+                      DM2_GDAT_GFXSET_FLOOR, 65u, &floor_darkness));
+    }
     ++scene.scene_control_hash;
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, scene.graphicsset, scene.scene_control_hash,

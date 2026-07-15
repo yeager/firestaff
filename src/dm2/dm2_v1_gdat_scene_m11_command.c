@@ -84,6 +84,14 @@ static uint32_t dm2_v1_gdat_scene_draw_order_hash(
                           sizeof(command->decoded_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash,
                           sizeof(command->palette_hash));
+        hash = hash_bytes(hash, &command->palette_darkness,
+                          sizeof(command->palette_darkness));
+        hash = hash_bytes(hash,
+                          (const uint8_t *)&command->palette_light_receipt_hash,
+                          sizeof(command->palette_light_receipt_hash));
+        hash = hash_bytes(hash,
+                          (const uint8_t *)&command->palette_transform_hash,
+                          sizeof(command->palette_transform_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->geometry_hash,
                           sizeof(command->geometry_hash));
     }
@@ -95,6 +103,33 @@ int dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(
 {
     return plan && plan->draw_order_hash != 0u &&
         plan->draw_order_hash == dm2_v1_gdat_scene_draw_order_hash(plan);
+}
+
+int dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(
+    DM2_V1_GdatSceneM11CommandPlan *plan)
+{
+    uint32_t hash;
+
+    if (!plan || !plan->valid || plan->command_hash == 0u) return 0;
+    hash = dm2_v1_gdat_scene_draw_order_hash(plan);
+    if (hash == 0u) return 0;
+    plan->draw_order_hash = hash;
+    return 1;
+}
+
+int dm2_v1_gdat_scene_m11_plane_palette_darkness(
+    uint8_t field, uint8_t c_light_parameter, uint8_t *out_darkness)
+{
+    if (!out_darkness) return 0;
+    *out_darkness = 0u;
+    if ((field != DM2_GDAT_GFXSET_FLOOR && field != DM2_GDAT_GFXSET_CEIL) ||
+        c_light_parameter > 64u) {
+        return 0;
+    }
+    /* SkWinCore.cpp::_32cb_0804: _4976_4226 starts {0,0,12,28,46}; the
+     * floor/ceiling fields are classes 0/1, hence 64-((64-0)*(64-p)>>6)=p. */
+    *out_darkness = c_light_parameter;
+    return 1;
 }
 
 uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(

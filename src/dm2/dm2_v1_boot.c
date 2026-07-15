@@ -4659,6 +4659,71 @@ int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
     return 1;
 }
 
+int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
+    DM2_V1_BootProfile *profile,
+    uint8_t c_light_parameter,
+    uint32_t c_light_receipt_hash,
+    DM2_V1_GdatSceneM11CommandPlan *plan)
+{
+    DM2_V1_GdatSceneM11CommandPlan candidate;
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_InterfaceActionTable table;
+    int table_loaded = 0;
+
+    if (!profile || !profile->graphics_dat || !plan || !plan->valid ||
+        plan->command_hash == 0u || !c_light_receipt_hash ||
+        c_light_parameter > 64u) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    candidate = *plan;
+    for (size_t i = 0u; i < 2u; ++i) {
+        DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
+        size_t translated_size = 0u;
+        uint8_t darkness;
+        uint32_t hash = 2166136261u;
+
+        if (!dm2_v1_gdat_scene_m11_plane_palette_darkness(
+                command->field, c_light_parameter, &darkness) ||
+            /* _32cb_0804 takes TRANSLATE_PALETTE when dt07/class exists.
+             * Its program is not yet decoded, so it must not be replaced by
+             * the interface action table used by the stationary branch. */
+            dm2_v1_asset_load_typed_sized(
+                &gfx->loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                candidate.graphicsset, DM2_GDAT_ENTRY_TYPE_RAW7,
+                command->field, &translated_size) != NULL ||
+            (!table_loaded &&
+             !dm2_v1_boot_interface_action_table(profile, &table)) ||
+            !dm2_v1_interface_action_table_remap_palette(
+                &table, command->palette16, sizeof(command->palette16),
+                darkness, candidate.scene_colorkey, -1)) {
+            return 0;
+        }
+        table_loaded = 1;
+        for (size_t p = 0u; p < sizeof(command->palette16); ++p) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(
+                hash, command->palette16[p]);
+        }
+        command->palette_hash = hash ? hash : 1u;
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            2166136261u, c_light_receipt_hash);
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, command->field);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, c_light_parameter);
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, darkness);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, command->palette_hash);
+        command->palette_darkness = darkness;
+        command->palette_light_receipt_hash = c_light_receipt_hash;
+        command->palette_transform_hash = hash ? hash : 1u;
+    }
+    if (!dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(&candidate)) {
+        return 0;
+    }
+    *plan = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootProfile *profile,
     const DM2_V1_HudPartyState *party,
