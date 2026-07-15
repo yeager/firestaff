@@ -23044,19 +23044,11 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             * when there is decoded front text; drawing it under that readable
             * text makes Hall inscriptions look double-exposed and illegible. */
             if (ornGlobalIdx == 0 && spec.viewWallIndex == 12 &&
-                inscription.valid) {
-                /* ReDMCSB F0107 owns the D1C text decision, but F0128
-                 * rebuilds a complete viewport for every party tuple.  M11
-                 * must defer this source M648 material until its one final
-                 * repaint after the host palette pass; drawing it here and
-                 * again at frame end duplicates the same glyph cells. */
-                if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-                    /* V2.2 consumes this same verified M648 text during the
-                     * in-place source composition below.  Its modern pass
-                     * follows afterwards, so retain the established order. */
-                    m11_draw_dm1_front_wall_inscription_text(
-                        state, &cell, framebuffer, fbW, fbH);
-                }
+                m11_dm1_visible_wall_text_line_count(state, &cell) > 0) {
+                /* M11 applies its source palette map after this wall batch.
+                 * M648 must therefore be emitted exactly once by the final
+                 * post-palette D1C pass below, never into this pre-palette
+                 * ornament pass. */
                 continue;
             }
             if (m11_draw_dm1_wall_ornament_host_material_receipt(
