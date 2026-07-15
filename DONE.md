@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB capture discovery audit: rejected the unclassified local
+  DATA directory as a title/HUD capture source; no cross-game asset fallback.
+
 - 2026-07-15 CSBgraphics ownership audit: confirmed the existing hash-owned
   `LocateNthGraphic` span, LZW boundary, and runtime-plan chain; no unverified
   title/HUD/door entry was promoted.
