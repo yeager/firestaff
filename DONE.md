@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 GDAT HUD Rect14 admission: the DM2 HUD material gate now
+  requires the source `INTERFACE_GENERAL/0 dt07/0x0A` Rect14 placement table
+  for its layout lane, keeps `dt07/0` as the separate font lane, and keeps
+  `dtPalette16/0xFE` as the separate palette lane. A wrong field rejects
+  without exposing champion pixels, so synthetic or adjacent GDAT records
+  cannot satisfy the HUD Rect14 owner. Verification: strict C11 direct build
+  and run of `tests/test_dm2_v1_gdat_hud_material_admission_dm2_010.c`.
+
 - ✅ 2026-07-15 Theron Track02 raw-grid object-table projection blocker:
   the source-verified initial-grid handoff now has an explicit negative
   receipt for object-table projection. Callers can record that the exact
