@@ -147,6 +147,9 @@ int main(void) {
     Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
     Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
     Nexus_V1_DgnStructure3CaptureTargetReceipt target;
+    Nexus_V1_DgnStructure3CaptureTargetReceipt altered_target;
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt campaign;
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt reordered_campaign;
     Nexus_V1_DgnStructure1AStructure3TopologyCandidate owner_source;
     Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt owner_target;
     Nexus_V1_Level level;
@@ -239,6 +242,51 @@ int main(void) {
                    strstr(target_text, "normal_byte_offset=68") != NULL &&
                    strstr(target_text, "no_draw_only=1") != NULL,
                "capture target names every required raw lane without manufacturing bytes");
+    }
+    remove(target_path);
+
+    nexus_v1_dgn_structure3_capture_campaign_init(&campaign);
+    expect(nexus_v1_dgn_structure3_capture_campaign_add_target(&campaign, &target) &&
+               campaign.target_count == 1U && campaign.level_mask == (1U << 1) &&
+               campaign.original_saturn_capture_required && campaign.no_draw_only &&
+               !campaign.structure1a_model_entry_mapping_proven &&
+               !campaign.decoder_or_renderer_authorized,
+           "one canonical target joins the no-draw Structure3 campaign ledger");
+    altered_target = target;
+    altered_target.fallback_visuals_permitted = 1;
+    expect(!nexus_v1_dgn_structure3_capture_campaign_add_target(
+               &campaign, &altered_target) && campaign.target_count == 1U,
+           "a fallback-permitting target cannot enter the capture campaign");
+    altered_target = target;
+    altered_target.candidate.face_ordinal = 1U;
+    nexus_v1_dgn_structure3_capture_campaign_init(&reordered_campaign);
+    expect(nexus_v1_dgn_structure3_capture_campaign_add_target(
+               &reordered_campaign, &altered_target) &&
+               nexus_v1_dgn_structure3_capture_campaign_add_target(
+                   &reordered_campaign, &target) &&
+               nexus_v1_dgn_structure3_capture_campaign_add_target(
+                   &campaign, &altered_target) &&
+               campaign.ordered_target_fnv1a64 !=
+                   reordered_campaign.ordered_target_fnv1a64,
+           "campaign fingerprint commits the producer target order");
+    snprintf(target_path, sizeof(target_path),
+             "/tmp/firestaff-nexus-structure3-campaign-%ld.txt", (long)getpid());
+    remove(target_path);
+    expect(nexus_v1_dgn_structure3_capture_campaign_write(target_path, &campaign) &&
+               (target_file = fopen(target_path, "rb")) != NULL &&
+               fread(target_text, 1U, sizeof(target_text) - 1U, target_file) > 0U &&
+               fclose(target_file) == 0,
+           "campaign ledger writes only source-bound no-draw target evidence");
+    target_file = fopen(target_path, "rb");
+    if (target_file) {
+        size_t target_size = fread(target_text, 1U, sizeof(target_text) - 1U,
+                                   target_file);
+        target_text[target_size] = '\0';
+        fclose(target_file);
+        expect(strstr(target_text, NEXUS_V1_STRUCTURE3_CAPTURE_CAMPAIGN_MAGIC) != NULL &&
+                   strstr(target_text, "target_count=2") != NULL &&
+                   strstr(target_text, "decoder_or_renderer_authorized=0") != NULL,
+               "campaign ledger keeps decoder and renderer authorization disabled");
     }
     remove(target_path);
 

@@ -14,6 +14,8 @@
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_TARGET_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_TARGET_V1"
+#define NEXUS_V1_STRUCTURE3_CAPTURE_CAMPAIGN_MAGIC \
+    "NEXUS_STRUCTURE3_SATURN_CAPTURE_CAMPAIGN_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_STRUCTURE1A_STRUCTURE3_CAPTURE_TARGET_MAGIC \
@@ -78,6 +80,20 @@ typedef struct {
     int no_draw_only;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure3CaptureTargetReceipt;
+
+/* A campaign ledger commits an external capture producer to the exact ordered
+ * set of source-only face requests it received. It neither imports a Saturn
+ * trace nor supplies any missing geometry, texture, palette, or VDP1 facts. */
+typedef struct {
+    uint32_t target_count;
+    uint32_t level_mask;
+    uint64_t ordered_target_fnv1a64;
+    uint64_t source_identity_fnv1a64;
+    int structure1a_model_entry_mapping_proven;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int decoder_or_renderer_authorized;
+} Nexus_V1_DgnStructure3CaptureCampaignReceipt;
 
 /* One visible Structure1F/Structure1A row beside an independently selected
  * Structure3 face capture target. It records both source sides so an
@@ -248,6 +264,18 @@ int nexus_v1_dgn_structure3_capture_target_build(
  * and cannot be imported as a completed capture manifest. */
 int nexus_v1_dgn_structure3_capture_target_write(
     const char *path, const Nexus_V1_DgnStructure3CaptureTargetReceipt *target);
+
+/* Aggregate only canonical, no-draw targets in their producer order. The
+ * resulting fingerprints detect omitted, reordered, or substituted requests
+ * without claiming any render semantics. */
+void nexus_v1_dgn_structure3_capture_campaign_init(
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt *receipt);
+int nexus_v1_dgn_structure3_capture_campaign_add_target(
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt *receipt,
+    const Nexus_V1_DgnStructure3CaptureTargetReceipt *target);
+int nexus_v1_dgn_structure3_capture_campaign_write(
+    const char *path,
+    const Nexus_V1_DgnStructure3CaptureCampaignReceipt *receipt);
 
 /* Builds a dual-source capture target from a fully checked Structure1A owner
  * candidate and one exact Structure3 face. The two identifiers are retained

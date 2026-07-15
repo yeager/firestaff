@@ -52,11 +52,15 @@ int main(int argc, char **argv)
     Nexus_V1_Level level_data;
     Nexus_V1_DgnStructure3AttachmentReceipt attachments;
     Nexus_V1_DgnStructure3CaptureTargetReceipt target;
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt campaign;
     int level;
     int last_level;
     int entry;
     int face;
     int written = 0;
+    char campaign_path[1024];
+
+    nexus_v1_dgn_structure3_capture_campaign_init(&campaign);
 
     if (argc != 4 ||
         (strcmp(argv[2], "all") != 0 && !parse_level(argv[2], &level))) {
@@ -105,6 +109,8 @@ int main(int argc, char **argv)
                     !target.capture_producer_required ||
                     !target.original_saturn_capture_required || !target.no_draw_only ||
                     target.fallback_visuals_permitted ||
+                    !nexus_v1_dgn_structure3_capture_campaign_add_target(
+                        &campaign, &target) ||
                     !nexus_v1_dgn_structure3_capture_target_write(path, &target)) {
                     fprintf(stderr, "could not write LEV%02d Structure3 face %d/%d\n",
                             level, entry, face);
@@ -116,7 +122,16 @@ int main(int argc, char **argv)
         }
         free(data);
     }
+    if (snprintf(campaign_path, sizeof(campaign_path),
+                 "%s/STRUCTURE3-FACE-CAPTURE-CAMPAIGN.target", argv[3]) >=
+            (int)sizeof(campaign_path) ||
+        !nexus_v1_dgn_structure3_capture_campaign_write(campaign_path, &campaign)) {
+        fprintf(stderr, "could not write Structure3 capture campaign ledger\n");
+        return 1;
+    }
     printf("wrote %d no-draw Structure3 face targets\n", written);
+    printf("capture_campaign_ordered_target_fnv1a64=%016llx\n",
+           (unsigned long long)campaign.ordered_target_fnv1a64);
     printf("structure1f_face_mesh_ordinal_relation_proven=1\n");
     printf("structure1a_model_entry_mapping_proven=0\n");
     printf("original_saturn_capture_required=1\n");

@@ -77,6 +77,125 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size)
     return fnv1a64_update(UINT64_C(1469598103934665603), data, size);
 }
 
+static uint64_t fnv1a64_u32le(uint64_t hash, uint32_t value)
+{
+    uint8_t bytes[4];
+    size_t index;
+
+    for (index = 0U; index < sizeof(bytes); ++index)
+        bytes[index] = (uint8_t)(value >> (index * 8U));
+    return fnv1a64_update(hash, bytes, sizeof(bytes));
+}
+
+static uint64_t fnv1a64_u64le(uint64_t hash, uint64_t value)
+{
+    uint8_t bytes[8];
+    size_t index;
+
+    for (index = 0U; index < sizeof(bytes); ++index)
+        bytes[index] = (uint8_t)(value >> (index * 8U));
+    return fnv1a64_update(hash, bytes, sizeof(bytes));
+}
+
+void nexus_v1_dgn_structure3_capture_campaign_init(
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->ordered_target_fnv1a64 = UINT64_C(1469598103934665603);
+    receipt->source_identity_fnv1a64 = UINT64_C(1469598103934665603);
+    receipt->original_saturn_capture_required = 1;
+    receipt->no_draw_only = 1;
+}
+
+int nexus_v1_dgn_structure3_capture_campaign_add_target(
+    Nexus_V1_DgnStructure3CaptureCampaignReceipt *receipt,
+    const Nexus_V1_DgnStructure3CaptureTargetReceipt *target)
+{
+    uint64_t ordered;
+    uint64_t source;
+
+    if (!receipt || !target ||
+        receipt->target_count == UINT32_MAX || target->level_index < 0 ||
+        target->level_index > 15 || !target->valid ||
+        !target->capture_producer_required ||
+        !target->original_saturn_capture_required || !target->no_draw_only ||
+        target->fallback_visuals_permitted ||
+        target->candidate.dgn_fnv1a64 == 0U ||
+        target->candidate.structure3_payload_fnv1a32 == 0U ||
+        target->candidate.typed_mesh_corpus_fnv1a32 !=
+            NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32 ||
+        target->candidate.face_row_fnv1a32 == 0U ||
+        target->candidate.referenced_vertex_rows_fnv1a32 == 0U ||
+        target->candidate.normal_row_fnv1a32 == 0U) return 0;
+
+    ordered = receipt->ordered_target_fnv1a64;
+    ordered = fnv1a64_u32le(ordered, (uint32_t)target->level_index);
+    ordered = fnv1a64_u32le(ordered, target->candidate.entry_index);
+    ordered = fnv1a64_u32le(ordered, target->candidate.face_ordinal);
+    ordered = fnv1a64_u32le(ordered, target->candidate.face_row_fnv1a32);
+    ordered = fnv1a64_u32le(ordered,
+                             target->candidate.referenced_vertex_rows_fnv1a32);
+    ordered = fnv1a64_u32le(ordered, target->candidate.normal_row_fnv1a32);
+    ordered = fnv1a64_u32le(ordered, target->candidate.fill_selector);
+
+    source = receipt->source_identity_fnv1a64;
+    source = fnv1a64_u32le(source, (uint32_t)target->level_index);
+    source = fnv1a64_u64le(source, target->candidate.dgn_fnv1a64);
+    source = fnv1a64_u32le(source,
+                            target->candidate.structure3_payload_fnv1a32);
+    source = fnv1a64_u32le(source,
+                            target->candidate.typed_mesh_corpus_fnv1a32);
+    source = fnv1a64_u32le(source, target->entry_byte_offset);
+    source = fnv1a64_u32le(source, target->vertex_byte_offset);
+    source = fnv1a64_u32le(source, target->face_byte_offset);
+    source = fnv1a64_u32le(source, target->normal_byte_offset);
+
+    receipt->ordered_target_fnv1a64 = ordered;
+    receipt->source_identity_fnv1a64 = source;
+    receipt->level_mask |= UINT32_C(1) << (uint32_t)target->level_index;
+    ++receipt->target_count;
+    return 1;
+}
+
+int nexus_v1_dgn_structure3_capture_campaign_write(
+    const char *path,
+    const Nexus_V1_DgnStructure3CaptureCampaignReceipt *receipt)
+{
+    char temporary_path[1024];
+    FILE *file;
+
+    if (!path || !receipt || receipt->target_count == 0U ||
+        receipt->level_mask == 0U ||
+        receipt->ordered_target_fnv1a64 == UINT64_C(1469598103934665603) ||
+        receipt->source_identity_fnv1a64 == UINT64_C(1469598103934665603) ||
+        receipt->structure1a_model_entry_mapping_proven ||
+        !receipt->original_saturn_capture_required || !receipt->no_draw_only ||
+        receipt->decoder_or_renderer_authorized ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp.%ld", path,
+                 (long)getpid()) >= (int)sizeof(temporary_path)) return 0;
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    if (fprintf(file,
+                NEXUS_V1_STRUCTURE3_CAPTURE_CAMPAIGN_MAGIC "\n"
+                "target_count=%x\nlevel_mask=%x\n"
+                "ordered_target_fnv1a64=%016llx\n"
+                "source_identity_fnv1a64=%016llx\n"
+                "typed_mesh_corpus_fnv1a32=%x\n"
+                "structure1a_model_entry_mapping_proven=0\n"
+                "original_saturn_capture_required=1\nno_draw_only=1\n"
+                "decoder_or_renderer_authorized=0\n",
+                receipt->target_count, receipt->level_mask,
+                (unsigned long long)receipt->ordered_target_fnv1a64,
+                (unsigned long long)receipt->source_identity_fnv1a64,
+                NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32) < 0 ||
+        fclose(file) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    return rename(temporary_path, path) == 0;
+}
+
 int nexus_v1_dgn_structure3_capture_target_build(
     const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
     int level_index, int dgn_source_hash_verified, uint32_t entry_index,

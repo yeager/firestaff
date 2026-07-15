@@ -7410,6 +7410,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `structure1a_model_entry_mapping_proven=0`; original Saturn capture must
     still establish that relation, texture/palette/VDP1 semantics, transforms,
     culling, and any decoder or draw route.
+  - 2026-07-15 campaign-ledger update: the all-face producer now writes one
+    ordered, source-fingerprinted campaign ledger beside its individual
+    no-draw targets. It detects missing, reordered, or substituted target
+    requests without treating the ledger as a Saturn trace. Model-to-entry,
+    texture, palette, VDP1, transform, culling, decoder, and draw semantics
+    remain unproven and blocked.
   - 2026-07-15 update: the active canonical LEV route can now atomically emit
     its verified dual-source Structure1F/Structure1A and Structure3-face
     target for an external capture producer. The written request contains no
