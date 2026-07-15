@@ -829,7 +829,7 @@ int main(void)
     render_state.entrance_active = 1;
     render_state.opening_active = 1;
     render_state.opening_delay_ticks = 1;
-    render_state.opening_step = 2;
+    render_state.opening_step = 0;
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
@@ -844,7 +844,7 @@ int main(void)
               plan.closed_left_fallback_fill_color == 12 &&
               plan.closed_right_fallback_fill_color == 12 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
-              plan.opening_step == 2 &&
+              plan.opening_step == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -866,6 +866,7 @@ int main(void)
           "startup render plan owns door pre-open command order");
 
     render_state.opening_delay_ticks = 0;
+    render_state.opening_step = 2;
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&

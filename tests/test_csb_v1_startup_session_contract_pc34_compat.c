@@ -103,12 +103,28 @@ static void make_title_host(
     host->title_special_palette = special_palette;
     host->host_surface_hash = host_hash;
     host->frame.session_generation = session->generation;
+    host->frame.special_palette = special_palette;
+    host->frame.title_special_palette = special_palette;
     host->frame.stage = stage;
     host->frame.title_surface =
         &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    host->frame.title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
+    host->frame.frame_route_hash = host_hash ^ 0x51000000u;
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
+        host->frame.title_phase_tick = 1;
+        host->frame.title_phase_mask = 0x01;
+    } else if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) {
+        host->frame.title_phase_tick = 21;
+        host->frame.title_phase_mask = 0x02;
+    } else if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
+        host->frame.title_phase_tick = 22;
+        host->frame.title_phase_mask = 0x08;
+    }
     host->raster.valid = host->raster.real_asset_matched = 1;
     host->raster.title_composited = 1;
     host->raster.source_surface_count = 1;
+    host->raster.pixel_hash = host_hash ^ 0x71000000u;
+    host->raster.route_hash = host_hash ^ 0x72000000u;
 }
 
 static void make_opening_host(
@@ -245,6 +261,18 @@ int main(void)
               title_opening.opening_host_surface_hash ==
                   opening_host.host_surface_hash,
           "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    chaos_host.frame.title_phase_tick = 1;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "PRESENTS source step cannot be relabeled as a CHAOS title capture");
+    chaos_host.frame.title_phase_tick = 21;
+    strikes_host.raster.pixel_hash = presents_host.raster.pixel_hash;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "duplicated title pixels cannot satisfy PRESENTS/CHAOS/STRIKES consumption");
+    strikes_host.raster.pixel_hash = 0xc003u ^ 0x71000000u;
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 1;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB title phase host-consumption gate: the
+  title/opening session receipt now requires PRESENTS, CHAOS, and STRIKES
+  BACK host captures to carry the matching ReDMCSB F0437 source step,
+  phase mask, palette, and distinct indexed raster hash before C004/C002/C003
+  opening consumption can reach HUD/runtime. Focused startup-session contract
+  coverage rejects relabeled PRESENTS-as-CHAOS and duplicated title pixels;
+  adjacent startup CTests pass.
+
 - ✅ 2026-07-15 DM1 HoC C026 direct mirror atlas gate: the low-level
   `dm1_v1_front_mirror_render_plan_pc34()` path now rejects portrait indices
   outside ReDMCSB's 8x3 C026 atlas before computing source coordinates, so
