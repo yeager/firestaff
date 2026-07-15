@@ -6372,6 +6372,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   order, palette addressing, UV/VDP1 semantics, and the render route before
   any decoder or draw can be enabled.
 
+- 🔧 2026-07-15 Nexus Structure3 package-geometry route: the active canonical
+  LEV now yields a renderer-facing no-draw packet containing one exact typed
+  Structure3 face, its referenced original 16.16 vertex rows and paired
+  normal, joined to the same hash-bound static Structure2 descriptor and
+  opaque image/palette anchors. This is real package geometry, not a surface:
+  transform/camera, pixel span/order, palette format/addressing, VDP1 command,
+  UV, culling, and raster semantics still need independent original-Saturn
+  capture proof before any draw or decoder can be enabled.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no
