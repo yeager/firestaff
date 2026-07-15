@@ -1352,6 +1352,7 @@ static void test_sprite_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     viewport.item_count = 1;
     viewport.items[0].item_category = 0x10;
     viewport.items[0].item_type = 0x22;
@@ -1374,10 +1375,12 @@ static void test_sprite_asset_provider(void)
               item_plan.items[0].fallback_radius == 4 &&
               item_plan.items[0].fallback_color == 3);
     dm2_v1_render_items(&viewport);
-    CHECK("item fallback draws when no sprite asset provider is installed",
+    CHECK("item without source material blocks instead of drawing fallback pixels",
           viewport.asset_item_drawn_count == 0 &&
-              viewport.fallback_item_drawn_count == 1 &&
-              framebuffer[(90 * 320) + 80] == 3);
+              viewport.fallback_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0 &&
+              framebuffer[(90 * 320) + 80] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1494,6 +1497,7 @@ static void test_sprite_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     viewport.carried_item_present = 1;
     viewport.carried_item.item_category = 0x15;
     viewport.carried_item.item_type = 0x22;
@@ -1515,6 +1519,22 @@ static void test_sprite_asset_provider(void)
               carried_item_plan.item.fallback_radius == 5 &&
               carried_item_plan.item.fallback_color ==
                   (uint8_t)(12 + (0x22 & 3)));
+    dm2_v1_render_carried_item(&viewport);
+    CHECK("carried item without source material blocks instead of fallback pixels",
+          viewport.asset_carried_item_drawn_count == 0 &&
+              viewport.fallback_carried_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM) != 0 &&
+              framebuffer[(70 * 320) + 120] == 0);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.carried_item_present = 1;
+    viewport.carried_item.item_category = 0x15;
+    viewport.carried_item.item_type = 0x22;
+    viewport.carried_item.frame_index = 0x04;
+    viewport.carried_item.screen_x = 120;
+    viewport.carried_item.screen_y = 70;
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        test_dm2_asset_fetch,
@@ -1541,6 +1561,7 @@ static void test_sprite_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     viewport.projectile_count = 1;
     viewport.projectiles[0].projectile_category = 0x0d;
     viewport.projectiles[0].projectile_type = 0x02;
@@ -1568,10 +1589,12 @@ static void test_sprite_asset_provider(void)
               projectile_plan.projectiles[0].fallback_len == 3 &&
               projectile_plan.projectiles[0].fallback_color == 15);
     dm2_v1_render_projectiles(&viewport);
-    CHECK("projectile fallback draws when no sprite asset provider is installed",
+    CHECK("projectile without source material blocks instead of fallback pixels",
           viewport.asset_projectile_drawn_count == 0 &&
-              viewport.fallback_projectile_drawn_count == 1 &&
-              framebuffer[(70 * 320) + 120] == 15);
+              viewport.fallback_projectile_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE) != 0 &&
+              framebuffer[(70 * 320) + 120] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

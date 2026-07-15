@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject map-chip no-draw gate: floor items, leader-hand
+  items, projectiles, and clouds now require their selected GDAT bitmap, as
+  do the previously gated creature routes. On a source-material route, missing
+  material records its blocked class and produces no generated diamond,
+  hand-item, missile, or cloud pixels. The focused viewport gate covers all
+  three new no-draw paths.
+
 - 2026-07-15 DM2 skproject creature source-material gate: viewport creature
   and creature-possession routes now require their selected GDAT map-chip
   bitmap. Missing material records the appropriate blocked class and draws no
