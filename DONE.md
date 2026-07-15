@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin timerheap contract audit: extracted SetTimer/DeleteTimer
+  source ownership and rejected a partial Firestaff adapter before it could
+  fabricate timer IDs or heap mutation.
+
 - 2026-07-15 CSB discovery census: no hash-verifiable CSB asset candidate was
   found in configured local data roots; no runtime receipt was emitted.
 

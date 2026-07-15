@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
+  handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/
+  TT_BASH_DOOR duplicate rules, allocates `m_firstAvailTimer`, copies the full
+  TIMER record, assigns sequence, finds the next TT_EMPTY slot, appends the
+  handle, then calls `AdjustTimerQueue`. Firestaff retains only imported queue
+  order and event fields, not TIMER slots, free-handle state, or duplicate
+  comparison word6/level/byte8/byte9. Do not enable I_Delay/Message until a
+  candidate slot-table + heap can roll back as one owner transaction.
+
 - 2026-07-15 CSB hash-discovery census: scanned `/Users/bosse/.firestaff` and
   `/Users/bosse/firestaff-work` for CSBgraphics/CSB-save/dungeon candidates.
   No CSBgraphics.dat or csbgame candidate exists; the sole DUNGEON.DAT is
