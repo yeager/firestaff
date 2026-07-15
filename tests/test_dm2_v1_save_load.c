@@ -2469,6 +2469,22 @@ static int test_original_save_candidate_live_restore(void)
         memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
         goto done;
     }
+    /* Insert one ground-stack word, root it at DB0[0], and mark map (0,0)
+     * thing-bearing. DB0[0].w0 remains the fixture's invalid 0x1234 link, so
+     * c_record.cpp's bounded next-record route must reject before publication.
+     * The insertion shifts the complete SUPPRESS tail with its source prefix. */
+    if (payload_size + 2u > sizeof(payload)) goto done;
+    memmove(payload + 70u, payload + 68u, payload_size - 68u);
+    payload_size += 2u;
+    write_u16_le_at(payload, 10u, 1u);
+    write_u16_le_at(payload, 68u, 0u);
+    payload[102u] = 0x10u;
+    if (dm2_v1_runtime_restore_save_candidate(payload, payload_size) == 0 ||
+        game.party_x != 3 || game.party_y != 4 ||
+        dungeon.level_widths[0] != 4 || dungeon.level_heights[0] != 5 ||
+        memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
+        goto done;
+    }
     /* A source-valid stream cannot place the party outside the exact saved
      * G1 map descriptor.  Rejection must retain the already-published model. */
     gs->wPlayerPosX = 4;
