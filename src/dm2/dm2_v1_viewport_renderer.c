@@ -4989,23 +4989,12 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
             }
         }
         if (!drawn_asset) {
-            if (s->source_materials_required) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-            } else {
-                int half_w = c->fallback_rect.w / 2;
-                int half_h = c->fallback_rect.h / 2;
-                for (int dy = -half_h; dy < half_h; dy++) {
-                    int sy = c->center_y + dy;
-                    if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-                    for (int dx = -half_w; dx < half_w; dx++) {
-                        int sx = c->center_x + dx;
-                        if ((unsigned)sx < (unsigned)DM2_VP_WIDTH)
-                            vp[sy * stride + sx] = c->fallback_color;
-                    }
-                }
-                ++s->fallback_creature_drawn_count;
-            }
+            /* skproject DRAW_MAP_CHIP selects a GDAT bitmap.  A coloured
+             * substitute would hide a missing source material and produce
+             * graphics that the original cannot render. */
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
+            continue;
         }
         /* Health bar above creature */
         if (c->health_bg_rect.w > 0) {
@@ -5213,25 +5202,11 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
         }
 
         if (!drawn_asset) {
-            if (s->source_materials_required) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION);
-            } else {
-                int sz = it->fallback_radius;
-                uint8_t color = it->fallback_color;
-                for (int dy = -sz; dy <= sz; ++dy) {
-                    int sy = it->center_y + dy;
-                    if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-                    for (int dx = -sz; dx <= sz; ++dx) {
-                        int sx = it->center_x + dx;
-                        if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
-                        if (abs(dx) + abs(dy) <= sz) {
-                            vp[sy * stride + sx] = color;
-                        }
-                    }
-                }
-                ++s->fallback_creature_possession_item_drawn_count;
-            }
+            /* Creature possession uses the same source-owned map-chip
+             * route.  Do not invent a diamond when the GDAT material fails. */
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION);
+            continue;
         }
     }
 }

@@ -1252,6 +1252,7 @@ static void test_sprite_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 0x12;
     viewport.creatures[0].frame_index = 0x01;
@@ -1275,12 +1276,14 @@ static void test_sprite_asset_provider(void)
               rect_equals(&creature_plan.creatures[0].health_fill_rect,
                           32, 42, 12, 1));
     dm2_v1_render_creatures(&viewport);
-    CHECK("creature fallback draws when no sprite asset provider is installed",
+    CHECK("creature without source material blocks instead of drawing fallback pixels",
           viewport.asset_creature_drawn_count == 0 &&
-              viewport.fallback_creature_drawn_count == 1 &&
-              framebuffer[(50 * 320) + 40] == (uint8_t)(11 + (0x12 & 7)) &&
-              framebuffer[(42 * 320) + 32] == 2 &&
-              framebuffer[(42 * 320) + 45] == 4);
+              viewport.fallback_creature_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE) != 0 &&
+              framebuffer[(50 * 320) + 40] == 0 &&
+              framebuffer[(42 * 320) + 32] == 0 &&
+              framebuffer[(42 * 320) + 45] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1422,6 +1425,7 @@ static void test_sprite_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     viewport.creature_possession_item_count = 1;
     viewport.creature_possession_items[0].item_category = 0x10;
     viewport.creature_possession_items[0].item_type = 0x22;
@@ -1446,10 +1450,12 @@ static void test_sprite_asset_provider(void)
               possession_plan.items[0].fallback_color ==
                   (uint8_t)(9 + (0x22 & 5)));
     dm2_v1_render_creature_possession_items(&viewport);
-    CHECK("creature possession item fallback draws when no asset provider is installed",
+    CHECK("creature possession without source material blocks instead of fallback pixels",
           viewport.asset_creature_possession_item_drawn_count == 0 &&
-              viewport.fallback_creature_possession_item_drawn_count == 1 &&
-              framebuffer[(80 * 320) + 100] == (uint8_t)(9 + (0x22 & 5)));
+              viewport.fallback_creature_possession_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION) != 0 &&
+              framebuffer[(80 * 320) + 100] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject creature source-material gate: viewport creature
+  and creature-possession routes now require their selected GDAT map-chip
+  bitmap. Missing material records the appropriate blocked class and draws no
+  generated rectangle, health bar, or diamond. The focused viewport test
+  proves both no-draw paths as well as the existing source-asset paths.
+
 - 2026-07-15 DM2 skproject DB4 creature facing: direct G1 creature receipts
   and `CREATURES/type/F9` material now use `Creature::b15_0_1()` for the
   `DRAW_MAP_CHIP` view-relative atlas direction, rather than ObjectID bits.
