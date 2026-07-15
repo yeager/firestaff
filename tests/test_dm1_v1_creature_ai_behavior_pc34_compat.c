@@ -26,6 +26,20 @@ static int g_fail = 0;
     else { g_fail++; fprintf(stderr, "FAIL: %s (both were %d)\n", msg, (int)(a)); } \
 } while(0)
 
+struct F0199BlockGrid {
+    int firstX;
+    int firstY;
+    int secondX;
+    int secondY;
+};
+
+static int f0199_is_blocked(int mapX, int mapY, void* context)
+{
+    const struct F0199BlockGrid* grid = context;
+    return grid && ((mapX == grid->firstX && mapY == grid->firstY) ||
+                    (mapX == grid->secondX && mapY == grid->secondY));
+}
+
 /* Helper to create a default context */
 static struct DM1GroupBehaviorContext_Compat make_default_ctx(void) {
     struct DM1GroupBehaviorContext_Compat ctx;
@@ -665,6 +679,65 @@ static void test_visible_distance_requires_party_map(void) {
               1, "visible_map: source adapter succeeds");
     EXPECT_EQ(distance, 0,
               "visible_map: cross-map group cannot retain visible party distance");
+}
+
+static void test_visible_distance_f0200_live_route(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat active;
+    struct F0199BlockGrid grid;
+    struct RngState_Compat rng;
+    int distance = 99;
+
+    memset(&active, 0, sizeof(active));
+    memset(&grid, 0xff, sizeof(grid));
+    ctx.currentMapIndex = 0;
+    ctx.partyMapIndex = 0;
+    ctx.currentGroupMapX = 0;
+    ctx.currentGroupMapY = 0;
+    ctx.partyMapX = 0;
+    ctx.partyMapY = 3;
+    ctx.currentGroupDistanceToParty = 3;
+    ctx.creatureCount = 0;
+    ctx.creatureInfo.attributes = 0;
+    ctx.creatureInfo.ranges = 4;
+    ctx.isViewSquareBlocked = f0199_is_blocked;
+    ctx.viewBlockerContext = &grid;
+    active.directions = 2;
+    F0730_COMBAT_RngInit_Compat(&rng, 1u);
+
+    EXPECT_EQ(F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+                  &ctx, &active, -1, &rng, &distance), 1,
+              "F0200 sees party through a clear loaded-map route");
+    EXPECT_EQ(distance, 3, "F0200 returns F0199 route distance");
+
+    active.directions = 0;
+    distance = 99;
+    F0730_COMBAT_RngInit_Compat(&rng, 1u);
+    EXPECT_EQ(F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+                  &ctx, &active, -1, &rng, &distance), 0,
+              "F0200 rejects a party behind the creature direction");
+
+    ctx.creatureInfo.attributes = 0x0004;
+    F0730_COMBAT_RngInit_Compat(&rng, 1u);
+    EXPECT_EQ(F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+                  &ctx, NULL, -1, &rng, &distance), 1,
+              "F0200 side-attack creature sees in all directions");
+
+    ctx.creatureInfo.attributes = 0;
+    ctx.partyInvisibilityEventCount = 1;
+    F0730_COMBAT_RngInit_Compat(&rng, 1u);
+    EXPECT_EQ(F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+                  &ctx, &active, -1, &rng, &distance), 0,
+              "F0200 hides an invisible party from ordinary creatures");
+
+    ctx.partyInvisibilityEventCount = 0;
+    active.directions = 2;
+    grid.firstX = 0;
+    grid.firstY = 2;
+    F0730_COMBAT_RngInit_Compat(&rng, 1u);
+    EXPECT_EQ(F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+                  &ctx, &active, -1, &rng, &distance), 0,
+              "F0200 consumes F0199 loaded-map route blocking");
 }
 
 /* =========================================================
@@ -1554,20 +1627,6 @@ static void test_remove_all_active_groups_f0194(void) {
               "F0194 rejects before mutating raw C04 data");
 }
 
-struct F0199BlockGrid {
-    int firstX;
-    int firstY;
-    int secondX;
-    int secondY;
-};
-
-static int f0199_is_blocked(int mapX, int mapY, void* context)
-{
-    const struct F0199BlockGrid* grid = context;
-    return grid && ((mapX == grid->firstX && mapY == grid->firstY) ||
-                    (mapX == grid->secondX && mapY == grid->secondY));
-}
-
 static void test_group_path_blockers_f0197_to_f0199(void) {
     struct DM1GroupSightSquare_Compat square;
     struct F0199BlockGrid grid;
@@ -1639,6 +1698,7 @@ int main(void) {
     test_single_square_move_uses_typed_facts();
     test_smell_direction();
     test_visible_distance_requires_party_map();
+    test_visible_distance_f0200_live_route();
     test_smell_direction_requires_unblocked_route();
     test_smell_direction_stored_scent_fallback();
     test_per_creature_attack_event();

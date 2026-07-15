@@ -254,6 +254,10 @@ struct DM1GroupBehaviorContext_Compat {
     int partyMapIndex;
     int currentMapIndex;
     int partyChampionCount;
+    int partyInvisibilityEventCount;
+    int dungeonViewPaletteIndex;
+    int (*isViewSquareBlocked)(int mapX, int mapY, void* context);
+    void* viewBlockerContext;
 
     /* Creature info for the group's type */
     struct DM1CreatureInfo_Compat creatureInfo;
@@ -612,6 +616,16 @@ int F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
 int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
     const struct DM1GroupBehaviorContext_Compat* ctx,
     int creatureIndex,
+    int* outDistance);
+
+/* Exact GROUP.C F0200 form. The active group, palette/invisibility state,
+ * and F0197-backed loaded-map callback must be supplied by the runtime.
+ * Returns the source F0199 distance, or zero when no creature has sight. */
+int F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    int creatureIndex,
+    struct RngState_Compat* rng,
     int* outDistance);
 
 /*

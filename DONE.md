@@ -17000,3 +17000,9 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   imaginary-state distinction, diagonal branch blocking, and Manhattan route
   result are covered; non-adjacent paths require a loaded-map callback.
   Source: ReDMCSB `GROUP.C` F0197-F0199.
+- ✅ 2026-07-15 DM1 GROUP F0200: added the complete route-backed visible
+  party decision. It preserves per-creature facing deduplication, side attack,
+  invisibility and night-vision range changes, adjacent random range, then
+  delegates the final line to F0199. Regression covers facing, side attack,
+  invisibility, and an actual map-route blocker. Source: ReDMCSB `GROUP.C`
+  F0200/F0227.
