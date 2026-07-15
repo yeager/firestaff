@@ -2979,8 +2979,9 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
                 receipt.floor_ornament_graphics_dat_width = (int16_t)width;
                 receipt.floor_ornament_graphics_dat_height = (int16_t)height;
             }
-            receipt.floor_ornament_used_bounded_fallback =
-                !receipt.floor_ornament_graphics_dat_bound;
+            /* F0108 has no host-colored substitute: absent original pixels
+             * remain an unmaterialized source receipt and draw nothing. */
+            receipt.floor_ornament_used_bounded_fallback = false;
         }
     }
 
@@ -3239,14 +3240,13 @@ static int dm1_viewport_3d_floor_ornament_side_for_square(
     return 0;
 }
 
-static int dm1_viewport_3d_draw_floor_ornament_plan(
+int dm1_viewport_3d_draw_floor_ornament(
     DM1_Viewport3DState *state,
     DM1_ViewSquareIndex square,
     int floor_ornament_index)
 {
     DM1_FloorOrnamentRenderPlanPc34 plan;
     int rel_side;
-    int color;
     int max_x;
     int max_y;
     uint8_t *vp;
@@ -3272,10 +3272,6 @@ static int dm1_viewport_3d_draw_floor_ornament_plan(
         return 0;
     }
 
-    color = floor_ornament_index & 0x3f;
-    if (color == 0 || color == COLOR_TRANSPARENT) {
-        color = 11;
-    }
     vp = state->viewport_pixels;
     stride = state->viewport_stride;
 
@@ -3308,15 +3304,9 @@ static int dm1_viewport_3d_draw_floor_ornament_plan(
         return 1;
     }
 
-    /* Bounded diagnostic fallback used only when no expanded GRAPHICS.DAT
-     * floor-ornament pixels have been provided. */
-    for (int y = 0; y < plan.blit.height; ++y) {
-        uint8_t *row = vp + (plan.blit.dstY + y) * stride + plan.blit.dstX;
-        for (int x = 0; x < plan.blit.width; ++x) {
-            row[x] = (uint8_t)color;
-        }
-    }
-    return 1;
+    /* F0108 calls F0489 for the original ornament graphic. Without that
+     * caller-owned GRAPHICS.DAT span, there is no source pixel to present. */
+    return 0;
 }
 
 static int dm1_viewport_3d_draw_d3_door_front_plan(
@@ -3537,7 +3527,7 @@ static void dm1_viewport_3d_draw_d3_side_square(
         element == DM1_VP_ELEMENT_DOOR_SIDE ||
         element == DM1_VP_ELEMENT_DOOR_FRONT) {
         int ornament_slot = right ? 3 : 2;
-        (void)dm1_viewport_3d_draw_floor_ornament_plan(
+        (void)dm1_viewport_3d_draw_floor_ornament(
             state, square, state->floor_ornament_indices[ornament_slot]);
     }
 
@@ -3740,7 +3730,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         case DM1_VIEW_SQUARE_D3R2: fo_idx = state->floor_ornament_indices[1]; break;
         default: break;
         }
-        (void)dm1_viewport_3d_draw_floor_ornament_plan(state, square, fo_idx);
+        (void)dm1_viewport_3d_draw_floor_ornament(state, square, fo_idx);
 
         /* F0115 creature/item/projectile/explosion pass receipt.
          * ReDMCSB calls F0115 here with 0x3421/0x4312 for open cells, 0x0321/

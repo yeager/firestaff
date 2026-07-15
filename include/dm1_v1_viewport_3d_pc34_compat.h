@@ -1083,6 +1083,18 @@ void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(
     const DM1_WallFrame *frame);
 
 /*
+ * Draw a source-selected floor ornament through its ReDMCSB F0108 C10
+ * viewport zone. The graphic provider must return the original expanded
+ * GRAPHICS.DAT pixels; absent or undersized source media is no-draw.
+ *
+ * Source: DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament (lines 3940-4011).
+ */
+int dm1_viewport_3d_draw_floor_ornament(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int floor_ornament_index);
+
+/*
  * Draw a DM1 V1 door button bitmap span into a chunky destination buffer.
  * door_button_ordinal follows ReDMCSB M000_INDEX_TO_ORDINAL semantics:
  * 0 means no button; 1 selects C0_DOOR_BUTTON.
