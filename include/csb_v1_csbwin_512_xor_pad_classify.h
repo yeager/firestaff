@@ -406,10 +406,18 @@ typedef struct {
         item16[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
     uint16_t timer_summary_count;
     uint16_t timer_summary_total;
+    /* Verified, unscrambled TIMER/heap bytes retained for a future source
+     * GameTimers owner; never inferred from the summary. */
+    size_t timer_raw_size;
+    uint32_t timer_raw_fnv1a;
+    uint8_t timer_raw[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES * 16u];
     CSB_V1_CSBWin512TimerSummary
         timers[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES];
     uint16_t timer_queue_summary_count;
     uint16_t timer_queue_summary_total;
+    size_t timer_queue_raw_size;
+    uint32_t timer_queue_raw_fnv1a;
+    uint8_t timer_queue_raw[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES * 2u];
     uint16_t timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
     size_t appended_offset;
     size_t appended_size;

@@ -1790,6 +1790,11 @@ int csb_v1_csbwin_512_verify_save_body(
          * function-specific words after reading. This summary keeps the raw
          * fixed TIMER fields plus the already-decoded LE time/sequence. */
         parse_timer_summaries(decoded, out->max_timers, timer_record_size, out);
+        if (timer_size <= sizeof(out->timer_raw)) {
+            memcpy(out->timer_raw, decoded, timer_size);
+            out->timer_raw_size = timer_size;
+            out->timer_raw_fnv1a = fnv1a32_bytes(decoded, timer_size);
+        }
     }
     free(decoded);
     decoded = NULL;
@@ -1810,6 +1815,11 @@ int csb_v1_csbwin_512_verify_save_body(
         /* CSBWin/Data.h:1562 exposes TimerQueue() as uint16 entries and
          * SaveGame.cpp:1851 decodes exactly MaxTimers * 2 bytes. */
         parse_timer_queue_summary(decoded, out->max_timers, out);
+        if (timer_queue_size <= sizeof(out->timer_queue_raw)) {
+            memcpy(out->timer_queue_raw, decoded, timer_queue_size);
+            out->timer_queue_raw_size = timer_queue_size;
+            out->timer_queue_raw_fnv1a = fnv1a32_bytes(decoded, timer_queue_size);
+        }
     }
     free(decoded);
     decoded = NULL;
