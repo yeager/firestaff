@@ -125,7 +125,10 @@ static const DM1_V1_ChampionPanelSpellAreaOverlayPc34Contract s_contract = {
 static const char s_source_evidence[] =
     "contract_only=1; CASTER.C:18-21 F0394 short-circuits when "
     "requested_caster_index == G0514_i_MagicCasterChampionIndex and rejects "
-    "non-NONE with !CurrentHealth; CASTER.C:23-33 F0394 paints the "
+    "non-NONE with !CurrentHealth; COMMAND.C/CLIKMENU.C C109 can only "
+    "select a party tab already admitted by G0305_ui_PartyChampionCount, so "
+    "a skipped out-of-party tab cannot publish C009/C011 spell material; "
+    "CASTER.C:23-33 F0394 paints the "
     "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (33 rows, 48 byte width) into "
     "G0000_ai_Graphic562_Box_SpellArea only on a transition from NONE; "
     "CASTER.C:28-32 F0394 CM1_CHAMPION_NONE path sets "
@@ -312,6 +315,15 @@ int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     /* CASTER.C:18-21 F0394 same-caster short-circuit. */
     if (input->requested_caster_index == input->previous_caster_index) {
         plan_reject(&plan, DM1_V1_CPSAO_REJECT_SAME_CASTER_PC34,
+                    input->previous_caster_index);
+        *out_plan = plan;
+        return 1;
+    }
+
+    /* C109 can only select a live party slot; skipped tabs do not materialize. */
+    if (input->requested_caster_index != DM1_V1_CPSAO_CHAMPION_NONE_PC34 &&
+        input->requested_caster_index >= input->party_champion_count) {
+        plan_reject(&plan, DM1_V1_CPSAO_REJECT_OUT_OF_PARTY_PC34,
                     input->previous_caster_index);
         *out_plan = plan;
         return 1;
