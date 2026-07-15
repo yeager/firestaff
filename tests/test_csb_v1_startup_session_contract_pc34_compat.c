@@ -188,6 +188,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
+    CSB_V1_StartupRuntimeSurface_PC34 swapped_surface;
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 title_opening;
     CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door;
     unsigned int tick;
@@ -316,6 +317,31 @@ int main(void)
               title_opening.opening_host_surface_hash ==
                   opening_host.host_surface_hash,
           "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    swapped_surface = session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    swapped_surface.pixels =
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].pixels;
+    presents_host.frame.title_surface = &swapped_surface;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "swapped C001 title owner cannot satisfy title/opening consumption");
+    presents_host.frame.title_surface =
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    swapped_surface = session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    swapped_surface.pixels =
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels;
+    opening_host.frame.entrance_surface = &swapped_surface;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "swapped C004 entrance owner cannot satisfy title/opening consumption");
+    opening_host.frame.entrance_surface =
+        &session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
     ++opening_host.frame.source_tick;
     check(!csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &opening_host, &opening_door),

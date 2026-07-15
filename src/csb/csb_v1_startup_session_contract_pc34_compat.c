@@ -408,6 +408,9 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 *out_receipt)
 {
     const CSB_V1_StartupRuntimeSurface_PC34 *title;
+    const CSB_V1_StartupRuntimeSurface_PC34 *entrance;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     /* ReDMCSB TITLE.C F0437 lines 424-463 emits three C001 phases before
@@ -434,6 +437,12 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
 
     title = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    entrance = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    left = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
     if (!csb_v1_startup_session_c001_title_contract_pc34(session) ||
         !csb_v1_startup_session_opening_surface_contract_pc34(session) ||
         !presents_host->valid || !chaos_host->valid || !strikes_host->valid ||
@@ -474,6 +483,12 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         presents_host->frame.title_surface != title ||
         chaos_host->frame.title_surface != title ||
         strikes_host->frame.title_surface != title ||
+        /* ENTRANCE.C F0806 keeps C004 behind the resident C002/C003 strips.
+         * The broader title->opening receipt must pin the same owner pointers
+         * as the narrow opening-door receipt, not just matching raster facts. */
+        opening_host->frame.entrance_surface != entrance ||
+        opening_host->frame.left_door_surface != left ||
+        opening_host->frame.right_door_surface != right ||
         !presents_host->raster.valid || !chaos_host->raster.valid ||
         !strikes_host->raster.valid || !opening_host->raster.valid ||
         !presents_host->raster.title_composited ||

@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB title/opening resident-surface ownership gate: the
+  title/opening consumption receipt now requires PRESENTS, CHAOS, and
+  STRIKES host frames to reference the resident C001 title surface and
+  requires the C004/C002/C003 opening host frame to reference the resident
+  entrance and door surfaces from the same startup session. Plausible raster
+  facts with swapped owner pointers fail closed, so wrapper-owned title or
+  entrance surfaces cannot satisfy the verified CSB startup path. Verification:
+  focused Ninja build plus CTest `csb_v1_startup_session_contract_pc34_compat`
+  pass in `build-csb-startup-session-contract`; adjacent CTests
+  `csb_v1_startup_terminal_handoff_real_data_pc34_compat` and
+  `csb_v1_startup_raster_present_pc34_compat` pass in `build-local-ninja`.
+  Remaining blocker: external original-window capture and broader app-route
+  parity for the complete CSB startup sequence.
+
 - ✅ 2026-07-16 Nexus Structure1A relation receipt source recheck: the
   Structure1F/Structure1A host provenance gate now revalidates cached
   relation fields against the live owner-ref table and the current
