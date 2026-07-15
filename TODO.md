@@ -7046,6 +7046,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     VDP1 texture command before any later capture analysis. Independent Saturn
     provenance, PRS3 opcode grammar, pixel mode, palette format, and runtime
     rendering remain explicitly unproved and blocked.
+  - 2026-07-15 executable-anchor update: canonical retail `DM.BIN` contains
+    one exact eight-word big-endian table at `+0x77114` with the VDP1 register
+    base `0x25D00000` and `+0x10`. Firestaff now hashes and retains this as a
+    static capture-producer anchor only. It does not prove SH-2 writes,
+    command-list emission, DGN ownership, palette/transform semantics, or a
+    drawable primitive. The next evidence must be a real execution trace that
+    connects this executable route to a command snapshot and active DGN face.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's

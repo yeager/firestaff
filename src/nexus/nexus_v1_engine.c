@@ -1965,6 +1965,68 @@ uint8_t *nexus_v1_read_file(Nexus_V1_Engine *engine, const char *name, int *out_
     return buf;
 }
 
+int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DmBinVdp1RegisterTableReceipt *out_receipt)
+{
+    /* This exact big-endian word sequence is present once in the canonical
+     * retail executable at DM.BIN+0x77114. It is deliberately retained as a
+     * static capture anchor, not decoded as SH-2 control flow. */
+    static const uint32_t expected_words[8] = {
+        UINT32_C(0x060967fc), UINT32_C(0x060972bc), UINT32_C(0x25d00000),
+        UINT32_C(0x06097428), UINT32_C(0x060972c0), UINT32_C(0x25f80004),
+        UINT32_C(0x0609747c), UINT32_C(0x25d00010)
+    };
+    Nexus_V1_DmBinVdp1RegisterTableReceipt receipt;
+    uint8_t *data;
+    int size = 0;
+    int offset;
+    int word;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.table_offset = -1;
+    receipt.no_draw_only = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine ||
+        nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
+        !receipt.source.canonical_hash_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    data = nexus_v1_read_file(engine, "DM.BIN", &size);
+    if (!data || size < (int)(sizeof(expected_words))) {
+        free(data);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = size;
+    receipt.source_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(data, size);
+    for (offset = 0; offset <= size - (int)sizeof(expected_words); offset += 4) {
+        for (word = 0; word < (int)(sizeof(expected_words) / sizeof(expected_words[0]));
+             ++word) {
+            if (nexus_v1_dgn_read_be32(data + offset + word * 4) !=
+                expected_words[word]) {
+                break;
+            }
+        }
+        if (word == (int)(sizeof(expected_words) / sizeof(expected_words[0]))) {
+            if (receipt.table_offset < 0) receipt.table_offset = offset;
+            ++receipt.table_occurrence_count;
+        }
+    }
+    free(data);
+    receipt.vdp1_register_base_0x25d00000_observed =
+        receipt.table_occurrence_count > 0;
+    receipt.vdp1_register_offset_0x10_observed =
+        receipt.table_occurrence_count > 0;
+    receipt.static_vdp1_register_table_proven =
+        receipt.table_occurrence_count == 1;
+    *out_receipt = receipt;
+    return receipt.static_vdp1_register_table_proven ? 1 : 0;
+}
+
 static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
 {
     uint8_t *data;

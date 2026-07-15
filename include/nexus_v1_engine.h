@@ -1244,6 +1244,25 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1FDirectMeshBindingReceipt;
 
+/* A static table observed in the hash-verified retail DM.BIN executable.
+ * This is a capture-producer anchor only: it does not prove that the SH-2
+ * writes either VDP1 register, emits a command list, selects DGN geometry,
+ * or establishes transform/palette/pixel/draw semantics. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int table_offset;
+    int table_occurrence_count;
+    int vdp1_register_base_0x25d00000_observed;
+    int vdp1_register_offset_0x10_observed;
+    int static_vdp1_register_table_proven;
+    int vdp1_command_emission_proven;
+    int dgn_binding_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DmBinVdp1RegisterTableReceipt;
+
 typedef struct {
     int level_index;
     Nexus_V1_LevelAuxSourceReceipt slev;
@@ -2111,6 +2130,11 @@ int nexus_v1_current_level_structure1f_face_mesh_receipt(
 int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectMeshBindingReceipt *out_receipt);
+/* Find the one known static VDP1 register table in canonical retail DM.BIN.
+ * A successful receipt deliberately remains insufficient for rendering. */
+int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DmBinVdp1RegisterTableReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);

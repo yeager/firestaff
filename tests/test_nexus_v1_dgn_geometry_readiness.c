@@ -701,12 +701,29 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     {
         Nexus_V1_Engine corpus_engine;
         Nexus_V1_DgnMaterialCorpusReceipt corpus;
+        Nexus_V1_DmBinVdp1RegisterTableReceipt vdp1_table;
         int corpus_level;
 
         memset(&corpus_engine, 0, sizeof(corpus_engine));
         corpus_engine.source = NEXUS_SRC_EXTRACTED;
         strncpy(corpus_engine.data_dir, data_dir,
                 sizeof(corpus_engine.data_dir) - 1U);
+        memset(&vdp1_table, 0, sizeof(vdp1_table));
+        CHECK(nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
+                  &corpus_engine, &vdp1_table) == 1 &&
+                  vdp1_table.source.canonical_hash_verified &&
+                  vdp1_table.source_byte_count > 0 &&
+                  vdp1_table.source_bytes_fnv1a64 != 0U &&
+                  vdp1_table.table_offset == 0x77114 &&
+                  vdp1_table.table_occurrence_count == 1 &&
+                  vdp1_table.vdp1_register_base_0x25d00000_observed &&
+                  vdp1_table.vdp1_register_offset_0x10_observed &&
+                  vdp1_table.static_vdp1_register_table_proven &&
+                  !vdp1_table.vdp1_command_emission_proven &&
+                  !vdp1_table.dgn_binding_proven &&
+                  vdp1_table.no_draw_only &&
+                  !vdp1_table.fallback_visuals_permitted,
+              "canonical DM.BIN has one static VDP1 register anchor without draw semantics");
         memset(&corpus, 0, sizeof(corpus));
         CHECK(nexus_v1_inspect_dgn_material_corpus(&corpus_engine, &corpus) == 0 &&
                   corpus.parsed_level_count == 16 &&
