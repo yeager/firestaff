@@ -2555,6 +2555,7 @@ static int csb_v1_runtime_decode_destination_teleporter(
     CSB_V1_TeleporterRotationRuntimeTeleporterPc34 *out_teleporter,
     int *out_scope)
 {
+    int raw_square;
     int first_thing;
     int thing_type;
     int thing_size;
@@ -9005,6 +9006,7 @@ static void csb_v1_runtime_process_object_wall_sensors_at(
     int map_y,
     int add_thing)
 {
+    int raw_square;
     int first_thing;
     int placed_thing_type;
     int object_type;
@@ -9016,6 +9018,10 @@ static void csb_v1_runtime_process_object_wall_sensors_at(
     if (!profile || !dungeon || !dungeon->raw_data ||
         dungeon->square_bytes != 1 || profile->dungeon_handle != dungeon ||
         level < 0 || level >= dungeon->level_count) {
+        return;
+    }
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0 || ((raw_square >> 5) & 0x07) != DM1_SQUARE_WALL) {
         return;
     }
     if (!csb_v1_dungeon_get_thing_record(
