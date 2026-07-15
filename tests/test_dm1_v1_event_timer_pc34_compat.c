@@ -261,7 +261,45 @@ static void test_tick_processing(void) {
 }
 
 /* ----------------------------------------------------------------
- *  Test 7: Serialisation round-trip
+ * Test 7: MOVESENS.C F0265 C60/C61 native event shape
+ * ---------------------------------------------------------------- */
+static void test_f0265_move_group_event_shape(void) {
+    struct DM1_Event_V1 event;
+    uint16_t groupThing = (uint16_t)((4u << 10) | 0x0007u);
+
+    memset(&event, 0xff, sizeof(event));
+    TEST_ASSERT(dm1v1_f0265_build_move_group_event(
+                    0x00fffffeu, 3u, 11u, 12u, groupThing, 0, &event),
+                "F0265 builds silent C60 event");
+    TEST_ASSERT_INT_EQ(event.type, DM1_EVENT_MOVE_GROUP_SILENT,
+                       "F0265 silent type is C60");
+    TEST_ASSERT_INT_EQ(event.priority, 0, "F0265 priority is zero");
+    TEST_ASSERT_INT_EQ(DM1_MAP_TIME_MAP(event.map_time), 3,
+                       "F0265 preserves map index");
+    TEST_ASSERT_INT_EQ(DM1_MAP_TIME_TIME(event.map_time), 3,
+                       "F0265 wraps only the native 24-bit game time");
+    TEST_ASSERT_INT_EQ(event.b_mapX, 11, "F0265 writes destination X");
+    TEST_ASSERT_INT_EQ(event.b_mapY, 12, "F0265 writes destination Y");
+    TEST_ASSERT_INT_EQ((int)(event.c_cell | ((uint16_t)event.c_effect << 8)),
+                       groupThing, "F0265 writes exact C04 Thing into C.Slot");
+
+    TEST_ASSERT(dm1v1_f0265_build_move_group_event(
+                    100u, 2u, 1u, 9u, groupThing, 1, &event),
+                "F0265 builds audible C61 event");
+    TEST_ASSERT_INT_EQ(event.type, DM1_EVENT_MOVE_GROUP_AUDIBLE,
+                       "F0265 audible type is C61");
+    TEST_ASSERT_INT_EQ(DM1_MAP_TIME_TIME(event.map_time), 105,
+                       "F0265 delays exactly five ticks");
+
+    TEST_ASSERT(!dm1v1_f0265_build_move_group_event(
+                     0u, 0u, 0u, 0u, groupThing, 0, NULL),
+                "F0265 rejects absent event storage");
+    tests_passed++;
+    printf("PASS: test_f0265_move_group_event_shape\n");
+}
+
+/* ----------------------------------------------------------------
+ *  Test 8: Serialisation round-trip
  * ---------------------------------------------------------------- */
 static void test_serialisation_roundtrip(void) {
     struct DM1_EventQueue_V1 queue1, queue2;
@@ -518,6 +556,7 @@ int main(void) {
     test_door_event_merge();
     test_delete_and_heap_integrity();
     test_tick_processing();
+    test_f0265_move_group_event_shape();
     test_serialisation_roundtrip();
     test_capacity_limit();
     test_tick_advancement();

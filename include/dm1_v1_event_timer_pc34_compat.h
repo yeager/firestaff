@@ -215,6 +215,19 @@ int dm1v1_event_fix_existing_placement(
     struct DM1_EventQueue_V1* queue,
     int eventIndex);
 
+/* ReDMCSB MOVESENS.C F0265:169-192. Build the native C60/C61 retry
+ * event: Map_Time is (mapIndex, gameTime + 5), Priority is zero,
+ * B.Location is the requested destination and C.Slot is the exact C04 Thing
+ * word in PC little-endian byte order. The caller owns C04 validation. */
+int dm1v1_f0265_build_move_group_event(
+    uint32_t gameTime,
+    uint8_t mapIndex,
+    uint8_t mapX,
+    uint8_t mapY,
+    uint16_t groupThing,
+    int audible,
+    struct DM1_Event_V1* outEvent);
+
 /* ================================================================
  *  API — Timer tick processing
  * ================================================================ */

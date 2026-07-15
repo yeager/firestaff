@@ -449,6 +449,32 @@ int dm1v1_event_is_first_expired(
     return eventTime <= queue->gameTick;
 }
 
+int dm1v1_f0265_build_move_group_event(
+    uint32_t gameTime,
+    uint8_t mapIndex,
+    uint8_t mapX,
+    uint8_t mapY,
+    uint16_t groupThing,
+    int audible,
+    struct DM1_Event_V1* outEvent)
+{
+    if (!outEvent) return 0;
+
+    /* MOVESENS.C F0265 writes the whole EVENT explicitly. C.Slot shares the
+     * C.A.Cell/C.A.Effect bytes, so retain the original PC little-endian
+     * Thing word instead of storing a host-only C04 index. */
+    memset(outEvent, 0, sizeof(*outEvent));
+    outEvent->map_time = DM1_MAP_TIME_MAKE(mapIndex, gameTime + 5u);
+    outEvent->type = audible ? DM1_EVENT_MOVE_GROUP_AUDIBLE
+                             : DM1_EVENT_MOVE_GROUP_SILENT;
+    outEvent->priority = 0;
+    outEvent->b_mapX = mapX;
+    outEvent->b_mapY = mapY;
+    outEvent->c_cell = (uint8_t)(groupThing & 0xffu);
+    outEvent->c_effect = (uint8_t)(groupThing >> 8);
+    return 1;
+}
+
 /* ================================================================
  *  Event type → dispatch kind classification
  *
