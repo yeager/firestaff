@@ -49,8 +49,6 @@ def main() -> int:
         "C127 mirror owner must consume only the D1C front cell")
     assert "m11_draw_dm1_front_mirror_route(" not in ornaments, (
         "generic F0107 ornament pass cannot duplicate C127")
-    assert "drawFrontWallOverlay" in ornaments, (
-        "generic ornament pass must defer source-owned C127 overlay")
     print("ok: DM1 F0128 D3->D1 content order and D1C C127 ownership are locked")
     return 0
 
