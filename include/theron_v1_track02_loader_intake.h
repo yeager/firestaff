@@ -20,6 +20,7 @@ typedef struct {
 
 typedef struct {
     int observed;
+    int authenticated_v3_trace;
     int payload_intake_admitted;
     int initial_envelope_source_bound;
     int initial_envelope_decoded;
@@ -48,6 +49,7 @@ typedef struct {
  * the byte as a cell, object, tile, visual, or runtime value. */
 typedef struct {
     int handed_off;
+    int authenticated_v3_trace;
     uint16_t raw_grid_x;
     uint16_t raw_grid_y;
     uint8_t raw_grid_byte;
@@ -62,6 +64,7 @@ typedef struct {
  * visual semantics at this boundary. */
 typedef struct {
     int handed_off;
+    int authenticated_v3_trace;
     uint16_t raw_grid_y;
     uint16_t raw_grid_bytes;
     uint8_t raw_grid_row[THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH];
@@ -77,6 +80,7 @@ typedef struct {
  * object, tile, visual, or runtime semantics to them. */
 typedef struct {
     int handed_off;
+    int authenticated_v3_trace;
     uint16_t raw_grid_width;
     uint16_t raw_grid_height;
     uint32_t raw_grid_bytes;
@@ -100,6 +104,7 @@ typedef int (*Theron_V1Track02RawGridConsumer)(
 
 typedef struct {
     int delivered;
+    int authenticated_v3_trace;
     int no_fallback;
     uint16_t raw_grid_width;
     uint16_t raw_grid_height;
@@ -116,6 +121,7 @@ typedef struct {
  * project those bytes into objects, triggers, monsters, or fallback visuals. */
 typedef struct {
     int projection_blocked;
+    int authenticated_v3_trace;
     int no_fallback;
     uint16_t raw_grid_width;
     uint16_t raw_grid_height;
@@ -126,6 +132,26 @@ typedef struct {
     uint32_t raw_track02_offset;
     const char *status;
 } Theron_V1Track02RawGridObjectTableProjectionReceipt;
+
+/* A narrow level route for the verified startup grid. This is the first
+ * dungeon-facing positive handoff from Track 02, but it still admits only the
+ * source-owned raw grid. Bitmap and object routes stay blocked until their
+ * own original-data receipts exist. */
+typedef struct {
+    int level_route_admitted;
+    int authenticated_v3_trace;
+    int bitmap_route_blocked;
+    int object_route_blocked;
+    int no_fallback;
+    uint16_t raw_grid_width;
+    uint16_t raw_grid_height;
+    uint32_t raw_grid_bytes;
+    uint32_t raw_grid_hash;
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    const char *status;
+} Theron_V1Track02RawGridLevelRouteReceipt;
 
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
@@ -227,5 +253,11 @@ int theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
 int theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
     const Theron_V1Track02RawGridReceipt *grid,
     Theron_V1Track02RawGridObjectTableProjectionReceipt *out_receipt);
+
+/* Admits only the source-verified raw grid as a level route. The paired
+ * bitmap and object routes are explicitly unavailable with no fallback. */
+int theron_v1_track02_loader_intake_admit_raw_grid_level_route(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridLevelRouteReceipt *out_receipt);
 
 #endif

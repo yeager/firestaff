@@ -26,6 +26,31 @@ static uint32_t hash_bytes(const uint8_t *bytes, size_t byte_count) {
     return hash;
 }
 
+static int valid_raw_grid_receipt(const Theron_V1Track02RawGridReceipt *grid) {
+    if (!grid || !grid->handed_off || !grid->authenticated_v3_trace ||
+        grid->raw_grid_width != THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
+        grid->raw_grid_height != THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        grid->raw_grid_bytes !=
+            (uint32_t)THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH *
+                THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        grid->raw_grid_hash == 0u ||
+        hash_bytes(grid->raw_grid, grid->raw_grid_bytes) !=
+            grid->raw_grid_hash ||
+        grid->raw_sector_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET +
+                THERON_V1_TRACK02_MODE1_HEADER_BYTES +
+                TQR_INITIAL_ENVELOPE_HEADER_BYTES ||
+        grid->raw_track02_offset !=
+            grid->raw_track02_sector * THERON_V1_TRACK02_RAW_SECTOR_BYTES +
+                grid->raw_sector_offset ||
+        !grid->status ||
+        strcmp(grid->status,
+               "initial_envelope_raw_grid_handoff_no_semantics") != 0) {
+        return 0;
+    }
+    return 1;
+}
+
 int theron_v1_track02_loader_intake_observe(
     const Theron_V1Track02LoaderReadFacts *facts,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
@@ -170,6 +195,7 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!decoded_receipt || !raw_track02 || !raw_track02_md5 || !out_receipt ||
         !decoded_receipt->observed ||
+        !decoded_receipt->authenticated_v3_trace ||
         !decoded_receipt->payload_intake_admitted ||
         !decoded_receipt->initial_envelope_source_bound ||
         !decoded_receipt->initial_envelope_decoded ||
@@ -238,6 +264,7 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
     coordinate_raw_offset = grid_raw_offset +
         (size_t)raw_grid_y * decoded_receipt->decoded_grid_row_bytes + raw_grid_x;
     receipt.handed_off = 1;
+    receipt.authenticated_v3_trace = 1;
     receipt.raw_grid_x = raw_grid_x;
     receipt.raw_grid_y = raw_grid_y;
     receipt.raw_grid_byte = raw_track02[coordinate_raw_offset];
@@ -268,6 +295,7 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_row(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!decoded_receipt || !raw_track02 || !raw_track02_md5 || !out_receipt ||
         !decoded_receipt->observed ||
+        !decoded_receipt->authenticated_v3_trace ||
         !decoded_receipt->payload_intake_admitted ||
         !decoded_receipt->initial_envelope_source_bound ||
         !decoded_receipt->initial_envelope_decoded ||
@@ -335,6 +363,7 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_row(
     row_raw_offset = grid_raw_offset +
         (size_t)raw_grid_y * decoded_receipt->decoded_grid_row_bytes;
     receipt.handed_off = 1;
+    receipt.authenticated_v3_trace = 1;
     receipt.raw_grid_y = raw_grid_y;
     receipt.raw_grid_bytes = decoded_receipt->decoded_grid_row_bytes;
     memcpy(receipt.raw_grid_row, raw_track02 + row_raw_offset,
@@ -377,6 +406,7 @@ int theron_v1_track02_loader_intake_handoff_raw_grid(
     }
 
     receipt.handed_off = 1;
+    receipt.authenticated_v3_trace = 1;
     receipt.raw_grid_width = decoded_receipt->decoded_grid_row_bytes;
     receipt.raw_grid_height = decoded_receipt->decoded_grid_row_count;
     receipt.raw_grid_bytes = decoded_receipt->decoded_grid_bytes;
@@ -431,6 +461,7 @@ int theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
     if (!consumer(&grid, consumer_context)) return 0;
 
     receipt.delivered = 1;
+    receipt.authenticated_v3_trace = 1;
     receipt.no_fallback = 1;
     receipt.raw_grid_width = grid.raw_grid_width;
     receipt.raw_grid_height = grid.raw_grid_height;
@@ -450,20 +481,12 @@ int theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
     Theron_V1Track02RawGridObjectTableProjectionReceipt receipt = {0};
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!grid || !out_receipt || !grid->handed_off ||
-        grid->raw_grid_width != THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
-        grid->raw_grid_height != THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
-        grid->raw_grid_bytes !=
-            (uint32_t)THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH *
-                THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
-        grid->raw_grid_hash == 0u ||
-        !grid->status ||
-        strcmp(grid->status,
-               "initial_envelope_raw_grid_handoff_no_semantics") != 0) {
+    if (!out_receipt || !valid_raw_grid_receipt(grid)) {
         return 0;
     }
 
     receipt.projection_blocked = 1;
+    receipt.authenticated_v3_trace = 1;
     receipt.no_fallback = 1;
     receipt.raw_grid_width = grid->raw_grid_width;
     receipt.raw_grid_height = grid->raw_grid_height;
@@ -478,10 +501,39 @@ int theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
     return 1;
 }
 
+int theron_v1_track02_loader_intake_admit_raw_grid_level_route(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridLevelRouteReceipt *out_receipt) {
+    Theron_V1Track02RawGridLevelRouteReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !valid_raw_grid_receipt(grid)) {
+        return 0;
+    }
+
+    receipt.level_route_admitted = 1;
+    receipt.authenticated_v3_trace = 1;
+    receipt.bitmap_route_blocked = 1;
+    receipt.object_route_blocked = 1;
+    receipt.no_fallback = 1;
+    receipt.raw_grid_width = grid->raw_grid_width;
+    receipt.raw_grid_height = grid->raw_grid_height;
+    receipt.raw_grid_bytes = grid->raw_grid_bytes;
+    receipt.raw_grid_hash = grid->raw_grid_hash;
+    receipt.raw_track02_sector = grid->raw_track02_sector;
+    receipt.raw_sector_offset = grid->raw_sector_offset;
+    receipt.raw_track02_offset = grid->raw_track02_offset;
+    receipt.status =
+        "initial_envelope_raw_grid_level_route_bitmap_object_blocked_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_track02_loader_intake_observe_authenticated_trace(
     const Theron_V1AuthenticatedTrack02LoaderReadFacts *facts,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
     Theron_V1Track02LoaderReadFacts observation;
+    int observed;
 
     if (!facts || !facts->trace_provenance ||
         !facts->trace_provenance->valid ||
@@ -496,7 +548,12 @@ int theron_v1_track02_loader_intake_observe_authenticated_trace(
     observation.record_user_data_offset = facts->record_user_data_offset;
     observation.destination = facts->destination;
     observation.byte_count = facts->byte_count;
-    return theron_v1_track02_loader_intake_observe(&observation, out_receipt);
+    observed = theron_v1_track02_loader_intake_observe(&observation,
+                                                       out_receipt);
+    if (observed) {
+        out_receipt->authenticated_v3_trace = 1;
+    }
+    return observed;
 }
 
 int theron_v1_track02_loader_intake_bind_initial_envelope(
