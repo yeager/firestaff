@@ -32,6 +32,18 @@ int dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
     size_t byte_count,
     uint16_t* io_running_checksum);
 
+/* ReDMCSB READWRIT.C F0422. Write one complete dungeon-tail source span and
+ * add its unsigned bytes to the caller-owned 16-bit running checksum. The
+ * cursor and checksum are unchanged when the complete destination span is
+ * unavailable. F0433 owns the enclosing tail and its final checksum word. */
+int dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
+    uint8_t* destination,
+    size_t destination_size,
+    size_t* io_cursor,
+    const uint8_t* source,
+    size_t byte_count,
+    uint16_t* io_running_checksum);
+
 #define DM1_ORIGINAL_SAVE_PC34_HANDOFF_ACTIVE_GROUP_REPORT_CAP \
     GAMEWORLD_CREATURE_AI_CAPACITY
 

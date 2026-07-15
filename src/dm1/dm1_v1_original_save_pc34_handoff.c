@@ -47,6 +47,39 @@ int dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
     return 1;
 }
 
+int dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
+    uint8_t* destination,
+    size_t destination_size,
+    size_t* io_cursor,
+    const uint8_t* source,
+    size_t byte_count,
+    uint16_t* io_running_checksum)
+{
+    uint16_t checksum;
+    size_t cursor;
+    size_t i;
+
+    if (!destination || !io_cursor || !source || !io_running_checksum) {
+        return 0;
+    }
+    cursor = *io_cursor;
+    if (cursor > destination_size || byte_count > destination_size - cursor) {
+        return 0;
+    }
+
+    /* READWRIT.C F0422 first completes F0416, then sums the exact bytes it
+     * wrote into the caller-owned tail checksum. Validate the full range
+     * before either the destination, cursor, or checksum can change. */
+    memcpy(destination + cursor, source, byte_count);
+    checksum = 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        checksum = (uint16_t)(checksum + source[i]);
+    }
+    *io_running_checksum = (uint16_t)(*io_running_checksum + checksum);
+    *io_cursor = cursor + byte_count;
+    return 1;
+}
+
 static int dm1_original_save_backup_path(const char *path,
                                          char out_path[DM1_ORIGINAL_SAVE_PATH_MAX])
 {
@@ -4553,7 +4586,37 @@ static int dm1_original_save_header_part_shape_match(
 
 /* ReDMCSB LOADSAVE.C F0433 writes the optional loaded dungeon immediately
  * after the four external portraits, and F0435 reads it from the same cursor.
- * This is a corpus-only raw-byte receipt: no tail bytes are decoded or
+ * Rebuild its body through the bounded F0422 writer before comparing a corpus
+ * receipt, so an independently checksum-valid decoded tail cannot borrow an
+ * unchecked byte stream. */
+static int dm1_original_save_dungeon_tail_f0422_roundtrip_ok(
+    const uint8_t *tail,
+    size_t tail_size,
+    uint16_t expected_checksum)
+{
+    uint8_t *staged;
+    size_t body_size;
+    size_t cursor = 0u;
+    uint16_t checksum = 0u;
+    int ok;
+
+    if (!tail || tail_size < 2u) {
+        return 0;
+    }
+    body_size = tail_size - 2u;
+    staged = (uint8_t *)malloc(body_size ? body_size : 1u);
+    if (!staged) {
+        return 0;
+    }
+    ok = dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
+             staged, body_size, &cursor, tail, body_size, &checksum) &&
+         cursor == body_size && checksum == expected_checksum &&
+         memcmp(staged, tail, body_size) == 0;
+    free(staged);
+    return ok;
+}
+
+/* This is a corpus-only raw-byte receipt: no tail bytes are decoded or
  * promoted here. A tail-less original save must remain tail-less on export. */
 static int dm1_original_save_dungeon_tail_bytes_match(
     const uint8_t *source_bytes,
@@ -4602,6 +4665,16 @@ static int dm1_original_save_dungeon_tail_bytes_match(
         source_report->dungeon_tail_byte_count > source_size - source_cursor ||
         exported_report->dungeon_tail_byte_count >
             exported_size - exported_cursor) {
+        return 1;
+    }
+    if (!dm1_original_save_dungeon_tail_f0422_roundtrip_ok(
+            source_bytes + source_cursor,
+            source_report->dungeon_tail_byte_count,
+            source_report->dungeon_tail_expected_checksum) ||
+        !dm1_original_save_dungeon_tail_f0422_roundtrip_ok(
+            exported_bytes + exported_cursor,
+            exported_report->dungeon_tail_byte_count,
+            exported_report->dungeon_tail_expected_checksum)) {
         return 1;
     }
     out_report->dungeon_tail_byte_preservation_ok = memcmp(
