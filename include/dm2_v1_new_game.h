@@ -204,6 +204,30 @@ typedef struct DM2_V1_SaveCandidate {
     size_t dungeon_size;
 } DM2_V1_SaveCandidate;
 
+/* Read-only receipt for the uncompressed dungeon prefix of an original raw
+ * SKSave body. skproject c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE reads
+ * these spans before SUPPRESS/GAME_LOAD state. This does not interpret DB
+ * records or record links; it preserves only source-owned boundaries and
+ * byte identities for an admitted original save. */
+#define DM2_RAW_SKSAVE_DB_POOL_COUNT 16
+typedef struct {
+    int valid;
+    uint8_t map_count;
+    uint16_t map_data_byte_count;
+    uint16_t column_index_count;
+    uint16_t ground_stack_count;
+    uint16_t text_word_count;
+    uint16_t db_record_counts[DM2_RAW_SKSAVE_DB_POOL_COUNT];
+    uint32_t descriptor_hash;
+    uint32_t column_index_hash;
+    uint32_t ground_stack_hash;
+    uint32_t text_hash;
+    uint32_t db_pool_hashes[DM2_RAW_SKSAVE_DB_POOL_COUNT];
+    uint32_t map_data_hash;
+    uint32_t prefix_hash;
+    size_t suppress_state_offset;
+} DM2_V1_OriginalRawDungeonReceipt;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -288,6 +312,14 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size);
+
+/* Validate the exact raw-SKSave dungeon prefix and expose only its
+ * skproject-owned section boundaries/hashes. Unknown or truncated layouts
+ * fail closed and leave *out_receipt zeroed. */
+int dm2_v1_original_raw_sksave_dungeon_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    DM2_V1_OriginalRawDungeonReceipt *out_receipt);
 
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only
