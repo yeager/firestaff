@@ -118,6 +118,9 @@ static int csb_v1_runtime_dsa_inspect_cells(
     uint32_t first_cell, uint32_t last_cell, uint32_t *out_result);
 static int csb_v1_runtime_dsa_get_thing_type(
     void *user, int32_t thing_index, int32_t *out_type);
+static int csb_v1_runtime_dsa_is_carried(
+    void *user, int32_t character_selector, int32_t object_selector,
+    int32_t *out_result);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17587,6 +17590,81 @@ static int csb_v1_runtime_dsa_get_thing_type(
     return 1;
 }
 
+static int csb_v1_runtime_dsa_carried_chain(
+    const CSB_V1_DungeonData *dungeon, uint16_t thing, int32_t object_selector,
+    int *count, int *found, int depth)
+{
+    int guard = 0;
+
+    if (!dungeon || !count || !found || depth > 30) return -1;
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && guard++ < 128) {
+        const uint8_t *record;
+        int type;
+        int size;
+
+        record = csb_v1_dungeon_get_thing_record(dungeon, thing, &type,
+                                                  NULL, &size);
+        if (!record || size < 2) return -1;
+        if (object_selector >= 0) {
+            if ((int32_t)thing == object_selector) {
+                *found = 1;
+                return 1;
+            }
+        } else {
+            int wanted = -object_selector;
+            if (wanted == 1) wanted = 0;
+            if (type == wanted) ++*count;
+        }
+        if (type == 9) {
+            if (size < 8 || csb_v1_runtime_dsa_carried_chain(
+                    dungeon, csb_v1_runtime_read_u16(record + 2),
+                    object_selector, count, found, depth + 1) < 0) return -1;
+            if (*found) return 1;
+        }
+        thing = csb_v1_runtime_read_u16(record);
+    }
+    return guard >= 128 ? -1 : 1;
+}
+
+static int csb_v1_runtime_dsa_is_carried(
+    void *user, int32_t character_selector, int32_t object_selector,
+    int32_t *out_result)
+{
+    const CSB_V1_RuntimeProfile *profile = user;
+    const CSB_V1_DungeonData *dungeon;
+    int champion_index;
+    int count = 0;
+
+    if (!out_result || !profile || !profile->party_state_valid ||
+        !profile->dungeon_handle) return -1;
+    dungeon = profile->dungeon_handle;
+    for (champion_index = 0; champion_index < profile->party_state.ChampionCount &&
+         champion_index < CSB_V1_MAX_CHAMPIONS; ++champion_index) {
+        const CSB_V1_Champion *champion;
+        int slot;
+        int selected = character_selector == champion_index ||
+            (character_selector == 4 && champion_index == profile->leader_index) ||
+            character_selector == 5;
+        if (!selected) continue;
+        champion = &profile->party_state.Champions[champion_index];
+        for (slot = 0; slot < CSB_V1_SLOT_COUNT; ++slot) {
+            int found = 0;
+            if (csb_v1_runtime_dsa_carried_chain(dungeon, champion->Slots[slot],
+                                                 object_selector, &count, &found, 0) < 0) return -1;
+            if (found) { *out_result = slot + 256 * champion_index; return 1; }
+        }
+        if (champion_index == profile->leader_index) {
+            int found = 0;
+            if (csb_v1_runtime_dsa_carried_chain(
+                    dungeon, csb_v1_runtime_export_leader_hand_thing(profile),
+                    object_selector, &count, &found, 0) < 0) return -1;
+            if (found) { *out_result = 255 + 256 * champion_index; return 1; }
+        }
+    }
+    *out_result = object_selector >= 0 ? -1 : count;
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20586,6 +20664,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
+    candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20708,6 +20787,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
+    candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
