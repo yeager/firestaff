@@ -18873,3 +18873,12 @@ the separate zero-side corridor, and the nonzero path guards input, reads one
 byte through `@R12+`, then reaches the existing R2 byte store. This proves only
 a bounded direct-byte path. It does not establish the zero-side grammar, token
 names, buffer ownership, termination, palette use, PRS3 pixels, or rendering.
+
+# Nexus PRS3 V1 zero-side termination condition (2026-07-15)
+
+The hash-bound zero-side corridor now retains the exact SH-2
+`CMP/EQ R1,R10; ADD #1,R10; BF/S` control sequence and branch target. It
+proves that the repeat loop returns only while the compared registers differ.
+That is a static termination condition, not a claim that either register is a
+run length or that the zero side is a backreference. No PRS3 output, palette,
+or renderer route is enabled.
