@@ -5211,7 +5211,9 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                          s->g1_weapon_map_chip_materials,
                          it->object_id, it->map_x, it->map_y,
                          it->item_type, src_w, src_h,
-                         s->active_asset_palette_hash))) {
+                         s->active_asset_palette_hash,
+                         dm2_v1_viewport_indexed_pixel_hash(
+                             pixels, src_w, src_h, src_stride)))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
                     continue;
@@ -5222,7 +5224,9 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                          s->g1_container_map_chip_materials,
                          it->object_id, it->map_x, it->map_y,
                          it->item_type, src_w, src_h,
-                         s->active_asset_palette_hash))) {
+                         s->active_asset_palette_hash,
+                         dm2_v1_viewport_indexed_pixel_hash(
+                             pixels, src_w, src_h, src_stride)))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
                     continue;

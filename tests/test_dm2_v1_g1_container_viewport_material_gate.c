@@ -74,6 +74,7 @@ static void setup(DM2_V1_ViewportState *viewport, uint8_t *framebuffer,
     material->image_format = 3;
     for (int i = 0; i < 16; ++i) palette[i] = (uint8_t)(0x30 + i);
     material->local_palette_hash = fnv1a(palette, 16);
+    material->decoded_pixel_hash = fnv1a(g_pixels, sizeof(g_pixels));
 
     *expected_index = dm2_v1_viewport_item_graphic_index(0x14, 0, 0xf9);
     dm2_v1_viewport_init(viewport, framebuffer, DM2_VP_WIDTH);
@@ -119,6 +120,17 @@ int main(void)
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0u &&
               framebuffer[88 * DM2_VP_WIDTH + 96] == 0x7eu);
+
+    memset(framebuffer, 0x7e, sizeof(framebuffer));
+    setup(&viewport, framebuffer, &receipt, &expected_index);
+    g_pixels[1] ^= 1u;
+    dm2_v1_render_items(&viewport);
+    CHECK("changed decoded G1 DB9 pixels block container material",
+          viewport.asset_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0u &&
+              framebuffer[88 * DM2_VP_WIDTH + 96] == 0x7eu);
+    g_pixels[1] ^= 1u;
 
     printf("DM2 G1 DB9 viewport material gate: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;

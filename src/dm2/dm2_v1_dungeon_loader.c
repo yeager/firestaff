@@ -3585,13 +3585,15 @@ int dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
     int item_type,
     int image_width,
     int image_height,
-    uint32_t local_palette_hash)
+    uint32_t local_palette_hash,
+    uint32_t decoded_pixel_hash)
 {
     int i;
 
     if (!receipt || !receipt->valid || object_id == 0xfffeu ||
         item_type < 0 || item_type > 0xff || image_width <= 0 ||
-        image_height <= 0 || local_palette_hash == 0u) {
+        image_height <= 0 || local_palette_hash == 0u ||
+        decoded_pixel_hash == 0u) {
         return 0;
     }
     for (i = 0; i < receipt->material_count; ++i) {
@@ -3601,7 +3603,8 @@ int dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
             material->y == y && material->item_type == (uint8_t)item_type &&
             material->image_width == image_width &&
             material->image_height == image_height &&
-            material->local_palette_hash == local_palette_hash) {
+            material->local_palette_hash == local_palette_hash &&
+            material->decoded_pixel_hash == decoded_pixel_hash) {
             return 1;
         }
     }
@@ -3616,13 +3619,15 @@ int dm2_v1_g1_container_map_chip_matches_decoded_instance(
     int container_type,
     int image_width,
     int image_height,
-    uint32_t local_palette_hash)
+    uint32_t local_palette_hash,
+    uint32_t decoded_pixel_hash)
 {
     int i;
 
     if (!receipt || !receipt->valid || object_id == 0xfffeu ||
         container_type < 0 || container_type > 3 || image_width <= 0 ||
-        image_height <= 0 || local_palette_hash == 0u) {
+        image_height <= 0 || local_palette_hash == 0u ||
+        decoded_pixel_hash == 0u) {
         return 0;
     }
     for (i = 0; i < receipt->material_count; ++i) {
@@ -3633,7 +3638,8 @@ int dm2_v1_g1_container_map_chip_matches_decoded_instance(
             material->container_type == (uint8_t)container_type &&
             material->image_width == image_width &&
             material->image_height == image_height &&
-            material->local_palette_hash == local_palette_hash) {
+            material->local_palette_hash == local_palette_hash &&
+            material->decoded_pixel_hash == decoded_pixel_hash) {
             return 1;
         }
     }
