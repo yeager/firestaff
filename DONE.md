@@ -223,6 +223,14 @@
   cells cleared; no host or guessed bitmap font can render `WAR CRY` or rune
   glyphs. Focused coverage: `m11_dm1_action_spell_asset_fail_closed`.
 
+- ✅ 2026-07-15 DM1 ReDMCSB TEXT2.C F0644 M653 baseline raster: F0387 action
+  header/rows and F0397/F0398 available/selected runes now share the real
+  M653 six-by-six cell primitive. It samples `char * 8 + 3`, advances six
+  pixels per HUD cell, and converts each original baseline to `baseline - 4`.
+  This removes the prior four-pixel-low HUD glyph placement without adding a
+  host-font route. Focused coverage: `m11_dm1_action_spell_asset_fail_closed`
+  and `m11_dm1_spell_area_asset_route`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 creature source-material/geometry gate:
   live C584+ creature presentation now requires a decoded loaded-pixel PC34
   surface selected through G0221/G0222. Blank C3200/G0224 anchors reject the

@@ -2970,6 +2970,47 @@ static void m11_draw_ra_overlay(const M11_GameViewState* state,
     }
 }
 
+/* TEXT2.C F0644 writes a six-by-six visible M653 cell using a baseline,
+ * rather than the top-left origin used by the generic inscription renderer.
+ * MEDIA508 derives the target top as baseline - 4.  Keep that conversion in
+ * one primitive so F0387 and F0397/F0398 cannot slowly diverge. */
+enum { M11_DM1_M653_BASELINE_TO_TOP_PC34 = 4 };
+
+static int m11_draw_dm1_m653_cell_at_baseline(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int baselineX,
+    int baselineY,
+    unsigned char ch,
+    unsigned char foreground,
+    unsigned char background)
+{
+    const int fontX = ((int)ch * M11_FONT_CHAR_CELL_WIDTH) +
+                      M11_FONT_X_OFFSET;
+    const int topY = baselineY - M11_DM1_M653_BASELINE_TO_TOP_PC34;
+    int row;
+
+    if (!font || !M11_Font_IsLoaded(font) || !framebuffer) {
+        return 0;
+    }
+    for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
+        int col;
+        for (col = 0; col < M11_FONT_CHAR_VISIBLE_W; ++col) {
+            const int dstX = baselineX + col;
+            const int dstY = topY + row;
+            if (dstX >= 0 && dstX < framebufferWidth &&
+                dstY >= 0 && dstY < framebufferHeight) {
+                framebuffer[dstY * framebufferWidth + dstX] =
+                    M11_Font_GetPixel(font, fontX + col, row)
+                        ? foreground : background;
+            }
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_ui_text_trailing_spaces(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -2994,16 +3035,11 @@ static void m11_draw_dm1_ui_text_trailing_spaces(
             if (text && text[i] != '\0') {
                 ch = (unsigned char)text[i];
             }
-            (void)M11_Font_DrawChar(g_activeOriginalFont,
-                                    framebuffer,
-                                    framebufferWidth,
-                                    framebufferHeight,
-                                    x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
-                                    y,
-                                    ch,
-                                    fgColor,
-                                    (int)bgColor,
-                                    1);
+            (void)m11_draw_dm1_m653_cell_at_baseline(
+                g_activeOriginalFont, framebuffer, framebufferWidth,
+                framebufferHeight,
+                x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34), y,
+                ch, fgColor, bgColor);
         }
         return;
     }
@@ -3012,9 +3048,9 @@ static void m11_draw_dm1_ui_text_trailing_spaces(
     for (i = 0; i < maxChars; ++i) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
-                      y,
+                      y - M11_DM1_M653_BASELINE_TO_TOP_PC34,
                       DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34,
-                      DM1_V1_ACTION_MENU_TEXT_CELL_HEIGHT_PC34,
+                      M11_FONT_CHAR_VISIBLE_H,
                       bgColor);
     }
 }
@@ -35049,14 +35085,14 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
             unsigned char glyph = (unsigned char)(
                 DM1_V1_CPSAO_AVAILABLE_SYMBOL_BASE_PC34 +
                 DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34 * row + i);
-            (void)M11_Font_DrawChar(g_activeOriginalFont, framebuffer,
-                                    framebufferWidth, framebufferHeight,
-                                    DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 +
-                                        DM1_V1_CPSAO_AVAILABLE_SYMBOL_STEP_PC34 * i,
-                                    DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34,
-                                    glyph,
-                                    DM1_V1_CPSAO_COLOR_CYAN_PC34,
-                                    DM1_V1_CPSAO_COLOR_BLACK_PC34, 1);
+            (void)m11_draw_dm1_m653_cell_at_baseline(
+                g_activeOriginalFont, framebuffer, framebufferWidth,
+                framebufferHeight,
+                DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 +
+                    DM1_V1_CPSAO_AVAILABLE_SYMBOL_STEP_PC34 * i,
+                DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34, glyph,
+                DM1_V1_CPSAO_COLOR_CYAN_PC34,
+                DM1_V1_CPSAO_COLOR_BLACK_PC34);
         }
     }
     /* MENUDRAW.C F0398 owns exactly four output cells, space-padding the
@@ -35065,14 +35101,14 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         unsigned char glyph = i < state->spellBuffer.runeCount
             ? (unsigned char)state->spellBuffer.runes[i]
             : (unsigned char)' ';
-        (void)M11_Font_DrawChar(g_activeOriginalFont, framebuffer,
-                                framebufferWidth, framebufferHeight,
-                                DM1_V1_CPSAO_CHAMPION_SYMBOL_X0_PC34 +
-                                    DM1_V1_CPSAO_CHAMPION_SYMBOL_STEP_PC34 * i,
-                                DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34,
-                                glyph,
-                                DM1_V1_CPSAO_COLOR_CYAN_PC34,
-                                DM1_V1_CPSAO_COLOR_BLACK_PC34, 1);
+        (void)m11_draw_dm1_m653_cell_at_baseline(
+            g_activeOriginalFont, framebuffer, framebufferWidth,
+            framebufferHeight,
+            DM1_V1_CPSAO_CHAMPION_SYMBOL_X0_PC34 +
+                DM1_V1_CPSAO_CHAMPION_SYMBOL_STEP_PC34 * i,
+            DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34, glyph,
+            DM1_V1_CPSAO_COLOR_CYAN_PC34,
+            DM1_V1_CPSAO_COLOR_BLACK_PC34);
     }
 }
 
@@ -37408,25 +37444,10 @@ static int m11_draw_dm1_pc34_interface_text(
     if (!font || !M11_Font_IsLoaded(font) || !framebuffer || !text) {
         return 0;
     }
-    /* TEXT2.C F0644 MEDIA508: top = (baseline + G2086_C1) -
-     * (G2083_C6 - G2086_C1) = baseline - 4. */
-    y -= 4;
     while (*text) {
-        const int fontX = ((unsigned char)*text * 8) + 3;
-        int row;
-        for (row = 0; row < 6; ++row) {
-            int col;
-            for (col = 0; col < 6; ++col) {
-                const int dstX = x + col;
-                const int dstY = y + row;
-                if (dstX >= 0 && dstX < framebufferWidth &&
-                    dstY >= 0 && dstY < framebufferHeight) {
-                    framebuffer[dstY * framebufferWidth + dstX] =
-                        M11_Font_GetPixel(font, fontX + col, row)
-                            ? foreground : background;
-                }
-            }
-        }
+        (void)m11_draw_dm1_m653_cell_at_baseline(
+            font, framebuffer, framebufferWidth, framebufferHeight,
+            x, y, (unsigned char)*text, foreground, background);
         x += 6;
         text++;
         drawn = 1;
