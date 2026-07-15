@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSBWin live TT_1 presentation transaction: the live
+  `ProcessTT_1` animation path now stages its non-party door pixel state and
+  commits it only after the source TIMER delete/set transaction succeeds.
+  Failed ownership removes the staged timeline entry and leaves the door
+  unchanged; the non-atomic party damage/sound subroute is explicitly blocked.
+
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_DOOR pool mutation: a source-owned
   `ProcessTT_DOOR` conversion now retires its TT_DOOR handle and publishes the
   TT_1 successor through `SetTimer` allocation, sequence, and heap ownership.

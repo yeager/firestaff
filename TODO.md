@@ -118,6 +118,10 @@
   duplicate-policy matrix and full requeue semantics from a real CSBWin save
   corpus.
 
+- 2026-07-15 CSBWin TT_1 party-door damage/sound remains fail-closed: the
+  source side effects need one rollback-capable owner with the TIMER pool.
+  Do not publish a timer successor, synthetic damage, or host sound before it.
+
 - 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
   handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/
   TT_BASH_DOOR duplicate rules, allocates `m_firstAvailTimer`, copies the full
