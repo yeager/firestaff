@@ -357,6 +357,11 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
                                      int framebufferHeight);
+static void m11_clear_csb_v1_message_area_source_owned(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -1706,8 +1711,8 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                    framebufferHeight);
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
-    m11_draw_v1_message_area(state, framebuffer, framebufferWidth,
-                             framebufferHeight);
+    m11_clear_csb_v1_message_area_source_owned(
+        state, framebuffer, framebufferWidth, framebufferHeight);
 }
 
 static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
@@ -38386,6 +38391,29 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                       panelX + 5, panelY + panelH - 10,
                       "I CLOSE  TAB CHAMPION", &footStyle);
     }
+}
+
+static void m11_clear_csb_v1_message_area_source_owned(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    DM1_V1_LayoutZoneRectPc34 messageRect;
+
+    if (!state || !framebuffer || state->showDebugHUD ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled() ||
+        !dm1_v1_message_area_zone_id_pc34()) {
+        return;
+    }
+    /* TEXT.C F0049 clears C015 before a source-owned TextString message is
+     * printed. M11's messageLog is host telemetry, not CSB GAMEBLOCK/TEXT
+     * state, so it must not become visible game text. */
+    messageRect = dm1_v1_message_area_rect_pc34();
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  messageRect.x, messageRect.y,
+                  messageRect.w, messageRect.h, M11_COLOR_BLACK);
 }
 
 static void m11_draw_v1_message_area(const M11_GameViewState* state,

@@ -154,23 +154,24 @@ static void record_presented_real_package_frame(M11_GameViewState* view,
                 message);
 }
 
-static int count_nonzero_pixels_in_rows(const unsigned char* pixels,
-                                        int first_row,
-                                        int last_row) {
+static int rows_are_color(const unsigned char* pixels,
+                          int first_row,
+                          int last_row,
+                          unsigned char color) {
     int x;
     int y;
-    int count = 0;
+
     if (!pixels || first_row < 0 || last_row > 200 || first_row >= last_row) {
         return 0;
     }
     for (y = first_row; y < last_row; ++y) {
         for (x = 0; x < 320; ++x) {
-            if (pixels[y * 320 + x] != 0u) {
-                ++count;
+            if (pixels[y * 320 + x] != color) {
+                return 0;
             }
         }
     }
-    return count;
+    return 1;
 }
 
 static int frame_matches_source_rect(const unsigned char* frame,
@@ -620,8 +621,11 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.level_loaded == 1 &&
                     view.csbState.current_level >= 0,
                 "M11 CSB post-entrance handoff retains the loaded source dungeon");
-    expect_true(count_nonzero_pixels_in_rows(framebuffer, 169, 200) > 0,
-                "M11 CSB post-entrance handoff draws the V1 champion/control HUD band");
+    M11_MessageLog_Push(&view.messageLog, "M11 HOST TELEMETRY", 15);
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(rows_are_color(framebuffer, 173, 200, 0u),
+                "M11 CSB clears C015 but never renders generic host telemetry as CSB text");
     {
         CSB_V1_StartupRuntimeAssetSession_PC34 *session =
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -707,9 +711,8 @@ static void run_real_launcher_handoff_if_available(void) {
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(view.csbState.c040_panel_session_active == 0 &&
-                            count_nonzero_pixels_in_rows(framebuffer, 169,
-                                                         200) > 0,
-                        "M11 CSB clears C040 once into same-session neutral live HUD");
+                            rows_are_color(framebuffer, 173, 200, 0u),
+                        "M11 CSB clears C040 into source HUD while C015 stays source-cleared");
             {
                 unsigned int clear_tick = session->source_tick;
                 unsigned int saved_generation = session->generation;
