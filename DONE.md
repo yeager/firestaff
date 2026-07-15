@@ -18528,3 +18528,14 @@ invalid geometry/palette receipt blocks the door pass; no wall-frame
 approximation is used. The source cell/field/RAW4 route remains locked by
 `test_dm2_v1_door_side_frame_source_route`; boot smoke covers the runtime
 source-material transaction.
+
+# ✅ 2026-07-15 DM2 G1 runtime material refresh
+
+G1-to-GDAT runtime receipts are now rebuilt atomically from the current raw
+dungeon bytes at boot, session apply, position change, and live-save restore.
+This covers bounded first-map ownership, DB2 text/WALL_GFX, DB3 actuator
+WALL_GFX, and current-level DB4/DB5/DB9 routes. Old receipts are cleared
+before re-materialization, so a changed raw G1 cannot reuse pixels, palette,
+or coordinates from a prior frame. Source: SKProject `GAME_LOAD`,
+`READ_DUNGEON_STRUCTURE`, `c_record.cpp`, and the corresponding GDAT query
+routes. Verification: DM2 boot smoke 88/88 and save/load 26/26.
