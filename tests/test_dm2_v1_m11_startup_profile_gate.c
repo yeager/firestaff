@@ -433,11 +433,11 @@ static void expect_dm2_startup_layout_contract(void) {
         &snapshot,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 2 &&
+    expect_true(command_count == 1 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 1 &&
-                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[1].gdat_field == 4,
+                    commands[0].gdat_field == 4 &&
+                    commands[0].frame_owner ==
+                        DM2_V1_FRAME_OWNER_STARTUP_MENU,
                 "DM2 startup presentation builds from snapshot");
     command_count = dm2_v1_startup_presentation_build_from_facts(
         "",
@@ -447,11 +447,11 @@ static void expect_dm2_startup_layout_contract(void) {
         9,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 2 &&
+    expect_true(command_count == 1 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 1 &&
-                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[1].gdat_field == 4,
+                    commands[0].gdat_field == 4 &&
+                    commands[0].frame_owner ==
+                        DM2_V1_FRAME_OWNER_STARTUP_MENU,
                 "DM2 startup presentation builds directly from runtime facts");
     memset(&host_facts, 0, sizeof(host_facts));
     host_facts.save_root = "";
@@ -463,11 +463,11 @@ static void expect_dm2_startup_layout_contract(void) {
         &host_facts,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 2 &&
+    expect_true(command_count == 1 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 1 &&
-                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[1].gdat_field == 4,
+                    commands[0].gdat_field == 4 &&
+                    commands[0].frame_owner ==
+                        DM2_V1_FRAME_OWNER_STARTUP_MENU,
                 "DM2 startup presentation builds from host facts");
     memset(&boot_snapshot, 0, sizeof(boot_snapshot));
     boot_snapshot.startup_menu_active = 1;
@@ -492,7 +492,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     &title_frame,
                     &title_frame_max,
                     &title_ready) &&
-                    command_count == 2 &&
+                    command_count == 1 &&
                     view_receipt.valid &&
                     view_receipt.command_count == command_count &&
                     view_receipt.render.command_count == command_count &&
@@ -790,7 +790,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands,
                     command_count,
                     &executor) &&
-                    draw_probe.gdat_count == 2 &&
+                    draw_probe.gdat_count == 1 &&
                     draw_probe.fill_count == 0 &&
                     draw_probe.outline_count == 0 &&
                     draw_probe.text_count == 0,
@@ -875,25 +875,17 @@ static void expect_dm2_startup_layout_contract(void) {
         &menu,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 2,
-                "DM2 startup presentation emits original GDAT title and menu surfaces");
+    expect_true(command_count == 1,
+                "DM2 startup presentation emits SHOW_MENU_SCREEN only");
     expect_true(commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
                     commands[0].gdat_category == 5 &&
                     commands[0].gdat_index == 0 &&
-                    commands[0].gdat_field == 1 &&
+                    commands[0].gdat_field == 4 &&
                     commands[0].rect.w == 320 &&
                     commands[0].rect.h == 200,
-                "DM2 startup presentation owns original GDAT title backdrop command");
-    expect_true(commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[1].gdat_category == 5 &&
-                    commands[1].gdat_index == 0 &&
-                    commands[1].gdat_field == 4 &&
-                    commands[1].rect.w == 320 &&
-                    commands[1].rect.h == 200,
                 "DM2 startup presentation owns original GDAT menu surface command");
-    expect_true(commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
-                    commands[1].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU,
-                "DM2 startup presentation splits title and menu ownership");
+    expect_true(commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU,
+                "DM2 startup presentation owns menu surface only");
     menu.selected_row = 9;
     expect_true(dm2_v1_startup_menu_refresh(&menu, 0, 0u) &&
                     menu.row_count == 1 &&
@@ -1544,7 +1536,7 @@ int main(void) {
                                     .real_menu_screen_no_synthetic_overlay_ready == 1)) &&
                         real_visual_capture.composite_pixel_count == 64000u &&
                         real_visual_capture.composite_pixel_hash != 0u &&
-                        real_visual_capture.menu_gdat_command_count == 2 &&
+                        real_visual_capture.menu_gdat_command_count == 1 &&
                         real_visual_capture.menu_rect_command_count >= 2 &&
                         real_visual_capture.menu_text_command_count >=
                             real_visual_capture.menu_row_count &&

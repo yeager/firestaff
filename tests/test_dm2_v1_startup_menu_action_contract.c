@@ -501,7 +501,7 @@ int main(void)
     draw_probe.gdat_result = 1;
     check(dm2_v1_startup_execute_draw_commands(
               commands, row_count, &draw_executor) &&
-              draw_probe.gdat_calls == 2,
+              draw_probe.gdat_calls == 1,
           "startup draw accepts a consumed original TITLE menu surface");
     host_facts.startup_menu_active = 1;
     check(dm2_v1_startup_presentation_view_receipt_from_host_facts(
@@ -659,7 +659,7 @@ int main(void)
                   boot_consumer_receipt.startup_draw_command_count &&
               boot_render_ownership_receipt.executed_command_count ==
                   boot_render_ownership_receipt.draw_command_count &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
               boot_render_ownership_receipt.menu_gdat_command_count == 1 &&
               boot_render_ownership_receipt.executed_rect_count == 0 &&
@@ -778,7 +778,7 @@ int main(void)
               boot_render_ownership_receipt.title_frame_remaining_ticks == 5 &&
               boot_render_ownership_receipt.next_title_tick_delta == 0 &&
               boot_render_ownership_receipt.title_next_frame_tick == 18 &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
               boot_render_ownership_receipt.menu_gdat_command_count == 1 &&
               boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
@@ -959,7 +959,7 @@ int main(void)
                       boot_real_visual_capture.composite_pixel_count == 64000u &&
                       boot_real_visual_capture.composite_pixel_hash != 0u &&
                       boot_real_visual_capture.menu_capture_ready == 1 &&
-                      boot_real_visual_capture.menu_gdat_command_count == 2 &&
+                      boot_real_visual_capture.menu_gdat_command_count == 1 &&
                       boot_real_visual_capture.menu_rect_command_count >= 2 &&
                       boot_real_visual_capture.menu_text_command_count >=
                           boot_real_visual_capture.menu_row_count &&
