@@ -1522,9 +1522,10 @@ void dm1_viewport_3d_draw_wall_opaque(DM1_Viewport3DState *state,
 void dm1_viewport_3d_draw_door(DM1_Viewport3DState *state,
                                const DM1_WallFrame *frame)
 {
-    if (!state->temp_bitmap) return;
-    /* Reuse wall draw with transparency — door uses temp_bitmap as source */
-    dm1_viewport_3d_draw_wall(state, state->temp_bitmap, frame);
+    if (!state || !state->temp_bitmap) return;
+    /* F0102 passes F0128's G0074 through the same C10 route as F0104. */
+    dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap(
+        state, state->temp_bitmap, frame);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -1541,24 +1542,46 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const uint8_t *frame_bitmap,
                                              const DM1_WallFrame *frame)
 {
-    if (!frame || frame->byte_width == 0 || !frame_bitmap) return;
-    if (!state) return;
+    /* F0103's post-flip C10 blit has the same source-owned scratch contract
+     * as F0105. Source: DUNVIEW.C:3096-3108, 3185-3204. */
+    dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(
+        state, frame_bitmap, frame);
+}
+
+void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap(
+    DM1_Viewport3DState *state,
+    const uint8_t *bitmap,
+    const DM1_WallFrame *frame)
+{
+    /* ReDMCSB F0104 is a C10-transparent bitmap-to-viewport blit. Its
+     * caller owns graphic selection and G0163 destination geometry. */
+    dm1_viewport_3d_draw_wall(state, bitmap, frame);
+}
+
+void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(
+    DM1_Viewport3DState *state,
+    const uint8_t *bitmap,
+    const DM1_WallFrame *frame)
+{
+    if (!state || !frame || frame->byte_width == 0 || frame->height == 0 ||
+        !bitmap) {
+        return;
+    }
 
     int bw = frame->byte_width;
     int bh = frame->height;
     size_t needed = (size_t)bw * (size_t)bh;
 
     /* F0128 allocates and owns G0074_puc_Bitmap_Temporary before dispatching
-     * F0103/F0105.  A host allocation here can make an unadmitted viewport
+     * F0105. A host allocation here can make an unadmitted viewport
      * look valid, so a missing or undersized source scratch span is a strict
-     * no-draw. Source: DUNVIEW.C:8318-8335, 3096-3108, 3185-3204. */
+     * no-draw. Source: DUNVIEW.C:8318-8335, 3185-3204. */
     if (!state->temp_bitmap || state->temp_bitmap_size < (int)needed) return;
 
-    /* Copy and flip into temp buffer */
-    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, state->temp_bitmap, bw, bh);
-
-    /* Draw with transparency */
-    dm1_viewport_3d_draw_wall(state, state->temp_bitmap, frame);
+    /* DUNVIEW.C:3197-3204 F0105: F0099 -> G0074, then F0104. */
+    dm1_viewport_3d_copy_and_flip_h(bitmap, state->temp_bitmap, bw, bh);
+    dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap(
+        state, state->temp_bitmap, frame);
 }
 
 int dm1_v1_viewport_draw_door_button_pc34(uint8_t *dst,
