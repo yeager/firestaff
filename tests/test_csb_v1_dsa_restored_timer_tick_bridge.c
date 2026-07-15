@@ -1292,5 +1292,44 @@ int main(void)
               profile.csbwin_first_avail_timer == 1u &&
               profile.csbwin_timer_sequence == 28u,
           "TT_7 deferred clear uses Timer.cpp pool ownership");
+
+    /* ProcessTT_DOOR changes the consumed TIMER to TT_1 and immediately
+     * passes it to SetTimer. The conversion remains a source pool handoff,
+     * rather than rewriting the dispatched handle in place. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    memset(profile.csbwin_timers, 0, sizeof(profile.csbwin_timers));
+    memset(profile.csbwin_timer_queue, 0, sizeof(profile.csbwin_timer_queue));
+    raw[80u] = 0x82u;
+    put_le16(raw, 62u, 0xfffeu);
+    profile.csbwin_timer_summary_count = 2u;
+    profile.csbwin_timer_summary_total = 2u;
+    profile.csbwin_timer_queue_summary_count = 1u;
+    profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_max_timers = 2u;
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_first_avail_timer = 0u;
+    profile.csbwin_timer_sequence = 31u;
+    profile.csbwin_timers[0].valid = 1u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].function = DM1_EVENT_NONE;
+    profile.csbwin_timers[1].valid = 1u;
+    profile.csbwin_timers[1].source_index = 1u;
+    profile.csbwin_timers[1].function = 10u;
+    profile.csbwin_timers[1].time = profile.game_time;
+    profile.csbwin_timer_queue[0] = 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80u] == 0x82u &&
+              profile.timeline_queue.eventCount == 1 &&
+              profile.csbwin_timer_queue[0] == 0u &&
+              profile.csbwin_timers[0].function == 1u &&
+              profile.csbwin_timers[0].source_index == 0u &&
+              profile.csbwin_timers[0].sequence == 31u &&
+              profile.csbwin_timers[0].time + 1u == profile.game_time &&
+              profile.csbwin_timers[1].function == DM1_EVENT_NONE &&
+              profile.csbwin_first_avail_timer == 1u &&
+              profile.csbwin_timer_sequence == 32u,
+          "TT_DOOR conversion uses Timer.cpp pool ownership");
     return failures == 0 ? 0 : 1;
 }

@@ -112,10 +112,11 @@
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
   retain bounded bytes plus FNV provenance. Runtime now admits CSBWin's full
   `MaxTimers` slot pool separately from its active `NumTimer` heap; free slots
-  do not materialize into M10 or DSA. TT_53, collision-free TT_1, and deferred
-  TT_7 CLEAR now use the source-owned atomic `DeleteTimer`/`SetTimer` slot
-  transaction. Remaining work is the exact duplicate-policy matrix and full
-  requeue semantics from a real CSBWin save corpus.
+  do not materialize into M10 or DSA. TT_53, TT_DOOR->TT_1, collision-free
+  TT_1, and deferred TT_7 CLEAR now use the source-owned atomic
+  `DeleteTimer`/`SetTimer` slot transaction. Remaining work is the exact
+  duplicate-policy matrix and full requeue semantics from a real CSBWin save
+  corpus.
 
 - 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
   handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/

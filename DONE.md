@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSBWin Timer.cpp TT_DOOR pool mutation: a source-owned
+  `ProcessTT_DOOR` conversion now retires its TT_DOOR handle and publishes the
+  TT_1 successor through `SetTimer` allocation, sequence, and heap ownership.
+  The staged event is removed if the complete source pool transaction cannot
+  commit. Focused coverage proves a conversion moves from slot 1 to slot 0.
+
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_7 pool mutation: deferred falsewall CLEAR
   now stages its +1 successor through the source `DeleteTimer`/`SetTimer`
   allocator transaction. An incomplete timer/event ownership change deletes
