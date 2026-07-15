@@ -5625,6 +5625,14 @@ static int dm2_v1_render_hud_source_font(
         !s->gdat_interface_font_rows || s->gdat_interface_font_hash == 0u) {
         return 0;
     }
+    /* skproject DRAW_STRING dispatches high-bit text through DRAW_MBCS_STR.
+     * The canonical PC G1 graphics corpus has no category-0x1c font entry,
+     * so QUERY_CHAR_METRICS returns NULL and the original consumes the byte
+     * without blitting a substitute glyph.  Keep that source-owned no-draw
+     * outcome: the ASCII dt07/0 table is not a valid replacement font. */
+    for (int glyph = 0; text[glyph] && glyph < 80; ++glyph) {
+        if ((unsigned char)text[glyph] & 0x80u) return 1;
+    }
     /* skproject/SKWIN/SkWinCore.cpp QUERY_FONT expands each dt07/0 byte
      * into three pixels in the order 0x10, 0x04, 0x01 for six rows. */
     for (int glyph = 0; text[glyph] && glyph < 80; ++glyph) {
