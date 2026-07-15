@@ -6967,7 +6967,13 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                     ground->decoded_hash !=
                         dm2_v1_gdat_scene_m11_command_pixel_hash(ground) ||
                     sky->decoded_hash !=
-                        dm2_v1_gdat_scene_m11_command_pixel_hash(sky)) {
+                        dm2_v1_gdat_scene_m11_command_pixel_hash(sky) ||
+                    ground->palette_hash !=
+                        dm2_v1_weather_pixels_hash(ground->palette16, 16, 1,
+                                                   16) ||
+                    sky->palette_hash !=
+                        dm2_v1_weather_pixels_hash(sky->palette16, 16, 1,
+                                                   16)) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                     return;

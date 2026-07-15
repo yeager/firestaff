@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 runtime scene local-palette unblock: source-required
+  DM2 dungeon rendering now accepts the strict provider-backed
+  GRAPHICSSET image plus `QUERY_GDAT_IMAGE_LOCALPAL` route when no
+  boot-owned scene command plan has been installed, and binds ceiling/floor
+  plus outdoor sky/ground palettes independently before each material blit.
+  Outdoor rendering now prefers the real `GdatSceneM11CommandPlan` when it
+  exists, so source-owned plan pixels are not replaced by a second callback
+  lookup. Verification: focused Ninja build plus CTest
+  `dm2_v1_gdat_m11_material_receipt_real_data` and
+  `dm2_v1_runtime_handoff_smoke` pass in `build-local-ninja`.
+
 - ✅ 2026-07-16 DM2 scene local-palette smoke closure: the skproject
   source-required renderer now admits the explicit asset+palette provider
   route used by focused viewport tests while live boot-owned rendering still
