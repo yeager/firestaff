@@ -8056,3 +8056,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   obtain original loader/CD-read evidence that binds a post-startup bitmap or
   object-table record to a concrete runtime consumer. Do not infer palette,
   layout, object fields, or draw behavior from the retained startup envelope.
+  - Update: the observed `$0b52` CD-read now reaches runtime as an opaque,
+    hash-bound record receipt. It is explicitly not a level/object decoder.
+    Remaining: capture a game-owned post-`$3800` consumer that identifies a
+    record boundary and semantic role before any level or object publication.

@@ -76,6 +76,23 @@ typedef struct {
     uint8_t pixels[THERON_RUNTIME_MEDIA_PIXELS];
 } Theron_RuntimeMediaSurface;
 
+/* An observed original CD_READ payload retained by runtime before any later
+ * game-owned consumer proves its level, object, palette, or visual meaning. */
+typedef struct {
+    int ready;
+    int raw_source_verified;
+    int no_semantic_promotion;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t destination;
+    size_t raw_user_data_offset;
+    size_t payload_bytes;
+    uint32_t payload_checksum;
+    size_t post_envelope_offset;
+    size_t post_envelope_bytes;
+    uint32_t post_envelope_checksum;
+} Theron_RuntimeTrack02LoaderRecord;
+
 /* Provenance for the bank and audio frame paired with decoded Track 02
  * surfaces.  This records byte-verified routing only; it does not claim a
  * decoded palette payload or playable audio stream. */
@@ -133,6 +150,7 @@ typedef struct {
     Theron_RuntimeMediaSurface stage;
     Theron_RuntimeMediaSurface soul_room;
     Theron_RuntimeMediaSurface forcefield;
+    Theron_RuntimeTrack02LoaderRecord loader_record;
     Theron_RuntimeMediaIdentity identity;
     uint64_t cache_generation;
     Theron_RuntimeLevelBankSelection level_bank;
@@ -383,6 +401,17 @@ const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
 int theron_v1_world_runtime_media_set_identity(
     Theron_V1_World *world,
     const Theron_RuntimeMediaIdentity *identity);
+int theron_v1_world_runtime_media_set_loader_record(
+    Theron_V1_World *world,
+    const char *track02_md5,
+    uint32_t record,
+    uint32_t destination,
+    size_t raw_user_data_offset,
+    size_t payload_bytes,
+    uint32_t payload_checksum,
+    size_t post_envelope_offset,
+    size_t post_envelope_bytes,
+    uint32_t post_envelope_checksum);
 int theron_v1_world_runtime_media_select_level_bank(
     Theron_V1_World *world,
     Theron_RuntimeLevelBankKind kind,

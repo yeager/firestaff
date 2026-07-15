@@ -547,6 +547,25 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
         return 0;
     }
     handoff = &profile->track02_initial_level_handoff;
+    candidate = *world;
+    if (!theron_v1_world_runtime_media_set_loader_record(
+            &candidate, profile->graphics_md5, payload_receipt.record,
+            payload_receipt.destination,
+            (size_t)payload_receipt.raw_track02_offset,
+            (size_t)payload_receipt.payload_bytes,
+            payload_receipt.payload_checksum,
+            handoff->loader_post_envelope.record_user_data_offset,
+            handoff->loader_post_envelope.byte_count,
+            handoff->loader_post_envelope.checksum)) {
+        return 0;
+    }
+    /* This is a source-only runtime handoff.  It intentionally publishes no
+     * level/object/visual state until the later loader consumer is proven. */
+    receipt.loader_record_received = 1;
+    receipt.loader_record = payload_receipt.record;
+    receipt.loader_record_raw_user_data_offset =
+        payload_receipt.raw_track02_offset;
+    receipt.loader_record_payload_checksum = payload_receipt.payload_checksum;
     memset(&route, 0, sizeof(route));
     if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
             handoff) ||
@@ -589,10 +608,11 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
         payload_level.start_dir != route.level.start_dir ||
         memcmp(payload_level.squares, route.level.squares,
                sizeof(payload_level.squares)) != 0) {
+        *world = candidate;
+        *out_receipt = receipt;
         return 0;
     }
 
-    candidate = *world;
     candidate.current_dungeon = dungeon_id;
     candidate.current_level = 0;
     candidate.levels[(int)dungeon_id - 1][0] = route.level;
