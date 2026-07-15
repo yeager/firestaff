@@ -267,7 +267,7 @@ F	0180	F0180_GROUP_StartWandering	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS
 F	180	F180_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0181	F0181_GROUP_DeleteEvents	GROUP.C	implemented-narrow	implemented_narrow	DM1 source-locked event-record scan deletes the complete C29..C41 group family only at the supplied current-map square; F0237 preserves heap repair, including a final timeline entry.
 F	181	F181_czzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0182	F0182_GROUP_StopAttacking	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0182	F0182_GROUP_StopAttacking	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;MOVESENS.C	implemented-narrow	mapped_source_verified	DM1 M10 F0182 clears four Aspect attacking bits and compacts exact-square C29..C41 reaction events; F0209 consumes its existing stopAttacking source decision
 F	182	F182_aqzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0183	F0183_GROUP_AddActiveGroup	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	183	F183_kzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

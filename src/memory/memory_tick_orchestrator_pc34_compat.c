@@ -2706,6 +2706,51 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
     }
 }
 
+int F0182_DM1_GROUP_StopAttacking_Compat(
+    struct GameWorld_Compat* world,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int aspectIndex;
+    int oldEventCount;
+    int readIndex;
+    int writeIndex = 0;
+
+    if (!world || !activeGroup || world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+    oldEventCount = world->timeline.count;
+
+    /* GROUP.C F0182:374-381 clears only MASK0x0080 in all four Aspect
+     * bytes, then delegates the square-local C29..C41 removal to F0181. */
+    for (aspectIndex = 0; aspectIndex < 4; ++aspectIndex) {
+        activeGroup->aspect[aspectIndex] &= ~0x80;
+    }
+    for (readIndex = 0; readIndex < oldEventCount; ++readIndex) {
+        const struct TimelineEvent_Compat* event =
+            &world->timeline.events[readIndex];
+
+        if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            event->mapIndex == mapIndex && event->mapX == mapX &&
+            event->mapY == mapY &&
+            event->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+            event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            continue;
+        }
+        world->timeline.events[writeIndex++] = *event;
+    }
+    world->timeline.count = writeIndex;
+    while (writeIndex < oldEventCount) {
+        memset(&world->timeline.events[writeIndex], 0,
+               sizeof(world->timeline.events[writeIndex]));
+        ++writeIndex;
+    }
+    return 1;
+}
+
 static void orch_cmd_attack_target_square_compat(
     const struct GameWorld_Compat* world,
     int direction,
@@ -9838,6 +9883,15 @@ static int orch_handle_creature_reaction_event_compat(
      * to the active-group analogue. */
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
+        return 0;
+    }
+
+    /* GROUP.C F0209 calls F0182 whenever this source decision abandons an
+     * attack.  The decision already carries that source fact; consume it
+     * before any replacement C37/C38 event is scheduled. */
+    if (behavior.stopAttacking &&
+        !F0182_DM1_GROUP_StopAttacking_Compat(
+            world, &activeGroup, ev->mapIndex, ev->mapX, ev->mapY)) {
         return 0;
     }
 
