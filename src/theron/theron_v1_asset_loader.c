@@ -55,6 +55,15 @@
 int tr_asset_parse_track03(TrAssetBundle *bundle,
                             const uint8_t *track03,
                             size_t track03_size) {
+    (void)bundle;
+    (void)track03;
+    (void)track03_size;
+    /* Retail CUEs declare tracks 03--18 as audio. "THG3" is a Firestaff
+     * marker, not an original Theron's Quest format. A captured HuC6280
+     * loader/CD route must identify an actual Track 02 tile-bank span before
+     * this API can ever return pixels to the runtime. */
+    return -1;
+
     if (!bundle || !track03 || track03_size < 24) return -1;
 
     /* Verify magic */
@@ -210,6 +219,13 @@ int tr_asset_parse_track03(TrAssetBundle *bundle,
 TrAssetResult tr_asset_parse_track04(TrAssetBundle *bundle,
                                       const uint8_t *track04,
                                       size_t track04_size) {
+    (void)bundle;
+    (void)track04;
+    (void)track04_size;
+    /* No original audio data track or loader route has been proven for this
+     * guessed format. Keep audio ownership outside the runtime. */
+    return TR_ASSET_ERR_TR04;
+
     if (!bundle || !track04 || track04_size < 16) {
         return TR_ASSET_ERR_TR04;
     }

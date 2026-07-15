@@ -7681,6 +7681,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     reject their generated bars, glyphs, portraits, compass, and stat panels.
     The known startup atlas is not promoted as a runtime UI bank; a positive
     loader/CD capture must bind that bank before any UI pixel is emitted.
+  - 2026-07-15 Track03/04 correction: legacy `THG3` tile and `THS4` audio
+    marker parsers are hard-rejected. Retail CUE provenance has only Track 02
+    as MODE1 data, so the remaining real-data job is a captured HuC6280
+    loader/CD byte-span binding for a bitmap, object, world, UI, or audio
+    consumer; marker syntax alone cannot create an atlas or playback route.
 
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and
