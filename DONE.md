@@ -17559,3 +17559,14 @@ source-window trace admission. A trace remains opaque even after independent
 original-Saturn provenance is supplied: no pixel, palette, VDP1, transform,
 decoder, or draw semantics are inferred. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus Mednafen owner/material trace collector
+
+`firestaff_nexus_v1_saturn_owner_material_trace_collector` accepts only an
+existing atomic target and a nonempty raw Mednafen debugger trace. It copies
+the target's required identity fields, adds the raw-trace FNV-1a witness, and
+writes an unauthenticated intake manifest for the atomic admission route. The
+tool does not launch an emulator, generate trace bytes, or attest original
+Saturn provenance. The atomic target now includes the Structure2 opaque-payload
+fingerprint required by that route. Verification:
+`test_nexus_v1_dgn_geometry_readiness` and direct collector compilation.

@@ -7390,3 +7390,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     only as an opaque original-Saturn receipt. It still proves neither a
     Structure2 decode nor pixel/palette/VDP1 semantics; a legal BIOS-backed
     capture with those observations remains the next blocker.
+  - 2026-07-15 collector update: `firestaff_nexus_v1_saturn_owner_material_trace_collector`
+    now packages a nonempty Mednafen debugger raw trace beside all required
+    fields copied from one atomic target, including its missing opaque-payload
+    fingerprint. It creates no raw trace and carries an explicit non-attestation
+    marker. This machine has Mednafen 1.32.1 but no local `sega_101.bin` or
+    verified Nexus media, so no authentic trace or format-derived decoder was
+    produced here.

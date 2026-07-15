@@ -22519,6 +22519,17 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_dgn_geometry_readiness
     )
 
+    # Packages a pre-recorded Mednafen debugger trace with one exact atomic
+    # owner/Structure3/Structure2 request. It deliberately has no emulator,
+    # decoder, or render dependency and cannot fabricate a capture.
+    add_executable(firestaff_nexus_v1_saturn_owner_material_trace_collector
+        probes/nexus/nexus_v1_saturn_owner_material_trace_collector.c
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_nexus_v1_saturn_owner_material_trace_collector
+            PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+
     # Retail Structure3 face-row to normal-row correspondence. The parser
     # checks only documented ordinal pairing and fixed-point unit framing;
     # it deliberately does not infer planes, surfaces, palettes, or draws.
