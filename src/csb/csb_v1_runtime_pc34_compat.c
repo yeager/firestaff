@@ -20304,11 +20304,13 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         int guard = 0;
         int material_group_occupies = 0;
         struct DM1_Event_V1 next;
+        CSB_V1_CSBWin512TimerSummary successor;
         int event_index;
 
         /* CSBWin CSBCode.cpp:6429 dispatches TT_1 to Timer.cpp:1224-1341.
          * Retain ProcessTT_1's collision-free state step and its exact
-         * +1-tick successor under the same saved TIMER/queue owner. Party
+         * +1-tick successor through Timer.cpp's DeleteTimer/SetTimer pool
+         * transaction. Party
          * damage, material-group damage, and QueueSound need source state
          * not present in this profile, so those shapes remain fail-closed. */
         if (timer->valid && !timer->truncated &&
@@ -20376,6 +20378,10 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                                     (uint8_t)next_door_state);
                 return 1;
             }
+            /* The materialized M10 dispatch runs after its source timer's
+             * saved tick. Preserve the existing runtime bridge's live clock
+             * boundary while still making SetTimer own the replacement slot. */
+            if (profile->game_time >= 0x00ffffffu) return 1;
             memset(&next, 0, sizeof(next));
             next.map_time = DM1_MAP_TIME_MAKE(
                 timer->level, profile->game_time + 1u);
@@ -20387,11 +20393,17 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             next.c_effect = timer->ubyte9;
             event_index = csb_v1_runtime_add_timeline_event(profile, &next);
             if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
-                *square = (uint8_t)((*square & (uint8_t)~0x07u) |
-                                    (uint8_t)next_door_state);
-                timer->time = profile->game_time + 1u;
-                profile->csbwin_timeline_event_queue_slot[event_index] =
-                    queue_slot;
+                successor = *timer;
+                successor.time = profile->game_time + 1u;
+                if (csb_v1_runtime_replace_dispatched_csbwin_timer(
+                        profile, queue_slot, timer_index, &successor,
+                        event_index)) {
+                    *square = (uint8_t)((*square & (uint8_t)~0x07u) |
+                                        (uint8_t)next_door_state);
+                } else {
+                    (void)dm1v1_event_delete(&profile->timeline_queue,
+                                              event_index);
+                }
             }
         }
         /* TT_1 aliases shared door animation. Invalid and collision-owned

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSBWin Timer.cpp TT_1 pool mutation: collision-free door
+  animation requeue now follows the same `DeleteTimer` then `SetTimer`
+  transaction as the source. The consumed handle becomes TT_EMPTY, the
+  successor uses the original allocator cursor and sequence, and the door
+  cell changes only after the full timer/event ownership transaction commits.
+  Focused coverage proves a nonterminal door successor moves from slot 1 to
+  slot 0 with its exact +1 source time.
+
 - ✅ 2026-07-15 DM1 F0292 auxiliary source-material gate: normal V1 shield
   borders accept only exact loaded-pixel C037/C038/C039 67x29 surfaces and
   C032 POISONED accepts only its 96x15 source surface at the C502 geometry.
