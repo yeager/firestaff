@@ -3308,6 +3308,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       source order, with no EXPOOL enlargement. Missing wings retain the
       source no-op; malformed or unavailable tails reject. Character swaps,
       skill experience, and other CHARDESC mutation remain open.
+    - 2026-07-15 DSA-info update: `STKOP_DSAInfoFetch` now reads selector,
+      state, ParameterA, and ParameterB only from a loaded compact DB3
+      type-47 record through the profile-owned dungeon. Invalid/non-DSA
+      things retain CSBWin's four `-1` result words. This is introspection
+      only: it neither resolves a master nor opens DSA execution.
     - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
       restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
       before the existing live leader-hand publication. Only the original
