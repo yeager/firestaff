@@ -1075,6 +1075,13 @@
   the encoded bytes, reverse F0417 recovery, checksum agreement, and both
   rejection paths.
 
+- 2026-07-15 DM1 SAVEUTIL F0419: original-PC34 F0435 ingress now invokes an
+  explicit DM1-owned part reader. It validates the F0420 size prefix, applies
+  exactly one F0417 inverse/checksum pass, exposes the diagnostic checksum,
+  and rejects odd, truncated, or mismatched parts before the staged save can
+  materialize. The paired focused gate covers valid source recovery,
+  checksum-mismatch diagnostics, odd lengths, and truncated bodies.
+
 - 2026-07-15 DM1 DUNGEON F0168: HoC wall inscriptions use the original PC3.4
   raw TEXTSTRING record for Visible and TextDataWordOffset before the source
   glyph decoder builds the F0107 M648/C10 material receipt. The focused

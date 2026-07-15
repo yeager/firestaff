@@ -689,15 +689,16 @@ static void write_original_pc34_fixture_event(uint8_t *dst,
     dst[9u] = (uint8_t)effect;
 }
 
-static int read_original_part(const uint8_t *bytes,
-                              size_t size,
-                              size_t *cursor,
-                              uint16_t key,
-                              uint16_t expected_checksum,
-                              uint8_t *out_plain,
-                              size_t out_capacity,
-                              size_t *out_size,
-                              uint16_t *out_actual_checksum)
+int dm1_v1_original_save_pc34_read_part_f0419(
+    const uint8_t *bytes,
+    size_t size,
+    size_t *cursor,
+    uint16_t key,
+    uint16_t expected_checksum,
+    uint8_t *out_plain,
+    size_t out_capacity,
+    size_t *out_size,
+    uint16_t *out_actual_checksum)
 {
     uint16_t byte_count;
     uint16_t actual_checksum;
@@ -2947,11 +2948,10 @@ static int import_original_pc34_global_data(
         }
     }
 
-    rc = read_original_part(bytes, size, &cursor,
-                            part_keys[SAVEGAME_PC34_PART_GLOBAL_DATA],
-                            part_checksums[SAVEGAME_PC34_PART_GLOBAL_DATA],
-                            part, sizeof(part), &part_size,
-                            &actual_checksum);
+    rc = dm1_v1_original_save_pc34_read_part_f0419(
+        bytes, size, &cursor, part_keys[SAVEGAME_PC34_PART_GLOBAL_DATA],
+        part_checksums[SAVEGAME_PC34_PART_GLOBAL_DATA], part, sizeof(part),
+        &part_size, &actual_checksum);
     if (out_report) {
         out_report->part_byte_counts[SAVEGAME_PC34_PART_GLOBAL_DATA] =
             (uint32_t)part_size;
@@ -2993,10 +2993,9 @@ static int import_original_pc34_global_data(
     }
 
     for (i = 1; i < SAVEGAME_PC34_PART_COUNT; ++i) {
-        rc = read_original_part(bytes, size, &cursor, part_keys[i],
-                                part_checksums[i],
-                                part, sizeof(part), &part_size,
-                                &actual_checksum);
+        rc = dm1_v1_original_save_pc34_read_part_f0419(
+            bytes, size, &cursor, part_keys[i], part_checksums[i], part,
+            sizeof(part), &part_size, &actual_checksum);
         if (out_report) {
             out_report->part_byte_counts[i] = (uint32_t)part_size;
             out_report->part_actual_checksums[i] = actual_checksum;

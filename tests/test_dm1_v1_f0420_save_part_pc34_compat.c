@@ -1,5 +1,6 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "memory_savegame_pc34_compat.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,8 +21,12 @@ int main(void)
     const unsigned char plain[4] = { 0x34u, 0x12u, 0x78u, 0x56u };
     unsigned char encoded[6] = {0};
     unsigned char recovered[4] = {0};
+    unsigned char malformed[5] = { 3u, 0u, 0u, 0u, 0u };
     uint16_t checksum = 0u;
     uint16_t read_checksum;
+    uint16_t actual_checksum = 0u;
+    size_t cursor = 0u;
+    size_t recovered_size = 0u;
 
     CHECK("F0420 writes length plus body",
           dm1_v1_original_save_pc34_write_part_f0420(
@@ -37,6 +42,48 @@ int main(void)
     CHECK("F0420 read contract restores source bytes",
           memcmp(recovered, plain, sizeof(plain)) == 0);
     CHECK("F0420 read/write checksum agrees", read_checksum == checksum);
+    cursor = 0u;
+    memset(recovered, 0, sizeof(recovered));
+    CHECK("F0419 reads F0420 source part",
+          dm1_v1_original_save_pc34_read_part_f0419(
+              encoded, sizeof(encoded), &cursor, 0x2a5cu, checksum,
+              recovered, sizeof(recovered), &recovered_size,
+              &actual_checksum) == SAVEGAME_PC34_OK);
+    CHECK("F0419 consumes complete valid part", cursor == sizeof(encoded));
+    CHECK("F0419 returns decoded source bytes",
+          recovered_size == sizeof(plain) &&
+          memcmp(recovered, plain, sizeof(plain)) == 0);
+    CHECK("F0419 reports source checksum", actual_checksum == checksum);
+    cursor = 0u;
+    memset(recovered, 0, sizeof(recovered));
+    recovered_size = 0u;
+    actual_checksum = 0u;
+    CHECK("F0419 rejects checksum mismatch after decode",
+          dm1_v1_original_save_pc34_read_part_f0419(
+              encoded, sizeof(encoded), &cursor, 0x2a5cu,
+              (uint16_t)(checksum ^ 1u), recovered, sizeof(recovered),
+              &recovered_size, &actual_checksum) ==
+              SAVEGAME_PC34_ERROR_BAD_CHECKSUM);
+    CHECK("F0419 mismatch remains diagnostic-only",
+          cursor == sizeof(encoded) && recovered_size == sizeof(plain) &&
+          actual_checksum == checksum &&
+          memcmp(recovered, plain, sizeof(plain)) == 0);
+    cursor = 0u;
+    recovered_size = 99u;
+    CHECK("F0419 rejects odd source span",
+          dm1_v1_original_save_pc34_read_part_f0419(
+              malformed, sizeof(malformed), &cursor, 1u, 0u, recovered,
+              sizeof(recovered), &recovered_size, NULL) ==
+              SAVEGAME_PC34_ERROR_BAD_SIZE);
+    CHECK("F0419 only consumes malformed length prefix",
+          cursor == 2u && recovered_size == 0u);
+    malformed[0] = 4u;
+    cursor = 0u;
+    CHECK("F0419 rejects truncated source span",
+          dm1_v1_original_save_pc34_read_part_f0419(
+              malformed, sizeof(malformed), &cursor, 1u, 0u, recovered,
+              sizeof(recovered), &recovered_size, NULL) ==
+              SAVEGAME_PC34_ERROR_BAD_SIZE);
     CHECK("F0420 rejects odd byte counts",
           dm1_v1_original_save_pc34_write_part_f0420(
               encoded, sizeof(encoded), plain, 3u, 1u, &checksum) < 0);
