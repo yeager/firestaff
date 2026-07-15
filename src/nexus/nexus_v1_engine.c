@@ -2503,6 +2503,11 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
         packet.vdp1_command, packet.vdp1_command_size, &receipt.command) == 0;
     receipt.texture_primitive_observed = receipt.command_format_parsed &&
         receipt.command.texture_command;
+    receipt.texture_format_framed = receipt.texture_primitive_observed &&
+        receipt.command.colour_mode_documented &&
+        receipt.command.texture_byte_count > 0U;
+    receipt.texture_span_size_matches_command = receipt.texture_format_framed &&
+        packet.texture_span_size == (int)receipt.command.texture_byte_count;
     /* Command-table framing never proves payload byte order, VDP1 colour
      * interpretation, palette/CLUT relation, or host draw behavior. */
     receipt.valid = receipt.command_format_parsed;
@@ -2563,6 +2568,10 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
     out_receipt->vdp1_command_format_framed =
         nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
             engine, &out_receipt->vdp1_command_framing) == 1;
+    out_receipt->vdp1_texture_format_framed =
+        out_receipt->vdp1_command_format_framed &&
+        out_receipt->vdp1_command_framing.texture_format_framed &&
+        out_receipt->vdp1_command_framing.texture_span_size_matches_command;
 
     /* The opaque capture may be source-bound, but the Saturn codecs and VDP1
      * command meaning are not known. Keep every renderer consumer fail-closed. */

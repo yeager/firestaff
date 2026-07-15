@@ -308,6 +308,8 @@ typedef struct {
     int complete_vdp1_command_record;
     int command_format_parsed;
     int texture_primitive_observed;
+    int texture_format_framed;
+    int texture_span_size_matches_command;
     Nexus_V1_Vdp1TextureCommand command;
     int pixel_format_proven;
     int palette_format_proven;
@@ -337,6 +339,7 @@ typedef struct {
     int normal_culling_state_bound;
     int vdp1_command_bound;
     int vdp1_command_format_framed;
+    int vdp1_texture_format_framed;
     Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt vdp1_command_framing;
     int texture_decode_unproven;
     int palette_decode_unproven;

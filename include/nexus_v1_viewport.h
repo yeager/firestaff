@@ -30,6 +30,7 @@ typedef struct {
     int structure3_source_geometry_bound;
     int structure3_source_no_draw;
     int structure3_runtime_vdp1_command_framed;
+    int structure3_runtime_vdp1_texture_format_framed;
     Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt
         structure3_runtime_vdp1_command;
     /* A package-owned Structure3 face/vertex/normal packet may be consumed
