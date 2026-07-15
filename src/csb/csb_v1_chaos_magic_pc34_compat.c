@@ -984,6 +984,35 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         variables[v] = w;
         variable_state[v] = 1u;
         break;
+    case 60u: /* STKOP_MonsterFetch */
+        /* CSBWin DSA.cpp:3992-4048 consumes Thing, DSAVARS destination, and
+         * requested count. It initializes the exact eight DB4 result words,
+         * then copies at most eight into the caller action's local bank. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if (v > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v) {
+            break;
+        }
+        {
+            uint32_t monster_values[8] = { 0u, UINT32_MAX, 0u, 0u,
+                                           0u, 0u, 0u, 0u };
+            if (w <= UINT16_MAX) {
+                if (!context->get_monster_info ||
+                    !context->get_monster_info(context->dungeon_user,
+                                                (uint16_t)w,
+                                                monster_values)) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+            }
+            if (count > 8u) count = 8u;
+            for (sv = 0; sv < (int32_t)count; ++sv) {
+                variables[v + (uint32_t)sv] = monster_values[sv];
+                variable_state[v + (uint32_t)sv] = 1u;
+            }
+        }
+        break;
     case 130u: /* STKOP_DSAInfoFetch, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:2439-2471 returns the four DB3 type-47 fields or
          * four -1 words for every invalid indirect object. */
@@ -1829,6 +1858,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.excell_user = runner->excell_user;
     context.get_generator_delay = runner->get_generator_delay;
     context.set_generator_delay = runner->set_generator_delay;
+    context.get_monster_info = runner->get_monster_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

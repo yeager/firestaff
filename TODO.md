@@ -3258,6 +3258,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       generator-free locations retain the source no-op/`-1` behavior, while
       malformed chains reject. Positive original DSA-bearing save-corpus
       capture remains required.
+    - 2026-07-15 monster-query update: source `STKOP_MonsterFetch` now reads
+      only a loaded original DB4 group through the decoded Thing handle and
+      copies CSBWin's eight result words into the authenticated action-local
+      DSAVARS bank: group count, type, four hit points, feature-gated flags,
+      and alternate graphic. The invisible/size-four/unique/poison bits use
+      the authenticated Extended Features flags exactly as CSBWin `DB4` does.
+      Invalid/non-DB4 Thing handles retain the original zero/`-1` result;
+      invalid DSAVARS spans are source no-ops. `MonsterStore` remains open
+      pending a complete transactional DB4 write route and original-save
+      corpus capture.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

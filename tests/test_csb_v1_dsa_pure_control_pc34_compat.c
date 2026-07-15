@@ -22,6 +22,7 @@ static int excell_flags_enabled;
 static int generator_delay_enabled;
 static int generator_delay_stored;
 static int generator_delay_store_count;
+static int monster_info_enabled;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -98,6 +99,22 @@ static int set_generator_delay(void *user, uint32_t location, int delay)
     return 1;
 }
 
+static int get_monster_info(void *user, uint16_t thing,
+                            uint32_t out_values[8])
+{
+    (void)user;
+    if (!monster_info_enabled || !out_values || thing != 0x0123u) return 0;
+    out_values[0] = 3u;
+    out_values[1] = 17u;
+    out_values[2] = 101u;
+    out_values[3] = 102u;
+    out_values[4] = 103u;
+    out_values[5] = 104u;
+    out_values[6] = 13u;
+    out_values[7] = 5u;
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -159,6 +176,7 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_generator_delay = get_generator_delay;
         context.set_generator_delay = set_generator_delay;
     }
+    if (monster_info_enabled) context.get_monster_info = get_monster_info;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -277,6 +295,14 @@ int main(void)
     };
     uint16_t generator_delay_store_then_bad[] = {
         0x0686u, 91u, 0x0686u, 0x0c82u, 0x088bu, 0x0000u
+    };
+    uint16_t monster_fetch[] = {
+        0x0686u, 0x0123u, 0x0686u, 0u, 0x0686u, 8u, 0x0f0bu,
+        0x0686u, 2u, 0x098bu, 0x000du
+    };
+    uint16_t monster_fetch_bad_span[] = {
+        0x0686u, 0x0123u, 0x0686u, 99u, 0x0686u, 2u, 0x0f0bu,
+        0x0686u, 99u, 0x098bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -495,6 +521,21 @@ int main(void)
               generator_delay_store_count == 0,
           "GeneratorDelay! rejects a later unsupported source word without DB3 mutation");
     generator_delay_enabled = 0;
+    monster_info_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, monster_fetch,
+              (int)(sizeof(monster_fetch) / sizeof(monster_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 101u && execution.stack_depth == 0u,
+          "Monster@ copies real DB4 result words into source DSAVARS order");
+    parameters[0] = 77u;
+    check(run(&state, &action, monster_fetch_bad_span,
+              (int)(sizeof(monster_fetch_bad_span) /
+                    sizeof(monster_fetch_bad_span[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0u && execution.stack_depth == 0u,
+          "Monster@ keeps CSBWin's out-of-bank local span as a no-op with undefined zero");
+    monster_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
