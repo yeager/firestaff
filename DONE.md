@@ -17074,3 +17074,8 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   turn from the legacy helper. Opposite turns now require the live RNG form,
   which preserves F0205 one-step correction and F0206's per-creature gates.
   Source: ReDMCSB `GROUP.C` F0205/F0206.
+- ✅ 2026-07-15 DM1 GROUP F0207: removed non-source projectile substitutions.
+  Lord Order and Grey Lord now reject original BUG0_13's undefined projectile
+  Thing without consuming RNG, and the unproven Trolin spell palette is gone.
+  Verified original projectile types remain unchanged. Source: ReDMCSB
+  `GROUP.C` F0207 BUG0_13.

@@ -7051,3 +7051,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now require the original RNG state. Remaining work is to route all M10
   C37-C41 turn owners through the RNG forms and retire calls to the legacy
   direct-only helper where a source random turn may occur.
+- 2026-07-15 DM1 GROUP F0207 follow-up: source-defined projectile selection
+  no longer substitutes a fireball for BUG0_13's undefined C25/C26 Thing or
+  an invented Trolin palette. Remaining work is live M10 F0212 consumption of
+  the verified projectile plan and true attack-sound ownership.
