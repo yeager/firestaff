@@ -225,6 +225,9 @@ int main(void)
         1);
 
     squareFirstThings[0] = staticDoor;
+    ok &= expect_thing("F0175 follows raw static chain to first C04 group",
+        dm1_v1_group_get_thing_f0175_pc34(&dungeon, &things, 0, 0, 0),
+        firstGroup);
     ok &= expect_thing("F0162 skips static door/text/sensor records",
         F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
         firstGroup);
@@ -235,6 +238,9 @@ int main(void)
     squareFirstThings[0] = staticDoor;
     rawSensor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawSensor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    ok &= expect_thing("F0175 does not invent a group after static records",
+        dm1_v1_group_get_thing_f0175_pc34(&dungeon, &things, 0, 0, 0),
+        THING_ENDOFLIST);
     ok &= expect_thing("F0162 does not fabricate an object after static records",
         F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
         THING_ENDOFLIST);

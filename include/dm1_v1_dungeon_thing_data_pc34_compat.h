@@ -39,6 +39,14 @@ int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
     unsigned short thing,
     unsigned short *outAttributes);
 
+/* ReDMCSB GROUP.C F0175: first C04 group in a loaded square Thing chain. */
+unsigned short dm1_v1_group_get_thing_f0175_pc34(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void);
 
 #ifdef __cplusplus
