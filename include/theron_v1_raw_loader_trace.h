@@ -340,7 +340,10 @@ typedef struct {
     uint16_t call_pc;
     uint32_t call_physical_pc;
     uint16_t call_target;
+    uint16_t return_instruction_pc;
+    uint32_t return_instruction_physical_pc;
     int continuation_execution_proven;
+    int continuation_termination_instruction_proven;
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt;
 

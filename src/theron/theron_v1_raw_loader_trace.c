@@ -789,9 +789,12 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
     unsigned int logical_pc;
     unsigned int physical_pc;
     unsigned int target;
+    unsigned int return_instruction_pc;
+    unsigned int return_instruction_physical_pc;
     int consumed;
     int transfer_seen = 0;
     unsigned int matching_call_count = 0u;
+    unsigned int matching_return_count = 0u;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!handoff || !capture || !out ||
@@ -821,22 +824,42 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
         consumed = 0;
         if (sscanf(line,
                    "main_ram_loader_jsr logical_pc=%x physical_pc=%x target=%x a=%*x x=%*x y=%*x%n",
-                   &logical_pc, &physical_pc, &target, &consumed) != 3 ||
-            consumed != (int)length || target != transfer.destination_address) {
+                   &logical_pc, &physical_pc, &target, &consumed) == 3 &&
+            consumed == (int)length && target == transfer.destination_address) {
+            if (++matching_call_count != 1u || logical_pc > UINT16_MAX ||
+                physical_pc < 0x1f0000u || physical_pc >= 0x1f8000u) {
+                return 0;
+            }
+            out->call_pc = (uint16_t)logical_pc;
+            out->call_physical_pc = physical_pc;
+            out->call_target = (uint16_t)target;
             continue;
         }
-        if (++matching_call_count != 1u || logical_pc > UINT16_MAX ||
-            physical_pc < 0x1f0000u || physical_pc >= 0x1f8000u) {
+        if (matching_call_count == 0u) continue;
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_rts logical_pc=%x physical_pc=%x%n",
+                   &return_instruction_pc, &return_instruction_physical_pc,
+                   &consumed) != 2 || consumed != (int)length) {
+            continue;
+        }
+        if (++matching_return_count != 1u || return_instruction_pc > UINT16_MAX ||
+            return_instruction_physical_pc < 0x1f0000u ||
+            return_instruction_physical_pc >= 0x1f8000u ||
+            return_instruction_pc < transfer.destination_address ||
+            (size_t)(return_instruction_pc - transfer.destination_address) >=
+                transfer.byte_count) {
             return 0;
         }
-        out->call_pc = (uint16_t)logical_pc;
-        out->call_physical_pc = physical_pc;
-        out->call_target = (uint16_t)target;
+        out->return_instruction_pc = (uint16_t)return_instruction_pc;
+        out->return_instruction_physical_pc = return_instruction_physical_pc;
     }
-    if (!transfer_seen || matching_call_count != 1u) return 0;
+    if (!transfer_seen || matching_call_count != 1u ||
+        matching_return_count != 1u) return 0;
     out->valid = 1;
     out->transfer = transfer;
     out->continuation_execution_proven = 1;
+    out->continuation_termination_instruction_proven = 1;
     out->level_or_object_semantics_proven = 0;
     return 1;
 }

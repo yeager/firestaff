@@ -18643,6 +18643,19 @@ Verification: focused descriptor probe validates the byte span plus malformed
 MODE1/zero-selector rejection; `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 copied-continuation termination receipt
+
+The instrumented Mednafen main-RAM loader trace now emits HuC6280 RTS rows.
+Continuation admission requires one source-bound `$3c80` TII, a later JSR to
+its exact destination, and exactly one RTS whose PC lies inside the copied
+destination span. The capture script reports RTS count for acquisition. This
+proves only that original copied code reaches a termination instruction; it
+does not observe a return target or promote level, object, palette, bitmap,
+tile, command, or rendering semantics. Verification: Ninja focused targets,
+`test_theron_rendering` 18/18, `test_theron_v1_startup_save_resume_pc34`
+258/258, patch-shape test skip-cleans without `MEDNAFEN_SOURCE`, and capture
+script contract test passes.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
