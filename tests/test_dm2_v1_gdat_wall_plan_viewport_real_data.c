@@ -249,6 +249,55 @@ int main(void)
         goto done;
     }
     {
+        static const int expected_squares[] = {
+            DM2_SQ_D0R, DM2_SQ_D0L,
+            DM2_SQ_D1L, DM2_SQ_D1R, DM2_SQ_D1C,
+            DM2_SQ_D2L, DM2_SQ_D2R, DM2_SQ_D2C,
+            DM2_SQ_D3L, DM2_SQ_D3R
+        };
+        static const int expected_passes[] = {
+            9, 11, 12, 13, 14, 15, 16, 17, 18, 19
+        };
+        DM2_V1_ViewportState order_viewport;
+        DM2_V1_WallPanelRenderPlan order_plan;
+        uint8_t order_framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+        memset(order_framebuffer, 0, sizeof(order_framebuffer));
+        dm2_v1_viewport_init(&order_viewport, order_framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &order_viewport, 1, graphicsset, scene_plan.command_hash,
+            scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+            scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            scene_plan.ambient_darkness);
+        if (!dm2_v1_viewport_build_wall_panel_render_plan(
+                &order_viewport, &order_plan) ||
+            order_plan.panel_count != (int)(sizeof(expected_squares) /
+                                             sizeof(expected_squares[0]))) {
+            fputs("FAIL: source wall pass plan was incomplete\n", stderr);
+            failures = 1;
+            goto done;
+        }
+        for (size_t i = 0; i < sizeof(expected_squares) / sizeof(expected_squares[0]);
+             ++i) {
+            if (order_plan.panels[i].view_square != expected_squares[i] ||
+                order_plan.panels[i].render_step != expected_passes[i] ||
+                dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(
+                    expected_squares[i]) != expected_passes[i]) {
+                fputs("FAIL: M11 wall plan diverged from SKProject table1d7029\n",
+                      stderr);
+                failures = 1;
+                goto done;
+            }
+        }
+        if (dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(DM2_SQ_D3C) >= 0 ||
+            dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(DM2_SQ_D0C) >= 0) {
+            fputs("FAIL: a non-geometry center cell was promoted to DRAW_WALL\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
+    }
+    {
         static const int side_squares[] = {
             DM2_SQ_D3L, DM2_SQ_D3R, DM2_SQ_D2L, DM2_SQ_D2R
         };

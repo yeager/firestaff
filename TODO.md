@@ -7201,6 +7201,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     canonical route covers the observed nested RAW4 grammar and fails closed
     for an unproved global-clip branch. Remaining: live movement/light
     clipping, complete source cell ordering, and dynamic tile/object passes.
+  - 2026-07-15 update: stationary `DRAW_WALL` now follows SKProject
+    `DM2_DRAW_DUNGEON_TILES`' exact `table1d7029` cell scheduler rather than
+    the former DM1-like depth loop. The admitted wall cells are consumed in
+    source pass order `11,10,7,8,6,4,5,3,1,2`; D3C and D0C remain unavailable
+    because Firestaff has no source `DRAW_WALL` geometry for those centers.
+    This proves only the wall subpass. The tile-type branches that interleave
+    doors, creatures, static objects, pits, and teleporters still need real
+    per-cell records.
   - 2026-07-15 update: moving source-required frames now reject the cached
     stationary wall plan. `DM2_DRAW_WALL` changes the signed RAW4 request by
     the live `table1d6b15[iViewportCell]` distance; until that dynamic RAW4
