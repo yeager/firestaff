@@ -831,6 +831,8 @@ typedef struct {
     int gdat_scene_weather_consumed_count;
     const DM2_V1_WeatherRendererReceipt *gdat_weather_renderer_receipt;
     uint8_t gdat_weather_renderer_graphicsset;
+    uint32_t gdat_weather_renderer_consumed_hash;
+    unsigned int gdat_weather_renderer_consumed_command_count;
     int asset_weather_drawn_count;
     int asset_teleporter_drawn_count;
     int gdat_sprite_palette_consumed_count;
