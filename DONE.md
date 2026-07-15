@@ -17727,3 +17727,14 @@ directly and rejects missing/mismatched ownership rather than re-querying
 GDAT or using a fallback. Verification: `dm2_v1_g1_scene_viewport_material_gate`
 proves a direct handoff renders with zero asset/palette callback calls;
 `dm2_v1_g1_scene_creature_gdat_real_data` proves the canonical media path.
+
+# ✅ 2026-07-15 DM2 direct G1 GDAT plane and wall presentation
+
+M10 now consumes the boot-owned `GRAPHICSSET` plans selected by skproject's
+`UPDATE_GFXSET`: `DRAW_DUNGEON_GRAPHIC` consumes the validated floor/ceiling
+700/701 transaction and `DM2_DRAW_WALL` consumes only the complete matching
+wall command plan. A G1 control-hash change detaches both plan types. In
+source-required mode, no missing/stale plan can fall through to a second GDAT
+asset or palette lookup. Verification: direct canonical-data runs of
+`test_dm2_v1_gdat_scene_plan_viewport_real_data` and
+`test_dm2_v1_gdat_wall_plan_viewport_real_data` pass.

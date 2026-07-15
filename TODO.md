@@ -4705,6 +4705,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     ownership remains a blocked no-draw. Remaining scene work is other
     `c_record` families and visible-square selection beyond the bounded DB4
     route.
+  - 2026-07-15 update: M10 now consumes G1-selected `GRAPHICSSET` floor,
+    ceiling, and wall plans directly. `DRAW_DUNGEON_GRAPHIC` keeps the
+    source-owned 700/701 plane transaction, while `DM2_DRAW_WALL` accepts
+    only a complete wall command plan bound to the same live
+    `UPDATE_GFXSET`/`MapGraphicsStyle` control hash. A changed control
+    transaction detaches both plans; missing, stale, or incomplete plans are
+    blocked before an asset callback can resolve a replacement. Remaining
+    render work is source-owned plans for the other dungeon material families
+    and broader real save/runtime coverage.
   - 2026-07-14 update: creature-atlas admission now requires the SKProject `GET_CREATURE_ANIMATION_FRAME` raw-table triad (`dtRaw8/FB`, `dtRaw7/FC`, `dtRaw7/FD`) to coexist for one real `CREATURES` index. The receipt retains the complete-index mask and hash; isolated table sightings cannot promote animation readiness. Remaining creature work is decoding the selected command/sequence semantics into the live frame choice. In particular, the dynamic route still needs the source-owned mutable sequence state, random branch, and AI/static classification; the bounded direct-DB4 route may not fabricate any of those fields.
   - 2026-07-14 update: the V5 dynamic-table decoder now reads one complete real `CREATURES/type` `FB` command row, `FC` terminal sequence walk, and `FD` directional image id only after a GDAT-backed AI definition classifies the type as non-static. Its focused canonical-media test uses the SKProject initial `iAnimInfo=0xffff` sentinel and records no pixels or generated state; it skips when the supplied variant has no admitted source AI classification. Remaining work is binding authentic mutable `iAnimInfo` and command state from a live original creature context; the static DB4 route remains frame-zero-only and cannot borrow this dynamic receipt.
   - 2026-07-14 update: runtime now carries an admitted live V5 receipt from

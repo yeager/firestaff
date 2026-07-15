@@ -334,6 +334,31 @@ int main(void)
             failures = 1;
         }
     }
+    /* UPDATE_GFXSET is a single G1 transaction.  A wall plan retained from
+     * the old control hash must be detached before M10 can query any fallback
+     * provider or draw a stale GRAPHICSSET panel. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash,
+        scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+        scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+        scene_plan.ambient_darkness);
+    dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &wall_plan);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash ^ 1u,
+        scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+        scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+        scene_plan.ambient_darkness);
+    dm2_v1_render_walls(&viewport);
+    if (viewport.gdat_wall_material_plan != NULL ||
+        viewport.asset_wall_drawn_count != 0 ||
+        (viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u) {
+        fputs("FAIL: stale G1 wall plan did not detach before M10 draw\n", stderr);
+        failures = 1;
+    }
     memset(&trace, 0, sizeof(trace));
     trace.loader = &loader;
     trace.graphicsset = graphicsset;
@@ -350,7 +375,8 @@ int main(void)
         scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
         scene_plan.ambient_darkness);
     dm2_v1_render_walls(&viewport);
-    if (viewport.asset_wall_drawn_count != 0 ||
+    if (trace.fetch_calls != 0 || trace.palette_calls != 0 ||
+        viewport.asset_wall_drawn_count != 0 ||
         viewport.fallback_wall_drawn_count != 0 ||
         viewport.last_dungeon_wall_material_consumed_mask != 0u ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) ==
