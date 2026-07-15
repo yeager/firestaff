@@ -1,9 +1,10 @@
 # Firestaff TODO - Open Work
 
 - 2026-07-15 DM1 DUNGEON F0158 follow-up: the raw PC3.4 WEAPON.Type to
-  original G0238 WeaponInfo bridge is available. Remaining work is to route
-  the separately owned live F0312/F0294 callers through it. Do not derive a
-  WeaponInfo row from a decoded mirror or accept a Type outside G0238.
+  original G0238 WeaponInfo bridge now owns the F0294 raw-slot compatibility
+  gate. Remaining work is to route the separately owned live F0312 caller
+  and M11 champion-slot handoff through it. Do not derive a WeaponInfo row
+  from a decoded mirror or accept a Type outside G0238.
 
 - 2026-07-15 DM1 DUNGEON F0168 follow-up: the HoC wall-inscription consumer
   reads raw PC3.4 TEXTSTRING visible/offset fields through F0156 before

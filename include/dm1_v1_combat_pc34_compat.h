@@ -227,6 +227,18 @@ int dm1_wound_defense(const DM1_CombatState* s, int champIdx, int woundIdx, int 
 /* ── Champion attributes ──────────────────────────────────────────── */
 int dm1_weapon_info_pc34(int weaponType, DM1_WeaponInfo* outInfo);
 int dm1_weapon_info_class_pc34(int weaponType);
+
+/*
+ * ReDMCSB AMMO.C F0294.  The two values are champion inventory-slot THINGs
+ * from a loaded PC3.4 dungeon; their WEAPON.Type rows are read through
+ * DUNGEON.C F0158 before their G0238 classes are compared.
+ */
+struct DungeonThings_Compat;
+int dm1_champion_ammunition_compatible_f0294_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short weaponThing,
+    unsigned short ammunitionThing);
+
 int dm1_champion_f0312_skill_level_bonus_pc34(int weaponClass,
                                               int f0303SwingLevel,
                                               int f0303ThrowLevel,
