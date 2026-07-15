@@ -3486,6 +3486,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This is a failure-shaped static path, not evidence of a PRS3 end token or
     external decoder status. A genuine ordered Saturn trace must still bind
     any terminal path to a specific MENU.BPK stream.
+  - The branch-local source debit is now source-proven: nonzero control uses
+    `ADD #-1,R14` before one direct byte read, while zero control uses
+    `ADD #-2,R14` before its two adjacent reads. This proves only the bounded
+    source-consumption difference. It does not identify tokens, fields,
+    output/history ownership, palette use, pixels, or a decoder rule.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
