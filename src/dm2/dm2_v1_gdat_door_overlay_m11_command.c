@@ -310,8 +310,8 @@ static int bind_door_panel_geometry(
 
 /* SKWINSPX v0/skglobal.cpp glbTabYAxisDistance and
  * v4/SkWinCore.cpp DRAW_DOOR: D0/D1/D2/D3 center cells are 0/3/6/11.
- * DRAW_DOOR starts with stretch 0x40 and light palette 0, selecting
- * image y-distance-1 except D0, which explicitly selects image zero. */
+ * The initial 0x40 stretch is overridden for D0 by the source's mandatory
+ * image-zero branch (SkWinCore.cpp:46431-46441), which uses 0x71. */
 static int resolve_draw_door_distance(int view_square,
                                       uint8_t *out_distance,
                                       uint8_t *out_stretch,
@@ -327,7 +327,7 @@ static int resolve_draw_door_distance(int view_square,
     default: return 0;
     }
     *out_distance = distance;
-    *out_stretch = 0x40u;
+    *out_stretch = distance == 0u ? 0x71u : 0x40u;
     *out_light = 0u;
     return 1;
 }
@@ -337,6 +337,47 @@ static uint8_t draw_door_distance_stretch(uint8_t distance)
     /* kskval1.h tlbDistanceStretch = { 0x60, 0x40, 0x2b, 0x1c, 0x13 }. */
     static const uint8_t stretch[] = { 0x60u, 0x40u, 0x2bu, 0x1cu, 0x13u };
     return distance < sizeof(stretch) ? stretch[distance] : 0u;
+}
+
+static int command_draw_controls_valid(
+    const DM2_V1_GdatDoorOverlayM11Command *command)
+{
+    uint8_t distance;
+    uint8_t stretch;
+    uint8_t light;
+
+    if (!command || command->kind != DM2_V1_GDAT_DOOR_PANEL ||
+        !resolve_draw_door_distance(command->view_square, &distance,
+                                    &stretch, &light)) {
+        return 0;
+    }
+    if (command->draw_distance != distance) return 0;
+    if (command->field == (distance == 0u ? 0u : distance - 1u)) {
+        return command->stretch_dual == stretch &&
+               command->light_palette == light;
+    }
+    /* DRAW_DOOR retries DOORS/image 0 only after the selected distance image
+     * cannot load. D0 already selects image zero through the first branch. */
+    return distance != 0u && command->field == 0u &&
+           command->stretch_dual == draw_door_distance_stretch(distance) &&
+           command->light_palette == distance;
+}
+
+int dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *plan)
+{
+    if (!plan || !plan->valid || plan->command_count == 0u ||
+        plan->command_count > DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX) {
+        return 0;
+    }
+    for (uint8_t i = 0u; i < plan->command_count; ++i) {
+        const DM2_V1_GdatDoorOverlayM11Command *command = &plan->commands[i];
+        if (command->kind == DM2_V1_GDAT_DOOR_PANEL &&
+            !command_draw_controls_valid(command)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 void dm2_v1_gdat_door_overlay_m11_command_plan_free(

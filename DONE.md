@@ -17545,6 +17545,19 @@ the original palette-transform implementation. The renderer therefore cannot
 mistake an IMG3 local palette for source lighting or substitute a visual.
 Verification: canonical-PC-G1 `dm2_v1_gdat_door_overlay_plan_real_data`.
 
+# ✅ 2026-07-15 DM2 DRAW_DOOR D0 stretch-control receipt
+
+The source-owned DM2 door M11 command now reproduces skproject
+`DM2_DRAW_DOOR`'s mandatory D0 image-zero branch: the D0 `DOORS/0` panel
+uses `iStretchDual=0x71`, not the initial `0x40` used before the branch.
+Before a source-required viewport consumes a door transaction it rechecks
+every panel's observed distance/image/stretch/light tuple. An altered D0
+stretch, or an unsupported field-zero distance retry, blocks the full door
+pass rather than rendering the right pixels with a stale transform. This is
+only a source-control and receipt repair; the unresolved nonzero
+light-palette transform remains fail-closed. Verification:
+canonical-PC-G1 `dm2_v1_gdat_door_overlay_plan_real_data`.
+
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer

@@ -73,6 +73,10 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_DoorRenderPlan *door_plan,
     DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan);
+/* Verifies the DRAW_DOOR distance/image/stretch/light control tuple before
+ * a source-owned M11 plan reaches the viewport. */
+int dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
 void dm2_v1_gdat_door_overlay_m11_command_plan_free(
     DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
 

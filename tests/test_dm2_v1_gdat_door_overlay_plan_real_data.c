@@ -136,7 +136,7 @@ int main(void)
         material_plan.commands[0].door_state != 4 ||
         material_plan.commands[0].door_open_pct != 50 ||
         material_plan.commands[0].draw_distance != 0u ||
-        material_plan.commands[0].stretch_dual != 0x40u ||
+        material_plan.commands[0].stretch_dual != 0x71u ||
         material_plan.commands[0].light_palette != 0u ||
         !material_plan.commands[0].rect_number ||
         !material_plan.commands[0].rect_width ||
@@ -152,7 +152,9 @@ int main(void)
         material_plan.commands[0].color_key != source_color_key ||
         material_plan.commands[0].no_frames != source_no_frames ||
         !material_plan.commands[0].palette_hash || !material_plan.commands[2].palette_hash ||
-        !material_plan.commands[3].palette_hash) goto fail;
+        !material_plan.commands[3].palette_hash ||
+        !dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
+            &material_plan)) goto fail;
     door_plan.doors[0].door_open_pct = 75;
     if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
                                                           &changed_plan) ||
@@ -210,6 +212,29 @@ int main(void)
             vertical_plan.commands[0].rect_height ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&vertical_plan);
+    /* Source D0 always chooses DOORS image zero through the 0x71 stretch
+     * branch. The M11 consumer must reject a stale initial-0x40 receipt. */
+    {
+        DM2_V1_GdatDoorOverlayM11CommandPlan altered_plan = material_plan;
+        altered_plan.commands[0].stretch_dual = 0x40u;
+        if (dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
+                &altered_plan)) goto fail;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+        viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        bind_scene_control(&viewport);
+        dm2_v1_viewport_set_asset_provider(&viewport, static_fetch,
+                                           &fallback_fetches);
+        dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette,
+                                                    NULL);
+        dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport,
+                                                             &altered_plan);
+        dm2_v1_render_doors(&viewport);
+        if ((viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) goto fail;
+    }
     /* DRAW_DOOR opens horizontally by halving one real DOORS image and
      * submitting right then left RAW4 destinations. Both commands must be
      * present and reach the viewport together. */

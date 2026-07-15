@@ -4247,6 +4247,16 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
         return;
     }
+    if (s->source_materials_required &&
+        s->gdat_door_overlay_material_plan &&
+        !dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
+            s->gdat_door_overlay_material_plan)) {
+        /* DRAW_DOOR chooses its image, stretch and light tuple before any
+         * panel/frame draw. A mismatched M11 receipt is not source material. */
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+        return;
+    }
     if (s->source_materials_required) {
         for (int square = 0; square < DM2_SQ_COUNT; ++square) {
             const DM2_ViewSquare *vs = &s->squares[square];
