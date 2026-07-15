@@ -10,9 +10,7 @@
  *   ReDMCSB OBJECT.C    — object/projectile draw (F0841-F0843)
  *   Saturn VDP1 SDK     — local coord system, quad cmd, texture
  *
- * Deterministic fallback rule (Phase 4 mandate):
- *   Any texture/model that fails to load renders as flat-color
- *   placeholder (palette entry 7 = mid-gray).  No crashes. */
+ * Missing or unproven texture material is no-draw. */
 
 #include "nexus_v1_rasterizer.h"
 #include <string.h>
@@ -47,7 +45,7 @@ void nexus_fb_init(Nexus_Framebuffer *fb) {
     fb->palette[1]  = 0xFF1A1A2EU;  fb->palette[2]  = 0xFF16213EU;
     fb->palette[3]  = 0xFF0F3460U;  fb->palette[4]  = 0xFF533483U;
     fb->palette[5]  = 0xFF404040U;  fb->palette[6]  = 0xFF606060U;
-    fb->palette[7]  = 0xFF808080U;  /* fallback flat-color */
+    fb->palette[7]  = 0xFF808080U;
     fb->palette[8]  = 0xFF3C3C3CU;  fb->palette[9]  = 0xFF2A2A2EU;
     fb->palette[10] = 0xFF8B4513U; fb->palette[11] = 0xFF556B2FU;
     fb->palette[12] = 0xFFB22222U; fb->palette[13] = 0xFF4169E1U;
@@ -285,9 +283,8 @@ void nexus_raster_quad_tex(Nexus_Framebuffer *fb,
     const uint32_t *tex_palette)
 {
     if (!fb || !cam) return;
-    /* Deterministic fallback: invalid texture params → flat-shaded */
+    /* Unverified material must not become a flat-color substitute. */
     if (!tex_data || tex_w <= 0 || tex_h <= 0 || !tex_palette) {
-        nexus_raster_quad(fb, v0, v1, v2, v3, cam);
         return;
     }
     nexus_raster_triangle_tex(fb, v0, v1, v2, cam,

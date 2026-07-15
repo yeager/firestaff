@@ -3309,6 +3309,10 @@ real-data-present synthetic fallback candidate.
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
+  no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
+  a substitute flat-material path.
+
 - 2026-07-15 Nexus STABG.BIN: source bytes are discovered but its Saturn
   surface framing remains unproven. It is intentionally unavailable; derive a
   decoder only from original capture/code evidence.
