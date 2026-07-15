@@ -3387,6 +3387,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       water/attribute/talent rules; publication waits for complete bytecode.
       A live runtime binding remains closed until one original owner can supply
       that full candidate and commit it transactionally.
+    - 2026-07-15 experience update: authenticated `STKOP_ExperiencePlus`
+      now retains CSBWin's `(character,skill,experience)` stack order and
+      stages a source-owned `AddToSkill` candidate until full bytecode
+      acceptance. The live binding remains closed until one original skill
+      owner supplies selected/base-skill XP, experience limits, mastery, and
+      level-up side effects as one transaction.
     - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
       `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
       compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors

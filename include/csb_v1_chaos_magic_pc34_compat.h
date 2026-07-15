@@ -300,6 +300,14 @@ typedef int (*CSB_V1_CSBWinDSAPrepareCharacterStoreFn)(
 typedef int (*CSB_V1_CSBWinDSASetCharacterInfoFn)(
     void *user, int32_t character_selector, const uint32_t values[59],
     uint32_t word_count);
+/* STKOP_ExperiencePlus delegates CSBWin Magic.cpp::AddToSkill to a live
+ * CHARDESC/skill candidate. Preparation must not publish XP or level changes. */
+typedef int (*CSB_V1_CSBWinDSAPrepareExperiencePlusFn)(
+    void *user, int32_t character_selector, int32_t skill_number,
+    int32_t experience);
+typedef int (*CSB_V1_CSBWinDSAAddExperiencePlusFn)(
+    void *user, int32_t character_selector, int32_t skill_number,
+    int32_t experience);
 
 typedef struct {
     uint32_t master_location;
@@ -370,6 +378,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
     CSB_V1_CSBWinDSAPrepareCharacterStoreFn prepare_character_store;
     CSB_V1_CSBWinDSASetCharacterInfoFn set_character_info;
+    CSB_V1_CSBWinDSAPrepareExperiencePlusFn prepare_experience_plus;
+    CSB_V1_CSBWinDSAAddExperiencePlusFn add_experience_plus;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -634,6 +644,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
     CSB_V1_CSBWinDSAPrepareCharacterStoreFn prepare_character_store;
     CSB_V1_CSBWinDSASetCharacterInfoFn set_character_info;
+    CSB_V1_CSBWinDSAPrepareExperiencePlusFn prepare_experience_plus;
+    CSB_V1_CSBWinDSAAddExperiencePlusFn add_experience_plus;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
