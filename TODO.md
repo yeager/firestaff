@@ -6584,3 +6584,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source-address byte semantics, colour mode, pixel order, CLUT/palette
   addressing, transform/culling, or drawing; each remains blocked pending a
   real retail Saturn capture with those relations.
+  - 2026-07-15 command-table correction: the shared VDP1 parser now follows
+    the documented 32-byte table offsets `CMDCTRL +00`, `CMDLINK +02`,
+    `CMDPMOD +04`, `CMDCOLR +06`, `CMDSRCA +08`, and `CMDSIZE +0A`.
+    `CMDCOLR` is retained as an opaque raw word; this correction does not
+    infer a palette, CLUT, texture byte span, or draw route.
