@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 original SKSave DB2/DB9 record admission: added bounded,
+  hash-bound raw receipts for `DME.h::Text` (`w2` visibility/mode/text index)
+  and `DME.h::Container` (`b4` open/type). The expanded source-order corpus
+  fixture reaches the standard raw runtime handoff, verifies both families,
+  and rejects missing rows. It does not read GenericRecord links, text-table
+  bytes, container contents, or promote any graphics.
+
 - ✅ 2026-07-15 DM2 original SKSave common-item record admission: the raw
   save parser now reads `DME.h::ItemType()` only from hash-bound four-byte
   DB5 Weapon, DB6 Cloth, DB7 Scroll, and DB10 Miscellaneous_item rows. It

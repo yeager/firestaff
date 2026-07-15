@@ -7244,6 +7244,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     GenericRecord links, item contents, charges outside DB5, and all visual
     consumers remain unowned. Remaining work is real corpus breadth and the
     source-complete DB graph/post-load order.
+  - 2026-07-15 update: raw DB2 Text and DB9 Container rows now have separate
+    hash-bound SKProject field receipts. DB2 exposes only `w2` visibility,
+    mode, and 13-bit text index; DB9 exposes only `b4` open/type. Both reject
+    absent rows before runtime import, while `GenericRecord::w0`, text-table
+    decoding, contained-object `w2`, record chains, and any visual route stay
+    explicitly unavailable. Remaining work is positive real-corpus record
+    graph evidence and source-complete post-load ordering.
 - DM2-010 — `skproject/SKULLWIN/c_gui_vp.cpp` `DM2_DRAW_WALL`, `DM2_DRAW_DOOR`, `DM2_DRAW_DOOR_FRAMES`, and `DM2_DRAW_DUNGEON_TILES`, plus `c_gfx_blit.cpp`/`c_gfx_stretch.cpp`: `src/dm2/dm2_v1_viewport_renderer.c` still permits fallback rectangles/colours. Door panel, frame, button, ornament, destroyed-mask, dynamic champion HUD pixels, walls, planes, and map chips now consume the exact 16-byte IMG3 local palette returned by `QUERY_GDAT_IMAGE_LOCALPAL`; a source-owned runtime image is blocked when that palette cannot be proven. Original `dt07/0x0A` Rect14 metadata reaches the host receipt and gates runtime viewport consumption. Champion names consume boot-owned `INTERFACE_GENERAL dt07/0`, while portraits and three status bars consume expanded original `dt04/0` IDs 173–176, 165–168, and 185–204. Direct G1 DB5/DB9 floor map chips now enter only through the proven `DM2_DRAW_STATIC_OBJECT` D1C/D2C centre cells (source cells 3/6, `table1d7029` passes 17/14); D0C and all side/deep routes are unavailable instead of using Firestaff's old generic projection. `SUMMARIZE_STONE_ROOM` calls the original random-decoration helper before it populates ornament details; Firestaff has no proven decoration table/seed contract, so that stage remains unavailable rather than randomized. Remaining: complete source cell ordering, `DRAW_ITEM` clipping/placement, door states, object/creature/cloud passes, scale/flip rules, and verified GDAT material.
   - 2026-07-15 update: leader-hand rendering now follows SKProject
     `_2405_014a`/`DRAW_ITEM_IN_HAND`: it reads the held record's exact
