@@ -30,6 +30,11 @@
   target or ledger before an external capture producer consumes it. It leaves
   Saturn decoder and rendering authorization disabled.
 
+- 2026-07-15 Nexus Structure1F owner corpus: a canonical LEV00--LEV15 probe
+  revalidates every Structure1F owner row against its bounded Structure1A
+  record and produces a stable raw-owner fingerprint. It explicitly keeps the
+  Structure1A model-to-Structure3-entry relation unproven and no-draw.
+
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.
