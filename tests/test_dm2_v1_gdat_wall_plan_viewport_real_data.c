@@ -145,6 +145,19 @@ static void free_wall_pixels(WallTrace *trace)
     }
 }
 
+static void mark_plan_walls_visible(
+    DM2_V1_ViewportState *viewport,
+    const DM2_V1_GdatWallM11CommandPlan *plan)
+{
+    if (!viewport || !plan) return;
+    for (int i = 0; i < plan->command_count; ++i) {
+        int square = plan->commands[i].view_square;
+        if (square >= 0 && square < DM2_SQ_COUNT) {
+            viewport->squares[square].flags |= DM2_SQF_HAS_WALL;
+        }
+    }
+}
+
 static int style_has_complete_wall_plan(const DM2_V1_AssetLoader *loader,
                                         int graphicsset)
 {
@@ -278,6 +291,7 @@ int main(void)
         scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
         scene_plan.ambient_darkness);
     dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &wall_plan);
+    mark_plan_walls_visible(&viewport, &wall_plan);
     dm2_v1_render_walls(&viewport);
     if (trace.fetch_calls != 0 || trace.palette_calls != 0 ||
         viewport.asset_wall_drawn_count != wall_plan.command_count ||
@@ -324,6 +338,7 @@ int main(void)
             scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
             scene_plan.ambient_darkness);
         dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &malformed_plan);
+        mark_plan_walls_visible(&viewport, &malformed_plan);
         dm2_v1_render_walls(&viewport);
         if (viewport.asset_wall_drawn_count != 0 ||
             viewport.last_dungeon_wall_material_consumed_mask != 0u ||
@@ -332,6 +347,44 @@ int main(void)
             fputs("FAIL: altered side-wall M11 destination did not fail closed\n",
                   stderr);
             failures = 1;
+        }
+    }
+    {
+        const uint16_t selected =
+            (uint16_t)((1u << DM2_SQ_D3L) | (1u << DM2_SQ_D2R) |
+                       (1u << DM2_SQ_D0L));
+
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_party(&viewport, 3, 12, 9);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, graphicsset, scene_plan.command_hash,
+            scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+            scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            scene_plan.ambient_darkness);
+        dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &wall_plan);
+        viewport.squares[DM2_SQ_D3L].flags |= DM2_SQF_HAS_WALL;
+        viewport.squares[DM2_SQ_D2R].flags |= DM2_SQF_HAS_WALL;
+        viewport.squares[DM2_SQ_D0L].flags |= DM2_SQF_HAS_WALL;
+        dm2_v1_render_walls(&viewport);
+        {
+            DM2_V1_WallPanelRenderPlan selected_plan;
+            if (!dm2_v1_viewport_build_wall_panel_render_plan(
+                    &viewport, &selected_plan) ||
+                selected_plan.party_direction != 3 ||
+                selected_plan.selected_square_mask != selected ||
+                selected_plan.panel_count != 3 ||
+                viewport.asset_wall_drawn_count != 3 ||
+                viewport.gdat_wall_material_plan_consumed_count != 3 ||
+                viewport.last_dungeon_wall_material_required_mask != selected ||
+                viewport.last_dungeon_wall_material_consumed_mask != selected ||
+                (viewport.blocked_material_mask &
+                 DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) != 0u) {
+                fputs("FAIL: M10 wall plan did not consume the selected depth/direction cells\n",
+                      stderr);
+                failures = 1;
+            }
         }
     }
     /* UPDATE_GFXSET is a single G1 transaction.  A wall plan retained from

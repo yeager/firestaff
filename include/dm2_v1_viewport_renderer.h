@@ -303,6 +303,10 @@ typedef struct {
 typedef struct {
     DM2_V1_WallPanelRender panels[DM2_V1_WALL_PANEL_RENDER_MAX];
     int panel_count;
+    /* c_gui_vp's cell order is view-relative.  The plan is rebuilt for the
+     * current direction after G1 has classified the actual visible cells. */
+    int party_direction;
+    uint16_t selected_square_mask;
 } DM2_V1_WallPanelRenderPlan;
 
 #define DM2_V1_DOOR_RENDER_MAX DM2_SQ_COUNT

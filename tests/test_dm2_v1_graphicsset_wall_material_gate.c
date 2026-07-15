@@ -92,8 +92,8 @@ int main(void)
     trace.missing_after = 2;
     prepare_viewport(&viewport, framebuffer, &trace);
     dm2_v1_render_walls(&viewport);
-    CHECK("later missing GDAT panel blocks before any wall pixels draw",
-          trace.fetches >= 2 && viewport.asset_wall_drawn_count == 0 &&
+    CHECK("source wall draw blocks before callback lookup without a G1 plan",
+          trace.fetches == 0 && viewport.asset_wall_drawn_count == 0 &&
               viewport.last_dungeon_wall_material_consumed_mask == 0u &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) != 0u);
@@ -102,14 +102,13 @@ int main(void)
     memset(&trace, 0, sizeof(trace));
     prepare_viewport(&viewport, framebuffer, &trace);
     dm2_v1_render_walls(&viewport);
-    CHECK("complete GDAT wall set consumes every planned source panel",
-          trace.fetches > 0 && viewport.asset_wall_drawn_count > 0 &&
+    CHECK("callback-complete GDAT cannot replace a source-owned wall plan",
+          trace.fetches == 0 && viewport.asset_wall_drawn_count == 0 &&
               viewport.fallback_wall_drawn_count == 0 &&
-              viewport.last_dungeon_wall_material_required_mask != 0u &&
-              viewport.last_dungeon_wall_material_required_mask ==
-                  viewport.last_dungeon_wall_material_consumed_mask &&
+              viewport.last_dungeon_wall_material_required_mask == 0u &&
+              viewport.last_dungeon_wall_material_consumed_mask == 0u &&
               (viewport.blocked_material_mask &
-               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u);
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) != 0u);
 
     printf("DM2 complete GDAT wall material gate: %d/%d passed\n",
            passed, checks);

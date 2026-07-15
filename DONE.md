@@ -17738,3 +17738,15 @@ source-required mode, no missing/stale plan can fall through to a second GDAT
 asset or palette lookup. Verification: direct canonical-data runs of
 `test_dm2_v1_gdat_scene_plan_viewport_real_data` and
 `test_dm2_v1_gdat_wall_plan_viewport_real_data` pass.
+
+# ✅ 2026-07-15 DM2 directional depth-selected wall consumption
+
+The boot-owned `GRAPHICSSET` plan stays complete, while M10 now consumes only
+the wall commands selected by G1's actual visible view squares for the current
+party direction. A selected panel retains its exact depth/view-square field,
+crop, destination, pixels, and local palette; unclassified squares do not
+draw generic walls. Source-required callback resolution is no longer an
+alternative material path. Verification: canonical-data
+`test_dm2_v1_gdat_wall_plan_viewport_real_data` covers a direction-3 D3L/D2R/
+D0L selection, and `test_dm2_v1_gdat_scene_plan_viewport_real_data` keeps all
+five G1 plane plans green.
