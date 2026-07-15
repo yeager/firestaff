@@ -7,6 +7,15 @@
   unavailable. Focused M11 coverage proves unavailable no-draw and real
   C032/C038 presentation.
 
+- ✅ 2026-07-15 CSBWin Timer.cpp TT_53 pool mutation: watchdog requeue now
+  stages `DeleteTimer` followed by `SetTimer` ownership as one transaction.
+  It removes the dispatched TIMER handle, uses the first real TT_EMPTY slot
+  for the successor, updates sequence/first-available state, remaps the live
+  event receipt, and rolls back the staged event on any incomplete source
+  transaction. Heap adjustment remains source-ordered before core-save export.
+  Focused coverage exercises a two-slot pool where the successor must move
+  from slot 1 into slot 0 rather than accepting an in-place host rewrite.
+
 - ✅ 2026-07-15 DM1 F0623/F0320 source damage-indicator gate: normal V1
   champion damage feedback now accepts only exact loaded-pixel C015 (45x7)
   or C016 (32x29), uses C167/C179 geometry without default coordinates, and
