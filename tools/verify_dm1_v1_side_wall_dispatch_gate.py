@@ -31,9 +31,12 @@ def main() -> int:
     m11 = M11.read_text(encoding="utf-8")
     viewport = VIEWPORT.read_text(encoding="utf-8")
     side_walls = function_body(m11, "static void m11_draw_dm1_side_walls")
+    ornaments = function_body(m11, "static void m11_draw_dm1_wall_ornaments")
 
     assert "m11_dm1_side_lane_clear_for_rel" not in side_walls, (
         "F0128 wall dispatch must not use the side-lane content occlusion gate")
+    assert "m11_dm1_side_lane_clear_for_rel" not in ornaments, (
+        "F0107 wall material must not use the side-lane content occlusion gate")
     assert "F0116/F0117 (D3L/D3R), F0119/F0120 (D2L/D2R)" in side_walls
     assert "blit.relForward > maxVisibleForward" in side_walls
     assert "m11_viewport_cell_is_wall_like(&cell)" in side_walls
@@ -50,7 +53,9 @@ def main() -> int:
         assert pattern.search(viewport), f"missing F0128 spec for {square}"
 
     assert "F0128 lines 8446-8542 draws D3/D2/D1 side" in viewport
-    print("ok: DM1 F0128 D2/D3 side walls bypass content-only side-lane occlusion")
+    assert "champion portraits are owned by the D1C front-mirror route" in m11
+    assert "ornGlobalIdx == 0 && spec.viewWallIndex == 12" in m11
+    print("ok: DM1 F0128/F0107 D2/D3 side wall material bypasses content-only occlusion")
     return 0
 
 
