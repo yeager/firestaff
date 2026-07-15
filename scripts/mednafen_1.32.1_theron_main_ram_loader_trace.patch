@@ -11,7 +11,7 @@
 -
 +
  #ifdef WANT_DEBUGGER
-@@ -39,6 +41,120 @@
+@@ -39,6 +41,140 @@
  namespace MDFN_IEN_PCE
  {
 -
@@ -29,6 +29,9 @@
 +static bool TheronMainRAMLoaderEntryPending;
 +static uint16 TheronMainRAMLoaderEntryInstructionPC;
 +static uint32 TheronMainRAMLoaderEntryInstructionPhysicalPC;
++static bool TheronMainRAMLoaderEntrySuccessorPending;
++static uint16 TheronMainRAMLoaderEntrySuccessorInstructionPC;
++static uint32 TheronMainRAMLoaderEntrySuccessorInstructionPhysicalPC;
 +
 +static void TheronTraceMainRAMLoaderOperation(uint16 logical_pc, uint32 physical_pc, uint8 opcode,
 +                                              uint16 first, uint16 second, uint16 third,
@@ -64,12 +67,29 @@
 +   return;
 +  }
 + }
++ if(TheronMainRAMLoaderEntrySuccessorPending)
++ {
++  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_entry_successor_next successor_logical_pc=%04x successor_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x\n",
++          TheronMainRAMLoaderEntrySuccessorInstructionPC,
++          TheronMainRAMLoaderEntrySuccessorInstructionPhysicalPC,
++          logical_pc, physical_pc, opcode);
++  TheronMainRAMLoaderEntrySuccessorPending = false;
++  TheronMainRAMLoaderTraceCount++;
++  if(TheronMainRAMLoaderTraceCount >= 96)
++  {
++   fflush(TheronMainRAMLoaderTrace);
++   return;
++  }
++ }
 + if(TheronMainRAMLoaderEntryPending)
 + {
 +  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_entry_next entry_logical_pc=%04x entry_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x\n",
 +          TheronMainRAMLoaderEntryInstructionPC,
 +          TheronMainRAMLoaderEntryInstructionPhysicalPC,
 +          logical_pc, physical_pc, opcode);
++  TheronMainRAMLoaderEntrySuccessorInstructionPC = logical_pc;
++  TheronMainRAMLoaderEntrySuccessorInstructionPhysicalPC = physical_pc;
++  TheronMainRAMLoaderEntrySuccessorPending = true;
 +  TheronMainRAMLoaderEntryPending = false;
 +  TheronMainRAMLoaderTraceCount++;
 +  if(TheronMainRAMLoaderTraceCount >= 96)

@@ -19244,3 +19244,10 @@ requires the existing source-bound geometry and transform receipts and emits
 only `original_saturn_capture_required=1` and `no_draw_only=1`. It does not
 decode materials or establish transforms, culling, VDP1, palette, pixels, or
 rendering.
+# ✅ 2026-07-15 Theron Track 02 copied-entry second-successor receipt
+
+Mednafen now emits a second source-owned successor row after a main-RAM call
+entry's first successor. Firestaff admits it only when it remains inside the
+same copied TII span and matches original Track 02 byte `$3c8a`. This proves a
+third bounded byte-to-execution observation, not instruction role, control
+semantics, CD-record selection, dungeon data, or visual meaning.

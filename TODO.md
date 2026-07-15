@@ -8599,3 +8599,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     proves two bounded execution bytes, not instruction length, routine role,
     record format, or dungeon semantics. Remaining: observe a real CD-read,
     data access, or call from this copied routine.
+  - Update: the Mednafen producer now records the next actual main-RAM step
+    after that successor; admission keeps it only when it stays within the
+    same TII destination and matches original byte `$3c8a`. This is execution
+    provenance, not a control-flow interpretation or record-selection proof.
+    Remaining: capture a source-observed call, CD read, or data access from
+    the copied routine.
