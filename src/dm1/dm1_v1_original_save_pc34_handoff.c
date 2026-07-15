@@ -133,6 +133,27 @@ static int dm1_original_save_corpus_external_pc34_bytes(
     return 0;
 }
 
+static int dm1_original_save_corpus_external_pc34_file(
+    const char *path,
+    int *out_firestaff_manifest)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int result;
+
+    if (out_firestaff_manifest) {
+        *out_firestaff_manifest = 0;
+    }
+    if (read_original_pc34_file_bytes(path, &bytes, &size) !=
+        DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return 0;
+    }
+    result = dm1_original_save_corpus_external_pc34_bytes(
+        bytes, size, out_firestaff_manifest);
+    free(bytes);
+    return result;
+}
+
 static int dm1_original_save_snapshot_matches_classification(
     const DM1OriginalSaveClassifyResult *discovered,
     const uint8_t *bytes,
@@ -3818,6 +3839,7 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     char backup_path[DM1_ORIGINAL_SAVE_PATH_MAX];
     const char *load_path = path;
     int resumed_from_backup = 0;
+    int firestaff_manifest = 0;
     int result;
 
     if (!path || !out_world || out_world == start_world) {
@@ -3853,7 +3875,12 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
      * external original-save corpus member and must not become a launcher
      * resume source. There is deliberately no native-save/synthetic retry
      * from this route. Apply the same rule to a recovered .bak source. */
-    if (!dm1_original_save_corpus_external_pc34_file(load_path, NULL)) {
+    /* Keep malformed external files on the normal F0435 parser path so it
+     * reports their source error. This boundary rejects only a positively
+     * identified Firestaff exporter manifest. */
+    (void)dm1_original_save_corpus_external_pc34_file(
+        load_path, &firestaff_manifest);
+    if (firestaff_manifest) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
     result = dm1_v1_original_save_pc34_handoff_load_world_from_file(
