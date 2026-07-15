@@ -137,6 +137,8 @@ static int decode_anchor(int mode, int x0, int y0, int width, int height,
  * Unsupported raw4 grammar fails closed. */
 static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
                                 uint16_t rect_number, int width, int height,
+                                int query_offset_x, int query_offset_y,
+                                int signed_rect, int override_mode,
                                 DM2_V1_DoorRawRect *out)
 {
     DM2_V1_DoorRawRect current;
@@ -146,9 +148,17 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
     if (!out || width <= 0 || height <= 0 ||
         !decode_raw4_rect(table, table_size, rect_number, &current) ||
         current.x == 9 || current.x < 0 || current.x > 18) return 0;
-    mode = current.x;
+    mode = override_mode >= 0 ? override_mode : current.x;
+    if (override_mode >= 0) current.x = (int16_t)override_mode;
     if (mode > 8) { mode -= 10; x0 = 0; y0 = 0; }
     else { x0 = current.w; y0 = current.h; }
+    /* DRAW_PICST marks the raw rectangle signed when QUERY_TEMP_PICST's
+     * queried image offset is nonzero.  DM2_QUERY_BLIT_RECT then applies the
+     * offset before it resolves the source image's width/height. */
+    if (signed_rect) {
+        x0 += query_offset_x;
+        y0 += query_offset_y;
+    }
     for (int guard = 0; current.y != 0 && guard < 64; ++guard) {
         DM2_V1_DoorRawRect next;
         if (!decode_raw4_rect(table, table_size, (uint16_t)current.y, &next)) return 0;
@@ -270,7 +280,7 @@ static int bind_door_panel_geometry(
     if (!table || !table_size || !row ||
         !query_raw4_blit_rect(table, table_size, command->rect_number,
                              command->source_width, command->source_height,
-                             &rect) ||
+                             0, 0, 0, -1, &rect) ||
         rect.x > INT16_MAX || rect.y > INT16_MAX ||
         rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
         return 0;
@@ -306,6 +316,87 @@ static int bind_door_panel_geometry(
                                       command->rect_row_hash);
     return command->rect_table_hash != 0u && command->rect_row_hash != 0u &&
            command->geometry_hash != 0u;
+}
+
+/* DRAW_DOOR_FRAMES uses QUERY_TEMP_PICST with a GRAPHICSSET image, a fixed
+ * 64/64 scale, source rect mode 4 (left) or 3 (right), and the image's
+ * QUERY_GDAT_SUMMARY_IMAGE offset.  This is deliberately separate from the
+ * centre-door-frame route: its destination belongs to RAW4, not wall boxes. */
+static int bind_door_side_frame_geometry(
+    const DM2_V1_AssetLoader *loader, const DM2_V1_DoorRender *door,
+    int side, DM2_V1_GdatDoorOverlayM11Command *command)
+{
+    DM2_V1_GdatImageMetadata metadata;
+    DM2_V1_DoorRawRect rect;
+    const uint8_t *table;
+    const uint8_t *row;
+    size_t table_size = 0u;
+    int offset_x;
+    int offset_y;
+
+    if (!loader || !door || !command || side < 0 || side > 1 ||
+        door->side_frame_graphicsset_field[side] == 0u ||
+        door->side_frame_rect_number[side] <= 0 || command->width == 0u ||
+        command->height == 0u ||
+        !dm2_v1_asset_load_image_metadata(
+            loader, DM2_GDAT_CATEGORY_GRAPHICSSET, door->graphicsset_index,
+            door->side_frame_graphicsset_field[side], &metadata)) {
+        return 0;
+    }
+    offset_x = metadata.query_offset_x;
+    offset_y = metadata.query_offset_y;
+    command->mirror_flip = (uint8_t)door->side_frame_mirror_flip[side];
+    if (command->mirror_flip & 1u) offset_x = -offset_x;
+    command->source_x = 0u;
+    command->source_y = 0u;
+    command->source_width = command->width;
+    command->source_height = command->height;
+    command->rect_number = (uint16_t)door->side_frame_rect_number[side];
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+    row = find_raw4_row(table, table_size, command->rect_number);
+    if (!table || !table_size || !row ||
+        !query_raw4_blit_rect(table, table_size, command->rect_number,
+                              command->source_width, command->source_height,
+                              offset_x, offset_y,
+                              offset_x != 0 || offset_y != 0,
+                              side == 0 ? 4 : 3, &rect) ||
+        rect.x > INT16_MAX || rect.y > INT16_MAX ||
+        rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
+        return 0;
+    }
+    command->rect_x = (int16_t)rect.x;
+    command->rect_y = (int16_t)rect.y;
+    command->rect_width = (uint16_t)rect.w;
+    command->rect_height = (uint16_t)rect.h;
+    command->rect_table_hash = hash_bytes(2166136261u, table, table_size);
+    command->rect_row_hash = hash_bytes(2166136261u, row, 8u);
+    command->geometry_hash = 2166136261u;
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_number);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      (uint32_t)(uint16_t)command->rect_x);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      (uint32_t)(uint16_t)command->rect_y);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_width);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_height);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      (uint32_t)(uint16_t)offset_x);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      (uint32_t)(uint16_t)offset_y);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      metadata.metadata_hash);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->mirror_flip);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_table_hash);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->rect_row_hash);
+    return command->rect_table_hash != 0u && command->rect_row_hash != 0u &&
+           metadata.metadata_hash != 0u && command->geometry_hash != 0u;
 }
 
 /* SKWINSPX v0/skglobal.cpp glbTabYAxisDistance and
@@ -435,6 +526,15 @@ static int resolve_material_address(const DM2_V1_DoorRender *door, int kind,
         if (*out_index < 0 || *out_index > 0xff) return 0;
         *out_field = dm2_v1_viewport_door_frame_field_for_square(door->view_square);
         break;
+    case DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT:
+    case DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT: {
+        const int side = kind == DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT ? 0 : 1;
+        gdat_index = door->side_frame_gdat_index[side];
+        *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        *out_index = door->graphicsset_index;
+        *out_field = door->side_frame_graphicsset_field[side];
+        break;
+    }
     case DM2_V1_GDAT_DOOR_BUTTON:
         if (door->button_source_kind != 1) return 1;
         gdat_index = door->button_gdat_index;
@@ -563,6 +663,18 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                            command->geometry_hash);
         command->selection_hash = hash_u32(command->selection_hash,
                                            (uint32_t)(horizontal_part + 1));
+    } else if (kind == DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT ||
+               kind == DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT) {
+        const int side = kind == DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT ? 0 : 1;
+        if (!bind_door_side_frame_geometry(loader, door, side, command)) {
+            return 0;
+        }
+        /* DRAW_DOOR_FRAMES passes the scene-owned colour key, not a DOORS
+         * entry.  It is carried by the G1 scene transaction at draw time. */
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->geometry_hash);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->mirror_flip);
     }
     return command->raw_hash != 0u && command->decoded_hash != 0u &&
            command->selection_hash != 0u && ++plan->command_count;
@@ -596,6 +708,15 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
         if ((!no_frames && door_plan->doors[i].frame_gdat_index != 0 &&
              !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME, -1)) ||
             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON, -1)) goto fail;
+        if (!no_frames) {
+            for (int side = 0; side < 2; ++side) {
+                const int kind = side == 0 ? DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT
+                                           : DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT;
+                if (door_plan->doors[i].side_frame_gdat_index[side] != 0 &&
+                    !add_material(loader, &candidate, &door_plan->doors[i],
+                                  kind, -1)) goto fail;
+            }
+        }
     }
     if (!candidate.command_count) goto fail;
     for (int i = 0; i < candidate.command_count; ++i) {

@@ -4854,6 +4854,70 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
             }
         }
+        /* SKProject DRAW_DOOR_FRAMES draws its left and right GRAPHICSSET
+         * jambs through distinct QUERY_TEMP_PICST calls.  Their RAW4
+         * destinations, image offsets, mirror state and local palettes are
+         * carried by the M11 door command; never reuse the bounded wall-frame
+         * rectangle for this route. */
+        if (s->source_materials_required && !source_no_frames) {
+            for (int side = 0; side < 2; ++side) {
+                const int kind = side == 0
+                    ? DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT
+                    : DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT;
+                const DM2_V1_GdatDoorOverlayM11Command *command = NULL;
+                const int wanted_gdat = door->side_frame_gdat_index[side];
+
+                if (wanted_gdat == 0) continue;
+                if (!s->gdat_door_overlay_material_plan ||
+                    s->gdat_scene_colorkey > 0xffu) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                    return;
+                }
+                for (int j = 0;
+                     j < s->gdat_door_overlay_material_plan->command_count;
+                     ++j) {
+                    const DM2_V1_GdatDoorOverlayM11Command *candidate =
+                        &s->gdat_door_overlay_material_plan->commands[j];
+                    if (candidate->kind == kind &&
+                        candidate->view_square == door->view_square &&
+                        candidate->gdat_index == wanted_gdat) {
+                        command = candidate;
+                        break;
+                    }
+                }
+                if (!command || !command->pixels || command->width == 0u ||
+                    command->height == 0u || command->source_width == 0u ||
+                    command->source_height == 0u || command->rect_width == 0u ||
+                    command->rect_height == 0u || !command->geometry_hash ||
+                    !command->decoded_hash || !command->palette_hash ||
+                    command->source_x + command->source_width > command->width ||
+                    command->source_y + command->source_height > command->height ||
+                    dm2_v1_weather_pixels_hash(command->pixels,
+                                               command->width, command->height,
+                                               command->width) !=
+                        command->decoded_hash ||
+                    dm2_v1_weather_pixels_hash(command->palette16, 16, 1, 16) !=
+                        command->palette_hash) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                    return;
+                }
+                memcpy(s->active_asset_palette16, command->palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash = command->palette_hash;
+                s->active_asset_palette_ready = 1;
+                dm2_v1_blit_scaled_material_bitmap_region_ex(
+                    s, vp, stride, command->rect_x, command->rect_y,
+                    command->rect_width, command->rect_height,
+                    command->pixels, command->source_x, command->source_y,
+                    command->source_width, command->source_height,
+                    command->width, (int)s->gdat_scene_colorkey,
+                    command->mirror_flip,
+                    &s->gdat_material_palette_door_frame_consumed_count);
+                ++door_asset_count;
+            }
+        }
         if (door->button_gdat_index != 0 &&
             door->button_rect.w > 0 && door->button_rect.h > 0) {
             const uint8_t *button_pixels = NULL;

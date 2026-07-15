@@ -18341,7 +18341,6 @@ rejects unknown/mismatched variants and incomplete spans. It still performs
 no palette binding, RGB conversion, layout inference, object-table decoding,
 or drawing. Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
-
 # ✅ 2026-07-15 Theron authenticated CD-read runtime record
 
 The independently authenticated Track 02 `$0b52` CD-read payload now enters
@@ -18366,3 +18365,15 @@ source-byte boundaries and continuity, not level-grid, object-table, palette,
 or visual semantics; the runtime remains no-draw without a captured game-owned
 consumer. Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
+
+# ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
+
+`DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
+side-jamb images. Each command resolves the source `GRAPHICSSET` field and
+`QUERY_CREATURE_BLIT_RECTI` RAW4 row, applies the original
+`QUERY_GDAT_SUMMARY_IMAGE` image offsets, mode 4/3 placement, right-side
+mirror, local IMG3 palette, and source scene colorkey. Missing bytes or an
+invalid geometry/palette receipt blocks the door pass; no wall-frame
+approximation is used. The source cell/field/RAW4 route remains locked by
+`test_dm2_v1_door_side_frame_source_route`; boot smoke covers the runtime
+source-material transaction.
