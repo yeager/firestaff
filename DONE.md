@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 source-owned boot HUD: the real G1 startup path now draws
+  only verified GDAT chrome until a real game load or new-game handoff owns
+  `Champion::HeroType`; no synthetic party portraits are generated. The
+  canonical source pose and subsequent turn receipt are preserved. Verification:
+  `dm2_v1_boot_profile_smoke` passes 87/87.
+
 - 2026-07-15 DM2 G1 first-frame wall ownership: boot now consumes the real G1 packed start pose after projecting its 5-bit coordinates through map-0 `Map_definitions` origins and checking raw map bounds. The first M10 frame consequently consumes source GDAT wall panels rather than rendering from the synthetic `(15,15,N)` pose outside the 7x10 map. Source: skproject `DME.h` `File_header::StartPartyPosX/Y`, `Map_definitions::MapOffsetX/Y`, and `SkWinCore.cpp READ_DUNGEON_STRUCTURE`. Verification: canonical G1 runtime-map test plus boot smoke 86 pass / 2 remaining directional-capture failures.
 - ✅ 2026-07-15 DM1 F0292 status-name composition correction: the live
   champion status-name strip no longer centers or substitutes Firestaff host
