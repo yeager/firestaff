@@ -19319,6 +19319,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.game_time = profile->game_time;
     candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
     candidate.dsa_slave_thing = binding->location.actuator_thing;
+    candidate.party_leader_index = -1;
     if (profile->party_state_valid &&
         profile->party_state.ChampionCount >= 0 &&
         profile->party_state.ChampionCount <= 4) {
@@ -19326,6 +19327,15 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
 
         candidate.party_champions_valid = 1;
         candidate.party_champion_count = profile->party_state.ChampionCount;
+        candidate.party_leader_index = profile->leader_index;
+        if (candidate.party_leader_index < 0 ||
+            candidate.party_leader_index >= candidate.party_champion_count) {
+            candidate.party_leader_index = profile->party_state.LeaderIndex;
+        }
+        if (candidate.party_leader_index < 0 ||
+            candidate.party_leader_index >= candidate.party_champion_count) {
+            candidate.party_leader_index = -1;
+        }
         for (champion_index = 0;
              champion_index < candidate.party_champion_count;
              ++champion_index) {

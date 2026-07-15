@@ -1152,6 +1152,28 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, w)) goto underflow;
         break;
+    case 134u: /* STKOP_TalentsFetch, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:4243-4283 maps index four to d.HandChar and
+         * returns the selected CHARDESC talents. Wing records are EXPOOL
+         * owned and are not part of this party receipt, so they stay closed. */
+        if (!context->party_champions_valid ||
+            context->party_champion_count < 0 ||
+            context->party_champion_count > 4 ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = (int32_t)v;
+        if (sv == 4) sv = context->party_leader_index;
+        if (((uint32_t)sv & 0x10000u) != 0u) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (sv < 0 || sv >= context->party_champion_count) {
+            v = 0u;
+        } else {
+            v = context->party_champion_talents[sv];
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v)) goto underflow;
+        break;
     case 131u: /* STKOP_GetSkin, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:3107-3120 pops the packed five/five/six-bit
          * location, reads the loaded SKIN_CACHE, then pushes its byte. */
@@ -1509,6 +1531,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.dsa_slave_thing = runner->dsa_slave_thing;
     context.party_champions_valid = runner->party_champions_valid;
     context.party_champion_count = runner->party_champion_count;
+    context.party_leader_index = runner->party_leader_index;
     memcpy(context.party_champion_talents, runner->party_champion_talents,
            sizeof(context.party_champion_talents));
     memcpy(context.party_champion_wounds, runner->party_champion_wounds,
