@@ -1059,6 +1059,30 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const DM1_WallFrame *frame);
 
 /*
+ * Draw a native floor, pit, or stairs bitmap through the C10-transparent
+ * viewport route.
+ *
+ * Source: DUNVIEW.C F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap
+ * (lines 3113-3156).
+ */
+void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap(
+    DM1_Viewport3DState *state,
+    const uint8_t *bitmap,
+    const DM1_WallFrame *frame);
+
+/*
+ * Mirror a floor, pit, or stairs bitmap through F0099 into F0128-owned
+ * G0074 temporary storage, then use F0104's C10-transparent route.
+ *
+ * Source: DUNVIEW.C F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlipped-
+ * Horizontally (lines 3185-3247).
+ */
+void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(
+    DM1_Viewport3DState *state,
+    const uint8_t *bitmap,
+    const DM1_WallFrame *frame);
+
+/*
  * Draw a DM1 V1 door button bitmap span into a chunky destination buffer.
  * door_button_ordinal follows ReDMCSB M000_INDEX_TO_ORDINAL semantics:
  * 0 means no button; 1 selects C0_DOOR_BUTTON.

@@ -4575,6 +4575,38 @@ static void test_f0103_requires_f0128_owned_temporary_bitmap(void)
     check_int("F0103.source_temp_flips_row_1_right", viewport[DM1_VIEWPORT_WIDTH + 1], 3);
 }
 
+static void test_f0104_f0105_use_native_and_owned_flip_routes(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    const uint8_t source[4] = { 1u, 10u, 3u, 4u };
+    uint8_t temporary[4] = { 0u, 0u, 0u, 0u };
+    DM1_Viewport3DState state;
+    DM1_WallFrame frame = { 0, 1, 0, 1, 2, 2, 0, 0 };
+
+    memset(&state, 0, sizeof(state));
+    memset(viewport, 0x5au, sizeof(viewport));
+    state.viewport_pixels = viewport;
+    state.viewport_stride = DM1_VIEWPORT_WIDTH;
+
+    /* F0104 native C10 blit: source color 10 leaves destination intact. */
+    dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap(&state, source, &frame);
+    check_int("F0104.native_first_pixel", viewport[0], 1);
+    check_int("F0104.native_c10_preserves_destination", viewport[1], 0x5a);
+    check_int("F0104.native_second_row", viewport[DM1_VIEWPORT_WIDTH], 3);
+
+    memset(viewport, 0x5au, sizeof(viewport));
+    dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(&state, source, &frame);
+    check_int("F0105.no_source_temp_keeps_pixel", viewport[0], 0x5a);
+
+    state.temp_bitmap = temporary;
+    state.temp_bitmap_size = (int)sizeof(temporary);
+    dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(&state, source, &frame);
+    check_int("F0105.source_temp_flips_c10_to_right", viewport[0], 0x5a);
+    check_int("F0105.source_temp_flips_first_pixel", viewport[1], 1);
+    check_int("F0105.source_temp_flips_second_row_left", viewport[DM1_VIEWPORT_WIDTH], 4);
+    check_int("F0105.source_temp_flips_second_row_right", viewport[DM1_VIEWPORT_WIDTH + 1], 3);
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
@@ -4619,6 +4651,7 @@ int main(void)
     test_side_lane_clear_contract();
     test_center_line_clear_contract();
     test_f0103_requires_f0128_owned_temporary_bitmap();
+    test_f0104_f0105_use_native_and_owned_flip_routes();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

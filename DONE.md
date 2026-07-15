@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0104/F0105 source-owned floor/pit/stairs primitives:
+  added the explicit native C10 route and its F0099 horizontal-flip sibling.
+  F0102/F0103 now reuse those canonical paths. F0105 only accepts the
+  F0128-owned temporary bitmap and otherwise performs no draw; focused tests
+  verify C10 transparency, flip pixels, and no-scratch rejection.
+
 - 2026-07-15 DM1 F0100-F0103 source-owned viewport primitives: mapped the
   ReDMCSB wall/door blit batch to the live DM1 compatibility renderer. F0103
   now requires F0128's verified temporary bitmap span and is no-draw without
