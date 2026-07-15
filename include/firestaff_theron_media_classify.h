@@ -28,14 +28,18 @@ typedef struct {
     /* Exact MODE1 sector width declared for CUE Track 02: 2048 or 2352.
      * Zero means no uniquely declared Track 02 source record. */
     int track02_mode1_sector_bytes;
+    /* Set only for exactly one CUE `TRACK 02 MODE1/2048|2352` with one
+     * INDEX 01 and a BINARY FILE member. It is independent of CDDA presence:
+     * missing audio must not make a hash-verifiable data track invalid. */
+    int has_valid_track02_mode1;
     int audio_track_count;
     int ogg_file_count;
     int bin_file_count;
     int iso_file_count;
     int launch_candidate;
     char candidate_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-    /* Canonical paths are populated only for a readable CUE-declared pair.
-     * candidate_path remains the Track 02 payload path for compatibility. */
+    /* track02_path is populated only for a readable valid Track 02 member.
+     * CDDA pairing is stricter and remains separately recorded below. */
     int has_track01_audio;
     int paired_track01_track02;
     char cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
