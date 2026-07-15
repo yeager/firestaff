@@ -1633,6 +1633,15 @@ static void test_sprite_asset_provider(void)
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE) != 0 &&
               framebuffer[(70 * 320) + 120] == 0);
 
+    viewport.projectiles[0].projectile_category = 0;
+    viewport.blocked_material_mask = 0u;
+    dm2_v1_render_projectiles(&viewport);
+    CHECK("DM2 unavailable projectile category blocks without a spell image",
+          viewport.asset_projectile_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE) != 0 &&
+              framebuffer[(70 * 320) + 120] == 0);
+
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     viewport.projectile_count = 1;

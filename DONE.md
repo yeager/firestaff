@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject projectile-category no-draw gate: missile and
+  cloud map-chip draws require their source-owned GDAT category. An absent
+  category no longer becomes the generic spell-missile image; source profiles
+  block the draw without inventing pixels.
+
 - 2026-07-15 DM2 skproject object-category no-draw gate: floor objects,
   creature possessions, and leader-hand overlays require the original
   record-owned GDAT category. Missing categories and unknown DB pools no
