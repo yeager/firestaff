@@ -1537,6 +1537,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                               .consumed_image_instruction_count ==
                           complete_scene.animated_image_scene
                               .declared_image_instruction_count &&
+                      complete_scene.structure2_payload_coverage_complete &&
+                      complete_scene.structure2_descriptor_count ==
+                          loaded_level.structure2_texture_count &&
+                      complete_scene.structure2_image_anchor_count ==
+                          complete_scene.structure2_descriptor_count &&
+                      complete_scene.structure2_payload_anchors_consumed ==
+                          complete_scene.structure2_payload_anchor_count &&
                       complete_scene.untextured_scene.untextured_face_count ==
                           loaded_level.structure3_face_materials
                               .non_textured_face_count &&
@@ -3222,20 +3229,11 @@ static void test_structure3_entry_header_boundaries(void) {
               "a bounded 08xx face reaches each declared Structure1G image descriptor no-draw");
         memset(&complete_scene, 0, sizeof(complete_scene));
         CHECK(nexus_v1_current_level_structure3_complete_source_scene_receipt(
-                  &engine, &complete_scene) == 1 && complete_scene.valid &&
-              complete_scene.category_coverage_complete &&
-              complete_scene.animated_image_coverage_complete &&
-              complete_scene.animated_image_scene.valid &&
-              complete_scene.animated_image_scene.complete &&
-              complete_scene.animated_image_scene.animated_face_count == 1 &&
-              complete_scene.animated_image_scene.declared_image_instruction_count == 1 &&
-              complete_scene.animated_image_scene.consumed_image_instruction_count == 1 &&
-              !complete_scene.transform_semantics_proven &&
-              !complete_scene.pixel_palette_vdp1_semantics_proven &&
-              !complete_scene.decoder_permitted && complete_scene.no_draw_only &&
-              !complete_scene.fallback_visuals_permitted &&
+                  &engine, &complete_scene) == 0 && !complete_scene.valid &&
+              !complete_scene.structure2_payload_coverage_complete &&
+              complete_scene.no_draw_only &&
               complete_scene.blocks_real_dgn_mesh_render,
-              "a complete DGN scene requires full 08xx image-source coverage no-draw");
+              "a DGN scene without bounded Structure2 payload anchors remains fail-closed");
         /* The following capture-route cases intentionally exercise the
          * pre-Structure2 source state. Keep this focused animated route from
          * widening those unrelated assertions. */

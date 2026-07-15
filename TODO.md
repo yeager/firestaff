@@ -7211,3 +7211,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   original invisibility/night-vision/palette term and source F0308 ordering.
   Remaining related work is its M11/F0304 Parry-XP consumer and the larger
   F0209 event-runtime body.
+- 🔧 2026-07-15 Nexus complete material source gate: the complete DGN receipt
+  now requires every active Structure2 descriptor to retain a bounded image
+  payload anchor from the canonical LEV, with each nonzero palette anchor
+  retained separately. These are capture bounds only, not proven image spans,
+  palette entries, pixel format, VDP1 mode, decoder input, or drawing. An
+  authentic Saturn trace must establish those semantics before promotion.

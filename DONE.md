@@ -16426,6 +16426,16 @@ source-owned no-draw catalog only; it does not decode texture, palette, VDP1,
 transform, or drawing semantics. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Nexus complete DGN material source gate
+
+The complete Structure3 source scene now consumes the active canonical
+Structure2 payload-anchor traversal. Every descriptor must retain an image
+anchor, each nonzero palette anchor is kept separately, and the full anchor
+count must be consumed from the same LEV bytes before the scene is complete.
+These remain bounded capture candidates only: image/palette lengths, texel
+order, palette format/addressing, VDP1 mode, decoder, and draw semantics all
+remain fail-closed. Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-15 Nexus Structure2 descriptor capture target
 
 The active canonical LEV route can now build and atomically write an external

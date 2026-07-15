@@ -4491,21 +4491,29 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
 {
     Nexus_V1_DgnStructure3CompleteSourceSceneReceipt receipt;
     Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt descriptor_receipt;
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt payload_scene;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
     receipt.no_draw_only = 1;
     receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&descriptor_receipt, 0, sizeof(descriptor_receipt));
+    memset(&payload_scene, 0, sizeof(payload_scene));
     if (!engine ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 || !material_receipt.valid ||
+        nexus_v1_current_level_structure2_descriptor_receipt(
+            engine, &descriptor_receipt) != 1 || !descriptor_receipt.valid ||
         nexus_v1_current_level_visit_structure3_package_geometry(
             engine, NULL, NULL, &receipt.static_scene) != 1 ||
         nexus_v1_current_level_visit_structure3_animated_materials(
             engine, NULL, NULL, &receipt.animated_scene) != 1 ||
         nexus_v1_current_level_visit_structure3_untextured_faces(
-            engine, NULL, NULL, &receipt.untextured_scene) != 1) {
+            engine, NULL, NULL, &receipt.untextured_scene) != 1 ||
+        nexus_v1_current_level_visit_structure2_payload_anchors(
+            engine, NULL, NULL, &payload_scene) != 1) {
         *out_receipt = receipt;
         return 0;
     }
@@ -4513,6 +4521,24 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
     receipt.source_byte_count = material_receipt.source_byte_count;
     receipt.source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
     receipt.face_count = material_receipt.faces.face_count;
+    receipt.structure2_descriptor_count = payload_scene.descriptor_count;
+    receipt.structure2_payload_anchor_count = payload_scene.anchor_count;
+    receipt.structure2_payload_anchors_consumed =
+        payload_scene.consumed_anchor_count;
+    receipt.structure2_image_anchor_count = payload_scene.image_anchor_count;
+    receipt.structure2_palette_anchor_count = payload_scene.palette_anchor_count;
+    receipt.structure2_payload_coverage_complete =
+        payload_scene.valid && payload_scene.level_index == receipt.level_index &&
+        payload_scene.source_byte_count == receipt.source_byte_count &&
+        payload_scene.source_bytes_fnv1a64 == receipt.source_bytes_fnv1a64 &&
+        payload_scene.descriptor_count == descriptor_receipt.descriptor_count &&
+        payload_scene.descriptor_count > 0 &&
+        payload_scene.image_anchor_count == payload_scene.descriptor_count &&
+        payload_scene.consumed_anchor_count == payload_scene.anchor_count &&
+        payload_scene.image_anchor_count + payload_scene.palette_anchor_count ==
+            payload_scene.anchor_count &&
+        payload_scene.no_draw_only && !payload_scene.fallback_visuals_permitted &&
+        payload_scene.blocks_real_dgn_mesh_render;
     if (receipt.animated_scene.animated_face_count > 0) {
         if (nexus_v1_current_level_visit_structure3_animated_material_images(
                 engine, NULL, NULL, &receipt.animated_image_scene) != 1 ||
@@ -4562,6 +4588,7 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
             receipt.source_bytes_fnv1a64 &&
         receipt.untextured_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
+        receipt.structure2_payload_coverage_complete &&
         receipt.static_scene.static_material_face_count ==
             material_receipt.materials.static_texture_selector_count &&
         receipt.animated_scene.animated_face_count ==

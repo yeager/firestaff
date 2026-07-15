@@ -874,6 +874,14 @@ typedef struct {
     int face_count;
     int traversed_face_count;
     int animated_image_coverage_complete;
+    /* Every active Structure2 descriptor needs a bounded, source-owned
+     * payload anchor before its faces can count as a complete material route. */
+    int structure2_descriptor_count;
+    int structure2_payload_anchor_count;
+    int structure2_payload_anchors_consumed;
+    int structure2_image_anchor_count;
+    int structure2_palette_anchor_count;
+    int structure2_payload_coverage_complete;
     int category_coverage_complete;
     int transform_semantics_proven;
     int pixel_palette_vdp1_semantics_proven;
