@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 spell-HUD C109 out-of-party gate: the
+  F0394/F0397/F0398 spell-area overlay contract now rejects a C109 caster
+  request outside `G0305_ui_PartyChampionCount` before publishing C009/C011
+  material, even if the skipped slot carries plausible health or Symbols
+  bytes. Focused spell-HUD CTest coverage passes.
+
 - ✅ 2026-07-15 CSB title phase host-consumption gate: the
   title/opening session receipt now requires PRESENTS, CHAOS, and STRIKES
   BACK host captures to carry the matching ReDMCSB F0437 source step,

@@ -35,6 +35,8 @@
  *   - the dead-champion reject:
  *       if (ChampionIndex != CM1_CHAMPION_NONE &&
  *           !M516_CHAMPIONS[ChampionIndex].CurrentHealth) return;
+ *   - the skipped-tab reject:
+ *       if (ChampionIndex >= G0305_ui_PartyChampionCount) return;
  *   - the CM1_CHAMPION_NONE clear path:
  *       G0514_i_MagicCasterChampionIndex = CM1_CHAMPION_NONE;
  *       M524_FillScreenBox(G0000_ai_Graphic562_Box_SpellArea,
@@ -163,7 +165,8 @@ typedef enum DM1_V1_CpsaoRejectReasonPc34 {
     DM1_V1_CPSAO_REJECT_NONE_PC34 = 0,
     DM1_V1_CPSAO_REJECT_SAME_CASTER_PC34 = 1,
     DM1_V1_CPSAO_REJECT_DEAD_CHAMPION_PC34 = 2,
-    DM1_V1_CPSAO_REJECT_NO_CASTER_LIVE_PC34 = 3
+    DM1_V1_CPSAO_REJECT_NO_CASTER_LIVE_PC34 = 3,
+    DM1_V1_CPSAO_REJECT_OUT_OF_PARTY_PC34 = 4
 } DM1_V1_CpsaoRejectReasonPc34;
 
 typedef struct DM1_V1_ChampionPanelSpellAreaOverlayPc34Contract {

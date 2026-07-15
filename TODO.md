@@ -78,6 +78,11 @@
   Champion.SymbolStep rows 4/5 and keeps the C109 tab receipt indexed by
   champion slot even when a dead or out-of-party tab is skipped, preventing
   stale HUD tab material from being described as a valid ReDMCSB row.
+  2026-07-15 update: the planner now rejects a C109 caster request outside
+  `G0305_ui_PartyChampionCount` before any C009/C011/F0393/F0397/F0398
+  material is published, even when the skipped slot still has health or
+  Symbols bytes. Remaining work is unchanged: real PC34/Mac capture across
+  caster changes, rune rows, recant, and cast refresh.
 
 - 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
   surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates

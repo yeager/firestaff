@@ -275,6 +275,45 @@ static void test_dead_champion_reject(void)
               0, "no draws on dead-champion reject");
 }
 
+static void test_out_of_party_caster_reject(void)
+{
+    DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 in;
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
+
+    reset_input(&in);
+    in.previous_caster_index = 0;
+    in.requested_caster_index = 3;
+    in.party_champion_count = 2;
+    in.symbol_step = 2;
+    in.champions[3].current_health = 100;
+    type_symbols(&in, 3, "FUL");
+
+    check_int("outParty.build",
+              dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, &plan),
+              1, "C109 skipped out-of-party tab");
+    check_int("outParty.reason", plan.reject_reason,
+              DM1_V1_CPSAO_REJECT_OUT_OF_PARTY_PC34,
+              "C109 cannot promote an out-of-party slot into F0394 material");
+    check_int("outParty.postCaster", plan.post_caster_index, 0,
+              "G0514 preserved when requested tab is outside party count");
+    check_int("outParty.background", plan.drew_background_graphic, 0,
+              "no C009 background for skipped tab");
+    check_int("outParty.linesBitmap", plan.drew_lines_bitmap, 0,
+              "no C011 lines for skipped tab");
+    check_int("outParty.controls", plan.drew_spell_area_controls, 0,
+              "no F0393 tab repaint for skipped tab");
+    check_int("outParty.avail", plan.drew_available_symbols, 0,
+              "no F0397 row from skipped tab SymbolStep");
+    check_int("outParty.champ", plan.drew_champion_symbols, 0,
+              "no F0398 row from skipped tab Symbols");
+    check_int("outParty.tabs", plan.tab_count, 0,
+              "skipped tab does not publish a tab receipt");
+    check_int("outParty.availCount", plan.available_symbol_count, 0,
+              "skipped tab does not publish available symbols");
+    check_int("outParty.champCount", plan.champion_symbol_count, 0,
+              "skipped tab does not publish champion symbols");
+}
+
 static void test_none_clear_path(void)
 {
     DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 in;
@@ -660,6 +699,7 @@ int main(void)
     test_contract();
     test_same_caster_reject();
     test_dead_champion_reject();
+    test_out_of_party_caster_reject();
     test_none_clear_path();
     test_first_caster_after_none();
     test_caster_swap_with_step_window();
