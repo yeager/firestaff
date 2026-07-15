@@ -33,6 +33,12 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
     unsigned short thing,
     int partyDirection);
 
+/* ReDMCSB DUNGEON.C F0144: raw GROUP.Type -> G0243 Attributes. */
+int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing,
+    unsigned short *outAttributes);
+
 const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void);
 
 #ifdef __cplusplus

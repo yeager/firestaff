@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 DUNGEON F0144 follow-up: raw PC3.4 `GROUP.Type` now
+  selects exact G0243 Attributes through F0156. Remaining work is routing
+  separately-owned live M10/M11 creature consumers through this raw accessor;
+  do not substitute a decoded group mirror or a default creature profile.
+
 - 2026-07-15 DM1 DUNGEON F0140 follow-up: the source-defined raw PC3.4
   object-weight route now covers F0156 object rows and F0159 container
   contents. Remaining work is separately-owned live inventory and champion

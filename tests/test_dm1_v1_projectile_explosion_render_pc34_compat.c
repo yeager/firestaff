@@ -687,6 +687,52 @@ static void test_f0141_f0032_f0033_raw_object_icon_path(void)
               "THING_NONE rejects without an icon fallback");
 }
 
+static void test_f0144_raw_group_attributes(void)
+{
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat decodedGroup;
+    unsigned char group[16] = {0};
+    unsigned short attributes = 0xffffu;
+    unsigned short groupThing = make_thing(THING_TYPE_GROUP, 0, 0);
+
+    printf("  F0144 raw group attributes...\n");
+    memset(&things, 0, sizeof(things));
+    memset(&decodedGroup, 0, sizeof(decodedGroup));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_GROUP] = group;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    /* A stale decoded mirror must not replace F0156 raw GROUP.Type. */
+    decodedGroup.creatureType = 0;
+    things.groups = &decodedGroup;
+    things.groupCount = 1;
+
+    group[4] = 3; /* Wizard Eye, G0243 Attributes 0x04B4. */
+    ASSERT_EQ(dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+                  &things, groupThing, &attributes), 1,
+              "F0144 reads loaded raw GROUP.Type");
+    ASSERT_EQ(attributes, 0x04B4,
+              "F0144 returns Wizard Eye G0243 attributes, not decoded Giant Scorpion");
+
+    group[4] = 23; /* Lord Chaos, PC3.4 G0243 Attributes 0x78AA. */
+    ASSERT_EQ(dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+                  &things, groupThing, &attributes), 1,
+              "F0144 reads raw Lord Chaos type");
+    ASSERT_EQ(attributes, 0x78AA, "F0144 preserves PC3.4 Lord Chaos attributes");
+
+    group[4] = 27;
+    ASSERT_EQ(dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+                  &things, groupThing, &attributes), 0,
+              "F0144 rejects an out-of-range raw GROUP.Type");
+    ASSERT_EQ(attributes, 0, "failed F0144 supplies no fallback attributes");
+    ASSERT_EQ(dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+                  &things, make_thing(THING_TYPE_WEAPON, 0, 0), &attributes), 0,
+              "F0144 rejects non-group Things");
+    things.rawThingData[THING_TYPE_GROUP] = NULL;
+    ASSERT_EQ(dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+                  &things, groupThing, &attributes), 0,
+              "F0144 rejects a missing raw GROUP record");
+}
+
 static void test_projectile_sprite_blit_plan(void) {
     DM1_ProjectileSpriteBlitPlan plan;
     printf("  projectile sprite blit plan...\n");
@@ -1557,6 +1603,7 @@ int main(void) {
     test_f0115_runtime_summary_from_world();
     test_f0115_world_candidates_real_pc34_data();
     test_f0141_f0032_f0033_raw_object_icon_path();
+    test_f0144_raw_group_attributes();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

@@ -198,7 +198,7 @@ F	0142	F0142_DUNGEON_GetProjectileAspect	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;D
 F	142	F142_aqzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0143	F0143_DUNGEON_GetArmourDefense	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;CHAMPION.C	implemented-narrow	implemented_narrow	DM1 exact DUNGEON.C F0143 source body: G0239 defense with optional low-3-bit sharp multiplier through F0030; raw PC3.4 ARMOUR.Type route rejects absent and invalid rows.
 F	143	F143_mzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0144	F0144_DUNGEON_GetCreatureAttributes	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;MENU.C;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0144	F0144_DUNGEON_GetCreatureAttributes	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;MENU.C;DEFS.H;TIMELINE.C;MOVESENS.C	implemented-narrow	implemented_narrow	DM1 F0156 raw C04 GROUP.Type-to-G0243 Attributes accessor; rejects missing, non-group, and invalid source records without decoded-mirror substitution.
 F	144	F144_amzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0145	F0145_DUNGEON_GetGroupCells	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	145	F145_rzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
