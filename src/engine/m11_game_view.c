@@ -1673,22 +1673,52 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
 static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
 {
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
-    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    int ready = 0;
 
     if (!state || !state->csbStartupRuntimeAssetSession) {
         return 0;
     }
-    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
-    /* ReDMCSB PANEL.C F0346/F0347 reaches C017 only after ENTRANCE.C F0806
-     * completes.  C017/C040 must remain the same verified session that
-     * carried C001-C005.  Do not re-open C017 through M11_AssetLoader: that
-     * is a second source owner and can reject the real PC3.4 session. */
+    /* ENTRANCE.C F0806 releases C004/C002/C003 only after the opening loop;
+     * PANEL.C F0346/F0347 then owns C040/C017 before DUNVIEW.C F0128 starts
+     * the first live page. M11 therefore consumes the completed CSB host
+     * surface, not merely a resident-surface pointer or an asset-loader copy. */
     if (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
-        !terminal.valid || !terminal.c017_ready || !terminal.c040_ready) {
+        !terminal.valid || !terminal.c017_ready || !terminal.c040_ready ||
+        !csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+            session, &full_runtime) ||
+        !full_runtime.valid || !full_runtime.title_to_hud_same_session ||
+        !full_runtime.playback_route_ready ||
+        full_runtime.session_generation != terminal.session_generation) {
         return 0;
     }
-    return 1;
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    plan.title_special_palette = -1;
+    plan.special_palette = -1;
+    memset(&host_surface, 0, sizeof(host_surface));
+    if (csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+            session, &plan, terminal.source_tick, &host_surface) &&
+        host_surface.valid && host_surface.real_asset_matched &&
+        host_surface.no_legacy_wrappers && host_surface.no_synthetic_surface &&
+        host_surface.host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 &&
+        host_surface.runtime_hud_decision &&
+        host_surface.uses_c017_inventory && host_surface.uses_c040_resurrect &&
+        host_surface.frame.session_generation == terminal.session_generation &&
+        host_surface.frame.source_tick == terminal.source_tick &&
+        host_surface.host_surface_hash != 0u) {
+        ready = 1;
+    }
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+        &host_surface);
+    return ready;
 }
 
 static int m11_csb_consume_c040_clear_session(M11_GameViewState *state)
@@ -3131,181 +3161,6 @@ static void m11_execute_csb_startup_primitive_commands(
             break;
         }
     }
-}
-
-typedef struct M11_CSBStartupAssetContext {
-    const M11_GameViewState *state;
-    unsigned char *framebuffer;
-    int framebufferWidth;
-    int framebufferHeight;
-    const CSB_V1_BootStartupRenderDrawReceipt_PC34 *drawReceipt;
-} M11_CSBStartupAssetContext;
-
-static int m11_execute_csb_startup_asset_command(
-    void *user,
-    const CSB_V1_StartupAssetCommand_PC34 *cmd)
-{
-    const M11_CSBStartupAssetContext *context =
-        (const M11_CSBStartupAssetContext *)user;
-    const M11_GameViewState *state;
-    const M11_AssetSlot *asset;
-    unsigned char *framebuffer;
-    int framebufferWidth;
-    int framebufferHeight;
-
-    if (!context) {
-        return 0;
-    }
-    state = context->state;
-    framebuffer = context->framebuffer;
-    framebufferWidth = context->framebufferWidth;
-    framebufferHeight = context->framebufferHeight;
-
-    if (!state || !framebuffer || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || !cmd || !cmd->visible ||
-        !state->assetsAvailable || cmd->asset_id <= 0 ||
-        cmd->source_w <= 0 || cmd->source_h <= 0 ||
-        cmd->dest_w <= 0 || cmd->dest_h <= 0) {
-        return 0;
-    }
-    asset = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)cmd->asset_id);
-    if (!asset ||
-        asset->width < (unsigned int)(cmd->source_x + cmd->source_w) ||
-        asset->height < (unsigned int)(cmd->source_y + cmd->source_h)) {
-        return 0;
-    }
-    switch (cmd->kind) {
-        case CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34:
-            if (asset->width != (unsigned int)cmd->source_w ||
-                asset->height != (unsigned int)cmd->source_h) {
-                return 0;
-            }
-            M11_AssetLoader_Blit(asset,
-                                 framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 cmd->dest_x,
-                                 cmd->dest_y,
-                                 cmd->transparent_color);
-            return 1;
-        case CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34:
-        case CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34:
-        case CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34:
-            M11_AssetLoader_BlitRegion(asset,
-                                       cmd->source_x,
-                                       cmd->source_y,
-                                       cmd->source_w,
-                                       cmd->source_h,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       cmd->dest_x,
-                                       cmd->dest_y,
-                                       cmd->transparent_color);
-            return 1;
-        case CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34:
-            M11_AssetLoader_BlitSubRectScaled(asset,
-                                              framebuffer,
-                                              framebufferWidth,
-                                              framebufferHeight,
-                                              cmd->dest_x,
-                                              cmd->dest_y,
-                                              cmd->dest_w,
-                                              cmd->dest_h,
-                                              cmd->source_x,
-                                              cmd->source_y,
-                                              cmd->source_w,
-                                              cmd->source_h,
-                                              cmd->transparent_color);
-            return 1;
-        case CSB_V1_STARTUP_ASSET_NONE_PC34:
-        default:
-            return 0;
-    }
-}
-
-static void m11_csb_startup_asset_context_init(
-    M11_CSBStartupAssetContext *context,
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight)
-{
-    if (!context) {
-        return;
-    }
-    context->state = state;
-    context->framebuffer = framebuffer;
-    context->framebufferWidth = framebufferWidth;
-    context->framebufferHeight = framebufferHeight;
-    context->drawReceipt = NULL;
-}
-
-static int m11_execute_csb_startup_asset_commands_kind(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    CSB_V1_StartupAssetCommandKind_PC34 kind)
-{
-    M11_CSBStartupAssetContext context;
-    int i;
-    int executed = 0;
-
-    if (!plan) {
-        return 0;
-    }
-    m11_csb_startup_asset_context_init(&context,
-                                       state,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight);
-    for (i = 0; i < plan->asset_command_count &&
-                i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
-        const CSB_V1_StartupAssetCommand_PC34 *cmd =
-            &plan->asset_commands[i];
-        if (cmd->kind == kind &&
-            m11_execute_csb_startup_asset_command(&context, cmd)) {
-            ++executed;
-        }
-    }
-    return executed > 0;
-}
-
-static int m11_execute_csb_startup_closed_door_asset_commands(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    M11_CSBStartupAssetContext context;
-    int left;
-    int right;
-
-    m11_csb_startup_asset_context_init(&context,
-                                       state,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight);
-    left = m11_execute_csb_startup_asset_commands_kind(
-        state,
-        framebuffer,
-        framebufferWidth,
-        framebufferHeight,
-        plan,
-        CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34);
-    right = m11_execute_csb_startup_asset_commands_kind(
-        state,
-        framebuffer,
-        framebufferWidth,
-        framebufferHeight,
-        plan,
-        CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34);
-    return left && right;
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(

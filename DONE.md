@@ -38,6 +38,11 @@
   provenance only after both source-backed blits complete; the real-PC34 HoC
   regression compares source/destination geometry, palette/key, and C026
   atlas cell against that live receipt.
+- ✅ 2026-07-15 CSB live door/HUD gate: M11 now requires the complete
+  C001 -> C004/C002/C003 -> C017/C040 session and its CSB-owned HUD host
+  receipt before it can draw the first F0128 page. The remaining unused M11
+  startup asset-command wrappers were removed. A real-launch regression
+  rejects the live frame when the authenticated source surface set is absent.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
