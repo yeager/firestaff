@@ -258,7 +258,7 @@ F	0175	F0175_GROUP_GetThing	PANEL.C;ATARIST.H;GROUP.C;FMTOWNS.H;CLIKVIEW.C;IIGS.
 F	175	F175_gzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0176	F0176_GROUP_GetCreatureOrdinalInCell	ATARIST.H;GROUP.C;FMTOWNS.H;CLIKVIEW.C;DUNVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	Raw C04 Count and F0144 G0243 size select exact centered/full/half-square source cell scan; F0145/F0147 effective values remain explicit caller inputs and invalid source records return no ordinal.
 F	176	F176_avzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0177	F0177_GROUP_GetMeleeTargetCreatureOrdinal	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0177	F0177_GROUP_GetMeleeTargetCreatureOrdinal	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H	implemented-narrow	implemented_narrow	Raw F0175 C04 lookup plus F0228 cardinal direction, F0229/G0023 target-cell priority, and F0176 ordinal selection; diagonal/non-adjacent and absent-group targets fail closed.
 F	177	F177_aszz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0178	F0178_GROUP_GetGroupValueUpdatedWithCreatureValue	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	Exact GROUP.C packed two-bit replacement, consumed by DM1 F0262 live group teleporter direction/cell rotation; source-valid 0..3 indices only.
 F	178	F178_aazz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

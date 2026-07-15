@@ -57,6 +57,19 @@ int dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
     unsigned int groupDirections,
     unsigned int cell);
 
+/* ReDMCSB GROUP.C F0177: resolve an adjacent raw C04 melee target. */
+int dm1_v1_group_get_melee_target_ordinal_f0177_pc34(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things,
+    int mapIndex,
+    int groupMapX,
+    int groupMapY,
+    int partyMapX,
+    int partyMapY,
+    unsigned int championCell,
+    unsigned int groupCells,
+    unsigned int groupDirections);
+
 const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void);
 
 #ifdef __cplusplus

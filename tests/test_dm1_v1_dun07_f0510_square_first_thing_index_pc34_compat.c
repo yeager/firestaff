@@ -228,6 +228,14 @@ int main(void)
     ok &= expect_thing("F0175 follows raw static chain to first C04 group",
         dm1_v1_group_get_thing_f0175_pc34(&dungeon, &things, 0, 0, 0),
         firstGroup);
+    rawGroup[4] = 0;
+    rawGroup[14] = 0;
+    ok &= expect_int("F0177 resolves raw adjacent C04 melee target",
+        dm1_v1_group_get_melee_target_ordinal_f0177_pc34(
+            &dungeon, &things, 0, 0, 0, 0, 1, 0u, 0x03u, 0u), 1);
+    ok &= expect_int("F0177 rejects a diagonal non-melee target",
+        dm1_v1_group_get_melee_target_ordinal_f0177_pc34(
+            &dungeon, &things, 0, 0, 0, 1, 1, 0u, 0x03u, 0u), 0);
     ok &= expect_thing("F0162 skips static door/text/sensor records",
         F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
         firstGroup);
@@ -241,6 +249,9 @@ int main(void)
     ok &= expect_thing("F0175 does not invent a group after static records",
         dm1_v1_group_get_thing_f0175_pc34(&dungeon, &things, 0, 0, 0),
         THING_ENDOFLIST);
+    ok &= expect_int("F0177 does not invent a target without C04",
+        dm1_v1_group_get_melee_target_ordinal_f0177_pc34(
+            &dungeon, &things, 0, 0, 0, 0, 1, 0u, 0x03u, 0u), 0);
     ok &= expect_thing("F0162 does not fabricate an object after static records",
         F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
         THING_ENDOFLIST);
