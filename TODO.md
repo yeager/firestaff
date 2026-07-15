@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 inventory panel follow-up: normal V1 F0355/F0341 now
+  accepts only exact loaded-pixel C017/C023/C033 GRAPHICS.DAT surfaces and
+  the original loaded font. Remaining work is a real PC34/Mac capture of
+  scroll, chest, and full 30-slot inventory states. Missing source material
+  must keep the C017-cleared area untouched; do not restore host slot boxes,
+  scroll chrome, or generic text.
+
 - 2026-07-15 DM1 CHAMDRAW HUD follow-up: F0622 champion-position icons and
   F0292 dead status boxes now require their exact PC34 GRAPHICS.DAT surfaces.
   Remaining work is a real four-champion HUD capture across live/dead and
