@@ -597,8 +597,8 @@ static void test_optional_real_menumenu_bpk(void) {
                       "real MENU.BPK first word is BE span-close on 161 entries");
                 CHECK(framing.be_shorter_than_stream == 1U &&
                           framing.first_be_short_entry == 162U &&
-                          framing.be_tail_bytes_total == 530U,
-                      "real MENU.BPK final PRS3 span exposes its 530-byte BPK tail");
+                          framing.be_tail_bytes_total == 6U,
+                      "real MENU.BPK final PRS3 frame has its verified 6-byte BE shortfall");
                 printf("  INFO: framing be-near=%u le-near=%u be-short=%u "
                        "tail=%u first-short=%u le-at-least=%u\n",
                        framing.be_near_stream, framing.le_near_stream,
