@@ -5004,6 +5004,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: quicksave `.v1runtime` byte format/parsing is now DM1-owned in `dm1_v1_runtime_sidecar_pc34_compat`; M11 only maps host fields to the DM1 sidecar contract. Remaining cleanup is broader runtime/API ownership and real Mac capture.
   - 2026-07-11 update: DM1 canonical loose `DUNGEON.DAT` is now hash-verified before virtual archive path selection, and original PC34 M11 resume keeps live dungeon ownership after handoff. Remaining cleanup is broader runtime/API ownership and real Mac capture.
   - 2026-07-11 update: DM1 original-PC34 runtime handoff now stages party, event queue, report, and optional dungeon tail in a candidate world and commits them atomically only after the full ReDMCSB F0435-shaped load succeeds. `DM1_LoadGameWithBackup()` now applies the same candidate-world transaction to native and PC34 resume sources, promoting a `.bak` only after a fully valid candidate and preserving the live world/header when a present primary is rejected. The DM1-owned corpus verifier now runs every classifier-qualified PC34 file through transient F0435 -> F0433 -> F0435 import/export/reload proof without writing beside user saves. Remaining save work is launcher/UI consumption of the corpus receipt and real user-save corpus evidence.
+  - 2026-07-15 update: corpus discovery continues to exclude a Firestaff
+    `LSV01RDM` manifest when selecting external originals, but F0435 accepts
+    an explicitly selected valid PC34 stream. This keeps source parser errors
+    and live C01 door/timeline state intact instead of adding a second,
+    weaker provenance parser before materialization. Remaining work is real
+    original save corpus and launcher evidence.
   - 2026-07-11 update: DM1 HoC boot-probe complete-support and release-app readiness gates now live on the DM1 boot-summary API; M11 only asks the DM1 helper. Remaining cleanup is broader runtime/API ownership and real Mac capture.
   - 2026-07-11 update: DM1 full-graphics startup media receipt source lookup now lives in the DM1 startup API; M11 SWSH/TITLE callers consume the DM1 handled-source helper instead of owning source filtering. Remaining cleanup is broader runtime/API ownership and real Mac capture.
   - 2026-07-11 update: DM1 wall-set graphic id mapping now lives in the DM1/ReDMCSB graphic-id API; M11 side/front wall drawing consumes that mapping instead of owning a local wallset base helper. Remaining cleanup is broader runtime/API ownership and real Mac capture.
@@ -5245,6 +5251,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-10 update: DM2 boot now exposes one complete-support receipt that joins skproject GDAT startup title/menu queries, HUD handoff, four-direction runtime HUD/dungeon capture, raw/decoded GDAT hashes, and no-fallback runtime visual gates. Remaining DM2 work is broader Mac packaged capture, exact interface decode breadth, creature sprite atlas parity, more CCM opcodes, and real save corpus import.
   - 2026-07-10 update: DM2 runtime frame ownership now requires full GDAT-backed HUD plus dungeon base rendering (floor/ceiling, walls, HUD core/portraits, and any visible door/object/creature/projectile overlays) with zero fallback draws before the frame is accepted as a full GDAT render. Remaining DM2 work is broader real packaged capture on Mac, exact interface decode breadth, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-10 update: DM2 save/load now exposes a real SKSave corpus scan receipt for SKSave.dat, SKSave.bak, and SKSave%02u.dat candidates, including slot mask, backup selection, payload totals, and invalid-save counts before full session import. Remaining DM2 work is real GDAT capture, exact interface decode breadth, creature sprite atlas parity, and broader real save corpus import.
+  - 2026-07-15 update: a valid `SKSave.dat` now owns last-session corpus
+    accounting and its `.bak` remains recovery-only, matching SKProject's
+    primary-before-backup behaviour. The receipt therefore excludes a valid
+    backup from importable totals; real corpus breadth remains open.
   - 2026-07-13 update: each parsed corpus candidate now retains an FNV-1a
     receipt over the complete original SKSave file, including its 42-byte
     header. The new receipted loader rechecks that file identity, payload size,

@@ -1719,10 +1719,7 @@ static int test_sksave_corpus_scan_receipt(void)
         printf("    FAIL: could not build SKSave corpus importer fixtures\n");
         return 0;
     }
-    largest_payload_size = payload_a_size;
-    if (payload_b_size > largest_payload_size) {
-        largest_payload_size = payload_b_size;
-    }
+    largest_payload_size = payload_b_size;
     if ((size_t)payload_c_size > largest_payload_size) {
         largest_payload_size = (size_t)payload_c_size;
     }
@@ -1783,7 +1780,7 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.valid_slot_mask != (uint16_t)(1u << 3) ||
         receipt.invalid_candidate_count != 1 ||
         receipt.importable_candidate_count != 2 ||
-        receipt.import_rejected_candidate_count != 1 ||
+        receipt.import_rejected_candidate_count != 0 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
@@ -1795,7 +1792,7 @@ static int test_sksave_corpus_scan_receipt(void)
             payload_b_size + (size_t)payload_c_size ||
         receipt.largest_payload_size != largest_payload_size ||
         receipt.total_payload_size !=
-            payload_a_size + payload_b_size + (size_t)payload_c_size ||
+            payload_b_size + (size_t)payload_c_size ||
         strstr(receipt.first_importable_path, "SKSave.dat") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.dat") == NULL) {
         printf("    FAIL: mixed corpus receipt did not match expected fields "
@@ -1811,7 +1808,7 @@ static int test_sksave_corpus_scan_receipt(void)
                receipt.original_raw_candidate_count,
                receipt.largest_payload_size, largest_payload_size,
                receipt.total_payload_size,
-               payload_a_size + payload_b_size + (size_t)payload_c_size,
+               payload_b_size + (size_t)payload_c_size,
                receipt.first_valid_path,
                receipt.first_importable_path);
         cleanup_slot_dir(tmpdir);

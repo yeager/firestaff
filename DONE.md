@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1/DM2 source-save admission: DM1 keeps manifest exclusion
+  in corpus discovery while F0435 materializes an explicitly selected valid
+  PC34 stream, preserving original parser errors and live C01 door/timeline
+  state. DM2 now counts a valid `SKSave.dat` as the authoritative
+  last-session save and uses `.bak` only for recovery, matching SKProject.
+  Focused `dm1_v1_original_save_pc34_handoff` and `dm2_v1_save_load` tests
+  pass in full.
+
 - ✅ 2026-07-15 DM1 M648 wall inscriptions: corrected the direct PC3.4
   `GRAPHICS.DAT` binding from mandatory preload slot 120 to ReDMCSB F0107's
   actual bitmap ordinal 258. The real-data all-map capture verifies 56 wall
