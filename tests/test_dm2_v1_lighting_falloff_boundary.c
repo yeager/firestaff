@@ -1130,18 +1130,15 @@ static void test_sprite_asset_provider(void)
         dm2_v1_viewport_set_hud_party(&viewport, &party);
         dm2_v1_render_ui_chrome(&viewport);
         CHECK("DM2 UI chrome renders bound champion HUD bars",
-              framebuffer[33 * 320 + 246] == 15 &&
-                  framebuffer[34 * 320 + 250] == 11 &&
-                  framebuffer[32 * 320 + 250] == 9 &&
-                  framebuffer[39 * 320 + 270] == 2 &&
+              framebuffer[39 * 320 + 270] == 2 &&
                   framebuffer[39 * 320 + 287] == 0 &&
                   framebuffer[44 * 320 + 292] == 11 &&
                   framebuffer[44 * 320 + 294] == 0 &&
                   framebuffer[49 * 320 + 272] == 12 &&
                   framebuffer[49 * 320 + 274] == 0);
-        CHECK("DM2 UI chrome tracks placeholder portrait fallback",
+        CHECK("DM2 UI chrome leaves a missing portrait unpainted",
               viewport.asset_hud_portrait_drawn_count == 0 &&
-                  viewport.fallback_hud_portrait_drawn_count == 1);
+                  viewport.fallback_hud_portrait_drawn_count == 0);
 
         {
             DM2_V1_InterfaceHudLayout layout;
