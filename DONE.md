@@ -16868,6 +16868,16 @@ pre-envelope byte and altered source media, and publishes no level grammar,
 dungeon, object, grid, bitmap, palette, or transition semantics. Verification:
 the focused US Track 02 raw-loader probe.
 
+# ✅ 2026-07-15 Theron initial-envelope header capture gate
+
+Firestaff can now retain the first twelve raw bytes of the source-locked
+initial envelope only when twelve ordered game-RAM payload receipts share one
+dispatch and READ(6) identity and cover the exact consecutive raw offsets.
+The receipt stores the source bytes and FNV-1a hash only. It does not interpret
+dimensions, the existing extension word, header grammar, level, dungeon,
+object, grid, bitmap, palette, or transition semantics. Verification: the
+focused US Track 02 probe rejects a split SCSI capture chain.
+
 # ✅ 2026-07-15 Theron LBA 4165 raw Track 02 binding
 
 Bound the four sectors requested by the game-owned window path, LBA

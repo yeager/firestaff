@@ -123,7 +123,11 @@ int main(void)
     uint8_t saved_envelope_byte;
     Theron_V1RawLoaderTraceGamePayloadReceipt game_payload;
     Theron_V1RawLoaderTraceGamePayloadReceipt envelope_payload;
+    Theron_V1RawLoaderTraceGamePayloadReceipt header_payloads[
+        THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt envelope_byte;
+    Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
+    size_t header_index;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
 
@@ -245,6 +249,46 @@ int main(void)
     }
     raw[boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
         envelope_payload.source_offset] = saved_envelope_byte;
+    for (header_index = 0u;
+         header_index < THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES;
+         ++header_index) {
+        header_payloads[header_index] = envelope_payload;
+        header_payloads[header_index].source_offset +=
+            (unsigned int)header_index;
+        header_payloads[header_index].source_byte = raw[
+            boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
+            header_payloads[header_index].source_offset];
+        header_payloads[header_index].dispatch_sequence = 4u;
+        header_payloads[header_index].scsi_generation = 12u;
+        header_payloads[header_index].scsi_lba = 0x17f0u;
+        header_payloads[header_index].scsi_sector_count = 1u;
+    }
+    if (!theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
+            header_payloads,
+            THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES,
+            raw, raw_size, md5, &envelope_header) || !envelope_header.valid ||
+        envelope_header.track02_record != boundary.track02_record ||
+        envelope_header.raw_sector != boundary.level_first_raw_sector ||
+        !envelope_header.contiguous_capture_chain_verified ||
+        !envelope_header.bytes_hash || envelope_header.header_semantics_proven ||
+        memcmp(envelope_header.bytes,
+               raw + boundary.level_first_raw_sector *
+                         THERON_TRACK02_RAW_SECTOR_BYTES +
+                     envelope_payload.source_offset,
+               THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES) != 0) {
+        free(raw);
+        printf("FAIL: contiguous game-RAM header receipt did not remain opaque\n");
+        return 1;
+    }
+    ++header_payloads[5].scsi_lba;
+    if (theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
+            header_payloads,
+            THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES,
+            raw, raw_size, md5, &envelope_header)) {
+        free(raw);
+        printf("FAIL: split CD capture chain reached the header receipt\n");
+        return 1;
+    }
     saved_tail_byte = raw[boundary.object_boundary_raw_offset];
     raw[boundary.object_boundary_raw_offset] ^= 0x01u;
     if (theron_v1_track02_capture_initial_level_object_boundary(

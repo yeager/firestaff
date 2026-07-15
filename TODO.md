@@ -6489,6 +6489,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   It proves envelope overlap only; a positive original capture still needs a
   separate loader/consumer proof before any level, object, graphics, palette,
   grid, or transition semantics may be investigated.
+  2026-07-15 update: a bounded 12-byte prefix receipt can now join one ordered
+  game-RAM capture chain to the exact raw envelope prefix. It requires one
+  shared dispatch and READ(6) identity across all twelve exact offsets and
+  retains only the raw bytes plus their hash. The prefix remains opaque: no
+  dimensions, extension word, header grammar, level, object, grid, graphics,
+  palette, or transition claim is admitted without a positive original
+  consumer trace.
   2026-07-15 update: dispatch-bounded FIFO tracing proves dispatch 0 / SCSI
   generation 4 materializes bytes at physical `0x1f0256..0x1f0259`; later
   dispatches also show System Card workspace writes. Neither destination has
