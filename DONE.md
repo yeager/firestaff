@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject portrait no-draw gate: `DRAW_CHAMPION_PICTURE`
+  no longer replaces a missing `CHAMPIONS` GDAT bitmap with a generated colour
+  fill. Strict profiles report a blocked portrait; other profiles leave its
+  surface blank while retaining the source-owned state-bar overlay path.
+
 - 2026-07-15 DM2 skproject scene no-draw gate: `DRAW_DUNGEON_TILES` planes
   and `DRAW_WALL` cells no longer paint generated ceiling, floor, or wall
   substitutes. Missing source GDAT leaves the region blank and strict profiles

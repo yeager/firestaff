@@ -5724,15 +5724,10 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     }
                     ++s->asset_hud_portrait_drawn_count;
                 } else {
-                    if (s->source_materials_required) {
-                        dm2_v1_block_source_material(
-                            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
-                    } else {
-                        dm2_v1_fill_rect(vp, stride,
-                                         &plan.champion_slots[slot].portrait_rect,
-                                         plan.champion_slots[slot].portrait_fill_color);
-                        ++s->fallback_hud_portrait_drawn_count;
-                    }
+                    /* DRAW_CHAMPION_PICTURE has only the selected CHAMPIONS
+                     * GDAT bitmap route. Do not invent a portrait fill. */
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
                 }
                 if (!dm2_v1_render_hud_source_font(
                         s, &plan.champion_slots[slot].name_marker_rect,
