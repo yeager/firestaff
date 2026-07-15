@@ -126,11 +126,17 @@ typedef struct {
     uint32_t zero_post_read_compare_offset;
     uint32_t zero_repeat_counter_increment_offset;
     uint32_t zero_repeat_branch_offset;
+    uint16_t zero_repeat_compare_instruction;
+    uint16_t zero_repeat_branch_instruction;
     uint32_t zero_repeat_branch_target_offset;
     uint32_t zero_repeat_delay_mask_offset;
     uint32_t zero_outer_loop_branch_offset;
     uint32_t zero_outer_loop_target_offset;
     int sh2_zero_side_repeat_control_verified;
+    /* The zero-side's `CMP/EQ; ADD #1; BF/S` loop exits only when its two
+     * working registers compare equal. This is a static SH-2 termination
+     * condition, not proof that either register is a PRS3 run length. */
+    int sh2_zero_repeat_termination_proven;
     uint32_t zero_side_linear_begin_offset;
     uint32_t zero_side_linear_end_offset;
     uint32_t zero_side_linear_byte_count;

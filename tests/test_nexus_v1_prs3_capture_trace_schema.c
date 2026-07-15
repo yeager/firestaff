@@ -365,6 +365,8 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.zero_post_read_compare_offset == 85530U &&
                receipt.zero_repeat_counter_increment_offset == 85532U &&
                receipt.zero_repeat_branch_offset == 85534U &&
+               receipt.zero_repeat_compare_instruction == 0x2a10U &&
+               receipt.zero_repeat_branch_instruction == 0x8ff3U &&
                receipt.zero_repeat_branch_target_offset == 85512U &&
                receipt.zero_outer_loop_target_offset == 85428U &&
                receipt.zero_side_linear_begin_offset == 85476U &&
@@ -384,6 +386,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_nonzero_direct_byte_path_proven &&
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_repeat_control_verified &&
+               receipt.sh2_zero_repeat_termination_proven &&
                receipt.sh2_zero_side_linear_route_verified &&
                receipt.sh2_zero_side_has_no_direct_output_store &&
                !receipt.zero_side_copy_or_backreference_proven &&
@@ -409,6 +412,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    !receipt.sh2_control_low_bit_semantics_proven &&
                    !receipt.sh2_nonzero_direct_byte_path_proven,
                "changed low-bit mask setup rejects the source byte-path receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85534U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_zero_repeat_termination_proven,
+               "changed zero-side termination branch rejects the receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);

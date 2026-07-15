@@ -767,6 +767,10 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.zero_post_read_compare_offset = SH2_ZERO_POST_READ_COMPARE_OFFSET;
     receipt.zero_repeat_counter_increment_offset = SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET;
     receipt.zero_repeat_branch_offset = SH2_ZERO_REPEAT_BRANCH_OFFSET;
+    receipt.zero_repeat_compare_instruction = read_be16(
+        dm_bin + SH2_ZERO_POST_READ_COMPARE_OFFSET);
+    receipt.zero_repeat_branch_instruction = read_be16(
+        dm_bin + SH2_ZERO_REPEAT_BRANCH_OFFSET);
     receipt.zero_repeat_delay_mask_offset = SH2_ZERO_REPEAT_DELAY_MASK_OFFSET;
     receipt.zero_outer_loop_branch_offset = SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET;
     receipt.sh2_zero_side_repeat_control_verified =
@@ -783,6 +787,18 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
                        SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET,
                        &receipt.zero_outer_loop_target_offset) &&
         receipt.zero_outer_loop_target_offset == SH2_CONTROL_REENTRY_OFFSET;
+    /* `CMP/EQ R1,R10; ADD #1,R10; BF/S repeat` is the exact SH-2 loop
+     * condition: BF/S returns to the repeat body only while the comparison
+     * is false. The delayed mask operation cannot change that branch choice.
+     * It proves a register-equality termination condition only; run length,
+     * history-copy, token, and surface meanings remain unassigned. */
+    receipt.sh2_zero_repeat_termination_proven =
+        receipt.sh2_zero_side_repeat_control_verified &&
+        receipt.zero_repeat_compare_instruction == 0x2a10U &&
+        read_be16(dm_bin + SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET) == 0x7a01U &&
+        receipt.zero_repeat_branch_instruction == 0x8ff3U &&
+        read_be16(dm_bin + SH2_ZERO_REPEAT_DELAY_MASK_OFFSET) == 0x2659U &&
+        receipt.zero_repeat_branch_target_offset == SH2_V1_CALLEE_OFFSET + 136U;
     receipt.zero_side_linear_begin_offset =
         receipt.control_zero_branch_target_offset;
     receipt.zero_side_linear_end_offset = SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET + 2U;
@@ -849,6 +865,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_nonzero_direct_byte_path_proven &&
         receipt.sh2_zero_side_index_read_verified &&
         receipt.sh2_zero_side_repeat_control_verified &&
+        receipt.sh2_zero_repeat_termination_proven &&
         receipt.sh2_zero_side_linear_route_verified &&
         receipt.sh2_zero_side_has_no_direct_output_store;
 }

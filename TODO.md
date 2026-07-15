@@ -3459,6 +3459,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `@R12+` input byte through the existing byte store. It proves neither the
     zero-side grammar nor output ownership/termination, so MENU.BPK remains
     unavailable for decode or drawing until an authenticated execution trace.
+  - The zero-side now has a source-proven static termination condition:
+    `CMP/EQ R1,R10; ADD #1,R10; BF/S` loops only while those registers differ.
+    This does not establish which value is a run length, nor a backreference,
+    token, output, palette, or pixel contract. A real ordered capture is still
+    required before using either PRS3 side to decode MENU.BPK.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
