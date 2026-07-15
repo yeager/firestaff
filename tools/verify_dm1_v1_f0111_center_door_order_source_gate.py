@@ -28,7 +28,7 @@ def function_body(source: str, signature: str) -> str:
 def main() -> int:
     source = M11.read_text(encoding="utf-8")
     for signature, token in (
-        ("static void m11_draw_dm1_center_doors", "m11_draw_dm1_zone_blit"),
+        ("static void m11_draw_dm1_center_doors", "m11_draw_dm1_center_door_material_receipt"),
         ("static void m11_draw_dm1_center_door_ornaments", "m11_draw_dm1_door_ornament_on_panel"),
         ("static void m11_draw_dm1_center_destroyed_door_masks", "m11_draw_dm1_destroyed_door_mask_on_panel"),
         ("static void m11_draw_dm1_center_door_buttons", "m11_blit_scaled_palette_map"),
