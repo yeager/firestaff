@@ -6280,6 +6280,16 @@ int nexus_v1_vdp1_texture_command_parse(
     parsed.texture_height = (uint16_t)(rl16(command + 10) >> 8);
     parsed.end_command = (parsed.control & 0x8000U) != 0U;
     parsed.texture_command = !parsed.end_command && parsed.command_type <= 2U;
+    parsed.colour_mode_documented = parsed.colour_mode <= 5U;
+    if (parsed.texture_command && parsed.colour_mode_documented &&
+        parsed.texture_width != 0U && parsed.texture_height != 0U) {
+        if (parsed.colour_mode <= 1U) parsed.texture_bits_per_pixel = 4U;
+        else if (parsed.colour_mode <= 4U) parsed.texture_bits_per_pixel = 8U;
+        else parsed.texture_bits_per_pixel = 16U;
+        parsed.texture_byte_count = ((uint32_t)parsed.texture_width *
+            (uint32_t)parsed.texture_height *
+            (uint32_t)parsed.texture_bits_per_pixel) / 8U;
+    }
     parsed.four_bpp_colour_bank = parsed.texture_command &&
         parsed.colour_mode == 0U;
     *out_command = parsed;

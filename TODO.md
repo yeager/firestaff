@@ -6589,3 +6589,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `CMDPMOD +04`, `CMDCOLR +06`, `CMDSRCA +08`, and `CMDSIZE +0A`.
     `CMDCOLR` is retained as an opaque raw word; this correction does not
     infer a palette, CLUT, texture byte span, or draw route.
+  - 2026-07-15 format-span update: for an authenticated texture primitive,
+    documented `CMDPMOD` modes 0--5 and `CMDSIZE` now determine only the
+    command-required byte count (4/8/16 bpp). The captured texture lane must
+    exactly match that count before the renderer marks it format-framed.
+    Mode 6/7, palette/CLUT meaning, source-address interpretation, pixel
+    ordering, and all decoding or drawing remain fail-closed.

@@ -2791,7 +2791,7 @@ static void test_structure3_entry_header_boundaries(void) {
     Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
     Nexus_V1_DgnStructure3FaceCaptureBindingReceipt capture;
     uint8_t vdp1_command[NEXUS_V1_VDP1_COMMAND_BYTES];
-    const uint8_t texture_span[] = { 0x12U, 0x34U };
+    const uint8_t texture_span[] = { 0x12U, 0x34U, 0x56U, 0x78U };
     const uint8_t palette_state[] = { 0x56U };
     const uint8_t vdp1_state[] = { 0x78U };
     const uint8_t transform_state[] = { 0x9aU };
@@ -3346,11 +3346,16 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_command_framing.complete_vdp1_command_record &&
               active_source.vdp1_command_framing.command_format_parsed &&
               active_source.vdp1_command_framing.texture_primitive_observed &&
+              active_source.vdp1_command_framing.texture_format_framed &&
+              active_source.vdp1_command_framing.texture_span_size_matches_command &&
+              active_source.vdp1_command_framing.command.texture_bits_per_pixel == 4U &&
+              active_source.vdp1_command_framing.command.texture_byte_count == 4U &&
               active_source.vdp1_command_framing.command.texture_width == 8U &&
               active_source.vdp1_command_framing.command.texture_height == 1U &&
               !active_source.vdp1_command_framing.pixel_format_proven &&
               !active_source.vdp1_command_framing.palette_format_proven &&
               !active_source.vdp1_command_framing.decoder_permitted &&
+              active_source.vdp1_texture_format_framed &&
               active_source.texture_decode_unproven &&
               active_source.palette_decode_unproven &&
               active_source.vdp1_draw_unproven &&
@@ -3369,6 +3374,8 @@ static void test_structure3_entry_header_boundaries(void) {
               viewport.last_dgn_render_receipt.structure3_source_no_draw &&
               viewport.last_dgn_render_receipt
                   .structure3_runtime_vdp1_command_framed &&
+              viewport.last_dgn_render_receipt
+                  .structure3_runtime_vdp1_texture_format_framed &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command.valid &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command
                   .command_format_parsed &&
@@ -4891,6 +4898,8 @@ static void test_vdp1_command_sidecar_stays_no_draw(void) {
           inspection.command.link_word == 0xbeefU &&
           inspection.command.colour_control == 0x4567U &&
           inspection.command.texture_source_word == 0x0010U &&
+          inspection.command.texture_bits_per_pixel == 4U &&
+          inspection.command.texture_byte_count == 4U &&
           inspection.command.texture_width == 8U &&
           inspection.command.texture_height == 1U &&
           !inspection.original_saturn_capture_verified &&

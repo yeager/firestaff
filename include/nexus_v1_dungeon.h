@@ -1804,8 +1804,11 @@ typedef struct {
     uint16_t texture_height;
     uint8_t command_type;
     uint8_t colour_mode;
+    uint8_t texture_bits_per_pixel;
+    uint32_t texture_byte_count;
     int end_command;
     int texture_command;
+    int colour_mode_documented;
     int four_bpp_colour_bank;
 } Nexus_V1_Vdp1TextureCommand;
 
