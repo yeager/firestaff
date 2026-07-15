@@ -66,6 +66,9 @@ int main(void) {
         ok = 0;
     }
     if (!strstr(s, "M11_DM1_M653_BASELINE_TO_TOP_PC34 = 4") ||
+        !strstr(s, "dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34") ||
+        !strstr(s, "!receipt.drawable") ||
+        !strstr(s, "m11_panel_asset_source_loaded") ||
         !strstr(s, "m11_draw_dm1_m653_cell_at_baseline") ||
         !strstr(s, "m11_draw_dm1_m653_cell_clipped_at_baseline") ||
         !strstr(s, "clipRect->x, clipRect->y, clipRect->w, clipRect->h") ||

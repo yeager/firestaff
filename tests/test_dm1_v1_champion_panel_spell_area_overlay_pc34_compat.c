@@ -65,6 +65,23 @@ static void type_symbols(DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 *in,
     in->champions[champion_index].symbols[n] = '\0';
 }
 
+static DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 material_ok(void)
+{
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
+    memset(&facts, 0, sizeof(facts));
+    facts.c009_loaded_pixels = 1;
+    facts.c009_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34;
+    facts.c009_width = DM1_V1_CPSAO_SPELL_AREA_WIDTH_PC34;
+    facts.c009_height = DM1_V1_CPSAO_SPELL_AREA_HEIGHT_PC34;
+    facts.c011_loaded_pixels = 1;
+    facts.c011_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_LINES_PC34;
+    facts.c011_width = DM1_V1_CPSAO_LINES_WIDTH_PC34;
+    facts.c011_height = DM1_V1_CPSAO_LINES_HEIGHT_PC34;
+    facts.m653_source_bound = 1;
+    facts.m653_graphic_index = DM1_V1_CPSAO_M653_GRAPHIC_PC34;
+    return facts;
+}
+
 static void test_contract(void)
 {
     const DM1_V1_ChampionPanelSpellAreaOverlayPc34Contract *c;
@@ -638,6 +655,106 @@ static void test_empty_symbols_full_padding(void)
     }
 }
 
+static void test_material_receipt_accepts_only_source_surfaces(void)
+{
+    DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 in;
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
+
+    reset_input(&in);
+    in.previous_caster_index = DM1_V1_CPSAO_CHAMPION_NONE_PC34;
+    in.requested_caster_index = 0;
+    in.party_champion_count = 4;
+    in.symbol_step = 1;
+    type_symbols(&in, 0, "FUL");
+    check_int("material.buildPlan",
+              dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, &plan),
+              1, "CASTER.C F0394 drawable spell area");
+
+    facts = material_ok();
+    check_int("material.ok",
+              dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+                  &plan, &facts, &receipt),
+              1, "C009/C011/M653 source receipt");
+    check_int("material.drawable", receipt.drawable, 1,
+              "all required source surfaces are present");
+    check_int("material.reason", receipt.reject_reason,
+              DM1_V1_CPSAO_MATERIAL_ACCEPTED_PC34,
+              "accepted material receipt");
+    check_int("material.c009Req", receipt.c009_required, 1,
+              "C009 required when F0394 draws background");
+    check_int("material.c011Req", receipt.c011_required, 1,
+              "C011 required when F0396/F0392 draw lines");
+    check_int("material.fontReq", receipt.m653_required, 1,
+              "M653 required for F0393/F0397/F0398");
+    check_int("material.noHostFallback", receipt.no_host_fallback_visuals, 1,
+              "receipt forbids host fallback visuals");
+
+    facts = material_ok();
+    facts.c011_loaded_pixels = 0;
+    check_int("material.noPixelsC011",
+              dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+                  &plan, &facts, &receipt),
+              1, "dimension-only C011 is not drawable");
+    check_int("material.noPixelsC011Drawable", receipt.drawable, 0,
+              "missing C011 pixels fail closed");
+    check_int("material.noPixelsC011Reason", receipt.reject_reason,
+              DM1_V1_CPSAO_MATERIAL_REJECT_C011_PC34,
+              "C011 reject reason");
+
+    facts = material_ok();
+    facts.c009_width = DM1_V1_CPSAO_SPELL_AREA_WIDTH_PC34 - 1;
+    check_int("material.croppedC009",
+              dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+                  &plan, &facts, &receipt),
+              1, "cropped C009 is not source-owned");
+    check_int("material.croppedC009Drawable", receipt.drawable, 0,
+              "cropped C009 fail closed");
+    check_int("material.croppedC009Reason", receipt.reject_reason,
+              DM1_V1_CPSAO_MATERIAL_REJECT_C009_PC34,
+              "C009 reject reason");
+
+    facts = material_ok();
+    facts.m653_graphic_index = 653;
+    check_int("material.fallbackFont",
+              dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+                  &plan, &facts, &receipt),
+              1, "fallback font record is rejected");
+    check_int("material.fallbackFontDrawable", receipt.drawable, 0,
+              "fallback font cannot draw rune text");
+    check_int("material.fallbackFontReason", receipt.reject_reason,
+              DM1_V1_CPSAO_MATERIAL_REJECT_M653_PC34,
+              "M653 reject reason");
+}
+
+static void test_material_receipt_rejects_non_draw_plans(void)
+{
+    DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 in;
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
+
+    reset_input(&in);
+    in.previous_caster_index = 1;
+    in.requested_caster_index = 1;
+    in.party_champion_count = 4;
+    in.symbol_step = 0;
+    facts = material_ok();
+    check_int("materialReject.buildPlan",
+              dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, &plan),
+              1, "CASTER.C same-caster short-circuit");
+    check_int("materialReject.receipt",
+              dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+                  &plan, &facts, &receipt),
+              1, "same-caster receipt returns a rejected material status");
+    check_int("materialReject.drawable", receipt.drawable, 0,
+              "same-caster short-circuit publishes no material");
+    check_int("materialReject.reason", receipt.reject_reason,
+              DM1_V1_CPSAO_MATERIAL_REJECT_PLAN_NO_DRAW_PC34,
+              "no stale C009/C011/M653 receipt survives a no-draw plan");
+}
+
 static void test_validation_guards(void)
 {
     DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 in;
@@ -706,6 +823,8 @@ int main(void)
     test_dead_champion_excluded_from_tabs();
     test_full_symbols_no_padding();
     test_empty_symbols_full_padding();
+    test_material_receipt_accepts_only_source_surfaces();
+    test_material_receipt_rejects_non_draw_plans();
     test_validation_guards();
 
     if (g_assertions < 100) {
