@@ -363,6 +363,7 @@ int main(void)
             {
                 Nexus_V1_DgnStructure1FTransformTracePaths paths;
                 Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt intake;
+                char capture_target_path[128];
                 char manifest_path[128];
                 char raw_trace_path[128];
                 char transform_state_path[128];
@@ -370,6 +371,9 @@ int main(void)
                 char attestation_text[2048];
                 FILE *sidecar;
 
+                snprintf(capture_target_path, sizeof(capture_target_path),
+                         "/tmp/firestaff-nexus-direct-face-target-%ld.txt",
+                         (long)getpid());
                 snprintf(manifest_path, sizeof(manifest_path),
                          "/tmp/firestaff-nexus-transform-manifest-%ld.txt",
                          (long)getpid());
@@ -405,6 +409,9 @@ int main(void)
                          (unsigned long long)fnv1a64(raw_trace, sizeof(raw_trace)),
                          (unsigned long long)fnv1a64(transform_state,
                                                      sizeof(transform_state)));
+                CHECK(nexus_v1_engine_write_structure1f_direct_face_capture_target(
+                          &engine, source_entry, capture_target_path, &target) == 1,
+                      "direct face target sidecar writes from the loaded package");
                 sidecar = fopen(manifest_path, "wb");
                 CHECK(sidecar != NULL &&
                       fwrite(manifest, 1U, strlen(manifest), sidecar) ==
@@ -430,6 +437,7 @@ int main(void)
                       "transform attestation sidecar writes");
                 if (sidecar) fclose(sidecar);
                 memset(&paths, 0, sizeof(paths));
+                paths.capture_target_path = capture_target_path;
                 paths.manifest_path = manifest_path;
                 paths.raw_trace_path = raw_trace_path;
                 paths.transform_state_path = transform_state_path;
@@ -438,8 +446,15 @@ int main(void)
                 CHECK(nexus_v1_engine_ingest_structure1f_transform_capture_trace(
                           &engine, source_entry, &paths, &intake) == 1 &&
                       intake.sidecar_paths_distinct &&
-                      intake.manifest_bytes_read && intake.raw_trace_bytes_read &&
+                      intake.capture_target_bytes_read && intake.manifest_bytes_read &&
+                      intake.raw_trace_bytes_read &&
                       intake.transform_state_bytes_read && intake.attestation_bytes_read &&
+                      intake.capture_target.status ==
+                          NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW &&
+                      intake.capture_target.package_bytes_bound &&
+                      intake.capture_target.manifest_target_bound &&
+                      intake.capture_target.owner_geometry_bound &&
+                      intake.capture_target.transform_selectors_bound &&
                       intake.attestation.status ==
                           NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_ADMITTED_OPAQUE &&
                       intake.attestation.capture_target_bound &&
@@ -456,7 +471,25 @@ int main(void)
                       !intake.admission.transform_semantics_proven &&
                       intake.no_draw_only && !intake.fallback_visuals_permitted &&
                       intake.blocks_real_dgn_mesh_render,
-                      "attested transform sidecars remain opaque and no-draw");
+                      "attested transform sidecars require the exact package target and remain no-draw");
+                sidecar = fopen(capture_target_path, "wb");
+                CHECK(sidecar != NULL &&
+                      fwrite("changed\n", 1U, sizeof("changed\n") - 1U, sidecar) ==
+                          sizeof("changed\n") - 1U,
+                      "changed direct face target sidecar writes");
+                if (sidecar) fclose(sidecar);
+                memset(&intake, 0, sizeof(intake));
+                CHECK(nexus_v1_engine_ingest_structure1f_transform_capture_trace(
+                          &engine, source_entry, &paths, &intake) == 0 &&
+                      intake.capture_target_bytes_read &&
+                      intake.capture_target.status ==
+                          NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_BLOCKED_MALFORMED &&
+                      intake.attestation.original_saturn_source_attested &&
+                      intake.admission.status ==
+                          NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MISSING &&
+                      intake.no_draw_only && intake.blocks_real_dgn_mesh_render,
+                      "trace route fails closed when its exact package target changes");
+                remove(capture_target_path);
                 remove(manifest_path);
                 remove(raw_trace_path);
                 remove(transform_state_path);

@@ -1420,10 +1420,11 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt;
 
-/* External sidecars for one direct-owner Saturn transform observation. Files
- * remain opaque and distinct: the manifest is never allowed to double as an
- * execution lane or transform-state snapshot. */
+/* External files for one direct-owner Saturn transform observation. The
+ * source-bound capture target is distinct from the debugger trace manifest,
+ * execution lane, and transform snapshot. */
 typedef struct {
+    const char *capture_target_path;
     const char *manifest_path;
     const char *raw_trace_path;
     const char *transform_state_path;
@@ -1459,10 +1460,12 @@ typedef struct {
 
 typedef struct {
     int sidecar_paths_distinct;
+    int capture_target_bytes_read;
     int manifest_bytes_read;
     int raw_trace_bytes_read;
     int transform_state_bytes_read;
     int attestation_bytes_read;
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt capture_target;
     Nexus_V1_DgnStructure1FTransformTraceAttestationReceipt attestation;
     Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt admission;
     int no_draw_only;
