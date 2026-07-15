@@ -301,11 +301,20 @@ jobs:
       - name: Install dependencies
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
-            zstd libarchive-tools curl \
-            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
-            libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
+          for attempt in 1 2 3 4 5; do
+            if sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=120 update && \
+              sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=120 install -y \
+                build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
+                zstd libarchive-tools curl \
+                libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
+                libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols; then
+              break
+            fi
+            if [[ "$attempt" == 5 ]]; then
+              exit 1
+            fi
+            sleep "$((attempt * 15))"
+          done
           git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
           cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
