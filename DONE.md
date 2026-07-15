@@ -18987,3 +18987,11 @@ The zero-side receipt now binds the actual post-merge sequence: mask R7 with
 re-entry. It proves that exact static branch condition and target only. No
 register role, token rejection, termination, output, palette, decoder, or
 renderer meaning is inferred.
+
+# Nexus PRS3 V1 source-counter terminal path (2026-07-15)
+
+The hash-bound DM.BIN receipt now proves that the refill, nonzero, and zero-side
+source-counter guards all branch to one shared epilogue. That path writes zero
+to R0 before the routine's RTS. It is intentionally recorded only as a static
+failure-shaped terminal path: it does not prove a PRS3 end marker, externally
+observed status, successful termination, decoder output, palette, or rendering.

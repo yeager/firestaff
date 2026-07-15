@@ -3480,6 +3480,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     to the PRS3 control re-entry after R7 is masked, incremented by two, and
     added to merged R4. It is not yet a token rejection or termination rule:
     original execution evidence must establish the register roles first.
+  - Source-counter exhaustion is now bounded to one shared DM.BIN epilogue:
+    three guard branches converge, the routine writes `R0 = 0`, then returns.
+    This is a failure-shaped static path, not evidence of a PRS3 end token or
+    external decoder status. A genuine ordered Saturn trace must still bind
+    any terminal path to a specific MENU.BPK stream.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
