@@ -112,6 +112,9 @@ int main(void)
     profile.csbwin_timer_summary_total = 1u;
     profile.csbwin_timer_queue_summary_count = 1u;
     profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_max_timers = 1u;
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_first_avail_timer = 1u;
     profile.csbwin_timers[0] = timer;
     profile.csbwin_timer_queue[0] = 0u;
 

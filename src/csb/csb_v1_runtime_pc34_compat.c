@@ -15085,6 +15085,32 @@ static int csb_v1_runtime_csbwin_timer_is_before(
     return index_a <= index_b;
 }
 
+/* CSBWin SaveGame.cpp restores a fixed TIMER slot pool (`MaxTimers`) and a
+ * separate active TimerQueue (`NumTimer`).  A free slot is not an active
+ * timer and must never be projected into M10 merely because it has a saved
+ * array index. */
+static int csb_v1_runtime_csbwin_timer_pool_counts_valid(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile || !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_summary_total !=
+            profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue_summary_total !=
+            profile->csbwin_timer_queue_summary_count ||
+        profile->csbwin_timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        profile->csbwin_timer_queue_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+        profile->csbwin_max_timers != profile->csbwin_timer_summary_count ||
+        profile->csbwin_num_timer !=
+            profile->csbwin_timer_queue_summary_count ||
+        profile->csbwin_num_timer > profile->csbwin_max_timers ||
+        profile->csbwin_first_avail_timer > profile->csbwin_max_timers) {
+        return 0;
+    }
+    return 1;
+}
+
 static int csb_v1_runtime_validate_csbwin_timer_heap(
     const CSB_V1_RuntimeProfile *profile)
 {
@@ -15138,18 +15164,10 @@ static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
     int event_ordinal;
     uint16_t i;
 
-    if (!profile || !profile->csbwin_body_runtime_summary_valid ||
-        profile->csbwin_timer_summary_total !=
-            profile->csbwin_timer_summary_count ||
-        profile->csbwin_timer_queue_summary_total !=
-            profile->csbwin_timer_queue_summary_count ||
-        profile->csbwin_timer_summary_count !=
-            profile->csbwin_timer_queue_summary_count ||
-        profile->csbwin_timer_summary_count >
-            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+    if (!csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
         profile->timeline_queue.eventCount < 0 ||
         profile->timeline_queue.eventCount !=
-            (int)profile->csbwin_timer_summary_count) {
+            (int)profile->csbwin_timer_queue_summary_count) {
         return 0;
     }
 
@@ -15201,10 +15219,6 @@ static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
         }
         staged_queue[position] = timer_index;
     }
-    for (i = 0u; i < profile->csbwin_timer_summary_count; ++i) {
-        if (!seen_timers[i]) return 0;
-    }
-
     for (event_ordinal = 0;
          event_ordinal < profile->timeline_queue.eventCount;
          ++event_ordinal) {
@@ -15257,19 +15271,7 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     uint16_t staged_slots[DM1_EVENT_MAX_COUNT];
     int imported = 0;
 
-    if (!profile || !profile->csbwin_body_runtime_summary_valid) {
-        return -1;
-    }
-    if (profile->csbwin_timer_queue_summary_count >
-            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
-        profile->csbwin_timer_summary_count >
-            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
-        (profile->csbwin_timer_summary_total != 0u &&
-         profile->csbwin_timer_summary_total !=
-             profile->csbwin_timer_summary_count) ||
-        (profile->csbwin_timer_queue_summary_total != 0u &&
-         profile->csbwin_timer_queue_summary_total !=
-             profile->csbwin_timer_queue_summary_count)) {
+    if (!csb_v1_runtime_csbwin_timer_pool_counts_valid(profile)) {
         return -1;
     }
     /* CSBWin Timer.cpp CheckTimers:884-906 rejects a saved queue if any
@@ -15875,16 +15877,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
          * event has been introduced, this runtime cannot reconstruct the
          * source heap's free-list/requeue state, so do not emit a plausible
          * but invented replacement save. */
-        if (profile->csbwin_timer_summary_total !=
-                profile->csbwin_timer_summary_count ||
-            profile->csbwin_timer_queue_summary_total !=
-                profile->csbwin_timer_queue_summary_count ||
-            profile->csbwin_timer_summary_count !=
-                profile->csbwin_timer_queue_summary_count ||
-            profile->csbwin_timer_summary_count >
-                CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
-            profile->csbwin_timer_queue_summary_count >
-                CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+        if (!csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
             profile->timeline_queue.eventCount < 0 ||
             profile->timeline_queue.eventCount > DM1_EVENT_MAX_COUNT ||
             profile->timeline_queue.eventCount !=
@@ -19016,13 +19009,7 @@ static int csb_v1_runtime_find_saved_timer_queue_slot(
      * A value-shaped TIMER from a caller is not enough to enter
      * ProcessDSATimer5: it must retain one unique serialized queue owner. */
     if (!profile || !timer || !out_queue_slot ||
-        !profile->csbwin_body_runtime_summary_valid ||
-        profile->csbwin_timer_summary_total !=
-            profile->csbwin_timer_summary_count ||
-        profile->csbwin_timer_queue_summary_total !=
-            profile->csbwin_timer_queue_summary_count ||
-        profile->csbwin_timer_queue_summary_count !=
-            profile->csbwin_timer_summary_count ||
+        !csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
         !csb_v1_runtime_csbwin_timer_matches_saved_slot(profile, timer)) {
         return 0;
     }
@@ -19157,13 +19144,7 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
      * consumes m_timerQueue. Do not allow a caller-built TIMER shape to
      * stand in for either authenticated saved record. */
     if (!profile || !dungeon || !slave_location ||
-        !profile->csbwin_body_runtime_summary_valid ||
-        profile->csbwin_timer_summary_total !=
-            profile->csbwin_timer_summary_count ||
-        profile->csbwin_timer_queue_summary_total !=
-            profile->csbwin_timer_queue_summary_count ||
-        profile->csbwin_timer_queue_summary_count !=
-            profile->csbwin_timer_summary_count ||
+        !csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
         queue_index >= profile->csbwin_timer_queue_summary_count) {
         return 0;
     }
