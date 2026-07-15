@@ -24981,6 +24981,23 @@ if(NOT MSVC)
     )
 endif()
 
+# Corpus-proves the raw Structure1F -> Structure1A owner rows across the
+# canonical LEV files; it deliberately does not infer a Structure3 mesh map.
+add_executable(firestaff_nexus_v1_structure1f_owner_corpus_probe
+    probes/nexus/firestaff_nexus_v1_structure1f_owner_corpus_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_structure1f_owner_corpus_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_structure1f_owner_corpus_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_structure1f_owner_corpus_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Emits a visible Structure1F/Structure1A owner context beside one bounded
 # Structure3 face for an external original-Saturn capture. No mesh mapping or
 # draw semantics are inferred by this producer request.

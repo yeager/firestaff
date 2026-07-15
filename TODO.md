@@ -328,6 +328,12 @@
   proven to select that mesh entry. A real original-Saturn trace must establish
   or reject this relation, then separately prove texture, palette, VDP1,
   transform, culling, and draw semantics before any renderer promotion.
+  - 2026-07-15 owner-corpus update: `firestaff_nexus_v1_structure1f_owner_corpus_probe`
+    now rechecks every canonical Structure1F owner row against its exact
+    Structure1A record and emits one all-level raw-owner fingerprint. The
+    documented Structure1A model byte remains only a source field: it does not
+    prove Structure3 entry selection, mesh placement, texture, palette, VDP1,
+    transform, decoder, or drawing semantics.
 
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,
