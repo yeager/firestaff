@@ -158,15 +158,18 @@ int main(void)
         &viewport, &open_panel, 1);
     dm2_v1_render_dialogue_open_panel(&viewport);
     if (!open_panel.valid || !open_panel.draw.valid ||
+        strcmp((const char *)open_panel.draw.version_text, "V1.0") != 0 ||
         strcmp((const char *)open_panel.draw.text[0], "SAVE") != 0 ||
         strcmp((const char *)open_panel.draw.text[1], "CANCEL") != 0 ||
+        open_panel.version_text_rect.w <= 0 ||
         open_panel.primary_text_rect.w <= 0 ||
         open_panel.secondary_text_rect.w <= 0 ||
-        viewport.gdat_dialogue_open_panel_consumed_count != 3 ||
+        viewport.gdat_dialogue_open_panel_consumed_count != 4 ||
         viewport.gdat_dialogue_open_panel_consumed_hash != open_panel.command_hash ||
         viewport.blocked_material_draw_count != 0) {
-        fprintf(stderr, "FAIL: canonical open dialogue panel did not consume its GDAT labels (%s/%s)\n",
-                open_panel.draw.text[0], open_panel.draw.text[1]);
+        fprintf(stderr, "FAIL: canonical open dialogue panel did not consume its source labels (%s/%s/%s)\n",
+                open_panel.draw.version_text, open_panel.draw.text[0],
+                open_panel.draw.text[1]);
         ++failures;
     }
 

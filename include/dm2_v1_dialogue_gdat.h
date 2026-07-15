@@ -41,6 +41,8 @@
 #define DM2_V1_DIALOGUE_OPEN_PANEL_BUTTON_PALETTE   11u
 #define DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT       2u
 #define DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY    80u
+#define DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT     "V1.0"
+#define DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE 5u
 
 typedef struct {
     int valid;
@@ -85,6 +87,9 @@ typedef struct {
 typedef struct {
     int valid;
     DM2_V1_DialogueBoxGdatReceipt material;
+    uint8_t version_text[DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE];
+    size_t version_text_size;
+    uint32_t version_text_hash;
     uint8_t decoded_text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT]
                         [DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY];
     const uint8_t *text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
@@ -153,8 +158,9 @@ int dm2_v1_dialogue_box_draw_plan(
     DM2_V1_DialogueBoxDrawPlan *out);
 
 /* Captures the complete source-owned save/load panel setup from
- * c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL. The returned text pointers
- * refer to the verified GDAT payload and must not be replaced by literals. */
+ * c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL. The button text pointers refer
+ * to the verified GDAT payload; the version heading is the exact compiled
+ * skproject dm2data.cpp constant and must not be replaced by a host label. */
 int dm2_v1_dialogue_open_panel_receipt(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_DialogueOpenPanelReceipt *out);

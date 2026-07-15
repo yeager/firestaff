@@ -5860,7 +5860,7 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
 {
     DM2_V1_BootGraphicsDat *gfx;
     const uint8_t *raw;
-    const DM2_V1_InterfaceRect *rects[3];
+    const DM2_V1_InterfaceRect *rects[4];
     size_t raw_size = 0u;
     uint32_t hash = 2166136261u;
 
@@ -5877,6 +5877,11 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
         !dm2_v1_boot_expand_hud_rect(raw, raw_size,
             out_command->draw.panel_rect_index, &out_command->panel_rect) ||
         !dm2_v1_boot_query_blit_text_rect(raw, raw_size,
+            out_command->draw.version_rect_index,
+            dm2_v1_boot_dialogue_text_width(out_command->draw.version_text,
+                                             out_command->draw.version_text_size),
+            6, &out_command->version_text_rect) ||
+        !dm2_v1_boot_query_blit_text_rect(raw, raw_size,
             DM2_V1_DIALOGUE_OPEN_PANEL_PRIMARY_TEXT_RECT,
             dm2_v1_boot_dialogue_text_width(out_command->draw.text[0],
                                              out_command->draw.text_size[0]),
@@ -5890,14 +5895,16 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
         return 0;
     }
 
-    /* skproject/SKULLWIN/c_dialog.cpp:375-415 consumes the GDAT button
-     * labels, panel image/local palette and raw4 rectangles together. */
+    /* skproject/SKULLWIN/c_dialog.cpp:375-415 consumes the source version
+     * string, GDAT button labels, panel image/local palette, and raw4
+     * rectangles together. */
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_command->draw.receipt_hash);
     rects[0] = &out_command->panel_rect;
-    rects[1] = &out_command->primary_text_rect;
-    rects[2] = &out_command->secondary_text_rect;
-    for (unsigned int i = 0; i < 3u; ++i) {
+    rects[1] = &out_command->version_text_rect;
+    rects[2] = &out_command->primary_text_rect;
+    rects[3] = &out_command->secondary_text_rect;
+    for (unsigned int i = 0; i < 4u; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(
             hash, (uint32_t)rects[i]->x);
         hash = dm2_v1_boot_packaged_capture_hash_step(

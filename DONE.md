@@ -16658,6 +16658,16 @@ fails closed. Canonical PC G1 verification resolves `RECT_451`, proves exact
 row-seven selection, and verifies the rejected pre-baseline route:
 `dm2_v1_dialogue_box_viewport_real_data`.
 
+# ✅ 2026-07-15 DM2 OPEN_DIALOG_PANEL source version heading
+
+`c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL` now carries the exact compiled
+skproject `dm2data.cpp::v1d10eb` byte sequence `V1.0`, its palette slot 12,
+and source `RECT_1C2` placement through the RAW4 host command. The active
+viewport renders it before the two verified GDAT button labels. Missing source
+material, font, palette, version hash, or placement blocks the entire
+dialogue draw; no localized or fallback label is substituted. Verification:
+canonical-PC-G1 `dm2_v1_dialogue_box_viewport_real_data`.
+
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer
