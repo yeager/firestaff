@@ -145,6 +145,15 @@ typedef struct {
     Theron_Track02Variant variant;
     char track02_md5[33];
     uint32_t stage3_track02_record;
+    /* The same original-media Stage 3 sector begins with `BRK $ff` at
+     * $3800. A later read is post-Stage-3 provenance only after the capture
+     * records the IRQ2 continuation at $3802. These are control-flow
+     * coordinates, not payload semantics. */
+    uint16_t stage3_entry_pc;
+    uint8_t stage3_irq2_selector;
+    uint16_t stage3_continuation_pc;
+    uint16_t stage3_post_irq2_next_pc;
+    int stage3_post_irq2_resume_verified;
     uint32_t later_track02_record;
     uint16_t descriptor_selector;
     size_t descriptor_selector_ordinal;

@@ -2118,6 +2118,11 @@ rehash-checked against its exact raw Track 02, System Card 3.0, and coalesced
 Mednafen trace paths before the ordered sector receipt is accepted. This is
 artifact provenance only: it still does not identify a payload format,
 dungeon, map, object, graphics, palette, bitmap, or transition.
+2026-07-15 post-`$3800` order gate: a future positive transcript must now
+record the original Stage 3 `BRK $ff` IRQ2 return from `$3800` to `$3802`
+before its later `$e009` dispatch. This proves ordering through the original
+loader entry only. It does not classify the later sector, promote a grid,
+or establish level, object, bitmap, palette, or transition semantics.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 

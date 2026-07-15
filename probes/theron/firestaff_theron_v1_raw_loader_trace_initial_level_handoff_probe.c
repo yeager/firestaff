@@ -64,6 +64,11 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     out->valid = 1;
     out->variant = THERON_TRACK02_VARIANT_US_BIN;
     snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", md5);
+    out->stage3_entry_pc = 0x3800u;
+    out->stage3_irq2_selector = 0xffu;
+    out->stage3_continuation_pc = 0x3802u;
+    out->stage3_post_irq2_next_pc = 0x3803u;
+    out->stage3_post_irq2_resume_verified = 1;
     out->later_track02_record = 0x0b52u;
     out->descriptor_selector = 0x067cu;
     out->descriptor_selector_ordinal = 0u;
@@ -359,6 +364,22 @@ int main(void)
     }
     --raw[payload_receipt.raw_track02_offset +
           handoff.loader_post_envelope.record_user_data_offset];
+    coalesced.stage3_post_irq2_resume_verified = 0;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt without the Stage 3 IRQ2 resume admitted the level route\n");
+        return 1;
+    }
+    coalesced.stage3_post_irq2_resume_verified = 1;
+    coalesced.stage3_continuation_pc = 0x3803u;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt with a non-original Stage 3 continuation admitted the level route\n");
+        return 1;
+    }
+    coalesced.stage3_continuation_pc = 0x3802u;
     coalesced.later_post_return_step_verified = 0;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {

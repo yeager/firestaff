@@ -1,6 +1,7 @@
 #include "theron_v1_raw_loader_trace.h"
 
 #include "theron_v1_irq2_live_trace_gate.h"
+#include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_stage3_manifest_evidence.h"
 
 #include <stdio.h>
@@ -193,6 +194,24 @@ static int tqr_trace_parse_later_e009_post_return_step(
            *out_caller_pc <= 0xffffu && *out_return_pc <= 0xffffu &&
            *out_record <= 0xffffffu && *out_resume_pc <= 0xffffu &&
            *out_next_pc <= 0xffffu;
+}
+
+static int tqr_trace_parse_stage3_irq2_resume(
+    const char *line, size_t length, unsigned int *out_entry_pc,
+    unsigned int *out_selector, unsigned int *out_continuation_pc,
+    unsigned int *out_resumed_pc, unsigned int *out_next_pc)
+{
+    int consumed = 0;
+
+    if (!line || !out_entry_pc || !out_selector || !out_continuation_pc ||
+        !out_resumed_pc || !out_next_pc) return 0;
+    return sscanf(line,
+                  "stage3_irq2_resume entry_pc=%x selector=%x continuation_pc=%x resumed_pc=%x next_pc=%x%n",
+                  out_entry_pc, out_selector, out_continuation_pc,
+                  out_resumed_pc, out_next_pc, &consumed) == 5 &&
+           consumed == (int)length && *out_entry_pc <= 0xffffu &&
+           *out_selector <= 0xffu && *out_continuation_pc <= 0xffffu &&
+           *out_resumed_pc <= 0xffffu && *out_next_pc <= 0xffffu;
 }
 
 static int tqr_trace_parse_raw_sector_span(const char *line, size_t length,
@@ -720,12 +739,14 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     Theron_V1RawLoaderTraceCoalescedLaterReceipt *out)
 {
     Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3Irq2DispatchReceipt stage3_dispatch;
     Theron_V1Stage3ManifestEvidence manifest;
     const char *cursor;
     const char *line;
     size_t length;
     size_t source_count = 0u;
     size_t dynamic_count = 0u;
+    size_t stage3_resume_count = 0u;
     size_t dispatch_count = 0u;
     size_t sector_count = 0u;
     size_t destination_count = 0u;
@@ -733,6 +754,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     size_t return_count = 0u;
     size_t post_return_count = 0u;
     size_t dynamic_line = 0u;
+    size_t stage3_resume_line = 0u;
     size_t dispatch_line = 0u;
     size_t sector_line = 0u;
     size_t destination_line = 0u;
@@ -776,6 +798,11 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     unsigned int post_return_record = 0u;
     unsigned int post_return_resume_pc = 0u;
     unsigned int post_return_next_pc = 0u;
+    unsigned int stage3_entry_pc = 0u;
+    unsigned int stage3_selector = 0u;
+    unsigned int stage3_continuation_pc = 0u;
+    unsigned int stage3_resumed_pc = 0u;
+    unsigned int stage3_next_pc = 0u;
     uint32_t expected_span_checksum;
     uint32_t expected_sector_checksum;
     uint32_t derived_base;
@@ -789,6 +816,8 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         theron_v1_track02_inspect_stage2_dynamic_payload(
             track02_data, track02_size, track02_md5, &payload) !=
             THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_stage3_irq2_dispatch_from_original_media(
+            track02_data, track02_size, &payload, &stage3_dispatch) ||
         !theron_v1_stage3_manifest_evidence_from_payload(
             track02_data, track02_size, &payload, &manifest)) return 0;
 
@@ -822,6 +851,15 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
             if (++dynamic_count != 1u || length != strlen(expected_dynamic) ||
                 memcmp(line, expected_dynamic, length) != 0) return 0;
             dynamic_line = line_number;
+        } else if (length >= strlen("stage3_irq2_resume ") &&
+                   memcmp(line, "stage3_irq2_resume ",
+                          strlen("stage3_irq2_resume ")) == 0) {
+            if (++stage3_resume_count != 1u ||
+                !tqr_trace_parse_stage3_irq2_resume(
+                    line, length, &stage3_entry_pc, &stage3_selector,
+                    &stage3_continuation_pc, &stage3_resumed_pc,
+                    &stage3_next_pc)) return 0;
+            stage3_resume_line = line_number;
         } else if (length >= strlen("later_system_card_e009_dispatch ") &&
                    memcmp(line, "later_system_card_e009_dispatch ",
                           strlen("later_system_card_e009_dispatch ")) == 0) {
@@ -877,11 +915,13 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
             post_return_line = line_number;
         }
     }
-    if (source_count != 1u || dynamic_count != 1u || dispatch_count != 1u ||
+    if (source_count != 1u || dynamic_count != 1u ||
+        stage3_resume_count != 1u || dispatch_count != 1u ||
         sector_count != 1u || destination_count != 1u ||
         destination_payload_count != 1u || return_count != 1u ||
         post_return_count != 1u ||
-        !(dynamic_line < dispatch_line && dispatch_line < sector_line &&
+        !(dynamic_line < stage3_resume_line &&
+          stage3_resume_line < dispatch_line && dispatch_line < sector_line &&
           sector_line < destination_line &&
           destination_line < destination_payload_line &&
           destination_payload_line < return_line &&
@@ -890,6 +930,10 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         caller_target != 0xe009u ||
         return_caller_pc != caller_pc || return_return_pc != return_pc ||
         return_record != record || destination_caller_pc != caller_pc ||
+        stage3_entry_pc != stage3_dispatch.entry_address ||
+        stage3_selector != stage3_dispatch.irq2_selector ||
+        stage3_continuation_pc != stage3_dispatch.continuation_address ||
+        stage3_resumed_pc != stage3_dispatch.continuation_address ||
         destination_return_pc != return_pc || destination_record != record ||
         destination_payload_caller_pc != caller_pc ||
         destination_payload_return_pc != return_pc ||
@@ -934,6 +978,11 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->variant = manifest.variant;
     snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
     out->stage3_track02_record = manifest.track02_record;
+    out->stage3_entry_pc = (uint16_t)stage3_entry_pc;
+    out->stage3_irq2_selector = (uint8_t)stage3_selector;
+    out->stage3_continuation_pc = (uint16_t)stage3_continuation_pc;
+    out->stage3_post_irq2_next_pc = (uint16_t)stage3_next_pc;
+    out->stage3_post_irq2_resume_verified = 1;
     out->later_track02_record = record;
     out->descriptor_selector = (uint16_t)selector;
     out->descriptor_selector_ordinal = ordinal;
@@ -1203,6 +1252,10 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     if (out) memset(out, 0, sizeof(*out));
     if (!coalesced_receipt || !track02_data || !track02_md5 || !out ||
         !coalesced_receipt->valid ||
+        !coalesced_receipt->stage3_post_irq2_resume_verified ||
+        coalesced_receipt->stage3_entry_pc != 0x3800u ||
+        coalesced_receipt->stage3_irq2_selector != 0xffu ||
+        coalesced_receipt->stage3_continuation_pc != 0x3802u ||
         !coalesced_receipt->observation_order_verified ||
         !coalesced_receipt->selector_sector_bytes_verified ||
         !coalesced_receipt->later_destination_local_ram_verified ||
