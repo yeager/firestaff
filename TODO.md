@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 GROUP F0176 follow-up: raw C04 count/type now selects the
+  exact centered/full/half-square cell scan. Remaining work is binding live
+  M10/M11 consumers to F0145/F0147 effective active-group cells and directions;
+  do not derive an ordinal from decoded health/slot mirrors or choose a
+  fallback target.
+
 - 2026-07-15 DM1 GROUP F0175 follow-up: loaded PC3.4 square chains now
   resolve their first C04 group through F0161/F0159. Remaining work is
   routing separately-owned M10/M11 live group consumers through this raw

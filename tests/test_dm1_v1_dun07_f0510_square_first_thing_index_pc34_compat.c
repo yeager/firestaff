@@ -269,6 +269,28 @@ int main(void)
 
     rawGroup[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawGroup[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawGroup[4] = 0; /* Giant Scorpion: full-square, G0243 size 2. */
+    rawGroup[14] = (unsigned char)(2u << 5); /* Three creatures, slots 0..2. */
+    rawGroup[15] = 0;
+    ok &= expect_int("F0176 resolves the highest matching raw creature slot",
+        dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+            &things, firstGroup, 0x24u, 0u, 2u), 3);
+    rawGroup[4] = 4; /* G0243 size 1: half-square. */
+    rawGroup[14] = 0;
+    ok &= expect_int("F0176 retains half-square cell occupancy",
+        dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+            &things, firstGroup, 0x03u, 0u, 3u), 1);
+    ok &= expect_int("F0176 retains centered-creature all-cell ordinal",
+        dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+            &things, firstGroup, 0xffu, 3u, 2u), 1);
+    rawGroup[4] = 27;
+    ok &= expect_int("F0176 rejects a group outside G0243",
+        dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+            &things, firstGroup, 0x00u, 0u, 0u), 0);
+    ok &= expect_int("F0176 rejects a non-group Thing",
+        dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+            &things, firstObject, 0x00u, 0u, 0u), 0);
+    rawGroup[4] = 0;
     ok &= expect_int("F0163 appends after an existing raw tail",
         F0514_DUNGEON_LinkThingToList_Compat(&dungeon, &things, linkedWeapon,
             firstGroup, 0, -1, 0), 1);
