@@ -5112,6 +5112,14 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           !handoff.fallback_visuals_permitted &&
           nexus_v1_menu_bpk_decode_receipt_ready(&engine),
           "only an authenticated source can expose an otherwise-ready BPK receipt");
+    engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
+    CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
+          handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+          !handoff.can_render_stored_surfaces &&
+          handoff.blocks_real_menu_surface_render &&
+          !handoff.fallback_visuals_permitted,
+          "an unproven generic PRS3 decode route cannot render MENU.BPK");
 }
 
 static void test_slev_capture_target_binds_loaded_bytes(void) {

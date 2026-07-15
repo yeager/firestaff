@@ -5920,8 +5920,11 @@ nexus_v1_menu_bpk_handoff_status_from_decode_route(
     Nexus_V1_BpkRuntimeDecodeRoute route) {
     switch (route) {
     case NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED:
-    case NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED:
         return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED;
+    case NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED:
+        /* There is no authenticated PRS3 decoder or Saturn render proof.
+         * A generic decoded status cannot authorize the retail menu route. */
+        return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3;
     case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3:
         return NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3;
     case NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED:
@@ -5989,11 +5992,11 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
         decode->first_blocked_expected_output_bytes;
 
     out_receipt->can_render_stored_surfaces =
-        (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED ||
-         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED);
+        decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
     out_receipt->blocks_real_menu_surface_render =
         (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
-         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED);
+         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED ||
+         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED);
     /* Stored original bytes may be presented by their own route, but no
      * BPK status ever authorizes a generated replacement surface. */
     out_receipt->fallback_visuals_permitted = 0;
