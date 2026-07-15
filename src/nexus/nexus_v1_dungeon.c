@@ -6286,6 +6286,7 @@ int nexus_v1_vdp1_texture_command_parse(
     parsed.draw_mode = rl16(command + 4);
     parsed.colour_control = rl16(command + 6);
     parsed.texture_source_word = rl16(command + 8);
+    parsed.link_byte_offset = (uint32_t)parsed.link_word * 8U;
     parsed.xa = (int16_t)rl16(command + 12);
     parsed.ya = (int16_t)rl16(command + 14);
     parsed.xb = (int16_t)rl16(command + 16);
@@ -6325,6 +6326,9 @@ int nexus_v1_vdp1_texture_command_parse(
     }
     parsed.four_bpp_colour_bank = parsed.texture_command &&
         parsed.colour_mode == 0U;
+    parsed.link_target_range_valid =
+        parsed.link_byte_offset <= NEXUS_V1_VDP1_VRAM_BYTES -
+            NEXUS_V1_VDP1_COMMAND_BYTES;
     parsed.coordinate_words_framed = parsed.texture_command;
     *out_command = parsed;
     return 0;

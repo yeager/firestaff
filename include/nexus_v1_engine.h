@@ -341,6 +341,30 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3Vdp1VramWindowReceipt;
 
+/* A full authenticated VDP1-VRAM lane may prove that the exact captured
+ * command record occurs once in VRAM. CMDLINK is still only an address field:
+ * it does not establish command flow, a target opcode, or drawing. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int original_saturn_capture_bound;
+    int complete_vdp1_vram_snapshot;
+    Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt command_framing;
+    int command_record_occurrence_count;
+    int command_record_unique_in_vram;
+    uint32_t command_record_byte_offset;
+    int command_link_target_bounded;
+    uint32_t command_link_byte_offset;
+    int pixel_format_proven;
+    int palette_format_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3Vdp1CommandVramReceipt;
+
 /* Renderer-bound provenance for the active canonical LEV entry.  This makes
  * the package-to-viewport boundary inspectable without assigning a Saturn
  * decoding or drawing meaning to any captured bytes. */
@@ -366,6 +390,8 @@ typedef struct {
     Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt vdp1_command_framing;
     int vdp1_vram_window_bound;
     Nexus_V1_DgnStructure3Vdp1VramWindowReceipt vdp1_vram_window;
+    int vdp1_command_vram_bound;
+    Nexus_V1_DgnStructure3Vdp1CommandVramReceipt vdp1_command_vram;
     int texture_decode_unproven;
     int palette_decode_unproven;
     int vdp1_draw_unproven;
@@ -1519,6 +1545,10 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
 int nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3Vdp1VramWindowReceipt *out_receipt);
+
+int nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3Vdp1CommandVramReceipt *out_receipt);
 /* Bind the active canonical LEV byte receipt to the viewport boundary. A
  * valid receipt remains no-draw even when an authenticated opaque capture is
  * present: texture, palette, VDP1, transform, and culling semantics are not
