@@ -14,6 +14,7 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V3_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V3"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V4_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V4"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V5"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V6"
 #define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
@@ -296,6 +297,25 @@ typedef struct {
     uint64_t first_control_sequence;
     uint64_t last_control_sequence;
     int complete_control_branch_coverage_observed;
+    /* V6 carries concrete, branch-local SH-2 operand observations. They are
+     * externally captured evidence only: values and sequencing may be bound
+     * to retail instructions, but no PRS3 token/output meaning is inferred. */
+    uint32_t nonzero_counter_decrement_instruction_offset;
+    uint32_t zero_counter_decrement_instruction_offset;
+    uint32_t nonzero_counter_before;
+    uint32_t nonzero_counter_after;
+    uint32_t zero_counter_before;
+    uint32_t zero_counter_after;
+    uint32_t nonzero_source_cursor_before;
+    uint32_t nonzero_source_cursor_after;
+    uint32_t zero_source_cursor_before;
+    uint32_t zero_source_cursor_after;
+    uint64_t nonzero_counter_decrement_sequence;
+    uint64_t nonzero_input_read_sequence;
+    uint64_t zero_counter_decrement_sequence;
+    uint64_t zero_first_input_read_sequence;
+    uint64_t zero_second_input_read_sequence;
+    int dynamic_control_operands_observed;
     int exact_vdp1_handoff_observed;
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;

@@ -19149,3 +19149,12 @@ corridor. After the guarded `R2 -> @(R13,R0)` byte store it executes
 The receipt rejects a changed update, mask, or re-entry branch. This is a
 source-control fact only: it does not establish a literal token, R6/R13
 allocation, output byte order, decoded data, palette, pixels, or rendering.
+
+# Nexus PRS3 V6 dynamic control-operand capture (2026-07-15)
+
+The VDP1 trace schema now admits V6 only when it includes one ordered dynamic
+operand witness for each low-bit branch: the real nonzero and zero R14 debit
+PCs, before/after R14 values, before/after R12 cursor values, and decrement to
+input-read sequence order. Source binding rechecks both PCs against the locked
+DM.BIN receipt. The witness remains unauthenticated capture evidence and does
+not prove PRS3 token grammar, output semantics, palette, pixels, or drawing.
