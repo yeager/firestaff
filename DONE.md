@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB title CHAOS receipt off-by-one: startup presentation
+  coherence now validates `TITLE.C F0437` against the current title frame,
+  not the previous frame. This restores the first and last CHAOS zoom render
+  plans instead of rejecting them before host presentation. Focused CSB
+  startup tests pass (`139/139`, plus title/import gate `129/129`).
+
 - ✅ 2026-07-15 DM2 skproject startup title/menu: startup presentation now
   consumes the original `TITLE/0` GDAT pair (`dt07/1` title and `dt07/4`
   menu) instead of a synthetic text/rect menu. M11 advances only the startup

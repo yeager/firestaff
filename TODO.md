@@ -187,6 +187,11 @@
     C001--C005 raster and palette gate pass. It cannot capture a stale phase,
     foreign door step, or host wrapper page. External Mac-window comparison
     remains required for original pixel parity.
+  - 2026-07-15 update: fixed the startup presentation receipt off-by-one that
+    compared `TITLE.C F0437` source step against the previous title frame.
+    First and last CHAOS zoom frames now produce valid real C001 render plans.
+    Remaining work is still the real Mac/window capture and broader app route,
+    not synthetic title/entrance replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
