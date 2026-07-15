@@ -18770,3 +18770,11 @@ It must match the direct owner, raw Structure1A table and selector column,
 plus both sidecar hashes before it can assert original-Saturn provenance. The
 result remains opaque and no-draw; Firestaff does not assign transform or
 graphics meaning to the captured bytes.
+
+# Nexus MENU.BPK PALT / WARNING.BIN correlation (2026-07-15)
+
+The canonical MENU.BPK PALT trailer and WARNING.BIN resource 0's documented
+DGT2 CLUT share 224 identical indexed big-endian 16-bit words. This establishes
+only a source-owned BGR555 word-encoding correlation. The other 32 PALT words
+remain raw source values; no PRS3 entry association, palette application, pixel
+decode, or rendering route is enabled.

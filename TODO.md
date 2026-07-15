@@ -3425,6 +3425,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   their documented BGR555 CLUTs into UI/title state. TITLE.CG, MENU.BPK,
   FACE.BIN, STABG.BIN, and DGN materials remain unavailable until their own
   original palette/decode routes are proven; do not borrow DGT2 palettes.
+  - Canonical MENU.BPK PALT now has a source-only correlation to WARNING.BIN
+    resource 0: 224 of 256 indexed BE16 words match its documented DGT2
+    BGR555 CLUT at the same indices. The other 32 PALT words remain raw
+    source values. This proves no PRS3 entry ownership, palette application,
+    pixel decoding, or draw route; those still require Saturn evidence.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

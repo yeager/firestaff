@@ -129,6 +129,31 @@ int main(void)
         puts("skip: FIRESTAFF_NEXUS_DATA_DIR is not set");
         return 0;
     }
+    {
+        Nexus_V1_Engine correlation_engine;
+        Nexus_V1_MenuBpkPaltWarningPaletteCorrelationReceipt correlation;
+
+        memset(&correlation_engine, 0, sizeof(correlation_engine));
+        correlation_engine.source = NEXUS_SRC_EXTRACTED;
+        snprintf(correlation_engine.data_dir,
+                 sizeof(correlation_engine.data_dir), "%s", data_dir);
+        memset(&correlation, 0, sizeof(correlation));
+        CHECK(nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
+                  &correlation_engine, &correlation) == 1 && correlation.valid &&
+              correlation.menu_bpk_source_hash_verified &&
+              correlation.warning_source_hash_verified &&
+              correlation.palt.valid && correlation.warning_dgt2_pp_bound &&
+              correlation.warning_clut_fnv1a64 != 0U &&
+              correlation.matching_entry_count == 224U &&
+              correlation.mismatched_entry_count == 32U &&
+              correlation.indexed_word_alignment_proven &&
+              correlation.bgr555_word_encoding_correlation_proven &&
+              !correlation.prs3_palette_association_proven &&
+              !correlation.palette_application_proven &&
+              !correlation.decoder_promoted && correlation.no_draw_only &&
+              !correlation.fallback_visuals_permitted,
+              "canonical MENU.BPK PALT aligns with the documented WARNING DGT2 CLUT without enabling PRS3 rendering");
+    }
     CHECK(snprintf(path, sizeof(path), "%s/LEV01.DGN", data_dir) <
               (int)sizeof(path) &&
           asset_file_matches_md5(path, "751e1442bf7dccbd41bf146b5be144ab"),
