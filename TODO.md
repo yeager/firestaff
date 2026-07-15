@@ -6982,6 +6982,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   remains blocked. This proves media identity and record coordinates only;
   it still does not establish object grammar or a game-owned object consumer.
 
+  2026-07-15 source-map correction: the local original US Stage 2 HuC6280
+  disassembly shows the completed `$e009` read being copied to `$3800` and
+  immediately transferred with `jmp $3800`. Thus record `0x0b52` is an
+  executed loader sector, not a proven initial level/object record. Firestaff
+  now blocks its former level-shaped subrange from runtime promotion. Required
+  next evidence is a game-owned post-`$3800` consumer that reads a separately
+  hash-bound level/object record and proves its grammar.
+
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
   MODE1/2352 declaration canonically resolves to the independently

@@ -256,6 +256,9 @@ int theron_v1_boot_track02_capture_admission_allows_initial_level(
     }
 
     initial_level = &profile->track02_initial_level_handoff;
+    if (!initial_level->initial_level_semantics_proven) {
+        return 0;
+    }
     memset(&route, 0, sizeof(route));
     if (theron_v1_track02_load_initial_level_loader_route(
             track02_data, track02_size, profile->graphics_md5,
@@ -272,7 +275,10 @@ int theron_v1_boot_track02_capture_admission_allows_initial_level(
         route.object_tail_semantics_proven || route.fallback_visuals_allowed) {
         return 0;
     }
-    return 1;
+    /* The source-locked stage-two code jumps to $3800 after this sector is
+     * loaded. Its level-shaped subrange remains observational, not a game
+     * level/object consumer, so no dungeon handoff may be admitted yet. */
+    return 0;
 }
 
 /* ── PC Engine file candidates ───────────────────────────────────── */

@@ -198,6 +198,10 @@ typedef struct {
     int coalesced_loader_cd_receipt_proven;
     int initial_level_record_proven;
     int complete_initial_level_envelope_proven;
+    /* The current original stage-two disassembly proves that execution jumps
+     * to the complete $3800 sector after this read. It does not prove that a
+     * level-shaped subrange or following bytes are a level/object record. */
+    int initial_level_semantics_proven;
     /* The exact post-$e009 one-sector local-RAM witness that authorizes this
      * admission. It remains opaque loader/media provenance, not a payload
      * grammar or a dungeon/object/visual claim. */
@@ -217,6 +221,7 @@ typedef struct {
      * opaque until an original loader consumer proves object semantics. */
     Theron_V1Track02LoaderPostEnvelopeReceipt loader_post_envelope;
     Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
+    /* Observational only until a game-owned consumer proves level semantics. */
     Theron_Track02InitialLevelLoaderRoute initial_level_route;
     int object_tail_semantics_proven;
     int fallback_visuals_allowed;

@@ -983,6 +983,8 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->complete_payload_witness_proven ? 1u : 0u;
     hash *= 16777619u;
+    hash ^= receipt->initial_level_semantics_proven ? 1u : 0u;
+    hash *= 16777619u;
     hash ^= receipt->loader_intake.observed ? 1u : 0u;
     hash *= 16777619u;
     hash ^= receipt->loader_intake.payload_intake_admitted ? 1u : 0u;
@@ -1064,6 +1066,7 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            receipt->coalesced_loader_cd_receipt_proven &&
            receipt->initial_level_record_proven &&
            receipt->complete_initial_level_envelope_proven &&
+           !receipt->initial_level_semantics_proven &&
            receipt->complete_payload_witness_proven &&
            receipt->complete_payload_bytes == THERON_TRACK02_RAW_USER_DATA_BYTES &&
            receipt->complete_payload_checksum != 0u &&
@@ -1333,6 +1336,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     out->coalesced_loader_cd_receipt_proven = 1;
     out->initial_level_record_proven = 1;
     out->complete_initial_level_envelope_proven = 1;
+    out->initial_level_semantics_proven = 0;
     out->complete_payload_bytes =
         coalesced_receipt->later_destination_payload_bytes;
     out->complete_payload_checksum =

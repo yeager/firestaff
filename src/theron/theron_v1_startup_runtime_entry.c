@@ -551,6 +551,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
     if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
             handoff) ||
         handoff->object_tail_semantics_proven ||
+        !handoff->initial_level_semantics_proven ||
         handoff->fallback_visuals_allowed ||
         !handoff->loader_level_envelope.handed_off ||
         !handoff->loader_level_envelope.no_fallback ||
