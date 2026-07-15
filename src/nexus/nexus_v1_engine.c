@@ -2919,6 +2919,120 @@ int nexus_v1_current_level_structure2_descriptor_receipt(
     return 1;
 }
 
+int nexus_v1_engine_build_structure2_descriptor_capture_target(
+    const Nexus_V1_Engine *engine, int descriptor_index,
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target)
+{
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt source_receipt;
+    const Nexus_V1_Level *level;
+    const uint8_t *data;
+    int size;
+    int structure2_byte_offset;
+    int descriptor_byte_offset;
+    int opaque_payload_byte_offset;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->level_index = -1;
+    out_target->no_draw_only = 1;
+    if (!engine || descriptor_index < 0 ||
+        nexus_v1_current_level_structure2_descriptor_receipt(
+            engine, &source_receipt) != 1 ||
+        descriptor_index >= source_receipt.descriptor_count) {
+        return 0;
+    }
+    level = &engine->current_level;
+    data = engine->current_level_dgn_data;
+    size = engine->current_level_dgn_size;
+    if (!data || size < 0x18 ||
+        (data[0x14] == 0U && data[0x15] == 0U)) {
+        return 0;
+    }
+    structure2_byte_offset =
+        (int)(((unsigned int)data[0x14] << 8) | data[0x15]) *
+        NEXUS_DGN_BLOCK_SIZE;
+    descriptor_byte_offset = structure2_byte_offset +
+        descriptor_index * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+    opaque_payload_byte_offset = structure2_byte_offset +
+        level->structure2_payload.opaque_payload_offset;
+    if (structure2_byte_offset < 0 ||
+        descriptor_byte_offset < structure2_byte_offset ||
+        descriptor_byte_offset > size - NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES ||
+        opaque_payload_byte_offset < structure2_byte_offset ||
+        opaque_payload_byte_offset > size -
+            level->structure2_payload.opaque_payload_size) {
+        return 0;
+    }
+    out_target->valid = 1;
+    out_target->level_index = engine->game.current_level;
+    out_target->source_byte_count = size;
+    out_target->source_bytes_fnv1a64 = source_receipt.source_bytes_fnv1a64;
+    out_target->descriptor_index = descriptor_index;
+    out_target->descriptor_byte_offset = descriptor_byte_offset;
+    out_target->descriptor = level->structure2_textures[descriptor_index];
+    out_target->opaque_payload_byte_offset = opaque_payload_byte_offset;
+    out_target->opaque_payload_byte_count =
+        level->structure2_payload.opaque_payload_size;
+    out_target->descriptor_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + descriptor_byte_offset, NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES);
+    out_target->opaque_payload_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + opaque_payload_byte_offset,
+        level->structure2_payload.opaque_payload_size);
+    out_target->capture_producer_required = 1;
+    out_target->original_saturn_capture_required = 1;
+    return 1;
+}
+
+int nexus_v1_engine_write_structure2_descriptor_capture_target(
+    const Nexus_V1_Engine *engine, int descriptor_index, const char *path,
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target)
+{
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget target;
+    char temporary_path[1024];
+    FILE *file;
+    int write_ok;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->level_index = -1;
+    out_target->no_draw_only = 1;
+    if (!path || !path[0] ||
+        nexus_v1_engine_build_structure2_descriptor_capture_target(
+            engine, descriptor_index, &target) != 1 ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
+            (int)sizeof(temporary_path)) {
+        return 0;
+    }
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    write_ok = fprintf(file,
+                       "NEXUS_STRUCTURE2_DESCRIPTOR_CAPTURE_TARGET_V1\n"
+                       "level=%d\nsource_bytes=%d\nsource_fnv1a64=%016llx\n"
+                       "descriptor_index=%d\ndescriptor_byte_offset=%d\n"
+                       "image_id=%u\nencoding=%u\npalette_id=%u\nwidth=%u\nheight=%u\n"
+                       "image_relative_offset=%u\npalette_relative_offset=%u\n"
+                       "opaque_payload_byte_offset=%d\nopaque_payload_byte_count=%d\n"
+                       "descriptor_fnv1a64=%016llx\nopaque_payload_fnv1a64=%016llx\n"
+                       "original_saturn_capture_required=1\nno_draw_only=1\n",
+                       target.level_index, target.source_byte_count,
+                       (unsigned long long)target.source_bytes_fnv1a64,
+                       target.descriptor_index, target.descriptor_byte_offset,
+                       target.descriptor.image_id, target.descriptor.encoding,
+                       target.descriptor.palette_id, target.descriptor.width,
+                       target.descriptor.height, target.descriptor.image_relative_offset,
+                       target.descriptor.palette_relative_offset,
+                       target.opaque_payload_byte_offset,
+                       target.opaque_payload_byte_count,
+                       (unsigned long long)target.descriptor_bytes_fnv1a64,
+                       (unsigned long long)target.opaque_payload_fnv1a64) >= 0;
+    if (!write_ok || fclose(file) != 0 || rename(temporary_path, path) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

@@ -16134,6 +16134,17 @@ source-owned no-draw catalog only; it does not decode texture, palette, VDP1,
 transform, or drawing semantics. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Nexus Structure2 descriptor capture target
+
+The active canonical LEV route can now build and atomically write an external
+capture request for one exact Structure2 descriptor. It carries only source
+identity, descriptor byte offset/raw fields, and FNV fingerprints for that
+20-byte descriptor and the bounded post-FFFF span. The target requires an
+original Saturn capture and remains no-draw; it is not a pixel decoder,
+palette format, animation rule, VDP1 command, or runtime fallback.
+Verification: `test_nexus_v1_dgn_geometry_readiness` against the hash-verified
+retail LEV corpus, including an emitted LEV00 request.
+
 # ✅ 2026-07-15 Nexus active DGN face/material selector receipt
 
 `nexus_v1_current_level_structure3_face_material_receipt()` now carries the

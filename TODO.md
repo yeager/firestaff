@@ -6292,3 +6292,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   and verified Structure1G global-to-local descriptor joins. The payload has
   no proven encoding, pixel ordering, palette layout, animation timing, or
   VDP1 route; original Saturn evidence remains required before drawing.
+
+- 🔧 2026-07-15 Nexus Structure2 capture acquisition: the active canonical
+  LEV can now emit a source-bound capture target for one exact Structure2
+  descriptor and its opaque post-FFFF payload span. The remaining work is an
+  authentic Saturn trace/frame that binds those bytes to a real decoder and
+  palette/VDP route; the target itself is never a decoder or runtime fallback.

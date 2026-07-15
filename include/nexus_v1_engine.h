@@ -415,6 +415,27 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveStructure2DescriptorReceipt;
 
+/* Source-owned request for an external Saturn capture of one exact Structure2
+ * descriptor. The descriptor fields and post-FFFF bytes stay opaque; a
+ * target is not a trace, format decoder, palette, or draw authorization. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int descriptor_index;
+    int descriptor_byte_offset;
+    Nexus_V1_DgnStructure2Texture descriptor;
+    int opaque_payload_byte_offset;
+    int opaque_payload_byte_count;
+    uint64_t descriptor_bytes_fnv1a64;
+    uint64_t opaque_payload_fnv1a64;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure2DescriptorCaptureTarget;
+
 /* Active party pose bound to the canonical LEV source and the bounded raw
  * Structure1A transform-selector evidence. This is camera input provenance,
  * not a decoded Saturn camera, transform, culling, or drawing rule. */
@@ -1069,6 +1090,12 @@ int nexus_v1_current_level_structure1a_owner_chain_receipt(
 int nexus_v1_current_level_structure2_descriptor_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveStructure2DescriptorReceipt *out_receipt);
+int nexus_v1_engine_build_structure2_descriptor_capture_target(
+    const Nexus_V1_Engine *engine, int descriptor_index,
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target);
+int nexus_v1_engine_write_structure2_descriptor_capture_target(
+    const Nexus_V1_Engine *engine, int descriptor_index, const char *path,
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target);
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);
