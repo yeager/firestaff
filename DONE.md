@@ -19167,3 +19167,13 @@ data. Verification: genuine Mednafen 1.32.1 patch dry-run, Ninja focused
 targets, `test_theron_rendering` 18/18,
 `test_theron_v1_startup_save_resume_pc34` 258/258, raw-loader probe skip-safe,
 and the capture contract pass.
+
+# Nexus PRS3 V7 nonzero source/output witness (2026-07-15)
+
+V7 now requires one bounded MENU.BPK byte witness for the nonzero control
+corridor: payload offset and byte, the source-locked nonzero output-store PC,
+observed output byte/address, and ordered write sequence. Asset binding checks
+the input byte against the selected real stream and rejects an output byte that
+does not match the source-owned direct-byte route. This is one capture-bound
+transfer candidate, not a complete PRS3 literal/token grammar, decoder,
+palette/pixel interpretation, or render permission.

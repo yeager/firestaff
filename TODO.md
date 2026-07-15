@@ -3510,6 +3510,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     events bound to the two retail decrement PCs. This is still untrusted
     capture evidence until original-Saturn provenance is authenticated, and
     it defines no token, byte, output, palette, or raster semantics.
+  - Capture schema V7 now requires one real-data nonzero witness: a bounded
+    MENU.BPK byte, the retail output-store PC, an ordered observed output byte,
+    and its bounded output address. The route proves one source-bound direct
+    transfer candidate only, not a complete literal rule or decoder.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

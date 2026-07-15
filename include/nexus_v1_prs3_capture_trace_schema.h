@@ -15,6 +15,7 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V4_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V4"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V5"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V6"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V7_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V7"
 #define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
@@ -316,6 +317,17 @@ typedef struct {
     uint64_t zero_first_input_read_sequence;
     uint64_t zero_second_input_read_sequence;
     int dynamic_control_operands_observed;
+    /* V7 adds one nonzero branch's observed byte transfer. The original
+     * source route can bind its PCs and input byte, but this remains capture
+     * evidence rather than a complete literal-token/decode conclusion. */
+    uint32_t nonzero_input_payload_byte_offset;
+    uint32_t nonzero_observed_input_byte;
+    uint32_t nonzero_observed_output_byte;
+    uint32_t nonzero_output_store_instruction_offset;
+    uint32_t nonzero_output_byte_offset;
+    uint32_t nonzero_output_address;
+    uint64_t nonzero_output_write_sequence;
+    int dynamic_nonzero_byte_transfer_observed;
     int exact_vdp1_handoff_observed;
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;
