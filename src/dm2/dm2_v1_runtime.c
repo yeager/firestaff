@@ -1009,6 +1009,20 @@ static void dm2_runtime_capture_door_render_receipt(
         door->destroyed_mask_gdat_index;
     g_dm2_last_door_render.frame_gdat_index =
         door->frame_gdat_index;
+    for (int side = 0; side < 2; ++side) {
+        g_dm2_last_door_render.side_frame_gdat_index[side] =
+            door->side_frame_gdat_index[side];
+        g_dm2_last_door_render.side_frame_graphicsset_field[side] =
+            door->side_frame_graphicsset_field[side];
+        g_dm2_last_door_render.side_frame_rect_number[side] =
+            door->side_frame_rect_number[side];
+        g_dm2_last_door_render.side_frame_mirror_flip[side] =
+            door->side_frame_mirror_flip[side];
+        g_dm2_last_door_render.side_frame_offset_x[side] =
+            door->side_frame_offset_x[side];
+        g_dm2_last_door_render.side_frame_offset_y[side] =
+            door->side_frame_offset_y[side];
+    }
     g_dm2_last_door_render.button_gdat_index =
         door->button_gdat_index;
     g_dm2_last_door_render.button_source_kind =
@@ -1098,6 +1112,14 @@ static void dm2_runtime_capture_door_render_receipt(
     DM2_MIX_DOOR_RECEIPT(door->ornate_gdat_index);
     DM2_MIX_DOOR_RECEIPT(door->destroyed_mask_gdat_index);
     DM2_MIX_DOOR_RECEIPT(door->frame_gdat_index);
+    for (int side = 0; side < 2; ++side) {
+        DM2_MIX_DOOR_RECEIPT(door->side_frame_gdat_index[side]);
+        DM2_MIX_DOOR_RECEIPT(door->side_frame_graphicsset_field[side]);
+        DM2_MIX_DOOR_RECEIPT(door->side_frame_rect_number[side]);
+        DM2_MIX_DOOR_RECEIPT(door->side_frame_mirror_flip[side]);
+        DM2_MIX_DOOR_RECEIPT(door->side_frame_offset_x[side]);
+        DM2_MIX_DOOR_RECEIPT(door->side_frame_offset_y[side]);
+    }
     DM2_MIX_DOOR_RECEIPT(door->button_gdat_index);
 #undef DM2_MIX_DOOR_RECEIPT
     g_dm2_last_door_render.panel_rect = door->panel_rect;

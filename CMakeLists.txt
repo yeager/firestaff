@@ -8810,6 +8810,19 @@ if(BUILD_TESTING)
     add_test(NAME dm2_v1_gdat_door_overlay_plan_real_data
              COMMAND test_dm2_v1_gdat_door_overlay_plan_real_data)
 
+    add_executable(test_dm2_v1_door_side_frame_source_route
+        tests/test_dm2_v1_door_side_frame_source_route.c)
+    target_include_directories(test_dm2_v1_door_side_frame_source_route PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_door_side_frame_source_route
+        PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_door_side_frame_source_route PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_door_side_frame_source_route
+             COMMAND test_dm2_v1_door_side_frame_source_route)
+
     add_executable(test_dm2_v1_door_scene_control_gate
         tests/test_dm2_v1_door_scene_control_gate.c
     )

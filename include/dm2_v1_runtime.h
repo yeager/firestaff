@@ -381,6 +381,12 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int ornate_gdat_index;
     int destroyed_mask_gdat_index;
     int frame_gdat_index;
+    int side_frame_gdat_index[2];
+    int side_frame_graphicsset_field[2];
+    int side_frame_rect_number[2];
+    int side_frame_mirror_flip[2];
+    int side_frame_offset_x[2];
+    int side_frame_offset_y[2];
     int button_gdat_index;
     int button_source_kind; /* 1=default door button, 2=wall-gfx button */
     int button_clickable;
