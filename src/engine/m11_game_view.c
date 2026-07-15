@@ -16121,6 +16121,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
         if (input == M12_MENU_INPUT_INVENTORY_TOGGLE) {
+            if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+                /* SKProject CHANGE_VIEWPORT_TO_INVENTORY owns a DM2-specific
+                 * GDAT/CHAMPIONS layout and event table. The shared M11
+                 * inventory panel is built from DM1 GRAPHICS.DAT slots, so
+                 * it cannot stand in for that source surface. */
+                state->inventoryPanelActive = 0;
+                m11_set_status(state, "INVENTORY",
+                               "DM2 INVENTORY GDAT REQUIRED");
+                return M11_GAME_INPUT_REDRAW;
+            }
             state->mapOverlayActive = 0;
             M11_GameView_ToggleInventoryPanel(state);
             return M11_GAME_INPUT_REDRAW;
@@ -39170,10 +39180,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                            "DM2 RUNTIME GDAT");
         }
         if (runtime_frame_accepted) {
-            if (state->inventoryPanelActive) {
-                m11_draw_inventory_panel(state, framebuffer,
-                                         framebufferWidth, framebufferHeight);
-            }
             m11_draw_v1_leader_hand_object_name(state, framebuffer,
                                                 framebufferWidth,
                                                 framebufferHeight);
@@ -40289,6 +40295,14 @@ int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
     if (!state) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        /* SKProject CHANGE_VIEWPORT_TO_INVENTORY renders the DM2 inventory
+         * from CHAMPIONS/INTERFACE_GENERAL GDAT and its own click table. The
+         * generic M11 panel consumes DM1 GRAPHICS.DAT geometry, therefore a
+         * DM2 caller must fail closed until that source route is bound. */
+        state->inventoryPanelActive = 0;
+        return 0;
+    }
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB COMMAND.C lines 2177-2183 gates C007..C011
          * inventory toggles with !G0299_ui_CandidateChampionOrdinal while
