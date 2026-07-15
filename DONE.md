@@ -15561,6 +15561,14 @@ DB5 roots use item 126, but `GRAPHICS.DAT` contains no exact
 before metadata or palette access. This is deliberately no-draw, not a
 substitute item surface. Verification: local canonical real-data gate.
 
+# ✅ 2026-07-15 DM2 raw SKSave DB-pool offset receipt
+
+Raw SKSave receipts now retain exact source-order offsets for each DB pool and
+the `warr_00[1]` map-data span beside the existing count/hash evidence. These
+offsets do not authorize unknown record or link decoding. The focused save/load
+fixture proves the empty-pool/map-data boundary at byte 68 and SUPPRESS starts
+at byte 88.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at

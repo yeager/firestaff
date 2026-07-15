@@ -218,6 +218,8 @@ typedef struct {
     uint16_t ground_stack_count;
     uint16_t text_word_count;
     uint16_t db_record_counts[DM2_RAW_SKSAVE_DB_POOL_COUNT];
+    size_t db_pool_offsets[DM2_RAW_SKSAVE_DB_POOL_COUNT];
+    size_t map_data_offset;
     uint32_t descriptor_hash;
     uint32_t column_index_hash;
     uint32_t ground_stack_hash;
