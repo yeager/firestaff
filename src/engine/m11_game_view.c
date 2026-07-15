@@ -39164,21 +39164,32 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
+        /* PANEL.C F0346/F0347 validates a pending C040 -> C017 clear before
+         * DUNVIEW draws the next page.  Keep that ordering in M11: a stale
+         * terminal generation must not reveal a newly drawn viewport before
+         * the session transaction rejects it. */
         if (!m11_csb_live_hud_session_ready(state) ||
+            (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
+             !m11_csb_consume_c040_clear_session(csb_state)) ||
             !m11_render_csb_boot_viewport(state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
             /* A verified CSB launch must not exchange missing source
-             * material for a replacement host page. */
+             * material for a replacement host page or retain a stale page. */
+            memset(framebuffer, 0,
+                   (size_t)framebufferWidth * (size_t)framebufferHeight);
         } else {
             if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-                if (!m11_csb_consume_c040_clear_session(csb_state) ||
-                    (state->inventoryPanelActive &&
+                if (state->inventoryPanelActive &&
                     !m11_draw_csb_v1_inventory_surface(
                         csb_state, framebuffer, framebufferWidth,
-                        framebufferHeight))) {
+                        framebufferHeight)) {
                     /* The C017/C040 pair did not form one complete terminal
-                     * session surface. The verified viewport page remains. */
+                     * session surface. Do not retain the preceding viewport
+                     * as a substitute presentation. */
+                    memset(framebuffer, 0,
+                           (size_t)framebufferWidth *
+                               (size_t)framebufferHeight);
                 } else if (!state->inventoryPanelActive) {
                     m11_draw_csb_v1_runtime_hud(state, framebuffer,
                                                 framebufferWidth,

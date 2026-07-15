@@ -4,6 +4,17 @@
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.
 
+- 2026-07-15 CSB PC3.4 real startup handoff: production playback now consumes
+  the single ReDMCSB `TITLE.C F0437` state-to-plan contract for C001 PRESENTS,
+  CHAOS, and STRIKES BACK. M11 validates the terminal C040-to-C017 transaction
+  and clears stale host pixels rather than substituting a prior viewport.
+  Verification: package presentation 27/27, M12/M11 handoff 301/301,
+  real-asset launch 68/68, and title/import UI gate 129/129.
+
+- 2026-07-15 CSB package discovery: the scanner completes one hash-verified
+  loose-file pass for `GRAPHICS.DAT`/`DUNGEON.DAT` before considering containers,
+  so a verified pair does not enumerate unrelated shared-data archives.
+
 - 2026-07-15 DM2 source-owned boot HUD: the real G1 startup path now draws
   only verified GDAT chrome until a real game load or new-game handoff owns
   `Champion::HeroType`; no synthetic party portraits are generated. The

@@ -3383,7 +3383,7 @@ static int csb_v1_startup_presentation_facts_are_source_coherent_pc34(
                facts->title_frame < csb_v1_startup_title_total_ticks_pc34() &&
                facts->title_source_step ==
                    (int)csb_v1_startup_title_source_step_for_frame_pc34(
-                       facts->title_frame);
+                       facts->title_frame > 0 ? facts->title_frame - 1 : 0);
     }
     if (credits_active) {
         return entrance_active && !opening_active &&

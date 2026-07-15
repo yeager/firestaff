@@ -68,25 +68,43 @@ static int host_surface(CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     return ok;
 }
 
-static int title_plan(int title_frame, CSB_V1_StartupRenderPlan_PC34 *out_plan)
+static int title_plan(int title_frame,
+                      const CSB_V1_StartupRenderPlan_PC34 *playback_plan)
 {
     CSB_V1_StartupHostFacts_PC34 facts;
     CSB_V1_StartupPresentationReceipt_PC34 receipt;
 
-    if (!out_plan) return 0;
+    if (!playback_plan) return 0;
     csb_v1_startup_host_facts_init_pc34(&facts);
     memset(&receipt, 0, sizeof(receipt));
     facts.title_active = 1;
     facts.entrance_active = 1;
     facts.title_frame = title_frame;
+    /* TITLE.C advances title_frame after drawing its current source step.
+     * Host facts therefore retain the preceding presented step, while the
+     * source-owned render plan derives the next C001 rectangle from frame. */
     facts.title_source_step = (int)
-        csb_v1_startup_title_source_step_for_frame_pc34(title_frame);
+        csb_v1_startup_title_source_step_for_frame_pc34(
+            title_frame > 0 ? title_frame - 1 : 0);
     if (!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
             &facts, &receipt) || !receipt.valid) {
         return 0;
     }
-    *out_plan = receipt.render_plan;
-    return 1;
+    return playback_plan->surface == receipt.render_plan.surface &&
+        playback_plan->source_asset_id == receipt.render_plan.source_asset_id &&
+        playback_plan->title_stage == receipt.render_plan.title_stage &&
+        playback_plan->title_source_step == receipt.render_plan.title_source_step &&
+        playback_plan->title_blit_kind == receipt.render_plan.title_blit_kind &&
+        playback_plan->title_source_x == receipt.render_plan.title_source_x &&
+        playback_plan->title_source_y == receipt.render_plan.title_source_y &&
+        playback_plan->title_source_w == receipt.render_plan.title_source_w &&
+        playback_plan->title_source_h == receipt.render_plan.title_source_h &&
+        playback_plan->title_dest_x == receipt.render_plan.title_dest_x &&
+        playback_plan->title_dest_y == receipt.render_plan.title_dest_y &&
+        playback_plan->title_dest_w == receipt.render_plan.title_dest_w &&
+        playback_plan->title_dest_h == receipt.render_plan.title_dest_h &&
+        playback_plan->special_palette == receipt.render_plan.special_palette &&
+        playback_plan->asset_command_count == receipt.render_plan.asset_command_count;
 }
 
 int main(int argc, char **argv)
