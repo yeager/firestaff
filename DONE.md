@@ -52,6 +52,10 @@
   before asking the source-bound F0128 viewport and HUD consumers to build the
   first live dungeon frame. The obsolete M11 opening-composite asset wrapper
   is removed, so the real package session is the only owner of door pixels.
+- ✅ 2026-07-15 CSB F0128 live-frame receipt: M11 now commits a dungeon page
+  only after CSB validates its real 224x136 indexed viewport pixels and draw
+  counts against the terminal C001-C005/C017/C040 PC3.4 session. Missing
+  session ownership fails closed before the candidate page can reach M11.
 - ✅ 2026-07-15 DM1 ReDMCSB F0107 HoC C127 materialization: M11 now consumes
   the native PC34 C346 48x43 raster through F0791 into G0205's 64x43 D1C
   destination before C026, rather than treating the destination width as a

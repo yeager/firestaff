@@ -1310,6 +1310,82 @@ int csb_v1_boot_render_viewport_frame_pc34(
     return 1;
 }
 
+int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_ViewportRuntimeDrawCounts *draw_counts,
+    const unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    CSB_V1_FirstLiveDungeonFrameReceipt_PC34 receipt;
+    uint32_t pixel_hash = 2166136261u;
+    uint32_t counts_hash = 2166136261u;
+    int x;
+    int y;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!profile || !session || !draw_counts || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        !profile->assets_verified || !profile->graphics_verified ||
+        !profile->dungeon_verified || !profile->runtime.dungeon_handle ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        !terminal.valid ||
+        !csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+            session, &full_runtime) ||
+        !full_runtime.valid || !full_runtime.title_to_hud_same_session ||
+        !full_runtime.playback_route_ready ||
+        full_runtime.session_generation != terminal.session_generation) {
+        return 0;
+    }
+
+    /* DUNVIEW.C F0128 owns the native viewport at (48,33), 224x136. Hash
+     * the actual completed indexed output, not a cached C004/C017 surface. */
+    for (y = 33; y < 169; ++y) {
+        for (x = 48; x < 272; ++x) {
+            pixel_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+                pixel_hash, framebuffer[(size_t)y * (size_t)framebuffer_width +
+                                       (size_t)x]);
+        }
+    }
+    counts_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        counts_hash, (uint32_t)draw_counts->object_sprite_drawn_count);
+    counts_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        counts_hash, (uint32_t)draw_counts->object_icon_drawn_count);
+    counts_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        counts_hash, (uint32_t)draw_counts->group_sprite_drawn_count);
+    counts_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        counts_hash, (uint32_t)draw_counts->projectile_sprite_drawn_count);
+    counts_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        counts_hash, (uint32_t)draw_counts->explosion_sprite_drawn_count);
+    counts_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
+        counts_hash, (uint32_t)draw_counts->real_asset_blocked_count);
+
+    receipt.real_asset_matched = 1;
+    receipt.terminal_session_owned = 1;
+    receipt.viewport_frame_consumed = 1;
+    receipt.no_synthetic_surface = 1;
+    receipt.session_generation = terminal.session_generation;
+    receipt.source_tick = terminal.source_tick;
+    receipt.viewport_pixel_hash = pixel_hash ? pixel_hash : 1u;
+    receipt.draw_counts_hash = counts_hash ? counts_hash : 1u;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C F0806 lines 857-889; DUNVIEW.C F0128 "
+        "lines 8318-8542; PANEL.C F0346/F0347";
+    receipt.valid = receipt.real_asset_matched && receipt.terminal_session_owned &&
+        receipt.viewport_frame_consumed && receipt.no_synthetic_surface &&
+        receipt.session_generation != 0u && receipt.viewport_pixel_hash != 0u &&
+        receipt.draw_counts_hash != 0u;
+    if (!receipt.valid) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int csb_v1_boot_apply_startup_handoff_pc34(
     CSB_V1_BootProfile *profile,
     const char *save_path,

@@ -113,6 +113,23 @@ typedef struct CSB_V1_BootProfile {
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
 
+/* ReDMCSB ENTRANCE.C F0806 releases the opening page before DUNVIEW.C F0128
+ * builds the first runtime viewport. Bind that real viewport output to the
+ * same terminal C001-C005/C017/C040 session; M11 must not retain a host page
+ * or manufacture a replacement dungeon surface at this boundary. */
+typedef struct CSB_V1_FirstLiveDungeonFrameReceipt_PC34 {
+    int valid;
+    int real_asset_matched;
+    int terminal_session_owned;
+    int viewport_frame_consumed;
+    int no_synthetic_surface;
+    uint32_t session_generation;
+    uint32_t source_tick;
+    uint32_t viewport_pixel_hash;
+    uint32_t draw_counts_hash;
+    const char *source_evidence;
+} CSB_V1_FirstLiveDungeonFrameReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupLaunchReceipts_PC34 {
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 handoff;
     CSB_V1_StartupInitStateReceipt_PC34 init_state;
@@ -1495,6 +1512,14 @@ int csb_v1_boot_render_viewport_frame_pc34(
     int framebuffer_height,
     const CSB_V1_ViewportRuntimeDrawerBinding *drawer_binding,
     CSB_V1_ViewportRuntimeDrawCounts *out_counts);
+int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_ViewportRuntimeDrawCounts *draw_counts,
+    const unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *out_receipt);
 int csb_v1_boot_apply_startup_handoff_pc34(
     CSB_V1_BootProfile *profile,
     const char *save_path,

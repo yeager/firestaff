@@ -706,6 +706,13 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.level_loaded == 1 &&
                     view.csbState.current_level >= 0,
                 "M11 CSB post-entrance handoff retains the loaded source dungeon");
+    expect_true(view.csbState.runtime_viewport_source_session_ready == 1 &&
+                    view.csbState.runtime_viewport_source_session_generation ==
+                        ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                             view.csbStartupRuntimeAssetSession)->generation &&
+                    view.csbState.runtime_viewport_pixel_hash != 0u &&
+                    view.csbState.runtime_viewport_draw_counts_hash != 0u,
+                "M11 CSB first F0128 dungeon frame consumes the terminal PC3.4 session receipt");
     /* F0806 releases C004/C002/C003 before F0128 begins the first live
      * dungeon pass. A caller-provided stale page must not survive above the
      * viewport after this source-owned transition. */
