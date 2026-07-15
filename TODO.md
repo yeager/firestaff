@@ -3097,6 +3097,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     field is executed or translated into audio playback.
   - 2026-07-15 source-route update: the raw SAL/MAP window route also rejects
     a missing `SDDRVS.TSK` identity before publishing an opaque window.
+  - 2026-07-15 raw-capture update: a SAL manifest alone cannot reach the host.
+    The producer must bind its exact raw Mednafen bytes by FNV before the
+    opaque host receipt is available. This still proves neither driver ABI,
+    selector semantics, sample codec, nor playback.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route. Manual condition/action fixtures are now inert even when
   callers mutate their public fields; remaining work is an original,

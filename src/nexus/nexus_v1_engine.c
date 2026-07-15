@@ -5016,6 +5016,8 @@ static int nexus_v1_slev_trace_is_sha256(const char *text) {
 
 static int nexus_v1_slev_trace_hex_u64(const char *text,
                                        uint64_t *out_value);
+static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data,
+                                            size_t size);
 
 int nexus_v1_engine_admit_sal_driver_trace(
     Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
@@ -5154,6 +5156,46 @@ int nexus_v1_current_level_sal_trace_admission_receipt(
     return 0;
 }
 
+int nexus_v1_engine_admit_sal_driver_trace_with_raw(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt) {
+    Nexus_V1_LevelSoundTraceAdmissionReceipt receipt;
+    char value[96];
+    uint64_t expected_hash;
+    uint64_t actual_hash;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SAL_TRACE_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_sfx_playback = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !raw_trace || raw_trace_size == 0 || !trace_text ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "raw_trace_fnv1a64", value,
+                                   sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        !(actual_hash = nexus_v1_slev_trace_fnv1a64(raw_trace,
+                                                     raw_trace_size)) ||
+        actual_hash != expected_hash) {
+        receipt.status = NEXUS_V1_SAL_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (nexus_v1_engine_admit_sal_driver_trace(engine, trace_text, trace_size,
+                                               &receipt) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bytes_bound = 1;
+    receipt.raw_trace_fnv1a64 = actual_hash;
+    receipt.raw_trace_byte_count = raw_trace_size;
+    engine->sound_trace_admission = receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_consume_sal_driver_trace(
     Nexus_V1_Engine *engine,
     Nexus_V1_LevelSoundTraceHostReceipt *out_receipt) {
@@ -5177,6 +5219,8 @@ int nexus_v1_engine_consume_sal_driver_trace(
         trace->level_index != receipt.level_index ||
         !trace->capture_target_bound || !trace->mednafen_debugger_provenance ||
         !trace->original_saturn_execution_claimed || !trace->trace_sha256_present ||
+        !trace->raw_trace_bytes_bound || !trace->raw_trace_fnv1a64 ||
+        trace->raw_trace_byte_count == 0 ||
         !trace->trace_chain_complete || trace->driver_dispatch_proven ||
         trace->sal_decode_proven || trace->playback_permitted ||
         !trace->blocks_real_sfx_playback || trace->fallback_visuals_permitted) {
