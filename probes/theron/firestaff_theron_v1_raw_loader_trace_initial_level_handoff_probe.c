@@ -176,6 +176,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryReceipt continuation_caller_next_transfer_call_entry;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt continuation_caller_next_transfer_call_entry_copy;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyNextReceipt continuation_caller_next_transfer_call_entry_copy_next;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopySuccessorReceipt continuation_caller_next_transfer_call_entry_copy_successor;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -184,6 +185,7 @@ int main(void)
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
     uint8_t transfer_destination_entry_opcode;
     uint8_t transfer_destination_entry_next_opcode;
+    uint8_t transfer_destination_entry_successor_opcode;
 
     if (!raw_path) {
         printf("SKIP: set FIRESTAFF_THERON_TRACK02_US_BIN for raw-media handoff coverage\n");
@@ -543,6 +545,7 @@ int main(void)
     --coalesced.descriptor_word0;
     transfer_destination_entry_opcode = handoff.loader_post_envelope.bytes[8u];
     transfer_destination_entry_next_opcode = handoff.loader_post_envelope.bytes[9u];
+    transfer_destination_entry_successor_opcode = handoff.loader_post_envelope.bytes[10u];
 
     {
         Theron_Track02InitialLevelLoaderSemanticReceipt direct_semantics;
@@ -1042,6 +1045,52 @@ int main(void)
         return 1;
     }
     --handoff.loader_post_envelope.bytes[9u];
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-main-ram-loader\n"
+             "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
+             "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n"
+             "main_ram_loader_rts logical_pc=2010 physical_pc=1f2010\n"
+             "main_ram_loader_post_rts source_logical_pc=2010 source_physical_pc=1f2010 logical_pc=3853 physical_pc=1f1853 opcode=20\n"
+             "main_ram_loader_jsr logical_pc=3853 physical_pc=1f1853 target=2100 a=00 x=00 y=00\n"
+             "main_ram_loader_rts logical_pc=2110 physical_pc=1f2110\n"
+             "main_ram_loader_post_rts source_logical_pc=2110 source_physical_pc=1f2110 logical_pc=3856 physical_pc=1f1856 opcode=ea\n"
+             "main_ram_loader_jsr logical_pc=3858 physical_pc=1f1858 target=2200 a=00 x=00 y=00\n"
+             "main_ram_loader_call_entry caller_logical_pc=3858 caller_physical_pc=1f1858 target=2200 logical_pc=2200 physical_pc=1f2200 opcode=ea\n"
+             "main_ram_loader_entry_next entry_logical_pc=2200 entry_physical_pc=1f2200 logical_pc=2201 physical_pc=1f2201 opcode=73\n"
+             "main_ram_loader_block_transfer logical_pc=2201 physical_pc=1f2201 operation=tii source=2008 destination=2400 length=0010\n"
+             "main_ram_loader_jsr logical_pc=2204 physical_pc=1f2204 target=2400 a=00 x=00 y=00\n"
+             "main_ram_loader_call_entry caller_logical_pc=2204 caller_physical_pc=1f2204 target=2400 logical_pc=2400 physical_pc=1f2400 opcode=%02x\n"
+             "main_ram_loader_entry_next entry_logical_pc=2400 entry_physical_pc=1f2400 logical_pc=2401 physical_pc=1f2401 opcode=%02x\n"
+             "main_ram_loader_entry_successor_next successor_logical_pc=2401 successor_physical_pc=1f2401 logical_pc=2402 physical_pc=1f2402 opcode=%02x\n",
+             transfer_destination_entry_opcode,
+             transfer_destination_entry_next_opcode,
+             transfer_destination_entry_successor_opcode);
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_copy_successor(
+            &handoff, game_payload_capture,
+            &continuation_caller_next_transfer_call_entry_copy_successor) ||
+        !continuation_caller_next_transfer_call_entry_copy_successor.valid ||
+        !continuation_caller_next_transfer_call_entry_copy_successor.copied_successor_next_byte_proven ||
+        continuation_caller_next_transfer_call_entry_copy_successor.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer_call_entry_copy_successor.next_pc != 0x2402u ||
+        continuation_caller_next_transfer_call_entry_copy_successor.next_physical_pc !=
+            0x1f2402u ||
+        continuation_caller_next_transfer_call_entry_copy_successor.original_source_address !=
+            0x3c8au ||
+        continuation_caller_next_transfer_call_entry_copy_successor.next_source_byte !=
+            transfer_destination_entry_successor_opcode) {
+        free(raw);
+        printf("FAIL: copied destination successor was not source-bound\n");
+        return 1;
+    }
+    ++handoff.loader_post_envelope.bytes[10u];
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_copy_successor(
+            &handoff, game_payload_capture,
+            &continuation_caller_next_transfer_call_entry_copy_successor)) {
+        free(raw);
+        printf("FAIL: altered copied successor source reached entry receipt\n");
+        return 1;
+    }
+    --handoff.loader_post_envelope.bytes[10u];
     ++manifest.trace_md5[0];
     if (theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
             &handoff, &manifest, manifest.track02_path, md5,
