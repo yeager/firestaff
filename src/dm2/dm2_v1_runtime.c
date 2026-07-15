@@ -5025,15 +5025,25 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
                                    header->session_size) != 0) return -1;
     cursor = data + sizeof(*header) + header->session_size;
     memcpy(&creatures, cursor, sizeof(creatures));
-    if (dm2_v1_creature_restore_live_state(&creatures) != 0) return -1;
-    cursor += sizeof(creatures);
-    memcpy(dungeon->raw_data, cursor, (size_t)dungeon->raw_size);
+    /* Validate every fallible payload before the first live mutation.
+     * SKProject GAME_LOAD rejects a bad candidate before publishing the new
+     * game world; a malformed creature blob must not partly replace a live
+     * party merely because its enclosing session decoded. */
+    if (dm2_v1_creature_live_state_valid(&creatures) != 0) return -1;
     g_dm2_runtime_restore_in_progress = 1;
     if (dm2_v1_runtime_apply_session(&session) != 0) {
         g_dm2_runtime_restore_in_progress = 0;
         return -1;
     }
     g_dm2_runtime_restore_in_progress = 0;
+    /* Both writes are now prevalidated and cannot reject after the session
+     * commit. Refresh source-owned scene controls after replacing raw G1
+     * bytes so the first restored frame observes the restored map. */
+    if (dm2_v1_creature_restore_live_state(&creatures) != 0) return -1;
+    cursor += sizeof(creatures);
+    memcpy(dungeon->raw_data, cursor, (size_t)dungeon->raw_size);
+    dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
+    dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
     memcpy(g_dm2_runtime.map_wall_gfx_list, header->map_wall_gfx_list,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     memcpy(g_dm2_runtime.map_floor_gfx_list, header->map_floor_gfx_list,
