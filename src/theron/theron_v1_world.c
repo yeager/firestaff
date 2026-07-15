@@ -523,9 +523,13 @@ void theron_v1_world_runtime_media_invalidate_cache(Theron_V1_World *world) {
 int theron_v1_world_runtime_media_set_surface(
     Theron_V1_World *world,
     Theron_RuntimeMediaSurfaceKind kind,
+    const char *track02_md5,
     unsigned int route_bit,
     uint16_t width,
     uint16_t height,
+    size_t first_raw_offset,
+    size_t last_raw_offset,
+    size_t first_user_data_offset,
     size_t tile_count,
     size_t nonzero_pixel_count,
     uint32_t checksum,
@@ -534,9 +538,12 @@ int theron_v1_world_runtime_media_set_surface(
 
     Theron_RuntimeMediaSurface *surface;
 
-    if (!world || !pixels || route_bit == 0u || width == 0u ||
+    if (!world || !pixels || !track02_md5 || strlen(track02_md5) != 32u ||
+        route_bit == 0u || width == 0u ||
         height == 0u || width > THERON_RUNTIME_MEDIA_MAX_WIDTH ||
         height > THERON_RUNTIME_MEDIA_HEIGHT ||
+        first_raw_offset == 0u || first_raw_offset > last_raw_offset ||
+        first_user_data_offset == 0u ||
         pixel_count != (size_t)width * (size_t)height ||
         pixel_count > THERON_RUNTIME_MEDIA_PIXELS || tile_count == 0u ||
         nonzero_pixel_count == 0u || checksum == 0u) {
@@ -555,9 +562,15 @@ int theron_v1_world_runtime_media_set_surface(
     }
     memset(surface, 0, sizeof(*surface));
     surface->ready = 1;
+    surface->raw_source_verified = 1;
+    snprintf(surface->track02_md5, sizeof(surface->track02_md5), "%s",
+             track02_md5);
     surface->route_bit = route_bit;
     surface->width = width;
     surface->height = height;
+    surface->first_raw_offset = first_raw_offset;
+    surface->last_raw_offset = last_raw_offset;
+    surface->first_user_data_offset = first_user_data_offset;
     surface->tile_count = tile_count;
     surface->nonzero_pixel_count = nonzero_pixel_count;
     surface->checksum = checksum;
@@ -645,6 +658,12 @@ int theron_v1_world_runtime_media_select_level_bank(
     selection.dungeon_id = dungeon_id;
     selection.level_index = level_index;
     selection.route_bit = surface->route_bit;
+    selection.raw_source_verified = surface->raw_source_verified;
+    snprintf(selection.track02_md5, sizeof(selection.track02_md5), "%s",
+             surface->track02_md5);
+    selection.first_raw_offset = surface->first_raw_offset;
+    selection.last_raw_offset = surface->last_raw_offset;
+    selection.first_user_data_offset = surface->first_user_data_offset;
     selection.width = surface->width;
     selection.height = surface->height;
     selection.tile_count = surface->tile_count;

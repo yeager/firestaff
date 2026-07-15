@@ -89,6 +89,9 @@ static void make_complete_track02_media_receipt(
     };
 
     memset(media, 0, sizeof(*media));
+    media->track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(media->track02_md5, sizeof(media->track02_md5), "%s",
+             THERON_TRACK02_MD5_US_BIN);
     media->startup_media_ready = 1;
     media->startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
     media->startup_bitmap_sample_count = 48;
@@ -146,6 +149,7 @@ static void make_complete_track02_media_receipt(
     media->startup_bitmap_forcefield_atlas_width = 96u;
     media->startup_bitmap_atlas.route_count = 4u;
     media->startup_bitmap_atlas.route_mask = TST_THERON_FULL_START_BITMAP_ROUTES;
+    media->startup_bitmap_atlas.variant = THERON_TRACK02_VARIANT_US_BIN;
     for (size_t i = 0u; i < 4u; ++i) {
         Theron_Track02StartupBitmapAtlasRoute *route =
             &media->startup_bitmap_atlas.routes[i];
@@ -155,6 +159,9 @@ static void make_complete_track02_media_receipt(
         route->height = 8u;
         route->nonzero_pixel_count = 32u;
         route->checksum = (uint32_t)(0x100u + i);
+        route->first_raw_offset = 0x1000u + i * 0x1000u;
+        route->last_raw_offset = route->first_raw_offset + 0x3cu;
+        route->first_user_data_offset = 0x0800u + i * 0x1000u;
         memset(route->pixels, (int)(i + 1u), 96u * 8u);
     }
 }
@@ -622,6 +629,13 @@ static void test_tqsv_only_resume_claim(void) {
                         world.runtime_media.route_mask ==
                             TST_THERON_FULL_START_BITMAP_ROUTES &&
                         world.runtime_media.title.ready &&
+                        world.runtime_media.title.raw_source_verified &&
+                        strcmp(world.runtime_media.title.track02_md5,
+                               THERON_TRACK02_MD5_US_BIN) == 0 &&
+                        world.runtime_media.title.first_raw_offset == 0x1000u &&
+                        world.runtime_media.title.last_raw_offset == 0x103cu &&
+                        world.runtime_media.title.first_user_data_offset ==
+                            0x0800u &&
                         world.runtime_media.title.route_bit ==
                             THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE &&
                         world.runtime_media.title.pixels[0] == 1u &&
@@ -657,6 +671,13 @@ static void test_tqsv_only_resume_claim(void) {
                             world.current_level &&
                         continue_result.track02_level_bank.route_bit ==
                             THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE &&
+                        continue_result.track02_level_bank.raw_source_verified &&
+                        strcmp(continue_result.track02_level_bank.track02_md5,
+                               THERON_TRACK02_MD5_US_BIN) == 0 &&
+                        continue_result.track02_level_bank.first_raw_offset ==
+                            0x2000u &&
+                        continue_result.track02_level_bank.last_raw_offset ==
+                            0x203cu &&
                         continue_result.track02_level_bank.surface_checksum ==
                             world.runtime_media.stage.checksum &&
                         continue_result.track02_level_bank.identity_checksum ==
