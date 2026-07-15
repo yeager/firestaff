@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB title/opening source-tick sequence gate: the
+  title/opening consumption receipt now requires PRESENTS, CHAOS, and
+  STRIKES BACK C001 host captures to carry an ordered source-tick sequence
+  immediately before the active C004/C002/C003 opening host tick. This blocks
+  replaying a stale title phase into the current opening receipt without
+  adding any wrapper or synthetic surface path. Verification: focused Ninja
+  build plus CTest `csb_v1_startup_session_contract_pc34_compat` pass in
+  `build-csb-startup-session-contract`; adjacent CTests
+  `csb_v1_startup_terminal_handoff_real_data_pc34_compat` and
+  `csb_v1_startup_raster_present_pc34_compat` pass in `build-local-ninja`.
+  Remaining blocker: the opt-in real package launch probe still reports
+  broader local real-data/hash failures and external original-window capture
+  remains required.
+
 - ✅ 2026-07-16 Nexus Structure2 shared texture/palette anchor proof:
   Structure2 descriptor capture targets now explicitly report when image and
   palette payload anchors resolve to the same bounded opaque DGN span. The

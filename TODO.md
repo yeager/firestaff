@@ -315,6 +315,13 @@
     pointers with plausible raster facts are rejected. Remaining work is
     unchanged: external original-window capture and broader app-route parity,
     not a wrapper-owned startup surface.
+  - 2026-07-16 update: the title/opening consumption receipt now also requires
+    PRESENTS, CHAOS, and STRIKES BACK host captures to carry a non-stale,
+    ordered source-tick sequence immediately before the active C004/C002/C003
+    opening tick. A replayed old C001 phase can no longer satisfy the current
+    title-to-opening receipt. Remaining work is unchanged: external
+    original-window capture and broader app-route parity; the local opt-in
+    real-package launch probe still has broader real-data/hash failures.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
