@@ -203,6 +203,9 @@ typedef int (*CSB_V1_CSBWinDSAGetInfoFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSAGetExCellFlagsFn)(void *user,
                                                 uint32_t location,
                                                 uint32_t out_words[8]);
+typedef int (*CSB_V1_CSBWinDSASetExCellFlagsFn)(void *user,
+                                                uint32_t location,
+                                                uint32_t flags);
 
 typedef struct {
     uint32_t master_location;
@@ -243,6 +246,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetInfoFn get_dsa_info;
     void *wing_user;
     CSB_V1_CSBWinDSAGetExCellFlagsFn get_excell_flags;
+    CSB_V1_CSBWinDSASetExCellFlagsFn set_excell_flags;
     void *excell_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -478,6 +482,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetInfoFn get_dsa_info;
     void *wing_user;
     CSB_V1_CSBWinDSAGetExCellFlagsFn get_excell_flags;
+    CSB_V1_CSBWinDSASetExCellFlagsFn set_excell_flags;
     void *excell_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

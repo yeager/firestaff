@@ -681,6 +681,13 @@ int csb_v1_runtime_read_csbwin_extended_cell_flags(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t location,
     uint32_t out_words[8]);
+/* Source-shaped EXPOOL::Read/Write update for STKOP_StoreExCellFlg. It uses
+ * only an existing authenticated DB11 free-list node; lacking one fails
+ * rather than expanding a save tail or inventing storage. */
+int csb_v1_runtime_set_csbwin_extended_cell_flags(
+    CSB_V1_RuntimeProfile *profile,
+    uint32_t location,
+    uint32_t flags);
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);
