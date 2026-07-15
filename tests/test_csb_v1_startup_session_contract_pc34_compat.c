@@ -316,6 +316,24 @@ int main(void)
               title_opening.opening_host_surface_hash ==
                   opening_host.host_surface_hash,
           "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    ++opening_host.frame.source_tick;
+    check(!csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door),
+          "stale opening host tick cannot mint an opening-door receipt");
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "stale opening host tick cannot satisfy title/opening consumption");
+    --opening_host.frame.source_tick;
+    ++package_receipt.source_tick;
+    check(!csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door),
+          "stale package tick cannot mint an opening-door receipt");
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "stale package tick cannot satisfy title/opening consumption");
+    --package_receipt.source_tick;
     set_terminal_playback(&session);
     check(!csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &opening_host, &opening_door),

@@ -364,7 +364,9 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
             CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
         !host_surface->door_opening_decision ||
         host_surface->frame.session_generation != session->generation ||
+        host_surface->frame.source_tick != session->source_tick ||
         package_receipt->session_generation != session->generation ||
+        package_receipt->source_tick != session->source_tick ||
         package_receipt->real_asset_receipt_hash == 0u ||
         package_receipt->consumed_surface_hash == 0u ||
         !csb_v1_startup_session_opening_host_raster_matches_pc34(host_surface) ||
@@ -452,6 +454,8 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         chaos_host->frame.session_generation != session->generation ||
         strikes_host->frame.session_generation != session->generation ||
         opening_host->frame.session_generation != session->generation ||
+        opening_host->frame.source_tick != session->source_tick ||
+        package_receipt->source_tick != session->source_tick ||
         !csb_v1_startup_session_title_host_phase_matches_pc34(
             presents_host, CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
             VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS) ||

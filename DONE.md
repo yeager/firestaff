@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB opening-door source-tick gate: opening-door and
+  title/opening consumption receipts now require the package receipt and
+  C004/C002/C003 opening host frame to match the active startup session source
+  tick. This blocks tick-stale entrance captures from crossing the verified
+  C001-to-door startup path without adding any fallback surface. Verification:
+  focused Ninja build and CTest `csb_v1_startup_session_contract_pc34_compat`
+  pass in `build-csb-startup-session-contract`.
+
 - ✅ 2026-07-16 DM2 skproject DB0 front-door and wall-gfx runtime draw:
   source-required dungeon rendering now admits the D0C/front-player DB0 door
   outside `table1d7029`, supplements G1 door metadata only from the same real
