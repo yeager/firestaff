@@ -16,6 +16,7 @@
  *   DEFS.H:     Attack types, wound masks, defense formula
  */
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -327,6 +328,54 @@ int dm1_weapon_info_class_pc34(int weaponType) {
     return info.weaponClass;
 }
 
+static int f0294_required_ammunition_class_pc34(int weaponClass)
+{
+    if (weaponClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
+        weaponClass <= DM1_WEAPON_CLASS_LAST_BOW) {
+        return DM1_WEAPON_CLASS_BOW_AMMUNITION;
+    }
+    if (weaponClass >= DM1_WEAPON_CLASS_FIRST_SLING &&
+        weaponClass <= DM1_WEAPON_CLASS_LAST_SLING) {
+        return DM1_WEAPON_CLASS_SLING_AMMUNITION;
+    }
+    return -1;
+}
+
+int dm1_champion_ammunition_compatible_f0294_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short weaponThing,
+    unsigned short ammunitionThing)
+{
+    DM1_WeaponInfo weaponInfo;
+    DM1_WeaponInfo ammunitionInfo;
+    int requiredClass;
+
+    /* AMMO.C F0294:43-47: reject before the first F0158 lookup. */
+    if (THING_GET_TYPE(weaponThing) != THING_TYPE_WEAPON) return 0;
+    if (dm1_v1_dungeon_get_weapon_info_pc34(things, weaponThing,
+                                             &weaponInfo) <= 0) {
+        return 0;
+    }
+
+    /* AMMO.C F0294:54-60: only bow and sling launchers can use ammunition. */
+    requiredClass = f0294_required_ammunition_class_pc34(
+        weaponInfo.weaponClass);
+    if (requiredClass < 0) return 0;
+
+    /*
+     * AMMO.C F0294:70-79 invokes F0158 for the ammunition slot before its
+     * final type-and-class expression.  Firestaff's F0158 refuses a
+     * non-weapon THING rather than dereferencing it, so malformed records
+     * fail closed while preserving the source's lookup ordering.
+     */
+    if (dm1_v1_dungeon_get_weapon_info_pc34(things, ammunitionThing,
+                                             &ammunitionInfo) <= 0) {
+        return 0;
+    }
+    return THING_GET_TYPE(ammunitionThing) == THING_TYPE_WEAPON &&
+           ammunitionInfo.weaponClass == requiredClass;
+}
+
 int dm1_champion_f0312_skill_level_bonus_pc34(int weaponClass,
                                               int f0303SwingLevel,
                                               int f0303ThrowLevel,
@@ -396,14 +445,14 @@ int dm1_ranged_shoot_resolve_pc34(const DM1_WeaponInfo* actionHandWeapon,
 
     if (launcherClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
         launcherClass <= DM1_WEAPON_CLASS_LAST_BOW) {
-        if (ammunitionClass != DM1_WEAPON_CLASS_BOW_AMMUNITION) {
+        if (ammunitionClass != f0294_required_ammunition_class_pc34(launcherClass)) {
             out->noAmmunition = 1;
             return 0;
         }
         stepEnergy = launcherClass - DM1_WEAPON_CLASS_FIRST_BOW;
     } else if (launcherClass >= DM1_WEAPON_CLASS_FIRST_SLING &&
                launcherClass <= DM1_WEAPON_CLASS_LAST_SLING) {
-        if (ammunitionClass != DM1_WEAPON_CLASS_SLING_AMMUNITION) {
+        if (ammunitionClass != f0294_required_ammunition_class_pc34(launcherClass)) {
             out->noAmmunition = 1;
             return 0;
         }

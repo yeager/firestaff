@@ -5,6 +5,8 @@
  * Source-locked to ReDMCSB GROUP.C / CHAMPION.C / DEFS.H.
  */
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"  /* F0192_GROUP_* new layer (BUG-115b) */
 #include "memory_creature_ai_pc34_compat.h"  /* F0801b archenemy double-move (BUG-115b) */
 #include <stdio.h>
@@ -953,6 +955,57 @@ static void test_ranged_shoot_sling_ammunition(void) {
     PASS();
 }
 
+/* F0294 consumes raw PC3.4 WEAPON.Type records, not decoded item mirrors. */
+static void test_f0294_raw_weapon_records(void) {
+    struct DungeonThings_Compat things;
+    unsigned char rawWeapons[20 * 4];
+    unsigned short bow = (unsigned short)((THING_TYPE_WEAPON << 10) | 6);
+    unsigned short arrow = (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    unsigned short sling = (unsigned short)((THING_TYPE_WEAPON << 10) | 18);
+    unsigned short rock = (unsigned short)((THING_TYPE_WEAPON << 10) | 12);
+    unsigned short scroll = (unsigned short)(THING_TYPE_SCROLL << 10);
+
+    TEST(f0294_raw_weapon_records);
+    memset(&things, 0, sizeof(things));
+    memset(rawWeapons, 0, sizeof(rawWeapons));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapons;
+    things.thingCounts[THING_TYPE_WEAPON] = 20;
+
+    /* PC3.4 WEAPON.Type occupies bits 0..6 of bytes 2..3.  G0238 rows:
+     * 25 = bow class 20, 27 = bow ammunition class 10, 30 = sling
+     * ammunition class 11, and 29 = sling class 39. */
+    rawWeapons[6 * 4 + 2] = 25;
+    rawWeapons[7 * 4 + 2] = 27;
+    rawWeapons[12 * 4 + 2] = 30;
+    rawWeapons[18 * 4 + 2] = 29;
+
+    {
+        DM1_WeaponInfo info;
+        CHECK(dm1_v1_dungeon_get_weapon_info_pc34(&things, bow, &info) == 1,
+              "F0158 should read the raw bow WEAPON.Type");
+        CHECK(info.weaponClass == 20,
+              "F0158 raw bow record should resolve G0238 class 20");
+        CHECK(dm1_v1_dungeon_get_weapon_info_pc34(&things, arrow, &info) == 1,
+              "F0158 should read the raw arrow WEAPON.Type");
+        CHECK(info.weaponClass == DM1_WEAPON_CLASS_BOW_AMMUNITION,
+              "F0158 raw arrow record should resolve G0238 class 10");
+    }
+
+    CHECK(dm1_champion_ammunition_compatible_f0294_pc34(&things, bow, arrow) == 1,
+          "F0294 should accept raw G0238 bow plus arrow records");
+    CHECK(dm1_champion_ammunition_compatible_f0294_pc34(&things, sling, rock) == 1,
+          "F0294 should accept raw G0238 sling plus stone records");
+    CHECK(dm1_champion_ammunition_compatible_f0294_pc34(&things, bow, rock) == 0,
+          "F0294 should reject raw sling ammunition for a bow");
+    CHECK(dm1_champion_ammunition_compatible_f0294_pc34(&things, scroll, arrow) == 0,
+          "F0294 should reject a non-weapon launcher before F0158");
+    CHECK(dm1_champion_ammunition_compatible_f0294_pc34(&things, bow, scroll) == 0,
+          "F0294 should fail closed when F0158 cannot read ammunition");
+
+    PASS();
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 int main(void) {
     printf("=== DM1 V1 Combat System — Source-locked CTest Gate ===\n");
@@ -986,6 +1039,7 @@ int main(void) {
     test_ranged_shoot_bow_crossbow();
     test_ranged_shoot_no_bow_ammunition();
     test_ranged_shoot_sling_ammunition();
+    test_f0294_raw_weapon_records();
     test_champion_is_lucky();
     test_f0735_lucky_hit_enters_damage_path();
     test_f0735_dex_hit_short_circuits_random4_luck();

@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 CHAMPION F0294: the ammunition compatibility gate now reads
+  actual loaded PC3.4 weapon THING records through F0158 and the original
+  G0238 WeaponInfo table. It preserves AMMO.C's launcher type, bow/sling
+  class, and matching-ammunition checks; unavailable or malformed raw records
+  fail closed. The focused combat test covers raw bow/arrow, sling/stone,
+  mismatch, and non-weapon rejection.
+
 - 2026-07-15 DM1 SAVEUTIL F0421: original PC34 F0435 dungeon-tail import now
   stages header, maps, columns, SFT, text, every ThingData block, and raw map
   through the exact bytewise 16-bit running-checksum contract from
