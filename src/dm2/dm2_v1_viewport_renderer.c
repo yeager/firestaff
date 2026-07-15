@@ -2009,9 +2009,10 @@ int dm2_v1_viewport_build_door_render_plan(
         }
         row->frame_gdat_index =
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
+        /* DRAW_DOOR_FRAMES reads the live MAP graphics set.  A source frame
+         * cannot borrow the renderer's historical set-one convenience. */
         row->graphicsset_index = s->gdat_scene_control_ready
-            ? s->gdat_scene_material_index
-            : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
+            ? s->gdat_scene_material_index : -1;
         row->door_open_pct = vs->door_open_pct;
         row->door_state = vs->door_state;
         row->ornate_gdat_index =
@@ -4084,6 +4085,14 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
      * Real door graphics from GRAPHICS.DAT (Phase 4). */
 
     if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
+        return;
+    }
+    /* skproject DRAW_DOOR_FRAMES captures glbMapGraphicsSet before resolving
+     * GRAPHICSSET side frames.  Without the G1 scene receipt, a same-shaped
+     * default door would be a wrong material route rather than a valid draw. */
+    if (s->source_materials_required && !s->gdat_scene_control_ready) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
         return;
     }
     if (s->source_materials_required) {
