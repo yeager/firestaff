@@ -22,6 +22,7 @@ int main(void)
     uint8_t file_bytes[40000];
     uint8_t file_read[40000];
     char text[32];
+    void *heap_block;
     const char *tmp_path = "/tmp/firestaff_dm2_anim_bootstrap_test.bin";
     FILE *tmp;
     int handle;
@@ -109,6 +110,18 @@ int main(void)
               dm2_v1_anim_toupper(-1, &file_receipt) == -1 &&
               file_receipt.source_line == 1308,
           "ANIM_TOUPPER keeps EOF and uppercases lowercase ASCII");
+    heap_block = dm2_v1_anim_farmalloc(64, &file_receipt);
+    check(heap_block != NULL && file_receipt.valid &&
+              file_receipt.requested_bytes == 64 &&
+              file_receipt.source_line == 934,
+          "ANIM_farmalloc returns malloc-backed memory with source receipt");
+    dm2_v1_anim_farfree(heap_block, &file_receipt);
+    check(file_receipt.valid && file_receipt.source_line == 1054,
+          "ANIM_farfree releases malloc-backed memory");
+    check(dm2_v1_anim_farcoreleft(&file_receipt) == 1024u * 1024u &&
+              file_receipt.file_size == 1024u * 1024u &&
+              file_receipt.source_line == 1060,
+          "ANIM_farcoreleft exposes skproject Win32 memory pool sentinel");
 
     memset(pixels, 0, sizeof(pixels));
     check(dm2_v1_anim_decode_img1(img_fill, sizeof(img_fill), pixels,

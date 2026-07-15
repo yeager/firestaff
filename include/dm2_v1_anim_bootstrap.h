@@ -62,6 +62,11 @@ char *dm2_v1_anim_strcpy(char *dst,
                          DM2_V1_AnimFileReceipt *out_receipt);
 int dm2_v1_anim_toupper(int value,
                         DM2_V1_AnimFileReceipt *out_receipt);
+void *dm2_v1_anim_farmalloc(uint32_t size,
+                            DM2_V1_AnimFileReceipt *out_receipt);
+void dm2_v1_anim_farfree(void *buffer,
+                         DM2_V1_AnimFileReceipt *out_receipt);
+uint32_t dm2_v1_anim_farcoreleft(DM2_V1_AnimFileReceipt *out_receipt);
 
 int dm2_v1_anim_setpixel_seq_4bpp(uint8_t *dst,
                                   size_t dst_size,

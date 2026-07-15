@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 skproject ANIM memory helpers: added source-mapped
+  `ANIM_farmalloc`, `ANIM_farfree`, and `ANIM_farcoreleft` helpers to the
+  ANIM receipt layer. The test pins malloc-backed allocation/free and the
+  skproject Win32 `1024*1024` farcoreleft sentinel without introducing
+  synthetic artwork or GDAT substitutes. Verification:
+  `test_dm2_v1_anim_bootstrap`.
+
 - ✅ 2026-07-16 Theron Track02 copied-continuation source binding:
   fixed the initial post-envelope copied-code successor receipt so a second
   TII that starts inside the authenticated continuation maps successor
