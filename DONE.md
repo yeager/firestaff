@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0396/F0397/F0398 spell-HUD symbol gap:
+  the champion-panel spell-area overlay contract now explicitly owns
+  MENUDRAW.C's C011 line-stack load, six available-symbol window, and
+  champion-symbol fill/space-pad tail. The stale F0396 movement-arrow wording
+  was corrected, and the callable audit moves only F0396/F0397/F0398 to
+  `PC34_SOURCE_IMPLEMENTED`; no broader F0394, rune input, cast-result,
+  action-list, or real-pixel parity is claimed. Verification: strict C11
+  `test_dm1_v1_spell_area_f0396_f0398_symbol_audit_pc34_compat` passed 33/33
+  assertions, and the corrected spell-effect render adapter compiled cleanly.
+
 - ✅ 2026-07-15 Nexus startup title-route receipt hardening slice: added a
   stable `asset-blocked` title route name and restored the startup save-route
   action receipt declarations that the Nexus startup menu source already
