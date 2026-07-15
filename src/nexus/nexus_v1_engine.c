@@ -4076,6 +4076,93 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
     return receipt.valid ? 1 : 0;
 }
 
+int nexus_v1_current_level_visit_structure1c_source_scene(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure1CSourceConsumer consumer, void *context,
+    Nexus_V1_DgnStructure1CSourceSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1CSourceSceneReceipt receipt;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    uint8_t referenced[4096];
+    int x, y, index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(referenced, 0, sizeof(referenced));
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        !engine->current_level.geometry_info.collision_records_valid ||
+        engine->current_level.geometry_info.structure1c_record_count <= 1 ||
+        engine->current_level.geometry_info.structure1c_record_count >
+            (int)sizeof(referenced) ||
+        engine->current_level.geometry_info.structure1c_offset < 0 ||
+        engine->current_level.geometry_info.structure1c_size !=
+            engine->current_level.geometry_info.structure1c_record_count * 4 ||
+        engine->current_level.geometry_info.structure1c_offset >
+            engine->current_level_dgn_size ||
+        engine->current_level.geometry_info.structure1c_size >
+            engine->current_level_dgn_size -
+                engine->current_level.geometry_info.structure1c_offset) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = engine->game.current_level;
+    receipt.source_byte_count = engine->current_level_dgn_size;
+    receipt.source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    receipt.record_count = engine->current_level.geometry_info.structure1c_record_count;
+    receipt.indexed_record_count = receipt.record_count - 1;
+    for (y = 0; y < engine->current_level.height; ++y) {
+        for (x = 0; x < engine->current_level.width; ++x) {
+            uint16_t ref = engine->current_level.collision_refs[y][x];
+            if (ref > 0U && ref < (uint16_t)receipt.record_count) {
+                referenced[ref] = 1U;
+                ++receipt.reference_occurrence_count;
+            }
+        }
+    }
+    for (index = 1; index < receipt.record_count; ++index) {
+        Nexus_V1_DgnStructure1CSourcePacket packet;
+        const uint8_t *record = engine->current_level_dgn_data +
+            engine->current_level.geometry_info.structure1c_offset + index * 4;
+
+        memset(&packet, 0, sizeof(packet));
+        packet.valid = 1;
+        packet.level_index = receipt.level_index;
+        packet.source_byte_count = receipt.source_byte_count;
+        packet.source_bytes_fnv1a64 = receipt.source_bytes_fnv1a64;
+        packet.record_index = index;
+        memcpy(packet.raw_bytes, record, sizeof(packet.raw_bytes));
+        packet.referenced_by_structure1b = referenced[index] ? 1 : 0;
+        packet.no_draw_only = 1;
+        packet.blocks_real_dgn_mesh_render = 1;
+        if (consumer && consumer(context, &packet) != 0) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        ++receipt.consumed_record_count;
+        if (packet.referenced_by_structure1b) ++receipt.referenced_record_count;
+        else ++receipt.unreferenced_record_count;
+    }
+    receipt.valid = receipt.consumed_record_count == receipt.indexed_record_count &&
+        receipt.referenced_record_count + receipt.unreferenced_record_count ==
+            receipt.indexed_record_count;
+    *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

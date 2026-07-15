@@ -6326,6 +6326,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     decoder, draw route, or substitute visual.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 Structure1C source-route update: every addressable bounded
+    four-byte Structure1C record now reaches the active hash-bound viewport
+    boundary with its Structure1B reference occurrence retained. The bytes
+    remain opaque: they do not establish collision shapes, blocking,
+    transforms, meshes, materials, pixels, VDP1 state, or drawing.
   - 2026-07-15 source-route update: every parsed Structure1F row now reaches
     the viewport boundary from the active hash-bound LEV, retaining direct
     coordinates and Structure1A-owned rows separately. This is source
