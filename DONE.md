@@ -8,6 +8,10 @@
   host-font text. Focused inventory runtime coverage checks both unavailable
   no-draw behavior and authentic C020/C029 presentation.
 
+- 2026-07-15 Nexus Structure1C active-cell lookup: verified Structure1B grid
+  cells now resolve their exact no-draw Structure1C source packet through the
+  canonical DGN receipt. Invalid or unreferenced cells remain unavailable.
+
 - 2026-07-15 CSB C033-C035 status-hand source gate: CSB F0291 hand slots
   now require the exact 18x18 GRAPHICS.DAT C033/C034/C035 source surface.
   A missing or malformed hand box leaves the C12 F0292 status clear intact

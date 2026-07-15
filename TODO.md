@@ -3346,6 +3346,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The four record bytes remain opaque and no-draw; collision semantics,
   transforms, material selection, and Saturn rasterization still require
   independent original evidence.
+  - Active cell lookup now consumes the same canonical source receipt and can
+    expose only the exact referenced record. It remains blocked for empty,
+    invalid, stale, or unverified cells and assigns no collision meaning.
 
 - 2026-07-15 Nexus STABG.BIN: source bytes are discovered but its Saturn
   surface framing remains unproven. It is intentionally unavailable; derive a
