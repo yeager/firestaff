@@ -20,6 +20,7 @@ typedef struct {
      * present, TRANSLATE_PALETTE uses its exact 256-byte direct lookup before
      * the normal _0b36_037e light remap. */
     uint8_t palette_darkness;
+    uint8_t palette_translation_field;
     uint32_t palette_translation_hash;
     uint32_t palette_light_receipt_hash;
     uint32_t palette_transform_hash;
@@ -145,6 +146,11 @@ int dm2_v1_c_light_m11_palette_darkness(
  * DISPLAY_VIEWPORT `glbLightLevel * 10` value unchanged. */
 int dm2_v1_gdat_scene_m11_plane_palette_darkness(
     uint8_t field, uint8_t c_light_parameter, uint8_t *out_darkness);
+/* _32cb_0804 changes floor/ceiling class 0/1 to 9/10 while the player is
+ * moving. The original may therefore select a different GRAPHICSSET dt07
+ * lookup even though the IMG3 field remains floor/ceiling. */
+int dm2_v1_gdat_scene_m11_plane_translation_field(
+    uint8_t field, int movement_active, uint8_t *out_field);
 /* SKProject TRANSLATE_PALETTE: dt07 is a direct 256-entry byte lookup, not a
  * palette program.  The exact consumed 256-byte window is hash-bound. */
 int dm2_v1_gdat_scene_m11_translate_palette(

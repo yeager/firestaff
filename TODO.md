@@ -488,8 +488,17 @@
   runs the original interface-table `_0b36_037e` light remap. The translated
   palette and lookup window are hash-bound to the matching `c_light` receipt.
   A truncated lookup still blocks both planes. Remaining scene work is
-  source-backed weather composition and moving-plane light semantics; no
+  source-backed weather composition and wider moving-class semantics; no
   base-palette or host-light fallback may stand in for either route.
+
+- 2026-07-15 DM2 skproject moving-scene follow-up: M11 now carries the live
+  movement state into `_32cb_0804` palette selection. Stationary floor/ceiling
+  use `GRAPHICSSET/dt07/0` and `/1`; moving floor/ceiling use `/9` and `/10`
+  after the source's `cls4 += 9` branch. The selected lookup-field identity is
+  included in the palette transaction before the existing local-palette blit,
+  so a stationary receipt cannot be replayed while moving. Remaining scene
+  work is source-backed weather composition and the other moving-class
+  semantics, never a host-derived palette choice.
 
 - 2026-07-15 DM2 scene follow-up: M11 now carries G1 MapGraphicsStyle with
   the level identity. Remaining work is source-proven light/weather compositing.
