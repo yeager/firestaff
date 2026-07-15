@@ -180,6 +180,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchReceipt continuation_caller_next_transfer_call_entry_branch;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetReceipt continuation_caller_next_transfer_call_entry_branch_target;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -193,6 +194,9 @@ int main(void)
     uint16_t transfer_destination_branch_target;
     uint16_t transfer_destination_branch_target_jsr_pc;
     uint16_t transfer_destination_branch_target_jsr_target;
+    uint32_t transfer_destination_branch_target_lba;
+    uint16_t transfer_destination_branch_target_source_offset;
+    uint8_t transfer_destination_branch_target_source_byte;
 
     if (!raw_path) {
         printf("SKIP: set FIRESTAFF_THERON_TRACK02_US_BIN for raw-media handoff coverage\n");
@@ -559,6 +563,12 @@ int main(void)
     transfer_destination_branch_target_jsr_pc =
         (uint16_t)(transfer_destination_branch_target + 2u);
     transfer_destination_branch_target_jsr_target = 0x2600u;
+    transfer_destination_branch_target_lba = handoff.observed_track02_record + 3009u;
+    transfer_destination_branch_target_source_offset =
+        THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    transfer_destination_branch_target_source_byte = raw[
+        (size_t)handoff.observed_track02_record * THERON_TRACK02_RAW_SECTOR_BYTES +
+        transfer_destination_branch_target_source_offset];
 
     {
         Theron_Track02InitialLevelLoaderSemanticReceipt direct_semantics;
@@ -1133,6 +1143,22 @@ int main(void)
              transfer_destination_branch_target_jsr_pc,
              0x1f0000u + transfer_destination_branch_target_jsr_pc,
              transfer_destination_branch_target_jsr_target);
+    {
+        size_t capture_length = strlen(game_payload_capture);
+        snprintf(game_payload_capture + capture_length,
+                 sizeof(game_payload_capture) - capture_length,
+                 "pce_cd_register_write cpu_pc=%04x physical=00001801 data=08\n"
+                 "scsi_read_command generation=17 opcode=08 cdb=08%02x%02x%02x0100 start_lba=%u sector_count=1\n"
+                 "pce_cd_fifo_origin_main_ram_receipt generation=17 source_lba=%u source_offset=%u fifo_sequence=23 reader_pc=e981 logical_destination=3000 physical_destination=1f1000 writer_pc=1840 writer_physical_pc=1f1840 value=%02x\n",
+                 transfer_destination_branch_target_jsr_target,
+                 (transfer_destination_branch_target_lba >> 16) & 0x1fu,
+                 (transfer_destination_branch_target_lba >> 8) & 0xffu,
+                 transfer_destination_branch_target_lba & 0xffu,
+                 transfer_destination_branch_target_lba,
+                 transfer_destination_branch_target_lba,
+                 transfer_destination_branch_target_source_offset,
+                 transfer_destination_branch_target_source_byte);
+    }
     if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch(
             &handoff, game_payload_capture,
             &continuation_caller_next_transfer_call_entry_branch) ||
@@ -1155,6 +1181,34 @@ int main(void)
             &continuation_caller_next_transfer_call_entry_branch)) {
         free(raw);
         printf("FAIL: altered copied BRA displacement reached receipt\n");
+        return 1;
+    }
+    --handoff.loader_post_envelope.bytes[9u];
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd) ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.valid ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.jsr_cd_register_write_observed ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.read6_record_source_verified ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.track02_record !=
+            handoff.observed_track02_record ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.scsi_lba !=
+            transfer_destination_branch_target_lba ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.source_offset !=
+            transfer_destination_branch_target_source_offset ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd.source_byte !=
+            transfer_destination_branch_target_source_byte) {
+        free(raw);
+        printf("FAIL: post-BRA JSR CD read did not bind a Track 02 record\n");
+        return 1;
+    }
+    ++handoff.loader_post_envelope.bytes[9u];
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd)) {
+        free(raw);
+        printf("FAIL: altered copied BRA target reached CD record receipt\n");
         return 1;
     }
     --handoff.loader_post_envelope.bytes[9u];

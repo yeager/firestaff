@@ -1863,6 +1863,116 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrReceipt
+        branch_target_jsr;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int cpu_pc;
+    unsigned int physical;
+    unsigned int data;
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    unsigned int origin_generation;
+    unsigned int origin_lba;
+    unsigned int origin_offset;
+    unsigned long long fifo_sequence;
+    unsigned int reader_pc;
+    unsigned int logical_destination;
+    unsigned int physical_destination;
+    unsigned int writer_pc;
+    unsigned int writer_physical_pc;
+    unsigned int value;
+    uint8_t cdb[6];
+    int consumed;
+    int jsr_seen = 0;
+    int register_seen = 0;
+    int scsi_seen = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !track02_data || !track02_md5 || !out ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
+            handoff, capture, &branch_target_jsr) || !branch_target_jsr.valid) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_bra_target_jsr branch_target=%x branch_target_physical_pc=%x logical_pc=%x physical_pc=%x target=%x%n",
+                   &cpu_pc, &physical, &reader_pc, &writer_physical_pc,
+                   &scsi_lba, &consumed) == 5 && consumed == (int)length &&
+            cpu_pc == branch_target_jsr.branch_target.target_pc &&
+            physical == branch_target_jsr.branch_target.target_physical_pc &&
+            reader_pc == branch_target_jsr.control_pc &&
+            writer_physical_pc == branch_target_jsr.control_physical_pc &&
+            scsi_lba == branch_target_jsr.jsr_target) {
+            jsr_seen = 1;
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "pce_cd_register_write cpu_pc=%x physical=%x data=%x%n",
+                   &cpu_pc, &physical, &data, &consumed) == 3 &&
+            consumed == (int)length && jsr_seen && !scsi_seen) {
+            if (cpu_pc != branch_target_jsr.jsr_target || physical != 0x1801u ||
+                data > UINT8_MAX) {
+                return 0;
+            }
+            register_seen = 1;
+            continue;
+        }
+        if (!scsi_seen && register_seen &&
+            tqr_trace_parse_scsi_read6(line, length, &scsi_generation,
+                                        &scsi_lba, &scsi_sector_count, cdb)) {
+            if (!scsi_sector_count) return 0;
+            scsi_seen = 1;
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "pce_cd_fifo_origin_main_ram_receipt generation=%u source_lba=%u source_offset=%u fifo_sequence=%llu reader_pc=%x logical_destination=%x physical_destination=%x writer_pc=%x writer_physical_pc=%x value=%x%n",
+                   &origin_generation, &origin_lba, &origin_offset, &fifo_sequence,
+                   &reader_pc, &logical_destination, &physical_destination,
+                   &writer_pc, &writer_physical_pc, &value, &consumed) != 10 ||
+            consumed != (int)length || !scsi_seen ||
+            origin_generation != scsi_generation || origin_lba != scsi_lba ||
+            origin_lba < 3009u || origin_lba >= scsi_lba + scsi_sector_count ||
+            origin_offset >= THERON_TRACK02_RAW_SECTOR_BYTES || value > UINT8_MAX) {
+            continue;
+        }
+        if ((size_t)(origin_lba - 3009u) >=
+                track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+            track02_data[(size_t)(origin_lba - 3009u) *
+                             THERON_TRACK02_RAW_SECTOR_BYTES + origin_offset] !=
+                (uint8_t)value) {
+            return 0;
+        }
+        out->valid = 1;
+        out->branch_target_jsr = branch_target_jsr;
+        out->cd_register_value = (uint8_t)data;
+        out->scsi_generation = scsi_generation;
+        out->scsi_lba = scsi_lba;
+        out->track02_record = origin_lba - 3009u;
+        out->source_offset = (uint16_t)origin_offset;
+        out->source_byte = (uint8_t)value;
+        out->jsr_cd_register_write_observed = 1;
+        out->read6_record_source_verified = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,
