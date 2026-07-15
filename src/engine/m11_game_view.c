@@ -14914,10 +14914,12 @@ static int m11_front_mirror_first_sensor_index_pc34(
     return 0;
 }
 
-static int m11_disable_front_mirror_route(M11_GameViewState* state) {
-    int sensorIndex;
-
-    if (!m11_front_mirror_first_sensor_index_pc34(state, &sensorIndex)) {
+static int m11_disable_front_mirror_sensor_owner(
+    M11_GameViewState* state,
+    int sensorIndex) {
+    if (!state || !state->world.things || !state->world.things->sensors ||
+        sensorIndex < 0 ||
+        sensorIndex >= state->world.things->sensorCount) {
         return 0;
     }
     state->world.things->sensors[sensorIndex].sensorType = 0;
@@ -15098,6 +15100,7 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate) {
     int championIndex;
+    int firstSensorIndex;
     char mirrorName[16];
 
     mirrorName[0] = '\0';
@@ -15105,6 +15108,12 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorRenameActive || state->candidateMirrorOrdinal < 0) {
         return 0;
     }
+    /* REVIVE.C F0282:805-817 walks the source chain once for the active
+     * C160/C161 command, then mutates party/UI state before it clears that
+     * selected SENSOR. Keep the resolved first owner; a second scan after
+     * mutation can select a different custom sensor or none at all. */
+    firstSensorIndex = -1;
+    (void)m11_front_mirror_first_sensor_index_pc34(state, &firstSensorIndex);
     championIndex = state->candidateMirrorPartyIndex;
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
@@ -15144,7 +15153,10 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
     if (state->world.party.championCount == 1) {
         state->world.party.activeChampionIndex = 0;
     }
-    (void)m11_disable_front_mirror_route(state);
+    if (firstSensorIndex >= 0 &&
+        !m11_disable_front_mirror_sensor_owner(state, firstSensorIndex)) {
+        return 0;
+    }
     state->candidateMirrorRenameActive = 0;
     memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     state->candidateMirrorPanelActive = 0;

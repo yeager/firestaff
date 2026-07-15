@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0282 C160/C161 first-sensor ownership: M11
+  resolves the front-square's first source SENSOR exactly once at command
+  entry, retains that index through the candidate-panel mutation, then clears
+  that same sensor in the F0282 tail. This preserves BUG0_87 when a custom
+  sensor precedes C127 and never replaces it with a mirror/TextString scan.
+  Focused coverage: `m11_dm1_hoc_no_fallback_panel` with a bounded, valid
+  PC34 SFT chain.
 - ✅ 2026-07-15 DM2 direct DB5/DB9 F9 M11 material handoff: a source-admitted
   static-object cell now carries its already decoded WEAPONS/CONTAINERS F9
   pixels, IMG3 local palette, ObjectID, coordinate, category/type and pixel
