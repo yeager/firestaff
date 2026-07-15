@@ -20386,6 +20386,19 @@ if(NOT TARGET test_m11_dm1_status_aux_source_gate)
         COMMAND test_m11_dm1_status_aux_source_gate)
 endif()
 
+if(NOT TARGET test_m11_dm1_food_water_source_gate)
+    add_executable(test_m11_dm1_food_water_source_gate
+        tests/test_m11_dm1_food_water_source_gate.c)
+    target_link_libraries(test_m11_dm1_food_water_source_gate PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_food_water_source_gate PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_dm1_food_water_source_gate
+        COMMAND test_m11_dm1_food_water_source_gate)
+endif()
+
 if(NOT TARGET test_m11_dm1_hoc_no_fallback_panel)
     add_executable(test_m11_dm1_hoc_no_fallback_panel
         tests/test_m11_dm1_hoc_no_fallback_panel.c)
