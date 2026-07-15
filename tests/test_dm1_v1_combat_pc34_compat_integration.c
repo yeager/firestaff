@@ -57,8 +57,54 @@ static void test_armor_defense(void) {
     TEST(armor_defense);
     DM1_ArmorPiece ap = { .defense = 20, .sharpDefense = 5, .isShield = 0, .slot = 3 };
     CHECK(dm1_armor_defense(&ap, 0) == 20, "no-sharp defense should be 20");
-    CHECK(dm1_armor_defense(&ap, 1) == 25, "sharp defense should be 25");
+    CHECK(dm1_armor_defense(&ap, 1) == 22,
+          "sharp defense must use F0143's (defense * (bits + 4)) >> 3");
     CHECK(dm1_armor_defense(NULL, 0) == 0, "NULL armor should be 0");
+    PASS();
+}
+
+/* ── Test: F0156 ARMOUR.Type -> G0239 -> F0143 ───────────────────── */
+static void test_f0143_raw_armour_records(void) {
+    struct DungeonThings_Compat things;
+    unsigned char rawArmours[3 * 4] = {0};
+    DM1_ArmourInfoPc34 info;
+    int defense = -1;
+
+    TEST(f0143_raw_armour_records);
+    memset(&things, 0, sizeof(things));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_ARMOUR] = rawArmours;
+    things.thingCounts[THING_TYPE_ARMOUR] = 3;
+
+    /* Raw type 34 is MITHRAL AKETON: { Weight 52, Defense 70, Attributes 7 }. */
+    rawArmours[2] = 34;
+    CHECK(dm1_v1_dungeon_get_armour_info_pc34(&things,
+                                               (THING_TYPE_ARMOUR << 10), &info) == 1,
+          "loaded ARMOUR.Type 34 must resolve through G0239");
+    CHECK(info.weight == 52 && info.defense == 70 && info.attributes == 7,
+          "MITHRAL AKETON must retain G0239 Weight/Defense/Attributes");
+    CHECK(dm1_v1_dungeon_get_armour_defense_f0143_pc34(
+              &things, (THING_TYPE_ARMOUR << 10), 0, &defense) == 1 && defense == 70,
+          "F0143 non-sharp must return raw G0239 defense");
+    CHECK(dm1_v1_dungeon_get_armour_defense_f0143_pc34(
+              &things, (THING_TYPE_ARMOUR << 10), 1, &defense) == 1 && defense == 96,
+          "F0143 sharp defense must scale 70 by (7 + 4) / 8");
+
+    /* Type 52 is SHIELD OF DARC and keeps its source shield attribute. */
+    rawArmours[4 + 2] = 52;
+    CHECK(dm1_v1_dungeon_get_armour_info_pc34(&things,
+                                               (THING_TYPE_ARMOUR << 10) | 1, &info) == 1,
+          "loaded shield ARMOUR.Type must resolve through G0239");
+    CHECK(info.weight == 40 && info.defense == 100 && info.attributes == 0x84,
+          "SHIELD OF DARC must retain its original shield flag");
+
+    rawArmours[8 + 2] = 58;
+    CHECK(dm1_v1_dungeon_get_armour_info_pc34(&things,
+                                               (THING_TYPE_ARMOUR << 10) | 2, &info) == 0,
+          "out-of-range ARMOUR.Type must fail closed");
+    CHECK(dm1_v1_dungeon_get_armour_info_pc34(&things,
+                                               (THING_TYPE_WEAPON << 10), &info) == 0,
+          "non-armour Thing must not borrow an ARMOUR row");
     PASS();
 }
 
@@ -1012,6 +1058,7 @@ int main(void) {
 
     test_scaled_product();
     test_armor_defense();
+    test_f0143_raw_armour_records();
     test_stamina_adjusted();
     test_stat_adjusted_attack();
     test_weapon_info_class_table_source_lock();

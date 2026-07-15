@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 DUNGEON F0143 follow-up: raw PC3.4 `ARMOUR.Type` now
+  resolves through the complete original G0239 table and exact sharp-defense
+  scaling. Remaining work is separately-owned live champion inventory
+  snapshot consumption; do not derive armour values from decoded mirrors or
+  admit an absent/out-of-range G0239 row.
+
 - 2026-07-15 DM1 F0141/F0032/F0033 follow-up: raw PC3.4 object-info and
   dynamic icon resolution now read the loaded F0156 Thing record and exact
   G0237 Type column; F0115 candidate subtype extraction shares the raw gate.

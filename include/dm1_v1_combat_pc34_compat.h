@@ -98,11 +98,19 @@ enum {
 /* ── Armor piece ──────────────────────────────────────────────────── */
 typedef struct {
     int defense;
+    /* Low three bits of G0239 ARMOUR_INFO.Attributes. */
     int sharpDefense;
     int isShield;
     int slot;
     int weight;
 } DM1_ArmorPiece;
+
+/* ReDMCSB DUNGEON.C G0239 ARMOUR_INFO, kept in its source field order. */
+typedef struct {
+    int weight;
+    int defense;
+    int attributes;
+} DM1_ArmourInfoPc34;
 
 /* ── Weapon info ──────────────────────────────────────────────────── */
 typedef struct {
@@ -222,6 +230,19 @@ void dm1_combat_init_group(DM1_CreatureGroup* g);
 
 /* ── Armor & defense ──────────────────────────────────────────────── */
 int dm1_armor_defense(const DM1_ArmorPiece* armor, int useSharpDefense);
+int dm1_armour_info_pc34(int armourType, DM1_ArmourInfoPc34* outInfo);
+
+/* ReDMCSB DUNGEON.C F0156 -> ARMOUR.Type -> G0239 -> F0143. */
+struct DungeonThings_Compat;
+int dm1_v1_dungeon_get_armour_info_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    DM1_ArmourInfoPc34* outInfo);
+int dm1_v1_dungeon_get_armour_defense_f0143_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    int useSharpDefense,
+    int* outDefense);
 int dm1_wound_defense(const DM1_CombatState* s, int champIdx, int woundIdx, int useSharpDefense);
 
 /* ── Champion attributes ──────────────────────────────────────────── */
@@ -233,7 +254,6 @@ int dm1_weapon_info_class_pc34(int weaponType);
  * from a loaded PC3.4 dungeon; their WEAPON.Type rows are read through
  * DUNGEON.C F0158 before their G0238 classes are compared.
  */
-struct DungeonThings_Compat;
 int dm1_champion_ammunition_compatible_f0294_pc34(
     const struct DungeonThings_Compat* things,
     unsigned short weaponThing,
