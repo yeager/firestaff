@@ -30,10 +30,11 @@
   HoC C127 sensor and candidate-panel state.
 
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
-  presentation accepts only C009/C011 pixels and the loaded original font via
-  CASTER.C/MENUDRAW.C. The old non-chrome workbench is not a DM1 fallback.
-  Remaining work is real PC34/Mac capture across caster changes, rune rows,
-  recant, and cast refresh; do not restore host labels, mana bars, or boxes.
+  presentation accepts only C009/C011 pixels and verified PC34 M653 font
+  entries 695/557 via CASTER.C/MENUDRAW.C. The old non-chrome workbench and
+  arbitrary 768-byte font records are not DM1 fallbacks. Remaining work is
+  real PC34/Mac capture across caster changes, rune rows, recant, and cast
+  refresh; do not restore host labels, mana bars, or boxes.
 
 - 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
   surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates
@@ -62,9 +63,11 @@
 
 - 2026-07-15 DM1 F0387 action-menu follow-up: C079/C077/C011 now require
   exact loaded PC34 pixels for one/two/three action rows; a malformed or
-  unavailable menu surface preserves the F0387 black clear. Remaining work
-  is real PC34/Mac capture of action-menu transitions and hit targets. Do not
-  restore a permissive bitmap blit, procedural panel, or host-font route.
+  unavailable menu surface preserves the F0387 black clear. Its TEXT2 labels
+  now require verified PC34 M653 entries 695/557. Remaining work is real
+  PC34/Mac capture of action-menu transitions and hit targets. Do not restore
+  a permissive bitmap blit, procedural panel, arbitrary font, or host-font
+  route.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces

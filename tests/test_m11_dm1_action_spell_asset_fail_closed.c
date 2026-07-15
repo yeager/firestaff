@@ -29,6 +29,8 @@ int main(void) {
     s[n] = '\0'; fclose(f);
     char *action_menu;
     char *action_menu_end;
+    char *hud_font_gate;
+    char *hud_font_gate_end;
 
     ok = strstr(s, "if (actionAsset && spellAsset && actionAsset->loaded") &&
          strstr(s, "Missing real data leaves this source-owned strip black.") &&
@@ -43,6 +45,24 @@ int main(void) {
                           "slot && slot->loaded && slot->pixels") ||
         contains_between(action_menu, action_menu_end,
                          "m11_blit_panel_asset_native(state,")) {
+        ok = 0;
+    }
+    hud_font_gate = strstr(s, "static int m11_dm1_pc34_hud_font_is_source_bound(");
+    hud_font_gate_end = hud_font_gate
+        ? strstr(hud_font_gate, "static int g_m11_font_scale_override")
+        : NULL;
+    if (!hud_font_gate || !hud_font_gate_end || hud_font_gate_end <= hud_font_gate ||
+        !contains_between(hud_font_gate, hud_font_gate_end,
+                          "M11_FONT_GRAPHIC_INDEX_PC34") ||
+        !contains_between(hud_font_gate, hud_font_gate_end,
+                          "M11_FONT_GRAPHIC_INDEX_LEGACY") ||
+        !contains_between(hud_font_gate, hud_font_gate_end,
+                          "M11_Font_ResolvedGraphicIndex") ||
+        !contains_between(hud_font_gate, hud_font_gate_end,
+                          "g_activeOriginalFont != &state->originalFont") ||
+        contains_between(hud_font_gate, hud_font_gate_end,
+                         "M11_FONT_GRAPHIC_INDEX_FALLBACK") ||
+        !strstr(s, "m11_dm1_pc34_hud_font_is_source_bound(state)")) {
         ok = 0;
     }
     free(s); return ok ? 0 : 1;

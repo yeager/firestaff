@@ -2574,6 +2574,26 @@ static const M11_TextStyle* m11_chrome_remap_style(const M11_TextStyle* style,
  * font when assets are available without changing every call site. */
 static const M11_FontState* g_activeOriginalFont = NULL;
 
+/* TEXT2.C F0041 and MENUDRAW.C F0397/F0398 consume the PC34 M653 interface
+ * font, whose local ReDMCSB media mappings resolve only to 695 or 557.  The
+ * generic font loader may inspect other 768-byte records for non-HUD callers;
+ * this DM1 HUD route must never promote one of those records as a substitute
+ * glyph source. */
+static int m11_dm1_pc34_hud_font_is_source_bound(
+    const M11_GameViewState* state)
+{
+    int graphic_index;
+
+    if (!state || !state->assetsAvailable || !state->originalFontAvailable ||
+        g_activeOriginalFont != &state->originalFont ||
+        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return 0;
+    }
+    graphic_index = M11_Font_ResolvedGraphicIndex(g_activeOriginalFont);
+    return graphic_index == M11_FONT_GRAPHIC_INDEX_PC34 ||
+           graphic_index == M11_FONT_GRAPHIC_INDEX_LEGACY;
+}
+
 /* Accessibility: in-game font size multiplier. Set from state->fontScale
  * (itself propagated from M12 launcher's fontScale setting) in
  * M11_GameView_Draw.  Used by m11_draw_glyph to scale glyph rendering.
@@ -2950,15 +2970,17 @@ static void m11_draw_ra_overlay(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
-                                                 int framebufferWidth,
-                                                 int framebufferHeight,
-                                                 int x,
-                                                 int y,
-                                                 const char* text,
-                                                 int maxChars,
-                                                 unsigned char fgColor,
-                                                 unsigned char bgColor) {
+static void m11_draw_dm1_ui_text_trailing_spaces(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    const char* text,
+    int maxChars,
+    unsigned char fgColor,
+    unsigned char bgColor) {
     int i;
     if (!framebuffer || maxChars <= 0) {
         return;
@@ -2966,7 +2988,7 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
     /* ACTIDRAW.C F0387 -> TEXT2.C writes the fixed native cell font into
      * C113..C115.  The global host fontScale is valid for Firestaff text,
      * but made source action names such as WAR CRY oversized and clipped. */
-    if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
+    if (m11_dm1_pc34_hud_font_is_source_bound(state)) {
         for (i = 0; i < maxChars; ++i) {
             unsigned char ch = ' ';
             if (text && text[i] != '\0') {
@@ -33054,7 +33076,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
          * TEXT2.C G2087_C6_TextCharacterWidth, not the 8-pixel
          * inscription/font advance. */
         m11_draw_dm1_ui_text_trailing_spaces(
-            framebuffer, framebufferWidth, framebufferHeight,
+            state, framebuffer, framebufferWidth, framebufferHeight,
             renderPlan->header_text.x,
             renderPlan->header_text.y,
             nameBuf, DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34,
@@ -33073,7 +33095,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                    : "";
         {
             m11_draw_dm1_ui_text_trailing_spaces(
-                framebuffer, framebufferWidth, framebufferHeight,
+                state, framebuffer, framebufferWidth, framebufferHeight,
                 renderPlan->row_text[row].x,
                 renderPlan->row_text[row].y,
                 name ? name : "",
@@ -35011,8 +35033,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     linesAsset = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
     if (!linesAsset || !linesAsset->loaded || !linesAsset->pixels ||
-        !g_activeOriginalFont ||
-        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) {
         return;
     }
 

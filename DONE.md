@@ -196,6 +196,13 @@
   `m11_dm1_spell_area_asset_route` and
   `m11_dm1_action_spell_asset_fail_closed`.
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0387/F0397/F0398 M653 binding: action labels
+  and spell runes now accept only the verified PC34 M653 graphic entries 695
+  or 557 from the active DM1 asset session. A generic 768-byte record, another
+  active font instance, or unavailable original font leaves the source-owned
+  cells cleared; no host or guessed bitmap font can render `WAR CRY` or rune
+  glyphs. Focused coverage: `m11_dm1_action_spell_asset_fail_closed`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 creature source-material/geometry gate:
   live C584+ creature presentation now requires a decoded loaded-pixel PC34
   surface selected through G0221/G0222. Blank C3200/G0224 anchors reject the
