@@ -877,6 +877,9 @@ typedef struct {
     const DM2_V1_GdatDoorOverlayM11CommandPlan *gdat_door_overlay_material_plan;
     int gdat_door_overlay_material_plan_consumed_count;
     const DM2_V1_GdatWallM11CommandPlan *gdat_wall_material_plan;
+    /* Bound when UPDATE_GFXSET installs the plan.  A later G1 scene-control
+     * transaction invalidates the pointer before any M10 wall draw. */
+    uint32_t gdat_wall_material_plan_scene_control_hash;
     int gdat_scene_material_consumed_count;
     /* Counts only wall blits supplied by the boot-owned GRAPHICSSET plan. */
     int gdat_wall_material_plan_consumed_count;

@@ -1000,6 +1000,15 @@ void dm2_v1_viewport_set_gdat_scene_control(
              s->gdat_scene_control_hash)) {
         s->gdat_scene_material_plan = NULL;
     }
+    if (s->gdat_wall_material_plan &&
+        (!s->gdat_scene_control_ready ||
+         s->gdat_wall_material_plan->graphicsset !=
+             (uint8_t)s->gdat_scene_material_index ||
+         s->gdat_wall_material_plan_scene_control_hash !=
+             s->gdat_scene_control_hash)) {
+        s->gdat_wall_material_plan = NULL;
+        s->gdat_wall_material_plan_scene_control_hash = 0u;
+    }
     s->dirty = 1;
 }
 
@@ -1038,7 +1047,16 @@ void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s, const DM2_V1_GdatWallM11CommandPlan *plan)
 {
     if (!s) return;
-    s->gdat_wall_material_plan = plan && plan->valid ? plan : NULL;
+    /* DM2_DRAW_WALL consumes the GRAPHICSSET chosen by UPDATE_GFXSET.  A
+     * standalone plan has no live G1 owner and must not become a substitute
+     * for the active map's source transaction. */
+    s->gdat_wall_material_plan = plan && plan->valid &&
+        plan->command_count > 0 && plan->command_hash != 0u &&
+        s->gdat_scene_control_ready &&
+        plan->graphicsset == (uint8_t)s->gdat_scene_material_index ? plan : NULL;
+    s->gdat_wall_material_plan_scene_control_hash =
+        s->gdat_wall_material_plan ? s->gdat_scene_control_hash : 0u;
+    s->gdat_wall_material_plan_consumed_count = 0;
     s->dirty = 1;
 }
 
@@ -3969,7 +3987,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
      * Each visible wall cell is a source GDAT material; missing material must
      * stay absent rather than become a deterministic placeholder.
      */
-    if (!s->asset_fetch) {
+    if (!s->source_materials_required && !s->asset_fetch) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
@@ -3978,7 +3996,10 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     /* skproject DRAW_WALL queries GRAPHICSSET with the live MapGraphicsStyle.
      * The default set is only a data-free renderer convenience; it must not
      * substitute for a missing source-owned scene-control receipt. */
-    if (s->source_materials_required && !s->gdat_scene_control_ready) {
+    if (s->source_materials_required &&
+        (!s->gdat_scene_control_ready || !s->gdat_wall_material_plan ||
+         s->gdat_wall_material_plan_scene_control_hash !=
+             s->gdat_scene_control_hash)) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
@@ -3997,16 +4018,14 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         for (int i = 0; i < plan.panel_count; ++i) {
             const DM2_V1_WallPanelRender *panel = &plan.panels[i];
             DM2_V1_WallMaterial *material = &materials[i];
-            int graphicsset_index = 0;
-            int field = 0;
             const DM2_V1_GdatWallM11Command *command = NULL;
 
             s->last_dungeon_wall_material_required_mask |=
                 (uint16_t)(1u << (unsigned)panel->view_square);
-            if (s->gdat_wall_material_plan) {
+            {
                 const DM2_V1_GdatWallM11CommandPlan *wall_plan =
                     s->gdat_wall_material_plan;
-                if (!wall_plan->valid ||
+                if (!wall_plan->valid || !wall_plan->command_hash ||
                     wall_plan->graphicsset != (uint8_t)s->gdat_scene_material_index) {
                     dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
                     return;
@@ -4044,27 +4063,6 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                 material->ready = 1;
                 continue;
             }
-            if (!dm2_v1_viewport_wall_graphic_address(
-                    panel->gdat_index, &graphicsset_index, &field) ||
-                graphicsset_index != s->gdat_scene_material_index ||
-                field != dm2_v1_viewport_wall_field_for_square(
-                    panel->view_square) ||
-                dm2_v1_fetch_viewport_local_material(
-                    s, panel->gdat_index, &material->pixels,
-                    &material->width, &material->height,
-                    &material->stride) != 0 ||
-                !material->pixels || material->width <= 0 ||
-                material->height <= 0 || !s->active_asset_palette_ready ||
-                s->active_asset_palette_hash == 0u) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
-                return;
-            }
-            memcpy(material->palette16, s->active_asset_palette16,
-                   sizeof(material->palette16));
-            material->palette_hash = s->active_asset_palette_hash;
-            material->destination_rect = panel->dst_rect;
-            material->ready = 1;
         }
     }
 
