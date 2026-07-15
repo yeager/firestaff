@@ -188,6 +188,9 @@ typedef int (*CSB_V1_CSBWinDSAGetWingTalentsFn)(void *user,
                                                 uint32_t *out_talents);
 typedef int (*CSB_V1_CSBWinDSAHasWingCharacterFn)(void *user,
                                                    uint16_t fingerprint);
+typedef int (*CSB_V1_CSBWinDSASetWingTalentsFn)(void *user,
+                                                uint16_t fingerprint,
+                                                uint32_t talents);
 
 typedef struct {
     uint32_t master_location;
@@ -223,6 +226,7 @@ typedef struct {
     void *skin_user;
     CSB_V1_CSBWinDSAGetWingTalentsFn get_wing_talents;
     CSB_V1_CSBWinDSAHasWingCharacterFn has_wing_character;
+    CSB_V1_CSBWinDSASetWingTalentsFn set_wing_talents;
     void *wing_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -453,6 +457,7 @@ typedef struct {
     void *skin_user;
     CSB_V1_CSBWinDSAGetWingTalentsFn get_wing_talents;
     CSB_V1_CSBWinDSAHasWingCharacterFn has_wing_character;
+    CSB_V1_CSBWinDSASetWingTalentsFn set_wing_talents;
     void *wing_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

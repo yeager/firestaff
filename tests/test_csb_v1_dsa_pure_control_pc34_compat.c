@@ -14,6 +14,7 @@
 #include <string.h>
 
 static int failures;
+static uint32_t last_party_talents[4];
 
 static int wing_talents_enabled;
 
@@ -88,8 +89,14 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_wing_talents = get_wing_talents;
         context.has_wing_character = has_wing_character;
     }
-    return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
-        state, 7, 1u, 0, &context, out_execution);
+    {
+        CSB_V1_CSBWinDSAStackResult result =
+            csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                state, 7, 1u, 0, &context, out_execution);
+        memcpy(last_party_talents, context.party_champion_talents,
+               sizeof(last_party_talents));
+        return result;
+    }
 }
 
 static CSB_V1_CSBWinDSAStackResult run_save_policy(
@@ -184,6 +191,12 @@ int main(void)
     };
     uint16_t talents_fetch_wing[] = {
         0x0786u, 1u, 1u, 0x0195u, 0x000du
+    };
+    uint16_t talents_store_party[] = {
+        0x0686u, 0x55u, 0x0686u, 1u, 0x01d5u
+    };
+    uint16_t talents_store_then_bad[] = {
+        0x0686u, 0x55u, 0x0686u, 1u, 0x01d5u, 0x0000u
     };
     uint16_t disable_saves[] = { 0x0686u, 1u, 0x090bu };
     uint16_t enable_saves[] = { 0x0686u, 0u, 0x090bu };
@@ -416,6 +429,22 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 0u && execution.stack_depth == 0u,
           "TALENTS@ returns source zero for a missing in-party index");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, talents_store_party,
+              (int)(sizeof(talents_store_party) /
+                    sizeof(talents_store_party[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              last_party_talents[1] == 0x55u && execution.stack_depth == 0u,
+          "TALENTS! stores a source party champion talent word");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, talents_store_then_bad,
+              (int)(sizeof(talents_store_then_bad) /
+                    sizeof(talents_store_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              last_party_talents[1] == 0x1u,
+          "TALENTS! rejects without publishing before a later bad opcode");
 
     parameters[0] = 77u;
     check(run(&state, &action, talents_fetch_wing,
