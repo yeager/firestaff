@@ -32,7 +32,7 @@ int dm1_v1_viewport_inscription_receipt_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
     unsigned short firstThing,
-    int d1cWallLike,
+    DM1_V1_ViewportInscriptionProjectionPc34 projection,
     int championMirror,
     DM1_V1_ViewportInscriptionReceiptPc34* outReceipt)
 {
@@ -46,8 +46,11 @@ int dm1_v1_viewport_inscription_receipt_from_world_pc34(
     receipt.clearPreviousMaterial = 1;
     /* ReDMCSB DUNVIEW.C F0128:8318-8616 clears/rebuilds the current viewport
      * tuple before F0107:3590-3706 can select M648. F0107:3913-3928 routes a
-     * C127 mirror through C346/C026, never the readable inscription branch. */
-    if (!d1cWallLike || championMirror || !things) {
+     * C127 mirror through C346/C026, never the readable inscription branch.
+     * Side/depth projections retain the original unreadable ornament route;
+     * only the D1C front-wall tuple may publish readable M648 glyph cells. */
+    if (projection != DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34 ||
+        championMirror || !things) {
         *outReceipt = receipt;
         return 1;
     }
