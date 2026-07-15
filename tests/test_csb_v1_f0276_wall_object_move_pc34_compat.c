@@ -46,6 +46,7 @@ static void queue_projectile_move(CSB_V1_RuntimeProfile *profile,
 static void make_loaded_chain(CSB_V1_DungeonData *dungeon,
                               unsigned char *raw,
                               int wall,
+                              int sensor_type,
                               int sensor_data)
 {
     memset(dungeon, 0, sizeof(*dungeon));
@@ -68,7 +69,8 @@ static void make_loaded_chain(CSB_V1_DungeonData *dungeon,
     put_le16(raw, 60 + 1 * 2, 0u);
     put_le16(raw, 66, (unsigned short)(3u << 10));
     put_le16(raw, 72, 0xfffeu);
-    put_le16(raw, 74, (unsigned short)((sensor_data << 7) | 3u));
+    put_le16(raw, 74,
+             (unsigned short)((sensor_data << 7) | (sensor_type & 0x7f)));
     put_le16(raw, 76, (unsigned short)(DM1_EFFECT_SET << 3));
     put_le16(raw, 78, sensor_target(0, 0, 3));
     put_le16(raw, 80, 0xfffeu);
@@ -112,7 +114,7 @@ int main(void)
     CSB_V1_DungeonData dungeon;
     unsigned char raw[112];
 
-    make_loaded_chain(&dungeon, raw, 1, 26);
+    make_loaded_chain(&dungeon, raw, 1, 3, 26);
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
@@ -123,7 +125,7 @@ int main(void)
               profile.timeline_queue.events[0].c_cell == 0u,
           "F0276 C003 object arrival reaches F0272/F0268 from its wall cell");
 
-    make_loaded_chain(&dungeon, raw, 0, 26);
+    make_loaded_chain(&dungeon, raw, 0, 3, 26);
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
@@ -131,13 +133,23 @@ int main(void)
     CHECK(profile.timeline_queue.eventCount == 0,
           "non-wall object arrival cannot borrow C003 wall sensor semantics");
 
-    make_loaded_chain(&dungeon, raw, 1, 27);
+    make_loaded_chain(&dungeon, raw, 1, 3, 27);
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
     run_object_move(&profile);
     CHECK(profile.timeline_queue.eventCount == 0,
           "C003 rejects the matching object type before Revert/HOLD handling");
+
+    make_loaded_chain(&dungeon, raw, 1, 1, 0);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    run_object_move(&profile);
+    CHECK(profile.timeline_queue.eventCount == 1 &&
+              profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
+              profile.timeline_queue.events[0].c_effect == DM1_EFFECT_SET,
+          "F0276 C001 object arrival consumes its loaded wall C03 record");
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;
