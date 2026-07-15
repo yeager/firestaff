@@ -91,6 +91,9 @@ typedef struct {
     int gdat_weather_destination_ready;
     uint32_t gdat_weather_destination_hash;
     uint32_t gdat_weather_destination_mask;
+    int gdat_weather_renderer_ready;
+    uint32_t gdat_weather_renderer_hash;
+    uint32_t gdat_weather_renderer_command_count;
     int gdat_dialogue_shell_receipt_ready;
     uint32_t gdat_dialogue_shell_receipt_hash;
     int gdat_scene_light_consumed;
@@ -617,6 +620,10 @@ uint8_t dm2_v1_runtime_get_minion_count(void);
 int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc);
 uint32_t dm2_v1_runtime_get_weather_seed(void);
 void dm2_v1_runtime_set_weather_seed(uint32_t seed);
+/* Accepts only already validated c_weather DistantEnvironment receipts. The
+ * runtime has no generic weather-to-image fallback; no bound slot is no-draw. */
+int dm2_v1_runtime_bind_weather_distant_environment(
+    const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count);
 
 /* dm2_v1_runtime_has_dungeon_data — returns 1 if dungeon state is available.
  * Used by dm2_v2_runtime_render_frame to detect headless mode.

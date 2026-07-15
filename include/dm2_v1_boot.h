@@ -1864,6 +1864,18 @@ int dm2_v1_boot_weather_gdat_destination_receipt(
     int graphicsset_index,
     DM2_V1_BootWeatherDestinationReceipt *out_receipt);
 
+/* Joins source-owned live DistantEnvironment slots to the verified GDAT
+ * material and original dt04 destination route. It cannot select commands
+ * from generic weather state and returns no drawable receipt without slots. */
+int dm2_v1_boot_weather_renderer_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    const DM2_V1_WeatherRestoredStateReceipt *restored_state,
+    const DM2_V1_DistantEnvironmentReceipt *slots,
+    unsigned int slot_count,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherRendererReceipt *out_receipt);
+
 /* c_gui_vp.cpp dialogue shell/glyph evidence only. The receipt does not
  * authorize text layout or a DRAW_PICST call. */
 int dm2_v1_boot_dialogue_gdat_receipt(

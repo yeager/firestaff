@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2: bound source-owned `DistantEnvironment` weather slots to
+  the GDAT viewport route. The runtime consumes decoded weather material only
+  for stationary frames with complete slot, palette, IMG3, and dt04 receipts;
+  absent or malformed slots remain no-draw.
+
 - 2026-07-15 DM2: added a source-bound `DM2_LOAD_NEW_DUNGEON` boot
   transaction. It atomically reparses the verified G1 dungeon and carries
   raw identity/seed/map-count evidence while explicitly refusing to create a
