@@ -3607,6 +3607,119 @@ cleanup:
     return result;
 }
 
+int nexus_v1_current_level_visit_structure3_animated_materials(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3AnimatedMaterialConsumer consumer, void *context,
+    Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt receipt;
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+    const uint8_t *data;
+    int entry_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded ||
+        nexus_v1_current_level_structure3_face_material_receipt(
+            engine, &material_receipt) != 1 || !material_receipt.valid ||
+        !engine->current_level_dgn_data) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    data = engine->current_level_dgn_data;
+    receipt.level_index = material_receipt.level_index;
+    receipt.source_byte_count = material_receipt.source_byte_count;
+    receipt.source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
+    receipt.structure3_entry_count =
+        engine->current_level.structure3_directory.entry_count;
+    if (receipt.structure3_entry_count <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (entry_index = 0; entry_index < receipt.structure3_entry_count;
+         ++entry_index) {
+        uint32_t entry_relative_offset;
+        uint32_t face_relative_offset;
+        uint16_t face_count;
+        int face_ordinal;
+
+        entry_relative_offset = nexus_v1_dgn_read_be32(
+            data + engine->current_level.structure3_payload.byte_offset + 4 +
+            entry_index * 4);
+        if (entry_relative_offset >
+                (uint32_t)engine->current_level.structure3_payload.byte_size ||
+            (uint32_t)engine->current_level.structure3_payload.byte_size -
+                entry_relative_offset < 40U) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        face_count = (uint16_t)((unsigned int)
+            data[engine->current_level.structure3_payload.byte_offset +
+                 entry_relative_offset + 6] << 8 |
+            data[engine->current_level.structure3_payload.byte_offset +
+                 entry_relative_offset + 7]);
+        face_relative_offset = nexus_v1_dgn_read_be32(
+            data + engine->current_level.structure3_payload.byte_offset +
+            entry_relative_offset + 16);
+        if (face_count != engine->current_level
+                              .structure3_entry_face_counts[entry_index] ||
+            face_relative_offset >
+                (uint32_t)engine->current_level.structure3_payload.byte_size ||
+            (uint32_t)engine->current_level.structure3_payload.byte_size -
+                face_relative_offset < (uint32_t)face_count * 12U) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        for (face_ordinal = 0; face_ordinal < (int)face_count;
+             ++face_ordinal) {
+            const uint8_t *face = data +
+                engine->current_level.structure3_payload.byte_offset +
+                face_relative_offset + face_ordinal * 12;
+            Nexus_V1_DgnStructure3AnimatedMaterialPacket packet;
+
+            ++receipt.candidate_face_count;
+            if ((face[8] & 0x40U) == 0U || face[10] != 0x08U) continue;
+            ++receipt.animated_face_count;
+            if (nexus_v1_current_level_structure3_animated_material_packet(
+                    engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
+                    &packet) != 1 || !packet.valid ||
+                !packet.source_geometry_bound ||
+                !packet.animation_declaration_bound ||
+                !packet.first_descriptor_bound ||
+                packet.animation_execution_permitted ||
+                packet.transform_semantics_proven ||
+                packet.pixel_palette_vdp1_semantics_proven ||
+                packet.decoder_permitted || !packet.no_draw_only ||
+                packet.fallback_visuals_permitted ||
+                !packet.blocks_real_dgn_mesh_render) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            if (consumer && consumer(context, &packet) != 0) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            ++receipt.consumed_face_count;
+        }
+    }
+    /* The typed face-material receipt is the cross-check that every 08xx
+     * source row entered exactly this traversal, not merely any face count. */
+    if (receipt.candidate_face_count != material_receipt.faces.face_count ||
+        receipt.animated_face_count !=
+            material_receipt.materials.animated_texture_selector_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.complete =
+        receipt.consumed_face_count == receipt.animated_face_count;
+    *out_receipt = receipt;
+    return receipt.complete ? 1 : 0;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)
