@@ -23070,6 +23070,13 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                         plan->height;
                     s_m11_dm1_unreadable_inscription_host_presentation_receipt.transparentColor =
                         plan->transparentColor;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.paletteMapValid =
+                        plan->paletteMapValid;
+                    if (plan->paletteMapValid) {
+                        memcpy(s_m11_dm1_unreadable_inscription_host_presentation_receipt.paletteMap,
+                               plan->paletteMap,
+                               sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt.paletteMap));
+                    }
                 }
                 /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3923-3928:
                  * champion portraits are owned by the D1C front-mirror route
