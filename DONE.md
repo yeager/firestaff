@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0100-F0103 source-owned viewport primitives: mapped the
+  ReDMCSB wall/door blit batch to the live DM1 compatibility renderer. F0103
+  now requires F0128's verified temporary bitmap span and is no-draw without
+  it, rather than allocating host scratch. Focused assertions verify rejection
+  plus the exact two-row horizontal flip.
+
 - 2026-07-15 DM1 TITLE/Entrance source-palette presentation: M11 now sends
   ReDMCSB TITLE.C/SWSH.C/ENTRANCE.C indexed pixels through their complete
   source VGA palette without V2 gamma, CRT, sharpening, or motion postpasses.

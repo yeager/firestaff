@@ -4546,6 +4546,35 @@ static void test_center_line_clear_contract(void)
               dm1_viewport_3d_center_visible_depth_mask_pc34(0x7u, 0x5u), 0x1);
 }
 
+static void test_f0103_requires_f0128_owned_temporary_bitmap(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t source[4] = { 1u, 2u, 3u, 4u };
+    uint8_t temporary[4] = { 0u, 0u, 0u, 0u };
+    DM1_Viewport3DState state;
+    DM1_WallFrame frame = { 0, 1, 0, 1, 2, 2, 0, 0 };
+
+    memset(&state, 0, sizeof(state));
+    memset(viewport, 0x5au, sizeof(viewport));
+    state.viewport_pixels = viewport;
+    state.viewport_stride = DM1_VIEWPORT_WIDTH;
+
+    /* DUNVIEW.C F0128 owns G0074 before F0103. Without it, no host scratch
+     * allocation may manufacture a mirrored door-frame draw. */
+    dm1_viewport_3d_draw_door_frame_flipped(&state, source, &frame);
+    check_int("F0103.no_source_temp_keeps_pixel_0", viewport[0], 0x5a);
+    check_int("F0103.no_source_temp_keeps_pixel_1", viewport[1], 0x5a);
+    check_int("F0103.no_source_temp_keeps_pixel_stride", viewport[DM1_VIEWPORT_WIDTH], 0x5a);
+
+    state.temp_bitmap = temporary;
+    state.temp_bitmap_size = (int)sizeof(temporary);
+    dm1_viewport_3d_draw_door_frame_flipped(&state, source, &frame);
+    check_int("F0103.source_temp_flips_row_0_left", viewport[0], 2);
+    check_int("F0103.source_temp_flips_row_0_right", viewport[1], 1);
+    check_int("F0103.source_temp_flips_row_1_left", viewport[DM1_VIEWPORT_WIDTH], 4);
+    check_int("F0103.source_temp_flips_row_1_right", viewport[DM1_VIEWPORT_WIDTH + 1], 3);
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
@@ -4589,6 +4618,7 @@ int main(void)
     test_center_lane_blocking_contract();
     test_side_lane_clear_contract();
     test_center_line_clear_contract();
+    test_f0103_requires_f0128_owned_temporary_bitmap();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

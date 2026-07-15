@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0100-F0103 follow-up: source-owned wall and door bitmap
+  primitives are now mapped and F0103 rejects missing F0128 temporary storage.
+  F0104/F0105 still need the verified native floor/pit/stairs bitmap selection
+  and live M11 material consumption; do not use host scratch or substitute art.
+
 - 2026-07-15 CSB archive-only media discovery: loose CSB package candidates
   are now verified in one files-only MD5 pass before any archive container is
   opened. Archive-only CSB media deliberately retains the complete
