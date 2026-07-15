@@ -90,8 +90,10 @@
   caster-tab invert boxes. C100 and C101..C108 now use the exact C013/C245..
   C250/C252/C254 source hit boxes, including F0400 single-rune recant.
   Remaining work is real PC34/Mac capture of action-menu transitions, spell
-  refresh, tab inversion, and the C109 per-caster `Symbols[]`/`SymbolStep`
-  owner. Do not restore a permissive bitmap blit, procedural panel, arbitrary
+  refresh and tab inversion. C109 now owns the original per-caster
+  `Symbols[]`/`SymbolStep` state through F0394/G0514; remaining work is a
+  real PC34/Mac capture of those transitions. Do not restore a permissive
+  bitmap blit, procedural panel, arbitrary
   font, or host-font route.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and

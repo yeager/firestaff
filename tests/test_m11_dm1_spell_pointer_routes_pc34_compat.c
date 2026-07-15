@@ -28,11 +28,14 @@ static void seed_state(M11_GameViewState* state)
     state->active = 1;
     state->showDebugHUD = 0;
     state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
-    state->world.party.championCount = 1;
+    state->world.party.championCount = 2;
     state->world.party.activeChampionIndex = 0;
     state->world.party.champions[0].present = 1;
     state->world.party.champions[0].hp.current = 100;
     state->world.party.champions[0].hp.maximum = 100;
+    state->world.party.champions[1].present = 1;
+    state->world.party.champions[1].hp.current = 100;
+    state->world.party.champions[1].hp.maximum = 100;
 }
 
 int main(void)
@@ -80,6 +83,52 @@ int main(void)
              "F0400 preserves earlier rune");
     CHECK_EQ(state.spellRuneRow, 1,
              "F0400 restores previous symbol step");
+
+    /* C109 maps only the outer spell strip.  F0393 owns the precise tab
+     * rectangles; caster changes must keep each Champion.Symbols[] and
+     * SymbolStep independent from the party leader. */
+    CHECK_EQ(M11_GameView_HandlePointerButton(&state, 281, 43, 0x0002),
+             M11_GAME_INPUT_REDRAW,
+             "C109 selects champion 1 through its F0393 tab rectangle");
+    CHECK_EQ(state.world.party.activeChampionIndex, 0,
+             "C109 does not change the party leader");
+    CHECK_EQ(state.dm1SpellCasting.magicCasterIndex, 1,
+             "F0394 owns G0514 as champion 1");
+    CHECK_EQ(state.spellBuffer.runeCount, 0,
+             "champion 1 starts with its own empty Symbols array");
+    CHECK_EQ(state.spellRuneRow, 0,
+             "champion 1 starts at its own SymbolStep");
+
+    CHECK_EQ(M11_GameView_HandlePointerButton(&state, 236, 52, 0x0002),
+             M11_GAME_INPUT_REDRAW,
+             "C101 appends to champion 1 only");
+    CHECK_EQ(state.dm1SpellCasting.input[1].symbols[0], 0x60,
+             "champion 1 stores its own Lo symbol");
+    CHECK_EQ(state.dm1SpellCasting.input[0].symbols[0], 0x60,
+             "champion 0 retains its earlier Lo symbol");
+    CHECK_EQ(state.dm1SpellCasting.input[1].symbolStep, 1,
+             "champion 1 advances its own SymbolStep");
+
+    CHECK_EQ(M11_GameView_HandlePointerButton(&state, 234, 43, 0x0002),
+             M11_GAME_INPUT_REDRAW,
+             "C109 restores champion 0's source tab state");
+    CHECK_EQ(state.dm1SpellCasting.magicCasterIndex, 0,
+             "F0394 returns G0514 to champion 0");
+    CHECK_EQ(state.spellBuffer.runeCount, 1,
+             "champion 0's stored Symbols reload without leakage");
+    CHECK_EQ(state.spellBuffer.runes[0], 0x60,
+             "champion 0's stored rune is preserved");
+    CHECK_EQ(state.spellRuneRow, 1,
+             "champion 0's stored SymbolStep is preserved");
+
+    state.world.party.champions[1].hp.current = 0;
+    CHECK_EQ(M11_GameView_HandlePointerButton(&state, 281, 43, 0x0002),
+             M11_GAME_INPUT_IGNORED,
+             "F0394 rejects a dead champion tab");
+    CHECK_EQ(state.dm1SpellCasting.magicCasterIndex, 0,
+             "dead C109 tab preserves current magic caster");
+    CHECK_EQ(state.spellBuffer.runeCount, 1,
+             "dead C109 tab cannot mutate current Symbols");
 
     CHECK_EQ(M11_GameView_HandlePointerButton(&state, 234, 51, 0x0002),
              M11_GAME_INPUT_IGNORED,

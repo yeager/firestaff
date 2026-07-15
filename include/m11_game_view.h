@@ -5,6 +5,7 @@
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 
 #include <stdint.h>
 #include "menu_startup_m12.h"
@@ -614,6 +615,11 @@ typedef struct {
     int spellPanelOpen;          /* 1 when rune entry panel is visible */
     int spellRuneRow;            /* current rune row (0..3) = power/element/form/class */
     struct RuneSequence_Compat spellBuffer; /* runes entered so far */
+    /* ReDMCSB DEFS.H Champion.Symbols[5]/SymbolStep plus
+     * G0514_i_MagicCasterChampionIndex.  spellBuffer/spellRuneRow remain
+     * the active-caster presentation view for existing M11 consumers; this
+     * record is the source-owned per-caster storage behind C109/F0394. */
+    DM1_SpellCastingState dm1SpellCasting;
 
     /* ── Creature animation state ── */
     /* Global animation tick — incremented each game tick, drives all
