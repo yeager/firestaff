@@ -7364,3 +7364,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     reads, palette state, VDP1 VRAM/command, transform, and culling lanes from
     one original Saturn session. The target still cannot claim a model-entry
     match, pixel span/order, palette format, VDP1 mode, or drawing.
+  - 2026-07-15 consumption update: external traces now need the deterministic
+    atomic-target fingerprint plus the owner/face identifiers before the
+    existing exact Structure2 trace gate runs. A successful trace is retained
+    only as an opaque original-Saturn receipt. It still proves neither a
+    Structure2 decode nor pixel/palette/VDP1 semantics; a legal BIOS-backed
+    capture with those observations remains the next blocker.

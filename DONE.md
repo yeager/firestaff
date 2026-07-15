@@ -17522,3 +17522,14 @@ one original-Saturn source-read, palette, VDP1 VRAM/command, transform, and
 culling observation set. It creates no pixels, decoder contract, model-entry
 mapping, or draw permission. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus atomic owner/material trace consumption
+
+`nexus_v1_engine_admit_structure1a_structure3_material_capture_trace()` now
+consumes an external trace only when it names the deterministic atomic target
+fingerprint, the active Structure1F/1A owner, the exact Structure3 face, and
+the selected Structure2 descriptor before delegating to the existing
+source-window trace admission. A trace remains opaque even after independent
+original-Saturn provenance is supplied: no pixel, palette, VDP1, transform,
+decoder, or draw semantics are inferred. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.

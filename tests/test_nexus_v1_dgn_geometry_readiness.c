@@ -5280,6 +5280,8 @@ static void test_palette_source_gate(void) {
 static void test_owner_material_capture_target_blocks_without_canonical_lev(void) {
     Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget target;
     Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt route;
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt trace;
+    static const uint8_t raw_trace[] = { 0x53U, 0x32U };
 
     memset(&target, 0xff, sizeof(target));
     memset(&route, 0xff, sizeof(route));
@@ -5289,6 +5291,18 @@ static void test_owner_material_capture_target_blocks_without_canonical_lev(void
           target.no_draw_only && target.blocks_real_dgn_mesh_render &&
           !target.fallback_visuals_permitted && !route.target_built,
           "an owner/material bundle blocks without one canonical LEV source");
+    memset(&trace, 0xff, sizeof(trace));
+    CHECK(nexus_v1_engine_admit_structure1a_structure3_material_capture_trace(
+              NULL, 0, 0U, 0U, "capture_target_fnv1a64=0\n",
+              sizeof("capture_target_fnv1a64=0\n") - 1U,
+              raw_trace, sizeof(raw_trace), 1, &trace) == 0 &&
+          trace.status == NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_BUNDLE &&
+          !trace.atomic_target_bound && !trace.owner_face_bound &&
+          !trace.structure2_trace_admitted && !trace.opaque_trace_admitted &&
+          !trace.decoder_permitted && trace.no_draw_only &&
+          !trace.fallback_visuals_permitted &&
+          trace.blocks_real_dgn_mesh_render,
+          "an external trace cannot bypass an absent owner/material capture target");
 }
 
 static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
