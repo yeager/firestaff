@@ -189,6 +189,26 @@ int csb_v1_save_header_verify(const CSB_V1_SaveHeader *hdr,
 /* Get the decryption key index from a save header magic */
 int csb_v1_save_header_get_key_index(uint32_t magic);
 
+/* ReDMCSB HINTLOAD.C save-part loaders.
+ * F1910 reads an exact byte part from a save stream.
+ * F1913 reads a part and deobfuscates it as uint16_t words with
+ * the supplied SAVEHEAD key index.
+ * F1914 loads the 512-byte save header and validates/deobfuscates it
+ * through the SAVEHEAD.C F0429 checksum path. */
+int csb_v1_f1910_load_saved_game_part(const char *path,
+                                       long offset,
+                                       void *out_part,
+                                       uint32_t part_size);
+int csb_v1_f1913_load_and_deobfuscate_saved_game_part(
+    const char *path,
+    long offset,
+    void *out_part,
+    uint32_t part_size,
+    uint16_t key_index);
+int csb_v1_f1914_load_and_deobfuscate_saved_game_header(
+    const char *path,
+    CSB_V1_SaveHeader *out_header);
+
 /* ── Checksum / obfuscation ──────────────────────────────────────────── */
 /* ReDMCSB F0417_SAVEUTIL_GetChecksumAndObfuscate:
  *   XOR-obfuscates 128 uint16_t words using a key derived from key_index.
