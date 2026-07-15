@@ -17505,6 +17505,13 @@ former set-one renderer convenience cannot supply a door material on a
 source-required frame: the full door pass is blocked before any material
 fetch. Verification: `test_dm2_v1_door_material_gate`.
 
+# ✅ 2026-07-15 DM2 live G1 wall-plan routing gate
+
+The M11 wall plan now rejects a source-required frame until the live G1
+`MapGraphicsStyle` receipt is present. This removes the remaining set-one
+planner fallback before a `GRAPHICSSET` wall command can be materialized.
+Verification: `test_dm2_v1_graphicsset_wall_material_gate`.
+
 # ✅ 2026-07-15 Nexus complete animated DGN source gate
 
 The complete active Structure3 scene now includes the full `08xx`

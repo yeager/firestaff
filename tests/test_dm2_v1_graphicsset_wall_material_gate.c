@@ -76,8 +76,16 @@ static void prepare_viewport(DM2_V1_ViewportState *viewport,
 int main(void)
 {
     DM2_V1_ViewportState viewport;
+    DM2_V1_WallPanelRenderPlan plan;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     FetchTrace trace;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    CHECK("source wall plan rejects missing live G1 graphics-set receipt",
+          dm2_v1_viewport_build_wall_panel_render_plan(&viewport, &plan) == 0 &&
+              plan.panel_count == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     memset(&trace, 0, sizeof(trace));

@@ -6490,6 +6490,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `GRAPHICSSET` frame. The old set-one renderer convenience is no longer a
     valid material owner; absent scene routing blocks the entire door pass
     before any GDAT fetch or pixel draw.
+  - 2026-07-15 update: the wall M11 planner now has the same G1 ownership
+    rule. It refuses to emit any `GRAPHICSSET` plan without a live
+    `MapGraphicsStyle` receipt, rather than encoding the historical set-one
+    default for later consumption.
   - 2026-07-15 update: creature scene rendering now has only the selected
     `DRAW_MAP_CHIP`/Rect14 GDAT bitmap route. Generated fallback rectangles,
     colours, and health bars are removed; absent material is blocked and
