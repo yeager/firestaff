@@ -16477,6 +16477,13 @@ below `N`; emulated CD reads and RAM writes are unchanged. The authenticated
 `N=8` capture omits the already-proved generation-7 FIFO traffic, but still
 does not reach a later FIFO byte before timeout. No handoff is claimed.
 
+# ✅ 2026-07-15 Theron guarded global-HID capture route
+
+The Quartz helper can use a global HID route only after activating and then
+rechecking the target's foreground PID. An authenticated run observed
+`loginwindow` PID `622`, not Mednafen, so it failed before posting a key. This
+is an environment receipt, not emulated input or a dungeon handoff.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
