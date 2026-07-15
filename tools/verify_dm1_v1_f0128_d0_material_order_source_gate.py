@@ -61,7 +61,9 @@ def main() -> int:
     effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
     final = viewport.find(final_calls[0])
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")
-    assert effect >= 0 and final > effect and mirror > final
+    # C127 is a F0107 D1C wall overlay; it remains before F0115/effects.
+    # Only the D0 pit/stair/field pass is deferred until after those effects.
+    assert mirror >= 0 and effect >= 0 and mirror < effect < final
     assert "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  0, 0, cells);" not in viewport
     print("ok: DM1 F0128 D0 pit/stair/field material follows D1 content and effects")
     return 0
