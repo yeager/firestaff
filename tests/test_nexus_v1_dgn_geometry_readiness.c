@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_palette.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_viewport.h"
 #include "asset_find_by_hash.h"
@@ -5007,6 +5008,26 @@ static void test_vdp1_command_sidecar_stays_no_draw(void) {
           "a changed VDP1 sidecar cannot reuse capture admission");
 }
 
+static void test_palette_source_gate(void) {
+    Nexus_PaletteState palette;
+    uint8_t source[NEXUS_PALETTE_SIZE * 2];
+    int i;
+
+    for (i = 0; i < (int)sizeof(source); ++i)
+        source[i] = (uint8_t)(i + 1);
+    nexus_palette_init_defaults(&palette);
+    CHECK(!palette.source_palette_bound && nexus_palette_lookup(&palette, 7U) == 0U,
+          "an absent Nexus source palette cannot create fallback pixels");
+    CHECK(nexus_palette_load_stone(&palette, source, sizeof(source)) ==
+              NEXUS_PALETTE_SIZE &&
+          palette.source_palette_bound &&
+          palette.entries[0] == 0x0201U,
+          "a complete source palette is admitted without generated entries");
+    CHECK(nexus_palette_load_stone(&palette, source, 2) == 0 &&
+          !palette.source_palette_bound && nexus_palette_lookup(&palette, 7U) == 0U,
+          "a truncated palette source withdraws the renderable palette");
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -5028,6 +5049,7 @@ int main(void) {
     test_real_dgn_structure1_layout_corpus();
     test_real_structure1f_direct_cell_corpus();
     test_vdp1_command_sidecar_stays_no_draw();
+    test_palette_source_gate();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);
