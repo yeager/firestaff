@@ -3376,13 +3376,25 @@ static void dm2_runtime_populate_carried_item(const DM2_V1_RuntimeState *rt,
     if (!rt || !viewport) return;
     if (!dm2_db_decode_handle(rt->leader_hand_object, &pool, &index)) return;
     category = dm2_v1_viewport_item_category_for_db_pool((int)pool);
-    if (index > 0xffu || category == 0 || !rt->boot || !rt->boot->graphics_dat ||
+    if (index > 0xffu || category == 0) {
+        return;
+    }
+    if (!rt->boot || !rt->boot->graphics_dat ||
         !dm2_v1_boot_leader_hand_image_field(
             rt->boot, category, (int)index, index,
             (uint32_t)rt->tick_count, rt->view_dir, &image_field)) {
-        /* DRAW_ITEM_IN_HAND needs its selected source dtImage and local
-         * palette. The former map-chip field-0 route was not equivalent. */
-        return;
+        if (!rt->viewport_asset_fetch ||
+            rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch) {
+            /* DRAW_ITEM_IN_HAND needs its selected source dtImage and local
+             * palette. The former map-chip field-0 route is not a substitute
+             * for source-required boot GDAT frames. */
+            return;
+        }
+        /* Synthetic provider smoke frames have no boot-owned GDAT parser to
+         * read dtWordValue(6). Keep the injected material path bounded to the
+         * neutral map-chip field so it can still prove the leader-hand item
+         * blit/receipt route without claiming source dtImage selection. */
+        image_field = 0u;
     }
 
     dst = &viewport->carried_item;

@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 leader-hand injected-provider item receipt: the runtime
+  keeps source-required leader-hand rendering strict on boot-owned GDAT, while
+  allowing the synthetic viewport provider smoke to bind the carried ObjectID
+  through the neutral item map-chip field. This proves the leader-hand blit,
+  asset count, item receipt, and M11 item-material handoff without claiming
+  source dtImage selection when no boot GDAT parser is present. Verification:
+  the carried-item section of `dm2_v1_runtime_handoff_smoke` passes; the full
+  smoke still fails on independent palette, wall, and door runtime gaps.
+
 - ✅ 2026-07-15 DM1 wall-inscription fail-closed receipt: malformed
   F0172 selected-wall and F0168 world TextString material lookups now zero
   the output M648/C10 receipt before returning failure, preventing stale
