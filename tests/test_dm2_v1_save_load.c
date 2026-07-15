@@ -954,6 +954,8 @@ static int build_raw_sksave_payload(
     write_u16_le_at(payload, 12u, 1u); /* one source-sized DB0 record */
     payload[68u] = 0x34u;
     payload[69u] = 0x12u;
+    payload[70u] = 0xe3u;
+    payload[71u] = 0x09u;
     pos = 92u;
 
     n = dm2_suppress_encode_gamestate(gs, enc, sizeof(enc));
@@ -1298,6 +1300,7 @@ static int test_raw_sksave_resume_import(void)
     DM2_V1_SessionState imported_session;
     DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
     DM2_V1_OriginalRawDbRecordReceipt db0_receipt;
+    DM2_V1_OriginalRawDoorReceipt door_receipt;
     int r;
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_rawsave_%d",
@@ -1373,7 +1376,16 @@ static int test_raw_sksave_resume_import(void)
         !db0_receipt.valid || db0_receipt.record_size != 4u ||
         db0_receipt.record_offset != 68u || db0_receipt.record_hash == 0u ||
         dm2_v1_original_raw_sksave_db_record_receipt(
-            payload, payload_size, 0, 1, &db0_receipt)) {
+            payload, payload_size, 0, 1, &db0_receipt) ||
+        !dm2_v1_original_raw_sksave_door_receipt(
+            payload, payload_size, 0, &door_receipt) || !door_receipt.valid ||
+        door_receipt.attributes != 0x09e3u || door_receipt.button != 1u ||
+        door_receipt.door_type != 1u || door_receipt.button_state != 1u ||
+        door_receipt.opening_dir != 1u || door_receipt.ornate_index != 1u ||
+        door_receipt.destroyable_by_fireball != 1u ||
+        door_receipt.bashable_by_chopping != 1u ||
+        dm2_v1_original_raw_sksave_door_receipt(
+            payload, payload_size, 1, &door_receipt)) {
         printf("    FAIL: raw SKSave dungeon receipt lost source-owned spans\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
