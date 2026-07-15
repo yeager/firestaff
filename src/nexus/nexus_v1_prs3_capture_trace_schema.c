@@ -748,7 +748,15 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.zero_first_byte_read_offset = SH2_ZERO_FIRST_BYTE_READ_OFFSET;
     receipt.zero_second_byte_read_offset = SH2_ZERO_SECOND_BYTE_READ_OFFSET;
     receipt.zero_sequential_input_byte_count = 2U;
+    receipt.zero_upper_mask_literal_load_offset = SH2_V1_CALLEE_OFFSET + 44U;
+    receipt.zero_second_byte_copy_offset = SH2_V1_CALLEE_OFFSET + 116U;
+    receipt.zero_first_shift_offset = SH2_V1_CALLEE_OFFSET + 118U;
+    receipt.zero_second_shift_offset = SH2_V1_CALLEE_OFFSET + 120U;
+    receipt.zero_upper_mask_and_offset = SH2_V1_CALLEE_OFFSET + 122U;
     receipt.zero_merge_or_offset = SH2_ZERO_MERGE_OR_OFFSET;
+    receipt.zero_low_mask_load_offset = SH2_V1_CALLEE_OFFSET + 106U;
+    receipt.zero_low_mask_immediate = 15;
+    receipt.zero_low_mask_and_offset = SH2_V1_CALLEE_OFFSET + 126U;
     receipt.zero_index_mask_offset = SH2_ZERO_INDEX_MASK_OFFSET;
     receipt.zero_indexed_byte_read_offset = SH2_ZERO_INDEXED_BYTE_READ_OFFSET;
     receipt.sh2_zero_side_index_read_verified =
@@ -777,6 +785,30 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + receipt.zero_first_byte_read_offset) == 0x64c4U &&
         read_be16(dm_bin + receipt.zero_first_byte_read_offset + 2U) == 0x644cU &&
         read_be16(dm_bin + receipt.zero_second_byte_read_offset) == 0x67c4U;
+    /* The source-owned SH-2 sequence is:
+     *   R8 = PC-relative 0x0f00; R2 = 15;
+     *   R3 = R7; SHLL2 R3; SHLL2 R3; AND R8,R3; OR R3,R4; AND R2,R7.
+     * Both byte loads use EXTU.B. Thus the static code proves the raw merge
+     * order `byte0 | ((byte1 << 4) & 0x0f00)`, but not what the merged word
+     * denotes or whether the later R13 access is a history copy. */
+    receipt.sh2_zero_byte_merge_order_proven =
+        receipt.sh2_zero_side_two_byte_input_span_proven &&
+        read_be16(dm_bin + receipt.zero_upper_mask_literal_load_offset) == 0x986cU &&
+        sh2_movw_pc_literal_target(
+            read_be16(dm_bin + receipt.zero_upper_mask_literal_load_offset),
+            receipt.zero_upper_mask_literal_load_offset,
+            &receipt.zero_upper_mask_literal_offset) &&
+        receipt.zero_upper_mask_literal_offset + 2U <= dm_bin_size &&
+        (receipt.zero_upper_mask_word = read_be16(
+            dm_bin + receipt.zero_upper_mask_literal_offset)) == 0x0f00U &&
+        read_be16(dm_bin + receipt.zero_low_mask_load_offset) == 0xe20fU &&
+        receipt.zero_low_mask_immediate == 15 &&
+        read_be16(dm_bin + receipt.zero_second_byte_copy_offset) == 0x6373U &&
+        read_be16(dm_bin + receipt.zero_first_shift_offset) == 0x4308U &&
+        read_be16(dm_bin + receipt.zero_second_shift_offset) == 0x4308U &&
+        read_be16(dm_bin + receipt.zero_upper_mask_and_offset) == 0x2389U &&
+        read_be16(dm_bin + receipt.zero_merge_or_offset) == 0x243bU &&
+        read_be16(dm_bin + receipt.zero_low_mask_and_offset) == 0x2729U;
     receipt.zero_post_read_compare_offset = SH2_ZERO_POST_READ_COMPARE_OFFSET;
     receipt.zero_repeat_counter_increment_offset = SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET;
     receipt.zero_repeat_branch_offset = SH2_ZERO_REPEAT_BRANCH_OFFSET;
@@ -878,6 +910,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_nonzero_direct_byte_path_proven &&
         receipt.sh2_zero_side_index_read_verified &&
         receipt.sh2_zero_side_two_byte_input_span_proven &&
+        receipt.sh2_zero_byte_merge_order_proven &&
         receipt.sh2_zero_side_repeat_control_verified &&
         receipt.sh2_zero_repeat_termination_proven &&
         receipt.sh2_zero_side_linear_route_verified &&

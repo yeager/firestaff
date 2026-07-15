@@ -18941,3 +18941,12 @@ one source byte, its sign extension, then the immediately following source
 byte. This proves an exact two-byte sequential input span before the raw merge.
 It does not assign fields, history access, output, token, palette, or pixel
 semantics, and cannot enable decoding or rendering.
+
+# Nexus PRS3 V1 zero-side merge order (2026-07-15)
+
+The source-bound DM.BIN receipt now proves the full static merge sequence:
+both sequential inputs are zero-extended, the second byte is copied and shifted
+four bits, masked with the PC-relative `0x0f00`, and ORed into the first byte;
+the source then masks the second register with immediate `15`. This fixes the
+raw merge order as `byte0 | ((byte1 << 4) & 0x0f00)`. It does not assign the
+word a PRS3 semantic or permit decoding, palette application, or rendering.
