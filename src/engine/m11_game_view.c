@@ -36454,7 +36454,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     drewStatusBox = 1;
                 }
             }
-            if (!drewStatusBox && !m11_v1_chrome_mode_enabled()) {
+            if (!drewStatusBox && !m11_v1_chrome_mode_enabled() &&
+                !m11_is_dm1_source_kind(state->sourceKind)) {
                 /* Procedural fallback.  V1 uses the same source status-box
                  * rectangle as C007/C008 (67x29); V2 keeps the legacy
                  * 71x28 shell baked into its vertical-slice HUD assets. */
