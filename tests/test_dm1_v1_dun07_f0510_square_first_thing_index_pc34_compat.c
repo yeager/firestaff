@@ -30,6 +30,12 @@ static unsigned char corridor_square(int hasThingList)
         (hasThingList ? DUNGEON_SQUARE_MASK_THING_LIST : 0));
 }
 
+static unsigned short discard_thing_for_f0166(void* context, unsigned short thingType)
+{
+    const unsigned short* replacement = (const unsigned short*)context;
+    return thingType == THING_TYPE_JUNK ? *replacement : THING_NONE;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -45,16 +51,20 @@ int main(void)
     unsigned char rawSensor[8];
     unsigned char rawGroup[16];
     unsigned char rawWeapon[4];
+    unsigned char rawJunk[20];
+    struct DungeonJunk_Compat decodedJunks[5];
     unsigned short staticDoor;
     unsigned short staticText;
     unsigned short staticSensor;
     unsigned short firstGroup;
     unsigned short firstObject;
     unsigned short linkedWeapon;
+    unsigned short discardedJunk;
+    unsigned short allocatedJunk;
     int ok = 1;
 
     printf("probe=dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat\n");
-    printf("sourceEvidence=ReDMCSB DUNGEON.C:F0160 lines 1715-1727; DUNGEON.C:F0161 lines 1730-1746; DUNGEON.C:F0162 lines 1752-1766\n");
+    printf("sourceEvidence=ReDMCSB DUNGEON.C:F0160-F0166 lines 1715-2137\n");
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
@@ -67,6 +77,8 @@ int main(void)
     memset(rawSensor, 0, sizeof(rawSensor));
     memset(rawGroup, 0, sizeof(rawGroup));
     memset(rawWeapon, 0, sizeof(rawWeapon));
+    memset(rawJunk, 0, sizeof(rawJunk));
+    memset(decodedJunks, 0, sizeof(decodedJunks));
 
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
@@ -130,11 +142,15 @@ int main(void)
     things.rawThingData[THING_TYPE_SENSOR] = rawSensor;
     things.rawThingData[THING_TYPE_GROUP] = rawGroup;
     things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunk;
     things.thingCounts[THING_TYPE_DOOR] = 1;
     things.thingCounts[THING_TYPE_TEXTSTRING] = 1;
     things.thingCounts[THING_TYPE_SENSOR] = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
     things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.thingCounts[THING_TYPE_JUNK] = 5;
+    things.junks = decodedJunks;
+    things.junkCount = 5;
 
     ok &= expect_int("map0 first flagged square index",
         F0510_DUNGEON_GetSquareFirstThingIndex_Compat(&dungeon, 0, 0, 0), 0);
@@ -208,9 +224,33 @@ int main(void)
             firstGroup, 0, -1, 0), 1);
     ok &= expect_thing("F0164 restores predecessor raw next", F0512_DUNGEON_GetThingNext_Compat(&things, firstGroup), THING_ENDOFLIST);
 
+    /* F0166 scans only the non-reserved JUNK range. A bones request may use
+     * the final three records, and a full normal range uses the real F0165
+     * discard callback rather than allocating a synthetic slot. */
+    rawJunk[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawJunk[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawJunk[4] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawJunk[5] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawJunk[8] = (unsigned char)(THING_NONE & 0xffu);
+    rawJunk[9] = (unsigned char)(THING_NONE >> 8);
+    decodedJunks[2].next = THING_NONE;
+    allocatedJunk = F0516_DUNGEON_GetUnusedThing_Compat(&things,
+        THING_TYPE_JUNK, NULL, NULL);
+    ok &= expect_thing("F0166 reserves normal JUNK bones slots", allocatedJunk, THING_NONE);
+    allocatedJunk = F0516_DUNGEON_GetUnusedThing_Compat(&things,
+        (unsigned short)(0x8000u | THING_TYPE_JUNK), NULL, NULL);
+    ok &= expect_thing("F0166 bones request uses reserved JUNK slot", allocatedJunk,
+        MAKE_THING(THING_TYPE_JUNK, 2, 0));
+    ok &= expect_thing("F0166 clears and terminates bones raw record",
+        F0512_DUNGEON_GetThingNext_Compat(&things, allocatedJunk), THING_ENDOFLIST);
+    discardedJunk = MAKE_THING(THING_TYPE_JUNK, 0, 0);
+    allocatedJunk = F0516_DUNGEON_GetUnusedThing_Compat(&things,
+        THING_TYPE_JUNK, discard_thing_for_f0166, &discardedJunk);
+    ok &= expect_thing("F0166 obtains full normal pool from F0165 callback", allocatedJunk, discardedJunk);
+
     if (!ok) {
         return 1;
     }
-    printf("PASS compact SquareFirstThings indexing matches ReDMCSB F0160/F0161\n");
+    printf("PASS compact SFT and unused-Thing allocation match ReDMCSB F0160-F0166\n");
     return 0;
 }
