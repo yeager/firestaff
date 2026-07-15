@@ -962,6 +962,93 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call(
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call_termination(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallTerminationReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt call;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int logical_pc;
+    unsigned int physical_pc;
+    unsigned int target;
+    unsigned int return_instruction_pc = 0u;
+    unsigned int return_instruction_physical_pc = 0u;
+    unsigned int source_pc;
+    unsigned int source_physical_pc;
+    unsigned int opcode;
+    unsigned int matching_return_count = 0u;
+    int call_seen = 0;
+    int return_pending = 0;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call(
+            handoff, capture, &call) || !call.valid ||
+        !call.post_return_call_proven) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (!call_seen) {
+            consumed = 0;
+            if (sscanf(line,
+                       "main_ram_loader_jsr logical_pc=%x physical_pc=%x target=%x a=%*x x=%*x y=%*x%n",
+                       &logical_pc, &physical_pc, &target, &consumed) == 3 &&
+                consumed == (int)length && logical_pc == call.call_pc &&
+                physical_pc == call.call_physical_pc && target == call.call_target) {
+                call_seen = 1;
+            }
+            continue;
+        }
+        if (return_pending) {
+            consumed = 0;
+            if (sscanf(line,
+                       "main_ram_loader_post_rts source_logical_pc=%x source_physical_pc=%x logical_pc=%x physical_pc=%x opcode=%x%n",
+                       &source_pc, &source_physical_pc, &logical_pc, &physical_pc,
+                       &opcode, &consumed) == 5 && consumed == (int)length &&
+                source_pc == return_instruction_pc &&
+                source_physical_pc == return_instruction_physical_pc) {
+                return_pending = 0;
+                if (logical_pc == (unsigned int)call.call_pc + 3u &&
+                    logical_pc <= UINT16_MAX && physical_pc >= 0x1f0000u &&
+                    physical_pc < 0x1f8000u && opcode <= UINT8_MAX) {
+                    if (++matching_return_count != 1u) return 0;
+                    out->return_instruction_pc =
+                        (uint16_t)return_instruction_pc;
+                    out->return_instruction_physical_pc =
+                        return_instruction_physical_pc;
+                    out->post_return_pc = (uint16_t)logical_pc;
+                    out->post_return_physical_pc = physical_pc;
+                    out->post_return_opcode = (uint8_t)opcode;
+                }
+                continue;
+            }
+            return_pending = 0;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_rts logical_pc=%x physical_pc=%x%n",
+                   &return_instruction_pc, &return_instruction_physical_pc,
+                   &consumed) == 2 && consumed == (int)length &&
+            return_instruction_pc <= UINT16_MAX &&
+            return_instruction_physical_pc >= 0x1f0000u &&
+            return_instruction_physical_pc < 0x1f8000u) {
+            return_pending = 1;
+        }
+    }
+    if (!call_seen || matching_return_count != 1u) return 0;
+    out->valid = 1;
+    out->call = call;
+    out->post_return_call_termination_proven = 1;
+    out->post_return_call_return_proven = 1;
+    out->level_or_object_semantics_proven = 0;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,

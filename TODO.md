@@ -7502,6 +7502,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     its data tables, or any level/object/graphics semantics. Remaining:
     authentic capture tying that routine to one non-self descriptor-selected
     CD record or verified loader data-table span.
+  - Update: that post-return routine call can now remain admitted only after
+    one later main-RAM RTS and its linked post-RTS row return to the exact
+    caller address. Nested returns are ignored unless their observed target
+    is that caller. This extends the authenticated TII -> copied continuation
+    -> routine -> caller control-flow chain, but leaves the routine and every
+    byte it may access opaque. Remaining: an authentic loader trace that
+    binds one subsequent CD read or table span to this verified routine path.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
