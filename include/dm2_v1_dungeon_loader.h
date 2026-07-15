@@ -1137,14 +1137,16 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_material(
     int image_width,
     int image_height,
     uint32_t local_palette_hash);
-/* A live DB4 draw additionally has to retain its exact source object and
- * tile owner. Matching a same-type creature elsewhere in the corpus is not
- * sufficient authorization for a viewport sprite. */
+/* A live DB4 draw additionally has to retain its exact source object, tile,
+ * and b15_0_1 direction owner. Matching a same-type creature elsewhere in
+ * the corpus, or replaying its material with a different record direction,
+ * is not sufficient authorization for a viewport sprite. */
 int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
     uint16_t object_id,
     int x,
     int y,
+    int direction,
     int creature_type,
     int image_width,
     int image_height,

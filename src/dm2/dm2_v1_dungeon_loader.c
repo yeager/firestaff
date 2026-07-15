@@ -3406,6 +3406,7 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
     uint16_t object_id,
     int x,
     int y,
+    int direction,
     int creature_type,
     int image_width,
     int image_height,
@@ -3414,6 +3415,7 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
     int i;
 
     if (!receipt || !receipt->valid || object_id == 0xfffeu ||
+        direction < 0 || direction > 3 ||
         creature_type < 0 || creature_type > 0xff || image_width <= 0 ||
         image_height <= 0 || local_palette_hash == 0u) {
         return 0;
@@ -3422,7 +3424,8 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
         const DM2_V1_G1CreatureMapChipMaterial *material =
             &receipt->materials[i];
         if (material->object_id == object_id && material->x == x &&
-            material->y == y && material->creature_type == (uint8_t)creature_type &&
+            material->y == y && material->direction == (uint8_t)direction &&
+            material->creature_type == (uint8_t)creature_type &&
             material->image_width == image_width &&
             material->image_height == image_height &&
             material->local_palette_hash == local_palette_hash) {

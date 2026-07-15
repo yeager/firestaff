@@ -4854,6 +4854,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                      !dm2_v1_g1_creature_map_chip_matches_decoded_instance(
                         s->g1_creature_map_chip_materials,
                         c->object_id, c->map_x, c->map_y,
+                        c->direction,
                         c->creature_type, src_w, src_h,
                         s->active_asset_palette_hash))) {
                     dm2_v1_block_source_material(

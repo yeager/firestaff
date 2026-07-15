@@ -33,7 +33,7 @@ static int fetch_palette(void *user, int index, uint8_t palette[16],
     return 0;
 }
 
-static int run_case(int mismatch, int wrong_owner)
+static int run_case(int mismatch, int wrong_owner, int wrong_direction)
 {
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     DM2_V1_ViewportState viewport;
@@ -51,6 +51,7 @@ static int run_case(int mismatch, int wrong_owner)
     viewport.creatures[0].object_id = 0x1000u;
     viewport.creatures[0].map_x = 12;
     viewport.creatures[0].map_y = 9;
+    viewport.creatures[0].direction = 0;
     viewport.creatures[0].screen_x = 160;
     viewport.creatures[0].screen_y = 90;
     viewport.creatures[0].health_pct = 100;
@@ -60,6 +61,7 @@ static int run_case(int mismatch, int wrong_owner)
     receipt.materials[0].object_id = wrong_owner ? 0x1001u : 0x1000u;
     receipt.materials[0].x = 12;
     receipt.materials[0].y = 9;
+    receipt.materials[0].direction = wrong_direction ? 1 : 0;
     receipt.materials[0].creature_type = 7;
     receipt.materials[0].image_width = 2;
     receipt.materials[0].image_height = 2;
@@ -70,7 +72,7 @@ static int run_case(int mismatch, int wrong_owner)
         dm2_v1_viewport_creature_graphic_index(7, 0),
         2, 2, 2, 0x11111111u);
     dm2_v1_render_creatures(&viewport);
-    return mismatch || wrong_owner
+    return mismatch || wrong_owner || wrong_direction
         ? viewport.asset_creature_drawn_count == 0 &&
               viewport.g1_scene_creature_material_consumed_count == 0 &&
               viewport.blocked_material_draw_count == 1
@@ -81,7 +83,8 @@ static int run_case(int mismatch, int wrong_owner)
 
 int main(void)
 {
-    if (!run_case(0, 0) || !run_case(1, 0) || !run_case(0, 1)) {
+    if (!run_case(0, 0, 0) || !run_case(1, 0, 0) ||
+        !run_case(0, 1, 0) || !run_case(0, 0, 1)) {
         fputs("FAIL: G1 DB4 owner did not gate matching viewport material\n",
               stderr);
         return 1;
