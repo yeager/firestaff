@@ -241,6 +241,40 @@ static void viewport_stage_structure3_complete_source_scene(
     vp->last_dgn_render_receipt.structure3_complete_source_scene = scene;
 }
 
+static int viewport_consume_structure1f_source(
+    void *context, const Nexus_V1_DgnStructure1FSourcePacket *packet)
+{
+    Nexus_Viewport *vp = (Nexus_Viewport *)context;
+
+    if (!vp || !packet || !packet->valid || !packet->no_draw_only ||
+        packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render) return -1;
+    if (!vp->structure1f_source_packet.valid)
+        vp->structure1f_source_packet = *packet;
+    return 0;
+}
+
+static void viewport_stage_structure1f_source_scene(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnStructure1FSourceSceneReceipt scene;
+
+    if (!vp) return;
+    memset(&vp->structure1f_source_packet, 0,
+           sizeof(vp->structure1f_source_packet));
+    memset(&scene, 0, sizeof(scene));
+    if (!engine || nexus_v1_current_level_visit_structure1f_source_scene(
+                       engine, viewport_consume_structure1f_source, vp,
+                       &scene) != 1 || !scene.valid ||
+        !scene.family_coverage_complete ||
+        scene.consumed_entry_count != scene.entry_count ||
+        (scene.entry_count > 0 && !vp->structure1f_source_packet.valid) ||
+        !scene.no_draw_only || scene.fallback_visuals_permitted ||
+        !scene.blocks_real_dgn_mesh_render) return;
+    vp->last_dgn_render_receipt.structure1f_source_scene_consumed = 1;
+    vp->last_dgn_render_receipt.structure1f_source_scene = scene;
+}
+
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int px, py, pdir;
@@ -302,6 +336,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         viewport_stage_structure3_animated_materials(vp, engine);
         viewport_stage_structure3_untextured_faces(vp, engine);
         viewport_stage_structure3_complete_source_scene(vp, engine);
+        viewport_stage_structure1f_source_scene(vp, engine);
         /* Structure1B/MNS supplies an older host material path, but it has
          * no proven mapping to this complete source-owned Structure3 scene.
          * Do not let it rasterize a different interpretation of the same

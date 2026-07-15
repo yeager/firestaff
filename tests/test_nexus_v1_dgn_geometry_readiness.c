@@ -1490,6 +1490,24 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                               .traversed_face_count == complete_scene.face_count &&
                       untextured_viewport.last_dgn_render_receipt
                           .no_draw_structure3_source_scene &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1f_source_scene_consumed &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1f_source_scene.family_coverage_complete &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1f_source_scene.entry_count ==
+                          loaded_level.structure1f_entry_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1f_source_scene.consumed_entry_count ==
+                          loaded_level.structure1f_entry_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1f_source_scene.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      (loaded_level.structure1f_entry_count == 0 ||
+                       (untextured_viewport.structure1f_source_packet.valid &&
+                        untextured_viewport.structure1f_source_packet.no_draw_only &&
+                        untextured_viewport.structure1f_source_packet
+                            .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size))) &&
                       untextured_viewport.structure3_untextured_face.valid &&
                       untextured_viewport.structure3_untextured_face
                           .raw_fill_selector == untextured_packet.raw_fill_selector &&

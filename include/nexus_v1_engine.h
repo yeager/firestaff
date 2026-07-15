@@ -680,6 +680,48 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3CompleteSourceSceneReceipt;
 
+/* One exact Structure1F source row from the active canonical LEV. Direct
+ * coordinates and Structure1A ownership are retained as separate raw source
+ * facts; neither establishes placement, trigger, object, mesh, or draw
+ * semantics. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int entry_index;
+    Nexus_V1_DgnStructure1FEntry entry;
+    int direct_coordinate_source;
+    int structure1a_owner_source;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FSourcePacket;
+
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int entry_count;
+    int consumed_entry_count;
+    int direct_coordinate_entry_count;
+    int structure1a_owner_entry_count;
+    int item_entry_count;
+    int floor_decoration_entry_count;
+    int floor_sensor_entry_count;
+    int alcove_entry_count;
+    int wall_decoration_entry_count;
+    int wall_sensor_entry_count;
+    int family_coverage_complete;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FSourceSceneReceipt;
+
+typedef int (*Nexus_V1_DgnStructure1FSourceConsumer)(
+    void *context, const Nexus_V1_DgnStructure1FSourcePacket *packet);
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1425,6 +1467,13 @@ int nexus_v1_current_level_visit_structure3_untextured_faces(
 int nexus_v1_current_level_structure3_complete_source_scene_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3CompleteSourceSceneReceipt *out_receipt);
+/* Traverse all parsed Structure1F source rows from the active canonical LEV.
+ * The packets are source transport only and never authorize object, trigger,
+ * transform, material, texture, palette, pixel, or draw behavior. */
+int nexus_v1_current_level_visit_structure1f_source_scene(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure1FSourceConsumer consumer, void *context,
+    Nexus_V1_DgnStructure1FSourceSceneReceipt *out_receipt);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,
