@@ -2588,12 +2588,11 @@ int nexus_v1_level_structure1a_relation_receipt(
         if (!receipt.table_valid ||
             record->structure1a_index >= (uint16_t)receipt.table_entry_count) {
             ++receipt.out_of_range_index_count;
-        } else if (record->structure1a_relation_valid) {
-            ++receipt.resolved_entry_count;
         } else {
             int x;
             int y;
             int owners = 0;
+            int owner_matches_cached_relation = 0;
             for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
                 for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
                     if (level->structure1a_owner_ref_valid[y][x] &&
@@ -2601,7 +2600,28 @@ int nexus_v1_level_structure1a_relation_receipt(
                             record->structure1a_index) ++owners;
                 }
             }
-            if (owners == 0) ++receipt.missing_owner_entry_count;
+            if (record->structure1a_relation_valid &&
+                record->structure1a_owner_x >= 0 &&
+                record->structure1a_owner_x < NEXUS_MAX_MAP_SIZE &&
+                record->structure1a_owner_y >= 0 &&
+                record->structure1a_owner_y < NEXUS_MAX_MAP_SIZE &&
+                level->structure1a_owner_ref_valid
+                    [record->structure1a_owner_y]
+                    [record->structure1a_owner_x] &&
+                level->structure1a_owner_refs
+                    [record->structure1a_owner_y]
+                    [record->structure1a_owner_x] ==
+                    record->structure1a_index &&
+                level->structure1a_models[record->structure1a_index]
+                    .structure3_model_index ==
+                    record->structure1a_structure3_model_index &&
+                level->structure1a_models[record->structure1a_index]
+                    .z_rotation == record->structure1a_z_rotation) {
+                owner_matches_cached_relation = 1;
+            }
+            if (owners == 1 && owner_matches_cached_relation) {
+                ++receipt.resolved_entry_count;
+            } else if (owners == 0) ++receipt.missing_owner_entry_count;
             else ++receipt.ambiguous_owner_entry_count;
         }
     }

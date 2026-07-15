@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Nexus Structure1A relation receipt source recheck: the
+  Structure1F/Structure1A host provenance gate now revalidates cached
+  relation fields against the live owner-ref table and the current
+  Structure1A model/rotation row before marking a relation resolved. Stale
+  cached owner coordinates or stale row bytes fail closed before runtime DGN
+  preparation, with no fallback material or draw route. Verification: focused
+  Ninja build plus CTest for `nexus_v1_structure1f_spatial_receipt`,
+  `nexus_v1_structure1_host_provenance`,
+  `nexus_v1_structure1a_structure3_row_receipt`,
+  `nexus_v1_dgn_material_raster`, `nexus_v1_dgn_geometry_readiness`, and
+  `nexus_v1_structure2_no_draw_receipt` pass in `build-local-ninja`.
+  Remaining blocker: original Saturn evidence for Structure1A selector
+  semantics, transforms, texture/palette, VDP1 ordering, culling, and draw
+  behavior.
+
 - ✅ 2026-07-16 DM1 TITLE.C C001 source-selector fallback closure: the DM1 V1
   title runtime source selector now treats TITLE.DAT availability as rejected
   evidence only. Malformed, cropped, or missing GRAPHICS.DAT C001 selects

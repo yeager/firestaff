@@ -374,6 +374,8 @@ int main(void) {
     engine.current_level.structure1a_model_count = 1;
     engine.current_level.structure1a_models[0].kind = 0x6aU;
     engine.current_level.structure1a_models[0].structure3_model_index = 5U;
+    engine.current_level.structure1a_owner_ref_valid[4][3] = 1U;
+    engine.current_level.structure1a_owner_refs[4][3] = 0U;
     engine.current_level.structure3_payload.declared = 1;
     engine.current_level.structure3_payload.valid = 1;
     engine.current_level.structure3_payload.block_offset = 20;

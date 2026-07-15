@@ -52,6 +52,7 @@ int main(void)
 
     level.structure1a_table_valid = 1;
     level.structure1a_model_count = 5;
+    level.structure1a_models[4].structure3_model_index = 2;
     level.structure1a_owner_ref_valid[9][7] = 1;
     level.structure1a_owner_refs[9][7] = 4;
     level.structure1f_entries[0].structure1a_relation_valid = 1;
@@ -70,6 +71,28 @@ int main(void)
                      receipt.status), "ready-resolved-structure1a") == 0,
           "only a complete Structure1A owner/model relation advances the host gate");
 
+    level.structure1f_entries[0].structure1a_owner_x = 8;
+    CHECK(nexus_v1_level_dgn_structure1_host_provenance_receipt(
+              &level, &receipt) == 0 &&
+          receipt.status ==
+              NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION &&
+          !receipt.can_prepare_runtime_dgn &&
+          !receipt.structure1a_relation.complete &&
+          receipt.structure1a_relation.resolved_entry_count == 0,
+          "a stale cached Structure1A owner coordinate cannot replace the source owner table");
+
+    level.structure1f_entries[0].structure1a_owner_x = 7;
+    level.structure1a_models[4].structure3_model_index = 3;
+    CHECK(nexus_v1_level_dgn_structure1_host_provenance_receipt(
+              &level, &receipt) == 0 &&
+          receipt.status ==
+              NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION &&
+          !receipt.can_prepare_runtime_dgn &&
+          !receipt.structure1a_relation.complete &&
+          receipt.structure1a_relation.resolved_entry_count == 0,
+          "a stale cached Structure1A model byte cannot replace the source row");
+
+    level.structure1a_models[4].structure3_model_index = 2;
     level.structure1f_entries[0].structure1a_relation_valid = 0;
     CHECK(nexus_v1_level_dgn_structure1_host_provenance_receipt(
               &level, &receipt) == 0 &&

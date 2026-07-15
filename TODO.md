@@ -727,6 +727,15 @@
   - 2026-07-15 raw-window witness update: every bounded static image/palette
     window now contributes its original bytes to the corpus hash. This proves
     source identity for future capture comparison, not payload grammar.
+  - 2026-07-16 Nexus Structure1A relation hardening: the host provenance
+    receipt no longer accepts a cached Structure1F relation flag unless the
+    live owner table still has exactly one matching source cell and the
+    cached model/rotation bytes still match the Structure1A row. Stale
+    owner coordinates or stale row bytes now block before runtime DGN
+    preparation, so cached relation data cannot replace source-owned DGN
+    records. Remaining blocker is unchanged: original Saturn evidence must
+    still prove Structure1A selector semantics, transforms, texture/palette,
+    VDP1, culling, and draw behavior.
 
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,
