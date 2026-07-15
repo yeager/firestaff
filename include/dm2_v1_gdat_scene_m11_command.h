@@ -15,6 +15,13 @@ typedef struct {
     uint32_t decoded_hash;
     uint32_t palette_hash;
     uint32_t geometry_hash;
+    /* QUERY_TEMP_PICST/_32cb_0804 may replace this IMG3 local palette only
+     * with an authenticated c_light transaction.  A nonzero receipt proves
+     * the stationary (non-dt07) branch; dt07 translation is deliberately
+     * unavailable until its source program is decoded. */
+    uint8_t palette_darkness;
+    uint32_t palette_light_receipt_hash;
+    uint32_t palette_transform_hash;
 } DM2_V1_GdatSceneM11Command;
 
 typedef struct {
@@ -132,6 +139,15 @@ int dm2_v1_c_light_m11_palette_darkness(
     const DM2_V1_GdatSceneLightM11Receipt *scene,
     const DM2_V1_CLightM11Receipt *receipt,
     uint8_t *out_darkness);
+/* SKProject _32cb_0804's stationary floor/ceiling branches use
+ * _4976_4226[0/1] == 0, so their palette parameter is the authenticated
+ * DISPLAY_VIEWPORT `glbLightLevel * 10` value unchanged. */
+int dm2_v1_gdat_scene_m11_plane_palette_darkness(
+    uint8_t field, uint8_t c_light_parameter, uint8_t *out_darkness);
+/* Refreshes only the presentation receipt after an authenticated palette
+ * transform. command_hash remains the immutable G1/GDAT scene owner. */
+int dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(
+    DM2_V1_GdatSceneM11CommandPlan *plan);
 
 /* The receipt hashes records 700/701 only. Plan construction retains this
  * receipt and admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */

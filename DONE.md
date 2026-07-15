@@ -19641,3 +19641,17 @@ JSR must write the CD data register, then a canonical READ(6) and FIFO-origin
 row must select a byte matching the hash-verified Track 02 sector at the
 observed LBA. The resulting record coordinate remains opaque provenance, not
 a loader name, level, object table, palette, bitmap, or rendering claim.
+
+# ✅ 2026-07-15 DM2 source floor/ceiling c_light palette receipt
+
+M11 now consumes SKProject `DM2_DISPLAY_VIEWPORT`'s authenticated
+`glbLightLevel * 10` parameter through the stationary
+`QUERY_TEMP_PICST/_32cb_0804` floor and ceiling palette path. The source
+`_4976_4226[0/1]` controls are both zero, so the original fixed-point formula
+retains that parameter unchanged. Each real IMG3 local palette is remapped by
+the original interface action table, hashed, and bound to the exact c_light
+receipt before the viewport accepts either plane. A present `GRAPHICSSET`
+`dt07/0` or `dt07/1` fails closed because SKProject instead calls the still
+undecoded `TRANSLATE_PALETTE` branch; no substitute table, brightness, or
+pixels are admitted. Verification: `dm2_v1_c_light_receipt`,
+`dm2_v1_boot_profile_smoke`, and `dm2_v1_save_load` pass.

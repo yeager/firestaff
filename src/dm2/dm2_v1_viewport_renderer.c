@@ -4044,6 +4044,21 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
             }
+            if ((floor->palette_light_receipt_hash != 0u ||
+                 ceiling->palette_light_receipt_hash != 0u) &&
+                (!s->gdat_c_light_receipt_ready ||
+                 floor->palette_light_receipt_hash == 0u ||
+                 ceiling->palette_light_receipt_hash == 0u ||
+                 floor->palette_light_receipt_hash !=
+                     s->gdat_c_light_receipt_hash ||
+                 ceiling->palette_light_receipt_hash !=
+                     s->gdat_c_light_receipt_hash ||
+                 floor->palette_transform_hash == 0u ||
+                 ceiling->palette_transform_hash == 0u)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
             if (floor->decoded_hash !=
                     dm2_v1_gdat_scene_m11_command_pixel_hash(floor) ||
                 ceiling->decoded_hash !=

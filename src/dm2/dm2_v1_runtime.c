@@ -3545,6 +3545,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int door_map_chip_material_plan_required = 0;
     int door_map_chip_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
+    DM2_V1_GdatSceneM11CommandPlan scene_material_plan;
+    const DM2_V1_GdatSceneM11CommandPlan *scene_material_plan_for_m11;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
     DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
@@ -3710,8 +3712,27 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
      * authenticated the `c_light.cpp` inputs. Passing the zero receipt here
      * explicitly clears any stale viewport result across a frame handoff. */
     dm2_v1_viewport_set_c_light_receipt(&viewport, &rt->c_light_receipt);
+    scene_material_plan_for_m11 = &rt->gdat_scene_material_plan;
+    if (rt->c_light_receipt.valid) {
+        uint8_t c_light_parameter = 0u;
+
+        scene_material_plan = rt->gdat_scene_material_plan;
+        if (!dm2_v1_c_light_m11_palette_darkness(
+                &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
+                &c_light_parameter) ||
+            !dm2_v1_boot_gdat_scene_m11_apply_light_palette(
+                rt->boot, c_light_parameter,
+                rt->c_light_receipt.receipt_hash, &scene_material_plan)) {
+            /* An observed c_light state selects _32cb_0804.  Do not present
+             * the base local palettes when its exact dt07 branch is present
+             * but undecoded. */
+            scene_material_plan_for_m11 = NULL;
+        } else {
+            scene_material_plan_for_m11 = &scene_material_plan;
+        }
+    }
     dm2_v1_viewport_set_gdat_scene_material_plan(
-        &viewport, &rt->gdat_scene_material_plan);
+        &viewport, scene_material_plan_for_m11);
     dm2_v1_viewport_set_gdat_scene_movement_active(
         &viewport, rt->scene_movement_pending);
     dm2_v1_viewport_set_gdat_wall_material_plan(
