@@ -2269,6 +2269,15 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
         load_path = backup_path;
         resumed_from_backup = 1;
     }
+    /* M11 reaches this boundary only after its original-save classifier has
+     * selected the F0435 route. Keep the final file admission here as well:
+     * a Firestaff F0433 export is useful for verification, but is not an
+     * external original-save corpus member and must not become a launcher
+     * resume source. There is deliberately no native-save/synthetic retry
+     * from this route. Apply the same rule to a recovered .bak source. */
+    if (!dm1_original_save_corpus_external_pc34_file(load_path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+    }
     result = dm1_v1_original_save_pc34_handoff_load_world_from_file(
         load_path, &candidate_world, event_queue ? &candidate_queue : NULL,
         &candidate_report);
