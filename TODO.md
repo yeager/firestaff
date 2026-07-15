@@ -3378,6 +3378,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       cyclic raw records reject rather than consulting Firestaff object
       metadata or inventing a container chain. Positive original DSA-bearing
       save-corpus proof remains required.
+    - 2026-07-15 parameter-count update: `STKOP_NumParam` now returns only
+      the authenticated caller's CSBWin parameter count. It has no inferred
+      argument vector, filter state, or world route.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

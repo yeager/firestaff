@@ -9,7 +9,7 @@
  * STKOP_WhoHasTalent:4363-4380, STKOP_CountInjury:4798-4817, and
  * STKOP_TalentsFetch:4243-4283, STKOP_DisableSaves:2946-2955, and
  * STKOP_ChPoss/STKOP_MonPoss:3330-3386 and ExamineCell/THISCELL/NEIGHBORS
- * 2210-2309,4819-4830, plus EX_TYPE:1388-1511. These
+ * 2210-2309,4819-4830, EX_TYPE:1388-1511, and STKOP_NumParam:4949-4955. These
  * commands and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
@@ -556,6 +556,7 @@ int main(void)
     uint16_t type_fetch[] = {
         0x0686u, 0x0456u, 0x020bu, 0x000du
     };
+    uint16_t num_param[] = { 0x02d5u, 0x000du };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -916,6 +917,12 @@ int main(void)
               parameters[0] == 50023u && execution.stack_depth == 0u,
           "TYPE returns the source dbType-plus-raw-record object code");
     thing_type_enabled = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, num_param,
+              (int)(sizeof(num_param) / sizeof(num_param[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 4u && execution.stack_depth == 0u,
+          "NUMPARAM returns the caller-owned source parameter count");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
