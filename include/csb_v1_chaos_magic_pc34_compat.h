@@ -361,6 +361,9 @@ typedef struct {
     uint32_t random_state;
     int dsa_slave_thing_valid;
     uint16_t dsa_slave_thing;
+    /* DSA.cpp::STKOP_ObjectID reads this live DSA-bank value. */
+    int most_recent_interesting_object_valid;
+    uint32_t most_recent_interesting_object;
     int party_champions_valid;
     int party_champion_count;
     int party_leader_index;
@@ -660,6 +663,8 @@ typedef struct {
     uint32_t random_state;
     int dsa_slave_thing_valid;
     uint16_t dsa_slave_thing;
+    int most_recent_interesting_object_valid;
+    uint32_t most_recent_interesting_object;
     int party_champions_valid;
     int party_champion_count;
     int party_leader_index;

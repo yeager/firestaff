@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSBWin `STKOP_ObjectID` now fail-closes without a live DSA-bank
+  owner. Remaining work is binding the actual DSA execution context.
+
 - 2026-07-15 DM1 GROUP F0182 follow-up: live F0209 now consumes its
   source-defined stop-attacking decision through F0182, clearing all four
   active-group attack bits and exact-square C29..C41 reactions before the

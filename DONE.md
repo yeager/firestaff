@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_ObjectID`: source DSA-bank object identity now
+  reaches the authenticated stack only with an explicit live owner.
+
 - 2026-07-15 CSBWin `STKOP_Describe`: implemented the source stack contract
   from `DSA.cpp:4639-4661`. Valid phrase-slot requests are staged and reach a
   DB2/phrase owner only after the full authenticated action accepts; invalid
