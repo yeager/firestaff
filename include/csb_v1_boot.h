@@ -1437,6 +1437,18 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     uint32_t source_tick,
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt);
+/* Verify that the framebuffer handed to M11 is the exact indexed raster
+ * composed by the currently owned PC3.4 startup plan.  This closes the
+ * title/entrance capture boundary: a valid session alone cannot promote a
+ * stale title phase, a door strip from another step, or a host wrapper page. */
+int csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    const unsigned char *indexed_pixels,
+    int width,
+    int height,
+    int special_palette);
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt);

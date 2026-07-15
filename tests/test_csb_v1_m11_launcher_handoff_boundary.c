@@ -140,12 +140,19 @@ static void record_presented_real_package_frame(M11_GameViewState* view,
                                                 const char* message) {
     M11_BootProbeReceipt probe;
     unsigned int expected_hash;
+    int special_palette;
 
     if (!view || !frame) {
         expect_true(0, message);
         return;
     }
     expected_hash = indexed_frame_hash(frame, 320u * 200u);
+    special_palette = M11_GameView_GetPresentationSpecialPalette(view);
+    if (special_palette >= 0) {
+        expect_true(M11_GameView_CSBPresentedFrameMatchesCurrentSource(
+                        view, frame, 320, 200, special_palette) == 1,
+                    "M11 CSB title/entrance frame matches its current PC34 source plan");
+    }
     M11_GameView_RecordCSBPresentedIndexedFrame(view, frame, 320, 200, 0, 0);
     expect_true(M11_GameView_GetBootProbeReceipt(view, &probe) == 1 &&
                     probe.csbPresentedFrameCaptureReady == 1 &&

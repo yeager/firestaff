@@ -12805,6 +12805,38 @@ void M11_GameView_RecordCSBPresentedIndexedFrame(
     state->csbState.presented_frame_hash = facts.presented_frame_hash;
 }
 
+int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
+    const M11_GameViewState* state,
+    const unsigned char* indexedPixels,
+    int width,
+    int height,
+    int specialPalette)
+{
+    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !indexedPixels || specialPalette < 0 ||
+        !state->csbStartupRuntimeAssetSession ||
+        !m11_csb_boot_runtime_startup_host_view_receipt(state, &host_view) ||
+        !host_view.valid || !host_view.render_draw_valid ||
+        !host_view.render_draw.render_plan_valid ||
+        host_view.special_palette != specialPalette ||
+        host_view.render_draw.render_plan.special_palette != specialPalette) {
+        return 0;
+    }
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    return csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+        session,
+        &host_view.render_draw.render_plan,
+        (uint32_t)state->csbState.startup_entrance_frame,
+        indexedPixels,
+        width,
+        height,
+        specialPalette);
+}
+
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath) {
     Nexus_V1_LauncherResumeReceipt receipt;

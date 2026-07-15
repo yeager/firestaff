@@ -1230,6 +1230,14 @@ void M11_GameView_RecordCSBPresentedIndexedFrame(
     int height,
     int runningFromMacOSAppBundle,
     int macWindowCaptureReady);
+/* Source-owned C001-C005/C017/C040 gate for the already drawn M11 page.
+ * The caller must present only when this exact current-plan comparison holds. */
+int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
+    const M11_GameViewState* state,
+    const unsigned char* indexedPixels,
+    int width,
+    int height,
+    int specialPalette);
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);

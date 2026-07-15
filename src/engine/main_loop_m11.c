@@ -478,6 +478,9 @@ static int m11_present_game_frame_and_publish_startup_capture(
         const int special_palette =
             M11_GameView_GetPresentationSpecialPalette(gameView);
         csb_source_output_matches = special_palette >= 0 &&
+            M11_GameView_CSBPresentedFrameMatchesCurrentSource(
+                gameView, presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                special_palette) &&
             M11_Render_PresentedIndexedSpecialMatches(
                 presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
                 special_palette);
