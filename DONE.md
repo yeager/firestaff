@@ -18695,7 +18695,12 @@ with the admitted slots and clears all slots whenever scene control refreshes.
 This blocks a same-command weather record from a previous map from drawing on
 the next map; unavailable timer output remains no-draw.
 
- That capture target now also carries the exact full 24-byte Structure1A table
+That capture target now also carries the exact full 24-byte Structure1A table
 and a separate selector-column fingerprint from the active canonical LEV.
- This locks a future trace to the raw table without claiming a rotation unit,
- matrix, camera convention, culling rule, or draw behavior.
+This locks a future trace to the raw table without claiming a rotation unit,
+matrix, camera convention, culling rule, or draw behavior.
+
+The direct-owner transform-trace admission now rechecks that table identity,
+the owner selector, model/face, raw execution lane, and transform-state
+snapshot before storing an opaque trace receipt. Missing Saturn provenance
+leaves the route blocked; admission never interprets transform bytes.

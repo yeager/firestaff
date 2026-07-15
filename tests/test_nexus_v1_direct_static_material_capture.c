@@ -218,6 +218,60 @@ int main(void)
         for (source_entry = 0;
              source_entry < engine.current_level.structure1f_entry_count;
              ++source_entry) {
+            Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+            Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt trace;
+            const uint8_t raw_trace[] = { 0x53U, 0x48U, 0x32U, 0x2dU, 0x54U };
+            const uint8_t transform_state[] = { 0x10U, 0x00U, 0x20U, 0x00U };
+            char manifest[2048];
+
+            memset(&target, 0, sizeof(target));
+            if (nexus_v1_engine_build_structure1f_transform_capture_target(
+                    &engine, source_entry, &target) != 1) {
+                continue;
+            }
+            snprintf(manifest, sizeof(manifest),
+                     "magic=%s\nproducer=saturn-debugger\n"
+                     "trace_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+                     "level_index=%x\nstructure1f_entry_index=%x\n"
+                     "structure1a_index=%x\nstructure3_model_index=%x\n"
+                     "face_ordinal=%x\nz_rotation=%x\n"
+                     "structure1a_table_offset=%x\nstructure1a_table_bytes=%x\n"
+                     "structure1a_table_fnv1a64=%016llx\n"
+                     "selector_column_fnv1a64=%016llx\n"
+                     "raw_trace_fnv1a64=%016llx\n"
+                     "transform_state_fnv1a64=%016llx\n",
+                     NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MAGIC,
+                     target.geometry.direct_mesh.level_index,
+                     target.geometry.direct_mesh.structure1f_entry_index,
+                     target.geometry.direct_mesh.structure1a_index,
+                     target.geometry.direct_mesh.structure3_model_index,
+                     target.geometry.direct_mesh.face_ordinal,
+                     target.geometry.direct_mesh.z_rotation,
+                     target.transform_table.table_byte_offset,
+                     target.transform_table.table_byte_count,
+                     (unsigned long long)target.transform_table.raw_table_fnv1a64,
+                     (unsigned long long)target.transform_table.selector_column_fnv1a64,
+                     (unsigned long long)fnv1a64(raw_trace, sizeof(raw_trace)),
+                     (unsigned long long)fnv1a64(transform_state,
+                                                 sizeof(transform_state)));
+            memset(&trace, 0, sizeof(trace));
+            CHECK(nexus_v1_engine_admit_structure1f_transform_capture_trace(
+                      &engine, source_entry, manifest, strlen(manifest), raw_trace,
+                      sizeof(raw_trace), transform_state, sizeof(transform_state), 0,
+                      &trace) == 0 &&
+                  trace.status ==
+                      NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_PROVENANCE &&
+                  trace.capture_target_bound && trace.manifest_target_bound &&
+                  trace.raw_trace_bytes_bound && trace.transform_state_bytes_bound &&
+                  !trace.transform_semantics_proven && trace.no_draw_only &&
+                  !trace.fallback_visuals_permitted &&
+                  trace.blocks_real_dgn_mesh_render,
+                  "source-bound transform trace remains blocked without Saturn provenance");
+            break;
+        }
+        for (source_entry = 0;
+             source_entry < engine.current_level.structure1f_entry_count;
+             ++source_entry) {
             Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget target;
 
             memset(&target, 0, sizeof(target));

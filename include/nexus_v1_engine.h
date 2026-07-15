@@ -1335,6 +1335,38 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FTransformCaptureTarget;
 
+/* Admission for a future original-Saturn transform observation of one direct
+ * Structure1F owner. It binds source bytes and captured state identity only;
+ * it never interprets transform words or authorizes a draw. */
+#define NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MAGIC \
+    "FIRESTAFF_NEXUS_STRUCTURE1F_TRANSFORM_TRACE_V1"
+typedef enum {
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MISSING = 0,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_OBSERVATIONS = 3,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_PROVENANCE = 4,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_ADMITTED_OPAQUE = 5
+} Nexus_V1_DgnStructure1FTransformTraceStatus;
+
+typedef struct {
+    Nexus_V1_DgnStructure1FTransformTraceStatus status;
+    int capture_target_bound;
+    int manifest_target_bound;
+    int raw_trace_bytes_bound;
+    uint64_t raw_trace_fnv1a64;
+    size_t raw_trace_byte_count;
+    int transform_state_bytes_bound;
+    uint64_t transform_state_fnv1a64;
+    size_t transform_state_byte_count;
+    int original_saturn_capture_verified;
+    int opaque_trace_admitted;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt;
+
 /* One direct Structure1F owner joined to the exact static Structure3 face
  * material target selected by the same documented Structure1A model/face
  * fields. This is capture provenance only: the Structure2 payload remains
@@ -2346,6 +2378,13 @@ int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
 int nexus_v1_engine_build_structure1f_transform_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target);
+int nexus_v1_engine_admit_structure1f_transform_capture_trace(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    const uint8_t *transform_state, size_t transform_state_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt *out_receipt);
 /* Bind one direct Structure1F source owner to its exact static Structure2
  * material target. Non-static, untextured, or unresolved faces remain
  * unavailable rather than selecting a substitute material. */

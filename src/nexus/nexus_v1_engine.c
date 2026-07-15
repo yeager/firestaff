@@ -24,6 +24,15 @@ typedef struct {
 
 static uint64_t nexus_v1_owner_material_capture_target_fnv1a64(
     const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *target);
+static int nexus_v1_slev_trace_value(const char *text, size_t size,
+                                     const char *key, char *out_value,
+                                     size_t out_value_size);
+static int nexus_v1_slev_trace_hex_u32(const char *text, uint32_t *out_value);
+static int nexus_v1_slev_trace_is_sha256(const char *text);
+static int nexus_v1_slev_trace_hex_u64(const char *text,
+                                       uint64_t *out_value);
+static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data,
+                                             size_t size);
 
 static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"DM.BIN", "e88d60859f65f08fa622e1992b02280f"},
@@ -6098,6 +6107,133 @@ int nexus_v1_engine_build_structure1f_transform_capture_target(
     target.original_saturn_capture_required = 1;
     target.valid = 1;
     *out_target = target;
+    return 1;
+}
+
+int nexus_v1_engine_admit_structure1f_transform_capture_trace(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    const uint8_t *transform_state, size_t transform_state_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+    Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt receipt;
+    char value[96];
+    uint32_t parsed_u32;
+    uint64_t parsed_u64;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MISSING;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !manifest_text || manifest_size == 0U || !raw_trace ||
+        raw_trace_size == 0U || !transform_state || transform_state_size == 0U ||
+        nexus_v1_engine_build_structure1f_transform_capture_target(
+            engine, structure1f_entry_index, &target) != 1 || !target.valid ||
+        !target.transform_table_source_bound ||
+        !target.owner_transform_selector_source_bound) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.capture_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size, "magic", value,
+                                    sizeof(value)) ||
+        strcmp(value, NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MAGIC) != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "producer", value,
+                                    sizeof(value)) ||
+        strcmp(value, "saturn-debugger") != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "trace_sha256",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_is_sha256(value)) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size, "level_index",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.level_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1f_entry_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure1f_entry_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure1a_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure3_model_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure3_model_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "face_ordinal",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.face_ordinal ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "z_rotation",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.z_rotation ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_table_offset", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.transform_table.table_byte_offset ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_table_bytes", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.transform_table.table_byte_count ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_table_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.transform_table.raw_table_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "selector_column_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.transform_table.selector_column_fnv1a64) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.manifest_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "raw_trace_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size) ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "transform_state_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != nexus_v1_slev_trace_fnv1a64(transform_state,
+                                                   transform_state_size)) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_OBSERVATIONS;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bytes_bound = 1;
+    receipt.raw_trace_byte_count = raw_trace_size;
+    receipt.raw_trace_fnv1a64 = nexus_v1_slev_trace_fnv1a64(raw_trace,
+                                                             raw_trace_size);
+    receipt.transform_state_bytes_bound = 1;
+    receipt.transform_state_byte_count = transform_state_size;
+    receipt.transform_state_fnv1a64 = nexus_v1_slev_trace_fnv1a64(
+        transform_state, transform_state_size);
+    if (!original_saturn_capture_verified) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_PROVENANCE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.original_saturn_capture_verified = 1;
+    receipt.opaque_trace_admitted = 1;
+    receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_ADMITTED_OPAQUE;
+    *out_receipt = receipt;
     return 1;
 }
 
