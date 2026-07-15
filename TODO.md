@@ -8651,3 +8651,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     only; the branch target has no asserted loader, record, level, object, or
     graphics meaning. Remaining: capture the first source-observed data read
     or CD state after that target.
+  - Update: the trace now admits the BRA only when Mednafen subsequently
+    fetches its exact computed target in main RAM. The fetched opcode remains
+    opaque control evidence, with no asserted loader, record, level, object,
+    palette, bitmap, or rendering meaning. Remaining: capture a source-bound
+    data read, call, or CD state after this executed target.

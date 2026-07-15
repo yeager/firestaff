@@ -19357,3 +19357,11 @@ and `0x0a = 0xffff`; a changed or
 unverified executable blocks capture intake. This is a capture prerequisite,
 not a claim that those registers select a Structure1F face or prove a command,
 transform, material, palette, pixel, or rendering result.
+# ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
+
+The raw loader trace now records a target row only when Mednafen actually
+fetches the exact target computed by the source-bound copied-entry `BRA`.
+Firestaff retains the target opcode solely as opaque control-flow evidence and
+requires the source PC, source physical PC, target and executed main-RAM PC to
+agree. This does not assert loader, CD-record, dungeon, object, palette,
+bitmap, or rendering semantics.
