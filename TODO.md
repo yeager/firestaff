@@ -3443,9 +3443,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       only a loaded DB14's flying Thing, range, damage, and its owning saved
       TIMER word8 direction. Invalid Things retain the four source `-1`
       values; short DB14 records, incomplete timer summaries, or missing raw
-      dungeon/save ownership reject. `MISSILEINFO!` remains closed pending
-      complete proven live timer writeback. Positive original DSA-bearing
-      save-corpus proof remains required.
+      dungeon/save ownership reject. `MISSILEINFO!` now stages DB14 range/
+      damage and TIMER word8 direction, then publishes both alongside the
+      already materialized timer event only after full action acceptance.
+      The runtime action clones the raw dungeon bytes before execution, so a
+      later save/DSA persistence failure cannot publish a partial DB14 edit.
+      Broken timer-queue/event ownership rejects. Positive original
+      DSA-bearing save-corpus proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

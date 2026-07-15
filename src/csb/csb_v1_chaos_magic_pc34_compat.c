@@ -743,6 +743,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_PROPERTY_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_MISSILE_WRITES 100
 
 typedef struct {
     uint32_t location;
@@ -779,6 +780,11 @@ typedef struct {
     CSB_V1_CSBWinDSAObjectProperty property;
     uint32_t value;
 } CSB_V1_CSBWinDSAPendingObjectPropertyWrite;
+
+typedef struct {
+    uint16_t thing;
+    uint32_t values[4];
+} CSB_V1_CSBWinDSAPendingMissileWrite;
 
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
@@ -834,7 +840,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_cell_write_count,
     CSB_V1_CSBWinDSAPendingObjectPropertyWrite *pending_object_property_writes,
     int *pending_object_property_write_count, int *staged_saves_disabled,
-    uint32_t *staged_random_state)
+    uint32_t *staged_random_state,
+    CSB_V1_CSBWinDSAPendingMissileWrite *pending_missile_writes,
+    int *pending_missile_write_count)
 {
     uint32_t v;
     uint32_t w;
@@ -855,11 +863,13 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_object_property_writes ||
         !pending_object_property_write_count ||
         !staged_saves_disabled || !staged_random_state ||
+        !pending_missile_writes || !pending_missile_write_count ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
         *pending_monster_write_count < 0 ||
         *pending_cell_write_count < 0 ||
         *pending_object_property_write_count < 0 ||
+        *pending_missile_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -915,6 +925,55 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                                                missile_values[3])) {
                 return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
             }
+        }
+        break;
+    case 102u: /* STKOP_MissileInfoStore, CSBWin DSA.cpp:2824-2846. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        if (v <= UINT16_MAX) {
+            uint32_t missile_values[4] = {
+                UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX
+            };
+            int pending = -1;
+            int source_result;
+            for (sv = 0; sv < *pending_missile_write_count; ++sv) {
+                if (pending_missile_writes[sv].thing == (uint16_t)v) {
+                    pending = sv;
+                }
+            }
+            if (pending >= 0) {
+                memcpy(missile_values, pending_missile_writes[pending].values,
+                       sizeof(missile_values));
+            } else {
+                if (!context->get_missile_info) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                source_result = context->get_missile_info(
+                    context->dungeon_user, (uint16_t)v, missile_values);
+                if (source_result < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                if (source_result == 0) break;
+            }
+            if (!csb_v1_csbwin_dsa_stack_pop(stack, depth,
+                                              &missile_values[3]) ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, depth,
+                                              &missile_values[2]) ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, depth,
+                                              &missile_values[1])) {
+                goto underflow;
+            }
+            if (pending < 0) {
+                if (!context->set_missile_info ||
+                    *pending_missile_write_count >=
+                        CSB_V1_CSBWIN_DSA_PENDING_MISSILE_WRITES) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                pending = *pending_missile_write_count;
+                pending_missile_writes[pending].thing = (uint16_t)v;
+                ++*pending_missile_write_count;
+            }
+            memcpy(pending_missile_writes[pending].values, missile_values,
+                   sizeof(missile_values));
         }
         break;
     case 3u: /* STKOP_Pick */
@@ -2100,6 +2159,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     CSB_V1_CSBWinDSAPendingObjectPropertyWrite
         pending_object_property_writes[
             CSB_V1_CSBWIN_DSA_PENDING_OBJECT_PROPERTY_WRITES];
+    CSB_V1_CSBWinDSAPendingMissileWrite
+        pending_missile_writes[CSB_V1_CSBWIN_DSA_PENDING_MISSILE_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -2110,6 +2171,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_monster_write_count = 0;
     int pending_cell_write_count = 0;
     int pending_object_property_write_count = 0;
+    int pending_missile_write_count = 0;
     int staged_saves_disabled;
     uint32_t staged_random_state;
     int i;
@@ -2331,7 +2393,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_monster_write_count, pending_cell_writes,
                 &pending_cell_write_count, pending_object_property_writes,
                 &pending_object_property_write_count, &staged_saves_disabled,
-                &staged_random_state);
+                &staged_random_state, pending_missile_writes,
+                &pending_missile_write_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2382,6 +2445,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_object_property_writes[i].thing,
                 pending_object_property_writes[i].property,
                 pending_object_property_writes[i].value)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_missile_write_count; ++i) {
+        if (!context->set_missile_info ||
+            !context->set_missile_info(context->dungeon_user,
+                                       pending_missile_writes[i].thing,
+                                       pending_missile_writes[i].values)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -2518,6 +2589,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.is_carried = runner->is_carried;
     context.get_level_multiplier = runner->get_level_multiplier;
     context.get_missile_info = runner->get_missile_info;
+    context.set_missile_info = runner->set_missile_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
