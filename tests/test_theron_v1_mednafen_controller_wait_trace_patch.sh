@@ -14,6 +14,7 @@ execution_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_
 e009_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_stage2_e009_trace.patch
 e00f_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_stage2_e00f_trace.patch
 later_raw_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_raw_sector_trace.patch
+later_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_fifo_generation_trace.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
@@ -99,6 +100,11 @@ if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     printf 'FAIL: later raw-sector patch no longer retains the bounded extended SCSI witness window\n' >&2
     exit 1
 fi
+if ! grep -Fq 'pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u' "$later_fifo_patch_file" ||
+   ! grep -Fq 'TheronSCSITraceCurrentReadGeneration' "$later_fifo_patch_file"; then
+    printf 'FAIL: later FIFO patch no longer binds data reads to SCSI generations\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
@@ -125,4 +131,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$execution_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$e009_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$e00f_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$later_raw_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$later_fifo_patch_file"
 printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'

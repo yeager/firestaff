@@ -1,0 +1,41 @@
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -68,5 +68,10 @@
+ static unsigned TheronSCSIReadCommandGeneration;
+ static uint32 TheronSCSIReadCommandStartLBA;
+ static uint32 TheronSCSIReadCommandSectorCount;
+ 
++unsigned TheronSCSITraceCurrentReadGeneration(void)
++{
++ return TheronSCSIReadCommandGeneration;
++}
++
+ static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
+ {
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -90,5 +90,7 @@ using namespace Mednafen;
+ 
+ #include "pcecd.h"
+ 
++namespace Mednafen { unsigned TheronSCSITraceCurrentReadGeneration(void); }
++
+ namespace MDFN_IEN_PCE
+ {
+@@ -594,12 +595,13 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
+    case 0x1:
+     ret = SCSICD_GetDB();
+     if(!PeekMode && SCSICD_GetIO() && !SCSICD_GetCD())
+     {
+      TheronPCECDDataReadPending = true;
+      TheronPCECDDataReadPC = HuCPU.GetRegister(HuC6280::GSREG_PC);
+      TheronPCECDDataReadValue = ret;
+-     TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x\n",
+-                           TheronPCECDDataReadPC, ret);
++     TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u\n",
++                           TheronPCECDDataReadPC, ret,
++                           Mednafen::TheronSCSITraceCurrentReadGeneration());
+     }
+ 	    break;
