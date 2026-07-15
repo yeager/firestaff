@@ -3712,8 +3712,35 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         door_render_plan.door_count > 0 &&
         dm2_v1_boot_gdat_door_overlay_m11_command_plan(
             rt->boot, &door_render_plan, &rt->gdat_door_material_plan)) {
-        dm2_v1_viewport_set_gdat_door_overlay_material_plan(
-            &viewport, &rt->gdat_door_material_plan);
+        int light_palette_required = 0;
+        uint8_t c_light_parameter = 0u;
+
+        for (uint8_t i = 0u;
+             i < rt->gdat_door_material_plan.command_count; ++i) {
+            const DM2_V1_GdatDoorOverlayM11Command *command =
+                &rt->gdat_door_material_plan.commands[i];
+            if (command->kind == DM2_V1_GDAT_DOOR_PANEL &&
+                command->light_palette != 0u) {
+                light_palette_required = 1;
+                break;
+            }
+        }
+        if (!light_palette_required ||
+            (dm2_v1_c_light_m11_palette_darkness(
+                 &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
+                 &c_light_parameter) &&
+             dm2_v1_boot_gdat_door_overlay_apply_light_palette(
+                 rt->boot, c_light_parameter,
+                 rt->c_light_receipt.receipt_hash,
+                 &rt->gdat_door_material_plan))) {
+            dm2_v1_viewport_set_gdat_door_overlay_material_plan(
+                &viewport, &rt->gdat_door_material_plan);
+        } else {
+            /* The D3 field-zero retry has no base-palette route. Its
+             * QUERY_TEMP_PICST light transform needs live c_light evidence. */
+            dm2_v1_gdat_door_overlay_m11_command_plan_free(
+                &rt->gdat_door_material_plan);
+        }
     }
     dm2_runtime_bind_g1_scene_wall_button_material(
         rt, &viewport, &door_render_plan);

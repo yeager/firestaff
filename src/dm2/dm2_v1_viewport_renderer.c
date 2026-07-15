@@ -4597,6 +4597,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         uint8_t palette16[16];
         uint32_t palette_hash;
         uint32_t decoded_hash;
+        uint8_t palette_darkness;
+        uint32_t palette_light_receipt_hash;
+        uint32_t palette_transform_hash;
         int transparent_color;
         uint8_t light_palette;
         uint16_t rect_number;
@@ -4765,6 +4768,11 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                sizeof(material->palette16));
                         material->palette_hash = command->palette_hash;
                         material->decoded_hash = command->decoded_hash;
+                        material->palette_darkness = command->palette_darkness;
+                        material->palette_light_receipt_hash =
+                            command->palette_light_receipt_hash;
+                        material->palette_transform_hash =
+                            command->palette_transform_hash;
                         material->light_palette = command->light_palette;
                         material->rect_number = command->rect_number;
                         material->source_rect = (DM2_V1_ViewportRect){
@@ -4839,15 +4847,18 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     return;
                 }
                 /* c_gui_vp.cpp::DM2_DRAW_DOOR may retry field zero with a
-                 * nonzero source light palette. The IMG3 local palette is
-                 * not that transform. Until the original light-palette
-                 * operation is decoded, drawing it as the base palette
-                 * would be a synthetic visual. */
+                 * nonzero source light palette. It is legal only after the
+                 * plan's dt07/2 remap is bound to this exact c_light result. */
                 if (kind == DM2_DOOR_MATERIAL_PANEL &&
-                    material->light_palette != 0u) {
-                    dm2_v1_block_source_material(
-                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
-                    return;
+                    material->light_palette != 0u &&
+                    (!s->gdat_c_light_receipt_ready ||
+                     material->palette_darkness > 64u ||
+                     material->palette_light_receipt_hash !=
+                         s->gdat_c_light_receipt_hash ||
+                     material->palette_transform_hash == 0u)) {
+                        dm2_v1_block_source_material(
+                            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                        return;
                 }
                 if (kind == DM2_DOOR_MATERIAL_PANEL &&
                     door->panel_visible_rect.w > 0 &&
@@ -4947,7 +4958,13 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     const DM2_V1_GdatDoorOverlayM11Command *command =
                         source_panel->panel_commands[part];
                     if (!command || !command->pixels || !command->decoded_hash ||
-                        !command->palette_hash || command->light_palette != 0u ||
+                        !command->palette_hash ||
+                        (command->light_palette != 0u &&
+                         (!s->gdat_c_light_receipt_ready ||
+                          command->palette_darkness > 64u ||
+                          command->palette_light_receipt_hash !=
+                              s->gdat_c_light_receipt_hash ||
+                          command->palette_transform_hash == 0u)) ||
                         command->source_width == 0u || command->source_height == 0u ||
                         command->source_x + command->source_width > command->width ||
                         command->source_y + command->source_height > command->height ||

@@ -430,6 +430,61 @@ static uint8_t draw_door_distance_stretch(uint8_t distance)
     return distance < sizeof(stretch) ? stretch[distance] : 0u;
 }
 
+int dm2_v1_gdat_door_light_palette_darkness(uint8_t light,
+                                            uint8_t light_palette,
+                                            uint8_t *out_darkness)
+{
+    /* SKProject skval1.h `_4976_4226`, consumed by _32cb_0804 when the
+     * player is stationary. `light` is DISPLAY_VIEWPORT's glbLightLevel*10. */
+    static const uint8_t distance_darkness[] = { 0u, 0u, 12u, 28u, 46u };
+    uint32_t distance;
+    uint32_t result;
+
+    if (!out_darkness || light > 64u ||
+        light_palette >= sizeof(distance_darkness)) {
+        return 0;
+    }
+    distance = distance_darkness[light_palette];
+    result = 64u - (((64u - distance) * (64u - light)) >> 6);
+    if (result > 64u) return 0;
+    *out_darkness = (uint8_t)result;
+    return 1;
+}
+
+static uint32_t command_plan_hash(
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *plan)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!plan || plan->command_count == 0u ||
+        plan->command_count > DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX) {
+        return 0u;
+    }
+    for (uint8_t i = 0u; i < plan->command_count; ++i) {
+        const DM2_V1_GdatDoorOverlayM11Command *command = &plan->commands[i];
+        hash = hash_u32(hash, command->raw_hash);
+        hash = hash_u32(hash, command->decoded_hash);
+        hash = hash_u32(hash, command->palette_hash);
+        hash = hash_u32(hash, command->selection_hash);
+        hash = hash_u32(hash, command->geometry_hash);
+        hash = hash_u32(hash, command->palette_transform_hash);
+    }
+    return hash ? hash : 1u;
+}
+
+int dm2_v1_gdat_door_overlay_m11_command_plan_refresh_hash(
+    DM2_V1_GdatDoorOverlayM11CommandPlan *plan)
+{
+    uint32_t hash;
+
+    if (!plan) return 0;
+    hash = command_plan_hash(plan);
+    if (!hash) return 0;
+    plan->command_hash = hash;
+    plan->valid = 1;
+    return 1;
+}
+
 static int command_draw_controls_valid(
     const DM2_V1_GdatDoorOverlayM11Command *command)
 {
@@ -461,6 +516,7 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
         plan->command_count > DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX) {
         return 0;
     }
+    if (plan->command_hash != command_plan_hash(plan)) return 0;
     for (uint8_t i = 0u; i < plan->command_count; ++i) {
         const DM2_V1_GdatDoorOverlayM11Command *command = &plan->commands[i];
         if (command->kind == DM2_V1_GDAT_DOOR_PANEL &&
@@ -685,7 +741,6 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan)
 {
     DM2_V1_GdatDoorOverlayM11CommandPlan candidate;
-    uint32_t hash = 2166136261u;
     if (!out_plan) return 0;
     memset(out_plan, 0, sizeof(*out_plan));
     memset(&candidate, 0, sizeof(candidate));
@@ -718,21 +773,10 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
             }
         }
     }
-    if (!candidate.command_count) goto fail;
-    for (int i = 0; i < candidate.command_count; ++i) {
-        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].raw_hash,
-                          sizeof(candidate.commands[i].raw_hash));
-        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].decoded_hash,
-                          sizeof(candidate.commands[i].decoded_hash));
-        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].palette_hash,
-                          sizeof(candidate.commands[i].palette_hash));
-        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].selection_hash,
-                          sizeof(candidate.commands[i].selection_hash));
-        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].geometry_hash,
-                          sizeof(candidate.commands[i].geometry_hash));
+    if (!candidate.command_count ||
+        !dm2_v1_gdat_door_overlay_m11_command_plan_refresh_hash(&candidate)) {
+        goto fail;
     }
-    candidate.command_hash = hash ? hash : 1u;
-    candidate.valid = 1;
     *out_plan = candidate;
     return 1;
 fail:
