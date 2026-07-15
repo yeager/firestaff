@@ -3745,19 +3745,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 DM2_SCENE_PLANE_CEILING;
         }
     } else {
-        if (s->source_materials_required) {
-            ++s->blocked_material_draw_count;
-            s->blocked_material_mask |=
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING;
-        } else {
-            /* Ceiling region: dark gray (matches DM2 darker dungeon atmosphere)
-             * Source: DUNVIEW.C:2996-3015 (PC34 ceiling blit path) */
-            for (int y = 0; y < ceiling_h; y++) {
-                /* DM2 ceiling is slightly darker than DM1 (gray-8 vs gray-9) */
-                memset(vp + y * stride, DM2_COL_DKGRAY, (size_t)DM2_VP_WIDTH);
-            }
-            ++s->fallback_floor_ceiling_drawn_count;
-        }
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
     }
 
     int floor_x = 0;
@@ -3815,20 +3804,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 DM2_SCENE_PLANE_FLOOR;
         }
     } else {
-        if (s->source_materials_required) {
-            ++s->blocked_material_draw_count;
-            s->blocked_material_mask |=
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING;
-        } else {
-            /* Floor region: brown (matches DM2 floor color)
-             * Source: DUNVIEW.C:3016-3047 (PC34 floor blit path) */
-            for (int y = floor_y; y < floor_y + floor_h; y++) {
-                if (y < DM2_VP_HEIGHT) {
-                    memset(vp + y * stride, 5, (size_t)DM2_VP_WIDTH);  /* brown */
-                }
-            }
-            ++s->fallback_floor_ceiling_drawn_count;
-        }
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
     }
 
     if (s->source_materials_required &&
@@ -3844,58 +3821,6 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 }
 
 /* ── Walls ───────────────────────────────────────────────────────── */
-
-static void dm2_v1_draw_wall_fallback_rect(uint8_t *vp,
-                                           int stride,
-                                           const DM2_WallFrame *frame,
-                                           uint8_t color)
-{
-    int x;
-    int y;
-    if (!vp || !frame || stride <= 0 ||
-        frame->byte_width == 0 || frame->height == 0) {
-        return;
-    }
-    for (y = frame->top_y; y <= frame->bottom_y && y < DM2_VP_HEIGHT; ++y) {
-        if (y < 0) {
-            continue;
-        }
-        for (x = frame->left_x; x <= frame->right_x && x < DM2_VP_WIDTH; ++x) {
-            if (x >= 0) {
-                vp[y * stride + x] = color;
-            }
-        }
-    }
-}
-
-static void dm2_v1_draw_legacy_wall_fallback(uint8_t *vp, int stride)
-{
-    int y;
-    int x;
-    if (!vp || stride <= 0) {
-        return;
-    }
-    for (y = 25; y < 25 + 51 && y < DM2_VP_HEIGHT; y++) {
-        for (x = 0; x < 84; x++) vp[y * stride + x] = 8;
-        for (x = 139; x < 224; x++) vp[y * stride + x] = 8;
-    }
-    for (y = 25; y < 25 + 50 && y < DM2_VP_HEIGHT; y++) {
-        for (x = 74; x < 150; x++) vp[y * stride + x] = 8;
-    }
-    for (y = 20; y < 20 + 71 && y < DM2_VP_HEIGHT; y++) {
-        for (x = 0; x < 75; x++) vp[y * stride + x] = 6;
-        for (x = 149; x < 224; x++) vp[y * stride + x] = 6;
-        for (x = 60; x < 164; x++) vp[y * stride + x] = 6;
-    }
-    for (y = 9; y < 9 + 111 && y < DM2_VP_HEIGHT; y++) {
-        for (x = 0; x < 64; x++) vp[y * stride + x] = 4;
-        for (x = 160; x < 224; x++) vp[y * stride + x] = 4;
-        for (x = 32; x < 192; x++) vp[y * stride + x] = 4;
-    }
-    for (y = 0; y < 136 && y < DM2_VP_HEIGHT; y++) {
-        for (x = 0; x < 224; x++) vp[y * stride + x] = 2;
-    }
-}
 
 static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
                                          uint32_t material_mask)
@@ -3983,7 +3908,6 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
     int wall_asset_count = 0;
-    int wall_fallback_count = 0;
     DM2_V1_WallPanelRenderPlan plan;
     DM2_V1_WallMaterial materials[DM2_V1_WALL_PANEL_RENDER_MAX];
 
@@ -3999,22 +3923,13 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
      * DM2 uses G3060 variant wall set (different from DM1's G2107).
      * Source: DUNVIEW.C:170-175, G3060_i_WallSet_Wall_D3C etc.
      *
-     * If no asset provider is installed, retain the old aggregate fallback so
-     * no-data probes keep a deterministic frame. Once a provider exists, draw
-     * each source wall cell independently so asset-backed cells are not hidden
-     * behind a full-viewport placeholder blanket.
+     * Each visible wall cell is a source GDAT material; missing material must
+     * stay absent rather than become a deterministic placeholder.
      */
     if (!s->asset_fetch) {
-        if (s->source_materials_required && !s->gdat_wall_material_plan) {
-            ++s->blocked_material_draw_count;
-            s->blocked_material_mask |= DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL;
-            return;
-        }
-        if (!s->source_materials_required) {
-            dm2_v1_draw_legacy_wall_fallback(vp, stride);
-            ++s->fallback_wall_drawn_count;
-            return;
-        }
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+        return;
     }
 
     /* skproject DRAW_WALL queries GRAPHICSSET with the live MapGraphicsStyle.
@@ -4138,18 +4053,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                                                    &wall_h,
                                                    &wall_stride) != 0) ||
             !wall_pixels || wall_w <= 0 || wall_h <= 0) {
-            if (s->source_materials_required) {
-                ++s->blocked_material_draw_count;
-                s->blocked_material_mask |=
-                    DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL;
-            } else {
-                dm2_v1_draw_wall_fallback_rect(vp,
-                                               stride,
-                                               dm2_v1_get_wall_frame(
-                                                   panel->view_square),
-                                               panel->fallback_color);
-                ++wall_fallback_count;
-            }
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
             continue;
         }
 
@@ -4192,7 +4097,6 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     if (wall_asset_count > 0) {
         s->asset_wall_drawn_count += wall_asset_count;
     }
-    s->fallback_wall_drawn_count += wall_fallback_count;
 }
 
 /* ── Doors ────────────────────────────────────────────────────────── */
