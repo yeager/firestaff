@@ -5470,6 +5470,10 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
     memset(&handoff, 0, sizeof(handoff));
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING &&
+          handoff.prs3_prerequisite_status ==
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING &&
+          strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
+                     handoff.prs3_prerequisite_status), "archive-missing") == 0 &&
           !handoff.receipt_valid && !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
@@ -5725,6 +5729,8 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     memset(&handoff, 0, sizeof(handoff));
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE &&
+          handoff.prs3_prerequisite_status ==
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SOURCE_UNVERIFIED &&
           !handoff.canonical_source_hash_verified && !handoff.receipt_valid &&
           !handoff.canonical_palette_trailer_bound &&
           !handoff.can_render_stored_surfaces &&
@@ -5752,6 +5758,8 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     engine.menu_bpk_source.canonical_hash_verified = 1;
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
+          handoff.prs3_prerequisite_status ==
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED &&
           handoff.canonical_source_hash_verified && handoff.receipt_valid &&
           handoff.canonical_palette_trailer_bound &&
           handoff.palette_trailer.record_bytes == 524U &&
@@ -5763,9 +5771,26 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           nexus_v1_menu_bpk_decode_receipt_ready(&engine),
           "only an authenticated source can expose an otherwise-ready BPK receipt");
     engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED;
+    CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
+          handoff.status ==
+              NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED &&
+          handoff.prs3_prerequisite_status ==
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_FRAME_INCOMPLETE &&
+          strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
+                     handoff.prs3_prerequisite_status), "frame-incomplete") == 0 &&
+          handoff.blocks_real_menu_surface_render &&
+          !handoff.fallback_visuals_permitted,
+          "a truncated MENU.BPK frame reports framing evidence, not decoder absence");
+    engine.menu_bpk_decode_receipt.route =
         NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+          handoff.prs3_prerequisite_status ==
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_AUTHENTIC_DECODER &&
+          strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
+                     handoff.prs3_prerequisite_status),
+                 "authentic-decoder-required") == 0 &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
