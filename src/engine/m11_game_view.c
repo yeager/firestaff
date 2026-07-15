@@ -33715,6 +33715,13 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
         !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
         return;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        /* SKProject GET_ITEM_NAME resolves an ObjectID through its GDAT
+         * category/class `dtText/0x18` entry and FORMAT_SKSTR. The shared
+         * M11 name field uses a DM1 rectangle and host font; its DM2 catalog
+         * labels are not a substitute for that source-owned text route. */
+        return;
+    }
     if (!dm1_v1_leader_hand_object_name_zone_id_pc34()) {
         return;
     }
