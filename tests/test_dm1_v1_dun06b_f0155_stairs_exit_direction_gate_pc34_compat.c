@@ -4,7 +4,8 @@
  * DUN-06b follow-up gate — DM1 V1 stairs up/down level transition regression.
  *
  * The DUN-06 test (`test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat.c`)
- * pins F0705_MOVEMENT_ResolveStairsTransition_Compat robustness: NULL/bounds
+ * retains the DUN-06 F0705 robustness coverage while pinning the DM1-owned
+ * F0154/F0155 resolver's source-defined transition behavior.
  * checks, zero-tiles, empty dungeon.  It does NOT exercise the positive
  * resolution path or the F0155_DUNGEON_GetStairsExitDirection lookup that
  * happens after F0154_DUNGEON_GetLocationAfterLevelChange.
@@ -23,7 +24,7 @@
  *     (I1..I4 in `dm1_v1_stairs_level_pc34_compat.c`) and no test that
  *     pins the no-concurrent-transitions / write-order / clamp-to-zero /
  *     idempotent-no-op behavior across M11 launcher ticks.
- *   - Both the F0705 positive path and the M11 state machine are part of
+ *   - Both the DM1 F0154/F0155 positive path and the M11 state machine are part of
  *     the same stairs-triggered level change; if either regresses the
  *     player can fall through the floor (literally — wrong exit
  *     direction can walk into a wall on the destination level).
@@ -44,11 +45,12 @@
  *   - No retest of stairs + inventory preservation (covered by
  *     test_dm1_v1_stairs_inventory_state_pc34_compat).
  *   - This test pins the F0155 exit-direction math + the M11 state
- *     machine invariants on top of the F0705 positive resolution.
+ *     machine invariants on top of the F0154/F0155 positive resolution.
  */
 
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "dm1_v1_dungeon_stairs_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "dm1_v1_stairs_level_pc34_compat.h"
 
@@ -97,7 +99,7 @@ static unsigned char corridor_square(void)
     return (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | 0x00);
 }
 
-/* ── Test 1: F0705 positive path, level-1 to level-0 with NS-oriented
+/* ── Test 1: F0154/F0155 positive path, level-1 to level-0 with NS-oriented
  *       stairs on the destination, EAST neighbor is a wall → blocked,
  *       so the encoded direction must be DIR_WEST (3).
  *       Bit layout: NS=1, blocked=1 → (1<<1)|1 = 3 = DIR_WEST.
@@ -172,7 +174,7 @@ static void test_f0155_ns_blocked_east_returns_dir_west(void)
     party.direction = DIR_NORTH;
     party.championCount = 0;
 
-    int rc = F0705_MOVEMENT_ResolveStairsTransition_Compat(&dungeon, &party, &r);
+    int rc = dm1_v1_dungeon_resolve_stairs_transition_pc34(&dungeon, &party, &r);
 
     expect_int("f0155.ns_blocked.rc", rc, 1,
                "DUNGEON.C:F0154_DUNGEON_GetLocationAfterLevelChange:1508-1558");
@@ -251,7 +253,7 @@ static void test_f0155_ns_open_east_returns_dir_east(void)
     party.mapY = 1;
     party.direction = DIR_SOUTH;
 
-    int rc = F0705_MOVEMENT_ResolveStairsTransition_Compat(&dungeon, &party, &r);
+    int rc = dm1_v1_dungeon_resolve_stairs_transition_pc34(&dungeon, &party, &r);
 
     expect_int("f0155.ns_open.rc", rc, 1,
                "DUNGEON.C:F0154:1508-1558");
@@ -327,7 +329,7 @@ static void test_f0155_ew_blocked_north_returns_dir_south(void)
     party.mapY = 1;
     party.direction = DIR_NORTH;
 
-    int rc = F0705_MOVEMENT_ResolveStairsTransition_Compat(&dungeon, &party, &r);
+    int rc = dm1_v1_dungeon_resolve_stairs_transition_pc34(&dungeon, &party, &r);
 
     expect_int("f0155.ew_blocked.rc", rc, 1,
                "DUNGEON.C:F0154:1508-1558");
@@ -340,7 +342,7 @@ static void test_f0155_ew_blocked_north_returns_dir_south(void)
                "(encode: 1<<1 | 0 = 2)");
 }
 
-/* ── Test 4: F0705 returns 0 (no transition) when party stands on a
+/* ── Test 4: F0154/F0155 returns 0 (no transition) when party stands on a
  *       plain corridor square — the resolver must reject this and
  *       leave the result zeroed except for the bookkeeping copy. */
 
@@ -393,25 +395,25 @@ static void test_f0705_returns_zero_on_corridor_square(void)
     party.mapY = 0;
     party.direction = DIR_NORTH;
 
-    int rc = F0705_MOVEMENT_ResolveStairsTransition_Compat(&dungeon, &party, &r);
+    int rc = dm1_v1_dungeon_resolve_stairs_transition_pc34(&dungeon, &party, &r);
 
     expect_int("f0705.corridor.rc", rc, 0,
                "M034_SQUARE_TYPE(square) = 1 (CORRIDOR), not STAIRS → no transition");
     expect_int("f0705.corridor.transitioned", r.transitioned, 0,
-               "F0705 only sets transitioned=1 on DUNGEON_ELEMENT_STAIRS squares");
+               "F0154/F0155 only sets transitioned=1 on DUNGEON_ELEMENT_STAIRS squares");
     expect_int("f0705.corridor.stairUp", r.stairUp, 0,
                "stairUp is only meaningful when transitioned=1");
     expect_int("f0705.corridor.fromMapIndex", r.fromMapIndex, party.mapIndex,
-               "F0705 copies party.mapIndex into fromMapIndex unconditionally");
+               "F0154/F0155 copies party.mapIndex into fromMapIndex unconditionally");
     expect_int("f0705.corridor.toMapIndex", r.toMapIndex, party.mapIndex,
-               "F0705 keeps toMapIndex = party.mapIndex when no transition");
+               "F0154/F0155 keeps toMapIndex = party.mapIndex when no transition");
     expect_int("f0705.corridor.newMapX", r.newMapX, party.mapX,
-               "F0705 keeps newMapX = party.mapX when no transition");
+               "F0154/F0155 keeps newMapX = party.mapX when no transition");
     expect_int("f0705.corridor.newMapY", r.newMapY, party.mapY,
-               "F0705 keeps newMapY = party.mapY when no transition");
+               "F0154/F0155 keeps newMapY = party.mapY when no transition");
 }
 
-/* ── Test 5: F0705 must return 0 when no target map covers the global
+/* ── Test 5: F0154/F0155 must return 0 when no target map covers the global
  *       coordinate of the source stairs square (F0154 returns -1). */
 
 static void test_f0705_returns_zero_when_no_target_map_covers_coord(void)
@@ -448,7 +450,7 @@ static void test_f0705_returns_zero_when_no_target_map_covers_coord(void)
     /* Map 1 exists but sits at level=1 with offsetMapX=100 → its
      * global coordinate range is (100..102, 0..2).  The source
      * stairs global coordinate is (1, 1), which is NOT covered.
-     * F0154 returns -1 and F0705 returns 0. */
+     * F0154 returns -1 and the DM1 resolver returns 0. */
     maps[1].level = 1;
     maps[1].width = 3;
     maps[1].height = 3;
@@ -468,14 +470,14 @@ static void test_f0705_returns_zero_when_no_target_map_covers_coord(void)
     party.mapY = 1;
     party.direction = DIR_NORTH;
 
-    int rc = F0705_MOVEMENT_ResolveStairsTransition_Compat(&dungeon, &party, &r);
+    int rc = dm1_v1_dungeon_resolve_stairs_transition_pc34(&dungeon, &party, &r);
 
     expect_int("f0705.no_target.rc", rc, 0,
                "DUNGEON.C:F0154:1508-1558 returns -1 when no map covers target coords");
     expect_int("f0705.no_target.transitioned", r.transitioned, 0,
-               "F0705 must not transition when F0154 returns -1");
+               "F0154/F0155 must not transition when F0154 returns -1");
     expect_int("f0705.no_target.toMapIndex", r.toMapIndex, party.mapIndex,
-               "F0705 keeps toMapIndex = party.mapIndex on F0154 miss");
+               "F0154/F0155 keeps toMapIndex = party.mapIndex on F0154 miss");
 }
 
 /* ── Test 6: DM1_V1_StairLevelStatePc34 invariants I1..I4 across

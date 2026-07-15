@@ -1,5 +1,6 @@
 #include "dm1_v1_movement_command_core_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_dungeon_stairs_pc34_compat.h"
 #include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 
 #include <string.h>
@@ -435,7 +436,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
          * stairs square as source (CLIKMENU.C:135), so the stairs walk-off
          * sensor pass is preserved without a same-square walk-on pass.
          */
-        if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+        if (dm1_v1_dungeon_resolve_stairs_transition_pc34(dungeon, party, &stairs) && stairs.transitioned) {
             struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
@@ -490,7 +491,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
      */
     if (action == MOVE_BACKWARD) {
         struct StairsTransitionResult_Compat stairs;
-        if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, party, &stairs) && stairs.transitioned) {
+        if (dm1_v1_dungeon_resolve_stairs_transition_pc34(dungeon, party, &stairs) && stairs.transitioned) {
             struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
@@ -525,7 +526,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         targetParty.mapX = outResult->movement.newMapX;
         targetParty.mapY = outResult->movement.newMapY;
         targetParty.direction = outResult->movement.newDirection;
-        if (F0705_MOVEMENT_ResolveStairsTransition_Compat(dungeon, &targetParty, &stairs) && stairs.transitioned) {
+        if (dm1_v1_dungeon_resolve_stairs_transition_pc34(dungeon, &targetParty, &stairs) && stairs.transitioned) {
             struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
