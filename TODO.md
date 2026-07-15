@@ -301,6 +301,13 @@
     into the entrance receipt. Remaining work is unchanged: external
     original-window capture and broader app-route parity, not a tick-stale
     host capture or synthetic startup replacement.
+  - 2026-07-16 update: the title/opening consumption receipt now pins each
+    host C001 title frame to the resident session title surface and pins the
+    C004/C002/C003 opening host frame to the resident entrance and door
+    surfaces, matching the narrower opening-door receipt. Swapped owner
+    pointers with plausible raster facts are rejected. Remaining work is
+    unchanged: external original-window capture and broader app-route parity,
+    not a wrapper-owned startup surface.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
