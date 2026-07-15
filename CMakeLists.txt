@@ -24998,6 +24998,17 @@ if(NOT MSVC)
     )
 endif()
 
+# Verifies the documented static Structure3-face to Structure2-descriptor join
+# over canonical LEV files; raw descriptor payloads remain no-draw.
+add_executable(firestaff_nexus_v1_structure3_static_descriptor_corpus_probe
+    probes/nexus/firestaff_nexus_v1_structure3_static_descriptor_corpus_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_structure3_static_descriptor_corpus_probe PRIVATE firestaff_nexus firestaff_m10)
+target_include_directories(firestaff_nexus_v1_structure3_static_descriptor_corpus_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_structure3_static_descriptor_corpus_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Emits a visible Structure1F/Structure1A owner context beside one bounded
 # Structure3 face for an external original-Saturn capture. No mesh mapping or
 # draw semantics are inferred by this producer request.
