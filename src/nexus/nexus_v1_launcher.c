@@ -2225,6 +2225,15 @@ static int nexus_v1_launcher_dgn_viewport_host_route_receipt(
            receipt.status == NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
 }
 
+static int nexus_v1_launcher_title_route_asset_ready(
+    Nexus_V1_StartupTitleRoute route,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets);
+
+static void nexus_v1_launcher_fill_title_asset_blocked_route(
+    const Nexus_V1_StartupTitleRouteReceipt *source,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
+
 /* M11 receives the dungeon only through the launcher handoff. Keep the
  * source-validated Structure1F/1G receipt intact at that boundary; this is a
  * data gate, not a Structure2 pixel decoder or animation executor. */
@@ -2234,15 +2243,34 @@ int nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
     Nexus_V1_StartupTitleRouteReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupTitleRouteReceipt route;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
         return 0;
     }
-    return nexus_v1_startup_title_route_receipt_from_host_facts_input(
+    if (!nexus_v1_startup_title_route_receipt_from_host_facts_input(
         &facts,
         menu_input,
-        out_receipt);
+        &route)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_startup_assets_from_runtime_state(state, &assets)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_title_route_asset_ready(route.route, &assets)) {
+        nexus_v1_launcher_fill_title_asset_blocked_route(&route,
+                                                         &assets,
+                                                         out_receipt);
+        return 1;
+    }
+    if (out_receipt) {
+        *out_receipt = route;
+    }
+    return 1;
 }
 
 int nexus_v1_launcher_startup_title_route_receipt_from_snapshot(
@@ -2264,14 +2292,33 @@ int nexus_v1_launcher_startup_title_pointer_route_receipt_from_runtime_state(
     Nexus_V1_StartupTitleRouteReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupTitleRouteReceipt route;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
         return 0;
     }
-    return nexus_v1_startup_title_route_receipt_from_host_facts_pointer(
+    if (!nexus_v1_startup_title_route_receipt_from_host_facts_pointer(
         &facts,
-        out_receipt);
+        &route)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_startup_assets_from_runtime_state(state, &assets)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_title_route_asset_ready(route.route, &assets)) {
+        nexus_v1_launcher_fill_title_asset_blocked_route(&route,
+                                                         &assets,
+                                                         out_receipt);
+        return 1;
+    }
+    if (out_receipt) {
+        *out_receipt = route;
+    }
+    return 1;
 }
 
 int nexus_v1_launcher_startup_title_pointer_route_receipt_from_snapshot(
@@ -2301,9 +2348,40 @@ static int nexus_v1_launcher_title_route_asset_ready(
     case NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD:
     case NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER:
         return 1;
+    case NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED:
     case NEXUS_V1_STARTUP_TITLE_ROUTE_INVALID:
     default:
         return 0;
+    }
+}
+
+static void nexus_v1_launcher_fill_title_asset_blocked_route(
+    const Nexus_V1_StartupTitleRouteReceipt *source,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt)
+{
+    Nexus_V1_StartupTitleRouteReceipt receipt;
+
+    nexus_v1_startup_title_route_receipt_clear(&receipt);
+    if (source) {
+        receipt = *source;
+    }
+    receipt.route = NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED;
+    receipt.handled = 1;
+    receipt.execution_kind = NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE;
+    receipt.host_input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    receipt.set_title_active = 0;
+    receipt.set_title_frame = 0;
+    receipt.set_save_select_active = 0;
+    receipt.set_save_selected_row = 0;
+    receipt.set_champion_select_active = 0;
+    receipt.set_champion_cursor = 0;
+    receipt.status_scope = "ASSETS";
+    receipt.status = assets && assets->startup_menu_asset_route
+        ? assets->startup_menu_asset_route
+        : "blocked-startup-assets";
+    if (out_receipt) {
+        *out_receipt = receipt;
     }
 }
 

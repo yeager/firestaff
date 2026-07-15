@@ -690,6 +690,9 @@ typedef struct {
     Nexus_V1_BpkRuntimeUploadRoute route;
     uint32_t archive_entries;
     uint32_t surface_entries;
+    int directory_trailer_found;
+    int directory_trailer_at_entry_zero;
+    int directory_trailer_valid;
     uint32_t ready_uploads;
     uint32_t blocked_prs3_uploads;
     uint32_t blocked_truncated_uploads;

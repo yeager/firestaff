@@ -1,5 +1,17 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 Nexus startup title-route follow-up: the runtime-state title
+  route receipt now has an `asset-blocked` route and the launcher wrappers
+  are wired to refuse save/champion presentation when startup menu assets are
+  not ready. Fresh launcher-object verification is still blocked by existing
+  Nexus runtime-handoff declaration drift below the startup route
+  (`Nexus_V1_StartupRuntimeHandoffReceipt` Structure1/Structure2/static
+  material fields and engine MNS route fields are referenced by
+  `src/nexus/nexus_v1_launcher.c` but absent from current headers). Remaining
+  work is to repair that Nexus-local declaration drift and then run
+  `tests/test_nexus_v1_startup_title_route_asset_gate.c` against the real
+  launcher object; do not promote fallback startup menu presentation.
+
 - 2026-07-11 DM2 startup follow-up: `fe7299.cpp` cue-0 to static-menu handoff
   is now owned by DM2. Remaining startup work is real packaged Mac capture
   with a supported DM2 audio backend, plus source evidence for interactive
