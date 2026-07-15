@@ -1,0 +1,36 @@
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -121,6 +121,9 @@ struct TheronPCECDFifoReceipt
+  uint16 reader_pc;
+  uint8 value;
+  unsigned generation;
++ bool source_known;
++ uint32 source_lba;
++ uint16 source_offset;
+  unsigned dispatch_sequence;
+  uint64 sequence;
+ };
+@@ -253,6 +256,9 @@ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned
+  receipt->reader_pc = reader_pc;
+  receipt->value = value;
+  receipt->generation = generation;
++ receipt->source_known = TheronPCECDDataReadHasOrigin;
++ receipt->source_lba = TheronPCECDDataReadLBA;
++ receipt->source_offset = TheronPCECDDataReadOffset;
+  receipt->dispatch_sequence = TheronPCECDMainRAMLoaderE009Sequence;
+  receipt->sequence = TheronPCECDFifoReceiptSequence++;
+  TheronPCECDFifoReceiptCount++;
+@@ -294,6 +300,12 @@ void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_dest
+  TheronPCECDTraceFifoReceipt("pce_cd_fifo_destination_receipt generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x value=%02x\n",
+                              receipt->generation, (unsigned long long)receipt->sequence,
+                              receipt->reader_pc, logical_destination, physical_destination, stored_value);
++ if(receipt->source_known && physical_destination >= 0x1f0000 && physical_destination < 0x1f8000)
++  TheronPCECDTraceFifoReceipt("pce_cd_fifo_origin_main_ram_receipt generation=%u source_lba=%u source_offset=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x writer_pc=%04x writer_physical_pc=%06x value=%02x\n",
++                              receipt->generation, receipt->source_lba, receipt->source_offset,
++                              (unsigned long long)receipt->sequence, receipt->reader_pc,
++                              logical_destination, physical_destination, writer_pc,
++                              writer_physical_pc, stored_value);
+  if(receipt->dispatch_sequence < 32)
+   TheronPCECDTraceFifoReceipt("main_ram_e009_fifo_destination dispatch_sequence=%u generation=%u fifo_sequence=%llu logical_destination=%04x physical_destination=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
+                               receipt->dispatch_sequence, receipt->generation,

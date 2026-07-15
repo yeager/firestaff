@@ -16772,6 +16772,20 @@ objects, palettes, or rendering semantics.
 Verification: `test_theron_v1_generation4_system_card_receipt` and the
 authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
 
+# ✅ 2026-07-15 Theron byte-exact FIFO-to-main-RAM instrumentation
+
+The Mednafen trace now retains the raw Track 02 LBA and byte offset that were
+current at each queued FIFO read, and emits them with the later main-RAM
+destination plus reader and writer CPU provenance. A verifier accepts such a
+receipt only when its source lies in a preceding observed READ(6) range and
+its destination is physical main RAM. This does not fabricate a handoff: the
+new MD5-pinned headless USA capture stayed at the System Card wait and emitted
+no FIFO-to-main-RAM receipt. A future runtime capture must supply the positive
+row before any game-owned loader, level, object, palette, or visual claim.
+
+Verification: `test_theron_v1_fifo_origin_main_ram_receipt`, the Mednafen
+patch application/compile probe, and the negative headless capture.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
