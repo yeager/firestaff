@@ -287,6 +287,9 @@ typedef struct {
     int party_direction;
     int game_time_valid;
     uint32_t game_time;
+    /* CSBWin CSBCode.cpp::STRandom owns this GAMEBLOCK2 state. */
+    int random_state_valid;
+    uint32_t random_state;
     int dsa_slave_thing_valid;
     uint16_t dsa_slave_thing;
     int party_champions_valid;
@@ -546,6 +549,8 @@ typedef struct {
     int party_direction;
     int game_time_valid;
     uint32_t game_time;
+    int random_state_valid;
+    uint32_t random_state;
     int dsa_slave_thing_valid;
     uint16_t dsa_slave_thing;
     int party_champions_valid;

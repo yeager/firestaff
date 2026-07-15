@@ -43,6 +43,8 @@ static int monster_possession_enabled;
 static int inspect_cells_enabled;
 static int thing_type_enabled;
 static int is_carried_enabled;
+static int random_state_enabled;
+static uint32_t random_state;
 static int level_multiplier_enabled;
 
 static int wing_talents_enabled;
@@ -328,6 +330,10 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_direction = 3;
     context.game_time_valid = 1;
     context.game_time = 12345u;
+    if (random_state_enabled) {
+        context.random_state_valid = 1;
+        context.random_state = random_state;
+    }
     context.dsa_slave_thing_valid = 1;
     context.dsa_slave_thing = 0x8123u;
     context.party_champions_valid = 1;
@@ -391,6 +397,9 @@ static CSB_V1_CSBWinDSAStackResult run(
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 state, 7, 1u, 0, &context, out_execution);
+        if (result == CSB_V1_CSBWIN_DSA_STACK_OK && random_state_enabled) {
+            random_state = context.random_state;
+        }
         memcpy(last_party_talents, context.party_champion_talents,
                sizeof(last_party_talents));
         return result;
@@ -586,6 +595,12 @@ int main(void)
     };
     uint16_t multiplier_default[] = {
         0x0686u, 99u, 0x1c0bu, 0x000du
+    };
+    uint16_t random_fetch[] = {
+        0x0686u, 10u, 0x10cbu, 0x000du
+    };
+    uint16_t random_then_bad_opcode[] = {
+        0x0686u, 10u, 0x10cbu, 0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -975,6 +990,23 @@ int main(void)
               parameters[0] == 1u && execution.stack_depth == 0u,
           "MULTIPLIER@ returns the source out-of-range default");
     level_multiplier_enabled = 0;
+    random_state_enabled = 1;
+    random_state = 0x12345678u;
+    parameters[0] = 77u;
+    check(run(&state, &action, random_fetch,
+              (int)(sizeof(random_fetch) / sizeof(random_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 5u && random_state == 0x7ee30323u,
+          "RANDOM advances the source CSBWin seed and returns its modulo");
+    random_state = 0x12345678u;
+    parameters[0] = 77u;
+    check(run(&state, &action, random_then_bad_opcode,
+              (int)(sizeof(random_then_bad_opcode) /
+                    sizeof(random_then_bad_opcode[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u && random_state == 0x12345678u,
+          "RANDOM does not publish a seed after a later rejected opcode");
+    random_state_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

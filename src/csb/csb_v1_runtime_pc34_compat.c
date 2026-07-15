@@ -20629,6 +20629,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.party_direction = profile->party_dir & 3;
     candidate.game_time_valid = 1;
     candidate.game_time = profile->game_time;
+    candidate.random_state_valid = profile->csbwin_gameblock2_summary_valid ? 1 : 0;
+    candidate.random_state = profile->csbwin_random_seed;
     candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
     candidate.dsa_slave_thing = binding->location.actuator_thing;
     candidate.saves_disabled_valid = 1;
@@ -20724,6 +20726,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int expool_changed;
     int dsa_state_changed;
     int party_talents_changed;
+    int random_state_changed;
     int i;
 
     if (!profile || !runner || !action ||
@@ -20756,6 +20759,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
            (size_t)global_count * sizeof(candidate.global_variables[0]));
     candidate.saves_disabled_valid = 1;
     candidate.saves_disabled = profile->csbwin_saves_disabled ? 1 : 0;
+    candidate.random_state_valid = profile->csbwin_gameblock2_summary_valid ? 1 : 0;
+    candidate.random_state = profile->csbwin_random_seed;
     if (profile->party_state_valid &&
         profile->party_state.ChampionCount >= 0 &&
         profile->party_state.ChampionCount <= 4) {
@@ -20847,6 +20852,11 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     if (saves_disabled_changed) {
         profile_candidate.csbwin_saves_disabled = candidate.saves_disabled;
     }
+    random_state_changed = candidate.random_state_valid &&
+        candidate.random_state != profile->csbwin_random_seed;
+    if (random_state_changed) {
+        profile_candidate.csbwin_random_seed = candidate.random_state;
+    }
     party_talents_changed = 0;
     for (i = 0; i < candidate.party_champion_count; ++i) {
         if (candidate.party_champion_talents[i] !=
@@ -20885,6 +20895,9 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     if (saves_disabled_changed) {
         profile->csbwin_saves_disabled =
             profile_candidate.csbwin_saves_disabled;
+    }
+    if (random_state_changed) {
+        profile->csbwin_random_seed = profile_candidate.csbwin_random_seed;
     }
     if (party_talents_changed) {
         for (i = 0; i < candidate.party_champion_count; ++i) {
