@@ -3,6 +3,7 @@
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 static int failures = 0;
@@ -77,6 +78,15 @@ int main(void)
               SAVEGAME_PC34_ERROR_BAD_SIZE);
     CHECK("F0419 only consumes malformed length prefix",
           cursor == 2u && recovered_size == 0u);
+    cursor = SIZE_MAX - 1u;
+    recovered_size = 99u;
+    CHECK("F0419 rejects overflowing cursor before prefix access",
+          dm1_v1_original_save_pc34_read_part_f0419(
+              encoded, sizeof(encoded), &cursor, 1u, 0u, recovered,
+              sizeof(recovered), &recovered_size, NULL) ==
+              SAVEGAME_PC34_ERROR_BAD_SIZE);
+    CHECK("F0419 overflow rejection leaves cursor and output untouched",
+          cursor == SIZE_MAX - 1u && recovered_size == 0u);
     malformed[0] = 4u;
     cursor = 0u;
     CHECK("F0419 rejects truncated source span",
