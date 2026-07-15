@@ -421,7 +421,7 @@ F	0284	F0284_CHAMPION_SetPartyDirection	ATARIST.H;FMTOWNS.H;IIGS.H;CLIKMENU.C;DE
 F	284	F284_czzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0285	F0285_CHAMPION_GetIndexInCell	ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;MENU.C;IO.C;DEFS.H;CHAMPION.C;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	285	F285_szzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0286	F0286_CHAMPION_GetTargetChampionIndex	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;CLIKMENU.C;DEFS.H;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0286	F0286_CHAMPION_GetTargetChampionIndex	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;CLIKMENU.C;DEFS.H;CHAMPION.C	implemented-narrow	implemented_narrow	CHAMPION.C:4956-4974 exact adjacent attacker gate, F0229/G0023 ordered cells and F0285 living champion scan; active M10 C04 melee target route consumes the live RNG owner
 F	286	F286_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0287	F0287_CHAMPION_DrawBarGraphs	IIGS.H;CHAMDRAW.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0288	F0288_CHAMPION_GetStringFromInteger	PANEL.C;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

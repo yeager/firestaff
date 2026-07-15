@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 CHAMPION F0286: added exact `CHAMPION.C:4956-4974`
+  adjacent C04-to-party target selection. The live melee route now consumes
+  F0229's ordered cell/RNG path and F0285's first living champion match.
+
 - 2026-07-15 DM1 MOVE F0265: added exact `MOVESENS.C:11938-11955` C60/C61
   event construction. The deferred group-move route now preserves native
   map/time wrapping, zero priority, destination location, and the C04 Thing

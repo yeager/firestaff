@@ -9656,14 +9656,9 @@ static int orch_apply_f0207_creature_attack_compat(
             }
             if (i == CHAMPION_MAX_PARTY) return 1;
         } else {
-            for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
-                if (world->party.champions[i].present &&
-                    world->party.champions[i].hp.current > 0 &&
-                    world->party.champions[i].cell == targetCell) {
-                    targetChampion = i;
-                    break;
-                }
-            }
+            targetChampion = F0286_CHAMPION_GetTargetChampionIndex_Compat(
+                &world->party, ev->mapX, ev->mapY,
+                (unsigned int)targetCell, &world->masterRng);
             if (targetChampion < 0) return 1;
         }
 

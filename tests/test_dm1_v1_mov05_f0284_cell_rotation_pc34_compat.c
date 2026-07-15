@@ -17,6 +17,8 @@
 
 #include "memory_mov05_f0284_cell_rotation_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -66,6 +68,26 @@ static void setup_sparse_3_champions(struct PartyState_Compat* party)
     party->championCount = 3;
     party->direction = 0;
     party->activeChampionIndex = 2;
+}
+
+static void setup_f0286_party(struct PartyState_Compat* party)
+{
+    memset(party, 0, sizeof(*party));
+    party->championCount = 4;
+    party->mapX = 10;
+    party->mapY = 10;
+    party->champions[0].present = 1;
+    party->champions[0].cell = 0;
+    party->champions[0].hp.current = 0;
+    party->champions[1].present = 1;
+    party->champions[1].cell = 1;
+    party->champions[1].hp.current = 50;
+    party->champions[2].present = 1;
+    party->champions[2].cell = 2;
+    party->champions[2].hp.current = 60;
+    party->champions[3].present = 1;
+    party->champions[3].cell = 3;
+    party->champions[3].hp.current = 70;
 }
 
 int main(void)
@@ -161,6 +183,43 @@ int main(void)
     CHECK(party.activeChampionIndex == 2,
           "sparse party preserves activeChampionIndex");
 
-    printf("PASS: MOV-05 F0284 source-locked Cell/Direction rotation\n");
+    /* CHAMPION.C F0286 calls F0229 and then F0285 across the original
+     * party range. The dead champion at cell zero cannot become a target. */
+    {
+        struct RngState_Compat actual = { 91u };
+        struct RngState_Compat expected = { 91u };
+        int ordered[4];
+        int expectedChampion = -1;
+        int order;
+        int champion;
+
+        setup_f0286_party(&party);
+        CHECK(F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
+                  ordered, party.mapX, party.mapY, 10, 9, 0u, &expected),
+              "F0286 fixture has an original F0229 row");
+        for (order = 0; order < 4 && expectedChampion < 0; ++order) {
+            for (champion = 0; champion < party.championCount; ++champion) {
+                if (party.champions[champion].present &&
+                    party.champions[champion].hp.current > 0 &&
+                    party.champions[champion].cell == ordered[order]) {
+                    expectedChampion = champion;
+                    break;
+                }
+            }
+        }
+        CHECK(F0286_CHAMPION_GetTargetChampionIndex_Compat(
+                  &party, 10, 9, 0u, &actual) == expectedChampion,
+              "F0286 returns F0229's first living F0285 cell match");
+        CHECK(actual.seed == expected.seed,
+              "F0286 preserves the source F0229 RNG order");
+        actual.seed = 77u;
+        CHECK(F0286_CHAMPION_GetTargetChampionIndex_Compat(
+                  &party, 12, 10, 0u, &actual) == -1,
+              "F0286 rejects non-adjacent attackers");
+        CHECK(actual.seed == 77u,
+              "F0286 does not consume RNG outside source range gate");
+    }
+
+    printf("PASS: F0284/F0286 source-locked party direction and target selection\n");
     return 0;
 }
