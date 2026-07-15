@@ -6612,6 +6612,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     strict profiles record the appropriate blocked source material. Remaining
     work is original record ownership and exact source placement, not a
     substitute category.
+  - 2026-07-15 update: direct G1 DB5 weapon roots now traverse the complete
+    `DRAW_MAP_CHIP` viewport path as `WEAPONS/itemType/F9`. The runtime admits
+    only a visible receipt row, and the final blit rechecks ObjectID, map
+    coordinate, item type, decoded dimensions, and IMG3 local-palette hash.
+    A mismatched or absent receipt is no-draw. The current canonical corpus
+    correctly remains blocked because it lacks `WEAPONS/126/F9`; broader DB6--
+    DB10 object ownership and mutable floor-chain semantics remain open.
   - 2026-07-15 update: the static `INTERFACE_GENERAL` HUD chrome (top/action/gold
     areas, action icons, portrait surround, dividers, coin/label, slot fills,
     and unavailable name pixels) is now GDAT-only. Missing material leaves the

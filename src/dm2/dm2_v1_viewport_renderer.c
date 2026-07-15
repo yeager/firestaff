@@ -1210,6 +1210,15 @@ void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_g1_weapon_map_chip_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt)
+{
+    if (!s) return;
+    s->g1_weapon_map_chip_materials = receipt && receipt->valid ? receipt : NULL;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_g1_scene_creature_material(
     DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
     int creature_type, int gdat_index, int width, int height, int stride,
@@ -3013,7 +3022,11 @@ int dm2_v1_viewport_build_item_render_plan(
         row->gdat_index = dm2_v1_viewport_item_graphic_index(
             category,
             src->item_type,
-            src->frame_index);
+            src->source_gdat_field ? src->source_gdat_field : src->frame_index);
+        row->object_id = src->object_id;
+        row->map_x = src->map_x;
+        row->map_y = src->map_y;
+        row->source_g1_weapon = src->source_g1_weapon;
         row->fallback_radius = 4;
         row->fallback_color = 3;
     }
@@ -3106,7 +3119,11 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
         row->gdat_index = dm2_v1_viewport_item_graphic_index(
             category,
             src->item_type,
-            0);
+            src->source_gdat_field ? src->source_gdat_field : 0);
+        row->object_id = src->object_id;
+        row->map_x = src->map_x;
+        row->map_y = src->map_y;
+        row->source_g1_weapon = src->source_g1_weapon;
         row->flip_mirror =
             dm2_v1_viewport_map_chip_flip_for_object_direction(
                 src->direction,
@@ -5099,6 +5116,17 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                     &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ItemAssetBlit blit;
+                if (it->source_g1_weapon &&
+                    (!s->g1_weapon_map_chip_materials ||
+                     !dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
+                         s->g1_weapon_map_chip_materials,
+                         it->object_id, it->map_x, it->map_y,
+                         it->item_type, src_w, src_h,
+                         s->active_asset_palette_hash))) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
+                    continue;
+                }
                 if (dm2_v1_viewport_item_asset_blit(it,
                                                     src_w,
                                                     src_h,
