@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB ReDMCSB F2262 timer-A event boundary: added a
+  CSB-owned F2262 adapter for the source input-wait state transition:
+  `G0317_i_WaitForInputVerticalBlankCount` advances until
+  `G0318_i_WaitForInputMaximumVerticalBlankCount`, then sets
+  `G0321_B_StopWaitingForPlayerInput`. The optional MEDIA670 FM-Towns
+  counter/volume-fade branch is represented only when caller-provided
+  FM-Towns state is present; PC34 reports that platform branch unavailable
+  and does not synthesize SND service behavior. Verification: strict direct
+  C11 build/run of `test_csb_v1_f2262_timer_a_event_pc34_compat`, plus
+  `git diff --check` on the touched CSB files.
+
 - ✅ 2026-07-16 Theron Track02 accepted-trace raw-grid level route: the
   Track02 loader intake now carries an `authenticated_v3_trace` gate from the
   accepted IRQ2 provenance path through raw BIN rehash, envelope decode, and
