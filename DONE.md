@@ -18758,6 +18758,19 @@ visual semantics. Verification: Ninja focused targets,
 (skip-safe without the authentic corpus), patch-shape test skip-cleans without
 `MEDNAFEN_SOURCE`, and the capture-script contract test passes.
 
+# ✅ 2026-07-15 Theron Track 02 caller-next-call receipt
+
+After the authenticated post-return caller resumes, Firestaff now admits the
+first subsequent main-RAM `JSR` row from the same original trace and retains
+its exact physical call site and immediate target. The receipt nests the full
+source-bound Track 02 TII/copy/call/return chain. It deliberately does not
+identify the target routine, an ABI, descriptor, CD read, table, record,
+level, object, tile, palette, bitmap, command, or visual route. Verification:
+Ninja focused targets, `test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), patch-shape test skip-cleans without
+`MEDNAFEN_SOURCE`, and the capture-script contract test passes.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
