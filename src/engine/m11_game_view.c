@@ -2958,11 +2958,12 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
                                                  unsigned char fgColor,
                                                  unsigned char bgColor) {
     int i;
-    int effectiveScale;
     if (!framebuffer || maxChars <= 0) {
         return;
     }
-    effectiveScale = g_m11_font_scale_override > 0 ? g_m11_font_scale_override : 1;
+    /* ACTIDRAW.C F0387 -> TEXT2.C writes the fixed native cell font into
+     * C113..C115.  The global host fontScale is valid for Firestaff text,
+     * but made source action names such as WAR CRY oversized and clipped. */
     if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
         for (i = 0; i < maxChars; ++i) {
             unsigned char ch = ' ';
@@ -2973,12 +2974,12 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
                                     framebuffer,
                                     framebufferWidth,
                                     framebufferHeight,
-                                    x + (i * 6 * effectiveScale),
+                                    x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
                                     y,
                                     ch,
                                     fgColor,
                                     (int)bgColor,
-                                    effectiveScale);
+                                    1);
         }
         return;
     }
@@ -2988,17 +2989,17 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
         one[0] = (text && text[i] != '\0') ? text[i] : ' ';
         one[1] = '\0';
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x + (i * 6 * effectiveScale),
+                      x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
                       y,
-                      6 * effectiveScale,
-                      7 * effectiveScale,
+                      DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34,
+                      DM1_V1_ACTION_MENU_TEXT_CELL_HEIGHT_PC34,
                       bgColor);
         style.color = fgColor;
         style.shadowDx = 0;
         style.shadowDy = 0;
         style.shadowColor = bgColor;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      x + (i * 6 * effectiveScale),
+                      x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
                       y,
                       one,
                       &style);

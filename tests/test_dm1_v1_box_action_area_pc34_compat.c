@@ -215,6 +215,15 @@ static void test_action_menu_receipts(void)
     CHECK(receipt.render_plan.graphic_rect.h == 33);
     CHECK(DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34 == 7);
     CHECK(DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34 == 12);
+    CHECK(DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34 == 6);
+    CHECK(DM1_V1_ACTION_MENU_TEXT_CELL_HEIGHT_PC34 == 7);
+    /* MENU.C G0490 action index 8 is the seven-cell source label WAR CRY.
+     * Its native F0387/TEXT2 width must fit C113's x=234..318 row without
+     * inheriting an unrelated host accessibility scale. */
+    CHECK(7 * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34 <=
+          receipt.render_plan.row_rects[0].w -
+              (receipt.render_plan.row_text[0].x -
+               receipt.render_plan.row_rects[0].x));
 
     state.action_row_count = 9;
     receipt = dm1_v1_action_menu_build_receipt_pc34(&state);
