@@ -7390,6 +7390,18 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_item_material_plan_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.item_material_plan_consumed : 0;
+        out_receipt->runtime_m11_frame_weather_material_plan_required =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_material_plan_required : 0;
+        out_receipt->runtime_m11_frame_weather_material_plan_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_material_plan_hash : 0u;
+        out_receipt->runtime_m11_frame_weather_material_plan_command_count =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_material_plan_command_count : 0;
+        out_receipt->runtime_m11_frame_weather_material_plan_consumed =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_material_plan_consumed : 0;
         out_receipt->runtime_m11_frame_teleporter_material_plan_required =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.teleporter_material_plan_required : 0;

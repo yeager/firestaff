@@ -540,6 +540,9 @@
   - 2026-07-15 update: multi-creature GDAT receipts now cross boot/M11 with
     their exact count. A shortened creature list is rejected before frame
     presentation; no inferred type/frame sprite is admitted.
+  - 2026-07-15 update: source-backed weather renderer hash/count now cross
+    boot/M11. A mismatched weather command list is rejected before host
+    presentation; no intensity-only overlay is admitted.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented
