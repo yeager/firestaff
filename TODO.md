@@ -7416,6 +7416,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     requests without treating the ledger as a Saturn trace. Model-to-entry,
     texture, palette, VDP1, transform, culling, decoder, and draw semantics
     remain unproven and blocked.
+  - 2026-07-15 campaign-verification update: the verifier rebuilds every
+    target from the canonical LEV00--LEV15 sources and requires the published
+    target bytes and ledger fingerprints to agree. This protects acquisition
+    evidence only; it is not a Saturn trace and cannot promote mesh, texture,
+    palette, VDP1, decoder, or draw semantics.
   - 2026-07-15 update: the active canonical LEV route can now atomically emit
     its verified dual-source Structure1F/Structure1A and Structure3-face
     target for an external capture producer. The written request contains no
