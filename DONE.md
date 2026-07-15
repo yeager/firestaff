@@ -16269,6 +16269,17 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron main-RAM `$e009` to SCSI receipt
+
+The HuC6280 trace now emits every physical main-RAM `$e009` call into the
+PCE-CD trace. A fail-closed verifier requires exactly seven subsequent CDB
+writes and one READ(6) SCSI command. A real USA Track 02 capture validates
+32 such dispatch-to-record chains. This proves loader-to-record transport,
+not game-owned destination, level, object, or visual semantics.
+
+Verification: Mednafen patch dry-run, focused verifier test, and real SDL2
+USA Track 02 capture.
+
 # ✅ 2026-07-15 Theron parameterised main-RAM `$e009` receipt
 
 The HuC6280 main-RAM trace now captures A/X/Y at each executed loader call.

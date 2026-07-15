@@ -1,0 +1,48 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -10,6 +10,7 @@
+ void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value);
+ void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destination);
+ void TheronPCECDTracePostGeneration7RAMWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
++void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc, uint8 accumulator, uint8 x, uint8 y);
+
+ class alignas(128) HuC6280
+ {
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -118,6 +118,7 @@
+ static FILE *TheronPCECDFifoReceiptTrace;
+ static bool TheronPCECDGeneration7FifoComplete;
+ static unsigned TheronPCECDPostGeneration7RAMWriteCount;
++static unsigned TheronPCECDMainRAMLoaderE009CallCount;
+
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -138,6 +139,16 @@
+  fflush(TheronPCECDFifoReceiptTrace);
+ }
+
++void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc,
++                                           uint8 accumulator, uint8 x, uint8 y)
++{
++ if(TheronPCECDMainRAMLoaderE009CallCount >= 32)
++  return;
++ TheronPCECDTraceFifoReceipt("main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x\n",
++                             TheronPCECDMainRAMLoaderE009CallCount++, logical_pc,
++                             physical_pc, accumulator, x, y);
++}
++
+ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned generation)
+ {
+  if(TheronPCECDFifoReceiptCount == TheronPCECDFifoReceiptCapacity)
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -730,6 +730,8 @@
+ 	  second = RdOp(PC + 3) | (RdOp(PC + 4) << 8);
+ 	  third = RdOp(PC + 5) | (RdOp(PC + 6) << 8);
+ 	  TheronTraceMainRAMLoaderOperation(PC, physical_pc, lastop, first, second, third, A, X, Y);
++	  if(lastop == 0x20 && first == 0xe009)
++	   TheronPCECDTraceMainRAMLoaderE009Call(PC, physical_pc, A, X, Y);
+ 	 }
+
+ 	 PC++;
