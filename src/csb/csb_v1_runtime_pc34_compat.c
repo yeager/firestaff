@@ -18416,7 +18416,7 @@ int csb_v1_runtime_get_csbwin_save_policy(
 
 int csb_v1_runtime_admit_csbwin_csbgraphics_plan(
     const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    const struct CSB_V1_CSBGraphicsRuntimePlan *plan,
     CSB_V1_CSBWinGraphicsSignatureReceipt *out_receipt)
 {
     if (!profile || !plan || !profile->csbwin_extended_features_valid ||

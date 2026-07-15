@@ -64,7 +64,7 @@
 #include "memory_projectile_pc34_compat.h"
 
 struct CSB_V1_StartupRuntimePlan_PC34;
-typedef struct CSB_V1_CSBGraphicsRuntimePlan CSB_V1_CSBGraphicsRuntimePlan;
+struct CSB_V1_CSBGraphicsRuntimePlan;
 
 #ifdef __cplusplus
 extern "C" {
@@ -752,7 +752,7 @@ int csb_v1_runtime_get_csbwin_save_policy(
  * unready, or mismatched plans remain unavailable to startup/HUD consumers. */
 int csb_v1_runtime_admit_csbwin_csbgraphics_plan(
     const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    const struct CSB_V1_CSBGraphicsRuntimePlan *plan,
     CSB_V1_CSBWinGraphicsSignatureReceipt *out_receipt);
 
 /* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
