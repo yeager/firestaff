@@ -139,6 +139,7 @@ if ! grep -Fq 'pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x 
 fi
 if ! grep -Fq 'main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x a=%02x x=%02x y=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_rts logical_pc=%04x physical_pc=%06x' "$main_ram_loader_patch_file" ||
+   ! grep -Fq 'main_ram_loader_post_rts source_logical_pc=%04x source_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_block_transfer logical_pc=%04x physical_pc=%06x operation=%s source=%04x destination=%04x length=%04x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'source=mednafen-pce-instrumented-main-ram-loader' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$main_ram_loader_patch_file" ||

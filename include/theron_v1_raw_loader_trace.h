@@ -342,8 +342,12 @@ typedef struct {
     uint16_t call_target;
     uint16_t return_instruction_pc;
     uint32_t return_instruction_physical_pc;
+    uint16_t post_return_pc;
+    uint32_t post_return_physical_pc;
+    uint8_t post_return_opcode;
     int continuation_execution_proven;
     int continuation_termination_instruction_proven;
+    int continuation_post_return_target_proven;
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt;
 
@@ -571,7 +575,9 @@ int theron_v1_raw_loader_trace_import_initial_post_envelope_tii_transfer_file(
     Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *out);
 
 /* Requires an original main-RAM-loader `JSR` after the authenticated TII
- * whose target is exactly that transfer's destination. */
+ * whose target is exactly that transfer's destination, followed by one RTS
+ * inside that copied span and the observed main-RAM instruction at the JSR
+ * return address. This is control-flow provenance only. */
 int theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
