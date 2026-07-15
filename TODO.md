@@ -3068,6 +3068,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     FNV-1a64 identities for the exact loaded SAL and MAP buffers. Missing or
     changed active bytes block capture acquisition before a driver trace can
     be requested. Codec, event, and playback semantics remain unproved.
+  - 2026-07-15 driver-trace admission update: an externally captured
+    SDDRVS trace must now match the active source-bound SAL/MAP target,
+    driver identity, selector/window, and three observed PCs. Admission stays
+    opaque and playback-blocked; the remaining work is authentic trace data
+    plus separately proven driver and codec semantics.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route. Manual condition/action fixtures are now inert even when
   callers mutate their public fields; remaining work is an original,

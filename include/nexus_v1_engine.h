@@ -1053,6 +1053,41 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelSoundCaptureTargetReceipt;
 
+/* Admission boundary for a future original-Saturn SDDRVS trace. A matching
+ * trace is evidence only: it cannot assign MAP selector semantics, decode a
+ * SAL window, or request host playback. */
+#define NEXUS_V1_SAL_TRACE_MAGIC "FIRESTAFF_NEXUS_SAL_DRIVER_TRACE_V1"
+typedef enum {
+    NEXUS_V1_SAL_TRACE_MISSING = 0,
+    NEXUS_V1_SAL_TRACE_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_SAL_TRACE_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_SAL_TRACE_ADMITTED_OPAQUE = 3
+} Nexus_V1_LevelSoundTraceStatus;
+
+typedef struct {
+    Nexus_V1_LevelSoundTraceStatus status;
+    int level_index;
+    int raw_map_selector;
+    int map_attribute;
+    int sal_offset;
+    int sal_size;
+    uint64_t canonical_sal_fnv1a64;
+    uint64_t canonical_map_fnv1a64;
+    int capture_target_bound;
+    int mednafen_debugger_provenance;
+    int original_saturn_execution_claimed;
+    int trace_sha256_present;
+    uint32_t selector_dispatch_pc;
+    uint32_t sal_read_pc;
+    uint32_t driver_output_pc;
+    int trace_chain_complete;
+    int driver_dispatch_proven;
+    int sal_decode_proven;
+    int playback_permitted;
+    int blocks_real_sfx_playback;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelSoundTraceAdmissionReceipt;
+
 /* Active-level ownership for the corpus-verified SLEV SH-2 entry profile.
  * This binds only the observed entry framing and literal locations to the
  * engine's current level. It does not identify task-body opcodes, callback
@@ -1474,6 +1509,7 @@ struct Nexus_V1_Engine {
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
     Nexus_V1_LevelScriptTraceAdmissionReceipt script_trace_admission;
     Nexus_V1_LevelScriptTraceHostReceipt script_trace_host_receipt;
+    Nexus_V1_LevelSoundTraceAdmissionReceipt sound_trace_admission;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
@@ -1713,6 +1749,12 @@ int nexus_v1_engine_build_sal_capture_target(
 int nexus_v1_engine_write_sal_capture_target(
     const Nexus_V1_Engine *engine, int raw_map_selector, const char *path,
     Nexus_V1_LevelSoundCaptureTargetReceipt *out_target);
+int nexus_v1_engine_admit_sal_driver_trace(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt);
+int nexus_v1_current_level_sal_trace_admission_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_script_route_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptRouteReceipt *out_receipt);
