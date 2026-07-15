@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB C033-C035 status-hand source gate: CSB F0291 hand slots
+  now require the exact 18x18 GRAPHICS.DAT C033/C034/C035 source surface.
+  A missing or malformed hand box leaves the C12 F0292 status clear intact
+  and blocks the dependent C020 icon; M11 no longer invents a gray frame.
+  The real-package launcher regression corrupts C033/C020 and verifies C211
+  remains source-cleared.
+- ✅ 2026-07-15 DM2 source HUD bar colors: HP, stamina, and mana now share
+  SKProject's `glbChampionColor[player]` bootstrap values (`7,11,8,14`) and
+  their decoded interface palette. Removed Firestaff's independent
+  per-resource colors (`2,11,12`); future mutations remain gated on an
+   authenticated runtime owner.
+
 - 2026-07-15 CSB C028 champion-icon source gate: CSB party-position icons
   now require the complete 76x14 C028 strip from the selected GRAPHICS.DAT.
   Missing or malformed C028 clears C113..C116 rather than showing M11's

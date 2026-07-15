@@ -371,6 +371,12 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
     const DM2_V1_HudPartyState *party,
     DM2_V1_HudChromeRenderPlan *out_plan)
 {
+    /* SKProject SkWinCore.cpp::INIT initializes glbChampionColor in player
+     * order. DRAW_PLAYER_3STAT_HEALTH_BAR indexes this single source table
+     * for HP, stamina, and mana; it does not invent a separate color per
+     * resource. */
+    static const uint8_t source_default_stat_bar_color[
+        DM2_V1_HUD_CHAMPION_SLOT_COUNT] = { 7u, 11u, 8u, 14u };
     if (!dm2_v1_viewport_build_hud_chrome_plan(is_outdoor, out_plan)) {
         return 0;
     }
@@ -397,6 +403,13 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->hp_pct = dm2_v1_hud_clamp_pct((int)src->hp_pct);
         dst->stamina_pct = dm2_v1_hud_clamp_pct((int)src->stamina_pct);
         dst->mana_pct = dm2_v1_hud_clamp_pct((int)src->mana_pct);
+        if (src->stat_bar_color_source_bound && src->stat_bar_color < 16u) {
+            dst->stat_bar_color = src->stat_bar_color;
+            dst->stat_bar_color_source_bound = 1;
+        } else {
+            dst->stat_bar_color = source_default_stat_bar_color[slot];
+            dst->stat_bar_color_source_bound = 1;
+        }
         /* skproject passes Champion::HeroType directly to
          * DRAW_CHAMPION_PICTURE. Do not fold it into a local ordinal. */
         dst->portrait_index = src->portrait_index;
@@ -5953,21 +5966,27 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                      s, DM2_COL_BLACK));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_fill_rect,
-                                 dm2_v1_hud_palette_color(s, 2));
+                                 dm2_v1_hud_palette_color(
+                                     s, plan.champion_slots[slot]
+                                            .stat_bar_color));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].stamina_bar_rect,
                                  dm2_v1_hud_palette_color(
                                      s, DM2_COL_BLACK));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].stamina_fill_rect,
-                                 dm2_v1_hud_palette_color(s, 11));
+                                 dm2_v1_hud_palette_color(
+                                     s, plan.champion_slots[slot]
+                                            .stat_bar_color));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].mana_bar_rect,
                                  dm2_v1_hud_palette_color(
                                      s, DM2_COL_BLACK));
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].mana_fill_rect,
-                                 dm2_v1_hud_palette_color(s, 12));
+                                 dm2_v1_hud_palette_color(
+                                     s, plan.champion_slots[slot]
+                                            .stat_bar_color));
                 if (plan.champion_slots[slot].leader) {
                     dm2_v1_fill_rect(
                         vp, stride,

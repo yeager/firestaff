@@ -380,6 +380,9 @@ typedef struct {
     uint8_t hp_pct;
     uint8_t stamina_pct;
     uint8_t mana_pct;
+    /* SKProject glbChampionColor[player], initialized by INIT. */
+    uint8_t stat_bar_color;
+    int stat_bar_color_source_bound;
     uint8_t portrait_index;
     int portrait_type_source_bound;
     uint8_t portrait_fill_color;
@@ -403,6 +406,10 @@ typedef struct {
     uint8_t hp_pct;
     uint8_t stamina_pct;
     uint8_t mana_pct;
+    /* Source-owned default from SkWinCore::INIT, not a resource-specific
+     * Firestaff color choice. */
+    uint8_t stat_bar_color;
+    int stat_bar_color_source_bound;
     char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
 } DM2_V1_HudChampionState;
 

@@ -56,7 +56,24 @@ int main(void)
     party.champions[0].portrait_index = 3;
     CHECK("HUD plan retains an explicitly unbound portrait type",
           dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party, &plan) &&
-              !plan.champion_slots[0].portrait_type_source_bound);
+              !plan.champion_slots[0].portrait_type_source_bound &&
+              plan.champion_slots[0].stat_bar_color_source_bound &&
+              plan.champion_slots[0].stat_bar_color == 7u);
+
+    party.champion_count = 4;
+    for (int slot = 0; slot < party.champion_count; ++slot) {
+        party.champions[slot].occupied = 1;
+    }
+    CHECK("HUD plan consumes SKProject's per-player default bar colors",
+          dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party, &plan) &&
+              plan.champion_slots[0].stat_bar_color == 7u &&
+              plan.champion_slots[1].stat_bar_color == 11u &&
+              plan.champion_slots[2].stat_bar_color == 8u &&
+              plan.champion_slots[3].stat_bar_color == 14u);
+
+    party.champion_count = 1;
+    memset(&party.champions[1], 0,
+           sizeof(party.champions) - sizeof(party.champions[0]));
 
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     dm2_v1_viewport_set_hud_party(&viewport, &party);

@@ -3140,6 +3140,13 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->stamina_pct =
             dm2_runtime_hud_pct_from_current(champ->stamina);
         dst->mana_pct = dm2_runtime_hud_pct_from_current(champ->mana);
+        /* SKProject INIT sets glbChampionColor to 7,11,8,14 before its HUD
+         * path. Keep the bootstrap value explicit until a source save/runtime
+         * mutation of that global is independently admitted. */
+        static const uint8_t source_default_stat_bar_color[
+            DM2_V1_HUD_CHAMPION_SLOT_COUNT] = { 7u, 11u, 8u, 14u };
+        dst->stat_bar_color = source_default_stat_bar_color[slot];
+        dst->stat_bar_color_source_bound = 1;
         dst->portrait_index = 0u;
         /* skproject/SKWIN/DME.h::Champion::heroType is byte 255 of the
          * 261-byte save record.  REVIVE_PLAYER writes it from the source
