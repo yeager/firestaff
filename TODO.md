@@ -6970,6 +6970,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   fallback. Still required: an original game-owned consumer that establishes
   the record grammar and connects it to a later level/object transition.
 
+  A complete 2048-byte ISO can now enter this byte-level boundary only when
+  every sector from Track 02 INDEX 01 is identical to the selected canonical
+  raw BIN user-data lane. That maps record `0x0b52` to ISO envelope
+  `[0x5a9114,0x5a9480)` and opaque continuation `[0x5a9480,0x5a9800)` for the
+  current corpus. The local short ISO is not that complete projection and
+  remains blocked. This proves media identity and record coordinates only;
+  it still does not establish object grammar or a game-owned object consumer.
+
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
   MODE1/2352 declaration canonically resolves to the independently

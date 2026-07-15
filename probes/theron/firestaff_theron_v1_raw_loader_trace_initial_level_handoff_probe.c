@@ -107,6 +107,11 @@ int main(void)
     Theron_V1CaptureManifest manifest;
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02InitialLevelObjectBoundaryReceipt mutated_boundary;
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02CanonicalIsoProjectionReceipt iso_projection;
+    uint8_t *complete_iso_projection = NULL;
+    size_t complete_iso_projection_size;
+    size_t projection_sector;
     uint8_t saved_tail_byte;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
@@ -144,6 +149,60 @@ int main(void)
         return 1;
     }
     raw[boundary.object_boundary_raw_offset] = saved_tail_byte;
+
+    if (theron_v1_track02_find_ipl_loader(raw, raw_size, md5, &loader) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !loader.valid || raw_size / 2352u <= loader.data_track_index01_raw_sector ||
+        raw_size / 2352u - loader.data_track_index01_raw_sector >
+            SIZE_MAX / 2048u) {
+        free(raw);
+        printf("FAIL: complete Track 02 ISO projection lacks INDEX 01\n");
+        return 1;
+    }
+    complete_iso_projection_size =
+        (raw_size / 2352u - loader.data_track_index01_raw_sector) * 2048u;
+    complete_iso_projection = (uint8_t *)malloc(complete_iso_projection_size);
+    if (!complete_iso_projection) {
+        free(raw);
+        printf("FAIL: could not allocate complete Track 02 ISO projection\n");
+        return 1;
+    }
+    for (projection_sector = 0u;
+         projection_sector < raw_size / 2352u - loader.data_track_index01_raw_sector;
+         ++projection_sector) {
+        memcpy(complete_iso_projection + projection_sector * 2048u,
+               raw + (loader.data_track_index01_raw_sector + projection_sector) *
+                   2352u + 16u, 2048u);
+    }
+    if (theron_v1_track02_verify_canonical_iso_projection(
+            raw, raw_size, md5, complete_iso_projection,
+            complete_iso_projection_size, &iso_projection) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !iso_projection.valid ||
+        iso_projection.first_level_track02_record != 0x0b52u ||
+        iso_projection.first_level_iso_user_data_offset !=
+            0x0b52u * 2048u + 0x114u ||
+        iso_projection.post_envelope_iso_user_data_offset !=
+            0x0b52u * 2048u + 0x480u ||
+        iso_projection.post_envelope_hash != boundary.following_user_data_hash ||
+        iso_projection.object_semantics_proven || iso_projection.fallback_allowed) {
+        free(complete_iso_projection);
+        free(raw);
+        printf("FAIL: complete ISO projection lost the bounded level continuation\n");
+        return 1;
+    }
+    ++complete_iso_projection[iso_projection.post_envelope_iso_user_data_offset];
+    if (theron_v1_track02_verify_canonical_iso_projection(
+            raw, raw_size, md5, complete_iso_projection,
+            complete_iso_projection_size, &iso_projection) ==
+        THERON_TRACK02_SIGNAL_OK) {
+        free(complete_iso_projection);
+        free(raw);
+        printf("FAIL: altered complete ISO projection reached the loader handoff\n");
+        return 1;
+    }
+    --complete_iso_projection[0x0b52u * 2048u + 0x480u];
+    free(complete_iso_projection);
 
     fixture_receipt(&coalesced, md5, raw, raw_size);
     if (!theron_v1_raw_loader_trace_bind_initial_level_handoff(

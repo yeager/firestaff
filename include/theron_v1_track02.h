@@ -1538,6 +1538,29 @@ typedef struct {
     uint32_t receipt_hash;
 } Theron_Track02InitialLevelObjectBoundaryReceipt;
 
+/* Exact MODE1/2048 projection of a complete canonical raw Track 02 image.
+ * This admits a full extracted ISO only when every user-data sector matches
+ * the selected hash-verified BIN from INDEX 01 through end of track. It maps
+ * the known first-level envelope and its opaque continuation into ISO byte
+ * coordinates, but does not assign object-record grammar to that tail. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t data_track_index01_raw_sector;
+    size_t iso_sector_count;
+    size_t iso_byte_count;
+    uint32_t first_level_track02_record;
+    size_t first_level_iso_user_data_offset;
+    size_t first_level_byte_count;
+    uint32_t first_level_hash;
+    size_t post_envelope_iso_user_data_offset;
+    size_t post_envelope_byte_count;
+    uint32_t post_envelope_hash;
+    int object_semantics_proven;
+    int fallback_allowed;
+    uint32_t receipt_hash;
+} Theron_Track02CanonicalIsoProjectionReceipt;
+
 /* Real-media decode of the source-locked initial level envelope.
  *
  * This receipt promotes only the level envelope facts established by the
@@ -1733,6 +1756,17 @@ theron_v1_track02_capture_initial_level_object_boundary(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02InitialLevelObjectBoundaryReceipt *out_receipt);
+
+/* Verify a complete ISO's bytes against the original raw Track 02 user-data
+ * lane and return only the established first-level byte intervals. A short,
+ * shifted, altered, or non-canonical ISO is rejected. */
+Theron_Track02SignalStatus theron_v1_track02_verify_canonical_iso_projection(
+    const uint8_t *raw_track02_data,
+    size_t raw_track02_size,
+    const char *raw_track02_md5,
+    const uint8_t *iso_data,
+    size_t iso_size,
+    Theron_Track02CanonicalIsoProjectionReceipt *out_receipt);
 
 /* Decode the corroborated initial-level envelope from authenticated raw JP/US
  * Track 02 media.  This is deliberately a no-visual, no-object receipt: it
