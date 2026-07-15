@@ -2887,6 +2887,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->sound_trace_admission.level_index = level;
     engine->sound_trace_admission.blocks_real_sfx_playback = 1;
     engine->sound_trace_admission.fallback_visuals_permitted = 0;
+    memset(&engine->sound_trace_host_receipt, 0,
+           sizeof(engine->sound_trace_host_receipt));
+    engine->sound_trace_host_receipt.status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
+    engine->sound_trace_host_receipt.level_index = level;
+    engine->sound_trace_host_receipt.blocks_real_sfx_playback = 1;
+    engine->sound_trace_host_receipt.fallback_visuals_permitted = 0;
     free(sal_data);
     free(map_data);
 
@@ -5144,6 +5150,80 @@ int nexus_v1_current_level_sal_trace_admission_receipt(
     out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->sound_trace_admission;
+    return 0;
+}
+
+int nexus_v1_engine_consume_sal_driver_trace(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_LevelSoundTraceHostReceipt *out_receipt) {
+    Nexus_V1_LevelSoundTraceHostReceipt receipt;
+    Nexus_V1_LevelSoundCaptureTargetReceipt target;
+    const Nexus_V1_LevelSoundTraceAdmissionReceipt *trace;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_sfx_playback = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = engine->level_aux_runtime_receipt.level_index;
+    trace = &engine->sound_trace_admission;
+    if (trace->status != NEXUS_V1_SAL_TRACE_ADMITTED_OPAQUE ||
+        trace->level_index != receipt.level_index ||
+        !trace->capture_target_bound || !trace->mednafen_debugger_provenance ||
+        !trace->original_saturn_execution_claimed || !trace->trace_sha256_present ||
+        !trace->trace_chain_complete || trace->driver_dispatch_proven ||
+        trace->sal_decode_proven || trace->playback_permitted ||
+        !trace->blocks_real_sfx_playback || trace->fallback_visuals_permitted) {
+        receipt.status = NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (nexus_v1_engine_build_sal_capture_target(engine,
+                                                 trace->raw_map_selector,
+                                                 &target) != 1 ||
+        !target.valid || target.level_index != trace->level_index ||
+        target.canonical_sal_fnv1a64 != trace->canonical_sal_fnv1a64 ||
+        target.canonical_map_fnv1a64 != trace->canonical_map_fnv1a64 ||
+        target.map_attribute != trace->map_attribute ||
+        target.sal_offset != trace->sal_offset || target.sal_size != trace->sal_size ||
+        target.sal_decode_proven || target.playback_permitted ||
+        !target.no_playback_only || target.fallback_visuals_permitted) {
+        receipt.status = NEXUS_V1_SAL_TRACE_HOST_BLOCKED_ACTIVE_ROUTE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.status = NEXUS_V1_SAL_TRACE_HOST_CONSUMED_OPAQUE;
+    receipt.active_sal_target_revalidated = 1;
+    receipt.admitted_trace_bound = 1;
+    receipt.raw_map_selector = trace->raw_map_selector;
+    receipt.map_attribute = trace->map_attribute;
+    receipt.sal_offset = trace->sal_offset;
+    receipt.sal_size = trace->sal_size;
+    receipt.selector_dispatch_pc = trace->selector_dispatch_pc;
+    receipt.sal_read_pc = trace->sal_read_pc;
+    receipt.driver_output_pc = trace->driver_output_pc;
+    receipt.host_consumed = 1;
+    engine->sound_trace_host_receipt = receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_current_level_sal_trace_host_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelSoundTraceHostReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->blocks_real_sfx_playback = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->sound_trace_host_receipt;
     return 0;
 }
 
