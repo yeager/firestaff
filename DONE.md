@@ -17688,3 +17688,13 @@ tool does not launch an emulator, generate trace bytes, or attest original
 Saturn provenance. The atomic target now includes the Structure2 opaque-payload
 fingerprint required by that route. Verification:
 `test_nexus_v1_dgn_geometry_readiness` and direct collector compilation.
+
+# ✅ 2026-07-15 DM2 direct G1/GDAT M10 scene consumption
+
+The source-classified DB4 creature route now carries its exact decoded
+`CREATURES/type/F9` pixels and 16-colour local palette from G1 handoff into
+the live M10 viewport frame. The matching draw consumes those retained bytes
+directly and rejects missing/mismatched ownership rather than re-querying
+GDAT or using a fallback. Verification: `dm2_v1_g1_scene_viewport_material_gate`
+proves a direct handoff renders with zero asset/palette callback calls;
+`dm2_v1_g1_scene_creature_gdat_real_data` proves the canonical media path.

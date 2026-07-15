@@ -21,6 +21,11 @@ typedef struct {
     int material_width;
     int material_height;
     int material_stride;
+    /* The G1 resolver has already selected and decoded this exact GDAT image.
+     * The boot-owned provider retains these bytes through the M10 frame; a
+     * consumer must not resolve the same GDAT address again. */
+    const uint8_t *material_pixels;
+    uint8_t material_palette16[16];
     uint32_t material_palette_hash;
 } DM2_V1_G1SceneRuntimeHandoffReceipt;
 

@@ -76,6 +76,9 @@ int dm2_v1_g1_scene_runtime_handoff(
     candidate.material_width = width;
     candidate.material_height = height;
     candidate.material_stride = stride;
+    candidate.material_pixels = pixels;
+    memcpy(candidate.material_palette16, palette16,
+           sizeof(candidate.material_palette16));
     candidate.material_palette_hash = palette_hash;
     candidate.valid = 1;
     *out = candidate;

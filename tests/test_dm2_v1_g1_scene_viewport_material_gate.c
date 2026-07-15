@@ -8,12 +8,15 @@
 #include <string.h>
 
 static int palette_mismatch;
+static int asset_fetch_calls;
+static int palette_fetch_calls;
 
 static int fetch_asset(void *user, int index, const uint8_t **pixels,
                        int *width, int *height, int *stride)
 {
     static const uint8_t image[4] = { 1, 1, 1, 1 };
     (void)user;
+    ++asset_fetch_calls;
     if (index != dm2_v1_viewport_creature_graphic_index(7, 0)) return -1;
     *pixels = image;
     *width = 2;
@@ -26,6 +29,7 @@ static int fetch_palette(void *user, int index, uint8_t palette[16],
                          uint32_t *hash)
 {
     (void)user;
+    ++palette_fetch_calls;
     if (index != dm2_v1_viewport_creature_graphic_index(7, 0)) return -1;
     memset(palette, 0, 16u);
     palette[1] = 0x4a;
@@ -33,13 +37,18 @@ static int fetch_palette(void *user, int index, uint8_t palette[16],
     return 0;
 }
 
-static int run_case(int mismatch, int wrong_owner, int wrong_direction)
+static int run_case(int mismatch, int wrong_owner, int wrong_direction,
+                    int direct_handoff)
 {
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    static const uint8_t direct_image[4] = { 1, 1, 1, 1 };
+    uint8_t direct_palette[16] = { 0 };
     DM2_V1_ViewportState viewport;
     DM2_V1_G1CreatureMapChipRuntimeReceipt receipt;
 
     palette_mismatch = mismatch;
+    asset_fetch_calls = 0;
+    palette_fetch_calls = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     dm2_v1_viewport_set_asset_provider(&viewport, fetch_asset, NULL);
@@ -67,10 +76,18 @@ static int run_case(int mismatch, int wrong_owner, int wrong_direction)
     receipt.materials[0].image_height = 2;
     receipt.materials[0].local_palette_hash = 0x11111111u;
     dm2_v1_viewport_set_g1_creature_map_chip_materials(&viewport, &receipt);
-    dm2_v1_viewport_set_g1_scene_creature_material(
-        &viewport, 1, 12, 9, 7,
-        dm2_v1_viewport_creature_graphic_index(7, 0),
-        2, 2, 2, 0x11111111u);
+    direct_palette[1] = 0x4a;
+    if (direct_handoff) {
+        dm2_v1_viewport_set_g1_scene_creature_material_direct(
+            &viewport, 1, 12, 9, 7,
+            dm2_v1_viewport_creature_graphic_index(7, 0), direct_image,
+            2, 2, 2, direct_palette, 0x11111111u);
+    } else {
+        dm2_v1_viewport_set_g1_scene_creature_material(
+            &viewport, 1, 12, 9, 7,
+            dm2_v1_viewport_creature_graphic_index(7, 0),
+            2, 2, 2, 0x11111111u);
+    }
     dm2_v1_render_creatures(&viewport);
     return mismatch || wrong_owner || wrong_direction
         ? viewport.asset_creature_drawn_count == 0 &&
@@ -78,13 +95,16 @@ static int run_case(int mismatch, int wrong_owner, int wrong_direction)
               viewport.blocked_material_draw_count == 1
         : viewport.asset_creature_drawn_count == 1 &&
               viewport.g1_scene_creature_material_consumed_count == 1 &&
-              viewport.blocked_material_draw_count == 0;
+              viewport.blocked_material_draw_count == 0 &&
+              (!direct_handoff ||
+               (asset_fetch_calls == 0 && palette_fetch_calls == 0));
 }
 
 int main(void)
 {
-    if (!run_case(0, 0, 0) || !run_case(1, 0, 0) ||
-        !run_case(0, 1, 0) || !run_case(0, 0, 1)) {
+    if (!run_case(0, 0, 0, 0) || !run_case(1, 0, 0, 0) ||
+        !run_case(0, 1, 0, 0) || !run_case(0, 0, 1, 0) ||
+        !run_case(0, 0, 0, 1)) {
         fputs("FAIL: G1 DB4 owner did not gate matching viewport material\n",
               stderr);
         return 1;

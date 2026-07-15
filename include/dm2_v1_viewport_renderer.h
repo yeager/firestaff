@@ -947,6 +947,8 @@ typedef struct {
     int g1_scene_creature_material_width;
     int g1_scene_creature_material_height;
     int g1_scene_creature_material_stride;
+    const uint8_t *g1_scene_creature_material_pixels;
+    uint8_t g1_scene_creature_material_palette16[16];
     uint32_t g1_scene_creature_material_palette_hash;
     int g1_scene_creature_material_consumed_count;
     const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
@@ -1102,6 +1104,13 @@ void dm2_v1_viewport_set_g1_creature_map_chip_materials(
 void dm2_v1_viewport_set_g1_scene_creature_material(
     DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
     int creature_type, int gdat_index, int width, int height, int stride,
+    uint32_t palette_hash);
+/* M10 binds the already decoded G1/GDAT handoff directly.  This path owns no
+ * pixels; their boot provider must outlive the current viewport frame. */
+void dm2_v1_viewport_set_g1_scene_creature_material_direct(
+    DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
+    int creature_type, int gdat_index, const uint8_t *pixels,
+    int width, int height, int stride, const uint8_t palette16[16],
     uint32_t palette_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
