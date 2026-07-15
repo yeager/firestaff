@@ -478,6 +478,14 @@ int F0812_DM1_GROUP_GetFirstPossibleMovementDir_Compat(
     int allowImaginaryPitsAndFakeWalls,
     int* outDirection);
 
+/* Live GROUP.C F0203 form. `testedDirections` is the caller-owned G0384
+ * state and is marked before each F0202 evaluation, even for a blocker. */
+int F0812a_DM1_GROUP_GetFirstPossibleMovementDirWithTestState_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int testedDirections[4],
+    int allowImaginaryPitsAndFakeWalls,
+    int* outDirection);
+
 /*
  * F0813: Pick single-square movement direction toward target.
  *

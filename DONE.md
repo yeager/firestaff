@@ -17041,3 +17041,7 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   otherwise blocks movement, while retaining source terrain, Fluxcage,
   teleporter, party, door, and group ordering. Regression fixtures explicitly
   provide decoded empty squares. Source: ReDMCSB `GROUP.C` F0202.
+- ✅ 2026-07-15 DM1 GROUP F0203: added the live tested-direction scan. Each
+  cardinal direction is marked before its F0202 evaluation, including a
+  blocker, and later directions remain untouched after a successful choice.
+  Source: ReDMCSB `GROUP.C` F0203/F0202.
