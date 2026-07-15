@@ -8176,3 +8176,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     continuation start in the verified loader sector. The destination and its
     content remain opaque. Remaining: capture the real `TII` row and the
     subsequent game-owned reads/control flow that establish record grammar.
+  - Update: the live Mednafen capture script now preserves the separate
+    main-RAM-loader trace and reports both all `TII` operations and `$3c80`
+    candidates in its transition receipt. No candidate is generated when the
+    original run does not execute one. Remaining: stage real media to acquire
+    an admissible TII row and its later consumer evidence.

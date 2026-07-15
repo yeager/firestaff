@@ -241,13 +241,14 @@ trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 input_trace="${trace}.input"
+main_ram_loader_trace="${trace}.main-ram-loader"
 transition_receipt="${trace}.transition"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$transition_receipt" "$stage2_system_card_receipt"
 if [[ -n "$configured_home" ]]; then
     home_dir=$configured_home
     cleanup_home=0
@@ -266,6 +267,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
+    FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
@@ -373,6 +375,8 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
 transition_scsi_read_command_count=$(trace_count '^scsi_read_command ' "$cd_trace")
 transition_scsi_sector_binding_count=$(trace_count '^scsi_read_sector_binding ' "$cd_trace")
 transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candidate ' "$cd_trace")
+transition_main_ram_loader_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii ' "$main_ram_loader_trace")
+transition_continuation_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii source=3c80 ' "$main_ram_loader_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'track02_md5=%s\n' "$track02_md5"
@@ -389,6 +393,8 @@ transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candid
     printf 'scsi_read_commands=%s\n' "$transition_scsi_read_command_count"
     printf 'scsi_read_sector_bindings=%s\n' "$transition_scsi_sector_binding_count"
     printf 'byte_exact_fifo_ram_destinations=%s\n' "$transition_data_destination_count"
+    printf 'main_ram_loader_tii_transfers=%s\n' "$transition_main_ram_loader_tii_count"
+    printf 'continuation_tii_source_3c80=%s\n' "$transition_continuation_tii_count"
     trace_input_order_receipt "$input_trace"
     if [[ -n "$host_key" ]]; then
         printf 'requested_host_key=%s\n' "$host_key"
