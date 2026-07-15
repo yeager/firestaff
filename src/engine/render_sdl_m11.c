@@ -92,6 +92,7 @@ typedef struct {
      * menu and HUD rendering.  This mode consumes raw 8-bit GDAT indices. */
     int indexed_palette_rgb6_active;
     unsigned char indexed_palette_rgb6[256][3];
+    unsigned char indexed_palette_rgb8[256][3];
 
     /* V2.0 visual extras (Firestaff-only, no ReDMCSB analogue). */
     int v2_phosphor_enabled;
@@ -167,7 +168,7 @@ static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
 
     if (g_state.indexed_palette_rgb6_active) {
         if (out_level) *out_level = 0;
-        return g_state.indexed_palette_rgb6[raw];
+        return g_state.indexed_palette_rgb8[raw];
     }
     index = raw & M11_FB_INDEX_MASK;
     level = (raw & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
@@ -1222,9 +1223,23 @@ int M11_Render_GetPaletteLevel(void) {
 }
 
 int M11_Render_SetIndexedPaletteRgb6(const uint8_t rgb6[256][3]) {
+    int color;
+    int channel;
+
     if (!rgb6) return M11_RENDER_ERR_INVALID_ARG;
     memcpy(g_state.indexed_palette_rgb6, rgb6,
            sizeof(g_state.indexed_palette_rgb6));
+    /* SKProject startend.cpp::DM2_INIT reads GDAT dtPalIRGB and calls
+     * DM2_CONVERT_DRIVERPALETTE before SHOW_MENU_SCREEN. The source channels
+     * are VGA DAC six-bit values, whereas SDL_RGBA needs the full eight-bit
+     * expansion. Preserve the raw receipt separately for provenance. */
+    for (color = 0; color < 256; ++color) {
+        for (channel = 0; channel < 3; ++channel) {
+            const uint8_t value = rgb6[color][channel];
+            g_state.indexed_palette_rgb8[color][channel] =
+                (uint8_t)((value << 2) | (value >> 4));
+        }
+    }
     g_state.indexed_palette_rgb6_active = 1;
     return M11_RENDER_OK;
 }
@@ -1233,6 +1248,8 @@ void M11_Render_ClearIndexedPaletteRgb6(void) {
     g_state.indexed_palette_rgb6_active = 0;
     memset(g_state.indexed_palette_rgb6, 0,
            sizeof(g_state.indexed_palette_rgb6));
+    memset(g_state.indexed_palette_rgb8, 0,
+           sizeof(g_state.indexed_palette_rgb8));
 }
 
 int M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]) {

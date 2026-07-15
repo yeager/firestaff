@@ -366,6 +366,15 @@
   executable original NEW path; `0xD9` now yields a hash-bound,
   selector-unavailable receipt and cannot become a synthetic resume action.
 
+- 2026-07-15 DM2 GDAT title/menu DAC presentation: `SkWinCore::DM2_INIT`
+  loads `INTERFACE_GENERAL/0/dtPalIRGB/0xFE` and calls
+  `DM2_CONVERT_DRIVERPALETTE` before `DM2_SHOW_MENU_SCREEN`. M11 now expands
+  those verified 6-bit DAC channels to SDL's 8-bit RGBA presentation values;
+  it retains the original RGB6 table for the existing source receipt and never
+  substitutes a palette. The M11 pointer route continues to consume only the
+  original dt04/0 `0xD7` NEW rectangle; the unbound `0xD9` selector stays
+  unavailable.
+
 - 2026-07-15 DM2 M11 HUD/scene composition: real HUD delivery now requires
   the same G1 scene-control receipt as its GDAT planes.
 
