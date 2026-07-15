@@ -369,14 +369,8 @@ static void verify_real_indexed_startup(
               package_receipt.consumed_surface_hash != 0u,
           "PC34 package receipt binds C001 title and C017/C040 HUD pixels to one real session");
 
-    memset(&plan, 0, sizeof(plan));
-    plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
-    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
-    plan.title_dest_y = 90;
-    plan.title_dest_w = 320;
-    plan.title_dest_h = 16;
-    plan.title_transparent_color = -1;
-    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+    CHECK(real_c001_title_plan(0, &plan) &&
+              csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 1u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
                   &frame, &plan, &raster) == 1 && raster.valid &&
@@ -391,12 +385,8 @@ static void verify_real_indexed_startup(
               presents_host.raster.title_composited,
           "runtime host consumes the real C001 PRESENTS surface");
 
-    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
-    plan.title_dest_x = 136;
-    plan.title_dest_y = 74;
-    plan.title_dest_w = 48;
-    plan.title_dest_h = 12;
-    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+    CHECK(real_c001_title_plan(60, &plan) &&
+              csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 2u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
                   &frame, &plan, &raster) == 1 && raster.valid &&
@@ -410,13 +400,8 @@ static void verify_real_indexed_startup(
               chaos_host.raster.title_composited,
           "runtime host consumes the real C001 CHAOS surface");
 
-    plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
-    plan.title_dest_x = 0;
-    plan.title_dest_y = 118;
-    plan.title_dest_w = 320;
-    plan.title_dest_h = 57;
-    plan.title_transparent_color = 0;
-    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+    CHECK(real_c001_title_plan(100, &plan) &&
+              csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 3u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
                   &frame, &plan, &raster) == 1 && raster.valid &&

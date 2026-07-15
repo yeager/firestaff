@@ -242,6 +242,7 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host,
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 *out_receipt)
 {
+    const CSB_V1_StartupRuntimeSurface_PC34 *title;
     const CSB_V1_StartupRuntimeSurface_PC34 *presents;
     const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
     const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
@@ -264,13 +265,16 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         package_receipt->real_asset_receipt_hash == 0u ||
         package_receipt->consumed_surface_hash == 0u) return 0;
 
+    title = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
     presents = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
     chaos = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
     strikes = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
-    if (!presents->valid || !chaos->valid || !strikes->valid ||
+    if (!title->valid || !title->pixels || title->source_asset_id != 1 ||
+        !presents->valid || !chaos->valid || !strikes->valid ||
         !presents->pixels || !chaos->pixels || !strikes->pixels ||
         presents->source_asset_id != 1 || chaos->source_asset_id != 1 ||
         strikes->source_asset_id != 1 ||
@@ -295,9 +299,12 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         presents_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 ||
         chaos_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 ||
         strikes_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 ||
-        presents_host->frame.title_surface != presents ||
-        chaos_host->frame.title_surface != chaos ||
-        strikes_host->frame.title_surface != strikes ||
+        /* The host rasterizes TITLE.C F0437's rectangles from resident
+         * C001.  The phase surfaces above are retained only as package
+         * geometry evidence, never as a second blit coordinate system. */
+        presents_host->frame.title_surface != title ||
+        chaos_host->frame.title_surface != title ||
+        strikes_host->frame.title_surface != title ||
         !presents_host->raster.valid || !chaos_host->raster.valid ||
         !strikes_host->raster.valid || !opening_host->raster.valid ||
         !presents_host->raster.title_composited ||

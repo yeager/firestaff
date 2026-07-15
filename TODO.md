@@ -1,11 +1,11 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-15 CSB PC3.4 C002/C003/C004 visual decoder gate: the verified
-  package reaches the full C001 -> entrance -> C017/C040 session and no
-  startup path links F0691/IMG3, but palette-applied C004/C002/C003 captures
-  still show malformed geometry. Do not bless the current raster hashes as
-  original pixels. Port and compare CSBWin `ExpandGraphic`'s exact 16-pixel
-  planar word/mask operations before promoting visual capture to DONE.
+- 2026-07-15 CSB PC3.4 palette/capture gate: C001 now reaches M11 through
+  TITLE.C F0437's original source rectangles and verified package rasters;
+  C002/C003/C004 and C017/C040 use the same session. Exact CSBWin
+  `Palette360` program-data bytes and an external original visual capture are
+  still absent locally. Do not replace the ReDMCSB palette with guessed RGB
+  values or promote the current package hashes to pixel-parity evidence.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
