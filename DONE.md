@@ -16442,6 +16442,16 @@ These remain bounded capture candidates only: image/palette lengths, texel
 order, palette format/addressing, VDP1 mode, decoder, and draw semantics all
 remain fail-closed. Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Nexus animated DGN payload-anchor route
+
+Every declared non-control Structure1G image instruction for an active `08xx`
+face now resolves through the active Structure2 payload-anchor traversal. The
+route requires the matching image anchor and, where present, the matching
+palette anchor from the exact same canonical LEV bytes. It remains no-draw:
+candidate interval bounds are not pixel spans, palette format/addressing,
+texel order, VDP1 mode, timing, decoder, or drawing proof. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-15 Nexus Structure2 descriptor capture target
 
 The active canonical LEV route can now build and atomically write an external

@@ -803,6 +803,26 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt;
 
+/* Source-only coverage of the Structure2 payload anchors required by every
+ * declared animated image instruction. Candidate intervals remain opaque: no
+ * span length, palette format, pixel codec, VDP1 mode, or draw is inferred. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int declared_image_instruction_count;
+    int consumed_image_instruction_count;
+    int image_payload_anchor_count;
+    int palette_payload_anchor_count;
+    int complete;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt;
+
 typedef int (*Nexus_V1_DgnStructure3AnimatedMaterialImageConsumer)(
     void *context, const Nexus_V1_DgnStructure3AnimatedMaterialImagePacket *packet);
 
@@ -870,10 +890,13 @@ typedef struct {
      * image instruction is source-bound to its local Structure2 descriptor. */
     Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt
         animated_image_scene;
+    Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt
+        animated_payload_scene;
     Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt untextured_scene;
     int face_count;
     int traversed_face_count;
     int animated_image_coverage_complete;
+    int animated_payload_coverage_complete;
     /* Every active Structure2 descriptor needs a bounded, source-owned
      * payload anchor before its faces can count as a complete material route. */
     int structure2_descriptor_count;
@@ -1890,6 +1913,11 @@ int nexus_v1_current_level_visit_structure3_animated_material_images(
     Nexus_V1_DgnStructure3AnimatedMaterialImageConsumer consumer,
     void *context,
     Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt *out_receipt);
+/* Require every active Structure1G image declaration to resolve to its exact
+ * bounded Structure2 image anchor (and its nonzero palette anchor). */
+int nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt *out_receipt);
 /* Build one source-bound non-textured Structure3 face packet. Raw fill bytes
  * are retained solely for later capture correlation and cannot draw a colour. */
 int nexus_v1_current_level_structure3_untextured_face_packet(

@@ -7230,3 +7230,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   retained separately. These are capture bounds only, not proven image spans,
   palette entries, pixel format, VDP1 mode, decoder input, or drawing. An
   authentic Saturn trace must establish those semantics before promotion.
+- 🔧 2026-07-15 Nexus animated payload-anchor route: every active non-control
+  Structure1G image instruction now has to resolve to the exact bounded
+  Structure2 image anchor, and to its separate nonzero palette anchor when
+  one exists. This is source provenance rather than image decoding: candidate
+  interval lengths, palette layout, texel order, VDP1 mode, timing, and draw
+  semantics remain fail-closed pending an authentic Saturn trace.

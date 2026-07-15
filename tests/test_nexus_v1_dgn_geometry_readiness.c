@@ -1537,6 +1537,17 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                               .consumed_image_instruction_count ==
                           complete_scene.animated_image_scene
                               .declared_image_instruction_count &&
+                      complete_scene.animated_payload_coverage_complete &&
+                      complete_scene.animated_payload_scene.valid &&
+                      complete_scene.animated_payload_scene.complete &&
+                      complete_scene.animated_payload_scene
+                              .declared_image_instruction_count ==
+                          complete_scene.animated_image_scene
+                              .declared_image_instruction_count &&
+                      complete_scene.animated_payload_scene
+                              .image_payload_anchor_count ==
+                          complete_scene.animated_payload_scene
+                              .declared_image_instruction_count &&
                       complete_scene.structure2_payload_coverage_complete &&
                       complete_scene.structure2_descriptor_count ==
                           loaded_level.structure2_texture_count &&
@@ -3177,6 +3188,7 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnActiveStructure3FaceFramingReceipt active_face_framing;
         Nexus_V1_DgnActiveTransformCameraFramingReceipt active_camera_framing;
         Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt animated_images;
+        Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt animated_payloads;
         AnimatedMaterialImageVisitCount animated_image_visits;
         Nexus_V1_DgnStructure3CompleteSourceSceneReceipt complete_scene;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
@@ -3227,6 +3239,12 @@ static void test_structure3_entry_header_boundaries(void) {
               !animated_images.fallback_visuals_permitted &&
               animated_images.blocks_real_dgn_mesh_render,
               "a bounded 08xx face reaches each declared Structure1G image descriptor no-draw");
+        memset(&animated_payloads, 0, sizeof(animated_payloads));
+        CHECK(nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
+                  &engine, &animated_payloads) == 0 && !animated_payloads.valid &&
+              animated_payloads.no_draw_only &&
+              animated_payloads.blocks_real_dgn_mesh_render,
+              "an 08xx image route without bounded descriptor anchors remains fail-closed");
         memset(&complete_scene, 0, sizeof(complete_scene));
         CHECK(nexus_v1_current_level_structure3_complete_source_scene_receipt(
                   &engine, &complete_scene) == 0 && !complete_scene.valid &&
