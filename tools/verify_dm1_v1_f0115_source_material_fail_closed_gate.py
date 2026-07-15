@@ -29,20 +29,21 @@ def main() -> int:
     source = M11.read_text(encoding="utf-8")
     center = function_body(source, "static void m11_draw_wall_contents")
     side = function_body(source, "static void m11_draw_dm1_side_contents")
-    d4 = function_body(source, "static void m11_draw_dm1_d4_far_projectile_pass")
     effects = function_body(source, "static void m11_draw_effect_cue")
-    explosions = function_body(source, "static void m11_draw_explosion_cue")
+    explosions = function_body(source, "static int m11_draw_explosion_material")
+    projectile = function_body(source, "static int m11_draw_viewport_projectile_sprite")
 
-    assert "m11_draw_item_sprite" in center
+    assert "m11_draw_dm1_f0115_floor_item_sprite" in center
     assert "m11_draw_creature_sprite" in center
     assert "m11_draw_creature_cue" not in center
-    assert "m11_draw_item_sprite" in side
+    assert "m11_draw_dm1_f0115_floor_item_sprite" in side
     assert "m11_draw_creature_sprite_ex" in side
-    assert "m11_draw_projectile_sprite" in side
+    assert "m11_draw_viewport_projectile_sprite" in side
     assert "m11_fill_rect" not in side[side.find("static void m11_draw_dm1_side_contents"):]
 
-    for body, name in ((effects, "effect"), (d4, "D4 projectile")):
-        assert "m11_draw_projectile_sprite" in body, f"{name} lacks source sprite"
+    assert "m11_draw_viewport_projectile_sprite" in effects
+    assert "m11_draw_projectile_sprite" in projectile
+    for body, name in ((effects, "effect"), (projectile, "projectile")):
         assert "m11_draw_hline" not in body, f"{name} revives synthetic cross"
         assert "m11_draw_vline" not in body, f"{name} revives synthetic cross"
 
