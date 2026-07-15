@@ -106,19 +106,20 @@
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
   retain bounded bytes plus FNV provenance. Runtime now admits CSBWin's full
   `MaxTimers` slot pool separately from its active `NumTimer` heap; free slots
-  do not materialize into M10 or DSA. TT_53 now uses the source-owned atomic
-  `DeleteTimer`/`SetTimer` slot transaction. Remaining work is the exact
-  duplicate-policy matrix and full requeue semantics from a real CSBWin save
-  corpus.
+  do not materialize into M10 or DSA. TT_53 and collision-free TT_1 now use
+  the source-owned atomic `DeleteTimer`/`SetTimer` slot transaction. Remaining
+  work is the exact duplicate-policy matrix and full requeue semantics from a
+  real CSBWin save corpus.
 
 - 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
   handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/
   TT_BASH_DOOR duplicate rules, allocates `m_firstAvailTimer`, copies the full
   TIMER record, assigns sequence, finds the next TT_EMPTY slot, appends the
   handle, then calls `AdjustTimerQueue`. Firestaff now uses that atomic
-  delete/requeue ownership path for TT_53, including source slot/sequence and
-  rollback of a staged timeline event. The duplicate matrix and I_Delay/Message
-  remain blocked until their source comparisons can be staged transactionally.
+  delete/requeue ownership path for TT_53 and collision-free TT_1, including
+  source slot/sequence and rollback of a staged timeline event. The duplicate
+  matrix and I_Delay/Message remain blocked until their source comparisons can
+  be staged transactionally.
 
 - 2026-07-15 CSBgraphics runtime inventory: verified local ownership chain is
   `Graphics.cpp:1643 LocateNthGraphic` -> bounded entry spans/LZW boundary ->
