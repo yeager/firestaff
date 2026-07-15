@@ -27,10 +27,7 @@
   applied only at F0097. M11 now publishes a frame-local receipt only after
   both C346 and C026 blits succeed, so a prior mirror cannot masquerade as
   current HoC material. Remaining work is real PC34/Mac capture across every
-  HoC C127 sensor and candidate-panel state. The live C160/F0282 first-sensor
-  owner remains separately open: after an authentic C346/C026 panel entry,
-  the source chain must be retained before completion so BUG0_87 disables its
-  original first sensor even if the live list changes while C040 is open.
+  HoC C127 sensor and candidate-panel state.
 
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
   presentation accepts only C009/C011 pixels and the loaded original font via

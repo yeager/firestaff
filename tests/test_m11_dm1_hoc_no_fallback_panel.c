@@ -72,6 +72,7 @@ typedef struct HocFrontMirrorFixture {
     struct DungeonSensor_Compat sensors[2];
     unsigned char squareData[2];
     unsigned short squareFirstThings[2];
+    unsigned short columnsCumulativeSquareFirstThingCount[1];
     unsigned char sensorRaw[16];
 } HocFrontMirrorFixture;
 
@@ -115,7 +116,11 @@ static int seed_front_mirror_state(M11_GameViewState* state,
     fixture->tiles.squareCount = 2;
     fixture->dungeon.header.mapCount = 1;
     fixture->dungeon.maps = &fixture->map;
+    fixture->dungeon.columnsCumulativeSquareFirstThingCount =
+        fixture->columnsCumulativeSquareFirstThingCount;
+    fixture->dungeon.dungeonColumnCount = 1;
     fixture->dungeon.tiles = &fixture->tiles;
+    fixture->dungeon.loaded = 1;
     fixture->dungeon.tilesLoaded = 1;
     fixture->things.squareFirstThings = fixture->squareFirstThings;
     fixture->things.squareFirstThingCount = 2;
@@ -123,6 +128,7 @@ static int seed_front_mirror_state(M11_GameViewState* state,
     fixture->things.thingCounts[THING_TYPE_SENSOR] = 1;
     fixture->things.sensors = fixture->sensors;
     fixture->things.sensorCount = 1;
+    fixture->things.loaded = 1;
     state->world.dungeon = &fixture->dungeon;
     state->world.things = &fixture->things;
 
@@ -542,7 +548,12 @@ static int test_c160_disables_source_first_sensor(void)
         fixture.sensors[1].sensorType != 127 ||
         state.candidateMirrorPanelActive ||
         state.world.party.championCount != 1) {
-        fprintf(stderr, "FAIL C160 did not preserve F0282 first-sensor owner\n");
+        fprintf(stderr,
+                "FAIL C160 first-sensor owner result=%d sensor0=%d sensor1=%d panel=%d party=%d\n",
+                confirmResult, fixture.sensors[0].sensorType,
+                fixture.sensors[1].sensorType,
+                state.candidateMirrorPanelActive,
+                state.world.party.championCount);
         M11_GameView_Shutdown(&state);
         return 0;
     }
