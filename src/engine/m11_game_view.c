@@ -23068,7 +23068,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             * when there is decoded front text; drawing it under that readable
             * text makes Hall inscriptions look double-exposed and illegible. */
             if (ornGlobalIdx == 0 && spec.viewWallIndex == 12 &&
-                m11_dm1_visible_wall_text_line_count(state, &cell) > 0) {
+                inscription.valid) {
                 /* M11 applies its source palette map after this wall batch.
                  * M648 must therefore be emitted exactly once by the final
                  * post-palette D1C pass below, never into this pre-palette
