@@ -3614,6 +3614,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     for one zero-side route, their locked SH-2 read PCs, and exact raw merge.
     The source corridor has no proven direct output store, so no output pair
     is claimed. A real trace must still establish the merged value's role.
+  - 2026-07-15 update: the separate nonzero transfer binder now rejects the
+    stale zero-branch delay-slot PC and requires the source-proven nonzero
+    R14 debit PC before it accepts an opaque byte-transfer candidate. This
+    closes an admission gap only; original-Saturn execution, opcode grammar,
+    output ownership, palette, pixel, and MENU.BPK draw semantics remain open.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

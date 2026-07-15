@@ -19672,6 +19672,18 @@ capture's final VDP1/VDP2 pixel stream must still byte-match before rendering
 can be enabled. Verification: `nexus_v1_vdp1_lookup_decode`,
 `nexus_v1_direct_static_material_capture`, and
 `nexus_v1_dgn_geometry_readiness` pass.
+# ✅ 2026-07-15 Nexus PRS3 nonzero transfer debit gate
+
+The external SH-2 PRS3 nonzero transfer binder now requires the real
+DM.BIN-proven nonzero R14 source-counter debit PC (`0x14dd2`) before it accepts
+an opaque MENU.BPK byte-transfer candidate. The previous `zero_branch + 2`
+delay-slot shortcut (`0x14dce`) is rejected by regression coverage, so a stale
+capture cannot satisfy the nonzero path. This remains evidence-only: no PRS3
+opcode grammar, decoder, output ownership, palette, pixel, VDP1, or menu draw
+route is promoted. Verification: `nexus_v1_prs3_capture_trace_schema`,
+`nexus_v1_bpk_archive`, `nexus_v1_bpk_surface_class`, and
+`nexus_v1_bpk_prs3_payload_evidence` pass.
+
 # DM1 HoC all-C127 C026 atlas source boundary (2026-07-15)
 
 The DM1 F0172/F0107 mirror receipt now rejects C127 `sensorData` outside the

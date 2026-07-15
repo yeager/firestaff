@@ -596,7 +596,7 @@ static void test_real_nonzero_transfer_trace_contract(void) {
              fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
              plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
              sh2.control_low_bit_test_offset, sh2.control_zero_branch_offset,
-             sh2.control_zero_branch_offset + 2U, sh2.stream_byte_read_offset,
+             sh2.nonzero_source_counter_decrement_offset, sh2.stream_byte_read_offset,
              sh2.output_byte_store_offset, menu[plan.stream_offset], menu[plan.stream_offset]);
     expect(nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
                text, strlen(text), menu, menu_size, dm_bin, dm_bin_size, 1,
@@ -605,6 +605,17 @@ static void test_real_nonzero_transfer_trace_contract(void) {
                !receipt.original_saturn_provenance_verified &&
                !receipt.decoder_promoted && !receipt.fallback_visuals_permitted,
            "real assets bind a claimed nonzero byte trace without promoting a decoder");
+    memcpy(strstr(text, "fallthrough_counter_decrement_offset=") +
+               strlen("fallthrough_counter_decrement_offset="),
+           "14dce", sizeof("14dce") - 1U);
+    expect(!nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+               text, strlen(text), menu, menu_size, dm_bin, dm_bin_size, 1,
+               &trace, &receipt) && !receipt.observed_byte_transfer &&
+               !receipt.nonzero_control_fallthrough_observed,
+           "nonzero transfer rejects the zero-branch delay-slot offset");
+    memcpy(strstr(text, "fallthrough_counter_decrement_offset=") +
+               strlen("fallthrough_counter_decrement_offset="),
+           "14dd2", sizeof("14dd2") - 1U);
     memcpy(strstr(text, "observed_control_low_bit=1"),
            "observed_control_low_bit=0", sizeof("observed_control_low_bit=0") - 1U);
     expect(!nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
@@ -788,7 +799,7 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         "entry_index=%x\nstream_offset=%x\nstream_size=%x\n"
         "expected_output_bytes=%x\npayload_byte_offset=0\n"
         "control_test_instruction_offset=14dca\nzero_branch_instruction_offset=14dcc\n"
-        "fallthrough_counter_decrement_offset=14dce\n"
+        "fallthrough_counter_decrement_offset=14dd2\n"
         "observed_control_low_bit=1\nobserved_zero_branch_taken=0\n"
         "input_instruction_offset=14dd4\noutput_instruction_offset=14dd8\n"
         "input_read_sequence=11\noutput_write_sequence=13\n"
