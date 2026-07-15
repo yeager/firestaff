@@ -11,6 +11,7 @@ extern "C" {
 #define NEXUS_V1_BPK_MAGIC_BPPK 0x4250504BU
 #define NEXUS_V1_BPK_MAGIC_BMPD 0x424D5044U
 #define NEXUS_V1_BPK_MAGIC_PRS3 0x50525333U
+#define NEXUS_V1_BPK_MAGIC_PALT 0x50414C54U
 #define NEXUS_V1_BPK_ENTRY_PREFIX_BYTES 20U
 
 /* Real MENU.BPK byte inspection (pass1082).
@@ -97,6 +98,23 @@ typedef struct {
     uint32_t trailer_index;   /* index whose prefix mode == MODE_TRAILER */
     int trailer_found;
 } Nexus_V1_BpkModeDistribution;
+
+/* The canonical retail MENU.BPK ends in a bounded PALT record: a BE record
+ * byte count, a 256-entry count, then 512 opaque bytes. This parser only
+ * retains that source framing. It does not assign colour format, CLUT use,
+ * PRS3 ownership, or any renderer meaning to the entries. */
+typedef struct {
+    int valid;
+    uint32_t record_offset;
+    uint32_t record_bytes;
+    uint32_t entry_count;
+    uint32_t entry_bytes;
+    uint64_t entry_bytes_fnv1a64;
+    int raw_entries_are_be16;
+    int palette_format_proven;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_BpkPaletteTrailerReceipt;
 
 /* Per-entry surface layout (pass1083). For every entry whose 20-byte
  * prefix is complete AND whose prefix mode is one of the four PRS3
@@ -315,6 +333,12 @@ const char *nexus_v1_bpk_surface_handoff_status_name(
 int nexus_v1_bpk_archive_parse(const uint8_t *data,
                                size_t data_size,
                                Nexus_V1_BpkArchiveInfo *out_info);
+
+/* Inspect only the exact end-of-file PALT record described above. Returns
+ * zero for a structurally complete record, otherwise -1. */
+int nexus_v1_bpk_archive_inspect_palette_trailer(
+    const uint8_t *data, size_t data_size,
+    Nexus_V1_BpkPaletteTrailerReceipt *out_receipt);
 
 int nexus_v1_bpk_archive_get_entry(const uint8_t *data,
                                    size_t data_size,

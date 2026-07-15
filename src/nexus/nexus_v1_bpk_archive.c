@@ -19,6 +19,18 @@ static uint32_t rd32_le(const uint8_t *p) {
            ((uint32_t)p[3] << 24);
 }
 
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t index;
+
+    if (!data || size == 0U) return 0U;
+    for (index = 0U; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static int read_header(const uint8_t *data,
                        size_t data_size,
                        uint32_t *out_count) {
@@ -150,6 +162,45 @@ int nexus_v1_bpk_archive_parse(const uint8_t *data,
     out_info->last_candidate_offset = last;
     out_info->prs3_payload_count = prs3;
     out_info->raw_payload_count = raw;
+    return 0;
+}
+
+int nexus_v1_bpk_archive_inspect_palette_trailer(
+    const uint8_t *data, size_t data_size,
+    Nexus_V1_BpkPaletteTrailerReceipt *out_receipt) {
+    Nexus_V1_BpkPaletteTrailerReceipt receipt;
+    uint32_t record_bytes;
+    uint32_t entry_count;
+    size_t record_offset;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!data || read_header(data, data_size, &entry_count) != 0 ||
+        entry_count == 0U || data_size < 12U + 256U * 2U) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    record_offset = data_size - (12U + 256U * 2U);
+    record_bytes = rd32_be(data + record_offset + 4U);
+    if (rd32_be(data + record_offset) != NEXUS_V1_BPK_MAGIC_PALT ||
+        rd32_be(data + record_offset + 4U) != record_bytes ||
+        rd32_be(data + record_offset + 8U) != 256U ||
+        record_bytes != 12U + 256U * 2U) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    receipt.valid = 1;
+    receipt.record_offset = (uint32_t)record_offset;
+    receipt.record_bytes = record_bytes;
+    receipt.entry_count = 256U;
+    receipt.entry_bytes = 512U;
+    receipt.entry_bytes_fnv1a64 = fnv1a64(data + record_offset + 12U,
+                                           receipt.entry_bytes);
+    receipt.raw_entries_are_be16 = 1;
+    receipt.palette_format_proven = 0;
+    receipt.decoder_promoted = 0;
+    *out_receipt = receipt;
     return 0;
 }
 
