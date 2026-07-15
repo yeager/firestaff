@@ -2390,7 +2390,8 @@ int dm2_v1_viewport_build_door_render_plan(
         /* LOAD_LOCALLEVEL_DYN only admits the two map DoorType slots when
          * Map_definitions::UseDoor0/UseDoor1 says that type is live. A DB0
          * payload alone must not select a same-numbered DOORS image. */
-        if (s->source_materials_required && !vs->door_gfx_admitted) {
+        if (s->source_materials_required && !vs->door_gfx_admitted &&
+            !vs->door_wall_button) {
             continue;
         }
         if (!dm2_v1_viewport_door_panel_rect_for_square(square,
@@ -4599,9 +4600,19 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
      * GRAPHICSSET side frames.  Without the G1 scene receipt, a same-shaped
      * default door would be a wrong material route rather than a valid draw. */
     if (s->source_materials_required && !s->gdat_scene_control_ready) {
-        dm2_v1_block_source_material(
-            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
-        return;
+        int source_custom_button_only = 1;
+        for (int square = 0; square < DM2_SQ_COUNT; ++square) {
+            const DM2_ViewSquare *vs = &s->squares[square];
+            if ((vs->flags & DM2_SQF_HAS_DOOR) && !vs->door_wall_button) {
+                source_custom_button_only = 0;
+                break;
+            }
+        }
+        if (!source_custom_button_only) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+            return;
+        }
     }
     if (s->source_materials_required &&
         s->gdat_door_overlay_material_plan &&
@@ -4616,7 +4627,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     if (s->source_materials_required) {
         for (int square = 0; square < DM2_SQ_COUNT; ++square) {
             const DM2_ViewSquare *vs = &s->squares[square];
-            if ((vs->flags & DM2_SQF_HAS_DOOR) && !vs->door_gfx_admitted) {
+            if ((vs->flags & DM2_SQF_HAS_DOOR) && !vs->door_gfx_admitted &&
+                !vs->door_wall_button) {
                 /* A map can contain a DB0-shaped tile while LOAD_LOCALLEVEL_DYN
                  * did not admit its DoorType. Keep the whole source frame
                  * blocked instead of replacing it with a generic panel. */
@@ -4637,6 +4649,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     if (s->source_materials_required) {
         for (int i = 0; i < plan.door_count; ++i) {
             const DM2_V1_DoorRender *door = &plan.doors[i];
+            const int custom_wall_button_only =
+                door->button_source_kind == 2 && !door->door_gfx_admitted;
             const int source_no_frames =
                 dm2_v1_viewport_door_m11_has_no_frames(
                     s->gdat_door_overlay_material_plan, door);
@@ -4648,12 +4662,14 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 door->button_gdat_index
             };
             const int required[DM2_DOOR_MATERIAL_COUNT] = {
-                door->panel_visible_rect.w > 0 && door->panel_visible_rect.h > 0,
-                door->ornate_gdat_index != 0 &&
+                !custom_wall_button_only && door->panel_visible_rect.w > 0 &&
+                    door->panel_visible_rect.h > 0,
+                !custom_wall_button_only && door->ornate_gdat_index != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0,
-                door->destroyed_mask_gdat_index != 0 &&
+                !custom_wall_button_only && door->destroyed_mask_gdat_index != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0,
-                !source_no_frames && door->frame_gdat_index != 0 &&
+                !custom_wall_button_only && !source_no_frames &&
+                    door->frame_gdat_index != 0 &&
                     door->frame_rect.w > 0 &&
                     door->frame_rect.h > 0,
                 door->button_gdat_index != 0 &&
@@ -4732,6 +4748,23 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             return;
                         }
                     }
+                }
+                if (kind == DM2_DOOR_MATERIAL_BUTTON &&
+                    door->button_source_kind == 2 &&
+                    (!material->pixels || material->width <= 0 ||
+                     material->height <= 0)) {
+                    (void)dm2_v1_fetch_viewport_local_material(
+                        s, gdat_indices[kind], &material->pixels,
+                        &material->width, &material->height,
+                        &material->stride);
+                }
+                if (kind == DM2_DOOR_MATERIAL_BUTTON &&
+                    door->button_source_kind == 2 && material->pixels &&
+                    material->width > 0 && material->height > 0 &&
+                    material->stride >= material->width) {
+                    material->decoded_hash = dm2_v1_weather_pixels_hash(
+                        material->pixels, material->width, material->height,
+                        material->stride);
                 }
                 if (gdat_indices[kind] == 0 ||
                     ((!material->pixels || material->width <= 0 ||
@@ -4826,6 +4859,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
     for (int i = 0; i < plan.door_count; i++) {
         const DM2_V1_DoorRender *door = &plan.doors[i];
+        const int custom_wall_button_only =
+            s->source_materials_required &&
+            door->button_source_kind == 2 && !door->door_gfx_admitted;
         DM2_V1_DoorRender source_door;
         const DM2_V1_DoorRender *render_door = door;
         const int source_no_frames = s->source_materials_required &&
@@ -4836,7 +4872,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         int frame_drawn_asset = 0;
         int button_drawn_asset = 0;
 
-        if (s->source_materials_required &&
+        if (!custom_wall_button_only && s->source_materials_required &&
             door->panel_visible_rect.w > 0 &&
             door->panel_visible_rect.h > 0) {
             const DM2_V1_DoorMaterial *panel =
@@ -4849,7 +4885,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             render_door = &source_door;
         }
 
-        if (render_door->panel_visible_rect.w > 0 &&
+        if (!custom_wall_button_only &&
+            render_door->panel_visible_rect.w > 0 &&
             render_door->panel_visible_rect.h > 0) {
             const uint8_t *panel_pixels = NULL;
             int panel_w = 0;
@@ -4990,7 +5027,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
             }
         }
-        {
+        if (!custom_wall_button_only) {
             const int overlay_indices[2] = {
                 door->ornate_gdat_index,
                 door->destroyed_mask_gdat_index
@@ -5090,7 +5127,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 }
             }
         }
-        if (!source_no_frames && door->frame_gdat_index != 0 &&
+        if (!custom_wall_button_only && !source_no_frames &&
+            door->frame_gdat_index != 0 &&
             door->frame_rect.w > 0 &&
             door->frame_rect.h > 0) {
             const uint8_t *door_pixels = NULL;
@@ -5169,7 +5207,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
          * destinations, image offsets, mirror state and local palettes are
          * carried by the M11 door command; never reuse the bounded wall-frame
          * rectangle for this route. */
-        if (s->source_materials_required && !source_no_frames) {
+        if (!custom_wall_button_only && s->source_materials_required &&
+            !source_no_frames) {
             for (int side = 0; side < 2; ++side) {
                 const int kind = side == 0
                     ? DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT
@@ -5270,6 +5309,10 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->g1_scene_wall_button_material_palette_hash;
                 s->active_asset_palette_ready = 1;
             } else if (s->source_materials_required) {
+                /* Custom buttons are preloaded above from their exact packed
+                 * WALL_GFX field-1 key. They share this source-owned local
+                 * material slot with normal buttons so M11 never queries it
+                 * a second time. */
                 const DM2_V1_DoorMaterial *material =
                     &materials[i][DM2_DOOR_MATERIAL_BUTTON];
                 button_pixels = material->pixels;

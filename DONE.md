@@ -14,6 +14,8 @@
   ObjectID, field, GDAT key, and pixel hash directly to M11. The renderer
   consumes it only when the existing G1 root receipt matches, avoiding a
   second mutable provider lookup; missing or altered data remains no-draw.
+  A button-only DB2/DB3 root cannot borrow a DB0 DoorType, GRAPHICSSET frame,
+  panel, or jamb route.
   `WALL_GFX/F9` and `DOORS/F9` are deliberately not used as substitute door
   art because SKProject has not yet proven their visible placement semantics.
   Source: SKProject `c_gui_vp.cpp::DRAW_DEFAULT_DOOR_BUTTON`,
