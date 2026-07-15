@@ -29,6 +29,7 @@ static int monster_info_store_count;
 static uint32_t monster_info_stored[8];
 static uint8_t monster_info_store_mask;
 static int cell_info_enabled;
+static int false_pit_enabled;
 static int cell_info_store_count;
 static uint32_t cell_info_stored[5];
 static uint8_t cell_info_store_mask;
@@ -154,11 +155,16 @@ static int get_cell_info(void *user, uint32_t location,
     if (!cell_info_enabled || !out_values) return 0;
     memset(out_values, 0, 5u * sizeof(out_values[0]));
     if (location == 0x0c82u) {
-        out_values[0] = 4u;
-        out_values[1] = 0x1du;
-        out_values[2] = 5u;
-        out_values[3] = 1u;
-        out_values[4] = 12u;
+        if (false_pit_enabled) {
+            out_values[0] = 3u;
+            out_values[1] = 0x0cu;
+        } else {
+            out_values[0] = 4u;
+            out_values[1] = 0x1du;
+            out_values[2] = 5u;
+            out_values[3] = 1u;
+            out_values[4] = 12u;
+        }
     }
     return 1;
 }
@@ -168,7 +174,8 @@ static int resolve_cell_store(void *user, uint32_t location,
 {
     (void)user;
     if (!cell_info_enabled) return -1;
-    return location == 0x0c82u && expected_room_type == 4u ? 1 : 0;
+    return location == 0x0c82u &&
+        (expected_room_type == (false_pit_enabled ? 3u : 4u)) ? 1 : 0;
 }
 
 static int set_cell_info(void *user, uint32_t location,
@@ -602,6 +609,12 @@ int main(void)
     uint16_t random_then_bad_opcode[] = {
         0x0686u, 10u, 0x10cbu, 0x0000u
     };
+    uint16_t false_pit_set[] = {
+        0x0686u, 0x0c82u, 0x0686u, 1u, 0x084bu
+    };
+    uint16_t false_pit_then_bad_opcode[] = {
+        0x0686u, 0x0c82u, 0x0686u, 1u, 0x084bu, 0x0000u
+    };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -1007,6 +1020,26 @@ int main(void)
               parameters[0] == 77u && random_state == 0x12345678u,
           "RANDOM does not publish a seed after a later rejected opcode");
     random_state_enabled = 0;
+    cell_info_enabled = 1;
+    false_pit_enabled = 1;
+    cell_info_store_count = 0;
+    memset(cell_info_stored, 0, sizeof(cell_info_stored));
+    check(run(&state, &action, false_pit_set,
+              (int)(sizeof(false_pit_set) / sizeof(false_pit_set[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              cell_info_store_count == 1 && cell_info_stored[0] == 3u &&
+              cell_info_stored[1] == 0x0du &&
+              cell_info_store_mask == (1u << 1),
+          "FALSEPIT writes only the source roomPIT false bit");
+    cell_info_store_count = 0;
+    check(run(&state, &action, false_pit_then_bad_opcode,
+              (int)(sizeof(false_pit_then_bad_opcode) /
+                    sizeof(false_pit_then_bad_opcode[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              cell_info_store_count == 0,
+          "FALSEPIT remains staged after a later rejected opcode");
+    false_pit_enabled = 0;
+    cell_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
