@@ -277,6 +277,8 @@ int main(void)
             FILE *capture_file;
             size_t capture_size;
             Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt manifest_receipt;
+            Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt raw_receipt;
+            Nexus_V1_DgnStructure3RawCaptureHostReceipt absent_raw_capture;
             char *level_value;
 
             memset(&target, 0, sizeof(target));
@@ -345,6 +347,21 @@ int main(void)
                   !manifest_receipt.fallback_visuals_permitted &&
                   manifest_receipt.blocks_real_dgn_mesh_render,
                   "package boundary accepts only its exact no-draw direct-face manifest");
+            memset(&absent_raw_capture, 0, sizeof(absent_raw_capture));
+            memset(&raw_receipt, 0, sizeof(raw_receipt));
+            CHECK(nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
+                      &engine, source_entry, capture_text, capture_size,
+                      &absent_raw_capture, &raw_receipt) == 0 &&
+                  raw_receipt.status ==
+                      NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_CAPTURE &&
+                  raw_receipt.direct_face.status ==
+                      NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW &&
+                  !raw_receipt.raw_capture_authenticated &&
+                  !raw_receipt.direct_face_candidate_bound &&
+                  raw_receipt.no_draw_only &&
+                  !raw_receipt.fallback_visuals_permitted &&
+                  raw_receipt.blocks_real_dgn_mesh_render,
+                  "direct face refuses absent Saturn capture lanes without drawing");
             level_value = strstr(capture_text, "level_index=");
             CHECK(level_value != NULL, "direct face manifest retains its level identity");
             if (level_value) {

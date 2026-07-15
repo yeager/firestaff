@@ -1388,6 +1388,36 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt;
 
+/* Joins a verified direct Structure1F face request to one independently
+ * authenticated six-lane Saturn capture. The join is deliberately opaque:
+ * it proves only that the capture manifest names the exact package face.
+ * Texture, palette, VDP1 command, transform, and draw semantics remain
+ * unavailable until their formats are separately proven. */
+typedef enum {
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_MISSING = 0,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_DIRECT_FACE = 1,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_CAPTURE = 2,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_FACE_MISMATCH = 3,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_ACCEPTED_OPAQUE = 4
+} Nexus_V1_DgnStructure1FDirectFaceRawCaptureStatus;
+
+typedef struct {
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureStatus status;
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt direct_face;
+    int raw_capture_authenticated;
+    int raw_capture_source_bound;
+    int direct_face_candidate_bound;
+    int texture_lane_bound;
+    int palette_lane_bound;
+    int vdp1_state_lane_bound;
+    int transform_lane_bound;
+    int normal_culling_lane_bound;
+    int vdp1_command_lane_bound;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt;
+
 /* Admission for a future original-Saturn transform observation of one direct
  * Structure1F owner. It binds source bytes and captured state identity only;
  * it never interprets transform words or authorizes a draw. */
@@ -2491,6 +2521,14 @@ int nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,
     Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt *out_receipt);
+/* Bind an authenticated raw Structure3 capture only when its exact candidate
+ * names the source-proved direct Structure1F owner face. Success is still an
+ * opaque no-draw handoff, not a Saturn decoder or renderer admission. */
+int nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *direct_manifest_text, size_t direct_manifest_size,
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt *out_receipt);
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,

@@ -244,6 +244,75 @@ int nexus_v1_launcher_dgn_direct_face_capture_intake(
     return 1;
 }
 
+int nexus_v1_launcher_dgn_direct_face_raw_capture_intake(
+    int structure1f_entry_index, const char *direct_manifest_text,
+    size_t direct_manifest_size, const char *capture_manifest_text,
+    size_t capture_manifest_size,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureHostReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureHostReceipt receipt;
+    Nexus_V1_DgnStructure2SourceReceipt source;
+    int source_verified;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(
+        &receipt.raw_capture);
+    if (!s_initialized || !s_engine.level_loaded || !direct_manifest_text ||
+        direct_manifest_size == 0U || !capture_manifest_text ||
+        capture_manifest_size == 0U || !paths || !attestation) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_launcher_dgn_direct_face_capture_intake(
+        structure1f_entry_index, direct_manifest_text, direct_manifest_size,
+        &receipt.direct_face);
+    if (!receipt.direct_face.vdp1_capture_prerequisite_bound) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    memset(&source, 0, sizeof(source));
+    (void)nexus_v1_current_level_structure2_source_receipt(&s_engine, &source);
+    source_verified = source.canonical_hash_verified &&
+        source.materialization_bound && source.loaded_bytes_bound &&
+        source.level_index == s_engine.game.current_level &&
+        source.loaded_dgn_size == s_engine.current_level_dgn_size &&
+        source.loaded_dgn_fnv1a64 != 0U &&
+        source.loaded_dgn_fnv1a64 == nexus_v1_launcher_dgn_bytes_fnv1a64(
+            s_engine.current_level_dgn_data, s_engine.current_level_dgn_size);
+    if (!source_verified || !s_engine.current_level_dgn_data ||
+        s_engine.current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_dgn_structure3_raw_capture_host_intake(
+        &s_engine.current_level, s_engine.current_level_dgn_data,
+        s_engine.current_level_dgn_size, source_verified, capture_manifest_text,
+        capture_manifest_size, paths, attestation, &receipt.raw_capture);
+    (void)nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
+        &s_engine, structure1f_entry_index, direct_manifest_text,
+        direct_manifest_size, &receipt.raw_capture, &receipt.joined_capture);
+    if (receipt.joined_capture.status !=
+        NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_ACCEPTED_OPAQUE) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.engine_capture_consumed = nexus_v1_engine_consume_structure3_capture(
+        &s_engine, &receipt.raw_capture.host.manifest.candidate,
+        &receipt.raw_capture.host.import_receipt.binding,
+        &receipt.raw_capture.raw_reader.import_packet);
+    if (!receipt.engine_capture_consumed) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt)
 {
