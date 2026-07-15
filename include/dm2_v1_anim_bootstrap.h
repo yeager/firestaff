@@ -32,8 +32,36 @@ typedef struct {
     uint32_t previous_row_run_count;
 } DM2_V1_AnimDecodeImg1Receipt;
 
+typedef struct {
+    int valid;
+    const char *symbol;
+    const char *source_file;
+    int source_line;
+    int handle;
+    uint32_t requested_bytes;
+    uint32_t transferred_bytes;
+    uint32_t chunk_count;
+    uint32_t file_size;
+} DM2_V1_AnimFileReceipt;
+
 int dm2_v1_anim_bootstrap_swoosh(DM2_V1_AnimBootstrapReceipt *out_receipt);
 int dm2_v1_anim_bootstrap_title(DM2_V1_AnimBootstrapReceipt *out_receipt);
+
+int dm2_v1_anim_file_open(const char *filename,
+                          DM2_V1_AnimFileReceipt *out_receipt);
+uint32_t dm2_v1_anim_get_file_size(int handle,
+                                   DM2_V1_AnimFileReceipt *out_receipt);
+int dm2_v1_anim_read_huge_file(int handle,
+                               uint32_t read_size,
+                               uint8_t *buffer,
+                               DM2_V1_AnimFileReceipt *out_receipt);
+void dm2_v1_anim_file_close(int handle,
+                            DM2_V1_AnimFileReceipt *out_receipt);
+char *dm2_v1_anim_strcpy(char *dst,
+                         const char *src,
+                         DM2_V1_AnimFileReceipt *out_receipt);
+int dm2_v1_anim_toupper(int value,
+                        DM2_V1_AnimFileReceipt *out_receipt);
 
 int dm2_v1_anim_setpixel_seq_4bpp(uint8_t *dst,
                                   size_t dst_size,
@@ -49,5 +77,13 @@ int dm2_v1_anim_decode_img1(const uint8_t *src,
                             uint8_t *dst,
                             size_t dst_size,
                             DM2_V1_AnimDecodeImg1Receipt *out_receipt);
+int dm2_v1_anim_blit_to_memory_row_4to4bpp(const uint8_t *src,
+                                           size_t src_size,
+                                           uint16_t off_src,
+                                           uint8_t *dst,
+                                           size_t dst_size,
+                                           uint16_t off_dst,
+                                           uint16_t width,
+                                           DM2_V1_AnimFileReceipt *out_receipt);
 
 #endif

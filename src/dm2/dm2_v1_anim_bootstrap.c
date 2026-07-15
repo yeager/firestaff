@@ -1,7 +1,28 @@
 #include "dm2_v1_anim_bootstrap.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+
+#define DM2_V1_ANIM_MAX_FILE_HANDLES 16
+#define DM2_V1_ANIM_READ_CHUNK_SIZE 0x8000u
+
+static FILE *dm2_v1_anim_files[DM2_V1_ANIM_MAX_FILE_HANDLES];
+
+static void dm2_v1_anim_file_receipt_set(DM2_V1_AnimFileReceipt *receipt,
+                                         const char *symbol,
+                                         int source_line,
+                                         int handle)
+{
+    if (receipt) {
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->valid = 1;
+        receipt->symbol = symbol;
+        receipt->source_file = "SKWIN/SkWinCore.cpp";
+        receipt->source_line = source_line;
+        receipt->handle = handle;
+    }
+}
 
 static void dm2_v1_anim_bootstrap_clear(DM2_V1_AnimBootstrapReceipt *receipt)
 {
@@ -64,6 +85,142 @@ int dm2_v1_anim_bootstrap_title(DM2_V1_AnimBootstrapReceipt *out_receipt)
                                      2045,
                                      7,
                                      argv);
+}
+
+int dm2_v1_anim_file_open(const char *filename,
+                          DM2_V1_AnimFileReceipt *out_receipt)
+{
+    int i;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!filename) {
+        return 0;
+    }
+    for (i = 1; i < DM2_V1_ANIM_MAX_FILE_HANDLES; ++i) {
+        if (!dm2_v1_anim_files[i]) {
+            FILE *fp = fopen(filename, "rb");
+            if (!fp) {
+                return 0;
+            }
+            dm2_v1_anim_files[i] = fp;
+            dm2_v1_anim_file_receipt_set(
+                out_receipt, "ANIM_FILE_OPEN", 915, i);
+            return i;
+        }
+    }
+    return 0;
+}
+
+uint32_t dm2_v1_anim_get_file_size(int handle,
+                                   DM2_V1_AnimFileReceipt *out_receipt)
+{
+    FILE *fp;
+    long current;
+    long size;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (handle <= 0 || handle >= DM2_V1_ANIM_MAX_FILE_HANDLES ||
+        !dm2_v1_anim_files[handle]) {
+        return 0;
+    }
+    fp = dm2_v1_anim_files[handle];
+    current = ftell(fp);
+    if (current < 0 || fseek(fp, 0, SEEK_END) != 0) {
+        return 0;
+    }
+    size = ftell(fp);
+    if (size < 0 || fseek(fp, current, SEEK_SET) != 0) {
+        return 0;
+    }
+    dm2_v1_anim_file_receipt_set(
+        out_receipt, "ANIM_GET_FILE_SIZE", 924, handle);
+    if (out_receipt) {
+        out_receipt->file_size = (uint32_t)size;
+    }
+    return (uint32_t)size;
+}
+
+int dm2_v1_anim_read_huge_file(int handle,
+                               uint32_t read_size,
+                               uint8_t *buffer,
+                               DM2_V1_AnimFileReceipt *out_receipt)
+{
+    FILE *fp;
+    uint8_t *cursor = buffer;
+    uint32_t remaining = read_size;
+    uint32_t chunks = 0;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (handle <= 0 || handle >= DM2_V1_ANIM_MAX_FILE_HANDLES ||
+        !dm2_v1_anim_files[handle] || (!buffer && read_size != 0u)) {
+        return 0;
+    }
+    fp = dm2_v1_anim_files[handle];
+    while (remaining > 0u) {
+        uint32_t chunk = remaining > DM2_V1_ANIM_READ_CHUNK_SIZE
+                             ? DM2_V1_ANIM_READ_CHUNK_SIZE
+                             : remaining;
+        if (fread(cursor, 1, chunk, fp) != chunk) {
+            return 0;
+        }
+        cursor += chunk;
+        remaining -= chunk;
+        ++chunks;
+    }
+    dm2_v1_anim_file_receipt_set(
+        out_receipt, "ANIM_READ_HUGE_FILE", 939, handle);
+    if (out_receipt) {
+        out_receipt->requested_bytes = read_size;
+        out_receipt->transferred_bytes = read_size;
+        out_receipt->chunk_count = chunks;
+    }
+    return 1;
+}
+
+void dm2_v1_anim_file_close(int handle,
+                            DM2_V1_AnimFileReceipt *out_receipt)
+{
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (handle > 0 && handle < DM2_V1_ANIM_MAX_FILE_HANDLES &&
+        dm2_v1_anim_files[handle]) {
+        fclose(dm2_v1_anim_files[handle]);
+        dm2_v1_anim_files[handle] = NULL;
+        dm2_v1_anim_file_receipt_set(
+            out_receipt, "ANIM_FILE_CLOSE", 970, handle);
+    }
+}
+
+char *dm2_v1_anim_strcpy(char *dst,
+                         const char *src,
+                         DM2_V1_AnimFileReceipt *out_receipt)
+{
+    if (!dst || !src) {
+        if (out_receipt) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+        }
+        return NULL;
+    }
+    dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_STRCPY", 984, 0);
+    return strcpy(dst, src);
+}
+
+int dm2_v1_anim_toupper(int value,
+                        DM2_V1_AnimFileReceipt *out_receipt)
+{
+    if (value == -1) {
+        dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_TOUPPER", 1308, 0);
+        return -1;
+    }
+    dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_TOUPPER", 1308, 0);
+    return (unsigned char)toupper((unsigned char)value);
 }
 
 int dm2_v1_anim_setpixel_seq_4bpp(uint8_t *dst,
@@ -321,6 +478,45 @@ int dm2_v1_anim_decode_img1(const uint8_t *src,
     (void)previous_flush;
     if (out_receipt) {
         *out_receipt = receipt;
+    }
+    return 1;
+}
+
+int dm2_v1_anim_blit_to_memory_row_4to4bpp(const uint8_t *src,
+                                           size_t src_size,
+                                           uint16_t off_src,
+                                           uint8_t *dst,
+                                           size_t dst_size,
+                                           uint16_t off_dst,
+                                           uint16_t width,
+                                           DM2_V1_AnimFileReceipt *out_receipt)
+{
+    uint16_t i;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!src || !dst || width == 0u) {
+        return 0;
+    }
+    for (i = 0; i < width; ++i) {
+        uint8_t color;
+        if (!dm2_v1_anim_get_nibble(src,
+                                    src_size,
+                                    (size_t)off_src + i,
+                                    &color) ||
+            !dm2_v1_anim_setpixel_seq_4bpp(dst,
+                                           dst_size,
+                                           (uint16_t)(off_dst + i),
+                                           color)) {
+            return 0;
+        }
+    }
+    dm2_v1_anim_file_receipt_set(
+        out_receipt, "ANIM_BLIT_TO_MEMORY_ROW_4TO4BPP", 1399, 0);
+    if (out_receipt) {
+        out_receipt->requested_bytes = width;
+        out_receipt->transferred_bytes = width;
     }
     return 1;
 }
