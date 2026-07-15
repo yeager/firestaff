@@ -3335,6 +3335,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       no-op behavior; missing raw dungeon ownership rejects rather than using
       object metadata or a substitute layout. Positive original DSA-bearing
       save-corpus proof remains required.
+    - 2026-07-15 possession-query update: source `STKOP_ChPoss` now reads
+      only the persisted `CHARDESC` 30-slot array after its original selector
+      normalization, including selector four through the loaded
+      `GAMEBLOCK2.handChar`; a negative selector reads the restored
+      `GAMEBLOCK2.objectInHand`. `STKOP_MonPoss` starts exclusively at raw
+      loaded `DB4.possession2` and follows the original `DBCOMMON.next`
+      Thing links, retaining `RNeof` as `-1`. Invalid Things retain the
+      source empty result; absent or malformed dungeon ownership rejects,
+      rather than deriving a possession list from metadata or a fallback.
+      Positive original DSA-bearing save-corpus proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

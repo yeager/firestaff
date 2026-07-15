@@ -254,6 +254,13 @@ typedef int (*CSB_V1_CSBWinDSASetObjectPropertyFn)(
 typedef int (*CSB_V1_CSBWinDSANormalizeObjectPropertyFn)(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t input_value, uint32_t *out_value);
+/* DSA.cpp STKOP_ChPoss/STKOP_MonPoss return a converted Thing integer or
+ * -1 for the source empty-list sentinel. */
+typedef int (*CSB_V1_CSBWinDSAGetChampionPossessionFn)(
+    void *user, int champion_index, uint32_t slot_index, int32_t *out_thing);
+typedef int (*CSB_V1_CSBWinDSAGetMonsterPossessionFn)(
+    void *user, uint16_t monster_thing, uint32_t possession_index,
+    int32_t *out_thing);
 
 typedef struct {
     uint32_t master_location;
@@ -308,6 +315,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
     CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
+    CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
+    CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -557,6 +566,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
     CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
+    CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
+    CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

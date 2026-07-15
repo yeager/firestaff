@@ -108,6 +108,11 @@ static int csb_v1_runtime_dsa_set_monster_info(void *user,
                                                 uint16_t thing,
                                                 const uint32_t values[8],
                                                 uint8_t write_mask);
+static int csb_v1_runtime_dsa_get_champion_possession(
+    void *user, int champion_index, uint32_t slot_index, int32_t *out_thing);
+static int csb_v1_runtime_dsa_get_monster_possession(
+    void *user, uint16_t monster_thing, uint32_t possession_index,
+    int32_t *out_thing);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17263,6 +17268,78 @@ static int csb_v1_runtime_dsa_set_monster_info(void *user,
     return 1;
 }
 
+/* CSBWin DSA.cpp STKOP_ChPoss:3330-3356.  The four normal champion
+ * selectors address the persisted CHARDESC slot array; selector four is
+ * normalized by the executor to GAMEBLOCK2.handChar and is therefore still
+ * a real loaded party member. */
+static int csb_v1_runtime_dsa_get_champion_possession(
+    void *user, int champion_index, uint32_t slot_index, int32_t *out_thing)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    uint16_t thing;
+
+    if (!out_thing || !profile || !profile->party_state_valid) return -1;
+    *out_thing = -1;
+    if (slot_index >= CSB_V1_SLOT_COUNT) return 1;
+    if (champion_index < 0) {
+        thing = csb_v1_runtime_export_leader_hand_thing(profile);
+    } else {
+        if (champion_index >= profile->party_state.ChampionCount ||
+            champion_index >= CSB_V1_MAX_CHAMPIONS) {
+            return 1;
+        }
+        thing = profile->party_state.Champions[champion_index].Slots[slot_index];
+    }
+    if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+        *out_thing = (int32_t)thing;
+    }
+    return 1;
+}
+
+/* CSBWin DSA.cpp STKOP_MonPoss:3358-3386 starts at DB4.possession2 (+2)
+ * and follows DBCOMMON.next (+0).  Never derive a possession list from
+ * renderer/runtime metadata: the raw loaded record chain is authoritative. */
+static int csb_v1_runtime_dsa_get_monster_possession(
+    void *user, uint16_t monster_thing, uint32_t possession_index,
+    int32_t *out_thing)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t thing;
+    int type;
+    int size;
+    int guard;
+
+    if (!out_thing || !profile || !profile->dungeon_handle) return -1;
+    *out_thing = -1;
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    record = csb_v1_dungeon_get_thing_record(dungeon, monster_thing,
+                                              &type, NULL, &size);
+    if (!record || type != CSB_V1_THING_TYPE_GROUP || size < 16) return 1;
+
+    thing = csb_v1_runtime_read_u16(record + 2);
+    for (guard = 0;
+         possession_index > 0u && thing != THING_NONE &&
+             thing != THING_ENDOFLIST && guard < 128;
+         ++guard, --possession_index) {
+        record = csb_v1_dungeon_get_thing_record(dungeon, thing,
+                                                  NULL, NULL, &size);
+        if (!record || size < 2) return -1;
+        thing = csb_v1_runtime_read_u16(record);
+    }
+    if (possession_index > 0u && thing != THING_NONE &&
+        thing != THING_ENDOFLIST) {
+        return -1;
+    }
+    if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+        *out_thing = (int32_t)thing;
+    }
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20257,6 +20334,9 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.set_generator_delay = csb_v1_runtime_dsa_set_generator_delay;
     candidate.get_monster_info = csb_v1_runtime_dsa_get_monster_info;
     candidate.set_monster_info = csb_v1_runtime_dsa_set_monster_info;
+    candidate.get_champion_possession =
+        csb_v1_runtime_dsa_get_champion_possession;
+    candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20374,6 +20454,9 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.set_generator_delay = csb_v1_runtime_dsa_set_generator_delay;
     candidate.get_monster_info = csb_v1_runtime_dsa_get_monster_info;
     candidate.set_monster_info = csb_v1_runtime_dsa_set_monster_info;
+    candidate.get_champion_possession =
+        csb_v1_runtime_dsa_get_champion_possession;
+    candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
