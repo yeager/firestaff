@@ -1572,6 +1572,12 @@
   fluxcage neighbors, follows source RNG direction order, and moves the exact
   Thing through F0164/F0163 or reports the Fuse-sequence terminal condition.
 
+- 2026-07-16 DM1 ReDMCSB F0222/F0223 source-lock: added focused coverage for
+  raw C04 Lord Chaos lookup and Lord Chaos escape-square allow classification.
+  The callable audit and symbol disposition rows now close F0222/F0223 as
+  `VERIFIED_SOURCE_MAPPING`; F0224 remains open for live Fluxcage runtime
+  capture.
+
 - 2026-07-15 DM1 F0223: source walkability gate now accepts only corridor,
   teleporter, pit, and door target squares for Lord Chaos escape routing.
 

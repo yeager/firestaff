@@ -20,6 +20,8 @@
 #include <string.h>
 
 static int g_fail = 0;
+static unsigned short g_test_first_thing = THING_ENDOFLIST;
+static int g_test_fluxcages[4];
 
 #define ASSERT_EQ(a, b, msg) do { \
     if ((a) != (b)) { \
@@ -41,6 +43,68 @@ static int g_fail = 0;
         g_fail = 1; \
     } \
 } while(0)
+
+static unsigned short make_test_thing(unsigned type, unsigned index)
+{
+    return (unsigned short)(((type & 0x0fu) << 10) | (index & 0x03ffu));
+}
+
+unsigned short F0511_DUNGEON_GetSquareFirstThing_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY)
+{
+    (void)dungeon; (void)things; (void)mapIndex; (void)mapX; (void)mapY;
+    return g_test_first_thing;
+}
+
+unsigned short F0512_DUNGEON_GetThingNext_Compat(
+    const struct DungeonThings_Compat* things, unsigned short thing)
+{
+    int index;
+    if (!things || THING_GET_TYPE(thing) != THING_TYPE_GROUP) return THING_ENDOFLIST;
+    index = (int)THING_GET_INDEX(thing);
+    if (index < 0 || index >= things->groupCount || !things->groups) return THING_ENDOFLIST;
+    return things->groups[index].next;
+}
+
+int F0221_GROUP_IsFluxcageOnSquare_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY, int* outIsFluxcage)
+{
+    int slot;
+    (void)dungeon; (void)things; (void)mapIndex; (void)mapY;
+    slot = mapX < 0 ? 0 : (mapX > 0 ? 1 : 2);
+    if (outIsFluxcage) *outIsFluxcage = g_test_fluxcages[slot & 3];
+    return 1;
+}
+
+int F0514_DUNGEON_LinkThingToList_Compat(
+    struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things,
+    unsigned short thingToLink, unsigned short thingInList,
+    int mapIndex, int mapX, int mapY)
+{
+    (void)dungeon; (void)things; (void)thingToLink; (void)thingInList;
+    (void)mapIndex; (void)mapX; (void)mapY;
+    return 1;
+}
+
+int F0515_DUNGEON_UnlinkThingFromList_Compat(
+    struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things,
+    unsigned short thingToUnlink, unsigned short thingInList,
+    int mapIndex, int mapX, int mapY)
+{
+    (void)dungeon; (void)things; (void)thingToUnlink; (void)thingInList;
+    (void)mapIndex; (void)mapX; (void)mapY;
+    return 1;
+}
+
+int F0732_COMBAT_RngRandom_Compat(struct RngState_Compat* rng, int modulus)
+{
+    (void)rng;
+    return modulus > 0 ? 0 : 0;
+}
 
 /* ── Test: Creature constants match DEFS.H ──────────────────────── */
 static void test_creature_constants(void)
@@ -151,34 +215,64 @@ static void test_f0222_raw_lord_chaos_thing(void)
     struct DungeonMapDesc_Compat map;
     struct DungeonMapTiles_Compat tiles;
     struct DungeonThings_Compat things;
-    struct DungeonGroup_Compat group;
-    unsigned char square = DUNGEON_ELEMENT_CORRIDOR << 5;
-    unsigned short firstThing = (unsigned short)(THING_TYPE_GROUP << 10);
+    struct DungeonGroup_Compat groups[3];
+    unsigned char squares[6];
+    unsigned short firstThing = make_test_thing(THING_TYPE_GROUP, 0);
     unsigned short base = 0, found = 0;
     int allowed = 0;
     memset(&dungeon, 0, sizeof(dungeon)); memset(&map, 0, sizeof(map));
     memset(&tiles, 0, sizeof(tiles)); memset(&things, 0, sizeof(things));
-    memset(&group, 0, sizeof(group));
+    memset(groups, 0, sizeof(groups)); memset(squares, 0, sizeof(squares));
     printf("  F0222 raw Lord Chaos Thing...\n");
-    square |= DUNGEON_SQUARE_MASK_THING_LIST;
-    map.width = map.height = 1; tiles.squareData = &square; tiles.squareCount = 1;
+    squares[0] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    squares[1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    squares[2] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
+    squares[3] = (unsigned char)(DUNGEON_ELEMENT_DOOR << 5);
+    squares[4] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    squares[5] = (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5);
+    map.width = 2; map.height = 3; tiles.squareData = squares; tiles.squareCount = 6;
     dungeon.header.mapCount = 1; dungeon.maps = &map; dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1; dungeon.columnsCumulativeSquareFirstThingCount = &base;
     dungeon.dungeonColumnCount = 1;
     things.loaded = 1; things.squareFirstThings = &firstThing;
-    things.squareFirstThingCount = 1; things.groups = &group; things.groupCount = 1;
-    group.next = THING_ENDOFLIST; group.creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    things.squareFirstThingCount = 1; things.groups = groups; things.groupCount = 3;
+    groups[0].next = make_test_thing(THING_TYPE_GROUP, 1);
+    groups[0].creatureType = 3;
+    groups[1].next = make_test_thing(THING_TYPE_GROUP, 2);
+    groups[1].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    groups[2].next = THING_ENDOFLIST;
+    groups[2].creatureType = 7;
+    g_test_first_thing = firstThing;
     ASSERT_EQ(DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
                   &dungeon, &things, 0, 0, 0, &found), 1, "F0222 query succeeds");
-    ASSERT_EQ(found, firstThing, "F0222 returns raw Lord Chaos Thing");
-    square = DUNGEON_ELEMENT_DOOR << 5;
+    ASSERT_EQ(found, make_test_thing(THING_TYPE_GROUP, 1),
+              "F0222 returns non-leading raw Lord Chaos Thing");
+    groups[1].creatureType = DM1_CREATURE_LORD_ORDER_ID;
+    found = THING_NONE;
+    ASSERT_EQ(DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
+                  &dungeon, &things, 0, 0, 0, &found), 1,
+              "F0222 absence scan succeeds");
+    ASSERT_EQ(found, 0, "F0222 absence does not synthesize a Lord Chaos Thing");
+    groups[1].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
     ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
-                  &dungeon, 0, 0, 0, &allowed), 1, "F0223 query succeeds");
+                  &dungeon, 0, 0, 0, &allowed), 1, "F0223 corridor query succeeds");
+    ASSERT_EQ(allowed, 1, "F0223 accepts corridors");
+    ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                  &dungeon, 0, 0, 1, &allowed), 1, "F0223 teleporter query succeeds");
+    ASSERT_EQ(allowed, 1, "F0223 accepts teleporters");
+    ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                  &dungeon, 0, 0, 2, &allowed), 1, "F0223 pit query succeeds");
+    ASSERT_EQ(allowed, 1, "F0223 accepts pits");
+    ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                  &dungeon, 0, 1, 0, &allowed), 1, "F0223 query succeeds");
     ASSERT_EQ(allowed, 1, "F0223 accepts doors");
-    square = DUNGEON_ELEMENT_WALL << 5;
     ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
-                  &dungeon, 0, 0, 0, &allowed), 1, "F0223 wall query succeeds");
+                  &dungeon, 0, 1, 1, &allowed), 1, "F0223 wall query succeeds");
     ASSERT_EQ(allowed, 0, "F0223 rejects walls");
+    ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                  &dungeon, 0, 1, 2, &allowed), 1, "F0223 stairs query succeeds");
+    ASSERT_EQ(allowed, 0, "F0223 rejects stairs");
 }
 
 /* ── Test: Fuse action — Lord Chaos not present ──────────────────── */
