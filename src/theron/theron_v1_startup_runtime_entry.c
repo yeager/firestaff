@@ -474,8 +474,10 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
     handoff = &profile->track02_initial_level_handoff;
     if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(handoff) ||
         strcmp(handoff->track02_md5, profile->graphics_md5) != 0 ||
+        handoff->loader_intake.track02_variant != handoff->variant ||
         !handoff->loader_payload.handed_off ||
         !handoff->loader_payload.no_fallback ||
+        handoff->loader_payload.track02_variant != handoff->variant ||
         handoff->loader_payload.record != handoff->observed_track02_record ||
         handoff->loader_payload.destination !=
             THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
@@ -487,6 +489,7 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             handoff->loader_intake.observed_payload_checksum ||
         !handoff->loader_level_envelope.handed_off ||
         !handoff->loader_level_envelope.no_fallback ||
+        handoff->loader_level_envelope.track02_variant != handoff->variant ||
         handoff->loader_level_envelope.record != handoff->observed_track02_record ||
         handoff->loader_level_envelope.record_user_data_offset !=
             handoff->initial_level_boundary.level_user_data_offset_in_record ||
@@ -499,6 +502,7 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
                 handoff->loader_level_envelope.envelope_bytes ||
         !handoff->loader_post_envelope.handed_off ||
         !handoff->loader_post_envelope.no_fallback ||
+        handoff->loader_post_envelope.track02_variant != handoff->variant ||
         handoff->loader_post_envelope.record != handoff->observed_track02_record ||
         handoff->loader_post_envelope.record_user_data_offset !=
             handoff->initial_level_boundary.object_boundary_user_data_offset_in_record ||
@@ -618,6 +622,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
         handoff->fallback_visuals_allowed ||
         !handoff->loader_level_envelope.handed_off ||
         !handoff->loader_level_envelope.no_fallback ||
+        handoff->loader_level_envelope.track02_variant != handoff->variant ||
         handoff->loader_level_envelope.record != handoff->observed_track02_record ||
         handoff->loader_level_envelope.record_user_data_offset !=
             handoff->initial_level_boundary.level_user_data_offset_in_record ||
@@ -626,6 +631,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
         handoff->loader_level_envelope.envelope_checksum !=
             handoff->initial_level_boundary.level_payload_hash ||
         !handoff->loader_post_envelope.handed_off ||
+        handoff->loader_post_envelope.track02_variant != handoff->variant ||
         handoff->loader_post_envelope.checksum !=
             handoff->initial_level_boundary.following_user_data_hash ||
         theron_v1_level_load(&payload_level,

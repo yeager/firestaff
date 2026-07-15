@@ -210,8 +210,10 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
            initial_level->variant == expected_variant &&
            strcmp(initial_level->track02_md5, profile->graphics_md5) == 0 &&
            initial_level->observed_track02_record == 0x0b52u &&
+           initial_level->loader_intake.track02_variant == expected_variant &&
            initial_level->loader_payload.handed_off &&
            initial_level->loader_payload.no_fallback &&
+           initial_level->loader_payload.track02_variant == expected_variant &&
            initial_level->loader_payload.record ==
                initial_level->observed_track02_record &&
            initial_level->loader_payload.payload_bytes ==
@@ -220,6 +222,7 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
                initial_level->complete_payload_checksum &&
            initial_level->loader_post_envelope.handed_off &&
            initial_level->loader_post_envelope.no_fallback &&
+           initial_level->loader_post_envelope.track02_variant == expected_variant &&
            initial_level->loader_post_envelope.record ==
                initial_level->observed_track02_record &&
            initial_level->loader_post_envelope.record_user_data_offset ==
