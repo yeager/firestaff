@@ -16321,6 +16321,18 @@ Added bounded CPU-read provenance for `0x1f01f7..0x1f01fb`, retaining logical
 and physical reader addresses. The instrument does not classify the bytes or
 infer any CDB, sector, level, or object semantics.
 
+# ✅ 2026-07-15 Theron control-window System Card exclusion
+
+Validated a real US Track 02 boot capture containing 64 reads of
+`0x1f01f7..0x1f01fb`. Every recorded reader is System Card physical code/RAM
+(`0x00xxxx`, `0x002xxx`, or `0x1fe0xx`); no reader is in the game-owned
+`0x1f0000..0x1f7fff` range. The bounded verifier fails on a game-owned or
+unclassified reader, so this capture cannot be promoted to a CDB/SCSI, sector,
+level, or object-record link.
+
+Verification: `test_theron_v1_main_ram_control_window_receipt` and
+`verify_theron_main_ram_control_window_receipt.pl` against the authentic trace.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
