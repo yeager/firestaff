@@ -571,6 +571,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
          1306, 786, 1318, 1428, 1474, 987, 552, 1045};
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int structure2_descriptor_total = 0;
+    int structure2_encoding_0x0008_total = 0;
+    int structure2_encoding_0x0028_total = 0;
+    int structure2_palette_anchor_total = 0;
+    int structure2_palette_absent_total = 0;
     int structure2_nonzero_target_total = 0;
     int structure2_in_span_target_total = 0;
     int structure2_word_bounded_target_total = 0;
@@ -611,6 +615,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnActiveStructure3FaceMaterialReceipt active_face_material;
         Nexus_V1_DgnActiveStructure1AOwnerChainReceipt active_owner_chain;
         Nexus_V1_DgnActiveStructure2DescriptorReceipt active_structure2;
+        Nexus_V1_DgnStructure2FormatEvidenceReceipt structure2_format;
         Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
         Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
         int byte3_above_wall_bank = 0;
@@ -965,6 +970,39 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               active_structure2.no_draw_only &&
               !active_structure2.fallback_visuals_permitted,
               "active retail LEV exposes the bounded Structure2 descriptor envelope only");
+        CHECK(nexus_v1_current_level_structure2_format_evidence_receipt(
+                  &active_engine, &structure2_format) == 1 &&
+              structure2_format.valid && structure2_format.level_index == level &&
+              structure2_format.source_byte_count == (int)size &&
+              structure2_format.source_bytes_fnv1a64 ==
+                  fnv1a64(data, (size_t)size) &&
+              structure2_format.descriptor_count ==
+                  loaded_level.structure2_texture_count &&
+              structure2_format.image_payload_anchor_count ==
+                  structure2_format.descriptor_count &&
+              structure2_format.palette_payload_anchor_count +
+                      structure2_format.palette_payload_absent_count ==
+                  structure2_format.descriptor_count &&
+              structure2_format.encoding_0x0008_count +
+                      structure2_format.encoding_0x0028_count +
+                      structure2_format.unobserved_encoding_count ==
+                  structure2_format.descriptor_count &&
+              structure2_format.encoding_0x0028_palette_anchor_count == 0 &&
+              structure2_format.encoding_0x0028_palette_absent_count ==
+                  structure2_format.encoding_0x0028_count &&
+              structure2_format.image_payload_anchors_complete &&
+              structure2_format.descriptor_format_classes_complete &&
+              !structure2_format.pixel_span_proven &&
+              !structure2_format.palette_addressing_proven &&
+              !structure2_format.vdp1_format_proven &&
+              !structure2_format.decoder_permitted &&
+              structure2_format.no_draw_only &&
+              !structure2_format.fallback_visuals_permitted,
+              "real Structure2 descriptor classes block decoder promotion without Saturn format evidence");
+        structure2_encoding_0x0008_total += structure2_format.encoding_0x0008_count;
+        structure2_encoding_0x0028_total += structure2_format.encoding_0x0028_count;
+        structure2_palette_anchor_total += structure2_format.palette_payload_anchor_count;
+        structure2_palette_absent_total += structure2_format.palette_payload_absent_count;
         CHECK(nexus_v1_engine_build_structure2_descriptor_capture_target(
                   &active_engine, 0, &descriptor_target) == 1 &&
               descriptor_target.valid && descriptor_target.level_index == level &&
@@ -1131,6 +1169,12 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               !active_structure2.valid && active_structure2.no_draw_only &&
               !active_structure2.fallback_visuals_permitted,
               "active Structure2 descriptor envelope withdraws on stale LEV identity");
+        CHECK(nexus_v1_current_level_structure2_format_evidence_receipt(
+                  &active_engine, &structure2_format) == 0 &&
+              !structure2_format.valid && structure2_format.no_draw_only &&
+              !structure2_format.decoder_permitted &&
+              !structure2_format.fallback_visuals_permitted,
+              "stale LEV identity withdraws Structure2 format evidence");
         if (material_target.valid) {
             CHECK(nexus_v1_engine_build_structure3_static_material_capture_target(
                       &active_engine, material_target.structure3_entry_index,
@@ -1337,6 +1381,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         free(data);
     }
     CHECK(checked == 16, "all LEV00 through LEV15 files were checked");
+    CHECK(structure2_encoding_0x0008_total == 1553 &&
+          structure2_encoding_0x0028_total == 125 &&
+          structure2_palette_anchor_total == 1266 &&
+          structure2_palette_absent_total == 412,
+          "retail Structure2 corpus locks its observed descriptor-class and palette-anchor split");
     CHECK(structure3_static_material_capture_target_level_count > 0,
           "real DGN corpus yields source-bound static face/material capture targets");
     CHECK(structure2_descriptor_total == 1678 &&

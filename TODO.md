@@ -6359,3 +6359,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   acquisition only. Authentic Saturn trace evidence must still prove pixel
   order, palette addressing, UV/VDP1 semantics, and the render route before
   any decoder or draw can be enabled.
+
+- 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
+  corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
+  (125 rows). Every image target is an in-payload anchor; `0x0028` has no
+  palette anchor while `0x0008` has a mixed present/absent palette split. This
+  rules out selecting an indexed or direct-color decoder from descriptor bytes
+  alone. A genuine Saturn trace must still establish pixel span/order, absent
+  palette behavior, palette entry format, and VDP1 command mode.

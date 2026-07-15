@@ -16688,3 +16688,14 @@ The focused corpus test verifies this against real hash-verified LEV00–LEV15
 package data. The target is capture-producer input only: pixels, palette
 format, UVs, VDP1 state, transforms, and drawing remain unproved and blocked.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus Structure2 retail format-evidence gate
+
+`nexus_v1_current_level_structure2_format_evidence_receipt()` now consumes
+the active canonical LEV and validates every descriptor's image anchor plus
+any nonzero palette anchor against the opaque payload. The hash-verified
+LEV00–LEV15 corpus fixes the observed split at 1,553 `0x0008` descriptors and
+125 `0x0028` descriptors; all `0x0028` rows lack a palette anchor. The gate
+keeps pixel span, palette addressing, VDP1 format, decoder permission, and
+drawing false. This is concrete format evidence, not a format inference.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.
