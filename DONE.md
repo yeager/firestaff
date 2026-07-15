@@ -1082,6 +1082,14 @@
   materialize. The paired focused gate covers valid source recovery,
   checksum-mismatch diagnostics, odd lengths, and truncated bodies.
 
+- 2026-07-15 DM1 SAVEUTIL F0422: original-PC34 tail round-trip receipts now
+  reconstruct each authentic F0433/F0435 tail body through an explicit
+  DM1-owned complete-span writer paired with F0421 before byte preservation
+  can be certified. It validates destination capacity before copying, adds
+  the exact unsigned source bytes to the caller-owned 16-bit checksum, and
+  leaves destination, cursor, and checksum unchanged when the span cannot
+  fit. The focused gate proves source bytes, checksum wrap, and rejection.
+
 - 2026-07-15 DM1 DUNGEON F0168: HoC wall inscriptions use the original PC3.4
   raw TEXTSTRING record for Visible and TextDataWordOffset before the source
   glyph decoder builds the F0107 M648/C10 material receipt. The focused

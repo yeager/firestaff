@@ -6237,6 +6237,7 @@ static void test_f0421_tail_read_checksum_gate(void)
 {
     const uint8_t source[] = { 1u, 2u, 250u, 4u };
     uint8_t destination[4] = { 0u, 0u, 0u, 0u };
+    uint8_t written[4] = { 0xa5u, 0xa5u, 0xa5u, 0xa5u };
     size_t cursor = 0u;
     uint16_t checksum = 0xfff0u;
 
@@ -6259,6 +6260,28 @@ static void test_f0421_tail_read_checksum_gate(void)
           "F0421 rejects truncated source section");
     CHECK(cursor == sizeof(source) && checksum == 0x00f1u,
           "F0421 leaves cursor and checksum unchanged on read failure");
+
+    cursor = 0u;
+    checksum = 0xfff0u;
+    CHECK(dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
+              written, sizeof(written), &cursor, source, 2u, &checksum),
+          "F0422 writes first dungeon-tail section");
+    CHECK(cursor == 2u && checksum == 0xfff3u &&
+          written[0] == 1u && written[1] == 2u,
+          "F0422 adds first source bytes to running checksum");
+    CHECK(dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
+              written, sizeof(written), &cursor, source + 2u, 2u,
+              &checksum),
+          "F0422 writes second dungeon-tail section");
+    CHECK(cursor == sizeof(written) && checksum == 0x00f1u &&
+          memcmp(written, source, sizeof(source)) == 0,
+          "F0422 retains source bytes and 16-bit wrapping checksum");
+    CHECK(!dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
+               written, sizeof(written), &cursor, source, 1u, &checksum),
+          "F0422 rejects truncated destination section");
+    CHECK(cursor == sizeof(written) && checksum == 0x00f1u &&
+          memcmp(written, source, sizeof(source)) == 0,
+          "F0422 leaves destination cursor and checksum unchanged on failure");
 }
 
 int main(void)
