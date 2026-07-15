@@ -30,6 +30,7 @@
  */
 
 #include "memory_projectile_pc34_compat.h"
+#include "memory_runtime_dynamics_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,8 +51,56 @@ static void spawn(struct ProjectileList_Compat* list, int slotIndex, int subtype
     list->count++;
 }
 
+static int test_f0221_raw_fluxcage_chain(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonExplosion_Compat explosion;
+    unsigned char square = DUNGEON_ELEMENT_CORRIDOR << 5;
+    unsigned short firstThing;
+    unsigned short columnBase = 0;
+    int isFluxcage = 0;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(&explosion, 0, sizeof(explosion));
+    map.width = 1;
+    map.height = 1;
+    square |= DUNGEON_SQUARE_MASK_THING_LIST;
+    tiles.squareData = &square;
+    tiles.squareCount = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = &columnBase;
+    dungeon.dungeonColumnCount = 1;
+    firstThing = (unsigned short)(THING_TYPE_EXPLOSION << 10);
+    things.loaded = 1;
+    things.squareFirstThings = &firstThing;
+    things.squareFirstThingCount = 1;
+    things.explosions = &explosion;
+    things.explosionCount = 1;
+    explosion.next = THING_ENDOFLIST;
+    explosion.type = C050_EXPLOSION_FLUXCAGE;
+    CHECK(F0221_GROUP_IsFluxcageOnSquare_Compat(
+              &dungeon, &things, 0, 0, 0, &isFluxcage) == 1 && isFluxcage == 1,
+          "F0221 finds only raw C15 fluxcage on a non-wall/non-stairs square");
+    square = DUNGEON_ELEMENT_STAIRS << 5;
+    isFluxcage = 1;
+    CHECK(F0221_GROUP_IsFluxcageOnSquare_Compat(
+              &dungeon, &things, 0, 0, 0, &isFluxcage) == 1 && isFluxcage == 0,
+          "F0221 rejects stairs before reading a C15 chain");
+    return 0;
+}
+
 int main(void) {
     struct ProjectileList_Compat list;
+
+    if (test_f0221_raw_fluxcage_chain() != 0) return 1;
 
     /* T1: PROJECTILE_LIST_CAPACITY == 60 (bounded V2 cap). */
     CHECK(PROJECTILE_LIST_CAPACITY == 60,

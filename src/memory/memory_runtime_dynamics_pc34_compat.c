@@ -582,6 +582,52 @@ int F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
     return 1;
 }
 
+int F0221_GROUP_IsFluxcageOnSquare_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outIsFluxcage)
+{
+    unsigned short thing;
+    int squareIndex;
+    int squareType;
+    int safety = 0;
+
+    if (outIsFluxcage) *outIsFluxcage = 0;
+    if (!dungeon || !things || !outIsFluxcage || !dungeon->tilesLoaded ||
+        !things->loaded || !dungeon->maps || !dungeon->tiles ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount ||
+        mapX < 0 || mapY < 0 ||
+        mapX >= (int)dungeon->maps[mapIndex].width ||
+        mapY >= (int)dungeon->maps[mapIndex].height) {
+        return 0;
+    }
+    squareIndex = mapX * (int)dungeon->maps[mapIndex].height + mapY;
+    if (!dungeon->tiles[mapIndex].squareData || squareIndex < 0 ||
+        squareIndex >= dungeon->tiles[mapIndex].squareCount) return 0;
+    squareType = (dungeon->tiles[mapIndex].squareData[squareIndex] >> 5) & 7;
+    /* F0221 rejects walls and stairs before it reads the SFT chain. */
+    if (squareType == DUNGEON_ELEMENT_WALL ||
+        squareType == DUNGEON_ELEMENT_STAIRS) {
+        return 1;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, mapIndex, mapX, mapY);
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety++ < 64) {
+        int index = THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
+            index >= 0 && index < things->explosionCount && things->explosions &&
+            things->explosions[index].type == C050_EXPLOSION_FLUXCAGE) {
+            *outIsFluxcage = 1;
+            return 1;
+        }
+        thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+    }
+    return safety <= 64;
+}
+
 int F0868_RUNTIME_HandleRemoveFluxcage_Compat(
     const struct FluxcageRemoveInput_Compat* in,
     struct ExplosionList_Compat* explosions,
