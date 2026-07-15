@@ -7482,6 +7482,20 @@ if(BUILD_TESTING)
             COMMAND test_dm2_v1_gdat_hud_m11_command_real_data)
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dialogue_box_viewport_real_data.c")
+        add_executable(test_dm2_v1_dialogue_box_viewport_real_data
+            tests/test_dm2_v1_dialogue_box_viewport_real_data.c)
+        target_link_libraries(test_dm2_v1_dialogue_box_viewport_real_data PRIVATE
+            firestaff_dm2 firestaff_m10)
+        target_include_directories(test_dm2_v1_dialogue_box_viewport_real_data PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_dm2_v1_dialogue_box_viewport_real_data PRIVATE -Wall -Wextra -Werror)
+        endif()
+        add_test(NAME dm2_v1_dialogue_box_viewport_real_data
+            COMMAND test_dm2_v1_dialogue_box_viewport_real_data)
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_extended_spells_definition_real_data.c")
         add_executable(test_dm2_v1_extended_spells_definition_real_data
             tests/test_dm2_v1_extended_spells_definition_real_data.c)

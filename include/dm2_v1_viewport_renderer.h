@@ -181,6 +181,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_FLOOR_GFX_MAP_CHIP_BASE (-0x1200000)
 #define DM2_V1_VIEWPORT_GFX_WALL_GFX_MAP_CHIP_BASE (-0x1300000)
 #define DM2_V1_VIEWPORT_GFX_DOOR_MAP_CHIP_BASE (-0x1400000)
+#define DM2_V1_VIEWPORT_GFX_DIALOGUE_BOX (-0x1500000)
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -243,6 +244,7 @@ int dm2_v1_viewport_wall_gfx_map_chip_graphic_address(
 int dm2_v1_viewport_door_map_chip_graphic_index(int door_gfx_index);
 int dm2_v1_viewport_door_map_chip_graphic_address(
     int gdat_index, int *out_door_gfx_index);
+int dm2_v1_viewport_dialogue_box_graphic_index(void);
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
@@ -967,6 +969,12 @@ typedef struct {
     /* One successful blit per exact command in the boot-owned HUD plan.
      * A source-required frame must not let M11 promote a partial plan. */
     int gdat_hud_material_plan_consumed_count;
+    /* c_dialog.cpp::DM2_dialog_2066_3820 owns this image and RECT_453.
+     * Admission alone must not create a host dialogue. */
+    DM2_V1_DialogueBoxHostCommand gdat_dialogue_box_command;
+    int gdat_dialogue_box_active;
+    int gdat_dialogue_box_consumed_count;
+    uint32_t gdat_dialogue_box_consumed_hash;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
@@ -1030,6 +1038,10 @@ void dm2_v1_viewport_set_gdat_wall_material_plan(
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan);
+void dm2_v1_viewport_set_gdat_dialogue_box_host_command(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_DialogueBoxHostCommand *command,
+    int active);
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
     uint8_t graphicsset_index,
@@ -1169,6 +1181,7 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s);
 void dm2_v1_render_projectiles(DM2_V1_ViewportState *s);
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s);
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s);
+void dm2_v1_render_dialogue_box(DM2_V1_ViewportState *s);
 
 /* ── GDAT-backed graphic fetch ─────────────────────────────────── */
 /* Fetches a GDAT graphic as a decompressed 8-bit bitmap.

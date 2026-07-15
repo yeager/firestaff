@@ -650,6 +650,11 @@ int dm2_v1_viewport_door_map_chip_graphic_address(
     return 1;
 }
 
+int dm2_v1_viewport_dialogue_box_graphic_index(void)
+{
+    return DM2_V1_VIEWPORT_GFX_DIALOGUE_BOX;
+}
+
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
  * Source: DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542
@@ -1079,6 +1084,29 @@ void dm2_v1_viewport_set_gdat_hud_material_plan(
     if (!s) return;
     s->gdat_hud_material_plan = plan;
     s->gdat_hud_material_plan_consumed_count = 0;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_dialogue_box_host_command(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_DialogueBoxHostCommand *command,
+    int active)
+{
+    if (!s) return;
+    memset(&s->gdat_dialogue_box_command, 0,
+           sizeof(s->gdat_dialogue_box_command));
+    s->gdat_dialogue_box_active = 0;
+    s->gdat_dialogue_box_consumed_count = 0;
+    s->gdat_dialogue_box_consumed_hash = 0u;
+    if (!active || !command || !command->valid || !command->draw.valid ||
+        command->draw.gdat_category != DM2_GDAT_CATEGORY_DIALOG_BOXES ||
+        command->draw.gdat_index != DM2_V1_DIALOGUE_BOX_INDEX ||
+        command->draw.gdat_field != DM2_V1_DIALOGUE_BOX_FIELD ||
+        command->draw.expanded_rect_index != DM2_V1_DIALOGUE_BOX_RECT_INDEX ||
+        command->draw.plan_hash == 0u || command->command_hash == 0u ||
+        command->rect.w <= 0 || command->rect.h <= 0) return;
+    s->gdat_dialogue_box_command = *command;
+    s->gdat_dialogue_box_active = 1;
     s->dirty = 1;
 }
 
@@ -5829,6 +5857,51 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     }
 }
 
+/* skproject/SKULLWIN/c_dialog.cpp::DM2_dialog_2066_3820 expands RECT_453
+ * and blits DIALOG_BOXES/0x81/0 over the already drawn interface. The M11
+ * owner alone supplies the active command, so an admitted material cannot
+ * leak into normal dungeon frames. */
+void dm2_v1_render_dialogue_box(DM2_V1_ViewportState *s)
+{
+    const DM2_V1_DialogueBoxHostCommand *command;
+    const uint8_t *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int gdat_index;
+
+    if (!s || !s->framebuffer || !s->gdat_dialogue_box_active) return;
+    command = &s->gdat_dialogue_box_command;
+    if (!command->valid || !command->draw.valid ||
+        command->draw.gdat_category != DM2_GDAT_CATEGORY_DIALOG_BOXES ||
+        command->draw.gdat_index != DM2_V1_DIALOGUE_BOX_INDEX ||
+        command->draw.gdat_field != DM2_V1_DIALOGUE_BOX_FIELD ||
+        command->draw.expanded_rect_index != DM2_V1_DIALOGUE_BOX_RECT_INDEX ||
+        command->draw.plan_hash == 0u || command->command_hash == 0u ||
+        command->rect.w <= 0 || command->rect.h <= 0) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    gdat_index = dm2_v1_viewport_dialogue_box_graphic_index();
+    if (dm2_v1_fetch_viewport_local_material(s, gdat_index, &pixels, &width,
+                                             &height, &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width ||
+        !s->active_asset_palette_ready || s->active_asset_palette_hash == 0u) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    dm2_v1_blit_scaled_material_bitmap(
+        s, s->framebuffer, s->fb_stride,
+        command->rect.x / 2, command->rect.y / 2,
+        command->rect.w / 2, command->rect.h / 2,
+        pixels, width, height, stride, DM2_COLOR_TRANSPARENT,
+        &s->gdat_interface_palette_consumed_count);
+    s->gdat_dialogue_box_consumed_count = 1;
+    s->gdat_dialogue_box_consumed_hash = command->command_hash;
+}
+
 /* ── Main render entry ─────────────────────────────────────────────── */
 
 void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
@@ -6121,6 +6194,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
 
     /* 11. UI chrome (always on top) */
     dm2_v1_render_ui_chrome(s);
+
+    /* 12. An original M11-owned dialogue, when its source state is active. */
+    dm2_v1_render_dialogue_box(s);
 
     s->dirty = 0;
 }

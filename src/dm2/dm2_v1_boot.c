@@ -134,6 +134,9 @@ typedef struct {
     uint8_t *hud_core_pixels[DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK + 1];
     int hud_core_w[DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK + 1];
     int hud_core_h[DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK + 1];
+    uint8_t *dialogue_box_pixels;
+    int dialogue_box_w;
+    int dialogue_box_h;
     uint8_t *startup_title_pixels;
     int startup_title_w;
     int startup_title_h;
@@ -391,6 +394,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     for (int i = 0; i <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_core_pixels[i]);
     }
+    dm2_v1_asset_free_pixels(gfx->dialogue_box_pixels);
     dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
     dm2_v1_asset_loader_free(&gfx->loader);
     dm2_v1_creature_reset_ai_table();
@@ -8460,6 +8464,13 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->scene_material_w[index][field];
         cache_h = &gfx->scene_material_h[index][field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (gdat_index == dm2_v1_viewport_dialogue_box_graphic_index()) {
+        cache_pixels = &gfx->dialogue_box_pixels;
+        cache_w = &gfx->dialogue_box_w;
+        cache_h = &gfx->dialogue_box_h;
+        category = DM2_GDAT_CATEGORY_DIALOG_BOXES;
+        index = DM2_V1_DIALOGUE_BOX_INDEX;
+        field = DM2_V1_DIALOGUE_BOX_FIELD;
     } else if (gdat_index == DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP) {
         cache_pixels = &gfx->teleporter_pixels;
         cache_w = &gfx->teleporter_w;
@@ -8864,6 +8875,10 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
     if (dm2_v1_viewport_scene_material_graphic_address(
             gdat_index, out_index, out_field)) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (gdat_index == dm2_v1_viewport_dialogue_box_graphic_index()) {
+        *out_category = DM2_GDAT_CATEGORY_DIALOG_BOXES;
+        *out_index = DM2_V1_DIALOGUE_BOX_INDEX;
+        *out_field = DM2_V1_DIALOGUE_BOX_FIELD;
     } else if (gdat_index == DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP) {
         *out_category = DM2_GDAT_CATEGORY_TELEPORTERS;
         *out_index = 0;

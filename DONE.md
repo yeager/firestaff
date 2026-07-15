@@ -16624,6 +16624,16 @@ fabricating a creature visual.
 
 # ✅ 2026-07-15 Nexus Structure1F/Structure3 runtime correlation
 
+# ✅ 2026-07-15 DM2 c_dialog source panel viewport route
+
+`c_dialog.cpp::DM2_dialog_2066_3820` now reaches the DM2 viewport through a
+reversible GDAT identity for `DIALOG_BOXES/0x81/0`. The boot provider decodes
+that exact image and its local palette, while the viewport accepts it only
+with the source-expanded `RECT_453` host command and an explicit active
+dialogue state. Missing pixels, palette, command identity, or rectangle fail
+closed; normal dungeon frames cannot display an admitted dialogue asset.
+Verification: `dm2_v1_dialogue_box_viewport_real_data`.
+
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer
