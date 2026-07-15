@@ -22945,6 +22945,25 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_direct_static_material_capture
     )
 
+    # Documented Sega VDP1 mode-1 lookup decoding. This is a byte-order and
+    # lookup-table unit test only; the engine route still requires an
+    # authenticated direct-face capture and remains no-draw.
+    add_executable(test_nexus_v1_vdp1_lookup_decode
+        tests/test_nexus_v1_vdp1_lookup_decode.c
+    )
+    target_include_directories(test_nexus_v1_vdp1_lookup_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp1_lookup_decode PRIVATE firestaff_nexus)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp1_lookup_decode PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_vdp1_lookup_decode
+        COMMAND test_nexus_v1_vdp1_lookup_decode
+    )
+
     # Packages a pre-recorded Mednafen debugger trace with one exact atomic
     # owner/Structure3/Structure2 request. It deliberately has no emulator,
     # decoder, or render dependency and cannot fabricate a capture.

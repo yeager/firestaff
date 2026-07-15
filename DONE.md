@@ -19451,6 +19451,21 @@ or pixels. The launcher consumes this receipt after the opaque capture handoff
 and remains fail-closed/no-draw. Verification:
 `test_nexus_v1_direct_static_material_capture` and
 `test_nexus_v1_dgn_geometry_readiness` pass.
+
+# Nexus Structure1F VDP1 mode-1 lookup decoder (2026-07-15)
+
+The new `nexus_v1_vdp1_decode_mode1_lookup_texture()` implements only the
+documented VDP1 mode-1 lookup route: four-bit texture samples are consumed
+high nibble then low nibble, and `CMDCOLR * 8` addresses the 32-byte,
+16-entry lookup table in the same authenticated VDP1 VRAM snapshot. It emits
+raw 16-bit VDP1 colour codes, never RGBA pixels or a draw command. The engine
+enters this path only after the direct Structure1F capture, byte-identical
+runtime lanes, command, and CMDSRCA window gates pass. An optional witness
+comparison is byte-for-byte but cannot authenticate a caller-supplied witness.
+This follows Sega's VDP1 User's Manual, sections 6.3--6.5; VDP2/CRAM and
+game-specific palette semantics remain blocked. Verification:
+`nexus_v1_vdp1_lookup_decode` and
+`nexus_v1_direct_static_material_capture` pass.
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually

@@ -6529,6 +6529,59 @@ int nexus_v1_engine_bind_structure1f_vdp1_material_capture(
     return 1;
 }
 
+int nexus_v1_engine_decode_structure1f_vdp1_lookup_texture(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *direct_manifest_text, size_t direct_manifest_size,
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
+    uint16_t *out_colour_codes, size_t out_colour_code_count,
+    const uint16_t *expected_colour_codes, size_t expected_colour_code_count,
+    Nexus_V1_DgnStructure1FVdp1LookupDecodeReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FVdp1LookupDecodeReceipt receipt;
+    Nexus_V1_DgnStructure3RenderPacket packet;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !out_colour_codes || out_colour_code_count == 0U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_engine_bind_structure1f_vdp1_material_capture(
+        engine, structure1f_entry_index, direct_manifest_text,
+        direct_manifest_size, raw_capture, &receipt.material);
+    if (receipt.material.status !=
+        NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_ACCEPTED_OPAQUE) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.direct_face_capture_bound = 1;
+    memset(&packet, 0, sizeof(packet));
+    if (nexus_v1_current_level_structure3_render_packet(engine, &packet) != 1 ||
+        !packet.valid || !packet.texture_span || !packet.vdp1_state ||
+        !packet.vdp1_command ||
+        nexus_v1_vdp1_decode_mode1_lookup_texture(
+            packet.vdp1_command, packet.vdp1_command_size,
+            packet.vdp1_state, packet.vdp1_state_size, packet.texture_span,
+            packet.texture_span_size, out_colour_codes, out_colour_code_count,
+            &receipt.lookup) != 1 || !receipt.lookup.valid ||
+        !receipt.lookup.texture_lane_matches_vram ||
+        !receipt.lookup.texture_high_nibble_first) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.lookup_colour_codes_bound = 1;
+    if (expected_colour_codes && expected_colour_code_count > 0U) {
+        receipt.pixel_output_witness_verified =
+            nexus_v1_vdp1_lookup_colour_codes_match(
+                out_colour_codes, receipt.lookup.output_pixel_count,
+                expected_colour_codes, expected_colour_code_count);
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,

@@ -1,6 +1,8 @@
 
 #ifndef NEXUS_V1_DUNGEON_H
 #define NEXUS_V1_DUNGEON_H
+
+#include <stddef.h>
 #include <stdint.h>
 
 /* DM Nexus dungeon level format (.DGN files).
@@ -1849,6 +1851,26 @@ typedef struct {
     int coordinate_words_framed;
 } Nexus_V1_Vdp1TextureCommand;
 
+/* Sega VDP1 User's Manual, Ch. 6.3--6.5: mode 1 is a 4bpp lookup-table
+ * texture. CMDCOLR names its 32-byte VDP1-VRAM table in eight-byte units and
+ * each source byte supplies the left/high then right/low pixel code. The
+ * helper returns raw 16-bit VDP1 colour codes only; it does not interpret
+ * them as RGB, VDP2 CRAM, or host pixels. */
+typedef struct {
+    int valid;
+    int command_mode1_lookup;
+    int complete_vdp1_vram_snapshot;
+    int texture_lane_matches_vram;
+    uint32_t lookup_table_byte_offset;
+    int lookup_table_in_vram;
+    int texture_high_nibble_first;
+    uint32_t output_pixel_count;
+    int output_byte_count;
+    int no_draw_only;
+    int pixel_colour_semantics_proven;
+    int palette_or_cram_semantics_proven;
+} Nexus_V1_Vdp1LookupDecodeReceipt;
+
 /* VDP1's 16-colour fetch is high-nibble first, but ITEM.IBS descriptor 0008
  * has not yet been tied to an original VDP1 command stream. These records
  * keep generic Saturn knowledge separate from an asset-bound observation. */
@@ -2396,6 +2418,20 @@ int nexus_v1_dgn_structure1f_item_ibs_coverage(
 int nexus_v1_vdp1_texture_command_parse(
     const uint8_t *command, int command_size,
     Nexus_V1_Vdp1TextureCommand *out_command);
+/* Decode only documented VDP1 mode-1 lookup texture samples from a complete,
+ * already-authenticated snapshot. This produces raw VDP1 colour codes, never
+ * RGBA or a draw. */
+int nexus_v1_vdp1_decode_mode1_lookup_texture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *texture_span, int texture_span_size,
+    uint16_t *out_colour_codes, size_t out_colour_code_count,
+    Nexus_V1_Vdp1LookupDecodeReceipt *out_receipt);
+/* Byte-for-byte checker for a separately supplied mode-1 colour-code witness.
+ * Equality does not authenticate a witness or permit a renderer. */
+int nexus_v1_vdp1_lookup_colour_codes_match(
+    const uint16_t *decoded, size_t decoded_count,
+    const uint16_t *expected, size_t expected_count);
 /* Atomically binds one descriptor-0008 image to original Saturn capture
  * bytes. The source ITEM.IBS, packed span, palette, VDP1 state/command, and
  * texture-before-command ordering all have to match. It never authorizes a
