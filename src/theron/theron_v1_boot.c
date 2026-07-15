@@ -3519,15 +3519,6 @@ static void theron_v1_boot_startup_draw_atlas_route(
                                  (int)(color & 0x0fu));
         }
     }
-    if (executor->draw_rect) {
-        executor->draw_rect(executor->userdata,
-                            command->x,
-                            command->y,
-                            command->w,
-                            command->h,
-                            command->cursor ? command->color2
-                                            : command->color);
-    }
 }
 
 static int theron_v1_boot_startup_execute_atlas_graphics_plan(
@@ -3552,26 +3543,12 @@ static int theron_v1_boot_startup_execute_atlas_graphics_plan(
             theron_v1_boot_startup_graphic_route_bit(command->kind);
         const Theron_Track02StartupBitmapAtlasRoute *route;
 
-        if (command->kind == THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT) {
-            if (executor->fill_rect) {
-                executor->fill_rect(executor->userdata,
-                                    command->x,
-                                    command->y,
-                                    command->w,
-                                    command->h,
-                                    command->color);
-            }
-            continue;
-        }
-        if (command->kind == THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT) {
-            if (executor->draw_rect) {
-                executor->draw_rect(executor->userdata,
-                                    command->x,
-                                    command->y,
-                                    command->w,
-                                    command->h,
-                                    command->color);
-            }
+        if (command->kind == THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT ||
+            command->kind == THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT) {
+            /* The plan's panel and cursor primitives are Firestaff-owned
+             * placeholders.  A complete, authenticated Track 02 atlas owns
+             * this frame, so leave regions without source pixels untouched
+             * until an original loader/CD capture identifies their art. */
             continue;
         }
         route = theron_v1_boot_startup_atlas_find_route(

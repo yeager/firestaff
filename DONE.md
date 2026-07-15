@@ -67,6 +67,13 @@
   unavailable/no-draw rather than selecting identity graphics. The resolver
    accepts the real global-0 inscription slot and rejects unloaded metadata.
 
+- 2026-07-15 Theron Track 02 source-only startup presentation: a complete,
+  authenticated title/stage/Soul Room/forcefield atlas now renders only its
+  decoded original pixels. Firestaff-owned fill, border, and cursor rectangles
+  are not emitted on that route; unproven regions stay untouched. Focused
+  startup receipt coverage verifies pixels are emitted while synthetic
+  rectangle calls remain zero.
+
 - 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
   host-colored fallback. F0108 now draws only callback-provided original
   expanded GRAPHICS.DAT pixels in the source C10 zone, preserving the

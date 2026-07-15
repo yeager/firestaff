@@ -3389,9 +3389,10 @@ static void test_startup_session_facts_wrappers(void) {
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_view_model(
                     &media_view_model,
                     &media_graphics_executor) &&
-                    media_graphics_counters.fill_count > 0 &&
-                    media_graphics_counters.rect_count > 0,
-                "boot startup view model render route executes graphics plan receipt");
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0,
+                "boot startup view model emits only authenticated Track02 atlas pixels");
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
                     &media_view_model,
@@ -3433,9 +3434,10 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.startup_menu_render_allowed &&
                     graphics_route_receipt.no_fallback_visuals_enforced &&
                     !graphics_route_receipt.fallback_visuals_allowed &&
-                    media_graphics_counters.fill_count > 0 &&
-                    media_graphics_counters.rect_count > 0,
-                "boot graphics route receipt executes startup graphics from view model");
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0,
+                "boot graphics route receipt excludes synthetic panel and cursor graphics");
     memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
