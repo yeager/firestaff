@@ -18382,6 +18382,29 @@ or visual semantics; the runtime remains no-draw without a captured game-owned
 consumer. Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 runtime boundary-byte retention
+
+The runtime loader receipt now retains the actual authenticated initial
+level-envelope bytes and their directly adjacent post-envelope bytes from the
+original `$0b52` CD-read record. Both spans must fit the record, be adjacent,
+and rehash to their loader-provided checksums before they are copied. This is
+a source-owned boundary for a future captured level/object consumer, not an
+object-table decoder: the continuation remains opaque and no palette, grid,
+object, or visual semantics are promoted. Verification: Ninja
+`test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
+# ✅ 2026-07-15 Theron Track 02 continuation-consumer boundary
+
+The raw loader-trace intake can now admit a game-RAM byte only when its
+original READ(6), FIFO-to-RAM, and game-owned consumer chain resolves to the
+directly adjacent continuation after the authenticated `$0b52` envelope.
+The receipt records its exact continuation-relative offset and source byte,
+while rejecting preceding and out-of-range bytes. It remains deliberately
+opaque: no object-table, level, palette, bitmap, grid, or visual semantics
+are inferred. Verification: Ninja `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
