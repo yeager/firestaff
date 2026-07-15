@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSB archive-only media discovery: loose CSB package candidates
+  are now verified in one files-only MD5 pass before any archive container is
+  opened. Archive-only CSB media deliberately retains the complete
+  hash-verified container path; do not replace it with filename guesses or
+  accept an archive member without its canonical MD5.
+
 - 2026-07-15 CSB PC3.4 palette/capture gate: C001 now reaches M11 through
   TITLE.C F0437's original source rectangles and verified package rasters;
   C002/C003/C004 and C017/C040 use the same session. M11's C017/C040 route

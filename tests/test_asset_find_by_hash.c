@@ -544,6 +544,17 @@ int main(void) {
         return 1;
     }
 
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_files_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                         outPaths, matched, 2, 2) != 1 ||
+        matched[0] || !matched[1] || !path_has_fixture_name(outPaths[1])) {
+        cleanup_fixture();
+        fprintf(stderr, "ordinary-file all-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
         cleanup_fixture();
@@ -568,6 +579,15 @@ int main(void) {
         cleanup_fixture();
         fprintf(stderr, "MD5 all-list ZIP lookup failed: matched=%d,%d path=%s\n",
                 matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_files_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                         outPaths, matched, 2, 2) != 0 ||
+        matched[0] || matched[1]) {
+        cleanup_fixture();
+        fprintf(stderr, "ordinary-file scan must not open archive containers\n");
         return 1;
     }
     if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||

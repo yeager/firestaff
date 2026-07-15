@@ -54,6 +54,18 @@ int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List
                                int maxDepth);
 
 /*
+ * Like asset_find_all_by_md5_list(), but hashes ordinary files only.  This is
+ * useful for a game-specific first pass: a verified loose-file package must
+ * not cause unrelated archive containers to be opened.  Archive-only media
+ * remains discoverable through asset_find_all_by_md5_list().
+ */
+int asset_find_all_files_by_md5_list(const char *searchDir,
+                                     const char *const *md5List,
+                                     char outPaths[][ASSET_PATH_MAX],
+                                     int *outMatched, int maxMatches,
+                                     int maxDepth);
+
+/*
  * Materialize a virtual container path returned by asset_find_by_md5(), for
  * example "game-data.zip::dm2/GRAPHICS.DAT" or "disc.iso::DUNGEON.DAT".
  * Writes the uncompressed/extracted entry to outFilePath and returns 1 on
