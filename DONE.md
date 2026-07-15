@@ -16344,6 +16344,18 @@ level, or object-record link.
 Verification: `test_theron_v1_main_ram_control_window_receipt` and
 `verify_theron_main_ram_control_window_receipt.pl` against the authentic trace.
 
+# ✅ 2026-07-15 Theron game-owned main-RAM window to SCSI receipt
+
+Added bounded read provenance for `0x1f1000..0x1f1007`. In an authentic US
+Track 02 capture, physical game code `0x1f0c88` reads all eight bytes before
+the game-owned `0x1f0cc7` `$e009` dispatch, which is followed by SCSI
+generation 2 at LBA 4165 for four sectors. The receipt proves this execution
+ordering only: no FIFO destination, level layout, or object-record grammar is
+assigned.
+
+Verification: `test_theron_v1_main_ram_game_window_scsi_receipt`, Mednafen
+patch dry-run, and the authentic capture verifier.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
