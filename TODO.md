@@ -505,6 +505,13 @@
     command count/hash. The receipt distinguishes the ten consumed viewport
     fields from the broader cached material plan; remaining work is exact
     original movement/light clipping and additional scene families.
+  - 2026-07-15 update: every successful skproject
+    `QUERY_DUNGEON_MAP_CHIP_PICT`/`DRAW_CHIP_OF_MAGIC_MAP` missile or cloud
+    blit now carries its real GDAT key in draw order into frame ownership and
+    the M11 receipt. A count/hash mismatch fails closed; the last projectile
+    diagnostic can no longer stand in for a mixed overlay frame. Remaining
+    work is original dynamic projectile/AI ownership and timing, not a
+    generic spell-image fallback.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented
