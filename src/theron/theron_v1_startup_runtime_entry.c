@@ -2417,71 +2417,82 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         (const Theron_V1_BootProfile *)boot_profile;
     const char *md5_hex =
         (profile && profile->graphics_md5[0]) ? profile->graphics_md5 : NULL;
+    Theron_Track02Variant variant =
+        theron_v1_track02_variant_for_md5(md5_hex);
     Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
     Theron_V1_World candidate_world;
 
-    /* The forcefield is the first startup-to-dungeon mutation. Keep the
-     * player in Soul Room unless the boot-owned capture receipt still matches
-     * both the selected Track 02 file and the exact loader route about to be
-     * consumed. */
-    if (!theron_v1_boot_track02_capture_admission_allows_initial_level(
-            profile, hucard_rom, hucard_rom_size,
-            flow ? flow->selected_dungeon : 0, 0)) {
-        if (out_result) {
-            theron_v1_startup_runtime_entry_result_init(out_result);
-            out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+    /* Raw BINs have an independently proven IPL/IRQ2 route, so they retain
+     * its strict capture admission. A verified 2048-byte ISO has no raw
+     * sectors or IPL receipt; pass its exact MD5 and bytes to the normal
+     * source-bound Soul Room route instead. That route can publish a dungeon
+     * only when its own ISO semantics validate, and never falls back. */
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
+        variant == THERON_TRACK02_VARIANT_US_BIN) {
+        if (!theron_v1_boot_track02_capture_admission_allows_initial_level(
+                profile, hucard_rom, hucard_rom_size,
+                flow ? flow->selected_dungeon : 0, 0)) {
+            if (out_result) {
+                theron_v1_startup_runtime_entry_result_init(out_result);
+                out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+            }
+            if (out_host_receipt) {
+                theron_v1_startup_host_receipt_init(out_host_receipt);
+                out_host_receipt->input_result =
+                    THERON_STARTUP_INPUT_RESULT_REDRAW;
+                out_host_receipt->status_scope = "TRACK02 ADMISSION";
+                out_host_receipt->status =
+                    "AUTHENTIC CAPTURE ADMISSION REQUIRED; fallback visuals blocked";
+                out_host_receipt->inspect_scope = "TRACK02 ADMISSION";
+                snprintf(out_host_receipt->inspect_detail,
+                         sizeof(out_host_receipt->inspect_detail),
+                         "%s",
+                         out_host_receipt->status);
+            }
+            if (out_state_receipt) {
+                theron_v1_startup_state_receipt_init(out_state_receipt);
+            }
+            if (receipt && receipt_cap > 0u) {
+                snprintf(receipt,
+                         receipt_cap,
+                         "Track02 capture admission required before forcefield entry; "
+                         "fallback visuals blocked");
+            }
+            return 0;
         }
-        if (out_host_receipt) {
-            theron_v1_startup_host_receipt_init(out_host_receipt);
-            out_host_receipt->input_result =
-                THERON_STARTUP_INPUT_RESULT_REDRAW;
-            out_host_receipt->status_scope = "TRACK02 ADMISSION";
-            out_host_receipt->status =
-                "AUTHENTIC CAPTURE ADMISSION REQUIRED; fallback visuals blocked";
-            out_host_receipt->inspect_scope = "TRACK02 ADMISSION";
-            snprintf(out_host_receipt->inspect_detail,
-                     sizeof(out_host_receipt->inspect_detail),
-                     "%s",
-                     out_host_receipt->status);
+        candidate_world = *world;
+        if (!theron_v1_startup_runtime_receive_boot_profile_initial_route(
+                profile, &candidate_world, hucard_rom, hucard_rom_size,
+                flow ? flow->selected_dungeon : 0, &route_receipt)) {
+            if (out_result) {
+                theron_v1_startup_runtime_entry_result_init(out_result);
+                out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+            }
+            if (out_host_receipt) {
+                theron_v1_startup_host_receipt_init(out_host_receipt);
+                out_host_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+                out_host_receipt->status_scope = "TRACK02 ROUTE";
+                out_host_receipt->status = "AUTHENTIC LEVEL ROUTE REQUIRED";
+                out_host_receipt->inspect_scope = "TRACK02 ROUTE";
+                snprintf(out_host_receipt->inspect_detail,
+                         sizeof(out_host_receipt->inspect_detail), "%s",
+                         out_host_receipt->status);
+            }
+            if (out_state_receipt) {
+                theron_v1_startup_state_receipt_init(out_state_receipt);
+            }
+            if (receipt && receipt_cap > 0u) {
+                snprintf(receipt, receipt_cap,
+                         "Track02 level route handoff required before forcefield entry");
+            }
+            return 0;
         }
-        if (out_state_receipt) {
-            theron_v1_startup_state_receipt_init(out_state_receipt);
-        }
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track02 capture admission required before forcefield entry; "
-                     "fallback visuals blocked");
-        }
+    } else if (variant != THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+               variant != THERON_TRACK02_VARIANT_US_ISO) {
         return 0;
     }
+
     candidate_world = *world;
-    if (!theron_v1_startup_runtime_receive_boot_profile_initial_route(
-            profile, &candidate_world, hucard_rom, hucard_rom_size,
-            flow ? flow->selected_dungeon : 0, &route_receipt)) {
-        if (out_result) {
-            theron_v1_startup_runtime_entry_result_init(out_result);
-            out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
-        }
-        if (out_host_receipt) {
-            theron_v1_startup_host_receipt_init(out_host_receipt);
-            out_host_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
-            out_host_receipt->status_scope = "TRACK02 ROUTE";
-            out_host_receipt->status = "AUTHENTIC LEVEL ROUTE REQUIRED";
-            out_host_receipt->inspect_scope = "TRACK02 ROUTE";
-            snprintf(out_host_receipt->inspect_detail,
-                     sizeof(out_host_receipt->inspect_detail), "%s",
-                     out_host_receipt->status);
-        }
-        if (out_state_receipt) {
-            theron_v1_startup_state_receipt_init(out_state_receipt);
-        }
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap,
-                     "Track02 level route handoff required before forcefield entry");
-        }
-        return 0;
-    }
 
     if (!theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
         flow,

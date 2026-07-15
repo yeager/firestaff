@@ -17781,3 +17781,13 @@ actually issued a valid raw `MODE1/2352` IPL receipt. A verified CUE-declared
 not reported as an invalid raw BIN. Verification:
 `theron_v1_launcher_scan_reuse` and
 `theron_v1_m11_launcher_handoff_boundary`.
+
+# ✅ 2026-07-15 Theron ISO identity at Soul Room boundary
+
+The boot-profile forcefield handoff now distinguishes raw BIN and ISO Track
+02 variants. Raw BIN remains behind its authenticated IPL/IRQ2 capture gate;
+a verified 2048-byte ISO retains its exact MD5 and source bytes through Soul
+Room to the existing ISO semantic dungeon route. That route stays fail-closed
+until original ISO bytes prove a first level/object handoff. Verification:
+`theron_v1_m11_launcher_handoff_boundary` checks installed real media and
+preserves the selected Track 02 identity through startup.
