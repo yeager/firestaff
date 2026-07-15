@@ -463,6 +463,48 @@ static void test_door_animation_merge(void) {
     printf("PASS: test_door_animation_merge\n");
 }
 
+/* ----------------------------------------------------------------
+ *  Test 12: GROUP.C F0181 deletes C29..C41 at one current-map square
+ * ---------------------------------------------------------------- */
+static void test_group_delete_events_f0181(void) {
+    struct DM1_EventQueue_V1 queue;
+    struct DM1_Event_V1 ev;
+    int deleted;
+
+    dm1v1_event_queue_init(&queue, 0);
+    memset(&ev, 0, sizeof(ev));
+    ev.map_time = DM1_MAP_TIME_MAKE(3, 10);
+    ev.b_mapX = 4;
+    ev.b_mapY = 5;
+
+    ev.type = DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE;
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "add C29 target");
+    ev.type = DM1_EVENT_UPDATE_ASPECT_CREATURE_2;
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "add C35 target");
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "add C41 target");
+
+    /* F0181 includes C32 aspect events; only other map/square entries stay. */
+    ev.type = DM1_EVENT_UPDATE_ASPECT_GROUP;
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "add C32 retained");
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.b_mapX = 6;
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "add other-square retained");
+    ev.b_mapX = 4;
+    ev.map_time = DM1_MAP_TIME_MAKE(2, 10);
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "add other-map retained");
+
+    deleted = dm1v1_group_delete_events_f0181(&queue, 3, 4, 5);
+    TEST_ASSERT_INT_EQ(deleted, 4,
+                       "F0181 removes exactly target C29..C41 entries");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 2, "F0181 retains out-of-contract events");
+    TEST_ASSERT_INT_EQ(dm1v1_group_delete_events_f0181(&queue, 3, 4, 5),
+                       0, "F0181 is empty after its exact deletion");
+
+    tests_passed++;
+    printf("PASS: test_group_delete_events_f0181\n");
+}
+
 /* ================================================================
  *  Main
  * ================================================================ */
@@ -481,6 +523,7 @@ int main(void) {
     test_tick_advancement();
     test_dispatch_classification();
     test_door_animation_merge();
+    test_group_delete_events_f0181();
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
