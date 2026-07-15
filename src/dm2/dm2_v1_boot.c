@@ -44,6 +44,7 @@ static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
                                                         uint32_t value);
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
 #define DM2_GDAT_WALL_FIELD_CACHE_LIMIT 0x40
@@ -397,6 +398,84 @@ static void dm2_md5_final(DM2_Md5Ctx *ctx, char outHex[33]) {
     outHex[32] = '\0';
 }
 
+static void dm2_md5_bytes_hex(const uint8_t *bytes,
+                              size_t size,
+                              char out_hex[33]) {
+    DM2_Md5Ctx ctx;
+    dm2_md5_init(&ctx);
+    if (bytes && size > 0u) {
+        while (size > 0u) {
+            unsigned int chunk = size > 0x40000000u
+                ? 0x40000000u
+                : (unsigned int)size;
+            dm2_md5_update(&ctx, bytes, chunk);
+            bytes += chunk;
+            size -= chunk;
+        }
+    }
+    dm2_md5_final(&ctx, out_hex);
+}
+
+static int dm2_v1_boot_read_asset_bytes(const char *path,
+                                        long max_size,
+                                        uint8_t **out_bytes,
+                                        size_t *out_size) {
+    char materialized[512];
+    const char *read_path;
+    FILE *f;
+    long fsize;
+    uint8_t *bytes;
+    size_t got;
+    int remove_materialized = 0;
+    static unsigned int materialize_serial = 0u;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!path || path[0] == '\0' || !out_bytes || !out_size ||
+        max_size <= 0) {
+        return 0;
+    }
+    read_path = path;
+    if (strstr(path, "::") != NULL) {
+        snprintf(materialized, sizeof(materialized),
+                 "/tmp/firestaff-dm2-asset-%ld-%u.dat",
+                 (long)getpid(), materialize_serial++);
+        if (!asset_extract_virtual_path(path, materialized)) {
+            return 0;
+        }
+        read_path = materialized;
+        remove_materialized = 1;
+    }
+    f = fopen(read_path, "rb");
+    if (!f) {
+        if (remove_materialized) remove(materialized);
+        return 0;
+    }
+    if (fseek(f, 0, SEEK_END) != 0 ||
+        (fsize = ftell(f)) <= 0 || fsize > max_size ||
+        fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        if (remove_materialized) remove(materialized);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)fsize);
+    if (!bytes) {
+        fclose(f);
+        if (remove_materialized) remove(materialized);
+        return 0;
+    }
+    got = fread(bytes, 1, (size_t)fsize, f);
+    fclose(f);
+    if (remove_materialized) remove(materialized);
+    if (got != (size_t)fsize) {
+        free(bytes);
+        return 0;
+    }
+    *out_bytes = bytes;
+    *out_size = got;
+    return 1;
+}
+
 static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     if (!gfx) return;
     for (int i = 0; i < DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT; ++i) {
@@ -451,43 +530,24 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
 
 static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
     const char *graphics_path) {
-    FILE *f;
-    long fsize;
-    size_t got;
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
     DM2_V1_BootGraphicsDat *gfx;
 
     if (!graphics_path || graphics_path[0] == '\0') return NULL;
-    f = fopen(graphics_path, "rb");
-    if (!f) return NULL;
-    if (fseek(f, 0, SEEK_END) != 0) {
-        fclose(f);
+    if (!dm2_v1_boot_read_asset_bytes(graphics_path,
+                                      16L * 1024L * 1024L,
+                                      &bytes,
+                                      &size)) {
         return NULL;
     }
-    fsize = ftell(f);
-    if (fsize <= 0 || fsize > 16L * 1024L * 1024L) {
-        fclose(f);
-        return NULL;
-    }
-    if (fseek(f, 0, SEEK_SET) != 0) {
-        fclose(f);
-        return NULL;
-    }
-
     gfx = (DM2_V1_BootGraphicsDat *)calloc(1, sizeof(*gfx));
     if (!gfx) {
-        fclose(f);
+        free(bytes);
         return NULL;
     }
-    gfx->bytes = (uint8_t *)malloc((size_t)fsize);
-    if (!gfx->bytes) {
-        fclose(f);
-        dm2_v1_boot_graphics_free(gfx);
-        return NULL;
-    }
-    got = fread(gfx->bytes, 1, (size_t)fsize, f);
-    fclose(f);
-    if (got != (size_t)fsize ||
-        dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, got) != 0 ||
+    gfx->bytes = bytes;
+    if (dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, size) != 0 ||
         !dm2_v1_asset_loader_verify(&gfx->loader) ||
         !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader)) {
         dm2_v1_boot_graphics_free(gfx);
@@ -497,7 +557,7 @@ static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
     gfx->ccm_program_count =
         dm2_v1_creature_load_ccm_programs_from_gdat_auto(
             &gfx->loader, &gfx->ccm_program_field);
-    gfx->size = got;
+    gfx->size = size;
     return gfx;
 }
 
@@ -571,9 +631,21 @@ static size_t file_size(const char *path) {
 /* ── MD5 hash string from path ───────────────────────────────────────── */
 
 static int path_md5_hex(const char *path, char out_hex[33]) {
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
     DM2_Md5Ctx ctx;
     FILE *f = fopen(path, "rb");
-    if (!f) return 0;
+    if (!f) {
+        if (!dm2_v1_boot_read_asset_bytes(path,
+                                          32L * 1024L * 1024L,
+                                          &bytes,
+                                          &size)) {
+            return 0;
+        }
+        dm2_md5_bytes_hex(bytes, size, out_hex);
+        free(bytes);
+        return 1;
+    }
     dm2_md5_init(&ctx);
     unsigned char buf[4096];
     size_t n;
@@ -1034,42 +1106,30 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
 
     /* Load dungeon */
     if (profile->dungeon_path[0]) {
-        FILE *f = fopen(profile->dungeon_path, "rb");
-        if (f) {
-            uint8_t header[64];
-            size_t n = fread(header, 1, sizeof(header), f);
+        uint8_t *dat = NULL;
+        size_t dat_size = 0u;
+        if (dm2_v1_boot_read_asset_bytes(profile->dungeon_path,
+                                         10L * 1024L * 1024L,
+                                         &dat,
+                                         &dat_size)) {
+            size_t n = dat_size < 64u ? dat_size : 64u;
             /* Build deterministic config from header */
             if (n >= 12) {
                 dm2_v1_boot_build_deterministic_config(
-                    profile, header, (int)n);
+                    profile, dat, (int)n);
             }
-            /* Re-read full file for dungeon loader */
-            fseek(f, 0, SEEK_END);
-            long fsize = ftell(f);
-            fseek(f, 0, SEEK_SET);
-            if (fsize > 0 && fsize < 10*1024*1024) {
-                uint8_t *dat = (uint8_t *)malloc((size_t)fsize);
-                if (dat) {
-                    size_t got = fread(dat, 1, (size_t)fsize, f);
-                    if (dm2_v1_dungeon_load(dd, dat, (int)got) != 0) {
-                        /* The real game may only leave the title/menu after
-                         * its GDAT startup surface is ready. A malformed
-                         * map is fatal, but record-graph completeness is a
-                         * later world capability, not boot admission.
-                         * SKProject SkWinCore::INIT reaches
-                         * SHOW_MENU_SCREEN before GAME_LOAD reads the
-                         * dungeon structure. */
-                        dm2_v1_dungeon_free(dd);
-                        free(dat);
-                        fclose(f);
-                        free(dd);
-                        free(gs);
-                        return -1;
-                    }
-                    free(dat);
-                }
+            if (dm2_v1_dungeon_load(dd, dat, (int)dat_size) != 0) {
+                /* The real game may only leave the title/menu after
+                 * its GDAT startup surface is ready. A malformed map is
+                 * fatal, but record-graph completeness is a later world
+                 * capability, not boot admission. */
+                dm2_v1_dungeon_free(dd);
+                free(dat);
+                free(dd);
+                free(gs);
+                return -1;
             }
-            fclose(f);
+            free(dat);
         }
     }
 
@@ -1102,8 +1162,7 @@ int dm2_v1_boot_load_new_dungeon(
     DM2_V1_BootProfile *profile,
     DM2_V1_BootNewDungeonReceipt *out_receipt)
 {
-    FILE *file;
-    long file_size;
+    size_t file_size = 0u;
     uint8_t *bytes = NULL;
     char current_md5[33];
     DM2_V1_DungeonData candidate;
@@ -1124,21 +1183,12 @@ int dm2_v1_boot_load_new_dungeon(
          !md5_matches(current_md5, profile->dungeon_md5))) {
         return 0;
     }
-    file = fopen(profile->dungeon_path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (file_size = ftell(file)) <= 0 || file_size > 10 * 1024 * 1024 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
+    if (!dm2_v1_boot_read_asset_bytes(profile->dungeon_path,
+                                      10L * 1024L * 1024L,
+                                      &bytes,
+                                      &file_size)) {
         return 0;
     }
-    bytes = (uint8_t *)malloc((size_t)file_size);
-    if (!bytes || fread(bytes, 1, (size_t)file_size, file) !=
-                      (size_t)file_size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
     memset(&candidate, 0, sizeof(candidate));
     if (dm2_v1_dungeon_load(&candidate, bytes, (int)file_size) != 0 ||
         candidate.square_bytes != 1 || candidate.level_count <= 0) {
@@ -1146,7 +1196,7 @@ int dm2_v1_boot_load_new_dungeon(
         free(bytes);
         return 0;
     }
-    for (long i = 0; i < file_size; ++i) {
+    for (size_t i = 0; i < file_size; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, bytes[i]);
     }
     free(bytes);
@@ -1494,6 +1544,59 @@ static int dm2_v1_boot_startup_rect_contains(
     return rect && rect->w > 0 && rect->h > 0 &&
            x >= rect->x && x < rect->x + rect->w &&
            y >= rect->y && y < rect->y + rect->h;
+}
+
+static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
+                                       uint16_t rect_id,
+                                       DM2_V1_InterfaceRect *out);
+static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw,
+                                             size_t raw_size,
+                                             uint16_t rect_id,
+                                             DM2_V1_InterfaceRect *out);
+static int dm2_v1_boot_blit_anchor(int mode, int x0, int y0, int width,
+                                   int height,
+                                   DM2_V1_InterfaceRect *out);
+
+static int dm2_v1_boot_startup_menu_event_rect(
+    const uint8_t *raw,
+    size_t raw_size,
+    uint16_t rect_id,
+    DM2_V1_InterfaceRect *out)
+{
+    DM2_V1_InterfaceRect current;
+    DM2_V1_InterfaceRect next;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    /* skproject c_xrect.cpp QUERY_RECT keeps title-menu event rectangles in
+     * the same compressed INTERFACE_GENERAL/0/dt04/0 table as HUD blit
+     * chains. For input events, prefer the event chain itself over the HUD
+     * drawable expansion path: 0xD7 is an anchor-backed event, while 0xD9 is
+     * already a direct hit box. */
+    if (!dm2_v1_boot_query_compressed_rect(raw, raw_size, rect_id,
+                                           &current)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (current.x > 0 && current.x <= 8 && current.y != 0 &&
+        dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                          (uint16_t)current.y, &next) &&
+        next.x == 9 &&
+        dm2_v1_boot_blit_anchor(current.x, current.w, current.h,
+                                next.w, next.h, out)) {
+        return 1;
+    }
+    *out = current;
+    if (out->w <= 0 || out->h <= 0) {
+        memset(out, 0, sizeof(*out));
+        if (dm2_v1_boot_expand_hud_rect(raw, raw_size, rect_id, out) &&
+            out->w > 0 && out->h > 0) {
+            return 1;
+        }
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return 1;
 }
 
 int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
@@ -6375,31 +6478,45 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_StartupMenuPointerLayout *out_layout)
 {
     DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_BootGraphicsDat *owned_gfx = NULL;
     const uint8_t *raw;
     size_t raw_size = 0u;
     uint32_t hash = 2166136261u;
 
     if (!out_layout) return 0;
     memset(out_layout, 0, sizeof(*out_layout));
-    if (!profile || !profile->graphics_dat) return 0;
+    if (!profile) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!gfx && profile->graphics_path[0] != '\0') {
+        /* SHOW_MENU_SCREEN owns this route before GAME_LOAD publishes the
+         * runtime graphics handle. Re-open only the verified source file
+         * named by the boot profile; do not promote a fallback surface. */
+        owned_gfx = dm2_v1_boot_graphics_load(profile->graphics_path);
+        gfx = owned_gfx;
+    }
+    if (!gfx) return 0;
     raw = dm2_v1_asset_load_typed_sized(
         &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
-    if (!raw || raw_size < 4u) return 0;
+    if (!raw || raw_size < 4u) {
+        dm2_v1_boot_graphics_free(owned_gfx);
+        return 0;
+    }
     for (size_t i = 0; i < raw_size; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
     }
     /* skproject _098d_1208 -> LOAD_RECTS_AND_COMPRESS loads raw4, then
      * HANDLE_UI_EVENT uses the title-menu event codes 0xD7 and 0xD9. */
-    if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, 0x00d7u,
-                                     &out_layout->new_game) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size, 0x00d9u,
-                                     &out_layout->resume_game)) {
+    if (!dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x00d7u,
+                                             &out_layout->new_game) ||
+        !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x00d9u,
+                                             &out_layout->resume_game)) {
+        dm2_v1_boot_graphics_free(owned_gfx);
         return 0;
     }
     out_layout->table_hash = hash;
     out_layout->valid = 1;
+    dm2_v1_boot_graphics_free(owned_gfx);
     return 1;
 }
 
