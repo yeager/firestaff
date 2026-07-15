@@ -7600,6 +7600,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     execution only, never a routine ABI, data-table layout, CD read, level,
     object, palette, bitmap, or rendering semantics. Remaining: bind an
     authenticated loader data read from an observed entry path.
+  - Update: the same producer now retains the next observed main-RAM
+    instruction after an admitted entry, tied to the entry logical/physical
+    PC and preserving its raw opcode. A missing or non-main-RAM continuation
+    remains unadmitted. This is still only execution ordering; it does not
+    assign opcode, loader, table, CD-read, level, object, palette, bitmap, or
+    rendering semantics. Remaining: an authentic loader data-read receipt
+    originating from one of these observed routine paths.
   - Update: the capture producer now records a main-RAM call-entry row only
     when the next-caller JSR target is actually executed at that target. The
     receipt requires exact caller PC, physical PC, target, entry PC, physical

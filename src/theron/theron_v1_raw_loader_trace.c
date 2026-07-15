@@ -1178,6 +1178,75 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_call_entry
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_entry_next(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextEntryNextReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextCallEntryReceipt entry;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int caller_pc;
+    unsigned int caller_physical_pc;
+    unsigned int target;
+    unsigned int entry_pc;
+    unsigned int entry_physical_pc;
+    unsigned int entry_opcode;
+    unsigned int next_pc;
+    unsigned int next_physical_pc;
+    unsigned int next_opcode;
+    int entry_seen = 0;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_call_entry(
+            handoff, capture, &entry) || !entry.valid ||
+        !entry.caller_next_call_entry_proven) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (!entry_seen) {
+            consumed = 0;
+            if (sscanf(line,
+                       "main_ram_loader_call_entry caller_logical_pc=%x caller_physical_pc=%x target=%x logical_pc=%x physical_pc=%x opcode=%x%n",
+                       &caller_pc, &caller_physical_pc, &target, &entry_pc,
+                       &entry_physical_pc, &entry_opcode, &consumed) == 6 &&
+                consumed == (int)length &&
+                caller_pc == entry.call.call_pc &&
+                caller_physical_pc == entry.call.call_physical_pc &&
+                target == entry.call.call_target && entry_pc == entry.entry_pc &&
+                entry_physical_pc == entry.entry_physical_pc &&
+                entry_opcode == entry.entry_opcode) {
+                entry_seen = 1;
+            }
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_entry_next entry_logical_pc=%x entry_physical_pc=%x logical_pc=%x physical_pc=%x opcode=%x%n",
+                   &entry_pc, &entry_physical_pc, &next_pc, &next_physical_pc,
+                   &next_opcode, &consumed) != 5 || consumed != (int)length ||
+            entry_pc != entry.entry_pc ||
+            entry_physical_pc != entry.entry_physical_pc ||
+            next_pc > UINT16_MAX || next_physical_pc < 0x1f0000u ||
+            next_physical_pc >= 0x1f8000u || next_opcode > UINT8_MAX) {
+            return 0;
+        }
+        out->valid = 1;
+        out->entry = entry;
+        out->next_pc = (uint16_t)next_pc;
+        out->next_physical_pc = next_physical_pc;
+        out->next_opcode = (uint8_t)next_opcode;
+        out->caller_next_entry_next_instruction_proven = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,
