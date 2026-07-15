@@ -1131,6 +1131,7 @@ static int test_c006_f0267_ordinary_moving_group_source_projectile_is_removed(vo
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
+    struct TimelineEvent_Compat duplicateMove;
     struct DungeonGroup_Compat* group;
     int ok = 1;
 
@@ -1175,8 +1176,23 @@ static int test_c006_f0267_ordinary_moving_group_source_projectile_is_removed(vo
 
     ok &= expect(test_schedule_future_projectile_move(&world),
                  "MOVESENS.C:297/F0214 queues projectile event before ordinary group impact");
+    /* A malformed/imported duplicate must not turn F0214 into a slot-wide
+     * deletion: the original routine consumes only C14.EventIndex. */
+    memset(&duplicateMove, 0, sizeof(duplicateMove));
+    duplicateMove.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    duplicateMove.fireAtTick = world.gameTick + 101u;
+    duplicateMove.mapIndex = 0;
+    duplicateMove.mapX = 1;
+    duplicateMove.mapY = 1;
+    duplicateMove.cell = 1;
+    duplicateMove.aux0 = 0;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &duplicateMove) == 1,
+                 "queue exact C14.EventIndex target after independent C49 owner");
     ok &= expect(test_schedule_creature_tick_now(&world, 0),
                  "GROUP.C:1928/2175 ordinary group tick enters F0267 from real source square");
+    /* F0214 consumes C14.EventIndex, not a projectile-slot sweep.  The
+     * earlier C37 insertion shifts the selected later C49 from index two. */
+    world.things->projectiles[0].eventIndex = 2;
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
@@ -1191,8 +1207,11 @@ static int test_c006_f0267_ordinary_moving_group_source_projectile_is_removed(vo
     ok &= expect(world.things->projectiles[0].next == THING_NONE &&
                  world.things->projectiles[0].eventIndex == 0xFFFFu,
                  "MOVESENS.C:297 plus PROJEXPL.C:607-608 deletes projectile event and thing");
-    ok &= expect(test_timeline_lacks_projectile_move(&world),
-                 "MOVESENS.C:297/F0214 removes queued projectile move on ordinary group impact");
+    ok &= expect(world.timeline.count == 1 &&
+                 world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+                 world.timeline.events[0].aux0 == 0 &&
+                 world.timeline.events[0].cell == 0,
+                 "F0214 removes only C14.EventIndex and preserves earlier same-slot C49");
     ok &= expect(world.creatureAICount == 1 &&
                  world.creatureAI[0].groupMapX == 2 &&
                  world.creatureAI[0].groupMapY == 1,
@@ -1253,6 +1272,8 @@ static int test_c006_f0267_ordinary_moving_group_lethal_projectile_blocks_move(v
                  "schedule projectile event before lethal ordinary group impact");
     ok &= expect(test_schedule_creature_tick_now(&world, 0),
                  "schedule ordinary group movement tick for lethal projectile impact");
+    /* The queued C49 follows the due C37 after sorted insertion. */
+    world.things->projectiles[0].eventIndex = 1;
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
@@ -1428,6 +1449,10 @@ int main(void) {
     int ok = 1;
     int rc;
     unsigned int generatorTriggerTick;
+
+    if (getenv("FIRESTAFF_FOCUS_F0214") != NULL) {
+        return test_c006_f0267_ordinary_moving_group_source_projectile_is_removed();
+    }
 
     if (!build_world(&world)) {
         fprintf(stderr, "FAIL: build_world\n");

@@ -5426,35 +5426,114 @@ static int orch_c13_apply_vi_altar_rebirth_compat(
     return 1;
 }
 
-static int orch_delete_projectile_move_events_compat(
+/* ReDMCSB PROJEXPL.C F0214:207-223 deletes exactly the Timeline record
+ * named by the raw C14 PROJECTILE.EventIndex.  The old compat route swept
+ * every C49 with the same host slot, which can discard a distinct queued
+ * movement receipt.  The compact host queue has no native event allocator,
+ * so accept its physical index only when it still names the exact C49 owner;
+ * malformed/imported indexes fail closed. */
+static int orch_delete_projectile_event_f0214_compat(
     struct GameWorld_Compat* world,
     int projectileIndex)
 {
+    const struct TimelineEvent_Compat* event;
+    const struct DungeonProjectile_Compat* projectile;
     int i;
-    int writeIndex = 0;
-    int deleted = 0;
-    int oldCount;
+    int eventIndex;
 
-    if (!world || projectileIndex < 0) return 0;
-    oldCount = world->timeline.count;
-    for (i = 0; i < oldCount; ++i) {
-        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
-        if (event->kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
-            event->aux0 == projectileIndex) {
-            deleted = 1;
-            continue;
-        }
-        if (writeIndex != i) {
-            world->timeline.events[writeIndex] = world->timeline.events[i];
-        }
-        ++writeIndex;
+    if (!world || !world->things || !world->things->projectiles ||
+        projectileIndex < 0 ||
+        projectileIndex >= world->things->projectileCount ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
+        return 0;
     }
-    while (writeIndex < oldCount) {
-        memset(&world->timeline.events[writeIndex], 0, sizeof(world->timeline.events[writeIndex]));
-        ++writeIndex;
+    projectile = &world->things->projectiles[projectileIndex];
+    eventIndex = (int)projectile->eventIndex;
+    if (eventIndex < 0 || eventIndex >= world->timeline.count) return 0;
+    event = &world->timeline.events[eventIndex];
+    if (event->kind != TIMELINE_EVENT_PROJECTILE_MOVE ||
+        event->aux0 != projectileIndex) {
+        return 0;
     }
-    if (deleted) world->timeline.count = writeIndex;
-    return deleted;
+
+    for (i = eventIndex + 1; i < world->timeline.count; ++i) {
+        world->timeline.events[i - 1] = world->timeline.events[i];
+    }
+    --world->timeline.count;
+    memset(&world->timeline.events[world->timeline.count], 0,
+           sizeof(world->timeline.events[world->timeline.count]));
+
+    /* Queue compaction changes only later host positions.  Preserve the
+     * native C14 owner relation for every live record that named one. */
+    for (i = 0; i < world->things->projectileCount; ++i) {
+        struct DungeonProjectile_Compat* candidate =
+            &world->things->projectiles[i];
+        if (candidate->eventIndex != 0xFFFFu &&
+            candidate->eventIndex > (unsigned short)eventIndex) {
+            --candidate->eventIndex;
+        }
+    }
+    return 1;
+}
+
+/* The host queue is ordered rather than the original fixed EVENT pool.  Keep
+ * a decoded C14 EventIndex coherent whenever its physical owner moves left
+ * after dispatch.  An index of zero may name the event being dispatched, so
+ * it is retained until F0214/F0215 or F0219 resolves that owner. */
+static void orch_shift_projectile_event_indexes_after_pop_compat(
+    struct GameWorld_Compat* world)
+{
+    int i;
+
+    if (!world || !world->things || !world->things->projectiles) return;
+    for (i = 0; i < world->things->projectileCount; ++i) {
+        struct DungeonProjectile_Compat* projectile =
+            &world->things->projectiles[i];
+        if (projectile->eventIndex != 0xFFFFu && projectile->eventIndex > 0) {
+            --projectile->eventIndex;
+        }
+    }
+}
+
+/* F0219 creates the next C48/C49, then stores its EventIndex in the same
+ * C14 owner that F0214 later consumes.  C49 does not participate in the
+ * host's door-only merge path, so its sorted insertion position is stable. */
+static int orch_schedule_projectile_move_f0219_compat(
+    struct GameWorld_Compat* world,
+    int projectileIndex,
+    const struct TimelineEvent_Compat* event)
+{
+    int insertIndex;
+    int i;
+
+    if (!world || !event || event->kind != TIMELINE_EVENT_PROJECTILE_MOVE ||
+        event->aux0 != projectileIndex ||
+        world->timeline.count < 0 ||
+        world->timeline.count >= TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+    insertIndex = world->timeline.count;
+    while (insertIndex > 0 &&
+           world->timeline.events[insertIndex - 1].fireAtTick > event->fireAtTick) {
+        --insertIndex;
+    }
+    if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, event)) return 0;
+    if (!world->things || !world->things->projectiles ||
+        projectileIndex < 0 || projectileIndex >= world->things->projectileCount) {
+        return 1;
+    }
+    for (i = 0; i < world->things->projectileCount; ++i) {
+        struct DungeonProjectile_Compat* candidate =
+            &world->things->projectiles[i];
+        if (i != projectileIndex && candidate->eventIndex != 0xFFFFu &&
+            candidate->eventIndex >= (unsigned short)insertIndex) {
+            ++candidate->eventIndex;
+        }
+    }
+    world->things->projectiles[projectileIndex].eventIndex =
+        (unsigned short)insertIndex;
+    return 1;
 }
 
 static int orch_projectile_landing_cell_f0219_compat(
@@ -5843,10 +5922,9 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                     orch_projectile_associated_weapon_type_compat(
                         world, &compatProjectile);
                 /* MOVESENS.C:F0266:292-301 calls F0217 on matching projectile
-                 * cells, then F0214 deletes the projectile event and F0217/
-                 * PROJEXPL.C:607-608 unlinks/deletes the projectile thing.
-                 * The compat timeline stores projectile slot in aux0. */
-                (void)orch_delete_projectile_move_events_compat(world, index);
+                 * cells, then F0214 deletes exactly C14.EventIndex before
+                 * F0217/PROJEXPL.C:607-608 unlinks/deletes the Thing. */
+                (void)orch_delete_projectile_event_f0214_compat(world, index);
                 (void)orch_unlink_thing_from_square_compat(world, mapIndex, mapX, mapY, thing);
                 projectile->next = THING_NONE;
                 projectile->eventIndex = 0xFFFFu;
@@ -6610,8 +6688,11 @@ static int orch_handle_projectile_move_event_compat(
                 }
                 (void)orch_materialize_projectile_associated_thing_compat(
                     world, other, &peerImpact, 0);
-                (void)orch_delete_projectile_move_events_compat(
-                    world, otherIndex);
+                /* The runtime projection's slotIndex is the raw C14 owner;
+                 * F0214 must consume that owner's EventIndex, never every
+                 * C49 that happens to carry otherIndex in aux0. */
+                (void)orch_delete_projectile_event_f0214_compat(
+                    world, other->slotIndex);
                 (void)F0813_PROJECTILE_Despawn_Compat(
                     &world->projectiles, otherIndex);
             }
@@ -6654,8 +6735,8 @@ static int orch_handle_projectile_move_event_compat(
         orch_sync_live_projectile_c14_f0219_compat(world, projectile);
     }
     if (relinkReceipt.shouldScheduleNextMove) {
-        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
-                                             &tickResult.outNextTick);
+        (void)orch_schedule_projectile_move_f0219_compat(
+            world, projectile->slotIndex, &tickResult.outNextTick);
     }
     return 1;
 }
@@ -11163,6 +11244,7 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
            && peek.fireAtTick <= world->gameTick)
     {
         if (F0723_TIMELINE_Pop_Compat(&world->timeline, &ev) != 1) break;
+        orch_shift_projectile_event_indexes_after_pop_compat(world);
         dispatched++;
         switch (ev.kind) {
         case TIMELINE_EVENT_DOOR_ANIMATE: {
