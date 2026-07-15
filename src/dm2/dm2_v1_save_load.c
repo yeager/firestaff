@@ -411,6 +411,7 @@ static void dm2_sksave_corpus_classify_payload(
     DM2_V1_SaveCandidate candidate;
     int status = 0;
     int importable_kind_ok = 0;
+    DM2_SKSaveKind save_kind = DM2_SK_SAVE_KIND_NONE;
     uint32_t initial_file_hash;
     uint32_t source_file_hash;
 
@@ -466,14 +467,17 @@ static void dm2_sksave_corpus_classify_payload(
     switch (candidate.kind) {
         case DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION:
             receipt->firestaff_session_candidate_count++;
+            save_kind = DM2_SK_SAVE_KIND_FIRESTAFF_SESSION;
             importable_kind_ok = 1;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE:
             receipt->original_envelope_candidate_count++;
+            save_kind = DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE;
             importable_kind_ok = 1;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW:
             receipt->original_raw_candidate_count++;
+            save_kind = DM2_SK_SAVE_KIND_ORIGINAL_RAW;
             importable_kind_ok = 1;
             break;
         default:
@@ -482,6 +486,10 @@ static void dm2_sksave_corpus_classify_payload(
             break;
     }
     if (importable_kind_ok) {
+        if (receipt->first_importable_kind == DM2_SK_SAVE_KIND_NONE) {
+            receipt->first_importable_kind = save_kind;
+            receipt->first_importable_payload_size = payload_size;
+        }
         if (receipt->candidate_receipt_count < DM2_SK_CORPUS_RECEIPT_MAX) {
             DM2_SKSaveCandidateReceipt *entry =
                 &receipt->candidate_receipts[receipt->candidate_receipt_count++];

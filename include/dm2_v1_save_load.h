@@ -106,6 +106,13 @@ typedef struct {
     char path[256];
 } DM2_SKSaveCandidateReceipt;
 
+typedef enum {
+    DM2_SK_SAVE_KIND_NONE = 0,
+    DM2_SK_SAVE_KIND_FIRESTAFF_SESSION = 1,
+    DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE = 2,
+    DM2_SK_SAVE_KIND_ORIGINAL_RAW = 3
+} DM2_SKSaveKind;
+
 typedef struct {
     uint8_t  valid_slot_count;
     uint16_t valid_slot_mask;
@@ -133,6 +140,8 @@ typedef struct {
     size_t   total_payload_size;
     size_t   largest_importable_payload_size;
     size_t   total_importable_payload_size;
+    size_t   first_importable_payload_size;
+    DM2_SKSaveKind first_importable_kind;
     uint32_t importable_kind_mask;
     uint32_t importable_payload_hash;
     uint8_t candidate_receipt_count;
