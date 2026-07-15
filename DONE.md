@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM1 spell-HUD material bundle gate: M11 now requires the
+  complete source-owned spell HUD bundle before rendering an open spell
+  panel: exact loaded C009 pixels, exact loaded C011 pixels, and a verified
+  PC34 M653 font from GRAPHICS.DAT 695/557. The material receipt rejects
+  cropped C009, dimension-only/missing C011, fallback font records, and
+  no-draw F0394 plans, so a valid C009 background can no longer leak as a
+  half-rendered spell HUD when C011 or M653 is unavailable. Verification:
+  focused Ninja build plus CTests
+  `dm1_v1_champion_panel_spell_area_overlay_pc34_compat`,
+  `m11_dm1_spell_area_asset_route`, and
+  `m11_dm1_action_spell_asset_fail_closed` pass in `build-local-ninja`;
+  full `ninja -C build-local-ninja firestaff` also passes.
+
 - ✅ 2026-07-16 DM2 complete-support original-save gate: the
   complete-support receipt now remains observable for a valid real-profile
   boot even when unrelated runtime GDAT checks are incomplete, carries the

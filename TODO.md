@@ -116,6 +116,13 @@
   material is published, even when the skipped slot still has health or
   Symbols bytes. Remaining work is unchanged: real PC34/Mac capture across
   caster changes, rune rows, recant, and cast refresh.
+  2026-07-16 update: the live M11 spell panel now preflights the full
+  F0394/F0396/F0397/F0398 material bundle before drawing an open spell HUD:
+  C009 must be exact 96x33 loaded pixels, C011 exact 96x36 loaded pixels,
+  and M653 must be source-bound to GRAPHICS.DAT 695/557. Missing C011 or
+  M653 clears the source spell rectangle instead of leaving a half-painted
+  C009 panel or host-font rune text. Remaining work is still real PC34/Mac
+  capture across caster changes, rune rows, recant, and cast refresh.
 
 - 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
   surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates

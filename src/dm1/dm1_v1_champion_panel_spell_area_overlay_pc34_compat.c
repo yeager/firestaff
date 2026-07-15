@@ -389,3 +389,111 @@ int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     *out_plan = plan;
     return 1;
 }
+
+static int material_matches_source_surface(int loaded_pixels,
+                                           int graphic_index,
+                                           int expected_index,
+                                           int width,
+                                           int expected_width,
+                                           int height,
+                                           int expected_height)
+{
+    return loaded_pixels &&
+           graphic_index == expected_index &&
+           width == expected_width &&
+           height == expected_height;
+}
+
+int dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+    const DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 *plan,
+    const DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 *facts,
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 *out_receipt)
+{
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_host_fallback_visuals = 1;
+
+    if (!plan || !facts || !plan->valid) {
+        receipt.reject_reason =
+            DM1_V1_CPSAO_MATERIAL_REJECT_INVALID_PLAN_PC34;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.plan_draws_background = plan->drew_background_graphic;
+    receipt.plan_draws_lines = plan->drew_lines_bitmap;
+    receipt.plan_draws_font =
+        plan->drew_spell_area_controls ||
+        plan->drew_available_symbols ||
+        plan->drew_champion_symbols;
+    receipt.c009_required = receipt.plan_draws_background;
+    receipt.c011_required = receipt.plan_draws_lines;
+    receipt.m653_required = receipt.plan_draws_font;
+    receipt.c009_graphic_index = facts->c009_graphic_index;
+    receipt.c009_width = facts->c009_width;
+    receipt.c009_height = facts->c009_height;
+    receipt.c011_graphic_index = facts->c011_graphic_index;
+    receipt.c011_width = facts->c011_width;
+    receipt.c011_height = facts->c011_height;
+    receipt.m653_graphic_index = facts->m653_graphic_index;
+
+    if (!receipt.plan_draws_background &&
+        !receipt.plan_draws_lines &&
+        !receipt.plan_draws_font) {
+        receipt.reject_reason =
+            DM1_V1_CPSAO_MATERIAL_REJECT_PLAN_NO_DRAW_PC34;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.c009_source_bound =
+        !receipt.c009_required ||
+        material_matches_source_surface(
+            facts->c009_loaded_pixels,
+            facts->c009_graphic_index,
+            DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34,
+            facts->c009_width,
+            DM1_V1_CPSAO_SPELL_AREA_WIDTH_PC34,
+            facts->c009_height,
+            DM1_V1_CPSAO_SPELL_AREA_HEIGHT_PC34);
+    if (!receipt.c009_source_bound) {
+        receipt.reject_reason = DM1_V1_CPSAO_MATERIAL_REJECT_C009_PC34;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.c011_source_bound =
+        !receipt.c011_required ||
+        material_matches_source_surface(
+            facts->c011_loaded_pixels,
+            facts->c011_graphic_index,
+            DM1_V1_CPSAO_GFX_SPELL_AREA_LINES_PC34,
+            facts->c011_width,
+            DM1_V1_CPSAO_LINES_WIDTH_PC34,
+            facts->c011_height,
+            DM1_V1_CPSAO_LINES_HEIGHT_PC34);
+    if (!receipt.c011_source_bound) {
+        receipt.reject_reason = DM1_V1_CPSAO_MATERIAL_REJECT_C011_PC34;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.m653_source_bound =
+        !receipt.m653_required ||
+        (facts->m653_source_bound &&
+         (facts->m653_graphic_index == DM1_V1_CPSAO_M653_GRAPHIC_PC34 ||
+          facts->m653_graphic_index == DM1_V1_CPSAO_M653_GRAPHIC_LEGACY_PC34));
+    if (!receipt.m653_source_bound) {
+        receipt.reject_reason = DM1_V1_CPSAO_MATERIAL_REJECT_M653_PC34;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.drawable = 1;
+    receipt.reject_reason = DM1_V1_CPSAO_MATERIAL_ACCEPTED_PC34;
+    *out_receipt = receipt;
+    return 1;
+}
