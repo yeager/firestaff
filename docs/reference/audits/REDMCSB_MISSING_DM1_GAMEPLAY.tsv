@@ -1,6 +1,6 @@
 symbol	family	reference_source	disposition	evidence
 F0106_DUNGEONVIEW_TestResetToStep1_CPSF	DUNGEONVIEW	ATARIST.H:62	implemented_narrow	Source CPSF reset transition; focused CTest.
-F0145_DUNGEON_GetGroupCells	DUNGEON	ATARIST.H:76	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; active-group cells remain decoded inline in src/dm1/dm1_v1_original_save_pc34_handoff.c.
+F0145_DUNGEON_GetGroupCells	DUNGEON	ATARIST.H:76	implemented_narrow	`src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c` reads raw C04 Cells away from the party map and the matching ACTIVE_GROUP overlay on the party map; missing active state rejects. Focused CTest `dm1_v1_f0145_f0148_group_overlay_pc34_compat`.
 F0147_DUNGEON_GetGroupDirections	DUNGEON	ATARIST.H:78	implemented_narrow	Packed C04 directions accessor; focused CTest.
 F0165_DUNGEON_GetDiscardedThing	DUNGEON	DEFS.H:7344	implemented_narrow	Source-owned discard-selection adapter; focused CTest.
 F0218_PROJECTILE_GetImpactCount	PROJECTILE	ATARIST.H:126	implemented_narrow	Bounded PC34 projectile-impact scan; focused CTest.
