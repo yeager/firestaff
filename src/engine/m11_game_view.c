@@ -2231,16 +2231,20 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
     if (!receipt->bind_graphics_dat) {
         return 1;
     }
-    if (M11_AssetLoader_Init(&state->assetLoader,
-                             receipt->graphics_dat_path)) {
-        state->assetsAvailable = 1;
-        M11_Font_Init(&state->originalFont);
-        if (M11_Font_LoadFromGraphicsDat(
-                &state->originalFont,
-                state->assetLoader.fileState,
-                state->assetLoader.runtimeState)) {
-            state->originalFontAvailable = 1;
-        }
+    /* The source-visible DM1 path owns GRAPHICS.DAT. Continuing after a
+     * failed bind leaves M11 active with stale or host surfaces, which makes
+     * M648 inscriptions and HUD art look like valid game output. */
+    if (!M11_AssetLoader_Init(&state->assetLoader,
+                              receipt->graphics_dat_path)) {
+        return 0;
+    }
+    state->assetsAvailable = 1;
+    M11_Font_Init(&state->originalFont);
+    if (M11_Font_LoadFromGraphicsDat(
+            &state->originalFont,
+            state->assetLoader.fileState,
+            state->assetLoader.runtimeState)) {
+        state->originalFontAvailable = 1;
     }
     return 1;
 }

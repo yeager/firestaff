@@ -10,7 +10,7 @@
   - 2026-07-15 raster-source binding update: both F0168 world discovery and
     F0172 selected-wall consumption now prove the same raw M648 receipt,
     with each decoded byte bound to `byte << 3`, an unscaled native 8x8 cell,
-    original GRAPHICS.DAT entry 120, and C10 transparency. The gate rejects
+    original GRAPHICS.DAT entry 258, and C10 transparency. The gate rejects
     padded/scaled font dimensions as well as altered source or destination
     cells. Remaining work is real PC34/Mac capture across every HoC and
     non-HoC projection; side/depth continues to use its original unreadable
@@ -6399,11 +6399,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the title path already uses its intentional 55 ms VBlank cadence. Remaining:
     same-state packaged macOS capture for the reported inscription/mirror/title
     symptoms; do not add non-source side-mirror, host-font, or timing fallbacks.
-  - 2026-07-15 M648 correction: the active HoC route had treated ReDMCSB's
-    `M648_GRAPHIC_INSCRIPTION_FONT` variable name as a GRAPHICS.DAT ordinal
-    and loaded entry 258. `DATA.C` G0018 entry 61 proves the PC34 font is raw
-    entry 120; the M11 raw-ordinal loader now receives 120, preserving its
-    36x8-pixel glyph sheet and C10 transparent blit. Non-D1C distances remain
+  - 2026-07-15 M648 correction: the active HoC route had confused ReDMCSB's
+    mandatory preload slot 120 with M648's actual PC3.4 GRAPHICS.DAT bitmap.
+    DUNVIEW.C F0107 consumes entry 258, a 288x8 glyph sheet; the M11 loader
+    now receives 258 and preserves its C10 transparent blit. Non-D1C distances remain
     the original unreadable-plaque route from `DUNVIEW.C` F0107, rather than a
     scaled host font. Title timing audit: the existing event-pumped 55 ms V1
     tick waits once per TITLE.C VBlank and has no macOS display-refresh path.

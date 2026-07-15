@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 M648 wall inscriptions: corrected the direct PC3.4
+  `GRAPHICS.DAT` binding from mandatory preload slot 120 to ReDMCSB F0107's
+  actual bitmap ordinal 258. The real-data all-map capture verifies 56 wall
+  texts, 787 checks, exact source pixels, and C10 transparency with no
+  host-font fallback.
+
 - ✅ 2026-07-15 DM2 original raw-SKSave corpus layout handoff: the
   original-only census now carries the parser-validated raw dungeon map count,
   all sixteen DB-pool record counts, and prefix/map-data FNV identities into
