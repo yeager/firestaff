@@ -610,6 +610,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnActiveStructure3FaceMaterialReceipt active_face_material;
         Nexus_V1_DgnActiveStructure1AOwnerChainReceipt active_owner_chain;
         Nexus_V1_DgnActiveStructure2DescriptorReceipt active_structure2;
+        Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -962,6 +963,56 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               active_structure2.no_draw_only &&
               !active_structure2.fallback_visuals_permitted,
               "active retail LEV exposes the bounded Structure2 descriptor envelope only");
+        CHECK(nexus_v1_engine_build_structure2_descriptor_capture_target(
+                  &active_engine, 0, &descriptor_target) == 1 &&
+              descriptor_target.valid && descriptor_target.level_index == level &&
+              descriptor_target.source_byte_count == (int)size &&
+              descriptor_target.source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
+              descriptor_target.descriptor_index == 0 &&
+              descriptor_target.descriptor_byte_offset ==
+                  ((((int)data[0x14] << 8) | data[0x15]) *
+                   NEXUS_DGN_BLOCK_SIZE) &&
+              descriptor_target.descriptor.image_id ==
+                  loaded_level.structure2_textures[0].image_id &&
+              descriptor_target.descriptor.encoding ==
+                  loaded_level.structure2_textures[0].encoding &&
+              descriptor_target.descriptor.palette_id ==
+                  loaded_level.structure2_textures[0].palette_id &&
+              descriptor_target.opaque_payload_byte_count ==
+                  loaded_level.structure2_payload.opaque_payload_size &&
+              descriptor_target.descriptor_bytes_fnv1a64 != 0U &&
+              descriptor_target.opaque_payload_fnv1a64 != 0U &&
+              descriptor_target.capture_producer_required &&
+              descriptor_target.original_saturn_capture_required &&
+              descriptor_target.no_draw_only &&
+              !descriptor_target.fallback_visuals_permitted,
+              "active retail LEV emits an exact opaque Structure2 capture target");
+        CHECK(nexus_v1_engine_build_structure2_descriptor_capture_target(
+                  &active_engine, loaded_level.structure2_texture_count,
+                  &descriptor_target) == 0 && !descriptor_target.valid &&
+              descriptor_target.no_draw_only &&
+              !descriptor_target.fallback_visuals_permitted,
+              "out-of-range Structure2 descriptors cannot create capture targets");
+        if (level == 0) {
+            const char *target_path =
+                "/private/tmp/firestaff_nexus_structure2_descriptor_target.txt";
+            char target_line[128];
+            FILE *target_file;
+
+            CHECK(nexus_v1_engine_write_structure2_descriptor_capture_target(
+                      &active_engine, 0, target_path, &descriptor_target) == 1 &&
+                  descriptor_target.valid &&
+                  descriptor_target.original_saturn_capture_required &&
+                  descriptor_target.no_draw_only,
+                  "active retail LEV writes an opaque Structure2 capture request");
+            target_file = fopen(target_path, "rb");
+            CHECK(target_file && fgets(target_line, sizeof(target_line), target_file) &&
+                  strcmp(target_line,
+                         "NEXUS_STRUCTURE2_DESCRIPTOR_CAPTURE_TARGET_V1\n") == 0,
+                  "Structure2 capture request carries its non-runtime target magic");
+            if (target_file) fclose(target_file);
+            remove(target_path);
+        }
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 ^= 1U;
         CHECK(nexus_v1_current_level_structure3_face_material_receipt(
                   &active_engine, &active_face_material) == 0 &&
