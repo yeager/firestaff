@@ -28,6 +28,8 @@ int main(void)
     char *source;
     char *route;
     char *route_end;
+    char *ornaments;
+    char *ornaments_end;
     long size;
     int ok;
 
@@ -43,6 +45,9 @@ int main(void)
     route = strstr(source, "static void m11_draw_dm1_front_mirror_route(");
     route_end = route ? strstr(route,
         "static int m11_draw_dm1_wall_ornament_host_material_receipt(") : NULL;
+    ornaments = strstr(source, "static void m11_draw_dm1_wall_ornaments(");
+    ornaments_end = ornaments ? strstr(ornaments,
+        "static int m11_dm1_side_wall_blit_for_rel(") : NULL;
     ok = route && route_end && route_end > route &&
          strstr(source, "static int m11_draw_dm1_front_mirror_backing_host_receipt(") &&
          strstr(source, "static int m11_draw_dm1_front_champion_portrait_host_receipt(") &&
@@ -53,7 +58,13 @@ int main(void)
          contains_between(route, route_end,
             "if (drawReceipt.candidatePanelOwnsCell)") &&
          strstr(source, "receipt->portraitSourceX + receipt->portraitWidth >") &&
-         strstr(source, "receipt->portraitSourceY + receipt->portraitHeight >");
+         strstr(source, "receipt->portraitSourceY + receipt->portraitHeight >") &&
+         ornaments && ornaments_end && ornaments_end > ornaments &&
+         contains_between(ornaments, ornaments_end,
+            "if (cell.championPortraitOrdinal >= 0)") &&
+         contains_between(ornaments, ornaments_end,
+            "The dedicated D1C route below is the sole C127 consumer") &&
+         contains_between(ornaments, ornaments_end, "continue;");
     free(source);
     return ok ? 0 : 1;
 }

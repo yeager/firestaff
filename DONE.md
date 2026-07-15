@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0172 C127 projection gate: a C127 sensor now
+  bypasses the generic F0107 wall-ornament loop. Only DUNVIEW's fixed D1C
+  C346/C026 route may render it, preventing an invented perspective mirror at
+  D2/D3 or side-wall positions. Focused coverage:
+  `m11_dm1_front_mirror_asset_fail_closed`.
+
+- ✅ 2026-07-15 DM1 ReDMCSB F0168/F0172 selected-inscription consumers: the
+  F0128 D1C repaint and F0107 side/depth presentation now consume the same
+  F0172-selected raw G0290 record as the direct M648 material route. Generic
+  Thing-chain scanning cannot leak an unrelated inscription into any live
+  viewport projection; a bad selected record remains no-draw. Focused
+  coverage: `m11_dm1_inscription_selected_wall_gate`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0168/F0172 selected-inscription gate: the M11
   F0107/M648 consumer now decodes only the current F0172-selected G0290 raw
   TextString. A bad selected source record is no-draw rather than a fallback
