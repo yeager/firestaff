@@ -1125,6 +1125,36 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             }
         }
         break;
+    case 57u: /* STKOP_CellFetch */
+        /* CSBWin DSA.cpp:3676-3835 zeroes the requested DSAVARS run, then
+         * overlays the real CELLFLAG/DB0/DB1 data for a valid LOCATIONREL.
+         * The runtime supplies only an original byte-map cell and its first
+         * matching record; no inferred room or object layout is accepted. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if ((int32_t)v < 0 || v > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v) {
+            break;
+        }
+        for (sv = 0; sv < (int32_t)count; ++sv) {
+            variables[v + (uint32_t)sv] = 0u;
+            variable_state[v + (uint32_t)sv] = 1u;
+        }
+        if (count == 0u) break;
+        {
+            uint32_t cell_values[5] = { 0u, 0u, 0u, 0u, 0u };
+            if (!context->get_cell_info ||
+                !context->get_cell_info(context->dungeon_user, w,
+                                         cell_values)) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            if (count > 5u) count = 5u;
+            for (sv = 0; sv < (int32_t)count; ++sv) {
+                variables[v + (uint32_t)sv] = cell_values[sv];
+            }
+        }
+        break;
     case 130u: /* STKOP_DSAInfoFetch, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:2439-2471 returns the four DB3 type-47 fields or
          * four -1 words for every invalid indirect object. */
@@ -1986,6 +2016,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_monster_info = runner->set_monster_info;
     context.monster_invisible_enabled = runner->monster_invisible_enabled;
     context.monster_size4_enabled = runner->monster_size4_enabled;
+    context.get_cell_info = runner->get_cell_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

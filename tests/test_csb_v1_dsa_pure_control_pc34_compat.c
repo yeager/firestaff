@@ -26,6 +26,7 @@ static int monster_info_enabled;
 static int monster_info_store_count;
 static uint32_t monster_info_stored[8];
 static uint8_t monster_info_store_mask;
+static int cell_info_enabled;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -129,6 +130,22 @@ static int set_monster_info(void *user, uint16_t thing,
     return 1;
 }
 
+static int get_cell_info(void *user, uint32_t location,
+                         uint32_t out_values[5])
+{
+    (void)user;
+    if (!cell_info_enabled || !out_values) return 0;
+    memset(out_values, 0, 5u * sizeof(out_values[0]));
+    if (location == 0x0c82u) {
+        out_values[0] = 4u;
+        out_values[1] = 0x1du;
+        out_values[2] = 5u;
+        out_values[3] = 1u;
+        out_values[4] = 12u;
+    }
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -194,6 +211,7 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_monster_info = get_monster_info;
         context.set_monster_info = set_monster_info;
     }
+    if (cell_info_enabled) context.get_cell_info = get_cell_info;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -331,6 +349,14 @@ int main(void)
         0x0686u, 555u, 0x0686u, 2u, 0x09cbu,
         0x0686u, 0x0123u, 0x0686u, 0u, 0x0686u, 3u, 0x0fcbu,
         0x0000u
+    };
+    uint16_t cell_fetch[] = {
+        0x0686u, 0x0c82u, 0x0686u, 0u, 0x0686u, 5u, 0x0e4bu,
+        0x0686u, 4u, 0x098bu, 0x000du
+    };
+    uint16_t cell_fetch_bad_span[] = {
+        0x0686u, 0x0c82u, 0x0686u, 99u, 0x0686u, 2u, 0x0e4bu,
+        0x0686u, 99u, 0x098bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -583,6 +609,21 @@ int main(void)
               monster_info_store_count == 0,
           "Monster! rejects a later unsupported source word without DB4 mutation");
     monster_info_enabled = 0;
+    cell_info_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, cell_fetch,
+              (int)(sizeof(cell_fetch) / sizeof(cell_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 12u && execution.stack_depth == 0u,
+          "Cell@ copies real CELLFLAG and DB0/DB1 words into source DSAVARS order");
+    parameters[0] = 77u;
+    check(run(&state, &action, cell_fetch_bad_span,
+              (int)(sizeof(cell_fetch_bad_span) /
+                    sizeof(cell_fetch_bad_span[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0u && execution.stack_depth == 0u,
+          "Cell@ retains CSBWin's out-of-bank local span as an undefined zero");
+    cell_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

@@ -108,6 +108,9 @@ static int csb_v1_runtime_dsa_set_monster_info(void *user,
                                                 uint16_t thing,
                                                 const uint32_t values[8],
                                                 uint8_t write_mask);
+static int csb_v1_runtime_dsa_get_cell_info(void *user,
+                                             uint32_t location,
+                                             uint32_t out_values[5]);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -17244,6 +17247,100 @@ static int csb_v1_runtime_dsa_set_monster_info(void *user,
     return 1;
 }
 
+static int csb_v1_runtime_dsa_get_cell_info(void *user,
+                                             uint32_t location,
+                                             uint32_t out_values[5])
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    int level = (int)((location >> 10) & 0x3fu);
+    int map_x = (int)((location >> 5) & 0x1fu);
+    int map_y = (int)(location & 0x1fu);
+    int raw_square;
+    int room_type;
+    int thing_type;
+    int thing_index;
+    int thing_size;
+    int thing;
+    uint16_t word2;
+    uint16_t word4;
+
+    if (!profile || !profile->dungeon_handle || !out_values) return 0;
+    dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1) return 0;
+    memset(out_values, 0, 5u * sizeof(out_values[0]));
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0) return 1;
+    room_type = (raw_square >> 5) & 0x07;
+    out_values[0] = (uint32_t)room_type;
+
+    switch (room_type) {
+    case 0: /* roomSTONE */
+        if ((raw_square & 0x08) != 0) out_values[1] |= 0x01u;
+        if ((raw_square & 0x04) != 0) out_values[1] |= 0x02u;
+        if ((raw_square & 0x02) != 0) out_values[1] |= 0x04u;
+        if ((raw_square & 0x01) != 0) out_values[1] |= 0x08u;
+        break;
+    case 1: /* roomOPEN */
+        if ((raw_square & 0x08) != 0) out_values[1] |= 0x01u;
+        break;
+    case 2: /* roomSTAIRS */
+        if ((raw_square & 0x04) != 0) out_values[1] |= 0x04u;
+        if ((raw_square & 0x08) != 0) out_values[1] |= 0x08u;
+        break;
+    case 3: /* roomPIT */
+        if ((raw_square & 0x01) != 0) out_values[1] |= 0x01u;
+        if ((raw_square & 0x04) != 0) out_values[1] |= 0x04u;
+        if ((raw_square & 0x08) != 0) out_values[1] |= 0x08u;
+        break;
+    case 6: /* roomFALSEWALL */
+        if ((raw_square & 0x01) != 0) out_values[1] |= 0x01u;
+        if ((raw_square & 0x04) != 0) out_values[1] |= 0x04u;
+        break;
+    case 5: /* roomTELEPORTER */
+        if ((raw_square & 0x08) != 0) out_values[1] |= 0x08u;
+        if ((raw_square & 0x04) != 0) out_values[1] |= 0x04u;
+        thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+        if (thing < 0) break;
+        record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                                  &thing_type, &thing_index,
+                                                  &thing_size);
+        (void)thing_index;
+        if (!record || thing_type != 1 || thing_size < 6) break;
+        word2 = csb_v1_runtime_read_u16(record + 2);
+        word4 = csb_v1_runtime_read_u16(record + 4);
+        out_values[2] = ((uint32_t)(word2 >> 10) & 0x03u) |
+                        (((uint32_t)(word2 >> 12) & 0x01u) << 2);
+        out_values[3] = ((uint32_t)word2 >> 13) & 0x03u;
+        out_values[4] = (((uint32_t)word4 >> 8) << 10) |
+                        (((uint32_t)word2 & 0x001fu) << 5) |
+                        (((uint32_t)word2 >> 5) & 0x001fu);
+        break;
+    case 4: /* roomDOOR */
+        thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+        if (thing < 0) break;
+        record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                                  &thing_type, &thing_index,
+                                                  &thing_size);
+        (void)thing_index;
+        if (!record || thing_type != 0 || thing_size < 4) break;
+        word2 = csb_v1_runtime_read_u16(record + 2);
+        if ((raw_square & 0x04) != 0) out_values[1] |= 0x01u;
+        if ((word2 & 0x0020u) != 0) out_values[1] |= 0x02u;
+        if ((word2 & 0x0040u) != 0) out_values[1] |= 0x04u;
+        if ((word2 & 0x0080u) != 0) out_values[1] |= 0x08u;
+        if ((word2 & 0x0100u) != 0) out_values[1] |= 0x10u;
+        out_values[2] = (uint32_t)(raw_square & 0x07);
+        out_values[3] = (uint32_t)(word2 & 0x01u);
+        out_values[4] = ((uint32_t)word2 >> 1) & 0x0fu;
+        break;
+    default:
+        break;
+    }
+    return 1;
+}
+
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report)
@@ -19831,6 +19928,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000004u) != 0u;
+    candidate.get_cell_info = csb_v1_runtime_dsa_get_cell_info;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -19941,6 +20039,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000004u) != 0u;
+    candidate.get_cell_info = csb_v1_runtime_dsa_get_cell_info;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
