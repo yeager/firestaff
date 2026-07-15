@@ -4661,6 +4661,7 @@ int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
 
 int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     DM2_V1_BootProfile *profile,
+    int movement_active,
     uint8_t c_light_parameter,
     uint32_t c_light_receipt_hash,
     DM2_V1_GdatSceneM11CommandPlan *plan)
@@ -4681,13 +4682,18 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
         DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
         const uint8_t *translation;
         size_t translated_size = 0u;
+        uint8_t translation_field;
         uint8_t darkness;
         uint32_t hash = 2166136261u;
 
+        if (!dm2_v1_gdat_scene_m11_plane_translation_field(
+                command->field, movement_active, &translation_field)) {
+            return 0;
+        }
         translation = dm2_v1_asset_load_typed_sized(
             &gfx->loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
             candidate.graphicsset, DM2_GDAT_ENTRY_TYPE_RAW7,
-            command->field, &translated_size);
+            translation_field, &translated_size);
         if (!dm2_v1_gdat_scene_m11_plane_palette_darkness(
                 command->field, c_light_parameter, &darkness) ||
             (translation &&
@@ -4701,6 +4707,7 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
                 darkness, candidate.scene_colorkey, -1)) {
             return 0;
         }
+        command->palette_translation_field = translation_field;
         table_loaded = 1;
         for (size_t p = 0u; p < sizeof(command->palette16); ++p) {
             hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -4710,6 +4717,8 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
         hash = dm2_v1_boot_packaged_capture_hash_step(
             2166136261u, c_light_receipt_hash);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, command->field);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, command->palette_translation_field);
         hash = dm2_v1_boot_packaged_capture_hash_step(
             hash, command->palette_translation_hash);
         hash = dm2_v1_boot_packaged_capture_hash_step(

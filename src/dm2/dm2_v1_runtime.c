@@ -3721,7 +3721,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
                 &c_light_parameter) ||
             !dm2_v1_boot_gdat_scene_m11_apply_light_palette(
-                rt->boot, c_light_parameter,
+                rt->boot, rt->scene_movement_pending, c_light_parameter,
                 rt->c_light_receipt.receipt_hash, &scene_material_plan)) {
             /* An observed c_light state selects _32cb_0804.  Do not present
              * the base local palettes when its exact dt07 branch is present

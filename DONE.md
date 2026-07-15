@@ -19701,3 +19701,14 @@ the source's non-fog branch; a partial lookup blocks the material route rather
 than borrowing colour data. Verification: `dm2_v1_c_light_receipt`,
 `dm2_v1_boot_profile_smoke`, `test_dm2_v1_gdat_graphicsset_real_data`, and
 `dm2_v1_save_load` pass.
+
+# ✅ 2026-07-15 DM2 moving floor/ceiling palette lookup selection
+
+M11 now follows SKProject `_32cb_0804`'s moving branch for the real
+floor/ceiling output route. While stationary it selects `GRAPHICSSET/dt07/0`
+and `/1`; while moving, it selects `/9` and `/10` after the source's
+`cls4 += 9` transition. The selected source field joins the palette lookup,
+c_light and draw-order hashes before the viewport blits the decoded IMG3
+planes. Verification: `dm2_v1_c_light_receipt`,
+`dm2_v1_boot_profile_smoke`, `test_dm2_v1_gdat_graphicsset_real_data`, and
+`dm2_v1_save_load` pass.

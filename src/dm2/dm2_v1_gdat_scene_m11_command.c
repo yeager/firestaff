@@ -86,6 +86,8 @@ static uint32_t dm2_v1_gdat_scene_draw_order_hash(
                           sizeof(command->palette_hash));
         hash = hash_bytes(hash, &command->palette_darkness,
                           sizeof(command->palette_darkness));
+        hash = hash_bytes(hash, &command->palette_translation_field,
+                          sizeof(command->palette_translation_field));
         hash = hash_bytes(hash,
                           (const uint8_t *)&command->palette_translation_hash,
                           sizeof(command->palette_translation_hash));
@@ -132,6 +134,20 @@ int dm2_v1_gdat_scene_m11_plane_palette_darkness(
     /* SkWinCore.cpp::_32cb_0804: _4976_4226 starts {0,0,12,28,46}; the
      * floor/ceiling fields are classes 0/1, hence 64-((64-0)*(64-p)>>6)=p. */
     *out_darkness = c_light_parameter;
+    return 1;
+}
+
+int dm2_v1_gdat_scene_m11_plane_translation_field(
+    uint8_t field, int movement_active, uint8_t *out_field)
+{
+    if (!out_field) return 0;
+    *out_field = 0u;
+    if (field != DM2_GDAT_GFXSET_FLOOR && field != DM2_GDAT_GFXSET_CEIL) {
+        return 0;
+    }
+    /* SkWinCore.cpp::_32cb_0804: moving cls4 >= 0 reads _4976_4221[cls4]
+     * then increments cls4 by nine before QUERY_GDAT_ENTRY_IF_LOADABLE. */
+    *out_field = movement_active ? (uint8_t)(field + 9u) : field;
     return 1;
 }
 

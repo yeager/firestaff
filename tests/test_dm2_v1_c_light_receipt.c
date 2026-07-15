@@ -96,6 +96,19 @@ int main(void)
                       DM2_GDAT_GFXSET_FLOOR, 65u, &floor_darkness));
     }
     {
+        uint8_t field = 0xffu;
+        CHECK("moving _32cb_0804 selects dt07/9 and dt07/10 for scene planes",
+              dm2_v1_gdat_scene_m11_plane_translation_field(
+                  DM2_GDAT_GFXSET_FLOOR, 1, &field) && field == 9u &&
+                  dm2_v1_gdat_scene_m11_plane_translation_field(
+                      DM2_GDAT_GFXSET_CEIL, 1, &field) && field == 10u);
+        CHECK("stationary _32cb_0804 retains dt07/0 and dt07/1",
+              dm2_v1_gdat_scene_m11_plane_translation_field(
+                  DM2_GDAT_GFXSET_FLOOR, 0, &field) && field == 0u &&
+                  dm2_v1_gdat_scene_m11_plane_translation_field(
+                      DM2_GDAT_GFXSET_CEIL, 0, &field) && field == 1u);
+    }
+    {
         uint8_t palette[] = { 0u, 1u, 42u, 255u };
         uint8_t translation[256];
         uint32_t translation_hash = 0u;
