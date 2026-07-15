@@ -10,9 +10,11 @@
 
 - 2026-07-15 DM1 F0292 champion-HUD material follow-up: the live status-box
   route no longer uses the generic cyan host frame when C008 or another
-  required source surface is unavailable, even with V1 chrome disabled.
-  Remaining work is real PC34/Mac capture across dead/alive, shields, hands,
-  and four-champion transitions; absent source material must remain no-draw.
+  required source surface is unavailable, even with V1 chrome disabled. The
+  original C008 dead-champion 67x29 surface is now blitted opaquely, so its
+  black pixels clear stale bars and hands. Remaining work is real PC34/Mac
+  capture across dead/alive, shields, hands, and four-champion transitions;
+  absent source material must remain no-draw.
 
 - 2026-07-15 DM1 F0172/C127 mirror-material follow-up: the live D1C route
   now treats C346 followed by C026 as one source-owned operation. A missing or
