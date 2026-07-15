@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_viewport.h"
 #include "asset_find_by_hash.h"
 
@@ -4815,6 +4816,48 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     free(data);
 }
 
+static void test_vdp1_command_sidecar_stays_no_draw(void) {
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt raw;
+    Nexus_V1_Prs3Vdp1CommandSidecarReceipt inspection;
+    uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES] = {0};
+
+    /* Unit framing only: production admission still requires canonical asset
+     * hashes and an independently authenticated original-Saturn producer. */
+    command[4] = 0x10U;
+    command[6] = 0x01U;
+    command[7] = 0x01U;
+    memset(&raw, 0, sizeof(raw));
+    raw.raw_sidecars_bound = 1;
+    raw.vdp1_command_sidecar_bound = 1;
+    raw.trace_file.source_bound_capture = 1;
+    raw.trace_file.v3_trace_parsed = 1;
+    raw.trace_file.trace.valid = 1;
+    raw.trace_file.trace.schema_version = 3U;
+    raw.trace_file.trace.vdp1_command_consumption_observed = 1;
+    raw.trace_file.trace.vdp1_command_read_bytes = sizeof(command);
+    raw.trace_file.trace.vdp1_command_fnv1a64 =
+        fnv1a64(command, sizeof(command));
+    CHECK(nexus_v1_prs3_vdp1_capture_inspect_command_sidecar(
+              &raw, command, sizeof(command), &inspection) &&
+          inspection.valid && inspection.capture_source_bound &&
+          inspection.command_sidecar_hash_bound &&
+          inspection.complete_vdp1_command_record &&
+          inspection.command_format_parsed && inspection.command.texture_command &&
+          inspection.command.texture_width == 8U &&
+          inspection.command.texture_height == 1U &&
+          !inspection.original_saturn_capture_verified &&
+          !inspection.pixel_format_proven && !inspection.palette_format_proven &&
+          !inspection.decoder_promoted && !inspection.runtime_import_permitted &&
+          !inspection.fallback_visuals_permitted,
+          "source-bound VDP1 command framing stays no-draw without independent Saturn provenance");
+    command[0] = 1U;
+    CHECK(!nexus_v1_prs3_vdp1_capture_inspect_command_sidecar(
+               &raw, command, sizeof(command), &inspection) &&
+          !inspection.valid && !inspection.command_sidecar_hash_bound &&
+          !inspection.decoder_promoted && !inspection.runtime_import_permitted,
+          "a changed VDP1 sidecar cannot reuse capture admission");
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -4835,6 +4878,7 @@ int main(void) {
     test_structure1g_animated_floor_material_handoff();
     test_real_dgn_structure1_layout_corpus();
     test_real_structure1f_direct_cell_corpus();
+    test_vdp1_command_sidecar_stays_no_draw();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);
