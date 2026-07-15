@@ -732,6 +732,43 @@ static void run_real_launcher_handoff_if_available(void) {
         view.world.party.direction = savedPartyDirection;
     }
     {
+        CSB_V1_BootProfile *boot =
+            (CSB_V1_BootProfile *)view.csbBootProfile;
+        DM1_V1_LayoutZoneRectPc34 iconRect;
+        DM1_V1_ChampionStatusRectPc34 statusRect;
+        int saved_party_state_valid = boot ? boot->runtime.party_state_valid : 0;
+        struct ChampionState_Compat savedChampion = view.world.party.champions[0];
+        int savedChampionCount = view.world.party.championCount;
+
+        expect_true(boot != NULL &&
+                        dm1_v1_champion_icon_rect_pc34(0, &iconRect) == 1 &&
+                        dm1_v1_champion_status_box_rect_pc34(0, &statusRect) == 1,
+                    "M11 CSB resolves party receipt-owned C113/C150 geometry");
+        if (boot) {
+            /* Deliberately seed the presentation mirror: a missing source
+             * GAMEBLOCK party must clear it rather than redraw it. */
+            boot->runtime.party_state_valid = 0;
+            view.world.party.championCount = 1;
+            memset(&view.world.party.champions[0], 0,
+                   sizeof(view.world.party.champions[0]));
+            view.world.party.champions[0].present = 1;
+            view.world.party.champions[0].hp.current = 100;
+            view.world.party.champions[0].hp.maximum = 100;
+            memset(framebuffer, 0xff, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(frame_rect_is_color(framebuffer,
+                                            iconRect.x, iconRect.y,
+                                            iconRect.w, iconRect.h, 0u) &&
+                            frame_rect_is_color(framebuffer,
+                                                statusRect.x, statusRect.y,
+                                                statusRect.w, statusRect.h, 0u),
+                        "M11 CSB clears stale party HUD without a source runtime receipt");
+            boot->runtime.party_state_valid = saved_party_state_valid;
+            view.world.party.champions[0] = savedChampion;
+            view.world.party.championCount = savedChampionCount;
+        }
+    }
+    {
         M11_AssetSlot *c033 = (M11_AssetSlot *)M11_AssetLoader_Load(
             &view.assetLoader, 33u);
         M11_AssetSlot *c020 = (M11_AssetSlot *)M11_AssetLoader_Load(
@@ -779,9 +816,8 @@ static void run_real_launcher_handoff_if_available(void) {
         expect_true(frame_rect_is_color(
                         framebuffer, handRect.x, handRect.y,
                         handRect.w, handRect.h,
-                        (unsigned char)
-                            dm1_v1_champion_status_box_fill_color_pc34()),
-                    "M11 CSB leaves C211 source-clear when C033/C020 are unavailable");
+                        0u),
+                    "M11 CSB leaves C211 black when no source party or C033/C020 is available");
         if (c033) c033->width = savedC033Width;
         if (c020) c020->width = savedC020Width;
         view.originalFontAvailable = 0;

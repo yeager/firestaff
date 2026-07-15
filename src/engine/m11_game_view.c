@@ -353,6 +353,14 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
                                  int framebufferHeight);
+static void m11_fill_rect(unsigned char* framebuffer,
+                          int framebufferWidth,
+                          int framebufferHeight,
+                          int x,
+                          int y,
+                          int w,
+                          int h,
+                          unsigned char color);
 static void m11_draw_v1_message_area(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
@@ -1555,24 +1563,102 @@ static void m11_draw_csb_runtime_hud(const M11_GameViewState *state,
     csb_v2_hud_runtime_render(framebuffer, framebufferWidth, framebufferHeight);
 }
 
+static void m11_clear_csb_v1_party_hud_source_surfaces(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int slot;
+
+    if (!framebuffer || framebufferWidth < 320 || framebufferHeight < 200) {
+        return;
+    }
+    /* ReDMCSB CHAMDRAW.C F0288/F0293 clears C113..C116 and the status
+     * rectangles before it can draw party-owned content.  M11 retains its
+     * framebuffer, so an absent CSBWin GAMEBLOCK party receipt must actively
+     * remove the prior frame rather than leave a host-side party visible. */
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        DM1_V1_LayoutZoneRectPc34 icon_rect;
+        DM1_V1_ChampionStatusRectPc34 status_rect;
+
+        if (dm1_v1_champion_icon_rect_pc34(slot, &icon_rect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          icon_rect.x, icon_rect.y,
+                          icon_rect.w, icon_rect.h, 0u);
+        }
+        if (dm1_v1_champion_status_box_rect_pc34(slot, &status_rect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          status_rect.x, status_rect.y,
+                          status_rect.w, status_rect.h, 0u);
+        }
+    }
+}
+
+static const M11_GameViewState *m11_csb_v1_party_hud_source_state(
+    const M11_GameViewState *state,
+    M11_GameViewState *out_state)
+{
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 receipt;
+
+    if (!state || !out_state ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile ||
+        !csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+            (const CSB_V1_BootProfile *)state->csbBootProfile, &receipt) ||
+        !receipt.valid || !receipt.party.valid) {
+        return NULL;
+    }
+
+    /* The M11 world is a presentation mirror, never a CSB party authority.
+     * PANEL.C F0354/CHAMDRAW.C F0287 consume the current GAMEBLOCK/CHARDESC
+     * party after ENTRANCE.C F0806 hands the game off.  Rebuild just that
+     * surface from the fresh CSB runtime receipt so a stale or caller-seeded
+     * M11 party cannot paint names, bars, hands, or position icons. */
+    *out_state = *state;
+    out_state->world.party = receipt.party.party;
+    out_state->leaderHandObjectPresent = receipt.leader_hand_present;
+    out_state->leaderHandThing = receipt.leader_hand_thing;
+    out_state->leaderHandIconIndex = receipt.leader_hand_icon_index;
+    snprintf(out_state->leaderHandObjectName,
+             sizeof(out_state->leaderHandObjectName), "%s",
+             receipt.leader_hand_object_name);
+    return out_state;
+}
+
 static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
                                         int framebufferHeight)
 {
+    M11_GameViewState source_party_state;
+    const M11_GameViewState *party_state;
+
     if (!state || !framebuffer || framebufferWidth < 320 ||
         framebufferHeight < 200) {
+        return;
+    }
+    party_state = m11_csb_v1_party_hud_source_state(state,
+                                                     &source_party_state);
+    if (!party_state) {
+        m11_clear_csb_v1_party_hud_source_surfaces(
+            framebuffer, framebufferWidth, framebufferHeight);
+        /* C013 and C015 have independent source owners.  A missing party
+         * receipt must not replace them with an M11 party fallback. */
+        m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
+                                    framebufferHeight);
+        m11_clear_csb_v1_message_area_source_owned(
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
     /* ReDMCSB CHAMDRAW.C F0287/F0290 and DUNVIEW.C F0097 redraw the
      * champion/control surfaces after the dungeon view.  Use the V1 draw
      * lane already backed by the selected CSB GRAPHICS.DAT; do not insert
      * diagnostic labels or substitute generated HUD artwork. */
-    m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
+    m11_draw_v1_champion_icons(party_state, framebuffer, framebufferWidth,
                                framebufferHeight);
     /* ReDMCSB CHAMDRAW.C F0292 prepares champion icons before F0287
      * draws the three bottom-anchored stat bars. */
-    m11_draw_party_panel(state, framebuffer, framebufferWidth,
+    m11_draw_party_panel(party_state, framebuffer, framebufferWidth,
                          framebufferHeight);
     m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
                                    framebufferHeight);
