@@ -180,6 +180,27 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_MenuBpkPaltTraceAdmissionReceipt;
 
+/* Canonical MENU.BPK PALT compared to the documented DGT2 BGR555 CLUT in
+ * WARNING.BIN. Matching words prove only an indexed raw-word correlation;
+ * they never associate PALT with a PRS3 entry or authorize palette use. */
+typedef struct {
+    int valid;
+    int menu_bpk_source_hash_verified;
+    int warning_source_hash_verified;
+    Nexus_V1_BpkPaletteTrailerReceipt palt;
+    int warning_dgt2_pp_bound;
+    uint64_t warning_clut_fnv1a64;
+    uint32_t matching_entry_count;
+    uint32_t mismatched_entry_count;
+    int indexed_word_alignment_proven;
+    int bgr555_word_encoding_correlation_proven;
+    int prs3_palette_association_proven;
+    int palette_application_proven;
+    int decoder_promoted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_MenuBpkPaltWarningPaletteCorrelationReceipt;
+
 /* A DGN view plan is not renderable until every referenced material has a
  * decoded DMDF/BPK surface. PRS3-only entries intentionally remain blocked:
  * no synthetic colour is substituted for an unverified Saturn surface. */
@@ -2617,6 +2638,9 @@ const char *nexus_v1_menu_bpk_prs3_prerequisite_message(
 int nexus_v1_engine_build_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);
+int nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkPaltWarningPaletteCorrelationReceipt *out_receipt);
 int nexus_v1_engine_write_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine, const char *path,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);

@@ -8476,6 +8476,86 @@ int nexus_v1_engine_build_menu_bpk_palt_capture_target(
     return 1;
 }
 
+int nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkPaltWarningPaletteCorrelationReceipt *out_receipt)
+{
+    Nexus_V1_MenuBpkPaltWarningPaletteCorrelationReceipt receipt;
+    Nexus_V1_LevelAuxSourceReceipt menu_bpk_source;
+    Nexus_V1_LevelAuxSourceReceipt warning_source;
+    Nexus_UI_Dgt2PpView warning_view;
+    uint8_t *menu_bpk = NULL;
+    uint8_t *warning = NULL;
+    int menu_bpk_size = 0;
+    int warning_size = 0;
+    uint32_t entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    memset(&menu_bpk_source, 0, sizeof(menu_bpk_source));
+    memset(&warning_source, 0, sizeof(warning_source));
+    if (!engine ||
+        nexus_v1_level_aux_source_receipt(engine, "MENU.BPK",
+                                          &menu_bpk_source) != 0 ||
+        nexus_v1_level_aux_source_receipt(engine, "WARNING.BIN",
+                                          &warning_source) != 0 ||
+        !menu_bpk_source.canonical_hash_verified ||
+        !warning_source.canonical_hash_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.menu_bpk_source_hash_verified = 1;
+    receipt.warning_source_hash_verified = 1;
+    menu_bpk = nexus_v1_read_file(engine, "MENU.BPK", &menu_bpk_size);
+    warning = nexus_v1_read_file(engine, "WARNING.BIN", &warning_size);
+    if (!menu_bpk || !warning ||
+        nexus_v1_bpk_archive_inspect_palette_trailer(
+            menu_bpk, (size_t)menu_bpk_size, &receipt.palt) != 0 ||
+        !receipt.palt.valid || receipt.palt.entry_count != 256U ||
+        receipt.palt.entry_bytes != 512U ||
+        menu_bpk_size <= 0 ||
+        receipt.palt.record_bytes > (uint32_t)menu_bpk_size ||
+        receipt.palt.record_offset > (uint32_t)menu_bpk_size -
+            receipt.palt.record_bytes ||
+        nexus_ui_res_dgt2_pp_view(warning, (size_t)warning_size, 0U,
+                                  &warning_view) != 0 ||
+        !warning_view.clut_bgr555_be) {
+        free(warning);
+        free(menu_bpk);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.warning_dgt2_pp_bound = 1;
+    receipt.warning_clut_fnv1a64 = nexus_v1_slev_trace_fnv1a64(
+        warning_view.clut_bgr555_be, 512U);
+    for (entry = 0U; entry < receipt.palt.entry_count; ++entry) {
+        const uint8_t *palt_word = menu_bpk + receipt.palt.record_offset +
+            12U + entry * 2U;
+        const uint8_t *warning_word = warning_view.clut_bgr555_be + entry * 2U;
+        if (palt_word[0] == warning_word[0] &&
+            palt_word[1] == warning_word[1]) {
+            ++receipt.matching_entry_count;
+        } else {
+            ++receipt.mismatched_entry_count;
+        }
+    }
+    /* This fixed canonical pair shares 224 indexed BE16 words. The 32
+     * differing slots remain source data, not default colours or an alpha
+     * convention. The DGT2 side supplies the documented BGR555 word layout;
+     * PRS3 ownership and palette application are intentionally still absent. */
+    receipt.indexed_word_alignment_proven =
+        receipt.matching_entry_count == 224U &&
+        receipt.mismatched_entry_count == 32U;
+    receipt.bgr555_word_encoding_correlation_proven =
+        receipt.indexed_word_alignment_proven;
+    receipt.valid = receipt.indexed_word_alignment_proven;
+    free(warning);
+    free(menu_bpk);
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_engine_write_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine, const char *path,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target)
