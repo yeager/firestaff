@@ -3064,6 +3064,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   callers mutate their public fields; remaining work is an original,
   hash-bound SH-2 task dispatcher and host callback ABI, not a receipt-only
   promotion.
+  - 2026-07-15 loaded-byte binding update: the active task FNV now travels
+    through the capture target, trace admission, and host revalidation. A
+    trace cannot be reused after the retained SLEV byte receipt changes.
+    This still grants neither opcode semantics nor dispatch permission.
 - 🔧 2026-07-13 Nexus runtime-host follow-up: a blocked SLEV dispatcher now
   prevents runtime-route consumption; remaining work is original dispatch
   semantics, not a receipt-only promotion.

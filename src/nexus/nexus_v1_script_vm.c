@@ -30,6 +30,18 @@ static int nexus_read_u32_be(const uint8_t *p) {
                      (uint32_t)p[3]) : 0;
 }
 
+static uint64_t nexus_slev_fnv1a64(const uint8_t *data, int size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    int i;
+
+    if (!data || size <= 0) return 0U;
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static int nexus_slev_is_observed_literal(int value) {
     return (value & 0xffff0000) == 0x00200000;
 }
@@ -209,6 +221,8 @@ int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm, int level_index,
     vm->current_level = level_index;
     vm->candidate_source_loaded = (data && size > 0) ? 1 : 0;
     vm->candidate_source_bytes = vm->candidate_source_loaded ? size : 0;
+    vm->candidate_source_fnv1a64 = vm->candidate_source_loaded
+        ? nexus_slev_fnv1a64(data, size) : 0U;
     vm->canonical_source_verified = canonical_source_verified ? 1 : 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
@@ -265,6 +279,7 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->current_level = -1;
     vm->candidate_source_loaded = 0;
     vm->candidate_source_bytes = 0;
+    vm->candidate_source_fnv1a64 = 0U;
     vm->canonical_source_verified = 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
@@ -315,6 +330,7 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->level_index = vm->current_level;
     out_receipt->candidate_source_loaded = vm->candidate_source_loaded;
     out_receipt->candidate_source_bytes = vm->candidate_source_bytes;
+    out_receipt->candidate_source_fnv1a64 = vm->candidate_source_fnv1a64;
     out_receipt->canonical_source_verified = vm->canonical_source_verified;
     out_receipt->parser_supported = vm->parser_supported;
     out_receipt->dispatch_enabled = vm->dispatch_enabled;

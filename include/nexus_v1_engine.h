@@ -1097,6 +1097,7 @@ typedef struct {
     char canonical_slev_name[16];
     char canonical_slev_md5[33];
     int source_byte_count;
+    uint64_t source_fnv1a64;
     int task_header_size;
     int first_opcode;
     int setup_immediate;
@@ -1130,6 +1131,7 @@ typedef struct {
     int mednafen_debugger_provenance;
     int original_saturn_execution_claimed;
     int trace_sha256_present;
+    uint64_t source_fnv1a64;
     int raw_trace_bytes_bound;
     uint64_t raw_trace_fnv1a64;
     size_t raw_trace_byte_count;
