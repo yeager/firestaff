@@ -546,7 +546,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.startup_render_ready == 1 &&
               render_receipt.runtime_hud_capture_ready == 1 &&
               render_receipt.runtime_hud_real_asset_ready == 1 &&
-              render_receipt.runtime_hud_asset_portrait_count >= 4 &&
+              render_receipt.runtime_hud_asset_portrait_count == 0 &&
               render_receipt.runtime_hud_fallback_portrait_count == 0 &&
               render_receipt.runtime_hud_raw_gdat_capture_ready == 1 &&
               render_receipt.runtime_hud_raw_portrait_count >= 4 &&
@@ -575,7 +575,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_blocked_material_draw_count == 0 &&
               render_receipt.runtime_render_blocked_material_mask == 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
-          "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
+          "boot runtime render owns source GDAT frame/HUD receipt without invented portraits");
     memset(&frame_ownership, 0, sizeof(frame_ownership));
     CHECK(dm2_v1_runtime_last_frame_ownership(&frame_ownership) == 1 &&
               frame_ownership.valid == 1 &&
@@ -612,7 +612,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.runtime_direction_mask == 0x0f &&
               hud_capture.runtime_turn_count == 4 &&
               hud_capture.unique_frame_hash_count > 0 &&
-              hud_capture.min_asset_portrait_count >= 4 &&
+              hud_capture.min_asset_portrait_count == 0 &&
               hud_capture.total_fallback_portrait_count == 0 &&
               hud_capture.min_asset_floor_ceiling_count >= 2 &&
               hud_capture.min_asset_wall_count > 0 &&
@@ -660,7 +660,9 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               (hud_capture.graphicsset_word_values_ready == 0 ||
                (hud_capture.graphicsset_word_values_hash != 0u &&
                 hud_capture.graphicsset_word_values_query_count >= 4u &&
-                (hud_capture.graphicsset_word_values_present_mask & 0x1bu) == 0x1bu)) &&
+                /* skproject only requires the scene's present word values;
+                 * this real set has no optional AMBIANT_LIGHT row. */
+                (hud_capture.graphicsset_word_values_present_mask & 0x13u) == 0x13u)) &&
               hud_capture.wall_gfx_image_offsets_ready == 1 &&
               hud_capture.wall_gfx_image_offsets_hash != 0u &&
               hud_capture.wall_gfx_image_offsets_query_count > 0u &&
@@ -686,7 +688,12 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.interface_palette_pal16_color_count > 0u &&
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
-          "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
+          "boot runtime HUD capture proves real GDAT availability and frames across sampled directions");
+    memset(&after, 0, sizeof(after));
+    CHECK(dm2_v1_boot_runtime_capture(launch.profile, &after) == 1 &&
+              after.party_x == 3 && after.party_y == 5 &&
+              after.party_dir == 2,
+          "directional HUD capture returns to the source G1 pose");
     {
         DM2_V1_InterfaceActionTable action_table;
         CHECK(dm2_v1_boot_interface_action_table(launch.profile,

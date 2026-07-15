@@ -1899,6 +1899,11 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootProfile *profile,
     const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+/* Source-owned static HUD chrome for a boot that has not yet received a
+ * GAME_LOAD/new-game Champion::HeroType handoff. */
+int dm2_v1_boot_gdat_hud_static_m11_command_plan(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 /* c_weather.cpp resolves ENVIRONMENT command text and the matching IMG3 by
  * the live MapGraphicsStyle. The returned receipt remains boot-owned evidence;
