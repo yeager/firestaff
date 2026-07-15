@@ -681,6 +681,21 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(memcmp(first_live_dungeon_frame, framebuffer,
                        sizeof(first_live_dungeon_frame)) == 0,
                 "M11 CSB first live dungeon frame is independent of released C004 host pixels");
+    {
+        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        int saved_surface_set_valid = session->surfaces.valid;
+
+        /* The first F0128 page must consume the completed CSB session host
+         * receipt, not a stale M11 C017/C040 or C004 surface. */
+        session->surfaces.valid = 0;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB rejects first live dungeon draw without the completed source session receipt");
+        session->surfaces.valid = saved_surface_set_valid;
+    }
     M11_MessageLog_Push(&view.messageLog, "M11 HOST TELEMETRY", 15);
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
