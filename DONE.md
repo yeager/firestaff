@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB ReDMCSB F0145--F0148 effective-group owner: added one
+  bounded C04/ActiveGroup transaction from `DUNGEON.C:923-970`. It validates
+  the C04 Thing type and 16-byte record, resolves byte 5 as ActiveGroupIndex
+  only on the party map, reads F0145/F0147 effective Cells/Directions, and
+  commits F0146/F0148 raw or active writes only after all inputs validate.
+  Non-party directions use original `G0258` expansion; party-map failures
+  leave raw and active data unchanged.
+
 - 2026-07-15 CSB save decode retains verified raw TIMER slot and queue spans
   with FNV provenance for the source-owned GameTimers adapter.
 
