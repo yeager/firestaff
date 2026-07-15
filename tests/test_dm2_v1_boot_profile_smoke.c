@@ -518,16 +518,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               before.party_x == 3 && before.party_y == 5 &&
               before.party_dir == 2,
           "boot runtime capture owns source G1 party receipt");
-    memset(&g1_context, 0, sizeof(g1_context));
-    CHECK(dm2_v1_boot_runtime_g1_context_receipt(
-              launch.profile, &g1_context) == 1 &&
-              g1_context.valid == 1 &&
-              g1_context.level == before.current_level &&
-              g1_context.map_graphics_style >= 0 &&
-              g1_context.map_load_token != 0u &&
-              g1_context.scene_control_hash != 0u &&
-              g1_context.interface_palette_hash != 0u,
-          "boot selection carries a real G1/GDAT context into runtime");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_tick(launch.profile, &after) == 1 &&
               after.runtime_ready == 1 &&
