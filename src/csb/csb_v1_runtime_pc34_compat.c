@@ -121,6 +121,8 @@ static int csb_v1_runtime_dsa_get_thing_type(
 static int csb_v1_runtime_dsa_is_carried(
     void *user, int32_t character_selector, int32_t object_selector,
     int32_t *out_result);
+static int csb_v1_runtime_dsa_get_level_multiplier(
+    void *user, int32_t level, int32_t *out_multiplier);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17665,6 +17667,20 @@ static int csb_v1_runtime_dsa_is_carried(
     return 1;
 }
 
+static int csb_v1_runtime_dsa_get_level_multiplier(
+    void *user, int32_t level, int32_t *out_multiplier)
+{
+    const CSB_V1_RuntimeProfile *profile = user;
+    const CSB_V1_DungeonData *dungeon;
+    if (!out_multiplier || !profile || !profile->dungeon_handle) return -1;
+    dungeon = profile->dungeon_handle;
+    /* LEVELDESC.word12 exists only in the original 16-byte descriptor path. */
+    if (!dungeon->raw_data || dungeon->square_bytes != 1) return -1;
+    *out_multiplier = (level >= 0 && level < dungeon->level_count)
+        ? dungeon->map_experience_multiplier[level] : 1;
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20665,6 +20681,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
+    candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20788,6 +20805,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
+    candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =

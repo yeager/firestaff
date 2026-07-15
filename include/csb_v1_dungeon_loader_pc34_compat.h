@@ -63,6 +63,7 @@ typedef struct {
     int map_offset_y[CSB_V1_MAX_LEVELS];
     int map_door_set0[CSB_V1_MAX_LEVELS];
     int map_door_set1[CSB_V1_MAX_LEVELS];
+    int map_experience_multiplier[CSB_V1_MAX_LEVELS];
     int square_bytes;
     int raw_map_data_base;
     int square_first_thing_base;

@@ -3391,6 +3391,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       loaded champion slots, cursor hand, and recursive DB9 child/next links.
       Exact Thing searches retain source slot/cursor result encoding; negative
       basic-type searches retain source counts. Short or cyclic chains reject.
+    - 2026-07-15 level-multiplier update: `STKOP_MultiplierFetch` now reads
+      only loaded original `LEVELDESC.word12` bits 12..15 through CSB's real
+      16-byte map descriptor. Out-of-range levels retain CSBWin's value `1`;
+      legacy fixture-format maps and missing raw media reject rather than
+      deriving a difficulty preference or multiplier. Positive original
+      DSA-bearing save-corpus proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.
