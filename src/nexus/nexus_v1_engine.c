@@ -1769,7 +1769,9 @@ static void nexus_v1_load_startup_surfaces(Nexus_V1_Engine *engine) {
 
 static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     int size = 0;
+    int dm_bin_size = 0;
     uint8_t *data;
+    uint8_t *dm_bin = NULL;
 
     if (!engine) return;
     engine->menu_bpk_decode_receipt_valid = 0;
@@ -1778,6 +1780,9 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     engine->menu_bpk_upload_row_count = 0;
     memset(&engine->menu_bpk_decode_receipt, 0,
            sizeof(engine->menu_bpk_decode_receipt));
+    engine->menu_bpk_prs3_execution_evidence_valid = 0;
+    memset(&engine->menu_bpk_prs3_execution_evidence, 0,
+           sizeof(engine->menu_bpk_prs3_execution_evidence));
     memset(&engine->menu_bpk_upload_receipt, 0,
            sizeof(engine->menu_bpk_upload_receipt));
     memset(engine->menu_bpk_upload_rows, 0,
@@ -1790,6 +1795,12 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     if (!engine->menu_bpk_source.canonical_hash_verified) {
         return;
     }
+
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, "DM.BIN",
+        &engine->menu_bpk_prs3_execution_evidence.dm_bin_source);
+    engine->menu_bpk_prs3_execution_evidence.menu_bpk_source_hash_verified =
+        1;
 
     data = nexus_v1_read_file(engine, "MENU.BPK", &size);
     if (!data || size <= 0) {
@@ -1817,6 +1828,34 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
                 ? (int)NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS
                 : (int)engine->menu_bpk_upload_receipt.planned_rows;
     }
+
+    /* The loader receipt comes from the same exact boot assets that the
+     * decoder would consume. It proves only outer framing and static SH-2
+     * instructions; neither fact describes PRS3 commands or pixels. */
+    if (engine->menu_bpk_prs3_execution_evidence.dm_bin_source
+            .canonical_hash_verified) {
+        dm_bin = nexus_v1_read_file(engine, "DM.BIN", &dm_bin_size);
+    }
+    if (dm_bin && dm_bin_size > 0 &&
+        nexus_v1_prs3_cross_asset_frame_receipt_verified(
+            dm_bin, (size_t)dm_bin_size, 1, data, (size_t)size, 1,
+            &engine->menu_bpk_prs3_execution_evidence.cross_asset) &&
+        nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+            dm_bin, (size_t)dm_bin_size, 1,
+            &engine->menu_bpk_prs3_execution_evidence.sh2_loader)) {
+        engine->menu_bpk_prs3_execution_evidence.cross_asset_framing_verified =
+            1;
+        engine->menu_bpk_prs3_execution_evidence.sh2_loader_route_verified =
+            1;
+        engine->menu_bpk_prs3_execution_evidence.valid = 1;
+        engine->menu_bpk_prs3_execution_evidence_valid = 1;
+    }
+    /* No present evidence establishes opcode grammar, output bytes, palette,
+     * or VDP1 presentation. Keep every decoder/render promotion fail-closed. */
+    engine->menu_bpk_prs3_execution_evidence.decoder_promoted = 0;
+    engine->menu_bpk_prs3_execution_evidence.runtime_decode_permitted = 0;
+    engine->menu_bpk_prs3_execution_evidence.fallback_visuals_permitted = 0;
+    free(dm_bin);
     free(data);
 }
 
@@ -7438,6 +7477,18 @@ int nexus_v1_menu_bpk_source_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (!engine) return 0;
     *out_receipt = engine->menu_bpk_source;
+    return 0;
+}
+
+int nexus_v1_menu_bpk_prs3_execution_evidence_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!engine || !engine->menu_bpk_prs3_execution_evidence_valid) {
+        return -1;
+    }
+    *out_receipt = engine->menu_bpk_prs3_execution_evidence;
     return 0;
 }
 

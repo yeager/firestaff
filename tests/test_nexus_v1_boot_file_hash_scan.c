@@ -166,6 +166,7 @@ int main(void) {
     Nexus_V1_BpkRuntimeUploadReceipt upload_receipt;
     Nexus_V1_BpkRuntimeUploadRow upload_rows[4];
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+    Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt prs3_execution;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnStructure2SourceReceipt structure2_source;
     Nexus_ScriptRuntimeReceipt script_receipt;
@@ -345,6 +346,22 @@ int main(void) {
             memset(&receipt, 0, sizeof(receipt));
             check_int(nexus_v1_menu_bpk_decode_receipt_ready(&engine) == 1,
                       "Nexus init records MENU.BPK decode receipt");
+            memset(&prs3_execution, 0, sizeof(prs3_execution));
+            check_int(nexus_v1_menu_bpk_prs3_execution_evidence_receipt(
+                          &engine, &prs3_execution) == 0 &&
+                          prs3_execution.valid &&
+                          prs3_execution.menu_bpk_source_hash_verified &&
+                          prs3_execution.dm_bin_source.canonical_hash_verified &&
+                          prs3_execution.cross_asset_framing_verified &&
+                          prs3_execution.sh2_loader_route_verified &&
+                          prs3_execution.cross_asset.outer_v1_framing_matches &&
+                          prs3_execution.sh2_loader.sh2_control_path_verified &&
+                          prs3_execution.sh2_loader.sh2_stream_read_verified &&
+                          prs3_execution.sh2_loader.sh2_output_store_verified &&
+                          !prs3_execution.decoder_promoted &&
+                          !prs3_execution.runtime_decode_permitted &&
+                          !prs3_execution.fallback_visuals_permitted,
+                      "Nexus boot binds real MENU.BPK framing to the verified DM.BIN loader without decoding");
             check_int(nexus_v1_menu_bpk_decode_receipt(&engine, &receipt) == 0,
                       "Nexus engine exposes MENU.BPK decode receipt");
             check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
