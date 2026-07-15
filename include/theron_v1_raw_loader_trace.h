@@ -255,6 +255,27 @@ typedef struct {
     int object_table_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt;
 
+#define THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES 12u
+
+/* A contiguous, source-owned prefix of the post-envelope continuation seen
+ * through one game-owned CD-to-RAM chain. The prefix is retained solely as a
+ * future grammar-capture anchor; it is not an object-table header. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t track02_record;
+    size_t raw_sector;
+    unsigned int dispatch_sequence;
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    uint8_t bytes[THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
+    uint32_t bytes_hash;
+    int contiguous_capture_chain_verified;
+    int object_table_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -439,6 +460,16 @@ int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt *out);
+
+/* Requires a complete ordered capture of the first continuation bytes from
+ * one CD dispatch. It records no object-table grammar. */
+int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope_prefix(
+    const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
+    size_t payload_count,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture

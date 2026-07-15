@@ -8128,3 +8128,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or outside it. This proves an observed source-consumer overlap, not an
     object table. Remaining: obtain a real post-`$3800` transcript with a
     complete consumer sequence and independently identify record grammar.
+  - Update: the same intake can now require an ordered 12-byte continuation
+    prefix from one CD dispatch. It binds the exact source bytes and rejects a
+    split capture chain, while retaining no object-table semantics. Remaining:
+    capture the original consumer's field accesses and control decisions to
+    establish a grammar separately from this byte boundary.

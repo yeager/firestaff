@@ -617,6 +617,54 @@ int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope_prefix(
+    const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
+    size_t payload_count, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt byte_receipt;
+    size_t index;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!payloads || !track02_data || !track02_md5 || !out ||
+        payload_count != THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES) {
+        return 0;
+    }
+    for (index = 0u; index < payload_count; ++index) {
+        if (!theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope(
+                &payloads[index], track02_data, track02_size, track02_md5,
+                &byte_receipt) || !byte_receipt.valid ||
+            byte_receipt.continuation_offset != index) {
+            return 0;
+        }
+        if (index == 0u) {
+            out->variant = byte_receipt.variant;
+            out->track02_record = byte_receipt.track02_record;
+            out->raw_sector = byte_receipt.raw_sector;
+            out->dispatch_sequence = payloads[index].dispatch_sequence;
+            out->scsi_generation = payloads[index].scsi_generation;
+            out->scsi_lba = payloads[index].scsi_lba;
+            out->scsi_sector_count = payloads[index].scsi_sector_count;
+        } else if (payloads[index].dispatch_sequence !=
+                       out->dispatch_sequence ||
+                   payloads[index].scsi_generation != out->scsi_generation ||
+                   payloads[index].scsi_lba != out->scsi_lba ||
+                   payloads[index].scsi_sector_count !=
+                       out->scsi_sector_count) {
+            return 0;
+        }
+        out->bytes[index] = byte_receipt.source_byte;
+    }
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->bytes_hash = tqr_trace_fnv1a_bytes(out->bytes, sizeof(out->bytes));
+    if (!out->bytes_hash) return 0;
+    out->valid = 1;
+    out->contiguous_capture_chain_verified = 1;
+    out->object_table_semantics_proven = 0;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,

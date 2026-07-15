@@ -18405,6 +18405,16 @@ opaque: no object-table, level, palette, bitmap, grid, or visual semantics
 are inferred. Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 continuation prefix receipt
+
+The loader-trace route can now require a contiguous 12-byte prefix of the
+authenticated post-envelope continuation from one ordered CD dispatch. Every
+byte is independently tied to the original sector and one game-RAM consumer
+chain; a split SCSI generation/LBA/dispatch is rejected. The retained prefix
+is only a future capture anchor, not an object-table header or decoder.
+Verification: Ninja `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
