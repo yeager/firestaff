@@ -96,6 +96,47 @@ static uint32_t real_surface_hash(const unsigned char *pixels, size_t count)
     return hash ? hash : 2166136261u;
 }
 
+static uint32_t real_hash_u32(uint32_t hash, uint32_t value)
+{
+    unsigned int byte_index;
+
+    for (byte_index = 0u; byte_index < 4u; ++byte_index) {
+        hash ^= (unsigned char)(value >> (byte_index * 8u));
+        hash *= 16777619u;
+    }
+    return hash ? hash : 2166136261u;
+}
+
+static int raster_matches_surface_rect(
+    const CSB_V1_StartupRuntimeRaster_PC34 *raster,
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface,
+    int source_x, int source_y, int destination_x, int destination_y,
+    int width, int height)
+{
+    int row;
+
+    if (!raster || !raster->valid || !raster->pixels || !surface ||
+        !surface->valid || !surface->pixels || source_x < 0 || source_y < 0 ||
+        destination_x < 0 || destination_y < 0 || width <= 0 || height <= 0 ||
+        source_x + width > surface->width || source_y + height > surface->height ||
+        destination_x + width > raster->width ||
+        destination_y + height > raster->height) {
+        return 0;
+    }
+    for (row = 0; row < height; ++row) {
+        if (memcmp(raster->pixels +
+                       (size_t)(destination_y + row) * (size_t)raster->width +
+                       (size_t)destination_x,
+                   surface->pixels +
+                       (size_t)(source_y + row) * (size_t)surface->width +
+                       (size_t)source_x,
+                   (size_t)width) != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void verify_real_c017_c040_hud_handoff(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session)
 {
@@ -233,6 +274,121 @@ static int real_c001_title_plan(int title_frame,
     }
     *out_plan = receipt.render_plan;
     return 1;
+}
+
+/* This is deliberately a package-byte regression rather than a visual
+ * approximation. It walks every TITLE.C F0437 frame and every ENTRANCE.C
+ * F0807 door frame through the same session -> host raster boundary M11
+ * consumes. A stale planar surface, strip, or host page changes the aggregate
+ * even when a representative phase still happens to look plausible. */
+static void verify_real_c001_c004_full_frame_sequence(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    enum {
+        /* Canonical English PC3.4 GRAPHICS.DAT, mixed in source presentation
+         * order: all 102 TITLE.C frames, then all 31 F0807 door frames. */
+        CSB_V1_PC34_C001_TITLE_SEQUENCE_HASH = 0x7746eb9eu,
+        CSB_V1_PC34_C004_OPENING_SEQUENCE_HASH = 0xaac5d7e2u
+    };
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRenderState_PC34 state;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right;
+    uint32_t title_hash = 2166136261u;
+    uint32_t opening_hash = 2166136261u;
+    int title_frame;
+    int step;
+    int ok = 1;
+
+    if (!session) return;
+    left = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+
+    for (title_frame = 0;
+         title_frame < csb_v1_startup_title_total_ticks_pc34();
+         ++title_frame) {
+        memset(&frame, 0, sizeof(frame));
+        memset(&raster, 0, sizeof(raster));
+        memset(&host_surface, 0, sizeof(host_surface));
+        if (!real_c001_title_plan(title_frame, &plan) ||
+            !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+                session, &plan, (uint32_t)title_frame, &frame) ||
+            !csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                &frame, &plan, &raster) || !raster.valid ||
+            !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                session, &plan, (uint32_t)title_frame, &host_surface) ||
+            !host_surface.valid ||
+            host_surface.host_surface !=
+                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+            host_surface.raster.pixel_hash != raster.pixel_hash ||
+            host_surface.special_palette != plan.title_special_palette) {
+            ok = 0;
+        } else {
+            title_hash = real_hash_u32(title_hash, raster.pixel_hash);
+        }
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &host_surface);
+        if (!ok) break;
+    }
+    CHECK(ok && title_hash == CSB_V1_PC34_C001_TITLE_SEQUENCE_HASH,
+          "all C001 TITLE.C phases retain their exact package/host frame hash");
+
+    for (step = 1; ok && step <= 31; ++step) {
+        int expected_sources;
+
+        memset(&state, 0, sizeof(state));
+        state.entrance_active = 1;
+        state.entrance_frame = step;
+        state.entrance_source_step = 4;
+        state.opening_active = 1;
+        state.opening_step = step;
+        memset(&frame, 0, sizeof(frame));
+        memset(&raster, 0, sizeof(raster));
+        memset(&host_surface, 0, sizeof(host_surface));
+        if (!csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan) ||
+            plan.surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 ||
+            !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+                session, &plan, (uint32_t)(102 + step), &frame) ||
+            !csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+                &frame, &plan, &raster) || !raster.valid ||
+            !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                session, &plan, (uint32_t)(102 + step), &host_surface) ||
+            !host_surface.valid ||
+            host_surface.host_surface !=
+                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
+            host_surface.raster.pixel_hash != raster.pixel_hash) {
+            ok = 0;
+        } else {
+            expected_sources = 1 + (plan.opening_left_w > 0) +
+                (plan.opening_right_w > 0);
+            if (raster.source_surface_count != expected_sources ||
+                (plan.opening_left_w > 0 && !raster_matches_surface_rect(
+                    &raster, left, plan.opening_left_source_x,
+                    plan.opening_left_source_y, plan.opening_left_dest_x,
+                    plan.opening_left_dest_y, plan.opening_left_w,
+                    plan.opening_left_h)) ||
+                (plan.opening_right_w > 0 && !raster_matches_surface_rect(
+                    &raster, right, plan.opening_right_source_x,
+                    plan.opening_right_source_y, plan.opening_right_dest_x,
+                    plan.opening_right_dest_y, plan.opening_right_w,
+                    plan.opening_right_h))) {
+                ok = 0;
+            } else {
+                opening_hash = real_hash_u32(opening_hash, raster.pixel_hash);
+            }
+        }
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &host_surface);
+    }
+    CHECK(ok && opening_hash == CSB_V1_PC34_C004_OPENING_SEQUENCE_HASH,
+          "all 31 F0807 C004/C002/C003 frames retain exact source strips and host hashes");
 }
 
 static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC34 *session)
@@ -381,6 +537,7 @@ static void verify_real_indexed_startup(
     if (!session.valid) return;
 
     verify_real_c001_title_sequence(&session);
+    verify_real_c001_c004_full_frame_sequence(&session);
     verify_real_c017_c040_hud_handoff(&session);
     CHECK(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
               real_asset_receipt, &session, &package_receipt) == 1 &&

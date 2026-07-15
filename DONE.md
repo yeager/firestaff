@@ -110,6 +110,16 @@
   `test_csb_v1_m11_launcher_handoff_boundary` (440/0), real package probe
   (71/0), and its CTest entry.
 
+- ✅ 2026-07-15 CSB complete title/entrance source-frame regression: the
+  local canonical PC3.4 package probe now walks all 102 `TITLE.C F0437`
+  frames and all 31 `ENTRANCE.C F0807` frames through the same owned session
+  and host-raster receipt that M11 presents. It compares each door strip
+  directly to C002/C003 source bytes, rejects stale plane/strip composition,
+  and locks the ordered C001 and C004 sequence hashes. Production records the
+  actual indexed CSB page only after SDL has presented it; headless coverage
+  deliberately does not claim a macOS app/window capture. Verification:
+  real package probe 73/0 and M11 launcher handoff 440/0.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
   a host transparency key, so source-black pixels erase prior bars and hands
