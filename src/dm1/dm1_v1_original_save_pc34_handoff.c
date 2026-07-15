@@ -15,6 +15,38 @@ static int read_original_pc34_file_bytes(
     uint8_t **out_bytes,
     size_t *out_size);
 
+int dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+    const uint8_t* source,
+    size_t source_size,
+    size_t* io_cursor,
+    uint8_t* destination,
+    size_t byte_count,
+    uint16_t* io_running_checksum)
+{
+    uint16_t checksum;
+    size_t cursor;
+    size_t i;
+
+    if (!source || !io_cursor || !destination || !io_running_checksum) {
+        return 0;
+    }
+    cursor = *io_cursor;
+    if (cursor > source_size || byte_count > source_size - cursor) {
+        return 0;
+    }
+
+    /* READWRIT.C F0421 first completes F0415, then sums the bytes read and
+     * adds that local 16-bit sum to the caller's running checksum. */
+    memcpy(destination, source + cursor, byte_count);
+    checksum = 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        checksum = (uint16_t)(checksum + destination[i]);
+    }
+    *io_running_checksum = (uint16_t)(*io_running_checksum + checksum);
+    *io_cursor = cursor + byte_count;
+    return 1;
+}
+
 static int dm1_original_save_backup_path(const char *path,
                                          char out_path[DM1_ORIGINAL_SAVE_PATH_MAX])
 {
@@ -2474,17 +2506,6 @@ static int import_original_pc34_external_portraits(
     return SAVEGAME_PC34_OK;
 }
 
-static uint16_t original_pc34_byte_checksum(const uint8_t *bytes,
-                                            size_t count)
-{
-    uint16_t checksum = 0u;
-    size_t i;
-    for (i = 0u; i < count; ++i) {
-        checksum = (uint16_t)(checksum + bytes[i]);
-    }
-    return checksum;
-}
-
 static uint32_t original_pc34_tail_fingerprint(const uint8_t *bytes,
                                                size_t count)
 {
@@ -2617,6 +2638,10 @@ static int decode_original_pc34_dungeon_tail(
     int thing_data_bytes = 0;
     size_t map_descriptors_offset;
     size_t columns_offset;
+    size_t square_first_things_offset;
+    size_t text_data_offset;
+    size_t thing_data_offset;
+    size_t raw_map_offset;
     int type;
 
     if (!bytes || !out_report || cursor >= size) {
@@ -2649,6 +2674,7 @@ static int decode_original_pc34_dungeon_tail(
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     off += (size_t)column_count * 2u;
+    square_first_things_offset = off;
 
     {
         int square_first_thing_count = (int)read_u16_le(tail + 10u);
@@ -2665,7 +2691,9 @@ static int decode_original_pc34_dungeon_tail(
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
         off += (size_t)square_first_thing_count * 2u;
+        text_data_offset = off;
         off += (size_t)text_data_word_count * 2u;
+        thing_data_offset = off;
         for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
             int count = (int)read_u16_le(tail + 12u + (size_t)type * 2u);
             int bytes_for_type = count * (int)s_thingDataByteCount[type];
@@ -2678,6 +2706,7 @@ static int decode_original_pc34_dungeon_tail(
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
         off += (size_t)thing_data_bytes;
+        raw_map_offset = off;
         if (off + (size_t)raw_map_bytes + 2u != tail_size) {
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
@@ -2695,7 +2724,58 @@ static int decode_original_pc34_dungeon_tail(
         }
         off += (size_t)raw_map_bytes;
         expected_checksum = read_u16_le(tail + off);
-        actual_checksum = original_pc34_byte_checksum(tail, off);
+        {
+            uint8_t* staged_tail = (uint8_t*)malloc(off ? off : 1u);
+            size_t read_cursor = 0u;
+            uint16_t running_checksum = 0u;
+            size_t section_start;
+
+            if (!staged_tail ||
+                !dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                    tail, off, &read_cursor, staged_tail + read_cursor,
+                    DUNGEON_HEADER_SIZE, &running_checksum) ||
+                !dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                    tail, off, &read_cursor, staged_tail + read_cursor,
+                    (size_t)map_count * DUNGEON_MAP_DESC_SIZE,
+                    &running_checksum) ||
+                !dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                    tail, off, &read_cursor, staged_tail + read_cursor,
+                    square_first_things_offset - columns_offset,
+                    &running_checksum) ||
+                !dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                    tail, off, &read_cursor, staged_tail + read_cursor,
+                    text_data_offset - square_first_things_offset,
+                    &running_checksum) ||
+                !dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                    tail, off, &read_cursor, staged_tail + read_cursor,
+                    thing_data_offset - text_data_offset, &running_checksum)) {
+                free(staged_tail);
+                return SAVEGAME_PC34_ERROR_BAD_SIZE;
+            }
+            section_start = thing_data_offset;
+            for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+                size_t type_byte_count = (size_t)read_u16_le(
+                    tail + 12u + (size_t)type * 2u) *
+                    (size_t)s_thingDataByteCount[type];
+                if (!dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                        tail, off, &read_cursor, staged_tail + read_cursor,
+                        type_byte_count, &running_checksum)) {
+                    free(staged_tail);
+                    return SAVEGAME_PC34_ERROR_BAD_SIZE;
+                }
+                section_start += type_byte_count;
+            }
+            if (section_start != raw_map_offset ||
+                !dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+                    tail, off, &read_cursor, staged_tail + read_cursor,
+                    (size_t)raw_map_bytes, &running_checksum) ||
+                read_cursor != off) {
+                free(staged_tail);
+                return SAVEGAME_PC34_ERROR_BAD_SIZE;
+            }
+            actual_checksum = running_checksum;
+            free(staged_tail);
+        }
         out_report->dungeon_tail_present = 1;
         out_report->dungeon_tail_byte_count = (uint32_t)tail_size;
         out_report->dungeon_tail_fingerprint =
@@ -5724,5 +5804,6 @@ const char *dm1_v1_original_save_pc34_handoff_source_evidence(void)
            "DEFS.H:574-587 ACTIVE_GROUP; "
            "DEFS.H:880-920 EVENT and timeline save arrays; "
            "DEFS.H:661-705 CHAMPION_EXCLUDING_PORTRAIT; "
-           "READWRIT.C F0417/F0418/F0419 save-part checksum and obfuscation";
+           "READWRIT.C F0417/F0418/F0419 save-part checksum and obfuscation; "
+           "READWRIT.C F0421 staged dungeon-tail running checksum";
 }

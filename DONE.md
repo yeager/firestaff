@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 SAVEUTIL F0421: original PC34 F0435 dungeon-tail import now
+  stages header, maps, columns, SFT, text, every ThingData block, and raw map
+  through the exact bytewise 16-bit running-checksum contract from
+  `READWRIT.C`. A short section fails before materialization; the focused
+  handoff test covers accumulation, wrap, failure, and runtime handoff.
+
 - 2026-07-15 DM1 DUNGEON F0168: HoC wall inscriptions use the original PC3.4
   raw TEXTSTRING record for Visible and TextDataWordOffset before the source
   glyph decoder builds the F0107 M648/C10 material receipt. The focused
