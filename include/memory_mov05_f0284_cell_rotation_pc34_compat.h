@@ -25,12 +25,24 @@
 
 #include "memory_champion_state_pc34_compat.h"
 
+struct RngState_Compat;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int F0284_CHAMPION_SetPartyDirection_Compat(
     struct PartyState_Compat* party, int newDirection);
+
+/* ReDMCSB CHAMPION.C F0286: find the first living party champion in the
+ * F0229/G0023 cell order for an adjacent attacker. Party slots remain in
+ * original M516 order; no host-selected target is substituted. */
+int F0286_CHAMPION_GetTargetChampionIndex_Compat(
+    const struct PartyState_Compat* party,
+    int attackerMapX,
+    int attackerMapY,
+    unsigned int attackerCell,
+    struct RngState_Compat* rng);
 
 #ifdef __cplusplus
 }

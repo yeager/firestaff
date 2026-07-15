@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 CHAMPION F0286 follow-up: C04 melee now resolves its
+  non-`ATTACK_ANY_CHAMPION` target through the original adjacent-range,
+  F0229/G0023, and F0285 chain. Remaining target work is real original
+  combat-capture; do not choose a host cell or consume fallback RNG.
+
 - 2026-07-15 DM1 MOVE F0265 follow-up: blocked C04 movement now builds the
   original C60/C61 `Map_Time`, `B.Location`, and exact little-endian `C.Slot`
   record before M10 schedules its retry. Remaining F0265 work is real
