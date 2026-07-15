@@ -125,49 +125,95 @@ fail:
     return -1;
 }
 
+static int cue_keyword(const char *p, const char *keyword)
+{
+    size_t i;
+    if (!p || !keyword) return 0;
+    while (*p && isspace((unsigned char)*p)) ++p;
+    for (i = 0; keyword[i]; ++i) {
+        if (!p[i] || tolower((unsigned char)p[i]) !=
+                     tolower((unsigned char)keyword[i])) {
+            return 0;
+        }
+    }
+    return p[i] == '\0' || isspace((unsigned char)p[i]);
+}
+
+static int cue_file_name(const char *line, char out_name[256])
+{
+    const char *p;
+    const char *end;
+    size_t count;
+
+    if (!line || !out_name || !cue_keyword(line, "FILE")) return 0;
+    p = line;
+    while (*p && !isspace((unsigned char)*p)) ++p;
+    while (*p && isspace((unsigned char)*p)) ++p;
+    if (*p == '"') {
+        ++p;
+        end = strchr(p, '"');
+    } else {
+        end = p;
+        while (*end && !isspace((unsigned char)*end)) ++end;
+    }
+    if (!end || end <= p || (count = (size_t)(end - p)) >= 256U) return 0;
+    memcpy(out_name, p, count);
+    out_name[count] = '\0';
+    /* CUE sheets are frequently authored on Windows while being launched on
+     * POSIX. A path separator is not part of the disc image identity. */
+    for (size_t i = 0; i < count; ++i) {
+        if (out_name[i] == '\\') out_name[i] = '/';
+    }
+    return 1;
+}
+
 int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path) {
-    /* Parse CUE to find Track 1 BIN file */
     FILE *cue;
-    char line[512], bin_name[256] = {0};
-    char bin_path[512];
+    char line[512];
+    char cue_dir[512];
+    char candidate_name[256];
+    char candidate_path[768];
+    char *last_slash;
 
     if (!reader || !cue_path) return -1;
+    memset(reader, 0, sizeof(*reader));
     cue = fopen(cue_path, "r");
     if (!cue) return -1;
 
+    strncpy(cue_dir, cue_path, sizeof(cue_dir) - 1U);
+    cue_dir[sizeof(cue_dir) - 1U] = '\0';
+    last_slash = strrchr(cue_dir, '/');
+    if (!last_slash) last_slash = strrchr(cue_dir, '\\');
+    if (last_slash) {
+        last_slash[1] = '\0';
+    } else {
+        cue_dir[0] = '\0';
+    }
+
+    /* A Saturn CUE can list CDDA before data, split files, or a nonstandard
+     * track order. The original failure chose the first FILE and fed audio
+     * bytes to the ISO/PRS3 path. Probe each declared payload and retain only
+     * the one whose ISO tree carries the Nexus disc signature. */
     while (fgets(line, sizeof(line), cue)) {
-        /* Find: FILE "something.bin" BINARY */
-        char *p = strstr(line, "FILE ");
-        if (p) {
-            char *q1 = strchr(p, '"');
-            if (q1) {
-                char *q2 = strchr(q1 + 1, '"');
-                if (q2) {
-                    int len = (int)(q2 - q1 - 1);
-                    if (len > 0 && len < 255) {
-                        memcpy(bin_name, q1 + 1, len);
-                        bin_name[len] = 0;
-                        break; /* Use first FILE entry (Track 1) */
-                    }
-                }
-            }
+        Nexus_ISOReader candidate;
+        int count;
+        if (!cue_file_name(line, candidate_name)) continue;
+        if (snprintf(candidate_path, sizeof(candidate_path), "%s%s",
+                     cue_dir, candidate_name) <= 0 ||
+            strlen(candidate_path) >= sizeof(candidate_path)) {
+            continue;
         }
+        memset(&candidate, 0, sizeof(candidate));
+        count = nexus_iso_open(&candidate, candidate_path);
+        if (count > 0 && nexus_iso_is_nexus(&candidate)) {
+            fclose(cue);
+            *reader = candidate;
+            return count;
+        }
+        nexus_iso_close(&candidate);
     }
     fclose(cue);
-
-    if (!bin_name[0]) return -1;
-
-    /* Build full path relative to CUE directory */
-    strncpy(bin_path, cue_path, sizeof(bin_path) - 1);
-    char *last_slash = strrchr(bin_path, '/');
-    if (!last_slash) last_slash = strrchr(bin_path, '\\');
-    if (last_slash) {
-        strcpy(last_slash + 1, bin_name);
-    } else {
-        strncpy(bin_path, bin_name, sizeof(bin_path) - 1);
-    }
-
-    return nexus_iso_open(reader, bin_path);
+    return -1;
 }
 
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name) {
