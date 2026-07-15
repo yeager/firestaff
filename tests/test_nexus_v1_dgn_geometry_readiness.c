@@ -5200,6 +5200,7 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
     Nexus_V1_LevelSoundCaptureTargetReceipt target;
     Nexus_V1_LevelSoundTraceAdmissionReceipt admission;
     Nexus_V1_LevelSoundTraceHostReceipt host;
+    Nexus_V1_LevelSoundRouteReceipt route;
     char trace[2048];
 
     memset(&engine, 0, sizeof(engine));
@@ -5239,6 +5240,19 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
     engine.audio.map_records[0].attribute = 3;
     engine.audio.map_records[0].sal_offset = 8;
     engine.audio.map_records[0].sal_size = 4;
+
+    CHECK(nexus_v1_current_level_sound_route_receipt(&engine, 7, &route) == 1 &&
+          route.status == NEXUS_V1_LEVEL_SOUND_ROUTE_BOUND_OPAQUE &&
+          route.canonical_sound_driver_source_verified &&
+          !route.playback_permitted,
+          "SAL route requires the verified sound-driver source before binding");
+
+    engine.level_aux_runtime_receipt.sound_driver.canonical_hash_verified = 0;
+    CHECK(nexus_v1_current_level_sound_route_receipt(&engine, 7, &route) == 0 &&
+          route.status == NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SOURCE &&
+          !route.canonical_sound_driver_source_verified,
+          "SAL route blocks without a verified sound-driver source");
+    engine.level_aux_runtime_receipt.sound_driver.canonical_hash_verified = 1;
 
     CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 1 &&
           target.valid && target.canonical_sal_fnv1a64 ==
