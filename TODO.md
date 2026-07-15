@@ -7640,6 +7640,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     re-copied by the observed caller path, not what those bytes represent.
     Remaining: capture an original CD read or descriptor-table access beyond
     this already known continuation interval.
+  - Update: the first observed JSR after that admitted TII must now target its
+    copied destination before it enters the receipt chain. This proves the
+    exact original Track 02 interval reached an observed code destination,
+    while keeping the routine and bytes opaque. Remaining: bind an observed
+    CD read or a separately proven descriptor-table source beyond this copied
+    continuation route.
   - Update: the capture producer now records a main-RAM call-entry row only
     when the next-caller JSR target is actually executed at that target. The
     receipt requires exact caller PC, physical PC, target, entry PC, physical

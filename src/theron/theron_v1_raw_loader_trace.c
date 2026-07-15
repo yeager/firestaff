@@ -1340,6 +1340,73 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer(
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferReceipt transfer;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int transfer_pc;
+    unsigned int transfer_physical_pc;
+    unsigned int source;
+    unsigned int destination;
+    unsigned int byte_count;
+    unsigned int call_pc;
+    unsigned int call_physical_pc;
+    unsigned int call_target;
+    int transfer_seen = 0;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer(
+            handoff, capture, &transfer) || !transfer.valid ||
+        !transfer.source_track02_bytes_proven) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (!transfer_seen) {
+            consumed = 0;
+            if (sscanf(line,
+                       "main_ram_loader_block_transfer logical_pc=%x physical_pc=%x operation=tii source=%x destination=%x length=%x%n",
+                       &transfer_pc, &transfer_physical_pc, &source, &destination,
+                       &byte_count, &consumed) == 5 && consumed == (int)length &&
+                transfer_pc == transfer.transfer_pc &&
+                transfer_physical_pc == transfer.transfer_physical_pc &&
+                source == transfer.source_address &&
+                destination == transfer.destination_address &&
+                byte_count == transfer.byte_count) {
+                transfer_seen = 1;
+            }
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_jsr logical_pc=%x physical_pc=%x target=%x a=%*x x=%*x y=%*x%n",
+                   &call_pc, &call_physical_pc, &call_target, &consumed) != 3 ||
+            consumed != (int)length) {
+            continue;
+        }
+        if (call_target != transfer.destination_address || call_pc > UINT16_MAX ||
+            call_physical_pc < 0x1f0000u || call_physical_pc >= 0x1f8000u) {
+            return 0;
+        }
+        out->valid = 1;
+        out->transfer = transfer;
+        out->call_pc = (uint16_t)call_pc;
+        out->call_physical_pc = call_physical_pc;
+        out->call_target = (uint16_t)call_target;
+        out->transfer_destination_call_proven = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,

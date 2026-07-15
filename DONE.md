@@ -18931,6 +18931,19 @@ focused targets, `test_theron_rendering` 18/18,
 (skip-safe without the authentic corpus), and the capture-script contract test
 passes.
 
+# ✅ 2026-07-15 Theron Track 02 caller-successor destination-call receipt
+
+The first observed main-RAM `JSR` after an admitted caller-successor `TII`
+must now call that transfer's copied destination. The nested receipt retains
+the source-bound Track 02 interval and exact call site, proving a bounded
+original-byte-to-execution chain. It does not classify the called routine or
+bytes as a loader, descriptor, CD read, table, record, level, object, tile,
+palette, bitmap, command, or visual route. Verification: genuine Mednafen
+1.32.1 patch dry-run, Ninja focused targets, `test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), and the capture-script contract test
+passes.
+
 # ✅ 2026-07-15 Theron Track 02 caller-next-call entry receipt
 
 The instrumented original Mednafen trace now writes a call-entry row only

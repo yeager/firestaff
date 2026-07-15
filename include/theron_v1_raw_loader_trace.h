@@ -433,6 +433,18 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferReceipt;
 
+/* The first observed main-RAM routine call after an admitted Track 02-derived
+ * TII, constrained to the copied destination. No routine semantics follow. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferReceipt transfer;
+    uint16_t call_pc;
+    uint32_t call_physical_pc;
+    uint16_t call_target;
+    int transfer_destination_call_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -707,6 +719,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer(
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferReceipt *out);
+
+/* Requires the first observed main-RAM JSR after the admitted TII to call its
+ * copied destination. This proves transfer-to-execution only. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
