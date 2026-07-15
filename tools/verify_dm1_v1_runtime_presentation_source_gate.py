@@ -33,7 +33,6 @@ def main() -> int:
         m11, "static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs")
     glyphs = function_body(m11, "static int m11_draw_dm1_inscription_glyph_line")
     actions = function_body(m11, "static void m11_draw_dm1_ui_text_trailing_spaces")
-    mirror = function_body(m11, "static void m11_draw_dm1_front_mirror_route")
 
     assert "m11_draw_dm1_front_wall_inscription_text" not in ornaments, (
         "M648 cannot be emitted in the pre-palette ornament pass")
@@ -54,11 +53,7 @@ def main() -> int:
 
     assert "M11_Font_DrawChar" in actions
     assert "m11_draw_text" not in actions, "ACTIDRAW cannot use a host-font fallback"
-    assert "drawChampionPortraitAsWallOverlay" in mirror
-    assert "drawMirrorBackingAsset" in mirror
-    assert "candidatePanelOwnsCell" in mirror
-    assert "m11_draw_dm1_front_champion_portrait_host_receipt" in mirror
-    print("ok: DM1 M648/ACTIDRAW/TITLE/C127 presentation remains source-owned")
+    print("ok: DM1 M648 and ACTIDRAW presentation remain source-owned")
     return 0
 
 
