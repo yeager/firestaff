@@ -26416,6 +26416,25 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND test_theron_v1_track02_loader_intake
     )
 
+    add_executable(test_theron_v1_track02_cue_layout
+        tests/test_theron_v1_track02_cue_layout.c
+    )
+    target_link_libraries(test_theron_v1_track02_cue_layout PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_cue_layout PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_cue_layout PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME theron_v1_track02_cue_layout
+        COMMAND test_theron_v1_track02_cue_layout
+    )
+
     # ── Theron V1 Track 02 Descriptor Table Decoder Probe ─────────
     # Narrow semantic Track 02 decoder probe: regression-locks the
     # 9-word little-endian stride table shape (0x0020..0x2020, stride

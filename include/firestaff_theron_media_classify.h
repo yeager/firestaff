@@ -25,6 +25,9 @@ typedef struct {
     int has_track02_data;
     int has_iso9660_pvd;
     int data_track_number;
+    /* Exact MODE1 sector width declared for CUE Track 02: 2048 or 2352.
+     * Zero means no uniquely declared Track 02 source record. */
+    int track02_mode1_sector_bytes;
     int audio_track_count;
     int ogg_file_count;
     int bin_file_count;

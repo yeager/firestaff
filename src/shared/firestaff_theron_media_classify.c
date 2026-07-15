@@ -222,7 +222,8 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
     int saw_track = 0;
     int track01_audio_count = 0;
     int track01_index_count = 0;
-    int track02_mode1_2352_count = 0;
+    int track02_mode1_count = 0;
+    int track02_mode1_sector_bytes = 0;
     int track02_index_count = 0;
     size_t pos = 0U;
 
@@ -305,7 +306,11 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
                             sizeof(status->track02_path),
                             current_file);
                     if (th_starts_with_i(q, "MODE1/2352")) {
-                        ++track02_mode1_2352_count;
+                        ++track02_mode1_count;
+                        track02_mode1_sector_bytes = 2352;
+                    } else if (th_starts_with_i(q, "MODE1/2048")) {
+                        ++track02_mode1_count;
+                        track02_mode1_sector_bytes = 2048;
                     }
                 }
             }
@@ -333,8 +338,10 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
     }
     status->has_track01_audio = track01_audio_count == 1 &&
         track01_index_count == 1;
+    status->track02_mode1_sector_bytes =
+        track02_mode1_count == 1 ? track02_mode1_sector_bytes : 0;
     status->paired_track01_track02 = status->has_track01_audio &&
-        track02_mode1_2352_count == 1 && track02_index_count == 1;
+        track02_mode1_count == 1 && track02_index_count == 1;
     th_finalize(status);
     return 0;
 }
@@ -742,11 +749,17 @@ int FirestaffTheronMedia_SelfTest(void) {
     th_check(s.layout == FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE, &failures);
     th_check(s.has_track02_data == 1 && s.launch_candidate == 1, &failures);
     th_check(s.bin_file_count == 1 && s.ogg_file_count == 1, &failures);
+    th_check(s.paired_track01_track02 == 1 &&
+             s.track02_mode1_sector_bytes == 2352,
+             &failures);
 
     th_check(FirestaffTheronMedia_ParseCue(iso_ogg_cue, strlen(iso_ogg_cue), &s) == 0, &failures);
     th_check(s.layout == FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE, &failures);
     th_check(s.iso_file_count == 1 && s.ogg_file_count == 2, &failures);
     th_check(strcmp(s.candidate_path, "TQUS02.iso") == 0, &failures);
+    th_check(s.paired_track01_track02 == 1 &&
+             s.track02_mode1_sector_bytes == 2048,
+             &failures);
 
     th_check(FirestaffTheronMedia_ParseCue(ogg_only, strlen(ogg_only), &s) == 0, &failures);
     th_check(s.layout == FIRESTAFF_THERON_MEDIA_LAYOUT_OGG_ONLY, &failures);
