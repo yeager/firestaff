@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_DiscardText`: the authenticated DSA executor now
+  stages `DSA.cpp:3161-3167` against a source-owned scrolling-text callback.
+  The discard publishes only after complete bytecode acceptance; unavailable
+  UI ownership rejects without a fallback. Focused regression covers commit,
+  rejected-bytecode atomicity, and missing owner.
+
 - 2026-07-15 CSBWin `STKOP_CausePoison`: the authenticated DSA executor now
   stages CSBWin `DSA.cpp:4348-4362` / `CSBCode.cpp::PoisonCharacter` using a
   source-owned poison candidate. It retains poison-value/character stack

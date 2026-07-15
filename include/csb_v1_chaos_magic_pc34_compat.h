@@ -322,6 +322,7 @@ typedef int (*CSB_V1_CSBWinDSAPrepareCausePoisonFn)(
     void *user, int32_t character_selector, int32_t poison_value);
 typedef int (*CSB_V1_CSBWinDSACommitCausePoisonFn)(
     void *user, int32_t character_selector, int32_t poison_value);
+typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 
 typedef struct {
     uint32_t master_location;
@@ -398,6 +399,7 @@ typedef struct {
     CSB_V1_CSBWinDSACommitCharacterSwapFn commit_character_swap;
     CSB_V1_CSBWinDSAPrepareCausePoisonFn prepare_cause_poison;
     CSB_V1_CSBWinDSACommitCausePoisonFn commit_cause_poison;
+    CSB_V1_CSBWinDSADiscardTextFn discard_text;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -668,6 +670,7 @@ typedef struct {
     CSB_V1_CSBWinDSACommitCharacterSwapFn commit_character_swap;
     CSB_V1_CSBWinDSAPrepareCausePoisonFn prepare_cause_poison;
     CSB_V1_CSBWinDSACommitCausePoisonFn commit_cause_poison;
+    CSB_V1_CSBWinDSADiscardTextFn discard_text;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
