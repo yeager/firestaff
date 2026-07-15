@@ -1071,6 +1071,20 @@ typedef struct {
 typedef int (*Nexus_V1_DgnStructure1CSourceConsumer)(
     void *context, const Nexus_V1_DgnStructure1CSourcePacket *packet);
 
+/* One source-only lookup from an active Structure1B grid cell to its bounded
+ * Structure1C record. This preserves the exact indexed owner relation but
+ * never assigns collision, mesh, or draw semantics to the record bytes. */
+typedef struct {
+    int valid;
+    int cell_x;
+    int cell_y;
+    uint16_t collision_ref;
+    Nexus_V1_DgnStructure1CSourcePacket record;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1CCellSourcePacket;
+
 /* One descriptor-owned Structure2 payload anchor. The interval ends at the
  * next observed descriptor anchor (or payload end) only as a bounded capture
  * candidate; it is not an image span, palette span, or codec claim. */
@@ -2196,6 +2210,10 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure1CSourceConsumer consumer, void *context,
     Nexus_V1_DgnStructure1CSourceSceneReceipt *out_receipt);
+
+int nexus_v1_current_level_lookup_structure1c_cell_source(
+    const Nexus_V1_Engine *engine, int cell_x, int cell_y,
+    Nexus_V1_DgnStructure1CCellSourcePacket *out_packet);
 /* Traverse descriptor-owned Structure2 payload anchors from the active
  * canonical LEV. Candidate intervals are source bounds only, never decoded
  * texture or palette spans. */

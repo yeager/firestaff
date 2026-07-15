@@ -5746,6 +5746,63 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
     return receipt.valid ? 1 : 0;
 }
 
+typedef struct {
+    int wanted_record_index;
+    int found;
+    Nexus_V1_DgnStructure1CSourcePacket packet;
+} Nexus_V1_DgnStructure1CCellLookupContext;
+
+static int nexus_v1_structure1c_cell_lookup_consumer(
+    void *context, const Nexus_V1_DgnStructure1CSourcePacket *packet)
+{
+    Nexus_V1_DgnStructure1CCellLookupContext *lookup =
+        (Nexus_V1_DgnStructure1CCellLookupContext *)context;
+    if (!lookup || !packet || !packet->valid ||
+        packet->record_index != lookup->wanted_record_index) {
+        return 0;
+    }
+    lookup->packet = *packet;
+    lookup->found = 1;
+    return 1;
+}
+
+int nexus_v1_current_level_lookup_structure1c_cell_source(
+    const Nexus_V1_Engine *engine, int cell_x, int cell_y,
+    Nexus_V1_DgnStructure1CCellSourcePacket *out_packet)
+{
+    Nexus_V1_DgnStructure1CCellLookupContext lookup;
+    Nexus_V1_DgnStructure1CSourceSceneReceipt scene;
+    uint16_t collision_ref;
+
+    if (!out_packet) return -1;
+    memset(out_packet, 0, sizeof(*out_packet));
+    out_packet->cell_x = cell_x;
+    out_packet->cell_y = cell_y;
+    out_packet->no_draw_only = 1;
+    out_packet->blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded || cell_x < 0 || cell_y < 0 ||
+        cell_x >= engine->current_level.width ||
+        cell_y >= engine->current_level.height) {
+        return 0;
+    }
+    collision_ref = engine->current_level.collision_refs[cell_y][cell_x];
+    if (collision_ref == 0U) return 0;
+    memset(&lookup, 0, sizeof(lookup));
+    memset(&scene, 0, sizeof(scene));
+    lookup.wanted_record_index = (int)collision_ref;
+    if (nexus_v1_current_level_visit_structure1c_source_scene(
+            engine, nexus_v1_structure1c_cell_lookup_consumer, &lookup,
+            &scene) != 1 || !scene.valid || !lookup.found ||
+        !lookup.packet.referenced_by_structure1b ||
+        lookup.packet.reference_occurrence_count <= 0) {
+        return 0;
+    }
+    out_packet->collision_ref = collision_ref;
+    out_packet->record = lookup.packet;
+    out_packet->valid = 1;
+    return 1;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

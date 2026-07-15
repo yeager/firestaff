@@ -832,9 +832,12 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_Viewport package_viewport;
         Nexus_Viewport animated_viewport;
         Nexus_Viewport untextured_viewport;
+        Nexus_V1_DgnStructure1CCellSourcePacket structure1c_cell_source;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
+        int structure1c_cell_x = -1;
+        int structure1c_cell_y = -1;
         snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level);
         file = fopen(path, "rb");
         CHECK(file != NULL, "real DGN corpus file opens");
@@ -1116,6 +1119,47 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         active_engine.current_level_structure2_source.loaded_dgn_size = (int)size;
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(data, (size_t)size);
+        memset(&structure1c_cell_source, 0, sizeof(structure1c_cell_source));
+        for (structure1c_cell_y = 0;
+             structure1c_cell_y < active_engine.current_level.height &&
+             structure1c_cell_source.collision_ref == 0U;
+             ++structure1c_cell_y) {
+            for (structure1c_cell_x = 0;
+                 structure1c_cell_x < active_engine.current_level.width;
+                 ++structure1c_cell_x) {
+                if (active_engine.current_level
+                        .collision_refs[structure1c_cell_y][structure1c_cell_x] != 0U) {
+                    CHECK(nexus_v1_current_level_lookup_structure1c_cell_source(
+                              &active_engine, structure1c_cell_x,
+                              structure1c_cell_y, &structure1c_cell_source) == 1 &&
+                          structure1c_cell_source.valid &&
+                          structure1c_cell_source.cell_x == structure1c_cell_x &&
+                          structure1c_cell_source.cell_y == structure1c_cell_y &&
+                          structure1c_cell_source.collision_ref ==
+                              active_engine.current_level.collision_refs[
+                                  structure1c_cell_y][structure1c_cell_x] &&
+                          structure1c_cell_source.record.record_index ==
+                              (int)structure1c_cell_source.collision_ref &&
+                          structure1c_cell_source.record.referenced_by_structure1b &&
+                          structure1c_cell_source.record.reference_occurrence_count > 0 &&
+                          structure1c_cell_source.no_draw_only &&
+                          !structure1c_cell_source.fallback_visuals_permitted &&
+                          structure1c_cell_source.blocks_real_dgn_mesh_render,
+                          "active Structure1B cells resolve only exact no-draw Structure1C packets");
+                    break;
+                }
+            }
+        }
+        CHECK(structure1c_cell_source.collision_ref != 0U,
+              "real DGN corpus has a source-bound Structure1C cell reference");
+        memset(&structure1c_cell_source, 0, sizeof(structure1c_cell_source));
+        CHECK(nexus_v1_current_level_lookup_structure1c_cell_source(
+                  &active_engine, -1, 0, &structure1c_cell_source) == 0 &&
+              !structure1c_cell_source.valid &&
+              structure1c_cell_source.no_draw_only &&
+              !structure1c_cell_source.fallback_visuals_permitted &&
+              structure1c_cell_source.blocks_real_dgn_mesh_render,
+              "invalid DGN cells cannot manufacture a Structure1C or fallback route");
         CHECK(nexus_v1_current_level_structure1f_face_mesh_receipt(
                   &active_engine, &active_face_mesh) == 1 &&
               active_face_mesh.valid && active_face_mesh.level_index == level &&
