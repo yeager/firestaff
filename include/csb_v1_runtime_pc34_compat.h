@@ -765,8 +765,9 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
  * implemented self-master FindMaster branch, gets saved state, and selects
  * column `3 * timerPosition + timerFunction`.  LocalState 0 uses the DB3
  * DSAstate nibble and LocalState 1 uses serialized DSA::m_state. LocalState
- * 2 needs the complete DB3 ParameterB/word8 record and LocalState 3 is an
- * explicitly unimplemented source slave route, so both fail closed. */
+ * 2 reads compact DB3 ParameterB after DB3::MakeBig masks word6 to fourteen
+ * bits; writing its widened word8 form remains unavailable. LocalState 3 is
+ * an explicitly unimplemented source slave route. */
 int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -800,7 +801,7 @@ int csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
 /* Prepare only the source-selected pure-stack action for a restored
  * TT_FALSEWALL -> ProcessDSATimer7 timer.  This mirrors the source timer
  * handoff without promoting fake-wall state mutation, parameter payloads,
- * or the unproven LocalState 2/3 paths. */
+ * or the unproven LocalState 3 path or LocalState-2 widened-state writes. */
 int csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,

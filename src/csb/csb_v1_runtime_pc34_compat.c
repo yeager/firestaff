@@ -18460,22 +18460,21 @@ int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
     if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
 
     /* DSA.cpp GetState: LocalState 0 is DB3::DSAstate, while LocalState 1
-     * is serialized DSA::m_state. DB3::MakeBig (data.cpp:1319-1326) widens
-     * type-47 records before ParameterB may use its extra bits. The imported
-     * compact eight-byte DB3 gives us only word6, so accept LocalState 2
-     * strictly when its unrepresented high two bits are zero. That is the
-     * exact compact ParameterB value and never a guessed widened state. */
+     * is serialized DSA::m_state. data.cpp DB3::MakeBig moves raw word6 bits
+     * 14..15 to expanded word8 bits 6..7, then masks word6 to fourteen bits.
+     * ParameterB reads word8 bits 2..3 instead, so compact saved state is
+     * exactly word6 & 0x3fff. Firestaff does not admit a writable expanded
+     * word8 state record. */
     if (header->local_state == 0u) {
         candidate.state_index = (uint32_t)((word2 >> 12) & 0x0fu);
     } else if (header->local_state == 1u) {
         candidate.state_index = header->persistent_state;
     } else if (header->local_state == 2u) {
-        uint16_t parameter_b;
+        uint16_t compact_word6;
 
         if (size < 8) return 0;
-        parameter_b = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
-        if ((parameter_b & 0xc000u) != 0u) return 0;
-        candidate.state_index = (uint32_t)parameter_b;
+        compact_word6 = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
+        candidate.state_index = (uint32_t)(compact_word6 & 0x3fffu);
     } else {
         return 0;
     }
