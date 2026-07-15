@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 GROUP F0177 follow-up: raw adjacent C04 melee target
+  selection now consumes F0175/F0176 and the original F0229/G0023 cell order.
+  Remaining work is routing live M10/M11 attack consumers through effective
+  F0145/F0147 values; do not choose a target for diagonal, non-adjacent, or
+  absent-C04 input.
+
 - 2026-07-15 DM1 GROUP F0176 follow-up: raw C04 count/type now selects the
   exact centered/full/half-square cell scan. Remaining work is binding live
   M10/M11 consumers to F0145/F0147 effective active-group cells and directions;

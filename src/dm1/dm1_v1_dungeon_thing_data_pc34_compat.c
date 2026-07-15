@@ -1,4 +1,5 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "firestaff/dm1/v1/ordered_cells_to_attack_pc34_compat.h"
 
 enum {
     kObjectInfoFirstScroll = 0,
@@ -162,6 +163,53 @@ int dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
             creatureCell = (groupCells >> (creatureIndex << 1)) & 0x03u;
             if (creatureCell == cell) return (int)creatureIndex + 1;
         } while (creatureIndex-- != 0u);
+    }
+    return 0;
+}
+
+int dm1_v1_group_get_melee_target_ordinal_f0177_pc34(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things,
+    int mapIndex,
+    int groupMapX,
+    int groupMapY,
+    int partyMapX,
+    int partyMapY,
+    unsigned int championCell,
+    unsigned int groupCells,
+    unsigned int groupDirections)
+{
+    unsigned short groupThing;
+    unsigned int direction;
+    unsigned int row;
+    int cellIndex;
+    int creatureOrdinal;
+
+    groupThing = dm1_v1_group_get_thing_f0175_pc34(
+        dungeon, things, mapIndex, groupMapX, groupMapY);
+    if (groupThing == THING_ENDOFLIST) return 0;
+
+    /* F0228's direct cardinal branches are the complete F0177 melee
+     * contract: a non-adjacent/diagonal target has no invented direction. */
+    if (groupMapX == partyMapX && groupMapY != partyMapY) {
+        direction = groupMapY > partyMapY ? 0u : 2u;
+    } else if (groupMapY == partyMapY && groupMapX != partyMapX) {
+        direction = groupMapX > partyMapX ? 3u : 1u;
+    } else {
+        return 0;
+    }
+
+    /* PROJEXPL.C F0229: direction*2, vertical CellSource increment, then
+     * G0023's selected row. */
+    row = direction << 1;
+    if ((row & 0x0002u) == 0u) championCell++;
+    row += (championCell >> 1) & 0x0001u;
+    for (cellIndex = 0; cellIndex < 4; ++cellIndex) {
+        int cell = dm1_v1_ordered_cells_to_attack_pc34((int)row, cellIndex);
+        if (cell < 0) return 0;
+        creatureOrdinal = dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+            things, groupThing, groupCells, groupDirections, (unsigned int)cell);
+        if (creatureOrdinal != 0) return creatureOrdinal;
     }
     return 0;
 }
