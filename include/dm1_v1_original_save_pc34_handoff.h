@@ -207,11 +207,14 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     DM1OriginalSavePC34HandoffReport *out_report);
 
 /* ReDMCSB LOADSAVE.C F0435 restores save parts and the dungeon before the
- * live runtime consumes HoC state. These helpers stage all parsed state in
- * a candidate world and commit it only after the final dungeon/timeline
- * handoff succeeds. On failure, world, event_queue, and out_report retain
- * their prior values. A tail-less original save borrows start_world's
- * already materialized dungeon; out_world may not alias start_world. */
+ * live runtime consumes HoC state. This file entry point admits only an
+ * external PC34 envelope: a Firestaff-manifest-bearing F0433 export cannot
+ * re-enter the launcher/runtime resume route. These helpers stage all parsed
+ * state in a candidate world and commit it only after the final
+ * dungeon/timeline handoff succeeds. On failure, world, event_queue, and
+ * out_report retain their prior values. A tail-less original save borrows
+ * start_world's already materialized dungeon; out_world may not alias
+ * start_world. */
 int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     const char *path,
     const struct GameWorld_Compat *start_world,
