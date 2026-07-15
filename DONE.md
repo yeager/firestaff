@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0111 D3 door-front real-media gate: removed the active
+  host-colored fallback from the F0676/F0677 C3700/C3710 panel route. It now
+  presents only expanded GRAPHICS.DAT G0693 pixels or verified packed G0693
+  rows through G0074; absent or malformed source remains no-draw. Focused
+  viewport assertions cover no-media rejection and both packed/provider paths.
+
 - 2026-07-15 Nexus STABG synthetic-surface removal: the old file-size based
   320x170/320x200 guess is removed. Original STABG.BIN remains no-surface
   until its native framing is proven.
