@@ -1316,6 +1316,23 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FDirectMeshGeometryPacket;
 
+/* Source-owned transform capture target for one direct mesh owner. The
+ * Structure1A selector table and raw owner rotation are retained together
+ * with exact geometry for a future Saturn trace; they are not a matrix,
+ * coordinate conversion, or host placement rule. */
+typedef struct {
+    int valid;
+    Nexus_V1_DgnStructure1FDirectMeshGeometryPacket geometry;
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
+    int owner_transform_selector_source_bound;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FTransformCaptureTarget;
+
 /* One direct Structure1F owner joined to the exact static Structure3 face
  * material target selected by the same documented Structure1A model/face
  * fields. This is capture provenance only: the Structure2 payload remains
@@ -2324,6 +2341,9 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
 int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectMeshGeometryPacket *out_packet);
+int nexus_v1_engine_build_structure1f_transform_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target);
 /* Bind one direct Structure1F source owner to its exact static Structure2
  * material target. Non-static, untextured, or unresolved faces remain
  * unavailable rather than selecting a substitute material. */

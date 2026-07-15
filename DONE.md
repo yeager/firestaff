@@ -18617,3 +18617,8 @@ only when both receipts explicitly carry zero wall-plan identity and command
 count; a stale or invented plan is rejected. The map-transition and watermark
 fixtures now include the required source command-count evidence instead of
 implicitly accepting an incomplete indoor receipt.
+
+ The same owner geometry can now be emitted with the bounded Structure1A
+rotation-selector corpus as a source-only transform capture target. It stays
+ no-draw and requires original Saturn execution evidence before any transform
+ or camera semantics can be promoted.

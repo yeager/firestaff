@@ -6065,6 +6065,34 @@ done:
     return result;
 }
 
+int nexus_v1_engine_build_structure1f_transform_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target)
+{
+    Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+
+    if (!out_target) return -1;
+    memset(&target, 0, sizeof(target));
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
+    if (!engine || nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
+            engine, structure1f_entry_index, &target.geometry) != 1 ||
+        !target.geometry.valid || !target.geometry.source_geometry_bound ||
+        !target.geometry.no_draw_only || target.geometry.fallback_visuals_permitted ||
+        nexus_v1_level_structure1a_transform_selector_receipt(
+            &engine->current_level, &target.transform_selectors) != 0 ||
+        target.transform_selectors.resolved_selector_count <= 0) {
+        *out_target = target;
+        return 0;
+    }
+    target.owner_transform_selector_source_bound = 1;
+    target.capture_producer_required = 1;
+    target.original_saturn_capture_required = 1;
+    target.valid = 1;
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target)
