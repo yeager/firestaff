@@ -358,6 +358,18 @@ static int dm2_runtime_rebuild_original_timer_owners(
     return 1;
 }
 
+/* skproject GAME_LOAD completes its bounded session/timer checks before it
+ * publishes the new world. Keep the fallible part shared by direct session
+ * apply and raw-SKSave restore, so a bad post-load timer cannot clear live
+ * runtime state while an original candidate is still being staged. */
+static int dm2_runtime_prepare_session_apply(
+    const DM2_V1_SessionState *session,
+    DM2_V1_RuntimeTimerPostLoadReceipt *out)
+{
+    return session && out && dm2_v1_session_validate(session) &&
+           dm2_runtime_rebuild_original_timer_owners(session, out);
+}
+
 static int dm2_runtime_resolve_g1_scene_gdat(
     void *user,
     DM2_V1_G1SceneTileClass tile_class,
@@ -1918,11 +1930,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     if (!session || !rt->boot || !rt->boot->dm2_state) {
         return -1;
     }
-    if (!dm2_v1_session_validate(session)) {
-        return -1;
-    }
-    if (!dm2_runtime_rebuild_original_timer_owners(session,
-                                                   &timer_post_load)) {
+    if (!dm2_runtime_prepare_session_apply(session, &timer_post_load)) {
         return -1;
     }
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
@@ -5265,6 +5273,7 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     DM2_V1_DungeonData parsed_dungeon;
     DM2_V1_DungeonData saved_dungeon;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_handoff;
+    DM2_V1_RuntimeTimerPostLoadReceipt timer_preflight;
     int parsed_original_dungeon = 0;
 
     if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
@@ -5276,6 +5285,19 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     if (!dungeon->raw_data || dungeon->raw_size <= 0 ||
         (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
          candidate.dungeon_size != (size_t)dungeon->raw_size)) {
+        return -1;
+    }
+
+    /* GAME_LOAD's timer-owner reconstruction is fallible even after the
+     * SUPPRESS stream has decoded. Run it before swapping G1 or clearing the
+     * Firestaff-only CCM cache; apply_session repeats this exact check at the
+     * publication boundary. */
+    if (!dm2_runtime_prepare_session_apply(&candidate.session,
+                                           &timer_preflight)) {
+        return -1;
+    }
+    memset(&cleared_creatures, 0, sizeof(cleared_creatures));
+    if (dm2_v1_creature_live_state_valid(&cleared_creatures) != 0) {
         return -1;
     }
 
@@ -5315,7 +5337,6 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     /* Original SKSave has dungeon DB records but no Firestaff-only CCM cache.
      * Clear that cache before apply_session; a matching quicksave sidecar is
      * allowed to replace it with the exact saved CCM/animation/GDAT state. */
-    memset(&cleared_creatures, 0, sizeof(cleared_creatures));
     if (dm2_v1_creature_restore_live_state(&cleared_creatures) != 0 ||
         dm2_v1_runtime_apply_session(&candidate.session) != 0) {
         if (parsed_original_dungeon) {
