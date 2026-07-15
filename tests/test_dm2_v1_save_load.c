@@ -2643,6 +2643,7 @@ static int test_original_sksave_corpus_runtime_import(void)
     DM2_V1_SaveCandidate candidate;
     DM2_V1_RuntimeCorpusImportReceipt receipt;
     DM2_SKSaveCorpusReceipt corpus;
+    DM2_OriginalSaveStateCorpusReceipt state_corpus;
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
@@ -2699,6 +2700,34 @@ static int test_original_sksave_corpus_runtime_import(void)
 
     if (!dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
         corpus.candidate_receipt_count != 1u ||
+        !dm2_v1_original_save_state_corpus_probe(tmpdir, &state_corpus) ||
+        state_corpus.entry_count != 1u ||
+        state_corpus.entries[0].candidate.kind !=
+            DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        state_corpus.entries[0].raw_dungeon_prefix_present != 1u ||
+        state_corpus.entries[0].raw_map_count !=
+            candidate.dungeon_receipt.map_count ||
+        state_corpus.entries[0].raw_map_data_byte_count !=
+            candidate.dungeon_receipt.map_data_byte_count ||
+        state_corpus.entries[0].raw_column_index_count !=
+            candidate.dungeon_receipt.column_index_count ||
+        state_corpus.entries[0].raw_ground_stack_count !=
+            candidate.dungeon_receipt.ground_stack_count ||
+        state_corpus.entries[0].raw_text_word_count !=
+            candidate.dungeon_receipt.text_word_count ||
+        state_corpus.entries[0].raw_suppress_state_offset !=
+            candidate.dungeon_receipt.suppress_state_offset ||
+        state_corpus.entries[0].raw_descriptor_hash !=
+            candidate.dungeon_receipt.descriptor_hash ||
+        state_corpus.entries[0].raw_map_data_hash !=
+            candidate.dungeon_receipt.map_data_hash ||
+        state_corpus.entries[0].raw_prefix_hash !=
+            candidate.dungeon_receipt.prefix_hash ||
+        memcmp(state_corpus.entries[0].raw_db_record_counts,
+               candidate.dungeon_receipt.db_record_counts,
+               sizeof(candidate.dungeon_receipt.db_record_counts)) != 0 ||
+        state_corpus.entries[0].raw_db_pools_hash == 0u ||
+        state_corpus.entries[0].state_hash == 0u ||
         !dm2_v1_runtime_import_sksave_receipted_candidate(
             &corpus.candidate_receipts[0], &receipt) ||
         receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
@@ -2911,7 +2940,32 @@ static int test_external_original_sksave_corpus_census(void)
                                  DM2_GLOBAL_WORDS_SIZE) != entry->global_words_hash ||
             corpus_hash_bytes(candidate.session.original_spell_effects,
                               sizeof(candidate.session.original_spell_effects)) !=
-                entry->spell_effects_hash) {
+                entry->spell_effects_hash ||
+            ((candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) &&
+             (!candidate.dungeon_receipt.valid ||
+              entry->raw_dungeon_prefix_present != 1u ||
+              entry->raw_map_count != candidate.dungeon_receipt.map_count ||
+              entry->raw_map_data_byte_count !=
+                  candidate.dungeon_receipt.map_data_byte_count ||
+              entry->raw_column_index_count !=
+                  candidate.dungeon_receipt.column_index_count ||
+              entry->raw_ground_stack_count !=
+                  candidate.dungeon_receipt.ground_stack_count ||
+              entry->raw_text_word_count !=
+                  candidate.dungeon_receipt.text_word_count ||
+              entry->raw_suppress_state_offset !=
+                  candidate.dungeon_receipt.suppress_state_offset ||
+              entry->raw_descriptor_hash !=
+                  candidate.dungeon_receipt.descriptor_hash ||
+              entry->raw_map_data_hash !=
+                  candidate.dungeon_receipt.map_data_hash ||
+              entry->raw_prefix_hash != candidate.dungeon_receipt.prefix_hash ||
+              memcmp(entry->raw_db_record_counts,
+                     candidate.dungeon_receipt.db_record_counts,
+                     sizeof(entry->raw_db_record_counts)) != 0 ||
+              entry->raw_db_pools_hash == 0u)) ||
+            ((candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) &&
+             entry->raw_dungeon_prefix_present != 0u)) {
             printf("    FAIL: external candidate %u did not revalidate\n",
                    (unsigned)i);
             return 0;
