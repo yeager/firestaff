@@ -6729,3 +6729,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     and format plus its `CMDCOLR`/CLUT relation for an admitted DGN command.
     The next implementation step must consume that authentic trace; no legacy
     palette accessor or flat-colour substitute remains available.
+  - 2026-07-15 real-corpus capture-tool update: use the emitted hash-bound
+    Structure2 target with an independently authenticated Saturn producer to
+    obtain the descriptor's palette-state, VDP1 command/VRAM, and texture
+    lanes. Only then may the actual pixel/palette format work begin.
