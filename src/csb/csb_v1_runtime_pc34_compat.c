@@ -15529,8 +15529,32 @@ static int csb_v1_runtime_replace_dispatched_csbwin_timer(
     }
 
     for (i = 0u; i < DM1_EVENT_MAX_COUNT; ++i) {
+        const struct DM1_Event_V1 *mapped_event;
+
         if (i == (uint16_t)successor_event_index) continue;
-        if (staged_slots[i] == consumed_queue_slot) return 0;
+        if (staged_slots[i] == consumed_queue_slot) {
+            /* Pre-dispatch TT_60/61 still has its due EVENT in the live
+             * timeline. Retire only that exact source receipt as DeleteTimer
+             * consumes its handle; any unrelated alias remains invalid. */
+            mapped_event = &profile->timeline_queue.events[i];
+            if (mapped_event->map_time !=
+                    profile->csbwin_timers[consumed_timer_index].time ||
+                mapped_event->type !=
+                    profile->csbwin_timers[consumed_timer_index].function ||
+                mapped_event->priority !=
+                    profile->csbwin_timers[consumed_timer_index].ubyte5 ||
+                mapped_event->b_mapX !=
+                    profile->csbwin_timers[consumed_timer_index].ubyte6 ||
+                mapped_event->b_mapY !=
+                    profile->csbwin_timers[consumed_timer_index].ubyte7 ||
+                mapped_event->c_cell !=
+                    profile->csbwin_timers[consumed_timer_index].ubyte8 ||
+                mapped_event->c_effect !=
+                    profile->csbwin_timers[consumed_timer_index].ubyte9) {
+                return 0;
+            }
+            staged_slots[i] = CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+        }
         if (consumed_queue_slot != last_queue_slot &&
             staged_slots[i] == last_queue_slot) {
             staged_slots[i] = consumed_queue_slot;
@@ -20952,6 +20976,7 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
     int thing_type;
     int thing_size;
     struct DM1_Event_V1 next;
+    CSB_V1_CSBWin512TimerSummary successor;
     int successor_index;
 
     /* CSBWin CSBCode.cpp:6471-6472 dispatches the TIMER directly to
@@ -21018,9 +21043,12 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
     successor_index = csb_v1_runtime_add_timeline_event(profile, &next);
     if (successor_index < 0 || successor_index >= DM1_EVENT_MAX_COUNT) return 1;
 
-    /* Commit only after the source successor owns a live M10 queue slot. */
-    timer->time += 5u;
-    profile->csbwin_timeline_event_queue_slot[successor_index] = queue_slot;
+    successor = *timer;
+    successor.time = timer->time + 5u;
+    if (!csb_v1_runtime_replace_dispatched_csbwin_timer(
+            profile, queue_slot, timer_index, &successor, successor_index)) {
+        (void)dm1v1_event_delete(&profile->timeline_queue, successor_index);
+    }
     return 1;
 }
 
