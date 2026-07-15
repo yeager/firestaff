@@ -3295,6 +3295,9 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         host_frame.render_startup_menu &&
         host_frame.suppress_game_hud;
     out_receipt->draw_command_count = view_model->command_count;
+    out_receipt->title_gdat_command_count =
+        package.title_gdat_category == DM2_GDAT_CATEGORY_TITLE &&
+        package.title_gdat_field == 1 ? 1 : 0;
     out_receipt->suppress_game_hud = host_frame.suppress_game_hud;
     out_receipt->startup_hud_raw_gdat_receipt_consumed =
         host_frame.startup_hud_raw_gdat_capture_ready;
@@ -3362,7 +3365,6 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
             ++out_receipt->executed_gdat_image_count;
             if (command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
                 command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE) {
-                ++out_receipt->title_gdat_command_count;
                 out_receipt->title_gdat_asset_ready =
                     package.title_gdat_asset_ready;
                 out_receipt->title_gdat_asset_w =
@@ -7027,14 +7029,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
           * for rejecting any generated text/rect overlay. */
          (!out_receipt->menu_raw_screen_route_ready &&
           out_receipt->menu_image_field_fallback_used &&
-          out_receipt->menu_gdat_command_count >= 1) ||
-         (!out_receipt->menu_raw_screen_route_ready &&
-          !out_receipt->menu_image_field_fallback_used &&
-          out_receipt->menu_gdat_command_count == 2 &&
-          out_receipt->menu_rect_command_count >= 2 &&
-          out_receipt->menu_text_command_count >=
-              out_receipt->menu_row_count &&
-          out_receipt->selected_highlight_count >= 1));
+          out_receipt->menu_gdat_command_count >= 1));
     out_receipt->exact_selected_highlight_ready =
         out_receipt->selected_highlight_count == 1;
     (void)dm2_v1_boot_startup_composite_capture(profile,

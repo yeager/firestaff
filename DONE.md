@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 skproject SHOW_MENU_SCREEN real-GDAT startup route:
+  startup presentation now emits only the original `TITLE/0 dt07/4`
+  menu surface for `SHOW_MENU_SCREEN`; `TITLE/0 dt07/1` remains source
+  receipt evidence for the preceding title phase, not a second draw.
+  Render ownership accepts one menu GDAT command plus title receipt proof
+  and rejects the old synthetic no-image text/rect fallback. Verification:
+  `test_dm2_v1_startup_menu_action_contract` passed 99/99.
+
 - ✅ 2026-07-16 CSB HINTLOAD save-part wrappers: added CSB-owned
   `F1910_LoadSavedGamePart`, `F1913_LoadAndDeobfuscateSavedGamePart`, and
   `F1914_LoadAndDeobfuscateSavedGameHeader` entry points to the native CSB
