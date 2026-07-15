@@ -3134,7 +3134,6 @@ static void m11_execute_csb_startup_primitive_commands(
 typedef struct M11_CSBStartupAssetContext {
     const M11_GameViewState *state;
     unsigned char *framebuffer;
-    const unsigned char *dungeonFrame;
     int framebufferWidth;
     int framebufferHeight;
     const CSB_V1_BootStartupRenderDrawReceipt_PC34 *drawReceipt;
@@ -3237,7 +3236,6 @@ static void m11_csb_startup_asset_context_init(
     }
     context->state = state;
     context->framebuffer = framebuffer;
-    context->dungeonFrame = NULL;
     context->framebufferWidth = framebufferWidth;
     context->framebufferHeight = framebufferHeight;
     context->drawReceipt = NULL;
@@ -3547,154 +3545,6 @@ static void m11_draw_csb_startup_plan_text(
                   y,
                   text,
                   m11_csb_startup_text_style(style));
-}
-
-static int m11_csb_copy_startup_rect(const unsigned char *source,
-                                     unsigned int sourceWidth,
-                                     unsigned int sourceHeight,
-                                     int sourceX,
-                                     int sourceY,
-                                     unsigned char *destination,
-                                     int destinationWidth,
-                                     int destinationHeight,
-                                     int destinationX,
-                                     int destinationY,
-                                     int width,
-                                     int height)
-{
-    int y;
-    if (!source || !destination || sourceX < 0 || sourceY < 0 ||
-        destinationX < 0 || destinationY < 0 || width <= 0 || height <= 0 ||
-        sourceX + width > (int)sourceWidth ||
-        sourceY + height > (int)sourceHeight ||
-        destinationX + width > destinationWidth ||
-        destinationY + height > destinationHeight) {
-        return 0;
-    }
-    for (y = 0; y < height; ++y) {
-        memcpy(destination + (size_t)(destinationY + y) *
-                              (size_t)destinationWidth + (size_t)destinationX,
-               source + (size_t)(sourceY + y) * (size_t)sourceWidth +
-                            (size_t)sourceX,
-               (size_t)width);
-    }
-    return 1;
-}
-
-static int m11_draw_csb_entrance_opening_frame_asset(
-    void *user,
-    const CSB_V1_StartupOpeningComposite_PC34 *composite)
-{
-    M11_CSBStartupAssetContext *context =
-        (M11_CSBStartupAssetContext *)user;
-    const M11_GameViewState *state;
-    unsigned char *framebuffer;
-    int framebufferWidth;
-    int framebufferHeight;
-    const M11_AssetSlot *entranceScreen;
-    const M11_AssetSlot *leftDoor;
-    const M11_AssetSlot *rightDoor;
-
-    if (!context || !composite) {
-        return 0;
-    }
-    state = context->state;
-    framebuffer = context->framebuffer;
-    framebufferWidth = context->framebufferWidth;
-    framebufferHeight = context->framebufferHeight;
-    if (!state || !framebuffer || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || !context->dungeonFrame ||
-        !state->assetsAvailable) {
-        return 0;
-    }
-    entranceScreen = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)composite->screen_asset_id);
-    leftDoor = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)composite->left_door_asset_id);
-    rightDoor = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)composite->right_door_asset_id);
-    if (!entranceScreen || !leftDoor || !rightDoor) {
-        return 0;
-    }
-    /* ReDMCSB DATA.C PC layout: the C004 door composite has a 224x136
-     * aperture at (0,3); F0438 then presents that composite at screen y=30.
-     * M11's live viewport remains at (48,33), so copy it into C004's native
-     * local aperture at (0,33), never back into the normal gameplay box. */
-    return m11_csb_copy_startup_rect(entranceScreen->pixels,
-                                     entranceScreen->width,
-                                     entranceScreen->height,
-                                     0, 0, framebuffer, framebufferWidth,
-                                     framebufferHeight, 0, 0, 320, 200) &&
-           m11_csb_copy_startup_rect(context->dungeonFrame,
-                                     (unsigned int)framebufferWidth,
-                                     (unsigned int)framebufferHeight,
-                                     48, 33, framebuffer, framebufferWidth,
-                                     framebufferHeight, 0, 33, 224, 136) &&
-           m11_csb_copy_startup_rect(leftDoor->pixels, leftDoor->width,
-                                     leftDoor->height,
-                                     composite->left_source_x,
-                                     composite->left_source_y, framebuffer,
-                                     framebufferWidth, framebufferHeight,
-                                     composite->left_box_x,
-                                     composite->left_box_y,
-                                     composite->left_box_w,
-                                     composite->left_box_h) &&
-           m11_csb_copy_startup_rect(rightDoor->pixels, rightDoor->width,
-                                     rightDoor->height,
-                                     composite->right_source_x,
-                                     composite->right_source_y, framebuffer,
-                                     framebufferWidth, framebufferHeight,
-                                     composite->right_box_x,
-                                     composite->right_box_y,
-                                     composite->right_box_w,
-                                     composite->right_box_h);
-}
-
-static int m11_execute_csb_entrance_opening_composite(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const unsigned char *dungeonFrame,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    M11_CSBStartupAssetContext context;
-    CSB_V1_StartupOpeningComposite_PC34 composite;
-
-    if (!state || !framebuffer || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || !dungeonFrame || !plan ||
-        !state->assetsAvailable || !plan->opening_composite_valid ||
-        plan->opening_composite_screen_asset_id <= 0 ||
-        plan->opening_composite_left_asset_id <= 0 ||
-        plan->opening_composite_right_asset_id <= 0) {
-        return 0;
-    }
-    m11_csb_startup_asset_context_init(&context,
-                                       state,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight);
-    context.dungeonFrame = dungeonFrame;
-    composite.screen_asset_id = plan->opening_composite_screen_asset_id;
-    composite.left_door_asset_id = plan->opening_composite_left_asset_id;
-    composite.right_door_asset_id = plan->opening_composite_right_asset_id;
-    composite.animation_step = plan->opening_composite_animation_step;
-    composite.left_box_x = plan->opening_composite_left_box_x;
-    composite.left_box_y = plan->opening_composite_left_box_y;
-    composite.left_box_w = plan->opening_composite_left_box_w;
-    composite.left_box_h = plan->opening_composite_left_box_h;
-    composite.right_box_x = plan->opening_composite_right_box_x;
-    composite.right_box_y = plan->opening_composite_right_box_y;
-    composite.right_box_w = plan->opening_composite_right_box_w;
-    composite.right_box_h = plan->opening_composite_right_box_h;
-    composite.left_source_x = plan->opening_composite_left_source_x;
-    composite.left_source_y = plan->opening_composite_left_source_y;
-    composite.right_source_x = plan->opening_composite_right_source_x;
-    composite.right_source_y = plan->opening_composite_right_source_y;
-    return m11_draw_csb_entrance_opening_frame_asset(&context, &composite);
 }
 
 /* TITLE.C and ENTRANCE.C own the indexed 320x200 page.  M11 owns only the
@@ -39004,6 +38854,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
+        /* ENTRANCE.C F0806 releases C002-C005 before DUNVIEW.C F0128 draws
+         * the first live dungeon page. The previous C004 opening raster is
+         * not a runtime backing store: begin each post-entrance source pass
+         * from a cleared page so no host-retained entrance pixels survive
+         * outside the authenticated viewport/HUD consumers. */
+        memset(framebuffer, 0,
+               (size_t)framebufferWidth * (size_t)framebufferHeight);
         /* PANEL.C F0346/F0347 validates a pending C040 -> C017 clear before
          * DUNVIEW draws the next page.  Keep that ordering in M11: a stale
          * terminal generation must not reveal a newly drawn viewport before
