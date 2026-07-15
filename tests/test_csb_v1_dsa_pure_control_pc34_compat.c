@@ -51,6 +51,7 @@ static int missile_info_enabled;
 static int missile_info_store_count;
 static uint32_t missile_info_stored[4];
 static int mastery_enabled;
+static int party_info_enabled;
 
 static int wing_talents_enabled;
 
@@ -323,6 +324,18 @@ static int get_mastery(void *user, uint32_t champion_index,
     return 1;
 }
 
+static int get_party_info(void *user, uint32_t out_values[12])
+{
+    static const uint32_t source_party[12] = {
+        4u, 5u, 10u, 12u, 3u, 1u, 1u, 0u, 2u, 1u, 17u, 19u
+    };
+
+    (void)user;
+    if (!party_info_enabled || !out_values) return -1;
+    memcpy(out_values, source_party, sizeof(source_party));
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -358,10 +371,10 @@ static void check(int condition, const char *message)
     }
 }
 
-static CSB_V1_CSBWinDSAStackResult run(
+static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
     uint16_t *words, int word_count, uint32_t *parameters,
-    CSB_V1_CSBWinDSAStackExecution *out_execution)
+    int parameter_count, CSB_V1_CSBWinDSAStackExecution *out_execution)
 {
     CSB_V1_CSBWinDSAStackContext context;
 
@@ -369,7 +382,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     action->program_words = words;
     action->program_word_count = word_count;
     context.parameters = parameters;
-    context.parameter_count = 4;
+    context.parameter_count = parameter_count;
     context.party_location_valid = 1;
     context.party_level = 5;
     context.party_x = 10;
@@ -445,6 +458,7 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.set_missile_info = set_missile_info;
     }
     if (mastery_enabled) context.get_mastery = get_mastery;
+    if (party_info_enabled) context.get_party_info = get_party_info;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -456,6 +470,15 @@ static CSB_V1_CSBWinDSAStackResult run(
                sizeof(last_party_talents));
         return result;
     }
+}
+
+static CSB_V1_CSBWinDSAStackResult run(
+    CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
+    uint16_t *words, int word_count, uint32_t *parameters,
+    CSB_V1_CSBWinDSAStackExecution *out_execution)
+{
+    return run_with_parameter_count(state, action, words, word_count,
+                                    parameters, 4, out_execution);
 }
 
 static CSB_V1_CSBWinDSAStackResult run_save_policy(
@@ -676,6 +699,13 @@ int main(void)
     };
     uint16_t mastery_invalid[] = {
         0x0686u, 9u, 0x0686u, 7u, 0x0686u, 3u, 0x0c4bu, 0x000du
+    };
+    uint16_t party_fetch[] = {
+        0x0686u, 0u, 0x0686u, 12u, 0x100bu,
+        0x0686u, 12u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t party_fetch_bad_span[] = {
+        0x0686u, 99u, 0x0686u, 2u, 0x100bu
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1144,6 +1174,38 @@ int main(void)
               parameters[0] == 0u && execution.stack_depth == 0u,
           "MASTERY preserves source zero for an invalid character");
     mastery_enabled = 0;
+    party_info_enabled = 1;
+    {
+        uint32_t party_parameters[12] = { 0u };
+
+        check(run_with_parameter_count(
+                  &state, &action, party_fetch,
+                  (int)(sizeof(party_fetch) / sizeof(party_fetch[0])),
+                  party_parameters, 12, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_OK &&
+              party_parameters[0] == 4u && party_parameters[1] == 5u &&
+              party_parameters[2] == 10u && party_parameters[3] == 12u &&
+              party_parameters[4] == 3u && party_parameters[5] == 1u &&
+              party_parameters[6] == 1u && party_parameters[7] == 0u &&
+              party_parameters[8] == 2u && party_parameters[9] == 1u &&
+              party_parameters[10] == 17u && party_parameters[11] == 19u,
+              "PARTY@ copies the complete source GAMEBLOCK2 word order");
+        memset(party_parameters, 0x5a, sizeof(party_parameters));
+        check(run_with_parameter_count(
+                  &state, &action, party_fetch_bad_span,
+                  (int)(sizeof(party_fetch_bad_span) /
+                        sizeof(party_fetch_bad_span[0])), party_parameters,
+                  12, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              party_parameters[0] == 0x5a5a5a5au,
+              "PARTY@ preserves the source out-of-bank no-op");
+    }
+    party_info_enabled = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, party_fetch,
+              (int)(sizeof(party_fetch) / sizeof(party_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "PARTY@ rejects without a complete GAMEBLOCK2 owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

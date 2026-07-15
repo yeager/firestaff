@@ -1433,6 +1433,30 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             }
         }
         break;
+    case 64u: /* STKOP_PartyFetch, CSBWin DSA.cpp:4127-4165. */
+        /* The original takes (DSAVARS index, requested count), then copies a
+         * coherent twelve-word GAMEBLOCK2 snapshot. In particular, do not
+         * synthesize PartySleeping from an unrelated Firestaff flag. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        if (v > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v) {
+            break;
+        }
+        {
+            uint32_t party_values[12];
+
+            if (!context->get_party_info ||
+                context->get_party_info(context->dungeon_user, party_values) <= 0) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            if (count > 12u) count = 12u;
+            for (w = 0u; w < count; ++w) {
+                variables[v + w] = party_values[w];
+                variable_state[v + w] = 1u;
+            }
+        }
+        break;
     case 57u: /* STKOP_CellFetch */
         /* CSBWin DSA.cpp:3676-3835 zeroes the requested DSAVARS run, then
          * overlays the real CELLFLAG/DB0/DB1 data for a valid LOCATIONREL.
@@ -2609,6 +2633,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_missile_info = runner->get_missile_info;
     context.set_missile_info = runner->set_missile_info;
     context.get_mastery = runner->get_mastery;
+    context.get_party_info = runner->get_party_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
