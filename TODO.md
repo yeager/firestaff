@@ -363,7 +363,9 @@
 
 - 2026-07-15 DM1 original-save F0421 follow-up: saved dungeon-tail sections
   now pass the original running byte-checksum gate before F0435 materializes
-  them. Remaining save work is authentic external corpus breadth and
+  them. F0420 now writes each F0433 save part through an explicit owned
+  size-prefix/one-pass F0417 contract before the complete envelope is
+  committed. Remaining save work is authentic external corpus breadth and
   launcher/UI consumption; do not admit a tail on a header-only or aggregate
   checksum substitute.
 

@@ -39,6 +39,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0145_f0148_group_overl
              COMMAND test_dm1_v1_f0145_f0148_group_overlay_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0420_save_part_pc34_compat.c")
+    add_executable(test_dm1_v1_f0420_save_part_pc34_compat
+        tests/test_dm1_v1_f0420_save_part_pc34_compat.c)
+    target_link_libraries(test_dm1_v1_f0420_save_part_pc34_compat PRIVATE
+        firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0420_save_part_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm1_v1_f0420_save_part_pc34_compat
+             COMMAND test_dm1_v1_f0420_save_part_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0033_raw_inventory_icon_gate.c")
     add_executable(test_m11_dm1_f0033_raw_inventory_icon_gate
         tests/test_m11_dm1_f0033_raw_inventory_icon_gate.c)

@@ -693,6 +693,18 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
     struct GameWorld_Compat *loaded_world,
     struct DM1_EventQueue_V1 *loaded_queue);
 
+/* ReDMCSB READWRIT.C F0420: prefix an even-byte save part with its original
+ * 16-bit size, obfuscate it through F0417 exactly once, and return the
+ * source checksum. The caller retains transaction ownership of the complete
+ * F0433 save envelope; malformed spans are rejected before any write. */
+int dm1_v1_original_save_pc34_write_part_f0420(
+    uint8_t *dst,
+    size_t dst_capacity,
+    const uint8_t *plain,
+    size_t byte_count,
+    uint16_t key,
+    uint16_t *out_checksum);
+
 void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
     const struct GameWorld_Compat *world,
     DM1OriginalSavePC34HoCResumeState *state);

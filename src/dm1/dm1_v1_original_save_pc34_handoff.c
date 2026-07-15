@@ -557,12 +557,13 @@ static uint16_t skill_level_from_base_experience(uint32_t experience)
     return level;
 }
 
-static int write_original_part(uint8_t *dst,
-                               size_t dst_capacity,
-                               const uint8_t *plain,
-                               size_t byte_count,
-                               uint16_t key,
-                               uint16_t *out_checksum)
+int dm1_v1_original_save_pc34_write_part_f0420(
+    uint8_t *dst,
+    size_t dst_capacity,
+    const uint8_t *plain,
+    size_t byte_count,
+    uint16_t key,
+    uint16_t *out_checksum)
 {
     uint16_t checksum;
 
@@ -3243,13 +3244,13 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
                0x30 + i, CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
     }
 
-    rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
+    rc = dm1_v1_original_save_pc34_write_part_f0420(out_bytes + cursor, out_capacity - cursor,
                              global, sizeof(global),
                              keys[SAVEGAME_PC34_PART_GLOBAL_DATA],
                              &checksums[SAVEGAME_PC34_PART_GLOBAL_DATA]);
     if (rc < 0) return rc;
     cursor += (size_t)rc;
-    rc = write_original_part(
+    rc = dm1_v1_original_save_pc34_write_part_f0420(
         out_bytes + cursor, out_capacity - cursor,
         active_group,
         (size_t)maximum_active_group_count *
@@ -3258,13 +3259,13 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
         &checksums[SAVEGAME_PC34_PART_ACTIVE_GROUP]);
     if (rc < 0) return rc;
     cursor += (size_t)rc;
-    rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
+    rc = dm1_v1_original_save_pc34_write_part_f0420(out_bytes + cursor, out_capacity - cursor,
                              party, sizeof(party),
                              keys[SAVEGAME_PC34_PART_PARTY],
                              &checksums[SAVEGAME_PC34_PART_PARTY]);
     if (rc < 0) return rc;
     cursor += (size_t)rc;
-    rc = write_original_part(
+    rc = dm1_v1_original_save_pc34_write_part_f0420(
         out_bytes + cursor, out_capacity - cursor,
         events,
         (size_t)event_maximum_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
@@ -3272,7 +3273,7 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
         &checksums[SAVEGAME_PC34_PART_EVENTS]);
     if (rc < 0) return rc;
     cursor += (size_t)rc;
-    rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
+    rc = dm1_v1_original_save_pc34_write_part_f0420(out_bytes + cursor, out_capacity - cursor,
                              timeline, (size_t)event_maximum_count * 2u,
                              keys[SAVEGAME_PC34_PART_TIMELINE],
                              &checksums[SAVEGAME_PC34_PART_TIMELINE]);
