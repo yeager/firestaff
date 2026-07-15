@@ -98,6 +98,8 @@ int main(void)
     door_plan.doors[0].ornate_gdat_index = dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
     door_plan.doors[0].panel_gdat_index = dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D0C);
     door_plan.doors[0].frame_gdat_index = dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D0C);
+    door_plan.doors[0].graphicsset_index =
+        DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
     door_plan.doors[0].panel_rect = (DM2_V1_ViewportRect){ 0, 28, 320, 144 };
     door_plan.doors[0].panel_visible_rect = door_plan.doors[0].panel_rect;
     door_plan.doors[0].frame_rect = door_plan.doors[0].panel_rect;
@@ -116,6 +118,8 @@ int main(void)
         material_plan.commands[1].entry_index != ornate ||
         material_plan.commands[1].kind != DM2_V1_GDAT_DOOR_OVERLAY_ORNATE ||
         material_plan.commands[2].kind != DM2_V1_GDAT_DOOR_FRAME ||
+        material_plan.commands[2].entry_index !=
+            DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET ||
         material_plan.commands[3].kind != DM2_V1_GDAT_DOOR_BUTTON ||
         material_plan.commands[0].door_opening_dir != 1 ||
         material_plan.commands[0].door_state != 4 ||
@@ -146,6 +150,14 @@ int main(void)
             material_plan.commands[0].selection_hash) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&changed_plan);
     door_plan.doors[0].door_open_pct = 50;
+    /* An absent glbMapGraphicsSet receipt may not borrow the former default
+     * record.  This is the negative counterpart to the canonical index-one
+     * material assertion above. */
+    door_plan.doors[0].graphicsset_index = 0x100;
+    if (dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
+                                                         &changed_plan)) goto fail;
+    door_plan.doors[0].graphicsset_index =
+        DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
     /* DRAW_DOOR's vertical intermediate state uses the next source
      * tlbRectnoDoorPosition RAW4 record, not a cropped closed-panel box. */
     door_plan.doors[0].door_state = 1;

@@ -310,6 +310,9 @@ typedef struct {
     int ornate_gdat_index;
     int destroyed_mask_gdat_index;
     int frame_gdat_index;
+    /* skproject DRAW_DOOR_FRAMES reads glbMapGraphicsSet, not a global
+     * default graphics set.  This value is carried into the M11 receipt. */
+    int graphicsset_index;
     int button_gdat_index;
     int button_source_kind; /* 1=default door button, 2=wall-gfx button */
     int wall_button_index;

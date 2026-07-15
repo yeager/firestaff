@@ -2050,6 +2050,9 @@ int dm2_v1_viewport_build_door_render_plan(
         }
         row->frame_gdat_index =
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
+        row->graphicsset_index = s->gdat_scene_control_ready
+            ? s->gdat_scene_material_index
+            : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
         row->door_open_pct = vs->door_open_pct;
         row->door_state = vs->door_state;
         row->ornate_gdat_index =
