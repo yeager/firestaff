@@ -18,6 +18,13 @@ static void check(int condition, const char *message)
 static void make_terminal_real_data_session(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const char *graphics_path,
+    unsigned char *title_pixels,
+    unsigned char *presents_pixels,
+    unsigned char *chaos_pixels,
+    unsigned char *strikes_pixels,
+    unsigned char *left_door_pixels,
+    unsigned char *right_door_pixels,
+    unsigned char *entrance_pixels,
     unsigned char *inventory_pixels,
     unsigned char *resurrect_pixels)
 {
@@ -36,8 +43,10 @@ static void make_terminal_real_data_session(
     session->source_tick = 1u;
     session->generation = 1u;
     session->surfaces.valid = 1;
+    session->surfaces.real_asset_matched = 1;
     session->surfaces.title_regions_ready = 1;
     session->surfaces.opening_frame_ready = 1;
+    session->surfaces.entrance_screen_ready = 1;
     session->surfaces.hud_surfaces_ready = 1;
     session->playback.no_fallback_routes = 1;
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
@@ -56,6 +65,94 @@ static void make_terminal_real_data_session(
     session->hud_resurrect_binding.graphic_index = 40u;
     snprintf(session->hud_resurrect_binding.path,
              sizeof(session->hud_resurrect_binding.path), "%s", graphics_path);
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].source_asset_id = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].width = 320;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 153;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].pixels = presents_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].source_asset_id = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].source_y = 137;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].width = 320;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].height = 16;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].pixels = chaos_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].source_asset_id = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].width = 320;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].height = 80;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].pixels = strikes_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].source_asset_id = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].source_y = 80;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].width = 320;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].height = 57;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].transparent_color = 0;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].pixels = left_door_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].source_asset_id = 2;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].width = 105;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].height = 161;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels = right_door_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].source_asset_id = 3;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 128;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].height = 161;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].source_asset_id = 4;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].width = 320;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].height = 200;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].transparent_color = -1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
     session->surfaces.surfaces[
@@ -91,6 +188,13 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 receipt;
     CSB_V1_DungeonData dungeon;
+    unsigned char title_pixels = 1u;
+    unsigned char presents_pixels = 2u;
+    unsigned char chaos_pixels = 3u;
+    unsigned char strikes_pixels = 4u;
+    unsigned char left_door_pixels = 5u;
+    unsigned char right_door_pixels = 6u;
+    unsigned char entrance_pixels = 7u;
     unsigned char inventory_pixels = 17u;
     unsigned char resurrect_pixels = 40u;
     int handoff_ok;
@@ -112,9 +216,13 @@ int main(void)
         CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
 
     make_terminal_real_data_session(&session, profile.graphics_path,
+                                    &title_pixels, &presents_pixels,
+                                    &chaos_pixels, &strikes_pixels,
+                                    &left_door_pixels, &right_door_pixels,
+                                    &entrance_pixels,
                                     &inventory_pixels, &resurrect_pixels);
-    check(csb_v1_startup_session_hud_surface_contract_pc34(&session),
-          "fixture supplies the original C017/C040 surface contract");
+    check(csb_v1_startup_session_full_surface_contract_pc34(&session),
+          "fixture supplies the original C001/C004/C002/C003/C017/C040 surface contract");
     handoff_ok = csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
         &snapshot, &session, &receipt);
     check(handoff_ok && receipt.hud_session_ready &&
@@ -122,6 +230,10 @@ int main(void)
           "ReDMCSB entrance completion hands the verified C017/C040 pair to runtime");
 
     make_terminal_real_data_session(&session, "/verified/other-graphics.dat",
+                                    &title_pixels, &presents_pixels,
+                                    &chaos_pixels, &strikes_pixels,
+                                    &left_door_pixels, &right_door_pixels,
+                                    &entrance_pixels,
                                     &inventory_pixels, &resurrect_pixels);
     check(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
               &snapshot, &session, &receipt) && receipt.door_opening_finished &&
@@ -133,6 +245,25 @@ int main(void)
           "a different real-data package cannot cross the entrance runtime handoff");
 
     make_terminal_real_data_session(&session, profile.graphics_path,
+                                    &title_pixels, &presents_pixels,
+                                    &chaos_pixels, &strikes_pixels,
+                                    &left_door_pixels, &right_door_pixels,
+                                    &entrance_pixels,
+                                    &inventory_pixels, &resurrect_pixels);
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].source_asset_id = 4;
+    check(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+              &snapshot, &session, &receipt) && receipt.door_opening_finished &&
+              !receipt.runtime_view_ready && !receipt.hud_session_ready &&
+              receipt.route ==
+                  CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_RUNTIME_BLOCKED_PC34,
+          "a swapped C003 opening strip cannot cross the entrance runtime handoff");
+
+    make_terminal_real_data_session(&session, profile.graphics_path,
+                                    &title_pixels, &presents_pixels,
+                                    &chaos_pixels, &strikes_pixels,
+                                    &left_door_pixels, &right_door_pixels,
+                                    &entrance_pixels,
                                     &inventory_pixels, &resurrect_pixels);
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].width = 143;

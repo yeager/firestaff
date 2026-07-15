@@ -119,6 +119,14 @@ int csb_v1_startup_session_hud_surface_contract_pc34(
         c040->transparent_color == CSB_V1_CONTRACT_C040_TRANSPARENT_PC34;
 }
 
+int csb_v1_startup_session_full_surface_contract_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    return csb_v1_startup_session_c001_title_contract_pc34(session) &&
+        csb_v1_startup_session_opening_surface_contract_pc34(session) &&
+        csb_v1_startup_session_hud_surface_contract_pc34(session);
+}
+
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupSessionTerminalReceipt_PC34 *out_receipt)

@@ -1812,11 +1812,12 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         return 0;
     }
 
-    /* ReDMCSB PANEL.C F0347 restores the fixed C017/C040 HUD bitmaps after
-     * ENTRANCE.C F0806 releases the prison doors.  The profile path alone is
-     * insufficient: malformed crops from that package must not become live
-     * HUD surfaces at the F0806 -> dungeon handoff. */
-    if (!csb_v1_startup_session_hud_surface_contract_pc34(session)) {
+    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806/F0807 consume C001,
+     * C004 and C002/C003 before PANEL.C F0347 restores C017/C040.  The
+     * profile path alone is insufficient: malformed title/opening/HUD crops
+     * from that package must not become live HUD surfaces at the
+     * F0806 -> dungeon handoff. */
+    if (!csb_v1_startup_session_full_surface_contract_pc34(session)) {
         return 0;
     }
 
