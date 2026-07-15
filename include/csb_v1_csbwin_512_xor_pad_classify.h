@@ -497,8 +497,20 @@ typedef struct {
     uint32_t extended_flags;
     uint16_t dsa_count;
     uint32_t data_map_length;
+    uint32_t editing_options;
     uint32_t game_info_size;
     uint32_t cell_flag_array_size;
+    uint32_t graphics_signature1;
+    uint32_t graphics_signature2;
+    uint32_t spell_filter_location;
+    int32_t overlay_ordinal;
+    int32_t overlay_p1;
+    int32_t overlay_p2;
+    int32_t overlay_p3;
+    int32_t overlay_p4;
+    uint32_t csbgraphics_signature1;
+    uint32_t csbgraphics_signature2;
+    uint8_t hint_key[8];
     size_t extension_payload_offset;
 } CSB_V1_CSBWinExtendedFeaturesReport;
 

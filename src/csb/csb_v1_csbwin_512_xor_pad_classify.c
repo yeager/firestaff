@@ -994,9 +994,21 @@ int csb_v1_csbwin_512_inspect_extended_features(
     out_report->version = header[36u];
     out_report->flags = header[37u];
     out_report->dsa_count = read_le16(header, 38u);
+    out_report->editing_options = read_le32(header, 40u);
     out_report->game_info_size = read_le32(header, 44u);
     out_report->cell_flag_array_size = read_le32(header, 48u);
+    out_report->graphics_signature1 = read_le32(header, 52u);
+    out_report->graphics_signature2 = read_le32(header, 56u);
+    out_report->spell_filter_location = read_le32(header, 60u);
     out_report->extended_flags = read_le32(header, 64u);
+    out_report->overlay_ordinal = (int32_t)read_le32(header, 68u);
+    out_report->overlay_p1 = (int32_t)read_le32(header, 72u);
+    out_report->overlay_p2 = (int32_t)read_le32(header, 76u);
+    out_report->overlay_p3 = (int32_t)read_le32(header, 80u);
+    out_report->overlay_p4 = (int32_t)read_le32(header, 84u);
+    out_report->csbgraphics_signature1 = read_le32(header, 88u);
+    out_report->csbgraphics_signature2 = read_le32(header, 92u);
+    memcpy(out_report->hint_key, header + 96u, sizeof(out_report->hint_key));
     out_report->data_map_length = data_map_length;
     out_report->extension_payload_offset =
         CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES + maps_size;

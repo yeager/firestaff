@@ -36,7 +36,19 @@ int main(void)
     profile.csbwin_extended_features_version = 21u;
     profile.csbwin_extended_features_flags = 0x7fu;
     profile.csbwin_extended_features_flags32 = 0x12345678u;
+    profile.csbwin_extended_editing_options = 0x10203040u;
     profile.csbwin_extended_cell_flag_array_size = 4096u;
+    profile.csbwin_extended_graphics_signature1 = 0x11111111u;
+    profile.csbwin_extended_graphics_signature2 = 0x22222222u;
+    profile.csbwin_extended_spell_filter_location = 0x80000012u;
+    profile.csbwin_extended_overlay_ordinal = 3;
+    profile.csbwin_extended_overlay_p1 = -1;
+    profile.csbwin_extended_overlay_p2 = 2;
+    profile.csbwin_extended_overlay_p3 = -3;
+    profile.csbwin_extended_overlay_p4 = 4;
+    profile.csbwin_extended_csbgraphics_signature1 = 0x33333333u;
+    profile.csbwin_extended_csbgraphics_signature2 = 0x44444444u;
+    profile.csbwin_extended_hint_key[0] = 0x5au;
     profile.csbwin_extended_level_index_present = 1;
     profile.csbwin_extended_level_dsa_index[2][3] = 77u;
     profile.csbwin_extended_game_info = malloc(4u);
@@ -56,7 +68,19 @@ int main(void)
               profile.csbwin_extended_features_version == 0u &&
               profile.csbwin_extended_features_flags == 0u &&
               profile.csbwin_extended_features_flags32 == 0u &&
+              profile.csbwin_extended_editing_options == 0u &&
               profile.csbwin_extended_cell_flag_array_size == 0u &&
+              profile.csbwin_extended_graphics_signature1 == 0u &&
+              profile.csbwin_extended_graphics_signature2 == 0u &&
+              profile.csbwin_extended_spell_filter_location == 0u &&
+              profile.csbwin_extended_overlay_ordinal == 0 &&
+              profile.csbwin_extended_overlay_p1 == 0 &&
+              profile.csbwin_extended_overlay_p2 == 0 &&
+              profile.csbwin_extended_overlay_p3 == 0 &&
+              profile.csbwin_extended_overlay_p4 == 0 &&
+              profile.csbwin_extended_csbgraphics_signature1 == 0u &&
+              profile.csbwin_extended_csbgraphics_signature2 == 0u &&
+              profile.csbwin_extended_hint_key[0] == 0u &&
               profile.csbwin_extended_game_info == NULL &&
               profile.csbwin_extended_game_info_size == 0u &&
               profile.csbwin_extended_game_info_fnv1a == 0u &&

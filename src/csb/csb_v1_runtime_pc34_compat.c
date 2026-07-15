@@ -15449,7 +15449,20 @@ static void csb_v1_runtime_reset_csbwin_extended_metadata(
     profile->csbwin_extended_features_version = 0u;
     profile->csbwin_extended_features_flags = 0u;
     profile->csbwin_extended_features_flags32 = 0u;
+    profile->csbwin_extended_editing_options = 0u;
     profile->csbwin_extended_cell_flag_array_size = 0u;
+    profile->csbwin_extended_graphics_signature1 = 0u;
+    profile->csbwin_extended_graphics_signature2 = 0u;
+    profile->csbwin_extended_spell_filter_location = 0u;
+    profile->csbwin_extended_overlay_ordinal = 0;
+    profile->csbwin_extended_overlay_p1 = 0;
+    profile->csbwin_extended_overlay_p2 = 0;
+    profile->csbwin_extended_overlay_p3 = 0;
+    profile->csbwin_extended_overlay_p4 = 0;
+    profile->csbwin_extended_csbgraphics_signature1 = 0u;
+    profile->csbwin_extended_csbgraphics_signature2 = 0u;
+    memset(profile->csbwin_extended_hint_key, 0,
+           sizeof(profile->csbwin_extended_hint_key));
     profile->csbwin_extended_level_index_present = 0;
     memset(profile->csbwin_extended_level_dsa_index, 0xff,
            sizeof(profile->csbwin_extended_level_dsa_index));
@@ -15625,8 +15638,26 @@ static int csb_v1_runtime_stage_csbwin_extended_state(
     candidate->csbwin_extended_features_version = features->version;
     candidate->csbwin_extended_features_flags = features->flags;
     candidate->csbwin_extended_features_flags32 = features->extended_flags;
+    candidate->csbwin_extended_editing_options = features->editing_options;
     candidate->csbwin_extended_cell_flag_array_size =
         features->cell_flag_array_size;
+    candidate->csbwin_extended_graphics_signature1 =
+        features->graphics_signature1;
+    candidate->csbwin_extended_graphics_signature2 =
+        features->graphics_signature2;
+    candidate->csbwin_extended_spell_filter_location =
+        features->spell_filter_location;
+    candidate->csbwin_extended_overlay_ordinal = features->overlay_ordinal;
+    candidate->csbwin_extended_overlay_p1 = features->overlay_p1;
+    candidate->csbwin_extended_overlay_p2 = features->overlay_p2;
+    candidate->csbwin_extended_overlay_p3 = features->overlay_p3;
+    candidate->csbwin_extended_overlay_p4 = features->overlay_p4;
+    candidate->csbwin_extended_csbgraphics_signature1 =
+        features->csbgraphics_signature1;
+    candidate->csbwin_extended_csbgraphics_signature2 =
+        features->csbgraphics_signature2;
+    memcpy(candidate->csbwin_extended_hint_key, features->hint_key,
+           sizeof(candidate->csbwin_extended_hint_key));
     candidate->csbwin_extended_game_info = game_info;
     candidate->csbwin_extended_game_info_size = tail->game_info_size;
     candidate->csbwin_extended_game_info_fnv1a = tail->game_info_fnv1a;
