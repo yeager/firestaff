@@ -7118,3 +7118,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 2026-07-15 DM1 GROUP F0226: the C29-C41 current-group distance now uses
   the exact source Manhattan primitive. Remaining related work is F0227/F0228
   directional visibility over loaded map facts, not an inferred route.
+- 2026-07-15 DM1 GROUP F0227: exact directional-cone visibility now has one
+  owner for F0200 and M10. Remaining related work is the F0228 primary and
+  secondary direction selection with its real RNG ordering.

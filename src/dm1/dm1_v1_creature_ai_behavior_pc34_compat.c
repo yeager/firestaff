@@ -102,6 +102,52 @@ int F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
     return distanceX + distanceY;
 }
 
+int F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+    int direction,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY)
+{
+    int temporary;
+
+    /* GROUP.C F0227 rotates every cardinal cone into its west-facing
+     * comparison before testing forward distance and lateral spread. */
+    switch (direction & 3) {
+    case 2:
+        temporary = sourceMapX;
+        sourceMapX = destinationMapY;
+        destinationMapY = temporary;
+        temporary = destinationMapX;
+        destinationMapX = sourceMapY;
+        sourceMapY = temporary;
+        break;
+    case 1:
+        temporary = sourceMapX;
+        sourceMapX = destinationMapX;
+        destinationMapX = temporary;
+        temporary = destinationMapY;
+        destinationMapY = sourceMapY;
+        sourceMapY = temporary;
+        break;
+    case 0:
+        temporary = sourceMapX;
+        sourceMapX = sourceMapY;
+        sourceMapY = temporary;
+        temporary = destinationMapX;
+        destinationMapX = destinationMapY;
+        destinationMapY = temporary;
+        break;
+    default:
+        break;
+    }
+    sourceMapX -= destinationMapX - 1;
+    if (sourceMapX <= 0) return 0;
+    temporary = sourceMapY - destinationMapY;
+    if (temporary < 0) temporary = -temporary;
+    return temporary <= sourceMapX;
+}
+
 static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }
@@ -1191,47 +1237,6 @@ int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
     return 1;
 }
 
-static int dm1_group_destination_visible_from_source(int direction,
-                                                      int sourceMapX,
-                                                      int sourceMapY,
-                                                      int destinationMapX,
-                                                      int destinationMapY)
-{
-    int temp;
-
-    switch (direction & 3) {
-    case 2:
-        temp = sourceMapX;
-        sourceMapX = destinationMapY;
-        destinationMapY = temp;
-        temp = destinationMapX;
-        destinationMapX = sourceMapY;
-        sourceMapY = temp;
-        break;
-    case 1:
-        temp = sourceMapX;
-        sourceMapX = destinationMapX;
-        destinationMapX = temp;
-        temp = destinationMapY;
-        destinationMapY = sourceMapY;
-        sourceMapY = temp;
-        break;
-    case 0:
-        temp = sourceMapX;
-        sourceMapX = sourceMapY;
-        sourceMapY = temp;
-        temp = destinationMapX;
-        destinationMapX = destinationMapY;
-        destinationMapY = temp;
-        break;
-    default:
-        break;
-    }
-    sourceMapX -= destinationMapX - 1;
-    return sourceMapX > 0 &&
-           dm1_abs_int(sourceMapY - destinationMapY) <= sourceMapX;
-}
-
 /* ReDMCSB GROUP.C F0200 and F0227. The old F0818 context adapter remains
  * for callers that only have a previously established sight distance; this
  * form is the live source path and refuses to infer a map route. */
@@ -1280,7 +1285,7 @@ int F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
 
     while (viewDirectionCount-- > 0) {
         if (!(ctx->creatureInfo.attributes & 0x0004) &&
-            !dm1_group_destination_visible_from_source(
+            !F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
                 viewDirections[viewDirectionCount], ctx->currentGroupMapX,
                 ctx->currentGroupMapY, ctx->partyMapX, ctx->partyMapY)) {
             continue;

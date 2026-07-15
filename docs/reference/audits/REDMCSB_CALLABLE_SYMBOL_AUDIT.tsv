@@ -336,7 +336,7 @@ F	0225	F0225_GROUP_FuseAction	ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;PROJEXPL.
 F	225	F225_dzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0226	F0226_GROUP_GetDistanceBetweenSquares	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	implemented-narrow	implemented_narrow	Exact GROUP.C:13762-13770 Manhattan body; M10 C29-C41 now consumes the symbol for current-group distance to party.
 F	226	F226_ozzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0227	F0227_GROUP_IsDestinationVisibleFromSource	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0227	F0227_GROUP_IsDestinationVisibleFromSource	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	implemented-narrow	implemented_narrow	Exact GROUP.C:13772-13808 directional cone transform. DM1 F0200 route and M10 visible-party gate consume the same source-owned primitive; F0199 remains the real loaded-map blocker path.
 F	227	F227_qzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0228	F0228_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	228	F228_uzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

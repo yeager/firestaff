@@ -241,6 +241,15 @@ int F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
     int destinationMapX,
     int destinationMapY);
 
+/* ReDMCSB GROUP.C F0227 lines 13772-13808. Tests the unblocked 90-degree
+ * view cone only; F0199 still owns the loaded-map path walk. */
+int F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+    int direction,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY);
+
 /* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
  * decoding and supplies these facts; DM1 owns the original branch order. */
 struct DM1GroupMovementFacts_Compat {

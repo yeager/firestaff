@@ -1807,6 +1807,18 @@ static void test_group_path_blockers_f0197_to_f0199(void) {
               6, "F0226 returns source Manhattan distance");
     EXPECT_EQ(F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(-3, 4, -3, 4),
               0, "F0226 returns zero for the same square");
+    EXPECT_EQ(F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                  0, 0, 0, 1, -2),
+              1, "F0227 accepts a north-facing diagonal cone edge");
+    EXPECT_EQ(F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                  0, 0, 0, 3, -1),
+              0, "F0227 rejects a north-facing destination outside the cone");
+    EXPECT_EQ(F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                  1, 0, 0, 2, 1),
+              1, "F0227 accepts an east-facing diagonal cone edge");
+    EXPECT_EQ(F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                  3, 0, 0, 1, 0),
+              0, "F0227 rejects a destination behind west-facing source");
     square.elementType = DUNGEON_ELEMENT_DOOR;
     square.doorState = 3;
     EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 1,
