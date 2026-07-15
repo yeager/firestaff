@@ -197,6 +197,12 @@ typedef int (*CSB_V1_CSBWinDSAGetInfoFn)(void *user,
                                          int *out_state,
                                          int *out_parameter_a,
                                          int *out_parameter_b);
+/* CSBWin DSA.cpp STKOP_FetchExCellFlg reads the eight source ui32 words in
+ * one EDT_ExtendedCellFlags EXPOOL record.  The runtime owns the authenticated
+ * save tail; a missing hook keeps this source-owned query unavailable. */
+typedef int (*CSB_V1_CSBWinDSAGetExCellFlagsFn)(void *user,
+                                                uint32_t location,
+                                                uint32_t out_words[8]);
 
 typedef struct {
     uint32_t master_location;
@@ -236,6 +242,8 @@ typedef struct {
     CSB_V1_CSBWinDSASetWingTalentsFn set_wing_talents;
     CSB_V1_CSBWinDSAGetInfoFn get_dsa_info;
     void *wing_user;
+    CSB_V1_CSBWinDSAGetExCellFlagsFn get_excell_flags;
+    void *excell_user;
 } CSB_V1_CSBWinDSAStackContext;
 
 typedef struct {
@@ -469,6 +477,8 @@ typedef struct {
     CSB_V1_CSBWinDSASetWingTalentsFn set_wing_talents;
     CSB_V1_CSBWinDSAGetInfoFn get_dsa_info;
     void *wing_user;
+    CSB_V1_CSBWinDSAGetExCellFlagsFn get_excell_flags;
+    void *excell_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
     int execution_count;
