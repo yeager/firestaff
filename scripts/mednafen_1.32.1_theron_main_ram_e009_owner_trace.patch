@@ -1,0 +1,45 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -7,7 +7,7 @@
+
+ namespace MDFN_IEN_PCE
+ {
+-void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value);
++void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destination);
+ void TheronPCECDTracePostGeneration7RAMWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc, uint8 accumulator, uint8 x, uint8 y);
+@@ -439,7 +439,8 @@
+ 	 const uint8 writer_mpr = MPR[writer_pc >> 13];
+ 	 TheronPCECDTracePostGeneration7RAMWrite(address, physical_address, V, writer_pc,
+ 	                                          (writer_mpr << 13) | (writer_pc & 0x1FFF));
+-	 TheronPCECDTraceDataWrite(address, physical_address, V);
++	 TheronPCECDTraceDataWrite(address, physical_address, V, writer_pc,
++	                           (writer_mpr << 13) | (writer_pc & 0x1FFF));
+
+ 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
+ 	}
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -184,7 +184,8 @@
+                              (unsigned long long)receipt->sequence, reader_pc, value);
+ }
+
+-void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value)
++void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value,
++                                uint16 writer_pc, uint32 writer_physical_pc)
+ {
+  if(!TheronPCECDFifoReceiptCount)
+   return;
+@@ -202,6 +203,11 @@
+  TheronPCECDTraceFifoReceipt("pce_cd_fifo_destination_receipt generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x value=%02x\n",
+                              receipt->generation, (unsigned long long)receipt->sequence,
+                              receipt->reader_pc, logical_destination, physical_destination, stored_value);
++ if(receipt->dispatch_sequence < 32)
++  TheronPCECDTraceFifoReceipt("main_ram_e009_fifo_destination dispatch_sequence=%u generation=%u fifo_sequence=%llu logical_destination=%04x physical_destination=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++                              receipt->dispatch_sequence, receipt->generation,
++                              (unsigned long long)receipt->sequence, logical_destination,
++                              physical_destination, stored_value, writer_pc, writer_physical_pc);
+  TheronPCECDFifoReceiptHead = (TheronPCECDFifoReceiptHead + 1) % TheronPCECDFifoReceiptCapacity;
+  TheronPCECDFifoReceiptCount--;
+  if(receipt->generation == 7 && receipt->sequence == 16383)

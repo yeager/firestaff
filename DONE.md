@@ -16295,6 +16295,16 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron `$e009` writer-provenance receipt
+
+FIFO destination receipts now retain the actual writer PC and physical PC.
+Real USA Track 02 capture proves every observed `$e009` FIFO store is written
+by System Card code (`0x000a52` or `0x000b35`), including stores addressed in
+main RAM. Thus none qualifies as game-owned level/object data. The next route
+must first prove a physical `0x1fxxxx` writer.
+
+Verification: Mednafen patch dry-run and real SDL2 USA Track 02 capture.
+
 # ✅ 2026-07-15 Theron G4 RAM consumer negative receipt
 
 The HuC6280 read path now records exact reads of G4's materialized
