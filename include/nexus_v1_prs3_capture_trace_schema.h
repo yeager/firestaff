@@ -113,6 +113,14 @@ typedef struct {
     uint32_t zero_index_mask_offset;
     uint32_t zero_indexed_byte_read_offset;
     int sh2_zero_side_index_read_verified;
+    uint32_t zero_post_read_compare_offset;
+    uint32_t zero_repeat_counter_increment_offset;
+    uint32_t zero_repeat_branch_offset;
+    uint32_t zero_repeat_branch_target_offset;
+    uint32_t zero_repeat_delay_mask_offset;
+    uint32_t zero_outer_loop_branch_offset;
+    uint32_t zero_outer_loop_target_offset;
+    int sh2_zero_side_repeat_control_verified;
     int menu_frame_binding_proven;
     int vdp1_command_proven;
     int opcode_grammar_proven;
