@@ -8571,3 +8571,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original-byte-to-execution chain; it does not identify a routine, data
     table, dungeon, object, palette, bitmap, or rendering role. Remaining:
     capture a real data read or subsequent call from the entered destination.
+  - Update: destination-entry admission now also checks that the executed
+    opcode equals the first byte copied by the authenticated TII from Track
+    02-derived source address `$3c88`. This is byte provenance only, not a
+    decoder, routine name, or level/object grammar. Remaining: a real trace
+    must observe the entered routine's next data read or call.

@@ -457,6 +457,19 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryReceipt;
 
+/* The exact copied Track 02 byte observed as the entry opcode at the bound
+ * TII destination. This proves byte-to-execution only, not its meaning. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryReceipt
+        entry;
+    uint16_t copied_source_address;
+    uint16_t original_source_address;
+    uint8_t copied_source_byte;
+    int copied_source_byte_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -745,6 +758,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryReceipt *out);
+
+/* Requires the observed destination entry opcode to equal the first byte of
+ * the exact Track 02-derived interval copied by the bound TII. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_copy(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
