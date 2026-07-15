@@ -65,5 +65,15 @@ int main(void) {
         !strstr(s, "m11_dm1_pc34_hud_font_is_source_bound(state)")) {
         ok = 0;
     }
+    if (!strstr(s, "M11_DM1_M653_BASELINE_TO_TOP_PC34 = 4") ||
+        !strstr(s, "m11_draw_dm1_m653_cell_at_baseline") ||
+        !contains_between(action_menu, action_menu_end,
+                          "m11_draw_dm1_ui_text_trailing_spaces") ||
+        !strstr(s, "DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34, glyph") ||
+        !strstr(s, "DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34, glyph") ||
+        !strstr(s, "const int topY = baselineY - M11_DM1_M653_BASELINE_TO_TOP_PC34") ||
+        !strstr(s, "x += 6;")) {
+        ok = 0;
+    }
     free(s); return ok ? 0 : 1;
 }

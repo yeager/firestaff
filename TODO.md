@@ -64,10 +64,12 @@
 - 2026-07-15 DM1 F0387 action-menu follow-up: C079/C077/C011 now require
   exact loaded PC34 pixels for one/two/three action rows; a malformed or
   unavailable menu surface preserves the F0387 black clear. Its TEXT2 labels
-  now require verified PC34 M653 entries 695/557. Remaining work is real
-  PC34/Mac capture of action-menu transitions and hit targets. Do not restore
-  a permissive bitmap blit, procedural panel, arbitrary font, or host-font
-  route.
+  now require verified PC34 M653 entries 695/557 and use TEXT2 F0644's
+  baseline-minus-four, six-pixel-cell raster rule for all header/action rows.
+  MENUDRAW F0397/F0398 use that same M653 primitive for available and selected
+  runes. Remaining work is real PC34/Mac capture of action-menu transitions,
+  spell refresh, and hit targets. Do not restore a permissive bitmap blit,
+  procedural panel, arbitrary font, or host-font route.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
