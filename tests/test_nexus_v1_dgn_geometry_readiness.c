@@ -5190,6 +5190,8 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
     uint8_t map[] = {0, 1, 2, 3, 4, 5, 6, 7};
     Nexus_V1_Engine engine;
     Nexus_V1_LevelSoundCaptureTargetReceipt target;
+    Nexus_V1_LevelSoundTraceAdmissionReceipt admission;
+    char trace[2048];
 
     memset(&engine, 0, sizeof(engine));
     engine.level_loaded = 1;
@@ -5235,6 +5237,37 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           target.canonical_map_fnv1a64 == fnv1a64(map, sizeof(map)) &&
           target.no_playback_only && !target.playback_permitted,
           "SAL capture target binds the active raw SAL and MAP bytes");
+    snprintf(trace, sizeof(trace),
+             "magic=%s\nproducer=mednafen-debugger\n"
+             "trace_sha256=0000000000000000000000000000000000000000000000000000000000000000\n"
+             "level_index=%x\ncanonical_sal_name=%s\ncanonical_sal_md5=%s\n"
+             "canonical_sal_fnv1a64=%016llx\n"
+             "canonical_map_name=%s\ncanonical_map_md5=%s\n"
+             "canonical_map_fnv1a64=%016llx\n"
+             "canonical_driver_name=%s\ncanonical_driver_md5=%s\n"
+             "raw_map_selector=%x\nmap_attribute=%x\nsal_offset=%x\nsal_size=%x\n"
+             "selector_dispatch_pc=1000\nsal_read_pc=1002\n"
+             "driver_output_pc=1004\noriginal_saturn_execution=1\n",
+             NEXUS_V1_SAL_TRACE_MAGIC, target.level_index,
+             target.canonical_sal_name, target.canonical_sal_md5,
+             (unsigned long long)target.canonical_sal_fnv1a64,
+             target.canonical_map_name, target.canonical_map_md5,
+             (unsigned long long)target.canonical_map_fnv1a64,
+             target.canonical_driver_name, target.canonical_driver_md5,
+             target.raw_map_selector, target.map_attribute,
+             target.sal_offset, target.sal_size);
+    CHECK(nexus_v1_engine_admit_sal_driver_trace(&engine, trace, strlen(trace),
+                                                 &admission) == 1 &&
+          admission.capture_target_bound && admission.trace_chain_complete &&
+          !admission.driver_dispatch_proven && !admission.sal_decode_proven &&
+          !admission.playback_permitted && admission.blocks_real_sfx_playback,
+          "SAL driver trace admission stays opaque and playback-blocked");
+    engine.audio.map_source_fnv1a64 ^= UINT64_C(1);
+    CHECK(nexus_v1_engine_admit_sal_driver_trace(&engine, trace, strlen(trace),
+                                                 &admission) == 0 &&
+          admission.status == NEXUS_V1_SAL_TRACE_BLOCKED_TARGET_MISMATCH &&
+          !admission.playback_permitted,
+          "a changed active MAP identity rejects a stale SAL driver trace");
     engine.audio.map_source_fnv1a64 = 0U;
     CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 0,
           "missing active MAP byte identity blocks SAL capture acquisition");

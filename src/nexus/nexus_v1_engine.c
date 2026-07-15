@@ -2881,6 +2881,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
             .canonical_hash_verified);
     (void)nexus_sound_level_runtime_receipt(&engine->audio,
                                             &engine->sfx_runtime_receipt);
+    memset(&engine->sound_trace_admission, 0,
+           sizeof(engine->sound_trace_admission));
+    engine->sound_trace_admission.status = NEXUS_V1_SAL_TRACE_MISSING;
+    engine->sound_trace_admission.level_index = level;
+    engine->sound_trace_admission.blocks_real_sfx_playback = 1;
+    engine->sound_trace_admission.fallback_visuals_permitted = 0;
     free(sal_data);
     free(map_data);
 
@@ -4999,6 +5005,146 @@ static int nexus_v1_slev_trace_is_sha256(const char *text) {
               (value >= 'a' && value <= 'f'))) return 0;
     }
     return 1;
+}
+
+static int nexus_v1_slev_trace_hex_u64(const char *text,
+                                       uint64_t *out_value);
+
+int nexus_v1_engine_admit_sal_driver_trace(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt) {
+    Nexus_V1_LevelSoundCaptureTargetReceipt target;
+    Nexus_V1_LevelSoundTraceAdmissionReceipt receipt;
+    char value[96];
+    char magic[96];
+    uint32_t number;
+    uint64_t hash;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SAL_TRACE_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_sfx_playback = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !trace_text || trace_size == 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "raw_map_selector",
+                                   value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &number) || number > 0xffU ||
+        nexus_v1_engine_build_sal_capture_target(engine, (int)number,
+                                                 &target) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = target.level_index;
+    receipt.raw_map_selector = target.raw_map_selector;
+    if (!nexus_v1_slev_trace_value(trace_text, trace_size, "magic", magic,
+                                   sizeof(magic)) ||
+        strcmp(magic, NEXUS_V1_SAL_TRACE_MAGIC) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "producer", value,
+                                   sizeof(value)) ||
+        strcmp(value, "mednafen-debugger") != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "trace_sha256",
+                                   value, sizeof(value)) ||
+        !nexus_v1_slev_trace_is_sha256(value)) {
+        receipt.status = NEXUS_V1_SAL_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.mednafen_debugger_provenance = 1;
+    receipt.trace_sha256_present = 1;
+    if (!nexus_v1_slev_trace_value(trace_text, trace_size, "level_index", value,
+                                   sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &number) ||
+        (int)number != target.level_index ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_sal_name", value, sizeof(value)) ||
+        strcmp(value, target.canonical_sal_name) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_sal_md5", value, sizeof(value)) ||
+        strcmp(value, target.canonical_sal_md5) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_sal_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &hash) ||
+        hash != target.canonical_sal_fnv1a64 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_map_name", value, sizeof(value)) ||
+        strcmp(value, target.canonical_map_name) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_map_md5", value, sizeof(value)) ||
+        strcmp(value, target.canonical_map_md5) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_map_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &hash) ||
+        hash != target.canonical_map_fnv1a64 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_driver_name", value, sizeof(value)) ||
+        strcmp(value, target.canonical_driver_name) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "canonical_driver_md5", value, sizeof(value)) ||
+        strcmp(value, target.canonical_driver_md5) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "map_attribute", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &number) ||
+        (int)number != target.map_attribute ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "sal_offset", value,
+                                   sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &number) ||
+        (int)number != target.sal_offset ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "sal_size", value,
+                                   sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &number) ||
+        (int)number != target.sal_size) {
+        receipt.status = NEXUS_V1_SAL_TRACE_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "selector_dispatch_pc", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.selector_dispatch_pc) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "sal_read_pc", value,
+                                   sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.sal_read_pc) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "driver_output_pc",
+                                   value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.driver_output_pc) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                   "original_saturn_execution", value,
+                                   sizeof(value)) || strcmp(value, "1") != 0 ||
+        receipt.selector_dispatch_pc == 0U || receipt.sal_read_pc == 0U ||
+        receipt.driver_output_pc == 0U) {
+        receipt.status = NEXUS_V1_SAL_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.map_attribute = target.map_attribute;
+    receipt.sal_offset = target.sal_offset;
+    receipt.sal_size = target.sal_size;
+    receipt.canonical_sal_fnv1a64 = target.canonical_sal_fnv1a64;
+    receipt.canonical_map_fnv1a64 = target.canonical_map_fnv1a64;
+    receipt.capture_target_bound = 1;
+    receipt.original_saturn_execution_claimed = 1;
+    receipt.trace_chain_complete = 1;
+    receipt.driver_dispatch_proven = 0;
+    receipt.sal_decode_proven = 0;
+    receipt.playback_permitted = 0;
+    receipt.status = NEXUS_V1_SAL_TRACE_ADMITTED_OPAQUE;
+    engine->sound_trace_admission = receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_current_level_sal_trace_admission_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_SAL_TRACE_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->blocks_real_sfx_playback = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->sound_trace_admission;
+    return 0;
 }
 
 static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data, size_t size) {
