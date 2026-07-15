@@ -21,7 +21,8 @@
  *   Line 2 (y=50..61): 6 available rune symbols drawn by
  *     F0397_MENUS_DrawAvailableSymbols. First char = 96 + 6*SymbolStep,
  *     6 chars in C04_COLOR_CYAN on C00_COLOR_BLACK, x = 239 + 14*i,
- *     y = 58.
+ *     y = 58. Champion.SymbolStep is the original 0..3 ring maintained by
+ *     SYMBOL.C F0399/F0400; values outside that domain are rejected.
  *   Line 3 (y=62..73): up to 4 currently-typed champion symbols drawn by
  *     F0398_MENUS_DrawChampionSymbols. The first strlen(Symbols) chars
  *     are filled from Champion->Symbols[0..N-1], the rest are padded
@@ -108,6 +109,7 @@ extern "C" {
 #define DM1_V1_CPSAO_LINE3_Y1_PC34 73
 
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34 6
+#define DM1_V1_CPSAO_SYMBOL_STEP_COUNT_PC34 4
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_BASE_PC34 96
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_STEP_PC34 14
 #define DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 239

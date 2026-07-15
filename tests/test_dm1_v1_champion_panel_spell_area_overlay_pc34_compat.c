@@ -14,6 +14,7 @@
  * - SPELDRAW.C:36-90 F0393 4-tab x0 columns and CurrentHealth / party
  *   count gate.
  * - MENUDRAW.C:47-80 F0397 6-symbol window starting at 96+6*SymbolStep.
+ * - SYMBOL.C F0399/F0400 keeps Champion.SymbolStep in the 0..3 ring.
  * - MENUDRAW.C:83-117 F0398 strlen(Symbols) fill + space-pad tail.
  */
 
@@ -192,6 +193,8 @@ static void test_contract(void)
                    "F0393 in evidence");
     check_contains("source.f0397", evidence, "F0397",
                    "F0397 in evidence");
+    check_contains("source.symbolStepRing", evidence, "0..3 ring",
+                   "SYMBOL.C F0399/F0400 SymbolStep ring evidence");
     check_contains("source.f0398", evidence, "F0398",
                    "F0398 in evidence");
     check_contains("source.f0396", evidence, "F0396",
@@ -520,6 +523,10 @@ static void test_dead_champion_excluded_from_tabs(void)
               "champion 2 dead -> not present");
     check_int("deadExcl.l1c3present", plan.line1[3].present, 0,
               "champion 3 dead -> not present");
+    check_int("deadExcl.l1c2idx", plan.line1[2].champion_index, 2,
+              "dead champion keeps its own tab receipt slot");
+    check_int("deadExcl.l1c3idx", plan.line1[3].champion_index, 3,
+              "out-of-party champion keeps its own tab receipt slot");
     check_int("deadExcl.l1c2hl", plan.line1[2].highlighted, 0,
               "dead champion cannot be highlighted");
     check_int("deadExcl.l1c3hl", plan.line1[3].highlighted, 0,
@@ -628,10 +635,19 @@ static void test_validation_guards(void)
     in.previous_caster_index = 0;
     in.requested_caster_index = 0;
     in.party_champion_count = 4;
-    in.symbol_step = 6;
-    check_int("badStep.build",
+    in.symbol_step = 4;
+    check_int("badStep4.build",
               dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, &plan),
-              0, "SymbolStep > 5");
+              0, "SymbolStep row 4 is outside the source 0..3 ring");
+
+    reset_input(&in);
+    in.previous_caster_index = 0;
+    in.requested_caster_index = 0;
+    in.party_champion_count = 4;
+    in.symbol_step = 5;
+    check_int("badStep5.build",
+              dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, &plan),
+              0, "SymbolStep row 5 is outside the source 0..3 ring");
 
     check_int("nullOut.build",
               dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, NULL),

@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 spell-HUD SymbolStep/tab receipt hardening:
+  the F0394/F0397/F0398 spell-area overlay contract now admits only the
+  original champion-owned SymbolStep ring `0..3` from SYMBOL.C F0399/F0400,
+  rejecting rows 4/5 instead of synthesizing unavailable rune material. The
+  F0393 tab receipt also remains keyed by champion slot, so dead or
+  out-of-party HoC/mirror candidates cannot pack later tab data into stale
+  HUD rows. Focused `dm1_v1_champion_panel_spell_area_overlay_pc34_compat`
+  coverage passes.
+
 - ✅ 2026-07-15 DM2 active GRAPHICSSET scene-material gate: M11 scene
   command planning now matches skproject `UPDATE_GFXSET` by requiring the
   active set's `SCENE_COLORKEY`/`SCENE_FLAGS` plus real floor/ceiling GDAT
