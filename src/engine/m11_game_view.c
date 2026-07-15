@@ -2911,6 +2911,30 @@ static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
     }
 }
 
+/* CHAMDRAW.C F0623:697 passes F0288(damage, C0_FALSE, 3) to F0053 with
+ * C15 foreground and C08 background. A missing original font is no-draw. */
+static void m11_draw_v1_damage_number_text(unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight,
+                                           int x,
+                                           int y,
+                                           const char* text) {
+    int i;
+    if (!framebuffer || !g_activeOriginalFont ||
+        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return;
+    }
+    for (i = 0; i < 3; ++i) {
+        if (!text || text[i] == '\0') {
+            break;
+        }
+        (void)M11_Font_DrawChar(
+            g_activeOriginalFont, framebuffer, framebufferWidth,
+            framebufferHeight, x + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34, y,
+            (unsigned char)text[i], M11_COLOR_WHITE, M11_COLOR_LIGHT_RED, 1);
+    }
+}
+
 static const M11_TextStyle *m11_csb_startup_text_style(int style);
 static void m11_draw_csb_startup_plan_text(
     unsigned char *framebuffer,
@@ -36653,6 +36677,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     (!useV2PartyHud &&
                      state->inventoryPanelActive &&
                      slot == state->world.party.activeChampionIndex);
+                int drewDamageSurface = 0;
                 if (state->assetsAvailable) {
                     const M11_AssetSlot* dmgAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
@@ -36707,9 +36732,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             0, 0, dmgW, dmgH,
                             framebuffer, framebufferWidth, framebufferHeight,
                             dmgX, dmgY, 0);
+                        drewDamageSurface = 1;
                     }
                 }
-                /* Always draw the damage number (even without assets).
+                /* Draw the damage number after its source surface.
                  * ReDMCSB CHAMPION.C F0320 lines 1745-1775 (DM1 PC34
                  * MEDIA009 path) uses fixed x/y origins for the 1/2/3-digit
                  * damage string instead of centering in C167/C179. */
@@ -36732,9 +36758,18 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             dmgNumX = x;
                             dmgNumY = y;
                         }
-                        m11_draw_text(framebuffer, framebufferWidth,
-                                      framebufferHeight,
-                                      dmgNumX, dmgNumY, dmgNum, &dmgStyle);
+                        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                            if (drewDamageSurface) {
+                                m11_draw_v1_damage_number_text(
+                                    framebuffer, framebufferWidth,
+                                    framebufferHeight,
+                                    dmgNumX, dmgNumY, dmgNum);
+                            }
+                        } else {
+                            m11_draw_text(framebuffer, framebufferWidth,
+                                          framebufferHeight,
+                                          dmgNumX, dmgNumY, dmgNum, &dmgStyle);
+                        }
                     } else {
                         int dmgBaseW = 67;
                         int dmgBaseH = 29;

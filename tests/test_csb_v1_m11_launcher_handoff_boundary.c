@@ -732,6 +732,80 @@ static void run_real_launcher_handoff_if_available(void) {
         view.world.party.direction = savedPartyDirection;
     }
     {
+        M11_AssetSlot *c033 = (M11_AssetSlot *)M11_AssetLoader_Load(
+            &view.assetLoader, 33u);
+        M11_AssetSlot *c020 = (M11_AssetSlot *)M11_AssetLoader_Load(
+            &view.assetLoader, 20u);
+        DM1_V1_ChampionStatusRectPc34 handRect;
+        struct ChampionState_Compat savedChampion = view.world.party.champions[0];
+        int savedChampionCount = view.world.party.championCount;
+        unsigned short savedC033Width = c033 ? c033->width : 0u;
+        unsigned short savedC020Width = c020 ? c020->width : 0u;
+
+        M11_AssetSlot *c015 = (M11_AssetSlot *)M11_AssetLoader_Load(
+            &view.assetLoader, 15u);
+        DM1_V1_ChampionStatusRectPc34 numberOrigin;
+        int savedFontAvailable = view.originalFontAvailable;
+        int savedDamageTimer = view.championDamageTimer[0];
+        int savedDamageAmount = view.championDamageAmount[0];
+        unsigned short savedC015Width = c015 ? c015->width : 0u;
+
+        expect_true(c033 && c033->pixels && c033->loaded &&
+                        c033->width == 18u && c033->height == 18u,
+                    "M11 CSB exposes the authentic C033 hand-slot surface");
+        expect_true(dm1_v1_champion_status_hand_slot_box_rect_pc34(
+                        0, 0, &handRect) == 1,
+                    "M11 CSB resolves C211 ready-hand geometry");
+        expect_true(c015 && c015->pixels && c015->loaded &&
+                        c015->width == 45u && c015->height == 7u,
+                    "M11 CSB exposes the authentic C015 damage surface");
+        expect_true(dm1_v1_champion_damage_number_origin_variant_pc34(
+                        0, 42, 0, &numberOrigin) == 1,
+                    "M11 CSB resolves F0320 two-digit damage origin");
+        view.world.party.championCount = 1;
+        memset(&view.world.party.champions[0], 0,
+               sizeof(view.world.party.champions[0]));
+        view.world.party.champions[0].present = 1;
+        view.world.party.champions[0].hp.current = 1;
+        view.world.party.champions[0].hp.maximum = 1;
+        view.world.party.champions[0].stamina.current = 1;
+        view.world.party.champions[0].stamina.maximum = 1;
+        view.world.party.champions[0].mana.current = 1;
+        view.world.party.champions[0].mana.maximum = 1;
+        if (c033) c033->width = 0u;
+        if (c020) c020->width = 0u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(frame_rect_is_color(
+                        framebuffer, handRect.x, handRect.y,
+                        handRect.w, handRect.h,
+                        (unsigned char)
+                            dm1_v1_champion_status_box_fill_color_pc34()),
+                    "M11 CSB leaves C211 source-clear when C033/C020 are unavailable");
+        if (c033) c033->width = savedC033Width;
+        if (c020) c020->width = savedC020Width;
+        view.originalFontAvailable = 0;
+        if (c015) c015->width = 0u;
+        view.championDamageTimer[0] = 0;
+        view.championDamageAmount[0] = 0;
+        memset(movement_base_frame, 0xff, sizeof(movement_base_frame));
+        M11_GameView_Draw(&view, movement_base_frame, 320, 200);
+        view.championDamageTimer[0] = 1;
+        view.championDamageAmount[0] = 42;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(frame_rect_matches(
+                        movement_base_frame, framebuffer,
+                        numberOrigin.x, numberOrigin.y, 12, 6),
+                    "M11 CSB leaves F0053 damage text blank without C015/font bytes");
+        if (c015) c015->width = savedC015Width;
+        view.championDamageTimer[0] = savedDamageTimer;
+        view.championDamageAmount[0] = savedDamageAmount;
+        view.originalFontAvailable = savedFontAvailable;
+        view.world.party.champions[0] = savedChampion;
+        view.world.party.championCount = savedChampionCount;
+    }
+     {
         CSB_V1_StartupRuntimeAssetSession_PC34 *session =
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
                 view.csbStartupRuntimeAssetSession;

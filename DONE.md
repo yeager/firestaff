@@ -15,6 +15,12 @@
   record's exact Structure1B reference count and first/last owning grid cell.
   This is authenticated DGN geometry provenance only and cannot draw or infer
    collision semantics.
+- 2026-07-15 CSB C015 damage-text source gate: CSB F0623/F0320 feedback now
+  emits its 1–3 digit damage number only through the loaded F0053 original
+  font with C15-on-C08 colors. Missing C015/font bytes leave the source-clear
+  status surface untouched; the M11 small-font substitute is removed. The
+  real-package launcher regression verifies that missing C015/font cannot
+   create host damage digits.
 
 - 2026-07-15 CSB C028 champion-icon source gate: CSB party-position icons
   now require the complete 76x14 C028 strip from the selected GRAPHICS.DAT.
