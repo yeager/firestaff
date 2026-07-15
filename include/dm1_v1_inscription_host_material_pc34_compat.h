@@ -23,6 +23,14 @@ typedef struct DM1_V1_InscriptionHostMaterialReceiptPc34 {
         lines[DM1_V1_INSCRIPTION_MAX_LINES];
 } DM1_V1_InscriptionHostMaterialReceiptPc34;
 
+/* ReDMCSB DUNGEON.C F0168 reads TEXTSTRING from G0284 before checking
+ * Visible and TextDataWordOffset. Keep the HoC renderer on that raw PC3.4
+ * record: the decoded DungeonTextString mirror is not an authority here. */
+int dm1_v1_inscription_get_visible_raw_text_offset_pc34(
+    const struct DungeonThings_Compat* things,
+    int textStringIndex,
+    int* outTextDataWordOffset);
+
 int dm1_v1_inscription_host_material_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
