@@ -15544,6 +15544,18 @@ canonical 39,437-byte PC G1 `DUNGEON.DAT` proves two placements of ObjectID
 `0xd407`, at `(5,8)` and `(6,1)`. Verification: real-data Weapon test and
 focused 87-check dungeon-loader gate passed.
 
+# ✅ 2026-07-15 DM2 direct DB5 Weapon GDAT no-draw gate
+
+`Weapon::ItemType()` now has a source-bound runtime material route to
+`WEAPONS/item/F9`, retaining the direct G1 owner tile, ObjectID, direction,
+raw hash, image metadata, and local-palette hash only when every exact GDAT
+read succeeds. Boot and runtime refresh the receipt with the active map.
+The local canonical corpus proves the safety boundary: its two direct map-17
+DB5 roots use item 126, but `GRAPHICS.DAT` contains no exact
+`WEAPONS/126/dtImage/F9`; raw lookup is attempted once and the route rejects
+before metadata or palette access. This is deliberately no-draw, not a
+substitute item surface. Verification: local canonical real-data gate.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at

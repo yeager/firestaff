@@ -4520,6 +4520,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-13 update: direct DB5 `Weapon` roots on runtime-admitted map 17
     now expose only `DME.h` `ItemType`, `Important`, and `Charges` from `w2`.
     `w0`, every other item family, and all object traversal remain unavailable.
+  - 2026-07-15 update: the direct DB5 `Weapon::ItemType()` ->
+    `WEAPONS/item/F9` material route is now explicitly admitted through a
+    G1/GDAT receipt. The local canonical G1's two `item=126` roots reach the
+    exact query, but its paired `GRAPHICS.DAT` has no `WEAPONS/126/F9` image.
+    The receipt therefore fails before metadata/palette lookup and runtime
+    retains no weapon map-chip material. Keep this as no-draw until a corpus
+    supplies the exact original image; never borrow another item's art.
   - 2026-07-13 update: direct DB9 `Container` roots on runtime-admitted map 9
     now expose only `DME.h` `IsOpened` and `ContainerType` bits from `b4`.
     `w0`, the `w2` contained-object ObjectID, and all container traversal stay

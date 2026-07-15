@@ -9129,6 +9129,22 @@ if(BUILD_TESTING)
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical DB5 Weapon -> WEAPONS/F9 receipt; original media is required,
+    # so CI only builds the executable and local runs pass both data paths.
+    add_executable(test_dm2_v1_g1_weapon_map_chip_real_data
+        tests/test_dm2_v1_g1_weapon_map_chip_real_data.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_weapon_map_chip_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_weapon_map_chip_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     # Canonical G1 direct-root census is build-only because it requires user
     # media and deliberately reads no record payload or GenericRecord::w0.
     add_executable(test_dm2_v1_g1_direct_root_family_census_real_data

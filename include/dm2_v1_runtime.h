@@ -297,6 +297,8 @@ int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_creature_map_chip_receipt(
     DM2_V1_G1CreatureMapChipRuntimeReceipt *out_receipt);
+int dm2_v1_runtime_g1_weapon_map_chip_receipt(
+    DM2_V1_G1WeaponMapChipRuntimeReceipt *out_receipt);
 /* Source-classified G1 tile/root handoff used by the live dungeon frame.
  * A direct class without a source material is reported blocked, never drawn
  * through a generic material. */

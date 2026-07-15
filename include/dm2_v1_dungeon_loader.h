@@ -363,11 +363,43 @@ typedef struct {
         materials[DM2_V1_G1_CREATURE_MAP_CHIP_MAX];
 } DM2_V1_G1CreatureMapChipRuntimeReceipt;
 
+#define DM2_V1_G1_WEAPON_MAP_CHIP_MAX 32
+
+/* skproject/SKWIN/DME.h::Weapon::ItemType() selects the original
+ * WEAPONS/itemType/F9 map-chip.  These fields retain the direct G1 owner;
+ * they are not a generic item-type cache. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint8_t direction;
+    uint8_t item_type;
+    uint32_t raw_hash;
+    uint32_t raw_byte_count;
+    int image_width;
+    int image_height;
+    int image_format;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
+} DM2_V1_G1WeaponMapChipMaterial;
+
+typedef struct {
+    int valid;
+    int map;
+    int source_weapon_root_count;
+    int material_count;
+    DM2_V1_G1WeaponMapChipMaterial
+        materials[DM2_V1_G1_WEAPON_MAP_CHIP_MAX];
+} DM2_V1_G1WeaponMapChipRuntimeReceipt;
+
 /* Hashes one admitted DB4 -> CREATURES/type/F9 material together with the
  * original G1 owner fields. This is a receipt identity, not a replacement
  * image or a generic creature-type lookup. */
 int dm2_v1_g1_creature_map_chip_material_identity(
     const DM2_V1_G1CreatureMapChipMaterial *material,
+    uint32_t *out_identity);
+int dm2_v1_g1_weapon_map_chip_material_identity(
+    const DM2_V1_G1WeaponMapChipMaterial *material,
     uint32_t *out_identity);
 
 /* The dungeon layer owns G1 record addressing. The boot layer supplies this
@@ -1083,6 +1115,19 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     void *read_userdata,
     DM2_V1_G1CreatureMapChipRuntimeReceipt *out);
 
+/* Direct DB5 roots use Weapon::ItemType() exactly as DRAW_MAP_CHIP does:
+ * WEAPONS/itemType/dtImage/F9 plus that image's local palette.  The receipt
+ * admits no inferred record chain and is invalid as a whole on missing or
+ * malformed original GDAT material. */
+int dm2_v1_dungeon_materialize_g1_weapon_map_chip_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatRawRead read_raw,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1WeaponMapChipRuntimeReceipt *out);
+
 /* Used by the dungeon viewport after the real F9 fetch/decode. A DB4
  * creature is drawable only when its decoded surface matches the source
  * metadata receipt for that creature type. */
@@ -1101,6 +1146,15 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
     int x,
     int y,
     int creature_type,
+    int image_width,
+    int image_height,
+    uint32_t local_palette_hash);
+int dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
+    const DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt,
+    uint16_t object_id,
+    int x,
+    int y,
+    int item_type,
     int image_width,
     int image_height,
     uint32_t local_palette_hash);
