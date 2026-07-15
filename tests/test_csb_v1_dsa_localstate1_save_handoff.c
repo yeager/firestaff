@@ -97,6 +97,15 @@ static void make_real_shape(uint8_t bytes[SAVE_BYTES])
              rcs_checksum(bytes + DSA_OFFSET, DSA_CHECKSUM_OFFSET - DSA_OFFSET));
 }
 
+static void make_localstate2_shape(uint8_t bytes[SAVE_BYTES])
+{
+    make_real_shape(bytes);
+    bytes[DSA_OFFSET + 86u] = 2u;
+    put_le32(bytes, DSA_CHECKSUM_OFFSET,
+             rcs_checksum(bytes + DSA_OFFSET,
+                          DSA_CHECKSUM_OFFSET - DSA_OFFSET));
+}
+
 static void make_transfer_shape(uint8_t bytes[TRANSFER_SAVE_BYTES])
 {
     uint8_t header[EXTENDED_HEADER_BYTES];
@@ -152,6 +161,8 @@ int main(void)
     CSB_V1_CSBWinExtendedDSAReport report;
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_RuntimeProfile policy_profile;
+    CSB_V1_DungeonData localstate2_dungeon;
+    uint8_t localstate2_raw[16] = { 0 };
     CSB_V1_CSBWinDSAFilterStackRunnerContext policy_runner;
     CSB_V1_DSAImportedAction policy_action;
     uint16_t policy_disable_words[] = { 0x0686u, 1u, 0x090bu };
@@ -247,6 +258,47 @@ int main(void)
                   .persistent_state == 1u &&
               profile.csbwin_appended_tail_fnv1a != before_hash,
           "bad DSA RCS fails closed without publishing a new master state");
+    csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
+
+    make_localstate2_shape(bytes);
+    memset(&profile, 0, sizeof(profile));
+    memset(&localstate2_dungeon, 0, sizeof(localstate2_dungeon));
+    check(initialize_profile(&profile, bytes, sizeof(bytes)) == 1,
+          "real-shaped LocalState=2 receipt imports");
+    /* Original compact DB3 type-47: ParameterB/word6 starts at state 1. */
+    localstate2_raw[10] = 0x2fu;
+    localstate2_raw[11] = 0x01u;
+    localstate2_raw[14] = 1u;
+    localstate2_dungeon.raw_data = localstate2_raw;
+    localstate2_dungeon.raw_size = (int)sizeof(localstate2_raw);
+    localstate2_dungeon.thing_data_bases[CSB_V1_THING_TYPE_ACTUATOR] = 8;
+    localstate2_dungeon.thing_type_counts[CSB_V1_THING_TYPE_ACTUATOR] = 1;
+    profile.dungeon_handle = &localstate2_dungeon;
+    memset(&runner, 0, sizeof(runner));
+    {
+        CSB_V1_RuntimeDSAFilterBinding binding;
+        memset(&binding, 0, sizeof(binding));
+        binding.dsa_id = 7u;
+        binding.actuator_identity_valid = 1;
+        binding.location.actuator_thing =
+            (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
+        check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+                  &profile, &binding, 1u, 0, 0u, &runner) == 1,
+              "LocalState=2 runner owns its exact compact DB3");
+    }
+    action = csb_v1_chaos_find_imported_action(
+        &profile.csbwin_extended_dsa_state, 7, 1u, 0);
+    check(action != NULL &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, action, NULL, 0, NULL) == 1 &&
+              localstate2_raw[14] == 2u && localstate2_raw[15] == 0u,
+          "PutState commits compact LocalState=2 through original DB3 bytes");
+    localstate2_raw[15] = 0x40u;
+    check(action != NULL &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, action, NULL, 0, NULL) == 0 &&
+              localstate2_raw[14] == 2u && localstate2_raw[15] == 0x40u,
+          "widened LocalState=2 DB3 state remains fail-closed");
     csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
 
     make_transfer_shape(transfer_bytes);
