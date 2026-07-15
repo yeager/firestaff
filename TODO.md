@@ -6388,6 +6388,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   UV, culling, and raster semantics still need independent original-Saturn
   capture proof before any draw or decoder can be enabled.
 
+  The DGN viewport now consumes that package geometry as a separate no-draw
+  source lane before its material/raster gate. It is deliberately not an M11
+  presentation route: no authentic Saturn pixel/palette/VDP1 format proof is
+  available, so the packet cannot produce a host frame or unblock rendering.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no

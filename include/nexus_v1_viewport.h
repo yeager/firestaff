@@ -25,6 +25,12 @@ typedef struct {
     int structure3_source_packet_consumed;
     int structure3_source_geometry_bound;
     int structure3_source_no_draw;
+    /* A package-owned Structure3 face/vertex/normal packet may be consumed
+     * before any external Saturn capture exists. It is a no-draw source
+     * staging lane, separate from the opaque capture packet above. */
+    int structure3_package_geometry_consumed;
+    int structure3_package_geometry_bound;
+    int structure3_package_geometry_no_draw;
     int party_x;
     int party_y;
     int party_dir;
@@ -109,6 +115,7 @@ typedef struct {
     uint8_t wall_material_palette_map[NEXUS_DMDF_MATERIAL_COUNT][256];
     int material_palette_valid;
     Nexus_V1_DgnStructure3RenderPacket structure3_source_packet;
+    Nexus_V1_DgnStructure3PackageGeometryPacket structure3_package_geometry;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 
