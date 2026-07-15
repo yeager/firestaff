@@ -199,6 +199,18 @@ typedef struct DM1_ChampionPanel_IconBitmapModel {
     int applyInvisibilityPalette;
 } DM1_ChampionPanel_IconBitmapModel;
 
+/* A CHAMDRAW surface may be drawn only when the caller retained the exact
+ * GRAPHICS.DAT graphic and its original indexed dimensions. */
+int DM1_ChampionPanel_AssetSurfaceAccepted(
+    int graphicIndex,
+    int expectedGraphicIndex,
+    int loaded,
+    int hasPixels,
+    int width,
+    int height,
+    int expectedWidth,
+    int expectedHeight);
+
 typedef struct DM1_ChampionPanel_BarFillModel {
     int zoneId;
     int x;

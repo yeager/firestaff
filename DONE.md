@@ -25,6 +25,11 @@
   verified GRAPHICS.DAT C013 panel unchanged and rejects M11's generic
   hatch/cyan keyboard overlay. The real-package launcher regression proves a
    pending keyboard visual mask cannot alter the original C013 rectangle.
+- 2026-07-15 DM1 CHAMDRAW HUD material gate: the live F0622 champion-icon
+  path now requires the complete C028 76x14 indexed GRAPHICS.DAT strip before
+  its color fill/blit, and normal V1 status boxes no longer substitute a
+  procedural frame when their exact source surface is absent. Focused tests
+   cover correct graphic identity, pixels, and dimensions plus rejection.
 
 - 2026-07-15 DM1 F0111 D3 door-front real-media gate: removed the active
   host-colored fallback from the F0676/F0677 C3700/C3710 panel route. It now

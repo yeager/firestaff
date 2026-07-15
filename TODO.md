@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 CHAMDRAW HUD follow-up: F0622 champion-position icons and
+  F0292 dead status boxes now require their exact PC34 GRAPHICS.DAT surfaces.
+  Remaining work is a real four-champion HUD capture across live/dead and
+  invisibility states; missing media must remain unavailable, not a colored
+  icon tile or procedural status frame.
+
 - 2026-07-15 DM1 ornament follow-up: F0107/F0108/F0109 runtime consumers now
   require F0173-owned DUNGEON.DAT local indices and original GRAPHICS.DAT
   pixels. Remaining work is broader real HoC/Mac capture across all wall and

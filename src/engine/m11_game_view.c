@@ -36217,6 +36217,22 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             (unsigned int)dm1_v1_graphic_champion_icons_pc34());
     }
 
+    /* F0622 first fills the temporary 19x14 bitmap, then overlays C028.
+     * Without the verified original strip, that fill alone is a fabricated
+     * party marker, so the complete icon route stays unavailable. */
+    if (!iconStrip ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_champion_icons_pc34(),
+            DM1_GFX_CHAMPION_ICONS,
+            iconStrip->loaded,
+            iconStrip->pixels != NULL,
+            iconStrip->width,
+            iconStrip->height,
+            DM1_CHAMPION_ICON_WIDTH * 4,
+            DM1_CHAMPION_ICON_HEIGHT)) {
+        return;
+    }
+
     /* ReDMCSB CHAMDRAW.C F0288 clears C113..C116, fills a 19x14
      * temporary bitmap with G0046_auc_Graphic562_ChampionColor[slot],
      * overlays C028_GRAPHIC_CHAMPION_ICONS with C12 transparent, then
@@ -36253,8 +36269,7 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             }
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x, y, w, h, (unsigned char)iconModel.fillColor);
-            if (iconStrip && iconStrip->loaded && iconStrip->pixels &&
-                iconStrip->width == iconModel.width * 4 &&
+            if (iconStrip->width == iconModel.width * 4 &&
                 iconStrip->height == iconModel.height &&
                 iconModel.sourceX >= 0 &&
                 iconModel.sourceX + iconModel.width <= iconStrip->width) {
@@ -36355,7 +36370,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
                         baseGfx);
-                    if (boxAsset && boxAsset->width == slotW && boxAsset->height == slotH) {
+                    if (boxAsset &&
+                        DM1_ChampionPanel_AssetSurfaceAccepted(
+                            baseGfx, baseGfx,
+                            boxAsset->loaded,
+                            boxAsset->pixels != NULL,
+                            boxAsset->width, boxAsset->height,
+                            slotW, slotH)) {
                         M11_AssetLoader_BlitRegion(boxAsset,
                             0, 0, slotW, slotH,
                             framebuffer, framebufferWidth, framebufferHeight,
@@ -36371,7 +36392,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     drewStatusBox = 1;
                 }
             }
-            if (!drewStatusBox) {
+            if (!drewStatusBox && !m11_v1_chrome_mode_enabled()) {
                 /* Procedural fallback.  V1 uses the same source status-box
                  * rectangle as C007/C008 (67x29); V2 keeps the legacy
                  * 71x28 shell baked into its vertical-slice HUD assets. */
