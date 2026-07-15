@@ -383,6 +383,7 @@ transition_main_ram_loader_call_entry_count=$(trace_count '^main_ram_loader_call
 transition_main_ram_loader_entry_next_count=$(trace_count '^main_ram_loader_entry_next ' "$main_ram_loader_trace")
 transition_main_ram_loader_entry_successor_next_count=$(trace_count '^main_ram_loader_entry_successor_next ' "$main_ram_loader_trace")
 transition_main_ram_loader_bra_count=$(trace_count '^main_ram_loader_bra ' "$main_ram_loader_trace")
+transition_main_ram_loader_bra_target_count=$(trace_count '^main_ram_loader_bra_target ' "$main_ram_loader_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'track02_md5=%s\n' "$track02_md5"
@@ -407,6 +408,7 @@ transition_main_ram_loader_bra_count=$(trace_count '^main_ram_loader_bra ' "$mai
     printf 'main_ram_loader_entry_next=%s\n' "$transition_main_ram_loader_entry_next_count"
     printf 'main_ram_loader_entry_successor_next=%s\n' "$transition_main_ram_loader_entry_successor_next_count"
     printf 'main_ram_loader_bra=%s\n' "$transition_main_ram_loader_bra_count"
+    printf 'main_ram_loader_bra_targets=%s\n' "$transition_main_ram_loader_bra_target_count"
     trace_input_order_receipt "$input_trace"
     if [[ -n "$host_key" ]]; then
         printf 'requested_host_key=%s\n' "$host_key"
