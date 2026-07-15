@@ -531,6 +531,9 @@
   - 2026-07-15 update: the visible `DRAW_WALL` command count now crosses the
     boot/M11 host boundary with its source hash. M11 rejects a stale count,
     so a shorter wall panel list cannot reuse an otherwise valid material hash.
+  - 2026-07-15 update: ordered projectile GDAT receipts now cross boot/M11,
+    including their exact count. A stale missile/cloud count is rejected at
+    presentation; no generic projectile image can fill the gap.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented
