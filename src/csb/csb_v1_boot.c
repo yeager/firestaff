@@ -1645,6 +1645,42 @@ void csb_v1_boot_startup_door_runtime_receipt_init_pc34(
     csb_v1_runtime_m11_mirror_receipt_init_pc34(&receipt->runtime_mirror);
 }
 
+static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
+    const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
+
+    if (!profile || !session || !profile->assets_verified ||
+        !profile->graphics_verified || !profile->dungeon_verified ||
+        !profile->graphics_path[0] || !session->valid ||
+        !session->real_asset_matched || !session->full_startup_ready ||
+        !session->rejects_legacy_wrappers ||
+        !session->playback.no_fallback_routes ||
+        !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
+        !session->hud_assets_bound || !session->hud_inventory_binding.verified ||
+        !session->hud_resurrect_binding.verified ||
+        session->hud_inventory_binding.source !=
+            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
+        session->hud_resurrect_binding.source !=
+            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
+        session->hud_inventory_binding.graphic_index != 17u ||
+        session->hud_resurrect_binding.graphic_index != 40u ||
+        strcmp(session->hud_inventory_binding.path, profile->graphics_path) != 0 ||
+        strcmp(session->hud_resurrect_binding.path, profile->graphics_path) != 0) {
+        return 0;
+    }
+
+    inventory = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    resurrect = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    return inventory->valid && inventory->pixels &&
+        inventory->source_asset_id == 17 && resurrect->valid &&
+        resurrect->pixels && resurrect->source_asset_id == 40;
+}
+
 int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -1675,9 +1711,13 @@ int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
     out_receipt->door_opening_finished = 1;
     /* ReDMCSB ENTRANCE.C F0806 lines 857-889 and CSBWin CSBCode.cpp
      * lines 9515-9535 only return from the entrance after the door action.
-     * Build the live dungeon/HUD mirror before changing the media owner so a
-     * failed runtime mirror cannot expose a HUD with stale entrance state. */
-    if (!csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+     * C017/C040 must remain bound to the verified GRAPHICS.DAT that supplied
+     * this boot profile. Build the live dungeon/HUD mirror before changing
+     * the media owner so a swapped session or failed mirror cannot expose a
+     * HUD with stale entrance state. */
+    if (!csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
+            profile, session) ||
+        !csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
             &profile->runtime, &out_receipt->runtime_mirror) ||
         !out_receipt->runtime_mirror.valid ||
         !out_receipt->runtime_mirror.view.level_loaded) {
@@ -2090,8 +2130,8 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
         out_receipt->title_frame = route->presentation.title_frame;
         out_receipt->title_frame_max = route->presentation.title_frame_max;
         /* ReDMCSB TITLE.C F0437 lines 424-463 draws CM58 PRESENTS for 60
-         * ticks, animates 18 PC-path CM59 CHAOS frames through source steps
-         * 2..19, holds CHAOS for two vblanks, then blits C426 STRIKES BACK.
+         * ticks, animates 20 PC-path CM59 CHAOS frames through source steps
+         * 2..21, holds CHAOS for two vblanks, then blits C426 STRIKES BACK.
          * CSBWin/Viewport.cpp keeps the active
          * title/HUD surface as view-owned state. Publish the exact stage and
          * source/destination route here so M11 does not derive
@@ -3955,14 +3995,14 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
             boot_profile,
             out_receipt->source_title_presents_ticks +
                 out_receipt->source_title_chaos_zoom_ticks,
-            19,
+            21,
             CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
             &out_receipt->title_sample_hashes[2]);
     out_receipt->title_strikes_back_capture_ready =
         csb_v1_boot_startup_visual_title_sample_pc34(
             boot_profile,
             csb_v1_startup_title_total_ticks_pc34() - 1,
-            20,
+            22,
             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
             &out_receipt->title_sample_hashes[3]);
     out_receipt->title_sample_count =
@@ -4177,8 +4217,8 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     static const int title_source_steps[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
         1,
         2,
-        19,
-        20
+        21,
+        22
     };
     int title_frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t runtime_hash = 2166136261u;

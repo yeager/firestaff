@@ -329,6 +329,18 @@ static uint32_t csb_v1_startup_raster_hash_pc34(const unsigned char *pixels,
     return hash;
 }
 
+static int csb_v1_startup_raster_has_visible_pixels_pc34(
+    const unsigned char *pixels, size_t pixel_count)
+{
+    size_t i;
+
+    if (!pixels || pixel_count == 0u) return 0;
+    for (i = 0; i < pixel_count; ++i) {
+        if (pixels[i] != 0u) return 1;
+    }
+    return 0;
+}
+
 void csb_v1_boot_startup_runtime_raster_release_pc34(
     CSB_V1_StartupRuntimeRaster_PC34 *raster)
 {
@@ -361,12 +373,16 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
         surface = frame->title_surface;
         if (!surface || !surface->valid || !surface->pixels ||
+            surface->source_asset_id != plan->source_asset_id ||
+            plan->title_source_w <= 0 || plan->title_source_h <= 0 ||
             plan->title_dest_w <= 0 || plan->title_dest_h <= 0) goto done;
         copied = csb_v1_startup_raster_blit_pc34(
             pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
-            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34, surface, 0, 0,
-            surface->width, surface->height, plan->title_dest_x,
-            plan->title_dest_y, plan->title_dest_w, plan->title_dest_h,
+            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34, surface,
+            plan->title_source_x, plan->title_source_y,
+            plan->title_source_w, plan->title_source_h,
+            plan->title_dest_x, plan->title_dest_y,
+            plan->title_dest_w, plan->title_dest_h,
             plan->title_transparent_color);
         out_raster->title_composited = copied ? 1 : 0;
         out_raster->source_surface_count = copied ? 1 : 0;
@@ -447,6 +463,8 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
         out_raster->route_hash, (uint32_t)out_raster->source_surface_count);
     out_raster->valid = out_raster->pixel_hash != 0u &&
         out_raster->route_hash != 0u &&
+        csb_v1_startup_raster_has_visible_pixels_pc34(
+            pixels, (size_t)out_raster->width * out_raster->height) &&
         (out_raster->title_composited || out_raster->entrance_composited) &&
         ((plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
           plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) ||
@@ -510,12 +528,11 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
         out_frame->title_phase_mask =
             csb_v1_startup_frame_title_phase_mask_pc34(out_frame->stage);
-        if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34)
-            out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
-        else if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34)
-            out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
-        else
-            out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+        /* Keep C001 whole through the runtime boundary. TITLE.C selects
+         * C424/C425/C426 by source rectangle, so capture must consume those
+         * exact decoded PC3.4 bytes instead of a pre-cropped surrogate. */
+        out_frame->title_surface = &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
     } else if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
         out_frame->entrance_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34];
     } else if (plan->surface != CSB_V1_STARTUP_RENDER_NONE_PC34 &&
