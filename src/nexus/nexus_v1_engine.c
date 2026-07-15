@@ -3938,6 +3938,7 @@ int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
                        "face_row_fnv1a32=%08x\nreferenced_vertex_rows_fnv1a32=%08x\n"
                        "normal_row_fnv1a32=%08x\nfill_selector=%u\n"
                        "descriptor_index=%d\ndescriptor_fnv1a64=%016llx\n"
+                       "opaque_payload_fnv1a64=%016llx\n"
                        "image_anchor_offset=%u\nimage_next_anchor_offset=%u\n"
                        "image_candidate_byte_count=%u\nimage_candidate_fnv1a64=%016llx\n"
                        "palette_candidate_present=%d\npalette_anchor_offset=%u\n"
@@ -3971,6 +3972,8 @@ int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
                        target.material_target.descriptor_target.descriptor_index,
                        (unsigned long long)target.material_target.descriptor_target
                            .descriptor_bytes_fnv1a64,
+                       (unsigned long long)target.material_target.descriptor_target
+                           .opaque_payload_fnv1a64,
                        target.material_target.descriptor_target
                            .image_payload_anchor_offset,
                        target.material_target.descriptor_target
@@ -6157,7 +6160,8 @@ int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
         strcmp(value, NEXUS_V1_STRUCTURE2_SATURN_RAW_TRACE_MAGIC) != 0 ||
         !nexus_v1_slev_trace_value(manifest_text, manifest_size, "producer", value,
                                     sizeof(value)) ||
-        strcmp(value, "external-saturn-capture") != 0) {
+        (strcmp(value, "external-saturn-capture") != 0 &&
+         strcmp(value, "mednafen-debugger") != 0)) {
         receipt.status = NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_MALFORMED;
         *out_receipt = receipt;
         return 0;
