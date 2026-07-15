@@ -2259,6 +2259,21 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                     (size_t)count * sizeof(*variable_state));
         }
         break;
+    case 138u: /* STKOP_ModifyMessage, reached via AMPERSAND2 + 128 */
+        /* DSA.cpp:4931-4947 pops SET, CLEAR, then TOGGLE and clamps each
+         * source value above MSG_TOGGLE to MSG_TOGGLE. These values belong
+         * to one ProcessTimers invocation, never to save data or a host
+         * default, so publish them only after this complete action passes. */
+        if (!context->timer_type_modifiers_valid ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        context->timer_type_modifiers[0] = (uint8_t)(v > 3u ? 3u : v);
+        context->timer_type_modifiers[1] = (uint8_t)(w > 3u ? 3u : w);
+        context->timer_type_modifiers[2] = (uint8_t)(count > 3u ? 3u : count);
+        break;
     case 117u: /* STKOP_WhoHasTalent */
         /* DSA.cpp:4363-4380 evaluates every source party CHARDESC and
          * returns its bitmask when all requested talent bits are present. */
@@ -2458,6 +2473,12 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         context->parameter_count < 0 || context->global_variable_count < 0 ||
         context->global_variable_count > CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY ||
         (context->global_variable_count > 0 && !context->global_variables)) {
+        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    }
+    if (context->timer_type_modifiers_valid &&
+        (context->timer_type_modifiers[0] > 3u ||
+         context->timer_type_modifiers[1] > 3u ||
+         context->timer_type_modifiers[2] > 3u)) {
         return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     }
     action = csb_v1_chaos_find_imported_action(state, dsa_id, state_index,
@@ -2788,6 +2809,11 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     if (context->random_state_valid) {
         context->random_state = staged_random_state;
     }
+    if (context->timer_type_modifiers_valid) {
+        memcpy(context->timer_type_modifiers,
+               context_candidate.timer_type_modifiers,
+               sizeof(context->timer_type_modifiers));
+    }
     memcpy(context->party_champion_talents,
            context_candidate.party_champion_talents,
            sizeof(context->party_champion_talents));
@@ -2879,6 +2905,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
            sizeof(context.party_champion_health));
     context.saves_disabled_valid = runner->saves_disabled_valid;
     context.saves_disabled = runner->saves_disabled;
+    context.timer_type_modifiers_valid = runner->timer_type_modifiers_valid;
+    memcpy(context.timer_type_modifiers, runner->timer_type_modifiers,
+           sizeof(context.timer_type_modifiers));
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;
@@ -2932,6 +2961,10 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
         return 0;
     }
     if (runner->random_state_valid) runner->random_state = context.random_state;
+    if (runner->timer_type_modifiers_valid) {
+        memcpy(runner->timer_type_modifiers, context.timer_type_modifiers,
+               sizeof(runner->timer_type_modifiers));
+    }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = (int)parameter_words[i];
     }

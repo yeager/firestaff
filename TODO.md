@@ -3676,6 +3676,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       type-47 record through the profile-owned dungeon. Invalid/non-DSA
       things retain CSBWin's four `-1` result words. This is introspection
       only: it neither resolves a master nor opens DSA execution.
+    - 2026-07-15 message-remap update: authenticated `STKOP_ModifyMessage`
+      now owns CSBWin's current three-entry timer SET/CLEAR/TOGGLE remap in
+      the DSA transaction. It preserves `DSA.cpp`'s pop order and clamps
+      every value above `MSG_TOGGLE` to three; a malformed later word leaves
+      all three caller-owned values unchanged. The broader timer-handler
+      consumer matrix remains separate source work.
+    - 2026-07-15 blocked: `TEXT@`, `TEXTSAY`, `CHARNAME@`, and
+      `GLOBALTEXT!` remain closed pending the complete per-execution
+      `DSADBANK` text owner (exactly ten slots plus DB2 decode and UI
+      presentation). `MONL&D` remains closed pending the original live
+      monster-move filter parameters and activation lifetime.
     - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
       restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
       before the existing live leader-hand publication. Only the original

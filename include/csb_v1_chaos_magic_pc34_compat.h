@@ -351,6 +351,12 @@ typedef struct {
     int party_champion_health[4];
     int saves_disabled_valid;
     int saves_disabled;
+    /* CSBWin DSA.cpp:4931-4947 keeps this three-entry SET/CLEAR/TOGGLE
+     * remap in the current ProcessTimers execution only. The caller owns
+     * that timer scope; the DSA core stages all three values until the
+     * authenticated action has been fully consumed. */
+    int timer_type_modifiers_valid;
+    uint8_t timer_type_modifiers[3];
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -626,6 +632,8 @@ typedef struct {
     int party_champion_health[4];
     int saves_disabled_valid;
     int saves_disabled;
+    int timer_type_modifiers_valid;
+    uint8_t timer_type_modifiers[3];
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;
