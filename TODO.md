@@ -1,20 +1,5 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-16 DM2 runtime smoke remaining blockers: after the skproject DB0
-  door/wall-gfx runtime draw fix, `dm2_v1_runtime_handoff_smoke` still fails
-  on two independent palette gates: indoor floor/ceiling local-palette
-  consumption and outdoor sky/ground local-palette binding. Provider-backed
-  viewport-cell wall draw counts and the matching wall-plan consumption split
-  now pass in the smoke fixture. Do not regress the now-passing DB0
-  door-set/default-button/ornate/destroyed-mask/wall-gfx routes or the
-  provider-backed wall-count route while fixing the palette blockers.
-  - 2026-07-16 update: both local-palette smoke blockers are fixed. The
-    source-required renderer now allows the explicit provider/palette fixture
-    route while live boot still requires the GDAT scene plan, and outdoor
-    sky/ground preserve their decoder-owned palette receipt hashes without
-    reinterpreting them as framebuffer hashes. Remaining DM2 work moves back
-    to broader real GDAT dungeon/HUD material coverage and real-save corpus.
-
 - 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
   now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped
   C001/TITLE.DAT substitution, holds the verified title through the original
