@@ -95,6 +95,25 @@ int main(void)
                   !dm2_v1_gdat_scene_m11_plane_palette_darkness(
                       DM2_GDAT_GFXSET_FLOOR, 65u, &floor_darkness));
     }
+    {
+        uint8_t palette[] = { 0u, 1u, 42u, 255u };
+        uint8_t translation[256];
+        uint32_t translation_hash = 0u;
+
+        for (unsigned i = 0u; i < sizeof(translation); ++i) {
+            translation[i] = (uint8_t)(255u - i);
+        }
+        CHECK("TRANSLATE_PALETTE consumes the exact dt07 lookup bytes",
+              dm2_v1_gdat_scene_m11_translate_palette(
+                  palette, sizeof(palette), translation, sizeof(translation),
+                  &translation_hash) && translation_hash != 0u &&
+                  palette[0] == 255u && palette[1] == 254u &&
+                  palette[2] == 213u && palette[3] == 0u);
+        CHECK("TRANSLATE_PALETTE rejects a partial dt07 lookup",
+              !dm2_v1_gdat_scene_m11_translate_palette(
+                  palette, sizeof(palette), translation, 255u,
+                  &translation_hash) && translation_hash == 0u);
+    }
     ++scene.scene_control_hash;
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, scene.graphicsset, scene.scene_control_hash,

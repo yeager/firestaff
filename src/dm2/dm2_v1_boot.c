@@ -4679,19 +4679,21 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     candidate = *plan;
     for (size_t i = 0u; i < 2u; ++i) {
         DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
+        const uint8_t *translation;
         size_t translated_size = 0u;
         uint8_t darkness;
         uint32_t hash = 2166136261u;
 
+        translation = dm2_v1_asset_load_typed_sized(
+            &gfx->loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+            candidate.graphicsset, DM2_GDAT_ENTRY_TYPE_RAW7,
+            command->field, &translated_size);
         if (!dm2_v1_gdat_scene_m11_plane_palette_darkness(
                 command->field, c_light_parameter, &darkness) ||
-            /* _32cb_0804 takes TRANSLATE_PALETTE when dt07/class exists.
-             * Its program is not yet decoded, so it must not be replaced by
-             * the interface action table used by the stationary branch. */
-            dm2_v1_asset_load_typed_sized(
-                &gfx->loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
-                candidate.graphicsset, DM2_GDAT_ENTRY_TYPE_RAW7,
-                command->field, &translated_size) != NULL ||
+            (translation &&
+             !dm2_v1_gdat_scene_m11_translate_palette(
+                 command->palette16, sizeof(command->palette16), translation,
+                 translated_size, &command->palette_translation_hash)) ||
             (!table_loaded &&
              !dm2_v1_boot_interface_action_table(profile, &table)) ||
             !dm2_v1_interface_action_table_remap_palette(
@@ -4708,6 +4710,8 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
         hash = dm2_v1_boot_packaged_capture_hash_step(
             2166136261u, c_light_receipt_hash);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, command->field);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, command->palette_translation_hash);
         hash = dm2_v1_boot_packaged_capture_hash_step(
             hash, c_light_parameter);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, darkness);

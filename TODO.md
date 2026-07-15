@@ -480,14 +480,14 @@
 - 2026-07-15 DM2 skproject scene/light follow-up: the stationary
   `QUERY_TEMP_PICST/_32cb_0804` floor/ceiling palette route now consumes the
   authenticated `DM2_DISPLAY_VIEWPORT` `glbLightLevel * 10` parameter through
-  M11. It retains the source's `_4976_4226[0/1] == 0` result, remaps each
-  plane's own local palette with the original interface action table, and
-  binds the transformed bytes to the matching `c_light` receipt. If either
-  `GRAPHICSSET/dt07/0` or `/1` exists, M11 blocks both planes: SKProject takes
-  `TRANSLATE_PALETTE` there and Firestaff has not decoded that program yet.
-  Remaining scene work is that exact dt07 palette-translation branch plus
-  source-backed weather composition; no base-palette or host-light fallback
-  may stand in for either route.
+  M11. It retains the source's `_4976_4226[0/1] == 0` result. When
+  `GRAPHICSSET/dt07/0` or `/1` exists, M11 now consumes its exact first 256
+  bytes as Skproject `TRANSLATE_PALETTE`'s direct palette-index lookup, then
+  runs the original interface-table `_0b36_037e` light remap. The translated
+  palette and lookup window are hash-bound to the matching `c_light` receipt.
+  A truncated lookup still blocks both planes. Remaining scene work is
+  source-backed weather composition and moving-plane light semantics; no
+  base-palette or host-light fallback may stand in for either route.
 
 - 2026-07-15 DM2 scene follow-up: M11 now carries G1 MapGraphicsStyle with
   the level identity. Remaining work is source-proven light/weather compositing.

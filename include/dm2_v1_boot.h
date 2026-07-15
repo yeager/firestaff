@@ -1921,10 +1921,9 @@ int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
     uint8_t c_light_parameter,
     uint32_t c_light_receipt_hash,
     DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
-/* Applies only SKProject QUERY_TEMP_PICST/_32cb_0804's stationary fallback
- * palette branch to GRAPHICSSET floor/ceiling IMG3s.  A present dt07/0 or
- * dt07/1 record is not interchangeable with the interface action table, so
- * that unimplemented TRANSLATE_PALETTE branch fails closed. */
+/* Applies SKProject QUERY_TEMP_PICST/_32cb_0804 to GRAPHICSSET floor/ceiling
+ * IMG3s: its optional exact dt07/0 or dt07/1 direct lookup, followed by the
+ * original _0b36_037e light remap. */
 int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     DM2_V1_BootProfile *profile,
     uint8_t c_light_parameter,
