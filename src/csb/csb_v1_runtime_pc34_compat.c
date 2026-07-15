@@ -2714,17 +2714,15 @@ static void csb_v1_runtime_apply_destination_stairs(
         return;
     }
 
+    exit_direction = csb_v1_runtime_stairs_exit_direction(
+        dungeon, target_level, target_x, target_y);
+    if (exit_direction < 0) return;
     profile->current_level = target_level;
     profile->party_x = target_x;
     profile->party_y = target_y;
     profile->party_state.PartyMapX = target_x;
     profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
-    exit_direction = csb_v1_runtime_stairs_exit_direction(
-        dungeon,
-        target_level,
-        target_x,
-        target_y);
     (void)csb_v1_runtime_rotate_party(profile, exit_direction);
     result->new_party_level = target_level;
     result->stair_transition_applied = 1;
@@ -2781,17 +2779,15 @@ static void csb_v1_runtime_take_current_stairs(
         return;
     }
 
+    exit_direction = csb_v1_runtime_stairs_exit_direction(
+        dungeon, target_level, target_x, target_y);
+    if (exit_direction < 0) return;
     profile->current_level = target_level;
     profile->party_x = target_x;
     profile->party_y = target_y;
     profile->party_state.PartyMapX = target_x;
     profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
-    exit_direction = csb_v1_runtime_stairs_exit_direction(
-        dungeon,
-        target_level,
-        target_x,
-        target_y);
     (void)csb_v1_runtime_rotate_party(profile, exit_direction);
     result->new_party_level = target_level;
     result->stair_transition_applied = 1;
@@ -5702,72 +5698,9 @@ static int csb_v1_runtime_stairs_exit_direction(
     int map_x,
     int map_y)
 {
-    static const int step_east[4] = { 0, 1, 0, -1 };
-    static const int step_north[4] = { -1, 0, 1, 0 };
-    int raw_square;
-    int north_south;
-    int check_x;
-    int check_y;
-    int check_raw;
-    int check_type = 1;
-    int blocked = 0;
-
-    if (!dungeon || level < 0 || level >= dungeon->level_count) return 0;
-    raw_square = csb_v1_dungeon_get_raw_square(
-        dungeon,
-        level,
-        map_x,
-        map_y);
-    if (raw_square < 0) return 0;
-
-    north_south = (raw_square & 0x08) ? 0 : 1;
-    check_x = map_x + step_east[north_south ? 1 : 0];
-    check_y = map_y + step_north[north_south ? 1 : 0];
-    check_raw = csb_v1_dungeon_get_raw_square(
-        dungeon,
-        level,
-        check_x,
-        check_y);
-    if (check_raw >= 0) {
-        check_type = (dungeon->square_bytes == 1)
-            ? ((check_raw >> 5) & 0x07)
-            : (check_raw & 0x1F);
-        blocked = (check_type == 0 || check_type == 3) ? 1 : 0;
-    }
-    /* ReDMCSB DUNGEON.C F0155 lines 1560-1582: stairs without the
-     * north/south orientation bit check EAST and return EAST/WEST; stairs
-     * with the bit check NORTH and return NORTH/SOUTH depending on whether
-     * that neighbor is wall/stairs. */
-    return (blocked << 1) + north_south;
-}
-
-static int csb_v1_runtime_has_map_location_metadata(
-    const CSB_V1_DungeonData *dungeon)
-{
-    int i;
-
-    if (!dungeon) return 0;
-    for (i = 0; i < dungeon->level_count; ++i) {
-        if (dungeon->map_levels[i] != 0 ||
-            dungeon->map_offset_x[i] != 0 ||
-            dungeon->map_offset_y[i] != 0) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-static int csb_v1_runtime_map_source_level(
-    const CSB_V1_DungeonData *dungeon,
-    int map_index)
-{
-    if (!dungeon ||
-        map_index < 0 ||
-        map_index >= dungeon->level_count ||
-        !csb_v1_runtime_has_map_location_metadata(dungeon)) {
-        return map_index;
-    }
-    return dungeon->map_levels[map_index];
+    int direction = csb_v1_dungeon_f0155_get_stairs_exit_direction_pc34(
+        dungeon, level, map_x, map_y);
+    return direction;
 }
 
 static int csb_v1_runtime_location_after_level_change(
@@ -5778,50 +5711,15 @@ static int csb_v1_runtime_location_after_level_change(
     int *inout_map_y,
     int *out_map_index)
 {
-    int source_level;
-    int target_source_level;
-    int global_x;
-    int global_y;
-    int i;
+    int target_map;
 
     if (out_map_index) *out_map_index = -1;
-    if (!dungeon || !inout_map_x || !inout_map_y || !out_map_index ||
-        map_index < 0 || map_index >= dungeon->level_count) {
-        return 0;
-    }
-    if (!csb_v1_runtime_has_map_location_metadata(dungeon)) {
-        int target = map_index + level_delta;
-        if (target < 0 || target >= dungeon->level_count) return 0;
-        *out_map_index = target;
-        return 1;
-    }
-
-    /* ReDMCSB DUNGEON.C F0154 lines 1508-1554: level changes convert
-     * local map coordinates to global OffsetMapX/Y coordinates, add the
-     * level delta to MAP.A.Level, then choose the map on that source level
-     * whose offset/width/height contains the same global coordinate. */
-    source_level = csb_v1_runtime_map_source_level(dungeon, map_index);
-    target_source_level = source_level + level_delta;
-    global_x = dungeon->map_offset_x[map_index] + *inout_map_x;
-    global_y = dungeon->map_offset_y[map_index] + *inout_map_y;
-    for (i = 0; i < dungeon->level_count; ++i) {
-        int min_x = dungeon->map_offset_x[i];
-        int min_y = dungeon->map_offset_y[i];
-        int max_x = min_x + dungeon->level_widths[i] - 1;
-        int max_y = min_y + dungeon->level_heights[i] - 1;
-
-        if (csb_v1_runtime_map_source_level(dungeon, i) !=
-                target_source_level ||
-            global_x < min_x || global_x > max_x ||
-            global_y < min_y || global_y > max_y) {
-            continue;
-        }
-        *inout_map_x = global_x - min_x;
-        *inout_map_y = global_y - min_y;
-        *out_map_index = i;
-        return 1;
-    }
-    return 0;
+    if (!out_map_index) return 0;
+    target_map = csb_v1_dungeon_f0154_get_location_after_level_change_pc34(
+        dungeon, map_index, level_delta, inout_map_x, inout_map_y);
+    if (target_map < 0) return 0;
+    *out_map_index = target_map;
+    return 1;
 }
 
 static int csb_v1_runtime_apply_object_consequences_at_square(
@@ -5932,6 +5830,12 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                     *inout_map_index,
                     *inout_map_x,
                     *inout_map_y);
+                if (direction < 0) {
+                    *inout_map_index = old_level;
+                    *inout_map_x = old_x;
+                    *inout_map_y = old_y;
+                    break;
+                }
                 cell = (*inout_thing >> 14) & 0x03;
                 cell = (((cell - direction + 1) & 0x02) >> 1) + direction;
                 cell &= 0x03;
