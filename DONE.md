@@ -4691,6 +4691,14 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   `test_csb_v1_dsa_restored_timer_tick_bridge` and
   `test_csb_v1_m11_launcher_handoff_boundary`.
 
+- 2026-07-15 CSBWin DSA `PutState` compact `LocalState=2` route: a complete
+  authenticated action now commits its final state through the original
+  eight-byte type-47 DB3 `ParameterB` record in the candidate dungeon before
+  publication. The route verifies the exact actuator, source state, action,
+  and 14-bit compact representation; records requiring unretained `word8`
+  expansion fail closed. Verification:
+  `test_csb_v1_dsa_localstate1_save_handoff`.
+
 - 2026-07-13 CSBWin saved `TT_22` runtime: an authenticated imported timer
   now preserves CSBWin's documented restart no-op rather than acquiring a
   generic C22 action. Source: `CSBCode.cpp:6564-6569`. Verification:

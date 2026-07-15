@@ -2364,6 +2364,12 @@ Remaining CSB DSA work is writable widened `LocalState=2` ParameterB state,
 a real slave-master route, source world effects, and a real-save corpus. Do
 not promote unsupported world or text opcodes from fixtures.
 
+  - 2026-07-15 update: the exact compact `LocalState=2` `PutState` form now
+    writes the authenticated DB3 `ParameterB` state back to its original raw
+    record after a complete action. DB3 records carrying the unrepresented
+    `word8` extension remain rejected, so widened ParameterB state, the
+    slave-master route, world effects, and a real-save corpus are still open.
+
 CSBWin type-47 DSA binding now also requires the current complete
 FNV-authenticated Extended Features tail that published its saved level index
 and action catalog. A stale, truncated, or headerless retained catalog cannot

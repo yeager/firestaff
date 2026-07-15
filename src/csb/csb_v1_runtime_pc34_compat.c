@@ -16414,6 +16414,74 @@ static int csb_v1_runtime_has_verified_csbwin_extended_dsa_tail(
                profile->csbwin_appended_tail_preserved_size);
 }
 
+/* CSBWin DSA.cpp PutState:562-571 writes LocalState=2 through DB3::ParameterB.
+ * Firestaff's loaded dungeon owns only the original eight-byte DB3 record, so
+ * accept the source compact form only: MakeBig's unretained word8 extension
+ * must be zero and no widened 18-bit value may be invented. */
+static int csb_v1_runtime_persist_csbwin_localstate2_dsa(
+    CSB_V1_RuntimeProfile *candidate,
+    const CSB_V1_CSBWinDSAFilterStackRunnerContext *before,
+    const CSB_V1_CSBWinDSAFilterStackRunnerContext *after)
+{
+    CSB_V1_CSBWinDSAImportedHeader *header;
+    uint8_t *record;
+    uint16_t word2;
+    uint16_t word4;
+    uint16_t word6;
+    uint32_t final_state;
+    int64_t relative_state;
+    int type;
+    int size;
+
+    if (!candidate || !before || !after || !candidate->dungeon_handle ||
+        !before->dsa_slave_thing_valid ||
+        before->dsa_id < 0 || before->dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
+        before->action_ordinal != after->action_ordinal) {
+        return 0;
+    }
+    header = &candidate->csbwin_extended_dsa_state.imported_headers[
+        before->dsa_id];
+    if (!header->valid || header->local_state != 2u ||
+        header->state_slot_count == 0u) {
+        return 0;
+    }
+    if (after->transfer_execution_count != before->transfer_execution_count) {
+        if (after->transfer_execution_count !=
+                before->transfer_execution_count + 1 ||
+            after->last_transfer.final_state < 0) {
+            return 0;
+        }
+        final_state = (uint32_t)after->last_transfer.final_state;
+    } else {
+        if (after->execution_count != before->execution_count + 1) return 0;
+        if (after->last_execution.forced_state >= 0) {
+            final_state = (uint32_t)after->last_execution.forced_state;
+        } else {
+            relative_state = (int64_t)before->state_index +
+                (int64_t)after->last_execution.next_state;
+            if (relative_state < 0 || relative_state > UINT32_MAX) return 0;
+            final_state = (uint32_t)relative_state;
+        }
+    }
+    if (final_state >= header->state_slot_count || final_state > 0x3fffu) {
+        return 0;
+    }
+    record = csb_v1_runtime_mutable_thing_record(candidate->dungeon_handle,
+        before->dsa_slave_thing, &type, &size);
+    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 8) return 0;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    word4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    word6 = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
+    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE ||
+        (word4 & 0xc000u) != 0u || (word6 & 0xc000u) != 0u ||
+        (word6 & 0x3fffu) != before->state_index) {
+        return 0;
+    }
+    record[6] = (uint8_t)final_state;
+    record[7] = (uint8_t)(final_state >> 8);
+    return 1;
+}
+
 /* Persist the one CSBWin DSA state store that has a complete source-owned
  * representation here: DSA::m_state (LocalState 1).  CSBWin DSA.cpp
  * ProcessDSATimer6 (lines 5315-5465) obtains a state through GetState(),
@@ -21347,6 +21415,17 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             return 0;
         }
         dsa_state_changed = 1;
+    } else if (profile_candidate.csbwin_extended_dsa_state.imported_headers[
+                   candidate.dsa_id].valid &&
+               profile_candidate.csbwin_extended_dsa_state.imported_headers[
+                   candidate.dsa_id].local_state == 2u) {
+        if (!csb_v1_runtime_has_verified_csbwin_extended_dsa_tail(
+                &profile_candidate) ||
+            !csb_v1_runtime_persist_csbwin_localstate2_dsa(
+                &profile_candidate, runner, &candidate)) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
     }
     expool_changed = profile_candidate.csbwin_appended_tail_fnv1a !=
                          profile->csbwin_appended_tail_fnv1a ||
