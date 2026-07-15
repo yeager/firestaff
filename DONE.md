@@ -7,6 +7,14 @@
   its actual explosion consumer. Focused coverage:
   `m11_dm1_f0115_material_asset_fail_closed` and
   `m11_dm1_explosion_asset_fail_closed`.
+=======
+- ✅ 2026-07-15 DM2 source per-square-light gate: source-required M11
+  projection no longer writes the synthetic full-light value `15` into G1
+  squares. The existing GRAPHICSSET transaction proves only ambient controls;
+   per-square light remains unavailable (`0`) until a `c_light` result is
+   source-bound. Compatibility-only callers retain the old default. Verified:
+   `test_dm2_v1_boot_profile_smoke` (88/0) and `test_dm2_v1_save_load`
+   (26/26).
 
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_60 pool mutation: the authenticated
   party-square +5 successor now retires the due source receipt and requeues

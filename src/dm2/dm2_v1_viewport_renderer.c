@@ -3654,9 +3654,11 @@ static void __attribute__((unused)) dm2_populate_view_squares (
             else if (vs->square_type == DM2_SQUARE_FLOOR)
                 vs->flags |= DM2_SQF_NONE;
 
-            /* Light level: DM2 uses per-tile illumination (0-15).
-             * Source: SKULL.ASM T560 — per-square lighting */
-            vs->light_level = 15;  /* default full light; future: use world model */
+            /* DM2 uses a dynamic per-square light value. The active G1
+             * GRAPHICSSET receipt owns only ambient control words, not the
+             * later c_light per-square result. A source-required frame must
+             * leave it unavailable rather than invent fully-lit tiles. */
+            vs->light_level = s->source_materials_required ? 0u : 15u;
         }
 
         (void)gx; (void)gy; /* reserved for world model integration */
