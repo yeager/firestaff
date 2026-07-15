@@ -121,6 +121,11 @@ typedef struct {
     uint32_t zero_outer_loop_branch_offset;
     uint32_t zero_outer_loop_target_offset;
     int sh2_zero_side_repeat_control_verified;
+    uint32_t zero_side_linear_begin_offset;
+    uint32_t zero_side_linear_end_offset;
+    uint32_t zero_side_output_store_instruction_count;
+    int sh2_zero_side_has_no_direct_output_store;
+    int zero_side_copy_or_backreference_proven;
     int menu_frame_binding_proven;
     int vdp1_command_proven;
     int opcode_grammar_proven;

@@ -7049,6 +7049,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This is a source-owned repeat-control shape only, not a copy length or
     backreference condition. A Saturn trace must still prove the compared
     values, branch outcome, R13 buffer ownership, and any output writes.
+  - 2026-07-15 copy/backreference boundary: the complete linear zero-side
+    block from branch target through its outer-loop return contains no direct
+    `R2 -> @(R13,R0)` output store. Static DM.BIN therefore cannot prove a
+    copy length or backreference, despite the masked R13 read and repeat
+    control. The grammar remains blocked until an authentic Saturn trace
+    provides R13 ownership, read/write addresses, branch outcomes, and a
+    complete output range for one MENU.BPK stream.
   - 2026-07-15 startup diagnostic update: canonical `MENU.BPK` was correctly
     found and parsed but Firestaff's generic M11 text said `REAL SATURN
     DECODER REQUIRED`, which looked like a missing emulator/decoder error.

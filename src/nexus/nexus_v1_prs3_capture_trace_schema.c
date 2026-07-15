@@ -517,6 +517,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 162U
     };
     Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
+    uint32_t offset;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
@@ -632,6 +633,23 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
                        SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET,
                        &receipt.zero_outer_loop_target_offset) &&
         receipt.zero_outer_loop_target_offset == SH2_CONTROL_REENTRY_OFFSET;
+    receipt.zero_side_linear_begin_offset =
+        receipt.control_zero_branch_target_offset;
+    receipt.zero_side_linear_end_offset = SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET + 2U;
+    if (receipt.zero_side_linear_end_offset <= dm_bin_size) {
+        for (offset = receipt.zero_side_linear_begin_offset;
+             offset + 2U <= receipt.zero_side_linear_end_offset; offset += 2U) {
+            if (read_be16(dm_bin + offset) == 0x0d24U) {
+                ++receipt.zero_side_output_store_instruction_count;
+            }
+        }
+    }
+    receipt.sh2_zero_side_has_no_direct_output_store =
+        receipt.zero_side_linear_end_offset <= dm_bin_size &&
+        receipt.zero_side_output_store_instruction_count == 0U;
+    /* Static code never proves that R13 is a history window or that this
+     * control branch copies bytes. Only a source-bound execution trace can. */
+    receipt.zero_side_copy_or_backreference_proven = 0;
     }
     receipt.sh2_control_path_verified =
         receipt.control_test_instruction == 0x23b8U &&
