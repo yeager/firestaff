@@ -500,6 +500,11 @@
     material receipt and rejects a count/hash mismatch, so a multi-creature
     frame cannot be represented by the last blit alone. Remaining work is
     authentic dynamic CCM/DB4 ownership and mutable animation state.
+  - 2026-07-15 update: every visible `DRAW_WALL` GRAPHICSSET panel now also
+    reaches frame ownership in source draw order, with a separate visible
+    command count/hash. The receipt distinguishes the ten consumed viewport
+    fields from the broader cached material plan; remaining work is exact
+    original movement/light clipping and additional scene families.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented
