@@ -82,6 +82,9 @@ static int monster_move_inhibit_enabled;
 static int adjust_skills_parameters_enabled;
 static int adjust_skills_parameters_count;
 static uint32_t adjust_skills_parameters_values[5];
+static int describe_enabled;
+static int describe_count;
+static int32_t describe_location, describe_index, describe_color;
 static int actuator_copy_enabled;
 static int actuator_copy_store_count;
 static uint8_t actuator_copy_payloads[3][6];
@@ -553,6 +556,14 @@ static int set_adjust_skills_parameters(void *user,
     ++adjust_skills_parameters_count;
     return 1;
 }
+static int describe(void *user, int32_t location, int32_t index, int32_t color)
+{
+    (void)user;
+    if (!describe_enabled) return 0;
+    describe_location = location; describe_index = index; describe_color = color;
+    ++describe_count;
+    return 1;
+}
 
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
@@ -703,6 +714,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (adjust_skills_parameters_enabled) {
         context.set_adjust_skills_parameters = set_adjust_skills_parameters;
     }
+    if (describe_enabled) context.describe = describe;
     context.monster_move_inhibit_valid = monster_move_inhibit_enabled;
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -1089,6 +1101,10 @@ int main(void)
     uint16_t set_adjust_skills_then_bad[] = {
         0x0686u, 10u, 0x0686u, 20u, 0x0686u, 30u, 0x0686u, 40u,
         0x0686u, 50u, 0x170bu, 0x0000u
+    };
+    uint16_t describe_words[] = { 0x0686u, 0x1234u, 0x0686u, 3u, 0x0686u, 9u, 0x120bu };
+    uint16_t describe_then_bad[] = {
+        0x0686u, 0x1234u, 0x0686u, 3u, 0x0686u, 9u, 0x120bu, 0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1869,6 +1885,22 @@ int main(void)
               (int)(sizeof(set_adjust_skills) / sizeof(set_adjust_skills[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "SETADJUSTSKILLSPARAMETERS remains closed without Magic owner");
+    describe_enabled = 1; describe_count = 0;
+    check(run(&state, &action, describe_words,
+              (int)(sizeof(describe_words) / sizeof(describe_words[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && describe_count == 1 &&
+              describe_location == 0x1234 && describe_index == 3 && describe_color == 9,
+          "DESCRIBE preserves Character.cpp location/index/color pop order");
+    describe_count = 0;
+    check(run(&state, &action, describe_then_bad,
+              (int)(sizeof(describe_then_bad) / sizeof(describe_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED && describe_count == 0,
+          "DESCRIBE does not publish before later rejection");
+    describe_enabled = 0;
+    check(run(&state, &action, describe_words,
+              (int)(sizeof(describe_words) / sizeof(describe_words[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "DESCRIBE remains closed without a DB2 phrase owner");
     check(run(&state, &action, discard_text, 1, parameters, &execution) ==
               CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "DISCARDTEXT rejects without the source UI owner");

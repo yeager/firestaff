@@ -337,6 +337,11 @@ typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
  * the complete replacement after the authenticated action succeeds. */
 typedef int (*CSB_V1_CSBWinDSASetAdjustSkillsParametersFn)(
     void *user, const uint32_t values[5]);
+/* Character.cpp::ModifyDescription owns DB2 text decoding and the live
+ * descriptive phrase state.  It receives only original location/index/color
+ * triples after a complete authenticated DSA action. */
+typedef int (*CSB_V1_CSBWinDSADescribeFn)(
+    void *user, int32_t location, int32_t index, int32_t color);
 
 typedef struct {
     uint32_t master_location;
@@ -385,6 +390,7 @@ typedef struct {
     int monster_move_inhibit_valid;
     uint8_t monster_move_inhibit[4];
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
+    CSB_V1_CSBWinDSADescribeFn describe;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -674,6 +680,7 @@ typedef struct {
     int monster_move_inhibit_valid;
     uint8_t monster_move_inhibit[4];
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
+    CSB_V1_CSBWinDSADescribeFn describe;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;

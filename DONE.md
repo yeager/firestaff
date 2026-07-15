@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_Describe`: implemented the source stack contract
+  from `DSA.cpp:4639-4661`. Valid phrase-slot requests are staged and reach a
+  DB2/phrase owner only after the full authenticated action accepts; invalid
+  source slots remain no-ops and missing ownership fails closed.
+
 - 2026-07-15 CSBWin `STKOP_SetAdjustSkillsParameters`: implemented
   `DSA.cpp:3034-3043` as a source-ordered, transactional five-word update.
   The values reach only an explicit `Magic.cpp::AddToSkill` owner after full
