@@ -790,6 +790,63 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     if (count > 0) rt->map_door_ornate_count = count;
 }
 
+/* The G1 receipts retain decoded pointers, coordinates and source hashes from
+ * the currently loaded dungeon bytes.  GAME_LOAD/session restore can replace
+ * those bytes, so rebuild every source-owned record-to-GDAT route together.
+ * A missing route remains an empty receipt; no previous frame may lend it art. */
+static void dm2_runtime_refresh_g1_runtime_materials(DM2_V1_RuntimeState *rt)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!rt) return;
+    memset(&rt->g1_first_map_runtime, 0,
+           sizeof(rt->g1_first_map_runtime));
+    memset(&rt->g1_map5_text_runtime, 0,
+           sizeof(rt->g1_map5_text_runtime));
+    memset(&rt->g1_map5_text_messages_runtime, 0,
+           sizeof(rt->g1_map5_text_messages_runtime));
+    memset(&rt->g1_map5_gdat_text_messages_runtime, 0,
+           sizeof(rt->g1_map5_gdat_text_messages_runtime));
+    memset(&rt->g1_map5_text_wall_gfx_runtime, 0,
+           sizeof(rt->g1_map5_text_wall_gfx_runtime));
+    memset(&rt->g1_actuator_wall_gfx_runtime, 0,
+           sizeof(rt->g1_actuator_wall_gfx_runtime));
+    memset(&rt->g1_creature_map_chip_runtime, 0,
+           sizeof(rt->g1_creature_map_chip_runtime));
+    memset(&rt->g1_weapon_map_chip_runtime, 0,
+           sizeof(rt->g1_weapon_map_chip_runtime));
+    memset(&rt->g1_container_map_chip_runtime, 0,
+           sizeof(rt->g1_container_map_chip_runtime));
+
+    if (!rt->boot || !rt->boot->dungeon_data) return;
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (dungeon->square_bytes != 1) return;
+
+    (void)dm2_v1_dungeon_materialize_g1_first_map_runtime(
+        dungeon, &rt->g1_first_map_runtime);
+    (void)dm2_v1_dungeon_materialize_g1_map5_text_runtime(
+        dungeon, &rt->g1_map5_text_runtime);
+    if (rt->g1_map5_text_runtime.committed) {
+        (void)dm2_v1_dungeon_materialize_g1_map5_text_messages(
+            dungeon, &rt->g1_map5_text_runtime,
+            &rt->g1_map5_text_messages_runtime);
+        (void)dm2_v1_boot_g1_gdat_text_materials(
+            rt->boot, &rt->g1_map5_text_runtime,
+            &rt->g1_map5_gdat_text_messages_runtime);
+        (void)dm2_v1_boot_g1_text_wall_gfx_materials(
+            rt->boot, &rt->g1_map5_text_runtime,
+            &rt->g1_map5_text_wall_gfx_runtime);
+    }
+    (void)dm2_v1_boot_g1_actuator_wall_gfx_materials(
+        rt->boot, rt->dungeon_level, &rt->g1_actuator_wall_gfx_runtime);
+    (void)dm2_v1_boot_g1_creature_map_chip_materials(
+        rt->boot, rt->dungeon_level, &rt->g1_creature_map_chip_runtime);
+    (void)dm2_v1_boot_g1_weapon_map_chip_materials(
+        rt->boot, rt->dungeon_level, &rt->g1_weapon_map_chip_runtime);
+    (void)dm2_v1_boot_g1_container_map_chip_materials(
+        rt->boot, rt->dungeon_level, &rt->g1_container_map_chip_runtime);
+}
+
 static int dm2_runtime_apply_direct_g1_door_metadata(
     const DM2_V1_RuntimeState *rt,
     int x,
@@ -1747,36 +1804,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.map_wall_gfx_count = 0;
     g_dm2_runtime.map_graphics_style = -1;
     if (boot_profile->dungeon_data) {
-        (void)dm2_v1_dungeon_materialize_g1_first_map_runtime(
-            (const DM2_V1_DungeonData *)boot_profile->dungeon_data,
-            &g_dm2_runtime.g1_first_map_runtime);
-        (void)dm2_v1_dungeon_materialize_g1_map5_text_runtime(
-            (const DM2_V1_DungeonData *)boot_profile->dungeon_data,
-            &g_dm2_runtime.g1_map5_text_runtime);
-        if (g_dm2_runtime.g1_map5_text_runtime.committed) {
-            (void)dm2_v1_dungeon_materialize_g1_map5_text_messages(
-                (const DM2_V1_DungeonData *)boot_profile->dungeon_data,
-                &g_dm2_runtime.g1_map5_text_runtime,
-                &g_dm2_runtime.g1_map5_text_messages_runtime);
-            (void)dm2_v1_boot_g1_gdat_text_materials(
-                boot_profile, &g_dm2_runtime.g1_map5_text_runtime,
-                &g_dm2_runtime.g1_map5_gdat_text_messages_runtime);
-            (void)dm2_v1_boot_g1_text_wall_gfx_materials(
-                boot_profile, &g_dm2_runtime.g1_map5_text_runtime,
-                &g_dm2_runtime.g1_map5_text_wall_gfx_runtime);
-        }
-        (void)dm2_v1_boot_g1_actuator_wall_gfx_materials(
-            boot_profile, g_dm2_runtime.dungeon_level,
-            &g_dm2_runtime.g1_actuator_wall_gfx_runtime);
-        (void)dm2_v1_boot_g1_creature_map_chip_materials(
-            boot_profile, g_dm2_runtime.dungeon_level,
-            &g_dm2_runtime.g1_creature_map_chip_runtime);
-        (void)dm2_v1_boot_g1_weapon_map_chip_materials(
-            boot_profile, g_dm2_runtime.dungeon_level,
-            &g_dm2_runtime.g1_weapon_map_chip_runtime);
-        (void)dm2_v1_boot_g1_container_map_chip_materials(
-            boot_profile, g_dm2_runtime.dungeon_level,
-            &g_dm2_runtime.g1_container_map_chip_runtime);
+        dm2_runtime_refresh_g1_runtime_materials(&g_dm2_runtime);
     }
     if (boot_profile->dm2_state) {
         DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
@@ -1959,6 +1987,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_map_wall_gfx_list(rt);
+    dm2_runtime_refresh_g1_runtime_materials(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
     rt->leader_hand_object = session->original_leader_hand_object;
     memset(rt->champion_inventory_objects, 0,
@@ -4722,15 +4751,8 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
-    (void)dm2_v1_boot_g1_actuator_wall_gfx_materials(
-        rt->boot, level, &rt->g1_actuator_wall_gfx_runtime);
-    (void)dm2_v1_boot_g1_creature_map_chip_materials(
-        rt->boot, level, &rt->g1_creature_map_chip_runtime);
-    (void)dm2_v1_boot_g1_weapon_map_chip_materials(
-        rt->boot, level, &rt->g1_weapon_map_chip_runtime);
-    (void)dm2_v1_boot_g1_container_map_chip_materials(
-        rt->boot, level, &rt->g1_container_map_chip_runtime);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
+    dm2_runtime_refresh_g1_runtime_materials(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
 }
 
@@ -5060,6 +5082,7 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     cursor += sizeof(creatures);
     memcpy(dungeon->raw_data, cursor, (size_t)dungeon->raw_size);
     dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
+    dm2_runtime_refresh_g1_runtime_materials(&g_dm2_runtime);
     dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
     memcpy(g_dm2_runtime.map_wall_gfx_list, header->map_wall_gfx_list,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
