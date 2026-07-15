@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 champion-statistics follow-up: F0351 now requires exact
+  loaded-pixel C020 plus loaded M653 font at the existing source C557/C559
+  geometry. Remaining work is a real PC34/Mac capture covering skill levels,
+  red/green/gray statistic runs, and locale variants. Missing material must
+  remain no-draw rather than recreating the statistics panel with host text.
+
 - 2026-07-15 DM1 object-description follow-up: F0342 now requires exact
   loaded-pixel C020/C029 and M653 font geometry, with the C556 continuation
   origin used directly. Remaining work is a real PC34/Mac capture of weapon,

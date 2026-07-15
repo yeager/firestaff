@@ -64,6 +64,23 @@ static void seed_description_state(
           "object description route is active");
 }
 
+static void seed_stats_state(
+    M11_GameViewState* state,
+    struct DungeonThings_Compat* things,
+    struct DungeonWeapon_Compat* weapon)
+{
+    seed_description_state(state, things, weapon);
+    M11_GameView_ClearV1LeaderHandObject(state);
+    CHECK(M11_GameView_GetV1LeaderHandThing(state) == THING_NONE,
+          "leader hand returns to source empty state");
+    CHECK(M11_GameView_DismissDialogOverlay(state) == 1,
+          "dismisses prior object-description dialog before F0351 click");
+    CHECK(M11_GameView_HandlePointer(state, 20, 54, 1) == M11_GAME_INPUT_REDRAW,
+          "eye click opens source champion statistics panel");
+    CHECK(state->v1ChampionStatsPanelActive == 1,
+          "F0351 statistics route is active");
+}
+
 static int framebuffer_has_source_pixel(const unsigned char* framebuffer,
                                         const M11_AssetSlot* asset,
                                         int dstX,
@@ -136,6 +153,35 @@ int main(void)
         CHECK(framebuffer_has_source_pixel(framebuffer, circle, 103, 33 + 53, 1,
                                            8, 6, 16, 16),
               "F0342 presents C029 source pixels at C504");
+        M11_GameView_Shutdown(&state);
+    }
+
+    seed_stats_state(&state, &things, &weapon);
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    CHECK(framebuffer[(33 + 52) * 320 + 80] == 0,
+          "missing C020 keeps F0351 statistics panel unavailable");
+    M11_GameView_Shutdown(&state);
+
+    if (graphicsPath) {
+        const M11_AssetSlot* panel;
+
+        seed_stats_state(&state, &things, &weapon);
+        CHECK(M11_AssetLoader_Init(&state.assetLoader, graphicsPath),
+              "PC34 GRAPHICS.DAT reloads for F0351");
+        state.assetsAvailable = 1;
+        M11_Font_Init(&state.originalFont);
+        CHECK(M11_Font_LoadFromGraphicsDat(&state.originalFont,
+                                           state.assetLoader.fileState,
+                                           state.assetLoader.runtimeState),
+              "PC34 M653 source font reloads for F0351");
+        state.originalFontAvailable = 1;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        panel = M11_AssetLoader_Load(&state.assetLoader, 20u);
+        CHECK(framebuffer_has_source_pixel(framebuffer, panel, 80, 33 + 52, 8,
+                                           -1, -1, 0, 0),
+              "F0351 presents C020 source pixels at C101");
         M11_GameView_Shutdown(&state);
     }
 
