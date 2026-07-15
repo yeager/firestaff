@@ -182,6 +182,11 @@
     its exact F0437/F0441 palette selection before accepting SDL RGBA output.
     A stale title phase, foreign door step, or host wrapper page is no-draw.
     Remaining work is an external Mac window capture of the complete sequence.
+  - 2026-07-15 update: `FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR` records one
+    post-present SDL RGBA BMP per source palette phase only after the live
+    C001--C005 raster and palette gate pass. It cannot capture a stale phase,
+    foreign door step, or host wrapper page. External Mac-window comparison
+    remains required for original pixel parity.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
