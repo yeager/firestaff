@@ -1374,17 +1374,43 @@ typedef struct {
     const char *manifest_path;
     const char *raw_trace_path;
     const char *transform_state_path;
+    const char *attestation_path;
 } Nexus_V1_DgnStructure1FTransformTracePaths;
 
+/* Attestation is parsed from an independently produced sidecar. Firestaff
+ * validates its binding but cannot create this assertion from trace bytes. */
+#define NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_MAGIC \
+    "FIRESTAFF_NEXUS_STRUCTURE1F_TRANSFORM_ATTESTATION_V1"
+typedef enum {
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_MISSING = 0,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_BLOCKED_SIDECARS = 3,
+    NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_ADMITTED_OPAQUE = 4
+} Nexus_V1_DgnStructure1FTransformAttestationStatus;
+
 typedef struct {
+    Nexus_V1_DgnStructure1FTransformAttestationStatus status;
+    int capture_target_bound;
+    int manifest_target_bound;
+    int raw_trace_bound;
+    int transform_state_bound;
+    int attestation_sha256_present;
+    int independent_saturn_review_declared;
     int original_saturn_source_attested;
-} Nexus_V1_DgnStructure1FTransformTraceAttestation;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FTransformTraceAttestationReceipt;
 
 typedef struct {
     int sidecar_paths_distinct;
     int manifest_bytes_read;
     int raw_trace_bytes_read;
     int transform_state_bytes_read;
+    int attestation_bytes_read;
+    Nexus_V1_DgnStructure1FTransformTraceAttestationReceipt attestation;
     Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt admission;
     int no_draw_only;
     int fallback_visuals_permitted;
@@ -2409,10 +2435,15 @@ int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const uint8_t *transform_state, size_t transform_state_size,
     int original_saturn_capture_verified,
     Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt *out_receipt);
+int nexus_v1_engine_parse_structure1f_transform_trace_attestation(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *attestation_text, size_t attestation_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    const uint8_t *transform_state, size_t transform_state_size,
+    Nexus_V1_DgnStructure1FTransformTraceAttestationReceipt *out_receipt);
 int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const Nexus_V1_DgnStructure1FTransformTracePaths *paths,
-    const Nexus_V1_DgnStructure1FTransformTraceAttestation *attestation,
     Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt *out_receipt);
 /* Bind one direct Structure1F source owner to its exact static Structure2
  * material target. Non-static, untextured, or unresolved faces remain
