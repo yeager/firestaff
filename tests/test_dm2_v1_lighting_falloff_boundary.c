@@ -65,6 +65,18 @@ static int test_dm2_asset_fetch(void *user,
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9
     };
+    static const uint8_t creature_direct_field_one[7 * 7] = {
+        12,12,12,12,12,12,12, 12,12,12,12,12,12,12,
+        12,12,12,12,12,12,12, 12,12,12,12,12,12,12,
+        12,12,12,12,12,12,12, 12,12,12,12,12,12,12,
+        12,12,12,12,12,12,12
+    };
+    static const uint8_t creature_direct_field_two[7 * 7] = {
+        9,9,9,9,9,9,9, 9,9,9,9,9,9,9,
+        9,9,9,9,9,9,9, 9,9,9,9,9,9,9,
+        9,9,9,9,9,9,9, 9,9,9,9,9,9,9,
+        9,9,9,9,9,9,9
+    };
     static const uint8_t item_atlas[21 * 7] = {
         2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
         2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
@@ -202,6 +214,20 @@ static int test_dm2_asset_fetch(void *user,
         if (out_stride) *out_stride =
             (s_projectile_seven_frame_fixture ||
              s_projectile_flip_fixture) ? 49 : 21;
+        return 0;
+    } else if (gdat_index ==
+                   dm2_v1_viewport_creature_field_graphic_index(0x12, 1)) {
+        if (out_pixels) *out_pixels = creature_direct_field_one;
+        if (out_w) *out_w = 7;
+        if (out_h) *out_h = 7;
+        if (out_stride) *out_stride = 7;
+        return 0;
+    } else if (gdat_index ==
+                   dm2_v1_viewport_creature_field_graphic_index(0x12, 2)) {
+        if (out_pixels) *out_pixels = creature_direct_field_two;
+        if (out_w) *out_w = 7;
+        if (out_h) *out_h = 7;
+        if (out_stride) *out_stride = 7;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
@@ -1271,13 +1297,12 @@ static void test_sprite_asset_provider(void)
     viewport.creatures[0].screen_y = 50;
     viewport.creatures[0].health_pct = 75;
     memset(&creature_plan, 0, sizeof(creature_plan));
-    CHECK("DM2 creature render plan owns source sprite identity",
+    CHECK("DM2 unowned creature plan has no GDAT sprite identity",
           dm2_v1_viewport_build_creature_render_plan(&viewport,
                                                      &creature_plan) == 1 &&
               creature_plan.creature_count == 1 &&
               creature_plan.creatures[0].creature_index == 0 &&
-              creature_plan.creatures[0].gdat_index ==
-                  dm2_v1_viewport_creature_graphic_index(0x12, 0x01));
+              creature_plan.creatures[0].gdat_index == 0);
     dm2_v1_render_creatures(&viewport);
     CHECK("creature without source material blocks instead of drawing fallback pixels",
           viewport.asset_creature_drawn_count == 0 &&
@@ -1293,6 +1318,9 @@ static void test_sprite_asset_provider(void)
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 0x12;
     viewport.creatures[0].frame_index = 0x01;
+    viewport.creatures[0].source_kind = 1;
+    viewport.creatures[0].source_material_proven = 1;
+    viewport.creatures[0].gdat_image_field = 1;
     viewport.creatures[0].screen_x = 40;
     viewport.creatures[0].screen_y = 50;
     viewport.creatures[0].health_pct = 75;
@@ -1302,13 +1330,13 @@ static void test_sprite_asset_provider(void)
                                        test_dm2_asset_fetch,
                                        NULL);
     dm2_v1_render_creatures(&viewport);
-    CHECK("creature pass fetches DM2 map-chip sprite assets",
+    CHECK("live creature pass fetches source-selected GDAT sprite asset",
           s_asset_fetch_calls == 1 &&
               s_last_asset_index ==
-                  dm2_v1_viewport_creature_graphic_index(0x12, 0x01) &&
+                  dm2_v1_viewport_creature_field_graphic_index(0x12, 1) &&
               viewport.asset_creature_drawn_count == 1 &&
               viewport.fallback_creature_drawn_count == 0);
-    CHECK("creature map-chip atlas draws only the selected frame",
+    CHECK("live creature draw consumes its selected direct GDAT field",
           framebuffer[((50 - 4) * 320) + (40 - 4)] == 12 &&
               framebuffer[(50 * 320) + 40] == 12);
     CHECK("creature health state does not generate a scene health bar",
@@ -1321,6 +1349,9 @@ static void test_sprite_asset_provider(void)
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 0x12;
     viewport.creatures[0].frame_index = 0x02;
+    viewport.creatures[0].source_kind = 1;
+    viewport.creatures[0].source_material_proven = 1;
+    viewport.creatures[0].gdat_image_field = 2;
     viewport.creatures[0].direction = 1;
     viewport.creatures[0].screen_x = 40;
     viewport.creatures[0].screen_y = 50;
@@ -1332,7 +1363,7 @@ static void test_sprite_asset_provider(void)
                                        NULL);
     dm2_v1_render_creatures(&viewport);
     s_creature_directional_frame_fixture = 0;
-    CHECK("creature render uses view-relative directional atlas frame",
+    CHECK("live creature render uses the selected source GDAT image field",
           viewport.asset_creature_drawn_count == 1 &&
               framebuffer[((50 - 4) * 320) + (40 - 4)] == 9 &&
               framebuffer[(50 * 320) + 40] == 9);
