@@ -837,8 +837,15 @@ typedef struct CSB_V1_StartupPlaybackState_PC34 {
     CSB_V1_StartupPlaybackStage_PC34 stage;
     CSB_V1_StartupStage_PC34 title_stage;
     int title_frame;
+    int title_phase_mask;
     int swoosh_active;
     int entrance_music_active;
+    int entrance_complete;
+    int entrance_scene_presented;
+    int door_frame_presented;
+    int last_door_opening_step;
+    int next_door_opening_step;
+    int entrance_special_palette;
     int no_fallback_routes;
 } CSB_V1_StartupPlaybackState_PC34;
 
@@ -1065,6 +1072,7 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
+    int special_palette;
     int title_phase_tick;
     int title_phase_tick_count;
     const CSB_V1_StartupRuntimeSurface_PC34 *title_surface;
@@ -1082,6 +1090,11 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
  * composition before presentation, keeping it out of legacy callbacks. */
 #define CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 320
 #define CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 200
+#define CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 224
+#define CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 136
+#define CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 144
+#define CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 73
+#define CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34 6
 
 typedef struct CSB_V1_StartupRuntimeRaster_PC34 {
     unsigned char *pixels;
@@ -1096,6 +1109,35 @@ typedef struct CSB_V1_StartupRuntimeRaster_PC34 {
     uint32_t pixel_hash;
     uint32_t route_hash;
 } CSB_V1_StartupRuntimeRaster_PC34;
+
+typedef struct CSB_V1_StartupCompleteTimelineReceipt_PC34 {
+    int valid;
+    int c001_complete;
+    int terminal_f0807_complete;
+    int hud_session_ready;
+    int c017_ready;
+    int c040_ready;
+    int no_legacy_wrapper;
+    int no_fallback_route;
+    uint32_t source_tick;
+    uint32_t session_generation;
+} CSB_V1_StartupCompleteTimelineReceipt_PC34;
+
+typedef struct CSB_V1_TerminalUiStateReceipt_PC34 {
+    int valid;
+    int c040_cleared_once;
+    int post_c101_presented;
+    int live_c017_only_panel_base;
+    int palette_neutral;
+    int no_legacy_wrapper;
+    int no_cast_or_combat;
+    int c017_source_asset_id;
+    int c017_width;
+    int c017_height;
+    int c017_special_palette;
+    uint32_t source_tick;
+    uint32_t session_generation;
+} CSB_V1_TerminalUiStateReceipt_PC34;
 
 /* Runtime-only startup presentation.  This is the CSB boundary for title,
  * entrance/HUD, utility, and opening-door plans when verified game data is
@@ -1318,6 +1360,16 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    int include_resurrection_panel,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+int csb_v1_boot_terminal_ui_state_host_raster_pc34(
+    const CSB_V1_TerminalUiStateReceipt_PC34 *terminal_ui,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    int include_resurrection_panel,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt);
@@ -1351,8 +1403,20 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     int title_frame,
     CSB_V1_StartupRenderPlan_PC34 *out_plan,
     CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+int csb_v1_boot_startup_playback_complete_entrance_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 int csb_v1_boot_startup_playback_enter_hud_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupCompleteTimelineReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_authorize_live_hud_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupCompleteTimelineReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_live_hud_terminal_receipt_current_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    uint32_t terminal_source_tick,
+    uint32_t terminal_generation);
 const char *csb_v1_boot_startup_asset_source_name_pc34(
     CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
