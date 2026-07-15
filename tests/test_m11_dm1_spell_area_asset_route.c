@@ -65,9 +65,12 @@ int main(void)
     ok &= require_text(source,
                        "DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34");
     ok &= require_text(source, "!state || !state->assetsAvailable");
-    ok &= require_text(source,
-                       "!linesAsset || !linesAsset->loaded || !linesAsset->pixels ||");
+    ok &= require_text(source, "facts.c011_loaded_pixels");
     ok &= require_text(source, "M11_Font_IsLoaded(g_activeOriginalFont)");
+    ok &= require_text(source,
+                       "dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34");
+    ok &= require_text(source, "m11_panel_asset_source_loaded");
+    ok &= require_text(source, "!receipt.drawable");
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_WIDTH_PC34");
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34");
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34");
