@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0172 C127 mirror material gate: the live D1C
+  C346/C026 route now requires a successful original C346 backing draw before
+  it may overlay C026, and validates the C026 atlas rectangle before blitting.
+  This prevents a missing or malformed backing from presenting a floating
+  champion portrait; no replacement frame or font is used. Focused coverage:
+  `m11_dm1_front_mirror_asset_fail_closed` and
+  `m11_dm1_hoc_wall_material_receipt_pc34`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB CASTER/MENUDRAW spell-HUD source gate: DM1 now
   leaves the spell area source-cleared unless C009/C011 and the original font
   are fully decoded. The legacy procedural workbench cannot become a DM1
