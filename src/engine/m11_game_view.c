@@ -472,25 +472,6 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
 }
 
-static int m11_dm2_boot_v2_render_callback(int party_dir,
-                                           int party_x,
-                                           int party_y,
-                                           uint8_t *framebuffer,
-                                           int fb_stride,
-                                           int view_w,
-                                           int view_h,
-                                           void *userdata)
-{
-    (void)userdata;
-    return dm2_v2_runtime_render_frame(party_dir,
-                                       party_x,
-                                       party_y,
-                                       framebuffer,
-                                       fb_stride,
-                                       view_w,
-                                       view_h);
-}
-
 static void m11_dm2_copy_printable(unsigned char *dst,
                                    int dst_len,
                                    const char *src,
@@ -39162,13 +39143,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
 
         if (state->dm2World) {
+            /* The mounted DM2 V1 profile already owns the exact G1 pose and
+             * GDAT material transaction.  Do not let the optional V2
+             * procedural viewport claim this source-backed frame; V2 may
+             * still consume its own decoded GDAT HUD after this handoff. */
             (void)dm2_v1_boot_runtime_render_frame(
                 (DM2_V1_BootProfile *)state->dm2BootProfile,
                 framebuffer,
                 framebufferWidth,
                 framebufferWidth,
                 framebufferHeight,
-                m11_dm2_boot_v2_render_callback,
+                NULL,
                 NULL,
                 &runtime_render_receipt);
             rendered = runtime_render_receipt.render_result;
