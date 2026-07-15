@@ -34,7 +34,8 @@
  *
  * F0397 emits 6 characters starting at ASCII 96 + 6*SymbolStep
  * (C00..C05 rune alphabet window), cyan on black, at
- * (239 + 14*i, 58) for i in 0..5.
+ * (239 + 14*i, 58) for i in 0..5. SymbolStep is the F0399/F0400
+ * champion-owned 0..3 ring; rows 4 and 5 are not source-owned.
  *
  * F0398 emits up to 4 characters from the new caster's Symbols[],
  * space-padding the tail. X = 241 + 9*i, y = 70, cyan on black.
@@ -137,7 +138,9 @@ static const char s_source_evidence[] =
     "F0393 only highlights champion n if Champion[n].CurrentHealth > 0 and "
     "G0305_ui_PartyChampionCount > n. MENUDRAW.C:47-80 F0397 emits 6 chars "
     "starting at ASCII 96 + 6*SymbolStep in C04_COLOR_CYAN on C00_COLOR_BLACK "
-    "at screen x = 239 + 14*i, y = 58. MENUDRAW.C:83-117 F0398 emits up to "
+    "at screen x = 239 + 14*i, y = 58; SYMBOL.C F0399:39 and F0400 keep "
+    "Champion.SymbolStep in the 0..3 ring, so rows 4/5 are not source-owned. "
+    "MENUDRAW.C:83-117 F0398 emits up to "
     "4 chars from Champion->Symbols[0..N-1] (N = strlen clamped to 4) with "
     "space-pad tail, screen x = 241 + 9*i, y = 70, cyan on black. "
     "MENUDRAW.C:31-45 F0396 loads C011_GRAPHIC_MENU_SPELL_AREA_LINES into "
@@ -206,10 +209,9 @@ static int fill_line1(
           DM1_V1_CPSAO_TAB_OTHER_Y1_PC34 }
     };
     int i;
-    int n = 0;
     for (i = 0; i < DM1_V1_CPSAO_CHAMPION_COUNT_PC34; ++i) {
         DM1_V1_ChampionPanelSpellAreaOverlayLine1Pc34 *row =
-            &out->line1[n];
+            &out->line1[i];
         row->champion_index = i;
         row->tab_x0 = tabs[i].x0;
         row->tab_x1 = tabs[i].x1;
@@ -221,10 +223,9 @@ static int fill_line1(
         if (input->champions[i].current_health <= 0) continue;
         row->present = 1;
         if (i == active_caster) row->highlighted = 1;
-        ++n;
+        ++out->tab_count;
     }
-    out->tab_count = n;
-    return n;
+    return out->tab_count;
 }
 
 static void fill_line2(
@@ -301,7 +302,7 @@ int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
         input->previous_caster_index >= DM1_V1_CPSAO_CHAMPION_COUNT_PC34) {
         return 0;
     }
-    if (input->symbol_step > 5u) {
+    if (input->symbol_step >= DM1_V1_CPSAO_SYMBOL_STEP_COUNT_PC34) {
         return 0;
     }
 

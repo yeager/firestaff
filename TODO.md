@@ -58,7 +58,11 @@
   entries 695/557 via CASTER.C/MENUDRAW.C. The old non-chrome workbench and
   arbitrary 768-byte font records are not DM1 fallbacks. Remaining work is
   real PC34/Mac capture across caster changes, rune rows, recant, and cast
-  refresh; do not restore host labels, mana bars, or boxes.
+  refresh; do not restore host labels, mana bars, or boxes. 2026-07-15
+  update: the F0394/F0397/F0398 contract now rejects non-source
+  Champion.SymbolStep rows 4/5 and keeps the C109 tab receipt indexed by
+  champion slot even when a dead or out-of-party tab is skipped, preventing
+  stale HUD tab material from being described as a valid ReDMCSB row.
 
 - 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
   surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates
