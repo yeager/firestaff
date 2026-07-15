@@ -130,6 +130,12 @@
     are accepted: Firestaff has no verified original name-index owner for
     possession bonuses, so the unflagged route remains unavailable rather
     than mapping a host item.
+  - 2026-07-15 follow-up: `STKOP_PartyFetch` now consumes the complete
+    source-owned twelve-word `DSA.cpp:4127-4165` image when both verified
+    GAMEBLOCK2 and character-tail handoffs are live. Pose/count/HandChar and
+    sleeping come from the live profile; spell-effect words come only from the
+    verified tail. A missing owner rejects the whole opcode rather than
+    returning a partial party image.
 
 - 2026-07-15 CSBWin DSA `STKOP_SetAdjustSkillsParameters` now stages the
   exact five `DSA.cpp:3034-3043` values and commits them only to an explicit
@@ -3661,9 +3667,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-15 party-fetch update: authenticated `STKOP_PartyFetch` now
       preserves CSBWin's `(index,num)` stack order, 100-cell no-op boundary,
       and all twelve GAMEBLOCK2 words through one explicit snapshot callback.
-      Its live runtime binding remains closed: Firestaff currently lacks an
-      original owner for `PartySleeping`, so it cannot assemble a partial
-      result from profile and character-tail fields.
+      The live bridge requires verified GAMEBLOCK2 plus the verified
+      character-tail handoff, then reads count/pose/facing/HandChar and
+      `PartySleeping` from the live profile and effect fields from the tail.
+      Missing, inconsistent, or partial ownership rejects instead of
+      assembling a partial party image.
     - 2026-07-15 character-fetch update: authenticated `STKOP_CharFetch`
       now preserves CSBWin's `(character,index,num)` stack order, 59-word
       CHARDESC image, invalid-character zero image, and the distinct

@@ -57,6 +57,10 @@ static void test_experience_plus_runtime_bridge(void)
     uint16_t possession_mastery_program[] = {
         0x0686u, 4u, 0x0686u, 7u, 0x0686u, 0u, 0x0c4bu, 0x000du
     };
+    uint16_t party_fetch_program[] = {
+        0x0686u, 0u, 0x0686u, 12u, 0x100bu,
+        0x0686u, 12u, 0x0686u, 0u, 0x0a4bu
+    };
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
@@ -86,6 +90,7 @@ static void test_experience_plus_runtime_bridge(void)
     profile.party_state.Champions[0].SkillExperience[7] = 600u;
     profile.leader_index = 0;
     profile.party_state.LeaderIndex = 0;
+    profile.champion_count = 1;
 
     check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
               &profile, &binding, action.state_index, 0, 0u, &runner) == 1 &&
@@ -135,6 +140,42 @@ static void test_experience_plus_runtime_bridge(void)
               &profile, &runner, &action, parameters, 1, NULL) == 0 &&
               parameters[0] == -1,
           "DSA Mastery rejects unowned possession bonuses without a substitute item map");
+
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.current_level = 5;
+    profile.party_x = 10;
+    profile.party_y = 12;
+    profile.party_dir = 3;
+    profile.csbwin_party_sleeping = 1;
+    profile.csbwin_character_tail_see_thru_walls = 1u;
+    profile.csbwin_character_tail_magic_footprints_active = 2u;
+    profile.csbwin_character_tail_invisible = 3u;
+    profile.csbwin_character_tail_fire_shield = -17;
+    profile.csbwin_character_tail_spell_shield = 19;
+    action.program_words = party_fetch_program;
+    action.program_word_count = (int)(sizeof(party_fetch_program) /
+                                      sizeof(party_fetch_program[0]));
+    {
+        int party_values[12] = { 0 };
+
+        check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, party_values, 12, NULL) == 1 &&
+                  party_values[0] == 1 && party_values[1] == 5 &&
+                  party_values[2] == 10 && party_values[3] == 12 &&
+                  party_values[4] == 3 && party_values[5] == 1 &&
+                  party_values[6] == 1 && party_values[7] == 2 &&
+                  party_values[8] == 0 && party_values[9] == 3 &&
+                  party_values[10] == -17 && party_values[11] == 19,
+              "DSA PartyFetch consumes the complete verified CSBWin party image");
+        profile.csbwin_body_runtime_summary_valid = 0;
+        party_values[0] = -1;
+        check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, party_values, 12, NULL) == 0 &&
+                  party_values[0] == -1,
+              "DSA PartyFetch rejects without its verified character-tail owner");
+        profile.csbwin_body_runtime_summary_valid = 1;
+    }
 
     action.program_words = level_up_program;
     action.program_word_count = (int)(sizeof(level_up_program) /
