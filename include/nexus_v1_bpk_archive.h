@@ -691,6 +691,7 @@ typedef struct {
     uint32_t archive_entries;
     uint32_t surface_entries;
     int directory_trailer_found;
+    uint32_t directory_trailer_entries;
     int directory_trailer_at_entry_zero;
     int directory_trailer_valid;
     uint32_t ready_uploads;

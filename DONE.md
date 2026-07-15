@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Nexus startup/runtime receipt declaration repair: reconciled
+  the Nexus public headers with the existing launcher/engine implementation
+  for the startup handoff, MENU.BPK/PRS3 upload metadata, Structure2 and
+  static MNS source receipts, DGN command-buffer ownership, ITEM.IBS,
+  SLEV/SAL/MAP/SDDRVS canonical source receipts, FACE compact PRS3
+  descriptors, and the Structure1F no-draw viewport route. The change adds no
+  synthetic pixels or fallback promotion; it exposes the real-data receipts
+  already consumed by the Nexus runtime. Verification: strict object syntax
+  checks passed for the touched Nexus sources, and direct current-source tests
+  passed for `test_nexus_v1_startup_title_route_asset_gate`,
+  `test_nexus_v1_dgn_canonical_buffer_gate`,
+  `test_nexus_v1_dgn_source_provenance_gate`, and
+  `test_nexus_v1_dgn_face_material_source_path`.
+
 - ✅ 2026-07-16 CSB terminal door-runtime handoff hardening: the CSB
   entrance-to-runtime receipt now rejects legacy one-byte C017/C040 wrapper
   shapes, incomplete PRESENTS/CHAOS/STRIKES playback, stale door-open state,

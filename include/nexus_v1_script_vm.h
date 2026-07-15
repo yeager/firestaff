@@ -58,12 +58,24 @@ typedef struct {
 #define NEXUS_SCRIPT_MAX_RULES 256
 #define NEXUS_SCRIPT_MAX_FLAGS 32
 
+typedef enum {
+    NEXUS_SLEV_SETUP_IMMEDIATE_NONE = 0,
+    NEXUS_SLEV_SETUP_IMMEDIATE_SH2_MOV_R2 = 1
+} Nexus_SlevSetupImmediateProvenance;
+
+typedef enum {
+    NEXUS_SLEV_LITERAL_NONE = 0,
+    NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3 = 1,
+    NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0 = 2
+} Nexus_SlevLiteralProvenance;
+
 typedef struct {
     Nexus_ScriptRule rules[NEXUS_SCRIPT_MAX_RULES];
     int rule_count;
     uint8_t flags[NEXUS_SCRIPT_MAX_FLAGS];
     int initialized;
     int current_level;
+    int canonical_source_verified;
     int candidate_source_loaded;
     int candidate_source_bytes;
     int parser_supported;
@@ -71,6 +83,20 @@ typedef struct {
     int parsed_record_size;
     int parsed_rule_count;
     int real_task_profile_supported;
+    int real_task_header_supported;
+    int real_task_header_size;
+    int real_task_setup_immediate;
+    Nexus_SlevSetupImmediateProvenance real_task_setup_immediate_provenance;
+    int real_task_primary_literal_instruction_offset;
+    int real_task_primary_literal_displacement;
+    int real_task_primary_literal_offset;
+    int real_task_primary_literal_address;
+    Nexus_SlevLiteralProvenance real_task_primary_literal_provenance;
+    int real_task_aux_literal_instruction_offset;
+    int real_task_aux_literal_displacement;
+    int real_task_aux_literal_offset;
+    int real_task_aux_literal_address;
+    Nexus_SlevLiteralProvenance real_task_aux_literal_provenance;
     int real_task_word_count;
     int real_task_first_opcode;
     int real_task_rts_count;
@@ -97,6 +123,7 @@ typedef enum {
 typedef struct {
     Nexus_ScriptRuntimeStatus status;
     int level_index;
+    int canonical_source_verified;
     int candidate_source_loaded;
     int candidate_source_bytes;
     int parser_supported;
@@ -104,6 +131,20 @@ typedef struct {
     int parsed_record_size;
     int parsed_rule_count;
     int real_task_profile_supported;
+    int real_task_header_supported;
+    int real_task_header_size;
+    int real_task_setup_immediate;
+    Nexus_SlevSetupImmediateProvenance real_task_setup_immediate_provenance;
+    int real_task_primary_literal_instruction_offset;
+    int real_task_primary_literal_displacement;
+    int real_task_primary_literal_offset;
+    int real_task_primary_literal_address;
+    Nexus_SlevLiteralProvenance real_task_primary_literal_provenance;
+    int real_task_aux_literal_instruction_offset;
+    int real_task_aux_literal_displacement;
+    int real_task_aux_literal_offset;
+    int real_task_aux_literal_address;
+    Nexus_SlevLiteralProvenance real_task_aux_literal_provenance;
     int real_task_word_count;
     int real_task_first_opcode;
     int real_task_rts_count;
@@ -136,6 +177,11 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm);
  * Source: docs/nexus_triggers.md unresolved SLEV*.BIN/DGN trigger owner. */
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size);
+int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm,
+                                         int level_index,
+                                         const uint8_t *data,
+                                         int size,
+                                         int canonical_source_verified);
 int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
                                     Nexus_ScriptRuntimeReceipt *out_receipt);
 const char *nexus_script_runtime_status_name(

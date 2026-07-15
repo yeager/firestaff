@@ -92,6 +92,8 @@ typedef struct {
 #define NEXUS_DMDF_MAX_STRING_BYTES     4096
 #define NEXUS_DMDF_MAX_BITMAP_DIM       256
 #define NEXUS_DMDF_MAX_BITMAP_BYTES     (256U * 256U * 2U)
+#define NEXUS_DMDF_TEXTURE_SECTION_MAGIC 0x54455854U  /* "TEXT" */
+#define NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS 256
 
 typedef struct {
     uint32_t width;            /* parsed width (power of two, 8..256)    */
@@ -139,6 +141,32 @@ typedef struct {
     int      valid;
 } Nexus_DMDFRawTexturePayload;
 
+typedef struct {
+    uint16_t material_id;
+    uint16_t flags;
+    uint16_t width;
+    uint16_t height;
+    uint32_t pixel_offset;
+    uint32_t reserved;
+    int valid;
+} Nexus_DMDFTextureDescriptor;
+
+typedef struct {
+    uint32_t offset;
+    uint32_t bytes;
+    uint32_t declared_entry_count;
+    uint32_t flags;
+    uint32_t descriptor_offset;
+    uint32_t pixel_data_offset;
+    uint32_t descriptor_count;
+    Nexus_DMDFTextureDescriptor descriptors[NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS];
+    uint32_t unique_material_id_count;
+    uint16_t first_material_id;
+    uint16_t last_material_id;
+    int material_ids_unique;
+    int valid;
+} Nexus_DMDFTextureSection;
+
 /* Runtime-ready indexed surface decoded from a bounded BITM/PLTB pair.
  * `pixels` is owned by the surface and already contains global palette
  * indices, so it can be passed directly to the V1 software rasterizer. */
@@ -175,6 +203,8 @@ typedef enum {
 typedef struct {
     Nexus_V1_DgnMaterialCategory category;
     uint32_t command_count;
+    uint32_t unique_material_id_count;
+    uint32_t covered_unique_material_id_count;
     uint32_t material_surface_count;
     uint32_t missing_material_count;
     uint8_t first_missing_material_id;
@@ -236,6 +266,10 @@ int nexus_v1_dmdf_scan_embedded_blocks(const uint8_t *data, int size,
  * tail is present without dereferencing past EOF. */
 int nexus_v1_dmdf_estimate_raw_texture_payload(
     const uint8_t *data, int size, Nexus_DMDFRawTexturePayload *out);
+int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
+                                        Nexus_DMDFTextureSection *out);
+int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
+                                            Nexus_DMDFMaterialBank *out);
 
 /* Decode every valid BITM in a DMDF payload into the material slot matching
  * its ordinal. A matching PLTB supplies its CLUT; malformed, direct-colour,

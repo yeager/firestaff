@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <io.h>
@@ -237,6 +238,41 @@ static const char *nexus_known_boot_file_md5(const char *name) {
 }
 
 static int nexus_path_is_file(const char *path);
+
+static int asset_file_matches_md5(const char *path, const char *expected_md5)
+{
+    FILE *fp;
+    long size_long;
+    uint8_t *bytes;
+    size_t read_count;
+    int matched;
+
+    if (!path || !expected_md5) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    size_long = ftell(fp);
+    if (size_long <= 0 || size_long > INT_MAX ||
+        fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size_long);
+    if (!bytes) {
+        fclose(fp);
+        return 0;
+    }
+    read_count = fread(bytes, 1U, (size_t)size_long, fp);
+    fclose(fp);
+    matched = read_count == (size_t)size_long &&
+        nexus_v1_dgn_bytes_match_canonical_md5(
+            bytes, (int)size_long, expected_md5);
+    free(bytes);
+    return matched;
+}
 
 static int nexus_v1_level_aux_source_receipt(
     Nexus_V1_Engine *engine, const char *name,

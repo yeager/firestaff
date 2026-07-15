@@ -8,17 +8,14 @@
   capture with local CSB data through that receipt path, not another synthetic
   title/door/HUD path.
 
-- 2026-07-15 Nexus startup title-route follow-up: the runtime-state title
-  route receipt now has an `asset-blocked` route and the launcher wrappers
-  are wired to refuse save/champion presentation when startup menu assets are
-  not ready. Fresh launcher-object verification is still blocked by existing
-  Nexus runtime-handoff declaration drift below the startup route
-  (`Nexus_V1_StartupRuntimeHandoffReceipt` Structure1/Structure2/static
-  material fields and engine MNS route fields are referenced by
-  `src/nexus/nexus_v1_launcher.c` but absent from current headers). Remaining
-  work is to repair that Nexus-local declaration drift and then run
-  `tests/test_nexus_v1_startup_title_route_asset_gate.c` against the real
-  launcher object; do not promote fallback startup menu presentation.
+- 2026-07-16 Nexus startup/DGN follow-up: the runtime-handoff declaration drift
+  below the startup title route is repaired, and
+  `tests/test_nexus_v1_startup_title_route_asset_gate.c` now passes against
+  the real launcher object. Remaining Nexus work is still real MENU.BPK PRS3
+  decode, original Structure2/ITEM.IBS/VDP1 texture-palette binding, broad DGN
+  command-plan readiness repair, and Saturn capture comparison. Keep the
+  startup/menu/DGN path fail-closed; do not promote fallback startup menu or
+  synthetic dungeon visuals.
 
 - 2026-07-15 DM1 F0399/G0485/G0486 symbol mana-cost follow-up: spell symbol
   input now consumes a DM1-owned receipt for the real PC34 base-cost and
