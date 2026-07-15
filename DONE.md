@@ -19072,3 +19072,13 @@ executes `ADD #-2,R14` before its two adjacent `@R12+` reads. The receipt
 rejects either changed instruction. This establishes only static input-byte
 consumption by branch; it does not name PRS3 tokens, fields, output/history
 behavior, palette use, decoded pixels, or a renderable surface.
+
+# Nexus PRS3 V1 indexed-byte control operands (2026-07-15)
+
+The source-locked zero-side receipt now records the exact static operand flow
+from `MOV.B @(R0,R13),R1` through `CMP/EQ R1,R3` and then `CMP/EQ R1,R10`,
+which is immediately followed by the existing `BF/S` repeat decision. The
+receipt rejects a changed indexed load or compare corridor. This identifies no
+PRS3 token, history buffer, copied/output byte, length, terminator, palette,
+pixel, or drawing behavior; those meanings still need an authenticated Saturn
+execution trace.

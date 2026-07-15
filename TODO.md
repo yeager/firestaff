@@ -3491,6 +3491,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `ADD #-2,R14` before its two adjacent reads. This proves only the bounded
     source-consumption difference. It does not identify tokens, fields,
     output/history ownership, palette use, pixels, or a decoder rule.
+  - The zero-side's indexed source/control operand flow is now bounded:
+    `MOV.B @(R0,R13),R1` reaches the later `CMP/EQ R1,R3` and
+    `CMP/EQ R1,R10` sequence that precedes the repeat decision. This is not
+    proof that R13 is history, R1 is output, or R10 is a length; authenticated
+    execution remains required for any PRS3 grammar or decoder promotion.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
