@@ -296,6 +296,27 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt;
 
+/* Parsed hardware framing from an already source-bound Structure3 capture
+ * command. It records only documented VDP1 command-table fields; it neither
+ * establishes texel/palette semantics nor authorizes a renderer. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int original_saturn_capture_bound;
+    int complete_vdp1_command_record;
+    int command_format_parsed;
+    int texture_primitive_observed;
+    Nexus_V1_Vdp1TextureCommand command;
+    int pixel_format_proven;
+    int palette_format_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt;
+
 /* Renderer-bound provenance for the active canonical LEV entry.  This makes
  * the package-to-viewport boundary inspectable without assigning a Saturn
  * decoding or drawing meaning to any captured bytes. */
@@ -315,6 +336,8 @@ typedef struct {
     int transform_state_bound;
     int normal_culling_state_bound;
     int vdp1_command_bound;
+    int vdp1_command_format_framed;
+    Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt vdp1_command_framing;
     int texture_decode_unproven;
     int palette_decode_unproven;
     int vdp1_draw_unproven;
@@ -1458,6 +1481,11 @@ int nexus_v1_engine_write_structure1a_structure3_capture_target(
 int nexus_v1_current_level_structure3_render_packet(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3RenderPacket *out_packet);
+/* Parse the complete VDP1 command lane from an already authenticated
+ * Structure3 capture. This is command framing only and remains no-draw. */
+int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt *out_receipt);
 /* Bind the active canonical LEV byte receipt to the viewport boundary. A
  * valid receipt remains no-draw even when an authenticated opaque capture is
  * present: texture, palette, VDP1, transform, and culling semantics are not

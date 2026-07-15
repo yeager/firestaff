@@ -399,6 +399,10 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 structure3_packet.no_draw_only &&
                 structure3_packet.blocks_real_dgn_mesh_render;
         }
+        vp->last_dgn_render_receipt.structure3_runtime_vdp1_command_framed =
+            nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
+                engine, &vp->last_dgn_render_receipt
+                             .structure3_runtime_vdp1_command) == 1;
         /* This is intentionally independent of the external capture packet.
          * A real package face may be staged, but never rasterized, before
          * Saturn pixel/palette/VDP1 evidence is available. */
