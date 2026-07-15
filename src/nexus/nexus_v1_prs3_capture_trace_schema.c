@@ -293,7 +293,8 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
     receipt.nonzero_control_fallthrough_observed =
         trace.control_test_instruction_offset == sh2.control_low_bit_test_offset &&
         trace.zero_branch_instruction_offset == sh2.control_zero_branch_offset &&
-        trace.fallthrough_counter_decrement_offset == sh2.control_zero_branch_offset + 2U &&
+        trace.fallthrough_counter_decrement_offset ==
+            sh2.nonzero_source_counter_decrement_offset &&
         trace.observed_control_low_bit == 1U &&
         trace.observed_zero_branch_taken == 0U;
     receipt.source_byte_matches = receipt.entry_plan_matches &&
