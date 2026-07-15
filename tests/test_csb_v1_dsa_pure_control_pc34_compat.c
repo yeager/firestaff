@@ -50,6 +50,7 @@ static int level_multiplier_enabled;
 static int missile_info_enabled;
 static int missile_info_store_count;
 static uint32_t missile_info_stored[4];
+static int mastery_enabled;
 
 static int wing_talents_enabled;
 
@@ -309,6 +310,19 @@ static int set_missile_info(void *user, uint16_t thing,
     return 1;
 }
 
+static int get_mastery(void *user, uint32_t champion_index,
+                       uint32_t skill_index, uint32_t flags,
+                       uint32_t *out_mastery)
+{
+    (void)user;
+    if (!mastery_enabled || !out_mastery) return -1;
+    if (champion_index == 4u) champion_index = 1u;
+    if (champion_index >= 3u || skill_index >= 20u) return 0;
+    if (champion_index != 1u || skill_index != 7u || flags != 3u) return -1;
+    *out_mastery = 9u;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -430,6 +444,7 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_missile_info = get_missile_info;
         context.set_missile_info = set_missile_info;
     }
+    if (mastery_enabled) context.get_mastery = get_mastery;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -655,6 +670,12 @@ int main(void)
     uint16_t missile_info_store_then_bad_opcode[] = {
         0x0686u, 77u, 0x0686u, 66u, 0x0686u, 2u, 0x0686u, 0x014eu,
         0x198bu, 0x0000u
+    };
+    uint16_t mastery_query[] = {
+        0x0686u, 4u, 0x0686u, 7u, 0x0686u, 3u, 0x0c4bu, 0x000du
+    };
+    uint16_t mastery_invalid[] = {
+        0x0686u, 9u, 0x0686u, 7u, 0x0686u, 3u, 0x0c4bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1109,6 +1130,20 @@ int main(void)
               missile_info_store_count == 0,
           "MISSILEINFO! remains staged after a later rejected opcode");
     missile_info_enabled = 0;
+    mastery_enabled = 1;
+    memset(parameters, 0, sizeof(parameters));
+    check(run(&state, &action, mastery_query,
+              (int)(sizeof(mastery_query) / sizeof(mastery_query[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 9u && execution.stack_depth == 0u,
+          "MASTERY preserves source hand-character and flag stack order");
+    memset(parameters, 0xff, sizeof(parameters));
+    check(run(&state, &action, mastery_invalid,
+              (int)(sizeof(mastery_invalid) / sizeof(mastery_invalid[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0u && execution.stack_depth == 0u,
+          "MASTERY preserves source zero for an invalid character");
+    mastery_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

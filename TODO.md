@@ -3330,6 +3330,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       pose, including direction. Unrecognized selectors retain source zero;
       selector one rejects without a party pose rather than manufacturing a
       location. It reads no dungeon, timer, filter, or substitute world state.
+    - 2026-07-15 mastery update: authenticated `STKOP_Mastery` now preserves
+      CSBWin's character, skill, and flag stack order through an explicit
+      CHARDESC mastery owner, including source zero for invalid character or
+      skill. A live runtime binding remains closed until party sleeping and
+      original possession name-index bonuses are both retained; it does not
+      infer either from Firestaff item metadata.
     - 2026-07-15 EXPOOL cell-flags update: source `STKOP_FetchExCellFlg`
       now reads only the current FNV-authenticated CSBWin
       `EDT_ExtendedCellFlags` record. It folds the selected Y bit from the

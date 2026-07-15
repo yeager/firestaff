@@ -847,6 +847,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     uint32_t v;
     uint32_t w;
     uint32_t count;
+    uint32_t result;
     uint8_t skin;
     int32_t sv;
     int32_t sw;
@@ -1085,6 +1086,23 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         *staged_saves_disabled = v != 0u;
+        break;
+    case 49u: /* STKOP_Mastery, CSBWin DSA.cpp:3389-3409. */
+        /* Keep DetermineMastery's sleeping, temporary-XP, and possession
+         * rules with the live CHARDESC owner.  The core only preserves the
+         * source stack order and its invalid-character/skill zero result. */
+        if (!context->get_mastery ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = context->get_mastery(context->dungeon_user, count, w, v, &result);
+        if (sv < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                          sv == 0 ? 0u : result)) {
+            goto underflow;
+        }
         break;
     case 27u: /* STKOP_Less */
     case 50u: /* STKOP_ULess */
@@ -2590,6 +2608,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_level_multiplier = runner->get_level_multiplier;
     context.get_missile_info = runner->get_missile_info;
     context.set_missile_info = runner->set_missile_info;
+    context.get_mastery = runner->get_mastery;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
