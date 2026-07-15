@@ -118,6 +118,21 @@ int main(void)
           dm2_v1_dungeon_c_light_map_descriptor_receipt(
               &dungeon, 0, &map_receipt) && !map_receipt.dynamic_light &&
               map_receipt.descriptor_hash != 0u);
+    source.valid = 1;
+    source.source_state_hash = 0x434c4954u;
+    source.dynamic_map = 0u;
+    source.base_light = 5u;
+    source.darkness_offset = 0u;
+    scene.scene_control_hash = 0x53434e45u;
+    scene.valid = 1;
+    CHECK("c_light state must match source map fixed-light branch",
+          dm2_v1_c_light_m11_receipt_build_for_map(
+              &scene, &map_receipt, &source, &receipt) &&
+              receipt.light_level == 1u);
+    source.dynamic_map = 1u;
+    CHECK("c_light rejects state from a different map light branch",
+          !dm2_v1_c_light_m11_receipt_build_for_map(
+              &scene, &map_receipt, &source, &receipt) && !receipt.valid);
 
     printf("DM2 c_light receipt: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;
