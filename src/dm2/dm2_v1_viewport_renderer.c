@@ -4139,6 +4139,18 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         return;
     }
 
+    /* SKProject c_gui_vp.cpp::DM2_DRAW_WALL changes QUERY_TEMP_PICST's
+     * signed RAW4 query by `-table1d6b15[iViewportCell]` while a move is in
+     * progress. The cached command plan proves only its stationary RAW4
+     * crop/destination. Replaying that plan during movement would be a
+     * source-incorrect wall placement, so leave the pass unavailable until
+     * the live signed-RAW4 transaction is captured and bound. */
+    if (s->source_materials_required && s->gdat_scene_movement_active) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+        return;
+    }
+
     if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
         return;
     }

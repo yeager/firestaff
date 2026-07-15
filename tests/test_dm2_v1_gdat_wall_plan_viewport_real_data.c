@@ -387,6 +387,29 @@ int main(void)
             }
         }
     }
+    /* DM2_DRAW_WALL changes its signed RAW4 query while the party moves.
+     * A stationary command plan must never be replayed as a substitute for
+     * that live clip/offset transaction. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash,
+        scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+        scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+        scene_plan.ambient_darkness);
+    dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &wall_plan);
+    mark_plan_walls_visible(&viewport, &wall_plan);
+    dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
+    dm2_v1_render_walls(&viewport);
+    if (viewport.asset_wall_drawn_count != 0 ||
+        viewport.gdat_wall_material_plan_consumed_count != 0 ||
+        (viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u) {
+        fputs("FAIL: moving M10 frame replayed stationary RAW4 wall geometry\n",
+              stderr);
+        failures = 1;
+    }
     /* UPDATE_GFXSET is a single G1 transaction.  A wall plan retained from
      * the old control hash must be detached before M10 can query any fallback
      * provider or draw a stale GRAPHICSSET panel. */
