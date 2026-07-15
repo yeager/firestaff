@@ -17024,3 +17024,8 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   delegates the final line to F0199. Regression covers facing, side attack,
   invisibility, and an actual map-route blocker. Source: ReDMCSB `GROUP.C`
   F0200/F0227.
+- ✅ 2026-07-15 DM1 GROUP F0201: added live direct party scent consumption.
+  It calls F0199 through an F0198-backed map callback before considering the
+  supplied original stored scent, preserving the source ordering and range
+  gate. Regression covers clear route priority and blocked-route stored scent.
+  Source: ReDMCSB `GROUP.C` F0201/F0198/F0199.

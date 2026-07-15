@@ -258,6 +258,8 @@ struct DM1GroupBehaviorContext_Compat {
     int dungeonViewPaletteIndex;
     int (*isViewSquareBlocked)(int mapX, int mapY, void* context);
     void* viewBlockerContext;
+    int (*isSmellSquareBlocked)(int mapX, int mapY, void* context);
+    void* smellBlockerContext;
 
     /* Creature info for the group's type */
     struct DM1CreatureInfo_Compat creatureInfo;
@@ -676,6 +678,15 @@ struct DM1GroupSmellDirectionPlan_Compat {
 int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
     const struct DM1GroupBehaviorContext_Compat* ctx,
     int smellRouteDistance,
+    const struct DM1GroupScent_Compat* scent,
+    struct RngState_Compat* rng,
+    struct DM1GroupSmellDirectionPlan_Compat* out);
+
+/* Live GROUP.C F0201 form. Direct party scent consumes F0198/F0199 through
+ * the loaded-map callback; only a supplied original party-scent record may
+ * serve as the later source fallback. */
+int F0819c_DM1_GROUP_BuildSmelledPartyDirectionPlanWithRoute_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
     const struct DM1GroupScent_Compat* scent,
     struct RngState_Compat* rng,
     struct DM1GroupSmellDirectionPlan_Compat* out);

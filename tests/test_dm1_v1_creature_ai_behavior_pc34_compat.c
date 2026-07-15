@@ -833,6 +833,53 @@ static void test_smell_direction_stored_scent_fallback(void) {
               "smell_direct: direct route preserves party secondary direction");
 }
 
+static void test_smell_direction_f0201_live_route(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1GroupScent_Compat scent;
+    struct DM1GroupSmellDirectionPlan_Compat plan;
+    struct F0199BlockGrid grid;
+    struct RngState_Compat rng;
+
+    memset(&scent, 0, sizeof(scent));
+    memset(&grid, 0xff, sizeof(grid));
+    ctx.currentMapIndex = 0;
+    ctx.partyMapIndex = 0;
+    ctx.currentGroupMapX = 0;
+    ctx.currentGroupMapY = 0;
+    ctx.partyMapX = 0;
+    ctx.partyMapY = 2;
+    ctx.currentGroupDistanceToParty = 2;
+    ctx.currentGroupPrimaryDirToParty = 2;
+    ctx.currentGroupSecondaryDirToParty = 1;
+    ctx.creatureInfo.ranges = 0x1403;
+    ctx.isSmellSquareBlocked = f0199_is_blocked;
+    ctx.smellBlockerContext = &grid;
+    F0730_COMBAT_RngInit_Compat(&rng, 7u);
+
+    EXPECT_EQ(F0819c_DM1_GROUP_BuildSmelledPartyDirectionPlanWithRoute_Compat(
+                  &ctx, NULL, &rng, &plan), 1,
+              "F0201 consumes a clear loaded-map smell route");
+    EXPECT_EQ(plan.usedDirectPartyRoute, 1,
+              "F0201 selects direct scent before stored scent");
+    EXPECT_EQ(plan.directionOrdinal, 3,
+              "F0201 returns the real party primary direction");
+
+    grid.firstX = 0;
+    grid.firstY = 1;
+    scent.present = 1;
+    scent.strength = 30;
+    scent.mapX = 3;
+    scent.mapY = 0;
+    F0730_COMBAT_RngInit_Compat(&rng, 7u);
+    EXPECT_EQ(F0819c_DM1_GROUP_BuildSmelledPartyDirectionPlanWithRoute_Compat(
+                  &ctx, &scent, &rng, &plan), 1,
+              "F0201 builds a blocked-route stored-scent plan");
+    EXPECT_EQ(plan.usedDirectPartyRoute, 0,
+              "F0201 rejects a real map blocker before stored scent");
+    EXPECT_EQ(plan.usedStoredScent, 1,
+              "F0201 uses only the supplied fresh original scent fallback");
+}
+
 /* =========================================================
  *  Test 14: Per-creature attack event (C38)
  * ========================================================= */
@@ -1701,6 +1748,7 @@ int main(void) {
     test_visible_distance_f0200_live_route();
     test_smell_direction_requires_unblocked_route();
     test_smell_direction_stored_scent_fallback();
+    test_smell_direction_f0201_live_route();
     test_per_creature_attack_event();
     test_pc34_ranged_diagonal_c38_attack();
     test_reaction_during_freeze();
