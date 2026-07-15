@@ -7618,6 +7618,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     assign opcode, loader, table, CD-read, level, object, palette, bitmap, or
     rendering semantics. Remaining: an authentic loader data-read receipt
     originating from one of these observed routine paths.
+  - Update: when that successor is an observed `TII`, admission now requires
+    its source interval to lie wholly within the earlier hash-bound Track 02
+    continuation copy. The new receipt retains both RAM intervals and the
+    original-source coordinate/checksum. This proves original bytes were
+    re-copied by the observed caller path, not what those bytes represent.
+    Remaining: capture an original CD read or descriptor-table access beyond
+    this already known continuation interval.
   - Update: the capture producer now records a main-RAM call-entry row only
     when the next-caller JSR target is actually executed at that target. The
     receipt requires exact caller PC, physical PC, target, entry PC, physical

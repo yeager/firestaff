@@ -171,6 +171,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextCallReceipt continuation_caller_next_call;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextCallEntryReceipt continuation_caller_next_call_entry;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextEntryNextReceipt continuation_caller_next_entry_next;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferReceipt continuation_caller_next_transfer;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -830,6 +831,45 @@ int main(void)
             &handoff, game_payload_capture, &continuation_caller_next_entry_next)) {
         free(raw);
         printf("FAIL: altered caller next entry successor reached receipt\n");
+        return 1;
+    }
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-main-ram-loader\n"
+             "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
+             "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n"
+             "main_ram_loader_rts logical_pc=2010 physical_pc=1f2010\n"
+             "main_ram_loader_post_rts source_logical_pc=2010 source_physical_pc=1f2010 logical_pc=3853 physical_pc=1f1853 opcode=20\n"
+             "main_ram_loader_jsr logical_pc=3853 physical_pc=1f1853 target=2100 a=00 x=00 y=00\n"
+             "main_ram_loader_rts logical_pc=2110 physical_pc=1f2110\n"
+             "main_ram_loader_post_rts source_logical_pc=2110 source_physical_pc=1f2110 logical_pc=3856 physical_pc=1f1856 opcode=ea\n"
+             "main_ram_loader_jsr logical_pc=3858 physical_pc=1f1858 target=2200 a=00 x=00 y=00\n"
+             "main_ram_loader_call_entry caller_logical_pc=3858 caller_physical_pc=1f1858 target=2200 logical_pc=2200 physical_pc=1f2200 opcode=ea\n"
+             "main_ram_loader_entry_next entry_logical_pc=2200 entry_physical_pc=1f2200 logical_pc=2201 physical_pc=1f2201 opcode=73\n"
+             "main_ram_loader_block_transfer logical_pc=2201 physical_pc=1f2201 operation=tii source=2008 destination=2400 length=0010\n");
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer(
+            &handoff, game_payload_capture, &continuation_caller_next_transfer) ||
+        !continuation_caller_next_transfer.valid ||
+        !continuation_caller_next_transfer.source_track02_bytes_proven ||
+        continuation_caller_next_transfer.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer.transfer_pc != 0x2201u ||
+        continuation_caller_next_transfer.transfer_physical_pc != 0x1f2201u ||
+        continuation_caller_next_transfer.source_address != 0x2008u ||
+        continuation_caller_next_transfer.destination_address != 0x2400u ||
+        continuation_caller_next_transfer.byte_count != 0x10u ||
+        continuation_caller_next_transfer.original_source_address != 0x3c88u ||
+        continuation_caller_next_transfer.source_checksum !=
+            fnv1a_bytes(handoff.loader_post_envelope.bytes + 8u, 0x10u)) {
+        free(raw);
+        printf("FAIL: caller next TII was not bound to Track 02 bytes\n");
+        return 1;
+    }
+    *(strstr(game_payload_capture,
+             "source=2008 destination=2400 length=0010") +
+      strlen("source=20")) = '2';
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer(
+            &handoff, game_payload_capture, &continuation_caller_next_transfer)) {
+        free(raw);
+        printf("FAIL: altered caller next TII source reached receipt\n");
         return 1;
     }
     ++manifest.trace_md5[0];
