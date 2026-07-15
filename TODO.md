@@ -342,10 +342,12 @@
   dynamic icon resolution now read the loaded F0156 Thing record and exact
   G0237 Type column; F0115 candidate subtype extraction and the live M11
   champion-panel/leader-hand icon painter share the same F0033 result.
-  Missing raw records are no-draw even when decoded mirrors have an icon-like
-  subtype. Remaining work is real PC34/Mac capture across inventory, hand,
-  charge, compass, and scroll-state changes; do not substitute a decoded
-  Thing mirror, subtype-zero object, or host-generated icon.
+  F0302/F0303 hand, inventory, and chest placement now also consumes that
+  source-selected G0237 row's AllowedSlots field. Missing raw records are
+  no-draw and no-place even when decoded mirrors have an icon-like subtype.
+  Remaining work is real PC34/Mac capture across inventory, hand, charge,
+  compass, scroll-state, and slot-placement changes; do not substitute a
+  decoded Thing mirror, subtype-zero object, or host-generated icon.
 
 - 2026-07-15 DM1 DUNGEON F0158 follow-up: the raw PC3.4 WEAPON.Type to
   original G0238 WeaponInfo bridge now owns the F0294 raw-slot compatibility

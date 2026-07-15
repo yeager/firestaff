@@ -1033,6 +1033,12 @@
   focused M11 gate proves a contradictory decoded torch cannot override raw
   source bytes and that removing the raw record suppresses both consumers.
 
+- 2026-07-15 DM1 M11 DUNGEON F0141 AllowedSlots consumer: champion hand,
+  inventory, and chest placement now query the raw F0156-selected G0237 row
+  through the DM1 owner. M11 no longer uses its private AllowedSlots table or
+  a decoded object subtype to admit a placement. A missing raw record rejects
+  the move before any inventory mutation.
+
 - 2026-07-15 DM1 CHAMPION F0294: the ammunition compatibility gate now reads
   actual loaded PC3.4 weapon THING records through F0158 and the original
   G0238 WeaponInfo table. It preserves AMMO.C's launcher type, bow/sling

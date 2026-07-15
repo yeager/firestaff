@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +51,9 @@ int main(void)
              DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(
                  &state, CHAMPION_SLOT_ACTION_HAND),
              6);
+    CHECK_EQ("raw F0141 action-hand allowed slots",
+             (int)dm1_v1_dungeon_get_object_allowed_slots_pc34(&things, torch),
+             0x0400);
 
     state.leaderHandObjectPresent = 1;
     state.leaderHandThing = torch;
@@ -59,6 +63,9 @@ int main(void)
              6);
 
     things.rawThingData[THING_TYPE_WEAPON] = NULL;
+    CHECK_EQ("missing raw allowed-slots record is rejected",
+             (int)dm1_v1_dungeon_get_object_allowed_slots_pc34(&things, torch),
+             0);
     CHECK_EQ("missing raw inventory record is no-draw",
              DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(
                  &state, CHAMPION_SLOT_ACTION_HAND),

@@ -29,6 +29,13 @@ int dm1_v1_dungeon_get_object_type_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing);
 
+/* ReDMCSB DUNGEON.C F0141 / G0237.AllowedSlots.  This is a raw-Thing
+ * ownership query for CHAMPION.C inventory and hand placement; missing raw
+ * data returns zero so a host/decoded object cannot be placed anywhere. */
+unsigned int dm1_v1_dungeon_get_object_allowed_slots_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
 int dm1_v1_dungeon_get_object_icon_index_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing,
