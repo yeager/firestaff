@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB callable audit refresh: verified local full-audit MISSING
+  candidates against the available source corpus and excluded declaration-only,
+  platform-only, graphics-blocked, and already landed routes from implementation.
+
 - 2026-07-15 CSBWin overlay ownership audit: verified that the retained
   EXPOOL palette and CSBgraphics signature gate are prerequisites for the
   DSA overlay routes; no opcode was enabled without the missing payload owner.

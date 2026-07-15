@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSB callable-audit: local `REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv`
+  MISSING candidates were mechanically rechecked. The high-priority rows
+  available locally resolve only to declarations/platform stubs (not complete
+  ReDMCSB bodies), or are already source-implemented CSB routes such as F0243.
+  Do not promote an audit label into an implementation candidate until its
+  referenced source file and complete body are locally staged.
+
 - 2026-07-15 CSBWin `STKOP_Overlay`/`STKOP_Palette` blocker: source chain is
   `DSA.cpp:2916-2943` -> `Bitmaps.cpp:650-723`. EXPOOL owns the 1536-byte
   512xRGB overlay palette and save policy owns the CSBgraphics signatures;
