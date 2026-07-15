@@ -771,6 +771,27 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + SH2_STREAM_BYTE_READ_OFFSET) == 0x62c4U &&
         read_be16(dm_bin + SH2_OUTPUT_INDEX_COPY_OFFSET) == 0x6063U &&
         read_be16(dm_bin + SH2_OUTPUT_BYTE_STORE_OFFSET) == 0x0d24U;
+    receipt.nonzero_post_store_r6_increment_offset = SH2_V1_CALLEE_OFFSET + 90U;
+    receipt.nonzero_post_store_r6_increment = 1;
+    receipt.nonzero_post_store_r6_mask_offset = SH2_V1_CALLEE_OFFSET + 94U;
+    receipt.nonzero_post_store_r6_mask_source_register = 5U;
+    receipt.nonzero_post_store_r6_mask_destination_register = 6U;
+    receipt.nonzero_control_reentry_branch_offset = SH2_LOOP_BRANCH_OFFSET;
+    receipt.sh2_nonzero_output_commit_reentry_proven =
+        receipt.sh2_nonzero_direct_byte_path_proven &&
+        receipt.nonzero_post_store_r6_increment_offset ==
+            SH2_OUTPUT_BYTE_STORE_OFFSET + 2U &&
+        receipt.nonzero_post_store_r6_increment == 1 &&
+        receipt.nonzero_post_store_r6_mask_offset ==
+            receipt.nonzero_post_store_r6_increment_offset + 4U &&
+        receipt.nonzero_post_store_r6_mask_source_register == 5U &&
+        receipt.nonzero_post_store_r6_mask_destination_register == 6U &&
+        read_be16(dm_bin + receipt.nonzero_post_store_r6_increment_offset) == 0x7601U &&
+        read_be16(dm_bin + receipt.nonzero_post_store_r6_mask_offset) == 0x2659U &&
+        sh2_bra_target(read_be16(dm_bin + receipt.nonzero_control_reentry_branch_offset),
+                       receipt.nonzero_control_reentry_branch_offset,
+                       &receipt.nonzero_control_reentry_target_offset) &&
+        receipt.nonzero_control_reentry_target_offset == SH2_CONTROL_REENTRY_OFFSET;
     receipt.nonzero_source_counter_decrement_offset = SH2_V1_CALLEE_OFFSET + 82U;
     receipt.nonzero_source_counter_delta = -1;
     receipt.zero_source_counter_decrement_offset = SH2_V1_CALLEE_OFFSET + 100U;
@@ -1004,6 +1025,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_loop_body_bound && receipt.sh2_control_low_bit_semantics_proven &&
         receipt.sh2_terminal_failure_path_proven &&
         receipt.sh2_nonzero_direct_byte_path_proven &&
+        receipt.sh2_nonzero_output_commit_reentry_proven &&
         receipt.sh2_control_dependent_source_consumption_proven &&
         receipt.sh2_zero_side_index_read_verified &&
         receipt.sh2_zero_side_two_byte_input_span_proven &&

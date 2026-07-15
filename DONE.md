@@ -19110,3 +19110,12 @@ receipt rejects a changed indexed load or compare corridor. This identifies no
 PRS3 token, history buffer, copied/output byte, length, terminator, palette,
 pixel, or drawing behavior; those meanings still need an authenticated Saturn
 execution trace.
+
+# Nexus PRS3 V1 nonzero post-store control route (2026-07-15)
+
+The retail DM.BIN receipt now locks the complete static nonzero post-store
+corridor. After the guarded `R2 -> @(R13,R0)` byte store it executes
+`ADD #1,R6`, `AND R5,R6`, and branches to the shared PRS3 control re-entry.
+The receipt rejects a changed update, mask, or re-entry branch. This is a
+source-control fact only: it does not establish a literal token, R6/R13
+allocation, output byte order, decoded data, palette, pixels, or rendering.

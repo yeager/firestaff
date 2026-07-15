@@ -3498,6 +3498,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `CMP/EQ R1,R10` sequence that precedes the repeat decision. This is not
     proof that R13 is history, R1 is output, or R10 is a length; authenticated
     execution remains required for any PRS3 grammar or decoder promotion.
+  - The nonzero side now has a complete static post-store corridor: after its
+    guarded `R2 -> @(R13,R0)` byte store, the source increments and masks R6,
+    then branches back to shared control. This does not prove literal-token,
+    output-buffer, byte-order, or pixel semantics; a real execution trace
+    must still bind the dynamic operands and complete stream behavior.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
