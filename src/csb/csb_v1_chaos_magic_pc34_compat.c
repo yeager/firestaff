@@ -746,6 +746,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_MISSILE_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_EXPERIENCE_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS 100
 
 typedef struct {
     uint32_t location;
@@ -799,6 +800,11 @@ typedef struct {
     int32_t skill_number;
     int32_t experience;
 } CSB_V1_CSBWinDSAPendingExperienceWrite;
+
+typedef struct {
+    int32_t party_index;
+    int32_t fingerprint;
+} CSB_V1_CSBWinDSAPendingCharacterSwap;
 
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
@@ -860,7 +866,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingCharacterWrite *pending_character_writes,
     int *pending_character_write_count,
     CSB_V1_CSBWinDSAPendingExperienceWrite *pending_experience_writes,
-    int *pending_experience_write_count)
+    int *pending_experience_write_count,
+    CSB_V1_CSBWinDSAPendingCharacterSwap *pending_character_swaps,
+    int *pending_character_swap_count)
 {
     uint32_t v;
     uint32_t w;
@@ -885,6 +893,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_missile_writes || !pending_missile_write_count ||
         !pending_character_writes || !pending_character_write_count ||
         !pending_experience_writes || !pending_experience_write_count ||
+        !pending_character_swaps || !pending_character_swap_count ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
         *pending_monster_write_count < 0 ||
@@ -893,6 +902,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_missile_write_count < 0 ||
         *pending_character_write_count < 0 ||
         *pending_experience_write_count < 0 ||
+        *pending_character_swap_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -2106,6 +2116,38 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             }
         }
         break;
+    case 118u: /* STKOP_SwapCharacter, CSBWin DSA.cpp:4413-4425. */
+        /* CSBWin pushes SwapCharacter(index,fingerprint)'s result directly.
+         * The roster owner retains delete/add/swap selection, Wings lookup,
+         * and the source error codes; only a successful candidate is queued
+         * until this complete authenticated action has been consumed. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if (!context->prepare_character_swap ||
+            !context->commit_character_swap ||
+            *pending_character_swap_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        {
+            uint32_t swap_result = 0u;
+            int prepared = context->prepare_character_swap(
+                context->dungeon_user, (int32_t)w, (int32_t)v, &swap_result);
+
+            if (prepared < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (!csb_v1_csbwin_dsa_stack_push(stack, depth, swap_result)) {
+                goto underflow;
+            }
+            if (prepared > 0) {
+                CSB_V1_CSBWinDSAPendingCharacterSwap *swap =
+                    &pending_character_swaps[*pending_character_swap_count];
+
+                swap->party_index = (int32_t)w;
+                swap->fingerprint = (int32_t)v;
+                ++*pending_character_swap_count;
+            }
+        }
+        break;
     case 129u: /* STKOP_PartyDistance, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:4057-4072 pops LOCATIONREL and compares it with
          * d.partyLevel/X/Y.  The source returns Manhattan distance on the
@@ -2343,6 +2385,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_character_writes[CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_WRITES];
     CSB_V1_CSBWinDSAPendingExperienceWrite
         pending_experience_writes[CSB_V1_CSBWIN_DSA_PENDING_EXPERIENCE_WRITES];
+    CSB_V1_CSBWinDSAPendingCharacterSwap
+        pending_character_swaps[CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -2356,6 +2400,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_missile_write_count = 0;
     int pending_character_write_count = 0;
     int pending_experience_write_count = 0;
+    int pending_character_swap_count = 0;
     int staged_saves_disabled;
     uint32_t staged_random_state;
     int i;
@@ -2580,7 +2625,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &staged_random_state, pending_missile_writes,
                 &pending_missile_write_count, pending_character_writes,
                 &pending_character_write_count, pending_experience_writes,
-                &pending_experience_write_count);
+                &pending_experience_write_count, pending_character_swaps,
+                &pending_character_swap_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2659,6 +2705,15 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_experience_writes[i].character_selector,
                 pending_experience_writes[i].skill_number,
                 pending_experience_writes[i].experience)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_character_swap_count; ++i) {
+        if (!context->commit_character_swap ||
+            !context->commit_character_swap(
+                context->dungeon_user,
+                pending_character_swaps[i].party_index,
+                pending_character_swaps[i].fingerprint)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -2803,6 +2858,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_character_info = runner->set_character_info;
     context.prepare_experience_plus = runner->prepare_experience_plus;
     context.add_experience_plus = runner->add_experience_plus;
+    context.prepare_character_swap = runner->prepare_character_swap;
+    context.commit_character_swap = runner->commit_character_swap;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

@@ -63,6 +63,10 @@ static int experience_plus_count;
 static int32_t experience_plus_character;
 static int32_t experience_plus_skill;
 static int32_t experience_plus_amount;
+static int character_swap_enabled;
+static int character_swap_commit_count;
+static int32_t character_swap_index;
+static int32_t character_swap_fingerprint;
 
 static int wing_talents_enabled;
 
@@ -418,6 +422,33 @@ static int add_experience_plus(void *user, int32_t character_selector,
     return 1;
 }
 
+static int prepare_character_swap(void *user, int32_t party_index,
+                                  int32_t fingerprint, uint32_t *out_result)
+{
+    (void)user;
+    if (!character_swap_enabled || !out_result) return -1;
+    if (party_index == 99) {
+        *out_result = 3u;
+        return 0;
+    }
+    if (party_index != 1 || fingerprint != 0x2222) return -1;
+    *out_result = 1u;
+    return 1;
+}
+
+static int commit_character_swap(void *user, int32_t party_index,
+                                 int32_t fingerprint)
+{
+    (void)user;
+    if (!character_swap_enabled || party_index != 1 || fingerprint != 0x2222) {
+        return 0;
+    }
+    character_swap_index = party_index;
+    character_swap_fingerprint = fingerprint;
+    ++character_swap_commit_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -549,6 +580,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (experience_plus_enabled) {
         context.prepare_experience_plus = prepare_experience_plus;
         context.add_experience_plus = add_experience_plus;
+    }
+    if (character_swap_enabled) {
+        context.prepare_character_swap = prepare_character_swap;
+        context.commit_character_swap = commit_character_swap;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -844,6 +879,15 @@ int main(void)
     };
     uint16_t experience_plus_zero[] = {
         0x0686u, 1u, 0x0686u, 7u, 0x0686u, 0u, 0x1c4bu
+    };
+    uint16_t character_swap[] = {
+        0x0686u, 1u, 0x0686u, 0x2222u, 0x1d8bu, 0x080du
+    };
+    uint16_t character_swap_then_bad[] = {
+        0x0686u, 1u, 0x0686u, 0x2222u, 0x1d8bu, 0x0000u
+    };
+    uint16_t character_swap_full_party[] = {
+        0x0686u, 99u, 0x0686u, 0x2222u, 0x1d8bu, 0x080du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1468,6 +1512,35 @@ int main(void)
               (int)(sizeof(experience_plus) / sizeof(experience_plus[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "EXPERIENCE+ rejects without a complete skill owner");
+    character_swap_enabled = 1;
+    character_swap_commit_count = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, character_swap,
+              (int)(sizeof(character_swap) / sizeof(character_swap[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 1u && character_swap_commit_count == 1 &&
+              character_swap_index == 1 && character_swap_fingerprint == 0x2222,
+          "SWAPCHARACTER preserves source stack result and staged roster call");
+    character_swap_commit_count = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, character_swap_then_bad,
+              (int)(sizeof(character_swap_then_bad) /
+                    sizeof(character_swap_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              character_swap_commit_count == 0 && parameters[0] == 77u,
+          "SWAPCHARACTER does not publish before a later rejected source word");
+    parameters[0] = 77u;
+    check(run(&state, &action, character_swap_full_party,
+              (int)(sizeof(character_swap_full_party) /
+                    sizeof(character_swap_full_party[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 3u && character_swap_commit_count == 0,
+          "SWAPCHARACTER preserves the source full-party return code");
+    character_swap_enabled = 0;
+    check(run(&state, &action, character_swap,
+              (int)(sizeof(character_swap) / sizeof(character_swap[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "SWAPCHARACTER rejects without a complete roster owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

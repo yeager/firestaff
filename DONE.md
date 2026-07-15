@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_SwapCharacter`: the authenticated DSA executor
+  now stages CSBWin `DSA.cpp:4413-4425` / `Character.cpp::SwapCharacter` with
+  source stack order and immediate source status result. Only a successful
+  candidate roster operation commits after complete bytecode acceptance.
+  Focused regression covers a successful return, full-party result code,
+  rejected-bytecode atomicity, and missing-owner rejection.
+
 - 2026-07-15 CSBWin `STKOP_ExperiencePlus`: the authenticated DSA executor
   now stages CSBWin `DSA.cpp:4542-4557` and `Magic.cpp::AddToSkill` through
   source-owned prepare/commit callbacks. It keeps the original pop order and
