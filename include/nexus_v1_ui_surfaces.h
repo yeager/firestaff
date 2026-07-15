@@ -137,6 +137,23 @@ typedef struct {
     uint32_t declared_pixel_count;
 } Nexus_UI_FaceCompactRecordDescriptor;
 
+/* Whole-file PRS3 framing evidence for retail FACE.BIN. It records only
+ * authenticated stream boundaries and byte witnesses, never token grammar,
+ * decoded pixels, prefix-palette semantics, or a drawable portrait. */
+typedef struct {
+    int valid;
+    int frame_count;
+    size_t source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    uint64_t prs3_headers_fnv1a64;
+    uint64_t stream_bytes_fnv1a64;
+    size_t total_stream_byte_count;
+    uint64_t declared_total_pixel_count;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_UI_FacePrs3CorpusReceipt;
+
 typedef enum {
     NEXUS_UI_FACE_RECORD_NONE = 0,
     /* Canonical Saturn FACE.BIN frames are PRS3-compressed 56x56 records.
@@ -233,6 +250,9 @@ int nexus_ui_face_compact_record_descriptor(const uint8_t *data,
     int data_size,
     int face_index,
     Nexus_UI_FaceCompactRecordDescriptor *out_descriptor);
+int nexus_ui_face_prs3_corpus_receipt(const uint8_t *data,
+                                      int data_size,
+                                      Nexus_UI_FacePrs3CorpusReceipt *out_receipt);
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,

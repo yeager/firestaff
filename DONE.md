@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Nexus FACE.BIN PRS3 corpus receipt: all 20 retail frame headers
+  and streams now have exact bounds, aggregate byte witnesses, and declared
+  output totals. This is decoder evidence only; portrait decoding and drawing
+  remain fail-closed.
+
 - 2026-07-15 Nexus Structure1F active-row lookup: canonical source rows now
   resolve by exact index through the complete no-draw family receipt, giving a
   later mesh decoder a source-owned selection point without any inferred mesh
