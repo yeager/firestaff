@@ -6264,6 +6264,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   FIFO/RAM destination and a game-owned level/object consumer for this range.
   FIFO provenance now proves record `0x484` bytes `0..31` reach System Card
   `0xea9c` through `$1808`; it is not yet a game-owned RAM or record consumer.
+  2026-07-15 update: a corpus verifier now fixes the observed game-owned
+  main-RAM writer set at 128 writes: 12 control-window writes at
+  `0x1f01f6..0x1f01fb` and 116 `00`/`ff` initialization writes at
+  `0x1f10xx`. Every row has `dispatch_sequence=0`, and the authentic G7
+  `READ(6)` of LBA 4847 follows the entire writer corpus. This is a bounded
+  negative proof: those writers cannot consume G7 records `0x72e..0x735` and
+  carry no observed `$e009` CDB route. It does not claim the absence of a
+  later game loader; the next admissible step is a later game-owned writer or
+  reader with an exact FIFO/CDB origin.
   Generation 4 is separate: CDB `080010891100` reads LBA `4233..4249` / Track
   02 records `0x4c8..0x4d8`; its observed FIFO and `0x1f0256..0x1f0259` stores
   are System Card-owned. No game-RAM or level/object consumer is admitted.
