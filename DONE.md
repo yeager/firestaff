@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 archive-backed real data startup: verified virtual
+  `GRAPHICS.DAT`/`DUNGEON.DAT` paths from archive discovery now materialize
+  into temporary byte-for-byte inputs for the DM2 boot parsers instead of
+  failing through `fopen`. The M11 startup pointer route now resolves the
+  original `INTERFACE_GENERAL/0/dt04/0` NEW/RESUME hit geometry from real
+  GDAT and enters the real NEW runtime route when data is present. Focused
+  startup pointer/menu-action tests pass; the broader M11 profile gate is
+  reduced to the remaining runtime HUD/save/object-icon/tick blockers.
+
 - ✅ 2026-07-15 DM1 G0500 action-menu table contract: the two-action
   action/spell menu box now exposes ReDMCSB's signed `int16_t[4]`
   `G0500_ai_Graphic560_Box_ActionArea2ActionsMenu` instead of a byte pointer

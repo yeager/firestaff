@@ -454,11 +454,13 @@
 - 2026-07-15 DM2 startup/runtime follow-up: skproject title/menu startup now
   uses the real `TITLE/0` GDAT `dt07/1` + `dt07/4` surfaces and focused
   startup contracts pass. The broader M11 profile test still fails after
-  NEW GAME on real GDAT dungeon/HUD runtime capture, original `dt04/0`
-  NEW-rectangle input geometry, object-icon resolution, and SKSave resume
-  restore. Do not add synthetic menu, dungeon, HUD, or party substitutes;
-  next work must bind those remaining consumers to real `GRAPHICS.DAT`,
-  `DUNGEON.DAT`, and save-corpus data.
+  NEW GAME on real GDAT dungeon/HUD runtime capture, object-icon resolution,
+  tick/input redraw, boot-pose mirror, and SKSave resume restore. Real
+  archive-backed `GRAPHICS.DAT`/`DUNGEON.DAT` materialization and original
+  `dt04/0` NEW/RESUME hit geometry now cross the M11 startup pointer route.
+  Do not add synthetic menu, dungeon, HUD, or party substitutes; next work
+  must bind the remaining consumers to real `GRAPHICS.DAT`, `DUNGEON.DAT`,
+  and save-corpus data.
 
 - 2026-07-15 DM1 F0094/F0098: packaged active-map C079/C078 assets now reach
   the PC34 224x39 plus 224x97 viewport pair. Remaining work is broader
