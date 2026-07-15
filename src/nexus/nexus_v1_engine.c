@@ -3039,6 +3039,84 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
     return 1;
 }
 
+int nexus_v1_current_level_structure2_format_evidence_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure2FormatEvidenceReceipt *out_receipt)
+{
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt descriptor_receipt;
+    const Nexus_V1_Level *level;
+    uint32_t opaque_start;
+    uint32_t opaque_end;
+    int index;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    if (!engine || nexus_v1_current_level_structure2_descriptor_receipt(
+            engine, &descriptor_receipt) != 1) {
+        return 0;
+    }
+    level = &engine->current_level;
+    opaque_start = (uint32_t)level->structure2_payload.opaque_payload_offset;
+    opaque_end = opaque_start +
+        (uint32_t)level->structure2_payload.opaque_payload_size;
+    if (level->structure2_payload.opaque_payload_offset < 0 ||
+        level->structure2_payload.opaque_payload_size <= 0 ||
+        opaque_end <= opaque_start) {
+        return 0;
+    }
+    for (index = 0; index < level->structure2_texture_count; ++index) {
+        const Nexus_V1_DgnStructure2Texture *descriptor =
+            &level->structure2_textures[index];
+        int palette_present = descriptor->palette_relative_offset != 0U;
+
+        if (descriptor->width == 0U || descriptor->height == 0U ||
+            descriptor->image_relative_offset < opaque_start ||
+            descriptor->image_relative_offset >= opaque_end ||
+            (palette_present &&
+             (descriptor->palette_relative_offset < opaque_start ||
+              descriptor->palette_relative_offset >= opaque_end))) {
+            return 0;
+        }
+        ++out_receipt->image_payload_anchor_count;
+        if (palette_present) ++out_receipt->palette_payload_anchor_count;
+        else ++out_receipt->palette_payload_absent_count;
+        if (descriptor->encoding == 0x0008U) {
+            ++out_receipt->encoding_0x0008_count;
+            if (palette_present)
+                ++out_receipt->encoding_0x0008_palette_anchor_count;
+            else
+                ++out_receipt->encoding_0x0008_palette_absent_count;
+        } else if (descriptor->encoding == 0x0028U) {
+            ++out_receipt->encoding_0x0028_count;
+            if (palette_present)
+                ++out_receipt->encoding_0x0028_palette_anchor_count;
+            else
+                ++out_receipt->encoding_0x0028_palette_absent_count;
+        } else {
+            ++out_receipt->unobserved_encoding_count;
+        }
+    }
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = descriptor_receipt.source_bytes_fnv1a64;
+    out_receipt->descriptor_count = level->structure2_texture_count;
+    out_receipt->image_payload_anchors_complete =
+        out_receipt->image_payload_anchor_count == out_receipt->descriptor_count;
+    out_receipt->descriptor_format_classes_complete =
+        out_receipt->encoding_0x0008_count +
+            out_receipt->encoding_0x0028_count +
+            out_receipt->unobserved_encoding_count ==
+        out_receipt->descriptor_count;
+    /* The package contains no authoritative image span, palette length,
+     * pixel order, or VDP1 command relation. These fields deliberately stay
+     * false even when all source anchors are valid. */
+    out_receipt->valid = out_receipt->image_payload_anchors_complete &&
+        out_receipt->descriptor_format_classes_complete;
+    return out_receipt->valid;
+}
+
 int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,

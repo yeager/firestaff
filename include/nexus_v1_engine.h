@@ -437,6 +437,37 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure2DescriptorCaptureTarget;
 
+/* Measured Structure2 descriptor facts from an active canonical LEV. The
+ * observed encoding values are retained as raw classes, not bit-depth or
+ * VDP1 mode claims. An absent palette offset also never implies a default
+ * palette. Both candidate routes stay blocked until an authentic Saturn trace
+ * proves actual pixel spans, palette addressing, and VDP1 use. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int descriptor_count;
+    int image_payload_anchor_count;
+    int palette_payload_anchor_count;
+    int palette_payload_absent_count;
+    int encoding_0x0008_count;
+    int encoding_0x0008_palette_anchor_count;
+    int encoding_0x0008_palette_absent_count;
+    int encoding_0x0028_count;
+    int encoding_0x0028_palette_anchor_count;
+    int encoding_0x0028_palette_absent_count;
+    int unobserved_encoding_count;
+    int image_payload_anchors_complete;
+    int descriptor_format_classes_complete;
+    int pixel_span_proven;
+    int palette_addressing_proven;
+    int vdp1_format_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure2FormatEvidenceReceipt;
+
 /* One exact static-textured Structure3 face joined to its bounded Structure2
  * descriptor in the same canonical LEV. This is capture-producer input only:
  * the descriptor's post-FFFF bytes remain opaque and no pixel, palette, UV,
@@ -1159,6 +1190,9 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
 int nexus_v1_engine_write_structure2_descriptor_capture_target(
     const Nexus_V1_Engine *engine, int descriptor_index, const char *path,
     Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target);
+int nexus_v1_current_level_structure2_format_evidence_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure2FormatEvidenceReceipt *out_receipt);
 int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
