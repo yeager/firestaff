@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
+  champions now blit the complete original C008 67x29 source surface without
+  a host transparency key, so source-black pixels erase prior bars and hands
+  rather than leaking stale HUD. Focused CTest:
+  `m11_dm1_champion_panel_asset_fail_closed`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0107 unreadable-inscription palette receipt:
   side/depth M648 substitutes now publish the exact source plan's C10 key and
   16-entry palette map together with their G0205 geometry. The real-PC34

@@ -36480,7 +36480,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                         M11_AssetLoader_BlitRegion(boxAsset,
                             0, 0, slotW, slotH,
                             framebuffer, framebufferWidth, framebufferHeight,
-                            x, y, 0);
+                            /* CHAMDRAW.C F0292's C008 dead status box is a
+                             * complete source surface. Black pixels erase
+                             * old bars/hands; it has no host transparency. */
+                            x, y, -1);
                         drewStatusBox = 1;
                     }
                 }

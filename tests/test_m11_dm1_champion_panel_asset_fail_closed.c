@@ -49,6 +49,9 @@ int main(void)
             "                !m11_is_dm1_source_kind(state->sourceKind))") &&
          contains_between(panel, panel_end,
             "/* Procedural fallback.  V1 uses the same source status-box") &&
+         contains_between(panel, panel_end,
+            "CHAMDRAW.C F0292's C008 dead status box is a") &&
+         contains_between(panel, panel_end, "x, y, -1);") &&
          !contains_between(panel, panel_end,
             "if (!drewStatusBox && !m11_v1_chrome_mode_enabled()) {");
     free(source);
