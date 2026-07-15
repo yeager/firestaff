@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0113 teleporter-field follow-up: live M11 now requires the
+  complete real C076 field and its required C070..C075 projection mask before
+  drawing a HoC teleporter. Remaining work is PC34/Mac capture across all
+  field zones and animation phases. Do not expose an unmasked field when its
+  source mask is missing or malformed.
+
 - 2026-07-15 DM1 F0387 action-menu follow-up: C079/C077/C011 now require
   exact loaded PC34 pixels for one/two/three action rows; a malformed or
   unavailable menu surface preserves the F0387 black clear. Remaining work
