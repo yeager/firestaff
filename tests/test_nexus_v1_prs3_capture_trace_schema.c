@@ -693,28 +693,28 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         free(menu); free(dm_bin); return;
     }
     snprintf(text, sizeof(text),
-        "NEXUS_PRS3_SH2_VDP1_TRACE_V5\n"
+        "NEXUS_PRS3_SH2_VDP1_TRACE_V6\n"
         "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
         "entry_index=%x\nstream_offset=%x\nstream_size=%x\nexpected_output_bytes=%x\n"
         "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
         "last_input_read_address=%x\ninput_read_bytes=%x\npayload_fnv1a64=%llx\n"
         "output_ram_address=%x\nfirst_output_write_address=%x\n"
         "last_output_write_address=%x\noutput_write_bytes=%x\noutput_fnv1a64=3\n"
-        "first_opcode_sequence=10\nfirst_input_read_sequence=11\nlast_input_read_sequence=12\n"
-        "first_output_write_sequence=13\nlast_output_write_sequence=14\ndecoder_return_sequence=15\n"
-        "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
+        "first_opcode_sequence=10\nfirst_input_read_sequence=11\nlast_input_read_sequence=22\n"
+        "first_output_write_sequence=13\nlast_output_write_sequence=23\ndecoder_return_sequence=30\n"
+        "vdp1_command_sequence=31\nvdp1_command_address=5c00000\n"
         "vdp1_texture_source_address=%x\nvdp1_texture_source_bytes=%x\n"
-        "vdp1_texture_first_read_sequence=17\nvdp1_texture_last_read_sequence=18\n"
+        "vdp1_texture_first_read_sequence=32\nvdp1_texture_last_read_sequence=33\n"
         "vdp1_texture_first_read_address=%x\nvdp1_texture_last_read_address=%x\n"
         "vdp1_texture_read_bytes=%x\nvdp1_texture_fnv1a64=3\n"
-        "vdp1_command_first_read_sequence=17\nvdp1_command_last_read_sequence=17\n"
+        "vdp1_command_first_read_sequence=32\nvdp1_command_last_read_sequence=32\n"
         "vdp1_command_first_read_address=5c00000\nvdp1_command_last_read_address=5c0001f\n"
         "vdp1_command_read_bytes=20\nvdp1_command_fnv1a64=4\n"
-        "palette_first_read_sequence=17\npalette_last_read_sequence=18\n"
+        "palette_first_read_sequence=32\npalette_last_read_sequence=33\n"
         "palette_first_read_address=5f00000\npalette_last_read_address=5f0001f\n"
         "palette_read_bytes=20\npalette_fnv1a64=5\n"
         "output_index_copy_instruction_offset=14dd6\noutput_store_instruction_offset=14dd8\n"
-        "first_output_store_sequence=13\nlast_output_store_sequence=14\n"
+        "first_output_store_sequence=13\nlast_output_store_sequence=23\n"
         "first_output_store_address=%x\nlast_output_store_address=%x\n"
         "output_store_bytes=%x\noutput_store_fnv1a64=3\n"
         "output_store_predecessor_observed=1\ncomplete_output_store_range_observed=1\n"
@@ -723,8 +723,18 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         "control_zero_branch_target_offset=14de4\n"
         "control_branch_outcomes_mask=3\n"
         "nonzero_control_observation_count=1\nzero_control_observation_count=1\n"
-        "first_control_sequence=13\nlast_control_sequence=14\n"
+        "first_control_sequence=13\nlast_control_sequence=22\n"
         "complete_control_branch_coverage_observed=1\n"
+        "nonzero_counter_decrement_instruction_offset=14dd2\n"
+        "zero_counter_decrement_instruction_offset=14de4\n"
+        "nonzero_counter_before=5\nnonzero_counter_after=4\n"
+        "zero_counter_before=6\nzero_counter_after=4\n"
+        "nonzero_source_cursor_before=6010000\nnonzero_source_cursor_after=6010001\n"
+        "zero_source_cursor_before=6010001\nzero_source_cursor_after=6010003\n"
+        "nonzero_counter_decrement_sequence=14\nnonzero_input_read_sequence=15\n"
+        "zero_counter_decrement_sequence=19\nzero_first_input_read_sequence=20\n"
+        "zero_second_input_read_sequence=21\n"
+        "dynamic_control_operands_observed=1\n"
         "decoder_returned_success=1\ncapture_complete=1\n",
         fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
         plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
@@ -741,8 +751,9 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
                &trace, menu, menu_size, dm_bin, dm_bin_size, &binding) &&
            binding.valid && binding.vdp1_command_consumption_observed &&
            binding.palette_consumption_observed && !binding.decoder_promoted &&
-           !binding.fallback_visuals_permitted,
-           "V5 binds source-owned store PCs to the retail DM.BIN route without decoding");
+           !binding.fallback_visuals_permitted &&
+           trace.schema_version == 6U && trace.dynamic_control_operands_observed,
+           "V6 binds source-owned dynamic control operands without decoding");
     expect(nexus_v1_prs3_decoder_readiness_bind_capture(
                &trace, menu, menu_size, dm_bin, dm_bin_size, &readiness) &&
            readiness.valid && readiness.capture_source_bound &&
@@ -752,7 +763,7 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            !readiness.original_saturn_execution_authenticated &&
            !readiness.opcode_grammar_proven && !readiness.decoder_ready &&
            !readiness.decoder_promoted && !readiness.fallback_visuals_permitted,
-           "V5 reaches decoder-grammar review only, never a decoder route");
+           "V6 reaches decoder-grammar review only, never a decoder route");
     snprintf(transfer_text, sizeof(transfer_text),
         "NEXUS_PRS3_SH2_TRANSFER_TRACE_V1\n"
         "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
@@ -832,7 +843,7 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            !control_review.decoder_promoted &&
            !control_review.fallback_visuals_permitted,
            "both real low-bit paths join only as opaque grammar review evidence");
-    zero_trace.second_input_read_sequence = 0x13U;
+    zero_trace.second_input_read_sequence = 0x23U;
     expect(!nexus_v1_prs3_control_grammar_review_bind(
                &readiness, &trace, &transfer_trace, &transfer_receipt,
                &zero_trace, &zero_receipt, &control_review) && !control_review.valid,
@@ -842,6 +853,15 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
                &readiness, &trace, &transfer_trace, &transfer_receipt,
                &token_receipt) && !token_receipt.valid,
            "token review rejects a transfer offset not represented by its receipt");
+    memcpy(strstr(text, "nonzero_counter_after=4"),
+           "nonzero_counter_after=5",
+           sizeof("nonzero_counter_after=5") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               text, strlen(text), &trace) && !trace.valid,
+           "V6 rejects a dynamic nonzero counter debit mismatch");
+    memcpy(strstr(text, "nonzero_counter_after=5"),
+           "nonzero_counter_after=4",
+           sizeof("nonzero_counter_after=4") - 1U);
     memcpy(strstr(text, "control_branch_outcomes_mask=3"),
            "control_branch_outcomes_mask=1",
            sizeof("control_branch_outcomes_mask=1") - 1U);

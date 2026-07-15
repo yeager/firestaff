@@ -1047,6 +1047,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     uint32_t output_store_predecessor_observed;
     uint32_t complete_output_store_range_observed;
     uint32_t complete_control_branch_coverage_observed;
+    uint32_t dynamic_control_operands_observed;
     const char *cursor;
     size_t magic_size;
 
@@ -1054,6 +1055,12 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!text) return 0;
+    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC) - 1U;
+    if (text_size > magic_size &&
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC, magic_size) == 0 &&
+        text[magic_size] == '\n') {
+        receipt.schema_version = 6U;
+    } else {
     magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC) - 1U;
     if (text_size > magic_size &&
         memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC, magic_size) == 0 &&
@@ -1084,6 +1091,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
             text[magic_size] != '\n') return 0;
         receipt.schema_version = 1U;
         }
+    }
     }
     }
     }
@@ -1155,6 +1163,23 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           !read_u64(&cursor, "first_control_sequence=", &receipt.first_control_sequence) ||
           !read_u64(&cursor, "last_control_sequence=", &receipt.last_control_sequence) ||
           !read_u32(&cursor, "complete_control_branch_coverage_observed=", &complete_control_branch_coverage_observed))) ||
+        (receipt.schema_version >= 6U &&
+         (!read_u32(&cursor, "nonzero_counter_decrement_instruction_offset=", &receipt.nonzero_counter_decrement_instruction_offset) ||
+          !read_u32(&cursor, "zero_counter_decrement_instruction_offset=", &receipt.zero_counter_decrement_instruction_offset) ||
+          !read_u32(&cursor, "nonzero_counter_before=", &receipt.nonzero_counter_before) ||
+          !read_u32(&cursor, "nonzero_counter_after=", &receipt.nonzero_counter_after) ||
+          !read_u32(&cursor, "zero_counter_before=", &receipt.zero_counter_before) ||
+          !read_u32(&cursor, "zero_counter_after=", &receipt.zero_counter_after) ||
+          !read_u32(&cursor, "nonzero_source_cursor_before=", &receipt.nonzero_source_cursor_before) ||
+          !read_u32(&cursor, "nonzero_source_cursor_after=", &receipt.nonzero_source_cursor_after) ||
+          !read_u32(&cursor, "zero_source_cursor_before=", &receipt.zero_source_cursor_before) ||
+          !read_u32(&cursor, "zero_source_cursor_after=", &receipt.zero_source_cursor_after) ||
+          !read_u64(&cursor, "nonzero_counter_decrement_sequence=", &receipt.nonzero_counter_decrement_sequence) ||
+          !read_u64(&cursor, "nonzero_input_read_sequence=", &receipt.nonzero_input_read_sequence) ||
+          !read_u64(&cursor, "zero_counter_decrement_sequence=", &receipt.zero_counter_decrement_sequence) ||
+          !read_u64(&cursor, "zero_first_input_read_sequence=", &receipt.zero_first_input_read_sequence) ||
+          !read_u64(&cursor, "zero_second_input_read_sequence=", &receipt.zero_second_input_read_sequence) ||
+          !read_u32(&cursor, "dynamic_control_operands_observed=", &dynamic_control_operands_observed))) ||
         !read_u32(&cursor, "decoder_returned_success=", &decoder_returned_success) ||
         !read_u32(&cursor, "capture_complete=", &capture_complete) || *cursor != '\0') return 0;
     if (!receipt.menu_bpk_fnv1a64 || !receipt.dm_bin_fnv1a64 ||
@@ -1232,6 +1257,27 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           receipt.first_control_sequence > receipt.last_control_sequence ||
           receipt.last_control_sequence >= receipt.decoder_return_sequence ||
           complete_control_branch_coverage_observed != 1U)) ||
+        (receipt.schema_version >= 6U &&
+         (!receipt.nonzero_counter_decrement_instruction_offset ||
+          !receipt.zero_counter_decrement_instruction_offset ||
+          receipt.nonzero_counter_before < 1U ||
+          receipt.nonzero_counter_after != receipt.nonzero_counter_before - 1U ||
+          receipt.zero_counter_before < 2U ||
+          receipt.zero_counter_after != receipt.zero_counter_before - 2U ||
+          receipt.nonzero_source_cursor_before < receipt.payload_ram_address ||
+          receipt.nonzero_source_cursor_after != receipt.nonzero_source_cursor_before + 1U ||
+          receipt.nonzero_source_cursor_after > receipt.last_input_read_address + 1U ||
+          receipt.zero_source_cursor_before < receipt.payload_ram_address ||
+          receipt.zero_source_cursor_after != receipt.zero_source_cursor_before + 2U ||
+          receipt.zero_source_cursor_after > receipt.last_input_read_address + 1U ||
+          receipt.nonzero_counter_decrement_sequence <= receipt.first_control_sequence ||
+          receipt.nonzero_counter_decrement_sequence >= receipt.nonzero_input_read_sequence ||
+          receipt.nonzero_input_read_sequence > receipt.last_control_sequence ||
+          receipt.zero_counter_decrement_sequence <= receipt.first_control_sequence ||
+          receipt.zero_counter_decrement_sequence >= receipt.zero_first_input_read_sequence ||
+          receipt.zero_first_input_read_sequence >= receipt.zero_second_input_read_sequence ||
+          receipt.zero_second_input_read_sequence > receipt.last_control_sequence ||
+          dynamic_control_operands_observed != 1U)) ||
         decoder_returned_success != 1U || capture_complete != 1U) return 0;
     receipt.valid = 1;
     receipt.complete_capture = 1;
@@ -1242,6 +1288,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     receipt.output_store_predecessor_observed = receipt.schema_version >= 4U;
     receipt.complete_output_store_range_observed = receipt.schema_version >= 4U;
     receipt.complete_control_branch_coverage_observed = receipt.schema_version >= 5U;
+    receipt.dynamic_control_operands_observed = receipt.schema_version >= 6U;
     receipt.opcode_grammar_proven = 0;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;
@@ -1313,6 +1360,25 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
             receipt.vdp1_command_consumption_observed && output_store_route_matches;
         receipt.palette_consumption_observed =
             receipt.palette_consumption_observed && output_store_route_matches;
+    }
+    if (trace->schema_version >= 6U) {
+        int dynamic_operand_route_matches =
+            nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                dm_bin, dm_bin_size, 1, &sh2) &&
+            sh2.sh2_control_dependent_source_consumption_proven &&
+            trace->nonzero_counter_decrement_instruction_offset ==
+                sh2.nonzero_source_counter_decrement_offset &&
+            trace->zero_counter_decrement_instruction_offset ==
+                sh2.zero_source_counter_decrement_offset &&
+            trace->dynamic_control_operands_observed;
+        receipt.exact_vdp1_handoff_observed =
+            receipt.exact_vdp1_handoff_observed && dynamic_operand_route_matches;
+        receipt.vdp1_texture_consumption_observed =
+            receipt.vdp1_texture_consumption_observed && dynamic_operand_route_matches;
+        receipt.vdp1_command_consumption_observed =
+            receipt.vdp1_command_consumption_observed && dynamic_operand_route_matches;
+        receipt.palette_consumption_observed =
+            receipt.palette_consumption_observed && dynamic_operand_route_matches;
     }
     receipt.valid = receipt.exact_vdp1_handoff_observed;
     receipt.decoder_promoted = 0;

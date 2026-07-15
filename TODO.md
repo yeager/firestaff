@@ -3505,6 +3505,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     then branches back to shared control. This does not prove literal-token,
     output-buffer, byte-order, or pixel semantics; a real execution trace
     must still bind the dynamic operands and complete stream behavior.
+  - Capture schema V6 now requires one observed before/after R14 debit and
+    R12 source-cursor movement for each low-bit branch, with ordered dynamic
+    events bound to the two retail decrement PCs. This is still untrusted
+    capture evidence until original-Saturn provenance is authenticated, and
+    it defines no token, byte, output, palette, or raster semantics.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
