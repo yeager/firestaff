@@ -2717,8 +2717,8 @@ static int test_original_sksave_corpus_runtime_import(void)
     DM2_GameStateBlock *gs = &gs_store.block;
     DM2_ChampionRecord champion;
     DM2_V1_SaveCandidate candidate;
-    DM2_V1_RuntimeCorpusImportReceipt receipt;
-    DM2_SKSaveCorpusReceipt corpus;
+    DM2_V1_RuntimeOriginalCorpusImportReceipt receipt;
+    DM2_OriginalSaveStateCorpusReceipt state_corpus;
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
@@ -2727,6 +2727,10 @@ static int test_original_sksave_corpus_runtime_import(void)
     uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
     uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    DM2_V1_SessionState fallback_session;
+    uint8_t fallback_payload[DM2_SESSION_MAX_SIZE];
+    int fallback_payload_size;
+    FILE *file;
     int result = 0;
 
     printf("  Hash-receipted original SKSave corpus candidate restores runtime...\n");
@@ -2757,6 +2761,18 @@ static int test_original_sksave_corpus_runtime_import(void)
                                  payload_size) != 0) {
         goto done;
     }
+    /* A valid Firestaff slot must not become an implicit substitute when the
+     * explicitly selected original corpus row later goes stale. */
+    dm2_v1_session_new(&fallback_session);
+    fallback_session.party_x = 9u;
+    fallback_session.party_y = 9u;
+    fallback_payload_size = dm2_v1_session_serialize(
+        &fallback_session, fallback_payload, sizeof(fallback_payload));
+    if (fallback_payload_size <= 0 ||
+        dm2_sl_save(tmpdir, 0u, "NoOriginalFallback", fallback_payload,
+                    (size_t)fallback_payload_size) != 0) {
+        goto done;
+    }
 
     memset(&boot, 0, sizeof(boot));
     memset(&game, 0, sizeof(game));
@@ -2773,22 +2789,47 @@ static int test_original_sksave_corpus_runtime_import(void)
     snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "original-corpus-gdat");
     dm2_v1_runtime_init(&boot);
 
-    if (!dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
-        corpus.candidate_receipt_count != 1u ||
-        !dm2_v1_runtime_import_sksave_receipted_candidate(
-            &corpus.candidate_receipts[0], &receipt) ||
-        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
-        !receipt.restored ||
-        receipt.candidate_kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
-        receipt.rejected_original_candidate ||
-        receipt.selected_payload_size != payload_size ||
-        receipt.selected_source_file_hash !=
-            corpus.candidate_receipts[0].source_file_hash ||
-        strstr(receipt.selected_path, "SKSave.dat") == NULL ||
+    if (!dm2_v1_original_save_state_corpus_probe(tmpdir, &state_corpus) ||
+        state_corpus.entry_count != 1u ||
+        !dm2_v1_runtime_import_original_sksave_state_entry(
+            tmpdir, &state_corpus.entries[0], &receipt) ||
+        !receipt.corpus_complete || !receipt.selected_state_admitted ||
+        receipt.original_candidate_count != 1u ||
+        receipt.parsed_candidate_count != 1u || receipt.corpus_hash == 0u ||
+        receipt.selected_state_hash != state_corpus.entries[0].state_hash ||
+        receipt.runtime_import.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
+        !receipt.runtime_import.restored ||
+        receipt.runtime_import.candidate_kind !=
+            DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        receipt.runtime_import.rejected_original_candidate ||
+        receipt.runtime_import.selected_payload_size != payload_size ||
+        receipt.runtime_import.selected_source_file_hash !=
+            state_corpus.entries[0].candidate.source_file_hash ||
+        strstr(receipt.runtime_import.selected_path, "SKSave.dat") == NULL ||
         game.party_x != 2 || game.party_y != 3 || game.party_dir != 3 ||
         dm2_v1_runtime_get_tick_count() != (int)gs->dwGameTick ||
         dm2_v1_runtime_get_champion_inventory_object(0, 8) != inventory[8] ||
         memcmp(dungeon.raw_data, payload, candidate.dungeon_size) != 0) {
+        goto done;
+    }
+    file = fopen(state_corpus.entries[0].candidate.path, "ab");
+    if (!file) {
+        goto done;
+    }
+    if (fputc(0xa5, file) == EOF) {
+        fclose(file);
+        goto done;
+    }
+    if (fclose(file) != 0) {
+        goto done;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (dm2_v1_runtime_import_original_sksave_state_entry(
+            tmpdir, &state_corpus.entries[0], &receipt) ||
+        receipt.runtime_import.result != DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED ||
+        receipt.selected_state_admitted ||
+        game.party_x != 2 || game.party_y != 3 || game.party_dir != 3 ||
+        dm2_v1_runtime_get_tick_count() != (int)gs->dwGameTick) {
         goto done;
     }
     result = 1;
@@ -2799,7 +2840,7 @@ done:
         printf("    FAIL: receipted original corpus candidate was not restored\n");
         return 0;
     }
-    printf("    PASS: original bytes were hash-gated then restored through runtime\n");
+    printf("    PASS: selected original corpus state restored without a fallback\n");
     return 1;
 }
 
