@@ -137,6 +137,46 @@ static int verify_unscaled_raster_binding(
     return 0;
 }
 
+static int verify_fail_closed_clears_stale_receipt(void)
+{
+    struct DungeonThings_Compat things;
+    unsigned char rawTextString[4] = {0, 0, 0, 0};
+    unsigned short textData[1] = {0x0081u};
+    DM1_V1_InscriptionHostMaterialReceiptPc34 stale;
+    const unsigned char zero[sizeof(stale)] = {0};
+    unsigned short textThing =
+        (unsigned short)((THING_TYPE_TEXTSTRING << 10) | 0);
+
+    memset(&things, 0, sizeof(things));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_TEXTSTRING] = rawTextString;
+    things.thingCounts[THING_TYPE_TEXTSTRING] = 1;
+    things.textData = textData;
+    things.textDataWordCount = 1;
+
+    memset(&stale, 0x5a, sizeof(stale));
+    stale.valid = 1;
+    if (dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            &things, 0, &stale) ||
+        memcmp(&stale, zero, sizeof(stale)) != 0) {
+        fprintf(stderr,
+                "malformed F0172 selected wall retained stale M648 receipt\n");
+        return 0;
+    }
+
+    memset(&stale, 0x5a, sizeof(stale));
+    stale.valid = 1;
+    if (dm1_v1_inscription_host_material_from_world_pc34(
+            &things, 0, textThing, &stale) ||
+        memcmp(&stale, zero, sizeof(stale)) != 0) {
+        fprintf(stderr,
+                "malformed F0168 world text retained stale M648 receipt\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -155,6 +195,10 @@ int main(void)
     int decodedCount;
     int line;
     int result = 1;
+
+    if (!verify_fail_closed_clears_stale_receipt()) {
+        return 1;
+    }
 
     if (!dataDir || !dataDir[0]) {
         home = getenv("HOME");

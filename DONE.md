@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 wall-inscription fail-closed receipt: malformed
+  F0172 selected-wall and F0168 world TextString material lookups now zero
+  the output M648/C10 receipt before returning failure, preventing stale
+  readable inscription material from surviving a rejected raw record. Focused
+  wall-inscription material and M11 inscription CTests pass.
+
 - ✅ 2026-07-15 CSB opening-door source-plan step gate: the public CSB
   source render-plan route now rejects pre-open delay states that carry a
   real door step and rejects opening-frame plans outside ReDMCSB's C002/C003
