@@ -683,8 +683,9 @@ uint8_t dm2_v1_runtime_get_minion_count(void);
 int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc);
 uint32_t dm2_v1_runtime_get_weather_seed(void);
 void dm2_v1_runtime_set_weather_seed(uint32_t seed);
-/* Accepts only already validated c_weather DistantEnvironment receipts. The
- * runtime has no generic weather-to-image fallback; no bound slot is no-draw. */
+/* Accepts only c_weather DistantEnvironment receipts that can be rebuilt
+ * against the current source-owned MapGraphicsStyle/GDAT weather receipt.
+ * A level or scene refresh clears them; no bound slot is no-draw. */
 int dm2_v1_runtime_bind_weather_distant_environment(
     const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count);
 
