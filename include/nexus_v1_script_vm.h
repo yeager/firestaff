@@ -81,6 +81,7 @@ typedef struct {
     int current_level;
     int candidate_source_loaded;
     int candidate_source_bytes;
+    uint64_t candidate_source_fnv1a64;
     int canonical_source_verified;
     int parser_supported;
     int dispatch_enabled;
@@ -134,6 +135,7 @@ typedef struct {
     int level_index;
     int candidate_source_loaded;
     int candidate_source_bytes;
+    uint64_t candidate_source_fnv1a64;
     int canonical_source_verified;
     int parser_supported;
     int dispatch_enabled;

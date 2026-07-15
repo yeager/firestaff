@@ -4855,6 +4855,7 @@ int nexus_v1_engine_build_slev_capture_target(
         route.saturn_task_dispatch_proven || route.dispatch_permitted ||
         !route.blocks_real_script_dispatch ||
         route.fallback_visuals_permitted || !engine ||
+        !engine->script_vm.candidate_source_fnv1a64 ||
         engine->level_aux_runtime_receipt.slev.canonical_name[0] == '\0' ||
         engine->level_aux_runtime_receipt.slev.canonical_md5[0] == '\0') {
         return 0;
@@ -4868,6 +4869,8 @@ int nexus_v1_engine_build_slev_capture_target(
              sizeof(out_target->canonical_slev_md5), "%s",
              engine->level_aux_runtime_receipt.slev.canonical_md5);
     out_target->source_byte_count = route.candidate_source_bytes;
+    out_target->source_fnv1a64 =
+        engine->script_vm.candidate_source_fnv1a64;
     out_target->task_header_size = route.task_header_size;
     out_target->first_opcode = route.first_opcode;
     out_target->setup_immediate = route.setup_immediate;
@@ -4902,6 +4905,7 @@ int nexus_v1_engine_write_slev_capture_target(
                 NEXUS_V1_SLEV_CAPTURE_TARGET_MAGIC "\n"
                 "level_index=%x\ncanonical_slev_name=%s\n"
                 "canonical_slev_md5=%s\nsource_byte_count=%x\n"
+                "source_fnv1a64=%016llx\n"
                 "task_header_size=%x\nfirst_opcode=%x\nsetup_immediate=%x\n"
                 "primary_literal_offset=%x\nprimary_literal_address=%x\n"
                 "auxiliary_literal_offset=%x\nauxiliary_literal_address=%x\n"
@@ -4910,6 +4914,7 @@ int nexus_v1_engine_write_slev_capture_target(
                 "task_body_dispatch_proven=0\nno_dispatch_only=1\n",
                 target.level_index, target.canonical_slev_name,
                 target.canonical_slev_md5, target.source_byte_count,
+                (unsigned long long)target.source_fnv1a64,
                 target.task_header_size, target.first_opcode,
                 target.setup_immediate, target.primary_literal_offset,
                 target.primary_literal_address, target.auxiliary_literal_offset,
@@ -5120,6 +5125,7 @@ int nexus_v1_engine_admit_slev_execution_trace(
     char callback_kind[16];
     uint32_t source_byte_count;
     uint32_t entry_opcode;
+    uint64_t source_fnv1a64;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
@@ -5163,6 +5169,10 @@ int nexus_v1_engine_admit_slev_execution_trace(
                                     value, sizeof(value)) ||
         !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
         (int)source_byte_count != target.source_byte_count ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "source_fnv1a64",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &source_fnv1a64) ||
+        source_fnv1a64 != target.source_fnv1a64 ||
         !nexus_v1_slev_trace_value(trace_text, trace_size, "entry_opcode", value,
                                     sizeof(value)) ||
         !nexus_v1_slev_trace_hex_u32(value, &entry_opcode) ||
@@ -5214,6 +5224,7 @@ int nexus_v1_engine_admit_slev_execution_trace(
         return 0;
     }
     receipt.callback_or_write_is_write = strcmp(callback_kind, "write") == 0;
+    receipt.source_fnv1a64 = source_fnv1a64;
     receipt.original_saturn_execution_claimed = 1;
     receipt.capture_target_bound = 1;
     receipt.trace_chain_complete = 1;
@@ -5314,6 +5325,8 @@ int nexus_v1_engine_consume_slev_execution_trace(
     }
     if (nexus_v1_engine_build_slev_capture_target(engine, &target) != 1 ||
         !target.valid || target.level_index != trace->level_index ||
+        !target.source_fnv1a64 ||
+        trace->source_fnv1a64 != target.source_fnv1a64 ||
         target.task_body_dispatch_proven || !target.no_dispatch_only ||
         target.fallback_visuals_permitted) {
         receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_ACTIVE_ROUTE;

@@ -5114,6 +5114,77 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           "only an authenticated source can expose an otherwise-ready BPK receipt");
 }
 
+static void test_slev_capture_target_binds_loaded_bytes(void) {
+    static const uint8_t spine[36] = {
+        0x2f, 0xe6, 0x00, 0x00, 0x00, 0x00, 0x34, 0x23,
+        0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
+        0x23, 0x42, 0x44, 0x11, 0x89, 0x04, 0xe0, 0xff,
+        0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
+        0x00, 0x00, 0x00, 0x00
+    };
+    uint8_t slev[64];
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelScriptCaptureTargetReceipt target;
+    Nexus_V1_LevelScriptTraceAdmissionReceipt admission;
+    char trace[2048];
+
+    memset(slev, 0, sizeof(slev));
+    memcpy(slev, spine, sizeof(spine));
+    slev[2] = 0xe0U;
+    slev[3] = 1U;
+    slev[4] = 0xd0U;
+    slev[5] = 8U;
+    slev[32] = 0xd0U;
+    slev[33] = 3U;
+    wb32(slev + 40, 0x00200010U);
+    wb32(slev + 48, 0x00200020U);
+
+    memset(&engine, 0, sizeof(engine));
+    nexus_script_vm_init(&engine.script_vm);
+    engine.level_loaded = 1;
+    engine.level_aux_runtime_receipt.level_index = 0;
+    engine.level_aux_runtime_receipt.slev.canonical_hash_verified = 1;
+    snprintf(engine.level_aux_runtime_receipt.slev.canonical_name,
+             sizeof(engine.level_aux_runtime_receipt.slev.canonical_name),
+             "SLEV00.BIN");
+    snprintf(engine.level_aux_runtime_receipt.slev.canonical_md5,
+             sizeof(engine.level_aux_runtime_receipt.slev.canonical_md5),
+             "59c01cbdd224152a6176687cdebeea9e");
+    CHECK(nexus_script_vm_load_canonical_level(&engine.script_vm, 0, slev,
+                                               (int)sizeof(slev), 1) == 0 &&
+          nexus_v1_engine_build_slev_capture_target(&engine, &target) == 1 &&
+          target.valid && target.source_fnv1a64 == fnv1a64(slev, sizeof(slev)),
+          "SLEV capture target binds the exact loaded task bytes");
+
+    snprintf(trace, sizeof(trace),
+             "magic=%s\nproducer=mednafen-debugger\n"
+             "trace_sha256=0000000000000000000000000000000000000000000000000000000000000000\n"
+             "level_index=%x\ncanonical_slev_name=%s\ncanonical_slev_md5=%s\n"
+             "source_byte_count=%x\nsource_fnv1a64=%016llx\n"
+             "entry_opcode=%x\ntask_header_size=%x\n"
+             "primary_literal_address=%x\nauxiliary_literal_address=%x\n"
+             "entry_pc=1000\ntask_body_pc=1002\ntask_body_opcode=1234\n"
+             "callback_or_write_pc=1004\ncallback_or_write_kind=write\n"
+             "original_saturn_execution=1\n",
+             NEXUS_V1_SLEV_TRACE_MAGIC, target.level_index,
+             target.canonical_slev_name, target.canonical_slev_md5,
+             target.source_byte_count, (unsigned long long)target.source_fnv1a64,
+             target.first_opcode, target.task_header_size,
+             target.primary_literal_address, target.auxiliary_literal_address);
+    CHECK(nexus_v1_engine_admit_slev_execution_trace(
+              &engine, trace, strlen(trace), &admission) == 1 &&
+          admission.capture_target_bound &&
+          admission.source_fnv1a64 == target.source_fnv1a64 &&
+          !admission.dispatch_permitted && admission.blocks_real_script_dispatch,
+          "SLEV trace admission retains loaded-byte identity without dispatch");
+    engine.script_vm.candidate_source_fnv1a64 ^= UINT64_C(1);
+    CHECK(nexus_v1_engine_admit_slev_execution_trace(
+              &engine, trace, strlen(trace), &admission) == 0 &&
+          admission.status == NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH &&
+          !admission.dispatch_permitted,
+          "a changed active SLEV byte receipt rejects a stale capture trace");
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -5138,6 +5209,7 @@ int main(void) {
     test_palette_source_gate();
     test_menu_bpk_missing_handoff_blocks_fallback();
     test_menu_bpk_handoff_requires_canonical_source();
+    test_slev_capture_target_binds_loaded_bytes();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);
