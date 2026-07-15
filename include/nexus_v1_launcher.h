@@ -78,6 +78,9 @@ typedef struct {
     int active_level_bound;
     int package_source_bound;
     Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt capture_target;
+    Nexus_V1_DmBinVdp1StateWriteReceipt vdp1_state;
+    int vdp1_state_source_bound;
+    int vdp1_capture_prerequisite_bound;
     int no_draw_only;
     int fallback_visuals_permitted;
     int blocks_real_dgn_mesh_render;
