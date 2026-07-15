@@ -6622,3 +6622,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     rejects ranges outside the 512 KiB VDP1 VRAM. This is a command-local
     bound only: an authentic trace must still prove that its captured texture
     lane was read from that VRAM interval.
+  - 2026-07-15 VDP1-VRAM snapshot update: when an independently authenticated
+    capture supplies the complete 512 KiB VDP1 VRAM, the exact CMDSRCA window
+    is now compared byte-for-byte to the captured texture lane before it is
+    exposed to renderer or viewport receipts. Partial `vdp1_state` lanes stay
+    opaque and cannot establish this relation. Pixel order, colour expansion,
+    palette/CLUT state, and draw semantics remain unproved and blocked.

@@ -410,6 +410,11 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 .texture_format_framed &&
             vp->last_dgn_render_receipt.structure3_runtime_vdp1_command
                 .texture_span_size_matches_command;
+        vp->last_dgn_render_receipt
+            .structure3_runtime_vdp1_vram_window_bound =
+            nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
+                engine, &vp->last_dgn_render_receipt
+                             .structure3_runtime_vdp1_vram_window) == 1;
         /* This is intentionally independent of the external capture packet.
          * A real package face may be staged, but never rasterized, before
          * Saturn pixel/palette/VDP1 evidence is available. */
