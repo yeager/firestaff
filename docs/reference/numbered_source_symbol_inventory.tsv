@@ -1192,7 +1192,7 @@ F	214	F214_pzzz_	ATARIST.H	unmapped_or_unverified
 F	0215	F0215_PROJECTILE_Delete	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;PROJEXPL.C	referenced_not_verified
 F	215	F215_lzzz_	ATARIST.H	unmapped_or_unverified
 F	0216	F0216_PROJECTILE_GetImpactAttack	IIGS.H;DEFS.H;PROJEXPL.C	referenced_not_verified
-F	0217	F0217_PROJECTILE_HasImpactOccured	FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced_not_verified
+F	0217	F0217_PROJECTILE_HasImpactOccured	FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented_narrow
 F	0218	F0218_PROJECTILE_GetImpactCount	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	referenced_not_verified
 F	218	F218_ezzz_	ATARIST.H	unmapped_or_unverified
 F	0219	F0219_PROJECTILE_ProcessEvents48To49_Projectile	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;PROJEXPL.C	referenced_not_verified

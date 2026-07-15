@@ -322,7 +322,7 @@ F	214	F214_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0215	F0215_PROJECTILE_Delete	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	215	F215_lzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0216	F0216_PROJECTILE_GetImpactAttack	IIGS.H;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0217	F0217_PROJECTILE_HasImpactOccured	FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0217	F0217_PROJECTILE_HasImpactOccured	FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	F0820 locks the F0217 non-explosion sound branch to raw Projectile.Slot type; no subtype-derived weapon fallback.
 F	0218	F0218_PROJECTILE_GetImpactCount	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	218	F218_ezzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0219	F0219_PROJECTILE_ProcessEvents48To49_Projectile	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

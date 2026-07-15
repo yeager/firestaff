@@ -250,28 +250,12 @@ static int projectile_non_explosion_impact_sound_code(
      * C00_SOUND_METALLIC_THUD only when the projectile associated thing
      * is C05_THING_TYPE_WEAPON; all other non-explosion impacts request
      * C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM. */
-    if (in) {
-        associatedThing = (unsigned int)in->reserved1;
-        if (associatedThing != 0 &&
-            associatedThing != THING_NONE &&
-            associatedThing != THING_ENDOFLIST &&
-            THING_GET_TYPE(associatedThing) == THING_TYPE_WEAPON) {
-            return PHASE17_SOUND_METALLIC_THUD;
-        }
-        if (associatedThing != 0 &&
-            associatedThing != THING_NONE &&
-            associatedThing != THING_ENDOFLIST) {
-            return PHASE17_SOUND_WOODEN_THUD;
-        }
-    }
-    /* Legacy synthetic fixtures created before Projectile.Slot was carried
-     * through reserved1 used the kinetic-arrow subtype as the local
-     * weapon-backed analogue. Keep that narrow fallback for old save/test
-     * blobs that still lack the associated Thing. */
-    if (in && in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
-        && in->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
+    if (!in) return PHASE17_SOUND_WOODEN_THUD;
+    associatedThing = (unsigned int)in->reserved1;
+    if (THING_GET_TYPE(associatedThing) == THING_TYPE_WEAPON)
         return PHASE17_SOUND_METALLIC_THUD;
-    }
+    /* The original classifies Projectile.Slot itself. It never infers a
+     * weapon from projectile category or subtype. */
     return PHASE17_SOUND_WOODEN_THUD;
 }
 
