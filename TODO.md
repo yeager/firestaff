@@ -7409,6 +7409,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or ambiguous table relation without assigning aliases, row ordering, or
     any word a gameplay meaning. Remaining: a real post-`$3800` execution
     trace proving how a non-self descriptor record is consumed.
+  - Update: the handoff now retains the exact six-byte big-endian descriptor
+    source span inside the authenticated loaded Stage-3 sector. Its physical
+    raw offset and hash must re-decode to the retained three descriptor words
+    before the selected later sector may enter runtime. This proves one
+    original loader-table-to-record boundary only. It does not assign field
+    formats, graphics, palette, object, level, or command semantics. Remaining
+    work still requires a real game-code consumer for a non-self record.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02

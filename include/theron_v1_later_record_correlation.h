@@ -62,6 +62,13 @@ typedef struct {
     size_t user_data_offset;
     size_t user_data_bytes;
     uint32_t user_data_hash;
+    /* Exact six-byte big-endian source row inside the authenticated Stage-3
+     * loader sector. This records the physical descriptor-to-record transfer
+     * boundary only; it does not classify the row or target payload. */
+    size_t descriptor_source_raw_offset;
+    size_t descriptor_source_bytes;
+    uint32_t descriptor_source_hash;
+    int descriptor_source_bytes_proven;
     /* Full table relationship for this selector. Multiple raw descriptor rows
      * can resolve to one physical record; these ordinal facts retain that
      * aliasing without assigning a meaning to the selector or row words. */

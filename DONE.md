@@ -18623,6 +18623,18 @@ command, or visual route. Verification: descriptor-correlation probe covers a
 duplicated selector relation and rejection paths; `test_theron_rendering`
 18/18 and `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 descriptor source-span binding
+
+Each admitted later descriptor record now keeps the exact six-byte big-endian
+row span from the authenticated loaded Stage-3 MODE1 sector. Firestaff checks
+the physical raw offset and FNV-1a against the three retained raw words before
+the later sector may reach the runtime handoff. This closes the source-table
+to-selected-sector byte boundary without interpreting any descriptor field,
+target record, graphics, palette, object, level, or command grammar.
+Verification: focused descriptor probe validates the byte span plus malformed
+MODE1/zero-selector rejection; `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3

@@ -26,10 +26,19 @@ static void test_bounded_selector_catalog(void) {
     uint8_t raw_track[40u * 2352u];
     size_t index;
 
+#define PUT_BE16(destination, value) \
+    do { \
+        (destination)[0] = (uint8_t)((value) >> 8u); \
+        (destination)[1] = (uint8_t)(value); \
+    } while (0)
+
     memset(&manifest, 0, sizeof(manifest));
     manifest.valid = 1;
     manifest.variant = THERON_TRACK02_VARIANT_US_BIN;
     manifest.track02_record = 20u;
+    manifest.raw_sector = 20u;
+    manifest.raw_offset = 20u * 2352u;
+    manifest.user_data_offset = manifest.raw_offset + 16u;
     manifest.descriptor_count =
         THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT;
     manifest.first_descriptor.word2 = 10u;
@@ -54,6 +63,13 @@ static void test_bounded_selector_catalog(void) {
         raw_track[21u * 2352u + 16u + index] =
             (uint8_t)(index ^ 0x5au);
     }
+    for (index = 0u; index < manifest.descriptor_count; ++index) {
+        uint8_t *encoded = raw_track + manifest.user_data_offset + 4u +
+            index * 6u;
+        PUT_BE16(encoded, manifest.descriptors[index].word0);
+        PUT_BE16(encoded + 2u, manifest.descriptors[index].word1);
+        PUT_BE16(encoded + 4u, manifest.descriptors[index].word2);
+    }
 
     check(theron_v1_later_record_correlation_from_manifest(
               &manifest, 40u * 2352u, &correlation) &&
@@ -76,6 +92,11 @@ static void test_bounded_selector_catalog(void) {
               boundary.user_data_offset == 21u * 2352u + 16u &&
               boundary.user_data_bytes == 2048u &&
               boundary.user_data_hash != 0u &&
+              boundary.descriptor_source_raw_offset ==
+                  20u * 2352u + 16u + 4u + 6u &&
+              boundary.descriptor_source_bytes == 6u &&
+              boundary.descriptor_source_hash != 0u &&
+              boundary.descriptor_source_bytes_proven &&
               boundary.selector_occurrence_count == 2u &&
               boundary.selector_first_ordinal == 1u &&
               boundary.selector_last_ordinal == 4u &&
@@ -93,6 +114,8 @@ static void test_bounded_selector_catalog(void) {
     check(!theron_v1_stage3_descriptor_record_boundary_from_manifest(
               raw_track, sizeof(raw_track), &manifest, 2u, &boundary),
           "descriptor boundary rejects a zero opaque selector");
+
+#undef PUT_BE16
 }
 
 static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
