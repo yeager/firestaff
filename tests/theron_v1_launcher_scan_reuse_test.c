@@ -161,10 +161,10 @@ int main(void) {
     }
     snprintf(isoCuePath, sizeof(isoCuePath), "%s/Therons Quest.cue", isoCueDir);
     check_int(write_file(isoCuePath,
-                         "FILE Track 01.bin BINARY\n"
+                         "FILE \"Track 01.bin\" BINARY\n"
                          "  TRACK 01 AUDIO\n"
                          "    INDEX 01 00:00:00\n"
-                         "FILE Track 02.iso BINARY\n"
+                         "FILE \"Track 02.iso\" BINARY\n"
                          "  TRACK 02 MODE1/2048\n"
                          "    INDEX 01 00:00:00\n"),
               "strict MODE1/2048 Theron CUE fixture written");
@@ -240,7 +240,7 @@ int main(void) {
                   media->track02_mode1_sector_bytes == 2048 &&
                   media->has_valid_track02_mode1 &&
                   strcmp(media->track02_path, isoTrackPath) == 0,
-              "Theron scanner accepts unquoted 2048-byte ISO Track 02 path");
+              "Theron scanner preserves the declared 2048-byte ISO Track 02 path");
     check_int(!M12_AssetStatus_GetTheronTrack02LoaderReceipt(&isoCueStatus)->valid,
               "MODE1/2048 ISO CUE does not claim a raw Track02 IPL receipt");
     isoLaunchPath = M12_AssetStatus_GetTheronLaunchMediaPath(&isoCueStatus);
