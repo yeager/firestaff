@@ -1,6 +1,24 @@
 
 # Unreleased
 
+# Firestaff v3.0.77
+
+Firestaff v3.0.77 packages current source-owned runtime work from `main`.
+
+## Highlights since v3.0.76
+
+- **DM1/CSB**: expanded ReDMCSB-backed dungeon, event, endgame, and raw-object
+  ownership paths with focused runtime tests.
+- **DM2**: GDAT floor, ceiling, door, creature, HUD, and outdoor scene paths
+  now require their verified local source palettes at final viewport use.
+- **Nexus/Theron**: deeper fail-closed provenance for Saturn VDP1 state and
+  Track 02 CD-to-RAM loader routes.
+
+## Verification
+
+- Focused DM1, CSB, DM2, Nexus, and Theron checks passed locally.
+- GitHub Actions packages platform artifacts from the `v3.0.77` tag.
+
 # Firestaff v3.0.76
 
 Firestaff v3.0.76 packages the latest source-faithful DM1/CSB text, cache,
