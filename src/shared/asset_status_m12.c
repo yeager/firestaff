@@ -846,13 +846,18 @@ static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
     version = m12_first_matched_version(status, theronIndex);
     if (!version || !version->matched ||
         !status->theronMedia.paired_track01_track02 ||
+        status->theronMedia.track02_mode1_sector_bytes != 2352 ||
         status->theronMedia.cue_path[0] == '\0' ||
         status->theronMedia.track02_path[0] == '\0' ||
         strcmp(version->matchedPath, status->theronMedia.track02_path) != 0 ||
         theron_v1_track02_variant_for_md5(version->matchedMd5) ==
             THERON_TRACK02_VARIANT_UNKNOWN) return;
 
-    /* The raw BIN IPL records are relative to Track 02 INDEX 01.  The
+    /* This receipt is exclusively the raw MODE1/2352 IPL path. A valid
+     * MODE1/2048 CUE payload is still a launchable hash-verified Track 02,
+     * but must use its existing ISO route rather than being mislabeled as a
+     * broken raw BIN or receiving a fabricated sector wrapper. The raw BIN
+     * IPL records are relative to Track 02 INDEX 01. The
      * verified JP/US CUEs place that index at raw sectors 224/225, so the
      * scanner must retain the pregap as well as the stage-two body. */
     required = ((size_t)THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +

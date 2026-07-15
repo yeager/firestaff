@@ -17762,3 +17762,13 @@ alternative material path. Verification: canonical-data
 `test_dm2_v1_gdat_wall_plan_viewport_real_data` covers a direction-3 D3L/D2R/
 D0L selection, and `test_dm2_v1_gdat_scene_plan_viewport_real_data` keeps all
 five G1 plane plans green.
+
+# ✅ 2026-07-15 Theron BIN/CUE Track 02 admission
+
+The media classifier now records CUE Track 02's declared `MODE1/2048` or
+`MODE1/2352` sector width and accepts either as one authentic Track 01/Track
+02 pair. The scanner sends only 2352-byte data to the raw IPL receipt;
+2048-byte CUE media remains on the existing verified ISO route. No sector
+extraction, wrapper or fallback was added. Verification:
+`firestaff_theron_media_classify_unit` and
+`theron_v1_track02_cue_layout`.
