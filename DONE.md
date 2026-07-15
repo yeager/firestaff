@@ -18890,3 +18890,11 @@ proves that the repeat loop returns only while the compared registers differ.
 That is a static termination condition, not a claim that either register is a
 run length or that the zero side is a backreference. No PRS3 output, palette,
 or renderer route is enabled.
+
+# Nexus PRS3 V1 zero-side two-byte source span (2026-07-15)
+
+The verified zero-side corridor now records its adjacent `MOV.B @R12+` reads:
+one source byte, its sign extension, then the immediately following source
+byte. This proves an exact two-byte sequential input span before the raw merge.
+It does not assign fields, history access, output, token, palette, or pixel
+semantics, and cannot enable decoding or rendering.

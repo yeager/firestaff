@@ -3464,6 +3464,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This does not establish which value is a run length, nor a backreference,
     token, output, palette, or pixel contract. A real ordered capture is still
     required before using either PRS3 side to decode MENU.BPK.
+  - The zero-side's next bounded source fact is two adjacent `@R12+` reads
+    before the merge, so it consumes exactly two sequential stream bytes on
+    that path. Their field layout and history/output meaning remain unproved;
+    this does not authorize a PRS3 decoder or rendered surface.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
