@@ -130,6 +130,11 @@ static const char *nexus_known_boot_file_md5(const char *name) {
     return NULL;
 }
 
+const char *nexus_v1_known_file_md5(const char *name)
+{
+    return nexus_known_boot_file_md5(name);
+}
+
 static int nexus_path_is_file(const char *path);
 
 static uint64_t nexus_v1_dgn_bytes_fnv1a64(const uint8_t *data, int size)
