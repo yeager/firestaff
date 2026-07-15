@@ -185,14 +185,6 @@
 
 - 2026-07-15 DM2 HUD follow-up: HUD now binds to its G1 scene receipt. Save corpus remains.
 
-- 2026-07-15 DM2 startup-to-runtime follow-up: the selected boot/session now
-  carries level, G1 `MapGraphicsStyle`, source map-load token, GDAT scene hash,
-  and original interface-palette hash into the first M11 dungeon frame. M11
-  blocks a mismatch. Remaining work is broader real save-corpus state and
-  source-proven later-map/lighting/weather execution. The current local
-  broad boot smoke still reports four pre-existing full-frame ownership/HUD
-  corpus failures; do not bypass that gate or add a loose HUD/dungeon fallback.
-
 - 2026-07-15 DM2 HUD follow-up: exact real HUD command counts now cross M11.
   Remaining work is original save-corpus admission, not partial HUD fallback.
 

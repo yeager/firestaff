@@ -6935,48 +6935,6 @@ int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
     return 1;
 }
 
-int dm2_v1_boot_runtime_g1_context_receipt(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_BootRuntimeG1ContextReceipt *out_receipt)
-{
-    DM2_V1_GameState *game;
-    DM2_V1_DungeonData *dungeon;
-    DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
-
-    if (!out_receipt) {
-        return 0;
-    }
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!profile || !profile->assets_verified || !profile->dm2_state ||
-        !profile->dungeon_data || !profile->graphics_dat) {
-        return 0;
-    }
-    game = (DM2_V1_GameState *)profile->dm2_state;
-    dungeon = (DM2_V1_DungeonData *)profile->dungeon_data;
-    if (game->outdoor || game->current_level < 0 ||
-        dm2_v1_dungeon_get_map_graphics_style(dungeon,
-                                               game->current_level) < 0) {
-        return 0;
-    }
-    memset(&scene, 0, sizeof(scene));
-    if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) ||
-        !scene.ready || scene.map_graphics_style < 0 ||
-        scene.map_graphics_style != dm2_v1_dungeon_get_map_graphics_style(
-                                      dungeon, game->current_level) ||
-        !scene.interface_palette_ready || !scene.hash ||
-        !scene.interface_palette_hash) {
-        return 0;
-    }
-    out_receipt->level = game->current_level;
-    out_receipt->map_graphics_style = scene.map_graphics_style;
-    out_receipt->map_load_token = dm2_v1_runtime_g1_scene_map_token(
-        game->current_level, scene.map_graphics_style, 0);
-    out_receipt->scene_control_hash = scene.hash;
-    out_receipt->interface_palette_hash = scene.interface_palette_hash;
-    out_receipt->valid = out_receipt->map_load_token != 0u;
-    return out_receipt->valid;
-}
-
 int dm2_v1_boot_runtime_tick(DM2_V1_BootProfile *profile,
                              DM2_V1_BootRuntimeReceipt *out_receipt)
 {
@@ -7216,7 +7174,6 @@ int dm2_v1_boot_runtime_render_frame(
     DM2_V1_BootRuntimeRenderReceipt *out_receipt)
 {
     DM2_V1_BootRuntimeReceipt runtime;
-    DM2_V1_BootRuntimeG1ContextReceipt g1_context;
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     DM2_V1_ViewportM11FrameReceipt m11_frame;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
@@ -7272,8 +7229,6 @@ int dm2_v1_boot_runtime_render_frame(
     memset(&frame_ownership, 0, sizeof(frame_ownership));
     memset(&m11_frame, 0, sizeof(m11_frame));
     memset(&raw_sksave_handoff, 0, sizeof(raw_sksave_handoff));
-    memset(&g1_context, 0, sizeof(g1_context));
-    (void)dm2_v1_boot_runtime_g1_context_receipt(profile, &g1_context);
     (void)dm2_v1_runtime_last_frame_ownership(&frame_ownership);
     (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_frame);
     (void)dm2_v1_runtime_last_raw_sksave_handoff_receipt(
@@ -7405,13 +7360,14 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
             out_receipt->runtime_render_no_core_fallbacks;
-        out_receipt->runtime_g1_context = g1_context;
         out_receipt->runtime_m11_frame_receipt_consumed =
             m11_frame.valid && m11_frame.m11_consume_frame;
         out_receipt->runtime_m11_frame_map_load_token =
-            m11_frame.map_load_token;
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.map_load_token : 0u;
         out_receipt->runtime_m11_frame_scene_control_hash =
-            m11_frame.scene_control_hash;
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.scene_control_hash : 0u;
         out_receipt->runtime_m11_frame_scene_light_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.scene_light_hash : 0u;
@@ -7557,21 +7513,14 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.door_map_chip_material_plan_consumed : 0;
         out_receipt->runtime_m11_frame_palette_hash =
-            m11_frame.palette_hash;
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.palette_hash : 0u;
         out_receipt->runtime_m11_frame_interface_action_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.interface_action_palette_hash : 0u;
         out_receipt->runtime_m11_frame_interface_action_palette_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.interface_action_palette_consumed : 0;
-        out_receipt->runtime_g1_context_matches_frame =
-            out_receipt->runtime_g1_context.valid &&
-            out_receipt->runtime_g1_context.map_load_token ==
-                out_receipt->runtime_m11_frame_map_load_token &&
-            out_receipt->runtime_g1_context.scene_control_hash ==
-                out_receipt->runtime_m11_frame_scene_control_hash &&
-            out_receipt->runtime_g1_context.interface_palette_hash ==
-                out_receipt->runtime_m11_frame_palette_hash;
     }
     return rendered == 0;
 }
@@ -8804,8 +8753,6 @@ int dm2_v1_boot_startup_launch_detach_runtime(
     out_receipt->initialize_v2_runtime = 1;
     out_receipt->initialize_hud_runtime = 1;
     out_receipt->initialize_touch_runtime = 1;
-    (void)dm2_v1_boot_runtime_g1_context_receipt(launch->profile,
-                                                 &out_receipt->g1_context);
     launch->profile = NULL;
     return 1;
 }
