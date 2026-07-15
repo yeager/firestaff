@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
+  original-PC34 part reader now rejects overflowing cursor state before
+  touching the F0420 length prefix or body. Remaining work is an
+  operator-staged `FIRESTAFF_DM1_PC34_SAVE_CORPUS` run that exercises the
+  same malformed-boundary cases against real original save files; do not
+  promote checksum-authenticated fixture envelopes as external-save evidence.
+
 - 2026-07-15 DM1 F0168/F0172 inscription-owner follow-up: M11 now consumes
   only the F0172-selected raw G0290 TextString for F0107/M648 front, side,
   and depth wall passes; a malformed selected record cannot borrow another

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 SAVEUTIL F0419 cursor hardening: the original-PC34
+  save-part reader now validates the incoming cursor with subtraction-based
+  bounds before reading the F0420 length prefix or body, so malformed caller
+  state cannot wrap past the save envelope. Focused F0419/F0420 and full
+  original-save handoff CTests pass.
+
 - ✅ 2026-07-15 CSB title/opening receipt door-raster gate: the
   title-to-opening startup consumption receipt now rejects a host opening
   page unless its raster proves the real C004 entrance plus C002/C003 door

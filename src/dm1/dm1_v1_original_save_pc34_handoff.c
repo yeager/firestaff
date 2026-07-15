@@ -743,13 +743,14 @@ int dm1_v1_original_save_pc34_read_part_f0419(
     if (out_actual_checksum) {
         *out_actual_checksum = 0u;
     }
-    if (*cursor + 2u > size) {
+    if (*cursor > size || size - *cursor < 2u) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     byte_count = read_u16_le(bytes + *cursor);
     *cursor += 2u;
     if ((byte_count & 1u) != 0u ||
-        *cursor + (size_t)byte_count > size ||
+        *cursor > size ||
+        (size_t)byte_count > size - *cursor ||
         (size_t)byte_count > out_capacity) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
