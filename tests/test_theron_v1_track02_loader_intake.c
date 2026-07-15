@@ -102,7 +102,9 @@ int main(void) {
     Theron_V1Track02RawGridReceipt grid_receipt;
     Theron_V1Track02RawGridRuntimeReceipt runtime_receipt;
     Theron_V1Track02RawGridObjectTableProjectionReceipt object_projection;
+    Theron_V1Track02RawGridBitmapRouteReceipt bitmap_route;
     Theron_V1Track02RawGridLevelRouteReceipt level_route;
+    Theron_V1Track02RawGridDungeonRouteReceipt dungeon_route;
     const char *real_track02_path;
     const char *real_track02_md5 = NULL;
     unsigned char *real_track02;
@@ -193,6 +195,16 @@ int main(void) {
         CHECK(object_projection.raw_track02_offset == grid_receipt.raw_track02_offset);
         CHECK(strcmp(object_projection.status,
                      "initial_envelope_raw_grid_object_table_projection_blocked_no_fallback") == 0);
+        CHECK(theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+            &grid_receipt, &bitmap_route));
+        CHECK(bitmap_route.bitmap_route_blocked);
+        CHECK(bitmap_route.authenticated_v3_trace);
+        CHECK(bitmap_route.no_fallback);
+        CHECK(bitmap_route.raw_grid_bytes == grid_receipt.raw_grid_bytes);
+        CHECK(bitmap_route.raw_grid_hash == grid_receipt.raw_grid_hash);
+        CHECK(bitmap_route.raw_track02_offset == grid_receipt.raw_track02_offset);
+        CHECK(strcmp(bitmap_route.status,
+                     "initial_envelope_raw_grid_bitmap_route_blocked_no_fallback") == 0);
         CHECK(theron_v1_track02_loader_intake_admit_raw_grid_level_route(
             &grid_receipt, &level_route));
         CHECK(level_route.level_route_admitted);
@@ -205,11 +217,31 @@ int main(void) {
         CHECK(level_route.raw_track02_offset == grid_receipt.raw_track02_offset);
         CHECK(strcmp(level_route.status,
                      "initial_envelope_raw_grid_level_route_bitmap_object_blocked_no_fallback") == 0);
+        CHECK(theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+            &grid_receipt, &dungeon_route));
+        CHECK(dungeon_route.dungeon_route_admitted);
+        CHECK(dungeon_route.authenticated_v3_trace);
+        CHECK(dungeon_route.bitmap_route_blocked);
+        CHECK(dungeon_route.object_route_blocked);
+        CHECK(dungeon_route.no_fallback);
+        CHECK(dungeon_route.raw_grid_bytes == grid_receipt.raw_grid_bytes);
+        CHECK(dungeon_route.raw_grid_hash == grid_receipt.raw_grid_hash);
+        CHECK(dungeon_route.raw_track02_offset == grid_receipt.raw_track02_offset);
+        CHECK(strcmp(dungeon_route.status,
+                     "initial_envelope_raw_grid_dungeon_route_bitmap_object_blocked_no_fallback") == 0);
         ++grid_receipt.raw_grid[0];
+        CHECK(!theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+            &grid_receipt, &bitmap_route));
+        CHECK(!bitmap_route.bitmap_route_blocked);
+        CHECK(!bitmap_route.no_fallback);
         CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_level_route(
             &grid_receipt, &level_route));
         CHECK(!level_route.level_route_admitted);
         CHECK(!level_route.no_fallback);
+        CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+            &grid_receipt, &dungeon_route));
+        CHECK(!dungeon_route.dungeon_route_admitted);
+        CHECK(!dungeon_route.no_fallback);
         --grid_receipt.raw_grid[0];
         consumer.accept = 1;
         CHECK(theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
@@ -358,6 +390,10 @@ int main(void) {
             &grid_receipt, &object_projection));
         CHECK(!object_projection.projection_blocked);
         CHECK(!object_projection.no_fallback);
+        CHECK(!theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+            &grid_receipt, &bitmap_route));
+        CHECK(!bitmap_route.bitmap_route_blocked);
+        CHECK(!bitmap_route.no_fallback);
         CHECK(receipt.initial_envelope_source_bound);
         free(synthetic_raw);
     }
@@ -379,30 +415,58 @@ int main(void) {
         &grid_receipt, &object_projection));
     CHECK(!object_projection.projection_blocked);
     CHECK(!object_projection.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+        &grid_receipt, &bitmap_route));
+    CHECK(!bitmap_route.bitmap_route_blocked);
+    CHECK(!bitmap_route.no_fallback);
     CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_level_route(
         &grid_receipt, &level_route));
     CHECK(!level_route.level_route_admitted);
     CHECK(!level_route.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+        &grid_receipt, &dungeon_route));
+    CHECK(!dungeon_route.dungeon_route_admitted);
+    CHECK(!dungeon_route.no_fallback);
     grid_receipt.authenticated_v3_trace = 1;
     CHECK(!theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
         &grid_receipt, &object_projection));
     CHECK(!object_projection.projection_blocked);
     CHECK(!object_projection.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+        &grid_receipt, &bitmap_route));
+    CHECK(!bitmap_route.bitmap_route_blocked);
+    CHECK(!bitmap_route.no_fallback);
     CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_level_route(
         &grid_receipt, &level_route));
     CHECK(!level_route.level_route_admitted);
     CHECK(!level_route.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+        &grid_receipt, &dungeon_route));
+    CHECK(!dungeon_route.dungeon_route_admitted);
+    CHECK(!dungeon_route.no_fallback);
     grid_receipt.status = NULL;
     CHECK(!theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
         &grid_receipt, &object_projection));
     CHECK(!object_projection.projection_blocked);
     CHECK(!object_projection.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+        &grid_receipt, &bitmap_route));
+    CHECK(!bitmap_route.bitmap_route_blocked);
+    CHECK(!bitmap_route.no_fallback);
     grid_receipt.status = "initial_envelope_raw_grid_handoff_no_semantics";
     grid_receipt.raw_grid_hash = 0u;
     CHECK(!theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
         &grid_receipt, &object_projection));
     CHECK(!object_projection.projection_blocked);
     CHECK(!object_projection.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+        &grid_receipt, &bitmap_route));
+    CHECK(!bitmap_route.bitmap_route_blocked);
+    CHECK(!bitmap_route.no_fallback);
+    CHECK(!theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+        &grid_receipt, &dungeon_route));
+    CHECK(!dungeon_route.dungeon_route_admitted);
+    CHECK(!dungeon_route.no_fallback);
 
     initial_envelope.envelope_bytes = facts.byte_count + 1u;
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(

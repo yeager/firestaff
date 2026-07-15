@@ -501,6 +501,32 @@ int theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
     return 1;
 }
 
+int theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridBitmapRouteReceipt *out_receipt) {
+    Theron_V1Track02RawGridBitmapRouteReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !valid_raw_grid_receipt(grid)) {
+        return 0;
+    }
+
+    receipt.bitmap_route_blocked = 1;
+    receipt.authenticated_v3_trace = 1;
+    receipt.no_fallback = 1;
+    receipt.raw_grid_width = grid->raw_grid_width;
+    receipt.raw_grid_height = grid->raw_grid_height;
+    receipt.raw_grid_bytes = grid->raw_grid_bytes;
+    receipt.raw_grid_hash = grid->raw_grid_hash;
+    receipt.raw_track02_sector = grid->raw_track02_sector;
+    receipt.raw_sector_offset = grid->raw_sector_offset;
+    receipt.raw_track02_offset = grid->raw_track02_offset;
+    receipt.status =
+        "initial_envelope_raw_grid_bitmap_route_blocked_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_track02_loader_intake_admit_raw_grid_level_route(
     const Theron_V1Track02RawGridReceipt *grid,
     Theron_V1Track02RawGridLevelRouteReceipt *out_receipt) {
@@ -525,6 +551,34 @@ int theron_v1_track02_loader_intake_admit_raw_grid_level_route(
     receipt.raw_track02_offset = grid->raw_track02_offset;
     receipt.status =
         "initial_envelope_raw_grid_level_route_bitmap_object_blocked_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridDungeonRouteReceipt *out_receipt) {
+    Theron_V1Track02RawGridDungeonRouteReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !valid_raw_grid_receipt(grid)) {
+        return 0;
+    }
+
+    receipt.dungeon_route_admitted = 1;
+    receipt.authenticated_v3_trace = 1;
+    receipt.bitmap_route_blocked = 1;
+    receipt.object_route_blocked = 1;
+    receipt.no_fallback = 1;
+    receipt.raw_grid_width = grid->raw_grid_width;
+    receipt.raw_grid_height = grid->raw_grid_height;
+    receipt.raw_grid_bytes = grid->raw_grid_bytes;
+    receipt.raw_grid_hash = grid->raw_grid_hash;
+    receipt.raw_track02_sector = grid->raw_track02_sector;
+    receipt.raw_sector_offset = grid->raw_sector_offset;
+    receipt.raw_track02_offset = grid->raw_track02_offset;
+    receipt.status =
+        "initial_envelope_raw_grid_dungeon_route_bitmap_object_blocked_no_fallback";
     *out_receipt = receipt;
     return 1;
 }

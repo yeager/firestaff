@@ -133,6 +133,23 @@ typedef struct {
     const char *status;
 } Theron_V1Track02RawGridObjectTableProjectionReceipt;
 
+/* The verified initial grid is not a bitmap route. This negative receipt is
+ * separate from object-table blocking so callers cannot treat either route as
+ * implicitly covered by the other. */
+typedef struct {
+    int bitmap_route_blocked;
+    int authenticated_v3_trace;
+    int no_fallback;
+    uint16_t raw_grid_width;
+    uint16_t raw_grid_height;
+    uint32_t raw_grid_bytes;
+    uint32_t raw_grid_hash;
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    const char *status;
+} Theron_V1Track02RawGridBitmapRouteReceipt;
+
 /* A narrow level route for the verified startup grid. This is the first
  * dungeon-facing positive handoff from Track 02, but it still admits only the
  * source-owned raw grid. Bitmap and object routes stay blocked until their
@@ -152,6 +169,25 @@ typedef struct {
     uint32_t raw_track02_offset;
     const char *status;
 } Theron_V1Track02RawGridLevelRouteReceipt;
+
+/* Dungeon-named handoff for consumers that should not infer bitmap/object
+ * readiness from the older level-route receipt. This admits the same opaque
+ * raw grid and explicitly keeps non-grid dungeon semantics closed. */
+typedef struct {
+    int dungeon_route_admitted;
+    int authenticated_v3_trace;
+    int bitmap_route_blocked;
+    int object_route_blocked;
+    int no_fallback;
+    uint16_t raw_grid_width;
+    uint16_t raw_grid_height;
+    uint32_t raw_grid_bytes;
+    uint32_t raw_grid_hash;
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    const char *status;
+} Theron_V1Track02RawGridDungeonRouteReceipt;
 
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
@@ -254,10 +290,23 @@ int theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
     const Theron_V1Track02RawGridReceipt *grid,
     Theron_V1Track02RawGridObjectTableProjectionReceipt *out_receipt);
 
+/* Explicitly blocks bitmap/visual projection from the verified startup grid.
+ * The receipt is negative evidence only and cannot create a generated visual
+ * or asset substitute. */
+int theron_v1_track02_loader_intake_block_raw_grid_bitmap_route(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridBitmapRouteReceipt *out_receipt);
+
 /* Admits only the source-verified raw grid as a level route. The paired
  * bitmap and object routes are explicitly unavailable with no fallback. */
 int theron_v1_track02_loader_intake_admit_raw_grid_level_route(
     const Theron_V1Track02RawGridReceipt *grid,
     Theron_V1Track02RawGridLevelRouteReceipt *out_receipt);
+
+/* Admits only the source-verified raw grid as the dungeon-facing handoff.
+ * Bitmap/object projection and visual fallback remain unavailable. */
+int theron_v1_track02_loader_intake_admit_raw_grid_dungeon_route(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridDungeonRouteReceipt *out_receipt);
 
 #endif

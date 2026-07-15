@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Theron Track02 bitmap/dungeon route receipts: added explicit
+  fail-closed bitmap-route blocking and a dungeon-named raw-grid handoff over
+  the authenticated Track02 startup grid. Both receipts reuse the exact
+  source-verified grid validator, reject forged/synthetic receipts, and keep
+  object projection plus visual fallback unavailable until real later-read
+  evidence exists. Verification: focused Theron loader/dungeon tests and
+  `git diff --check`.
+
 - ✅ 2026-07-16 Nexus MENU.BPK renderer fail-closed gate: tightened the
   startup/menu handoff so missing, invalid, no-surface, PRS3-blocked, and
   truncated MENU.BPK decode receipts all block real menu rendering without
