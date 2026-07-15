@@ -20319,7 +20319,12 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
     backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                    (unsigned int)renderReceipt.backingGraphicIndex);
     if (!backing || !backing->loaded || !backing->pixels ||
-        backing->width <= 0 || backing->height <= 0 ||
+        renderReceipt.backingSourceX < 0 || renderReceipt.backingSourceY < 0 ||
+        renderReceipt.backingWidth <= 0 || renderReceipt.backingHeight <= 0 ||
+        renderReceipt.backingSourceX + renderReceipt.backingWidth >
+            (int)backing->width ||
+        renderReceipt.backingSourceY + renderReceipt.backingHeight >
+            (int)backing->height ||
         !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
             &renderReceipt, 0, 1, &hostDraw) ||
         !hostDraw.valid || !hostDraw.drawChampionPortrait ||
@@ -22716,27 +22721,23 @@ static int m11_draw_dm1_front_mirror_backing_host_receipt(
                                    (unsigned int)receipt->backingGraphicIndex);
     if (!backing || !backing->loaded || !backing->pixels ||
         receipt->backingSourceX < 0 || receipt->backingSourceY < 0 ||
-        receipt->backingSourceX >= (int)backing->width ||
-        receipt->backingSourceY >= (int)backing->height) {
+        receipt->backingSourceX + receipt->backingWidth > (int)backing->width ||
+        receipt->backingSourceY + receipt->backingHeight > (int)backing->height) {
         return 0;
     }
     paletteMap = receipt->backingPaletteMapValid
         ? receipt->backingPaletteMap : NULL;
     for (y = 0; y < receipt->backingHeight; ++y) {
-        const int sourceHeight = (int)backing->height - receipt->backingSourceY;
-        const int sourceY = receipt->backingSourceY +
-            (y * sourceHeight) / receipt->backingHeight;
+        const int sourceY = receipt->backingSourceY + y;
         const int framebufferY = M11_VIEWPORT_Y + receipt->backingDstY + y;
         int x;
         if (framebufferY < 0 || framebufferY >= fbH) {
             continue;
         }
         for (x = 0; x < receipt->backingWidth; ++x) {
-            const int sourceWidth = (int)backing->width - receipt->backingSourceX;
             const int sourceOffsetX = receipt->backingFlipHorizontal
                 ? receipt->backingWidth - 1 - x : x;
-            const int sourceX = receipt->backingSourceX +
-                (sourceOffsetX * sourceWidth) / receipt->backingWidth;
+            const int sourceX = receipt->backingSourceX + sourceOffsetX;
             const int framebufferX = M11_VIEWPORT_X + receipt->backingDstX + x;
             unsigned char pixel;
             if (framebufferX < 0 || framebufferX >= fbW) {

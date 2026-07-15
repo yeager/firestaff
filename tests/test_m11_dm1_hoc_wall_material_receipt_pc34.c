@@ -97,8 +97,8 @@ static int verify_front_mirror_backing_pixel(
     if (!backing || !backing->loaded || !backing->pixels ||
         hostDraw.backingSourceX < 0 || hostDraw.backingSourceY < 0 ||
         hostDraw.backingWidth <= 0 || hostDraw.backingHeight <= 0 ||
-        hostDraw.backingSourceX >= (int)backing->width ||
-        hostDraw.backingSourceY >= (int)backing->height) {
+        hostDraw.backingSourceX + hostDraw.backingWidth > (int)backing->width ||
+        hostDraw.backingSourceY + hostDraw.backingHeight > (int)backing->height) {
         return 0;
     }
     for (y = 0; y < hostDraw.backingHeight; ++y) {
@@ -106,13 +106,9 @@ static int verify_front_mirror_backing_pixel(
         for (x = 0; x < hostDraw.backingWidth; ++x) {
             int dstX = hostDraw.backingDstX + x;
             int dstY = hostDraw.backingDstY + y;
-            int sourceWidth = (int)backing->width - hostDraw.backingSourceX;
-            int sourceHeight = (int)backing->height - hostDraw.backingSourceY;
             int sourceX = hostDraw.backingSourceX +
-                ((hostDraw.backingFlipHorizontal ? hostDraw.backingWidth - 1 - x : x) *
-                 sourceWidth) / hostDraw.backingWidth;
-            int sourceY = hostDraw.backingSourceY +
-                (y * sourceHeight) / hostDraw.backingHeight;
+                (hostDraw.backingFlipHorizontal ? hostDraw.backingWidth - 1 - x : x);
+            int sourceY = hostDraw.backingSourceY + y;
             unsigned char expected = backing->pixels[
                 sourceY * (int)backing->width + sourceX];
             int framebufferX = dstX;

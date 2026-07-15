@@ -59,6 +59,9 @@ int main(void)
             "if (drawReceipt.candidatePanelOwnsCell)") &&
          strstr(source, "receipt->portraitSourceX + receipt->portraitWidth >") &&
          strstr(source, "receipt->portraitSourceY + receipt->portraitHeight >") &&
+         strstr(source, "receipt->backingSourceX + receipt->backingWidth >") &&
+         strstr(source, "receipt->backingSourceY + receipt->backingHeight >") &&
+         strstr(source, "receipt->backingSourceX + sourceOffsetX") &&
          ornaments && ornaments_end && ornaments_end > ornaments &&
          contains_between(ornaments, ornaments_end,
             "if (cell.championPortraitOrdinal >= 0)") &&
