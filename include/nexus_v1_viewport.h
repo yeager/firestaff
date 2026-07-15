@@ -20,6 +20,10 @@ typedef struct {
     int fallback_visuals_permitted;
     int no_draw_structure2_source;
     int no_draw_structure1f_semantics;
+    /* A complete source-bound Structure3 scene supersedes the older
+     * Structure1B/MNS raster path until original Saturn material and VDP1
+     * semantics are independently captured. */
+    int no_draw_structure3_source_scene;
     int active_level_source_consumed;
     Nexus_V1_DgnActiveLevelRendererSourceReceipt active_level_source;
     int structure3_source_packet_consumed;
@@ -76,7 +80,8 @@ typedef enum {
     NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS = 4,
     NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER = 5,
     NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE2_SOURCE = 6,
-    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE1F_SEMANTICS = 7
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE1F_SEMANTICS = 7,
+    NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE3_SOURCE_SCENE = 8
 } Nexus_V1_DgnViewportHostRouteStatus;
 
 typedef struct {
@@ -89,6 +94,7 @@ typedef struct {
     int fallback_visuals_permitted;
     int no_draw_structure2_source;
     int no_draw_structure1f_semantics;
+    int no_draw_structure3_source_scene;
     int active_level_source_consumed;
     Nexus_V1_DgnActiveLevelRendererSourceReceipt active_level_source;
     int level;

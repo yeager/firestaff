@@ -6287,6 +6287,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     capture reader/host path. It fails before reading any capture if no real
     loaded level exists, and the admitted source remains no-draw. A genuine
     original-Saturn capture is still required for render semantics.
+  - 2026-07-15 runtime safety follow-up: a complete hash-bound Structure3
+    source scene now blocks the older Structure1B/MNS raster route with an
+    explicit host status. This prevents an unrelated host material mapping
+    from presenting a retail DGN scene before an original Saturn trace proves
+    the Structure2 pixel/palette and VDP1 relations. The block is not a
+    decoder, draw route, or substitute visual.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 update: the active canonical LEV route can now atomically emit
