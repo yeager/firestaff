@@ -29,6 +29,8 @@ static int failed;
 static void test_weather_seed_advances_with_reproducible_lcg(void)
 {
     DM2_V1_WeatherState state = {0};
+    DM2_V1_SetTimerWeatherReceipt timer = {0};
+    DM2_V1_Weather3df70037Receipt receipt = {0};
     uint32_t seed = 0x0100u;
     uint32_t s1;
     uint32_t s2;
@@ -53,6 +55,40 @@ static void test_weather_seed_advances_with_reproducible_lcg(void)
     CHECK(dm2_v1_weather_next_state(&state) == w2,
           "second transition returns expected weather");
     CHECK(state.weather_seed == s2, "second transition stores advanced seed");
+
+    dm2_v1_weather_set_seed(&state, seed);
+    dm2_v1_weather_set(&state, DM2_WEATHER_CLEAR);
+    CHECK(dm2_v1_weather_set_timer_weather_receipt(0, 182u, &timer),
+          "DM2_SET_TIMER_WEATHER receipt is valid indoors");
+    CHECK(!timer.due_now && !timer.scheduled && timer.next_tick == 0u,
+          "DM2_SET_TIMER_WEATHER does not schedule indoor weather");
+    CHECK(!dm2_v1_weather_3df7_0037_receipt(&state, &timer, &receipt),
+          "DM2_weather_3df7_0037 rejects indoor timer");
+    CHECK(state.weather_seed == seed && state.weather == DM2_WEATHER_CLEAR,
+          "indoor rejected transition leaves state unchanged");
+
+    CHECK(dm2_v1_weather_set_timer_weather_receipt(1, 181u, &timer),
+          "DM2_SET_TIMER_WEATHER receipt is valid before boundary");
+    CHECK(!timer.due_now && timer.scheduled && timer.next_tick == 182u,
+          "DM2_SET_TIMER_WEATHER schedules next 182-tick boundary");
+    CHECK(!dm2_v1_weather_3df7_0037_receipt(&state, &timer, &receipt),
+          "DM2_weather_3df7_0037 rejects not-due timer");
+    CHECK(state.weather_seed == seed && state.weather == DM2_WEATHER_CLEAR,
+          "not-due rejected transition leaves state unchanged");
+
+    CHECK(dm2_v1_weather_set_timer_weather_receipt(1, 182u, &timer),
+          "DM2_SET_TIMER_WEATHER receipt is valid at boundary");
+    CHECK(timer.due_now && timer.scheduled && timer.next_tick == 364u,
+          "DM2_SET_TIMER_WEATHER marks due boundary and next schedule");
+    CHECK(dm2_v1_weather_3df7_0037_receipt(&state, &timer, &receipt),
+          "DM2_weather_3df7_0037 accepts due outdoor timer");
+    CHECK(receipt.valid && receipt.transitioned,
+          "DM2_weather_3df7_0037 publishes transition receipt");
+    CHECK(receipt.previous_seed == seed &&
+          receipt.next_seed == dm2_v1_weather_advance_seed(seed),
+          "DM2_weather_3df7_0037 records seed transaction");
+    CHECK(receipt.source_receipt_hash == timer.receipt_hash,
+          "DM2_weather_3df7_0037 binds timer receipt hash");
 }
 
 static void test_weather_ticks_only_change_outdoor_weather_at_boundary(void)
@@ -67,11 +103,19 @@ static void test_weather_ticks_only_change_outdoor_weather_at_boundary(void)
     dm2_v1_runtime_set_outdoor(0);
 
     for (int tick = 0; tick < 182; tick++) {
+        DM2_V1_SetTimerWeatherReceipt timer = {0};
+        DM2_V1_Weather3df70037Receipt weather = {0};
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_weather_seed() == seed,
               "indoor mode never advances weather seed");
         CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_CLEAR,
               "indoor mode keeps clear weather");
+        CHECK(dm2_v1_runtime_last_set_timer_weather_receipt(&timer),
+              "runtime publishes DM2_SET_TIMER_WEATHER receipt indoors");
+        CHECK(!timer.due_now && !timer.scheduled,
+              "runtime indoor timer receipt never schedules weather");
+        CHECK(!dm2_v1_runtime_last_weather_3df7_0037_receipt(&weather),
+              "runtime indoor path has no weather transition receipt");
     }
 
     dm2_v1_runtime_init(&boot);
@@ -79,12 +123,35 @@ static void test_weather_ticks_only_change_outdoor_weather_at_boundary(void)
     dm2_v1_runtime_set_outdoor(1);
 
     for (int tick = 0; tick < 181; tick++) {
+        DM2_V1_SetTimerWeatherReceipt timer = {0};
+        DM2_V1_Weather3df70037Receipt weather = {0};
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_weather_seed() == seed,
               "outdoor mode keeps seed before 182nd tick");
+        CHECK(dm2_v1_runtime_last_set_timer_weather_receipt(&timer),
+              "runtime publishes outdoor timer receipt before boundary");
+        CHECK(!timer.due_now && timer.scheduled,
+              "runtime outdoor timer receipt is scheduled but not due");
+        CHECK(!dm2_v1_runtime_last_weather_3df7_0037_receipt(&weather),
+              "runtime outdoor not-due path has no transition receipt");
     }
 
     dm2_v1_runtime_tick();
+    {
+        DM2_V1_SetTimerWeatherReceipt timer = {0};
+        DM2_V1_Weather3df70037Receipt weather = {0};
+        CHECK(dm2_v1_runtime_last_set_timer_weather_receipt(&timer),
+              "runtime publishes outdoor due timer receipt");
+        CHECK(timer.due_now && timer.scheduled && timer.current_tick == 182u,
+              "runtime due timer receipt binds tick 182");
+        CHECK(dm2_v1_runtime_last_weather_3df7_0037_receipt(&weather),
+              "runtime publishes DM2_weather_3df7_0037 receipt at boundary");
+        CHECK(weather.source_receipt_hash == timer.receipt_hash,
+              "runtime weather transition binds timer receipt");
+        CHECK(weather.previous_seed == seed &&
+              weather.next_seed == expected_seed_after_182,
+              "runtime weather transition records seed transaction");
+    }
     CHECK(dm2_v1_runtime_get_weather_seed() == expected_seed_after_182,
           "outdoor mode advances weather seed at tick 182");
     CHECK(dm2_v1_runtime_get_weather() == expected_weather_after_182,
