@@ -780,57 +780,6 @@ static void dm2_v1_fill_rect(uint8_t *fb,
     }
 }
 
-static void dm2_v1_stroke_rect(uint8_t *fb,
-                               int stride,
-                               const DM2_V1_ViewportRect *rect,
-                               uint8_t color)
-{
-    DM2_V1_ViewportRect line;
-
-    if (!fb || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
-        return;
-    }
-    line = (DM2_V1_ViewportRect){ rect->x, rect->y, rect->w, 1 };
-    dm2_v1_fill_rect(fb, stride, &line, color);
-    line.y = rect->y + rect->h - 1;
-    dm2_v1_fill_rect(fb, stride, &line, color);
-    line = (DM2_V1_ViewportRect){ rect->x, rect->y, 1, rect->h };
-    dm2_v1_fill_rect(fb, stride, &line, color);
-    line.x = rect->x + rect->w - 1;
-    dm2_v1_fill_rect(fb, stride, &line, color);
-}
-
-static void dm2_v1_fill_coin_disc(uint8_t *fb,
-                                  int stride,
-                                  const DM2_V1_ViewportRect *rect,
-                                  uint8_t color)
-{
-    int cx;
-    int cy;
-    int radius_sq;
-
-    if (!fb || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
-        return;
-    }
-    cx = rect->x + rect->w / 2;
-    cy = rect->y + rect->h / 2;
-    radius_sq = (rect->w < rect->h ? rect->w : rect->h);
-    radius_sq = (radius_sq * radius_sq) / 4;
-    for (int y = rect->y; y < rect->y + rect->h; ++y) {
-        if (y < 0 || y >= DM2_VP_HEIGHT) continue;
-        for (int x = rect->x; x < rect->x + rect->w; ++x) {
-            int dx;
-            int dy;
-            if (x < 0 || x >= DM2_VP_WIDTH) continue;
-            dx = x - cx;
-            dy = y - cy;
-            if (dx * dx + dy * dy < radius_sq) {
-                fb[y * stride + x] = color;
-            }
-        }
-    }
-}
-
 /* ── Initialization ───────────────────────────────────────────────── */
 
 void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
@@ -5567,101 +5516,38 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
                                       plan.top_bar_gdat_index)) {
-        if (s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-        } else {
-            dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect,
-                             dm2_v1_hud_palette_color(s, DM2_COL_DKGRAY));
-            ++s->fallback_hud_core_drawn_count;
-        }
-    }
-    if (!s->source_materials_required) {
-        dm2_v1_fill_rect(vp, stride, &plan.top_divider_rect,
-                         dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.action_strip_rect,
                                       plan.action_strip_gdat_index)) {
-        if (s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-        } else {
-            dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect,
-                             dm2_v1_hud_palette_color(s, DM2_COL_DKGRAY));
-            ++s->fallback_hud_core_drawn_count;
-        }
-    }
-    if (!s->source_materials_required) {
-        dm2_v1_fill_rect(vp, stride, &plan.action_divider_rect,
-                         dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
     if (!dm2_v1_render_hud_core_asset(s,
                                       &plan.gold_box_rect,
                                       plan.gold_box_gdat_index)) {
-        if (s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-        } else {
-            dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect,
-                             dm2_v1_hud_palette_color(s, DM2_COL_GROUND));
-            ++s->fallback_hud_core_drawn_count;
-        }
-    }
-    if (!s->source_materials_required) {
-        dm2_v1_fill_coin_disc(vp, stride, &plan.gold_coin_rect, 11);
-        dm2_v1_fill_rect(vp, stride, &plan.gold_label_rect,
-                         dm2_v1_hud_palette_color(s, DM2_COL_LTGRAY));
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
     for (int i = 0; i < plan.action_icon_count; ++i) {
-        if (!s->source_materials_required) {
-            dm2_v1_stroke_rect(vp, stride, &plan.action_icons[i].frame_rect,
-                               dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
-        }
         if (!dm2_v1_render_hud_core_asset(s,
                                           &plan.action_icons[i].fill_rect,
                                           plan.action_icons[i].gdat_index)) {
-            if (s->source_materials_required) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-            } else {
-                dm2_v1_fill_rect(vp, stride, &plan.action_icons[i].fill_rect,
-                                 dm2_v1_hud_palette_color(
-                                     s, plan.action_icons[i].fill_color));
-                ++s->fallback_hud_core_drawn_count;
-            }
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
         }
     }
 
     if (!plan.outdoor) {
-        if (!s->source_materials_required) {
-            dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_dark_rect,
-                             dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
-            dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_light_rect,
-                             dm2_v1_hud_palette_color(s, DM2_COL_LTGRAY));
-        }
         if (!dm2_v1_render_hud_core_asset(s,
                                           &plan.portrait_panel_rect,
                                           plan.portrait_panel_gdat_index)) {
-            if (s->source_materials_required) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-            } else {
-                dm2_v1_fill_rect(vp, stride, &plan.portrait_panel_rect,
-                                 dm2_v1_hud_palette_color(s, DM2_COL_DKGRAY));
-                ++s->fallback_hud_core_drawn_count;
-            }
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
         }
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
-            if (!s->source_materials_required) {
-                dm2_v1_fill_rect(vp, stride,
-                                 &plan.champion_slots[slot].frame_rect,
-                                 dm2_v1_hud_palette_color(s, DM2_COL_MIDGRAY));
-                dm2_v1_fill_rect(vp, stride,
-                                 &plan.champion_slots[slot].fill_rect,
-                                 dm2_v1_hud_palette_color(
-                                     s, plan.champion_slots[slot].fill_color));
-            }
             if (plan.champion_slots[slot].occupied) {
                 const uint8_t *portrait_pixels = NULL;
                 int portrait_w = 0;
@@ -5733,15 +5619,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                         s, &plan.champion_slots[slot].name_marker_rect,
                         plan.champion_slots[slot].name,
                         DM2_COL_WHITE, DM2_COL_BLACK, 0)) {
-                    if (s->source_materials_required) {
-                        dm2_v1_block_source_material(
-                            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-                    } else {
-                        dm2_v1_fill_rect(
-                            vp, stride,
-                            &plan.champion_slots[slot].name_marker_rect,
-                            dm2_v1_hud_palette_color(s, DM2_COL_WHITE));
-                    }
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
                 }
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].hp_bar_rect,
