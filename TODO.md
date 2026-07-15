@@ -16,8 +16,9 @@
   now treats C346 followed by C026 as one source-owned operation. A missing or
   malformed C346 backing must suppress C026 rather than leave a floating
   portrait; missing C026 keeps the verified backing but draws no substitute
-  portrait. Remaining work is real PC34/Mac capture across every HoC C127
-  sensor and candidate-panel state.
+  portrait. C127 has no generic F0107 side/depth projection: the original
+  C346/C026 route is D1C-only. Remaining work is real PC34/Mac capture across
+  every HoC C127 sensor and candidate-panel state.
 
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
   presentation accepts only C009/C011 pixels and the loaded original font via

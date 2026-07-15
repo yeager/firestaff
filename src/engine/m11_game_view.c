@@ -22957,6 +22957,15 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (!m11_viewport_cell_is_wall_like(&cell)) {
             continue;
         }
+        /* ReDMCSB DUNGEON.C F0172 publishes C127 as a current wall fact,
+         * but DUNVIEW.C:3913-3928 consumes C346/C026 only in the fixed D1C
+         * route.  Letting this general F0107 projection loop render its
+         * sensor ornament would create an invented D2/D3 or side mirror
+         * image.  The dedicated D1C route below is the sole C127 consumer;
+         * a non-front mirror therefore remains no-draw. */
+        if (cell.championPortraitOrdinal >= 0) {
+            continue;
+        }
         mapIdx = state->world.party.mapIndex;
         if (cell.wallOrnamentOrdinal <= 0) {
             continue;
