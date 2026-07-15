@@ -111,12 +111,14 @@ int main(void)
     if (!dm2_v1_gdat_scene_light_m11_receipt(&scene, &light) ||
         !light.valid || light.receipt_hash == 0u ||
         light.scene_control_hash != scene.command_hash ||
+        light.ambient_light != scene.ambient_light ||
         light.highest_light_level != scene.highest_light_level ||
         light.ambient_darkness != scene.ambient_darkness) {
         fprintf(stderr,
-                "FAIL: canonical scene/light receipt style=%d valid=%d hash=%08x control=%08x/%08x light=%u/%u darkness=%u/%u\n",
+                "FAIL: canonical scene/light receipt style=%d valid=%d hash=%08x control=%08x/%08x ambient=%u/%u light=%u/%u darkness=%u/%u\n",
                 style, light.valid, light.receipt_hash,
                 light.scene_control_hash, scene.command_hash,
+                light.ambient_light, scene.ambient_light,
                 light.highest_light_level, scene.highest_light_level,
                 light.ambient_darkness, scene.ambient_darkness);
         dm2_v1_gdat_scene_m11_command_plan_free(&scene);

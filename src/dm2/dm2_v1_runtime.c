@@ -882,7 +882,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     }
 
     /* The old control receipt could fall through to another graphics set.
-     * These four source fields are the complete G1 family and must remain
+     * These five source fields are the complete G1 light/scene family and must remain
      * paired with the decoded floor/ceiling pixels from the selected map. */
     rt->gdat_scene_control_ready = 1;
     rt->gdat_scene_control_hash = rt->gdat_scene_material_plan.command_hash;
@@ -890,6 +890,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_scene_control_query_count = 4u;
     rt->gdat_scene_flags = rt->gdat_scene_material_plan.scene_flags;
     rt->gdat_scene_colorkey = rt->gdat_scene_material_plan.scene_colorkey;
+    rt->gdat_scene_ambient_light = rt->gdat_scene_material_plan.ambient_light;
     rt->gdat_scene_highest_light_level =
         rt->gdat_scene_material_plan.highest_light_level;
     rt->gdat_ambient_darkness = rt->gdat_scene_material_plan.ambient_darkness;

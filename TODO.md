@@ -225,6 +225,12 @@
   Remaining work is source-proven panel compositing/light behavior, not a
   renderer-local rectangle or synthetic material path.
 
+- 2026-07-15 DM2 skproject scene/light follow-up: the active G1
+  `GDAT_GFXSET_AMBIANT_LIGHT` word now reaches the source-owned scene plan,
+  light receipt, runtime and viewport. Remaining light work is dynamic
+  party/spell/rain accumulation and palette selection, never a host-derived
+  brightness value.
+
 - 2026-07-15 DM2 skproject scene follow-up: floor and ceiling commands now
   carry decoded-pixel and QUERY_BLIT_RECT geometry receipts, verified at the
   source-required M11 boundary. Remaining work is original light/weather
