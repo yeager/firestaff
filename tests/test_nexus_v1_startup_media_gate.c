@@ -67,6 +67,10 @@ int main(void)
     expect_true(nexus_ui_load_title(&ui, NULL, 0, NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
                 "missing TITLE.CG cannot become a generated title surface");
+    expect_true(nexus_ui_load_stabg(&ui, opaque_title,
+                                    (int)sizeof(opaque_title), NULL) < 0 &&
+                    ui.surfaces[NEXUS_SURFACE_STABG].data == NULL,
+                "unframed STABG.BIN bytes cannot become a guessed UI surface");
     expect_true(nexus_ui_load_title(&ui, opaque_title,
                                     (int)sizeof(opaque_title), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,

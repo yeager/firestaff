@@ -3302,6 +3302,10 @@ real-data-present synthetic fallback candidate.
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 2026-07-15 Nexus STABG.BIN: source bytes are discovered but its Saturn
+  surface framing remains unproven. It is intentionally unavailable; derive a
+  decoder only from original capture/code evidence.
+
 - 🔧 2026-07-13 Nexus Structure1G follow-up: every validated original
   Structure1G image instruction now reaches a bounded local Structure2
   descriptor receipt. Missing local descriptors remain explicitly blocked;

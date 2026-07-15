@@ -361,24 +361,14 @@ int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
         data, data_size, 320, 200, 128, 64, "GAMEOVER.BIN");
 }
 
-/* STABG.BIN (52 KB) — status area background.
- * May be 320×200 or a narrower horizontal strip. */
+/* STABG.BIN has verified source identity but no proven Saturn surface
+ * framing. File-size-derived dimensions were synthetic and are forbidden. */
 int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
 {
-    (void)palette;
-    if (!mgr) return -1;
-    /* 52 KB / 320 ≈ 170 rows; treat as 320×170 or fall back to 320×200 */
-    if (data_size >= 320 * 200) {
-        return nexus_ui_surface_load(mgr, NEXUS_SURFACE_STABG,
-            data, data_size, 320, 200, 0, 16, "STABG.BIN");
-    } else if (data_size >= 320 * 50) {
-        return nexus_ui_surface_load(mgr, NEXUS_SURFACE_STABG,
-            data, data_size, 320, 52, 0, 16, "STABG.BIN");
-    }
-    return nexus_ui_surface_load(mgr, NEXUS_SURFACE_STABG,
-        data, data_size, 320, 200, 0, 16, "STABG.BIN");
+    (void)mgr; (void)data; (void)data_size; (void)palette;
+    return -1;
 }
 
 int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h) {
