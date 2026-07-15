@@ -54,18 +54,19 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
-/* Extends the same verified HUD family with the occupied party portraits.
- * A portrait without its exact CHAMPIONS/index/0 material rejects all 13
- * commands rather than replacing it with a coloured slot. */
+/* Extends the same verified HUD family with 0..4 occupied party portraits.
+ * A portrait without its exact CHAMPIONS/HeroType/0 material rejects the
+ * plan rather than replacing it with a coloured slot. */
 int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
-/* Binds four original INTERFACE_GENERAL/0/dt04 portrait rectangles
- * (RECT_173..RECT_176) to a complete four-champion command plan. */
+/* Binds original INTERFACE_GENERAL/0/dt04 portrait rectangles
+ * (RECT_173..RECT_176) to occupied portraits in squad order. */
 int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
     DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_HudPartyState *party,
     const DM2_V1_ViewportRect portrait_destinations[4],
     uint32_t source_table_hash);
 uint32_t dm2_v1_gdat_hud_m11_command_pixel_hash(

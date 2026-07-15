@@ -42,10 +42,11 @@ int main(void)
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT] = { 0 };
     int portrait_fetches = 0;
 
-    CHECK("legacy portrait ordinal stays bounded",
+    CHECK("source HeroType keeps the full 8-bit record range",
           dm2_v1_viewport_hud_portrait_graphic_index(3) != 0 &&
               dm2_v1_viewport_hud_portrait_graphic_index(-1) == 0 &&
-              dm2_v1_viewport_hud_portrait_graphic_index(8) == 0);
+              dm2_v1_viewport_hud_portrait_graphic_index(255) != 0 &&
+              dm2_v1_viewport_hud_portrait_graphic_index(256) == 0);
 
     memset(&party, 0, sizeof(party));
     party.champion_count = 1;

@@ -114,11 +114,11 @@ int main(void)
     dm2_v1_boot_profile_init(&boot);
     memset(&plan, 0, sizeof(plan));
     memset(&party, 0, sizeof(party));
-    party.champion_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+    party.champion_count = 3;
     for (int i = 0; i < party.champion_count; ++i) {
         party.champions[i].occupied = 1;
         party.champions[i].portrait_type_source_bound = 1;
-        party.champions[i].portrait_index = (uint8_t)i;
+        party.champions[i].portrait_index = (uint8_t)(i == 0 ? 3 : i - 1);
     }
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
         fputs("FAIL: canonical DM2 GRAPHICS.DAT was not admitted\n", stderr);
@@ -172,7 +172,7 @@ int main(void)
         decoded_champion[255] != source_champion[255]) {
         ++failures;
     }
-    if (!plan.valid || plan.command_count != DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+    if (!plan.valid || plan.command_count != 12 ||
         plan.command_hash == 0u) {
         ++failures;
     }
@@ -182,7 +182,8 @@ int main(void)
             (i < 9 && (command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
                        command->gdat_index < 2 || command->gdat_index > 6)) ||
             (i >= 9 && (command->gdat_category != DM2_GDAT_CATEGORY_CHAMPIONS ||
-                        command->gdat_index != i - 9 || command->gdat_field != 0)) ||
+                        command->gdat_index != (i == 9 ? 3 : i - 10) ||
+                        command->gdat_field != 0)) ||
             command->width <= 0 || command->height <= 0 || !command->pixels ||
             command->format == DM2_IMG_FMT_UNKNOWN || command->raw_hash == 0u ||
             command->decoded_hash == 0u || command->decoded_hash !=
@@ -218,9 +219,9 @@ int main(void)
     /* HUD names still use the separately source-gated dt07 font route. The
      * image-family proof below excludes that known no-draw lookup. */
     if (viewport.asset_hud_core_drawn_count != 9 ||
-        viewport.asset_hud_portrait_drawn_count != 4 ||
+        viewport.asset_hud_portrait_drawn_count != 3 ||
         viewport.gdat_hud_material_plan_consumed_count !=
-            DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            12 ||
         viewport.fallback_hud_core_drawn_count != 0 ||
         viewport.fallback_hud_portrait_drawn_count != 0) {
         fputs("FAIL: HUD plan did not render directly from canonical GDAT material\n",
@@ -249,8 +250,7 @@ int main(void)
         dm2_v1_render_ui_chrome(&viewport);
         plan.commands[0].palette16[0] = saved_palette_byte;
         if (viewport.asset_hud_core_drawn_count >= 9 ||
-            viewport.gdat_hud_material_plan_consumed_count >=
-                DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            viewport.gdat_hud_material_plan_consumed_count >= 12 ||
             (viewport.blocked_material_mask &
                 DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE) == 0u ||
             viewport.fallback_hud_core_drawn_count != 0 ||

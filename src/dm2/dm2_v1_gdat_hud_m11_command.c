@@ -191,6 +191,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
 {
     DM2_V1_HudChromeRenderPlan chrome;
     int slot;
+    int portrait_count = 0;
 
     if (!party || !dm2_v1_gdat_hud_m11_command_plan_build(loader, out_plan) ||
         !dm2_v1_viewport_build_hud_chrome_plan_for_party(0, party, &chrome)) {
@@ -199,15 +200,21 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     }
     for (slot = 0; slot < chrome.champion_slot_count; ++slot) {
         const DM2_V1_HudChampionSlotRender *champ = &chrome.champion_slots[slot];
-        if (!champ->occupied || !champ->portrait_type_source_bound ||
+        if (!champ->occupied) {
+            continue;
+        }
+        if (!champ->portrait_type_source_bound ||
             !dm2_v1_gdat_hud_add_command(loader, out_plan,
                 DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
                 champ->portrait_index, &champ->portrait_rect)) {
             dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
             return 0;
         }
+        ++portrait_count;
     }
-    if (out_plan->command_count != 13) {
+    /* DRAW_CHAMPION_PICTURE runs once per active squad member. Keep the
+     * source chrome plus exactly the admitted HeroType images. */
+    if (out_plan->command_count != 9 + portrait_count) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
@@ -217,19 +224,32 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
 
 int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
     DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_HudPartyState *party,
     const DM2_V1_ViewportRect portrait_destinations[4],
     uint32_t source_table_hash)
 {
     int slot;
-    if (!plan || !plan->valid || plan->command_count !=
-        DM2_V1_GDAT_HUD_M11_COMMAND_MAX || !portrait_destinations ||
+    int command_index = 9;
+    if (!plan || !plan->valid || plan->command_count < 9 ||
+        plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+        !party || !portrait_destinations ||
         source_table_hash == 0u) return 0;
     for (slot = 0; slot < 4; ++slot) {
-        DM2_V1_GdatHudM11Command *command = &plan->commands[9 + slot];
+        DM2_V1_GdatHudM11Command *command;
         const DM2_V1_ViewportRect *destination = &portrait_destinations[slot];
+        if (slot >= party->champion_count || !party->champions[slot].occupied) {
+            continue;
+        }
+        if (!party->champions[slot].portrait_type_source_bound) {
+            dm2_v1_gdat_hud_m11_command_plan_free(plan);
+            return 0;
+        }
+        if (command_index >= plan->command_count) break;
+        command = &plan->commands[command_index];
         if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
             command->gdat_category != DM2_GDAT_CATEGORY_CHAMPIONS ||
-            command->gdat_index != slot || command->gdat_field != 0 ||
+            command->gdat_index != party->champions[slot].portrait_index ||
+            command->gdat_field != 0 ||
             destination->x < 0 || destination->y < 0 || destination->w <= 0 ||
             destination->h <= 0 || destination->x + destination->w > DM2_VP_WIDTH ||
             destination->y + destination->h > DM2_VP_HEIGHT) {
@@ -239,6 +259,11 @@ int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
         command->destination = *destination;
         command->destination_rect_id = (uint16_t)(173 + slot);
         command->destination_table_hash = source_table_hash;
+        ++command_index;
+    }
+    if (command_index != plan->command_count) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
     }
     plan->command_hash = dm2_v1_gdat_hud_command_hash(plan);
     if (plan->command_hash == 0u) {

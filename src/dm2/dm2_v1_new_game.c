@@ -315,7 +315,9 @@ void dm2_v1_session_new(DM2_V1_SessionState *session)
     /* No weather at start */
     session->rain_intensity = 0;
 
-    /* Generate starter party */
+    /* This legacy session helper is retained for save-format fixtures. The
+     * M11 new-game route follows skproject LOAD_NEW_DUNGEON and does not
+     * apply this helper before source GAME_LOAD/revival records arrive. */
     dm2_v1_generate_starter_party(session);
 }
 
