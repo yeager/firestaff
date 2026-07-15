@@ -475,6 +475,18 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             handoff->complete_payload_checksum ||
         handoff->loader_payload.payload_checksum !=
             handoff->loader_intake.observed_payload_checksum ||
+        !handoff->loader_level_envelope.handed_off ||
+        !handoff->loader_level_envelope.no_fallback ||
+        handoff->loader_level_envelope.record != handoff->observed_track02_record ||
+        handoff->loader_level_envelope.record_user_data_offset !=
+            handoff->initial_level_boundary.level_user_data_offset_in_record ||
+        handoff->loader_level_envelope.envelope_bytes !=
+            handoff->initial_level_boundary.level_byte_count ||
+        handoff->loader_level_envelope.envelope_checksum !=
+            handoff->initial_level_boundary.level_payload_hash ||
+        handoff->loader_post_envelope.record_user_data_offset !=
+            handoff->loader_level_envelope.record_user_data_offset +
+                handoff->loader_level_envelope.envelope_bytes ||
         !handoff->loader_post_envelope.handed_off ||
         !handoff->loader_post_envelope.no_fallback ||
         handoff->loader_post_envelope.record != handoff->observed_track02_record ||
@@ -497,6 +509,16 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             hucard_rom + raw_offset,
             handoff->loader_payload.payload_bytes) !=
             handoff->loader_payload.payload_checksum ||
+        handoff->loader_level_envelope.record_user_data_offset >
+            handoff->loader_payload.payload_bytes ||
+        handoff->loader_level_envelope.envelope_bytes >
+            handoff->loader_payload.payload_bytes -
+                handoff->loader_level_envelope.record_user_data_offset ||
+        theron_v1_startup_runtime_fnv1a32(
+            hucard_rom + raw_offset +
+                handoff->loader_level_envelope.record_user_data_offset,
+            handoff->loader_level_envelope.envelope_bytes) !=
+            handoff->loader_level_envelope.envelope_checksum ||
         theron_v1_startup_runtime_fnv1a32(
             hucard_rom + raw_offset +
                 handoff->loader_post_envelope.record_user_data_offset,
@@ -504,6 +526,10 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             handoff->loader_post_envelope.checksum ||
         memcmp(hucard_rom + raw_offset, handoff->loader_payload.payload,
                handoff->loader_payload.payload_bytes) != 0 ||
+        memcmp(hucard_rom + raw_offset +
+                   handoff->loader_level_envelope.record_user_data_offset,
+               handoff->loader_level_envelope.envelope,
+               handoff->loader_level_envelope.envelope_bytes) != 0 ||
         memcmp(hucard_rom + raw_offset +
                    handoff->loader_post_envelope.record_user_data_offset,
                handoff->loader_post_envelope.bytes,
@@ -554,6 +580,9 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
             (size_t)payload_receipt.raw_track02_offset,
             (size_t)payload_receipt.payload_bytes,
             payload_receipt.payload_checksum,
+            handoff->loader_level_envelope.record_user_data_offset,
+            handoff->loader_level_envelope.envelope_bytes,
+            handoff->loader_level_envelope.envelope_checksum,
             handoff->loader_post_envelope.record_user_data_offset,
             handoff->loader_post_envelope.byte_count,
             handoff->loader_post_envelope.checksum)) {
@@ -566,6 +595,11 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
     receipt.loader_record_raw_user_data_offset =
         payload_receipt.raw_track02_offset;
     receipt.loader_record_payload_checksum = payload_receipt.payload_checksum;
+    receipt.level_envelope_offset =
+        handoff->loader_level_envelope.record_user_data_offset;
+    receipt.level_envelope_bytes = handoff->loader_level_envelope.envelope_bytes;
+    receipt.level_envelope_checksum =
+        handoff->loader_level_envelope.envelope_checksum;
     memset(&route, 0, sizeof(route));
     if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
             handoff) ||

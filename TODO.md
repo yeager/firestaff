@@ -8072,3 +8072,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     hash-bound record receipt. It is explicitly not a level/object decoder.
     Remaining: capture a game-owned post-`$3800` consumer that identifies a
     record boundary and semantic role before any level or object publication.
+  - Update: the authenticated initial-envelope boundary and its directly
+    adjacent opaque continuation now require matching loader receipts and raw
+    Track 02 checksums before runtime admission. This proves byte ownership,
+    not a level grid or object table. Remaining: a captured game consumer
+    must establish either grammar before promotion.

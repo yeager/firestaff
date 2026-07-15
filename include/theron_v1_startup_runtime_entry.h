@@ -76,6 +76,9 @@ typedef struct {
     uint32_t loader_record;
     uint64_t loader_record_raw_user_data_offset;
     uint32_t loader_record_payload_checksum;
+    uint32_t level_envelope_offset;
+    uint32_t level_envelope_bytes;
+    uint32_t level_envelope_checksum;
     int dungeon_id;
     int sub_level_index;
     uint32_t route_hash;
