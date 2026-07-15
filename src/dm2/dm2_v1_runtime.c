@@ -3820,10 +3820,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.door_material_plan_required &&
         rt->gdat_door_material_plan.valid &&
         rt->gdat_door_material_plan.command_hash != 0u &&
-        viewport.gdat_door_overlay_material_plan_consumed_count > 0;
+        rt->gdat_door_material_plan.command_count > 0 &&
+        viewport.gdat_door_overlay_material_plan_consumed_count ==
+            rt->gdat_door_material_plan.command_count;
     g_dm2_last_m11_frame.door_material_plan_hash =
         g_dm2_last_m11_frame.door_material_plan_consumed
             ? rt->gdat_door_material_plan.command_hash : 0u;
+    g_dm2_last_m11_frame.door_material_plan_command_count =
+        g_dm2_last_m11_frame.door_material_plan_consumed
+            ? rt->gdat_door_material_plan.command_count : 0;
     g_dm2_last_m11_frame.hud_material_plan_required =
         hud_material_plan_required;
     g_dm2_last_m11_frame.hud_material_plan_hash = hud_material_plan_hash;
@@ -3926,6 +3931,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (rt->outdoor || g_dm2_last_m11_frame.wall_material_plan_hash != 0u) &&
         (!g_dm2_last_m11_frame.door_material_plan_required ||
          (g_dm2_last_m11_frame.door_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.door_material_plan_command_count > 0 &&
           g_dm2_last_m11_frame.door_material_plan_consumed)) &&
         (!g_dm2_last_m11_frame.hud_material_plan_required ||
          (g_dm2_last_m11_frame.hud_material_plan_hash != 0u &&
