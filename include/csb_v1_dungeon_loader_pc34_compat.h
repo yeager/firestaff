@@ -148,6 +148,15 @@ uint16_t csb_v1_dungeon_f0159_get_next_thing_pc34(
 uint16_t csb_v1_dungeon_f0162_get_square_first_object_pc34(
     const CSB_V1_DungeonData *d, int level, int x, int y);
 
+/* ReDMCSB DUNGEON.C F0154/F0155 over explicit loaded PC34 MAP ownership.
+ * F0154 commits x/y only when a same-global-coordinate target map exists;
+ * F0155 returns -1 when the source square cannot be read. */
+int csb_v1_dungeon_f0154_get_location_after_level_change_pc34(
+    const CSB_V1_DungeonData *d, int map_index, int level_delta,
+    int *inout_map_x, int *inout_map_y);
+int csb_v1_dungeon_f0155_get_stairs_exit_direction_pc34(
+    const CSB_V1_DungeonData *d, int level, int map_x, int map_y);
+
 /* Return a read-only pointer to a decoded dungeon thing record.
  * Returns NULL if the thing handle is invalid, the type has no records, or
  * the record would exceed raw_data bounds.  out_type/out_index/out_size are

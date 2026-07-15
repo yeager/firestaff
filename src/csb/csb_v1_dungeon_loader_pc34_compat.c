@@ -545,6 +545,69 @@ uint16_t csb_v1_dungeon_f0162_get_square_first_object_pc34(
     return 0xfffeu;
 }
 
+int csb_v1_dungeon_f0154_get_location_after_level_change_pc34(
+    const CSB_V1_DungeonData *d, int map_index, int level_delta,
+    int *inout_map_x, int *inout_map_y)
+{
+    int global_x;
+    int global_y;
+    int target_level;
+    int target_map;
+
+    if (!d || d->square_bytes != 1 || !inout_map_x || !inout_map_y ||
+        map_index < 0 || map_index >= d->level_count) {
+        return -1;
+    }
+
+    /* ReDMCSB DUNGEON.C F0154 lines 1508-1554: convert through the source
+     * map's global offsets, then find a target MAP on the requested source
+     * level covering that same global coordinate. */
+    global_x = d->map_offset_x[map_index] + *inout_map_x;
+    global_y = d->map_offset_y[map_index] + *inout_map_y;
+    target_level = d->map_levels[map_index] + level_delta;
+    for (target_map = 0; target_map < d->level_count; ++target_map) {
+        int min_x = d->map_offset_x[target_map];
+        int min_y = d->map_offset_y[target_map];
+        int max_x = min_x + d->level_widths[target_map] - 1;
+        int max_y = min_y + d->level_heights[target_map] - 1;
+
+        if (d->level_widths[target_map] <= 0 ||
+            d->level_heights[target_map] <= 0 ||
+            d->map_levels[target_map] != target_level ||
+            global_x < min_x || global_x > max_x ||
+            global_y < min_y || global_y > max_y) {
+            continue;
+        }
+        *inout_map_x = global_x - min_x;
+        *inout_map_y = global_y - min_y;
+        return target_map;
+    }
+    return -1;
+}
+
+int csb_v1_dungeon_f0155_get_stairs_exit_direction_pc34(
+    const CSB_V1_DungeonData *d, int level, int map_x, int map_y)
+{
+    int square;
+    int north_south_oriented;
+    int exit_x;
+    int exit_y;
+    int exit_type;
+
+    square = csb_v1_dungeon_f0151_get_square_pc34(d, level, map_x, map_y);
+    if (square < 0) return -1;
+
+    /* ReDMCSB DUNGEON.C F0155 lines 1560-1582. */
+    north_south_oriented = (square & 0x08) == 0;
+    exit_x = map_x + (north_south_oriented ? 1 : 0);
+    exit_y = map_y + (north_south_oriented ? 0 : -1);
+    exit_type = csb_v1_dungeon_f0153_get_relative_square_type_pc34(
+        d, level, 0, 0, 0, exit_x, exit_y);
+    if (exit_type < 0) return -1;
+    return (((exit_type == 0 || exit_type == 3) ? 1 : 0) << 1) |
+           north_south_oriented;
+}
+
 int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x, int y) {
     int v = csb_v1_dungeon_get_raw_square(d, level, x, y);
     if (v < 0) return -1;

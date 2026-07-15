@@ -217,9 +217,9 @@ F	151	F151_rzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0152	F0152_DUNGEON_GetRelativeSquare	FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;GAMELOOP.C	implemented-narrow	implemented_narrow	CSB real byte-map owner uses exact F0150 direction-vector order then F0151; invalid direction/layout fails closed.
 F	0153	F0153_DUNGEON_GetRelativeSquareType	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H	implemented-narrow	implemented_narrow	CSB real byte-map owner derives M034 square type solely from its F0152 result.
 F	153	F153_yzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0154	F0154_DUNGEON_GetLocationAfterLevelChange	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0154	F0154_DUNGEON_GetLocationAfterLevelChange	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	implemented	implemented	CSB real PC34 MAP owner converts local to global coordinates and selects only a same-global-coordinate target MAP at the requested source level; no adjacency fallback remains.
 F	154	F154_afzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0155	F0155_DUNGEON_GetStairsExitDirection	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0155	F0155_DUNGEON_GetStairsExitDirection	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	implemented	implemented	CSB real PC34 stairs owner follows F0151 for both source and exit square, including the original orientation and wall/stairs outcome encoding.
 F	155	F155_ahzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0156	F0156_DUNGEON_GetThingData	PANEL.C;ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;OBJECT.C;CLIKVIEW.C;DUNVIEW.C;IIGS.H;REVIVE.C;MENU.C;READWRIT.C;DEFS.H;CHAMPION.C;TIMELINE.C;ENDGAME.C;PROJEXPL.C;MOVESENS.C;CHEST.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	156	F156_afzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
