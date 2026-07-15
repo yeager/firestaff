@@ -513,6 +513,15 @@ unsigned short F0511_DUNGEON_GetSquareFirstThing_Compat(
 unsigned short F0512_DUNGEON_GetThingNext_Compat(
     const struct DungeonThings_Compat* things, unsigned short thing);
 
+/* ReDMCSB DUNGEON.C F0162: starts at the compact SquareFirstThings entry
+ * and skips only static Thing types before C04_GROUP. */
+unsigned short F0513_DUNGEON_GetSquareFirstObject_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 /* ---- Text data decoding (Phase 7 text-strings) ---- */
 
 /*
