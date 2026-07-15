@@ -196,6 +196,7 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                                       i * CSB_DUNGEON_MAP_DESC_SIZE;
             int level_id = 0;
             uint16_t raw_bit_a = rd16(map_desc + 8);
+            uint16_t raw_bit_c = rd16(map_desc + 12);
             uint16_t raw_bit_d = rd16(map_desc + 14);
             csb_decode_map_bitfield_a(raw_bit_a, &level_id,
                                       &out->level_widths[i],
@@ -209,6 +210,8 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
              * before PROJEXPL.C F0232 compares door defense. */
             out->map_door_set0[i] = (int)((raw_bit_d >> 8) & 0x0Fu);
             out->map_door_set1[i] = (int)((raw_bit_d >> 12) & 0x0Fu);
+            out->map_experience_multiplier[i] =
+                (int)((raw_bit_c >> 12) & 0x0Fu);
             if (out->level_widths[i] < 1 ||
                 out->level_widths[i] > CSB_V1_MAX_SQUARE_SIZE ||
                 out->level_heights[i] < 1 ||
@@ -298,6 +301,7 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->map_offset_y[i] = 0;
         out->map_door_set0[i] = 0;
         out->map_door_set1[i] = 0;
+        out->map_experience_multiplier[i] = 0;
         offset += 6;
     }
 

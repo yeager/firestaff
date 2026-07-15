@@ -43,6 +43,7 @@ static int monster_possession_enabled;
 static int inspect_cells_enabled;
 static int thing_type_enabled;
 static int is_carried_enabled;
+static int level_multiplier_enabled;
 
 static int wing_talents_enabled;
 
@@ -265,6 +266,14 @@ static int is_carried(void *user, int32_t character, int32_t object, int32_t *ou
     return 1;
 }
 
+static int get_level_multiplier(void *user, int32_t level, int32_t *out)
+{
+    (void)user;
+    if (!level_multiplier_enabled || !out) return -1;
+    *out = level == 2 ? 7 : 1;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -375,6 +384,9 @@ static CSB_V1_CSBWinDSAStackResult run(
     if (inspect_cells_enabled) context.inspect_cells = inspect_cells;
     if (thing_type_enabled) context.get_thing_type = get_thing_type;
     if (is_carried_enabled) context.is_carried = is_carried;
+    if (level_multiplier_enabled) {
+        context.get_level_multiplier = get_level_multiplier;
+    }
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -568,6 +580,12 @@ int main(void)
     uint16_t num_param[] = { 0x02d5u, 0x000du };
     uint16_t is_carried_query[] = {
         0x0686u, 4u, 0x0686u, 0x0456u, 0x1c8bu, 0x000du
+    };
+    uint16_t multiplier_fetch[] = {
+        0x0686u, 2u, 0x1c0bu, 0x000du
+    };
+    uint16_t multiplier_default[] = {
+        0x0686u, 99u, 0x1c0bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -943,6 +961,20 @@ int main(void)
               parameters[0] == 767u,
           "ISCARRIED preserves source character and object stack order");
     is_carried_enabled = 0;
+    level_multiplier_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, multiplier_fetch,
+              (int)(sizeof(multiplier_fetch) / sizeof(multiplier_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 7u && execution.stack_depth == 0u,
+          "MULTIPLIER@ reads the source LEVELDESC multiplier");
+    parameters[0] = 77u;
+    check(run(&state, &action, multiplier_default,
+              (int)(sizeof(multiplier_default) / sizeof(multiplier_default[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 1u && execution.stack_depth == 0u,
+          "MULTIPLIER@ returns the source out-of-range default");
+    level_multiplier_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
