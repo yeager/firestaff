@@ -87,6 +87,9 @@ static uint32_t dm2_v1_gdat_scene_draw_order_hash(
         hash = hash_bytes(hash, &command->palette_darkness,
                           sizeof(command->palette_darkness));
         hash = hash_bytes(hash,
+                          (const uint8_t *)&command->palette_translation_hash,
+                          sizeof(command->palette_translation_hash));
+        hash = hash_bytes(hash,
                           (const uint8_t *)&command->palette_light_receipt_hash,
                           sizeof(command->palette_light_receipt_hash));
         hash = hash_bytes(hash,
@@ -129,6 +132,27 @@ int dm2_v1_gdat_scene_m11_plane_palette_darkness(
     /* SkWinCore.cpp::_32cb_0804: _4976_4226 starts {0,0,12,28,46}; the
      * floor/ceiling fields are classes 0/1, hence 64-((64-0)*(64-p)>>6)=p. */
     *out_darkness = c_light_parameter;
+    return 1;
+}
+
+int dm2_v1_gdat_scene_m11_translate_palette(
+    uint8_t *palette, uint32_t palette_count,
+    const uint8_t *translation, size_t translation_size,
+    uint32_t *out_translation_hash)
+{
+    uint32_t hash;
+
+    if (out_translation_hash) *out_translation_hash = 0u;
+    if (!palette || palette_count == 0u || palette_count > 256u ||
+        !translation || translation_size < 256u) {
+        return 0;
+    }
+    hash = hash_bytes(2166136261u, translation, 256u);
+    if (hash == 0u) return 0;
+    for (uint32_t i = 0u; i < palette_count; ++i) {
+        palette[i] = translation[palette[i]];
+    }
+    if (out_translation_hash) *out_translation_hash = hash;
     return 1;
 }
 

@@ -16,10 +16,11 @@ typedef struct {
     uint32_t palette_hash;
     uint32_t geometry_hash;
     /* QUERY_TEMP_PICST/_32cb_0804 may replace this IMG3 local palette only
-     * with an authenticated c_light transaction.  A nonzero receipt proves
-     * the stationary (non-dt07) branch; dt07 translation is deliberately
-     * unavailable until its source program is decoded. */
+     * with an authenticated c_light transaction.  When GRAPHICSSET dt07 is
+     * present, TRANSLATE_PALETTE uses its exact 256-byte direct lookup before
+     * the normal _0b36_037e light remap. */
     uint8_t palette_darkness;
+    uint32_t palette_translation_hash;
     uint32_t palette_light_receipt_hash;
     uint32_t palette_transform_hash;
 } DM2_V1_GdatSceneM11Command;
@@ -144,6 +145,12 @@ int dm2_v1_c_light_m11_palette_darkness(
  * DISPLAY_VIEWPORT `glbLightLevel * 10` value unchanged. */
 int dm2_v1_gdat_scene_m11_plane_palette_darkness(
     uint8_t field, uint8_t c_light_parameter, uint8_t *out_darkness);
+/* SKProject TRANSLATE_PALETTE: dt07 is a direct 256-entry byte lookup, not a
+ * palette program.  The exact consumed 256-byte window is hash-bound. */
+int dm2_v1_gdat_scene_m11_translate_palette(
+    uint8_t *palette, uint32_t palette_count,
+    const uint8_t *translation, size_t translation_size,
+    uint32_t *out_translation_hash);
 /* Refreshes only the presentation receipt after an authenticated palette
  * transform. command_hash remains the immutable G1/GDAT scene owner. */
 int dm2_v1_gdat_scene_m11_command_plan_refresh_draw_order(

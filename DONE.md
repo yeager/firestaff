@@ -19665,7 +19665,20 @@ M11 now consumes SKProject `DM2_DISPLAY_VIEWPORT`'s authenticated
 retains that parameter unchanged. Each real IMG3 local palette is remapped by
 the original interface action table, hashed, and bound to the exact c_light
 receipt before the viewport accepts either plane. A present `GRAPHICSSET`
-`dt07/0` or `dt07/1` fails closed because SKProject instead calls the still
-undecoded `TRANSLATE_PALETTE` branch; no substitute table, brightness, or
+`dt07/0` or `dt07/1` originally remained blocked pending exact
+`TRANSLATE_PALETTE` decoding; that narrow limitation is superseded by the
+following source-lookup implementation. No substitute table, brightness, or
 pixels are admitted. Verification: `dm2_v1_c_light_receipt`,
 `dm2_v1_boot_profile_smoke`, and `dm2_v1_save_load` pass.
+
+# ✅ 2026-07-15 DM2 floor/ceiling dt07 TRANSLATE_PALETTE
+
+The M11 floor/ceiling c_light path now implements Skproject
+`TRANSLATE_PALETTE` exactly: a present `GRAPHICSSET/dt07/0` or `/1` is a
+direct 256-entry byte lookup applied to the local IMG3 palette before the
+normal `_0b36_037e` light remap. The consumed lookup window, transformed
+palette and c_light receipt are independently hash-bound. Missing dt07 retains
+the source's non-fog branch; a partial lookup blocks the material route rather
+than borrowing colour data. Verification: `dm2_v1_c_light_receipt`,
+`dm2_v1_boot_profile_smoke`, `test_dm2_v1_gdat_graphicsset_real_data`, and
+`dm2_v1_save_load` pass.
