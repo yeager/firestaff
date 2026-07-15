@@ -1989,6 +1989,16 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
         return 1;
     }
     if (state->opening_active) {
+        if (state->opening_delay_ticks > 0) {
+            if (state->opening_step != 0) {
+                *out_plan = plan;
+                return 0;
+            }
+        } else if (state->opening_step < 1 ||
+                   state->opening_step > CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34) {
+            *out_plan = plan;
+            return 0;
+        }
         plan.surface = state->opening_delay_ticks > 0
             ? CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34
             : CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
