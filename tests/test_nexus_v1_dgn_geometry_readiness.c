@@ -5028,6 +5028,20 @@ static void test_palette_source_gate(void) {
           "a truncated palette source withdraws the renderable palette");
 }
 
+static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+
+    memset(&engine, 0, sizeof(engine));
+    memset(&handoff, 0, sizeof(handoff));
+    CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
+          handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING &&
+          !handoff.receipt_valid && !handoff.can_render_stored_surfaces &&
+          handoff.blocks_real_menu_surface_render &&
+          !handoff.fallback_visuals_permitted,
+          "missing MENU.BPK stays fail-closed without replacement visuals");
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -5050,6 +5064,7 @@ int main(void) {
     test_real_structure1f_direct_cell_corpus();
     test_vdp1_command_sidecar_stays_no_draw();
     test_palette_source_gate();
+    test_menu_bpk_missing_handoff_blocks_fallback();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);
