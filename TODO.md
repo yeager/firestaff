@@ -3403,6 +3403,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       legacy fixture-format maps and missing raw media reject rather than
       deriving a difficulty preference or multiplier. Positive original
       DSA-bearing save-corpus proof remains required.
+    - 2026-07-15 random update: `STKOP_Random` now advances only the
+      checksum-verified CSBWin `GAMEBLOCK2.RandomNumber` state with the exact
+      `STRandom` multiplier/addend and Atari-compatible low-word modulus.
+      The seed is staged until the entire authenticated action succeeds;
+      missing original GAMEBLOCK2 ownership rejects rather than using a host
+      RNG or a generated seed. Positive original DSA-bearing save-corpus
+      proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

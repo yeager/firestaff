@@ -833,7 +833,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingCellWrite *pending_cell_writes,
     int *pending_cell_write_count,
     CSB_V1_CSBWinDSAPendingObjectPropertyWrite *pending_object_property_writes,
-    int *pending_object_property_write_count, int *staged_saves_disabled)
+    int *pending_object_property_write_count, int *staged_saves_disabled,
+    uint32_t *staged_random_state)
 {
     uint32_t v;
     uint32_t w;
@@ -853,7 +854,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_cell_writes || !pending_cell_write_count ||
         !pending_object_property_writes ||
         !pending_object_property_write_count ||
-        !staged_saves_disabled ||
+        !staged_saves_disabled || !staged_random_state ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
         *pending_monster_write_count < 0 ||
@@ -874,6 +875,19 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         memmove(&stack[*depth - (int)count - 1],
                 &stack[*depth - (int)count], (size_t)count * sizeof(*stack));
         stack[*depth - 1] = v;
+        break;
+    case 67u: /* STKOP_Random, CSBWin DSA.cpp:2721-2731. */
+        if (!context->random_state_valid ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (v == 0u) v = 1u;
+        *staged_random_state = *staged_random_state * 0xbb40e62du + 11u;
+        w = (*staged_random_state >> 8) & 0x00ffffffu;
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                           (w & 0xffffu) % v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+        }
         break;
     case 3u: /* STKOP_Pick */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
@@ -2023,6 +2037,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_cell_write_count = 0;
     int pending_object_property_write_count = 0;
     int staged_saves_disabled;
+    uint32_t staged_random_state;
     int i;
 
     if (!state || !context || !out_execution ||
@@ -2045,6 +2060,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     memset(&candidate, 0, sizeof(candidate));
     candidate.forced_state = -1;
     staged_saves_disabled = context->saves_disabled ? 1 : 0;
+    staged_random_state = context->random_state;
     while (cursor < action->program_word_count) {
         uint16_t command = action->program_words[cursor++];
         uint8_t opcode = (uint8_t)(command & 0x3fu);
@@ -2240,7 +2256,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_generator_write_count, pending_monster_writes,
                 &pending_monster_write_count, pending_cell_writes,
                 &pending_cell_write_count, pending_object_property_writes,
-                &pending_object_property_write_count, &staged_saves_disabled);
+                &pending_object_property_write_count, &staged_saves_disabled,
+                &staged_random_state);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2300,6 +2317,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     }
     if (context->saves_disabled_valid) {
         context->saves_disabled = staged_saves_disabled;
+    }
+    if (context->random_state_valid) {
+        context->random_state = staged_random_state;
     }
     memcpy(context->party_champion_talents,
            context_candidate.party_champion_talents,
@@ -2374,6 +2394,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.party_direction = runner->party_direction;
     context.game_time_valid = runner->game_time_valid;
     context.game_time = runner->game_time;
+    context.random_state_valid = runner->random_state_valid;
+    context.random_state = runner->random_state;
     context.dsa_slave_thing_valid = runner->dsa_slave_thing_valid;
     context.dsa_slave_thing = runner->dsa_slave_thing;
     context.party_champions_valid = runner->party_champions_valid;
@@ -2428,6 +2450,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
         CSB_V1_CSBWIN_DSA_STACK_OK) {
         return 0;
     }
+    if (runner->random_state_valid) runner->random_state = context.random_state;
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = (int)parameter_words[i];
     }
