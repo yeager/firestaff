@@ -1,9 +1,9 @@
 
 # Unreleased
 
-# Firestaff v3.0.79
+# Firestaff v3.0.80
 
-Firestaff v3.0.79 packages source-owned runtime work from `main`.
+Firestaff v3.0.80 packages source-owned runtime work from `main`.
 
 ## Highlights since v3.0.78
 
@@ -19,7 +19,10 @@ Firestaff v3.0.79 packages source-owned runtime work from `main`.
 ## Verification
 
 - Focused source-gate and runtime checks passed locally.
-- GitHub Actions packages platform artifacts from the `v3.0.79` tag.
+- Theron's Quest continues the verified Track 02 caller-chain capture without promoting unproven dungeon graphics.
+- Nexus records a verified PRS3 zero-termination boundary while keeping unsupported decode paths diagnostic-only.
+- DM2 binds HUD light level to authentic source receipts and avoids guessed palette state.
+- GitHub Actions packages platform artifacts from the `v3.0.80` tag.
 
 # Firestaff v3.0.77
 
