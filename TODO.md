@@ -7726,6 +7726,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     rebuilt before storage; a changed target cannot replace an admitted
     correlation. This still proves no model-index-to-entry relation and keeps
     texture, palette, VDP1, transform, and draw semantics fail-closed.
+  - 2026-07-15 direct owner/material update: documented active
+    `Structure1F -> Structure1A -> Structure3` entry/face rows now join their
+    exact static Structure2 descriptor and bounded image/palette candidate
+    lanes when the referenced face is source-proven static. Animated,
+    untextured, or unresolved faces remain unavailable. A genuine Saturn
+    trace must still establish the payload format, palette, transform, VDP1,
+    and draw behavior; no material is decoded or rendered here.
   establish one original Saturn execution-to-VDP1 receipt for a named
   `(LEVxx.DGN, Structure3 entry, face ordinal)` from the hash-verified retail
   corpus. The receipt must bind the exact typed mesh-row corpus identity

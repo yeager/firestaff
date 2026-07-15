@@ -1296,6 +1296,22 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1FDirectMeshBindingReceipt;
 
+/* One direct Structure1F owner joined to the exact static Structure3 face
+ * material target selected by the same documented Structure1A model/face
+ * fields. This is capture provenance only: the Structure2 payload remains
+ * opaque and no transform, palette, VDP1, or draw semantics are inferred. */
+typedef struct {
+    int valid;
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt direct_mesh;
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget static_material;
+    int direct_face_material_bound;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget;
+
 /* A static table observed in the hash-verified retail DM.BIN executable.
  * This is a capture-producer anchor only: it does not prove that the SH-2
  * writes either VDP1 register, emits a command list, selects DGN geometry,
@@ -2255,6 +2271,12 @@ int nexus_v1_current_level_structure1f_face_mesh_receipt(
 int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectMeshBindingReceipt *out_receipt);
+/* Bind one direct Structure1F source owner to its exact static Structure2
+ * material target. Non-static, untextured, or unresolved faces remain
+ * unavailable rather than selecting a substitute material. */
+int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target);
 /* Find the one known static VDP1 register table in canonical retail DM.BIN.
  * A successful receipt deliberately remains insufficient for rendering. */
 int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(

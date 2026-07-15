@@ -22719,6 +22719,25 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_dgn_geometry_readiness
     )
 
+    add_executable(test_nexus_v1_direct_static_material_capture
+        tests/test_nexus_v1_direct_static_material_capture.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_direct_static_material_capture PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_direct_static_material_capture PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_direct_static_material_capture PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_direct_static_material_capture
+        COMMAND test_nexus_v1_direct_static_material_capture
+    )
+
     # Packages a pre-recorded Mednafen debugger trace with one exact atomic
     # owner/Structure3/Structure2 request. It deliberately has no emulator,
     # decoder, or render dependency and cannot fabricate a capture.
