@@ -78,7 +78,13 @@ static int count_package_geometry_packet(
     if (!packet->valid || !packet->source_geometry_bound ||
         !packet->material_descriptor_bound || !packet->no_draw_only ||
         packet->fallback_visuals_permitted ||
-        !packet->blocks_real_dgn_mesh_render) {
+        !packet->blocks_real_dgn_mesh_render ||
+        !packet->material_target.image_payload_interval_bound ||
+        packet->material_target.image_payload_candidate_byte_count == 0U ||
+        (packet->material_target.descriptor_target.descriptor
+                 .palette_relative_offset != 0U &&
+         (!packet->material_target.palette_payload_interval_bound ||
+          packet->material_target.palette_payload_candidate_byte_count == 0U))) {
         ++count->invalid_packet_count;
     }
     return 0;
@@ -1178,6 +1184,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                               (int)material_target.descriptor_target.descriptor
                                   .image_relative_offset &&
                       material_target.image_payload_anchor_bound &&
+                      material_target.image_payload_interval_bound &&
+                      material_target.image_payload_candidate_byte_count > 0U &&
+                      material_target.image_payload_next_anchor_offset >
+                          material_target.descriptor_target.descriptor
+                              .image_relative_offset &&
                       ((material_target.descriptor_target.descriptor
                             .palette_relative_offset == 0U &&
                         material_target.palette_payload_byte_offset == -1 &&
@@ -1189,7 +1200,12 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                              NEXUS_DGN_BLOCK_SIZE) +
                                 (int)material_target.descriptor_target.descriptor
                                     .palette_relative_offset &&
-                        material_target.palette_payload_anchor_bound)) &&
+                        material_target.palette_payload_anchor_bound &&
+                        material_target.palette_payload_interval_bound &&
+                        material_target.palette_payload_candidate_byte_count > 0U &&
+                        material_target.palette_payload_next_anchor_offset >
+                            material_target.descriptor_target.descriptor
+                                .palette_relative_offset)) &&
                       material_target.capture_producer_required &&
                       material_target.original_saturn_capture_required &&
                       material_target.no_draw_only &&
