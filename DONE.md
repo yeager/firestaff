@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin overlay ownership audit: verified that the retained
+  EXPOOL palette and CSBgraphics signature gate are prerequisites for the
+  DSA overlay routes; no opcode was enabled without the missing payload owner.
+
 - 2026-07-15 CSBWin `STKOP_ObjectID`: source DSA-bank object identity now
   reaches the authenticated stack only with an explicit live owner.
 
