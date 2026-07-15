@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB terminal door-runtime handoff hardening: the CSB
+  entrance-to-runtime receipt now rejects legacy one-byte C017/C040 wrapper
+  shapes, incomplete PRESENTS/CHAOS/STRIKES playback, stale door-open state,
+  non-neutral C040 transparency, and mismatched GRAPHICS.DAT ownership before
+  publishing HUD-ready. The live handoff requires the runtime mirror and exact
+  C017 224x136 / C040 144x73 source surfaces from the verified CSB session.
+  Verification: focused strict C11 direct build/run of
+  `test_csb_v1_startup_terminal_handoff_real_data_pc34_compat`, plus strict
+  object builds for `csb_v1_boot.c` and
+  `csb_v1_startup_runtime_surfaces_pc34_compat.c`.
+
 - ✅ 2026-07-16 CSB terminal startup HUD receipt gate: the verified CSB
   startup session now carries title phase mask, entrance-door completion,
   terminal C017/C040 source identity, neutral-palette live HUD raster, and

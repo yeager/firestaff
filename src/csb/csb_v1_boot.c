@@ -10,6 +10,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -1658,6 +1659,16 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         !session->real_asset_matched || !session->full_startup_ready ||
         !session->rejects_legacy_wrappers ||
         !session->playback.no_fallback_routes ||
+        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
+        session->playback.title_phase_mask != 0x0b ||
+        !session->playback.entrance_complete ||
+        !session->playback.entrance_scene_presented ||
+        !session->playback.door_frame_presented ||
+        session->playback.last_door_opening_step != 31 ||
+        session->playback.next_door_opening_step != 32 ||
+        session->playback.entrance_special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+        session->generation == 0u ||
         !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
         !session->hud_assets_bound || !session->hud_inventory_binding.verified ||
         !session->hud_resurrect_binding.verified ||
@@ -1677,8 +1688,15 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
     resurrect = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
     return inventory->valid && inventory->pixels &&
-        inventory->source_asset_id == 17 && resurrect->valid &&
-        resurrect->pixels && resurrect->source_asset_id == 40;
+        inventory->source_asset_id == 17 &&
+        inventory->width == CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 &&
+        inventory->height == CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 &&
+        inventory->transparent_color == -1 && resurrect->valid &&
+        resurrect->pixels && resurrect->source_asset_id == 40 &&
+        resurrect->width == CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 &&
+        resurrect->height == CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 &&
+        resurrect->transparent_color ==
+            CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34;
 }
 
 int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
