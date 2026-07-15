@@ -380,19 +380,13 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
 }
 
 int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h) {
-    int entry_size;
-    int count;
-    if (portrait_w <= 0 || portrait_h <= 0 || data_size <= 0) {
-        return 0;
-    }
-    entry_size = portrait_w * portrait_h;
-    if (entry_size <= 0) {
-        return 0;
-    }
-    count = data_size / entry_size;
-    if (count < 0) return 0;
-    if (count > 24) return 24;
-    return count;
+    /* FACE.BIN is a variable-length PRS3 container, not a raw portrait
+     * table. Keep this legacy query inert so arbitrary bytes cannot admit a
+     * 48x48 surface through an old caller. */
+    (void)data_size;
+    (void)portrait_w;
+    (void)portrait_h;
+    return 0;
 }
 
 static int nexus_ui_read_be32(const uint8_t *p) {
@@ -490,12 +484,9 @@ int nexus_ui_face_layout_detect(const uint8_t *data,
         if (out_layout) *out_layout = layout;
         return 1;
     }
-    layout.valid = 1;
-    layout.header_size = 0;
-    layout.entry_count = nexus_ui_face_full_entry_count(data_size, 48, 48);
-    layout.entry_size = 48 * 48;
+    /* No alternate raw-table form is evidenced for retail FACE.BIN. */
     if (out_layout) *out_layout = layout;
-    return layout.entry_count > 0;
+    return 0;
 }
 
 int nexus_ui_face_compact_record_descriptor(const uint8_t *data,
@@ -539,15 +530,10 @@ int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
         if (out_info) *out_info = info;
         return 0;
     }
-    if (record_size != entry_size) {
-        if (out_info) *out_info = info;
-        return 0;
-    }
-    memcpy(out_pixels, record_data, (size_t)entry_size);
-    info.copied_pixels = entry_size;
-    info.kind = NEXUS_UI_FACE_RECORD_RAW_48X48;
+    /* No raw 48x48 record grammar is source-owned. */
+    (void)entry_size;
     if (out_info) *out_info = info;
-    return 1;
+    return 0;
 }
 
 int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,

@@ -460,16 +460,16 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     nexus_ui_manager_init(&ui);
     expect_true(nexus_ui_face_full_entry_count((int)sizeof(face_bytes),
                                                48,
-                                               48) == 1,
-                "Nexus FACE loader counts one complete 48x48 portrait");
+                                               48) == 0,
+                "Nexus FACE loader rejects raw 48x48 portrait tables");
     expect_true(nexus_ui_face_full_entry_count((48 * 48 * 19) + 1328,
                                                48,
-                                               48) == 19,
-                "Nexus FACE loader ignores trailing partial portrait bytes");
+                                               48) == 0,
+                "Nexus FACE loader rejects partial raw portrait tables");
     expect_true(nexus_ui_face_full_entry_count(48 * 48 * 30,
                                                48,
-                                               48) == 24,
-                "Nexus FACE loader caps startup portraits at roster size");
+                                               48) == 0,
+                "Nexus FACE loader rejects raw portrait roster tables");
     memset(&layout, 0, sizeof(layout));
     expect_true(nexus_ui_face_layout_detect(compact_face,
                                             compact_size,
@@ -513,11 +513,10 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                                   (int)sizeof(face_bytes),
                                                   expanded_face,
                                                   (int)sizeof(expanded_face),
-                                                  &decode_info) > 0 &&
-                    decode_info.kind == NEXUS_UI_FACE_RECORD_RAW_48X48 &&
-                    decode_info.copied_pixels == 48 * 48 &&
-                    decode_info.zero_padded_pixels == 0,
-                "Nexus FACE raw record decode reports a complete 48x48 portrait");
+                                                  &decode_info) == 0 &&
+                    decode_info.kind == NEXUS_UI_FACE_RECORD_NONE &&
+                    decode_info.copied_pixels == 0,
+                "Nexus FACE raw record cannot become a portrait surface");
     expect_true(nexus_ui_load_faces(&ui,
                                     face_bytes,
                                     0,

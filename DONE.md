@@ -5,6 +5,13 @@
   SKProject `GET_ITEM_NAME` uses `QUERY_GDAT_ITEM_NAME` (`dtText/0x18`) plus
   `FORMAT_SKSTR`; Firestaff now leaves the zone untouched until that real
   text route is available, while retaining the separate GDAT icon route.
+- 2026-07-15 Nexus legacy raw portrait removal: `nexus_ui_load_faces` is now
+  fail-closed. Only the bounded PRS3-gated portrait route can ever materialize
+  a champion surface.
+- 2026-07-15 Nexus raw FACE retirement: layout detection, record expansion,
+  and the legacy entry counter reject raw 48x48 tables. Retail FACE.BIN now
+  admits only its authenticated PRS3 descriptor layout, which remains no-draw
+   until opcode and palette evidence is complete.
 
 - 2026-07-15 Nexus DGN raster fallback removal: textured quads with missing
    material now no-draw instead of becoming flat-color substitute geometry.

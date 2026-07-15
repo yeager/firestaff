@@ -133,7 +133,6 @@ typedef struct {
 
 typedef enum {
     NEXUS_UI_FACE_RECORD_NONE = 0,
-    NEXUS_UI_FACE_RECORD_RAW_48X48,
     /* Canonical Saturn FACE.BIN frames are PRS3-compressed 56x56 records.
      * Their opcode grammar is not established, so no pixel output is legal. */
     NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN
