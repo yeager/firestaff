@@ -79,6 +79,31 @@ int32_t DM1_Endgame_IsLordChaosOnSquare(int32_t creatureTypeOnSquare)
     return (creatureTypeOnSquare == DM1_CREATURE_LORD_CHAOS_ID) ? 1 : 0;
 }
 
+int DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY,
+    unsigned short* outThing)
+{
+    unsigned short thing;
+    int safety = 0;
+    if (outThing) *outThing = 0;
+    if (!dungeon || !things || !outThing) return 0;
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP &&
+            index >= 0 && index < things->groupCount && things->groups &&
+            things->groups[index].creatureType == DM1_CREATURE_LORD_CHAOS_ID) {
+            *outThing = thing;
+            return 1;
+        }
+        thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+    }
+    return 1;
+}
+
 /* ===================================================================
  * Fuse Action Evaluation
  * Source: PROJEXPL.C F0225_GROUP_FuseAction:
