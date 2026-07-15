@@ -7,14 +7,22 @@
 
 typedef struct DM2_V1_DoorRenderPlan DM2_V1_DoorRenderPlan;
 
-#define DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX 20
+/* A visible source door can issue two panel halves plus ornate, destroyed,
+ * centre-frame, button and two side-jamb commands. Keep the fixed M11
+ * receipt large enough for every viewport square, rather than truncating a
+ * valid multi-door source frame. */
+#define DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX 64
 
 typedef enum {
     DM2_V1_GDAT_DOOR_OVERLAY_ORNATE = 1,
     DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK = 2,
     DM2_V1_GDAT_DOOR_PANEL = 3,
     DM2_V1_GDAT_DOOR_FRAME = 4,
-    DM2_V1_GDAT_DOOR_BUTTON = 5
+    DM2_V1_GDAT_DOOR_BUTTON = 5,
+    /* SKProject DRAW_DOOR_FRAMES resolves these independently of the
+     * centre frame through GRAPHICSSET plus QUERY_CREATURE_BLIT_RECTI. */
+    DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT = 6,
+    DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT = 7
 } DM2_V1_GdatDoorOverlayKind;
 
 typedef struct {
@@ -30,6 +38,7 @@ typedef struct {
     uint8_t door_opening_dir;
     uint8_t door_state;
     uint8_t door_open_pct;
+    uint8_t mirror_flip;
     /* skproject DRAW_DOOR's selected image and initial stretch/light
      * controls. These are source routing data, not synthesized shading. */
     uint8_t draw_distance;
