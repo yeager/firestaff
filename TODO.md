@@ -347,6 +347,11 @@
     and bounded raw anchor fields under one corpus fingerprint. The anchors
     remain opaque: pixel codec, palette format, UVs, VDP1, transforms and draw
     behavior still require original Saturn evidence.
+  - 2026-07-15 static capture-window update: each static face descriptor now
+    carries a bounded raw image-anchor interval and, when present, palette
+    anchor interval derived only from the next original descriptor anchor or
+    payload end. These are capture windows, never pixel/palette lengths or
+    decoder/VDP1 semantics.
 
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,
