@@ -690,6 +690,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     uint32_t capture_complete;
     uint32_t output_store_predecessor_observed;
     uint32_t complete_output_store_range_observed;
+    uint32_t complete_control_branch_coverage_observed;
     const char *cursor;
     size_t magic_size;
 
@@ -697,6 +698,12 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!text) return 0;
+    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC) - 1U;
+    if (text_size > magic_size &&
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC, magic_size) == 0 &&
+        text[magic_size] == '\n') {
+        receipt.schema_version = 5U;
+    } else {
     magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V4_MAGIC) - 1U;
     if (text_size > magic_size &&
         memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V4_MAGIC, magic_size) == 0 &&
@@ -721,6 +728,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
             text[magic_size] != '\n') return 0;
         receipt.schema_version = 1U;
         }
+    }
     }
     }
     cursor = text + magic_size + 1U;
@@ -781,6 +789,16 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           !read_u64(&cursor, "output_store_fnv1a64=", &receipt.output_store_fnv1a64) ||
           !read_u32(&cursor, "output_store_predecessor_observed=", &output_store_predecessor_observed) ||
           !read_u32(&cursor, "complete_output_store_range_observed=", &complete_output_store_range_observed))) ||
+        (receipt.schema_version >= 5U &&
+         (!read_u32(&cursor, "control_test_instruction_offset=", &receipt.control_test_instruction_offset) ||
+          !read_u32(&cursor, "control_zero_branch_instruction_offset=", &receipt.control_zero_branch_instruction_offset) ||
+          !read_u32(&cursor, "control_zero_branch_target_offset=", &receipt.control_zero_branch_target_offset) ||
+          !read_u32(&cursor, "control_branch_outcomes_mask=", &receipt.control_branch_outcomes_mask) ||
+          !read_u32(&cursor, "nonzero_control_observation_count=", &receipt.nonzero_control_observation_count) ||
+          !read_u32(&cursor, "zero_control_observation_count=", &receipt.zero_control_observation_count) ||
+          !read_u64(&cursor, "first_control_sequence=", &receipt.first_control_sequence) ||
+          !read_u64(&cursor, "last_control_sequence=", &receipt.last_control_sequence) ||
+          !read_u32(&cursor, "complete_control_branch_coverage_observed=", &complete_control_branch_coverage_observed))) ||
         !read_u32(&cursor, "decoder_returned_success=", &decoder_returned_success) ||
         !read_u32(&cursor, "capture_complete=", &capture_complete) || *cursor != '\0') return 0;
     if (!receipt.menu_bpk_fnv1a64 || !receipt.dm_bin_fnv1a64 ||
@@ -847,6 +865,17 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           receipt.output_store_fnv1a64 != receipt.output_fnv1a64 ||
           output_store_predecessor_observed != 1U ||
           complete_output_store_range_observed != 1U)) ||
+        (receipt.schema_version >= 5U &&
+         (!receipt.control_test_instruction_offset ||
+          !receipt.control_zero_branch_instruction_offset ||
+          !receipt.control_zero_branch_target_offset ||
+          receipt.control_branch_outcomes_mask != 3U ||
+          !receipt.nonzero_control_observation_count ||
+          !receipt.zero_control_observation_count ||
+          receipt.first_control_sequence <= receipt.first_opcode_sequence ||
+          receipt.first_control_sequence > receipt.last_control_sequence ||
+          receipt.last_control_sequence >= receipt.decoder_return_sequence ||
+          complete_control_branch_coverage_observed != 1U)) ||
         decoder_returned_success != 1U || capture_complete != 1U) return 0;
     receipt.valid = 1;
     receipt.complete_capture = 1;
@@ -856,6 +885,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     receipt.palette_consumption_observed = receipt.schema_version >= 3U;
     receipt.output_store_predecessor_observed = receipt.schema_version >= 4U;
     receipt.complete_output_store_range_observed = receipt.schema_version >= 4U;
+    receipt.complete_control_branch_coverage_observed = receipt.schema_version >= 5U;
     receipt.opcode_grammar_proven = 0;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;
@@ -929,6 +959,65 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
             receipt.palette_consumption_observed && output_store_route_matches;
     }
     receipt.valid = receipt.exact_vdp1_handoff_observed;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int nexus_v1_prs3_decoder_readiness_bind_capture(
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size,
+    Nexus_V1_Prs3DecoderReadinessReceipt *out_receipt) {
+    Nexus_V1_Prs3DecoderReadinessReceipt receipt;
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt capture_binding;
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt sh2;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!trace || trace->schema_version < 5U ||
+        !nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+            trace, menu_bpk, menu_bpk_size, dm_bin, dm_bin_size,
+            &capture_binding) ||
+        !nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+            dm_bin, dm_bin_size, 1, &sh2)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.capture_source_bound = capture_binding.valid;
+    receipt.complete_input_range_bound =
+        trace->input_read_bytes == trace->stream_size &&
+        trace->first_input_read_address == trace->payload_ram_address &&
+        trace->last_input_read_address == trace->payload_ram_address +
+            trace->stream_size - 1U;
+    receipt.complete_output_range_bound =
+        trace->output_write_bytes == trace->expected_output_bytes &&
+        trace->output_store_bytes == trace->expected_output_bytes &&
+        trace->first_output_write_address == trace->output_ram_address &&
+        trace->last_output_write_address == trace->output_ram_address +
+            trace->expected_output_bytes - 1U &&
+        trace->first_output_store_address == trace->output_ram_address &&
+        trace->last_output_store_address == trace->output_ram_address +
+            trace->expected_output_bytes - 1U;
+    receipt.control_branch_coverage_bound =
+        trace->complete_control_branch_coverage_observed &&
+        trace->control_branch_outcomes_mask == 3U &&
+        trace->nonzero_control_observation_count > 0U &&
+        trace->zero_control_observation_count > 0U &&
+        trace->control_test_instruction_offset == sh2.control_low_bit_test_offset &&
+        trace->control_zero_branch_instruction_offset ==
+            sh2.control_zero_branch_offset &&
+        trace->control_zero_branch_target_offset ==
+            sh2.control_zero_branch_target_offset;
+    receipt.valid = receipt.capture_source_bound &&
+        receipt.complete_input_range_bound && receipt.complete_output_range_bound &&
+        receipt.control_branch_coverage_bound;
+    /* A source-bound capture is not independent producer authentication, nor
+     * does complete branch coverage assign PRS3 command grammar. */
+    receipt.original_saturn_execution_authenticated = 0;
+    receipt.opcode_grammar_proven = 0;
+    receipt.decoder_ready = 0;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;
     *out_receipt = receipt;

@@ -7315,6 +7315,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     SH-2 receipt. The trace itself remains untrusted external evidence: it
     does not prove PRS3 grammar or authorize decoding, palette use, VDP1
     upload, or drawing.
+  - 2026-07-15 PRS3 V5 decoder-review update: one complete stream can now
+    bind its full input/output intervals and both observed low-bit branch
+    outcomes to the locked SH-2 PCs. This produces a grammar-review receipt,
+    not decoder readiness: authentic emulator provenance, token meanings,
+    bit order, termination, pixel/palette semantics, and drawing remain open.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).

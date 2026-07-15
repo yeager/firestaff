@@ -13,6 +13,7 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V2"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V3_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V3"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V4_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V4"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V5"
 #define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
@@ -199,6 +200,17 @@ typedef struct {
     uint64_t output_store_fnv1a64;
     int output_store_predecessor_observed;
     int complete_output_store_range_observed;
+    /* V5 complete-stream control coverage. This is still a capture claim;
+     * neither outcome is assigned PRS3 token semantics here. */
+    uint32_t control_test_instruction_offset;
+    uint32_t control_zero_branch_instruction_offset;
+    uint32_t control_zero_branch_target_offset;
+    uint32_t control_branch_outcomes_mask;
+    uint32_t nonzero_control_observation_count;
+    uint32_t zero_control_observation_count;
+    uint64_t first_control_sequence;
+    uint64_t last_control_sequence;
+    int complete_control_branch_coverage_observed;
     int exact_vdp1_handoff_observed;
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;
@@ -222,6 +234,23 @@ typedef struct {
     int decoder_promoted;
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Vdp1CaptureBindingReceipt;
+
+/* A source-bound capture may be ready for opcode-grammar review only after it
+ * proves one entire input/output interval and both observed low-bit outcomes.
+ * It is deliberately not decoder readiness: no observed branch is assigned a
+ * literal/copy meaning, and `decoder_ready` remains false. */
+typedef struct {
+    int valid;
+    int capture_source_bound;
+    int complete_input_range_bound;
+    int complete_output_range_bound;
+    int control_branch_coverage_bound;
+    int original_saturn_execution_authenticated;
+    int opcode_grammar_proven;
+    int decoder_ready;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3DecoderReadinessReceipt;
 
 /* File-backed import receipt for an externally captured V3 trace. The trace
  * is evidence supplied by a capture tool, not a runtime asset: successful
@@ -487,7 +516,8 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
  * palette read intervals/fingerprints from the original capture. All versions
  * remain evidence-only until an independently reviewed opcode and Saturn
  * palette grammar exists. V4 additionally carries the complete output-store
- * lane; binding rechecks its two PCs against the original DM.BIN receipt. */
+ * lane; V5 adds both observed low-bit outcomes. Binding rechecks source PCs
+ * against the original DM.BIN receipt. */
 int nexus_v1_prs3_vdp1_capture_schema_parse(
     const char *text, size_t text_size,
     Nexus_V1_Prs3Vdp1CaptureReceipt *out_receipt);
@@ -499,6 +529,15 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
     const uint8_t *menu_bpk, size_t menu_bpk_size,
     const uint8_t *dm_bin, size_t dm_bin_size,
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt *out_receipt);
+
+/* Bind a V5 complete-stream capture to its exact original assets and static
+ * control/store route. This is a review receipt only, never a decoder or draw
+ * authorization. */
+int nexus_v1_prs3_decoder_readiness_bind_capture(
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size,
+    Nexus_V1_Prs3DecoderReadinessReceipt *out_receipt);
 
 /* Read a text V3/V4 capture plus ordinary canonical MENU.BPK and DM.BIN files.
  * The two source files must match the original Track 1 MD5 identities before

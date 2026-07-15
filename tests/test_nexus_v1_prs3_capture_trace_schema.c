@@ -500,11 +500,12 @@ static void test_real_zero_side_trace_contract(void) {
     free(menu); free(dm_bin);
 }
 
-static void test_real_v4_output_store_trace_contract(void) {
+static void test_real_v5_decoder_readiness_trace_contract(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     Nexus_V1_BpkPrs3StreamPlan plan;
     Nexus_V1_Prs3Vdp1CaptureReceipt trace;
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
+    Nexus_V1_Prs3DecoderReadinessReceipt readiness;
     unsigned char *menu;
     unsigned char *dm_bin;
     size_t menu_size = 0U, dm_bin_size = 0U;
@@ -522,7 +523,7 @@ static void test_real_v4_output_store_trace_contract(void) {
         free(menu); free(dm_bin); return;
     }
     snprintf(text, sizeof(text),
-        "NEXUS_PRS3_SH2_VDP1_TRACE_V4\n"
+        "NEXUS_PRS3_SH2_VDP1_TRACE_V5\n"
         "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
         "entry_index=%x\nstream_offset=%x\nstream_size=%x\nexpected_output_bytes=%x\n"
         "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
@@ -547,6 +548,13 @@ static void test_real_v4_output_store_trace_contract(void) {
         "first_output_store_address=%x\nlast_output_store_address=%x\n"
         "output_store_bytes=%x\noutput_store_fnv1a64=3\n"
         "output_store_predecessor_observed=1\ncomplete_output_store_range_observed=1\n"
+        "control_test_instruction_offset=14dca\n"
+        "control_zero_branch_instruction_offset=14dcc\n"
+        "control_zero_branch_target_offset=14de4\n"
+        "control_branch_outcomes_mask=3\n"
+        "nonzero_control_observation_count=1\nzero_control_observation_count=1\n"
+        "first_control_sequence=13\nlast_control_sequence=14\n"
+        "complete_control_branch_coverage_observed=1\n"
         "decoder_returned_success=1\ncapture_complete=1\n",
         fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
         plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
@@ -564,7 +572,23 @@ static void test_real_v4_output_store_trace_contract(void) {
            binding.valid && binding.vdp1_command_consumption_observed &&
            binding.palette_consumption_observed && !binding.decoder_promoted &&
            !binding.fallback_visuals_permitted,
-           "V4 binds source-owned store PCs to the retail DM.BIN route without decoding");
+           "V5 binds source-owned store PCs to the retail DM.BIN route without decoding");
+    expect(nexus_v1_prs3_decoder_readiness_bind_capture(
+               &trace, menu, menu_size, dm_bin, dm_bin_size, &readiness) &&
+           readiness.valid && readiness.capture_source_bound &&
+           readiness.complete_input_range_bound &&
+           readiness.complete_output_range_bound &&
+           readiness.control_branch_coverage_bound &&
+           !readiness.original_saturn_execution_authenticated &&
+           !readiness.opcode_grammar_proven && !readiness.decoder_ready &&
+           !readiness.decoder_promoted && !readiness.fallback_visuals_permitted,
+           "V5 reaches decoder-grammar review only, never a decoder route");
+    memcpy(strstr(text, "control_branch_outcomes_mask=3"),
+           "control_branch_outcomes_mask=1",
+           sizeof("control_branch_outcomes_mask=1") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               text, strlen(text), &trace) && !trace.valid,
+           "V5 rejects a purported complete stream missing one control outcome");
     free(menu); free(dm_bin);
 }
 
@@ -888,7 +912,7 @@ int main(void) {
     test_dm_bin_sh2_v1_execution_receipt();
     test_real_nonzero_transfer_trace_contract();
     test_real_zero_side_trace_contract();
-    test_real_v4_output_store_trace_contract();
+    test_real_v5_decoder_readiness_trace_contract();
     test_sh2_transfer_trace_gate();
 
     return failures ? 1 : 0;
