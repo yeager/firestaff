@@ -279,6 +279,15 @@ int F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
     int mapY,
     int* outCount);
 
+/* ReDMCSB PROJEXPL.C F0221: raw loaded-DAT square-chain query. */
+int F0221_GROUP_IsFluxcageOnSquare_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outIsFluxcage);
+
 /* ==========================================================
  *  Group D — Generator re-enable (F0872 – F0874).
  * ========================================================== */
