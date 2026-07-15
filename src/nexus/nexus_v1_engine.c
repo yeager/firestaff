@@ -6181,6 +6181,98 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     }
 }
 
+int nexus_v1_engine_build_menu_bpk_palt_capture_target(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target)
+{
+    Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+    const Nexus_V1_BpkPaletteTrailerReceipt *palette;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->original_saturn_capture_required = 1;
+    out_target->palt_memory_read_observation_required = 1;
+    out_target->palette_state_observation_required = 1;
+    out_target->vdp1_command_observation_required = 1;
+    out_target->no_draw_only = 1;
+    if (!engine ||
+        nexus_v1_menu_bpk_renderer_handoff_receipt(engine, &handoff) != 0 ||
+        !handoff.canonical_source_hash_verified ||
+        !handoff.canonical_palette_trailer_bound ||
+        !engine->menu_bpk_source.canonical_name[0] ||
+        !engine->menu_bpk_source.canonical_md5[0]) {
+        return 0;
+    }
+    palette = &handoff.palette_trailer;
+    if (!palette->valid || !palette->record_bytes || !palette->entry_count ||
+        !palette->entry_bytes || !palette->entry_bytes_fnv1a64 ||
+        palette->palette_format_proven || palette->decoder_promoted ||
+        palette->fallback_visuals_permitted) {
+        return 0;
+    }
+
+    snprintf(out_target->canonical_menu_bpk_name,
+             sizeof(out_target->canonical_menu_bpk_name), "%s",
+             engine->menu_bpk_source.canonical_name);
+    snprintf(out_target->canonical_menu_bpk_md5,
+             sizeof(out_target->canonical_menu_bpk_md5), "%s",
+             engine->menu_bpk_source.canonical_md5);
+    out_target->palt_record_offset = palette->record_offset;
+    out_target->palt_record_bytes = palette->record_bytes;
+    out_target->palt_entry_count = palette->entry_count;
+    out_target->palt_entry_bytes = palette->entry_bytes;
+    out_target->palt_entry_bytes_fnv1a64 = palette->entry_bytes_fnv1a64;
+    out_target->valid = 1;
+    return 1;
+}
+
+int nexus_v1_engine_write_menu_bpk_palt_capture_target(
+    const Nexus_V1_Engine *engine, const char *path,
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target)
+{
+    char temporary_path[1024];
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt target;
+    FILE *file;
+    int write_ok;
+
+    if (!path || !out_target ||
+        nexus_v1_engine_build_menu_bpk_palt_capture_target(engine, &target) != 1 ||
+        !target.valid || !target.original_saturn_capture_required ||
+        !target.palt_memory_read_observation_required ||
+        !target.palette_state_observation_required ||
+        !target.vdp1_command_observation_required ||
+        target.palt_palette_relation_proven || target.decoder_promoted ||
+        !target.no_draw_only || target.fallback_visuals_permitted ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
+            (int)sizeof(temporary_path)) {
+        return 0;
+    }
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    write_ok = fprintf(file,
+                       NEXUS_V1_MENU_BPK_PALT_CAPTURE_TARGET_MAGIC "\n"
+                       "canonical_menu_bpk_name=%s\ncanonical_menu_bpk_md5=%s\n"
+                       "palt_record_offset=%x\npalt_record_bytes=%x\n"
+                       "palt_entry_count=%x\npalt_entry_bytes=%x\n"
+                       "palt_entry_bytes_fnv1a64=%016llx\n"
+                       "capture_kind=original_saturn_menu_palt_correlation\n"
+                       "required_observations=palt_memory_read,palette_state,vdp1_command\n"
+                       "palt_palette_relation_proven=0\ndecoder_promoted=0\n"
+                       "no_draw_only=1\n",
+                       target.canonical_menu_bpk_name,
+                       target.canonical_menu_bpk_md5, target.palt_record_offset,
+                       target.palt_record_bytes, target.palt_entry_count,
+                       target.palt_entry_bytes,
+                       (unsigned long long)target.palt_entry_bytes_fnv1a64) >= 0;
+    if (fclose(file) != 0) write_ok = 0;
+    if (!write_ok || rename(temporary_path, path) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt) {

@@ -77,6 +77,31 @@ typedef struct {
     Nexus_V1_BpkPaletteTrailerReceipt palette_trailer;
 } Nexus_V1_MenuBpkRendererHandoffReceipt;
 
+/* A source-bound request for an original-Saturn observation of the canonical
+ * MENU.BPK PALT record. PALT is only an opaque EOF record today: the target
+ * asks a capture producer to establish or reject its relation to palette
+ * reads and VDP1 state without treating it as decoded palette data. */
+#define NEXUS_V1_MENU_BPK_PALT_CAPTURE_TARGET_MAGIC \
+    "FIRESTAFF_NEXUS_MENU_BPK_PALT_CAPTURE_TARGET_V1"
+typedef struct {
+    int valid;
+    char canonical_menu_bpk_name[16];
+    char canonical_menu_bpk_md5[33];
+    uint32_t palt_record_offset;
+    uint32_t palt_record_bytes;
+    uint32_t palt_entry_count;
+    uint32_t palt_entry_bytes;
+    uint64_t palt_entry_bytes_fnv1a64;
+    int original_saturn_capture_required;
+    int palt_memory_read_observation_required;
+    int palette_state_observation_required;
+    int vdp1_command_observation_required;
+    int palt_palette_relation_proven;
+    int decoder_promoted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_MenuBpkPaltCaptureTargetReceipt;
+
 /* A DGN view plan is not renderable until every referenced material has a
  * decoded DMDF/BPK surface. PRS3-only entries intentionally remain blocked:
  * no synthetic colour is substituted for an unverified Saturn surface. */
@@ -1928,6 +1953,12 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt);
 const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     Nexus_V1_MenuBpkRendererHandoffStatus status);
+int nexus_v1_engine_build_menu_bpk_palt_capture_target(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);
+int nexus_v1_engine_write_menu_bpk_palt_capture_target(
+    const Nexus_V1_Engine *engine, const char *path,
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);

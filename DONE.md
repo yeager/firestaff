@@ -17155,3 +17155,11 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
 - 2026-07-15 DM2 skproject door material integrity: M11 now rehashes every
   source-owned `DRAW_DOOR` decoded plane and local palette immediately before
   presentation. Altered same-sized GDAT material blocks the complete pass.
+
+# ✅ 2026-07-15 Nexus canonical PALT capture target
+
+The canonical MENU.BPK handoff can now write a source-bound original-Saturn
+capture target for PALT's exact record and raw-table fingerprint. It requests
+only PALT-memory-read, palette-state, and VDP1-command observations, leaving
+the PALT-to-palette relation unproved and all decoder/draw routes blocked.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.

@@ -5069,6 +5069,11 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
     Nexus_V1_BpkPaletteTrailerReceipt palette;
     Nexus_V1_BpkRuntimeUploadReceipt upload;
     Nexus_V1_BpkEntry last_entry;
+    Nexus_V1_Engine engine;
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt target;
+    char target_path[128];
+    char target_text[2048];
+    FILE *target_file;
     size_t index;
     const char *data_dir;
 
@@ -5104,6 +5109,53 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
           upload.route == NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES &&
           !upload.fallback_visuals_permitted,
           "BPK upload receipt carries PALT framing without creating a surface");
+
+    memset(&engine, 0, sizeof(engine));
+    engine.menu_bpk_source.canonical_hash_verified = 1;
+    snprintf(engine.menu_bpk_source.canonical_name,
+             sizeof(engine.menu_bpk_source.canonical_name), "MENU.BPK");
+    snprintf(engine.menu_bpk_source.canonical_md5,
+             sizeof(engine.menu_bpk_source.canonical_md5),
+             "c2776768ff25287c79013a1452253ca0");
+    engine.menu_bpk_upload_receipt_valid = 1;
+    engine.menu_bpk_upload_receipt.palette_trailer_observed = 1;
+    engine.menu_bpk_upload_receipt.palette_trailer = palette;
+    CHECK(nexus_v1_engine_build_menu_bpk_palt_capture_target(
+              &engine, &target) == 1 && target.valid &&
+          target.palt_record_offset == 48U && target.palt_record_bytes == 524U &&
+          target.palt_entry_bytes_fnv1a64 == fnv1a64(archive + 60U, 512U) &&
+          target.original_saturn_capture_required &&
+          target.palt_memory_read_observation_required &&
+          target.palette_state_observation_required &&
+          target.vdp1_command_observation_required &&
+          !target.palt_palette_relation_proven && !target.decoder_promoted &&
+          target.no_draw_only && !target.fallback_visuals_permitted,
+          "canonical PALT handoff emits only an original-Saturn correlation target");
+    snprintf(target_path, sizeof(target_path),
+             "/tmp/firestaff-nexus-palt-target-%ld.txt", (long)getpid());
+    CHECK(nexus_v1_engine_write_menu_bpk_palt_capture_target(
+              &engine, target_path, &target) == 1 && target.valid,
+          "canonical PALT capture target writes atomically");
+    target_file = fopen(target_path, "rb");
+    if (target_file) {
+        size_t target_size = fread(target_text, 1U,
+                                   sizeof(target_text) - 1U, target_file);
+        target_text[target_size] = '\0';
+        fclose(target_file);
+        CHECK(strstr(target_text,
+                     "FIRESTAFF_NEXUS_MENU_BPK_PALT_CAPTURE_TARGET_V1\n") != NULL &&
+              strstr(target_text,
+                     "required_observations=palt_memory_read,palette_state,vdp1_command\n") != NULL &&
+              strstr(target_text, "decoder_promoted=0\n") != NULL,
+              "PALT target requests trace evidence without a decoder claim");
+    } else {
+        CHECK(0, "PALT capture target can be read back");
+    }
+    remove(target_path);
+    engine.menu_bpk_source.canonical_hash_verified = 0;
+    CHECK(nexus_v1_engine_build_menu_bpk_palt_capture_target(
+              &engine, &target) == 0 && !target.valid,
+          "unverified MENU.BPK cannot emit a PALT capture target");
     wb32(archive + 52, 522U);
     CHECK(nexus_v1_bpk_archive_inspect_palette_trailer(
               archive, sizeof(archive), &palette) != 0 && !palette.valid &&
