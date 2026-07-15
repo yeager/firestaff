@@ -53,6 +53,26 @@ typedef enum {
     NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE = 6
 } Nexus_V1_MenuBpkRendererHandoffStatus;
 
+/* Corpus-wide, hash-bound owner topology for one LEV. Structure1F rows are
+ * joined through their decoded Structure1B owner and Structure1A model row to
+ * the raw Structure3 model/face selectors. This establishes source ownership
+ * only: model-entry, mesh-face, transform, texture, palette, and draw
+ * semantics remain unproven. */
+typedef struct {
+    int valid;
+    int level_index;
+    int canonical_lev_source_bound;
+    int structure1f_owner_row_count;
+    int structure1a_resolved_row_count;
+    int structure3_model_reference_count;
+    int structure1f_face_selector_count;
+    int structure3_model_face_selector_pair_count;
+    int owner_model_selector_binding_complete;
+    int owner_to_mesh_entry_mapping_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1FOwnerModelSelectorCorpusReceipt;
+
 typedef struct {
     Nexus_V1_MenuBpkRendererHandoffStatus status;
     Nexus_V1_BpkRuntimeDecodeRoute decode_route;
@@ -1624,6 +1644,7 @@ typedef struct {
     int structure1f_item_attribute_pair_complete_level_count;
     int structure1f_item_location_pair_complete_level_count;
     int structure1f_item_coordinate_pair_complete_level_count;
+    int structure1f_owner_model_selector_complete_level_count;
     int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
     int structure3_one_based_block_ordinal_mapping_disproven_level_count;
     int structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
@@ -1689,6 +1710,8 @@ typedef struct {
         structure1f_item_location_pairs[16];
     Nexus_V1_DgnStructure1FItemCoordinatePairReceipt
         structure1f_item_coordinate_pairs[16];
+    Nexus_V1_DgnStructure1FOwnerModelSelectorCorpusReceipt
+        structure1f_owner_model_selectors[16];
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt
         structure3_ordinal_correlations[16];
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;

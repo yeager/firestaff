@@ -472,6 +472,72 @@ static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
     return NULL;
 }
 
+/* Retain the complete byte-proved owner chain for corpus inspection without
+ * claiming the final model-index-to-mesh-entry relation. The latter remains
+ * explicitly false until original Saturn evidence establishes it. */
+static void nexus_v1_dgn_structure1f_owner_model_selector_corpus_receipt(
+    int level_index, const Nexus_V1_DgnStructure2SourceReceipt *source,
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FOwnerModelSelectorCorpusReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    Nexus_V1_DgnStructure3ModelReferenceReceipt model_references;
+    Nexus_V1_DgnStructure1FFaceSelectorReceipt face_selectors;
+    Nexus_V1_DgnStructure3ModelFaceSelectorReceipt model_face_selectors;
+
+    if (!out_receipt) return;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = level_index;
+    out_receipt->no_draw_only = 1;
+    if (!source || !level || level_index < 0 || level_index >= 16 ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound) {
+        return;
+    }
+    out_receipt->canonical_lev_source_bound = 1;
+    memset(&spatial, 0, sizeof(spatial));
+    memset(&relation, 0, sizeof(relation));
+    memset(&model_references, 0, sizeof(model_references));
+    memset(&face_selectors, 0, sizeof(face_selectors));
+    memset(&model_face_selectors, 0, sizeof(model_face_selectors));
+    if (nexus_v1_level_structure1f_spatial_receipt(level, &spatial) != 0 ||
+        !spatial.valid ||
+        nexus_v1_level_structure1a_relation_receipt(level, &relation) != 0 ||
+        !relation.complete ||
+        nexus_v1_level_structure3_model_reference_receipt(
+            level, &model_references) != 0 || !model_references.complete ||
+        nexus_v1_level_structure1f_face_selector_receipt(
+            level, &face_selectors) != 0 || !face_selectors.complete ||
+        face_selectors.face_semantics_proven ||
+        nexus_v1_level_structure3_model_face_selector_receipt(
+            level, &model_face_selectors) != 0 ||
+        !model_face_selectors.complete ||
+        model_face_selectors.attachment_semantics_proven) {
+        return;
+    }
+    out_receipt->structure1f_owner_row_count =
+        spatial.structure1a_bound_entry_count;
+    out_receipt->structure1a_resolved_row_count =
+        relation.resolved_entry_count;
+    out_receipt->structure3_model_reference_count =
+        model_references.resolved_model_reference_count;
+    out_receipt->structure1f_face_selector_count =
+        face_selectors.resolved_face_selector_count;
+    out_receipt->structure3_model_face_selector_pair_count =
+        model_face_selectors.resolved_pair_count;
+    out_receipt->owner_model_selector_binding_complete =
+        out_receipt->structure1f_owner_row_count ==
+            out_receipt->structure1a_resolved_row_count &&
+        out_receipt->structure1a_resolved_row_count ==
+            out_receipt->structure3_model_reference_count &&
+        out_receipt->structure3_model_reference_count ==
+            out_receipt->structure1f_face_selector_count &&
+        out_receipt->structure1f_face_selector_count ==
+            out_receipt->structure3_model_face_selector_pair_count;
+    out_receipt->valid = out_receipt->owner_model_selector_binding_complete;
+}
+
 int nexus_v1_inspect_dgn_material_corpus(
     Nexus_V1_Engine *engine,
     Nexus_V1_DgnMaterialCorpusReceipt *out_receipt)
@@ -510,12 +576,23 @@ int nexus_v1_inspect_dgn_material_corpus(
         int x;
         int y;
         Nexus_V1_Level level;
+        Nexus_V1_DgnStructure2SourceReceipt level_source;
         snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
         data = nexus_v1_read_file(engine, name, &size);
         if (!data) continue;
         ++receipt.readable_level_count;
         memset(&level, 0, sizeof(level));
         if (nexus_v1_level_load(&level, data, size, level_index) != 0) {
+            free(data);
+            continue;
+        }
+        memset(&level_source, 0, sizeof(level_source));
+        (void)nexus_v1_structure2_source_receipt(
+            engine, level_index, &level, data, size, &level_source);
+        receipt.structure2_sources[level_index] = level_source;
+        if (!level_source.canonical_hash_verified ||
+            !level_source.materialization_bound ||
+            !level_source.loaded_bytes_bound) {
             free(data);
             continue;
         }
@@ -577,6 +654,9 @@ int nexus_v1_inspect_dgn_material_corpus(
             &level, &receipt.structure1f_item_location_pairs[level_index]);
         (void)nexus_v1_level_structure1f_item_coordinate_pair_receipt(
             &level, &receipt.structure1f_item_coordinate_pairs[level_index]);
+        nexus_v1_dgn_structure1f_owner_model_selector_corpus_receipt(
+            level_index, &level_source, &level,
+            &receipt.structure1f_owner_model_selectors[level_index]);
         (void)nexus_v1_level_structure3_ordinal_correlation_receipt(
             &level, &receipt.structure3_ordinal_correlations[level_index]);
         if (level.structure3_payload.declared) {
@@ -701,6 +781,9 @@ int nexus_v1_inspect_dgn_material_corpus(
         if (receipt.structure1f_item_coordinate_pairs[level_index].complete) {
             ++receipt.structure1f_item_coordinate_pair_complete_level_count;
         }
+        if (receipt.structure1f_owner_model_selectors[level_index].valid) {
+            ++receipt.structure1f_owner_model_selector_complete_level_count;
+        }
         if (receipt.structure3_ordinal_correlations[level_index]
                 .zero_based_block_ordinal_mapping_disproven) {
             ++receipt.structure3_zero_based_block_ordinal_mapping_disproven_level_count;
@@ -822,9 +905,6 @@ int nexus_v1_inspect_dgn_material_corpus(
                 receipt.structure2_material_or_image_data_proven_level_count++;
             }
         }
-        (void)nexus_v1_structure2_source_receipt(
-            engine, level_index, &level, NULL, 0,
-            &receipt.structure2_sources[level_index]);
         if (receipt.structure2_sources[level_index].canonical_hash_verified) {
             ++receipt.structure2_canonical_source_verified_level_count;
         }
