@@ -89,6 +89,8 @@ typedef struct {
     int sh2_control_path_verified;
     int sh2_stream_read_verified;
     int sh2_output_store_verified;
+    uint32_t output_index_copy_offset;
+    int sh2_output_store_predecessor_verified;
     int sh2_loop_back_target_verified;
     int sh2_loop_body_bound;
     uint32_t control_reentry_offset;

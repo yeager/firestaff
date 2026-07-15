@@ -317,6 +317,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.v1_callee_offset == 85376U &&
                receipt.control_test_offset == 85450U &&
                receipt.stream_byte_read_offset == 85460U &&
+               receipt.output_index_copy_offset == 85462U &&
                receipt.output_byte_store_offset == 85464U &&
                receipt.loop_branch_offset == 85472U &&
                receipt.control_reentry_offset == 85428U &&
@@ -346,6 +347,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.loop_branch_instruction == 0xafe8U &&
                receipt.sh2_control_path_verified &&
                receipt.sh2_stream_read_verified && receipt.sh2_output_store_verified &&
+               receipt.sh2_output_store_predecessor_verified &&
                receipt.sh2_control_refill_verified &&
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_repeat_control_verified &&

@@ -24989,6 +24989,23 @@ set_tests_properties(nexus_v1_prs3_branch_flow_probe PROPERTIES
     LABELS "tier4;nexus;prs3;branch_flow;skip_safe"
 )
 
+# Emit one exact no-draw original-Saturn capture request per canonical
+# MENU.BPK PRS3 stream. The producer has no decoder or runtime route.
+add_executable(firestaff_nexus_v1_prs3_capture_campaign
+    probes/nexus/firestaff_nexus_v1_prs3_capture_campaign.c
+)
+target_link_libraries(firestaff_nexus_v1_prs3_capture_campaign PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_prs3_capture_campaign PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_prs3_capture_campaign PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus FACE.BIN original-media receipt. The probe locks canonical FACE/PRS3
 # frame boundaries but intentionally proves no portrait decode or fallback.
 add_executable(firestaff_nexus_v1_face_media_probe
