@@ -698,6 +698,42 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int level;
     int checked = 0;
     if (!data_dir || !data_dir[0]) return;
+    {
+        Nexus_V1_Engine corpus_engine;
+        Nexus_V1_DgnMaterialCorpusReceipt corpus;
+        int corpus_level;
+
+        memset(&corpus_engine, 0, sizeof(corpus_engine));
+        corpus_engine.source = NEXUS_SRC_EXTRACTED;
+        strncpy(corpus_engine.data_dir, data_dir,
+                sizeof(corpus_engine.data_dir) - 1U);
+        memset(&corpus, 0, sizeof(corpus));
+        CHECK(nexus_v1_inspect_dgn_material_corpus(&corpus_engine, &corpus) == 0 &&
+                  corpus.parsed_level_count == 16 &&
+                  corpus.structure2_canonical_source_verified_level_count == 16 &&
+                  corpus.structure2_materialization_bound_level_count == 16,
+              "all retail LEVs cross the hash-bound corpus source gate");
+        CHECK(corpus.structure1f_owner_model_selector_complete_level_count <=
+                  corpus.parsed_level_count,
+              "only byte-complete Structure1F owner/model selector chains count");
+        for (corpus_level = 0; corpus_level < 16; ++corpus_level) {
+            const Nexus_V1_DgnStructure2SourceReceipt *source =
+                &corpus.structure2_sources[corpus_level];
+            const Nexus_V1_DgnStructure1FOwnerModelSelectorCorpusReceipt *binding =
+                &corpus.structure1f_owner_model_selectors[corpus_level];
+            CHECK(source->canonical_hash_verified && source->materialization_bound &&
+                      source->loaded_bytes_bound,
+                  "corpus source receipt retains the loaded canonical LEV bytes");
+            if (binding->valid) {
+                CHECK(binding->canonical_lev_source_bound &&
+                          binding->owner_model_selector_binding_complete &&
+                          !binding->owner_to_mesh_entry_mapping_proven &&
+                          binding->no_draw_only &&
+                          !binding->fallback_visuals_permitted,
+                      "proved owner/model selectors remain no-draw mesh provenance");
+            }
+        }
+    }
     for (level = 0; level <= 15; ++level) {
         char path[1024];
         FILE *file;
