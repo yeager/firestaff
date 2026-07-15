@@ -2281,8 +2281,14 @@ static int test_live_runtime_state_roundtrip(void)
     const DM2_V1_CreatureInstance *before;
     const DM2_V1_CreatureInstance *after;
     uint8_t *save_data = NULL;
+    uint8_t *valid_save_data = NULL;
+    uint8_t session_bytes[DM2_SESSION_MAX_SIZE];
+    DM2_V1_SessionState live_session;
+    DM2_V1_SessionState rejected_session;
     size_t save_size;
+    size_t session_offset;
     int creature_id;
+    int session_size;
     int saved_hp;
     uint32_t saved_animation_tick;
     uint32_t saved_render_revision;
@@ -2307,6 +2313,12 @@ static int test_live_runtime_state_roundtrip(void)
     snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "runtime-gdat");
     snprintf(boot.save_root, sizeof(boot.save_root), "%s", tmpdir);
     dm2_v1_runtime_init(&boot);
+    /* Runtime init deliberately has no invented GAME_LOAD party. This
+     * isolated codec fixture supplies the accepted zero-champion session it
+     * needs to exercise an actual live save/restore transaction. */
+    memset(&live_session, 0, sizeof(live_session));
+    live_session.time_of_day_minutes = 720u;
+    if (dm2_v1_runtime_apply_session(&live_session) != 0) goto fail;
     memset(&scene_before, 0, sizeof(scene_before));
     if (dm2_v1_runtime_graphicsset_scene_receipt(&scene_before) != 0 ||
         scene_before.ready != 0) goto fail;
@@ -2324,6 +2336,9 @@ static int test_live_runtime_state_roundtrip(void)
     save_data = (uint8_t *)malloc(save_size);
     if (!save_data || dm2_v1_runtime_serialize_live_save(save_data, save_size) < 0)
         goto fail;
+    valid_save_data = (uint8_t *)malloc(save_size);
+    if (!valid_save_data) goto fail;
+    memcpy(valid_save_data, save_data, save_size);
     (void)dm2_v1_creature_deal_damage(creature_id, 3);
     dungeon.raw_data[3] = 0;
     if (dm2_v1_runtime_restore_live_save(save_data, save_size) != 0)
@@ -2337,19 +2352,53 @@ static int test_live_runtime_state_roundtrip(void)
     if (!after || after->hp_current != saved_hp ||
         after->animation_tick != saved_animation_tick ||
         after->render_revision != saved_render_revision ||
-        dungeon.raw_data[3] != 0x24) goto fail;
+        dungeon.raw_data[3] != 0x24)
+        goto fail;
+
+    /* The serialized session can pass its wire validator while SKProject's
+     * timer-owner pass rejects a champion timer for an absent champion. A
+     * live-sidecar failure here must leave the already-running creature and
+     * dungeon state untouched. */
+    if (dm2_v1_runtime_export_session(&rejected_session) != 0)
+        goto fail;
+    rejected_session.original_timer_count = 1u;
+    rejected_session.original_timers[0].interval_ticks = 0x000cu;
+    session_size = dm2_v1_session_serialize(&rejected_session, session_bytes,
+                                             sizeof(session_bytes));
+    if (session_size < 0 || save_size < (size_t)session_size +
+            sizeof(DM2_V1_CreatureLiveState) + (size_t)dungeon.raw_size)
+        goto fail;
+    session_offset = save_size - (size_t)session_size -
+        sizeof(DM2_V1_CreatureLiveState) - (size_t)dungeon.raw_size;
+    memcpy(save_data + session_offset, session_bytes, (size_t)session_size);
+    if (dm2_v1_creature_deal_damage(creature_id, 1) != 0)
+        goto fail;
+    dungeon.raw_data[3] = 0x66;
+    after = dm2_v1_creature_get_instance(creature_id);
+    if (!after || after->hp_current != saved_hp - 1 ||
+        dm2_v1_runtime_restore_live_save(save_data, save_size) == 0 ||
+        dungeon.raw_data[3] != 0x66)
+        goto fail;
+    after = dm2_v1_creature_get_instance(creature_id);
+    if (!after || after->hp_current != saved_hp - 1)
+        goto fail;
+    if (dm2_v1_runtime_restore_live_save(valid_save_data, save_size) != 0)
+        goto fail;
 
     if (!dm2_v1_runtime_quicksave_boot_profile_with_receipt(&boot, &receipt) ||
         !receipt.session_valid ||
         receipt.graphicsset_scene.ready != scene_before.ready ||
-        dm2_v1_creature_deal_damage(creature_id, 2) != 0) goto fail;
+        dm2_v1_creature_deal_damage(creature_id, 2) != 0)
+        goto fail;
     dungeon.raw_data[3] = 0;
-    if (dm2_v1_runtime_load_last_session(tmpdir) != 0) goto fail;
+    if (dm2_v1_runtime_load_last_session(tmpdir) != 0)
+        goto fail;
     after = dm2_v1_creature_get_instance(creature_id);
     if (!after || after->hp_current != saved_hp ||
         after->animation_tick != saved_animation_tick ||
         after->render_revision != saved_render_revision ||
-        dungeon.raw_data[3] != 0x24) goto fail;
+        dungeon.raw_data[3] != 0x24)
+        goto fail;
     {
         char path[512];
         snprintf(path, sizeof(path), "%s/SKSave.dat", tmpdir);
@@ -2360,6 +2409,7 @@ static int test_live_runtime_state_roundtrip(void)
         (void)remove(path);
     }
     FS_RMDIR(tmpdir);
+    free(valid_save_data);
     free(save_data);
     free(dungeon.raw_data);
     printf("    PASS: direct and quicksave live CCM/dungeon/GDAT restore work\n");
@@ -2375,6 +2425,7 @@ fail:
         (void)remove(path);
     }
     FS_RMDIR(tmpdir);
+    free(valid_save_data);
     free(save_data);
     free(dungeon.raw_data);
     printf("    FAIL: live runtime state did not round-trip\n");

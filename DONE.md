@@ -230,6 +230,13 @@
   stacks, text, each DB pool, map data, and the prefix; undersized/corrupt
   prefixes reject atomically before SUPPRESS state is read.
 
+- 2026-07-15 DM2 live-sidecar transactional restore: the runtime validates
+  the complete serialized creature pool before publishing the accepted
+  session, then replaces G1 bytes and refreshes derived GDAT scene controls.
+  A wire-valid save that fails SKProject timer-owner reconstruction now leaves
+  the live creature and dungeon state intact. The save/load executable passes
+  26/26 tests; no raw-corpus byte path or synthetic runtime state was added.
+
 - 2026-07-15 DM1 GROUP F0229: added exact `GROUP.C:13860-13876`
   F0228/G0023 ordered-cell selection. M10 CMD_ATTACK now supplies real group
   and party coordinates, preserves the source RNG step, and rejects no-cell

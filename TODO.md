@@ -6670,6 +6670,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     synthesizes attenuation and successful playback. Remaining: bind the
     source `DM2_SOUND9` queue mutations and a verified sample backend.
 - DM2-009 — `skproject/SKULLWIN/c_savegame.cpp` `DM2_SELECT_LOAD_GAME` and restore flow: world-state now accepts a validated original `D2RS`/raw candidate only after the complete payload parser succeeds, strips a valid 42-byte SKSave envelope before parsing, and applies direct party/champion/tick/weather fields atomically. The hash-revalidated original-save corpus census records only the already decoded `GAME_LOAD` state facts (tick, RNG, party pose/map, champion/timer counts, and rain intensity) for each original envelope/raw candidate; it is not a restore input and assigns no dungeon DB or timer-payload semantics. The raw prefix now validates and receipts the source-owned descriptor, column-index, ground-stack, text, DB-pool and map-data spans; map-data length is `savegamep4->warr_00[1]` exactly, never a derived descriptor size. Remaining: corpus-verified original read/write across full DB records, timer payloads, map state, and skproject post-load rebuild order.
+  - 2026-07-15 update: Firestaff live-sidecar restore now validates its full
+    creature payload before `GAME_LOAD`-owned session publication, then
+    restores the source-owned G1 bytes and refreshes derived scene controls.
+    A wire-valid session whose SKProject timer-owner reconstruction rejects is
+    covered as a non-mutating failure: live CCM and dungeon bytes remain
+    unchanged. This changes no original raw corpus bytes or provenance.
   - 2026-07-15 update: each DB pool and the `warr_00[1]` map span now retain
     their exact source-order byte offsets. This is address evidence only;
     unknown records, links, timer payloads, and rebuild semantics stay blocked.

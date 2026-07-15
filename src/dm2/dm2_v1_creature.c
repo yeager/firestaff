@@ -610,7 +610,7 @@ int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state) {
     return 0;
 }
 
-int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state) {
+int dm2_v1_creature_live_state_valid(const DM2_V1_CreatureLiveState *state) {
     if (!state || state->next_instance_id < 0 || state->tick_counter < 0) {
         return -1;
     }
@@ -622,6 +622,13 @@ int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state) {
             c->ai_index < 0 || c->ai_index >= DM2_AI_TABLE_SIZE) {
             return -1;
         }
+    }
+    return 0;
+}
+
+int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state) {
+    if (dm2_v1_creature_live_state_valid(state) != 0) {
+        return -1;
     }
     memcpy(g_creature_pool, state->instances, sizeof(g_creature_pool));
     g_next_instance_id = state->next_instance_id;
