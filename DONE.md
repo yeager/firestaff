@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB ReDMCSB F0149: implemented the exact current-map
+  alcove-ornament membership predicate from `DUNGEON.C:1330-1347`. The API
+  reads only caller-owned G0267-equivalent data, rejects negative ordinals,
+  and does not invent an ornament table when no real map owner is supplied.
+
 - 2026-07-15 CSB ReDMCSB F0145--F0148 effective-group owner: added one
   bounded C04/ActiveGroup transaction from `DUNGEON.C:923-970`. It validates
   the C04 Thing type and 16-byte record, resolves byte 5 as ActiveGroupIndex
