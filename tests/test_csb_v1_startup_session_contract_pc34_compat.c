@@ -20,8 +20,19 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
 {
     static unsigned char c017_pixel;
     static unsigned char c040_pixel;
+    static unsigned char c001_pixel;
+    static unsigned char c002_pixel;
+    static unsigned char c003_pixel;
+    static unsigned char c004_pixel;
     CSB_V1_StartupRuntimeSurface_PC34 *c017;
     CSB_V1_StartupRuntimeSurface_PC34 *c040;
+    CSB_V1_StartupRuntimeSurface_PC34 *title;
+    CSB_V1_StartupRuntimeSurface_PC34 *presents;
+    CSB_V1_StartupRuntimeSurface_PC34 *chaos;
+    CSB_V1_StartupRuntimeSurface_PC34 *strikes;
+    CSB_V1_StartupRuntimeSurface_PC34 *left;
+    CSB_V1_StartupRuntimeSurface_PC34 *right;
+    CSB_V1_StartupRuntimeSurface_PC34 *entrance;
 
     memset(session, 0, sizeof(*session));
     session->valid = session->real_asset_matched = 1;
@@ -43,6 +54,69 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     c040->valid = 1; c040->pixels = &c040_pixel; c040->source_asset_id = 40;
     c040->width = 144; c040->height = 73;
     c040->transparent_color = 6;
+    title = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
+    chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
+    strikes = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+    left = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+    entrance = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    title->valid = 1; title->pixels = &c001_pixel; title->source_asset_id = 1;
+    title->width = 320; title->height = 153; title->transparent_color = -1;
+    presents->valid = 1; presents->pixels = &c001_pixel; presents->source_asset_id = 1;
+    presents->source_x = 0; presents->source_y = 137;
+    presents->width = 320; presents->height = 16; presents->transparent_color = -1;
+    chaos->valid = 1; chaos->pixels = &c001_pixel; chaos->source_asset_id = 1;
+    chaos->source_x = 0; chaos->source_y = 0;
+    chaos->width = 320; chaos->height = 80; chaos->transparent_color = -1;
+    strikes->valid = 1; strikes->pixels = &c001_pixel; strikes->source_asset_id = 1;
+    strikes->source_x = 0; strikes->source_y = 80;
+    strikes->width = 320; strikes->height = 57; strikes->transparent_color = 0;
+    left->valid = 1; left->pixels = &c002_pixel; left->source_asset_id = 2;
+    right->valid = 1; right->pixels = &c003_pixel; right->source_asset_id = 3;
+    entrance->valid = 1; entrance->pixels = &c004_pixel; entrance->source_asset_id = 4;
+}
+
+static void make_title_host(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupStage_PC34 stage,
+    int special_palette,
+    uint32_t host_hash,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host)
+{
+    memset(host, 0, sizeof(*host));
+    host->valid = host->real_asset_matched = 1;
+    host->no_legacy_wrappers = host->no_synthetic_surface = 1;
+    host->host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34;
+    host->special_palette = special_palette;
+    host->title_special_palette = special_palette;
+    host->host_surface_hash = host_hash;
+    host->frame.session_generation = session->generation;
+    host->frame.stage = stage;
+    host->frame.title_surface =
+        &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    host->raster.valid = host->raster.real_asset_matched = 1;
+    host->raster.title_composited = 1;
+    host->raster.source_surface_count = 1;
+}
+
+static void make_opening_host(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host)
+{
+    memset(host, 0, sizeof(*host));
+    host->valid = host->real_asset_matched = 1;
+    host->no_legacy_wrappers = host->no_synthetic_surface = 1;
+    host->host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34;
+    host->door_opening_decision = 1;
+    host->special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    host->title_special_palette = -1;
+    host->host_surface_hash = 0xd004u;
+    host->frame.session_generation = session->generation;
+    host->raster.valid = host->raster.real_asset_matched = 1;
+    host->raster.entrance_composited = 1;
+    host->raster.door_composited = 1;
+    host->raster.source_surface_count = 3;
 }
 
 int main(void)
@@ -60,6 +134,11 @@ int main(void)
     CSB_V1_StartupSessionActionReceipt_PC34 action;
     CSB_V1_StartupSessionActionReceipt_PC34 cast_action;
     CSB_V1_StartupSessionSelectionReceipt_PC34 selection;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 presents_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
+    CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 title_opening;
     unsigned int tick;
     unsigned int generation;
 
@@ -135,6 +214,38 @@ int main(void)
                &session, &package_receipt, &terminal_package),
           "missing package surface hash cannot authorize the terminal HUD session");
     package_receipt.consumed_surface_hash = 0x87654321u;
+    make_title_host(&session, CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS, 0xc001u,
+                    &presents_host);
+    make_title_host(&session, CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS, 0xc002u,
+                    &chaos_host);
+    make_title_host(&session, CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES, 0xc003u,
+                    &strikes_host);
+    make_opening_host(&session, &opening_host);
+    check(csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening) &&
+              title_opening.valid && title_opening.presents_consumed &&
+              title_opening.chaos_consumed &&
+              title_opening.strikes_back_consumed &&
+              title_opening.c004_c002_c003_consumed &&
+              title_opening.opening_host_surface_hash ==
+                  opening_host.host_surface_hash,
+          "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    opening_host.raster.door_composited = 0;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "opening host without door strips cannot satisfy title/opening consumption");
+    opening_host.raster.door_composited = 1;
+    opening_host.raster.source_surface_count = 2;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "partial opening source count cannot satisfy C004/C002/C003 consumption");
+    opening_host.raster.source_surface_count = 3;
     tick = receipt.source_tick;
     generation = receipt.session_generation;
     terminal = receipt;

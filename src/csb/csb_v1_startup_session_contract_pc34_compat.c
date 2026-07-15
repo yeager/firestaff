@@ -325,9 +325,12 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         !presents_host->raster.title_composited ||
         !chaos_host->raster.title_composited ||
         !strikes_host->raster.title_composited ||
+        !opening_host->raster.entrance_composited ||
+        !opening_host->raster.door_composited ||
         presents_host->raster.source_surface_count != 1 ||
         chaos_host->raster.source_surface_count != 1 ||
         strikes_host->raster.source_surface_count != 1 ||
+        opening_host->raster.source_surface_count != 3 ||
         presents_host->host_surface_hash == 0u || chaos_host->host_surface_hash == 0u ||
         strikes_host->host_surface_hash == 0u || opening_host->host_surface_hash == 0u)
         return 0;
