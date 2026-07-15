@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0115 projectile/object material follow-up: M613 projectile,
+  F0142/G0209 thrown-object, and C2500 floor-object paths now require decoded
+  PC34 pixel surfaces before their source placement plans run. Remaining work
+  is real PC34/Mac multi-projectile and object-pile capture. Missing media
+  must be no-draw, never a dimension-only or host-material substitute.
+
 - 2026-07-15 DM1 F0114 explosion follow-up: live D1–D3 F0114 sprites and the
   separate D0C M636 pattern now require loaded-pixel PC34 surfaces. Remaining
   work is real PC34/Mac capture across explosion type, depth, and animation
