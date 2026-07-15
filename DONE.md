@@ -17558,17 +17558,6 @@ only a source-control and receipt repair; the unresolved nonzero
 light-palette transform remains fail-closed. Verification:
 canonical-PC-G1 `dm2_v1_gdat_door_overlay_plan_real_data`.
 
-# ✅ 2026-07-15 DM2 raw SKSave dungeon corpus receipt
-
-The read-only original-SKSave corpus census now retains the source-verified
-`READ_SKSAVE_DUNGEON` prefix for each raw candidate: map/column/ground/text
-counts, exact DB-pool counts, prefix boundary, and descriptor/map/DB byte
-hashes. The candidate is reloaded through its file and payload receipts before
-these facts are published. Envelope candidates retain no raw-prefix facts.
-This is provenance only: it neither follows DB links nor assigns timer
-semantics or reconstructs a dungeon. Verification: `test_dm2_v1_save_load`
-checks raw-corpus revalidation against the parser's original byte receipt.
-
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer

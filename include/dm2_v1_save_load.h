@@ -172,11 +172,9 @@ typedef struct {
 } DM2_OriginalTimerFormatCorpusReceipt;
 
 /* Read-only census of the original save fields already decoded by the
- * source-locked SKSave importer.  The raw-prefix fields retain only the
- * source-owned READ_SKSAVE_DUNGEON boundaries and byte identities; they do
- * not assign record-link or timer-payload semantics. */
-#define DM2_ORIGINAL_SAVE_STATE_RAW_DB_POOL_COUNT 16
-
+ * source-locked SKSave importer.  This is not a restore input: dungeon DB
+ * records and timer payload ownership remain outside this receipt until their
+ * original byte-level contracts are proven. */
 typedef struct {
     DM2_SKSaveCandidateReceipt candidate;
     uint32_t game_tick;
@@ -195,21 +193,6 @@ typedef struct {
     uint32_t global_bytes_hash;
     uint32_t global_words_hash;
     uint32_t spell_effects_hash;
-    uint8_t raw_dungeon_prefix_present;
-    uint8_t raw_map_count;
-    uint16_t raw_map_data_byte_count;
-    uint16_t raw_column_index_count;
-    uint16_t raw_ground_stack_count;
-    uint16_t raw_text_word_count;
-    uint16_t raw_db_record_counts[DM2_ORIGINAL_SAVE_STATE_RAW_DB_POOL_COUNT];
-    size_t raw_suppress_state_offset;
-    uint32_t raw_descriptor_hash;
-    uint32_t raw_column_index_hash;
-    uint32_t raw_ground_stack_hash;
-    uint32_t raw_text_hash;
-    uint32_t raw_db_pools_hash;
-    uint32_t raw_map_data_hash;
-    uint32_t raw_prefix_hash;
     uint32_t state_hash;
 } DM2_OriginalSaveStateCorpusEntry;
 
