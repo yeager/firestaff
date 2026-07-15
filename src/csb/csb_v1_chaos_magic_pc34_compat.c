@@ -739,6 +739,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
  * atomic with parameter/global commits. */
 #define CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES 100
 
 typedef struct {
     uint32_t location;
@@ -749,6 +750,14 @@ typedef struct {
     uint32_t location;
     uint32_t flags;
 } CSB_V1_CSBWinDSAPendingExCellWrite;
+
+typedef struct {
+    uint32_t location;
+    int delay;
+    /* GeneratorDelay@ only finds source DB3 actuator type six.  A stored
+     * type-zero fallback must therefore not change a later fetch. */
+    int has_generator;
+} CSB_V1_CSBWinDSAPendingGeneratorWrite;
 
 static int csb_v1_csbwin_dsa_pending_skin_lookup(
     const CSB_V1_CSBWinDSAPendingSkinWrite *writes,
@@ -776,7 +785,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingSkinWrite *pending_skin_writes,
     int *pending_skin_write_count,
     CSB_V1_CSBWinDSAPendingExCellWrite *pending_excell_writes,
-    int *pending_excell_write_count, int *staged_saves_disabled)
+    int *pending_excell_write_count,
+    CSB_V1_CSBWinDSAPendingGeneratorWrite *pending_generator_writes,
+    int *pending_generator_write_count, int *staged_saves_disabled)
 {
     uint32_t v;
     uint32_t w;
@@ -791,8 +802,10 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !parameters || !context ||
         !pending_skin_writes || !pending_skin_write_count ||
         !pending_excell_writes || !pending_excell_write_count ||
+        !pending_generator_writes || !pending_generator_write_count ||
         !staged_saves_disabled ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
+        *pending_generator_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -1088,11 +1101,44 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         /* CSBWin DSA.cpp:4724-4735 queries the first type-six DB3 generator
          * at this real dungeon location and pushes its disableTime, or -1. */
         if (!context->get_generator_delay ||
-            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
-            !context->get_generator_delay(context->dungeon_user, v, &sv) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = -1;
+        for (count = 0u; count < (uint32_t)*pending_generator_write_count;
+             ++count) {
+            if (pending_generator_writes[count].location == v &&
+                pending_generator_writes[count].has_generator) {
+                sv = pending_generator_writes[count].delay;
+            }
+        }
+        if ((sv == -1 && !context->get_generator_delay(
+                              context->dungeon_user, v, &sv)) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sv)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        break;
+    case 34u: /* STKOP_GeneratorDelayStore */
+        /* CSBWin DSA.cpp:2876-2915 resolves a real DB3 chain, changes the
+         * first type-six actuator or otherwise the first type-zero actuator,
+         * and silently ignores stone/empty cells.  Query first to validate
+         * the caller-owned chain, then defer its write until this complete
+         * authenticated action is known-good. */
+        if (!context->get_generator_delay || !context->set_generator_delay ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            *pending_generator_write_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES ||
+            !context->get_generator_delay(context->dungeon_user, v, &sv)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_generator_writes[*pending_generator_write_count].location = v;
+        /* DB3 disableTime is CSBWin's unsigned BITS8_15 field. */
+        pending_generator_writes[*pending_generator_write_count].delay =
+            (int)(uint8_t)w;
+        pending_generator_writes[*pending_generator_write_count].has_generator =
+            sv != -1;
+        ++*pending_generator_write_count;
         break;
     case 97u: /* STKOP_TimeFetch */
         /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
@@ -1419,12 +1465,15 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_skin_writes[CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES];
     CSB_V1_CSBWinDSAPendingExCellWrite
         pending_excell_writes[CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES];
+    CSB_V1_CSBWinDSAPendingGeneratorWrite
+        pending_generator_writes[CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
     int depth = 0;
     int pending_skin_write_count = 0;
     int pending_excell_write_count = 0;
+    int pending_generator_write_count = 0;
     int staged_saves_disabled;
     int i;
 
@@ -1639,7 +1688,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 variable_state, parameters,
                 context->parameter_count, &context_candidate, pending_skin_writes,
                 &pending_skin_write_count, pending_excell_writes,
-                &pending_excell_write_count, &staged_saves_disabled);
+                &pending_excell_write_count, pending_generator_writes,
+                &pending_generator_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -1658,6 +1708,13 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         if (!context->set_excell_flags(
                 context->excell_user, pending_excell_writes[i].location,
                 pending_excell_writes[i].flags)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_generator_write_count; ++i) {
+        if (!context->set_generator_delay(
+                context->dungeon_user, pending_generator_writes[i].location,
+                pending_generator_writes[i].delay)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -1771,6 +1828,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_excell_flags = runner->set_excell_flags;
     context.excell_user = runner->excell_user;
     context.get_generator_delay = runner->get_generator_delay;
+    context.set_generator_delay = runner->set_generator_delay;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

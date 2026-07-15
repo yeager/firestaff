@@ -209,6 +209,9 @@ typedef int (*CSB_V1_CSBWinDSASetExCellFlagsFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSAGetGeneratorDelayFn)(void *user,
                                                     uint32_t location,
                                                     int *out_delay);
+typedef int (*CSB_V1_CSBWinDSASetGeneratorDelayFn)(void *user,
+                                                    uint32_t location,
+                                                    int delay);
 
 typedef struct {
     uint32_t master_location;
@@ -252,6 +255,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetExCellFlagsFn set_excell_flags;
     void *excell_user;
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
+    CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -490,6 +494,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetExCellFlagsFn set_excell_flags;
     void *excell_user;
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
+    CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

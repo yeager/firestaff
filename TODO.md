@@ -3236,12 +3236,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       replacement transaction for all eight words. A missing exact free node
       rejects rather than enlarging or fabricating a save tail; positive
       original DSA-bearing save-corpus capture remains required.
-    - 2026-07-15 dungeon query update: source `STKOP_GeneratorDelayFetch`
-      now follows CSBWin `FindFirstMonsterGenerator` over the loaded original
-      DB3 chain and returns that first type-six generator's `disableTime`.
-      Stone rooms and generator-free locations retain source `-1`; malformed
-      dungeon chains reject. `GeneratorDelayStore` remains separately open
-      pending its candidate-dungeon write transaction and real-save proof.
+    - 2026-07-15 generator-delay update: source `STKOP_GeneratorDelayFetch`
+      follows CSBWin `FindFirstMonsterGenerator` over the loaded original DB3
+      chain and returns that first type-six generator's `disableTime`.
+      `STKOP_GeneratorDelayStore` now follows DSA.cpp's first-type-six,
+      otherwise-first-type-zero rule and writes the original unsigned
+      `disableTime` byte only after a fully accepted authenticated action.
+      A same-action fetch observes a queued type-six write; stone, empty, and
+      generator-free locations retain the source no-op/`-1` behavior, while
+      malformed chains reject. Positive original DSA-bearing save-corpus
+      capture remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

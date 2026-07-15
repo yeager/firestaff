@@ -20,6 +20,8 @@ static uint32_t last_party_talents[4];
 static int dsa_info_enabled;
 static int excell_flags_enabled;
 static int generator_delay_enabled;
+static int generator_delay_stored;
+static int generator_delay_store_count;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -87,6 +89,15 @@ static int get_generator_delay(void *user, uint32_t location, int *out_delay)
     return 1;
 }
 
+static int set_generator_delay(void *user, uint32_t location, int delay)
+{
+    (void)user;
+    if (!generator_delay_enabled || location != 0x0c82u) return 0;
+    generator_delay_stored = delay;
+    ++generator_delay_store_count;
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -146,6 +157,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     }
     if (generator_delay_enabled) {
         context.get_generator_delay = get_generator_delay;
+        context.set_generator_delay = set_generator_delay;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -257,6 +269,14 @@ int main(void)
     };
     uint16_t generator_delay_absent[] = {
         0x0686u, 0x0c83u, 0x190bu, 0x000du
+    };
+    uint16_t generator_delay_store_then_fetch[] = {
+        0x0686u, 91u, 0x0686u, 0x0c82u, 0x088bu,
+        0x0686u, 0x0c82u, 0x190bu,
+        0x000du
+    };
+    uint16_t generator_delay_store_then_bad[] = {
+        0x0686u, 91u, 0x0686u, 0x0c82u, 0x088bu, 0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -456,6 +476,24 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == UINT32_MAX && execution.stack_depth == 0u,
           "GeneratorDelay@ preserves source minus one when no generator exists");
+    generator_delay_stored = -1;
+    generator_delay_store_count = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, generator_delay_store_then_fetch,
+              (int)(sizeof(generator_delay_store_then_fetch) /
+                    sizeof(generator_delay_store_then_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 91u && generator_delay_stored == 91 &&
+              generator_delay_store_count == 1,
+          "GeneratorDelay! stages DB3 delay, exposes it to same-action fetch, and commits once");
+    generator_delay_stored = -1;
+    generator_delay_store_count = 0;
+    check(run(&state, &action, generator_delay_store_then_bad,
+              (int)(sizeof(generator_delay_store_then_bad) /
+                    sizeof(generator_delay_store_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              generator_delay_store_count == 0,
+          "GeneratorDelay! rejects a later unsupported source word without DB3 mutation");
     generator_delay_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
