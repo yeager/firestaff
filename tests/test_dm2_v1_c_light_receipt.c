@@ -69,6 +69,13 @@ int main(void)
     CHECK("M11 frame consumes authenticated c_light metadata without pixels",
           viewport.gdat_c_light_consumed_count == 1 &&
               viewport.gdat_c_light_receipt_hash == receipt.receipt_hash);
+    {
+        uint8_t palette_darkness = 0u;
+        CHECK("DISPLAY_VIEWPORT palette parameter is c_light times ten",
+              dm2_v1_c_light_m11_palette_darkness(
+                  &scene, &receipt, &palette_darkness) &&
+                  palette_darkness == 30u);
+    }
     ++scene.scene_control_hash;
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, scene.graphicsset, scene.scene_control_hash,
@@ -77,6 +84,13 @@ int main(void)
     CHECK("mismatched scene transaction clears c_light instead of reusing it",
           !viewport.gdat_c_light_receipt_ready &&
               viewport.squares[DM2_SQ_D0C].light_level == 0u);
+    {
+        uint8_t palette_darkness = 0xffu;
+        CHECK("mismatched scene cannot publish a palette parameter",
+              !dm2_v1_c_light_m11_palette_darkness(
+                  &scene, &receipt, &palette_darkness) &&
+                  palette_darkness == 0u);
+    }
 
     source.source_state_hash = 0u;
     CHECK("missing raw c_light state cannot borrow scene controls",

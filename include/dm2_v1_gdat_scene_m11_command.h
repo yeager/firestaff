@@ -107,6 +107,14 @@ int dm2_v1_c_light_m11_receipt_build(
     const DM2_V1_GdatSceneLightM11Receipt *scene,
     const DM2_V1_CLightSourceState *source,
     DM2_V1_CLightM11Receipt *out_receipt);
+/* SKProject c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT stores
+ * `glbLightLevel * 10` before local palette processing.  This exposes that
+ * exact parameter only for a c_light result authenticated to this scene; it
+ * neither translates nor darkens a palette itself. */
+int dm2_v1_c_light_m11_palette_darkness(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightM11Receipt *receipt,
+    uint8_t *out_darkness);
 
 /* The receipt hashes records 700/701 only. Plan construction retains this
  * receipt and admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */

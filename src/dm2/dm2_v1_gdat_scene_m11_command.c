@@ -237,6 +237,26 @@ int dm2_v1_c_light_m11_receipt_build(
     return 1;
 }
 
+int dm2_v1_c_light_m11_palette_darkness(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightM11Receipt *receipt,
+    uint8_t *out_darkness)
+{
+    if (!out_darkness) return 0;
+    *out_darkness = 0u;
+    if (!scene || !scene->valid || scene->scene_control_hash == 0u ||
+        !receipt || !receipt->valid || receipt->receipt_hash == 0u ||
+        receipt->source_state_hash == 0u || receipt->light_level > 5u ||
+        receipt->graphicsset != scene->graphicsset ||
+        receipt->scene_control_hash != scene->scene_control_hash) {
+        return 0;
+    }
+    /* SKProject/SKULLWIN/c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT (32CB:5D13):
+     * _4976_5a88 = glbLightLevel * 10. */
+    *out_darkness = (uint8_t)(receipt->light_level * 10u);
+    return 1;
+}
+
 int dm2_v1_gdat_scene_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatSceneM11CommandPlan *out_plan)
