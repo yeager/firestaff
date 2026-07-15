@@ -219,9 +219,27 @@ int nexus_v1_launcher_dgn_direct_face_capture_intake(
     (void)nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
         &s_engine, structure1f_entry_index, manifest_text, manifest_size,
         &receipt.capture_target);
+    if (receipt.capture_target.status !=
+            NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW ||
+        nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
+            &s_engine, &receipt.vdp1_state) != 1 ||
+        !receipt.vdp1_state.source.canonical_hash_verified ||
+        !receipt.vdp1_state.static_instruction_dataflow_proven ||
+        !receipt.vdp1_state.vdp1_register_0x04_write_proven ||
+        !receipt.vdp1_state.vdp1_vram_base_r14_store_proven ||
+        !receipt.vdp1_state.vdp1_register_0x06_write_proven ||
+        receipt.vdp1_state.vdp1_command_emission_proven ||
+        receipt.vdp1_state.palette_semantics_proven ||
+        receipt.vdp1_state.transform_semantics_proven ||
+        !receipt.vdp1_state.no_draw_only ||
+        receipt.vdp1_state.fallback_visuals_permitted) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.vdp1_state_source_bound = 1;
+    receipt.vdp1_capture_prerequisite_bound = 1;
     *out_receipt = receipt;
-    return receipt.capture_target.status ==
-        NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW;
+    return 1;
 }
 
 void nexus_v1_launcher_boot_receipt_clear(

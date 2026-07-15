@@ -148,6 +148,7 @@ int main(void)
     {
         Nexus_V1_Engine correlation_engine;
         Nexus_V1_MenuBpkPaltWarningPaletteCorrelationReceipt correlation;
+        Nexus_V1_DmBinVdp1StateWriteReceipt vdp1_state;
 
         memset(&correlation_engine, 0, sizeof(correlation_engine));
         correlation_engine.source = NEXUS_SRC_EXTRACTED;
@@ -174,6 +175,21 @@ int main(void)
               !correlation.decoder_promoted && correlation.no_draw_only &&
               !correlation.fallback_visuals_permitted,
               "canonical MENU.BPK PALT aligns with the documented WARNING DGT2 CLUT without enabling PRS3 rendering");
+        memset(&vdp1_state, 0, sizeof(vdp1_state));
+        CHECK(nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
+                  &correlation_engine, &vdp1_state) == 1 &&
+              vdp1_state.source.canonical_hash_verified &&
+              vdp1_state.static_instruction_dataflow_proven &&
+              vdp1_state.vdp1_register_0x04_write_proven &&
+              vdp1_state.vdp1_register_0x04_value == 2U &&
+              vdp1_state.vdp1_vram_base_r14_store_proven &&
+              vdp1_state.vdp1_register_0x06_write_proven &&
+              vdp1_state.vdp1_register_0x06_value == 0x8000U &&
+              !vdp1_state.vdp1_command_emission_proven &&
+              !vdp1_state.palette_semantics_proven &&
+              !vdp1_state.transform_semantics_proven &&
+              vdp1_state.no_draw_only && !vdp1_state.fallback_visuals_permitted,
+              "canonical DM.BIN contributes only raw VDP1 capture prerequisites");
     }
     CHECK(snprintf(path, sizeof(path), "%s/LEV01.DGN", data_dir) <
               (int)sizeof(path) &&

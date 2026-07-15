@@ -3563,6 +3563,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     No local trace carries the external Saturn attestation needed to promote
     it beyond opaque no-draw evidence, and an admitted trace still has no
     matrix, camera, culling, material, palette, pixel, or draw semantics.
+  - 2026-07-15 VDP1 capture-prerequisite update: the launcher host route now
+    retains the hash-verified `DM.BIN` SH-2 state-write corridor, including
+    the raw VDP1 `0x04=2` and `0x06=0x8000` fields, before it accepts a
+    direct-face capture request. These are executable source fields only;
+    they do not identify a face command, transform, texture, palette, or
+    output pixel. A real same-session Saturn trace must establish that link.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.
