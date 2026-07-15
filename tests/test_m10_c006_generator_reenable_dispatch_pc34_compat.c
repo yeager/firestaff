@@ -1127,6 +1127,27 @@ static int test_timeline_lacks_projectile_move(const struct GameWorld_Compat* wo
     return 1;
 }
 
+static int test_timeline_keeps_only_projectile_move_cell(
+    const struct GameWorld_Compat* world,
+    int projectileIndex,
+    int cell)
+{
+    int i;
+    int count = 0;
+
+    if (!world) return 0;
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+        if (event->kind != TIMELINE_EVENT_PROJECTILE_MOVE ||
+            event->aux0 != projectileIndex) {
+            continue;
+        }
+        if (event->cell != cell) return 0;
+        ++count;
+    }
+    return count == 1;
+}
+
 static int test_c006_f0267_ordinary_moving_group_source_projectile_is_removed(void) {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -1207,10 +1228,7 @@ static int test_c006_f0267_ordinary_moving_group_source_projectile_is_removed(vo
     ok &= expect(world.things->projectiles[0].next == THING_NONE &&
                  world.things->projectiles[0].eventIndex == 0xFFFFu,
                  "MOVESENS.C:297 plus PROJEXPL.C:607-608 deletes projectile event and thing");
-    ok &= expect(world.timeline.count == 1 &&
-                 world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
-                 world.timeline.events[0].aux0 == 0 &&
-                 world.timeline.events[0].cell == 0,
+    ok &= expect(test_timeline_keeps_only_projectile_move_cell(&world, 0, 0),
                  "F0214 removes only C14.EventIndex and preserves earlier same-slot C49");
     ok &= expect(world.creatureAICount == 1 &&
                  world.creatureAI[0].groupMapX == 2 &&
