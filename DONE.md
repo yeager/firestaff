@@ -39,6 +39,12 @@
   surfaces or altered cells fail closed. Focused coverage:
   `dm1_v1_inscription_source_raster_gate` and
   `dm1_v1_wall_inscription_pc34_material_gate`.
+- ✅ 2026-07-15 CSB presented-frame source gate: before M11 accepts a CSB
+  title or entrance capture, it now rebuilds the active PC3.4 C001--C005
+  source plan and compares every indexed pixel plus the exact F0437/F0441
+  palette phase. Stale title phases, foreign C002/C003 door steps, and host
+  wrapper pages fail closed before SDL RGBA capture is recorded. Focused
+  coverage: real PC3.4 package probe and M11 launcher handoff.
 
 - ✅ 2026-07-15 DM2 SKProject `QUERY_ORNATE_ANIM_FRAME` viewport binding:
   legacy DB0-door wall-button material now resolves the real WALL_GFX

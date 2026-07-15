@@ -981,6 +981,45 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    const unsigned char *indexed_pixels,
+    int width,
+    int height,
+    int special_palette)
+{
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 receipt;
+    int matches = 0;
+
+    if (!indexed_pixels || width != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
+        height != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+            session, plan, source_tick, &receipt) || !receipt.valid ||
+        !receipt.raster.valid || !receipt.raster.real_asset_matched ||
+        !receipt.raster.pixels || receipt.raster.width != width ||
+        receipt.raster.height != height ||
+        receipt.special_palette != special_palette ||
+        receipt.frame.special_palette != special_palette) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &receipt);
+        return 0;
+    }
+
+    /* TITLE.C F0437 and ENTRANCE.C F0441/F0807 each compose their complete
+     * PC3.4 page before VBlank presentation.  Compare every source byte, not
+     * a crop/hash, so a stale phase or a wrapper-owned page fails closed. */
+    matches = memcmp(indexed_pixels,
+                     receipt.raster.pixels,
+                     (size_t)width * (size_t)height) == 0;
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&receipt);
+    return matches;
+}
+
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupFullRuntimeReceipt_PC34 *out_receipt)

@@ -576,6 +576,13 @@ static void verify_real_indexed_startup(
               presents_host.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
           "runtime host consumes C001 PRESENTS with its F0437 palette phase");
+    CHECK(csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+              &session, &plan, 1u, presents_host.raster.pixels, 320, 200,
+              VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS) == 1 &&
+              csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+                  &session, &plan, 1u, presents_host.raster.pixels, 320, 200,
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS) == 0,
+          "presented C001 PRESENTS raster rejects a different palette phase");
 
     CHECK(real_c001_title_plan(60, &plan) &&
               csb_v1_boot_startup_runtime_asset_session_frame_pc34(
@@ -678,6 +685,13 @@ static void verify_real_indexed_startup(
               host_surface.title_special_palette == -1 &&
               host_surface.no_synthetic_surface,
           "runtime host opening handoff consumes C004/C002/C003 with entrance palette");
+    CHECK(csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+              &session, &plan, 5u, host_surface.raster.pixels, 320, 200,
+              VGA_PALETTE_PC34_SPECIAL_ENTRANCE) == 1 &&
+              csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
+                  &session, &plan, 5u, host_surface.raster.pixels, 320, 200,
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES) == 0,
+          "presented C004/C002/C003 raster rejects a title palette phase");
     memset(&input_outcome, 0, sizeof(input_outcome));
     memset(&runtime_apply, 0, sizeof(runtime_apply));
     memset(&state_receipt, 0, sizeof(state_receipt));
