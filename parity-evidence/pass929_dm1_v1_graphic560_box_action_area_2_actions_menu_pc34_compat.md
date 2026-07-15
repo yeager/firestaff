@@ -4,8 +4,8 @@
 
 ## Anchors
 
-- MENU.C:37/463
+- MENU.C:36/496
 - MENU.C F0452 action/spell init
 
 ## Verification
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/Firestaff-worktrees/push-synthetic-clean/build-dm1-worker/test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat`: rc=0

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pass852 DM1 V1 mandatory-graphic-indices contract."""
+"""pass929 DM1 V1 G0500 action-area 2-actions menu box contract."""
 from __future__ import annotations
 
 import json
@@ -20,14 +20,14 @@ REPORT = ROOT / 'parity-evidence' / f'{PASS}.md'
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 ANCHORS = [
-    "MENU.C:37/463",
+    "MENU.C:36/496",
     "MENU.C F0452 action/spell init",
 ]
 
 LOCAL_NEEDLES = [
     "G0500_ai_Graphic560_Box_ActionArea2ActionsMenu",
-    "MENU.C:37",
-    "MENU.C:463",
+    "MENU.C:36",
+    "MENU.C:496",
     "Disjoint from pass784-790",
 ]
 
@@ -39,12 +39,9 @@ CMAKE_NEEDLES = [
 ]
 
 REDMCSB_WINDOWS = {
-    "DATA.C": [
-        (422, "G4013_auc_PaletteChanges_CursorMask"),
-    ],
-    "IO.C": [
-        (2151, "G4013_auc_PaletteChanges_CursorMask"),
-        (2453, "G4013_auc_PaletteChanges_CursorMask"),
+    "MENU.C": [
+        (36, "G0500_ai_Graphic560_Box_ActionArea2ActionsMenu"),
+        (496, "G0500_ai_Graphic560_Box_ActionArea2ActionsMenu[4] = { 224, 319, 77, 109 }"),
     ],
 }
 
@@ -104,7 +101,9 @@ def run(cmd):
 
 
 def resolve_build_dir(binary_name=""):
-    candidates = [ROOT / "build", ROOT / "builds" / "nv1-build",
+    candidates = [ROOT / "build", ROOT / "build-dm1-worker",
+                  ROOT / "build-local-ninja", ROOT / "build-verify",
+                  ROOT / "builds" / "nv1-build",
                   ROOT / "builds" / "n2-build"]
     for c in candidates:
         if (c / "CMakeCache.txt").exists() and (c / binary_name).exists():

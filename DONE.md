@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 G0500 action-menu table contract: the two-action
+  action/spell menu box now exposes ReDMCSB's signed `int16_t[4]`
+  `G0500_ai_Graphic560_Box_ActionArea2ActionsMenu` instead of a byte pointer
+  cast over host `int` storage. The focused test now dereferences the table
+  surface directly, and pass929 is re-pinned to `MENU.C:36/496` while finding
+  the worktree build binary.
+
 - ✅ 2026-07-15 CSB startup opening-step receipt gate: the presentation
   receipt now rejects an active C004/C002/C003 door-opening frame before
   ReDMCSB's first real animation step and after the final step. The pre-open
