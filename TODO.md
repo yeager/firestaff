@@ -6983,6 +6983,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `GRAPHICSSET` dialogue-shell/glyph IMG3-plus-local-palette receipt for
     field `0xfd` into frame ownership. It remains evidence-only and no-draw.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
+  - 2026-07-15 update: the active M11 DM2 leader-hand name overlay is now
+    no-draw. The previous DM1 rectangle/host-font path converted ObjectIDs to
+    catalog labels such as `DM2 MISC 51`; SKProject `GET_ITEM_NAME` instead
+    resolves `QUERY_GDAT_ITEM_NAME(category, class)` through `dtText/0x18`
+    and `FORMAT_SKSTR`. Do not show a name until that exact GDAT text and
+    formatting route is bound; source-backed object icons remain separate.
   - 2026-07-15 update: DM2's M11 inventory-toggle route now fails closed rather
     than opening the shared DM1 `GRAPHICS.DAT` inventory workbench. SKProject
     `CHANGE_VIEWPORT_TO_INVENTORY` owns DM2's `CHAMPIONS`/

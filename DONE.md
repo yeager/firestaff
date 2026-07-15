@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 M11 leader-hand name source gate: stopped drawing the
+  active DM1 rectangle/host-font catalog label over DM2 runtime frames.
+  SKProject `GET_ITEM_NAME` uses `QUERY_GDAT_ITEM_NAME` (`dtText/0x18`) plus
+  `FORMAT_SKSTR`; Firestaff now leaves the zone untouched until that real
+  text route is available, while retaining the separate GDAT icon route.
+
 - 2026-07-15 Nexus DGN raster fallback removal: textured quads with missing
    material now no-draw instead of becoming flat-color substitute geometry.
 

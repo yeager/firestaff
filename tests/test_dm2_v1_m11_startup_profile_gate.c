@@ -2161,15 +2161,15 @@ int main(void) {
             name_w = name_rect.w;
             name_h = name_rect.h;
         }
-        expect_true(framebuffer_zone_differs(framebuffer_without_hand,
-                                             framebuffer,
-                                             320,
-                                             200,
-                                             name_x,
-                                             name_y,
-                                             name_w,
-                                             name_h),
-                    "M11 DM2 draw overlays the leader-hand ObjectID name");
+        expect_true(!framebuffer_zone_differs(framebuffer_without_hand,
+                                              framebuffer,
+                                              320,
+                                              200,
+                                              name_x,
+                                              name_y,
+                                              name_w,
+                                              name_h),
+                    "M11 DM2 leaves the DM1 leader-hand name zone untouched");
         dm2_v1_runtime_set_leader_hand_object(0u);
         view.dm2State.leader_hand_object = 0u;
 
