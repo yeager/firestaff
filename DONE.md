@@ -3,6 +3,12 @@
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_60 pool mutation: the authenticated
   party-square +5 successor now retires the due source receipt and requeues
   through the original TIMER allocator, rather than rewriting its old slot.
+=======
+- ✅ 2026-07-15 DM1 ReDMCSB F0114 source explosion-material gate: D1–D3
+  scaled explosion sprites and the separate D0C M636 pattern now accept only
+  decoded loaded-pixel `GRAPHICS.DAT` surfaces. Dimension-only cache entries
+   cannot create an explosion frame. Focused coverage:
+   `m11_dm1_explosion_asset_fail_closed`.
 
 - ✅ 2026-07-15 CSBWin live TT_1 presentation transaction: the live
   `ProcessTT_1` animation path now stages its non-party door pixel state and

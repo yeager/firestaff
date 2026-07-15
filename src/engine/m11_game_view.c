@@ -18227,7 +18227,10 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
         gfxIndex >= 486) return 0;
     (void)relativeDir;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* F0114 may scale only a decoded PC34 explosion surface. A cache entry
+     * with dimensions but no pixel payload is not source material. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
     if (!dm1_v1_projectile_sprite_blit_plan(
             &plan,
             gfxIndex,
@@ -18567,7 +18570,10 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)graphicIndex);
-    if (!slot || slot->width == 0 || slot->height == 0) {
+    /* The D0C M636 route is distinct from F0114. It too needs a complete
+     * decoded PC34 bitmap; no host-colored pattern may stand in for it. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) {
         return 0;
     }
     if (dm1_v1_explosion_is_smoke(explosionType)) {
