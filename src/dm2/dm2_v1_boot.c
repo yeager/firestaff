@@ -1138,19 +1138,17 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
             dm2_v1_boot_graphics_load(profile->graphics_path);
     }
 
-    /* Set default start position (Hall of Champions, north-facing)
-     * Source: SKULL.ASM T520 — party_placement
-     * PC English DM2 start: mapX=15, mapY=15, facing North */
-    gs->party_x = 15;
-    gs->party_y = 15;
-    gs->party_dir = 0;  /* North */
+    /* skproject/SKWIN DME.h File_header stores the new-game party pose in
+     * the G1 header. The dungeon loader has already admitted that pose
+     * against map 0 dimensions and origin; do not replace it with the old
+     * synthetic Hall-of-Champions default. */
+    if (dd->initial_party_pose_valid) {
+        gs->party_x = dd->initial_party_x;
+        gs->party_y = dd->initial_party_y;
+        gs->party_dir = dd->initial_party_dir & 3;
+    }
     gs->current_level = 0;
     gs->outdoor = 0;
-    /* Keep DUNGEON.DAT's decoded header pose on DM2_V1_DungeonData as
-     * corpus evidence only.  skproject's T520 NEW GAME route places the
-     * starter party at the Skullkeep Hall-of-Champions pose above; promoting
-     * the header field here makes archive-backed launches enter the dungeon
-     * at the wrong square and breaks save/resume identity. */
 
     profile->dm2_state = gs;
     profile->dungeon_data = dd;
@@ -8022,6 +8020,7 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     uint8_t framebuffer[320 * 200];
     uint32_t frame_hashes[4];
     uint32_t combined_hash = 0x32485543u;
+    DM2_V1_BootRuntimeReceipt initial_runtime;
     int dir;
     int frame_hash_count = 0;
 
@@ -8036,6 +8035,9 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     out_receipt->min_asset_portrait_count = 9999;
     out_receipt->min_asset_floor_ceiling_count = 9999;
     out_receipt->min_asset_wall_count = 9999;
+    if (!dm2_v1_boot_runtime_capture(profile, &initial_runtime)) {
+        return 0;
+    }
 
     /* skproject/SKWIN T560 renders the same right-side runtime HUD from
      * party state while the dungeon view changes by direction. Sampling all
@@ -8194,6 +8196,10 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             ++out_receipt->runtime_turn_count;
         }
     }
+    dm2_v1_runtime_set_position(initial_runtime.current_level,
+                                initial_runtime.party_x,
+                                initial_runtime.party_y,
+                                initial_runtime.party_dir);
     if (out_receipt->min_asset_portrait_count == 9999) {
         out_receipt->min_asset_portrait_count = 0;
     }
