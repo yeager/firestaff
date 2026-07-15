@@ -4674,6 +4674,7 @@ int nexus_v1_current_level_sound_route_receipt(
         engine->level_aux_runtime_receipt.sound_driver.canonical_hash_verified;
     if (!out_receipt->canonical_sal_source_verified ||
         !out_receipt->canonical_map_source_verified ||
+        !out_receipt->canonical_sound_driver_source_verified ||
         engine->audio.current_level != out_receipt->level_index) {
         out_receipt->status = NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SOURCE;
         return 0;
