@@ -4568,6 +4568,71 @@ int dm2_v1_boot_gdat_door_overlay_m11_command_plan(
         &gfx->loader, door_plan, out_plan);
 }
 
+int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
+    DM2_V1_BootProfile *profile,
+    uint8_t c_light_parameter,
+    uint32_t c_light_receipt_hash,
+    DM2_V1_GdatDoorOverlayM11CommandPlan *plan)
+{
+    DM2_V1_GdatDoorOverlayM11CommandPlan candidate;
+    DM2_V1_InterfaceActionTable table;
+    int table_loaded = 0;
+    int transformed = 0;
+
+    if (!profile || !profile->graphics_dat || !plan || !plan->valid ||
+        !plan->command_hash || !c_light_receipt_hash ||
+        c_light_parameter > 64u) {
+        return 0;
+    }
+    candidate = *plan;
+    for (uint8_t i = 0u; i < candidate.command_count; ++i) {
+        DM2_V1_GdatDoorOverlayM11Command *command = &candidate.commands[i];
+        uint8_t darkness;
+        uint32_t hash = 2166136261u;
+
+        if (command->kind != DM2_V1_GDAT_DOOR_PANEL ||
+            command->light_palette == 0u) {
+            continue;
+        }
+        if (!dm2_v1_gdat_door_light_palette_darkness(
+                c_light_parameter, command->light_palette, &darkness) ||
+            (!table_loaded &&
+             !dm2_v1_boot_interface_action_table(profile, &table)) ||
+            !dm2_v1_interface_action_table_remap_palette(
+                &table, command->palette16, 16u, darkness,
+                command->color_key, -1)) {
+            return 0;
+        }
+        table_loaded = 1;
+        for (size_t p = 0u; p < sizeof(command->palette16); ++p) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(
+                hash, command->palette16[p]);
+        }
+        command->palette_hash = hash ? hash : 1u;
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            2166136261u, c_light_receipt_hash);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, command->light_palette);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, c_light_parameter);
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, darkness);
+        hash = dm2_v1_boot_packaged_capture_hash_step(
+            hash, command->palette_hash);
+        command->palette_darkness = darkness;
+        command->palette_light_receipt_hash = c_light_receipt_hash;
+        command->palette_transform_hash = hash ? hash : 1u;
+        command->selection_hash = dm2_v1_boot_packaged_capture_hash_step(
+            command->selection_hash, command->palette_transform_hash);
+        ++transformed;
+    }
+    if (transformed > 0 &&
+        !dm2_v1_gdat_door_overlay_m11_command_plan_refresh_hash(&candidate)) {
+        return 0;
+    }
+    *plan = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootProfile *profile,
     const DM2_V1_HudPartyState *party,

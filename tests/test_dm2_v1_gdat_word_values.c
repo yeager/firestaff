@@ -6,6 +6,7 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdint.h>
@@ -341,12 +342,30 @@ static void test_img3_local_palette_fixture(void)
           "C8 image consumes skproject's real GDAT default palette");
 }
 
+static void test_door_light_palette_darkness(void)
+{
+    uint8_t darkness = 0u;
+
+    /* SKProject _32cb_0804 combines c_light with _4976_4226.  D3 retry
+     * uses its distance index (3), whose original table value is 28. */
+    CHECK(dm2_v1_gdat_door_light_palette_darkness(20u, 3u, &darkness) &&
+              darkness == 40u,
+          "D3 light palette combines source c_light with distance darkness");
+    CHECK(dm2_v1_gdat_door_light_palette_darkness(0u, 3u, &darkness) &&
+              darkness == 28u,
+          "D3 light palette preserves original zero-light darkness");
+    CHECK(!dm2_v1_gdat_door_light_palette_darkness(65u, 3u, &darkness) &&
+              !dm2_v1_gdat_door_light_palette_darkness(20u, 5u, &darkness),
+          "door light palette rejects out-of-range source values");
+}
+
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
     test_carried_item_selector();
     test_interface_palette_decoder_fixture();
     test_img3_local_palette_fixture();
+    test_door_light_palette_darkness();
     test_interface_palette_real_data();
     test_item_word_values_real_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

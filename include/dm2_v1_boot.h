@@ -1906,6 +1906,15 @@ int dm2_v1_boot_gdat_wall_m11_command_plan(
 int dm2_v1_boot_gdat_door_overlay_m11_command_plan(
     DM2_V1_BootProfile *profile, const DM2_V1_DoorRenderPlan *door_plan,
     DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan);
+/* Applies SKProject QUERY_TEMP_PICST/_32cb_0804's original dt07/2 palette
+ * remap to nonzero DRAW_DOOR light-palette retries. A missing c_light receipt
+ * or source table rejects the complete transaction rather than using base
+ * IMG3 colours. */
+int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
+    DM2_V1_BootProfile *profile,
+    uint8_t c_light_parameter,
+    uint32_t c_light_receipt_hash,
+    DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
 
 int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootProfile *profile,

@@ -44,6 +44,12 @@ typedef struct {
     uint8_t draw_distance;
     uint8_t stretch_dual;
     uint8_t light_palette;
+    /* QUERY_TEMP_PICST applies _32cb_0804 after the source local palette is
+     * loaded. Nonzero entries retain the c_light receipt that authorized the
+     * dt07/2 remap; a base IMG3 palette is never reused as a dark retry. */
+    uint8_t palette_darkness;
+    uint32_t palette_light_receipt_hash;
+    uint32_t palette_transform_hash;
     uint16_t color_key;
     uint16_t no_frames;
     /* skproject DRAW_DOOR passes tlbRectnoDoorPosition[cell] through
@@ -86,6 +92,15 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
  * a source-owned M11 plan reaches the viewport. */
 int dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
     const DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
+/* skproject _32cb_0804's stationary `_4976_4226[zz]` branch. `light` is
+ * DISPLAY_VIEWPORT's authenticated `glbLightLevel * 10` parameter. */
+int dm2_v1_gdat_door_light_palette_darkness(uint8_t light,
+                                            uint8_t light_palette,
+                                            uint8_t *out_darkness);
+/* Recomputes the command receipt after a source-owned local-palette
+ * transform. The plan remains invalid when any retained command is corrupt. */
+int dm2_v1_gdat_door_overlay_m11_command_plan_refresh_hash(
+    DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
 void dm2_v1_gdat_door_overlay_m11_command_plan_free(
     DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
 

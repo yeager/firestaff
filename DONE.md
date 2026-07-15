@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 SKProject D3 `DRAW_DOOR` light-palette handoff:
+  field-zero retry panels now consume `_32cb_0804`'s original stationary
+  distance-darkness table and the decoded `INTERFACE_GENERAL/0/dt07/2`
+  `_0b36_037e` transform only with the matching live `c_light` receipt.
+  Command and M11 receipts bind the effective darkness, transformed palette,
+  and source identity. Missing or altered evidence remains no-draw; the IMG3
+  base palette is never used as a substitute. Focused coverage:
+  `dm2_v1_gdat_word_values`, `dm2_v1_boot_profile_smoke`, and
+  `dm2_v1_save_load`.
+
 - ✅ 2026-07-15 DM2 SKProject `DRAW_ITEM_IN_HAND` GDAT field handoff:
   leader-hand items now select their exact `dtImage` through
   `SkWinCore::_2405_014a`'s proven tick, record-index, and direction modes,
