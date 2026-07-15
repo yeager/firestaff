@@ -1982,6 +1982,7 @@ static void test_runtime_materializer_binds_original_group_reaction(void)
     struct DungeonMapDesc_Compat maps[3];
     struct DungeonMapTiles_Compat tiles[3];
     unsigned char square_data[3][32 * 32];
+    uint16_t column_sft_bases[3 * 32];
     struct DungeonThings_Compat things;
     unsigned short first_things[1];
     struct DungeonGroup_Compat groups[1];
@@ -2003,6 +2004,7 @@ static void test_runtime_materializer_binds_original_group_reaction(void)
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
     memset(&report, 0, sizeof(report));
@@ -2010,6 +2012,13 @@ static void test_runtime_materializer_binds_original_group_reaction(void)
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    /* ReDMCSB DUNGEON.C F0160 obtains the SquareFirstThing slot through
+     * G0280's cumulative per-column base.  The first and only flagged
+     * square is in map 2 / column 11, whose source base remains zero because
+     * no earlier column has a thing-list square. */
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     for (i = 0; i < 3; ++i) {
         maps[i].width = 32;
         maps[i].height = 32;
