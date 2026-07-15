@@ -260,7 +260,7 @@ F	0176	F0176_GROUP_GetCreatureOrdinalInCell	ATARIST.H;GROUP.C;FMTOWNS.H;CLIKVIEW
 F	176	F176_avzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0177	F0177_GROUP_GetMeleeTargetCreatureOrdinal	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	177	F177_aszz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0178	F0178_GROUP_GetGroupValueUpdatedWithCreatureValue	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0178	F0178_GROUP_GetGroupValueUpdatedWithCreatureValue	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	Exact GROUP.C packed two-bit replacement, consumed by DM1 F0262 live group teleporter direction/cell rotation; source-valid 0..3 indices only.
 F	178	F178_aazz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0179	F0179_GROUP_GetCreatureAspectUpdateTime	GROUP.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0180	F0180_GROUP_StartWandering	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

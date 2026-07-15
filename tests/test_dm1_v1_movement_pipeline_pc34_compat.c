@@ -50,6 +50,19 @@ static unsigned char sq(int elementType, int attrs)
     return (unsigned char)((elementType << 5) | (attrs & 0x1F));
 }
 
+static void test_f0178_packed_group_value_replacement(void)
+{
+    EXPECT_INT("f0178_slot_zero_replaces_only_low_pair",
+        (int)DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+            0xffffu, 0u, 0u), 0xfffcu);
+    EXPECT_INT("f0178_masks_value_before_slot_shift",
+        (int)DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+            0xffffu, 1u, 5u), 0xfff7u);
+    EXPECT_INT("f0178_high_slot_preserves_all_lower_creatures",
+        (int)DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+            0x0000u, 3u, 2u), 0x0080u);
+}
+
 static void set_sq(unsigned char* squares, int height, int x, int y, unsigned char value)
 {
     squares[x * height + y] = value;
@@ -1597,6 +1610,7 @@ int main(void)
     test_direct_command_wrapper_forward_step();
     test_original_keyboard_buffer_forward_route_to_first_redraw();
     test_mouse_movement();
+    test_f0178_packed_group_value_replacement();
     test_teleporter_rotation_parity_source_lock();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

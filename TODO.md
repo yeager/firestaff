@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 GROUP F0178 follow-up: packed C04 creature cells and
+  directions now use the exact source replacement primitive in the live F0262
+  teleporter route. Remaining work is routing separately-owned group AI and
+  viewport packed-value writes through it; do not reconstruct a packed value
+  from decoded creature state or use a default direction/cell.
+
 - 2026-07-15 DM1 DUNGEON F0144 follow-up: raw PC3.4 `GROUP.Type` now
   selects exact G0243 Attributes through F0156. Remaining work is routing
   separately-owned live M10/M11 creature consumers through this raw accessor;

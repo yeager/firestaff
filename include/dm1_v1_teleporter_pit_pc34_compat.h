@@ -71,6 +71,12 @@ typedef struct {
     int absoluteRotation;
 } DM1_V1_TeleporterDefPc34;
 
+/* ReDMCSB GROUP.C F0178: replace one packed two-bit creature value. */
+unsigned int DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+        unsigned int groupValue,
+        unsigned int creatureIndex,
+        unsigned int creatureValue);
+
 typedef struct {
     int movePrevented;
     int reason;
