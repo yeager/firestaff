@@ -74,7 +74,7 @@ static void make_terminal_real_data_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].width = 320;
     session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 153;
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 200;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].transparent_color = -1;
     session->surfaces.surfaces[

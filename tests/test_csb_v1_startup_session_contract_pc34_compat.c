@@ -20,7 +20,7 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
 {
     static unsigned char c017_pixel;
     static unsigned char c040_pixel;
-    static unsigned char c001_pixels[320 * 153];
+    static unsigned char c001_pixels[320 * 200];
     static unsigned char presents_pixels[320 * 16];
     static unsigned char chaos_pixels[320 * 80];
     static unsigned char strikes_pixels[320 * 57];
@@ -70,7 +70,7 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     right = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
     entrance = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
     title->valid = 1; title->pixels = c001_pixels; title->source_asset_id = 1;
-    title->width = 320; title->height = 153; title->transparent_color = -1;
+    title->width = 320; title->height = 200; title->transparent_color = -1;
     presents->valid = 1; presents->pixels = presents_pixels; presents->source_asset_id = 1;
     presents->source_x = 0; presents->source_y = 137;
     presents->width = 320; presents->height = 16; presents->transparent_color = -1;
@@ -317,10 +317,10 @@ int main(void)
     check(!csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt),
           "forged one-line C001 cannot authorize terminal C017/C040");
     session.surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 153;
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 200;
     check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               receipt.valid,
-          "restored real-shaped C001 re-authorizes terminal C017/C040");
+          "restored full C001 re-authorizes terminal C017/C040");
     opening_host.raster.door_composited = 0;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,

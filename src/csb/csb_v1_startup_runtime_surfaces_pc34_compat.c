@@ -424,7 +424,7 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
             plan->title_source_w <= 0 || plan->title_source_h <= 0 ||
             plan->title_dest_w <= 0 || plan->title_dest_h <= 0) goto done;
         /* TITLE.C F0437 selects distinct C001 source rectangles for
-         * PRESENTS, CHAOS, and STRIKES BACK.  Scaling the complete 320x153
+         * PRESENTS, CHAOS, and STRIKES BACK.  Scaling the complete 320x200
          * asset here discards that contract and can present a black phase. */
         copied = csb_v1_startup_raster_blit_pc34(
             pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,

@@ -250,6 +250,13 @@
     cannot satisfy the complete sequence. Remaining work is still external
     original-window capture and app-route parity, not a host-wrapper,
     duplicated-phase, or synthetic title replacement.
+  - 2026-07-15 update: CSB C001 title admission now keeps the decoded
+    GRAPHICS.DAT surface at its full 320x200 size, with PRESENTS, CHAOS, and
+    STRIKES BACK remaining separate cropped F0437 regions. A cropped 320x153
+    C001 stand-in no longer satisfies the startup session or package
+    consumption receipts. Remaining work is still external original-window
+    capture and broader app-route coverage, not a synthetic or cropped title
+    replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
