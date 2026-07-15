@@ -60,6 +60,26 @@ static uint64_t nexus_ui_fnv1a64_append(uint64_t hash,
     return hash;
 }
 
+static uint64_t nexus_ui_fnv1a64_append_u32(uint64_t hash, uint32_t value)
+{
+    uint8_t bytes[4];
+    int index;
+
+    for (index = 0; index < 4; ++index)
+        bytes[index] = (uint8_t)(value >> (index * 8));
+    return nexus_ui_fnv1a64_append(hash, bytes, sizeof(bytes));
+}
+
+static uint64_t nexus_ui_fnv1a64_append_u64(uint64_t hash, uint64_t value)
+{
+    uint8_t bytes[8];
+    int index;
+
+    for (index = 0; index < 8; ++index)
+        bytes[index] = (uint8_t)(value >> (index * 8));
+    return nexus_ui_fnv1a64_append(hash, bytes, sizeof(bytes));
+}
+
 static uint8_t nexus_ui_expand_5bit(uint16_t value)
 {
     return (uint8_t)((value << 3) | (value >> 2));
@@ -671,6 +691,74 @@ int nexus_ui_face_prs3_capture_target(const uint8_t *data,
         target.stream_bytes_fnv1a64 != 0U;
     *out_target = target;
     return target.valid ? 1 : 0;
+}
+
+int nexus_ui_face_prs3_capture_campaign(
+    const uint8_t *data,
+    int data_size,
+    int source_hash_verified,
+    Nexus_UI_FacePrs3CaptureCampaignReceipt *out_receipt)
+{
+    Nexus_UI_FacePrs3CaptureCampaignReceipt receipt;
+    int index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!data || data_size <= 0 || !source_hash_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = (size_t)data_size;
+    receipt.source_bytes_fnv1a64 = nexus_ui_fnv1a64_append(
+        UINT64_C(14695981039346656037), data, receipt.source_byte_count);
+    receipt.ordered_target_fnv1a64 = UINT64_C(14695981039346656037);
+    receipt.source_lanes_fnv1a64 = UINT64_C(14695981039346656037);
+    for (index = 0; index < NEXUS_UI_FACE_CANONICAL_FRAME_COUNT; ++index) {
+        Nexus_UI_FacePrs3CaptureTarget target;
+
+        if (nexus_ui_face_prs3_capture_target(data, data_size, index, 1,
+                                               &target) != 1 ||
+            !target.valid || !target.capture_producer_required ||
+            !target.original_saturn_capture_required ||
+            target.decoder_permitted || !target.no_draw_only ||
+            target.fallback_visuals_permitted) {
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.no_draw_only = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.ordered_target_fnv1a64 = nexus_ui_fnv1a64_append_u32(
+            receipt.ordered_target_fnv1a64, (uint32_t)target.face_index);
+        receipt.ordered_target_fnv1a64 = nexus_ui_fnv1a64_append_u64(
+            receipt.ordered_target_fnv1a64, target.descriptor.prs3_offset);
+        receipt.ordered_target_fnv1a64 = nexus_ui_fnv1a64_append_u64(
+            receipt.ordered_target_fnv1a64, target.descriptor.stream_size);
+        receipt.ordered_target_fnv1a64 = nexus_ui_fnv1a64_append_u64(
+            receipt.ordered_target_fnv1a64, target.prs3_header_fnv1a64);
+        receipt.source_lanes_fnv1a64 = nexus_ui_fnv1a64_append_u64(
+            receipt.source_lanes_fnv1a64, target.prefix_bytes_fnv1a64);
+        receipt.source_lanes_fnv1a64 = nexus_ui_fnv1a64_append_u64(
+            receipt.source_lanes_fnv1a64, target.stream_bytes_fnv1a64);
+        if (receipt.total_stream_byte_count > SIZE_MAX -
+            target.descriptor.stream_size) {
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.no_draw_only = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.total_stream_byte_count += target.descriptor.stream_size;
+        ++receipt.frame_count;
+    }
+    receipt.capture_producer_required = 1;
+    receipt.original_saturn_capture_required = 1;
+    receipt.valid = receipt.frame_count == NEXUS_UI_FACE_CANONICAL_FRAME_COUNT &&
+        receipt.source_bytes_fnv1a64 != 0U &&
+        receipt.ordered_target_fnv1a64 != UINT64_C(14695981039346656037) &&
+        receipt.source_lanes_fnv1a64 != UINT64_C(14695981039346656037) &&
+        receipt.total_stream_byte_count != 0U;
+    *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
 }
 
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,

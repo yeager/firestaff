@@ -429,6 +429,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_FaceCompactRecordDescriptor compact_last;
     Nexus_UI_FacePrs3CorpusReceipt corpus;
     Nexus_UI_FacePrs3CaptureTarget capture_target;
+    Nexus_UI_FacePrs3CaptureCampaignReceipt capture_campaign;
     unsigned char expanded_face[48 * 48];
     int compact_size;
     int compact_cursor;
@@ -515,6 +516,19 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                     compact_face, compact_size, 19, 0, &capture_target) == 0 &&
                     !capture_target.valid && capture_target.no_draw_only,
                 "Nexus FACE frame target requires a caller-owned source hash gate");
+    expect_true(nexus_ui_face_prs3_capture_campaign(
+                    compact_face, compact_size, 1, &capture_campaign) == 1 &&
+                    capture_campaign.valid && capture_campaign.frame_count == 20 &&
+                    capture_campaign.source_byte_count == (size_t)compact_size &&
+                    capture_campaign.total_stream_byte_count == 20U &&
+                    capture_campaign.ordered_target_fnv1a64 != 0U &&
+                    capture_campaign.source_lanes_fnv1a64 != 0U &&
+                    capture_campaign.capture_producer_required &&
+                    capture_campaign.original_saturn_capture_required &&
+                    !capture_campaign.decoder_permitted &&
+                    capture_campaign.no_draw_only &&
+                    !capture_campaign.fallback_visuals_permitted,
+                "Nexus FACE campaign locks every source frame without decoding");
     memset(&decode_info, 0, sizeof(decode_info));
     memset(expanded_face, 0xaa, sizeof(expanded_face));
     expect_true(nexus_ui_expand_face_record_48x48(compact_face + compact_last.prs3_offset,
@@ -717,6 +731,7 @@ static void expect_canonical_face_media_is_blocked(const char* data_dir) {
     Nexus_UI_FaceCompactRecordDescriptor descriptor;
     Nexus_UI_FacePrs3CorpusReceipt corpus;
     Nexus_UI_FacePrs3CaptureTarget capture_target;
+    Nexus_UI_FacePrs3CaptureCampaignReceipt capture_campaign;
     FILE* file;
 
     snprintf(path, sizeof(path), "%s%sFACE.BIN", data_dir, TEST_PATH_SEP);
@@ -778,6 +793,19 @@ static void expect_canonical_face_media_is_blocked(const char* data_dir) {
                     !capture_target.decoder_permitted && capture_target.no_draw_only &&
                     !capture_target.fallback_visuals_permitted,
                 "real Nexus FACE.BIN yields one source-bound no-draw capture target");
+    expect_true(nexus_ui_face_prs3_capture_campaign(
+                    bytes, (int)sizeof(bytes), 1, &capture_campaign) == 1 &&
+                    capture_campaign.valid && capture_campaign.frame_count == 20 &&
+                    capture_campaign.source_byte_count == sizeof(bytes) &&
+                    capture_campaign.total_stream_byte_count == corpus.total_stream_byte_count &&
+                    capture_campaign.ordered_target_fnv1a64 != 0U &&
+                    capture_campaign.source_lanes_fnv1a64 != 0U &&
+                    capture_campaign.capture_producer_required &&
+                    capture_campaign.original_saturn_capture_required &&
+                    !capture_campaign.decoder_permitted &&
+                    capture_campaign.no_draw_only &&
+                    !capture_campaign.fallback_visuals_permitted,
+                "real Nexus FACE.BIN yields a complete source-only capture campaign");
 }
 
 int main(void) {

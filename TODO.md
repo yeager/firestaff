@@ -7623,6 +7623,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     evidence is an authentic Saturn loader trace joining one target to input,
     output, palette, and menu placement; the target itself proves none of
     those semantics and cannot decode or draw a portrait.
+  - 2026-07-15 FACE complete-campaign update: all 20 source-hash-gated frame
+    targets now form one ordered byte-lane ledger. Missing, reordered, or
+    substituted frame requests change the campaign identity before trace
+    analysis. It still requires a genuine Saturn capture to establish loader
+    execution, token grammar, palette, and menu placement; no portrait route
+    is admitted.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).
