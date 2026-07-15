@@ -522,6 +522,30 @@ unsigned short F0513_DUNGEON_GetSquareFirstObject_Compat(
     int mapX,
     int mapY);
 
+/* ReDMCSB DUNGEON.C F0163/F0164.  These mutate the canonical PC34 raw
+ * Generic.Next words and their decoded mirrors.  Map coordinates select a
+ * compact SquareFirstThings entry; mapX < 0 operates on thingInList only.
+ * Both APIs fail closed when the loaded original tables cannot admit the
+ * exact operation (including the original BUG0_08 full-SFT corruption).
+ */
+int F0514_DUNGEON_LinkThingToList_Compat(
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    unsigned short thingToLink,
+    unsigned short thingInList,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
+int F0515_DUNGEON_UnlinkThingFromList_Compat(
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    unsigned short thingToUnlink,
+    unsigned short thingInList,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 /* ---- Text data decoding (Phase 7 text-strings) ---- */
 
 /*

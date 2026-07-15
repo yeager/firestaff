@@ -1742,3 +1742,185 @@ unsigned short F0513_DUNGEON_GetSquareFirstObject_Compat(
     }
     return thing;
 }
+
+static int dungeon_thing_record_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing,
+    unsigned char** outRaw)
+{
+    int type;
+    int index;
+
+    if (!things || !outRaw || thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (type < 0 || type >= DUNGEON_THING_TYPE_COUNT ||
+        s_thingDataByteCount[type] < 2 || !things->rawThingData[type] ||
+        index < 0 || index >= things->thingCounts[type]) return 0;
+    *outRaw = things->rawThingData[type] + index * s_thingDataByteCount[type];
+    return 1;
+}
+
+static int dungeon_set_thing_next_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing,
+    unsigned short next)
+{
+    int type = THING_GET_TYPE(thing);
+    int index = THING_GET_INDEX(thing);
+    unsigned char* raw;
+
+    if (!dungeon_thing_record_compat(things, thing, &raw)) return 0;
+    raw[0] = (unsigned char)(next & 0xffu);
+    raw[1] = (unsigned char)(next >> 8);
+    switch (type) {
+    case THING_TYPE_DOOR: if (things->doors && index < things->doorCount) things->doors[index].next = next; break;
+    case THING_TYPE_TELEPORTER: if (things->teleporters && index < things->teleporterCount) things->teleporters[index].next = next; break;
+    case THING_TYPE_TEXTSTRING: if (things->textStrings && index < things->textStringCount) things->textStrings[index].next = next; break;
+    case THING_TYPE_SENSOR: if (things->sensors && index < things->sensorCount) things->sensors[index].next = next; break;
+    case THING_TYPE_GROUP: if (things->groups && index < things->groupCount) things->groups[index].next = next; break;
+    case THING_TYPE_WEAPON: if (things->weapons && index < things->weaponCount) things->weapons[index].next = next; break;
+    case THING_TYPE_ARMOUR: if (things->armours && index < things->armourCount) things->armours[index].next = next; break;
+    case THING_TYPE_SCROLL: if (things->scrolls && index < things->scrollCount) things->scrolls[index].next = next; break;
+    case THING_TYPE_POTION: if (things->potions && index < things->potionCount) things->potions[index].next = next; break;
+    case THING_TYPE_CONTAINER: if (things->containers && index < things->containerCount) things->containers[index].next = next; break;
+    case THING_TYPE_JUNK: if (things->junks && index < things->junkCount) things->junks[index].next = next; break;
+    case THING_TYPE_PROJECTILE: if (things->projectiles && index < things->projectileCount) things->projectiles[index].next = next; break;
+    case THING_TYPE_EXPLOSION: if (things->explosions && index < things->explosionCount) things->explosions[index].next = next; break;
+    default: break;
+    }
+    return 1;
+}
+
+static int dungeon_map_first_column_compat(
+    const struct DungeonDatState_Compat* dungeon, int mapIndex)
+{
+    int map;
+    int first = 0;
+    if (!dungeon || !dungeon->maps || mapIndex < 0 || mapIndex >= dungeon->header.mapCount) return -1;
+    for (map = 0; map < mapIndex; ++map) first += dungeon->maps[map].width;
+    return first;
+}
+
+int F0514_DUNGEON_LinkThingToList_Compat(
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    unsigned short thingToLink,
+    unsigned short thingInList,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int squareIndex;
+    int firstColumn;
+    int column;
+    int row;
+    int steps = 0;
+    int maximumSteps = 0;
+    unsigned char* square;
+    unsigned short tail;
+
+    if (thingToLink == THING_ENDOFLIST) return 1;
+    if (!dungeon || !things || !things->loaded || !dungeon_thing_record_compat(things, thingToLink, &square)) return 0;
+    if (!dungeon_set_thing_next_compat(things, thingToLink, THING_ENDOFLIST)) return 0;
+    if (mapX >= 0) {
+        if (!dungeon->tiles || !dungeon->maps || mapIndex < 0 || mapIndex >= dungeon->header.mapCount ||
+            mapX >= dungeon->maps[mapIndex].width || mapY < 0 || mapY >= dungeon->maps[mapIndex].height ||
+            !dungeon->tiles[mapIndex].squareData || !things->squareFirstThings ||
+            !dungeon->columnsCumulativeSquareFirstThingCount) return 0;
+        square = &dungeon->tiles[mapIndex].squareData[mapX * dungeon->maps[mapIndex].height + mapY];
+        if (!(*square & DUNGEON_SQUARE_MASK_THING_LIST)) {
+            firstColumn = dungeon_map_first_column_compat(dungeon, mapIndex);
+            column = firstColumn + mapX;
+            if (firstColumn < 0 || column < 0 || column >= dungeon->dungeonColumnCount ||
+                things->squareFirstThingCount <= 0 ||
+                things->squareFirstThings[things->squareFirstThingCount - 1] != THING_NONE) return 0;
+            squareIndex = dungeon->columnsCumulativeSquareFirstThingCount[column];
+            for (row = 0; row < mapY; ++row) {
+                if (dungeon->tiles[mapIndex].squareData[mapX * dungeon->maps[mapIndex].height + row] &
+                    DUNGEON_SQUARE_MASK_THING_LIST) ++squareIndex;
+            }
+            if (squareIndex < 0 || squareIndex >= things->squareFirstThingCount) return 0;
+            memmove(&things->squareFirstThings[squareIndex + 1],
+                    &things->squareFirstThings[squareIndex],
+                    (size_t)(things->squareFirstThingCount - squareIndex - 1) * sizeof(*things->squareFirstThings));
+            things->squareFirstThings[squareIndex] = thingToLink;
+            *square |= DUNGEON_SQUARE_MASK_THING_LIST;
+            for (++column; column < dungeon->dungeonColumnCount; ++column) {
+                ++dungeon->columnsCumulativeSquareFirstThingCount[column];
+            }
+            return 1;
+        }
+        thingInList = F0511_DUNGEON_GetSquareFirstThing_Compat(dungeon, things, mapIndex, mapX, mapY);
+    }
+    if (thingInList == THING_NONE || thingInList == THING_ENDOFLIST) return 0;
+    tail = thingInList;
+    for (row = 0; row < DUNGEON_THING_TYPE_COUNT; ++row) maximumSteps += things->thingCounts[row];
+    while (F0512_DUNGEON_GetThingNext_Compat(things, tail) != THING_ENDOFLIST) {
+        unsigned short next = F0512_DUNGEON_GetThingNext_Compat(things, tail);
+        if (++steps > maximumSteps || next == THING_NONE || next == tail ||
+            !dungeon_thing_record_compat(things, next, &square)) return 0;
+        tail = next;
+    }
+    return dungeon_set_thing_next_compat(things, tail, thingToLink);
+}
+
+int F0515_DUNGEON_UnlinkThingFromList_Compat(
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonThings_Compat* things,
+    unsigned short thingToUnlink,
+    unsigned short thingInList,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int squareIndex;
+    int firstColumn;
+    int column;
+    int steps = 0;
+    int maximumSteps = 0;
+    unsigned char* square;
+    unsigned short target = (unsigned short)(thingToUnlink & 0x3fffu);
+    unsigned short next;
+    unsigned short previous;
+
+    if (!dungeon || !things || !things->loaded || thingToUnlink == THING_ENDOFLIST ||
+        !dungeon_thing_record_compat(things, target, &square)) return 0;
+    if (mapX >= 0) {
+        squareIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(dungeon, mapIndex, mapX, mapY);
+        if (squareIndex < 0 || squareIndex >= things->squareFirstThingCount || !dungeon->tiles ||
+            !dungeon->maps || !dungeon->tiles[mapIndex].squareData) return 0;
+        square = &dungeon->tiles[mapIndex].squareData[mapX * dungeon->maps[mapIndex].height + mapY];
+        thingInList = things->squareFirstThings[squareIndex];
+        next = F0512_DUNGEON_GetThingNext_Compat(things, target);
+        if (next == THING_ENDOFLIST && (thingInList & 0x3fffu) == target) {
+            firstColumn = dungeon_map_first_column_compat(dungeon, mapIndex);
+            column = firstColumn + mapX;
+            if (column < 0 || column >= dungeon->dungeonColumnCount) return 0;
+            *square &= (unsigned char)~DUNGEON_SQUARE_MASK_THING_LIST;
+            memmove(&things->squareFirstThings[squareIndex],
+                    &things->squareFirstThings[squareIndex + 1],
+                    (size_t)(things->squareFirstThingCount - squareIndex - 1) * sizeof(*things->squareFirstThings));
+            things->squareFirstThings[things->squareFirstThingCount - 1] = THING_NONE;
+            for (++column; column < dungeon->dungeonColumnCount; ++column) {
+                --dungeon->columnsCumulativeSquareFirstThingCount[column];
+            }
+            return dungeon_set_thing_next_compat(things, target, THING_ENDOFLIST);
+        }
+        if ((thingInList & 0x3fffu) == target) {
+            things->squareFirstThings[squareIndex] = next;
+            return dungeon_set_thing_next_compat(things, target, THING_ENDOFLIST);
+        }
+    }
+    if (thingInList == THING_NONE || thingInList == THING_ENDOFLIST) return 0;
+    previous = thingInList;
+    next = F0512_DUNGEON_GetThingNext_Compat(things, previous);
+    for (column = 0; column < DUNGEON_THING_TYPE_COUNT; ++column) maximumSteps += things->thingCounts[column];
+    while ((next & 0x3fffu) != target) {
+        if (++steps > maximumSteps || next == THING_NONE || next == THING_ENDOFLIST || next == previous) return 0;
+        previous = next;
+        next = F0512_DUNGEON_GetThingNext_Compat(things, previous);
+    }
+    if (!dungeon_set_thing_next_compat(things, previous, F0512_DUNGEON_GetThingNext_Compat(things, next))) return 0;
+    return dungeon_set_thing_next_compat(things, target, THING_ENDOFLIST);
+}
