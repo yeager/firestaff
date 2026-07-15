@@ -85,6 +85,10 @@ static int csb_v1_runtime_dsa_has_wing_character(void *user,
 static int csb_v1_runtime_dsa_set_wing_talents(void *user,
                                                uint16_t fingerprint,
                                                uint32_t talents);
+static int csb_v1_runtime_dsa_get_info(void *user, uint16_t thing,
+                                        int *out_selector, int *out_state,
+                                        int *out_parameter_a,
+                                        int *out_parameter_b);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -16940,6 +16944,36 @@ static int csb_v1_runtime_dsa_set_wing_talents(void *user,
         (CSB_V1_RuntimeProfile *)user, fingerprint, talents);
 }
 
+static int csb_v1_runtime_dsa_get_info(void *user, uint16_t thing,
+                                        int *out_selector, int *out_state,
+                                        int *out_parameter_a,
+                                        int *out_parameter_b)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const uint8_t *record;
+    uint16_t word2;
+    int type;
+    int index;
+    int size;
+
+    if (!out_selector || !out_state || !out_parameter_a || !out_parameter_b ||
+        !profile || !profile->dungeon_handle) return 0;
+    record = csb_v1_dungeon_get_thing_record(profile->dungeon_handle, thing,
+                                              &type, &index, &size);
+    (void)index;
+    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 8) return 0;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
+    *out_selector = (int)((word2 >> 7) & 0x1fu);
+    *out_state = (int)((word2 >> 12) & 0x0fu);
+    *out_parameter_a = (int)((uint16_t)record[4] |
+                             ((uint16_t)record[5] << 8));
+    *out_parameter_b = (int)((uint16_t)record[6] |
+                             ((uint16_t)record[7] << 8));
+    return 1;
+}
+
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report)
@@ -19611,6 +19645,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_wing_talents = csb_v1_runtime_dsa_get_wing_talents;
     candidate.has_wing_character = csb_v1_runtime_dsa_has_wing_character;
     candidate.set_wing_talents = csb_v1_runtime_dsa_set_wing_talents;
+    candidate.get_dsa_info = csb_v1_runtime_dsa_get_info;
     candidate.wing_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];

@@ -15,6 +15,7 @@
 
 static int failures;
 static uint32_t last_party_talents[4];
+static int dsa_info_enabled;
 
 static int wing_talents_enabled;
 
@@ -36,6 +37,19 @@ static int has_wing_character(void *user, uint16_t fingerprint)
     (void)user;
     if (!wing_talents_enabled) return -1;
     return fingerprint == 1u ? 1 : 0;
+}
+
+static int get_dsa_info(void *user, uint16_t thing, int *out_selector,
+                        int *out_state, int *out_parameter_a,
+                        int *out_parameter_b)
+{
+    (void)user;
+    if (!dsa_info_enabled || thing != 0x123u) return 0;
+    *out_selector = 3;
+    *out_state = 9;
+    *out_parameter_a = 0x4567;
+    *out_parameter_b = 0x89ab;
+    return 1;
 }
 
 static void check(int condition, const char *message)
@@ -89,6 +103,7 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_wing_talents = get_wing_talents;
         context.has_wing_character = has_wing_character;
     }
+    if (dsa_info_enabled) context.get_dsa_info = get_dsa_info;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -170,6 +185,12 @@ int main(void)
         0x0686u, 3u, 0x0686u, 0u, 0x0a4bu
     };
     uint16_t local_fetch_bad_index[] = { 0x0686u, 100u, 0x098bu };
+    uint16_t dsa_info_fetch[] = {
+        0x0686u, 0x0123u, 0x0095u, 0x00cdu, 0x008du, 0x004du, 0x000du
+    };
+    uint16_t dsa_info_invalid[] = {
+        0x0686u, 0x0124u, 0x0095u, 0x00cdu, 0x008du, 0x004du, 0x000du
+    };
     uint16_t who_has_talent[] = { 0x0686u, 1u, 0x1d4bu, 0x000du };
     uint16_t where_is_party_character[] = {
         0x0686u, 0x2020u, 0x1d0bu, 0x000du
@@ -391,6 +412,24 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL &&
               parameters[0] == 77u,
           "FETCH rejects an out-of-bank source local without publication");
+
+    dsa_info_enabled = 1;
+    parameters[0] = parameters[1] = parameters[2] = parameters[3] = 0u;
+    check(run(&state, &action, dsa_info_fetch,
+              (int)(sizeof(dsa_info_fetch) / sizeof(dsa_info_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 3u && parameters[1] == 9u &&
+              parameters[2] == 0x4567u && parameters[3] == 0x89abu,
+          "DSAINFO@ returns source DB3 type-47 fields in stack order");
+    parameters[0] = parameters[1] = parameters[2] = parameters[3] = 0u;
+    check(run(&state, &action, dsa_info_invalid,
+              (int)(sizeof(dsa_info_invalid) /
+                    sizeof(dsa_info_invalid[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == UINT32_MAX && parameters[1] == UINT32_MAX &&
+              parameters[2] == UINT32_MAX && parameters[3] == UINT32_MAX,
+          "DSAINFO@ returns four source minus-one words for an invalid object");
+    dsa_info_enabled = 0;
 
     parameters[0] = 77u;
     check(run(&state, &action, who_has_talent,

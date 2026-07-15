@@ -776,6 +776,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     uint8_t skin;
     int32_t sv;
     int32_t sw;
+    int info_a;
+    int info_b;
 
     if (!stack || !depth || !forced_state || !variables || !variable_state ||
         !parameters || !context ||
@@ -958,6 +960,27 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         variables[v] = w;
         variable_state[v] = 1u;
+        break;
+    case 130u: /* STKOP_DSAInfoFetch, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:2439-2471 returns the four DB3 type-47 fields or
+         * four -1 words for every invalid indirect object. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        sv = -1;
+        sw = -1;
+        info_a = -1;
+        info_b = -1;
+        if (context->get_dsa_info &&
+            context->get_dsa_info(context->wing_user, (uint16_t)v,
+                                  &sv, &sw, &info_a, &info_b)) {
+            /* callback populated all four source fields */
+        } else {
+            info_a = -1;
+            info_b = -1;
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sv) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sw) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)info_a) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)info_b)) goto underflow;
         break;
     case 48u: /* STKOP_Loc2AbsCoord */
         /* CSBWin DSA.cpp:3253-3268 constructs LOCATIONREL from the source
@@ -1634,6 +1657,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_wing_talents = runner->get_wing_talents;
     context.has_wing_character = runner->has_wing_character;
     context.set_wing_talents = runner->set_wing_talents;
+    context.get_dsa_info = runner->get_dsa_info;
     context.wing_user = runner->wing_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
