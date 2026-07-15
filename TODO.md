@@ -8624,3 +8624,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     provenance, not a control-flow interpretation or record-selection proof.
     Remaining: capture a source-observed call, CD read, or data access from
     the copied routine.
+  - Update: the original US Track 02 bytes at the copied entry identify a
+    HuC6280 `BRA` opcode with a source-bound displacement. The producer now
+    emits its computed target, and admission requires exact opcode,
+    displacement, and target agreement. This proves one real control transfer
+    only; the branch target has no asserted loader, record, level, object, or
+    graphics meaning. Remaining: capture the first source-observed data read
+    or CD state after that target.
