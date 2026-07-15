@@ -637,7 +637,7 @@ static void run_real_launcher_handoff_if_available(void) {
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         for (row = 0; row < c017->height; ++row) {
-            if (memcmp(framebuffer + (size_t)(33 + row) * 320u + 48u,
+            if (memcmp(framebuffer + (size_t)(33 + row) * 320u,
                        c017->pixels + (size_t)row * c017->width,
                        c017->width) != 0) {
                 row_matches = 0;
@@ -677,7 +677,7 @@ static void run_real_launcher_handoff_if_available(void) {
                     (size_t)row * c040->width + (size_t)column];
                 unsigned char actual = framebuffer[
                     (size_t)(33 + 52 + row) * 320u +
-                    (size_t)(48 + 80 + column)];
+                    (size_t)(80 + column)];
                 if (expected == 6) {
                     expected = c017->pixels[
                         (size_t)(52 + row) * c017->width +
@@ -742,18 +742,38 @@ static void run_real_launcher_handoff_if_available(void) {
     {
         const M11_AssetSlot *loaded_c017 =
             M11_AssetLoader_Load(&view.assetLoader, 17u);
+        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        const CSB_V1_StartupRuntimeSurface_PC34 *session_c017 =
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
         unsigned char saved_c017_byte = 0;
+        int row_matches = 1;
+        int row;
 
         expect_true(loaded_c017 && loaded_c017->pixels,
-                    "M11 CSB live HUD exposes the renderer C017 source slot");
+                    "M11 CSB keeps the generic C017 cache separate from the terminal session");
         if (loaded_c017 && loaded_c017->pixels) {
             saved_c017_byte = loaded_c017->pixels[0];
             loaded_c017->pixels[0] ^= 0x0fu;
+            expect_true(M11_GameView_ToggleInventoryPanel(&view) == 1,
+                        "M11 CSB opens the terminal C017 panel without consulting the generic cache");
             memset(framebuffer, 0xff, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) ==
-                            0,
-                        "M11 CSB live HUD rejects a C017 byte mismatch against the terminal session");
+            for (row = 0; row < session_c017->height; ++row) {
+                if (memcmp(framebuffer + (size_t)(33 + row) * 320u,
+                           session_c017->pixels +
+                               (size_t)row * session_c017->width,
+                           session_c017->width) != 0) {
+                    row_matches = 0;
+                    break;
+                }
+            }
+            expect_true(row_matches,
+                        "M11 CSB terminal C017 ignores a mismatched generic cache");
+            expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
+                        "M11 CSB closes the terminal C017 panel after cache-isolation proof");
             loaded_c017->pixels[0] = saved_c017_byte;
         }
     }

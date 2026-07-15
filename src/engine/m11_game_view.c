@@ -1713,8 +1713,6 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
 {
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
-    const M11_AssetSlot *live_c017;
 
     if (!state || !state->csbStartupRuntimeAssetSession) {
         return 0;
@@ -1723,21 +1721,13 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
         state->csbStartupRuntimeAssetSession;
     /* ReDMCSB PANEL.C F0346/F0347 reaches C017 only after ENTRANCE.C F0806
      * completes.  C017/C040 must remain the same verified session that
-     * carried C001-C005, never a late asset-loader substitute. */
+     * carried C001-C005.  Do not re-open C017 through M11_AssetLoader: that
+     * is a second source owner and can reject the real PC3.4 session. */
     if (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
-        !terminal.valid || !terminal.c017_ready || !terminal.c040_ready ||
-        !state->assetsAvailable) {
+        !terminal.valid || !terminal.c017_ready || !terminal.c040_ready) {
         return 0;
     }
-    c017 = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-    live_c017 = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader,
-                                     17u);
-    return live_c017 && live_c017->pixels && c017->pixels &&
-        live_c017->width == (unsigned int)c017->width &&
-        live_c017->height == (unsigned int)c017->height &&
-        memcmp(live_c017->pixels, c017->pixels,
-               (size_t)c017->width * (size_t)c017->height) == 0;
+    return 1;
 }
 
 static int m11_csb_consume_c040_clear_session(M11_GameViewState *state)
@@ -1783,7 +1773,7 @@ static int m11_draw_csb_v1_inventory_surface(
     int framebufferHeight)
 {
     enum {
-        CSB_C017_VIEWPORT_X_PC34 = 48,
+        CSB_C017_VIEWPORT_X_PC34 = 0,
         CSB_C017_VIEWPORT_Y_PC34 = 33,
         CSB_C017_VIEWPORT_WIDTH_PC34 = 224,
         CSB_C017_VIEWPORT_HEIGHT_PC34 = 136,
@@ -1809,9 +1799,10 @@ static int m11_draw_csb_v1_inventory_surface(
         state->csbStartupRuntimeAssetSession;
     c017 = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-    /* ReDMCSB PANEL.C F0347 expands C017 directly into the viewport before
-     * it dispatches the active inventory panel.  This live CSB path consumes
-     * that terminal-session bitmap, never M11's generic inventory fallback. */
+    /* ReDMCSB PANEL.C:2376 expands C017 directly into G0296 at screen
+     * (0,33). F0346 then uses G0032's panel box x=80..223, y=52..124
+     * relative to that viewport. This live CSB path consumes only the
+     * terminal-session bitmaps, never M11's generic inventory path. */
     if (!c017->valid || !c017->pixels || c017->source_asset_id != 17 ||
         c017->width != CSB_C017_VIEWPORT_WIDTH_PC34 ||
         c017->height != CSB_C017_VIEWPORT_HEIGHT_PC34 ||
