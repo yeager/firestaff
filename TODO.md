@@ -70,6 +70,13 @@
   session; do not promote ISO-end bytes, Track 19 inventory, or generated
   fallback visuals as a substitute.
 
+- 2026-07-16 Theron Track02 post-envelope loader follow-up: the copied-code
+  successor receipt now keeps the second TII source-window offset when mapping
+  executed bytes back to the authenticated `$0b52` post-envelope continuation.
+  Remaining work is still an independently captured loader consumer that proves
+  object-table grammar or dungeon semantics; the current receipt remains
+  byte/control-flow provenance only and must not authorize fallback visuals.
+
 - 2026-07-16 DM1 original-save corpus follow-up: the public PC34 corpus
   roundtrip receipt now exposes scan rejection/truncation, Firestaff-export
   rejection, malformed-envelope rejection, first-failure, and provenance

@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Theron Track02 copied-continuation source binding:
+  fixed the initial post-envelope copied-code successor receipt so a second
+  TII that starts inside the authenticated continuation maps successor
+  instruction bytes back through `copy_source_offset + next_copy_offset`,
+  not just the destination-local offset. This keeps `$0b52` post-envelope
+  evidence byte-faithful and still leaves `level_or_object_semantics_proven=0`.
+  Verification: strict syntax checks for `src/theron/theron_v1_raw_loader_trace.c`
+  and `probes/theron/firestaff_theron_v1_raw_loader_trace_initial_level_handoff_probe.c`.
+
 - ✅ 2026-07-16 DM2 skproject ANIM file/blit slice:
   added source-mapped `ANIM_FILE_OPEN`, `ANIM_GET_FILE_SIZE`,
   `ANIM_READ_HUGE_FILE`, `ANIM_FILE_CLOSE`, `ANIM_STRCPY`,
