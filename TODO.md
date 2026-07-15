@@ -3574,6 +3574,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     direct-face capture request. These are executable source fields only;
     they do not identify a face command, transform, texture, palette, or
     output pixel. A real same-session Saturn trace must establish that link.
+  - 2026-07-15 direct texture-link corpus update: the complete canonical
+    LEV00--15 corpus yields zero direct Structure1F-to-Structure2 static
+    material targets through the verified owner/model/face route. The apparent
+    texture selector therefore remains unbound; do not promote it from a
+    shared image id. A real Saturn capture must establish the face-material
+    relation before any texture or VDP1 command can join this host route.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.

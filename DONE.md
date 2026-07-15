@@ -19380,6 +19380,14 @@ and `0x0a = 0xffff`; a changed or
 unverified executable blocks capture intake. This is a capture prerequisite,
 not a claim that those registers select a Structure1F face or prove a command,
 transform, material, palette, pixel, or rendering result.
+
+# Nexus Structure1F direct material corpus gate (2026-07-15)
+
+All canonical LEV00--15 files now pass a direct-owner material audit. It finds
+zero source-proven Structure1F-to-Structure2 static material links through the
+current owner/model/face relation, so the engine cannot turn a shared selector
+into a texture or VDP1 claim. The missing link remains an original-Saturn
+capture requirement; no material or renderer path was enabled.
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually
