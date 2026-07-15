@@ -6481,6 +6481,157 @@ int nexus_v1_vdp1_decode_mode1_lookup_texture(
     return 1;
 }
 
+static uint8_t nexus_v1_vdp_rgb5_to_u8(uint16_t value, unsigned shift)
+{
+    return (uint8_t)(((value >> shift) & 0x1fU) << 3);
+}
+
+int nexus_v1_vdp1_mode1_palette_pixels_match(
+    const Nexus_V1_Vdp1Mode1PalettePixel *resolved, size_t resolved_count,
+    const Nexus_V1_Vdp1Mode1PalettePixel *expected, size_t expected_count)
+{
+    if (!resolved || !expected || resolved_count == 0U ||
+        resolved_count != expected_count) return 0;
+    return memcmp(resolved, expected,
+                  resolved_count * sizeof(*resolved)) == 0;
+}
+
+int nexus_v1_vdp1_resolve_mode1_palette_capture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *texture_span, int texture_span_size,
+    const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
+    Nexus_V1_Vdp1Mode1PalettePixel *out_pixels, size_t out_pixel_count,
+    Nexus_V1_Vdp1Mode1PaletteResolveReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1Mode1PaletteResolveReceipt receipt;
+    Nexus_V1_Vdp1LookupDecodeReceipt lookup;
+    Nexus_V1_Vdp1TextureCommand parsed;
+    uint16_t *raw_codes = NULL;
+    uint16_t ramctl;
+    uint16_t craofb;
+    uint8_t cram_mode;
+    uint8_t sprite_offset;
+    uint32_t pixel_count;
+    uint32_t pixel;
+    int current_row_ended = 0;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!command || !vdp1_vram || !texture_span || !vdp2_capture ||
+        !out_pixels || command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        !vdp2_capture->colour_ram ||
+        vdp2_capture->colour_ram_size != NEXUS_V1_VDP2_CRAM_BYTES ||
+        !vdp2_capture->registers ||
+        vdp2_capture->registers_size <
+            NEXUS_V1_VDP2_CAPTURE_REGISTERS_MIN_BYTES ||
+        !vdp2_capture->original_saturn_capture_verified ||
+        nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.texture_command || parsed.colour_mode != 1U ||
+        !parsed.texture_source_range_valid || !parsed.texture_byte_count ||
+        parsed.texture_byte_count > (uint32_t)INT_MAX) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    pixel_count = (uint32_t)parsed.texture_width *
+        (uint32_t)parsed.texture_height;
+    if (pixel_count == 0U || pixel_count > out_pixel_count ||
+        pixel_count > (uint32_t)(SIZE_MAX / sizeof(*raw_codes))) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    ramctl = rl16(vdp2_capture->registers + NEXUS_V1_VDP2_RAMCTL_OFFSET);
+    craofb = rl16(vdp2_capture->registers + NEXUS_V1_VDP2_CRAOFB_OFFSET);
+    cram_mode = (uint8_t)((ramctl >> 12) & 0x3U);
+    sprite_offset = (uint8_t)((craofb >> 4) & 0x7U);
+    /* VDP2 RAMCTL CRMD=3 is expressly prohibited by Sega's VDP2 manual. */
+    if (cram_mode == 3U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    raw_codes = (uint16_t *)malloc((size_t)pixel_count * sizeof(*raw_codes));
+    if (!raw_codes || nexus_v1_vdp1_decode_mode1_lookup_texture(
+                          command, command_size, vdp1_vram, vdp1_vram_size,
+                          texture_span, texture_span_size, raw_codes,
+                          pixel_count, &lookup) != 1 || !lookup.valid) {
+        free(raw_codes);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.original_saturn_capture_verified = 1;
+    receipt.mode1_lookup_bound = 1;
+    receipt.vdp2_cram_bound = 1;
+    receipt.vdp2_registers_bound = 1;
+    receipt.vdp2_cram_mode = cram_mode;
+    receipt.vdp2_sprite_colour_ram_offset = sprite_offset;
+    receipt.source_index_zero_transparent = (parsed.draw_mode & 0x0040U) == 0U;
+    receipt.source_index_f_end_code = (parsed.draw_mode & 0x0080U) == 0U;
+    receipt.direct_rgb555_proven = 1;
+    receipt.vdp2_cram_address_proven = 1;
+    receipt.vdp2_cram_rgb_proven = 1;
+    receipt.output_pixel_count = pixel_count;
+    receipt.colour_ram_fnv1a64 = nexus_v1_fnv1a64(
+        vdp2_capture->colour_ram, (int)vdp2_capture->colour_ram_size);
+    receipt.registers_fnv1a64 = nexus_v1_fnv1a64(
+        vdp2_capture->registers, (int)vdp2_capture->registers_size);
+    for (pixel = 0U; pixel < pixel_count; ++pixel) {
+        Nexus_V1_Vdp1Mode1PalettePixel resolved;
+        uint8_t packed = texture_span[pixel >> 1U];
+        uint8_t index = (pixel & 1U) == 0U ? (uint8_t)(packed >> 4U) :
+            (uint8_t)(packed & 0x0fU);
+        uint32_t address;
+
+        if (pixel % parsed.texture_width == 0U) current_row_ended = 0;
+        memset(&resolved, 0, sizeof(resolved));
+        resolved.texture_index = index;
+        resolved.raw_colour_code = raw_codes[pixel];
+        if (current_row_ended) {
+            resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_SUPPRESSED_AFTER_END;
+        } else if (index == 0U && receipt.source_index_zero_transparent) {
+            resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT;
+        } else if (index == 0x0fU && receipt.source_index_f_end_code) {
+            resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_END_CODE;
+            current_row_ended = 1;
+        } else if ((resolved.raw_colour_code & 0x8000U) != 0U) {
+            /* VDP1 RGB-code format: bit 15 selects direct RGB; B:G:R are
+             * 5:5:5 at bits 14..10, 9..5, and 4..0. */
+            resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_RGB555;
+            resolved.red = nexus_v1_vdp_rgb5_to_u8(resolved.raw_colour_code, 0U);
+            resolved.green = nexus_v1_vdp_rgb5_to_u8(resolved.raw_colour_code, 5U);
+            resolved.blue = nexus_v1_vdp_rgb5_to_u8(resolved.raw_colour_code, 10U);
+        } else {
+            /* VDP2 sprite colour-bank output supplies 11 dot-colour bits.
+             * SPCAOS is added at the high three address bits; CRMD modes 0
+             * and 2 mirror/ignore bit 10 as documented. */
+            address = (uint32_t)(resolved.raw_colour_code & 0x07ffU) +
+                ((uint32_t)sprite_offset << 8);
+            if (cram_mode == 0U || cram_mode == 2U) address &= 0x03ffU;
+            else address &= 0x07ffU;
+            resolved.colour_ram_address = (uint16_t)address;
+            if (cram_mode == 2U) {
+                const uint8_t *entry = vdp2_capture->colour_ram + address * 4U;
+                resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB888;
+                resolved.red = entry[0];
+                resolved.green = entry[1];
+                resolved.blue = entry[2];
+            } else {
+                uint16_t colour = rl16(vdp2_capture->colour_ram + address * 2U);
+                resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB555;
+                resolved.red = nexus_v1_vdp_rgb5_to_u8(colour, 0U);
+                resolved.green = nexus_v1_vdp_rgb5_to_u8(colour, 5U);
+                resolved.blue = nexus_v1_vdp_rgb5_to_u8(colour, 10U);
+            }
+        }
+        out_pixels[pixel] = resolved;
+    }
+    free(raw_codes);
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_item_ibs_bind_0008_vdp1_capture(
     const Nexus_V1_ItemIbsFloorImage *floor,
     const uint8_t *item_ibs, int item_ibs_size, int item_ibs_hash_verified,

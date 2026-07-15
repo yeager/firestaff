@@ -19494,6 +19494,26 @@ This follows Sega's VDP1 User's Manual, sections 6.3--6.5; VDP2/CRAM and
 game-specific palette semantics remain blocked. Verification:
 `nexus_v1_vdp1_lookup_decode` and
 `nexus_v1_direct_static_material_capture` pass.
+
+# Nexus Structure1F VDP1 mode-1 VDP2 palette-chain verifier (2026-07-15)
+
+`nexus_v1_vdp1_resolve_mode1_palette_capture()` now consumes the documented
+mode-1 lookup result only alongside an explicitly attested full VDP2 CRAM
+capture (4 KiB) and its raw register image. It preserves the VDP1 source-index
+rules from `CMDPMOD`: index 0 is transparent when SPD is clear, and index F
+ends a source scanline when ECD is clear. A lookup value with bit 15 set is
+decoded as RGB555; otherwise the verifier adds captured `SPCAOS` to the
+11-bit sprite dot-colour value, applies captured `RAMCTL/CRMD` address rules,
+and reads the selected RGB555 or RGB888 CRAM entry. Prohibited CRMD=3,
+partial state, and unattested captures fail closed. The output is a
+source-independent inspection receipt, never a host draw or a claim of final
+Saturn composition. The focused test verifies transparent, direct-RGB,
+CRAM-addressed, end-code, post-end suppression, and capture-attestation
+rejection paths. It does not claim an actual Nexus output witness: a real
+capture's final VDP1/VDP2 pixel stream must still byte-match before rendering
+can be enabled. Verification: `nexus_v1_vdp1_lookup_decode`,
+`nexus_v1_direct_static_material_capture`, and
+`nexus_v1_dgn_geometry_readiness` pass.
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually
