@@ -2674,22 +2674,6 @@ static int dm2_v1_viewport_scaled_sprite_extent(int src_extent,
     return extent;
 }
 
-static DM2_V1_ViewportRect dm2_v1_centered_rect(int center_x,
-                                                int center_y,
-                                                int w,
-                                                int h)
-{
-    DM2_V1_ViewportRect rect = { 0, 0, 0, 0 };
-    if (w <= 0 || h <= 0) {
-        return rect;
-    }
-    rect.x = center_x - w / 2;
-    rect.y = center_y - h / 2;
-    rect.w = w;
-    rect.h = h;
-    return rect;
-}
-
 int dm2_v1_viewport_build_creature_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CreatureRenderPlan *out_plan)
@@ -2704,15 +2688,12 @@ int dm2_v1_viewport_build_creature_render_plan(
 
     /* skproject SKWIN/SkWinCore.cpp DRAW_TEMP_PICST/QUERY_DUNGEON_MAP_CHIP_PICT
      * selects a creature map-chip image before DRAW_CHIP_OF_MAGIC_MAP scales it
-     * at the visible-cell center. Keep identity, fallback, and health geometry
-     * in a renderer-owned plan so the draw pass only fetches/copies pixels. */
+     * at the visible-cell center. Keep only source-owned image identity and
+     * Rect14 geometry in the renderer-owned plan. */
     for (int i = 0; i < s->creature_count &&
                     i < DM2_MAX_CREATURES_PER_SQ; ++i) {
         const DM2_CreatureSprite *src = &s->creatures[i];
         DM2_V1_CreatureRender *row;
-        int fallback_size = 8;
-        int fallback_h = fallback_size;
-        int bar_w = 16;
 
         if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
             src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
@@ -2763,21 +2744,6 @@ int dm2_v1_viewport_build_creature_render_plan(
                 row->rect14_lateral_offset = (int8_t)rect14[1];
                 row->rect14_flip_mirror = rect14[10 + relative_direction] & 1u;
             }
-        }
-        row->fallback_color = (uint8_t)(11 + (src->creature_type & 7));
-        row->fallback_rect = dm2_v1_centered_rect(row->center_x,
-                                                  row->center_y,
-                                                  fallback_size,
-                                                  fallback_size);
-        if (src->health_pct < 100) {
-            row->health_bg_rect =
-                (DM2_V1_ViewportRect){ row->center_x - bar_w / 2,
-                                       row->center_y - fallback_h / 2 - 4,
-                                       bar_w,
-                                       1 };
-            row->health_fill_rect = row->health_bg_rect;
-            row->health_fill_rect.w =
-                (bar_w * (int)src->health_pct) / 100;
         }
     }
     return 1;
@@ -4700,8 +4666,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
      * skproject SKWIN/SkWinCore.cpp lines 10557-10619 routes creature
      * records through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) before
      * DRAW_CHIP_OF_MAGIC_MAP. This pass asks the boot-owned asset provider
-     * for that map-chip bitmap first and only falls back to the old
-     * placeholder when the GDAT image is unavailable. */
+     * for that map-chip bitmap; missing GDAT material remains no-draw. */
 
     if (!dm2_v1_viewport_build_creature_render_plan(s, &plan)) {
         return;
@@ -4722,7 +4687,6 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
     for (int i = 0; i < plan.creature_count; i++) {
         const DM2_V1_CreatureRender *c = &plan.creatures[i];
         int drawn_asset = 0;
-        int drawn_h = 8;
 
         s->last_creature_render_valid = 1;
         s->last_creature_render = *c;
@@ -4771,7 +4735,6 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                                                         src_stride,
                                                         s->party_dir,
                                                         &blit)) {
-                    drawn_h = blit.dst_rect.h;
                     dm2_v1_blit_scaled_material_bitmap_region_ex(
                         s, vp,
                         stride,
@@ -4819,25 +4782,6 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
             continue;
-        }
-        /* Health bar above creature */
-        if (c->health_bg_rect.w > 0) {
-            DM2_V1_ViewportRect bg = c->health_bg_rect;
-            DM2_V1_ViewportRect fill = c->health_fill_rect;
-            if (drawn_asset) {
-                bg.y = c->center_y - (drawn_h / 2) - 4;
-                fill.y = bg.y;
-            }
-            if (bg.y >= 0) {
-                for (int bx = bg.x; bx < bg.x + bg.w; bx++) {
-                    if ((unsigned)bx < (unsigned)DM2_VP_WIDTH)
-                        vp[bg.y * stride + bx] = 4;  /* dark red = damaged */
-                }
-                for (int bx = fill.x; bx < fill.x + fill.w; bx++) {
-                    if ((unsigned)bx < (unsigned)DM2_VP_WIDTH)
-                        vp[fill.y * stride + bx] = 2;  /* green = health */
-                }
-            }
         }
     }
 }
