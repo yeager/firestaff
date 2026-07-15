@@ -11,26 +11,36 @@ void DM1_V1_Title_InitPc34Compat(DM1_V1_TitleStatePc34* state) {
 }
 
 bool DM1_V1_Title_LoadGraphicsPc34Compat(DM1_V1_TitleStatePc34* state, const uint8_t* data, uint32_t size) {
+    uint8_t* screen0;
+    uint8_t* screen1;
+    uint8_t* title;
+
     if (!state || !data || size == 0) return false;
+    if (size != DM1_V1_TITLE_C001_BYTES_PC34) return false;
+    if (state->initialized) return false;
 
-    state->screen_buffers[0] = (uint8_t*)malloc(320 * 200);
-    state->screen_buffers[1] = (uint8_t*)malloc(320 * 200);
-    if (!state->screen_buffers[0] || !state->screen_buffers[1]) {
-        free(state->screen_buffers[0]);
-        free(state->screen_buffers[1]);
+    screen0 = (uint8_t*)malloc(DM1_V1_TITLE_C001_BYTES_PC34);
+    screen1 = (uint8_t*)malloc(DM1_V1_TITLE_C001_BYTES_PC34);
+    if (!screen0 || !screen1) {
+        free(screen0);
+        free(screen1);
         return false;
     }
 
-    state->title_bitmap = (uint8_t*)malloc(size);
-    if (!state->title_bitmap) {
-        free(state->screen_buffers[0]);
-        free(state->screen_buffers[1]);
+    title = (uint8_t*)malloc(size);
+    if (!title) {
+        free(screen0);
+        free(screen1);
         return false;
     }
 
-    memcpy(state->title_bitmap, data, size);
+    memcpy(title, data, size);
+    state->screen_buffers[0] = screen0;
+    state->screen_buffers[1] = screen1;
+    state->title_bitmap = title;
     state->title_bitmap_size = size;
     state->master_bitmap = state->title_bitmap;
+    state->current_zoom_step = 0;
     state->initialized = true;
     return true;
 }
@@ -49,6 +59,7 @@ bool DM1_V1_Title_AnimateZoomPc34Compat(DM1_V1_TitleStatePc34* state, uint32_t f
     state->zoom_steps[step].w = w;
     state->zoom_steps[step].h = h;
     state->zoom_steps[step].bitmap = state->title_bitmap;
+    state->current_zoom_step = step;
 
     return true;
 }
@@ -59,9 +70,9 @@ void DM1_V1_Title_DrawPc34Compat(DM1_V1_TitleStatePc34* state) {
     uint8_t* target = state->screen_buffers[state->active_buffer];
     if (!target) return;
 
-    memset(target, 0, 320 * 200);
+    memset(target, 0, DM1_V1_TITLE_C001_BYTES_PC34);
 
-    uint8_t step = state->active_buffer % DM1_TITLE_ZOOM_STEPS;
+    uint8_t step = state->current_zoom_step % DM1_TITLE_ZOOM_STEPS;
     DM1_V1_TitleZoomStepPc34* zs = &state->zoom_steps[step];
 
     if (zs->bitmap && zs->w > 0 && zs->h > 0) {
@@ -97,6 +108,16 @@ bool DM1_V1_Title_BuildRealAssetCaptureReceiptPc34Compat(
 
     if (!state || !out) return false;
     memset(out, 0, sizeof(*out));
+    if (!state->initialized ||
+        !state->title_bitmap ||
+        state->title_bitmap_size != DM1_V1_TITLE_C001_BYTES_PC34) {
+        out->requiresGraphicsDat = 1;
+        out->noHostRenderInference = 1;
+        out->reason =
+            "title-real-asset-capture: missing exact GRAPHICS.DAT C001 "
+            "320x200 source";
+        return false;
+    }
 
     step = frame % DM1_TITLE_ZOOM_STEPS;
     w = 48 + step * 16;

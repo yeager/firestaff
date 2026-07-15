@@ -244,13 +244,17 @@ static int check_m11_ts_state_cleanup(void) {
      * entrance surface. */
     DM1_V1_TitleStatePc34 state;
     DM1_V1_TitleRealAssetCaptureReceiptPc34 receipt;
-    uint8_t fakeBitmap[64];
-    uint8_t fakeBitmapAgain[64];
+    static uint8_t fakeBitmap[DM1_V1_TITLE_C001_BYTES_PC34];
+    static uint8_t fakeBitmapAgain[DM1_V1_TITLE_C001_BYTES_PC34];
+    uint8_t croppedBitmap[64];
     int i;
 
-    for (i = 0; i < 64; ++i) {
+    for (i = 0; i < DM1_V1_TITLE_C001_BYTES_PC34; ++i) {
         fakeBitmap[i] = (uint8_t)(i * 3 + 7);
         fakeBitmapAgain[i] = (uint8_t)(i * 5 + 11);
+    }
+    for (i = 0; i < 64; ++i) {
+        croppedBitmap[i] = (uint8_t)(i + 23);
     }
     memset(&state, 0xAA, sizeof(state));
     DM1_V1_Title_InitPc34Compat(&state);
@@ -267,8 +271,11 @@ static int check_m11_ts_state_cleanup(void) {
     DM1_V1_Title_InitPc34Compat(0);
     DM1_V1_Title_CleanupPc34Compat(0);
 
+    expect_truth("load rejects cropped non-C001 source",
+                 DM1_V1_Title_LoadGraphicsPc34Compat(
+                     &state, croppedBitmap, sizeof(croppedBitmap)) == 0, 1);
     if (!DM1_V1_Title_LoadGraphicsPc34Compat(&state, fakeBitmap, sizeof(fakeBitmap))) {
-        printf("FAIL load_title_graphics: load returned false on a valid 64-byte buffer\n");
+        printf("FAIL load_title_graphics: load returned false on an exact 320x200 C001 buffer\n");
         g_failures++;
         return 0;
     }
@@ -297,7 +304,7 @@ static int check_m11_ts_state_cleanup(void) {
         expect_signed("title real asset graphic",
                       receipt.graphicIndex,
                       DM1_V1_TITLE_GRAPHIC_TITLE_PRESENTS_PC34);
-        expect_u("title real asset byte size", receipt.loadedByteSize, (unsigned)sizeof(fakeBitmap));
+        expect_u("title real asset byte size", receipt.loadedByteSize, (unsigned)DM1_V1_TITLE_C001_BYTES_PC34);
         expect_signed("title real asset zoom step count", receipt.zoomStepCount, DM1_TITLE_ZOOM_STEPS);
         expect_signed("title real asset frame", receipt.zoomFrameIndex, 0);
         expect_signed("title real asset viewport x", receipt.viewportX, 136);
@@ -310,6 +317,12 @@ static int check_m11_ts_state_cleanup(void) {
         expect_truth("title real asset reason", receipt.reason != 0, 1);
     }
     DM1_V1_Title_DrawPc34Compat(&state);
+    expect_signed("draw leaves requested last zoom top-left pixel",
+                  state.screen_buffers[0][60 * DM1_V1_TITLE_C001_WIDTH_PC34],
+                  fakeBitmap[0]);
+    expect_signed("draw does not fall back to active-buffer zoom-0 placement",
+                  state.screen_buffers[0][60 * DM1_V1_TITLE_C001_WIDTH_PC34] != 0,
+                  1);
     DM1_V1_Title_SetCreditsPalettePc34Compat(&state);
 
     DM1_V1_Title_CleanupPc34Compat(&state);
@@ -344,10 +357,12 @@ static int check_m11_ts_animate_zoom_skip(void) {
      * visible garbage in the entrance transition. */
     DM1_V1_TitleStatePc34 cleanState;
     DM1_V1_TitleStatePc34 loadedState;
-    uint8_t fakeBitmap[64];
+    static uint8_t fakeBitmap[DM1_V1_TITLE_C001_BYTES_PC34];
     int i;
 
-    for (i = 0; i < 64; ++i) fakeBitmap[i] = (uint8_t)(i + 1);
+    for (i = 0; i < DM1_V1_TITLE_C001_BYTES_PC34; ++i) {
+        fakeBitmap[i] = (uint8_t)(i + 1);
+    }
 
     memset(&cleanState, 0xAA, sizeof(cleanState));
     DM1_V1_Title_InitPc34Compat(&cleanState);
