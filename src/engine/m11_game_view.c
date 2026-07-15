@@ -21671,7 +21671,10 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
         mask = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                     binding.maskGraphicIndex);
         if (!mask || !mask->loaded || !mask->pixels || mask->width <= 0 || mask->height <= 0) {
-            mask = NULL;
+            /* F0113's C070..C075 mask owns the projected teleporter shape.
+             * An unmasked C076 sample would be a different field, not a
+             * degraded form of the original one. */
+            return 0;
         }
     }
     for (y = 0; y < dstH; ++y) {

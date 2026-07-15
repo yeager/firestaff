@@ -11,6 +11,12 @@
   TT_1 successor through `SetTimer` allocation, sequence, and heap ownership.
   The staged event is removed if the complete source pool transaction cannot
   commit. Focused coverage proves a conversion moves from slot 1 to slot 0.
+=======
+- ✅ 2026-07-15 DM1 ReDMCSB F0113 source teleporter-field gate: the live M11
+  consumer now requires both decoded C076 field pixels and every required
+  C070..C075 projection mask before it writes a viewport pixel. Missing or
+   malformed masks no longer expose an unmasked, geometrically incorrect field.
+   Focused coverage: `m11_dm1_field_asset_fail_closed`.
 
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_7 pool mutation: deferred falsewall CLEAR
   now stages its +1 successor through the source `DeleteTimer`/`SetTimer`

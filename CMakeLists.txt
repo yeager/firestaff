@@ -20525,6 +20525,22 @@ if(NOT TARGET test_m11_dm1_action_spell_asset_fail_closed)
     )
 endif()
 
+if(NOT TARGET test_m11_dm1_field_asset_fail_closed)
+    add_executable(test_m11_dm1_field_asset_fail_closed
+        tests/test_m11_dm1_field_asset_fail_closed.c
+    )
+    target_compile_definitions(test_m11_dm1_field_asset_fail_closed PRIVATE
+        FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_field_asset_fail_closed PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_dm1_field_asset_fail_closed
+        COMMAND test_m11_dm1_field_asset_fail_closed
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     add_executable(test_dm1_v1_skill_experience_pc34_compat
         tests/test_dm1_v1_skill_experience_pc34_compat.c
