@@ -37466,9 +37466,12 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
                                                   int framebufferWidth,
                                                   int framebufferHeight) {
     const struct ChampionState_Compat* champ;
+    const M11_AssetSlot* panel;
+    const M11_AssetSlot* food;
+    const M11_AssetSlot* water;
+    const M11_AssetSlot* poison = NULL;
     int championIndex;
     int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
-    int drewPanel = 0;
 
     if (!state || !framebuffer || !state->v1FoodWaterPanelActive ||
         !state->inventoryPanelActive || state->showDebugHUD) {
@@ -37490,57 +37493,71 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
         panelH = panelRect.h;
     }
 
-    if (state->assetsAvailable) {
-        const M11_AssetSlot* panel = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)dm1_v1_graphic_panel_empty_pc34());
-        if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
-            M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
-                                 M11_VIEWPORT_X + panelX,
-                                 M11_VIEWPORT_Y + panelY,
-                                 M11_COLOR_RED);
-            drewPanel = 1;
-        }
+    /* PANEL.C F0345:1597-1606 owns C020/C030/C031 and, conditionally,
+     * C032.  These indexed surfaces and their C101/C500..C502 geometry are
+     * part of one panel transaction.  A hand-drawn box or partial label set
+     * changes the original layout, so incomplete PC34 material consumes the
+     * route without drawing a substitute. */
+    if (!state->assetsAvailable) {
+        return 1;
     }
-    if (!drewPanel) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_LIGHT_GRAY);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_BROWN);
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)dm1_v1_graphic_panel_empty_pc34());
+    food = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)dm1_v1_graphic_food_label_pc34());
+    water = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)dm1_v1_graphic_water_label_pc34());
+    if (!panel || !food || !water ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_panel_empty_pc34(),
+            dm1_v1_graphic_panel_empty_pc34(),
+            panel->loaded, panel->pixels != NULL,
+            panel->width, panel->height, panelW, panelH) ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_food_label_pc34(),
+            dm1_v1_graphic_food_label_pc34(),
+            food->loaded, food->pixels != NULL,
+            food->width, food->height, 34, 9) ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_water_label_pc34(),
+            dm1_v1_graphic_water_label_pc34(),
+            water->loaded, water->pixels != NULL,
+            water->width, water->height, 46, 9)) {
+        return 1;
+    }
+    if (champ->poisonDose > 0) {
+        poison = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
+        if (!poison ||
+            !DM1_ChampionPanel_AssetSurfaceAccepted(
+                dm1_v1_graphic_poisoned_label_pc34(),
+                dm1_v1_graphic_poisoned_label_pc34(),
+                poison->loaded, poison->pixels != NULL,
+                poison->width, poison->height, 96, 15)) {
+            return 1;
+        }
     }
 
-    if (state->assetsAvailable) {
-        const M11_AssetSlot* food = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)dm1_v1_graphic_food_label_pc34());
-        const M11_AssetSlot* water = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)dm1_v1_graphic_water_label_pc34());
-        if (food && food->pixels && food->width > 0 && food->height > 0) {
-            M11_AssetLoader_Blit(food, framebuffer, framebufferWidth, framebufferHeight,
-                                 M11_VIEWPORT_X + panelX + 32,
-                                 M11_VIEWPORT_Y + panelY + 13 - (((int)food->height + 1) / 2),
-                                 M11_COLOR_DARK_GRAY);
-        }
-        if (water && water->pixels && water->width > 0 && water->height > 0) {
-            M11_AssetLoader_Blit(water, framebuffer, framebufferWidth, framebufferHeight,
-                                 M11_VIEWPORT_X + panelX + 32,
-                                 M11_VIEWPORT_Y + panelY + 36 - (((int)water->height + 1) / 2),
-                                 M11_COLOR_DARK_GRAY);
-        }
-        if (champ->poisonDose > 0) {
-            const M11_AssetSlot* poison = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
-            if (poison && poison->pixels && poison->width > 0 && poison->height > 0) {
-                M11_AssetLoader_Blit(poison, framebuffer, framebufferWidth, framebufferHeight,
-                                     M11_VIEWPORT_X + panelX + 32,
-                                     M11_VIEWPORT_Y + panelY + 58 - (((int)poison->height + 1) / 2),
-                                     M11_COLOR_DARK_GRAY);
-            }
-        }
+    M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                         M11_COLOR_RED);
+    /* F0658 resolves C500/C501/C502 before it blits with C12 transparent.
+     * The retained zone geometry is viewport-relative: C500=(112,60),
+     * C501=(112,83), C502=(112,102). */
+    M11_AssetLoader_Blit(food, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X + panelX + 32,
+                         M11_VIEWPORT_Y + panelY + 13 - (((int)food->height + 1) / 2),
+                         M11_COLOR_DARK_GRAY);
+    M11_AssetLoader_Blit(water, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X + panelX + 32,
+                         M11_VIEWPORT_Y + panelY + 36 - (((int)water->height + 1) / 2),
+                         M11_COLOR_DARK_GRAY);
+    if (poison) {
+        M11_AssetLoader_Blit(poison, framebuffer, framebufferWidth, framebufferHeight,
+                             M11_VIEWPORT_X + panelX + 32,
+                             M11_VIEWPORT_Y + panelY + 58 - (((int)poison->height + 1) / 2),
+                             M11_COLOR_DARK_GRAY);
     }
 
     {
