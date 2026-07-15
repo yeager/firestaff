@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define DM2_V1_ANIM_MAX_FILE_HANDLES 16
@@ -221,6 +222,50 @@ int dm2_v1_anim_toupper(int value,
     }
     dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_TOUPPER", 1308, 0);
     return (unsigned char)toupper((unsigned char)value);
+}
+
+void *dm2_v1_anim_farmalloc(uint32_t size,
+                            DM2_V1_AnimFileReceipt *out_receipt)
+{
+    void *buffer;
+
+    if (size == 0u) {
+        if (out_receipt) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+        }
+        return NULL;
+    }
+    buffer = malloc((size_t)size);
+    if (!buffer) {
+        if (out_receipt) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+        }
+        return NULL;
+    }
+    dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_farmalloc", 934, 0);
+    if (out_receipt) {
+        out_receipt->requested_bytes = size;
+        out_receipt->transferred_bytes = size;
+    }
+    return buffer;
+}
+
+void dm2_v1_anim_farfree(void *buffer,
+                         DM2_V1_AnimFileReceipt *out_receipt)
+{
+    if (buffer) {
+        free(buffer);
+    }
+    dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_farfree", 1054, 0);
+}
+
+uint32_t dm2_v1_anim_farcoreleft(DM2_V1_AnimFileReceipt *out_receipt)
+{
+    dm2_v1_anim_file_receipt_set(out_receipt, "ANIM_farcoreleft", 1060, 0);
+    if (out_receipt) {
+        out_receipt->file_size = 1024u * 1024u;
+    }
+    return 1024u * 1024u;
 }
 
 int dm2_v1_anim_setpixel_seq_4bpp(uint8_t *dst,
