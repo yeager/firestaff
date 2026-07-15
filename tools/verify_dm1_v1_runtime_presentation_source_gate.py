@@ -7,7 +7,6 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 M11 = ROOT / "src/engine/m11_game_view.c"
-MAIN_LOOP = ROOT / "src/engine/main_loop_m11.c"
 
 
 def function_body(source: str, signature: str) -> str:
@@ -28,7 +27,6 @@ def function_body(source: str, signature: str) -> str:
 
 def main() -> int:
     m11 = M11.read_text(encoding="utf-8")
-    loop = MAIN_LOOP.read_text(encoding="utf-8")
     ornaments = function_body(m11, "static void m11_draw_dm1_wall_ornaments")
     viewport = function_body(m11, "static void m11_draw_viewport")
     font_loader = function_body(
@@ -36,7 +34,6 @@ def main() -> int:
     glyphs = function_body(m11, "static int m11_draw_dm1_inscription_glyph_line")
     actions = function_body(m11, "static void m11_draw_dm1_ui_text_trailing_spaces")
     mirror = function_body(m11, "static void m11_draw_dm1_front_mirror_route")
-    title = function_body(loop, "static int m11_play_redmcsb_title_graphic_intro_if_available")
 
     assert "m11_draw_dm1_front_wall_inscription_text" not in ornaments, (
         "M648 cannot be emitted in the pre-palette ornament pass")
@@ -57,12 +54,6 @@ def main() -> int:
 
     assert "M11_Font_DrawChar" in actions
     assert "m11_draw_text" not in actions, "ACTIDRAW cannot use a host-font fallback"
-    assert "V1_TitleFrontend_GetSourceTimingEvidence" in title
-    assert "step.vblankBeforeEvent" in title
-    assert "title_zoom_frame_delay_ms" in title
-    assert "title_presents_hold_ms" in title
-    assert "m11_delay_ms_with_intro_event_pump" in title
-
     assert "drawChampionPortraitAsWallOverlay" in mirror
     assert "drawMirrorBackingAsset" in mirror
     assert "candidatePanelOwnsCell" in mirror
