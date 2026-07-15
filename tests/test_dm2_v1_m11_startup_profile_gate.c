@@ -2227,9 +2227,11 @@ int main(void) {
             expect_true(M11_GameView_HandleInput(&view,
                                                  M12_MENU_INPUT_INVENTORY_TOGGLE) ==
                             M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 inventory toggle opens the startup inventory panel");
-            expect_true(M11_GameView_IsInventoryPanelActive(&view),
-                        "M11 DM2 startup inventory panel is active");
+                        "M11 DM2 inventory toggle is handled without opening a DM1 panel");
+            expect_true(!M11_GameView_IsInventoryPanelActive(&view) &&
+                        strstr(view.lastOutcome,
+                               "DM2 INVENTORY GDAT REQUIRED") != NULL,
+                        "M11 DM2 inventory remains blocked until its GDAT layout is bound");
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
@@ -2248,12 +2250,8 @@ int main(void) {
                                                      icon_w,
                                                      icon_h),
                         "M11 DM2 inventory draw keeps the GDAT leader-hand icon visible");
-            expect_true(M11_GameView_HandleInput(&view,
-                                                 M12_MENU_INPUT_BACK) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 Back closes the startup inventory panel");
             expect_true(!M11_GameView_IsInventoryPanelActive(&view),
-                        "M11 DM2 startup inventory panel closes before launcher return");
+                        "M11 DM2 startup inventory panel remains unavailable");
             expect_true(M11_GameView_HandlePointerMove(&view, 319, 199) ==
                             M11_GAME_INPUT_REDRAW,
                         "M11 DM2 pointer motion redraws at the framebuffer edge");

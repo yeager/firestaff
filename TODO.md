@@ -6983,6 +6983,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `GRAPHICSSET` dialogue-shell/glyph IMG3-plus-local-palette receipt for
     field `0xfd` into frame ownership. It remains evidence-only and no-draw.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
+  - 2026-07-15 update: DM2's M11 inventory-toggle route now fails closed rather
+    than opening the shared DM1 `GRAPHICS.DAT` inventory workbench. SKProject
+    `CHANGE_VIEWPORT_TO_INVENTORY` owns DM2's `CHAMPIONS`/
+    `INTERFACE_GENERAL` GDAT surfaces and click table; those bytes have not
+    yet been bound into a complete inventory layout. Existing DM2 GDAT object
+    icons stay source-owned, but no DM1 slot panel, host text, or input
+    transaction may be presented around them. Remaining: decode and bind the
+    complete original DM2 inventory layout/event route.
   - 2026-07-15 update: M11 no longer presents or drives the former fixed-coordinate
     catalog shop overlay. SKProject `SkWinCore::_32cb_0f82_SHOP_GLASS` binds a
     shop through the active G1 wall actuator, `WALL_GFX` image offsets, `dt08`

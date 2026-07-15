@@ -1,7 +1,13 @@
 # Firestaff DONE - Completed Work
 
 - 2026-07-15 Nexus DGN raster fallback removal: textured quads with missing
-  material now no-draw instead of becoming flat-color substitute geometry.
+   material now no-draw instead of becoming flat-color substitute geometry.
+
+- ✅ 2026-07-15 DM2 M11 inventory-panel source gate: removed the active DM1
+  `GRAPHICS.DAT` inventory workbench from the DM2 M11 path. DM2 inventory
+  toggles now report `DM2 INVENTORY GDAT REQUIRED` and preserve the verified
+  dungeon frame, because SKProject `CHANGE_VIEWPORT_TO_INVENTORY` owns a
+  separate `CHAMPIONS`/`INTERFACE_GENERAL` GDAT layout and click route.
 
 - 2026-07-15 DM1 F0111 D3 door-front real-media gate: removed the active
   host-colored fallback from the F0676/F0677 C3700/C3710 panel route. It now
