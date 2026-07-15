@@ -3319,6 +3319,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   different framing/opcode grammar or termination rule. M12 availability now
   remains a canonical-data gate and cannot claim startup capture readiness;
   only the runtime full-start package may promote that receipt.
+  - 2026-07-15 package-tail update: canonical `MENU.BPK` has one strict EOF
+    `PALT` record (524 bytes: a 256-entry raw BE16 table). Firestaff now
+    retains that bounded source framing and entry-byte fingerprint, but does
+    not infer BGR555/CLUT semantics, ownership by a PRS3 surface, colour
+    expansion, or a menu draw route. Those still require original Saturn
+    VDP1/palette evidence.
 - 🔧 2026-07-11 Nexus PRS3 loader-media follow-up: the MD5-verified Japanese
   `DM.BIN` has exactly two `PRS3` markers: one in executable-code territory
   and one embedded record (`PRS3`, version 1, target 4096, first word 997).

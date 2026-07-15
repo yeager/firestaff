@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_palette.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
@@ -5063,6 +5064,76 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
           "missing MENU.BPK cannot promote launcher main-menu readiness");
 }
 
+static void test_menu_bpk_palette_trailer_stays_opaque(void) {
+    uint8_t archive[552];
+    Nexus_V1_BpkPaletteTrailerReceipt palette;
+    size_t index;
+    const char *data_dir;
+
+    memset(archive, 0, sizeof(archive));
+    wb32(archive + 0, NEXUS_V1_BPK_MAGIC_BPPK);
+    wb32(archive + 4, (uint32_t)sizeof(archive));
+    wb32(archive + 12, NEXUS_V1_BPK_MAGIC_BMPD);
+    wb32(archive + 16, (uint32_t)sizeof(archive) - 12U);
+    wb32(archive + 20, 1U);
+    wb32(archive + 24, 28U);
+    wb32(archive + 28, NEXUS_V1_BPK_MAGIC_PALT);
+    wb32(archive + 32, 524U);
+    wb32(archive + 36, 256U);
+    for (index = 0; index < 512U; ++index) archive[40U + index] = (uint8_t)index;
+
+    CHECK(nexus_v1_bpk_archive_inspect_palette_trailer(
+              archive, sizeof(archive), &palette) == 0 && palette.valid &&
+          palette.record_offset == 28U && palette.record_bytes == 524U &&
+          palette.entry_count == 256U && palette.entry_bytes == 512U &&
+          palette.entry_bytes_fnv1a64 == fnv1a64(archive + 40U, 512U) &&
+          palette.raw_entries_are_be16 && !palette.palette_format_proven &&
+          !palette.decoder_promoted && !palette.fallback_visuals_permitted,
+          "bounded MENU.BPK PALT trailer stays opaque without palette promotion");
+    wb32(archive + 32, 522U);
+    CHECK(nexus_v1_bpk_archive_inspect_palette_trailer(
+              archive, sizeof(archive), &palette) != 0 && !palette.valid &&
+          !palette.fallback_visuals_permitted,
+          "malformed MENU.BPK PALT trailer stays blocked");
+
+    data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    if (data_dir && data_dir[0]) {
+        char path[1024];
+        FILE *file;
+        long size;
+        uint8_t *real_archive;
+
+        snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir);
+        file = fopen(path, "rb");
+        CHECK(file != NULL, "real MENU.BPK PALT source opens");
+        if (!file) return;
+        CHECK(asset_file_matches_md5(path, "c2776768ff25287c79013a1452253ca0"),
+              "real MENU.BPK PALT source matches canonical MD5");
+        if (!asset_file_matches_md5(path, "c2776768ff25287c79013a1452253ca0") ||
+            fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+            fseek(file, 0, SEEK_SET) != 0 ||
+            !(real_archive = (uint8_t *)malloc((size_t)size))) {
+            fclose(file);
+            return;
+        }
+        CHECK(fread(real_archive, 1, (size_t)size, file) == (size_t)size,
+              "real MENU.BPK PALT source reads completely");
+        fclose(file);
+        if (nexus_v1_bpk_archive_inspect_palette_trailer(
+                real_archive, (size_t)size, &palette) == 0) {
+            CHECK(palette.valid && palette.record_bytes == 524U &&
+                  palette.entry_count == 256U && palette.entry_bytes == 512U &&
+                  palette.entry_bytes_fnv1a64 != 0U &&
+                  palette.raw_entries_are_be16 && !palette.palette_format_proven &&
+                  !palette.decoder_promoted && !palette.fallback_visuals_permitted,
+                  "canonical MENU.BPK PALT trailer remains opaque source data");
+        } else {
+            CHECK(0, "canonical MENU.BPK PALT trailer keeps its bounded layout");
+        }
+        free(real_archive);
+    }
+}
+
 static void test_menu_bpk_handoff_requires_canonical_source(void) {
     Nexus_V1_Engine engine;
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
@@ -5394,6 +5465,7 @@ int main(void) {
     test_vdp1_command_sidecar_stays_no_draw();
     test_palette_source_gate();
     test_menu_bpk_missing_handoff_blocks_fallback();
+    test_menu_bpk_palette_trailer_stays_opaque();
     test_menu_bpk_handoff_requires_canonical_source();
     test_slev_capture_target_binds_loaded_bytes();
     test_sal_capture_target_binds_loaded_bytes();
