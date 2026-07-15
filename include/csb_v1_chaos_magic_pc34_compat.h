@@ -286,6 +286,11 @@ typedef int (*CSB_V1_CSBWinDSAGetMasteryFn)(
  * coherent snapshot. The source owner must decline when any word is absent. */
 typedef int (*CSB_V1_CSBWinDSAGetPartyInfoFn)(
     void *user, uint32_t out_values[12]);
+/* DSA.cpp STKOP_CharFetch has source-owned hand-character, Wings, pending
+ * damage, attribute, and skill rules. A return of zero means the selector is
+ * invalid in that exact owner and therefore produces the source zero image. */
+typedef int (*CSB_V1_CSBWinDSAGetCharacterInfoFn)(
+    void *user, int32_t character_selector, uint32_t out_values[59]);
 
 typedef struct {
     uint32_t master_location;
@@ -353,6 +358,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
     CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     CSB_V1_CSBWinDSAGetPartyInfoFn get_party_info;
+    CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -614,6 +620,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
     CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     CSB_V1_CSBWinDSAGetPartyInfoFn get_party_info;
+    CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
