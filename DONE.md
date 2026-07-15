@@ -4674,6 +4674,15 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   successor or replacement movement/sound behavior. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-15 CSBWin `TT_60`/`TT_61` queue-retirement correction: the direct
+  source route no longer changes an expired queue entry to `NONE` before
+  F0239 extracts it. It retires the exact saved TIMER first, then neutralizes
+  the dispatch receipt before M10 side effects. This preserves the
+  authenticated `+5` queue owner and keeps malformed, off-party, and Lord
+  Chaos receipts fail-closed. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge` and
+  `test_csb_v1_m11_launcher_handoff_boundary`.
+
 - 2026-07-13 CSBWin saved `TT_22` runtime: an authenticated imported timer
   now preserves CSBWin's documented restart no-op rather than acquiring a
   generic C22 action. Source: `CSBCode.cpp:6564-6569`. Verification:

@@ -2249,6 +2249,7 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     struct DM1_EventQueue_V1 queue_snapshot;
     uint16_t source_queue_slots[DM1_DISPATCH_MAX_PER_TICK];
     uint16_t source_event_indices[DM1_DISPATCH_MAX_PER_TICK];
+    uint8_t source_generator_consumed[DM1_DISPATCH_MAX_PER_TICK] = { 0 };
     int dispatched;
     int source_count = 0;
     int i;
@@ -2275,9 +2276,11 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
         if (csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
                 profile, source_event_indices[i], source_queue_slots[i])) {
             /* CSBWin owns TT_60/TT_61 before the shared M10 C60/C61 group
-             * dispatch can reinterpret timerObj8 as generic event payload. */
-            profile->timeline_queue.events[source_event_indices[i]].type =
-                DM1_EVENT_NONE;
+             * dispatch can reinterpret timerObj8 as generic event payload.
+             * Do not alter the queued EVENT before F0239 extracts it: the
+             * queue still has to retire the exact saved TIMER slot.  Mark its
+             * dispatch receipt instead, below, before any M10 side effects. */
+            source_generator_consumed[i] = 1u;
         }
     }
     memset(&profile->last_timeline_dispatch, 0,
@@ -2290,6 +2293,16 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
             if (source_event_indices[i] < DM1_EVENT_MAX_COUNT) {
                 profile->csbwin_timeline_event_queue_slot[source_event_indices[i]] =
                     CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+            }
+            if (source_generator_consumed[i]) {
+                /* The source handler either requeued the authenticated
+                 * ProcessTimer60and61 branch or consumed its unsupported
+                 * receipt.  In both cases shared C60/C61 must see nothing. */
+                profile->last_timeline_dispatch.records[i].eventType =
+                    DM1_EVENT_NONE;
+                profile->last_timeline_dispatch.records[i].dispatchKind =
+                    DM1_DISPATCH_UNSUPPORTED;
+                continue;
             }
             if (csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                     profile, &profile->last_timeline_dispatch.records[i],
