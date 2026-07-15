@@ -1022,6 +1022,13 @@ void dm2_v1_viewport_set_source_materials_required(
 {
     if (!s) return;
     s->source_materials_required = required ? 1 : 0;
+    if (s->source_materials_required) {
+        const uint8_t light = s->gdat_c_light_receipt_ready
+            ? s->gdat_c_light_level : 0u;
+        for (int i = 0; i < DM2_SQ_COUNT; ++i) {
+            s->squares[i].light_level = light;
+        }
+    }
     s->dirty = 1;
 }
 
@@ -1075,6 +1082,43 @@ void dm2_v1_viewport_set_gdat_scene_control(
              s->gdat_scene_control_hash)) {
         s->gdat_wall_material_plan = NULL;
         s->gdat_wall_material_plan_scene_control_hash = 0u;
+    }
+    /* A c_light result has no meaning after UPDATE_GFXSET changes its owning
+     * source transaction.  Do not retain it across a map/style handoff. */
+    if (!s->gdat_scene_control_ready ||
+        s->gdat_c_light_scene_control_hash != s->gdat_scene_control_hash) {
+        s->gdat_c_light_receipt_ready = 0;
+        s->gdat_c_light_level = 0u;
+        s->gdat_c_light_scene_control_hash = 0u;
+        s->gdat_c_light_source_state_hash = 0u;
+        s->gdat_c_light_receipt_hash = 0u;
+    }
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_c_light_receipt(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_CLightM11Receipt *receipt)
+{
+    int valid;
+
+    if (!s) return;
+    valid = receipt && receipt->valid && receipt->receipt_hash != 0u &&
+        receipt->source_state_hash != 0u &&
+        s->gdat_scene_control_ready &&
+        receipt->graphicsset == (uint8_t)s->gdat_scene_material_index &&
+        receipt->scene_control_hash == s->gdat_scene_control_hash;
+    s->gdat_c_light_receipt_ready = valid ? 1 : 0;
+    s->gdat_c_light_level = valid ? receipt->light_level : 0u;
+    s->gdat_c_light_scene_control_hash = valid
+        ? receipt->scene_control_hash : 0u;
+    s->gdat_c_light_source_state_hash = valid
+        ? receipt->source_state_hash : 0u;
+    s->gdat_c_light_receipt_hash = valid ? receipt->receipt_hash : 0u;
+    if (s->source_materials_required) {
+        for (int i = 0; i < DM2_SQ_COUNT; ++i) {
+            s->squares[i].light_level = s->gdat_c_light_level;
+        }
     }
     s->dirty = 1;
 }
@@ -6389,6 +6433,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->gdat_material_palette_wall_consumed_count = 0;
     s->gdat_material_palette_door_frame_consumed_count = 0;
     s->gdat_scene_light_consumed_count = 0;
+    s->gdat_c_light_consumed_count = 0;
     s->gdat_scene_material_consumed_count = 0;
     s->gdat_scene_weather_consumed_count = 0;
     s->gdat_sprite_palette_consumed_count = 0;
@@ -6399,6 +6444,16 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;
     s->fallback_hud_portrait_drawn_count = 0;
+
+    /* c_gui_vp consumes the already recomputed light state as part of the
+     * dungeon frame setup. This is deliberately metadata-only until the
+     * source palette branch is recovered; counting it must not imply a host
+     * palette transform or a generated brightness pixel. */
+    if (s->source_materials_required && s->gdat_c_light_receipt_ready &&
+        s->gdat_c_light_receipt_hash != 0u &&
+        s->gdat_c_light_scene_control_hash == s->gdat_scene_control_hash) {
+        ++s->gdat_c_light_consumed_count;
+    }
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

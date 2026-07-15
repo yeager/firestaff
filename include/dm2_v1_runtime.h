@@ -93,6 +93,11 @@ typedef struct {
     uint32_t gdat_misty_map;
     uint32_t gdat_thunder_position;
     uint32_t gdat_ambient_darkness;
+    int gdat_c_light_receipt_ready;
+    uint8_t gdat_c_light_level;
+    uint32_t gdat_c_light_receipt_hash;
+    uint32_t gdat_c_light_source_state_hash;
+    int gdat_c_light_consumed;
     int gdat_weather_receipt_ready;
     uint32_t gdat_weather_receipt_hash;
     uint32_t gdat_weather_material_mask;
@@ -164,6 +169,9 @@ typedef struct {
     uint32_t scene_control_hash;
     uint32_t scene_light_hash;
     uint16_t scene_ambient_light;
+    uint32_t c_light_receipt_hash;
+    uint32_t c_light_source_state_hash;
+    uint8_t c_light_level;
     int weather_graphicsset_bound;
     uint8_t weather_graphicsset;
     uint32_t weather_source_receipt_hash;

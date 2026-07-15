@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 
 typedef struct DM2_V1_GdatHudM11CommandPlan DM2_V1_GdatHudM11CommandPlan;
 typedef struct DM2_V1_GdatWallM11CommandPlan DM2_V1_GdatWallM11CommandPlan;
@@ -866,6 +867,16 @@ typedef struct {
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;
+    /* `c_light.cpp::DM2_RECALC_LIGHT_LEVEL` is a separate runtime result
+     * from GRAPHICSSET control words.  Keep its authenticated transaction
+     * explicit so a later raw save/live-state bridge cannot be replaced by a
+     * host brightness value. */
+    int gdat_c_light_receipt_ready;
+    uint8_t gdat_c_light_level;
+    uint32_t gdat_c_light_scene_control_hash;
+    uint32_t gdat_c_light_source_state_hash;
+    uint32_t gdat_c_light_receipt_hash;
+    int gdat_c_light_consumed_count;
     int gdat_scene_weather_consumed_count;
     const DM2_V1_WeatherRendererReceipt *gdat_weather_renderer_receipt;
     uint8_t gdat_weather_renderer_graphicsset;
@@ -1094,6 +1105,12 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t misty_map,
     uint16_t thunder_position,
     uint16_t ambient_darkness);
+/* c_light.cpp's terminal result may enter a source-required dungeon frame
+ * only when it names this exact UPDATE_GFXSET transaction.  It carries view
+ * metadata only; no palette or pixel transform is implied by this bind. */
+void dm2_v1_viewport_set_c_light_receipt(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_CLightM11Receipt *receipt);
 /* c_gui_vp consumes UPDATE_GFXSET's already decoded floor/ceiling pair.
  * The caller retains the plan through this viewport render; an incomplete or
  * differently addressed plan is rejected by the source-required plane gate. */
