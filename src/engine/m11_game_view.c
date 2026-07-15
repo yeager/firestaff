@@ -1731,87 +1731,32 @@ static int m11_draw_csb_v1_inventory_surface(
     int framebufferWidth,
     int framebufferHeight)
 {
-    enum {
-        CSB_C017_VIEWPORT_X_PC34 = 0,
-        CSB_C017_VIEWPORT_Y_PC34 = 33,
-        CSB_C017_VIEWPORT_WIDTH_PC34 = 224,
-        CSB_C017_VIEWPORT_HEIGHT_PC34 = 136,
-        CSB_C040_PANEL_X_PC34 = 80,
-        CSB_C040_PANEL_Y_PC34 = 52,
-        CSB_C040_PANEL_WIDTH_PC34 = 144,
-        CSB_C040_PANEL_HEIGHT_PC34 = 73,
-        CSB_C040_TRANSPARENT_COLOR_PC34 = 6
-    };
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
-    const CSB_V1_StartupRuntimeSurface_PC34 *c040;
-    int row;
+    CSB_V1_StartupRuntimeHudPanelReceipt_PC34 receipt;
 
     if (!state || !framebuffer || !state->csbStartupRuntimeAssetSession ||
-        framebufferWidth < CSB_C017_VIEWPORT_X_PC34 +
-            CSB_C017_VIEWPORT_WIDTH_PC34 ||
-        framebufferHeight < CSB_C017_VIEWPORT_Y_PC34 +
-            CSB_C017_VIEWPORT_HEIGHT_PC34) {
+        framebufferWidth < 224 || framebufferHeight < 169) {
         return 0;
     }
     session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
-    c017 = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-    /* ReDMCSB PANEL.C:2376 expands C017 directly into G0296 at screen
-     * (0,33). F0346 then uses G0032's panel box x=80..223, y=52..124
-     * relative to that viewport. This live CSB path consumes only the
-     * terminal-session bitmaps, never M11's generic inventory path. */
-    if (!c017->valid || !c017->pixels || c017->source_asset_id != 17 ||
-        c017->width != CSB_C017_VIEWPORT_WIDTH_PC34 ||
-        c017->height != CSB_C017_VIEWPORT_HEIGHT_PC34 ||
-        c017->transparent_color != -1) {
+    /* CSB owns the C017/C040 composition and M11 receives only its completed
+     * source receipt. This leaves M11 responsible for the viewport beneath
+     * PANEL.C's rectangle, not for any startup asset or transparency rule. */
+    if (!csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)session,
+            state->candidateMirrorPanelActive ? 1 : 0, framebuffer,
+            framebufferWidth, framebufferHeight, &receipt) || !receipt.valid ||
+        !receipt.c017_presented ||
+        (state->candidateMirrorPanelActive && !receipt.c040_presented)) {
         return 0;
     }
-    c040 = NULL;
-    if (state->candidateMirrorPanelActive) {
-        c040 = &session->surfaces.surfaces[
-            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-        /* PANEL.C F0347 expands C017 first, then F0346 overlays C040.
-         * Validate the whole terminal-session pair before modifying the host
-         * page, so malformed C040 cannot leave a partial C017 presentation. */
-        if (!c040->valid || !c040->pixels || c040->source_asset_id != 40 ||
-            c040->width != CSB_C040_PANEL_WIDTH_PC34 ||
-            c040->height != CSB_C040_PANEL_HEIGHT_PC34 ||
-            c040->transparent_color != CSB_C040_TRANSPARENT_COLOR_PC34) {
-            return 0;
-        }
+    if (receipt.c040_presented) {
+        state->csbState.c040_panel_session_active = 1;
+        state->csbState.c040_panel_source_tick = receipt.source_tick;
+        state->csbState.c040_panel_session_generation =
+            receipt.session_generation;
     }
-    for (row = 0; row < CSB_C017_VIEWPORT_HEIGHT_PC34; ++row) {
-        memcpy(framebuffer +
-                   (size_t)(CSB_C017_VIEWPORT_Y_PC34 + row) *
-                       (size_t)framebufferWidth +
-                   (size_t)CSB_C017_VIEWPORT_X_PC34,
-               c017->pixels + (size_t)row *
-                   (size_t)CSB_C017_VIEWPORT_WIDTH_PC34,
-               (size_t)CSB_C017_VIEWPORT_WIDTH_PC34);
-    }
-    if (!state->candidateMirrorPanelActive) {
-        return 1;
-    }
-    for (row = 0; row < CSB_C040_PANEL_HEIGHT_PC34; ++row) {
-        int column;
-        for (column = 0; column < CSB_C040_PANEL_WIDTH_PC34; ++column) {
-            unsigned char pixel = c040->pixels[
-                (size_t)row * (size_t)CSB_C040_PANEL_WIDTH_PC34 +
-                (size_t)column];
-            if (pixel != CSB_C040_TRANSPARENT_COLOR_PC34) {
-                framebuffer[(size_t)(CSB_C017_VIEWPORT_Y_PC34 +
-                                     CSB_C040_PANEL_Y_PC34 + row) *
-                                (size_t)framebufferWidth +
-                            (size_t)(CSB_C017_VIEWPORT_X_PC34 +
-                                     CSB_C040_PANEL_X_PC34 + column)] = pixel;
-            }
-        }
-    }
-    state->csbState.c040_panel_session_active = 1;
-    state->csbState.c040_panel_source_tick = session->source_tick;
-    state->csbState.c040_panel_session_generation = session->generation;
     return 1;
 }
 

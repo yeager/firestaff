@@ -103,9 +103,12 @@ static void verify_real_c017_c040_hud_handoff(
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupRuntimeHudPanelReceipt_PC34 panel_receipt;
     CSB_V1_StartupAudioAction_PC34 audio_action;
     const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
     const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
+    unsigned char panel_page[320 * 200];
+    int row;
 
     if (!session) return;
     inventory = &session->surfaces.surfaces[
@@ -180,6 +183,30 @@ static void verify_real_c017_c040_hud_handoff(
               raster.pixel_hash == host_surface.raster.pixel_hash &&
               raster.route_hash == host_surface.raster.route_hash,
           "C017/C040 presented HUD capture is stable across direct and host routes");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    memset(panel_page, 0xff, sizeof(panel_page));
+    memset(&panel_receipt, 0, sizeof(panel_receipt));
+    CHECK(csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
+              session, 1, panel_page, 320, 200, &panel_receipt) == 1 &&
+              panel_receipt.valid && panel_receipt.c017_presented &&
+              panel_receipt.c040_presented &&
+              panel_receipt.c017_pixel_hash == frame.hud_inventory_pixel_hash &&
+              panel_receipt.c040_pixel_hash == frame.hud_resurrect_pixel_hash &&
+              panel_receipt.panel_hash != 0u,
+          "CSB-owned panel handoff admits only the C017/C040 terminal session");
+    CHECK(csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+              &frame, 1, &raster) == 1 && raster.valid &&
+              raster.source_surface_count == 2,
+          "CSB-owned panel handoff has the matching original indexed raster");
+    for (row = 0; raster.valid && row < 136; ++row) {
+        if (memcmp(panel_page + (size_t)(33 + row) * 320u,
+                   raster.pixels + (size_t)(33 + row) * 320u,
+                   224u) != 0) {
+            break;
+        }
+    }
+    CHECK(raster.valid && row == 136,
+          "CSB-owned panel handoff copies the exact C017/C040 raster region");
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 }
