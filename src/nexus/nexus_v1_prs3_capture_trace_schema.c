@@ -794,6 +794,14 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.zero_merged_branch_offset = SH2_V1_CALLEE_OFFSET + 134U;
     receipt.zero_index_mask_offset = SH2_ZERO_INDEX_MASK_OFFSET;
     receipt.zero_indexed_byte_read_offset = SH2_ZERO_INDEXED_BYTE_READ_OFFSET;
+    receipt.zero_indexed_byte_base_register = 13U;
+    receipt.zero_indexed_byte_index_register = 0U;
+    receipt.zero_indexed_byte_destination_register = 1U;
+    receipt.zero_first_value_compare_offset = SH2_ZERO_INDEXED_BYTE_READ_OFFSET + 4U;
+    receipt.zero_first_value_compare_source_register = 1U;
+    receipt.zero_first_value_compare_destination_register = 3U;
+    receipt.zero_repeat_value_compare_source_register = 1U;
+    receipt.zero_repeat_value_compare_destination_register = 10U;
     receipt.sh2_zero_side_index_read_verified =
         read_be16(dm_bin + SH2_ZERO_FIRST_BYTE_READ_OFFSET) == 0x64c4U &&
         read_be16(dm_bin + SH2_ZERO_SECOND_BYTE_READ_OFFSET) == 0x67c4U &&
@@ -911,6 +919,26 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.zero_repeat_branch_instruction == 0x8ff3U &&
         read_be16(dm_bin + SH2_ZERO_REPEAT_DELAY_MASK_OFFSET) == 0x2659U &&
         receipt.zero_repeat_branch_target_offset == SH2_V1_CALLEE_OFFSET + 136U;
+    /* The static zero-side lookup is `MOV.B @(R0,R13),R1`. R1 is not written
+     * before the following CMP/EQ R1,R3 and CMP/EQ R1,R10 instructions; the
+     * latter is the comparison immediately before the BF/S repeat decision.
+     * This records only source-owned operand flow, not the value's role. */
+    receipt.sh2_zero_indexed_byte_control_operands_proven =
+        receipt.sh2_zero_side_index_read_verified &&
+        receipt.sh2_zero_repeat_termination_proven &&
+        receipt.zero_indexed_byte_base_register == 13U &&
+        receipt.zero_indexed_byte_index_register == 0U &&
+        receipt.zero_indexed_byte_destination_register == 1U &&
+        receipt.zero_first_value_compare_offset ==
+            receipt.zero_indexed_byte_read_offset + 4U &&
+        receipt.zero_first_value_compare_source_register == 1U &&
+        receipt.zero_first_value_compare_destination_register == 3U &&
+        receipt.zero_repeat_value_compare_source_register == 1U &&
+        receipt.zero_repeat_value_compare_destination_register == 10U &&
+        read_be16(dm_bin + receipt.zero_indexed_byte_read_offset) == 0x01dcU &&
+        read_be16(dm_bin + receipt.zero_indexed_byte_read_offset + 2U) == 0x3477U &&
+        read_be16(dm_bin + receipt.zero_first_value_compare_offset) == 0x2310U &&
+        read_be16(dm_bin + receipt.zero_post_read_compare_offset) == 0x2a10U;
     receipt.zero_side_linear_begin_offset =
         receipt.control_zero_branch_target_offset;
     receipt.zero_side_linear_end_offset = SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET + 2U;
@@ -983,6 +1011,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_zero_merged_branch_condition_proven &&
         receipt.sh2_zero_side_repeat_control_verified &&
         receipt.sh2_zero_repeat_termination_proven &&
+        receipt.sh2_zero_indexed_byte_control_operands_proven &&
         receipt.sh2_zero_side_linear_route_verified &&
         receipt.sh2_zero_side_has_no_direct_output_store;
 }

@@ -385,6 +385,14 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.zero_index_mask_word == 0x0fffU &&
                receipt.zero_index_mask_offset == 85520U &&
                receipt.zero_indexed_byte_read_offset == 85524U &&
+               receipt.zero_indexed_byte_base_register == 13U &&
+               receipt.zero_indexed_byte_index_register == 0U &&
+               receipt.zero_indexed_byte_destination_register == 1U &&
+               receipt.zero_first_value_compare_offset == 85528U &&
+               receipt.zero_first_value_compare_source_register == 1U &&
+               receipt.zero_first_value_compare_destination_register == 3U &&
+               receipt.zero_repeat_value_compare_source_register == 1U &&
+               receipt.zero_repeat_value_compare_destination_register == 10U &&
                receipt.zero_post_read_compare_offset == 85530U &&
                receipt.zero_repeat_counter_increment_offset == 85532U &&
                receipt.zero_repeat_branch_offset == 85534U &&
@@ -419,6 +427,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_zero_merged_branch_condition_proven &&
                receipt.sh2_zero_side_repeat_control_verified &&
                receipt.sh2_zero_repeat_termination_proven &&
+               receipt.sh2_zero_indexed_byte_control_operands_proven &&
                receipt.sh2_zero_side_linear_route_verified &&
                receipt.sh2_zero_side_has_no_direct_output_store &&
                !receipt.zero_side_copy_or_backreference_proven &&
@@ -504,6 +513,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    damaged, dm_bin_size, 1, &receipt) &&
                    !receipt.sh2_zero_repeat_termination_proven,
                "changed zero-side termination branch rejects the receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85524U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_zero_indexed_byte_control_operands_proven,
+               "changed indexed source operand rejects zero-side control receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);

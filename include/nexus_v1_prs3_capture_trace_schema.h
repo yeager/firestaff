@@ -157,6 +157,14 @@ typedef struct {
     uint32_t zero_index_mask_word;
     uint32_t zero_index_mask_offset;
     uint32_t zero_indexed_byte_read_offset;
+    uint32_t zero_indexed_byte_base_register;
+    uint32_t zero_indexed_byte_index_register;
+    uint32_t zero_indexed_byte_destination_register;
+    uint32_t zero_first_value_compare_offset;
+    uint32_t zero_first_value_compare_source_register;
+    uint32_t zero_first_value_compare_destination_register;
+    uint32_t zero_repeat_value_compare_source_register;
+    uint32_t zero_repeat_value_compare_destination_register;
     int sh2_zero_side_index_read_verified;
     /* Two adjacent `MOV.B @R12+` instructions consume a bounded sequential
      * source span before the zero-side merge. This assigns no field meaning
@@ -184,6 +192,10 @@ typedef struct {
      * working registers compare equal. This is a static SH-2 termination
      * condition, not proof that either register is a PRS3 run length. */
     int sh2_zero_repeat_termination_proven;
+    /* The R13/R0 indexed byte reaches the two subsequent R1 comparisons.
+     * This is static operand/control flow only, not proof of a copy source,
+     * decoded value, length, termination marker, or any pixel behavior. */
+    int sh2_zero_indexed_byte_control_operands_proven;
     uint32_t zero_side_linear_begin_offset;
     uint32_t zero_side_linear_end_offset;
     uint32_t zero_side_linear_byte_count;
