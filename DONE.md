@@ -17247,6 +17247,16 @@ records only observation order; no destination, CD causality, payload format,
 dungeon, map, object, graphics, or palette claim is introduced.
 Verification: `tests/test_theron_v1_later_e009_raw_sector_order_trace.sh`.
 
+# ✅ 2026-07-15 Theron post-`$3800` IRQ2-to-later-read ordering gate
+
+The coalesced Track 02 receipt now requires an observed original Stage 3
+`BRK $ff` return from `$3800` to `$3802` before it will accept a later
+`$e009` dispatch. Firestaff checks those capture coordinates against the
+hash-verified Stage 3 payload, then retains only the ordering fact. The gate
+does not decode the later sector or promote level, object, bitmap, palette,
+grid, or transition semantics. Verification: the corpus-bound raw-loader
+handoff probe rejects missing or altered Stage 3 continuation coordinates.
+
 Added a skip-safe, corpus-bound probe and Mednafen instrumentation for the
 first post-stage-two HuC6280 `JSR $e009` envelope. A positive result requires
 hash-verified JP and US raw Track 02 images plus matching instrumented traces;
