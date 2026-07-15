@@ -3345,6 +3345,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       skill. A live runtime binding remains closed until party sleeping and
       original possession name-index bonuses are both retained; it does not
       infer either from Firestaff item metadata.
+    - 2026-07-15 party-fetch update: authenticated `STKOP_PartyFetch` now
+      preserves CSBWin's `(index,num)` stack order, 100-cell no-op boundary,
+      and all twelve GAMEBLOCK2 words through one explicit snapshot callback.
+      Its live runtime binding remains closed: Firestaff currently lacks an
+      original owner for `PartySleeping`, so it cannot assemble a partial
+      result from profile and character-tail fields.
     - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
       `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
       compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors
