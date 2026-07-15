@@ -7321,6 +7321,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   bypass that runtime gate with Firestaff's host level loader. Required next
   evidence is a game-owned post-`$3800` consumer that reads a separately
   hash-bound level/object record and proves its grammar.
+  - Update: a provenance-marked loader trace can now establish one narrower
+    stage handoff when an authenticated `$3c80` continuation `TII` is followed
+    by a main-RAM `JSR` to exactly the copied destination. This proves original
+    byte-to-code transfer only. Remaining: capture that sequence on real media
+    and then prove the called code's record reads and grammar before publishing
+    a level or object table.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
