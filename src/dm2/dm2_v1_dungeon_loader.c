@@ -3157,6 +3157,38 @@ int dm2_v1_g1_creature_map_chip_material_identity(
     return 1;
 }
 
+int dm2_v1_g1_weapon_map_chip_material_identity(
+    const DM2_V1_G1WeaponMapChipMaterial *material,
+    uint32_t *out_identity)
+{
+    uint32_t hash = 2166136261u;
+
+    if (out_identity) *out_identity = 0u;
+    if (!material || !out_identity || material->object_id == 0xfffeu ||
+        material->raw_hash == 0u || material->raw_byte_count == 0u ||
+        material->image_width <= 0 || material->image_height <= 0 ||
+        material->image_format <= 0 || material->local_palette_hash == 0u) {
+        return 0;
+    }
+    hash = dm2_v1_g1_material_identity_step(hash, material->raw_hash);
+    hash = dm2_v1_g1_material_identity_step(hash, material->raw_byte_count);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             material->local_palette_hash);
+    hash = dm2_v1_g1_material_identity_step(hash, material->object_id);
+    hash = dm2_v1_g1_material_identity_step(hash, material->direction);
+    hash = dm2_v1_g1_material_identity_step(hash, material->item_type);
+    hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->x);
+    hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->y);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             (uint32_t)material->image_width);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             (uint32_t)material->image_height);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             (uint32_t)material->image_format);
+    *out_identity = hash ? hash : 1u;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     const DM2_V1_DungeonData *d,
     int map,
@@ -3267,6 +3299,81 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_weapon_map_chip_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatRawRead read_raw,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1WeaponMapChipRuntimeReceipt *out)
+{
+    DM2_V1_G1RuntimeMapWeaponReceipt roots;
+    DM2_V1_G1WeaponMapChipRuntimeReceipt candidate;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    /* skproject/SKWIN/SkWinCore.cpp::DRAW_MAP_CHIP asks
+     * QUERY_DUNGEON_MAP_CHIP_PICT(QUERY_CLS1_FROM_RECORD,
+     * QUERY_CLS2_FROM_RECORD, F9).  The direct DB5 receipt is the only
+     * admitted source of those two selectors; no GenericRecord::w0 walk or
+     * item-type-only cache can promote a weapon into a drawable material. */
+    if (!d || !read_raw || !read_image_metadata || !read_local_palette ||
+        !dm2_v1_dungeon_materialize_g1_runtime_map_weapons(d, map, &roots) ||
+        !roots.committed || !roots.incomplete_world) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = map;
+    candidate.source_weapon_root_count = roots.weapon_root_count;
+    for (i = 0; i < roots.weapon_root_count; ++i) {
+        const DM2_V1_G1DirectWeaponRoot *weapon = &roots.weapons[i];
+        const uint8_t *raw_map_chip = NULL;
+        uint32_t raw_byte_count = 0u;
+        int image_width = 0;
+        int image_height = 0;
+        int image_format = 0;
+        DM2_V1_G1WeaponMapChipMaterial *material;
+
+        if (candidate.material_count >= DM2_V1_G1_WEAPON_MAP_CHIP_MAX ||
+            !read_raw(read_userdata, 0x01, 0x10, weapon->item_type, 0xf9,
+                      &raw_map_chip, &raw_byte_count) ||
+            !raw_map_chip || raw_byte_count == 0u ||
+            !read_image_metadata(read_userdata, 0x10, weapon->item_type,
+                                 0xf9, &image_width, &image_height,
+                                 &image_format) ||
+            image_width <= 0 || image_height <= 0 ||
+            (image_format != 3 && image_format != 4 &&
+             image_format != 8 && image_format != 9)) {
+            return 0;
+        }
+        material = &candidate.materials[candidate.material_count++];
+        if (!read_local_palette(read_userdata, 0x10, weapon->item_type, 0xf9,
+                                material->local_palette16,
+                                &material->local_palette_hash) ||
+            material->local_palette_hash == 0u) {
+            return 0;
+        }
+        material->x = weapon->x;
+        material->y = weapon->y;
+        material->object_id = weapon->object_id;
+        material->direction = weapon->direction;
+        material->item_type = weapon->item_type;
+        material->raw_byte_count = raw_byte_count;
+        material->raw_hash = dm2_v1_g1_raw_hash(raw_map_chip,
+                                                 raw_byte_count);
+        material->image_width = image_width;
+        material->image_height = image_height;
+        material->image_format = image_format;
+        if (material->raw_hash == 0u) return 0;
+    }
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_g1_creature_map_chip_matches_decoded_material(
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
     int creature_type,
@@ -3316,6 +3423,37 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
             &receipt->materials[i];
         if (material->object_id == object_id && material->x == x &&
             material->y == y && material->creature_type == (uint8_t)creature_type &&
+            material->image_width == image_width &&
+            material->image_height == image_height &&
+            material->local_palette_hash == local_palette_hash) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
+    const DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt,
+    uint16_t object_id,
+    int x,
+    int y,
+    int item_type,
+    int image_width,
+    int image_height,
+    uint32_t local_palette_hash)
+{
+    int i;
+
+    if (!receipt || !receipt->valid || object_id == 0xfffeu ||
+        item_type < 0 || item_type > 0xff || image_width <= 0 ||
+        image_height <= 0 || local_palette_hash == 0u) {
+        return 0;
+    }
+    for (i = 0; i < receipt->material_count; ++i) {
+        const DM2_V1_G1WeaponMapChipMaterial *material =
+            &receipt->materials[i];
+        if (material->object_id == object_id && material->x == x &&
+            material->y == y && material->item_type == (uint8_t)item_type &&
             material->image_width == image_width &&
             material->image_height == image_height &&
             material->local_palette_hash == local_palette_hash) {

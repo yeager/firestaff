@@ -145,6 +145,7 @@ typedef struct {
     DM2_V1_G1TextWallGfxRuntimeReceipt g1_map5_text_wall_gfx_runtime;
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt g1_actuator_wall_gfx_runtime;
     DM2_V1_G1CreatureMapChipRuntimeReceipt g1_creature_map_chip_runtime;
+    DM2_V1_G1WeaponMapChipRuntimeReceipt g1_weapon_map_chip_runtime;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_runtime_handoff;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
@@ -1636,6 +1637,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         (void)dm2_v1_boot_g1_creature_map_chip_materials(
             boot_profile, g_dm2_runtime.dungeon_level,
             &g_dm2_runtime.g1_creature_map_chip_runtime);
+        (void)dm2_v1_boot_g1_weapon_map_chip_materials(
+            boot_profile, g_dm2_runtime.dungeon_level,
+            &g_dm2_runtime.g1_weapon_map_chip_runtime);
     }
     if (boot_profile->dm2_state) {
         DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
@@ -1726,6 +1730,16 @@ int dm2_v1_runtime_g1_creature_map_chip_receipt(
         return 0;
     }
     *out_receipt = g_dm2_runtime.g1_creature_map_chip_runtime;
+    return 1;
+}
+
+int dm2_v1_runtime_g1_weapon_map_chip_receipt(
+    DM2_V1_G1WeaponMapChipRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.g1_weapon_map_chip_runtime.valid) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.g1_weapon_map_chip_runtime;
     return 1;
 }
 
@@ -4404,6 +4418,8 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
         rt->boot, level, &rt->g1_actuator_wall_gfx_runtime);
     (void)dm2_v1_boot_g1_creature_map_chip_materials(
         rt->boot, level, &rt->g1_creature_map_chip_runtime);
+    (void)dm2_v1_boot_g1_weapon_map_chip_materials(
+        rt->boot, level, &rt->g1_weapon_map_chip_runtime);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
 }

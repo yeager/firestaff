@@ -1615,6 +1615,10 @@ int dm2_v1_boot_g1_creature_map_chip_materials(
     DM2_V1_BootProfile *profile,
     int map,
     DM2_V1_G1CreatureMapChipRuntimeReceipt *out);
+int dm2_v1_boot_g1_weapon_map_chip_materials(
+    DM2_V1_BootProfile *profile,
+    int map,
+    DM2_V1_G1WeaponMapChipRuntimeReceipt *out);
 
 #define DM2_V1_INTERFACE_HUD_CHAMPION_COUNT 4u
 typedef struct {
