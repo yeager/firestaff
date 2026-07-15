@@ -1795,6 +1795,74 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetReceipt
+        branch_target;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int source_target;
+    unsigned int source_target_physical_pc;
+    unsigned int target_pc;
+    unsigned int target_physical_pc;
+    unsigned int target_opcode;
+    unsigned int control_pc;
+    unsigned int control_physical_pc;
+    unsigned int jsr_target;
+    int consumed;
+    int target_seen = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target(
+            handoff, capture, &branch_target) || !branch_target.valid) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_bra_target source_logical_pc=%x source_physical_pc=%x target=%x logical_pc=%x physical_pc=%x opcode=%x%n",
+                   &source_target, &source_target_physical_pc, &target_pc,
+                   &control_pc, &target_physical_pc, &target_opcode,
+                   &consumed) == 6 && consumed == (int)length &&
+            source_target == branch_target.branch.entry_copy.entry.entry_pc &&
+            source_target_physical_pc == branch_target.branch.entry_copy.entry.entry_physical_pc &&
+            target_pc == branch_target.target_pc && control_pc == branch_target.target_pc &&
+            target_physical_pc == branch_target.target_physical_pc &&
+            target_opcode == branch_target.target_opcode) {
+            target_seen = 1;
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_bra_target_jsr branch_target=%x branch_target_physical_pc=%x logical_pc=%x physical_pc=%x target=%x%n",
+                   &source_target, &source_target_physical_pc, &control_pc,
+                   &control_physical_pc, &jsr_target, &consumed) != 5 ||
+            consumed != (int)length || !target_seen ||
+            source_target != branch_target.target_pc ||
+            source_target_physical_pc != branch_target.target_physical_pc ||
+            control_pc > UINT16_MAX ||
+            control_physical_pc < 0x1f0000u || control_physical_pc >= 0x1f8000u ||
+            jsr_target > UINT16_MAX) {
+            continue;
+        }
+        out->valid = 1;
+        out->branch_target = branch_target;
+        out->control_pc = (uint16_t)control_pc;
+        out->control_physical_pc = control_physical_pc;
+        out->jsr_target = (uint16_t)jsr_target;
+        out->copied_entry_branch_target_jsr_proven = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,
