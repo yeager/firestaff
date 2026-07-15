@@ -127,11 +127,8 @@ int main(void) {
     print_dec("single Mummy (count=0)",
               dm1_creature_place_group_cells(0, DM1_CREATURE_SIZE_QUARTER,
                                               NULL, NULL));
-    print_dec("two Mummies (count=2, NULL rng)",
-              dm1_creature_place_group_cells(2, DM1_CREATURE_SIZE_QUARTER,
-                                              NULL, NULL));
-    print_dec("four Mummies (count=4, NULL rng)",
-              dm1_creature_place_group_cells(4, DM1_CREATURE_SIZE_QUARTER,
+    print_dec("two Mummies (Count=1, no RNG)",
+              dm1_creature_place_group_cells(1, DM1_CREATURE_SIZE_QUARTER,
                                               NULL, NULL));
 
     /* Deterministic rng: shows that the start cell is randomised before
@@ -142,13 +139,13 @@ int main(void) {
         uint64_t seedB = 0x12345678ull;
         int cells;
         g_rngState = seedA;
-        cells = dm1_creature_place_group_cells(4,
+        cells = dm1_creature_place_group_cells(3,
                                                 DM1_CREATURE_SIZE_QUARTER,
                                                 probe_rng, &g_rngState);
         printf("  four Mummies (rng state=0x%016llX) -> 0x%02X\n",
                (unsigned long long)seedA, cells & 0xFF);
         g_rngState = seedB;
-        cells = dm1_creature_place_group_cells(2,
+        cells = dm1_creature_place_group_cells(1,
                                                 DM1_CREATURE_SIZE_FULL,
                                                 probe_rng, &g_rngState);
         printf("  two full-sq creatures (rng state=0x%016llX) -> 0x%02X\n",

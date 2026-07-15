@@ -719,36 +719,34 @@ int dm1_creature_aspect_vertical_offset(uint8_t aspectBits) {
  *                     Quarter- and full-square creatures therefore
  *                     advance by one cell per slot, half-square by two.
  *
- * rng must return an int in [0, range) and must accept range > 0.
- * Passing NULL is treated as "no randomness available" and returns the
- * deterministic slot ordering cells = startCell, startCell+1, ... (used
- * by tests for regression reproducibility). */
-int dm1_creature_place_group_cells(int creatureCount, int creatureSize,
+ * `creatureLastOrdinal` is the source GROUP.Count value: zero is one
+ * creature, one is two, and so on.  F0185 draws exactly one start cell for
+ * a multi-creature group, then walks the ordinals down to zero.  It does not
+ * redraw a cell inside that loop.
+ *
+ * rng must return an int in [0, range) and must accept range > 0.  A
+ * multi-creature group without the original RNG source is rejected. */
+int dm1_creature_place_group_cells(int creatureLastOrdinal, int creatureSize,
                                    int (*rng)(void* user, int range),
                                    void* rngUser) {
     unsigned cells;
     int slot;
     int cell;
 
-    if (creatureCount <= 0) return DM1_GROUP_CELL_SINGLE_CENTERED;
+    if (creatureLastOrdinal < 0 || creatureLastOrdinal > 3) return -1;
+    if (creatureLastOrdinal == 0) return DM1_GROUP_CELL_SINGLE_CENTERED;
+    if (rng == NULL) return -1;
 
     cells = 0;
-    cell = (rng != NULL) ? (rng(rngUser, 4) & 3) : 0;
+    cell = rng(rngUser, 4) & 3;
 
-    for (slot = 0; slot < creatureCount; ++slot) {
+    for (slot = creatureLastOrdinal; slot >= 0; --slot) {
         unsigned packed = ((unsigned)(cell & 3)) << (slot * 2);
         cells |= packed;
         /* F0185: post-increment the cell, then +1 for half-square only. */
         cell = (cell + 1) & 3;
         if (creatureSize == DM1_CREATURE_SIZE_HALF) {
             cell = (cell + 1) & 3;
-        }
-        /* Re-randomise the next slot's start cell the same way F0185
-         * does for non-quarter-square creatures.  With rng == NULL we
-         * fall back to the deterministic successor so tests can pin
-         * exact cells values. */
-        if (rng != NULL && creatureSize != DM1_CREATURE_SIZE_QUARTER) {
-            cell = rng(rngUser, 4) & 3;
         }
     }
 

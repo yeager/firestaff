@@ -54,6 +54,21 @@
 static int g_pass = 0;
 static int g_fail = 0;
 
+struct GroupCellRng {
+    int values[4];
+    int count;
+    int next;
+};
+
+static int group_cell_rng(void* user, int range) {
+    struct GroupCellRng* rng = (struct GroupCellRng*)user;
+    int value;
+
+    if (rng == NULL || range != 4 || rng->next >= rng->count) return -1;
+    value = rng->values[rng->next++];
+    return value;
+}
+
 #define ASSERT_EQ(a, b, msg) do { \
     long long _a = (long long)(a); \
     long long _b = (long long)(b); \
@@ -190,44 +205,55 @@ static void test_mummy_single_creature_placement(void) {
               "single creature group → 0xFF");
 }
 
-/* ── Test 5: Group placement — multi-creature cells are deterministic
- *            when rng is NULL (regression-friendly path). ── */
-static void test_mummy_multi_creature_placement_deterministic(void) {
+/* ── Test 5: F0185 consumes one RNG start cell, then fills Count down to 0. ── */
+static void test_mummy_multi_creature_placement_source_order(void) {
+    struct GroupCellRng rng = {{0}, 1, 0};
+    int cells;
+
     /* ReDMCSB GROUP.C F0185 lines 521-560: for count>=1, slots are
      * packed 2 bits each.  Each slot advances the cell by 1 via the
      * post-increment in F0185; quarter- and full-square creatures get
      * the same +1 step, half-square gets an additional +1. */
-    int cells = dm1_creature_place_group_cells(2, DM1_CREATURE_SIZE_QUARTER,
-                                                NULL, NULL);
-    /* Slot 0 → cell 0, slot 1 → cell 1 → cells = 0b00 | (0b01<<2) = 0x04. */
-    ASSERT_EQ(cells, 0x04, "two quarter-square Mummy slots = 0x04");
+    /* GROUP.Count=1 represents two creatures. F0185 writes slot 1 first
+     * from the one RNG start cell, then slot 0 from its successor. */
+    cells = dm1_creature_place_group_cells(1, DM1_CREATURE_SIZE_QUARTER,
+                                            group_cell_rng, &rng);
+    ASSERT_EQ(cells, 0x01, "two quarter-square Mummy slots = 0x01");
+    ASSERT_EQ(rng.next, 1, "F0185 consumes one start-cell RNG draw");
 
-    cells = dm1_creature_place_group_cells(4, DM1_CREATURE_SIZE_QUARTER,
-                                            NULL, NULL);
-    /* Slots 0,1,2,3 → cells 0,1,2,3 → packed 2 bits each → 0xE4. */
-    ASSERT_EQ(cells, 0xE4, "four quarter-square Mummy slots = 0xE4");
+    rng.values[0] = 2;
+    rng.count = 1;
+    rng.next = 0;
+    cells = dm1_creature_place_group_cells(2, DM1_CREATURE_SIZE_QUARTER,
+                                            group_cell_rng, &rng);
+    /* slot 2=2, slot 1=3, slot 0=0 -> 0x20 | 0x0C = 0x2C. */
+    ASSERT_EQ(cells, 0x2C, "three quarter-square slots retain source order");
+    ASSERT_EQ(rng.next, 1, "F0185 never redraws a slot cell");
 
     /* Half-square creatures advance the cell by 2 per slot. */
-    cells = dm1_creature_place_group_cells(3, DM1_CREATURE_SIZE_HALF,
-                                            NULL, NULL);
-    /* Slot 0 → 0, slot 1 → 2, slot 2 → 0 → 0b00 | (0b10<<2) | (0b00<<4)
-     * = 0x08. */
-    ASSERT_EQ(cells, 0x08, "three half-square Mummy slots = 0x08");
+    rng.values[0] = 1;
+    rng.count = 1;
+    rng.next = 0;
+    cells = dm1_creature_place_group_cells(2, DM1_CREATURE_SIZE_HALF,
+                                            group_cell_rng, &rng);
+    /* slot 2=1, slot 1=3, slot 0=1 -> 0x10 | 0x0C | 0x01 = 0x1D. */
+    ASSERT_EQ(cells, 0x1D, "half-square slots advance two cells in source order");
+    ASSERT_EQ(rng.next, 1, "half-square path consumes one RNG draw");
+
+    ASSERT_EQ(dm1_creature_place_group_cells(1, DM1_CREATURE_SIZE_HALF,
+                                              NULL, NULL),
+              -1, "multi-creature F0185 rejects absent RNG source");
 }
 
 /* ── Test 6: Group placement — full-square creatures step one cell each. ── */
 static void test_full_square_placement(void) {
     /* A full-square creature (C1_SIZE_FULL_SQUARE = 2) advances the
-     * base cell by 1 each slot.  With rng=NULL the deterministic path
-     * produces start cell 0 then 1, 2, 3 packed into 2 bits each:
-     *   slot 0 → 0b00 → bits 0-1   = 0x00
-     *   slot 1 → 0b01 → bits 2-3   = 0x04
-     *   slot 2 → 0b10 → bits 4-5   = 0x20
-     *   slot 3 → 0b11 → bits 6-7   = 0xC0
-     * Sum = 0xE4. */
-    int cells = dm1_creature_place_group_cells(4, DM1_CREATURE_SIZE_FULL,
-                                               NULL, NULL);
-    ASSERT_EQ(cells, 0xE4, "four full-square slots with rng=NULL");
+     * base cell by one. For Count=3 and start cell 0, F0185 writes
+     * ordinal 3..0 as cells 0,1,2,3, producing 0x1B. */
+    struct GroupCellRng rng = {{0}, 1, 0};
+    int cells = dm1_creature_place_group_cells(3, DM1_CREATURE_SIZE_FULL,
+                                               group_cell_rng, &rng);
+    ASSERT_EQ(cells, 0x1B, "four full-square slots in descending source order");
 }
 
 /* ── Test 7: Source-lock cross-reference with M11 sprite table. ── */
@@ -262,7 +288,7 @@ int main(void) {
     test_mummy_horizontal_offset_range();
     test_mummy_aspect_frame_cycling();
     test_mummy_single_creature_placement();
-    test_mummy_multi_creature_placement_deterministic();
+    test_mummy_multi_creature_placement_source_order();
     test_full_square_placement();
     test_m11_cross_reference();
 

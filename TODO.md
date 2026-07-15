@@ -90,6 +90,12 @@
   viewport packed-value writes through it; do not reconstruct a packed value
   from decoded creature state or use a default direction/cell.
 
+- 2026-07-15 DM1 GROUP F0185 follow-up: live C006 generation now uses the
+  original GROUP.C allocation, raw C04 initialization, one start-cell RNG
+  draw, descending `GROUP.Count` cell/health writes, F0267 route, and M560
+  buzz. Remaining work is authentic original generator/save capture; do not
+  replace a missing RNG, Thing slot, or move result with a generated group.
+
 - 2026-07-15 DM1 DUNGEON F0144 follow-up: raw PC3.4 `GROUP.Type` now
   selects exact G0243 Attributes through F0156. Remaining work is routing
   separately-owned live M10/M11 creature consumers through this raw accessor;

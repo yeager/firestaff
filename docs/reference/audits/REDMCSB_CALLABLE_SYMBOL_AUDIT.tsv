@@ -273,7 +273,7 @@ F	0183	F0183_GROUP_AddActiveGroup	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVE
 F	183	F183_kzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0184	F0184_GROUP_RemoveActiveGroup	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	184	F184_ahzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0185	F0185_GROUP_GetGenerated	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0185	F0185_GROUP_GetGenerated	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C	implemented-narrow	mapped_source_verified	DM1 C006 runtime consumes GROUP.C:512-547 source order: party-map active cap, raw C04 allocation/initialization, one multi-creature start-cell RNG draw, descending Count ordinal health/cell writes, F0267 insert/defer route, and independent M560 buzz. Missing real original capture remains explicit.
 F	185	F185_auzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0186	F0186_GROUP_DropCreatureFixedPossessions	GROUP.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0187	F0187_GROUP_DropMovingCreatureFixedPossessions	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
