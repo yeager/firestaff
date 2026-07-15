@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_launcher.h"
 #include "nexus_v1_palette.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_viewport.h"
@@ -5031,6 +5032,8 @@ static void test_palette_source_gate(void) {
 static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
     Nexus_V1_Engine engine;
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+    Nexus_V1_LauncherRuntimeReceipt runtime;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
 
     memset(&engine, 0, sizeof(engine));
     memset(&handoff, 0, sizeof(handoff));
@@ -5040,6 +5043,24 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
           handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
           "missing MENU.BPK stays fail-closed without replacement visuals");
+    memset(&runtime, 0, sizeof(runtime));
+    memset(&asset_handoff, 0, sizeof(asset_handoff));
+    runtime.engine = &engine;
+    runtime.level_loaded = 1;
+    runtime.title_loaded = 1;
+    runtime.startup_assets.title_route_ready = 1;
+    runtime.startup_assets.real_menu_surface_route_ready = 1;
+    runtime.startup_assets.startup_audio_handoff_ready = 1;
+    runtime.startup_assets.startup_menu_asset_route = "ready-real-menu-surfaces";
+    CHECK(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+              &runtime, &asset_handoff) &&
+          asset_handoff.route == NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
+          !asset_handoff.menu_bpk_renderer_handoff_valid &&
+          !asset_handoff.real_menu_asset_handoff_ready &&
+          !asset_handoff.main_menu_route_ready &&
+          asset_handoff.blocks_main_menu_route &&
+          !asset_handoff.fallback_visuals_permitted,
+          "missing MENU.BPK cannot promote launcher main-menu readiness");
 }
 
 int main(void) {
