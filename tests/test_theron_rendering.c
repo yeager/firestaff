@@ -621,6 +621,35 @@ static int test_asset_load_raw_track02_semantic_only(void) {
            "explicit verified-media block remains authoritative");
     tr_asset_free(&bundle);
 
+    {
+        static const uint8_t guessed_track03[24] = {
+            'T', 'H', 'G', '3', 1, 0, 16, 0,
+            0, 0, 1, 0, 1, 0, 1, 0,
+            1, 0, 20, 0, 0xaa, 0x55, 0x33, 0xcc
+        };
+        static const uint8_t guessed_track04[16] = {
+            'T', 'H', 'S', '4', 1, 0, 1, 0,
+            14, 0, 14, 0, 14, 0, 0xaa, 0x55
+        };
+        TrAssetBundle guessed_bundle;
+
+        memset(&guessed_bundle, 0, sizeof(guessed_bundle));
+        tqr_palette_init_defaults(&guessed_bundle.palette);
+        ASSERT(tr_asset_parse_track03(&guessed_bundle,
+                                      guessed_track03,
+                                      sizeof(guessed_track03)) < 0,
+               "guessed THG3 marker cannot create a Track 02 tile bank");
+        ASSERT(tr_asset_parse_track04(&guessed_bundle,
+                                      guessed_track04,
+                                      sizeof(guessed_track04)) == TR_ASSET_ERR_TR04,
+               "guessed THS4 marker cannot create an audio route");
+        ASSERT(guessed_bundle.palette.tile_count == 0 &&
+                   guessed_bundle.track03_data == NULL &&
+                   guessed_bundle.track04_data == NULL &&
+                   !tr_asset_generated_v1_rendering_allowed(&guessed_bundle),
+               "guessed Track03/04 bytes remain source-only no-draw/no-playback");
+    }
+
     PASS();
     return 1;
 }

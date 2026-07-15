@@ -148,6 +148,12 @@
   runtime UI bank, so the host surface remains untouched pending a loader/CD
   receipt for those original bytes.
 
+- 2026-07-15 Theron rejected Track03/04 marker parsers: synthetic `THG3`
+  bitmap and `THS4` audio marker inputs can no longer populate a tile bank or
+  claim sound readiness. Raw, hash-verified Track 02 remains available only
+  to source-backed semantic routes until an original HuC6280 loader/CD capture
+  identifies the actual consumer bytes.
+
 - 2026-07-15 Theron startup receipt contract correction: all five remaining
   full-start, raw-media, snapshot, and host receipt assertions now require an
   executed authenticated atlas with nonzero source pixels and zero generated

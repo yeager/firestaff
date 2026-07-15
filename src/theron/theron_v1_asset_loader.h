@@ -2,21 +2,18 @@
  * theron_v1_asset_loader.h — Theron's Quest V1 Phase 4: Asset Loader
  *
  * Loads Theron's Quest binary assets from the PC Engine HuCard/CD-ROM format.
- * Theron uses a different asset structure from DM1/CSB/DM2:
- *   - Track 03: graphics tiles (tile/sprite format)
- *   - Track 04: sound/music data
- *   - THERO.DAT: optional aggregated asset archive (Phase 2+)
+ * Theron uses Track 02 as its sole MODE1 data stream. Graphics, object, and
+ * audio subranges remain unbound until an original loader/CD receipt proves
+ * their address and consumer route.
  *
  * PC Engine HuCard format (Hudson Soft, 1992):
  *   CPU: 7.16 MHz HuC6280 (65C02 derivative)
  *   ROM: 2MB max on HuCard, banked at 0xE000-0xFFFF
  *   Asset data: embedded in ROM after the executable
  *
- * CD-ROM disc structure:
- *   Track 01: audio (CD-DA)
- *   Track 02: data track (HuCard ROM image + supplemental data)
- *   Track 03: graphics track (supplemental tile/sprite data)
- *   Track 04: sound/music track (ADPCM samples, sequencing)
+ * CD-ROM disc structure: Track 02 is MODE1 data; later retail tracks are
+ * audio. Earlier Track 03/04 format descriptions were Firestaff guesses and
+ * remain no-draw/no-playback until backed by a captured loader route.
  *
  * Asset verification:
  *   THERO.DAT SHA256: TBD from asset catalog (Phase 2 locks hash)
@@ -120,10 +117,11 @@ TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
  * Track 03 graphics parsing
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* Parse Track 03 tile data and populate the palette state's tile atlas.
- * Returns number of tiles loaded, or negative on error.
+/* Deprecated guessed parser. Always rejects until a real Track 02 loader/CD
+ * capture identifies a byte span, format, and graphics-bank ownership.
  *
- * Track 03 header format (from THQUEST.ASM T410):
+ * The historical header below is retained only as a rejected diagnostic
+ * vocabulary, not as a decoder contract:
  *   offset 0:  magic "THG3" (4 bytes)
  *   offset 4:  tile_count (2 bytes LE)
  *   offset 6:  tile_data_size (2 bytes LE)
@@ -135,7 +133,6 @@ TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
  *   offset 18: header size (2 bytes LE) = 20
  *   offset 20+: tile data (2bpp planar, 16 bytes each)
  *
- * Source: THQUEST.ASM T410 (Track 03 graphics parsing).
  */
 int tr_asset_parse_track03(TrAssetBundle *bundle,
                             const uint8_t *track03,
@@ -145,10 +142,11 @@ int tr_asset_parse_track03(TrAssetBundle *bundle,
  * Track 04 sound parsing
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* Parse Track 04 sound data (ADPCM samples + music sequences).
- * Returns 0 on success, negative on error.
+/* Deprecated guessed parser. Always rejects until a real Track 02 loader/CD
+ * capture identifies audio bytes and their playback route.
  *
- * Track 04 header format (from THQUEST.ASM T420):
+ * The historical header below is retained only as a rejected diagnostic
+ * vocabulary, not as a decoder contract:
  *   offset 0:  magic "THS4" (4 bytes)
  *   offset 4:  sample_count (2 bytes LE)
  *   offset 6:  sequence_count (2 bytes LE)
@@ -157,7 +155,6 @@ int tr_asset_parse_track03(TrAssetBundle *bundle,
  *   offset 12: header size (2 bytes LE)
  *   offset 14+: ADPCM sample data + sequence data
  *
- * Source: THQUEST.ASM T420 (Track 04 sound parsing).
  */
 TrAssetResult tr_asset_parse_track04(TrAssetBundle *bundle,
                                       const uint8_t *track04,
