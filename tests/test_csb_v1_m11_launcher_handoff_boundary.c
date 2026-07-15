@@ -363,6 +363,7 @@ static void run_real_launcher_handoff_if_available(void) {
     unsigned char title_strikes_frame[320 * 200];
     unsigned char entrance_closed_frame[320 * 200];
     unsigned char entrance_opening_frame[320 * 200];
+    unsigned char first_live_dungeon_frame[320 * 200];
     unsigned char movement_base_frame[320 * 200];
     int tick_before;
     int entrance_frame_before;
@@ -669,6 +670,17 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.level_loaded == 1 &&
                     view.csbState.current_level >= 0,
                 "M11 CSB post-entrance handoff retains the loaded source dungeon");
+    /* F0806 releases C004/C002/C003 before F0128 begins the first live
+     * dungeon pass. A caller-provided stale page must not survive above the
+     * viewport after this source-owned transition. */
+    memcpy(first_live_dungeon_frame, framebuffer, sizeof(first_live_dungeon_frame));
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(rows_are_color(framebuffer, 0, 30, 0u),
+                "M11 CSB first live dungeon frame clears released C004 before F0128");
+    expect_true(memcmp(first_live_dungeon_frame, framebuffer,
+                       sizeof(first_live_dungeon_frame)) == 0,
+                "M11 CSB first live dungeon frame is independent of released C004 host pixels");
     M11_MessageLog_Push(&view.messageLog, "M11 HOST TELEMETRY", 15);
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);

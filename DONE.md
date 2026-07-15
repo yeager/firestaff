@@ -26,6 +26,11 @@
   M11 now consumes only the completed terminal-session receipt; the real
   package probe compares the copied 224x136 region byte-for-byte with the
   authentic indexed raster. No generated HUD or transparency wrapper remains.
+- ✅ 2026-07-15 CSB F0806-to-F0128 first-frame handoff: after the genuine
+  C004/C002/C003 door sequence ends, M11 clears the released startup page
+  before asking the source-bound F0128 viewport and HUD consumers to build the
+  first live dungeon frame. The obsolete M11 opening-composite asset wrapper
+  is removed, so the real package session is the only owner of door pixels.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
