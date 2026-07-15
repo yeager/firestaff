@@ -203,6 +203,7 @@ typedef struct {
     int projectile_material_plan_consumed;
     int item_material_plan_required;
     uint32_t item_material_plan_hash;
+    uint32_t item_scene_control_hash;
     int item_material_plan_command_count;
     int item_material_plan_consumed;
     int teleporter_material_plan_required;

@@ -507,9 +507,14 @@
 - 2026-07-15 DM2 HUD follow-up: M11 now recomputes the real GDAT HUD command
   plan receipt at consumption time and blocks source-required champion
   portraits if the `RECT_173..176` table identity drifts. Remaining work is
-  still live save-corpus state binding, object-icon resolution, and broader
-  dungeon/HUD runtime capture; do not replace missing state with local
-  material fallback.
+  still live save-corpus state binding, broader object-icon state/corpus
+  resolution, and broader dungeon/HUD runtime capture; do not replace missing
+  state with local material fallback.
+  - 2026-07-15 update: M11 now binds source-required item/icon material
+    receipts to the same G1 scene-control identity as the viewport frame, so
+    a matching item material hash/count cannot be replayed from another scene.
+    Remaining object-icon work is save-corpus state binding and broader
+    inventory/hand/possession capture, not a local icon fallback.
 
 - 2026-07-15 DM2 startup/runtime follow-up: skproject title/menu startup now
   uses the real `TITLE/0` GDAT `dt07/1` + `dt07/4` surfaces and focused

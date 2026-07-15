@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 item/icon M11 scene receipt gate: source-required DM2
+  item, carried-hand, and possession icon material receipts now carry the G1
+  scene-control hash through runtime, boot, and the M11 presentation gate.
+  M11 rejects an item/icon receipt whose GDAT material hash/count matches but
+  whose scene identity differs from the presented viewport frame. Focused
+  Ninja build and CTest `dm2_v1_m11_runtime_frame_receipt_gate` pass.
+
 - ✅ 2026-07-15 CSB opening-door playback-stage gate: opening-door and
   title/opening consumption receipts now require the startup session to still
   be in active ENTRANCE playback, after the complete C001 title phases and

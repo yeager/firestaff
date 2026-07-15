@@ -4518,6 +4518,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.item_material_plan_required =
         item_material_plan_required;
     g_dm2_last_m11_frame.item_material_plan_hash = item_drawn_material_hash;
+    g_dm2_last_m11_frame.item_scene_control_hash =
+        item_material_plan_consumed
+            ? g_dm2_last_m11_frame.scene_control_hash : 0u;
     g_dm2_last_m11_frame.item_material_plan_command_count =
         item_material_plan_consumed ? item_drawn_material_count : 0;
     g_dm2_last_m11_frame.item_material_plan_consumed =

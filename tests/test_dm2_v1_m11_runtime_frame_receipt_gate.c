@@ -50,6 +50,7 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_projectile_material_plan_consumed = 1;
     receipt.runtime_m11_frame_item_material_plan_required = 1;
     receipt.runtime_m11_frame_item_material_plan_hash = 0x4954454du;
+    receipt.runtime_m11_frame_item_scene_control_hash = 0x53434e45u;
     receipt.runtime_m11_frame_item_material_plan_command_count = 3;
     receipt.runtime_m11_frame_item_material_plan_consumed = 1;
     receipt.runtime_m11_frame_weather_material_plan_required = 1;
@@ -112,6 +113,7 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.projectile_material_plan_consumed = 1;
     receipt.item_material_plan_required = 1;
     receipt.item_material_plan_hash = 0x4954454du;
+    receipt.item_scene_control_hash = 0x53434e45u;
     receipt.item_material_plan_command_count = 3;
     receipt.item_material_plan_consumed = 1;
     receipt.weather_material_plan_required = 1;
@@ -255,6 +257,11 @@ int main(void)
     runtime.item_material_plan_command_count++;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects a GDAT item command-count mismatch");
+    runtime = make_runtime_receipt();
+
+    runtime.item_scene_control_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects item icons from another G1 scene");
     runtime = make_runtime_receipt();
     runtime.weather_material_plan_command_count++;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
