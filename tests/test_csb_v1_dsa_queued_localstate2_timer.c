@@ -65,7 +65,7 @@ int main(void)
     memset(&timer, 0, sizeof(timer));
 
     /* Compact DB3: word2 is DSA type/selector/state, word6 is ParameterB.
-     * The zero high two bits are the only widened-state shape admitted. */
+     * DB3::MakeBig moves word6's high bits before reading its state. */
     raw[10] = 0x2fu; raw[11] = 0x01u;
     raw[14] = 1u;
     dungeon.raw_data = raw;
@@ -139,9 +139,9 @@ int main(void)
     before = profile.csbwin_global_variables[1];
     raw[15] = 0x80u;
     check(csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
-              &profile, &dungeon, &location, 0u) == 0 &&
+              &profile, &dungeon, &location, 0u) == 1 &&
               profile.csbwin_global_variables[1] == before,
-          "widened ParameterB bits reject before DSA publication");
+          "DB3 MakeBig masks raw word6 high bits before ParameterB dispatch");
     raw[15] = 0u;
 
     profile.csbwin_timer_queue[0] = 1u;

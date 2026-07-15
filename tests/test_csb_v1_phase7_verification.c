@@ -887,8 +887,9 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
           "CSBWin TT_FALSEWALL runner admits compact ParameterB state");
     actuator_record[7] = 0x80u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-              &profile, &dungeon, &location, 0, 0, &timer6) == 0,
-          "CSBWin widened ParameterB state rejects before timer dispatch");
+              &profile, &dungeon, &location, 0, 0, &timer6) == 1 &&
+              timer6.state_index == 4u,
+          "CSBWin MakeBig masks raw word6 high bits before ParameterB dispatch");
     actuator_record[7] = 0u;
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(

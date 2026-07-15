@@ -2007,15 +2007,15 @@ target/action/position to that receipt. The exact zero-parameter
 already admitted authenticated pure-stack action. Authenticated `JUMP/GOSUB`
 transfer receipts now also persist their source final `LocalState=1`
 `DSA::m_state` through the complete RCS-checked Extended Features DSA stream.
-Remaining CSB DSA work is authenticating widened `LocalState=2` ParameterB
-records, a real slave-master route, source world effects, and a real-save
-corpus. Do not promote unsupported world or text opcodes from fixtures.
+Remaining CSB DSA work is writable widened `LocalState=2` ParameterB state,
+a real slave-master route, source world effects, and a real-save corpus. Do
+not promote unsupported world or text opcodes from fixtures.
 
 CSBWin type-47 DSA binding now also requires the current complete
 FNV-authenticated Extended Features tail that published its saved level index
 and action catalog. A stale, truncated, or headerless retained catalog cannot
-resolve a timer or filter callback. Remaining DSA work is still authentic
-widened `LocalState=2` ParameterB records, a real slave-master route,
+resolve a timer or filter callback. Remaining DSA work is still writable
+widened `LocalState=2` ParameterB state, a real slave-master route,
 master-state/world effects, and a real-save corpus; no fallback catalog or
 generated DSA state is accepted.
 
@@ -3336,6 +3336,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       skill. A live runtime binding remains closed until party sleeping and
       original possession name-index bonuses are both retained; it does not
       infer either from Firestaff item metadata.
+    - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
+      `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
+      compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors
+      that read exactly. Writes that require expanded `word8` bits 2..3 stay
+      unavailable rather than creating a widened Firestaff record.
     - 2026-07-15 EXPOOL cell-flags update: source `STKOP_FetchExCellFlg`
       now reads only the current FNV-authenticated CSBWin
       `EDT_ExtendedCellFlags` record. It folds the selected Y bit from the
