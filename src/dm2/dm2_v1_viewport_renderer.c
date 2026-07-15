@@ -2395,15 +2395,16 @@ int dm2_v1_viewport_build_door_render_plan(
         return 1;
     }
 
-    /* Source frames follow DM2_DRAW_DUNGEON_TILES, not the local square
-     * ordinal. Only cells whose table1d7029 pass is known may render here.
-     * D0C maps to cell zero, which is not a tile-loop pass; it belongs to the
-     * later DRAW_PLAYER_TILE boundary and remains unavailable in strict mode. */
+    /* Source frames follow DM2_DRAW_DUNGEON_TILES plus the front-player tile.
+     * table1d7029 does not list cell zero, but skproject still draws an
+     * admitted directly-facing DB0 door through the later player-tile/
+     * DRAW_DOOR path. Admit D0C only after runtime has attached that G1 root;
+     * all other cells remain bound to the table1d7029 scheduler below. */
     const int source_scheduler =
         s->source_materials_required && s->gdat_scene_control_ready;
     const int iteration_count = source_scheduler
-        ? (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
-                sizeof(s_dm2_draw_dungeon_tiles_cells[0]))
+        ? 1 + (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
+                    sizeof(s_dm2_draw_dungeon_tiles_cells[0]))
         : DM2_SQ_COUNT;
     for (int iteration = 0; iteration < iteration_count; ++iteration) {
         int square = source_scheduler ? -1 : iteration;
@@ -2412,8 +2413,16 @@ int dm2_v1_viewport_build_door_render_plan(
         DM2_V1_DoorRender *row;
         DM2_V1_ViewportRect panel_rect;
 
-        if (source_scheduler) {
-            const int cell = s_dm2_draw_dungeon_tiles_cells[iteration];
+        if (source_scheduler && iteration == 0) {
+            square = DM2_SQ_D0C;
+            source_pass = -1;
+            vs = &s->squares[square];
+            if (!vs->door_direct_g1_root) {
+                continue;
+            }
+        } else if (source_scheduler) {
+            const int cell = s_dm2_draw_dungeon_tiles_cells[iteration - 1];
+            source_pass = iteration - 1;
             for (int candidate = 0; candidate < DM2_SQ_COUNT; ++candidate) {
                 if (dm2_v1_viewport_skproject_cell_for_square(candidate) == cell) {
                     square = candidate;
@@ -4910,6 +4919,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 }
                 if (kind == DM2_DOOR_MATERIAL_PANEL &&
                     door->panel_visible_rect.w > 0 &&
+                    s->gdat_door_overlay_material_plan &&
                     (!material->geometry_hash || !material->rect_number ||
                      material->source_rect.w <= 0 ||
                      material->source_rect.h <= 0)) {
