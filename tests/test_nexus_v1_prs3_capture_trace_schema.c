@@ -83,6 +83,34 @@ static const char valid_vdp1_v3_trace[] =
     "palette_read_bytes=20\npalette_fnv1a64=5\n"
     "decoder_returned_success=1\ncapture_complete=1\n";
 
+static const char valid_vdp1_v4_trace[] =
+    "NEXUS_PRS3_SH2_VDP1_TRACE_V4\n"
+    "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
+    "entry_index=0\nstream_offset=40\nstream_size=4\nexpected_output_bytes=4\n"
+    "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
+    "last_input_read_address=6010003\ninput_read_bytes=4\npayload_fnv1a64=%llx\n"
+    "output_ram_address=6020000\nfirst_output_write_address=6020000\n"
+    "last_output_write_address=6020003\noutput_write_bytes=4\noutput_fnv1a64=3\n"
+    "first_opcode_sequence=10\nfirst_input_read_sequence=11\nlast_input_read_sequence=12\n"
+    "first_output_write_sequence=13\nlast_output_write_sequence=14\ndecoder_return_sequence=15\n"
+    "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
+    "vdp1_texture_source_address=6020000\nvdp1_texture_source_bytes=4\n"
+    "vdp1_texture_first_read_sequence=17\nvdp1_texture_last_read_sequence=18\n"
+    "vdp1_texture_first_read_address=6020000\nvdp1_texture_last_read_address=6020003\n"
+    "vdp1_texture_read_bytes=4\nvdp1_texture_fnv1a64=3\n"
+    "vdp1_command_first_read_sequence=17\nvdp1_command_last_read_sequence=17\n"
+    "vdp1_command_first_read_address=5c00000\nvdp1_command_last_read_address=5c0001f\n"
+    "vdp1_command_read_bytes=20\nvdp1_command_fnv1a64=4\n"
+    "palette_first_read_sequence=17\npalette_last_read_sequence=18\n"
+    "palette_first_read_address=5f00000\npalette_last_read_address=5f0001f\n"
+    "palette_read_bytes=20\npalette_fnv1a64=5\n"
+    "output_index_copy_instruction_offset=14dd6\noutput_store_instruction_offset=14dd8\n"
+    "first_output_store_sequence=13\nlast_output_store_sequence=14\n"
+    "first_output_store_address=6020000\nlast_output_store_address=6020003\n"
+    "output_store_bytes=4\noutput_store_fnv1a64=3\n"
+    "output_store_predecessor_observed=1\ncomplete_output_store_range_observed=1\n"
+    "decoder_returned_success=1\ncapture_complete=1\n";
+
 static void put_be32(unsigned char *p, unsigned int value) {
     p[0] = (unsigned char)(value >> 24);
     p[1] = (unsigned char)(value >> 16);
@@ -472,13 +500,81 @@ static void test_real_zero_side_trace_contract(void) {
     free(menu); free(dm_bin);
 }
 
+static void test_real_v4_output_store_trace_contract(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_Prs3Vdp1CaptureReceipt trace;
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
+    unsigned char *menu;
+    unsigned char *dm_bin;
+    size_t menu_size = 0U, dm_bin_size = 0U;
+    unsigned int index;
+    char text[4096];
+    uint32_t output_base = 0x06020000U;
+
+    menu = read_asset(data_dir, "MENU.BPK", &menu_size);
+    dm_bin = read_asset(data_dir, "DM.BIN", &dm_bin_size);
+    if (!menu || !dm_bin) { free(menu); free(dm_bin); return; }
+    for (index = 0U; index < 163U; ++index)
+        if (nexus_v1_bpk_archive_prs3_stream_plan(menu, menu_size, index, &plan) ==
+            NEXUS_V1_BPK_PRS3_STREAM_OK) break;
+    if (index == 163U || plan.expected_output_bytes > 0x100000U) {
+        free(menu); free(dm_bin); return;
+    }
+    snprintf(text, sizeof(text),
+        "NEXUS_PRS3_SH2_VDP1_TRACE_V4\n"
+        "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
+        "entry_index=%x\nstream_offset=%x\nstream_size=%x\nexpected_output_bytes=%x\n"
+        "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
+        "last_input_read_address=%x\ninput_read_bytes=%x\npayload_fnv1a64=%llx\n"
+        "output_ram_address=%x\nfirst_output_write_address=%x\n"
+        "last_output_write_address=%x\noutput_write_bytes=%x\noutput_fnv1a64=3\n"
+        "first_opcode_sequence=10\nfirst_input_read_sequence=11\nlast_input_read_sequence=12\n"
+        "first_output_write_sequence=13\nlast_output_write_sequence=14\ndecoder_return_sequence=15\n"
+        "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
+        "vdp1_texture_source_address=%x\nvdp1_texture_source_bytes=%x\n"
+        "vdp1_texture_first_read_sequence=17\nvdp1_texture_last_read_sequence=18\n"
+        "vdp1_texture_first_read_address=%x\nvdp1_texture_last_read_address=%x\n"
+        "vdp1_texture_read_bytes=%x\nvdp1_texture_fnv1a64=3\n"
+        "vdp1_command_first_read_sequence=17\nvdp1_command_last_read_sequence=17\n"
+        "vdp1_command_first_read_address=5c00000\nvdp1_command_last_read_address=5c0001f\n"
+        "vdp1_command_read_bytes=20\nvdp1_command_fnv1a64=4\n"
+        "palette_first_read_sequence=17\npalette_last_read_sequence=18\n"
+        "palette_first_read_address=5f00000\npalette_last_read_address=5f0001f\n"
+        "palette_read_bytes=20\npalette_fnv1a64=5\n"
+        "output_index_copy_instruction_offset=14dd6\noutput_store_instruction_offset=14dd8\n"
+        "first_output_store_sequence=13\nlast_output_store_sequence=14\n"
+        "first_output_store_address=%x\nlast_output_store_address=%x\n"
+        "output_store_bytes=%x\noutput_store_fnv1a64=3\n"
+        "output_store_predecessor_observed=1\ncomplete_output_store_range_observed=1\n"
+        "decoder_returned_success=1\ncapture_complete=1\n",
+        fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
+        plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
+        0x06010000U + plan.stream_size - 1U, plan.stream_size,
+        fnv1a64(menu + plan.stream_offset, plan.stream_size), output_base,
+        output_base, output_base + plan.expected_output_bytes - 1U,
+        plan.expected_output_bytes, output_base, plan.expected_output_bytes,
+        output_base, output_base + plan.expected_output_bytes - 1U,
+        plan.expected_output_bytes, output_base,
+        output_base + plan.expected_output_bytes - 1U, plan.expected_output_bytes);
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               text, strlen(text), &trace) &&
+           nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+               &trace, menu, menu_size, dm_bin, dm_bin_size, &binding) &&
+           binding.valid && binding.vdp1_command_consumption_observed &&
+           binding.palette_consumption_observed && !binding.decoder_promoted &&
+           !binding.fallback_visuals_permitted,
+           "V4 binds source-owned store PCs to the retail DM.BIN route without decoding");
+    free(menu); free(dm_bin);
+}
+
 int main(void) {
     Nexus_V1_Prs3CaptureTraceSchemaReceipt receipt;
     Nexus_V1_Prs3CaptureAssetBindingReceipt binding;
     Nexus_V1_Prs3Vdp1CaptureReceipt vdp1_receipt;
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt vdp1_binding;
     char malformed[sizeof(valid_trace)];
-    char vdp1_malformed[sizeof(valid_vdp1_v3_trace) + 64U];
+    char vdp1_malformed[sizeof(valid_vdp1_v4_trace) + 64U];
     char bound_trace[2048];
     unsigned char bpk[68];
     static const unsigned char dm_bin[] = {0x53, 0x48, 0x32, 0x21};
@@ -609,6 +705,36 @@ int main(void) {
                !vdp1_receipt.decoder_promoted &&
                !vdp1_binding.fallback_visuals_permitted,
            "V3 capture binds original command and palette read witnesses without decoding them");
+    snprintf(bound_trace, sizeof(bound_trace), valid_vdp1_v4_trace,
+             fnv1a64(bpk, sizeof(bpk)), fnv1a64(dm_bin, sizeof(dm_bin)),
+             fnv1a64(bpk + 64U, 4U));
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               bound_trace, strlen(bound_trace), &vdp1_receipt) &&
+               vdp1_receipt.schema_version == 4U &&
+               vdp1_receipt.output_store_predecessor_observed &&
+               vdp1_receipt.complete_output_store_range_observed &&
+               !vdp1_receipt.decoder_promoted,
+           "V4 accepts a complete output-store intake without decoder promotion");
+    expect(!nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+               &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+               &vdp1_binding) && !vdp1_binding.valid,
+           "V4 rejects a non-original DM.BIN before accepting store PCs");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "output_store_instruction_offset=14dd8"),
+           "output_store_instruction_offset=14dd6",
+           sizeof("output_store_instruction_offset=14dd6") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "V4 rejects output-store PCs without the source predecessor relation");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "last_output_store_address=6020003"),
+           "last_output_store_address=6020004",
+           sizeof("last_output_store_address=6020004") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "V4 rejects an output-store range that differs from the output receipt");
     snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
     memcpy(strstr(vdp1_malformed, "palette_last_read_address=5f0001f"),
            "palette_last_read_address=5f00020",
@@ -762,6 +888,7 @@ int main(void) {
     test_dm_bin_sh2_v1_execution_receipt();
     test_real_nonzero_transfer_trace_contract();
     test_real_zero_side_trace_contract();
+    test_real_v4_output_store_trace_contract();
     test_sh2_transfer_trace_gate();
 
     return failures ? 1 : 0;
