@@ -1,6 +1,23 @@
 # Firestaff DONE - Completed Work
 
 - 2026-07-15 DM2 G1 first-frame wall ownership: boot now consumes the real G1 packed start pose after projecting its 5-bit coordinates through map-0 `Map_definitions` origins and checking raw map bounds. The first M10 frame consequently consumes source GDAT wall panels rather than rendering from the synthetic `(15,15,N)` pose outside the 7x10 map. Source: skproject `DME.h` `File_header::StartPartyPosX/Y`, `Map_definitions::MapOffsetX/Y`, and `SkWinCore.cpp READ_DUNGEON_STRUCTURE`. Verification: canonical G1 runtime-map test plus boot smoke 86 pass / 2 remaining directional-capture failures.
+- ✅ 2026-07-15 DM1 F0292 status-name composition correction: the live
+  champion status-name strip no longer centers or substitutes Firestaff host
+  text. It clears the real C159+n 43x7 surface, then renders `Name[8]` with
+  the authentic TEXT2 font at C163+n's fixed x+1/y=5 origin and clips after
+  seven 6px cells. Portrait ownership remains F0354 inventory-only; status
+  bars, hand slots, action cells, and spell cells retain their source order.
+  The focused source gate locks original-font-only behavior, PC34 clipping,
+  and the party/action/spell composition order.
+
+- ✅ 2026-07-15 DM1 HUD F0407/F0412 glyph-cell correction: `ACTIDRAW.C`
+  F0387 action/header labels now use only the authentic TEXT2 native 6x7
+  cells and clear fail-closed when the original font is unavailable; no host
+  font can substitute or scale `WAR CRY`. `MENUDRAW.C F0397/F0398` now
+  always paints the six offered spell symbols and all four typed-symbol
+  cells, padding the latter with source spaces so recant/caster changes
+  cannot leave stale glyphs. The focused source gate locks the exact PC34
+  coordinates, colors, original-font requirement, and action-menu caller.
 
 - 2026-07-15 DM2 real-profile MBCS HUD gate: high-bit champion text now follows skproject `DRAW_STRING`/`DRAW_MBCS_STR` when the real GDAT has no category-0x1c font records, consuming the unsupported MBCS bytes without painting an ASCII or synthetic substitute. This removes false HUD-material blocking while preserving a fail-closed visual outcome. Verification: real boot smoke.
 

@@ -133,6 +133,7 @@
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "firestaff/dm1/v1/champion_panel/dm1_v1_champion_panel_spell_area_overlay_pc34_compat.h"
+#include "firestaff/dm1/v1/champion_panel/name_box_clip_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0179_pc34_compat.h"
 #include "firestaff/dm1/v1/G0181_pc34_compat.h"
@@ -2993,6 +2994,37 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
                       DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34,
                       DM1_V1_ACTION_MENU_TEXT_CELL_HEIGHT_PC34,
                       bgColor);
+    }
+}
+
+/* CHAMDRAW.C F0292 writes Name[8] through F0053 into a 43x7 status strip.
+ * The strip is cleared by its caller; TEXT2 then emits at most seven native
+ * 6px cells from x+1,y=5.  Do not center, scale, or substitute host text. */
+static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight,
+                                          int x,
+                                          int y,
+                                          const char* text,
+                                          unsigned char fgColor,
+                                          unsigned char bgColor) {
+    int i;
+    if (!framebuffer || !g_activeOriginalFont ||
+        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return;
+    }
+    for (i = 0; i < DM1_V1_CPNBC_NAME_FIELD_VISIBLE_CHARS_PC34; ++i) {
+        unsigned char ch;
+        if (!text || text[i] == '\0') {
+            break;
+        }
+        ch = (unsigned char)text[i];
+        (void)M11_Font_DrawChar(
+            g_activeOriginalFont, framebuffer, framebufferWidth,
+            framebufferHeight,
+            x + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34,
+            y,
+            ch, fgColor, (int)bgColor, 1);
     }
 }
 
@@ -36585,14 +36617,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * text color (yellow for leader, gold otherwise), not a
              * double rectangular border around the status box. */
 
-            /* V1 champion name/title status text.  Source F0292 does
-             * not draw the 19x14 champion icon inside the compact
-             * status box.  It clears C159+n (43x7) to C01 dark gray
-             * and prints the champion name centered in C163+n:
-             * leader C11 yellow, other champions C09 gold. */
+            /* V1 champion name/title status text. Source F0292 does not
+             * draw the 19x14 champion icon inside the compact status box.
+             * It clears C159+n (43x7) to C01 then writes Name[8] at the
+             * fixed C163+n TEXT2 origin, clipped to seven 6px cells. */
             if (!useV2PartyHud) {
-                M11_TextStyle nameStyle = g_text_small;
-                nameStyle.color = (unsigned char)
+                unsigned char nameColor = (unsigned char)
                     dm1_v1_champion_status_name_color_pc34(
                         (int)champ->present,
                         (int)champ->hp.current,
@@ -36614,10 +36644,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             slot, &nameTextRect)) {
                         continue;
                     }
-                    m11_draw_text_centered_in_rect(
+                    m11_draw_dm1_status_name_text(
                         framebuffer, framebufferWidth, framebufferHeight,
-                        nameTextRect.x, nameTextRect.y, nameTextRect.w,
-                        name, &nameStyle);
+                        nameTextRect.x,
+                        nameTextRect.y + DM1_V1_CPNBC_NAME_BOX_PRINT_Y_PC34,
+                        name,
+                        nameColor,
+                        (unsigned char)dm1_v1_champion_status_name_clear_color_pc34());
                 }
             } else {
                 int nameOffX = 4;
