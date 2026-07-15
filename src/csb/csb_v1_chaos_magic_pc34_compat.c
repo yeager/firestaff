@@ -749,6 +749,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 
 typedef struct {
     uint32_t location;
@@ -817,6 +818,11 @@ typedef struct {
     uint16_t thing;
     uint8_t payload[6];
 } CSB_V1_CSBWinDSAPendingActuatorCopy;
+typedef struct {
+    int32_t sound_number;
+    int32_t volume;
+    int32_t flags;
+} CSB_V1_CSBWinDSAPendingSoundRequest;
 
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
@@ -900,7 +906,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingPoisonWrite *pending_poison_writes,
     int *pending_poison_write_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
-    int *pending_actuator_copy_count, int *discard_text_requested)
+    int *pending_actuator_copy_count,
+    CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
+    int *pending_sound_request_count, int *discard_text_requested)
 {
     uint32_t v;
     uint32_t w;
@@ -930,6 +938,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_character_swaps || !pending_character_swap_count ||
         !pending_poison_writes || !pending_poison_write_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
+        !pending_sound_requests || !pending_sound_request_count ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -942,6 +951,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_character_swap_count < 0 ||
         *pending_poison_write_count < 0 ||
         *pending_actuator_copy_count < 0 ||
+        *pending_sound_request_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -970,6 +980,19 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                                            (w & 0xffffu) % v)) {
             return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
         }
+        break;
+    case 69u: /* STKOP_Sound, CSBWin DSA.cpp:4612-4624. */
+        if (!context->play_sound ||
+            *pending_sound_request_count >= CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_sound_requests[*pending_sound_request_count].sound_number = (int32_t)count;
+        pending_sound_requests[*pending_sound_request_count].volume = (int32_t)w;
+        pending_sound_requests[*pending_sound_request_count].flags = (int32_t)v;
+        ++*pending_sound_request_count;
         break;
     case 101u: /* STKOP_MissileInfoFetch, CSBWin DSA.cpp:2795-2822. */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
@@ -2545,6 +2568,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_poison_writes[CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
+    CSB_V1_CSBWinDSAPendingSoundRequest
+        pending_sound_requests[CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -2561,6 +2586,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_character_swap_count = 0;
     int pending_poison_write_count = 0;
     int pending_actuator_copy_count = 0;
+    int pending_sound_request_count = 0;
     int discard_text_requested = 0;
     int staged_saves_disabled;
     uint32_t staged_random_state;
@@ -2795,7 +2821,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_experience_write_count, pending_character_swaps,
                 &pending_character_swap_count, pending_poison_writes,
                 &pending_poison_write_count, pending_actuator_copies,
-                &pending_actuator_copy_count, &discard_text_requested);
+                &pending_actuator_copy_count, pending_sound_requests,
+                &pending_sound_request_count, &discard_text_requested);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2900,6 +2927,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             context->set_actuator_payload(
                 context->dungeon_user, pending_actuator_copies[i].thing,
                 pending_actuator_copies[i].payload) <= 0) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_sound_request_count; ++i) {
+        if (!context->play_sound || !context->play_sound(
+                context->dungeon_user, pending_sound_requests[i].sound_number,
+                pending_sound_requests[i].volume,
+                pending_sound_requests[i].flags)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -3075,6 +3110,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.prepare_cause_poison = runner->prepare_cause_poison;
     context.commit_cause_poison = runner->commit_cause_poison;
     context.discard_text = runner->discard_text;
+    context.play_sound = runner->play_sound;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
