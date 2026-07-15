@@ -111,6 +111,22 @@ typedef struct {
     const char *status;
 } Theron_V1Track02RawGridRuntimeReceipt;
 
+/* The initial-grid handoff is not an object-table handoff. This receipt lets
+ * callers record that they reached verified raw bytes while still refusing to
+ * project those bytes into objects, triggers, monsters, or fallback visuals. */
+typedef struct {
+    int projection_blocked;
+    int no_fallback;
+    uint16_t raw_grid_width;
+    uint16_t raw_grid_height;
+    uint32_t raw_grid_bytes;
+    uint32_t raw_grid_hash;
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    const char *status;
+} Theron_V1Track02RawGridObjectTableProjectionReceipt;
+
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
 typedef struct {
@@ -204,5 +220,12 @@ int theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
     Theron_V1Track02RawGridConsumer consumer,
     void *consumer_context,
     Theron_V1Track02RawGridRuntimeReceipt *out_receipt);
+
+/* Explicitly blocks object-table projection from the verified startup grid.
+ * A successful receipt is a negative handoff: it proves no object route or
+ * substitute visual was admitted from these bytes. */
+int theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
+    const Theron_V1Track02RawGridReceipt *grid,
+    Theron_V1Track02RawGridObjectTableProjectionReceipt *out_receipt);
 
 #endif

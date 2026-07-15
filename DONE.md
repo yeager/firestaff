@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 Theron Track02 raw-grid object-table projection blocker:
+  the source-verified initial-grid handoff now has an explicit negative
+  receipt for object-table projection. Callers can record that the exact
+  raw `32x27` grid bytes were reached while still refusing objects, triggers,
+  monsters, or fallback visuals; malformed or synthetic grid receipts fail
+  closed. Verification: strict direct C11 compile/run of
+  `test_theron_v1_track02_loader_intake` passed, plus focused object compile
+  and `git diff --check` on the touched Theron files.
+
 - ✅ 2026-07-14 DM2 raw `c_tim` queue boundary: replaced the fabricated
   NPC/creature/door/message timeline catalog with the exact source-shaped
   twelve-byte timer record and `c_timer.cpp::DM2_cmp_timers` order: tick

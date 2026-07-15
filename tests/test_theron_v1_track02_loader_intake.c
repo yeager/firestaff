@@ -101,6 +101,7 @@ int main(void) {
     Theron_V1Track02RawGridRowReceipt row_receipt;
     Theron_V1Track02RawGridReceipt grid_receipt;
     Theron_V1Track02RawGridRuntimeReceipt runtime_receipt;
+    Theron_V1Track02RawGridObjectTableProjectionReceipt object_projection;
     const char *real_track02_path;
     const char *real_track02_md5 = NULL;
     unsigned char *real_track02;
@@ -171,6 +172,15 @@ int main(void) {
         CHECK(grid_receipt.raw_grid_hash == decoded_receipt.decoded_grid_hash);
         CHECK(strcmp(grid_receipt.status,
                      "initial_envelope_raw_grid_handoff_no_semantics") == 0);
+        CHECK(theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
+            &grid_receipt, &object_projection));
+        CHECK(object_projection.projection_blocked);
+        CHECK(object_projection.no_fallback);
+        CHECK(object_projection.raw_grid_bytes == grid_receipt.raw_grid_bytes);
+        CHECK(object_projection.raw_grid_hash == grid_receipt.raw_grid_hash);
+        CHECK(object_projection.raw_track02_offset == grid_receipt.raw_track02_offset);
+        CHECK(strcmp(object_projection.status,
+                     "initial_envelope_raw_grid_object_table_projection_blocked_no_fallback") == 0);
         consumer.accept = 1;
         CHECK(theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
             &decoded_receipt, real_track02, real_track02_bytes,
@@ -313,9 +323,44 @@ int main(void) {
             THERON_V1_TRACK02_MD5_US_BIN, &grid_receipt));
         CHECK(!grid_receipt.handed_off);
         CHECK(grid_receipt.status == NULL);
+        CHECK(!theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
+            &grid_receipt, &object_projection));
+        CHECK(!object_projection.projection_blocked);
+        CHECK(!object_projection.no_fallback);
         CHECK(receipt.initial_envelope_source_bound);
         free(synthetic_raw);
     }
+
+    memset(&grid_receipt, 0, sizeof(grid_receipt));
+    grid_receipt.handed_off = 1;
+    grid_receipt.raw_grid_width = THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH;
+    grid_receipt.raw_grid_height = THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT;
+    grid_receipt.raw_grid_bytes =
+        THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH *
+        THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT;
+    grid_receipt.raw_grid_hash = 0x12345678u;
+    grid_receipt.raw_track02_sector = initial_envelope.track02_raw_sector;
+    grid_receipt.raw_sector_offset = 0x130u;
+    grid_receipt.raw_track02_offset = 0x7015c0u;
+    grid_receipt.status = "initial_envelope_raw_grid_handoff_no_semantics";
+    CHECK(theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
+        &grid_receipt, &object_projection));
+    CHECK(object_projection.projection_blocked);
+    CHECK(object_projection.no_fallback);
+    CHECK(object_projection.raw_grid_hash == grid_receipt.raw_grid_hash);
+    CHECK(strcmp(object_projection.status,
+                 "initial_envelope_raw_grid_object_table_projection_blocked_no_fallback") == 0);
+    grid_receipt.status = NULL;
+    CHECK(!theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
+        &grid_receipt, &object_projection));
+    CHECK(!object_projection.projection_blocked);
+    CHECK(!object_projection.no_fallback);
+    grid_receipt.status = "initial_envelope_raw_grid_handoff_no_semantics";
+    grid_receipt.raw_grid_hash = 0u;
+    CHECK(!theron_v1_track02_loader_intake_block_raw_grid_object_table_projection(
+        &grid_receipt, &object_projection));
+    CHECK(!object_projection.projection_blocked);
+    CHECK(!object_projection.no_fallback);
 
     initial_envelope.envelope_bytes = facts.byte_count + 1u;
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
