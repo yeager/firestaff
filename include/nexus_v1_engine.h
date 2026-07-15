@@ -437,6 +437,29 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure2DescriptorCaptureTarget;
 
+/* One exact static-textured Structure3 face joined to its bounded Structure2
+ * descriptor in the same canonical LEV. This is capture-producer input only:
+ * the descriptor's post-FFFF bytes remain opaque and no pixel, palette, UV,
+ * VDP1, transform, or draw meaning is implied. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    uint32_t structure3_entry_index;
+    uint32_t face_ordinal;
+    int face_byte_offset;
+    uint64_t face_bytes_fnv1a64;
+    Nexus_V1_DgnStructure3Face face;
+    uint8_t static_texture_selector;
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
+    int static_selector_descriptor_bound;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure3StaticMaterialCaptureTarget;
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1129,6 +1152,10 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
 int nexus_v1_engine_write_structure2_descriptor_capture_target(
     const Nexus_V1_Engine *engine, int descriptor_index, const char *path,
     Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target);
+int nexus_v1_engine_build_structure3_static_material_capture_target(
+    const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
+    uint32_t face_ordinal,
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *out_target);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,

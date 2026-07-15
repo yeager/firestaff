@@ -6342,3 +6342,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   but local corpus contains no authentic Saturn trace. An independent capture
   owner must verify its provenance before opaque admission; pixel/palette/VDP1
   semantics, decoder selection, and all drawing remain blocked.
+
+- 🔧 2026-07-15 Nexus Structure3 static-material capture: hash-verified
+  LEV00–LEV15 data now yields a capture target that joins one real textured
+  Structure3 face row to its exact static Structure2 descriptor and opaque
+  payload. This is source acquisition only. Authentic Saturn trace evidence
+  must still prove pixel order, palette addressing, UV/VDP1 semantics, and
+  the render route before any decoder or draw can be enabled.

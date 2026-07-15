@@ -16665,3 +16665,14 @@ provenance; unverified input remains blocked even after every hash matches.
 Opaque admission authorizes neither a decoder nor draw, keeping the renderer
 fail-closed until pixel, palette, and VDP1 semantics are actually captured.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus Structure3 static face-to-Structure2 capture target
+
+`nexus_v1_engine_build_structure3_static_material_capture_target()` now joins
+one bounded, texture-flagged Structure3 face from the active canonical LEV to
+the exact matching static Structure2 descriptor, with independent hashes for
+the LEV source, the 12-byte face row, descriptor row, and opaque payload.
+The focused corpus test verifies this against real hash-verified LEV00–LEV15
+package data. The target is capture-producer input only: pixels, palette,
+UVs, VDP1 state, transforms, and drawing remain unproved and blocked.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.

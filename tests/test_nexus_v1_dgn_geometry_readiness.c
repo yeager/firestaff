@@ -584,6 +584,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure3_longest_nonzero_byte_run = 0;
     int structure3_static_face_selector_total = 0;
     int structure3_animated_face_selector_total = 0;
+    int structure3_static_material_capture_target_level_count = 0;
     uint64_t structure3_maximum_normal_length_error = 0;
     int structure3_complete_block_total = 0;
     int structure3_zero_block_total = 0;
@@ -611,6 +612,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnActiveStructure1AOwnerChainReceipt active_owner_chain;
         Nexus_V1_DgnActiveStructure2DescriptorReceipt active_structure2;
         Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
+        Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -993,6 +995,57 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               descriptor_target.no_draw_only &&
               !descriptor_target.fallback_visuals_permitted,
               "out-of-range Structure2 descriptors cannot create capture targets");
+        {
+            int entry_index;
+            int found_static_material_target = 0;
+
+            memset(&material_target, 0, sizeof(material_target));
+            for (entry_index = 0;
+                 entry_index < loaded_level.structure3_directory.entry_count &&
+                 !found_static_material_target;
+                 ++entry_index) {
+                int face_index;
+                for (face_index = 0;
+                     face_index < loaded_level.structure3_entry_face_counts[entry_index];
+                     ++face_index) {
+                    if (nexus_v1_engine_build_structure3_static_material_capture_target(
+                            &active_engine, (uint32_t)entry_index,
+                            (uint32_t)face_index, &material_target) == 1) {
+                        found_static_material_target = 1;
+                        break;
+                    }
+                }
+            }
+            if (loaded_level.structure3_face_materials.static_texture_selector_count > 0) {
+                CHECK(found_static_material_target && material_target.valid &&
+                      material_target.level_index == level &&
+                      material_target.source_byte_count == (int)size &&
+                      material_target.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      material_target.face_byte_offset >=
+                          loaded_level.structure3_payload.byte_offset &&
+                      material_target.face_bytes_fnv1a64 ==
+                          fnv1a64(data + material_target.face_byte_offset, 12) &&
+                      (material_target.face.flags & 0x40U) != 0U &&
+                      material_target.face.fill_selector ==
+                          material_target.static_texture_selector &&
+                      material_target.static_selector_descriptor_bound &&
+                      material_target.descriptor_target.valid &&
+                      material_target.descriptor_target.descriptor.image_id ==
+                          material_target.static_texture_selector &&
+                      material_target.capture_producer_required &&
+                      material_target.original_saturn_capture_required &&
+                      material_target.no_draw_only &&
+                      !material_target.fallback_visuals_permitted,
+                      "retail Structure3 static face binds its exact Structure2 capture descriptor only");
+                ++structure3_static_material_capture_target_level_count;
+            } else {
+                CHECK(!found_static_material_target && !material_target.valid &&
+                      material_target.no_draw_only &&
+                      !material_target.fallback_visuals_permitted,
+                      "a level without static Structure3 selectors cannot manufacture a material capture target");
+            }
+        }
         if (level == 0) {
             const char *target_path =
                 "/private/tmp/firestaff_nexus_structure2_descriptor_target.txt";
@@ -1060,6 +1113,14 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               !active_structure2.valid && active_structure2.no_draw_only &&
               !active_structure2.fallback_visuals_permitted,
               "active Structure2 descriptor envelope withdraws on stale LEV identity");
+        if (material_target.valid) {
+            CHECK(nexus_v1_engine_build_structure3_static_material_capture_target(
+                      &active_engine, material_target.structure3_entry_index,
+                      material_target.face_ordinal, &material_target) == 0 &&
+                  !material_target.valid && material_target.no_draw_only &&
+                  !material_target.fallback_visuals_permitted,
+                  "stale LEV identity withdraws Structure3-to-Structure2 capture targets");
+        }
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(data, (size_t)size);
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
@@ -1258,6 +1319,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         free(data);
     }
     CHECK(checked == 16, "all LEV00 through LEV15 files were checked");
+    CHECK(structure3_static_material_capture_target_level_count > 0,
+          "real DGN corpus yields source-bound static face/material capture targets");
     CHECK(structure2_descriptor_total == 1678 &&
           structure2_nonzero_target_total == 2944 &&
           structure2_in_span_target_total == 2944 &&
