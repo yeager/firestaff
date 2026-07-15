@@ -12,6 +12,12 @@
   `tests/test_nexus_v1_startup_title_route_asset_gate.c` against the real
   launcher object; do not promote fallback startup menu presentation.
 
+- 2026-07-15 DM1 F0399/G0485/G0486 symbol mana-cost follow-up: spell symbol
+  input now consumes a DM1-owned receipt for the real PC34 base-cost and
+  power-multiplier tables before mutating champion symbols or mana. Remaining
+  spell work is live cast-result/action-family ownership and real HUD/frame
+  evidence, not another synthetic rune-cost table.
+
 - 2026-07-11 DM2 startup follow-up: `fe7299.cpp` cue-0 to static-menu handoff
   is now owned by DM2. Remaining startup work is real packaged Mac capture
   with a supported DM2 audio backend, plus source evidence for interactive

@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 F0399/G0485/G0486 symbol mana-cost receipt: added a
+  DM1-owned receipt that computes spell-symbol mana cost from the real PC34
+  G0485 base table and G0486 power multiplier table before any champion mana
+  or symbol mutation. `dm1_spell_addSymbol` and `dm1_spell_symbolManaCost`
+  now consume that receipt instead of duplicating the table lookup locally;
+  corrupt symbol steps, indices, or power runes fail closed without mutation.
+  Verification: strict direct C11
+  `test_dm1_v1_g0485_g0486_f0399_symbol_mana_cost_pc34_compat` passed 42/42
+  assertions.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0396/F0397/F0398 spell-HUD symbol gap:
   the champion-panel spell-area overlay contract now explicitly owns
   MENUDRAW.C's C011 line-stack load, six available-symbol window, and
