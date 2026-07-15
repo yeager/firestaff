@@ -20,6 +20,13 @@ typedef struct CSB_V1_StartupSessionTerminalReceipt_PC34 {
 int csb_v1_startup_session_hud_surface_contract_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 
+/* TITLE.C F0437 and ENTRANCE.C F0806/F0807 must still be backed by the
+ * resident package C001/C004/C002/C003 surfaces before PANEL.C's C017/C040
+ * HUD can become live. This predicate does not require the playback stage to
+ * have already mutated to HUD. */
+int csb_v1_startup_session_full_surface_contract_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+
 /* The terminal F0807 handoff is only usable when the complete C001 title and
  * C017/C040 HUD package was consumed from the same hash-verified session. */
 typedef struct CSB_V1_StartupSessionTerminalPackageReceipt_PC34 {

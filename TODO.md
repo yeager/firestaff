@@ -224,7 +224,11 @@
     cross into HUD/runtime. Remaining work is still external original-window
     capture and broader app-route parity, not one-byte or host-owned package
     stand-ins.
-    not synthetic title/entrance replacement.
+  - 2026-07-15 update: the terminal F0806/F0807 door-to-HUD handoff now gates
+    on that same full resident surface contract before HUD playback, so a
+    valid C017/C040 pair cannot bypass malformed C001/C004/C002/C003 startup
+    media. Remaining work is still external original-window capture and
+    app-route parity, not synthetic title/entrance replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.

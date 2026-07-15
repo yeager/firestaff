@@ -14,6 +14,13 @@
   asset ids before HUD/runtime handoff. Focused startup-session contract
   coverage rejects forged one-line C001 and one-byte C003 stand-ins.
 
+- ✅ 2026-07-15 CSB terminal handoff full-surface gate: the F0806/F0807
+  entrance-to-HUD handoff now reuses the full resident startup surface
+  contract before entering HUD playback, so a valid C017/C040 HUD pair cannot
+  cross into runtime if C001, C004, C002, or C003 were swapped or malformed.
+  Focused `csb_v1_startup_terminal_handoff_real_data_pc34_compat` and
+  startup-session contract CTests pass.
+
 - ✅ 2026-07-15 DM1 spell-HUD SymbolStep/tab receipt hardening:
   the F0394/F0397/F0398 spell-area overlay contract now admits only the
   original champion-owned SymbolStep ring `0..3` from SYMBOL.C F0399/F0400,
