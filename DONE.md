@@ -16626,6 +16626,24 @@ the observed main-RAM writers. It cannot be promoted to level/object data.
 
 Verification: focused initialization receipt test.
 
+# ✅ 2026-07-15 Theron game-owned writer corpus negative receipt
+
+The authentic USA Track 02 capture now has a strict, bounded negative corpus
+receipt for every observed game-owned main-RAM loader writer. It contains 128
+writes: 12 control-window writes at physical `0x1f01f6..0x1f01fb`, plus 116
+`00`/`ff` initialization writes at `0x1f10xx`. All have
+`dispatch_sequence=0`; the authenticated generation-7 `READ(6)` at LBA 4847
+(Track 02 records `0x72e..0x735`) occurs only after that complete writer
+corpus. These rows therefore cannot be the G7 loader or a G7 record consumer.
+The verifier rejects a CDB-dispatched writer, a non-sentinel initialization
+byte, an unclassified destination, and a changed corpus count. This is not a
+global absence claim: a later game-owned FIFO/CDB reader or writer remains the
+required positive handoff evidence. No level, object, palette, or visual
+semantics were added.
+
+Verification: `test_theron_v1_game_loader_writer_negative_receipt` and the
+authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
