@@ -172,6 +172,7 @@ typedef struct {
      * prevents a no-door frame from needing a made-up door identity. */
     int door_material_plan_required;
     uint32_t door_material_plan_hash;
+    int door_material_plan_command_count;
     int door_material_plan_consumed;
     int hud_material_plan_required;
     uint32_t hud_material_plan_hash;
