@@ -37,6 +37,14 @@ int dm1_v1_inscription_host_material_from_world_pc34(
     unsigned short firstThing,
     DM1_V1_InscriptionHostMaterialReceiptPc34* outReceipt);
 
+/* F0172 has already selected G0290's current visible wall TextString.  M11
+ * uses this strict form for F0107/M648 so a malformed selected record cannot
+ * fall through to another visible TextString in a broader square list. */
+int dm1_v1_inscription_host_material_from_selected_wall_pc34(
+    const struct DungeonThings_Compat* things,
+    int selectedTextIndex,
+    DM1_V1_InscriptionHostMaterialReceiptPc34* outReceipt);
+
 /* The M11 consumer must accept only the exact F0107 M648/C10 raster plan.
  * Checking the complete receipt before the first blit prevents a malformed
  * later line from leaving a partial host inscription on the wall. */

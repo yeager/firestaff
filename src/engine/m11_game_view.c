@@ -22306,9 +22306,8 @@ static int m11_dm1_visible_wall_inscription_material(
     if (!state || !cell || !state->world.things) {
         return 0;
     }
-    return dm1_v1_inscription_host_material_from_world_pc34(
-        state->world.things, cell->inscriptionTextIndex, cell->firstThing,
-        outMaterial);
+    return dm1_v1_inscription_host_material_from_selected_wall_pc34(
+        state->world.things, cell->inscriptionTextIndex, outMaterial);
 }
 
 static int m11_dm1_visible_wall_inscription_presentation(
