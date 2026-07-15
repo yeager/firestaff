@@ -267,7 +267,8 @@ int main(void)
         handoff.gdat_index != trace.expected_index ||
         handoff.material_width <= 0 || handoff.material_height <= 0 ||
         handoff.material_stride < handoff.material_width ||
-        handoff.material_palette_hash == 0u || trace.resolve_calls != 0 ||
+        handoff.material_palette_hash == 0u ||
+        handoff.material_pixel_hash == 0u || trace.resolve_calls != 0 ||
         trace.fetch_calls != 1 || trace.palette_calls != 1) {
         fputs("FAIL: DB4 b4 did not hand off its exact decoded CREATURES/F9 material\n",
               stderr);
@@ -338,7 +339,7 @@ int main(void)
         handoff.gdat_index, handoff.material_pixels,
         handoff.material_width, handoff.material_height,
         handoff.material_stride, handoff.material_palette16,
-        handoff.material_palette_hash);
+        handoff.material_palette_hash, handoff.material_pixel_hash);
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = (uint8_t)trace.creature_type;
     viewport.creatures[0].source_kind = 2;
@@ -360,6 +361,29 @@ int main(void)
               stderr);
         failures = 1;
         goto done;
+    }
+    /* The direct DB4 receipt owns decoded indexed bytes as well as the
+     * palette. A provider buffer mutation cannot replay under stale source
+     * provenance. */
+    {
+        int accepted_asset_drawn = viewport.asset_creature_drawn_count;
+        int accepted_scene_consumed =
+            viewport.g1_scene_creature_material_consumed_count;
+        int accepted_blocked = viewport.blocked_material_draw_count;
+        uint8_t original_pixel = trace.decoded_pixels[0];
+
+        trace.decoded_pixels[0] ^= 1u;
+        dm2_v1_render_creatures(&viewport);
+        if (viewport.asset_creature_drawn_count != accepted_asset_drawn ||
+            viewport.g1_scene_creature_material_consumed_count !=
+                accepted_scene_consumed ||
+            viewport.blocked_material_draw_count != accepted_blocked + 1) {
+            fputs("FAIL: changed DB4 decoded pixels replayed a stale handoff\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
+        trace.decoded_pixels[0] = original_pixel;
     }
     /* The direct DB4 receipt owns b15_0_1 as well as its object, tile and
      * CREATURES/type/F9 material. A changed live direction cannot replay the

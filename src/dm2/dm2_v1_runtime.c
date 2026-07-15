@@ -3411,7 +3411,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     if (rt->g1_scene_runtime_handoff.valid &&
         rt->g1_scene_runtime_handoff.scene.root_class ==
-            DM2_V1_G1_SCENE_ROOT_CREATURE) {
+            DM2_V1_G1_SCENE_ROOT_CREATURE &&
+        rt->g1_scene_runtime_handoff.material_pixel_hash != 0u) {
         const DM2_V1_G1DungeonSceneClassificationReceipt *scene =
             &rt->g1_scene_runtime_handoff.scene;
         dm2_v1_viewport_set_g1_scene_creature_material_direct(
@@ -3423,7 +3424,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             rt->g1_scene_runtime_handoff.material_height,
             rt->g1_scene_runtime_handoff.material_stride,
             rt->g1_scene_runtime_handoff.material_palette16,
-            rt->g1_scene_runtime_handoff.material_palette_hash);
+            rt->g1_scene_runtime_handoff.material_palette_hash,
+            rt->g1_scene_runtime_handoff.material_pixel_hash);
     } else {
         dm2_v1_viewport_set_g1_scene_creature_material(
             &viewport, 0, 0, 0, 0, 0, 0, 0, 0, 0u);

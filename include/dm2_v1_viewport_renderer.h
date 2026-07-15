@@ -993,6 +993,7 @@ typedef struct {
     int g1_scene_creature_material_height;
     int g1_scene_creature_material_stride;
     const uint8_t *g1_scene_creature_material_pixels;
+    uint32_t g1_scene_creature_material_pixel_hash;
     uint8_t g1_scene_creature_material_palette16[16];
     uint32_t g1_scene_creature_material_palette_hash;
     int g1_scene_creature_material_consumed_count;
@@ -1162,7 +1163,7 @@ void dm2_v1_viewport_set_g1_scene_creature_material_direct(
     DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
     int creature_type, int gdat_index, const uint8_t *pixels,
     int width, int height, int stride, const uint8_t palette16[16],
-    uint32_t palette_hash);
+    uint32_t palette_hash, uint32_t expected_pixel_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,

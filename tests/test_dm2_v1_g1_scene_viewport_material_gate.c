@@ -81,7 +81,7 @@ static int run_case(int mismatch, int wrong_owner, int wrong_direction,
         dm2_v1_viewport_set_g1_scene_creature_material_direct(
             &viewport, 1, 12, 9, 7,
             dm2_v1_viewport_creature_graphic_index(7, 0), direct_image,
-            2, 2, 2, direct_palette, 0x11111111u);
+            2, 2, 2, direct_palette, 0x11111111u, 0u);
     } else {
         dm2_v1_viewport_set_g1_scene_creature_material(
             &viewport, 1, 12, 9, 7,
