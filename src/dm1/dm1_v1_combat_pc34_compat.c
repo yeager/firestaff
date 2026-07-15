@@ -17,6 +17,7 @@
  */
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -77,16 +78,81 @@ void dm1_combat_init_group(DM1_CreatureGroup* g) {
 
 /*
  * F0143_DUNGEON_GetArmourDefense
- * ReDMCSB: Returns armor defense. If useSharpDefense, adds the sharp
- * defense bits (MASK0x0007_SHARP_DEFENSE).
+ * ReDMCSB DUNGEON.C:1230-1245: when sharp defense applies, the low three
+ * G0239 Attributes bits select a multiplier in the 4..11 range.  This is a
+ * scaled product, not an additive bonus.
  */
 int dm1_armor_defense(const DM1_ArmorPiece* armor, int useSharpDefense) {
     if (!armor) return 0;
-    int def = armor->defense;
-    if (useSharpDefense) {
-        def += armor->sharpDefense;
+    if (!useSharpDefense) return armor->defense;
+    return dm1_scaled_product(armor->defense, 3,
+                              (armor->sharpDefense & 0x0007) + 4);
+}
+
+int dm1_armour_info_pc34(int armourType, DM1_ArmourInfoPc34* outInfo)
+{
+    static const DM1_ArmourInfoPc34 table[58] = {
+        {3, 5, 1}, {4, 10, 1}, {3, 4, 1}, {6, 5, 2},
+        {16, 25, 4}, {4, 5, 0}, {4, 5, 0}, {3, 7, 1},
+        {3, 7, 1}, {4, 6, 1}, {2, 4, 0}, {4, 5, 1},
+        {5, 7, 1}, {3, 11, 2}, {3, 13, 2}, {4, 13, 2},
+        {6, 17, 3}, {8, 20, 3}, {14, 20, 3}, {6, 12, 2},
+        {5, 9, 1}, {5, 8, 1}, {5, 9, 1}, {4, 1, 4},
+        {6, 5, 4}, {11, 12, 5}, {14, 17, 5}, {15, 20, 5},
+        {11, 22, 0x80 | 5}, {10, 16, 0x80 | 2},
+        {14, 20, 0x80 | 3}, {21, 35, 0x80 | 4},
+        {65, 35, 5}, {53, 35, 5}, {52, 70, 7}, {41, 55, 7},
+        {16, 25, 6}, {16, 30, 6}, {19, 40, 7}, {120, 65, 4},
+        {80, 56, 4}, {28, 37, 5}, {34, 56, 0x80 | 4},
+        {17, 62, 5}, {108, 125, 4}, {72, 90, 4}, {24, 50, 5},
+        {30, 85, 0x80 | 4}, {35, 76, 4}, {141, 160, 4},
+        {90, 101, 4}, {31, 60, 5}, {40, 100, 0x80 | 4},
+        {14, 54, 6}, {57, 60, 7}, {81, 88, 4}, {3, 16, 2}, {2, 3, 3}
+    };
+
+    if (!outInfo) return 0;
+    memset(outInfo, 0, sizeof(*outInfo));
+    if (armourType < 0 || armourType >= (int)(sizeof(table) / sizeof(table[0]))) {
+        return 0;
     }
-    return def;
+    *outInfo = table[armourType];
+    return 1;
+}
+
+int dm1_v1_dungeon_get_armour_info_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    DM1_ArmourInfoPc34* outInfo)
+{
+    const unsigned char* rawArmour;
+
+    if (outInfo) memset(outInfo, 0, sizeof(*outInfo));
+    if (!outInfo || THING_GET_TYPE(thing) != THING_TYPE_ARMOUR) return 0;
+    rawArmour = dm1_v1_dungeon_get_thing_data_pc34(things, thing);
+    if (!rawArmour) return 0;
+
+    /* PC3.4 ARMOUR.Type occupies bits 0..6 of raw byte 2. */
+    return dm1_armour_info_pc34(rawArmour[2] & 0x7f, outInfo);
+}
+
+int dm1_v1_dungeon_get_armour_defense_f0143_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    int useSharpDefense,
+    int* outDefense)
+{
+    DM1_ArmourInfoPc34 info;
+    DM1_ArmorPiece armour;
+
+    if (outDefense) *outDefense = 0;
+    if (!outDefense || !dm1_v1_dungeon_get_armour_info_pc34(things, thing, &info)) {
+        return 0;
+    }
+    memset(&armour, 0, sizeof(armour));
+    armour.defense = info.defense;
+    armour.sharpDefense = info.attributes & 0x0007;
+    *outDefense = dm1_armor_defense(&armour, useSharpDefense);
+    return 1;
 }
 
 /*
