@@ -16653,6 +16653,24 @@ work may begin.
 Verification: `test_theron_v1_origin_ram_receipt`, Mednafen patch dry-run,
 and an instrumented authentic-media boot capture.
 
+# ✅ 2026-07-15 Theron game-owned Track 02 FIFO-to-RAM writer gate
+
+The all-generation receipt now observes the store at the HuC6280 write point,
+so one trace row contains the raw sector generation/LBA/offset, FIFO reader,
+physical main-RAM destination, and both logical and physical writer PCs. The
+positive verifier accepts only writer and destination addresses in physical
+game RAM `0x1f0000..0x1f7fff`; a System Card writer is rejected. This is a
+transport/ownership gate only and publishes no record, level, object, palette,
+or visual semantics.
+
+The fresh MD5-pinned USA CUE capture posted real PID-targeted Quartz Return
+pairs but Mednafen reported no SDL key event, then reached only the System
+Card wait with no SCSI read or FIFO/RAM receipt. The failed delivery is kept
+as a negative capture result, not replaced with injected controller state.
+
+Verification: `test_theron_v1_game_owned_origin_ram_receipt`, full Mednafen
+patch dry-run, instrumented Mednafen build, and the authentic-media capture.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 face framing receipt
 
 The engine now binds Structure3 entry-header boundaries and face-row local

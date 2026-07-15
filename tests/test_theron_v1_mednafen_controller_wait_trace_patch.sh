@@ -27,6 +27,7 @@ game_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_game_window
 fifo_origin_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch
 later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
+game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
@@ -191,6 +192,13 @@ if ! grep -Fq 'pce_cd_origin_ram_receipt generation=%u source_lba=%u source_offs
     printf 'FAIL: all-generation source-to-RAM receipt patch is missing raw-sector provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'pce_cd_origin_main_ram_receipt sequence=%u generation=%u source_lba=%u' "$game_owned_origin_ram_receipt_patch_file" ||
+   ! grep -Fq 'writer_physical_pc=%06x' "$game_owned_origin_ram_receipt_patch_file" ||
+   ! grep -Fq 'TheronPCECDOriginRAMPending' "$game_owned_origin_ram_receipt_patch_file" ||
+   ! grep -Fq 'physical_destination >= 0x1f0000 && physical_destination < 0x1f8000' "$game_owned_origin_ram_receipt_patch_file"; then
+    printf 'FAIL: game-owned source-to-RAM receipt patch is missing exact writer provenance\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
@@ -230,4 +238,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$game_window_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$later_generation_filter_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$origin_ram_receipt_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$game_owned_origin_ram_receipt_patch_file"
 printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'
