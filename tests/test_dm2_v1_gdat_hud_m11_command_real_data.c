@@ -233,6 +233,34 @@ int main(void)
                 viewport.fallback_hud_portrait_drawn_count, unexpected_fetches);
         ++failures;
     }
+    {
+        uint8_t saved_palette_byte = plan.commands[0].palette16[0];
+
+        plan.commands[0].palette16[0] ^= 0x01u;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        unexpected_fetches = 0;
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+        dm2_v1_viewport_set_asset_palette_provider(
+            &viewport, unexpected_palette_fetch, NULL);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_gdat_hud_material_plan(&viewport, &plan);
+        dm2_v1_render_ui_chrome(&viewport);
+        plan.commands[0].palette16[0] = saved_palette_byte;
+        if (viewport.asset_hud_core_drawn_count >= 9 ||
+            viewport.gdat_hud_material_plan_consumed_count >=
+                DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            (viewport.blocked_material_mask &
+                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE) == 0u ||
+            viewport.fallback_hud_core_drawn_count != 0 ||
+            viewport.fallback_hud_portrait_drawn_count != 0 ||
+            unexpected_fetches != 0) {
+            fputs("FAIL: altered HUD palette reached the viewport or fallback path\n",
+                  stderr);
+            ++failures;
+        }
+    }
     dm2_v1_gdat_hud_m11_command_plan_free(&plan);
     dm2_v1_boot_cleanup(&boot);
     dm2_v1_asset_loader_free(&loader);
