@@ -3215,53 +3215,6 @@ static int orch_f0200_closed_door_blocks_view_compat(
     return 1;
 }
 
-/* ReDMCSB PROJEXPL.C F0227 lines 1144-1207 normalizes each facing
- * direction onto the west-facing cone, then accepts a destination in that
- * 90-degree cone.  GROUP.C F0200 uses it before F0199 walks the actual
- * unblocked-square path. */
-static int orch_f0227_destination_visible_from_source_compat(
-    int direction,
-    int sourceMapX,
-    int sourceMapY,
-    int destinationMapX,
-    int destinationMapY)
-{
-    int temporary;
-
-    switch (direction & 3) {
-    case 2: /* South */
-        temporary = sourceMapX;
-        sourceMapX = destinationMapY;
-        destinationMapY = temporary;
-        temporary = destinationMapX;
-        destinationMapX = sourceMapY;
-        sourceMapY = temporary;
-        break;
-    case 1: /* East */
-        temporary = sourceMapX;
-        sourceMapX = destinationMapX;
-        destinationMapX = temporary;
-        temporary = destinationMapY;
-        destinationMapY = sourceMapY;
-        sourceMapY = temporary;
-        break;
-    case 0: /* North */
-        temporary = sourceMapX;
-        sourceMapX = sourceMapY;
-        sourceMapY = temporary;
-        temporary = destinationMapX;
-        destinationMapX = destinationMapY;
-        destinationMapY = temporary;
-        break;
-    default: /* West is the canonical cone. */
-        break;
-    }
-
-    sourceMapX -= destinationMapX - 1;
-    return sourceMapX > 0 &&
-           abs(sourceMapY - destinationMapY) <= sourceMapX;
-}
-
 static int orch_f0199_square_blocks_view_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -3404,7 +3357,7 @@ static int orch_f0200_get_distance_to_visible_party_compat(
 
     direction = (int)group->direction & 3;
     if (!(ctx->creatureInfo.attributes & DM1_ATTR_SIDE_ATTACK) &&
-        !orch_f0227_destination_visible_from_source_compat(
+        !F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
             direction, ctx->currentGroupMapX, ctx->currentGroupMapY,
             ctx->partyMapX, ctx->partyMapY)) {
         return 0;

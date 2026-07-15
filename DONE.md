@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 GROUP F0227: unified the exact `GROUP.C:13772-13808`
+  directional-cone transform behind one DM1 owner. F0200 and M10 now consume
+  it before their loaded-map F0199 paths; focused coverage locks cardinal
+  cone outcomes.
+
 - 2026-07-15 DM1 GROUP F0226: added the exact `GROUP.C:13762-13770`
   Manhattan-distance primitive and bound M10's C29-C41 group-to-party
   distance to it. Focused coverage includes asymmetric and identical squares.
