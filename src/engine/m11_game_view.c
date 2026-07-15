@@ -22699,7 +22699,7 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 }
 #endif
 
-static void m11_draw_dm1_front_mirror_backing_host_receipt(
+static int m11_draw_dm1_front_mirror_backing_host_receipt(
     const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
     unsigned char* framebuffer,
@@ -22711,7 +22711,7 @@ static void m11_draw_dm1_front_mirror_backing_host_receipt(
 
     if (!state || !receipt || !framebuffer || !receipt->drawMirrorBackingAsset ||
         receipt->backingWidth <= 0 || receipt->backingHeight <= 0) {
-        return;
+        return 0;
     }
     backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                    (unsigned int)receipt->backingGraphicIndex);
@@ -22719,7 +22719,7 @@ static void m11_draw_dm1_front_mirror_backing_host_receipt(
         receipt->backingSourceX < 0 || receipt->backingSourceY < 0 ||
         receipt->backingSourceX >= (int)backing->width ||
         receipt->backingSourceY >= (int)backing->height) {
-        return;
+        return 0;
     }
     paletteMap = receipt->backingPaletteMapValid
         ? receipt->backingPaletteMap : NULL;
@@ -22751,9 +22751,10 @@ static void m11_draw_dm1_front_mirror_backing_host_receipt(
                 ? paletteMap[pixel & 0x0f] : pixel;
         }
     }
+    return 1;
 }
 
-static void m11_draw_dm1_front_champion_portrait_host_receipt(
+static int m11_draw_dm1_front_champion_portrait_host_receipt(
     const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
     unsigned char* framebuffer,
@@ -22761,12 +22762,18 @@ static void m11_draw_dm1_front_champion_portrait_host_receipt(
     int fbH) {
     const M11_AssetSlot* portraits;
     if (!state || !receipt || !receipt->drawChampionPortrait) {
-        return;
+        return 0;
     }
     portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                      (unsigned int)receipt->portraitGraphicIndex);
-    if (!portraits || !portraits->loaded || !portraits->pixels) {
-        return;
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        receipt->portraitSourceX < 0 || receipt->portraitSourceY < 0 ||
+        receipt->portraitWidth <= 0 || receipt->portraitHeight <= 0 ||
+        receipt->portraitSourceX + receipt->portraitWidth >
+            (int)portraits->width ||
+        receipt->portraitSourceY + receipt->portraitHeight >
+            (int)portraits->height) {
+        return 0;
     }
     M11_AssetLoader_BlitRegion(portraits,
                                receipt->portraitSourceX,
@@ -22779,6 +22786,7 @@ static void m11_draw_dm1_front_champion_portrait_host_receipt(
                                M11_VIEWPORT_X + receipt->portraitDstX,
                                M11_VIEWPORT_Y + receipt->portraitDstY,
                                receipt->portraitTransparentColor);
+    return 1;
 }
 
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
@@ -22818,13 +22826,18 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * cannot stand in for C346 because its map-local ornament lookup is a
      * different source input. */
     if (drawReceipt.candidatePanelOwnsCell) {
-        m11_draw_dm1_front_champion_portrait_host_receipt(
+        (void)m11_draw_dm1_front_champion_portrait_host_receipt(
             state, &drawReceipt, framebuffer, fbW, fbH);
         return;
     }
-    m11_draw_dm1_front_mirror_backing_host_receipt(
-        state, &drawReceipt, framebuffer, fbW, fbH);
-    m11_draw_dm1_front_champion_portrait_host_receipt(
+    /* DUNVIEW.C:3922-3928 is one C346->C026 wall operation.  Rendering the
+     * portrait after an invalid C346 would leave a floating champion image,
+     * so the complete non-panel route is fail-closed on the real backing. */
+    if (!m11_draw_dm1_front_mirror_backing_host_receipt(
+            state, &drawReceipt, framebuffer, fbW, fbH)) {
+        return;
+    }
+    (void)m11_draw_dm1_front_champion_portrait_host_receipt(
         state, &drawReceipt, framebuffer, fbW, fbH);
 }
 

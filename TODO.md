@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0172/C127 mirror-material follow-up: the live D1C route
+  now treats C346 followed by C026 as one source-owned operation. A missing or
+  malformed C346 backing must suppress C026 rather than leave a floating
+  portrait; missing C026 keeps the verified backing but draws no substitute
+  portrait. Remaining work is real PC34/Mac capture across every HoC C127
+  sensor and candidate-panel state.
+
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
   presentation accepts only C009/C011 pixels and the loaded original font via
   CASTER.C/MENUDRAW.C. The old non-chrome workbench is not a DM1 fallback.
