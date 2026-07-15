@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
+  classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
+  bitmap, level, object, audio, and visual fallback routes, and allows capture
+  planning only for raw Track02-ready media. Remaining Theron work is to bind a
+  real accepted v3 IRQ2 trace and raw Track02 corpus to an admitted runtime
+  session; do not promote ISO-end bytes, Track 19 inventory, or generated
+  fallback visuals as a substitute.
+
 - 2026-07-16 DM1 original-save corpus follow-up: the public PC34 corpus
   roundtrip receipt now exposes scan rejection/truncation, Firestaff-export
   rejection, malformed-envelope rejection, first-failure, and provenance
