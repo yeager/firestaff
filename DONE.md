@@ -8,6 +8,14 @@
   320x200 path with the verified RES*/DGT2 PP pixel-plane reader already used
   for WARNING.BIN. Malformed containers remain unavailable.
 
+- 2026-07-15 Nexus portrait allocation fallback removal: a failed raw-face
+   allocation no longer leaves a zero-filled portrait surface behind. The
+   champion surface stays unavailable unless original bytes were copied.
+
+ - 2026-07-15 Nexus FACE.BIN raw-path block: canonical compact PRS3 container
+   bytes are rejected by the legacy raw portrait helper until PRS3 decoding is
+   independently proven.
+
 - 2026-07-15 Nexus UI synthetic-fallback audit: the public UI contract now
   matches the implementation: missing or unsupported title/menu surfaces stay
   unavailable. Verified TITLE.CG and WARNING.BIN routes continue consuming

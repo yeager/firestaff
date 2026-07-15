@@ -72,6 +72,14 @@ int main(void)
                                     (int)sizeof(opaque_title), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_STABG].data == NULL,
                 "unframed STABG.BIN bytes cannot become a guessed UI surface");
+    {
+        unsigned char face_header[48 * 48] = { 'F', 'A', 'C', 'E' };
+        expect_true(nexus_ui_load_faces(&ui, face_header, 0,
+                                        (int)sizeof(face_header), 0, 48, 48,
+                                        NULL) < 0 &&
+                        ui.surfaces[NEXUS_SURFACE_FACE0].data == NULL,
+                    "FACE.BIN container bytes cannot enter the raw portrait path");
+    }
     expect_true(nexus_ui_load_title(&ui, opaque_title,
                                     (int)sizeof(opaque_title), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
