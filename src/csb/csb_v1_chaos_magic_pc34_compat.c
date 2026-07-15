@@ -742,6 +742,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_PROPERTY_WRITES 100
 
 typedef struct {
     uint32_t location;
@@ -772,6 +773,31 @@ typedef struct {
     uint32_t values[5];
     uint8_t write_mask;
 } CSB_V1_CSBWinDSAPendingCellWrite;
+
+typedef struct {
+    uint16_t thing;
+    CSB_V1_CSBWinDSAObjectProperty property;
+    uint32_t value;
+} CSB_V1_CSBWinDSAPendingObjectPropertyWrite;
+
+static int csb_v1_csbwin_dsa_pending_object_property_lookup(
+    const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
+    int write_count,
+    uint16_t thing,
+    CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t *out_value)
+{
+    int i;
+
+    if (!writes || !out_value || write_count < 0) return 0;
+    for (i = write_count - 1; i >= 0; --i) {
+        if (writes[i].thing == thing && writes[i].property == property) {
+            *out_value = writes[i].value;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static int csb_v1_csbwin_dsa_pending_skin_lookup(
     const CSB_V1_CSBWinDSAPendingSkinWrite *writes,
@@ -805,7 +831,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingMonsterWrite *pending_monster_writes,
     int *pending_monster_write_count,
     CSB_V1_CSBWinDSAPendingCellWrite *pending_cell_writes,
-    int *pending_cell_write_count, int *staged_saves_disabled)
+    int *pending_cell_write_count,
+    CSB_V1_CSBWinDSAPendingObjectPropertyWrite *pending_object_property_writes,
+    int *pending_object_property_write_count, int *staged_saves_disabled)
 {
     uint32_t v;
     uint32_t w;
@@ -823,11 +851,14 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_generator_writes || !pending_generator_write_count ||
         !pending_monster_writes || !pending_monster_write_count ||
         !pending_cell_writes || !pending_cell_write_count ||
+        !pending_object_property_writes ||
+        !pending_object_property_write_count ||
         !staged_saves_disabled ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
         *pending_monster_write_count < 0 ||
         *pending_cell_write_count < 0 ||
+        *pending_object_property_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -960,6 +991,107 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
                 subcode == 27u ? ((int32_t)w < (int32_t)v) : (w < v))) goto underflow;
+        break;
+    case 51u: /* STKOP_GetCurse */
+    case 53u: /* STKOP_GetCharges */
+    case 55u: /* STKOP_GetBroken */
+    case 74u: /* STKOP_GetPoisoned */
+    case 124u: /* STKOP_GetSubType */
+        /* CSBWin DSA.cpp:3411-3675 reads only DB5/DB6/DB8/DB10 fields.
+         * An invalid Thing is a source zero; an unavailable real dungeon is
+         * not replaced by a fixture and therefore remains unsupported. */
+        if (!context->get_object_property ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        {
+            CSB_V1_CSBWinDSAObjectProperty property;
+            int resolved;
+
+            switch (subcode) {
+            case 51u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE; break;
+            case 53u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES; break;
+            case 55u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN; break;
+            case 74u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED; break;
+            default: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE; break;
+            }
+            w = 0u;
+            if (v > UINT16_MAX) {
+                resolved = 0;
+            } else if (csb_v1_csbwin_dsa_pending_object_property_lookup(
+                           pending_object_property_writes,
+                           *pending_object_property_write_count,
+                           (uint16_t)v, property, &w)) {
+                resolved = 1;
+            } else {
+                resolved = context->get_object_property(
+                    context->dungeon_user, (uint16_t)v, property, &w);
+            }
+            if (resolved < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                               resolved > 0 ? w : 0u)) {
+                goto underflow;
+            }
+        }
+        break;
+    case 52u: /* STKOP_SetCurse */
+    case 54u: /* STKOP_SetCharges */
+    case 56u: /* STKOP_SetBroken */
+    case 75u: /* STKOP_SetPoisoned */
+    case 125u: /* STKOP_SetSubType */
+        /* The source setters are silent no-ops for an invalid DB type. Keep
+         * that behavior, but defer a valid raw-record mutation until the
+         * complete authenticated action has been consumed. */
+        if (!context->get_object_property || !context->set_object_property ||
+            !context->normalize_object_property ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        {
+            CSB_V1_CSBWinDSAObjectProperty property;
+            int resolved;
+            int pending = -1;
+
+            switch (subcode) {
+            case 52u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE; w = w != 0u; break;
+            case 54u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES; break;
+            case 56u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN; w = w != 0u; break;
+            case 75u: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED; w = w != 0u; break;
+            default: property = CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE; break;
+            }
+            if (v > UINT16_MAX) break;
+            resolved = context->get_object_property(
+                context->dungeon_user, (uint16_t)v, property, &count);
+            if (resolved < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (resolved == 0) break;
+            resolved = context->normalize_object_property(
+                context->dungeon_user, (uint16_t)v, property, w, &w);
+            if (resolved < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (resolved == 0) break;
+            for (count = 0u;
+                 count < (uint32_t)*pending_object_property_write_count;
+                 ++count) {
+                if (pending_object_property_writes[count].thing == (uint16_t)v &&
+                    pending_object_property_writes[count].property == property) {
+                    pending = (int)count;
+                }
+            }
+            if (pending >= 0) {
+                pending_object_property_writes[pending].value = w;
+            } else if (*pending_object_property_write_count >=
+                       CSB_V1_CSBWIN_DSA_PENDING_OBJECT_PROPERTY_WRITES) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            } else {
+                pending_object_property_writes[
+                    *pending_object_property_write_count].thing = (uint16_t)v;
+                pending_object_property_writes[
+                    *pending_object_property_write_count].property = property;
+                pending_object_property_writes[
+                    *pending_object_property_write_count].value = w;
+                ++*pending_object_property_write_count;
+            }
+        }
         break;
     case 28u: /* STKOP_2Drop */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
@@ -1775,6 +1907,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_monster_writes[CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES];
     CSB_V1_CSBWinDSAPendingCellWrite
         pending_cell_writes[CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES];
+    CSB_V1_CSBWinDSAPendingObjectPropertyWrite
+        pending_object_property_writes[
+            CSB_V1_CSBWIN_DSA_PENDING_OBJECT_PROPERTY_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -1784,6 +1919,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_generator_write_count = 0;
     int pending_monster_write_count = 0;
     int pending_cell_write_count = 0;
+    int pending_object_property_write_count = 0;
     int staged_saves_disabled;
     int i;
 
@@ -2001,7 +2137,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_excell_write_count, pending_generator_writes,
                 &pending_generator_write_count, pending_monster_writes,
                 &pending_monster_write_count, pending_cell_writes,
-                &pending_cell_write_count, &staged_saves_disabled);
+                &pending_cell_write_count, pending_object_property_writes,
+                &pending_object_property_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2043,6 +2180,15 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 context->dungeon_user, pending_cell_writes[i].location,
                 pending_cell_writes[i].values,
                 pending_cell_writes[i].write_mask)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_object_property_write_count; ++i) {
+        if (!context->set_object_property(
+                context->dungeon_user,
+                pending_object_property_writes[i].thing,
+                pending_object_property_writes[i].property,
+                pending_object_property_writes[i].value)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -2164,6 +2310,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_cell_info = runner->get_cell_info;
     context.resolve_cell_store = runner->resolve_cell_store;
     context.set_cell_info = runner->set_cell_info;
+    context.get_object_property = runner->get_object_property;
+    context.set_object_property = runner->set_object_property;
+    context.normalize_object_property = runner->normalize_object_property;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

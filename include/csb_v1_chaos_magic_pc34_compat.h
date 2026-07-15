@@ -234,6 +234,27 @@ typedef int (*CSB_V1_CSBWinDSASetCellInfoFn)(void *user,
                                              const uint32_t values[5],
                                              uint8_t write_mask);
 
+/* DSA.cpp's object attribute opcodes address the original DB5/DB6/DB8/DB10
+ * record selected by an authenticated Thing integer.  The runtime owns the
+ * raw record and exposes only these source-defined fields. */
+typedef enum {
+    CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE = 0,
+    CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN = 1,
+    CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED = 2,
+    CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES = 3,
+    CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE = 4
+} CSB_V1_CSBWinDSAObjectProperty;
+
+typedef int (*CSB_V1_CSBWinDSAGetObjectPropertyFn)(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t *out_value);
+typedef int (*CSB_V1_CSBWinDSASetObjectPropertyFn)(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t value);
+typedef int (*CSB_V1_CSBWinDSANormalizeObjectPropertyFn)(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t input_value, uint32_t *out_value);
+
 typedef struct {
     uint32_t master_location;
     uint32_t *parameters;
@@ -284,6 +305,9 @@ typedef struct {
     CSB_V1_CSBWinDSAGetCellInfoFn get_cell_info;
     CSB_V1_CSBWinDSAResolveCellStoreFn resolve_cell_store;
     CSB_V1_CSBWinDSASetCellInfoFn set_cell_info;
+    CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
+    CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
+    CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -530,6 +554,9 @@ typedef struct {
     CSB_V1_CSBWinDSAGetCellInfoFn get_cell_info;
     CSB_V1_CSBWinDSAResolveCellStoreFn resolve_cell_store;
     CSB_V1_CSBWinDSASetCellInfoFn set_cell_info;
+    CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
+    CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
+    CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

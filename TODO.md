@@ -3316,6 +3316,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       links; missing/malformed records and unsupported source words reject the
       transaction without mutation. Positive original DSA-bearing save-corpus
       proof remains required.
+    - 2026-07-15 object-property update: source `STKOP_Get/SetCurse`,
+      `Get/SetBroken`, `Get/SetPoisoned`, `Get/SetCharges`, and
+      `Get/SetSubType` now consume only a validated loaded DB5 weapon, DB6
+      armour, DB8 potion, or DB10 junk `word2`. Their original bit widths are
+      retained (including DB5/DB6 four-bit charges, DB8 eight-bit strength,
+      and DB10 two-bit value/five-bit subtype fields). Writes are queued through the
+      authenticated action and a later same-action getter sees the source
+      masked value. Invalid Thing/type combinations retain CSBWin's zero or
+      no-op behavior; missing raw dungeon ownership rejects rather than using
+      object metadata or a substitute layout. Positive original DSA-bearing
+      save-corpus proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

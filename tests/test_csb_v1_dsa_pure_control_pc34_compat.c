@@ -30,6 +30,10 @@ static int cell_info_enabled;
 static int cell_info_store_count;
 static uint32_t cell_info_stored[5];
 static uint8_t cell_info_store_mask;
+static int object_property_enabled;
+static int object_property_store_count;
+static CSB_V1_CSBWinDSAObjectProperty object_property_stored;
+static uint32_t object_property_stored_value;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -168,6 +172,62 @@ static int set_cell_info(void *user, uint32_t location,
     return 1;
 }
 
+static int get_object_property(void *user, uint16_t thing,
+                               CSB_V1_CSBWinDSAObjectProperty property,
+                               uint32_t *out_value)
+{
+    (void)user;
+    if (!object_property_enabled || !out_value) return -1;
+    if (thing != 0x0456u) return 0;
+    switch (property) {
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE: *out_value = 0u; break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN: *out_value = 1u; break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED: *out_value = 0u; break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES: *out_value = 4u; break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE: *out_value = 17u; break;
+    default: return -1;
+    }
+    return 1;
+}
+
+static int set_object_property(void *user, uint16_t thing,
+                               CSB_V1_CSBWinDSAObjectProperty property,
+                               uint32_t value)
+{
+    (void)user;
+    if (!object_property_enabled || thing != 0x0456u) return 0;
+    object_property_stored = property;
+    object_property_stored_value = value;
+    ++object_property_store_count;
+    return 1;
+}
+
+static int normalize_object_property(void *user, uint16_t thing,
+                                     CSB_V1_CSBWinDSAObjectProperty property,
+                                     uint32_t input_value,
+                                     uint32_t *out_value)
+{
+    (void)user;
+    if (!object_property_enabled || !out_value) return -1;
+    if (thing != 0x0456u) return 0;
+    switch (property) {
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE:
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN:
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED:
+        *out_value = input_value != 0u;
+        break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES:
+        *out_value = input_value & 0x0fu;
+        break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE:
+        *out_value = input_value & 0x1fu;
+        break;
+    default:
+        return -1;
+    }
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -237,6 +297,11 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_cell_info = get_cell_info;
         context.resolve_cell_store = resolve_cell_store;
         context.set_cell_info = set_cell_info;
+    }
+    if (object_property_enabled) {
+        context.get_object_property = get_object_property;
+        context.set_object_property = set_object_property;
+        context.normalize_object_property = normalize_object_property;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -399,6 +464,16 @@ int main(void)
         0x0686u, 0x1eu, 0x0686u, 1u, 0x09cbu,
         0x0686u, 0x0c82u, 0x0686u, 0u, 0x0686u, 2u, 0x0e8bu,
         0x0000u
+    };
+    uint16_t object_get_broken[] = {
+        0x0686u, 0x0456u, 0x0dcbu, 0x000du
+    };
+    uint16_t object_set_charges_then_fetch[] = {
+        0x0686u, 0x0456u, 0x0686u, 0x2fu, 0x0d8bu,
+        0x0686u, 0x0456u, 0x0d4bu, 0x000du
+    };
+    uint16_t object_set_curse_then_bad[] = {
+        0x0686u, 0x0456u, 0x0686u, 1u, 0x0d0bu, 0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -686,6 +761,33 @@ int main(void)
               cell_info_store_count == 0,
           "Cell! rejects a later unsupported source word without cell or DB0 mutation");
     cell_info_enabled = 0;
+    object_property_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, object_get_broken,
+              (int)(sizeof(object_get_broken) / sizeof(object_get_broken[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 1u && execution.stack_depth == 0u,
+          "object property fetch reads the source DB5/DB6 boolean field");
+    object_property_store_count = 0;
+    object_property_stored_value = 0u;
+    parameters[0] = 77u;
+    check(run(&state, &action, object_set_charges_then_fetch,
+              (int)(sizeof(object_set_charges_then_fetch) /
+                    sizeof(object_set_charges_then_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 15u && object_property_store_count == 1 &&
+              object_property_stored ==
+                  CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES &&
+              object_property_stored_value == 15u,
+          "Get/SetCharges stages source bitfield truncation and exposes it within the action");
+    object_property_store_count = 0;
+    check(run(&state, &action, object_set_curse_then_bad,
+              (int)(sizeof(object_set_curse_then_bad) /
+                    sizeof(object_set_curse_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              object_property_store_count == 0,
+          "SetCurse rejects a later unsupported word without DB5/DB6/DB10 mutation");
+    object_property_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

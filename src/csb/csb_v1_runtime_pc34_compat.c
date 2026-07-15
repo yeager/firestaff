@@ -118,6 +118,15 @@ static int csb_v1_runtime_dsa_set_cell_info(void *user,
                                              uint32_t location,
                                              const uint32_t values[5],
                                              uint8_t write_mask);
+static int csb_v1_runtime_dsa_get_object_property(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t *out_value);
+static int csb_v1_runtime_dsa_set_object_property(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t value);
+static int csb_v1_runtime_dsa_normalize_object_property(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t input_value, uint32_t *out_value);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -17254,6 +17263,173 @@ static int csb_v1_runtime_dsa_set_monster_info(void *user,
     return 1;
 }
 
+/* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
+ * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
+ * original silent wrong-type/invalid-Thing result and -1 only when no loaded
+ * original dungeon can own the request. */
+static int csb_v1_runtime_dsa_get_object_property(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t *out_value)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word;
+    int type;
+    int size;
+
+    if (!out_value || !profile || !profile->dungeon_handle) return -1;
+    *out_value = 0u;
+    dungeon = profile->dungeon_handle;
+    record = csb_v1_dungeon_get_thing_record(dungeon, thing,
+                                              &type, NULL, &size);
+    if (!record || size < 4) return 0;
+    word = csb_v1_runtime_read_u16(record + 2);
+    switch (property) {
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE:
+        if (type != THING_TYPE_WEAPON && type != THING_TYPE_ARMOUR &&
+            type != THING_TYPE_JUNK) return 0;
+        *out_value = (word >> 8) & 1u;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN:
+        if (type == THING_TYPE_WEAPON) *out_value = (word >> 14) & 1u;
+        else if (type == THING_TYPE_ARMOUR) *out_value = (word >> 13) & 1u;
+        else return 0;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED:
+        if (type != THING_TYPE_WEAPON) return 0;
+        *out_value = (word >> 9) & 1u;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES:
+        if (type == THING_TYPE_WEAPON) *out_value = (word >> 10) & 0x0fu;
+        else if (type == THING_TYPE_ARMOUR) *out_value = (word >> 9) & 0x0fu;
+        else if (type == THING_TYPE_POTION) *out_value = word & 0x00ffu;
+        else if (type == THING_TYPE_JUNK) *out_value = (word >> 14) & 0x03u;
+        else return 0;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE:
+        if (type != THING_TYPE_JUNK) return 0;
+        *out_value = (word >> 9) & 0x1fu;
+        return 1;
+    default:
+        return -1;
+    }
+}
+
+static int csb_v1_runtime_dsa_set_object_property(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t value)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *record;
+    uint16_t word;
+    int type;
+    int size;
+
+    if (!profile || !profile->dungeon_handle) return 0;
+    dungeon = profile->dungeon_handle;
+    record = csb_v1_runtime_mutable_thing_record(dungeon, thing, &type, &size);
+    if (!record || size < 4) return 1;
+    word = csb_v1_runtime_read_u16(record + 2);
+    switch (property) {
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE:
+        if (type != THING_TYPE_WEAPON && type != THING_TYPE_ARMOUR &&
+            type != THING_TYPE_JUNK) return 1;
+        word = (uint16_t)((word & ~(uint16_t)0x0100u) |
+                          (value != 0u ? 0x0100u : 0u));
+        break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN:
+        if (type == THING_TYPE_WEAPON) {
+            word = (uint16_t)((word & ~(uint16_t)0x4000u) |
+                              (value != 0u ? 0x4000u : 0u));
+        } else if (type == THING_TYPE_ARMOUR) {
+            word = (uint16_t)((word & ~(uint16_t)0x2000u) |
+                              (value != 0u ? 0x2000u : 0u));
+        } else return 1;
+        break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED:
+        if (type != THING_TYPE_WEAPON) return 1;
+        word = (uint16_t)((word & ~(uint16_t)0x0200u) |
+                          (value != 0u ? 0x0200u : 0u));
+        break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES:
+        if (type == THING_TYPE_WEAPON) {
+            word = (uint16_t)((word & ~(uint16_t)0x3c00u) |
+                              ((value & 0x0fu) << 10));
+        } else if (type == THING_TYPE_ARMOUR) {
+            word = (uint16_t)((word & ~(uint16_t)0x1e00u) |
+                              ((value & 0x0fu) << 9));
+        } else if (type == THING_TYPE_POTION) {
+            word = (uint16_t)((word & ~(uint16_t)0x00ffu) |
+                              (value & 0xffu));
+        } else if (type == THING_TYPE_JUNK) {
+            word = (uint16_t)((word & ~(uint16_t)0xc000u) |
+                              ((value & 0x03u) << 14));
+        } else return 1;
+        break;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE:
+        if (type != THING_TYPE_JUNK) return 1;
+        word = (uint16_t)((word & ~(uint16_t)0x3e00u) |
+                          ((value & 0x1fu) << 9));
+        break;
+    default:
+        return 0;
+    }
+    csb_v1_runtime_write_u16(record + 2, word);
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_normalize_object_property(
+    void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
+    uint32_t input_value, uint32_t *out_value)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    int type;
+    int size;
+
+    if (!out_value || !profile || !profile->dungeon_handle) return -1;
+    *out_value = 0u;
+    dungeon = profile->dungeon_handle;
+    record = csb_v1_dungeon_get_thing_record(dungeon, thing,
+                                              &type, NULL, &size);
+    if (!record || size < 4) return 0;
+    switch (property) {
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CURSE:
+        if (type != THING_TYPE_WEAPON && type != THING_TYPE_ARMOUR &&
+            type != THING_TYPE_JUNK) return 0;
+        *out_value = input_value != 0u;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_BROKEN:
+        if (type != THING_TYPE_WEAPON && type != THING_TYPE_ARMOUR) return 0;
+        *out_value = input_value != 0u;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_POISONED:
+        if (type != THING_TYPE_WEAPON) return 0;
+        *out_value = input_value != 0u;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_CHARGES:
+        if (type == THING_TYPE_WEAPON || type == THING_TYPE_ARMOUR) {
+            *out_value = input_value & 0x0fu;
+        } else if (type == THING_TYPE_POTION) {
+            *out_value = input_value & 0xffu;
+        } else if (type == THING_TYPE_JUNK) {
+            *out_value = input_value & 0x03u;
+        } else return 0;
+        return 1;
+    case CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE:
+        if (type != THING_TYPE_JUNK) return 0;
+        *out_value = input_value & 0x1fu;
+        return 1;
+    default:
+        return -1;
+    }
+}
+
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5])
@@ -20088,6 +20264,10 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_cell_info = csb_v1_runtime_dsa_get_cell_info;
     candidate.resolve_cell_store = csb_v1_runtime_dsa_resolve_cell_store;
     candidate.set_cell_info = csb_v1_runtime_dsa_set_cell_info;
+    candidate.get_object_property = csb_v1_runtime_dsa_get_object_property;
+    candidate.set_object_property = csb_v1_runtime_dsa_set_object_property;
+    candidate.normalize_object_property =
+        csb_v1_runtime_dsa_normalize_object_property;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -20201,6 +20381,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_cell_info = csb_v1_runtime_dsa_get_cell_info;
     candidate.resolve_cell_store = csb_v1_runtime_dsa_resolve_cell_store;
     candidate.set_cell_info = csb_v1_runtime_dsa_set_cell_info;
+    candidate.get_object_property = csb_v1_runtime_dsa_get_object_property;
+    candidate.set_object_property = csb_v1_runtime_dsa_set_object_property;
+    candidate.normalize_object_property =
+        csb_v1_runtime_dsa_normalize_object_property;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
