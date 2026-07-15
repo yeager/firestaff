@@ -3912,8 +3912,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     indexed raster hashes and checks every F0807 step at native y=30. In the
     last five steps C002 is source-clipped, so the receipt correctly admits
     C004+C003 rather than blacking the frame for a nonexistent third surface.
-    Remaining CSB-010 work is Mac/app capture, not alternate decoding or a
-    fallback visual.
+    The local canonical-package regression now locks the ordered host-raster
+    hashes across all 102 title and all 31 opening frames, with direct
+    C002/C003 source-byte checks per door step. Production records a CSB
+    indexed frame only after SDL presentation through
+    `m11_present_game_frame_and_publish_dm1_hoc_capture`; the remaining
+    CSB-010 work is an actual bundled macOS window capture, not alternate
+    decoding or a fallback visual.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
