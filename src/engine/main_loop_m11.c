@@ -303,10 +303,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
             if (restoreFilter) {
                 M11_Render_SetScaleFilter(requestedFilter);
             }
-            if (result && outPresentedFrame) {
+            if (result == M11_RENDER_OK && outPresentedFrame) {
                 *outPresentedFrame = presented_frame;
             }
-            return result;
+            return result == M11_RENDER_OK;
         }
         if (M11_GameView_PresentationTarget(
                 gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
@@ -331,10 +331,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
-        if (result && outPresentedFrame) {
+        if (result == M11_RENDER_OK && outPresentedFrame) {
             *outPresentedFrame = presented_frame;
         }
-        return result;
+        return result == M11_RENDER_OK;
     }
     if (gameView &&
         gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
@@ -351,10 +351,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
-        if (result && outPresentedFrame) {
+        if (result == M11_RENDER_OK && outPresentedFrame) {
             *outPresentedFrame = presented_frame;
         }
-        return result;
+        return result == M11_RENDER_OK;
     }
     if (scale > 1) {
         result = M11_Render_PresentScaledIndexed(presented_frame,
@@ -364,10 +364,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
-        if (result && outPresentedFrame) {
+        if (result == M11_RENDER_OK && outPresentedFrame) {
             *outPresentedFrame = presented_frame;
         }
-        return result;
+        return result == M11_RENDER_OK;
     }
     if (M11_GameView_PresentationTarget(gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
                                          gameView ? gameView->presentationWidth : 0,
@@ -382,19 +382,19 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
-        if (result && outPresentedFrame) {
+        if (result == M11_RENDER_OK && outPresentedFrame) {
             *outPresentedFrame = presented_frame;
         }
-        return result;
+        return result == M11_RENDER_OK;
     }
     result = M11_Render_Present();
     if (restoreFilter) {
         M11_Render_SetScaleFilter(requestedFilter);
     }
-    if (result && outPresentedFrame) {
+    if (result == M11_RENDER_OK && outPresentedFrame) {
         *outPresentedFrame = presented_frame;
     }
-    return result;
+    return result == M11_RENDER_OK;
 }
 
 static void m11_publish_dm1_hoc_presented_capture_to_m12(
@@ -440,11 +440,44 @@ static int m11_running_from_macos_app_bundle(void)
     const char *base_path = SDL_GetBasePath();
     int running_from_bundle =
         base_path && strstr(base_path, ".app/Contents/MacOS/") != NULL;
+#if !SDL_VERSION_ATLEAST(3, 0, 0)
+    /* SDL2 allocates this string; SDL3 returns a library-owned const path. */
     SDL_free((void *)base_path);
+#endif
     return running_from_bundle;
 #else
     return 0;
 #endif
+}
+
+/* Opt-in evidence capture for the actual post-present SDL surface. The
+ * capture is downstream of the source-raster and RGBA palette gates; it
+ * never promotes a screenshot into source evidence. One file per source
+ * palette phase avoids writing one capture for every startup VBlank. */
+static void m11_capture_csb_presented_source_phase(int special_palette)
+{
+    const char *capture_dir = getenv("FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR");
+    static unsigned int captured_palette_mask;
+    char output_path[1024];
+    unsigned int palette_bit;
+
+    if (!capture_dir || !capture_dir[0] || special_palette < 0 ||
+        special_palette >= (int)(sizeof(captured_palette_mask) * 8u)) {
+        return;
+    }
+    palette_bit = 1u << (unsigned int)special_palette;
+    if (captured_palette_mask & palette_bit) {
+        return;
+    }
+    if (!M11_Screenshot_CapturePresentedRGBA(capture_dir, output_path,
+                                              (int)sizeof(output_path))) {
+        fprintf(stderr, "firestaff: CSB presented capture failed: %s\n",
+                capture_dir);
+        return;
+    }
+    captured_palette_mask |= palette_bit;
+    fprintf(stderr, "CSB PRESENTED SOURCE CAPTURE: palette=%d %s\n",
+            special_palette, output_path);
 }
 
 /* ReDMCSB/CSBWin startup hands source-owned pages to the host before input.
@@ -459,6 +492,7 @@ static int m11_present_game_frame_and_publish_startup_capture(
     int presented_height = 0;
     int mac_window_capture_ready = 0;
     int csb_source_output_matches = 0;
+    int csb_special_palette = -1;
 
     if (!m11_present_game_frame(gameView, &presented_frame)) {
         return 0;
@@ -475,15 +509,15 @@ static int m11_present_game_frame_and_publish_startup_capture(
 #endif
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         presented_frame) {
-        const int special_palette =
-            M11_GameView_GetPresentationSpecialPalette(gameView);
-        csb_source_output_matches = special_palette >= 0 &&
+        csb_special_palette =
+             M11_GameView_GetPresentationSpecialPalette(gameView);
+        csb_source_output_matches = csb_special_palette >= 0 &&
             M11_GameView_CSBPresentedFrameMatchesCurrentSource(
                 gameView, presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
-                special_palette) &&
+                csb_special_palette) &&
             M11_Render_PresentedIndexedSpecialMatches(
                 presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
-                special_palette);
+                csb_special_palette);
     }
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         presented_frame && presented_rgba && presented_width > 0 &&
@@ -496,6 +530,7 @@ static int m11_present_game_frame_and_publish_startup_capture(
             m11_running_from_macos_app_bundle(),
             mac_window_capture_ready
         );
+        m11_capture_csb_presented_source_phase(csb_special_palette);
     }
     m11_publish_dm1_hoc_presented_capture_to_m12(gameView, menuState);
     return 1;

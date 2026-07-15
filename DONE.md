@@ -23,6 +23,14 @@
   and rejects missing rows. It does not read GenericRecord links, text-table
   bytes, container contents, or promote any graphics.
 
+- ✅ 2026-07-15 CSB app presented capture: opt-in
+  `FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR` writes post-present SDL RGBA BMPs for
+  C001/C004 palette phases only after the current PC3.4 source raster and
+  palette gate pass. The route cannot capture a wrapper, stale title phase,
+  or unverified surface. M11 now treats `M11_RENDER_OK` as success when
+  publishing the presented receipt, and uses SDL3's library-owned base path
+  without freeing it during each capture frame.
+
 - ✅ 2026-07-15 DM2 original SKSave common-item record admission: the raw
   save parser now reads `DME.h::ItemType()` only from hash-bound four-byte
   DB5 Weapon, DB6 Cloth, DB7 Scroll, and DB10 Miscellaneous_item rows. It
