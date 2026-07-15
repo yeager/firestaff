@@ -3,6 +3,7 @@
 
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 
 #define MAKE_THING(type, index, cell) \
     ((unsigned short)((((cell) & 0x03) << 14) | (((type) & 0x0F) << 10) | ((index) & 0x03FF)))
@@ -69,6 +70,7 @@ int main(void)
     unsigned short allocatedJunk;
     unsigned short generatedThing;
     const unsigned char *thingData;
+    DM1_WeaponInfo weaponInfo;
     int ok = 1;
 
     printf("probe=dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat\n");
@@ -164,6 +166,22 @@ int main(void)
     things.thingCounts[THING_TYPE_JUNK] = 5;
     things.junks = decodedJunks;
     things.junkCount = 5;
+
+    /* F0158 is F0156(weaponThing) followed by the original G0238 table.
+     * The decoded weapon mirror is deliberately not needed for this lookup. */
+    rawWeapon[2] = 7; /* PC3.4 WEAPON.Type: THE FIRESTAFF */
+    ok &= expect_int("F0158 reads raw WEAPON.Type through F0156",
+        dm1_v1_dungeon_get_weapon_info_pc34(
+            &things, MAKE_THING(THING_TYPE_WEAPON, 0, 3), &weaponInfo), 1);
+    ok &= expect_int("F0158 selects original G0238 Firestaff class",
+        weaponInfo.weaponClass, 255);
+    rawWeapon[2] = 127;
+    ok &= expect_int("F0158 rejects a raw weapon type outside G0238",
+        dm1_v1_dungeon_get_weapon_info_pc34(
+            &things, MAKE_THING(THING_TYPE_WEAPON, 0, 0), &weaponInfo), 0);
+    ok &= expect_int("F0158 invalid type leaves no class fallback",
+        weaponInfo.weaponClass, -1);
+    rawWeapon[2] = 7;
 
     ok &= expect_int("map0 first flagged square index",
         F0510_DUNGEON_GetSquareFirstThingIndex_Compat(&dungeon, 0, 0, 0), 0);

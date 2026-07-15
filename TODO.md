@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 DUNGEON F0158 follow-up: the raw PC3.4 WEAPON.Type to
+  original G0238 WeaponInfo bridge is available. Remaining work is to route
+  the separately owned live F0312/F0294 callers through it. Do not derive a
+  WeaponInfo row from a decoded mirror or accept a Type outside G0238.
+
 - 2026-07-15 DM1 DUNGEON F0156 follow-up: the source-defined raw Thing-data
   accessor now owns the live door-button read path. Remaining work is to
   route other DM1 raw Thing consumers through this accessor while preserving
