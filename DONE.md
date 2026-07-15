@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 original raw-SKSave corpus layout handoff: the
+  original-only census now carries the parser-validated raw dungeon map count,
+  all sixteen DB-pool record counts, and prefix/map-data FNV identities into
+  the exact selected-row restore boundary. A raw row missing that receipt is
+  rejected before runtime restore. Focused `dm2_v1_save_load` coverage checks
+  the selected fixture and external original corpus census against freshly
+  parsed bytes. No GenericRecord links, record behavior, or graphics are
+  inferred.
+
 - ✅ 2026-07-15 DM2 original SKSave DB1 Teleporter admission: raw six-byte
   teleporter rows now expose only `DME.h`'s destination, scope, sound, and
   rotation fields after the complete DB-pool receipt validates them. Focused

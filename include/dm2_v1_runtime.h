@@ -487,6 +487,11 @@ typedef struct {
     uint16_t parsed_candidate_count;
     uint32_t corpus_hash;
     uint32_t selected_state_hash;
+    int selected_raw_dungeon_layout_valid;
+    uint8_t selected_raw_dungeon_map_count;
+    uint16_t selected_raw_db_record_counts[DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT];
+    uint32_t selected_raw_dungeon_prefix_hash;
+    uint32_t selected_raw_map_data_hash;
 } DM2_V1_RuntimeOriginalCorpusImportReceipt;
 
 /* Source-owned raw-SKSave dungeon handoff carried from GAME_LOAD into the

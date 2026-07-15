@@ -1150,7 +1150,9 @@ bool dm2_v1_original_save_state_corpus_probe(
                 source, payload, sizeof(payload), &payload_size) ||
             dm2_v1_session_parse_save_candidate(&candidate, payload,
                                                  payload_size) != 0 ||
-            candidate.kind != (DM2_V1_SaveCandidateKind)source->kind) {
+            candidate.kind != (DM2_V1_SaveCandidateKind)source->kind ||
+            (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
+             !candidate.dungeon_receipt.valid)) {
             out_receipt->original_candidate_list_complete = 0;
             out_receipt->rejected_candidate_count++;
             continue;
@@ -1179,6 +1181,20 @@ bool dm2_v1_original_save_state_corpus_probe(
         target->spell_effects_hash = dm2_sksave_corpus_payload_hash(
             candidate.session.original_spell_effects,
             sizeof(candidate.session.original_spell_effects), 2166136261u);
+        if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+            uint8_t pool;
+
+            target->raw_dungeon_layout_valid = 1;
+            target->raw_dungeon_map_count = candidate.dungeon_receipt.map_count;
+            target->raw_dungeon_prefix_hash =
+                candidate.dungeon_receipt.prefix_hash;
+            target->raw_map_data_hash = candidate.dungeon_receipt.map_data_hash;
+            for (pool = 0u; pool < DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT;
+                 ++pool) {
+                target->raw_db_record_counts[pool] =
+                    candidate.dungeon_receipt.db_record_counts[pool];
+            }
+        }
         hash = dm2_sksave_corpus_hash_step(hash, target->candidate.source_file_hash);
         hash = dm2_sksave_corpus_hash_step(hash, target->game_tick);
         hash = dm2_sksave_corpus_hash_step(hash, target->rng_seed);
@@ -1199,6 +1215,17 @@ bool dm2_v1_original_save_state_corpus_probe(
             target->state_hash, target->global_words_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->spell_effects_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, (uint32_t)target->raw_dungeon_layout_valid);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_dungeon_prefix_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_map_data_hash);
+        for (uint8_t pool = 0u; pool < DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT;
+             ++pool) {
+            target->state_hash = dm2_sksave_corpus_hash_step(
+                target->state_hash, target->raw_db_record_counts[pool]);
+        }
         hash = target->state_hash;
         out_receipt->parsed_candidate_count++;
     }

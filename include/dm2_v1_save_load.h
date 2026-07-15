@@ -171,6 +171,8 @@ typedef struct {
         candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
 } DM2_OriginalTimerFormatCorpusReceipt;
 
+enum { DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT = 16 };
+
 /* Read-only census of the original save fields already decoded by the
  * source-locked SKSave importer.  This is not a restore input: dungeon DB
  * records and timer payload ownership remain outside this receipt until their
@@ -193,6 +195,14 @@ typedef struct {
     uint32_t global_bytes_hash;
     uint32_t global_words_hash;
     uint32_t spell_effects_hash;
+    /* Raw SKSave candidates additionally retain only the complete parsed
+     * dungeon-prefix identity. These are pool/span facts, not DB semantics
+     * or permission to follow GenericRecord links. */
+    int raw_dungeon_layout_valid;
+    uint8_t raw_dungeon_map_count;
+    uint16_t raw_db_record_counts[DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT];
+    uint32_t raw_dungeon_prefix_hash;
+    uint32_t raw_map_data_hash;
     uint32_t state_hash;
 } DM2_OriginalSaveStateCorpusEntry;
 

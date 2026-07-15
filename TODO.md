@@ -7238,6 +7238,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     valid Firestaff session remains in the same directory; this route has no
     first-importable or synthetic-save fallback. Remaining: real multi-save
     corpus coverage plus full DB/timer materialisation and post-load order.
+  - 2026-07-15 update: selected raw rows now carry the independently parsed
+    map count, all 16 DB-pool record counts, and dungeon-prefix/map-data FNV
+    identities through the original-only corpus handoff. The runtime rejects
+    a raw row without this exact layout receipt before restore; this admits no
+    DB links, record behavior, or graphics semantics. Remaining: positive
+    multi-save corpus breadth and source-complete DB/timer materialisation.
   - 2026-07-15 update: raw original-save DB5 Weapon, DB6 Cloth, DB7 Scroll,
     and DB10 Miscellaneous_item records now expose only their common
     SKProject `DME.h::ItemType()` owner, `w2` bits 0..6, through a
