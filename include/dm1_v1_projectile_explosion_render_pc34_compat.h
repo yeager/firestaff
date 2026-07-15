@@ -128,6 +128,8 @@ struct GameWorld_Compat;
 #define DM1_PROJ_ASPECT_SLIME                12  /* C12 */
 #define DM1_PROJ_ASPECT_POISON               13  /* C13 */
 
+#define DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34 (-32768)
+
 /* ── Smoke palette remapping (G0212) ─────────────────────────────── */
 
 #define DM1_SMOKE_RECOLOR_SRC_A               6
@@ -158,6 +160,14 @@ unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex);
 int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir);
 int dm1_v1_projectile_subtype_graphic_index(int subtype);
 int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
+/* ReDMCSB DUNGEON.C F0142 returns a signed selector: negative
+ * PROJECTIL_ASPECT ordinal for spells/weapon projectile art, or zero/positive
+ * OBJECT_ASPECT index for ordinary thrown objects. */
+int dm1_v1_f0142_get_projectile_aspect_pc34(
+    int projectileSubtype,
+    int associatedThingType,
+    int associatedThingSubtype,
+    int weaponProjectileAspectOrdinal);
 /* C100 rebirth step 1 is the only explosion branch that uses the lightning
  * projectile's following native bitmap.  It deliberately does not reuse the
  * M636 explosion-pattern bank or a host replacement sprite.

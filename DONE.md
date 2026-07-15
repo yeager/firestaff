@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM1 ReDMCSB DUNGEON F0142 projectile-aspect mapping:
+  added a DM1-owned helper for `F0142_DUNGEON_GetProjectileAspect`'s signed
+  return contract. Spell/projectile slots now expose negative
+  `PROJECTIL_ASPECT` ordinals, weapon M066 projectile-art ordinals stay
+  negative, and ordinary thrown objects expose their G0237/G0209
+  `OBJECT_ASPECT` index before the existing material resolver selects M613 or
+  M612 graphics. The `F0142` symbol disposition is closed as
+  `VERIFIED_SOURCE_MAPPING`, reducing the DM1 backlog to 117 open rows.
+  Verification: `cmake -S . -B build-dm1-worker`,
+  `cmake --build build-dm1-worker --target test_dm1_v1_f0142_projectile_aspect_pc34_compat --parallel`,
+  direct `./build-dm1-worker/test_dm1_v1_f0142_projectile_aspect_pc34_compat`,
+  and `git diff --check` passed. The broader pre-existing
+  `test_dm1_v1_projectile_explosion_render_pc34_compat` executable still has
+  unrelated F0115 world-summary fixture failures.
+
 - ✅ 2026-07-16 DM2 skproject weather timer receipts: added source-mapped
   receipts for `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
   `DM2_weather_3df7_0037`. Runtime weather now records the outdoor-only
