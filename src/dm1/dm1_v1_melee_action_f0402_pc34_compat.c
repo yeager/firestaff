@@ -500,14 +500,18 @@ int dm1_v1_melee_target_creature_plan_f0177_pc34(
     }
 
     cellSource = (unsigned int)(in->championCell & 3);
-    if (((in->targetDirection & 1) == 0) && ((in->targetDirection & 3) < 4)) {
-        cellSource = (cellSource + 1) & 3;
+    if (in->hasOrderedCells) {
+        row = (const unsigned char*)in->orderedCells;
+    } else {
+        if (((in->targetDirection & 1) == 0) &&
+            ((in->targetDirection & 3) < 4)) {
+            cellSource = (cellSource + 1) & 3;
+        }
+        tableIndex = ((unsigned int)(in->targetDirection & 3) << 1) |
+                     ((cellSource >> 1) & 1u);
+        if (tableIndex > 7u) tableIndex = 0u;
+        row = s_dm1_f0177_ordered_cells_pc34[tableIndex];
     }
-    tableIndex = ((unsigned int)(in->targetDirection & 3) << 1) |
-                 ((cellSource >> 1) & 1u);
-    if (tableIndex > 7u) tableIndex = 0u;
-
-    row = s_dm1_f0177_ordered_cells_pc34[tableIndex];
     for (c = 0; c < 4; ++c) {
         int want = (int)row[c];
         for (i = groupCount; i >= 0; --i) {
@@ -516,9 +520,6 @@ int dm1_v1_melee_target_creature_plan_f0177_pc34(
                 return 1;
             }
         }
-    }
-    if (out->selectedCreatureIndex < 0) {
-        out->selectedCreatureIndex = out->firstLivingCreatureIndex;
     }
     return 1;
 }

@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 GROUP F0229: added exact `GROUP.C:13860-13876`
+  F0228/G0023 ordered-cell selection. M10 CMD_ATTACK now supplies real group
+  and party coordinates, preserves the source RNG step, and rejects no-cell
+  targets instead of choosing a synthetic first living creature.
+
 - 2026-07-15 DM1 GROUP F0228: added exact `GROUP.C:13810-13859`
   primary/secondary direction selection. M10 now consumes it before F0200
   with source RNG order; F0201 stored-scent routing shares it. Focused

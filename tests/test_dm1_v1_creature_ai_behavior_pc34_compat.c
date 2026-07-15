@@ -1850,6 +1850,34 @@ static void test_group_path_blockers_f0197_to_f0199(void) {
         EXPECT_EQ((int)rng.seed, (int)expected.seed,
                   "F0228 diagonal consumes exactly one RNG value");
     }
+    {
+        struct RngState_Compat rng = make_rng(99u);
+        struct RngState_Compat expected = make_rng(99u);
+        int cells[4] = { -1, -1, -1, -1 };
+
+        (void)F0732_COMBAT_RngRandom_Compat(&expected, 65536);
+        EXPECT_EQ(F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
+                      cells, 0, -1, 0, 0, 0u, &rng),
+                  1, "F0229 resolves a source vertical target row");
+        EXPECT_EQ(cells[0], 3, "F0229 vertical row first cell");
+        EXPECT_EQ(cells[1], 2, "F0229 vertical row second cell");
+        EXPECT_EQ(cells[2], 0, "F0229 vertical row third cell");
+        EXPECT_EQ(cells[3], 1, "F0229 vertical row fourth cell");
+        EXPECT_EQ((int)rng.seed, (int)expected.seed,
+                  "F0229 preserves F0228 cardinal RNG consumption");
+    }
+    {
+        struct RngState_Compat rng = make_rng(100u);
+        int cells[4] = { -1, -1, -1, -1 };
+
+        EXPECT_EQ(F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
+                      cells, -1, 0, 0, 0, 2u, &rng),
+                  1, "F0229 resolves a source horizontal target row");
+        EXPECT_EQ(cells[0], 2, "F0229 horizontal row first cell");
+        EXPECT_EQ(cells[1], 1, "F0229 horizontal row second cell");
+        EXPECT_EQ(cells[2], 3, "F0229 horizontal row third cell");
+        EXPECT_EQ(cells[3], 0, "F0229 horizontal row fourth cell");
+    }
     square.elementType = DUNGEON_ELEMENT_DOOR;
     square.doorState = 3;
     EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 1,

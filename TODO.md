@@ -7138,5 +7138,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   owner for F0200 and M10. Remaining related work is the F0228 primary and
   secondary direction selection with its real RNG ordering.
 - 2026-07-15 DM1 GROUP F0228: primary/secondary direction selection now
-  consumes source RNG before F0200 in M10. Remaining related work is F0229
-  target-cell order, using actual party/group cell facts.
+  consumes source RNG before F0200 in M10. F0229 now uses actual target and
+  party coordinates for M10 melee-cell ordering. Remaining related work is
+  F0230 champion damage and the larger F0209 event-runtime body.

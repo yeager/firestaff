@@ -262,6 +262,18 @@ int F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
     int* outPrimaryDirection,
     int* outSecondaryDirection);
 
+/* ReDMCSB GROUP.C F0229 / PROJEXPL.C F0229: resolve the actual G0023
+ * target-cell priority row. The target is the group square and the attacker
+ * is the party square, exactly as F0177 supplies them in the original. */
+int F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
+    int outOrderedCells[4],
+    int targetMapX,
+    int targetMapY,
+    int attackerMapX,
+    int attackerMapY,
+    unsigned int cellSource,
+    struct RngState_Compat* rng);
+
 /* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
  * decoding and supplies these facts; DM1 owns the original branch order. */
 struct DM1GroupMovementFacts_Compat {
