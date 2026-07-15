@@ -1062,6 +1062,49 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               active_face_mesh.no_draw_only &&
               !active_face_mesh.fallback_visuals_permitted,
               "active retail LEV consumes only authenticated Structure1F face/normal ordinals");
+        {
+            int source_entry;
+            int direct_binding_count = 0;
+            Nexus_V1_DgnStructure1FDirectMeshBindingReceipt direct_binding;
+
+            for (source_entry = 0;
+                 source_entry < loaded_level.structure1f_entry_count;
+                 ++source_entry) {
+                memset(&direct_binding, 0, sizeof(direct_binding));
+                if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
+                        &active_engine, source_entry, &direct_binding) != 1) {
+                    continue;
+                }
+                ++direct_binding_count;
+                CHECK(direct_binding.valid && direct_binding.level_index == level &&
+                          direct_binding.source_byte_count == (int)size &&
+                          direct_binding.source_bytes_fnv1a64 ==
+                              fnv1a64(data, (size_t)size) &&
+                          direct_binding.structure1f_entry_index == source_entry &&
+                          direct_binding.structure3_model_index ==
+                              loaded_level.structure1f_entries[source_entry]
+                                  .structure1a_structure3_model_index &&
+                          direct_binding.face_ordinal ==
+                              loaded_level.structure1f_entries[source_entry].face &&
+                          direct_binding.face_target.candidate.entry_index ==
+                              direct_binding.structure3_model_index &&
+                          direct_binding.face_target.candidate.face_ordinal ==
+                              direct_binding.face_ordinal &&
+                          direct_binding.model_to_entry_proven &&
+                          direct_binding.face_ordinal_proven &&
+                          direct_binding.no_draw_only &&
+                          !direct_binding.fallback_visuals_permitted,
+                      "real Structure1F owner binds only its exact Structure3 entry and face");
+            }
+            CHECK(direct_binding_count == attachments.structure1f_bound_entry_count,
+                  "every bounded retail Structure1F owner has one direct no-draw mesh subject");
+            memset(&direct_binding, 0, sizeof(direct_binding));
+            CHECK(nexus_v1_engine_build_structure1f_direct_mesh_binding(
+                      &active_engine, loaded_level.structure1f_entry_count,
+                      &direct_binding) == 0 && !direct_binding.valid &&
+                      direct_binding.no_draw_only,
+                  "out-of-range Structure1F rows cannot select a mesh subject");
+        }
         CHECK(nexus_v1_current_level_structure3_face_material_receipt(
                   &active_engine, &active_face_material) == 1 &&
               active_face_material.valid &&

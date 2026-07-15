@@ -1222,6 +1222,28 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveStructure1FFaceMeshReceipt;
 
+/* One direct, byte-proved Structure1F owner to Structure3 entry/face join
+ * from the active canonical LEV. It is suitable as a precise future capture
+ * subject, but never authorizes transform, texture, palette, VDP1, or draw. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int structure1f_entry_index;
+    int owner_x;
+    int owner_y;
+    uint16_t structure1a_index;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+    uint8_t face_ordinal;
+    Nexus_V1_DgnStructure3CaptureTargetReceipt face_target;
+    int model_to_entry_proven;
+    int face_ordinal_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1FDirectMeshBindingReceipt;
+
 typedef struct {
     int level_index;
     Nexus_V1_LevelAuxSourceReceipt slev;
@@ -2083,6 +2105,12 @@ int nexus_v1_current_level_transform_camera_framing_receipt(
 int nexus_v1_current_level_structure1f_face_mesh_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveStructure1FFaceMeshReceipt *out_receipt);
+/* Resolve one Structure1F owner directly through the documented Structure1A
+ * model index and its face ordinal. The result remains a source/capture
+ * receipt; Saturn rendering semantics are deliberately unavailable. */
+int nexus_v1_engine_build_structure1f_direct_mesh_binding(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
