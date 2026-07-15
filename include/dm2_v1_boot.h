@@ -1641,6 +1641,28 @@ typedef struct {
 int dm2_v1_boot_dialogue_open_panel_host_command(
     DM2_V1_BootProfile *profile,
     DM2_V1_DialogueOpenPanelHostCommand *out_command);
+
+/* skproject c_dialog.cpp/c_savegame.cpp receive the two rectangle IDs from
+ * the original event queue.  This host receipt resolves only those supplied
+ * IDs and the source row formula; it never substitutes a click layout. */
+typedef struct {
+    int valid;
+    uint16_t event_rect_index;
+    uint16_t event_top_left_index;
+    DM2_V1_InterfaceRect event_rect;
+    int top_left_x;
+    int top_left_y;
+    int row_stride;
+    int selected_slot;
+    uint32_t command_hash;
+} DM2_V1_DialogueSavePointerReceipt;
+
+int dm2_v1_boot_dialogue_save_pointer_receipt(
+    DM2_V1_BootProfile *profile,
+    uint16_t event_rect_index,
+    uint16_t event_top_left_index,
+    int pointer_y,
+    DM2_V1_DialogueSavePointerReceipt *out_receipt);
 typedef struct {
     int valid;
     uint32_t table_hash;
