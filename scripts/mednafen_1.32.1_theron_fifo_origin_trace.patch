@@ -1,0 +1,223 @@
+diff --git a/src/cdrom/scsicd.h b/src/cdrom/scsicd.h
+index 62719b746..41460be70 100644
+--- a/src/cdrom/scsicd.h
++++ b/src/cdrom/scsicd.h
+@@ -70,6 +70,9 @@ void SCSICD_SetSEL(bool set);
+ void SCSICD_SetRST(bool set);
+ void SCSICD_SetATN(bool set);
+ 
++bool TheronSCSITraceCurrentDataOrigin(uint32 *lba, uint16 *byte_offset,
++                                      unsigned *generation);
++
+ uint32 SCSICD_Run(scsicd_timestamp_t);
+ void SCSICD_ResetTS(uint32 ts_base);
+ 
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+index 21cffff2f..ca9909a17 100644
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -253,6 +253,76 @@ static cdda_t cdda;
+ 
+ static SimpleFIFO<uint8> *din = NULL;
+ 
++struct TheronSCSIDataOrigin
++{
++ bool known;
++ uint32 lba;
++ unsigned generation;
++ uint16 byte_offset;
++ uint16 remaining;
++};
++static TheronSCSIDataOrigin TheronSCSIDataOrigins[64];
++static unsigned TheronSCSIDataOriginHead;
++static unsigned TheronSCSIDataOriginCount;
++static bool TheronSCSIDataOriginCurrentKnown;
++static uint32 TheronSCSIDataOriginCurrentLBA;
++static uint16 TheronSCSIDataOriginCurrentOffset;
++static unsigned TheronSCSIDataOriginCurrentGeneration;
++
++static void TheronSCSITraceResetDataOrigins(void)
++{
++ TheronSCSIDataOriginHead = 0;
++ TheronSCSIDataOriginCount = 0;
++ TheronSCSIDataOriginCurrentKnown = false;
++}
++
++static void TheronSCSITraceQueueDataOrigin(bool known, uint32 lba,
++                                           unsigned generation, uint16 bytes)
++{
++ if(!bytes || TheronSCSIDataOriginCount == 64)
++ {
++  TheronSCSITraceResetDataOrigins();
++  return;
++ }
++ unsigned index = (TheronSCSIDataOriginHead + TheronSCSIDataOriginCount) & 63;
++ TheronSCSIDataOrigins[index].known = known;
++ TheronSCSIDataOrigins[index].lba = lba;
++ TheronSCSIDataOrigins[index].generation = generation;
++ TheronSCSIDataOrigins[index].byte_offset = 0;
++ TheronSCSIDataOrigins[index].remaining = bytes;
++ TheronSCSIDataOriginCount++;
++}
++
++static void TheronSCSITraceAdvanceDataOrigin(void)
++{
++ TheronSCSIDataOriginCurrentKnown = false;
++ if(!TheronSCSIDataOriginCount)
++  return;
++ TheronSCSIDataOrigin *origin = &TheronSCSIDataOrigins[TheronSCSIDataOriginHead];
++ TheronSCSIDataOriginCurrentKnown = origin->known;
++ TheronSCSIDataOriginCurrentLBA = origin->lba;
++ TheronSCSIDataOriginCurrentOffset = origin->byte_offset;
++ TheronSCSIDataOriginCurrentGeneration = origin->generation;
++ origin->byte_offset++;
++ origin->remaining--;
++ if(!origin->remaining)
++ {
++  TheronSCSIDataOriginHead = (TheronSCSIDataOriginHead + 1) & 63;
++  TheronSCSIDataOriginCount--;
++ }
++}
++
++bool TheronSCSITraceCurrentDataOrigin(uint32 *lba, uint16 *byte_offset,
++                                      unsigned *generation)
++{
++ if(!TheronSCSIDataOriginCurrentKnown)
++  return false;
++ *lba = TheronSCSIDataOriginCurrentLBA;
++ *byte_offset = TheronSCSIDataOriginCurrentOffset;
++ *generation = TheronSCSIDataOriginCurrentGeneration;
++ return true;
++}
++
+ static CDUtility::TOC toc;
+ 
+ static uint32 read_sec_start;
+@@ -333,6 +403,7 @@ static void VirtualReset(void)
+  InitModePages();
+ 
+  din->Flush();
++ TheronSCSITraceResetDataOrigins();
+ 
+  CDReadTimer = 0;
+ 
+@@ -563,6 +634,7 @@ static void SendStatusAndMessage(uint8 status, uint8 message)
+  {
+   //printf("[SCSICD] BUG: %d bytes still in SCSI CD FIFO\n", din->CanRead());
+   din->Flush();
++  TheronSCSITraceResetDataOrigins();
+  }
+ 
+  cd.message_pending = message;
+@@ -586,6 +658,7 @@ static void SendStatusAndMessage(uint8 status, uint8 message)
+ static void DoSimpleDataIn(const uint8 *data_in, uint32 len)
+ {
+  din->Write(data_in, len);
++ TheronSCSITraceQueueDataOrigin(false, 0, 0, len);
+ 
+  cd.data_transfer_done = true;
+ 
+@@ -649,6 +722,7 @@ static bool ValidateRawDataSector(uint8 *data, const uint32 lba)
+   MDFN_Notify(MDFN_NOTICE_WARNING, _("Uncorrectable error(s) in sector %d."), lba);
+ 
+   din->Flush();
++  TheronSCSITraceResetDataOrigins();
+   cd.data_transfer_done = false;
+ 
+   CommandCCError(SENSEKEY_MEDIUM_ERROR, AP_LEC_UNCORRECTABLE_ERROR);
+@@ -2862,6 +2936,7 @@ static INLINE void RunCDRead(uint32 system_timestamp, int32 run_time)
+     if(TrayOpen)
+     {
+      din->Flush();
++     TheronSCSITraceResetDataOrigins();
+      cd.data_transfer_done = false;
+ 
+      CommandCCError(SENSEKEY_NOT_READY, NSE_TRAY_OPEN);
+@@ -2884,10 +2959,13 @@ static INLINE void RunCDRead(uint32 system_timestamp, int32 run_time)
+     {
+      memcpy(cd.SubPWBuf, tmp_read_buf + 2352, 96);
+ 
++     const uint32 source_lba = SectorAddr;
+      if(tmp_read_buf[12 + 3] == 0x2)
+       din->Write(tmp_read_buf + 24, 2048);
+      else
+       din->Write(tmp_read_buf + 16, 2048);
++     TheronSCSITraceQueueDataOrigin(true, source_lba,
++                                    TheronSCSIReadCommandGeneration, 2048);
+ 
+      GenSubQFromSubPW();
+ 
+@@ -3104,6 +3182,7 @@ uint32 SCSICD_Run(scsicd_timestamp_t system_timestamp)
+     {
+      //printf("[SCSICD] Abort Received(DB=0x%02x)\n", cd_bus.DB);
+      din->Flush();
++     TheronSCSITraceResetDataOrigins();
+      cd.data_out_pos = cd.data_out_want = 0;
+ 
+      CDReadTimer = 0;
+@@ -3150,6 +3229,7 @@ uint32 SCSICD_Run(scsicd_timestamp_t system_timestamp)
+      }
+      else
+      {
++      TheronSCSITraceAdvanceDataOrigin();
+       cd_bus.DB = din->ReadByte();
+       SetREQ(true);
+      }
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+index 67f97398e..1d2dafbcc 100644
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -126,6 +126,7 @@ static unsigned TheronPCECDG4MainRAMReadCount;
+ static unsigned TheronPCECDMainRAMLoaderWriteCount;
+ static unsigned TheronPCECDControlWindowReadCount;
+ static unsigned TheronPCECDGameWindowReadCount;
++static unsigned TheronPCECDDataOriginCount;
+ 
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -199,6 +200,17 @@ void TheronPCECDTraceGameWindowRead(uint16 logical_address, uint32 physical_addr
+  TheronPCECDTraceFifoReceipt("main_ram_game_window_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n", TheronPCECDGameWindowReadCount++, logical_address, physical_address, value, reader_pc, reader_physical_pc);
+ }
+ 
++static void TheronPCECDTraceDataOrigin(uint16 cpu_pc, uint16 port,
++                                        unsigned generation, uint32 lba,
++                                        uint16 offset, uint8 value)
++{
++ if(TheronPCECDDataOriginCount >= 16384)
++  return;
++ TheronPCECDTraceFifoReceipt("pce_cd_data_origin sequence=%u cpu_pc=%04x port=%04x source_generation=%u source_lba=%u source_offset=%u data=%02x\n",
++                             TheronPCECDDataOriginCount++, cpu_pc, port,
++                             generation, lba, offset, value);
++}
++
+ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned generation)
+ {
+  if(TheronPCECDFifoReceiptCount == TheronPCECDFifoReceiptCapacity)
+@@ -601,6 +613,13 @@ static INLINE uint8 read_1808(int32 timestamp, const bool PeekMode)
+   {
+    if(SCSICD_GetIO())
+    {
++    uint32 source_lba;
++    uint16 source_offset;
++    unsigned source_generation;
++    if(Mednafen::TheronSCSITraceCurrentDataOrigin(&source_lba, &source_offset,
++                                                  &source_generation))
++     TheronPCECDTraceDataOrigin(HuCPU.GetRegister(HuC6280::GSREG_PC), 0x1808,
++                                 source_generation, source_lba, source_offset, ret);
+     SCSICD_SetACK(true);
+     ACKStatus = true;
+     scsicd_ne = SCSICD_Run(timestamp);
+@@ -768,6 +787,13 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
+      TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u\n",
+                            TheronPCECDDataReadPC, ret,
+                            Mednafen::TheronSCSITraceCurrentReadGeneration());
++     uint32 source_lba;
++     uint16 source_offset;
++     unsigned source_generation;
++     if(Mednafen::TheronSCSITraceCurrentDataOrigin(&source_lba, &source_offset,
++                                                   &source_generation))
++      TheronPCECDTraceDataOrigin(TheronPCECDDataReadPC, 0x1801,
++                                  source_generation, source_lba, source_offset, ret);
+      if(TheronPCECDMainRAMLoaderE009Active)
+       TheronPCECDQueueFifoReceipt(TheronPCECDDataReadPC, ret,
+                                   Mednafen::TheronSCSITraceCurrentReadGeneration());

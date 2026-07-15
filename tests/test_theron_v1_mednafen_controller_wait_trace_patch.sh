@@ -24,6 +24,7 @@ main_ram_e009_owner_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e00
 main_ram_loader_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace.patch
 control_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_control_window_trace.patch
 game_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_game_window_trace.patch
+fifo_origin_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
@@ -169,6 +170,12 @@ if ! grep -Fq 'main_ram_control_read sequence=%u logical_address=%04x physical_a
     printf 'FAIL: main-RAM window patches no longer retain bounded reader provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'pce_cd_data_origin sequence=%u cpu_pc=%04x port=%04x source_generation=%u source_lba=%u source_offset=%u data=%02x' "$fifo_origin_patch_file" ||
+   ! grep -Fq 'TheronSCSITraceCurrentDataOrigin' "$fifo_origin_patch_file" ||
+   ! grep -Fq 'TheronSCSITraceQueueDataOrigin(true, source_lba' "$fifo_origin_patch_file"; then
+    printf 'FAIL: FIFO origin patch no longer retains source LBA provenance\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
@@ -205,4 +212,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_owner_patch_fi
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_write_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$control_window_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$game_window_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_patch_file"
 printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'
