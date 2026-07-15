@@ -1021,6 +1021,14 @@
   covers weapon/torch, scroll, compass, potion, source arithmetic, and
   missing-record rejection.
 
+- 2026-07-15 DM1 M11 DUNGEON/OBJECT F0141/F0032/F0033 consumer: inventory
+  and leader-hand icon resolution now consumes the same loaded raw-PC3.4
+  F0156 -> F0141 -> F0032/F0033 owner as the viewport. M11 no longer derives
+  icon identity, charge state, closed-scroll state, or compass direction from
+  decoded Thing mirrors. Missing raw data is a strict no-draw result. The
+  focused M11 gate proves a contradictory decoded torch cannot override raw
+  source bytes and that removing the raw record suppresses both consumers.
+
 - 2026-07-15 DM1 CHAMPION F0294: the ammunition compatibility gate now reads
   actual loaded PC3.4 weapon THING records through F0158 and the original
   G0238 WeaponInfo table. It preserves AMMO.C's launcher type, bow/sling

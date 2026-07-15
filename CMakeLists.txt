@@ -39,6 +39,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0145_f0148_group_overl
              COMMAND test_dm1_v1_f0145_f0148_group_overlay_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0033_raw_inventory_icon_gate.c")
+    add_executable(test_m11_dm1_f0033_raw_inventory_icon_gate
+        tests/test_m11_dm1_f0033_raw_inventory_icon_gate.c)
+    target_link_libraries(test_m11_dm1_f0033_raw_inventory_icon_gate PRIVATE
+        firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_f0033_raw_inventory_icon_gate PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME m11_dm1_f0033_raw_inventory_icon_gate
+             COMMAND test_m11_dm1_f0033_raw_inventory_icon_gate)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0675_get_scaled_bitmap_pc34_compat.c")
  add_executable(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat tests/test_redmcsb_f0675_get_scaled_bitmap_pc34_compat.c src/shared/redmcsb_f0675_get_scaled_bitmap_pc34_compat.c)
  target_include_directories(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

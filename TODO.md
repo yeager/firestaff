@@ -340,9 +340,11 @@
 
 - 2026-07-15 DM1 F0141/F0032/F0033 follow-up: raw PC3.4 object-info and
   dynamic icon resolution now read the loaded F0156 Thing record and exact
-  G0237 Type column; F0115 candidate subtype extraction shares the raw gate.
-  Remaining work is routing the separately-owned live M11 champion-panel
-  slot-icon painter through F0033's result. Do not substitute a decoded
+  G0237 Type column; F0115 candidate subtype extraction and the live M11
+  champion-panel/leader-hand icon painter share the same F0033 result.
+  Missing raw records are no-draw even when decoded mirrors have an icon-like
+  subtype. Remaining work is real PC34/Mac capture across inventory, hand,
+  charge, compass, and scroll-state changes; do not substitute a decoded
   Thing mirror, subtype-zero object, or host-generated icon.
 
 - 2026-07-15 DM1 DUNGEON F0158 follow-up: the raw PC3.4 WEAPON.Type to
