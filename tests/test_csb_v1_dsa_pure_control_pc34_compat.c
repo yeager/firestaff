@@ -67,6 +67,10 @@ static int character_swap_enabled;
 static int character_swap_commit_count;
 static int32_t character_swap_index;
 static int32_t character_swap_fingerprint;
+static int cause_poison_enabled;
+static int cause_poison_commit_count;
+static int32_t cause_poison_character;
+static int32_t cause_poison_value;
 
 static int wing_talents_enabled;
 
@@ -449,6 +453,27 @@ static int commit_character_swap(void *user, int32_t party_index,
     return 1;
 }
 
+static int prepare_cause_poison(void *user, int32_t character_selector,
+                                int32_t poison_value)
+{
+    (void)user;
+    if (!cause_poison_enabled) return -1;
+    if (character_selector == 99) return 0;
+    return character_selector == 1 && poison_value == 128 ? 1 : -1;
+}
+
+static int commit_cause_poison(void *user, int32_t character_selector,
+                               int32_t poison_value)
+{
+    (void)user;
+    if (!cause_poison_enabled || character_selector != 1 ||
+        poison_value != 128) return 0;
+    cause_poison_character = character_selector;
+    cause_poison_value = poison_value;
+    ++cause_poison_commit_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -584,6 +609,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (character_swap_enabled) {
         context.prepare_character_swap = prepare_character_swap;
         context.commit_character_swap = commit_character_swap;
+    }
+    if (cause_poison_enabled) {
+        context.prepare_cause_poison = prepare_cause_poison;
+        context.commit_cause_poison = commit_cause_poison;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -888,6 +917,18 @@ int main(void)
     };
     uint16_t character_swap_full_party[] = {
         0x0686u, 99u, 0x0686u, 0x2222u, 0x1d8bu, 0x080du
+    };
+    uint16_t cause_poison[] = {
+        0x0686u, 128u, 0x0686u, 1u, 0x1b8bu
+    };
+    uint16_t cause_poison_then_bad[] = {
+        0x0686u, 128u, 0x0686u, 1u, 0x1b8bu, 0x0000u
+    };
+    uint16_t cause_poison_invalid[] = {
+        0x0686u, 128u, 0x0686u, 99u, 0x1b8bu
+    };
+    uint16_t cause_poison_negative[] = {
+        0x0686u, 128u, 0x0786u, 0xffffu, 0xffffu, 0x1b8bu
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1541,6 +1582,38 @@ int main(void)
               (int)(sizeof(character_swap) / sizeof(character_swap[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "SWAPCHARACTER rejects without a complete roster owner");
+    cause_poison_enabled = 1;
+    cause_poison_commit_count = 0;
+    check(run(&state, &action, cause_poison,
+              (int)(sizeof(cause_poison) / sizeof(cause_poison[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              cause_poison_commit_count == 1 && cause_poison_character == 1 &&
+              cause_poison_value == 128,
+          "CAUSEPOISON preserves CSBWin poison-value and character stack order");
+    cause_poison_commit_count = 0;
+    check(run(&state, &action, cause_poison_then_bad,
+              (int)(sizeof(cause_poison_then_bad) /
+                    sizeof(cause_poison_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              cause_poison_commit_count == 0,
+          "CAUSEPOISON does not publish before a later rejected source word");
+    check(run(&state, &action, cause_poison_invalid,
+              (int)(sizeof(cause_poison_invalid) /
+                    sizeof(cause_poison_invalid[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              cause_poison_commit_count == 0,
+          "CAUSEPOISON preserves the source unavailable-character no-op");
+    cause_poison_enabled = 0;
+    check(run(&state, &action, cause_poison_negative,
+              (int)(sizeof(cause_poison_negative) /
+                    sizeof(cause_poison_negative[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              cause_poison_commit_count == 0,
+          "CAUSEPOISON preserves the source negative-character no-op");
+    check(run(&state, &action, cause_poison,
+              (int)(sizeof(cause_poison) / sizeof(cause_poison[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "CAUSEPOISON rejects without a complete poison owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

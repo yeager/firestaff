@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_CausePoison`: the authenticated DSA executor now
+  stages CSBWin `DSA.cpp:4348-4362` / `CSBCode.cpp::PoisonCharacter` using a
+  source-owned poison candidate. It retains poison-value/character stack
+  order and publishes damage, flags, and timer effects only after complete
+  bytecode acceptance. Focused regression covers valid, unavailable,
+  negative-index, rejected, and missing-owner paths.
+
 - 2026-07-15 CSBWin `STKOP_SwapCharacter`: the authenticated DSA executor
   now stages CSBWin `DSA.cpp:4413-4425` / `Character.cpp::SwapCharacter` with
   source stack order and immediate source status result. Only a successful

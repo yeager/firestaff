@@ -3418,6 +3418,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       remains closed until one original owner supplies party deletion/addition/
       replacement, Wings lookup, CHARDESC persistence, and all source result
       codes as one save transaction.
+    - 2026-07-15 poison update: authenticated `STKOP_CausePoison` now stages
+      the source poison candidate through explicit callbacks. The live binding
+      remains closed until one original owner supplies CHARDESC damage, status
+      flags, selected-character UI state, poison count, and `TT_75` timer
+      scheduling as one transaction.
     - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
       `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
       compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors

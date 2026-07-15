@@ -747,6 +747,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_EXPERIENCE_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
 
 typedef struct {
     uint32_t location;
@@ -805,6 +806,11 @@ typedef struct {
     int32_t party_index;
     int32_t fingerprint;
 } CSB_V1_CSBWinDSAPendingCharacterSwap;
+
+typedef struct {
+    int32_t character_selector;
+    int32_t poison_value;
+} CSB_V1_CSBWinDSAPendingPoisonWrite;
 
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
@@ -868,7 +874,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingExperienceWrite *pending_experience_writes,
     int *pending_experience_write_count,
     CSB_V1_CSBWinDSAPendingCharacterSwap *pending_character_swaps,
-    int *pending_character_swap_count)
+    int *pending_character_swap_count,
+    CSB_V1_CSBWinDSAPendingPoisonWrite *pending_poison_writes,
+    int *pending_poison_write_count)
 {
     uint32_t v;
     uint32_t w;
@@ -894,6 +902,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_character_writes || !pending_character_write_count ||
         !pending_experience_writes || !pending_experience_write_count ||
         !pending_character_swaps || !pending_character_swap_count ||
+        !pending_poison_writes || !pending_poison_write_count ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
         *pending_monster_write_count < 0 ||
@@ -903,6 +912,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_character_write_count < 0 ||
         *pending_experience_write_count < 0 ||
         *pending_character_swap_count < 0 ||
+        *pending_poison_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -2084,6 +2094,35 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             goto underflow;
         }
         break;
+    case 110u: /* STKOP_CausePoison, CSBWin DSA.cpp:4348-4362. */
+        /* Source stack order is poison value then character index. Poisoning
+         * combines DamageCharacter, portrait flags, and a possible TT_75
+         * timer, so only the source runtime candidate may decide eligibility
+         * and publish the coupled result. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if ((int32_t)v < 0) break;
+        if (!context->prepare_cause_poison ||
+            !context->commit_cause_poison ||
+            *pending_poison_write_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        {
+            int prepared = context->prepare_cause_poison(
+                context->dungeon_user, (int32_t)v, (int32_t)w);
+
+            if (prepared < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (prepared > 0) {
+                CSB_V1_CSBWinDSAPendingPoisonWrite *write =
+                    &pending_poison_writes[*pending_poison_write_count];
+
+                write->character_selector = (int32_t)v;
+                write->poison_value = (int32_t)w;
+                ++*pending_poison_write_count;
+            }
+        }
+        break;
     case 113u: /* STKOP_ExperiencePlus, CSBWin DSA.cpp:4542-4557. */
         /* The original pops experience, skill, then character and delegates
          * all skill hierarchy, XP caps, and LevelUp effects to AddToSkill.
@@ -2387,6 +2426,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_experience_writes[CSB_V1_CSBWIN_DSA_PENDING_EXPERIENCE_WRITES];
     CSB_V1_CSBWinDSAPendingCharacterSwap
         pending_character_swaps[CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS];
+    CSB_V1_CSBWinDSAPendingPoisonWrite
+        pending_poison_writes[CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -2401,6 +2442,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_character_write_count = 0;
     int pending_experience_write_count = 0;
     int pending_character_swap_count = 0;
+    int pending_poison_write_count = 0;
     int staged_saves_disabled;
     uint32_t staged_random_state;
     int i;
@@ -2626,7 +2668,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_missile_write_count, pending_character_writes,
                 &pending_character_write_count, pending_experience_writes,
                 &pending_experience_write_count, pending_character_swaps,
-                &pending_character_swap_count);
+                &pending_character_swap_count, pending_poison_writes,
+                &pending_poison_write_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2714,6 +2757,15 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 context->dungeon_user,
                 pending_character_swaps[i].party_index,
                 pending_character_swaps[i].fingerprint)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_poison_write_count; ++i) {
+        if (!context->commit_cause_poison ||
+            !context->commit_cause_poison(
+                context->dungeon_user,
+                pending_poison_writes[i].character_selector,
+                pending_poison_writes[i].poison_value)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -2860,6 +2912,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.add_experience_plus = runner->add_experience_plus;
     context.prepare_character_swap = runner->prepare_character_swap;
     context.commit_character_swap = runner->commit_character_swap;
+    context.prepare_cause_poison = runner->prepare_cause_poison;
+    context.commit_cause_poison = runner->commit_cause_poison;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
