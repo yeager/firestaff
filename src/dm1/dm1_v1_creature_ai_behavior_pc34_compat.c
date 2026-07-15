@@ -86,6 +86,22 @@ int F0208_DM1_GROUP_BuildAddEventPlan_Compat(
     return 1;
 }
 
+int F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY)
+{
+    int distanceX = sourceMapX - destinationMapX;
+    int distanceY = sourceMapY - destinationMapY;
+
+    /* GROUP.C F0226 is exactly abs(sourceX - destinationX) plus
+     * abs(sourceY - destinationY). */
+    if (distanceX < 0) distanceX = -distanceX;
+    if (distanceY < 0) distanceY = -distanceY;
+    return distanceX + distanceY;
+}
+
 static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }
