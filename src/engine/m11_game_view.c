@@ -36217,6 +36217,22 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             (unsigned int)dm1_v1_graphic_champion_icons_pc34());
     }
 
+    /* CHAMDRAW.C F0622 requires C028's four 19x14 frames. CSB's selected
+     * GRAPHICS.DAT must supply that full strip before its icon zones exist. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        (!iconStrip || !iconStrip->loaded || !iconStrip->pixels ||
+         iconStrip->width != 4 * 19 || iconStrip->height != 14)) {
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            DM1_V1_LayoutZoneRectPc34 clearRect;
+            if (dm1_v1_champion_icon_rect_pc34(slot, &clearRect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              clearRect.x, clearRect.y,
+                              clearRect.w, clearRect.h, M11_COLOR_BLACK);
+            }
+        }
+        return;
+    }
+
     /* F0622 first fills the temporary 19x14 bitmap, then overlays C028.
      * Without the verified original strip, that fill alone is a fabricated
      * party marker, so the complete icon route stays unavailable. */
