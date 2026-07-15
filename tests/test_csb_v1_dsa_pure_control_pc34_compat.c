@@ -78,6 +78,7 @@ static int sound_count;
 static int32_t sound_number;
 static int32_t sound_volume;
 static int32_t sound_flags;
+static int monster_move_inhibit_enabled;
 static int actuator_copy_enabled;
 static int actuator_copy_store_count;
 static uint8_t actuator_copy_payloads[3][6];
@@ -685,6 +686,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     }
     if (discard_text_enabled) context.discard_text = discard_text;
     if (sound_enabled) context.play_sound = play_sound;
+    context.monster_move_inhibit_valid = monster_move_inhibit_enabled;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -1061,6 +1063,8 @@ int main(void)
     uint16_t sound_then_bad[] = {
         0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu, 0x0000u
     };
+    uint16_t monblk[] = { 0x0686u, 0x0du, 0x11cbu };
+    uint16_t monblk_then_bad[] = { 0x0686u, 0x0du, 0x11cbu, 0x0000u };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -1802,6 +1806,18 @@ int main(void)
               (int)(sizeof(sound) / sizeof(sound[0])), parameters,
               &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "SOUND remains closed without a CSB audio owner");
+
+    monster_move_inhibit_enabled = 1;
+    check(run(&state, &action, monblk,
+              (int)(sizeof(monblk) / sizeof(monblk[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              execution.stack_depth == 0u,
+          "MONBLK accepts CSBWin's four-direction mask");
+    check(run(&state, &action, monblk_then_bad,
+              (int)(sizeof(monblk_then_bad) / sizeof(monblk_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "MONBLK rejects a later malformed source word");
+    monster_move_inhibit_enabled = 0;
     check(run(&state, &action, discard_text, 1, parameters, &execution) ==
               CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "DISCARDTEXT rejects without the source UI owner");

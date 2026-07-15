@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_MonBlk`: implemented `DSA.cpp:4625-4636` as a
+  transactional four-direction movement-filter mask. It accepts no absent
+  owner and does not publish after a later malformed DSA word.
+
 - 2026-07-15 DM1 CHAMPION F0286: added exact `CHAMPION.C:4956-4974`
   adjacent C04-to-party target selection. The live melee route now consumes
   F0229's ordered cell/RNG path and F0285's first living champion match.

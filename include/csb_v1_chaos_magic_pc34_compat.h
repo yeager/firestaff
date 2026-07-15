@@ -375,6 +375,10 @@ typedef struct {
     int32_t x_overlay_jitter;
     int32_t y_overlay_jitter;
     int jitter_changed;
+    /* CSBWin Monster.cpp resets this four-direction mask before each live
+     * movement-filter execution; STKOP_MonBlk then owns its replacement. */
+    int monster_move_inhibit_valid;
+    uint8_t monster_move_inhibit[4];
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -661,6 +665,8 @@ typedef struct {
     int32_t x_overlay_jitter;
     int32_t y_overlay_jitter;
     int jitter_changed;
+    int monster_move_inhibit_valid;
+    uint8_t monster_move_inhibit[4];
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;

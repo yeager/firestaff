@@ -1142,6 +1142,16 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
                 subcode == 19u ? (w & v) : (subcode == 22u ? (w | v) : (w ^ v)))) goto underflow;
         break;
+    case 71u: /* STKOP_MonBlk, CSBWin DSA.cpp:4625-4636. */
+        if (!context->monster_move_inhibit_valid ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        context->monster_move_inhibit[0] = (uint8_t)(v & 1u);
+        context->monster_move_inhibit[1] = (uint8_t)(v & 2u);
+        context->monster_move_inhibit[2] = (uint8_t)(v & 4u);
+        context->monster_move_inhibit[3] = (uint8_t)(v & 8u);
+        break;
     case 20u: /* STKOP_Shift */
     case 31u: /* STKOP_RShift */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
@@ -3129,6 +3139,10 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
         runner->x_overlay_jitter = context.x_overlay_jitter;
         runner->y_overlay_jitter = context.y_overlay_jitter;
         runner->jitter_changed = context.jitter_changed;
+    }
+    if (runner->monster_move_inhibit_valid) {
+        memcpy(runner->monster_move_inhibit, context.monster_move_inhibit,
+               sizeof(runner->monster_move_inhibit));
     }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = (int)parameter_words[i];
