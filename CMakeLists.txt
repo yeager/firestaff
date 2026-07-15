@@ -27878,6 +27878,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_mandatory_graphic_indic
     )
 endif()
 
+# DM1 V1 M648 inscription-font binding: DATA.C G0018 entry 61 maps the
+# ReDMCSB M648 variable to raw GRAPHICS.DAT ordinal 120.
+if(BUILD_TESTING)
+    add_executable(test_dm1_v1_inscription_font_pc34_compat
+        tests/test_dm1_v1_inscription_font_pc34_compat.c
+        src/dm1/dm1_v1_mandatory_graphic_indices_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inscription_font_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inscription_font_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inscription_font_pc34_compat
+        COMMAND test_dm1_v1_inscription_font_pc34_compat
+    )
+endif()
+
 # pass853 — DM1 V1 wound defense factor: G0007_ai_Graphic562_WoundDefenseFactor[5]
 # — per-limb wound-defense multiplier table. Source-locked against
 # DATA.C:24/271-280 + REVIVE.C:1144-1148 (F0280 wound read at the
