@@ -192,6 +192,16 @@ int dm2_v1_viewport_wall_graphic_address(int gdat_index,
                                          int *out_field);
 int dm2_v1_viewport_door_frame_field_for_square(int view_square);
 int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square);
+/* skproject SKWIN/skval1.h binds the two side-frame IMG3 fields to the
+ * viewport cell, not to Firestaff's legacy single-frame convenience slot.
+ * `side` is 0=left, 1=right.  The returned rect is the source
+ * QUERY_CREATURE_BLIT_RECTI(cell, 10/14, 0) key. */
+int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
+                                           int *out_graphicsset_field,
+                                           int *out_rect_number,
+                                           int *out_mirror_flip,
+                                           int *out_offset_x,
+                                           int *out_offset_y);
 int dm2_v1_viewport_door_panel_field_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_record(int view_square,
@@ -312,6 +322,12 @@ typedef struct {
     int ornate_gdat_index;
     int destroyed_mask_gdat_index;
     int frame_gdat_index;
+    int side_frame_gdat_index[2];
+    int side_frame_graphicsset_field[2];
+    int side_frame_rect_number[2];
+    int side_frame_mirror_flip[2];
+    int side_frame_offset_x[2];
+    int side_frame_offset_y[2];
     /* skproject DRAW_DOOR_FRAMES reads glbMapGraphicsSet, not a global
      * default graphics set.  This value is carried into the M11 receipt. */
     int graphicsset_index;

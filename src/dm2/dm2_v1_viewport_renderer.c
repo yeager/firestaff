@@ -1430,6 +1430,46 @@ int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
 }
 
+int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
+                                           int *out_graphicsset_field,
+                                           int *out_rect_number,
+                                           int *out_mirror_flip,
+                                           int *out_offset_x,
+                                           int *out_offset_y)
+{
+    /* SKWIN/skval1.h: tlbGraphicsDoorSideFrames[14][2].  The active centre
+     * cells are 0, 3, 6 and 11 (D0..D3) in DRAW_DOOR_FRAMES. */
+    static const uint8_t side_frames[14][2] = {
+        { 0xd3u, 0xd4u }, { 0xffu, 0xffu }, { 0xffu, 0xffu },
+        { 0x07u, 0x08u }, { 0xffu, 0xd5u }, { 0xd6u, 0xffu },
+        { 0x09u, 0x0au }, { 0xffu, 0xd7u }, { 0xd8u, 0xffu },
+        { 0xffu, 0xffu }, { 0xffu, 0xffu }, { 0x0bu, 0x0cu },
+        { 0x0du, 0x0eu }, { 0x0fu, 0x10u }
+    };
+    int cell;
+    uint8_t field;
+
+    if (!out_graphicsset_field || !out_rect_number || !out_mirror_flip ||
+        !out_offset_x || !out_offset_y || side < 0 || side > 1) return 0;
+    switch (view_square) {
+    case DM2_SQ_D0C: cell = 0; break;
+    case DM2_SQ_D1C: cell = 3; break;
+    case DM2_SQ_D2C: cell = 6; break;
+    case DM2_SQ_D3C: cell = 11; break;
+    default: return 0;
+    }
+    field = side_frames[cell][side];
+    if (field == 0xffu) return 0;
+    *out_graphicsset_field = field;
+    *out_rect_number = 5000 + cell * 25 + (side == 0 ? 10 : 14);
+    /* DRAW_DOOR_FRAMES: left uses QUERY_TEMP_PICST(0,...,rect,4), right
+     * uses QUERY_TEMP_PICST(1,...,rect,3), then applies these offsets. */
+    *out_mirror_flip = side == 0 ? 0 : 1;
+    *out_offset_x = side == 0 ? -2 : 2;
+    *out_offset_y = 4;
+    return 1;
+}
+
 int dm2_v1_viewport_door_panel_field_for_square(int view_square)
 {
     switch (view_square) {
@@ -2053,6 +2093,20 @@ int dm2_v1_viewport_build_door_render_plan(
         }
         row->frame_gdat_index =
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
+        for (int side = 0; side < 2; ++side) {
+            int field, rect_number, mirror_flip, offset_x, offset_y;
+            if (dm2_v1_viewport_door_side_frame_source(
+                    square, side, &field, &rect_number, &mirror_flip,
+                    &offset_x, &offset_y)) {
+                row->side_frame_graphicsset_field[side] = field;
+                row->side_frame_gdat_index[side] =
+                    DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
+                row->side_frame_rect_number[side] = rect_number;
+                row->side_frame_mirror_flip[side] = mirror_flip;
+                row->side_frame_offset_x[side] = offset_x;
+                row->side_frame_offset_y[side] = offset_y;
+            }
+        }
         /* DRAW_DOOR_FRAMES reads the live MAP graphics set.  A source frame
          * cannot borrow the renderer's historical set-one convenience. */
         row->graphicsset_index = s->gdat_scene_control_ready

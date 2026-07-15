@@ -200,7 +200,10 @@
   Vertical state-1..3 and horizontal state-1..3 at D0/D1/D2 now use the
   original source panels. Horizontal draws are atomic right/left image crops,
   not a scaled substitute. Remaining: distance stretch/light-palette
-  execution, `DRAW_DOOR_FRAMES`, and broader door-type routing. No generic
+  execution, `DRAW_DOOR_FRAMES`, and broader door-type routing. The source
+  `tlbGraphicsDoorSideFrames` fields and `QUERY_CREATURE_BLIT_RECTI` keys for
+  D0--D3 now reach the runtime door receipt; actual side-frame pixel blits
+  remain blocked pending complete `QUERY_TEMP_PICST`/RAW4 geometry proof. No generic
   panel/frame fallback.
 
 - 2026-07-15 DM2 `DRAW_DOOR` follow-up: map `UseDoor0/UseDoor1` now gates
