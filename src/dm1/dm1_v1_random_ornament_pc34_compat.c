@@ -2,6 +2,28 @@
 
 #include <limits.h>
 
+static int dm1_v1_dungeon_wall_ornament_is_alcove_pc34(
+    int ordinal,
+    const int *alcoveOrnamentIndices,
+    int alcoveOrnamentCount)
+{
+    int index;
+    int i;
+
+    /* DUNGEON.C F0149 consumes an index, while F0171 passes its one-based
+     * aspect ordinal through M001_ORDINAL_TO_INDEX. */
+    if (ordinal <= 0 || !alcoveOrnamentIndices || alcoveOrnamentCount <= 0) {
+        return 0;
+    }
+    index = ordinal - 1;
+    for (i = 0; i < alcoveOrnamentCount; ++i) {
+        if (alcoveOrnamentIndices[i] == index) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm1_v1_dungeon_get_random_ornament_index_pc34(
     uint16_t value1,
     uint16_t value2,
@@ -51,8 +73,82 @@ int dm1_v1_dungeon_get_random_ornament_ordinal_pc34(
     return index < ornamentCount ? index + 1 : 0;
 }
 
+int dm1_v1_dungeon_set_random_wall_ornament_ordinals_pc34(
+    int *aspect,
+    int backRandomWallOrnamentAllowed,
+    int leftRandomWallOrnamentAllowed,
+    int frontRandomWallOrnamentAllowed,
+    int rightRandomWallOrnamentAllowed,
+    int randomWallOrnamentCount,
+    int direction,
+    int mapX,
+    int mapY,
+    int mapIndex,
+    int mapWidth,
+    int mapHeight,
+    uint16_t ornamentRandomSeed,
+    const int *alcoveOrnamentIndices,
+    int alcoveOrnamentCount)
+{
+    int sourceY;
+    int normalizedDirection;
+    int slot;
+
+    if (!aspect || direction < 0 || direction > 3 ||
+        randomWallOrnamentCount < 0 || alcoveOrnamentCount < 0 ||
+        (alcoveOrnamentCount > 0 && !alcoveOrnamentIndices)) {
+        return 0;
+    }
+
+    /* DUNGEON.C F0171:2438-2442.  PC3.4 first increments Y for the back
+     * wall, then increments direction between right, front, and left. */
+    sourceY = mapY + 1;
+    normalizedDirection = direction;
+    aspect[DM1_V1_SQUARE_ASPECT_BACK_WALL_ORNAMENT_PC34] =
+        dm1_v1_dungeon_get_random_ornament_ordinal_pc34(
+            backRandomWallOrnamentAllowed, randomWallOrnamentCount,
+            mapX, sourceY * (normalizedDirection + 1), mapIndex,
+            mapWidth, mapHeight, ornamentRandomSeed, 30);
+
+    normalizedDirection = (normalizedDirection + 1) & 3;
+    aspect[DM1_V1_SQUARE_ASPECT_RIGHT_WALL_ORNAMENT_PC34] =
+        dm1_v1_dungeon_get_random_ornament_ordinal_pc34(
+            leftRandomWallOrnamentAllowed, randomWallOrnamentCount,
+            mapX, sourceY * (normalizedDirection + 1), mapIndex,
+            mapWidth, mapHeight, ornamentRandomSeed, 30);
+
+    normalizedDirection = (normalizedDirection + 1) & 3;
+    aspect[DM1_V1_SQUARE_ASPECT_FRONT_WALL_ORNAMENT_PC34] =
+        dm1_v1_dungeon_get_random_ornament_ordinal_pc34(
+            frontRandomWallOrnamentAllowed, randomWallOrnamentCount,
+            mapX, sourceY * (normalizedDirection + 1), mapIndex,
+            mapWidth, mapHeight, ornamentRandomSeed, 30);
+
+    normalizedDirection = (normalizedDirection + 1) & 3;
+    aspect[DM1_V1_SQUARE_ASPECT_LEFT_WALL_ORNAMENT_PC34] =
+        dm1_v1_dungeon_get_random_ornament_ordinal_pc34(
+            rightRandomWallOrnamentAllowed, randomWallOrnamentCount,
+            mapX, sourceY * (normalizedDirection + 1), mapIndex,
+            mapWidth, mapHeight, ornamentRandomSeed, 30);
+
+    /* F0171:2450-2462 only suppresses random alcoves when the original wall
+     * lies outside the current map.  The caller supplies F0174's decoded map
+     * alcove list; this routine never substitutes a global ornament list. */
+    if (mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight) {
+        for (slot = DM1_V1_SQUARE_ASPECT_BACK_WALL_ORNAMENT_PC34;
+             slot <= DM1_V1_SQUARE_ASPECT_LEFT_WALL_ORNAMENT_PC34;
+             ++slot) {
+            if (dm1_v1_dungeon_wall_ornament_is_alcove_pc34(
+                    aspect[slot], alcoveOrnamentIndices, alcoveOrnamentCount)) {
+                aspect[slot] = 0;
+            }
+        }
+    }
+    return 1;
+}
+
 const char *dm1_v1_random_ornament_source_evidence_pc34(void)
 {
-    return "ReDMCSB DUNGEON.C F0169:2371-2379 and F0170:2382-2404; "
-           "F0172:2666 floor-ornament caller";
+    return "ReDMCSB DUNGEON.C F0169:2371-2379, F0170:2382-2404, "
+           "F0171:2407-2462, and F0149:1330-1348";
 }

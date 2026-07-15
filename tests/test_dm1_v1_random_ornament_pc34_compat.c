@@ -51,10 +51,40 @@ static void test_f0170_source_gate_and_ordinal(void)
                0);
 }
 
+static void test_f0171_pc34_wall_aspect_order_and_out_of_bounds_alcove_gate(void)
+{
+    int aspect[DM1_V1_SQUARE_ASPECT_COUNT_PC34] = {0};
+    const int inBoundsAlcoves[] = {4, 25}; /* zero-based F0149 indices */
+    const int outOfBoundsAlcoves[] = {14, 5};
+
+    expect_int("F0171 in-bounds succeeds",
+               dm1_v1_dungeon_set_random_wall_ornament_ordinals_pc34(
+                   aspect, 1, 1, 1, 1, 30, 0, 4, 7, 2, 32, 31,
+                   0xbeef, inBoundsAlcoves, 2),
+               1);
+    expect_int("F0171 back ordinal", aspect[3], 5);
+    expect_int("F0171 right ordinal", aspect[4], 12);
+    expect_int("F0171 front ordinal", aspect[5], 19);
+    expect_int("F0171 left ordinal", aspect[6], 26);
+
+    expect_int("F0171 out-of-bounds succeeds",
+               dm1_v1_dungeon_set_random_wall_ornament_ordinals_pc34(
+                   aspect, 1, 1, 1, 1, 30, 0, -1, 7, 2, 32, 31,
+                   0xbeef, outOfBoundsAlcoves, 2),
+               1);
+    /* Index 14 (ordinal 15) and index 5 (ordinal 6) are source alcoves and
+     * are removed only on the out-of-bounds branch. */
+    expect_int("F0171 out-of-bounds removes back alcove", aspect[3], 0);
+    expect_int("F0171 out-of-bounds keeps non-alcove right", aspect[4] != 0, 1);
+    expect_int("F0171 out-of-bounds keeps non-alcove front", aspect[5] != 0, 1);
+    expect_int("F0171 out-of-bounds removes left alcove", aspect[6], 0);
+}
+
 int main(void)
 {
     test_f0169_source_formula();
     test_f0170_source_gate_and_ordinal();
+    test_f0171_pc34_wall_aspect_order_and_out_of_bounds_alcove_gate();
     if (!strstr(dm1_v1_random_ornament_source_evidence_pc34(), "F0169") ||
         !strstr(dm1_v1_random_ornament_source_evidence_pc34(), "F0170")) {
         fprintf(stderr, "FAIL source evidence\n");
