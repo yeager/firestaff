@@ -42,6 +42,16 @@ static const unsigned char s_object_info_type[kObjectInfoCount] = {
     124, 132, 133, 134, 136, 137, 138, 139, 192, 193, 197, 198,
 };
 
+/* ReDMCSB DUNGEON.C G0243_as_Graphic559_CreatureInfo[27].Attributes,
+ * PC 3.4 I34E.  F0144 must use the raw C04 GROUP.Type, not a decoded
+ * runtime mirror that may lag a loaded/save-game record. */
+static const unsigned short s_creature_attributes_f0144_pc34[27] = {
+    0x0482, 0x0480, 0x4510, 0x04B4, 0x0701, 0x0581, 0x070C,
+    0x0300, 0x5864, 0x0282, 0x1480, 0x18C6, 0x1280, 0x14A2,
+    0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x4060, 0x10DE,
+    0x0082, 0x1480, 0x78AA, 0x068A, 0x78AA, 0x78AA
+};
+
 const unsigned char *dm1_v1_dungeon_get_thing_data_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing)
@@ -67,6 +77,30 @@ const unsigned char *dm1_v1_dungeon_get_thing_data_pc34(
 
     /* DUNGEON.C F0156: type base plus index times the original record size. */
     return things->rawThingData[type] + index * byteCount;
+}
+
+int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing,
+    unsigned short *outAttributes)
+{
+    const unsigned char *rawGroup;
+    int creatureType;
+
+    if (outAttributes) *outAttributes = 0;
+    if (!outAttributes || THING_GET_TYPE(thing) != THING_TYPE_GROUP) return 0;
+    rawGroup = dm1_v1_dungeon_get_thing_data_pc34(things, thing);
+    if (!rawGroup) return 0;
+
+    /* PC3.4 GROUP.Type is raw byte 4 of the 16-byte C04 record. */
+    creatureType = rawGroup[4];
+    if (creatureType < 0 ||
+        creatureType >= (int)(sizeof(s_creature_attributes_f0144_pc34) /
+                              sizeof(s_creature_attributes_f0144_pc34[0]))) {
+        return 0;
+    }
+    *outAttributes = s_creature_attributes_f0144_pc34[creatureType];
+    return 1;
 }
 
 int dm1_v1_dungeon_get_object_subtype_pc34(
