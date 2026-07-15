@@ -6605,6 +6605,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-15 PRS3 promotion update: generic `ready-decoded` receipts are
     explicitly blocked on the retail menu route until authentic opcode and
     Saturn render provenance exists.
+  - The same restriction now applies to the BPK-to-DGN material host route.
 - 🔧 2026-07-13 DM2 G1 scene runtime follow-up: canonical G1 maps use
   `MapGraphicsStyle()` 1..5, and each exact `GRAPHICSSET` now has verified
   floor/ceiling IMG3 metadata plus source-required scene colorkey/flag words.

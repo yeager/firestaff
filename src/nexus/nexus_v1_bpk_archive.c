@@ -1014,8 +1014,9 @@ int nexus_v1_dmdf_import_bpk_material_bank_host_route(
      * archive. A valid earlier entry does not make a later truncated or
      * undecodable PRS3 surface trustworthy, so keep the destination bank
      * unchanged unless the complete upload plan reached a ready route. */
-    if (upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED &&
-        upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED) {
+    /* No retail PRS3 decoder has authenticated Saturn provenance. Keep the
+     * material host to exact stored surfaces until that evidence exists. */
+    if (upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED) {
         out_receipt->after_surface_count = before_surface_count;
         return 0;
     }
