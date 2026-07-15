@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0292 champion-HUD fallback gate: DM1 status
+  boxes now stay source-owned even when V1 chrome is disabled. If a required
+  C008/C007 surface cannot be consumed, DM1 leaves the existing source clear
+  rather than drawing the generic cyan host frame. Focused coverage:
+  `m11_dm1_champion_panel_asset_fail_closed`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0172 C127 mirror material gate: the live D1C
   C346/C026 route now requires a successful original C346 backing draw before
   it may overlay C026, and validates the C026 atlas rectangle before blitting.

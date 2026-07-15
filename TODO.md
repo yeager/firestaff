@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0292 champion-HUD material follow-up: the live status-box
+  route no longer uses the generic cyan host frame when C008 or another
+  required source surface is unavailable, even with V1 chrome disabled.
+  Remaining work is real PC34/Mac capture across dead/alive, shields, hands,
+  and four-champion transitions; absent source material must remain no-draw.
+
 - 2026-07-15 DM1 F0172/C127 mirror-material follow-up: the live D1C route
   now treats C346 followed by C026 as one source-owned operation. A missing or
   malformed C346 backing must suppress C026 rather than leave a floating
