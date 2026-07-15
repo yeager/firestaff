@@ -342,7 +342,7 @@ F	0228	F0228_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource	ATARIST.H;GR
 F	228	F228_uzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0229	F0229_GROUP_SetOrderedCellsToAttack	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;CHAMPION.C;PROJEXPL.C	implemented-narrow	implemented_narrow	Exact GROUP.C:13860-13876 F0228/G0023 selection. M10 CMD_ATTACK supplies actual group/party coordinates, consumes source RNG, and rejects no-cell targets rather than selecting a synthetic first living creature.
 F	229	F229_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0230	F0230_GROUP_GetChampionDamage	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0230	F0230_GROUP_GetChampionDamage	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;PROJEXPL.C	implemented-narrow	implemented_narrow	DM1 M10 F0207 now supplies exact F0230 creatureDifficulty (invisibility/night vision/palette) and short-circuited dexterity/random4/F0308 ordering to the F0736/F0321 handoff. M11 creature scan and F0304 Parry XP remain separate runtime consumers.
 F	230	F230_ezzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0231	F0231_GROUP_GetMeleeActionDamage	ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	231	F231_izzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

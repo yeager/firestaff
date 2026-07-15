@@ -710,6 +710,7 @@ int dm1_v1_melee_creature_snapshot_plan_f0231_pc34(
     out->snapshot.woundProbabilities = in->profileWoundProbabilities;
     out->snapshot.properties = in->profileProperties;
     out->snapshot.doubledMapDifficulty = in->doubledMapDifficulty;
+    out->snapshot.creatureDifficulty = in->creatureDifficulty;
     out->snapshot.creatureIndex = in->creatureIndex;
     out->snapshot.healthBefore = in->creatureHealth;
     out->snapshot.isCandidateInvulnerable =

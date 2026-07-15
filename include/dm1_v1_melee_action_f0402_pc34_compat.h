@@ -310,6 +310,7 @@ typedef struct {
     int profileWoundProbabilities;
     int profileProperties;
     int doubledMapDifficulty;
+    int creatureDifficulty;
     int candidateInvulnerableEnabled;
     int candidateInvulnerableGroupIndex;
     int candidateInvulnerableCreatureIndex;

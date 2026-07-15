@@ -5338,6 +5338,7 @@ static void test_orch_creature_snapshot_uses_live_group_and_profile(void) {
     assert(snapshot.woundProbabilities == 0x0222);
     assert(snapshot.properties == 0x299B);
     assert(snapshot.doubledMapDifficulty == 6);
+    assert(snapshot.creatureDifficulty == 10);
     assert(snapshot.creatureIndex == 0);
     assert(snapshot.healthBefore == 77);
     assert(snapshot.isCandidateInvulnerable == 0);

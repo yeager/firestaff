@@ -7143,5 +7143,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   secondary direction selection with its real RNG ordering.
 - 2026-07-15 DM1 GROUP F0228: primary/secondary direction selection now
   consumes source RNG before F0200 in M10. F0229 now uses actual target and
-  party coordinates for M10 melee-cell ordering. Remaining related work is
-  F0230 champion damage and the larger F0209 event-runtime body.
+  party coordinates for M10 melee-cell ordering. M10 F0230 now carries the
+  original invisibility/night-vision/palette term and source F0308 ordering.
+  Remaining related work is its M11/F0304 Parry-XP consumer and the larger
+  F0209 event-runtime body.

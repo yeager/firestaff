@@ -919,7 +919,7 @@ done:
 
 int F0736_COMBAT_ResolveCreatureMelee_Compat(
     const struct CombatantCreatureSnapshot_Compat* attacker,
-    const struct CombatantChampionSnapshot_Compat* defender,
+    struct CombatantChampionSnapshot_Compat* defender,
     struct RngState_Compat* rng,
     struct CombatResult_Compat* out)
 {
@@ -935,6 +935,9 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
     int add1;
     int add2;
     int reduceGate;
+    int luckyRngCalls;
+    int defenderEscapes;
+    int shouldAttemptDamage;
 
     if (out == 0) {
         return 0;
@@ -961,18 +964,35 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
          * the original call-site. */
     }
 
-    /* Dexterity duel — mirror of PROJEXPL.C:1354 (MEDIA064 path). */
-    rand1 = F0732_COMBAT_RngRandom_Compat(rng, 32);
-    out->rngCallCount++;
-    out->rawAttackRoll = rand1;
+    /* ReDMCSB PROJEXPL.C F0230:1353-1371. The resting and dexterity-255
+     * branches short-circuit before either hit RNG draw. Otherwise the
+     * random-4 and F0308 luck call occur only after the dexterity comparison
+     * failed, preserving the original left-to-right RNG order. */
+    defenderEscapes = 0;
+    shouldAttemptDamage = defender->isResting || attacker->dexterity == 255;
+    if (!shouldAttemptDamage) {
+        rand1 = F0732_COMBAT_RngRandom_Compat(rng, 32);
+        out->rngCallCount++;
+        out->rawAttackRoll = rand1;
+        dexFails = defender->dexterity <
+            (rand1 + attacker->dexterity + attacker->doubledMapDifficulty +
+             attacker->creatureDifficulty - 16);
+        if (!dexFails) {
+            rand2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
+            out->rngCallCount++;
+            dexFails = rand2 == 0;
+        }
+        if (dexFails) {
+            luckyRngCalls = 0;
+            defenderEscapes = combat_champion_is_lucky(
+                defender, rng, 60,
+                &luckyRngCalls);
+            out->rngCallCount += luckyRngCalls;
+            shouldAttemptDamage = !defenderEscapes;
+        }
+    }
 
-    rand2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
-    out->rngCallCount++;
-
-    dexFails = (defender->dexterity < (rand1 + attacker->dexterity + attacker->doubledMapDifficulty - 16))
-            || (rand2 == 0);
-
-    if (defender->isResting || dexFails) {
+    if (shouldAttemptDamage) {
         /* Wound mask roll (PROJEXPL.C:1372). */
         woundTest = (uint32_t)F0732_COMBAT_RngRandom_Compat(rng, 32768);
         out->rngCallCount++;
