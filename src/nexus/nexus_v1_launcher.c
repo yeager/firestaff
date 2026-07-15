@@ -185,6 +185,45 @@ int nexus_v1_launcher_startup_structure3_raw_capture_intake(
     return result;
 }
 
+int nexus_v1_launcher_dgn_direct_face_capture_intake(
+    int structure1f_entry_index, const char *manifest_text, size_t manifest_size,
+    Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt receipt;
+    Nexus_V1_DgnStructure2SourceReceipt source;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!s_initialized || !s_engine.level_loaded || !manifest_text ||
+        manifest_size == 0U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.launcher_initialized = 1;
+    receipt.active_level_bound = 1;
+    memset(&source, 0, sizeof(source));
+    (void)nexus_v1_current_level_structure2_source_receipt(&s_engine, &source);
+    if (!source.canonical_hash_verified || !source.materialization_bound ||
+        !source.loaded_bytes_bound ||
+        source.level_index != s_engine.game.current_level ||
+        source.loaded_dgn_size != s_engine.current_level_dgn_size ||
+        source.loaded_dgn_fnv1a64 == 0U ||
+        source.loaded_dgn_fnv1a64 != nexus_v1_launcher_dgn_bytes_fnv1a64(
+            s_engine.current_level_dgn_data, s_engine.current_level_dgn_size)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.package_source_bound = 1;
+    (void)nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
+        &s_engine, structure1f_entry_index, manifest_text, manifest_size,
+        &receipt.capture_target);
+    *out_receipt = receipt;
+    return receipt.capture_target.status ==
+        NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW;
+}
+
 void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt)
 {

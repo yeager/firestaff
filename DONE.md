@@ -19306,3 +19306,12 @@ displacement byte, and the emulator-computed target to agree. The receipt
 records only this bounded control transfer; it does not classify the target as
 loader code, a record selector, dungeon data, object data, palette, bitmap, or
 rendering behavior.
+
+# Nexus Structure1F launcher host capture gate (2026-07-15)
+
+The launcher now exposes a direct-face capture intake that independently
+rechecks its initialized, active, canonical LEV source before delegating to
+the engine manifest gate. This carries the exact accepted request to the host
+boundary without allowing a caller to substitute another level's data. The
+receipt remains capture-only and no-draw: no Saturn transform, face material,
+palette, VDP1 command, pixel, or rendering claim is added.
