@@ -3280,6 +3280,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       exposes the queued result to a later same-action `MonsterFetch`.
       It does not allocate, delete, relink, or create a monster. Positive
       original DSA-bearing save-corpus capture remains required.
+    - 2026-07-15 cell-query update: source `STKOP_CellFetch` now reads only
+      the loaded original byte-map `CELLFLAG` and, where required, its first
+      validated DB0 door or DB1 teleporter record. It preserves CSBWin's
+      five-word room/flag/door/teleporter result layout and first clears the
+      requested authenticated DSAVARS range. Invalid locations retain that
+      cleared source result; legacy synthetic square layouts, missing records,
+      and unowned dungeon data remain unavailable. `CellStore` is still open
+      pending a complete staged CELLFLAG/DB0/DB1 write transaction and real
+      DSA-bearing save-corpus proof.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.
