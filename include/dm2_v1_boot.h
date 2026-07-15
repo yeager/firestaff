@@ -1093,6 +1093,7 @@ typedef struct {
      * dungeon DB and timer record layouts have exact source contracts. */
     int save_corpus_original_state_scan_complete;
     int save_corpus_original_state_list_complete;
+    int save_corpus_original_state_candidate_count;
     int save_corpus_original_state_parsed_candidate_count;
     int save_corpus_original_state_rejected_candidate_count;
     uint32_t save_corpus_original_state_hash;
