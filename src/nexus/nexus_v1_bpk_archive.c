@@ -54,6 +54,22 @@ static int read_header(const uint8_t *data,
     return 0;
 }
 
+static int palette_trailer_offset(const uint8_t *data, size_t data_size,
+                                  size_t *out_offset) {
+    size_t offset;
+
+    if (out_offset) *out_offset = 0U;
+    if (!data || !out_offset || data_size < 12U + 256U * 2U) return 0;
+    offset = data_size - (12U + 256U * 2U);
+    if (rd32_be(data + offset) != NEXUS_V1_BPK_MAGIC_PALT ||
+        rd32_be(data + offset + 4U) != 12U + 256U * 2U ||
+        rd32_be(data + offset + 8U) != 256U) {
+        return 0;
+    }
+    *out_offset = offset;
+    return 1;
+}
+
 static int read_candidate_offset(const uint8_t *data,
                                  size_t data_size,
                                  uint32_t count,
@@ -97,6 +113,15 @@ int nexus_v1_bpk_archive_get_entry(const uint8_t *data,
     } else {
         if (data_size > UINT32_MAX) return -1;
         next_offset = (uint32_t)data_size;
+        {
+            size_t palette_offset;
+            if (palette_trailer_offset(data, data_size, &palette_offset)) {
+                if (palette_offset <= offset || palette_offset > UINT32_MAX) {
+                    return -1;
+                }
+                next_offset = (uint32_t)palette_offset;
+            }
+        }
     }
 
     if (next_offset <= offset) return -1;
@@ -183,10 +208,8 @@ int nexus_v1_bpk_archive_inspect_palette_trailer(
     }
     record_offset = data_size - (12U + 256U * 2U);
     record_bytes = rd32_be(data + record_offset + 4U);
-    if (rd32_be(data + record_offset) != NEXUS_V1_BPK_MAGIC_PALT ||
-        rd32_be(data + record_offset + 4U) != record_bytes ||
-        rd32_be(data + record_offset + 8U) != 256U ||
-        record_bytes != 12U + 256U * 2U) {
+    if (!palette_trailer_offset(data, data_size, &record_offset) ||
+        rd32_be(data + record_offset + 4U) != record_bytes) {
         *out_receipt = receipt;
         return -1;
     }
