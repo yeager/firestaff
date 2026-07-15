@@ -23,6 +23,7 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
          boot_receipt->runtime_m11_frame_wall_material_plan_hash == 0u) ||
         (boot_receipt->runtime_m11_frame_door_material_plan_required &&
          (boot_receipt->runtime_m11_frame_door_material_plan_hash == 0u ||
+          boot_receipt->runtime_m11_frame_door_material_plan_command_count <= 0 ||
           !boot_receipt->runtime_m11_frame_door_material_plan_consumed)) ||
         (boot_receipt->runtime_m11_frame_hud_material_plan_required &&
          (boot_receipt->runtime_m11_frame_hud_material_plan_hash == 0u ||
@@ -78,7 +79,10 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
          (runtime_receipt->door_material_plan_hash != 0u &&
           runtime_receipt->door_material_plan_consumed &&
           runtime_receipt->door_material_plan_hash ==
-              boot_receipt->runtime_m11_frame_door_material_plan_hash)) &&
+              boot_receipt->runtime_m11_frame_door_material_plan_hash &&
+          runtime_receipt->door_material_plan_command_count > 0 &&
+          runtime_receipt->door_material_plan_command_count ==
+              boot_receipt->runtime_m11_frame_door_material_plan_command_count)) &&
         runtime_receipt->hud_material_plan_required ==
             boot_receipt->runtime_m11_frame_hud_material_plan_required &&
         (!runtime_receipt->hud_material_plan_required ||
