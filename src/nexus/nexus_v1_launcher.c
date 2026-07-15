@@ -375,8 +375,8 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
         engine && title_loaded && assets->title_route_ready;
     out_receipt->real_menu_asset_handoff_ready =
         assets->real_menu_surface_route_ready &&
-        (!out_receipt->menu_bpk_renderer_handoff_valid ||
-         renderer_handoff.can_render_stored_surfaces) ? 1 : 0;
+        out_receipt->menu_bpk_renderer_handoff_valid &&
+        renderer_handoff.can_render_stored_surfaces ? 1 : 0;
     out_receipt->audio_asset_handoff_ready =
         assets->startup_audio_handoff_ready ? 1 : 0;
     out_receipt->main_menu_route_ready =
