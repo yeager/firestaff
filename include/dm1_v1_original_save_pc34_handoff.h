@@ -705,6 +705,22 @@ int dm1_v1_original_save_pc34_write_part_f0420(
     uint16_t key,
     uint16_t *out_checksum);
 
+/* ReDMCSB READWRIT.C F0419: consume one F0420 length-prefixed save part and
+ * apply F0417 exactly once to recover its source bytes and checksum. A bad
+ * prefix or span is rejected before body access. The cursor advances across a
+ * complete part even when its source checksum differs, matching the reader's
+ * diagnostic contract; F0435 retains ownership of whole-save publication. */
+int dm1_v1_original_save_pc34_read_part_f0419(
+    const uint8_t *bytes,
+    size_t size,
+    size_t *cursor,
+    uint16_t key,
+    uint16_t expected_checksum,
+    uint8_t *out_plain,
+    size_t out_capacity,
+    size_t *out_size,
+    uint16_t *out_actual_checksum);
+
 void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
     const struct GameWorld_Compat *world,
     DM1OriginalSavePC34HoCResumeState *state);
