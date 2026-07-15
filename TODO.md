@@ -7073,6 +7073,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     in the original executable. This is not execution evidence: command
     production, active DGN ownership, transform, palette, and drawing still
     require an authentic Saturn trace.
+  - 2026-07-15 static-write update: a bounded original SH-2 corridor now
+    proves three `MOV.W` state writes from that map: `0x8000` to VDP1 `+0x06`,
+    zero to `+0x08`, and `0xffff` to `+0x0a`. This establishes only static
+    code/dataflow, not that the routine executes for an active scene. A real
+    trace must still connect emitted VDP1 command bytes, transform state, and
+    palette state to an active DGN face before rendering is possible.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
