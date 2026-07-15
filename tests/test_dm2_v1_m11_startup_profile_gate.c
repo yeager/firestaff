@@ -2303,12 +2303,11 @@ int main(void) {
         dm2_v1_runtime_set_outdoor(1);
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 action opens a runtime shop from the front square");
-        expect_true(strstr(view.lastOutcome, "DM2 SHOP") != NULL,
-                    "M11 DM2 shop action reports shop status");
-        expect_true(dm2_v1_shop_is_active() == 1 &&
-                    dm2_v1_shop_get_active_shop() == DM2_SHOP_ID_GENERAL,
-                    "DM2 runtime shop action activates General Store");
+                    "M11 DM2 action handles a shop wall from the front square");
+        expect_true(strstr(view.lastOutcome, "DM2 SHOP GDAT REQUIRED") != NULL,
+                    "M11 DM2 shop action fails closed until the GDAT wall route exists");
+        expect_true(dm2_v1_shop_is_active() == 0,
+                    "M11 DM2 does not retain the catalog shop state");
         expect_true(dm2_v1_shop_get_party_gold() == 375u,
                     "DM2 runtime shop action syncs party gold into shop state");
         expect_true(view.dm2State.party_x == 10 && view.dm2State.party_y == 6 &&
@@ -2316,91 +2315,17 @@ int main(void) {
                     "M11 DM2 shop action mirrors the runtime shop-facing pose");
         expect_true(view.dm2ShopSelectedStockIndex == 0 &&
                     view.dm2ShopSelectedInventoryIndex == 0,
-                    "M11 DM2 shop entry resets stock and inventory selection");
+                    "M11 DM2 clears the retired catalog selection state");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
-        expect_true(framebuffer[(24 * 320) + 16] == 11,
-                    "M11 DM2 active shop draws a yellow panel frame");
-        expect_true(framebuffer[(57 * 320) + 23] == 12,
-                    "M11 DM2 active shop draws selected stock row background");
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    view.dm2ShopSelectedStockIndex == 1,
-                    "M11 DM2 shop down selects the next stock row");
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    view.dm2ShopSelectedStockIndex == 2,
-                    "M11 DM2 shop down selects a later stock row");
-        memset(framebuffer, 0, sizeof(framebuffer));
-        M11_GameView_Draw(&view, framebuffer, 320, 200);
-        expect_true(framebuffer[(79 * 320) + 23] == 12,
-                    "M11 DM2 shop panel follows selected stock row");
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 shop action buys the selected stocked item");
-        expect_true(strstr(view.lastOutcome, "DM2 SHOP BUY") != NULL,
-                    "M11 DM2 shop buy reports transaction status");
-        {
-            int mana_price =
-                dm2_v1_shop_get_effective_price(DM2_SHOP_ID_GENERAL, 2);
-            int heal_price =
-                dm2_v1_shop_get_effective_price(DM2_SHOP_ID_GENERAL, 1);
-            int heal_sell_price;
-            uint32_t expected_gold = 375u - (uint32_t)mana_price;
-            expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
-                        dm2_v1_shop_get_state()->inventory_count == 1 &&
-                        dm2_v1_shop_get_state()->inventory_item[0] == 201u &&
-                        dm2_v1_shop_buy_count() == 1,
-                    "DM2 shop selected buy mutates gold, inventory item, and buy counter");
-            expect_true(world->gold == (int)expected_gold,
-                    "M11 DM2 shop buy mirrors gold back to the boot-owned world");
-            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-                            M11_GAME_INPUT_REDRAW &&
-                        view.dm2ShopSelectedStockIndex == 1,
-                        "M11 DM2 shop up selects the previous stock row");
-            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 shop action buys the newly selected stock row");
-            expected_gold -= (uint32_t)heal_price;
-            expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
-                        dm2_v1_shop_get_state()->inventory_count == 2 &&
-                        dm2_v1_shop_get_state()->inventory_item[0] == 201u &&
-                        dm2_v1_shop_get_state()->inventory_item[1] == 200u &&
-                        dm2_v1_shop_buy_count() == 2,
-                        "DM2 shop second selected buy appends the chosen item");
-            expect_true(M11_GameView_HandleInput(&view,
-                                                 M12_MENU_INPUT_RIGHT) ==
-                            M11_GAME_INPUT_REDRAW &&
-                        view.dm2ShopSelectedInventoryIndex == 1,
-                        "M11 DM2 shop right selects the next inventory row");
-            memset(framebuffer, 0, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(framebuffer[(68 * 320) + 163] == 12,
-                        "M11 DM2 shop panel follows selected inventory row");
-            heal_sell_price =
-                dm2_v1_shop_get_sell_price(DM2_SHOP_ID_GENERAL, 1);
-            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DROP_ITEM) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 shop drop-item sells the selected inventory item");
-            expect_true(strstr(view.lastOutcome, "DM2 SHOP SELL") != NULL,
-                        "M11 DM2 shop sell reports transaction status");
-            expected_gold += (uint32_t)heal_sell_price;
-            expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
-                        dm2_v1_shop_get_state()->inventory_count == 1 &&
-                        dm2_v1_shop_get_state()->inventory_item[0] == 201u &&
-                        view.dm2ShopSelectedInventoryIndex == 0 &&
-                        dm2_v1_shop_sell_count() == 1,
-                        "DM2 selected shop sell mutates gold, inventory, selection, and sell counter");
-            expect_true(world->gold == (int)expected_gold,
-                        "M11 DM2 shop sell mirrors gold back to the boot-owned world");
-        }
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 back leaves active shop instead of returning to menu");
-        expect_true(strstr(view.lastOutcome, "DM2 SHOP LEAVE") != NULL,
-                    "M11 DM2 shop leave reports leave status");
-        expect_true(dm2_v1_shop_is_active() == 0,
-                    "DM2 shop leave clears active shop state");
+        expect_true(framebuffer[(24 * 320) + 16] != 11 &&
+                    framebuffer[(57 * 320) + 23] != 12,
+                    "M11 DM2 does not draw the retired catalog shop overlay");
+        expect_true(dm2_v1_shop_get_party_gold() == 375u &&
+                    dm2_v1_shop_get_state()->inventory_count == 0 &&
+                    dm2_v1_shop_buy_count() == 0 &&
+                    dm2_v1_shop_sell_count() == 0,
+                    "M11 DM2 shop wall cannot mutate catalog transaction state");
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
