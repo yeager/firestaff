@@ -107,6 +107,12 @@
   untouched. Its generated bars, blocks, glyphs, and compass remain blocked
   until original loader/CD evidence identifies the corresponding UI art.
 
+- 2026-07-15 Theron unbound dungeon-tile fallback removal: both active V1
+  viewport routes now preserve their existing indexed surface when a tile bank
+  has no bound original Track 02 bytes. The generated black clear and
+  palette-7 gray tile replacement are removed; only supplied atlas bytes can
+  alter a dungeon region.
+
 - 2026-07-15 Theron startup receipt contract correction: all five remaining
   full-start, raw-media, snapshot, and host receipt assertions now require an
   executed authenticated atlas with nonzero source pixels and zero generated

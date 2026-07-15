@@ -258,7 +258,7 @@ static int test_vp_tile_for_square(void) {
  * ══════════════════════════════════════════════════════════════════════ */
 
 static int test_vp_render_dungeon(void) {
-    TEST("Runtime: vp_render_dungeon populates planar fb");
+    TEST("Runtime: vp_render_dungeon leaves unbound tile regions untouched");
 
     Theron_V1_Viewport vp;
     theron_vp_init(&vp);
@@ -288,31 +288,34 @@ static int test_vp_render_dungeon(void) {
     world.levels[0][0].start_dir = 0;  /* north */
     memcpy(world.levels[0][0].squares, tiny_map, 8 * 8);
 
-    /* Clear to known value */
-    theron_vp_clear(&vp, 0);
+    /* The unpopulated test atlas has no authenticated Track 02 tile bank.
+     * Rendering must preserve a prior source-owned surface rather than
+     * manufacturing the old gray tile fallback or a black clear. */
+    theron_vp_clear(&vp, 0xa5);
     theron_vp_render_dungeon(&vp, &world);
 
-    /* Some pixels should be non-zero after render */
-    int non_zero = 0;
+    int changed = 0;
     for (int i = 0; i < vp.fb.w * vp.fb.h; i++) {
-        if (vp.fb.data[i] != 0) { non_zero = 1; break; }
+        if (vp.fb.data[i] != 0xa5) { changed = 1; break; }
     }
-    ASSERT(non_zero, "Rendered dungeon should have non-zero pixels");
+    ASSERT(!changed,
+           "Unbound Track 02 tiles must not replace the source-owned surface");
 
-    /* Second pass: clear to 255, re-render, check non-zero again */
-    theron_vp_clear(&vp, 255);
-    non_zero = 0;
+    /* A different prior surface must remain byte-identical as well. */
+    theron_vp_clear(&vp, 0x5a);
+    changed = 0;
     for (int i = 0; i < vp.fb.w * vp.fb.h; i++) {
-        if (vp.fb.data[i] != 255) { non_zero = 1; break; }
+        if (vp.fb.data[i] != 0x5a) { changed = 1; break; }
     }
-    ASSERT(non_zero == 0, "After clear(255), all pixels should be 255");
+    ASSERT(!changed, "Known source-owned surface should be initialized");
 
     theron_vp_render_dungeon(&vp, &world);
-    non_zero = 0;
+    changed = 0;
     for (int i = 0; i < vp.fb.w * vp.fb.h; i++) {
-        if (vp.fb.data[i] != 255) { non_zero = 1; break; }
+        if (vp.fb.data[i] != 0x5a) { changed = 1; break; }
     }
-    ASSERT(non_zero, "Re-rendered dungeon should have non-zero pixels");
+    ASSERT(!changed,
+           "No-draw must hold until a verified Track 02 tile-bank route exists");
 
     theron_vp_free(&vp);
     PASS();

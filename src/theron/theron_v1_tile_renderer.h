@@ -10,7 +10,7 @@
  *   - Square type → tile index via deterministic lookup table
  *   - PC Engine 8×8 planar tiles decoded to indexed bitmap
  *   - 2× horizontal replication to fill 16px logical dungeon squares
- *   - Deterministic fallback: missing tile → palette entry 7 (mid-gray)
+ *   - Missing or unbound tile → no draw (preserve source-owned pixels)
  *
  * Source-lock references:
  *   ReDMCSB DUNVIEW.C F0116_DUNGEONVIEW_DrawSquareD3L (line 6361)
@@ -54,7 +54,7 @@ extern "C" {
 /*
  * Deterministic tile index per square type, depth, and wall flag.
  * Source: THQUEST.ASM T520 tile bank selection.
- * Fallback: -1 = flat-color (palette entry 7).
+ * -1 means no source-backed tile is available, so the renderer does not draw.
  */
 #define TR_TILE_FALLBACK (-1)
 
