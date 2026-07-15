@@ -3436,8 +3436,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&hud_layout, 0, sizeof(hud_layout));
     memset(&hud_material_plan, 0, sizeof(hud_material_plan));
     if (viewport.hud_party_valid) {
-        (void)dm2_v1_boot_gdat_hud_m11_command_plan(
-            rt->boot, &viewport.hud_party, &hud_material_plan);
+        if (!dm2_v1_boot_gdat_hud_m11_command_plan(
+                rt->boot, &viewport.hud_party, &hud_material_plan)) {
+            /* A missing per-champion GDAT record must not replace the
+             * complete source HUD chrome. Keep the static plan and let the
+             * individual portrait remain no-draw in the viewport. */
+            (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
+                rt->boot, &hud_material_plan);
+        }
     } else if (rt->boot && rt->boot->graphics_dat) {
         /* The static chrome is a complete source-owned nine-command plan.
          * Portrait commands are deliberately absent until GAME_LOAD or the

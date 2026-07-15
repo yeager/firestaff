@@ -4557,7 +4557,7 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             source_portraits[slot].w / 2, source_portraits[slot].h / 2 };
     }
     return dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
-        out_plan, portrait_destinations, table_hash);
+        out_plan, party, portrait_destinations, table_hash);
 }
 
 int dm2_v1_boot_gdat_hud_static_m11_command_plan(

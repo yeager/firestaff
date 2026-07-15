@@ -397,8 +397,9 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->hp_pct = dm2_v1_hud_clamp_pct((int)src->hp_pct);
         dst->stamina_pct = dm2_v1_hud_clamp_pct((int)src->stamina_pct);
         dst->mana_pct = dm2_v1_hud_clamp_pct((int)src->mana_pct);
-        dst->portrait_index =
-            (uint8_t)(src->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
+        /* skproject passes Champion::HeroType directly to
+         * DRAW_CHAMPION_PICTURE. Do not fold it into a local ordinal. */
+        dst->portrait_index = src->portrait_index;
         dst->portrait_type_source_bound = src->portrait_type_source_bound;
         dst->portrait_fill_color =
             (uint8_t)(8u + (dst->portrait_index & 7u));
@@ -1733,14 +1734,13 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
 int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index)
 {
     int packed;
-    if (portrait_index < 0 || portrait_index >= DM2_V1_HUD_PORTRAIT_COUNT) {
+    if (portrait_index < 0 || portrait_index > 255) {
         return 0;
     }
     /* skproject SKWIN/SkWinCore.cpp T560 draws the right-side status
      * portraits through UI GDAT image queries.  Firestaff packs the
-     * portrait ordinal into a renderer-private index so the boot profile can
-     * resolve the current GRAPHICS.DAT charsheet image and preserve the
-     * placeholder fill when the asset is absent. */
+     * source HeroType into a renderer-private index. The source gate owns
+     * validation; this packing must not narrow the 8-bit record field. */
     packed = (portrait_index << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT) |
              DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD;
     return DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - packed;
