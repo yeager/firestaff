@@ -972,6 +972,13 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, w + v)) goto underflow;
         break;
+    case 9u: /* STKOP_ObjectID, CSBWin DSA.cpp:2733-2738. */
+        if (!context->most_recent_interesting_object_valid ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                           context->most_recent_interesting_object)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        break;
     case 2u: /* STKOP_Roll */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
             count >= (uint32_t)*depth) goto underflow;
@@ -3115,6 +3122,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.random_state = runner->random_state;
     context.dsa_slave_thing_valid = runner->dsa_slave_thing_valid;
     context.dsa_slave_thing = runner->dsa_slave_thing;
+    context.most_recent_interesting_object_valid =
+        runner->most_recent_interesting_object_valid;
+    context.most_recent_interesting_object = runner->most_recent_interesting_object;
     context.party_champions_valid = runner->party_champions_valid;
     context.party_champion_count = runner->party_champion_count;
     context.party_leader_index = runner->party_leader_index;

@@ -79,6 +79,7 @@ static int32_t sound_number;
 static int32_t sound_volume;
 static int32_t sound_flags;
 static int monster_move_inhibit_enabled;
+static int most_recent_interesting_object_enabled;
 static int adjust_skills_parameters_enabled;
 static int adjust_skills_parameters_count;
 static uint32_t adjust_skills_parameters_values[5];
@@ -716,6 +717,9 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     }
     if (describe_enabled) context.describe = describe;
     context.monster_move_inhibit_valid = monster_move_inhibit_enabled;
+    context.most_recent_interesting_object_valid =
+        most_recent_interesting_object_enabled;
+    context.most_recent_interesting_object = 0x3456u;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -1093,6 +1097,7 @@ int main(void)
         0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu, 0x0000u
     };
     uint16_t monblk[] = { 0x0686u, 0x0du, 0x11cbu };
+    uint16_t object_id[] = { 0x024bu };
     uint16_t monblk_then_bad[] = { 0x0686u, 0x0du, 0x11cbu, 0x0000u };
     uint16_t set_adjust_skills[] = {
         0x0686u, 10u, 0x0686u, 20u, 0x0686u, 30u, 0x0686u, 40u,
@@ -1859,6 +1864,14 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "MONBLK rejects a later malformed source word");
     monster_move_inhibit_enabled = 0;
+    most_recent_interesting_object_enabled = 1;
+    check(run(&state, &action, object_id, 1, parameters, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.stack_depth == 1u,
+          "OBJECTID reads the source DSA-bank interesting object");
+    most_recent_interesting_object_enabled = 0;
+    check(run(&state, &action, object_id, 1, parameters, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "OBJECTID remains closed without a DSA-bank owner");
     adjust_skills_parameters_enabled = 1;
     adjust_skills_parameters_count = 0;
     memset(adjust_skills_parameters_values, 0,
