@@ -39,10 +39,20 @@ int main(void)
     unsigned char map0Squares[9];
     unsigned char map1Squares[4];
     unsigned short squareFirstThings[5];
+    unsigned short columnSftBases[5] = { 0, 2, 2, 3, 3 };
+    unsigned char rawDoor[4];
+    unsigned char rawText[4];
+    unsigned char rawSensor[8];
+    unsigned char rawGroup[16];
+    unsigned short staticDoor;
+    unsigned short staticText;
+    unsigned short staticSensor;
+    unsigned short firstGroup;
+    unsigned short firstObject;
     int ok = 1;
 
     printf("probe=dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat\n");
-    printf("sourceEvidence=ReDMCSB DUNGEON.C:F0160 lines 1715-1727; DUNGEON.C:F0161 lines 1730-1746\n");
+    printf("sourceEvidence=ReDMCSB DUNGEON.C:F0160 lines 1715-1727; DUNGEON.C:F0161 lines 1730-1746; DUNGEON.C:F0162 lines 1752-1766\n");
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
@@ -50,12 +60,19 @@ int main(void)
     memset(&things, 0, sizeof(things));
     memset(map0Squares, 0, sizeof(map0Squares));
     memset(map1Squares, 0, sizeof(map1Squares));
+    memset(rawDoor, 0, sizeof(rawDoor));
+    memset(rawText, 0, sizeof(rawText));
+    memset(rawSensor, 0, sizeof(rawSensor));
+    memset(rawGroup, 0, sizeof(rawGroup));
 
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.loaded = 1;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = columnSftBases;
+    dungeon.dungeonColumnCount = (int)(sizeof(columnSftBases) /
+                                       sizeof(columnSftBases[0]));
 
     maps[0].width = 3;
     maps[0].height = 3;
@@ -91,6 +108,28 @@ int main(void)
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 5;
 
+    staticDoor = MAKE_THING(THING_TYPE_DOOR, 0, 0);
+    staticText = MAKE_THING(THING_TYPE_TEXTSTRING, 0, 0);
+    staticSensor = MAKE_THING(THING_TYPE_SENSOR, 0, 0);
+    firstGroup = MAKE_THING(THING_TYPE_GROUP, 0, 1);
+    firstObject = MAKE_THING(THING_TYPE_WEAPON, 0, 2);
+    rawDoor[0] = (unsigned char)(staticText & 0xffu);
+    rawDoor[1] = (unsigned char)(staticText >> 8);
+    rawText[0] = (unsigned char)(staticSensor & 0xffu);
+    rawText[1] = (unsigned char)(staticSensor >> 8);
+    rawSensor[0] = (unsigned char)(firstGroup & 0xffu);
+    rawSensor[1] = (unsigned char)(firstGroup >> 8);
+    rawGroup[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawGroup[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    things.rawThingData[THING_TYPE_DOOR] = rawDoor;
+    things.rawThingData[THING_TYPE_TEXTSTRING] = rawText;
+    things.rawThingData[THING_TYPE_SENSOR] = rawSensor;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroup;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
+    things.thingCounts[THING_TYPE_TEXTSTRING] = 1;
+    things.thingCounts[THING_TYPE_SENSOR] = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+
     ok &= expect_int("map0 first flagged square index",
         F0510_DUNGEON_GetSquareFirstThingIndex_Compat(&dungeon, 0, 0, 0), 0);
     ok &= expect_int("map0 same-column second flagged square index",
@@ -114,6 +153,21 @@ int main(void)
     ok &= expect_thing("later map flagged square returns compact SFT[4]",
         F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 1, 1),
         squareFirstThings[4]);
+
+    squareFirstThings[0] = staticDoor;
+    ok &= expect_thing("F0162 skips static door/text/sensor records",
+        F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
+        firstGroup);
+    squareFirstThings[0] = firstObject;
+    ok &= expect_thing("F0162 retains the first live object",
+        F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
+        firstObject);
+    squareFirstThings[0] = staticDoor;
+    rawSensor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawSensor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    ok &= expect_thing("F0162 does not fabricate an object after static records",
+        F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
+        THING_ENDOFLIST);
 
     if (!ok) {
         return 1;

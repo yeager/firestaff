@@ -1723,3 +1723,22 @@ unsigned short F0512_DUNGEON_GetThingNext_Compat(
     raw = things->rawThingData[type] + index * s_thingDataByteCount[type];
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
+
+unsigned short F0513_DUNGEON_GetSquareFirstObject_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, mapIndex, mapX, mapY);
+
+    /* ReDMCSB DUNGEON.C F0162:1762-1766: static C00..C03 records own
+     * square metadata.  F0115/F0275 begin their live object pass at C04. */
+    while (thing != THING_ENDOFLIST &&
+           THING_GET_TYPE(thing) < THING_TYPE_GROUP) {
+        thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+    }
+    return thing;
+}
