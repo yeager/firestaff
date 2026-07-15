@@ -15,10 +15,9 @@
 #define DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 23u
 #define DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 2u
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
-/* ReDMCSB TITLE.C F0437 uses the PC VGA vertical-retrace primitive, as
- * SWSH.C does. Keep the runtime cadence on the shared 50 Hz/20 ms VBlank,
- * not the unrelated decoded TITLE.DAT frame-bank duration. */
-#define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 20u
+/* C001's 53-frame production bank shares the game's V1 55 ms cadence. */
+#define DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 53u
+#define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
 
 static unsigned int dm1_v1_startup_entrance_palette_fingerprint_pc34(void) {
     const unsigned int *palette = dm1_v1_palette_entrance_table_pc34();
@@ -5638,9 +5637,7 @@ unsigned int dm1_v1_startup_title_source_animation_steps_pc34(void) {
 }
 
 unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void) {
-    /* C001 is the production title route. TITLE.DAT's 53 records are a
-     * fallback asset and must not stretch the source-visible cadence. */
-    return DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
+    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34;
 }
 
 unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void) {
