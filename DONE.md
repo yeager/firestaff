@@ -19273,3 +19273,12 @@ fingerprints, vertex indexes, and transform-table fingerprints. Any malformed
 or changed field is fail-closed. Acceptance preserves `no_draw_only`; it is
 not evidence of a Saturn transform, culling result, material, VDP1 command,
 palette, pixels, or rendering.
+
+# Nexus Structure1F capture target trace-route binding (2026-07-15)
+
+Direct-owner transform trace intake now has five distinct files: the canonical
+direct-face target, debugger manifest, raw trace, transform snapshot, and
+independent attestation. It consumes and validates the target first, so a
+changed or malformed package target blocks trace admission even when the other
+sidecars remain valid. An accepted trace remains opaque and no-draw; it does
+not establish transform, material, palette, pixels, culling, VDP1, or rendering.

@@ -8041,6 +8041,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     must still bind palette/transform state and an active DGN face.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 direct face trace-route update: transform trace intake now
+    requires a separate, exact direct-face package target file before an
+    independently attested Saturn trace can enter the opaque host receipt.
+    This joins the capture route to original LEV ownership, but does not prove
+    a transform, material, palette, pixels, VDP1, culling, or drawing.
   - 2026-07-15 direct face host-consumption update: the package boundary now
     re-derives and validates every direct Structure1F face manifest field
     against the active canonical LEV before accepting it as a no-draw capture
