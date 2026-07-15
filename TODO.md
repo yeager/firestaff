@@ -6617,3 +6617,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     hash-matched texture lane whose length disagrees with the documented VDP1
     command requirement. This protects engine-owned storage as well as the
     viewport; it still does not identify source bytes, palette data, or texels.
+  - 2026-07-15 CMDSRCA range update: a texture command now derives its local
+    VDP1-VRAM byte interval from the documented `CMDSRCA * 8` address unit and
+    rejects ranges outside the 512 KiB VDP1 VRAM. This is a command-local
+    bound only: an authentic trace must still prove that its captured texture
+    lane was read from that VRAM interval.

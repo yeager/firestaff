@@ -1776,6 +1776,7 @@ typedef struct {
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES 2048
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS 4096
 #define NEXUS_V1_VDP1_COMMAND_BYTES 32
+#define NEXUS_V1_VDP1_VRAM_BYTES (512U * 1024U)
 
 typedef struct {
     uint16_t image_id;
@@ -1808,9 +1809,12 @@ typedef struct {
     uint8_t colour_mode;
     uint8_t texture_bits_per_pixel;
     uint32_t texture_byte_count;
+    uint32_t texture_source_byte_offset;
+    uint32_t texture_source_byte_end;
     int end_command;
     int texture_command;
     int colour_mode_documented;
+    int texture_source_range_valid;
     int four_bpp_colour_bank;
 } Nexus_V1_Vdp1TextureCommand;
 
