@@ -135,12 +135,22 @@ enum {
     DM1_V1_ACTION_ICON_INNER_ZONE_ID_BASE_PC34 = 93,
 
     DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34 = 7,
-    DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34 = 12
+    DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34 = 12,
+
+    /* ACTIDRAW.C F0387 prints action names through TEXT2.C using the
+     * original 6x7 cell font. This action-area surface is not affected by
+     * Firestaff's accessibility font scale, because scaling it would exceed
+     * COMMAND.C C113..C115's fixed 85-pixel row boxes. */
+    DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34 = 6,
+    DM1_V1_ACTION_MENU_TEXT_CELL_HEIGHT_PC34 = 7
 };
 
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_area_rect_pc34(void)
 {
+    /* DATA.C G0001 is the full C010 action graphic. C011/C077/C079 and
+     * C113..C115 are narrower child zones; using their 233..319 bounds for
+     * the parent crops the real source bitmap before F0387 prints rows. */
     DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
     return r;
 }
