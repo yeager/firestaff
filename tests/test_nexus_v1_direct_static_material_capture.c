@@ -28,10 +28,15 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size)
     return hash;
 }
 
-static int count_canonical_transform_capture_targets(const char *data_dir)
+static int count_canonical_transform_capture_targets(const char *data_dir,
+                                                     int *out_static_count)
 {
     int level_index;
     int target_count = 0;
+    int static_target_count = 0;
+
+    if (!out_static_count) return -1;
+    *out_static_count = 0;
     for (level_index = 0; level_index < 16; ++level_index) {
         char name[16], path[1024];
         FILE *file;
@@ -79,6 +84,7 @@ static int count_canonical_transform_capture_targets(const char *data_dir)
              source_entry < engine.current_level.structure1f_entry_count;
              ++source_entry) {
             Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+            Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget static_target;
             if (nexus_v1_engine_build_structure1f_transform_capture_target(
                     &engine, source_entry, &target) == 1 && target.valid &&
                 target.geometry.source_geometry_bound &&
@@ -105,9 +111,22 @@ static int count_canonical_transform_capture_targets(const char *data_dir)
                 target.blocks_real_dgn_mesh_render) {
                 ++target_count;
             }
+            memset(&static_target, 0, sizeof(static_target));
+            if (nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
+                    &engine, source_entry, &static_target) == 1 &&
+                static_target.valid && static_target.direct_face_material_bound &&
+                static_target.static_material.static_selector_descriptor_bound &&
+                static_target.static_material.image_payload_anchor_bound &&
+                static_target.static_material.image_payload_interval_bound &&
+                static_target.no_draw_only &&
+                !static_target.fallback_visuals_permitted &&
+                static_target.blocks_real_dgn_mesh_render) {
+                ++static_target_count;
+            }
         }
         free(data);
     }
+    *out_static_count = static_target_count;
     return target_count;
 }
 
@@ -125,6 +144,7 @@ int main(void)
     int untextured_found = 0;
     int animated_found = 0;
     int transform_found = 0;
+    int direct_static_target_count = 0;
 
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_NEXUS_DATA_DIR is not set");
@@ -243,8 +263,11 @@ int main(void)
         }
     }
     if (failures == 0) {
-        CHECK(count_canonical_transform_capture_targets(data_dir) > 0,
+        CHECK(count_canonical_transform_capture_targets(data_dir,
+                                                         &direct_static_target_count) > 0,
               "retail LEV00-15 binds direct mesh geometry to raw transform selectors");
+        CHECK(direct_static_target_count == 0,
+              "retail LEV00-15 cannot claim a direct Structure1F-to-Structure2 material link");
         for (source_entry = 0;
              source_entry < engine.current_level.structure1f_entry_count;
              ++source_entry) {
