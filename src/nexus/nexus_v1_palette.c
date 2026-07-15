@@ -8,10 +8,8 @@
  *   docs/NEXUS_FILE_CLASSIFICATION.md  — STONE.BIN 4 KB, TITLE.CG 164 KB,
  *     ITEM.IBS 98 KB
  *
- * Deterministic fallback rule:
- *   Any texture/material that cannot be loaded from source data produces
- *   a deterministic diagnostic + flat-color placeholder (color index 7
- *   = mid-gray), never a crash or zero return for mandatory data. */
+ * Missing or incomplete source palettes remain unavailable. They never
+ * promote a generated colour table to a renderable Saturn surface. */
 
 #include "nexus_v1_palette.h"
 #include <string.h>
@@ -118,7 +116,8 @@ static const uint16_t __attribute__((unused)) g_npal [256] = {
 };
 
 /* Correct g_npal: make sure it's exactly 256 BGR555 entries */
-static const uint16_t g_npal_default[NEXUS_PALETTE_SIZE] = {
+static const uint16_t g_npal_default[NEXUS_PALETTE_SIZE]
+    __attribute__((unused)) = {
     0x0000U,
     0x0200U, 0x0A06U, 0x1211U, 0x1C1AU, 0x2634U, 0x3028U, 0x3A3CU,
     0x444CU, 0x5050U, 0x5C60U, 0x6870U, 0x7480U, 0x8088U, 0x8C90U, 0x98A0U,
@@ -179,8 +178,6 @@ const uint16_t *nexus_palette_default_bgr555(void) { return g_npal_default; }
 void nexus_palette_init_defaults(Nexus_PaletteState *pal) {
     if (!pal) return;
     memset(pal, 0, sizeof(*pal));
-    memcpy(pal->entries, g_npal_default, sizeof(g_npal_default));
-    nexus_palette_expand_rgba(pal);
 }
 
 int nexus_palette_load_stone(Nexus_PaletteState *pal,
@@ -188,20 +185,20 @@ int nexus_palette_load_stone(Nexus_PaletteState *pal,
 {
     int i, n;
     if (!pal) return 0;
-    n = (size / 2);
-    if (n > NEXUS_PALETTE_SIZE) n = NEXUS_PALETTE_SIZE;
+    if (!data || size < NEXUS_PALETTE_SIZE * 2) {
+        memset(pal->entries, 0, sizeof(pal->entries));
+        memset(pal->rgba, 0, sizeof(pal->rgba));
+        pal->source_palette_bound = 0;
+        printf("Nexus palette: source data incomplete; palette remains blocked\n");
+        return 0;
+    }
+    n = NEXUS_PALETTE_SIZE;
 
     for (i = 0; i < n; i++)
         pal->entries[i] = (uint16_t)data[i*2] | ((uint16_t)data[i*2+1] << 8);
 
-    if (n < NEXUS_PALETTE_SIZE) {
-        memcpy(pal->entries + n, g_npal_default + n,
-               ((size_t)(NEXUS_PALETTE_SIZE - n)) * sizeof(uint16_t));
-        printf("Nexus palette: WARNING partial load %d/256 from STONE.BIN "
-               "— filling rest with defaults\n", n);
-    } else {
-        printf("Nexus palette: full load %d entries from STONE.BIN\n", n);
-    }
+    pal->source_palette_bound = 1;
+    printf("Nexus palette: source-bound load %d entries from STONE.BIN\n", n);
     nexus_palette_expand_rgba(pal);
     return n;
 }
@@ -219,12 +216,14 @@ int nexus_palette_load_surface(Nexus_PaletteState *pal,
                "for entries [%d-%d] — zero-fill\n",
                size, offset + count * 2, pal_start, pal_start + count - 1);
         for (i = 0; i < count; i++) pal->entries[pal_start + i] = 0;
+        pal->source_palette_bound = 0;
         nexus_palette_expand_rgba(pal);
         return 0;
     }
     for (i = 0; i < count; i++)
         pal->entries[pal_start + i] =
             (uint16_t)data[offset + i*2] | ((uint16_t)data[offset + i*2+1] << 8);
+    pal->source_palette_bound = 1;
     nexus_palette_expand_rgba(pal);
     printf("Nexus palette: loaded %d entries at offset %d [start=%d]\n",
            count, offset, pal_start);

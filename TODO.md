@@ -6706,3 +6706,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     match, and a unique command-lane occurrence before engine storage. This
     proves no palette/CLUT source or format, command flow, pixel ordering,
     transform, culling, raster, or draw behavior; those remain blocked.
+  - 2026-07-15 source-palette update: generated Nexus palette fallbacks are
+    disabled; incomplete source spans now block indexed lookup. The remaining
+    task is a positive authentic Saturn capture that proves the palette source
+    and format plus its `CMDCOLR`/CLUT relation for an admitted DGN command.

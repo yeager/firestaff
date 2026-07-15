@@ -49,17 +49,15 @@ typedef struct {
     uint16_t entries[NEXUS_PALETTE_SIZE];
     /* Pre-expanded RGBA (0xAARRGGBB) for fast framebuffer blit */
     uint32_t rgba[NEXUS_PALETTE_SIZE];
+    /* Set only after a complete source palette has been admitted. */
+    int source_palette_bound;
 
     /* Texture atlas */
     Nexus_Texture textures[NEXUS_MAX_TEXTURES];
     int texture_count;
 } Nexus_PaletteState;
 
-/* ── Default dungeon palette (BGR555) ─────────────────────────────── */
-
-/* Source-lock: DM Nexus Saturn master palette inferred from STONE.BIN
- * (4 KB = 256 entries × 16-bit BGR555). If STONE.BIN is absent, these
- * defaults produce perceptually close dungeon colors. */
+/* Source palette API. A palette stays unavailable until source bytes bind it. */
 extern const uint16_t g_nexus_default_palette_bgr555[NEXUS_PALETTE_SIZE];
 
 /* Flat color used for any texture slot with no loaded bitmap */
@@ -67,10 +65,8 @@ extern const uint16_t g_nexus_default_palette_bgr555[NEXUS_PALETTE_SIZE];
 
 /* ── Palette API ────────────────────────────────────────────────────── */
 
-/* Initialize palette from STONE.BIN (16-bit BGR555, 256 entries).
- * If STONE.BIN is absent or shorter than expected, fills with
- * g_nexus_default_palette_bgr555 and logs a diagnostic.
- * Returns number of entries loaded, or 0 on error. */
+/* Initialize from a complete STONE.BIN source span. Returns entries loaded,
+ * or zero while the palette remains unavailable. */
 int nexus_palette_load_stone(Nexus_PaletteState *pal, const uint8_t *data, int size);
 
 /* Load extended palette from a surface file (TITLE.CG, ITEM.IBS, etc).
@@ -86,7 +82,7 @@ void nexus_palette_expand_rgba(Nexus_PaletteState *pal);
 /* Look up RGBA from an indexed color index.
  * This is the fastest path for framebuffer → RGBA conversion. */
 static inline uint32_t nexus_palette_lookup(const Nexus_PaletteState *pal, uint8_t idx) {
-    return pal->rgba[idx & 0xFF];
+    return pal && pal->source_palette_bound ? pal->rgba[idx & 0xFF] : 0U;
 }
 
 /* Load a texture from a bitmap region (x, y, w, h) in a surface file.
@@ -101,7 +97,7 @@ int nexus_texture_load_from_surface(Nexus_PaletteState *pal,
 /* Free all texture data owned by the palette state. */
 void nexus_palette_free_textures(Nexus_PaletteState *pal);
 
-/* Initialize palette with defaults (g_nexus_default_palette_bgr555). */
+/* Clear palette state. This does not create a fallback palette. */
 void nexus_palette_init_defaults(Nexus_PaletteState *pal);
 
 #endif /* NEXUS_V1_PALETTE_H */
