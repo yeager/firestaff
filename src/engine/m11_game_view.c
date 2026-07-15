@@ -36742,17 +36742,22 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                      slot == state->world.party.activeChampionIndex);
                 int drewDamageSurface = 0;
                 if (state->assetsAvailable) {
+                    const int damageGraphic = useBigDamage
+                        ? dm1_v1_graphic_champion_damage_big_pc34()
+                        : dm1_v1_graphic_champion_damage_small_pc34();
+                    const int damageWidth = useBigDamage ? 32 : 45;
+                    const int damageHeight = useBigDamage ? 29 : 7;
                     const M11_AssetSlot* dmgAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
-                        (unsigned int)(useBigDamage
-                            ? dm1_v1_graphic_champion_damage_big_pc34()
-                            : dm1_v1_graphic_champion_damage_small_pc34()));
+                        (unsigned int)damageGraphic);
                     if (dmgAsset &&
-                        ((!useBigDamage && dmgAsset->width == 45 &&
-                          dmgAsset->height == 7) ||
-                         (useBigDamage && dmgAsset->width == 32 &&
-                          dmgAsset->height == 29))) {
+                        DM1_ChampionPanel_AssetSurfaceAccepted(
+                            damageGraphic, damageGraphic,
+                            dmgAsset->loaded, dmgAsset->pixels != NULL,
+                            dmgAsset->width, dmgAsset->height,
+                            damageWidth, damageHeight)) {
                         int dmgX, dmgY, dmgW, dmgH;
+                        int haveDamageGeometry = 0;
                         if (useBigDamage) {
                             DM1_V1_ChampionStatusRectPc34 dmgRect;
                             if (dm1_v1_champion_inventory_damage_indicator_rect_pc34(
@@ -36762,11 +36767,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                 dmgY = dmgRect.y;
                                 dmgW = dmgRect.w;
                                 dmgH = dmgRect.h;
-                            } else {
-                                dmgX = x;
-                                dmgY = y;
-                                dmgW = (int)dmgAsset->width;
-                                dmgH = (int)dmgAsset->height;
+                                haveDamageGeometry = 1;
                             }
                         } else if (!useV2PartyHud) {
                             DM1_V1_ChampionStatusRectPc34 dmgRect;
@@ -36777,11 +36778,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                 dmgY = dmgRect.y;
                                 dmgW = dmgRect.w;
                                 dmgH = dmgRect.h;
-                            } else {
-                                dmgX = x;
-                                dmgY = y;
-                                dmgW = (int)dmgAsset->width;
-                                dmgH = (int)dmgAsset->height;
+                                haveDamageGeometry = 1;
                             }
                         } else {
                             int dmgBaseW = 67;
@@ -36790,12 +36787,15 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             dmgY = y + (dmgBaseH - (int)dmgAsset->height) / 2;
                             dmgW = (int)dmgAsset->width;
                             dmgH = (int)dmgAsset->height;
+                            haveDamageGeometry = 1;
                         }
-                        M11_AssetLoader_BlitRegion(dmgAsset,
-                            0, 0, dmgW, dmgH,
-                            framebuffer, framebufferWidth, framebufferHeight,
-                            dmgX, dmgY, 0);
-                        drewDamageSurface = 1;
+                        if (haveDamageGeometry) {
+                            M11_AssetLoader_BlitRegion(dmgAsset,
+                                0, 0, dmgW, dmgH,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                dmgX, dmgY, 0);
+                            drewDamageSurface = 1;
+                        }
                     }
                 }
                 /* Draw the damage number after its source surface.
@@ -36817,21 +36817,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                 useBigDamage, &origin)) {
                             dmgNumX = origin.x;
                             dmgNumY = origin.y;
-                        } else {
-                            dmgNumX = x;
-                            dmgNumY = y;
-                        }
-                        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
                             if (drewDamageSurface) {
                                 m11_draw_v1_damage_number_text(
                                     framebuffer, framebufferWidth,
                                     framebufferHeight,
                                     dmgNumX, dmgNumY, dmgNum);
                             }
-                        } else {
-                            m11_draw_text(framebuffer, framebufferWidth,
-                                          framebufferHeight,
-                                          dmgNumX, dmgNumY, dmgNum, &dmgStyle);
                         }
                     } else {
                         int dmgBaseW = 67;

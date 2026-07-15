@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 F0623/F0320 source damage-indicator gate: normal V1
+  champion damage feedback now accepts only exact loaded-pixel C015 (45x7)
+  or C016 (32x29), uses C167/C179 geometry without default coordinates, and
+  prints its three-character number only through the loaded M653 source font.
+  The generic M11-font fallback is removed. Missing asset, font, or geometry
+  leaves the existing status clear unchanged. The focused M11 gate covers
+  unavailable no-draw and a real GRAPHICS.DAT C015/M653 presentation.
+
 - ✅ 2026-07-15 DM1 status-hand source-material gate: normal V1 F0291 now
   draws C211..C218 only from exact loaded-pixel C033/C034/C035 hand-box
   surfaces. The host black/gray rectangle fallback is removed, so a missing
