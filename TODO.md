@@ -3429,6 +3429,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       remains closed until one original owner supplies CHARDESC damage, status
       flags, selected-character UI state, poison count, and `TT_75` timer
       scheduling as one transaction.
+    - 2026-07-15 text-discard update: authenticated `STKOP_DiscardText` now
+      stages the source scrolling-text discard until bytecode acceptance. Text
+      fetch/name/import and the original DSA text bank remain separate open
+      work; no generated text or local fallback is introduced.
     - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
       `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
       compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors

@@ -71,6 +71,8 @@ static int cause_poison_enabled;
 static int cause_poison_commit_count;
 static int32_t cause_poison_character;
 static int32_t cause_poison_value;
+static int discard_text_enabled;
+static int discard_text_count;
 
 static int wing_talents_enabled;
 
@@ -474,6 +476,14 @@ static int commit_cause_poison(void *user, int32_t character_selector,
     return 1;
 }
 
+static int discard_text(void *user)
+{
+    (void)user;
+    if (!discard_text_enabled) return 0;
+    ++discard_text_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -614,6 +624,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
         context.prepare_cause_poison = prepare_cause_poison;
         context.commit_cause_poison = commit_cause_poison;
     }
+    if (discard_text_enabled) context.discard_text = discard_text;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -930,6 +941,8 @@ int main(void)
     uint16_t cause_poison_negative[] = {
         0x0686u, 128u, 0x0786u, 0xffffu, 0xffffu, 0x1b8bu
     };
+    uint16_t discard_text[] = { 0x1ccbu };
+    uint16_t discard_text_then_bad[] = { 0x1ccbu, 0x0000u };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -1614,6 +1627,20 @@ int main(void)
               (int)(sizeof(cause_poison) / sizeof(cause_poison[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "CAUSEPOISON rejects without a complete poison owner");
+    discard_text_enabled = 1;
+    discard_text_count = 0;
+    check(run(&state, &action, discard_text, 1, parameters, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && discard_text_count == 1,
+          "DISCARDTEXT commits the source UI discard after accepted bytecode");
+    discard_text_count = 0;
+    check(run(&state, &action, discard_text_then_bad, 2, parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              discard_text_count == 0,
+          "DISCARDTEXT does not publish before a later rejected source word");
+    discard_text_enabled = 0;
+    check(run(&state, &action, discard_text, 1, parameters, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "DISCARDTEXT rejects without the source UI owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
