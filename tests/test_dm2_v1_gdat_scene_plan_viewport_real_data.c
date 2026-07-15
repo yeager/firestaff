@@ -312,6 +312,35 @@ int main(void)
         }
     }
 
+    {
+        uint8_t original_palette = mismatched.commands[0].palette16[0];
+
+        mismatched.commands[0].palette16[0] ^= 1u;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        unexpected_fetches = 0;
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+        dm2_v1_viewport_set_asset_palette_provider(
+            &viewport, unexpected_palette_fetch, NULL);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, first_style, mismatched.command_hash,
+            mismatched.scene_colorkey, mismatched.scene_flags, 0u,
+            mismatched.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            mismatched.ambient_darkness);
+        dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &mismatched);
+        dm2_v1_render_floor_ceiling(&viewport);
+        mismatched.commands[0].palette16[0] = original_palette;
+        if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
+            viewport.fallback_floor_ceiling_drawn_count != 0 ||
+            (viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
+            fputs("FAIL: altered canonical floor palette was not a callback-free no-draw\n",
+                  stderr);
+            failures = 1;
+        }
+    }
+
     mismatched.graphicsset = (uint8_t)(first_style ^ 1);
     memset(framebuffer, 0, sizeof(framebuffer));
     unexpected_fetches = 0;

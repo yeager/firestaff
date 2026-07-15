@@ -3542,6 +3542,10 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                     dm2_v1_gdat_scene_m11_command_pixel_hash(floor) ||
                 ceiling->decoded_hash !=
                     dm2_v1_gdat_scene_m11_command_pixel_hash(ceiling) ||
+                floor->palette_hash !=
+                    dm2_v1_weather_pixels_hash(floor->palette16, 16, 1, 16) ||
+                ceiling->palette_hash !=
+                    dm2_v1_weather_pixels_hash(ceiling->palette16, 16, 1, 16) ||
                 floor->geometry_hash == 0u || ceiling->geometry_hash == 0u ||
                 floor->geometry_hash !=
                     dm2_v1_gdat_scene_m11_command_geometry_hash(floor, floor_rect) ||

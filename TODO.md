@@ -224,6 +224,13 @@
   source-required M11 boundary. Remaining work is original light/weather
   composition evidence, not a substitute plane or rectangle.
 
+- 2026-07-15 DM2 skproject scene follow-up: the final floor/ceiling viewport
+  gate now rehashes each command's local IMG3 palette alongside decoded pixels
+  and QUERY_BLIT_RECT geometry. A modified palette blocks both source planes
+  before any blit; the canonical G1 regression covers the no-draw result.
+  Remaining scene work is original light/weather composition, not a palette
+  substitute.
+
 - 2026-07-15 DM2 scene follow-up: M11 now carries G1 MapGraphicsStyle with
   the level identity. Remaining work is source-proven light/weather compositing.
 
