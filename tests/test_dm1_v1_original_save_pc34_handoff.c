@@ -3417,6 +3417,7 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
     struct TickResult_Compat result;
     unsigned char square_data[2][32 * 32];
     unsigned short square_first_things[32 * 32];
+    unsigned short column_sft_bases[2 * 32];
     unsigned char raw_junk[4];
     int i;
     int found_step1 = 0;
@@ -3430,17 +3431,26 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
     memset(&things, 0, sizeof(things));
     memset(junks, 0, sizeof(junks));
     memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(raw_junk, 0, sizeof(raw_junk));
     for (i = 0; i < (int)(sizeof(square_first_things) /
                           sizeof(square_first_things[0])); ++i) {
         square_first_things[i] = THING_ENDOFLIST;
     }
+    maps[0].width = 32;
+    maps[0].height = 32;
     maps[1].width = 32;
     maps[1].height = 32;
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    /* F0160 resolves the flagged map-1/x-2 square through the G0280
+     * per-column base loaded from DUNGEON.DAT.  With no earlier flagged
+     * squares, its source compact-SFT base is entry zero. */
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     tiles[0].squareData = square_data[0];
     tiles[0].squareCount = 32 * 32;
     tiles[1].squareData = square_data[1];
@@ -3557,6 +3567,7 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     unsigned char square_data[3][32 * 32];
     struct DungeonThings_Compat things;
     unsigned short first_things[1];
+    unsigned short column_sft_bases[3 * 32];
     unsigned char raw_explosion[4];
     struct DungeonExplosion_Compat explosions[1];
     DM1OriginalSavePC34HandoffReport report;
@@ -3579,6 +3590,7 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(&things, 0, sizeof(things));
     memset(raw_explosion, 0, sizeof(raw_explosion));
     memset(explosions, 0, sizeof(explosions));
@@ -3587,6 +3599,11 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    /* DUNGEON.DAT G0280 gives map 2/x 11 the compact-SFT base zero: this
+     * fixture has no flagged source squares before its C15 owner. */
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     for (i = 0; i < 3; ++i) {
         maps[i].width = 32;
         maps[i].height = 32;
@@ -3610,6 +3627,9 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     things.loaded = 1;
     start_world.dungeon = &dungeon;
     start_world.things = &things;
+    CHECK(F0511_DUNGEON_GetSquareFirstThing_Compat(
+              &dungeon, &things, 2, 11, 12) == source_thing,
+          "C25 fixture exposes its C15 owner through loaded G0280/SFT");
     make_temp_save_path(path, sizeof(path));
     remove(path);
     CHECK(write_fixture_file(path, bytes, written),
@@ -3651,6 +3671,7 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
     unsigned char square_data[3][32 * 32];
     struct DungeonThings_Compat things;
     unsigned short first_things[1];
+    unsigned short column_sft_bases[3 * 32];
     unsigned char raw_explosion[4];
     struct DungeonExplosion_Compat source_explosions[1];
     struct SaveGame_Compat imported;
@@ -3676,6 +3697,7 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(&things, 0, sizeof(things));
     memset(raw_explosion, 0, sizeof(raw_explosion));
     memset(source_explosions, 0, sizeof(source_explosions));
@@ -3686,6 +3708,11 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    /* The real G0280 table places this fixture's first flagged source square
+     * at compact SFT entry zero. */
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     for (i = 0; i < 3; ++i) {
         maps[i].width = 32;
         maps[i].height = 32;
@@ -4016,6 +4043,7 @@ static void test_original_c65_generator_import_runtime_export_roundtrip(void)
     unsigned char square_data[3][32 * 32];
     struct DungeonThings_Compat things;
     unsigned short first_things[1];
+    unsigned short column_sft_bases[3 * 32];
     unsigned char raw_sensor[8];
     struct DungeonSensor_Compat sensors[1];
     struct SaveGame_Compat imported;
@@ -4036,10 +4064,14 @@ static void test_original_c65_generator_import_runtime_export_roundtrip(void)
     memset(&start_world, 0, sizeof(start_world)); memset(&loaded_world, 0, sizeof(loaded_world));
     memset(&dungeon, 0, sizeof(dungeon)); memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles)); memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(&things, 0, sizeof(things)); memset(raw_sensor, 0, sizeof(raw_sensor));
     memset(sensors, 0, sizeof(sensors)); memset(&imported, 0, sizeof(imported));
     memset(&imported_party, 0, sizeof(imported_party)); memset(&report, 0, sizeof(report));
     dungeon.header.mapCount = 3; dungeon.maps = maps; dungeon.tiles = tiles; dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     for (i = 0; i < 3; ++i) { maps[i].width = 32; maps[i].height = 32; tiles[i].squareData = square_data[i]; tiles[i].squareCount = 32 * 32; }
     square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
     first_things[0] = sensor_thing; wr16le(raw_sensor, THING_ENDOFLIST);
@@ -5429,6 +5461,7 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
     unsigned char square_data[32 * 32];
     struct DungeonThings_Compat things;
     unsigned short first_things[1];
+    unsigned short column_sft_bases[32];
     unsigned char raw_explosion[4];
     struct DungeonExplosion_Compat source_explosions[1];
     uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
@@ -5444,6 +5477,7 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(&things, 0, sizeof(things));
     memset(raw_explosion, 0, sizeof(raw_explosion));
     memset(source_explosions, 0, sizeof(source_explosions));
@@ -5471,6 +5505,9 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     maps[0].width = 32;
     maps[0].height = 32;
     tiles[0].squareData = square_data;
@@ -5529,6 +5566,7 @@ static void test_world_export_rebuilds_c29_group_reaction_union(void)
     struct DungeonGroup_Compat groups[1];
     unsigned char square_data[32 * 32];
     unsigned short first_things[1];
+    unsigned short column_sft_bases[32];
     unsigned char raw_group[16];
     int written = 0;
     int rc;
@@ -5543,12 +5581,16 @@ static void test_world_export_rebuilds_c29_group_reaction_union(void)
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
     memset(square_data, 0, sizeof(square_data));
+    memset(column_sft_bases, 0, sizeof(column_sft_bases));
     memset(raw_group, 0, sizeof(raw_group));
 
     dungeon.header.mapCount = 1;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = column_sft_bases;
+    dungeon.dungeonColumnCount = (int)(sizeof(column_sft_bases) /
+                                       sizeof(column_sft_bases[0]));
     maps[0].width = 32;
     maps[0].height = 32;
     tiles[0].squareData = square_data;
