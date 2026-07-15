@@ -15,6 +15,13 @@
   RES*/DGT2 PP loads retain the exact 256-entry BGR555 CLUT as RGBA and the
   warning title phase consumes that source palette. No generated palette is
    used for these original UI surfaces.
+- ✅ 2026-07-15 DM1 inventory source-material gate: normal V1 inventory no
+  longer draws procedural slot boxes or a host scroll panel/text when PC34
+  material is absent. F0355 uses only loaded-pixel 224x136 C017; F0341 uses
+  only loaded-pixel C023 and the original loaded font; F0038 slot and chest
+  boxes use only loaded-pixel 18x18 C033. Missing or dimension-mismatched
+  media now leaves the original C017-cleared surface untouched. Focused
+   source-lock assertions cover C017/C033 identity, dimensions, and rejection.
 
 - ✅ 2026-07-15 DM2 M11 leader-hand name source gate: stopped drawing the
   active DM1 rectangle/host-font catalog label over DM2 runtime frames.

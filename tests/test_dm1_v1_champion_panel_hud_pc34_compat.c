@@ -150,6 +150,28 @@ int main(void)
             fprintf(stderr, "FAIL: CHAMDRAW exact GRAPHICS.DAT surface admission\n");
             failures++;
         }
+
+        /* PANEL.C F0340/F0341 and F0355: normal inventory presentation
+         * admits only the exact C017 backdrop and C033 slot surface. */
+        if (!DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_INVENTORY, DM1_GFX_INVENTORY,
+                1, 1, DM1_VIEWPORT_W, DM1_VIEWPORT_H,
+                DM1_VIEWPORT_W, DM1_VIEWPORT_H) ||
+            !DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_SLOT_NORMAL, DM1_GFX_SLOT_NORMAL,
+                1, 1, DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE,
+                DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE) ||
+            DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_INVENTORY, DM1_GFX_INVENTORY,
+                1, 1, DM1_VIEWPORT_W - 1, DM1_VIEWPORT_H,
+                DM1_VIEWPORT_W, DM1_VIEWPORT_H) ||
+            DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_SLOT_NORMAL, DM1_GFX_SLOT_NORMAL,
+                0, 1, DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE,
+                DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE)) {
+            fprintf(stderr, "FAIL: PANEL exact GRAPHICS.DAT surface admission\n");
+            failures++;
+        }
     }
 
     /*

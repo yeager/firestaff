@@ -37127,18 +37127,15 @@ static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
                                          int y,
                                          const char* line) {
     unsigned char encoded[DM1_V1_MESSAGE_MAX_LENGTH];
-    M11_TextStyle fallbackStyle = g_text_small;
 
-    if (!line) return;
-    fallbackStyle.color = M11_COLOR_BLACK;
-    fallbackStyle.shadowColor = M11_COLOR_WHITE;
-    fallbackStyle.shadowDx = 0;
-    fallbackStyle.shadowDy = 0;
+    if (!line || !g_activeOriginalFont ||
+        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return;
+    }
 
-    if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
-        int width;
-        dm1_v1_text_scroll_encode_line(line, encoded, sizeof(encoded));
-        width = M11_Font_MeasureString((const char*)encoded);
+    dm1_v1_text_scroll_encode_line(line, encoded, sizeof(encoded));
+    {
+        int width = M11_Font_MeasureString((const char*)encoded);
         M11_Font_DrawString(g_activeOriginalFont,
                             framebuffer,
                             framebufferWidth,
@@ -37149,15 +37146,6 @@ static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
                             M11_COLOR_BLACK,
                             -1,
                             1);
-    } else {
-        m11_draw_text_centered_in_rect(framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       centerX - 72,
-                                       y,
-                                       144,
-                                       line,
-                                       &fallbackStyle);
     }
 }
 
@@ -37196,8 +37184,12 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
         const M11_AssetSlot* scrollPanel = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)dm1_v1_graphic_panel_open_scroll_pc34());
-        if (scrollPanel && (int)scrollPanel->width == panelW &&
-            (int)scrollPanel->height == panelH) {
+        if (scrollPanel &&
+            DM1_ChampionPanel_AssetSurfaceAccepted(
+                dm1_v1_graphic_panel_open_scroll_pc34(),
+                dm1_v1_graphic_panel_open_scroll_pc34(),
+                scrollPanel->loaded, scrollPanel->pixels != NULL,
+                scrollPanel->width, scrollPanel->height, panelW, panelH)) {
             M11_AssetLoader_Blit(scrollPanel,
                                  framebuffer,
                                  framebufferWidth,
@@ -37208,14 +37200,7 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
             drewPanel = 1;
         }
     }
-    if (!drewPanel) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_LIGHT_GRAY);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_BROWN);
-    }
+    if (!drewPanel) return 0;
 
     dm1_v1_text_scroll_measure_layout(decoded, &layout);
     centerX = M11_VIEWPORT_X + panelX + (panelW / 2);
@@ -37742,16 +37727,22 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             (unsigned int)(state->showDebugHUD
                 ? dm1_v1_graphic_panel_empty_pc34()
                 : dm1_v1_graphic_inventory_backdrop_pc34()));
-        if (panelBg && panelBg->width > 0 && panelBg->height > 0) {
-            if (!state->showDebugHUD &&
-                panelBg->width == M11_VIEWPORT_W && panelBg->height == M11_VIEWPORT_H) {
+        if (!state->showDebugHUD) {
+            if (panelBg &&
+                DM1_ChampionPanel_AssetSurfaceAccepted(
+                    dm1_v1_graphic_inventory_backdrop_pc34(),
+                    dm1_v1_graphic_inventory_backdrop_pc34(),
+                    panelBg->loaded, panelBg->pixels != NULL,
+                    panelBg->width, panelBg->height,
+                    M11_VIEWPORT_W, M11_VIEWPORT_H)) {
                 M11_AssetLoader_Blit(panelBg, framebuffer, framebufferWidth,
                                      framebufferHeight, panelX, panelY, 0);
-            } else {
+            }
+        } else if (panelBg && panelBg->loaded && panelBg->pixels &&
+                   panelBg->width > 0 && panelBg->height > 0) {
                 M11_AssetLoader_BlitScaled(panelBg,
                     framebuffer, framebufferWidth, framebufferHeight,
                     panelX, panelY, panelW, panelH, 0);
-            }
         }
     }
 
@@ -37812,7 +37803,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         int slotIdx;
         for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox) {
             DM1_V1_InventorySlotBoxZonePc34 zone;
-            int zx = 0, zy = 0, zw = 0, zh = 0;
+            int zx = 0, zy = 0;
             int slotBoxGraphic = dm1_v1_graphic_slot_box_normal_pc34();
             memset(&zone, 0, sizeof(zone));
             if (!slotBoxGraphic ||
@@ -37822,27 +37813,22 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             }
             zx = zone.x;
             zy = zone.y;
-            zw = zone.w;
-            zh = zone.h;
             if (state->assetsAvailable) {
                 const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)slotBoxGraphic);
-                if (boxSlot && boxSlot->width == 18 && boxSlot->height == 18) {
+                if (boxSlot &&
+                    DM1_ChampionPanel_AssetSurfaceAccepted(
+                        slotBoxGraphic, slotBoxGraphic,
+                        boxSlot->loaded, boxSlot->pixels != NULL,
+                        boxSlot->width, boxSlot->height,
+                        DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE)) {
                     M11_AssetLoader_Blit(boxSlot, framebuffer, framebufferWidth,
                                          framebufferHeight,
                                          M11_VIEWPORT_X + zx - 1,
                                          M11_VIEWPORT_Y + zy - 1, 0);
-                    continue;
                 }
             }
-            /* Asset fallback: retain the source 16x16 zone footprint. */
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
-                          zw, zh, M11_COLOR_BLACK);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
-                          zw, zh, M11_COLOR_DARK_GRAY);
         }
         for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx) {
             unsigned short thingId = champ->inventory[slotIdx];
@@ -37903,7 +37889,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             }
             for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
                 DM1_V1_InventorySlotBoxZonePc34 zone;
-                int zx = 0, zy = 0, zw = 0, zh = 0;
+                int zx = 0, zy = 0;
                 memset(&zone, 0, sizeof(zone));
                 if (!dm1_v1_inventory_chest_slot_box_zone_pc34(
                         chestOrdinal, &zone)) {
@@ -37911,25 +37897,22 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
                 zx = zone.x;
                 zy = zone.y;
-                zw = zone.w;
-                zh = zone.h;
                 if (state->assetsAvailable) {
                     const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
                         (unsigned int)dm1_v1_graphic_slot_box_normal_pc34());
-                    if (boxSlot && boxSlot->width == 18 && boxSlot->height == 18) {
+                    if (boxSlot &&
+                        DM1_ChampionPanel_AssetSurfaceAccepted(
+                            dm1_v1_graphic_slot_box_normal_pc34(),
+                            dm1_v1_graphic_slot_box_normal_pc34(),
+                            boxSlot->loaded, boxSlot->pixels != NULL,
+                            boxSlot->width, boxSlot->height,
+                            DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE)) {
                         M11_AssetLoader_Blit(boxSlot, framebuffer, framebufferWidth,
                                              framebufferHeight,
                                              M11_VIEWPORT_X + zx - 1,
                                              M11_VIEWPORT_Y + zy - 1, 0);
                     }
-                } else {
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
-                                  zw, zh, M11_COLOR_BLACK);
-                    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
-                                  zw, zh, M11_COLOR_DARK_GRAY);
                 }
                 if (chestSlots[chestOrdinal] != THING_NONE &&
                     chestSlots[chestOrdinal] != THING_ENDOFLIST &&
