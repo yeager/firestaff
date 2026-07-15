@@ -134,6 +134,13 @@
   rows through G0074; absent or malformed source remains no-draw. Focused
   viewport assertions cover no-media rejection and both packed/provider paths.
 
+- 2026-07-15 CSBWin DSA `STKOP_DiscardText` runtime handoff: authenticated
+  DSA actions now clear only the profile candidate's source-owned
+  `TT_OPENROOM` DB2/F0168 C015 message receipt. The receipt commits only
+  after full bytecode acceptance; malformed trailing bytecode leaves it
+  intact. No host log, generic UI queue, or synthetic text is involved.
+  Verification: `csb_v1_dsa_localstate1_save_handoff` covers both commit and
+  rollback paths.
 - 2026-07-15 CSB TT_OPENROOM DB2 -> C015 source message: CSBWin
   `Timer.cpp::ProcessTT_OPENROOM` now carries a newly visible, sole TextString
   on the party square through the original `DUNGEON.DAT` text-word bank and
