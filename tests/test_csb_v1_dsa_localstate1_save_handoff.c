@@ -162,6 +162,8 @@ int main(void)
     profile.party_y = 12;
     profile.game_time = 991u;
     profile.party_state.ChampionCount = 2;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
     profile.party_state.Champions[0].Talents = 0x3u;
     profile.party_state.Champions[0].Wounds = 0x0003u;
     profile.party_state.Champions[0].CurrentHealth = 30;
@@ -186,7 +188,8 @@ int main(void)
                   runner.party_champion_count == 2 &&
                   runner.party_champion_talents[0] == 0x3u &&
                   runner.party_champion_wounds[1] == 0x000cu &&
-                  runner.party_champion_health[1] == 0,
+                  runner.party_champion_health[1] == 0 &&
+                  runner.party_leader_index == 0,
               "runtime runner copies the profile-owned CSBWin party query data");
     }
     action = csb_v1_chaos_find_imported_action(

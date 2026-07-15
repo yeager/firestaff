@@ -197,6 +197,7 @@ typedef struct {
     uint16_t dsa_slave_thing;
     int party_champions_valid;
     int party_champion_count;
+    int party_leader_index;
     uint32_t party_champion_talents[4];
     uint16_t party_champion_wounds[4];
     int party_champion_health[4];
@@ -424,6 +425,7 @@ typedef struct {
     uint16_t dsa_slave_thing;
     int party_champions_valid;
     int party_champion_count;
+    int party_leader_index;
     uint32_t party_champion_talents[4];
     uint16_t party_champion_wounds[4];
     int party_champion_health[4];

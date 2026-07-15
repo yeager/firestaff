@@ -4,7 +4,8 @@
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
  * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072,
  * STKOP_TimeFetch:2512-2518, STKOP_ThisDSAId:4822-4828,
- * STKOP_WhoHasTalent:4363-4380, and STKOP_CountInjury:4798-4817. These
+ * STKOP_WhoHasTalent:4363-4380, STKOP_CountInjury:4798-4817, and
+ * STKOP_TalentsFetch:4243-4283. These
  * commands and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
@@ -45,6 +46,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.dsa_slave_thing = 0x8123u;
     context.party_champions_valid = 1;
     context.party_champion_count = 4;
+    context.party_leader_index = 2;
     context.party_champion_talents[0] = 0x3u;
     context.party_champion_talents[1] = 0x1u;
     context.party_champion_talents[2] = 0x7u;
@@ -112,6 +114,15 @@ int main(void)
     uint16_t who_has_talent[] = { 0x0686u, 1u, 0x1d4bu, 0x000du };
     uint16_t count_injury[] = {
         0x0686u, 15u, 0x0686u, 7u, 0x1a8bu, 0x000du
+    };
+    uint16_t talents_fetch_leader[] = {
+        0x0686u, 4u, 0x0195u, 0x000du
+    };
+    uint16_t talents_fetch_missing[] = {
+        0x0686u, 7u, 0x0195u, 0x000du
+    };
+    uint16_t talents_fetch_wing[] = {
+        0x0786u, 0u, 1u, 0x0195u, 0x000du
     };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
@@ -314,6 +325,30 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 4u && execution.stack_depth == 0u,
           "COUNT_INJURY skips dead champions and counts selected source wounds");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, talents_fetch_leader,
+              (int)(sizeof(talents_fetch_leader) /
+                    sizeof(talents_fetch_leader[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x7u && execution.stack_depth == 0u,
+          "TALENTS@ resolves source hand character through the live party");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, talents_fetch_missing,
+              (int)(sizeof(talents_fetch_missing) /
+                    sizeof(talents_fetch_missing[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0u && execution.stack_depth == 0u,
+          "TALENTS@ returns source zero for a missing in-party index");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, talents_fetch_wing,
+              (int)(sizeof(talents_fetch_wing) /
+                    sizeof(talents_fetch_wing[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "TALENTS@ keeps unbound CSBWin wing records unavailable");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
