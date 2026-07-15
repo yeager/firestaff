@@ -196,6 +196,82 @@ int nexus_v1_prs3_capture_trace_schema_bind_assets(
     return receipt.valid;
 }
 
+int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+    const char *text, size_t text_size,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3Sh2TransferTrace *out_trace,
+    Nexus_V1_Prs3Sh2TransferReceipt *out_receipt) {
+    const char *cursor;
+    const size_t magic_size =
+        sizeof(NEXUS_V1_PRS3_SH2_TRANSFER_TRACE_MAGIC) - 1U;
+    Nexus_V1_Prs3Sh2TransferTrace trace;
+    Nexus_V1_Prs3Sh2TransferReceipt receipt;
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt sh2;
+
+    memset(&trace, 0, sizeof(trace));
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_trace) *out_trace = trace;
+    if (out_receipt) *out_receipt = receipt;
+    if (!out_trace || !out_receipt || !text || text_size <= magic_size ||
+        memcmp(text, NEXUS_V1_PRS3_SH2_TRANSFER_TRACE_MAGIC, magic_size) != 0 ||
+        text[magic_size] != '\n') return 0;
+    cursor = text + magic_size + 1U;
+    if (!read_u64(&cursor, "menu_bpk_fnv1a64=", &trace.menu_bpk_fnv1a64) ||
+        !read_u64(&cursor, "dm_bin_fnv1a64=", &trace.dm_bin_fnv1a64) ||
+        !read_u32(&cursor, "entry_index=", &trace.entry_index) ||
+        !read_u32(&cursor, "stream_offset=", &trace.stream_offset) ||
+        !read_u32(&cursor, "stream_size=", &trace.stream_size) ||
+        !read_u32(&cursor, "expected_output_bytes=", &trace.expected_output_bytes) ||
+        !read_u32(&cursor, "payload_byte_offset=", &trace.payload_byte_offset) ||
+        !read_u32(&cursor, "input_instruction_offset=", &trace.input_instruction_offset) ||
+        !read_u32(&cursor, "output_instruction_offset=", &trace.output_instruction_offset) ||
+        !read_u64(&cursor, "input_read_sequence=", &trace.input_read_sequence) ||
+        !read_u64(&cursor, "output_write_sequence=", &trace.output_write_sequence) ||
+        !read_u32(&cursor, "output_byte_offset=", &trace.output_byte_offset) ||
+        !read_u32(&cursor, "input_byte=", &trace.input_byte) ||
+        !read_u32(&cursor, "output_byte=", &trace.output_byte) || *cursor != '\0' ||
+        trace.input_byte > UINT8_MAX || trace.output_byte > UINT8_MAX ||
+        trace.input_read_sequence >= trace.output_write_sequence ||
+        trace.output_byte_offset >= trace.expected_output_bytes) return 0;
+    trace.valid = 1;
+    receipt.trace_valid = 1;
+    if (!menu_bpk || !dm_bin || !source_hash_verified ||
+        !trace.menu_bpk_fnv1a64 || !trace.dm_bin_fnv1a64 ||
+        fnv1a64(menu_bpk, menu_bpk_size) != trace.menu_bpk_fnv1a64 ||
+        fnv1a64(dm_bin, dm_bin_size) != trace.dm_bin_fnv1a64 ||
+        nexus_v1_bpk_archive_prs3_stream_plan(menu_bpk, menu_bpk_size,
+                                               trace.entry_index, &plan) !=
+            NEXUS_V1_BPK_PRS3_STREAM_OK ||
+        nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+            dm_bin, dm_bin_size, 1, &sh2) != 1) {
+        *out_trace = trace; *out_receipt = receipt; return 0;
+    }
+    receipt.menu_bpk_matches = 1;
+    receipt.dm_bin_matches = 1;
+    receipt.entry_plan_matches = plan.stream_offset == trace.stream_offset &&
+        plan.stream_size == trace.stream_size &&
+        plan.expected_output_bytes == trace.expected_output_bytes;
+    receipt.sh2_instruction_route_matches =
+        trace.input_instruction_offset == sh2.stream_byte_read_offset &&
+        trace.output_instruction_offset == sh2.output_byte_store_offset;
+    receipt.source_byte_matches = receipt.entry_plan_matches &&
+        trace.payload_byte_offset < plan.stream_size &&
+        menu_bpk[(size_t)plan.stream_offset + trace.payload_byte_offset] ==
+            (uint8_t)trace.input_byte;
+    receipt.observed_byte_transfer = receipt.source_byte_matches &&
+        receipt.sh2_instruction_route_matches &&
+        trace.input_byte == trace.output_byte;
+    /* External trace text alone cannot authenticate Saturn provenance. */
+    receipt.original_saturn_provenance_verified = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_trace = trace;
+    *out_receipt = receipt;
+    return receipt.observed_byte_transfer;
+}
+
 int nexus_v1_prs3_dm_bin_catalog_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3DmBinCatalogReceipt *out_receipt) {
