@@ -195,8 +195,11 @@ static int real_c001_title_plan(int title_frame,
     facts.title_active = 1;
     facts.entrance_active = 1;
     facts.title_frame = title_frame;
+    /* Runtime host facts retain the C001 source step just drawn; the
+     * presentation adapter derives the current frame's rectangle itself. */
     facts.title_source_step = (int)
-        csb_v1_startup_title_source_step_for_frame_pc34(title_frame);
+        csb_v1_startup_title_source_step_for_frame_pc34(
+            title_frame > 0 ? title_frame - 1 : 0);
     if (!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
             &facts, &receipt) || !receipt.valid) {
         return 0;

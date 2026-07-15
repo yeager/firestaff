@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
 #include <string.h>
 
@@ -83,6 +84,7 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     CSB_V1_StartupAudioAction_PC34 *out_audio_action)
 {
     CSB_V1_StartupStage_PC34 title_stage;
+    CSB_V1_StartupRenderState_PC34 render_state;
 
     csb_v1_startup_playback_clear_action_pc34(out_audio_action);
     if (out_plan) {
@@ -110,17 +112,20 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     }
     title_stage = (CSB_V1_StartupStage_PC34)
         csb_v1_startup_title_stage_for_frame_pc34(title_frame);
-    out_plan->surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
-    out_plan->title_stage = title_stage;
-    out_plan->title_source_step = (int)
-        csb_v1_startup_title_source_step_for_frame_pc34(title_frame);
-    out_plan->asset_command_count = 1;
-    out_plan->asset_commands[0].visible = 1;
-    out_plan->asset_commands[0].asset_id = 1;
-    out_plan->asset_commands[0].kind =
-        title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34
-            ? CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34
-            : CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34;
+    /* TITLE.C F0437's source rectangles, palette phase, and scaled CHAOS
+     * geometry are owned by the startup state-to-plan adapter. Playback must
+     * consume that exact plan rather than reconstructing a partial C001 blit. */
+    memset(&render_state, 0, sizeof(render_state));
+    render_state.entrance_active = 1;
+    render_state.title_active = 1;
+    render_state.title_frame = title_frame;
+    if (!csb_v1_startup_source_render_plan_from_state_pc34(&render_state,
+                                                            out_plan) ||
+        out_plan->surface != CSB_V1_STARTUP_RENDER_TITLE_PC34 ||
+        out_plan->title_stage != title_stage) {
+        memset(out_plan, 0, sizeof(*out_plan));
+        return 0;
+    }
     session->playback.title_frame = title_frame;
     session->playback.title_stage = title_stage;
     session->playback.title_phase_mask |=
