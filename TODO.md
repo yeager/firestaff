@@ -3415,6 +3415,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       missing original GAMEBLOCK2 ownership rejects rather than using a host
       RNG or a generated seed. Positive original DSA-bearing save-corpus
       proof remains required.
+    - 2026-07-15 false-pit update: `STKOP_FalsePit` now changes only bit zero
+      of a loaded original `roomPIT` CELLFLAG through the transaction-owned
+      `Cell!` byte-map path. Invalid/non-pit locations retain the source
+      no-op; missing raw dungeon ownership rejects. No pit layout, target,
+      or cell data is constructed. Positive original DSA-bearing save-corpus
+      proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

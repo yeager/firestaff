@@ -1123,6 +1123,52 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, v == 0u ? 1u : 0u)) goto underflow;
         break;
+    case 33u: /* STKOP_FalsePit, CSBWin DSA.cpp:2859-2876. */
+        /* The source changes only CELLFLAG bit zero on a real roomPIT. Reuse
+         * Cell!'s staged source image so a later action failure cannot write
+         * the byte map. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        {
+            uint32_t cell_values[5] = { 0u, 0u, 0u, 0u, 0u };
+            int pending = -1;
+            int resolved;
+            for (sv = 0; sv < *pending_cell_write_count; ++sv) {
+                if (pending_cell_writes[sv].location == w) pending = sv;
+            }
+            if (pending >= 0) {
+                memcpy(cell_values, pending_cell_writes[pending].values,
+                       sizeof(cell_values));
+            } else if (!context->get_cell_info ||
+                       !context->get_cell_info(context->dungeon_user, w,
+                                               cell_values)) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            if (!context->resolve_cell_store || !context->set_cell_info) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            resolved = context->resolve_cell_store(context->dungeon_user, w,
+                                                   3u /* roomPIT */);
+            if (resolved < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (resolved == 0) break;
+            cell_values[1] = (cell_values[1] & ~1u) | (v != 0u ? 1u : 0u);
+            if (pending >= 0) {
+                memcpy(pending_cell_writes[pending].values, cell_values,
+                       sizeof(cell_values));
+                pending_cell_writes[pending].write_mask |= 1u << 1;
+            } else if (*pending_cell_write_count >=
+                       CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            } else {
+                pending_cell_writes[*pending_cell_write_count].location = w;
+                memcpy(pending_cell_writes[*pending_cell_write_count].values,
+                       cell_values, sizeof(cell_values));
+                pending_cell_writes[*pending_cell_write_count].write_mask =
+                    1u << 1;
+                ++*pending_cell_write_count;
+            }
+        }
+        break;
     case 37u: /* STKOP_Gear */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
