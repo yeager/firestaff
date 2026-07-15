@@ -7432,6 +7432,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original loader-table-to-record boundary only. It does not assign field
     formats, graphics, palette, object, level, or command semantics. Remaining
     work still requires a real game-code consumer for a non-self record.
+  - Update: the Mednafen main-RAM loader capture now records RTS instructions.
+    A continuation execution receipt requires exactly one RTS inside the exact
+    destination span of the source-bound `$3c80` TII, after the matching JSR.
+    This proves that execution reached a copied original termination
+    instruction, not a return target, level/object grammar, or visual route.
+    Remaining: authentic capture of this sequence followed by a proven
+    non-self descriptor record consumer.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
