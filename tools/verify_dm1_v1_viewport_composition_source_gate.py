@@ -42,10 +42,9 @@ def main() -> int:
         "side F0115 content must run D3 -> D2 -> D1")
 
     center_contents = viewport.find("centerContentMask")
-    deferred_explosions = viewport.find("m11_draw_dm1_deferred_explosion_pass")
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")
-    assert 0 <= center_contents < deferred_explosions < mirror, (
-        "D1C C127 mirror must follow F0115 content and deferred effects")
+    assert 0 <= mirror < center_contents, (
+        "D1C C127 mirror must remain in the F0107 wall pass before F0115 content")
     assert "&cells[0][1]" in viewport[mirror:mirror + 200], (
         "C127 mirror owner must consume only the D1C front cell")
     assert "m11_draw_dm1_front_mirror_route(" not in ornaments, (
