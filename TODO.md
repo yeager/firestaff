@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 GROUP F0182 follow-up: live F0209 now consumes its
+  source-defined stop-attacking decision through F0182, clearing all four
+  active-group attack bits and exact-square C29..C41 reactions before the
+  replacement behavior event. Remaining group work is real original runtime
+  capture across the broader C29--C41 paths; no synthesized AI route is used.
 - 2026-07-15 DM1 CHAMPION F0286 follow-up: C04 melee now resolves its
   non-`ATTACK_ANY_CHAMPION` target through the original adjacent-range,
   F0229/G0023, and F0285 chain. Remaining target work is real original

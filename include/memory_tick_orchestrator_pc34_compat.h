@@ -315,6 +315,15 @@ int F0880b_WORLD_Clone_Compat(
     const struct GameWorld_Compat* src,
     struct GameWorld_Compat* dst);
 
+/* ReDMCSB GROUP.C F0182: clear every ACTIVE_GROUP attacking bit and purge
+ * the C29..C41 reaction range belonging to this exact map square. */
+int F0182_DM1_GROUP_StopAttacking_Compat(
+    struct GameWorld_Compat* world,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 /* ================================================================
  *  Group B — Tick Orchestrator (F0884-F0886)
  * ================================================================ */
