@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 F0292 auxiliary source-material gate: normal V1 shield
+  borders accept only exact loaded-pixel C037/C038/C039 67x29 surfaces and
+  C032 POISONED accepts only its 96x15 source surface at the C502 geometry.
+  The default status coordinates are no longer used when source geometry is
+  unavailable. Focused M11 coverage proves unavailable no-draw and real
+  C032/C038 presentation.
+
 - ✅ 2026-07-15 DM1 F0623/F0320 source damage-indicator gate: normal V1
   champion damage feedback now accepts only exact loaded-pixel C015 (45x7)
   or C016 (32x29), uses C167/C179 geometry without default coordinates, and

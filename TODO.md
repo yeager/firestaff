@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
+  C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
+  at source status geometry. Remaining work is a real PC34/Mac capture for
+  stacked shields and poisoned champions. Missing or malformed material must
+  remain no-draw; do not add host borders, labels, or substitute coordinates.
+
 - 2026-07-15 DM1 F0623/F0320 damage-HUD follow-up: normal V1 damage feedback
   now requires exact loaded-pixel C015/C016 and the original M653 source-font
   route at C167/C179 geometry. Remaining work is a real PC34/Mac pending-damage

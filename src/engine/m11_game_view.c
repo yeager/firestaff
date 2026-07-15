@@ -36489,8 +36489,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     if (borderGfx) {
                         const M11_AssetSlot* borderAsset = M11_AssetLoader_Load(
                             (M11_AssetLoader*)&state->assetLoader, borderGfx);
-                        if (borderAsset && borderAsset->width == slotW &&
-                            borderAsset->height == slotH) {
+                        if (borderAsset &&
+                            DM1_ChampionPanel_AssetSurfaceAccepted(
+                                (int)borderGfx, (int)borderGfx,
+                                borderAsset->loaded,
+                                borderAsset->pixels != NULL,
+                                borderAsset->width, borderAsset->height,
+                                slotW, slotH)) {
                             int borderX;
                             int borderY;
                             int borderW;
@@ -36694,8 +36699,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 const M11_AssetSlot* poisonLbl = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)dm1_v1_graphic_poisoned_label_pc34());
-                if (poisonLbl && poisonLbl->width > 0 &&
-                    poisonLbl->height > 0) {
+                if (poisonLbl &&
+                    DM1_ChampionPanel_AssetSurfaceAccepted(
+                        dm1_v1_graphic_poisoned_label_pc34(),
+                        dm1_v1_graphic_poisoned_label_pc34(),
+                        poisonLbl->loaded, poisonLbl->pixels != NULL,
+                        poisonLbl->width, poisonLbl->height, 96, 15)) {
                     /* Center the 96-wide label within the source status-box
                      * zone; in DM1 this spills across adjacent boxes, which
                      * is the correct original behaviour.  Preserve the old
@@ -36710,11 +36719,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             lblY = lblRect.y;
                             lblW = lblRect.w;
                             lblH = lblRect.h;
-                        } else {
-                            lblX = x;
-                            lblY = y + 29;
-                            lblW = (int)poisonLbl->width;
-                            lblH = (int)poisonLbl->height;
+                            M11_AssetLoader_BlitRegion(poisonLbl,
+                                0, 0, lblW, lblH,
+                                framebuffer, framebufferWidth, framebufferHeight,
+                                lblX, lblY, 0);
                         }
                     } else {
                         int poisonBaseW = 67;
@@ -36723,11 +36731,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                         lblY = y + poisonBaseH;
                         lblW = (int)poisonLbl->width;
                         lblH = (int)poisonLbl->height;
+                        M11_AssetLoader_BlitRegion(poisonLbl,
+                            0, 0, lblW, lblH,
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            lblX, lblY, 0);
                     }
-                    M11_AssetLoader_BlitRegion(poisonLbl,
-                        0, 0, lblW, lblH,
-                        framebuffer, framebufferWidth, framebufferHeight,
-                        lblX, lblY, 0);
                 }
             }
 
