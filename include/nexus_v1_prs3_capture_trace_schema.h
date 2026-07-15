@@ -329,6 +329,11 @@ typedef struct {
     uint32_t stream_size;
     uint32_t expected_output_bytes;
     uint32_t payload_byte_offset;
+    uint32_t control_test_instruction_offset;
+    uint32_t zero_branch_instruction_offset;
+    uint32_t fallthrough_counter_decrement_offset;
+    uint32_t observed_control_low_bit;
+    uint32_t observed_zero_branch_taken;
     uint32_t input_instruction_offset;
     uint32_t output_instruction_offset;
     uint64_t input_read_sequence;
@@ -344,6 +349,7 @@ typedef struct {
     int dm_bin_matches;
     int entry_plan_matches;
     int sh2_instruction_route_matches;
+    int nonzero_control_fallthrough_observed;
     int source_byte_matches;
     int observed_byte_transfer;
     int original_saturn_provenance_verified;

@@ -248,6 +248,11 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
         !read_u32(&cursor, "stream_size=", &trace.stream_size) ||
         !read_u32(&cursor, "expected_output_bytes=", &trace.expected_output_bytes) ||
         !read_u32(&cursor, "payload_byte_offset=", &trace.payload_byte_offset) ||
+        !read_u32(&cursor, "control_test_instruction_offset=", &trace.control_test_instruction_offset) ||
+        !read_u32(&cursor, "zero_branch_instruction_offset=", &trace.zero_branch_instruction_offset) ||
+        !read_u32(&cursor, "fallthrough_counter_decrement_offset=", &trace.fallthrough_counter_decrement_offset) ||
+        !read_u32(&cursor, "observed_control_low_bit=", &trace.observed_control_low_bit) ||
+        !read_u32(&cursor, "observed_zero_branch_taken=", &trace.observed_zero_branch_taken) ||
         !read_u32(&cursor, "input_instruction_offset=", &trace.input_instruction_offset) ||
         !read_u32(&cursor, "output_instruction_offset=", &trace.output_instruction_offset) ||
         !read_u64(&cursor, "input_read_sequence=", &trace.input_read_sequence) ||
@@ -256,6 +261,7 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
         !read_u32(&cursor, "input_byte=", &trace.input_byte) ||
         !read_u32(&cursor, "output_byte=", &trace.output_byte) || *cursor != '\0' ||
         trace.input_byte > UINT8_MAX || trace.output_byte > UINT8_MAX ||
+        trace.observed_control_low_bit > 1U || trace.observed_zero_branch_taken > 1U ||
         trace.input_read_sequence >= trace.output_write_sequence ||
         trace.output_byte_offset >= trace.expected_output_bytes) return 0;
     trace.valid = 1;
@@ -279,12 +285,19 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
     receipt.sh2_instruction_route_matches =
         trace.input_instruction_offset == sh2.stream_byte_read_offset &&
         trace.output_instruction_offset == sh2.output_byte_store_offset;
+    receipt.nonzero_control_fallthrough_observed =
+        trace.control_test_instruction_offset == sh2.control_low_bit_test_offset &&
+        trace.zero_branch_instruction_offset == sh2.control_zero_branch_offset &&
+        trace.fallthrough_counter_decrement_offset == sh2.control_zero_branch_offset + 2U &&
+        trace.observed_control_low_bit == 1U &&
+        trace.observed_zero_branch_taken == 0U;
     receipt.source_byte_matches = receipt.entry_plan_matches &&
         trace.payload_byte_offset < plan.stream_size &&
         menu_bpk[(size_t)plan.stream_offset + trace.payload_byte_offset] ==
             (uint8_t)trace.input_byte;
     receipt.observed_byte_transfer = receipt.source_byte_matches &&
         receipt.sh2_instruction_route_matches &&
+        receipt.nonzero_control_fallthrough_observed &&
         trace.input_byte == trace.output_byte;
     /* External trace text alone cannot authenticate Saturn provenance. */
     receipt.original_saturn_provenance_verified = 0;

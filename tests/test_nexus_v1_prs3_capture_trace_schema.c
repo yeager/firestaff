@@ -1,4 +1,5 @@
 #include "nexus_v1_prs3_capture_trace_schema.h"
+#include "nexus_v1_bpk_archive.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,6 +136,9 @@ static void test_sh2_transfer_trace_gate(void) {
              "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
              "entry_index=0\nstream_offset=34\nstream_size=10\n"
              "expected_output_bytes=4\npayload_byte_offset=0\n"
+             "control_test_instruction_offset=0\nzero_branch_instruction_offset=0\n"
+             "fallthrough_counter_decrement_offset=0\n"
+             "observed_control_low_bit=1\nobserved_zero_branch_taken=0\n"
              "input_instruction_offset=0\noutput_instruction_offset=0\n"
              "input_read_sequence=10\noutput_write_sequence=11\n"
              "output_byte_offset=0\ninput_byte=50\noutput_byte=50\n",
@@ -342,6 +346,61 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                "one changed SH-2 output-store instruction rejects the receipt");
         free(damaged);
     }
+    free(dm_bin);
+}
+
+static void test_real_nonzero_transfer_trace_contract(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt sh2;
+    Nexus_V1_Prs3Sh2TransferTrace trace;
+    Nexus_V1_Prs3Sh2TransferReceipt receipt;
+    unsigned char *menu;
+    unsigned char *dm_bin;
+    size_t menu_size = 0U;
+    size_t dm_bin_size = 0U;
+    unsigned int index;
+    char text[1024];
+
+    menu = read_asset(data_dir, "MENU.BPK", &menu_size);
+    dm_bin = read_asset(data_dir, "DM.BIN", &dm_bin_size);
+    if (!menu || !dm_bin) { free(menu); free(dm_bin); return; }
+    for (index = 0U; index < 163U; ++index) {
+        if (nexus_v1_bpk_archive_prs3_stream_plan(menu, menu_size, index, &plan) ==
+            NEXUS_V1_BPK_PRS3_STREAM_OK) break;
+    }
+    if (index == 163U || !nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+            dm_bin, dm_bin_size, 1, &sh2)) { free(menu); free(dm_bin); return; }
+    snprintf(text, sizeof(text),
+             "NEXUS_PRS3_SH2_TRANSFER_TRACE_V1\n"
+             "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
+             "entry_index=%x\nstream_offset=%x\nstream_size=%x\n"
+             "expected_output_bytes=%x\npayload_byte_offset=0\n"
+             "control_test_instruction_offset=%x\nzero_branch_instruction_offset=%x\n"
+             "fallthrough_counter_decrement_offset=%x\n"
+             "observed_control_low_bit=1\nobserved_zero_branch_taken=0\n"
+             "input_instruction_offset=%x\noutput_instruction_offset=%x\n"
+             "input_read_sequence=10\noutput_write_sequence=11\n"
+             "output_byte_offset=0\ninput_byte=%x\noutput_byte=%x\n",
+             fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
+             plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
+             sh2.control_low_bit_test_offset, sh2.control_zero_branch_offset,
+             sh2.control_zero_branch_offset + 2U, sh2.stream_byte_read_offset,
+             sh2.output_byte_store_offset, menu[plan.stream_offset], menu[plan.stream_offset]);
+    expect(nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+               text, strlen(text), menu, menu_size, dm_bin, dm_bin_size, 1,
+               &trace, &receipt) && receipt.observed_byte_transfer &&
+               receipt.nonzero_control_fallthrough_observed &&
+               !receipt.original_saturn_provenance_verified &&
+               !receipt.decoder_promoted && !receipt.fallback_visuals_permitted,
+           "real assets bind a claimed nonzero byte trace without promoting a decoder");
+    memcpy(strstr(text, "observed_control_low_bit=1"),
+           "observed_control_low_bit=0", sizeof("observed_control_low_bit=0") - 1U);
+    expect(!nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+               text, strlen(text), menu, menu_size, dm_bin, dm_bin_size, 1,
+               &trace, &receipt) && !receipt.observed_byte_transfer,
+           "zero-side claim cannot use the nonzero output byte path");
+    free(menu);
     free(dm_bin);
 }
 
@@ -633,6 +692,7 @@ int main(void) {
     test_dm_bin_prs3_catalog();
     test_cross_asset_prs3_frame_receipt();
     test_dm_bin_sh2_v1_execution_receipt();
+    test_real_nonzero_transfer_trace_contract();
     test_sh2_transfer_trace_gate();
 
     return failures ? 1 : 0;
