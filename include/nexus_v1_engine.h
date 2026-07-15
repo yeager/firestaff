@@ -357,6 +357,8 @@ typedef struct {
     uint32_t command_record_byte_offset;
     int command_link_target_bounded;
     uint32_t command_link_byte_offset;
+    int command_link_target_record_framed;
+    Nexus_V1_Vdp1TextureCommand command_link_target;
     int pixel_format_proven;
     int palette_format_proven;
     int decoder_permitted;
