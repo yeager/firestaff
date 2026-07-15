@@ -1,4 +1,5 @@
 #include "dm1_v1_collision_door_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 
 #include <string.h>
 
@@ -134,13 +135,12 @@ static int collision_front_door_has_button(
     if (thingRef == THING_NONE || thingRef == THING_ENDOFLIST) return 0;
     thingType = THING_GET_TYPE(thingRef);
     thingIndex = THING_GET_INDEX(thingRef);
-    if (thingType != THING_TYPE_DOOR || thingIndex < 0 ||
-        thingIndex >= things->thingCounts[THING_TYPE_DOOR] ||
-        !things->rawThingData[THING_TYPE_DOOR]) return 0;
+    if (thingType != THING_TYPE_DOOR || thingIndex < 0) return 0;
 
     /* F0156 returns the raw DOOR record.  Button is bit 6 of its PC34
      * Type_Ornament_Attributes word, not a host-only decoded substitute. */
-    rawDoor = things->rawThingData[THING_TYPE_DOOR] + (thingIndex * 4);
+    rawDoor = dm1_v1_dungeon_get_thing_data_pc34(things, thingRef);
+    if (!rawDoor) return 0;
     if (outDoorIndex) *outDoorIndex = thingIndex;
     return (rawDoor[2] & 0x40u) != 0;
 }
