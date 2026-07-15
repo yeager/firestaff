@@ -1395,6 +1395,7 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
     if (s && s->source_materials_required && !s->gdat_scene_control_ready) {
         return 0;
     }
+    out_plan->party_direction = s ? (s->party_dir & 3) : 0;
     /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST routes each
      * visible wall through the viewport-cell field before blitting.  Keep the
      * Firestaff contract as explicit panel rows so the asset-backed renderer,
@@ -1409,6 +1410,14 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
             graphicsset_index, square);
         DM2_V1_WallPanelRender *row;
 
+        /* G1/c_map has already projected the actual dungeon tile into this
+         * view square for the current party direction.  In source-required
+         * M10 mode, an absent wall fact is not permission to draw the generic
+         * GRAPHICSSET panel. */
+        if (s && s->source_materials_required &&
+            (s->squares[square].flags & DM2_SQF_HAS_WALL) == 0u) {
+            continue;
+        }
         if (!frame || frame->byte_width == 0 || frame->height == 0 ||
             gdat_index == 0 ||
             out_plan->panel_count >= DM2_V1_WALL_PANEL_RENDER_MAX) {
@@ -1432,6 +1441,7 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
             frame->bottom_y - frame->top_y + 1
         };
         row->fallback_color = dm2_v1_wall_fallback_color_for_step(step);
+        out_plan->selected_square_mask |= (uint16_t)(1u << (unsigned)square);
     }
     return 1;
 }
@@ -4023,6 +4033,12 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     }
 
     if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
+        return;
+    }
+    if (s->source_materials_required &&
+        plan.party_direction != (s->party_dir & 3)) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
     }
 
