@@ -3368,6 +3368,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       malformed chains reject; no room, monster, teleporter, or occupancy
       surrogate is constructed. Positive original DSA-bearing save-corpus
       proof remains required.
+    - 2026-07-15 object-type update: source `STKOP_Type` now maps a validated
+      loaded DB0–DB10 Thing directly to CSBWin's `dbType * 10000 + id`
+      result, retaining door/teleporter/actuator bit packing, DB4 monster,
+      DB5/DB6/DB8/DB10 subtype fields, DB9's raw contents-chain count, and
+      the zero-id DB11–DB14 result. Invalid handles return source `-1`.
+      Firestaff's type-15 DSA record is deliberately unavailable until its
+      relationship to CSBWin DB15 cloud bytes is proven. Missing, short, or
+      cyclic raw records reject rather than consulting Firestaff object
+      metadata or inventing a container chain. Positive original DSA-bearing
+      save-corpus proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

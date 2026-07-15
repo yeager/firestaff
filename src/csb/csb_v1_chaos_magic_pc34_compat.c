@@ -1594,6 +1594,20 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         break;
+    case 8u: /* STKOP_Type */
+        /* CSBWin DSA.cpp EX_TYPE:1388-1511 maps one validated original
+         * Thing record to dbType * 10000 plus its source type bits. */
+        if (!context->get_thing_type ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = -1;
+        if (context->get_thing_type(context->dungeon_user, (int32_t)v,
+                                    &sv) < 0 ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sv)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        break;
     case 100u: /* STKOP_GeneratorDelayFetch */
         /* CSBWin DSA.cpp:4724-4735 queries the first type-six DB3 generator
          * at this real dungeon location and pushes its disableTime, or -1. */
@@ -2377,6 +2391,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_champion_possession = runner->get_champion_possession;
     context.get_monster_possession = runner->get_monster_possession;
     context.inspect_cells = runner->inspect_cells;
+    context.get_thing_type = runner->get_thing_type;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
