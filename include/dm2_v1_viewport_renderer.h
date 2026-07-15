@@ -596,6 +596,13 @@ typedef struct {
     int16_t  screen_x;        /* viewport X position */
     int16_t  screen_y;        /* viewport Y position */
     uint8_t  direction;       /* source ObjectID::Dir(), for carried overlays */
+    /* A direct G1 DB5 root is admitted only through DRAW_MAP_CHIP's
+     * WEAPONS/type/F9 selector.  Generic runtime items leave this clear. */
+    uint16_t object_id;
+    int16_t map_x;
+    int16_t map_y;
+    uint8_t source_gdat_field;
+    uint8_t source_g1_weapon;
 } DM2_ItemSprite;
 
 typedef struct {
@@ -608,6 +615,10 @@ typedef struct {
     int center_x;
     int center_y;
     int gdat_index;
+    uint16_t object_id;
+    int map_x;
+    int map_y;
+    int source_g1_weapon;
     int flip_mirror;
     int fallback_radius;
     uint8_t fallback_color;
@@ -958,6 +969,7 @@ typedef struct {
     int asset_creature_possession_item_drawn_count;
     int fallback_creature_possession_item_drawn_count;
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *g1_creature_map_chip_materials;
+    const DM2_V1_G1WeaponMapChipRuntimeReceipt *g1_weapon_map_chip_materials;
     int g1_scene_creature_material_ready;
     int g1_scene_creature_material_map_x;
     int g1_scene_creature_material_map_y;
@@ -1120,6 +1132,9 @@ void dm2_v1_viewport_set_gdat_interface_font(
 void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt);
+void dm2_v1_viewport_set_g1_weapon_map_chip_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt);
 void dm2_v1_viewport_set_g1_scene_creature_material(
     DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
     int creature_type, int gdat_index, int width, int height, int stride,

@@ -2731,6 +2731,51 @@ static void dm2_runtime_populate_creatures(
     }
 }
 
+static void dm2_runtime_populate_g1_weapon_map_chip_items(
+    const DM2_V1_RuntimeState *rt,
+    DM2_V1_ViewportState *viewport,
+    int party_dir,
+    int party_x,
+    int party_y)
+{
+    const DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt;
+
+    if (!rt || !viewport || rt->outdoor) return;
+    receipt = &rt->g1_weapon_map_chip_runtime;
+    if (!receipt->valid || receipt->map != rt->dungeon_level) return;
+
+    /* skproject SkWinCore.cpp::DRAW_MAP_CHIP selects DB5 Weapon::ItemType
+     * through QUERY_DUNGEON_MAP_CHIP_PICT(..., F9).  These receipt rows are
+     * the only floor objects allowed to enter this direct G1 render path. */
+    for (int i = 0; i < receipt->material_count &&
+                    viewport->item_count < DM2_MAX_ITEMS_PER_SQ; ++i) {
+        const DM2_V1_G1WeaponMapChipMaterial *material =
+            &receipt->materials[i];
+        DM2_V1_ViewportSpritePlacement placement;
+        DM2_ItemSprite *dst;
+
+        if (!dm2_v1_viewport_project_map_to_sprite(
+                material->x, material->y, party_dir, party_x, party_y,
+                &placement)) {
+            continue;
+        }
+        dst = &viewport->items[viewport->item_count++];
+        memset(dst, 0, sizeof(*dst));
+        dst->item_category = 0x10; /* skproject dbWeapon -> WEAPONS */
+        dst->item_type = material->item_type;
+        dst->frame_index = 0;
+        dst->depth = (int16_t)placement.depth;
+        dst->screen_x = (int16_t)placement.screen_x;
+        dst->screen_y = (int16_t)placement.screen_y;
+        dst->direction = material->direction;
+        dst->object_id = material->object_id;
+        dst->map_x = (int16_t)material->x;
+        dst->map_y = (int16_t)material->y;
+        dst->source_gdat_field = 0xf9;
+        dst->source_g1_weapon = 1;
+    }
+}
+
 static void dm2_runtime_append_creature_possession_item(
     DM2_V1_ViewportState *viewport,
     uint16_t thing,
@@ -3190,6 +3235,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
      * viewport sprite or fallback image. Direct G1 DB4 material below is the
      * only admitted creature route until that ownership bridge exists. */
     dm2_runtime_populate_creatures(rt, &viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_g1_weapon_map_chip_items(
+        rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
@@ -3240,6 +3287,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     dm2_v1_viewport_set_g1_creature_map_chip_materials(
         &viewport, &rt->g1_creature_map_chip_runtime);
+    dm2_v1_viewport_set_g1_weapon_map_chip_materials(
+        &viewport, &rt->g1_weapon_map_chip_runtime);
     dm2_v1_viewport_set_g1_wall_gfx_materials(
         &viewport,
         &rt->g1_map5_text_wall_gfx_runtime,

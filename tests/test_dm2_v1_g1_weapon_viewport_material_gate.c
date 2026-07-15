@@ -1,0 +1,130 @@
+#include "dm2_v1_viewport_renderer.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+static int checks;
+static int passed;
+
+#define CHECK(label, condition) do { \
+    ++checks; \
+    if (condition) ++passed; \
+    else fprintf(stderr, "FAIL: %s\\n", label); \
+} while (0)
+
+static uint8_t g_pixels[16] = {
+    0, 0x35, 0, 0,
+    0x35, 0x35, 0x35, 0,
+    0, 0x35, 0, 0,
+    0, 0, 0, 0
+};
+
+static uint32_t fnv1a(const uint8_t *bytes, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    for (size_t i = 0; i < count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int fetch_material(void *user, int gdat_index, const uint8_t **pixels,
+                          int *width, int *height, int *stride)
+{
+    int expected = *(const int *)user;
+    if (gdat_index != expected) return -1;
+    *pixels = g_pixels;
+    *width = 4;
+    *height = 4;
+    *stride = 4;
+    return 0;
+}
+
+static int fetch_palette(void *user, int gdat_index, uint8_t palette[16],
+                         uint32_t *hash)
+{
+    int expected = *(const int *)user;
+    if (gdat_index != expected) return -1;
+    for (int i = 0; i < 16; ++i) palette[i] = (uint8_t)(0x30 + i);
+    *hash = fnv1a(palette, 16);
+    return 0;
+}
+
+static void setup(DM2_V1_ViewportState *viewport, uint8_t *framebuffer,
+                  DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt,
+                  int *expected_index)
+{
+    DM2_V1_G1WeaponMapChipMaterial *material;
+
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->valid = 1;
+    receipt->map = 7;
+    receipt->material_count = 1;
+    material = &receipt->materials[0];
+    material->object_id = 0x1401u;
+    material->x = 11;
+    material->y = 13;
+    material->direction = 2;
+    material->item_type = 0x22;
+    material->raw_hash = 1u;
+    material->raw_byte_count = 16u;
+    material->image_width = 4;
+    material->image_height = 4;
+    material->image_format = 3;
+    {
+        uint8_t palette[16];
+        for (int i = 0; i < 16; ++i) palette[i] = (uint8_t)(0x30 + i);
+        material->local_palette_hash = fnv1a(palette, 16);
+    }
+
+    *expected_index = dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0xf9);
+    dm2_v1_viewport_init(viewport, framebuffer, DM2_VP_WIDTH);
+    viewport->item_count = 1;
+    viewport->items[0].item_category = 0x10;
+    viewport->items[0].item_type = 0x22;
+    viewport->items[0].screen_x = 96;
+    viewport->items[0].screen_y = 88;
+    viewport->items[0].object_id = material->object_id;
+    viewport->items[0].map_x = material->x;
+    viewport->items[0].map_y = material->y;
+    viewport->items[0].direction = material->direction;
+    viewport->items[0].source_gdat_field = 0xf9;
+    viewport->items[0].source_g1_weapon = 1;
+    dm2_v1_viewport_set_g1_weapon_map_chip_materials(viewport, receipt);
+    dm2_v1_viewport_set_asset_provider(viewport, fetch_material, expected_index);
+    dm2_v1_viewport_set_asset_palette_provider(viewport, fetch_palette,
+                                                expected_index);
+    dm2_v1_viewport_set_source_materials_required(viewport, 1);
+}
+
+int main(void)
+{
+    DM2_V1_ViewportState viewport;
+    DM2_V1_G1WeaponMapChipRuntimeReceipt receipt;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    int expected_index;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    setup(&viewport, framebuffer, &receipt, &expected_index);
+    dm2_v1_render_items(&viewport);
+    CHECK("G1 DB5 item selects exact WEAPONS/type/F9 material",
+          viewport.asset_item_drawn_count == 1 &&
+              viewport.last_item_render.gdat_index == expected_index &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) == 0u);
+
+    memset(framebuffer, 0x7e, sizeof(framebuffer));
+    setup(&viewport, framebuffer, &receipt, &expected_index);
+    viewport.items[0].object_id ^= 1u;
+    dm2_v1_render_items(&viewport);
+    CHECK("altered G1 DB5 object identity blocks its viewport material",
+          viewport.asset_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0u &&
+              framebuffer[88 * DM2_VP_WIDTH + 96] == 0x7eu);
+
+    printf("DM2 G1 DB5 viewport material gate: %d/%d passed\n", passed, checks);
+    return passed == checks ? 0 : 1;
+}
