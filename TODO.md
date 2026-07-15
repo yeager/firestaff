@@ -3309,6 +3309,10 @@ real-data-present synthetic fallback candidate.
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 2026-07-15 Nexus FACE.BIN: portraits remain unavailable until authenticated
+   PRS3 decode evidence exists; all generic raw portrait materialization is
+   retired.
+
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
   a substitute flat-material path.
