@@ -1301,6 +1301,11 @@ typedef struct {
     int vdp1_register_0x04_write_proven;
     uint16_t vdp1_register_0x04_value;
     int vdp1_command_control_candidate_proven;
+    int vdp1_vram_base_literal_offset;
+    int vdp1_vram_base_load_offset;
+    int vdp1_vram_base_r14_store_offset;
+    int vdp1_vram_base_r14_store_proven;
+    int vdp1_vram_command_list_proven;
     int vdp1_register_0x06_write_proven;
     uint16_t vdp1_register_0x06_value;
     int vdp1_register_0x08_write_proven;

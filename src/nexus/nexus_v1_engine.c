@@ -2147,6 +2147,9 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
         UINT16_C(0xd438), UINT16_C(0xd336), UINT16_C(0xdd3a),
         UINT16_C(0x2321), UINT16_C(0x2011)
     };
+    static const uint16_t expected_vram_handoff_words[2] = {
+        UINT16_C(0xd234), UINT16_C(0x2e22)
+    };
     Nexus_V1_DmBinVdp1StateWriteReceipt receipt;
     uint8_t *data;
     int size = 0;
@@ -2156,6 +2159,9 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     memset(&receipt, 0, sizeof(receipt));
     receipt.code_window_offset = CODE_WINDOW_OFFSET;
     receipt.state_table_offset = STATE_TABLE_OFFSET;
+    receipt.vdp1_vram_base_literal_offset = STATE_TABLE_OFFSET + 36;
+    receipt.vdp1_vram_base_load_offset = 0x7d3e8;
+    receipt.vdp1_vram_base_r14_store_offset = 0x7d3ea;
     receipt.no_draw_only = 1;
     receipt.fallback_visuals_permitted = 0;
     if (!engine ||
@@ -2167,6 +2173,9 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     data = nexus_v1_read_file(engine, "DM.BIN", &size);
     if (!data || CODE_WINDOW_OFFSET + (int)sizeof(expected_code_words) > size ||
         CONTROL_WINDOW_OFFSET + (int)sizeof(expected_control_words) > size ||
+        receipt.vdp1_vram_base_r14_store_offset +
+            (int)sizeof(expected_vram_handoff_words) > size ||
+        receipt.vdp1_vram_base_literal_offset + 4 > size ||
         STATE_TABLE_OFFSET + 28 > size) {
         free(data);
         *out_receipt = receipt;
@@ -2193,6 +2202,17 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
             return 0;
         }
     }
+    for (word = 0;
+         word < (int)(sizeof(expected_vram_handoff_words) /
+                      sizeof(expected_vram_handoff_words[0]));
+         ++word) {
+        if (nexus_v1_dgn_read_be16(data + receipt.vdp1_vram_base_load_offset +
+                                   word * 2) != expected_vram_handoff_words[word]) {
+            free(data);
+            *out_receipt = receipt;
+            return 0;
+        }
+    }
     /* PC-relative source literals for D235, D136, D235, D336 and DD3A.
      * The immediately following MOV.W opcodes encode Rm -> @Rn, so the
      * observed dataflow is: 0x8000 -> 0x25d00006, zero -> 0x25d00008,
@@ -2206,6 +2226,11 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     receipt.vdp1_register_0x04_value = 2U;
     receipt.vdp1_command_control_candidate_proven =
         receipt.vdp1_register_0x04_write_proven;
+    /* The literal load and immediate MOV.L R2,@R14 prove a bounded memory
+     * handoff only. They do not identify R14 or a command-list address. */
+    receipt.vdp1_vram_base_r14_store_proven =
+        nexus_v1_dgn_read_be32(data + receipt.vdp1_vram_base_literal_offset) ==
+            UINT32_C(0x25c00000);
     receipt.vdp1_register_0x06_write_proven =
         nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 8) ==
             UINT32_C(0x00008000) &&
