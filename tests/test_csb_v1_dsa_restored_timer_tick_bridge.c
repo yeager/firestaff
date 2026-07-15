@@ -1249,5 +1249,48 @@ int main(void)
               profile.csbwin_first_avail_timer == 1u &&
               profile.csbwin_timer_sequence == 20u,
           "TT_1 uses Timer.cpp pool ownership for door requeue");
+
+    /* Deferred ProcessTT_FALSEWALL clear requeues at +1. Its successor must
+     * use DeleteTimer/SetTimer's source allocator rather than retaining the
+     * dispatched slot as an M10-side convenience. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    memset(profile.csbwin_timers, 0, sizeof(profile.csbwin_timers));
+    memset(profile.csbwin_timer_queue, 0, sizeof(profile.csbwin_timer_queue));
+    raw[80u] = 0x14u;
+    put_le16(raw, 62u, 0xfffeu);
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 0;
+    profile.csbwin_timer_summary_count = 2u;
+    profile.csbwin_timer_summary_total = 2u;
+    profile.csbwin_timer_queue_summary_count = 1u;
+    profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_max_timers = 2u;
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_first_avail_timer = 0u;
+    profile.csbwin_timer_sequence = 27u;
+    profile.csbwin_timers[0].valid = 1u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].function = DM1_EVENT_NONE;
+    profile.csbwin_timers[1].valid = 1u;
+    profile.csbwin_timers[1].source_index = 1u;
+    profile.csbwin_timers[1].function = 7u;
+    profile.csbwin_timers[1].ubyte9 = 1u;
+    profile.csbwin_timers[1].time = profile.game_time;
+    profile.csbwin_timer_queue[0] = 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80u] == 0x14u &&
+              profile.timeline_queue.eventCount == 1 &&
+              profile.csbwin_timer_queue[0] == 0u &&
+              profile.csbwin_timers[0].function == 7u &&
+              profile.csbwin_timers[0].source_index == 0u &&
+              profile.csbwin_timers[0].sequence == 27u &&
+              profile.csbwin_timers[0].time == profile.game_time &&
+              profile.csbwin_timers[1].function == DM1_EVENT_NONE &&
+              profile.csbwin_first_avail_timer == 1u &&
+              profile.csbwin_timer_sequence == 28u,
+          "TT_7 deferred clear uses Timer.cpp pool ownership");
     return failures == 0 ? 0 : 1;
 }
