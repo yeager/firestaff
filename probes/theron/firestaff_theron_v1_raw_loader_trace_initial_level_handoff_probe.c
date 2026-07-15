@@ -7,6 +7,7 @@
 #include "asset_status_m12.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_raw_loader_trace.h"
+#include "theron_v1_stage3_manifest_evidence.h"
 #include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
@@ -51,11 +52,17 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
                             size_t raw_size)
 {
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3ManifestEvidence manifest;
     size_t raw_offset;
 
     memset(out, 0, sizeof(*out));
     if (theron_v1_track02_capture_initial_level_object_boundary(
             raw, raw_size, md5, &boundary) != THERON_TRACK02_SIGNAL_OK ||
+        theron_v1_track02_inspect_stage2_dynamic_payload(
+            raw, raw_size, md5, &payload) != THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_stage3_manifest_evidence_from_payload(
+            raw, raw_size, &payload, &manifest) ||
         !boundary.valid || boundary.track02_record != 0x0b52u) {
         return;
     }
@@ -72,6 +79,16 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     out->later_track02_record = 0x0b52u;
     out->descriptor_selector = 0x067cu;
     out->descriptor_selector_ordinal = 0u;
+    if (manifest.descriptors[0].word2 != out->descriptor_selector) {
+        memset(out, 0, sizeof(*out));
+        return;
+    }
+    out->descriptor_word0 = manifest.descriptors[0].word0;
+    out->descriptor_word1 = manifest.descriptors[0].word1;
+    out->descriptor_record_user_data_hash = fnv1a_bytes(
+        raw + raw_offset, THERON_TRACK02_RAW_USER_DATA_BYTES);
+    out->descriptor_row_media_bound = 1;
+    out->descriptor_semantics_proven = 0;
     out->caller_pc = 0xea00u;
     out->return_pc = 0xea03u;
     out->later_caller_opcode = 0x20u;
@@ -443,6 +460,10 @@ int main(void)
         handoff.initial_level_semantics_proven ||
         !handoff.complete_payload_witness_proven ||
         handoff.complete_payload_bytes != THERON_TRACK02_RAW_USER_DATA_BYTES ||
+        !handoff.descriptor_row_media_bound ||
+        handoff.descriptor_semantics_proven ||
+        handoff.descriptor_record_user_data_hash !=
+            handoff.complete_payload_checksum ||
         !handoff.loader_intake.observed ||
         handoff.loader_intake.payload_intake_admitted ||
         handoff.loader_intake.record != handoff.observed_track02_record ||
@@ -471,6 +492,14 @@ int main(void)
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
         return 1;
     }
+    ++coalesced.descriptor_word0;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: altered descriptor row reached the loader handoff\n");
+        return 1;
+    }
+    --coalesced.descriptor_word0;
 
     {
         Theron_Track02InitialLevelLoaderSemanticReceipt direct_semantics;

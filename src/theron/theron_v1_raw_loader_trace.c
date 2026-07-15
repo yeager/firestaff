@@ -1,6 +1,7 @@
 #include "theron_v1_raw_loader_trace.h"
 
 #include "theron_v1_irq2_live_trace_gate.h"
+#include "theron_v1_later_record_correlation.h"
 #include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_stage3_manifest_evidence.h"
 
@@ -1393,6 +1394,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1Stage3Irq2DispatchReceipt stage3_dispatch;
     Theron_V1Stage3ManifestEvidence manifest;
+    Theron_V1Stage3DescriptorRecordBoundary descriptor_boundary;
     const char *cursor;
     const char *line;
     size_t length;
@@ -1473,6 +1475,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         !theron_v1_stage3_manifest_evidence_from_payload(
             track02_data, track02_size, &payload, &manifest)) return 0;
 
+    memset(&descriptor_boundary, 0, sizeof(descriptor_boundary));
     if (manifest.variant == THERON_TRACK02_VARIANT_JP_BIN) {
         variant_name = "jp_bin";
     } else if (manifest.variant == THERON_TRACK02_VARIANT_US_BIN) {
@@ -1608,7 +1611,16 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     for (ordinal = 0u; ordinal < manifest.descriptor_count; ++ordinal) {
         if (manifest.descriptors[ordinal].word2 == (uint16_t)selector) break;
     }
-    if (ordinal == manifest.descriptor_count) return 0;
+    if (ordinal == manifest.descriptor_count ||
+        !theron_v1_stage3_descriptor_record_boundary_from_manifest(
+            track02_data, track02_size, &manifest, ordinal,
+            &descriptor_boundary) ||
+        !descriptor_boundary.valid ||
+        !descriptor_boundary.record_coordinate_proven ||
+        !descriptor_boundary.mode1_user_data_proven ||
+        descriptor_boundary.descriptor_semantics_proven ||
+        descriptor_boundary.descriptor.word2 != selector ||
+        descriptor_boundary.resolved_track02_record != record) return 0;
 
     expected_span_checksum = tqr_trace_fnv1a_bytes(
         track02_data + (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES, 32u);
@@ -1638,6 +1650,12 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->later_track02_record = record;
     out->descriptor_selector = (uint16_t)selector;
     out->descriptor_selector_ordinal = ordinal;
+    out->descriptor_word0 = descriptor_boundary.descriptor.word0;
+    out->descriptor_word1 = descriptor_boundary.descriptor.word1;
+    out->descriptor_record_user_data_hash =
+        descriptor_boundary.user_data_hash;
+    out->descriptor_row_media_bound = 1;
+    out->descriptor_semantics_proven = 0;
     out->caller_pc = (uint16_t)caller_pc;
     out->return_pc = (uint16_t)return_pc;
     out->later_caller_opcode = (uint8_t)caller_opcode;
@@ -1677,6 +1695,16 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash ^= receipt->descriptor_selector;
     hash *= 16777619u;
     hash ^= (uint32_t)receipt->descriptor_selector_ordinal;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_word0;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_word1;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_record_user_data_hash;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_row_media_bound ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_semantics_proven ? 1u : 0u;
     hash *= 16777619u;
     hash ^= (uint32_t)receipt->complete_payload_bytes;
     hash *= 16777619u;
@@ -1768,6 +1796,10 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            receipt->initial_level_record_proven &&
            receipt->complete_initial_level_envelope_proven &&
            !receipt->initial_level_semantics_proven &&
+           receipt->descriptor_row_media_bound &&
+           !receipt->descriptor_semantics_proven &&
+           receipt->descriptor_record_user_data_hash ==
+               receipt->complete_payload_checksum &&
            receipt->complete_payload_witness_proven &&
            receipt->complete_payload_bytes == THERON_TRACK02_RAW_USER_DATA_BYTES &&
            receipt->complete_payload_checksum != 0u &&
@@ -1900,8 +1932,14 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     Theron_V1Track02LoaderPayloadReceipt loader_payload;
     Theron_V1Track02LoaderLevelEnvelopeReceipt loader_level_envelope;
     Theron_V1Track02LoaderPostEnvelopeReceipt loader_post_envelope;
+    Theron_Track02Stage2DynamicPayloadReceipt stage3_payload;
+    Theron_V1Stage3ManifestEvidence stage3_manifest;
+    Theron_V1Stage3DescriptorRecordBoundary descriptor_boundary;
 
     if (out) memset(out, 0, sizeof(*out));
+    memset(&stage3_payload, 0, sizeof(stage3_payload));
+    memset(&stage3_manifest, 0, sizeof(stage3_manifest));
+    memset(&descriptor_boundary, 0, sizeof(descriptor_boundary));
     if (!coalesced_receipt || !track02_data || !track02_md5 || !out ||
         !coalesced_receipt->valid ||
         !coalesced_receipt->stage3_post_irq2_resume_verified ||
@@ -1910,6 +1948,8 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         coalesced_receipt->stage3_continuation_pc != 0x3802u ||
         !coalesced_receipt->observation_order_verified ||
         !coalesced_receipt->selector_sector_bytes_verified ||
+        !coalesced_receipt->descriptor_row_media_bound ||
+        coalesced_receipt->descriptor_semantics_proven ||
         !coalesced_receipt->later_destination_local_ram_verified ||
         !coalesced_receipt->later_destination_media_span_verified ||
         !coalesced_receipt->later_destination_payload_verified ||
@@ -1930,6 +1970,29 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
          coalesced_receipt->variant != THERON_TRACK02_VARIANT_US_BIN) ||
         theron_v1_track02_variant_for_md5(track02_md5) !=
             coalesced_receipt->variant ||
+        theron_v1_track02_inspect_stage2_dynamic_payload(
+            track02_data, track02_size, track02_md5, &stage3_payload) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_stage3_manifest_evidence_from_payload(
+            track02_data, track02_size, &stage3_payload, &stage3_manifest) ||
+        !theron_v1_stage3_descriptor_record_boundary_from_manifest(
+            track02_data, track02_size, &stage3_manifest,
+            coalesced_receipt->descriptor_selector_ordinal,
+            &descriptor_boundary) ||
+        !descriptor_boundary.valid ||
+        !descriptor_boundary.record_coordinate_proven ||
+        !descriptor_boundary.mode1_user_data_proven ||
+        descriptor_boundary.descriptor_semantics_proven ||
+        descriptor_boundary.descriptor.word2 !=
+            coalesced_receipt->descriptor_selector ||
+        descriptor_boundary.descriptor.word0 !=
+            coalesced_receipt->descriptor_word0 ||
+        descriptor_boundary.descriptor.word1 !=
+            coalesced_receipt->descriptor_word1 ||
+        descriptor_boundary.resolved_track02_record !=
+            coalesced_receipt->later_track02_record ||
+        descriptor_boundary.user_data_hash !=
+            coalesced_receipt->descriptor_record_user_data_hash ||
         theron_v1_track02_capture_initial_level_object_boundary(
             track02_data, track02_size, track02_md5, &boundary) !=
             THERON_TRACK02_SIGNAL_OK ||
@@ -2029,6 +2092,12 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     out->descriptor_selector = coalesced_receipt->descriptor_selector;
     out->descriptor_selector_ordinal =
         coalesced_receipt->descriptor_selector_ordinal;
+    out->descriptor_word0 = coalesced_receipt->descriptor_word0;
+    out->descriptor_word1 = coalesced_receipt->descriptor_word1;
+    out->descriptor_record_user_data_hash =
+        coalesced_receipt->descriptor_record_user_data_hash;
+    out->descriptor_row_media_bound = 1;
+    out->descriptor_semantics_proven = 0;
     out->coalesced_loader_cd_receipt_proven = 1;
     out->initial_level_record_proven = 1;
     out->complete_initial_level_envelope_proven = 1;

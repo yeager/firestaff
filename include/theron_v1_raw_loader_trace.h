@@ -101,6 +101,15 @@ typedef struct {
     uint32_t later_track02_record;
     uint16_t descriptor_selector;
     size_t descriptor_selector_ordinal;
+    /* The complete source descriptor row selected by the observed loader
+     * call. word2 is the selector above; word0/word1 remain raw, unclassified
+     * table bytes. The row is retained only after its resolved MODE1 sector
+     * matches the same captured CD-read payload. */
+    uint16_t descriptor_word0;
+    uint16_t descriptor_word1;
+    uint32_t descriptor_record_user_data_hash;
+    int descriptor_row_media_bound;
+    int descriptor_semantics_proven;
     uint16_t caller_pc;
     uint16_t return_pc;
     uint8_t sector_count;
@@ -157,6 +166,14 @@ typedef struct {
     uint32_t later_track02_record;
     uint16_t descriptor_selector;
     size_t descriptor_selector_ordinal;
+    /* Exact raw descriptor row selected by the observed later CD_READ.
+     * word2 is `descriptor_selector`; word0/word1 are held without a format
+     * claim. The hash identifies that selected sector's original user data. */
+    uint16_t descriptor_word0;
+    uint16_t descriptor_word1;
+    uint32_t descriptor_record_user_data_hash;
+    int descriptor_row_media_bound;
+    int descriptor_semantics_proven;
     uint16_t caller_pc;
     uint16_t return_pc;
     /* Exact caller instruction bytes observed by the capture hook. This proves
@@ -345,6 +362,11 @@ typedef struct {
     uint32_t observed_track02_record;
     uint16_t descriptor_selector;
     size_t descriptor_selector_ordinal;
+    uint16_t descriptor_word0;
+    uint16_t descriptor_word1;
+    uint32_t descriptor_record_user_data_hash;
+    int descriptor_row_media_bound;
+    int descriptor_semantics_proven;
     int coalesced_loader_cd_receipt_proven;
     int initial_level_record_proven;
     int complete_initial_level_envelope_proven;

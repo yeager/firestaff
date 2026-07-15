@@ -18575,6 +18575,19 @@ focused descriptor probe covers valid coordinates and rejection of malformed
 MODE1/zero-selector records. Verification: Ninja probe, `test_theron_rendering`
 18/18, and `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 full descriptor-row handoff
+
+The authenticated later `$e009` route now carries the complete raw Stage-3
+descriptor row into the runtime handoff: descriptor ordinal, `word0`, `word1`,
+selector `word2`, resolved Track 02 record, and the selected MODE1 user-data
+hash. Firestaff independently derives those values from canonical Track 02
+bytes before accepting the coalesced loader receipt; changed row bytes or a
+changed selected sector reject the handoff. The row remains explicitly opaque:
+no level, object table, tile, palette, bitmap, command, or visual semantics
+are promoted. Verification: focused raw-handoff probe (skip-safe without the
+authentic corpus), `test_theron_rendering` 18/18, and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
