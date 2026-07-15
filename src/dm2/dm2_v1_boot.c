@@ -1146,11 +1146,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     gs->party_dir = 0;  /* North */
     gs->current_level = 0;
     gs->outdoor = 0;
-    if (dd->initial_party_pose_valid) {
-        gs->party_x = dd->initial_party_x;
-        gs->party_y = dd->initial_party_y;
-        gs->party_dir = dd->initial_party_dir;
-    }
+    /* Keep DUNGEON.DAT's decoded header pose on DM2_V1_DungeonData as
+     * corpus evidence only.  skproject's T520 NEW GAME route places the
+     * starter party at the Skullkeep Hall-of-Champions pose above; promoting
+     * the header field here makes archive-backed launches enter the dungeon
+     * at the wrong square and breaks save/resume identity. */
 
     profile->dm2_state = gs;
     profile->dungeon_data = dd;

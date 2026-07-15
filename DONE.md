@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 NEW GAME boot-pose routing: archive-backed DM2 launches
+  now keep the decoded `DUNGEON.DAT` header pose as corpus evidence only and
+  start runtime at skproject/T520's Hall-of-Champions pose `(15,15,N)`. This
+  removed the M11 boot-pose mirror/runtime accessor failures without adding
+  synthetic party or dungeon state.
+
 - ✅ 2026-07-15 DM2 archive-backed real data startup: verified virtual
   `GRAPHICS.DAT`/`DUNGEON.DAT` paths from archive discovery now materialize
   into temporary byte-for-byte inputs for the DM2 boot parsers instead of
