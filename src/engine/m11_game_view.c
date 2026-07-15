@@ -25842,7 +25842,10 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    /* A dimension-bearing cache record is not a drawable PC34 surface.
+     * F0387/F0394 may present only decoded GRAPHICS.DAT pixels. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
     if ((int)slot->width != expectedW || (int)slot->height != expectedH) {
@@ -33291,14 +33294,6 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                            renderPlan->graphic_rect.x,
                                            renderPlan->graphic_rect.y,
                                            -1);
-            } else {
-                (void)m11_blit_panel_asset_native(state,
-                    framebuffer, framebufferWidth, framebufferHeight,
-                    renderPlan->graphic_id,
-                    renderPlan->clear_rect.w,
-                    renderPlan->clear_rect.h,
-                    renderPlan->clear_rect.x,
-                    renderPlan->clear_rect.y);
             }
         }
     }

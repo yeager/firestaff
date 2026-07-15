@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0387 action-menu follow-up: C079/C077/C011 now require
+  exact loaded PC34 pixels for one/two/three action rows; a malformed or
+  unavailable menu surface preserves the F0387 black clear. Remaining work
+  is real PC34/Mac capture of action-menu transitions and hit targets. Do not
+  restore a permissive bitmap blit, procedural panel, or host-font route.
+
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
   at source status geometry. Remaining work is a real PC34/Mac capture for
