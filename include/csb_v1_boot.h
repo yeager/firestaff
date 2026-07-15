@@ -850,6 +850,14 @@ typedef enum CSB_V1_StartupAudioAction_PC34 {
     CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34
 } CSB_V1_StartupAudioAction_PC34;
 
+enum {
+    CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 = 224,
+    CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 = 136,
+    CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 = 144,
+    CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 = 73,
+    CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34 = 6
+};
+
 typedef struct CSB_V1_StartupPlaybackState_PC34 {
     CSB_V1_StartupPlaybackStage_PC34 stage;
     CSB_V1_StartupStage_PC34 title_stage;
@@ -858,6 +866,11 @@ typedef struct CSB_V1_StartupPlaybackState_PC34 {
     int swoosh_active;
     int entrance_music_active;
     int entrance_complete;
+    int entrance_scene_presented;
+    int door_frame_presented;
+    int last_door_opening_step;
+    int next_door_opening_step;
+    int entrance_special_palette;
     int no_fallback_routes;
 } CSB_V1_StartupPlaybackState_PC34;
 

@@ -9,6 +9,28 @@
   `dm2_v1_save_load`, and `dm2_v1_runtime_handoff_smoke` pass in
   `build-local-ninja`.
 
+- ✅ 2026-07-16 CSB terminal door-runtime handoff hardening: the CSB
+  entrance-to-runtime receipt now rejects legacy one-byte C017/C040 wrapper
+  shapes, incomplete PRESENTS/CHAOS/STRIKES playback, stale door-open state,
+  non-neutral C040 transparency, and mismatched GRAPHICS.DAT ownership before
+  publishing HUD-ready. The live handoff requires the runtime mirror and exact
+  C017 224x136 / C040 144x73 source surfaces from the verified CSB session.
+  Verification: focused strict C11 direct build/run of
+  `test_csb_v1_startup_terminal_handoff_real_data_pc34_compat`, plus strict
+  object builds for `csb_v1_boot.c` and
+  `csb_v1_startup_runtime_surfaces_pc34_compat.c`.
+
+- ✅ 2026-07-16 CSB terminal startup HUD receipt gate: the verified CSB
+  startup session now carries title phase mask, entrance-door completion,
+  terminal C017/C040 source identity, neutral-palette live HUD raster, and
+  stale tick/generation rejection through a CSB-owned receipt. ReDMCSB
+  `TITLE.C F0437`, `ENTRANCE.C F0806/F0807`, and `PANEL.C F0346/F0347`
+  remain the source boundary; no synthetic title, door, or HUD fallback can
+  satisfy this gate. Verification: strict C11 object builds for
+  `csb_v1_startup_playback_pc34_compat.c`,
+  `csb_v1_startup_runtime_surfaces_pc34_compat.c`, and
+  `csb_v1_startup_terminal_receipt_pc34_compat.c`.
+
 - ✅ 2026-07-16 DM1 spell-HUD material bundle gate: M11 now requires the
   complete source-owned spell HUD bundle before rendering an open spell
   panel: exact loaded C009 pixels, exact loaded C011 pixels, and a verified
@@ -853,7 +875,6 @@
   its actual explosion consumer. Focused coverage:
   `m11_dm1_f0115_material_asset_fail_closed` and
   `m11_dm1_explosion_asset_fail_closed`.
-=======
 - ✅ 2026-07-15 DM2 source per-square-light gate: source-required M11
   projection no longer writes the synthetic full-light value `15` into G1
   squares. The existing GRAPHICSSET transaction proves only ambient controls;
@@ -865,7 +886,6 @@
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_60 pool mutation: the authenticated
   party-square +5 successor now retires the due source receipt and requeues
   through the original TIMER allocator, rather than rewriting its old slot.
-=======
 - ✅ 2026-07-15 DM1 ReDMCSB F0114 source explosion-material gate: D1–D3
   scaled explosion sprites and the separate D0C M636 pattern now accept only
   decoded loaded-pixel `GRAPHICS.DAT` surfaces. Dimension-only cache entries
@@ -883,7 +903,6 @@
   TT_1 successor through `SetTimer` allocation, sequence, and heap ownership.
   The staged event is removed if the complete source pool transaction cannot
   commit. Focused coverage proves a conversion moves from slot 1 to slot 0.
-=======
 - ✅ 2026-07-15 DM1 ReDMCSB F0113 source teleporter-field gate: the live M11
   consumer now requires both decoded C076 field pixels and every required
   C070..C075 projection mask before it writes a viewport pixel. Missing or
@@ -903,7 +922,6 @@
   cell changes only after the full timer/event ownership transaction commits.
   Focused coverage proves a nonterminal door successor moves from slot 1 to
   slot 0 with its exact +1 source time.
-=======
 - ✅ 2026-07-15 DM1 ReDMCSB F0387 source action-menu gate: active V1
   one/two/three action rows accept only decoded loaded-pixel PC34
   C079/C077/C011 surfaces at their original geometry. A failed validation now
