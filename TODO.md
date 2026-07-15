@@ -31,9 +31,11 @@
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
   resolution, square lookup, relative square lookup, and relative square type;
-  the audit rows are closed as `VERIFIED_SOURCE_MAPPING`. Remaining
+  `F0222` and `F0223` are now closed with a focused raw C04 chain and
+  source-square-type gate test. The audit rows are closed as
+  `VERIFIED_SOURCE_MAPPING`. Remaining
   prioritized backlog symbols are `F0139`, `F0173`, `F0174`,
-  `F0179`-`F0193`, `F0208`, and `F0222`-`F0224`. Prefer the next
+  `F0179`-`F0193`, `F0208`, and `F0224`. Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
   audit hits as implementation evidence. Note: `tools/symbol_backlog.py` was
@@ -492,10 +494,12 @@
   phases or replace the capture with a synthetic frame sequence.
 
 - 2026-07-15 DM1 F0223 follow-up: raw target-square allow classification is
-  complete; F0224 still needs real Lord Chaos escape-route capture.
+  complete and source-locked by `test_dm1_v1_endgame_system_pc34_compat`;
+  F0224 still needs real Lord Chaos escape-route capture.
 
 - 2026-07-15 DM1 F0222 follow-up: F0224/FUSE still needs broader real-map
-  route capture; do not substitute a creature-type-only result for raw C04.
+  route capture; the F0222 raw C04 lookup itself is now source-locked by
+  `test_dm1_v1_endgame_system_pc34_compat`.
 
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
   retain bounded bytes plus FNV provenance. Runtime now admits CSBWin's full
