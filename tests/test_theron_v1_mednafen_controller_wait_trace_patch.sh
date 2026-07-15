@@ -24,6 +24,7 @@ main_ram_e009_owner_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e00
 main_ram_loader_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace.patch
 control_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_control_window_trace.patch
 game_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_game_window_trace.patch
+parameter_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_parameter_window_trace.patch
 fifo_origin_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch
 later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
@@ -173,6 +174,12 @@ if ! grep -Fq 'main_ram_control_read sequence=%u logical_address=%04x physical_a
     printf 'FAIL: main-RAM window patches no longer retain bounded reader provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'main_ram_parameter_window_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x' "$parameter_window_patch_file" ||
+   ! grep -Fq 'physical_address >= 0x1f01e5 && physical_address <= 0x1f01e7' "$parameter_window_patch_file" ||
+   ! grep -Fq 'TheronPCECDParameterWindowReadCount >= 128' "$parameter_window_patch_file"; then
+    printf 'FAIL: parameter-window patch no longer retains bounded lookup provenance\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'pce_cd_data_origin sequence=%u cpu_pc=%04x port=%04x source_generation=%u source_lba=%u source_offset=%u data=%02x' "$fifo_origin_patch_file" ||
    ! grep -Fq 'TheronSCSITraceCurrentDataOrigin' "$fifo_origin_patch_file" ||
    ! grep -Fq 'TheronSCSITraceQueueDataOrigin(true, source_lba' "$fifo_origin_patch_file"; then
@@ -239,4 +246,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$later_generation_filter_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$origin_ram_receipt_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$game_owned_origin_ram_receipt_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$parameter_window_patch_file"
 printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'

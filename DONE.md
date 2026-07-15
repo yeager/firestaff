@@ -16700,6 +16700,21 @@ palette, or visual meaning was inferred.
 Verification: `test_theron_v1_post_generation7_cdb_parameter_receipt` and
 the authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
 
+# ✅ 2026-07-15 Theron post-G7 parameter-window reader trace
+
+Mednafen's authentic trace pipeline now records every physical read of the
+post-G7 parameter-shadow window `0x1f01e5..0x1f01e7`, including its logical
+address, value, and logical/physical reader PC. The receipt is bounded to 128
+rows and is appended after all existing source-to-RAM provenance patches, so
+it cannot alter CDB, FIFO, controller, or emulated input behavior. It is
+fail-closed evidence only: the existing G8--G10 trace predates this reader
+instrumentation, while a new passive MD5-pinned media run reached only the
+System Card wait. There is therefore no claimed lookup, loader-table,
+game-owned consumer, record-table, or semantic binding yet.
+
+Verification: full `test_theron_v1_mednafen_controller_wait_trace_patch`
+dry-run against Mednafen 1.32.1 source.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer

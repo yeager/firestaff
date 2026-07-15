@@ -6329,6 +6329,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the unobserved parameter source/consumer is still required. A passive
   MD5-pinned CUE capture reached only the System Card wait and is explicitly
   excluded from this route proof.
+  2026-07-15 update: the Mednafen trace now records every actual read of the
+  `0x1f01e5..0x1f01e7` parameter shadow with logical/physical reader PC and
+  value, bounded to 128 rows. Existing G8--G10 capture predates that receipt;
+  the new passive capture never reached G7 and emitted none. Consequently no
+  System Card lookup, game-owned reader, loader-table address, or record-table
+  interpretation is yet admitted. The next capture must reach G8--G10 and
+  yield this reader receipt before any table binding.
   Generation 4 is separate: CDB `080010891100` reads LBA `4233..4249` / Track
   02 records `0x4c8..0x4d8`; its observed FIFO and `0x1f0256..0x1f0259` stores
   are System Card-owned. No game-RAM or level/object consumer is admitted.
