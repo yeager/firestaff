@@ -15590,6 +15590,14 @@ Button, DoorType, ButtonState, OpeningDir, ornate index, and fireball/chopping
 flags. `w0`, map attachment, and every record link remain opaque. Verification:
 focused save/load 26/26 with a source-sized DB0 record and invalid-index gate.
 
+# ✅ 2026-07-15 DM2 raw SKSave DB3 Actuator receipt
+
+The original-save corpus path now decodes only `SKWIN/DME.h::Actuator`
+`w2/w4/w6` from a hash-bound DB3 record: type/data, graphics and action flags,
+and target direction/cell. It does not execute the actuator, attach it to a
+tile, or inspect `w0`. Verification: focused save/load 26/26 with a
+source-sized DB3 record plus invalid-index rejection.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at

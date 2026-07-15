@@ -255,6 +255,25 @@ typedef struct {
     uint8_t bashable_by_chopping;
 } DM2_V1_OriginalRawDoorReceipt;
 
+/* Source-limited SKWIN/DME.h::Actuator w2/w4/w6 decode from DB3 only. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint8_t actuator_type;
+    uint16_t actuator_data;
+    uint8_t graphic_number;
+    uint8_t disabled;
+    uint8_t delay;
+    uint8_t sound_effect;
+    uint8_t revert_effect;
+    uint8_t action_type;
+    uint8_t once_only;
+    uint8_t active_status;
+    uint8_t target_direction;
+    uint8_t target_x;
+    uint8_t target_y;
+} DM2_V1_OriginalRawActuatorReceipt;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -358,6 +377,11 @@ int dm2_v1_original_raw_sksave_door_receipt(
     size_t buf_size,
     int record_index,
     DM2_V1_OriginalRawDoorReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_actuator_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawActuatorReceipt *out_receipt);
 
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only
