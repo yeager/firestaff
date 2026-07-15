@@ -2447,14 +2447,14 @@ static void test_eye_panel_weapon_attribute_flags(void) {
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
-    ASSERT_EQ(framebuffer[(33 + 52) * 320 + 80], 3,
-              "drawn object-description panel border starts at source C101");
-    ASSERT_EQ(framebuffer[(33 + 53) * 320 + 103], 12,
-              "drawn object-description circle starts at source C504");
-    ASSERT_EQ(framebuffer[(33 + 59) * 320 + 111], 13,
-              "drawn object-description icon fallback is anchored at source C505");
-    ASSERT_EQ(framebuffer[(33 + 64) * 320 + 134], 13,
-              "drawn object-description name text starts in source C506");
+    ASSERT_EQ(framebuffer[(33 + 52) * 320 + 80], 0,
+              "unavailable C020 leaves the C017-cleared panel untouched");
+    ASSERT_EQ(framebuffer[(33 + 53) * 320 + 103], 0,
+              "unavailable C029 does not draw a host circle");
+    ASSERT_EQ(framebuffer[(33 + 59) * 320 + 111], 0,
+              "unavailable object icon does not draw a host placeholder");
+    ASSERT_EQ(framebuffer[(33 + 64) * 320 + 134], 0,
+              "unavailable M653 font does not draw host description text");
     ASSERT_TRUE(strstr(state.inspectDetail, "CURSED") != NULL,
                 "weapon eye panel reports source cursed flag");
     ASSERT_TRUE(strstr(state.inspectDetail, "POISONED") != NULL,

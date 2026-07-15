@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 object-description source-material gate: normal V1
+  F0342 uses only exact loaded-pixel C020 (panel), C029 (circle), real object
+  icon pixels, and the loaded M653 font. The continuation text now begins at
+  source C556 rather than a host-selected Y coordinate. Missing source media
+  preserves the C017-cleared surface with no replacement panel/circle/icon or
+  host-font text. Focused inventory runtime coverage checks both unavailable
+  no-draw behavior and authentic C020/C029 presentation.
+
 - 2026-07-15 CSB C033-C035 status-hand source gate: CSB F0291 hand slots
   now require the exact 18x18 GRAPHICS.DAT C033/C034/C035 source surface.
   A missing or malformed hand box leaves the C12 F0292 status clear intact
