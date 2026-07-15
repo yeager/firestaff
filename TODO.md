@@ -3360,6 +3360,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       Its live runtime binding remains closed: Firestaff currently lacks an
       original owner for `PartySleeping`, so it cannot assemble a partial
       result from profile and character-tail fields.
+    - 2026-07-15 character-fetch update: authenticated `STKOP_CharFetch`
+      now preserves CSBWin's `(character,index,num)` stack order, 59-word
+      CHARDESC image, invalid-character zero image, and the distinct
+      oversized-destination partial zero-copy rule. Its live runtime binding
+      remains closed until one owner retains hand-character resolution, Wings,
+      pending damage, attributes, skills, and every source CHARDESC field.
     - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
       `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
       compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors

@@ -52,6 +52,7 @@ static int missile_info_store_count;
 static uint32_t missile_info_stored[4];
 static int mastery_enabled;
 static int party_info_enabled;
+static int character_info_enabled;
 
 static int wing_talents_enabled;
 
@@ -336,6 +337,24 @@ static int get_party_info(void *user, uint32_t out_values[12])
     return 1;
 }
 
+static int get_character_info(void *user, int32_t character_selector,
+                              uint32_t out_values[59])
+{
+    uint32_t i;
+
+    (void)user;
+    if (!character_info_enabled || !out_values) return -1;
+    if (character_selector == 99) return 0;
+    if (character_selector != 4) return -1;
+    for (i = 0u; i < 59u; ++i) out_values[i] = 1000u + i;
+    out_values[0] = 3u;
+    out_values[1] = 800u;
+    out_values[2] = 90u;
+    out_values[57] = 0x1234u;
+    out_values[58] = 0x00f0u;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -459,6 +478,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     }
     if (mastery_enabled) context.get_mastery = get_mastery;
     if (party_info_enabled) context.get_party_info = get_party_info;
+    if (character_info_enabled) context.get_character_info = get_character_info;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -706,6 +726,26 @@ int main(void)
     };
     uint16_t party_fetch_bad_span[] = {
         0x0686u, 99u, 0x0686u, 2u, 0x100bu
+    };
+    uint16_t character_fetch_head[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 59u, 0x104bu,
+        0x0686u, 26u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t character_fetch_tail[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 59u, 0x104bu,
+        0x0686u, 7u, 0x0686u, 52u, 0x0a4bu
+    };
+    uint16_t character_fetch_invalid[] = {
+        0x0686u, 99u, 0x0686u, 0u, 0x0686u, 26u, 0x104bu,
+        0x0686u, 26u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t character_fetch_bad_span[] = {
+        0x0686u, 4u, 0x0686u, 99u, 0x0686u, 2u, 0x104bu,
+        0x0686u, 1u, 0x0686u, 99u, 0x0a4bu
+    };
+    uint16_t character_fetch_negative[] = {
+        0x0786u, 0xffffu, 0xffffu, 0x0686u, 0u, 0x0686u, 1u, 0x104bu,
+        0x0686u, 1u, 0x0686u, 0u, 0x0a4bu
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1206,6 +1246,63 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "PARTY@ rejects without a complete GAMEBLOCK2 owner");
+    character_info_enabled = 1;
+    {
+        uint32_t character_parameters[26] = { 0u };
+
+        check(run_with_parameter_count(
+                  &state, &action, character_fetch_head,
+                  (int)(sizeof(character_fetch_head) /
+                        sizeof(character_fetch_head[0])), character_parameters,
+                  26, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              character_parameters[0] == 3u &&
+              character_parameters[1] == 800u &&
+              character_parameters[2] == 90u &&
+              character_parameters[25] == 1025u,
+              "CHAR@ copies source CHARDESC head words in order");
+        memset(character_parameters, 0, sizeof(character_parameters));
+        check(run_with_parameter_count(
+                  &state, &action, character_fetch_tail,
+                  (int)(sizeof(character_fetch_tail) /
+                        sizeof(character_fetch_tail[0])), character_parameters,
+                  26, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              character_parameters[0] == 1052u &&
+              character_parameters[4] == 1056u &&
+              character_parameters[5] == 0x1234u &&
+              character_parameters[6] == 0x00f0u,
+              "CHAR@ copies source skill tail, fingerprint, and talents");
+        memset(character_parameters, 0xff, sizeof(character_parameters));
+        check(run_with_parameter_count(
+                  &state, &action, character_fetch_invalid,
+                  (int)(sizeof(character_fetch_invalid) /
+                        sizeof(character_fetch_invalid[0])), character_parameters,
+                  26, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              character_parameters[0] == 0u && character_parameters[25] == 0u,
+              "CHAR@ preserves the source invalid-character zero image");
+        memset(character_parameters, 0x5a, sizeof(character_parameters));
+        check(run_with_parameter_count(
+                  &state, &action, character_fetch_bad_span,
+                  (int)(sizeof(character_fetch_bad_span) /
+                        sizeof(character_fetch_bad_span[0])), character_parameters,
+                  26, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              character_parameters[0] == 0u,
+              "CHAR@ zeroes the source oversized destination tail");
+    }
+    character_info_enabled = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, character_fetch_negative,
+              (int)(sizeof(character_fetch_negative) /
+                    sizeof(character_fetch_negative[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0u,
+          "CHAR@ preserves the source negative-selector zero image");
+    parameters[0] = 77u;
+    check(run(&state, &action, character_fetch_head,
+              (int)(sizeof(character_fetch_head) /
+                    sizeof(character_fetch_head[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "CHAR@ rejects without a complete CHARDESC owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

@@ -1457,6 +1457,42 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             }
         }
         break;
+    case 65u: /* STKOP_CharFetch, CSBWin DSA.cpp:4167-4253. */
+        /* CHAR@ consumes character selector, DSAVARS index, then count. The
+         * source zeroes the result for an oversized destination or an invalid
+         * character, but still copies the part that fits below DSAVARS[100].
+         * The real owner resolves hand selector four, Wings, PendingDamage,
+         * attributes, and skills as one coherent CHARDESC image. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        {
+            uint32_t character_values[59] = { 0u };
+            int result_available = 0;
+
+            if ((uint32_t)(v + count) <=
+                CSB_V1_CSBWIN_DSA_VARIABLE_COUNT && count != 0u &&
+                v <= 99u && (int32_t)w >= 0) {
+                if (!context->get_character_info) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                result_available = context->get_character_info(
+                    context->dungeon_user, (int32_t)w, character_values);
+                if (result_available < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                if (result_available == 0) {
+                    memset(character_values, 0, sizeof(character_values));
+                }
+            }
+            if (count > 59u) count = 59u;
+            for (result = 0u; result < count; ++result) {
+                if ((uint32_t)(v + result) > 99u) break;
+                variables[v + result] = character_values[result];
+                variable_state[v + result] = 1u;
+            }
+        }
+        break;
     case 57u: /* STKOP_CellFetch */
         /* CSBWin DSA.cpp:3676-3835 zeroes the requested DSAVARS run, then
          * overlays the real CELLFLAG/DB0/DB1 data for a valid LOCATIONREL.
@@ -2634,6 +2670,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_missile_info = runner->set_missile_info;
     context.get_mastery = runner->get_mastery;
     context.get_party_info = runner->get_party_info;
+    context.get_character_info = runner->get_character_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
