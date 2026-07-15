@@ -35,6 +35,8 @@ int main(int argc, char **argv)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RuntimeMapCreatureReceipt creatures;
     DM2_V1_G1RuntimeMapCreatureReceipt sentinel;
+    const unsigned char *first_record;
+    const unsigned char *fourth_record;
 
     if (argc != 2 || !(bytes = read_file(argv[1], &size)) ||
         bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
@@ -52,16 +54,28 @@ int main(int argc, char **argv)
         creatures.generic_record_reads != 0 || creatures.blocked_record_reads != 0 ||
         creatures.creatures[0].x != 4 || creatures.creatures[0].y != 4 ||
         creatures.creatures[0].object_id != 0x1098 ||
-        creatures.creatures[0].index != 152 || creatures.creatures[0].direction != 0 ||
+        creatures.creatures[0].index != 152 ||
         creatures.creatures[0].creature_type != 10 ||
         creatures.creatures[0].hit_points_1 != 0 ||
         creatures.creatures[3].x != 5 || creatures.creatures[3].y != 5 ||
         creatures.creatures[3].object_id != 0x10a8 ||
-        creatures.creatures[3].index != 168 || creatures.creatures[3].direction != 0 ||
+        creatures.creatures[3].index != 168 ||
         creatures.creatures[3].creature_type != 1 ||
         creatures.creatures[3].hit_points_1 != 0) {
         dm2_v1_dungeon_free(&dungeon);
         fputs("FAIL: direct DB4 Creature receipt changed canonical source fields\n",
+              stderr);
+        return 1;
+    }
+    first_record = dm2_v1_dungeon_get_thing_record(
+        &dungeon, creatures.creatures[0].object_id, NULL, NULL, NULL);
+    fourth_record = dm2_v1_dungeon_get_thing_record(
+        &dungeon, creatures.creatures[3].object_id, NULL, NULL, NULL);
+    if (!first_record || !fourth_record ||
+        creatures.creatures[0].direction != (first_record[15] & 3u) ||
+        creatures.creatures[3].direction != (fourth_record[15] & 3u)) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: direct DB4 Creature receipt did not use b15 facing\n",
               stderr);
         return 1;
     }

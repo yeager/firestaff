@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject DB4 creature facing: direct G1 creature receipts
+  and `CREATURES/type/F9` material now use `Creature::b15_0_1()` for the
+  `DRAW_MAP_CHIP` view-relative atlas direction, rather than ObjectID bits.
+  The focused graph gate mutates only the original DB4 b15 byte and proves
+  that the source-owned material receipt carries that facing.
+
 - 2026-07-15 DM1 DUNGEON/OBJECT F0141/F0032/F0033: added the exact PC3.4
   raw Thing-to-G0237 path for object-info index, base icon, and dynamic icon
   variants. The resolver reads only F0156-owned raw records and preserves

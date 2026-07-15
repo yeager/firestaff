@@ -1783,8 +1783,9 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
     int column_index = 0;
 
     /* skproject SKULLWIN/c_map.cpp obtains the root before c_record.cpp's
-     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Creature names b4 CreatureType and
-     * w6 HP1; no link or possession ObjectID is read by this receipt. */
+     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Creature names b4 CreatureType,
+     * w6 HP1, and b15 bits 0..1 as the facing consumed by DRAW_MAP_CHIP;
+     * no link or possession ObjectID is read by this receipt. */
     if (!out || !d || !d->raw_data ||
         !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
         !validation.committed || !validation.incomplete_world) {
@@ -1823,7 +1824,7 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
                 creature->y = y;
                 creature->object_id = root;
                 creature->index = root & 0x03ff;
-                creature->direction = (uint8_t)(root >> 14);
+                creature->direction = (uint8_t)(record[15] & 3u);
                 creature->creature_type = record[4];
                 creature->hit_points_1 = RD16(record + 6);
                 ++candidate.creature_record_reads;
@@ -3248,7 +3249,9 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
             material->x = x;
             material->y = y;
             material->object_id = root;
-            material->direction = (uint8_t)(root >> 14);
+            /* DRAW_MAP_CHIP uses Creature::b15_0_1(), not the ObjectID
+             * direction bits, to select the view-relative atlas frame. */
+            material->direction = (uint8_t)(record[15] & 3u);
             material->creature_type = creature_type;
             material->raw_byte_count = raw_byte_count;
             material->raw_hash = dm2_v1_g1_raw_hash(raw_map_chip,
