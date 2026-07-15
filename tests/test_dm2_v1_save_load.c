@@ -1358,6 +1358,8 @@ static int test_raw_sksave_resume_import(void)
         dungeon_receipt.column_index_count != 4u ||
         dungeon_receipt.ground_stack_count != 0u ||
         dungeon_receipt.text_word_count != 0u ||
+        dungeon_receipt.db_pool_offsets[0] != 68u ||
+        dungeon_receipt.map_data_offset != 68u ||
         dungeon_receipt.prefix_hash == 0u ||
         dungeon_receipt.map_data_hash == 0u ||
         dungeon_receipt.suppress_state_offset != 88u) {

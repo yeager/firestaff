@@ -1023,11 +1023,13 @@ static int dm2_v1_parse_raw_sksave_dungeon_prefix(
         if (bytes != 0u && pool_bytes / bytes != count) return 0;
         if (pool_bytes > buf_size - cursor) return 0;
         candidate.db_record_counts[i] = (uint16_t)count;
+        candidate.db_pool_offsets[i] = cursor;
         candidate.db_pool_hashes[i] = dm2_v1_raw_sksave_hash(
             buf + cursor, pool_bytes);
         cursor += pool_bytes;
     }
     if (map_data_bytes > buf_size - cursor) return 0;
+    candidate.map_data_offset = cursor;
     candidate.map_data_hash = dm2_v1_raw_sksave_hash(buf + cursor,
                                                      map_data_bytes);
     cursor += map_data_bytes;
