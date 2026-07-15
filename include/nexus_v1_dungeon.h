@@ -2025,6 +2025,8 @@ typedef struct {
     const uint8_t *packed_4bpp_texels;
     int source_hash_verified;
     int packed_4bpp_valid;
+    int blocked_missing_vdp1_command_provenance;
+    int original_vdp1_capture_verified;
     int texel_order_proven;
     int draw_authorized;
 } Nexus_V1_DgnCommandPacked4BppMaterial;
@@ -2048,6 +2050,8 @@ typedef struct {
     int special_floor_binding_count;
     int source_cell_match_count;
     int command_material_count;
+    int blocked_missing_vdp1_command_provenance_count;
+    int original_vdp1_capture_verified_count;
     int blocked_invalid_binding_count;
     int blocked_invalid_command_count;
     int blocked_source_cell_mismatch_count;
