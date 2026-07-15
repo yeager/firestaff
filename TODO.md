@@ -5952,6 +5952,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
+- 🔧 2026-07-15 Track 02 post-Stage-2 `$e00f` service boundary: the same
+  authentic 45-second boot receipt now covers direct non-System-Card calls to
+  both System Card loader entries. Across two Stage-2 returns and 52 observed
+  post-stage physical code pages, the only `$e00f` call is the already-known
+  Stage-2 `$40a4 -> $e00f` setup, with `ff0000`/`ffff`/`ff` sentinel fields;
+  the only `$e009` call remains `$3840` with the same invalid fields. No later
+  direct game loader call to either entry and no game-owned `$1801` writer is
+  observed. Indirect, block-transfer, or unobserved-route calls remain
+  unclassified, so this is a boot-path boundary, not a universal absence
+  claim. The next route still requires a non-sentinel caller correlated with
+  a raw-sector receipt and verified return destination.
+
 - 🔧 2026-07-15 Track 02 post-Stage-2 game-call boundary: an authentic
   45-second US CUE + System Card 3.0 capture accepts two real host RUN
   transitions, reaches two Stage-2 returns, and observes 61 physical code
