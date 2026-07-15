@@ -136,8 +136,12 @@ int main(void)
     boot.runtime_m11_frame_floor_material_hash = scene.commands[0].raw_hash;
     boot.runtime_m11_frame_ceiling_material_hash = scene.commands[1].raw_hash;
     boot.runtime_m11_frame_wall_material_plan_hash = wall.command_hash;
+    boot.runtime_m11_frame_wall_material_plan_command_count =
+        wall.command_count;
     boot.runtime_m11_frame_hud_material_plan_required = 1;
     boot.runtime_m11_frame_hud_material_plan_hash = hud.command_hash;
+    boot.runtime_m11_frame_hud_scene_control_hash = scene.command_hash;
+    boot.runtime_m11_frame_hud_material_plan_command_count = hud.command_count;
     boot.runtime_m11_frame_hud_material_plan_consumed = 1;
     boot.runtime_m11_frame_palette_hash = scene.commands[0].palette_hash;
     boot.runtime_m11_frame_interface_action_palette_hash = 1u;
@@ -153,8 +157,11 @@ int main(void)
     frame.floor_material_hash = scene.commands[0].raw_hash;
     frame.ceiling_material_hash = scene.commands[1].raw_hash;
     frame.wall_material_plan_hash = wall.command_hash;
+    frame.wall_material_plan_command_count = wall.command_count;
     frame.hud_material_plan_required = 1;
     frame.hud_material_plan_hash = hud.command_hash;
+    frame.hud_scene_control_hash = scene.command_hash;
+    frame.hud_material_plan_command_count = hud.command_count;
     frame.hud_material_plan_consumed = 1;
     frame.palette_hash = scene.commands[0].palette_hash;
     frame.interface_action_palette_hash = 1u;

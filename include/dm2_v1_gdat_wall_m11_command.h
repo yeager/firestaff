@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#define DM2_V1_GDAT_WALL_M11_COMMAND_MAX 10
+#define DM2_V1_GDAT_WALL_M11_COMMAND_MAX 12
 
 typedef struct {
     uint8_t view_square;
@@ -27,6 +27,14 @@ typedef struct {
     uint16_t destination_y;
     uint16_t destination_width;
     uint16_t destination_height;
+    /* skproject DM2_DRAW_WALL sends QUERY_TEMP_PICST the viewport-cell
+     * RAW4 rectangle (0x2be + cell).  Keep the raw ownership and the exact
+     * QUERY_BLIT_RECT result with the image command, not in M11 defaults. */
+    uint16_t rect_number;
+    uint8_t mirror_flip;
+    uint32_t rect_table_hash;
+    uint32_t rect_row_hash;
+    uint32_t metadata_hash;
     uint32_t geometry_hash;
 } DM2_V1_GdatWallM11Command;
 
