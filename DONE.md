@@ -17063,3 +17063,7 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   second step consumes its own loaded F0202 facts. Regression covers Fluxcage,
   blocked second square, and a verified clear second square. Source: ReDMCSB
   `GROUP.C` F0204/F0202.
+- ✅ 2026-07-15 DM1 GROUP F0205/F0206: removed the pseudo-random opposite
+  turn from the legacy helper. Opposite turns now require the live RNG form,
+  which preserves F0205 one-step correction and F0206's per-creature gates.
+  Source: ReDMCSB `GROUP.C` F0205/F0206.

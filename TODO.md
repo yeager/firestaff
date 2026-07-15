@@ -7037,3 +7037,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   movement now needs a first-step Fluxcage result plus real second-square
   facts. Remaining work is connecting M10's two successive F0202 reads to
   this helper; no unproved second square may allow an extra move.
+- 2026-07-15 DM1 GROUP F0205/F0206 follow-up: exact live direction updates
+  now require the original RNG state. Remaining work is to route all M10
+  C37-C41 turn owners through the RNG forms and retire calls to the legacy
+  direct-only helper where a source random turn may occur.
