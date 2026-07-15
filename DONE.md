@@ -18468,6 +18468,17 @@ is only a future capture anchor, not an object-table header or decoder.
 Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 continuation TII source binding
+
+The provenance-marked Mednafen main-RAM-loader trace can now bind one original
+`TII` transfer only when its source begins at `$3c80`: the continuation start
+derived from the authenticated `$3800` sector receipt. The copied source span
+is checksummed against retained original bytes and the capture must carry the
+producer marker; unrelated `TII` rows are ignored. Destination content stays
+opaque, with no object-table, level, palette, bitmap, grid, or rendering
+claim. Verification: Ninja `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3

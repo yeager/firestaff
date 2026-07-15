@@ -665,6 +665,83 @@ int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope_pref
     return 1;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *out)
+{
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int transfer_pc;
+    unsigned int transfer_physical_pc;
+    unsigned int source;
+    unsigned int destination;
+    unsigned int byte_count;
+    unsigned int matched = 0u;
+    int source_marker_seen = 0;
+    int consumed;
+    uint16_t expected_source;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
+            handoff) ||
+        handoff->loader_payload.destination > UINT16_MAX -
+            handoff->loader_post_envelope.record_user_data_offset ||
+        handoff->loader_post_envelope.byte_count == 0u) {
+        return 0;
+    }
+    expected_source = (uint16_t)(handoff->loader_payload.destination +
+        handoff->loader_post_envelope.record_user_data_offset);
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented-main-ram-loader") &&
+            memcmp(line, "source=mednafen-pce-instrumented-main-ram-loader",
+                   length) == 0) {
+            source_marker_seen = 1;
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_block_transfer logical_pc=%x physical_pc=%x operation=tii source=%x destination=%x length=%x%n",
+                   &transfer_pc, &transfer_physical_pc, &source, &destination,
+                   &byte_count, &consumed) != 5 || consumed != (int)length) {
+            continue;
+        }
+        if (source != expected_source) continue;
+        if (++matched != 1u || transfer_pc > UINT16_MAX ||
+            transfer_physical_pc < 0x1f0000u ||
+            transfer_physical_pc >= 0x1f8000u ||
+            destination > UINT16_MAX || byte_count == 0u ||
+            byte_count > handoff->loader_post_envelope.byte_count) {
+            return 0;
+        }
+    }
+    if (!source_marker_seen || matched != 1u) return 0;
+
+    out->valid = 1;
+    out->variant = handoff->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             handoff->track02_md5);
+    out->track02_record = handoff->observed_track02_record;
+    out->transfer_pc = (uint16_t)transfer_pc;
+    out->transfer_physical_pc = transfer_physical_pc;
+    out->source_address = (uint16_t)source;
+    out->destination_address = (uint16_t)destination;
+    out->byte_count = byte_count;
+    out->source_checksum = tqr_trace_fnv1a_bytes(
+        handoff->loader_post_envelope.bytes, byte_count);
+    if (!out->source_checksum) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->manifest_bound = 1;
+    out->source_continuation_transfer_verified = 1;
+    out->object_table_semantics_proven = 0;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,

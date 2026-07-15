@@ -26,7 +26,14 @@
 +  TheronMainRAMLoaderTraceInitialized = true;
 +  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE");
 +  if(path && *path)
++  {
 +   TheronMainRAMLoaderTrace = fopen(path, "w");
++   if(TheronMainRAMLoaderTrace)
++   {
++    fprintf(TheronMainRAMLoaderTrace, "source=mednafen-pce-instrumented-main-ram-loader\\n");
++    fflush(TheronMainRAMLoaderTrace);
++   }
++  }
 + }
 + if(!TheronMainRAMLoaderTrace || TheronMainRAMLoaderTraceCount >= 96)
 +  return;
@@ -82,4 +89,3 @@
 +	 }
 
  	 PC++;
-

@@ -8171,3 +8171,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     split capture chain, while retaining no object-table semantics. Remaining:
     capture the original consumer's field accesses and control decisions to
     establish a grammar separately from this byte boundary.
+  - Update: the instrumented original Mednafen `TII` producer can now bind a
+    post-`$3800` block transfer whose source starts exactly at `$3c80`, the
+    continuation start in the verified loader sector. The destination and its
+    content remain opaque. Remaining: capture the real `TII` row and the
+    subsequent game-owned reads/control flow that establish record grammar.
