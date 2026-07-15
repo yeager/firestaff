@@ -9,7 +9,7 @@
  #include <string.h>
 
  #ifdef WANT_DEBUGGER
-@@ -39,6 +41,43 @@
+@@ -39,6 +41,50 @@
  namespace MDFN_IEN_PCE
  {
 
