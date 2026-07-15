@@ -363,6 +363,9 @@
     anchor interval derived only from the next original descriptor anchor or
     payload end. These are capture windows, never pixel/palette lengths or
     decoder/VDP1 semantics.
+  - 2026-07-15 raw-window witness update: every bounded static image/palette
+    window now contributes its original bytes to the corpus hash. This proves
+    source identity for future capture comparison, not payload grammar.
 
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,
