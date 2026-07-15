@@ -3411,6 +3411,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   geometry ownership: owner placement, transforms, face culling, material
   selection, palette, VDP1 commands, and rasterization remain blocked until
   original Saturn execution evidence exists.
+  - The engine now emits a source-only transform capture target that keeps the
+    selected mesh beside the exact raw Structure1A rotation-selector corpus.
+    It does not assign that byte a rotation unit, matrix, camera convention,
+    or draw behavior; a real Saturn trace remains required.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.
