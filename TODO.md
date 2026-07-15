@@ -6678,3 +6678,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     as a complete raw command from the same authenticated snapshot. A real
     Saturn trace must still prove control-flow selection, target command role,
     ordering, palette/CLUT state, texel semantics, and output before drawing.
+  - 2026-07-15 runtime-admission update: external Structure3 captures now
+    require a complete 512 KiB VDP1 snapshot, an exact CMDSRCA texture-window
+    match, and a unique command-lane occurrence before engine storage. This
+    proves no palette/CLUT source or format, command flow, pixel ordering,
+    transform, culling, raster, or draw behavior; those remain blocked.

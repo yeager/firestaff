@@ -3292,6 +3292,16 @@ static void test_structure3_entry_header_boundaries(void) {
               !engine.structure3_runtime_source.valid,
               "engine rejects a complete-looking packet without the external Saturn verdict");
         import.original_saturn_capture_verified = 1;
+        import.vdp1_state_size = sizeof(vdp1_state) - 1U;
+        import.capture_bundle_fnv1a64 =
+            structure3_capture_bundle_fnv1a64(&import);
+        CHECK(!nexus_v1_engine_consume_structure3_capture(
+                  &engine, &candidate, &bound, &import) &&
+              !engine.structure3_runtime_source.valid,
+              "engine rejects an authenticated but partial VDP1-VRAM snapshot");
+        import.vdp1_state_size = sizeof(vdp1_state);
+        import.capture_bundle_fnv1a64 =
+            structure3_capture_bundle_fnv1a64(&import);
         CHECK(nexus_v1_engine_consume_structure3_capture(
                   &engine, &candidate, &bound, &import) &&
               engine.structure3_runtime_source.valid &&
