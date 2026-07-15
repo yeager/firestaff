@@ -754,6 +754,9 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   vdp1_state_write.code_window_offset == 0x7d3c0 &&
                   vdp1_state_write.state_table_offset == 0x7d498 &&
                   vdp1_state_write.static_instruction_dataflow_proven &&
+                  vdp1_state_write.vdp1_register_0x04_write_proven &&
+                  vdp1_state_write.vdp1_register_0x04_value == 2U &&
+                  vdp1_state_write.vdp1_command_control_candidate_proven &&
                   vdp1_state_write.vdp1_register_0x06_write_proven &&
                   vdp1_state_write.vdp1_register_0x06_value == 0x8000U &&
                   vdp1_state_write.vdp1_register_0x08_write_proven &&
@@ -765,7 +768,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   !vdp1_state_write.transform_semantics_proven &&
                   vdp1_state_write.no_draw_only &&
                   !vdp1_state_write.fallback_visuals_permitted,
-              "canonical DM.BIN statically proves three VDP1 state stores but no draw route");
+              "canonical DM.BIN statically proves VDP1 control/state stores but no draw route");
         memset(&corpus, 0, sizeof(corpus));
         CHECK(nexus_v1_inspect_dgn_material_corpus(&corpus_engine, &corpus) == 0 &&
                   corpus.parsed_level_count == 16 &&

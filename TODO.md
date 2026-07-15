@@ -7081,6 +7081,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     code/dataflow, not that the routine executes for an active scene. A real
     trace must still connect emitted VDP1 command bytes, transform state, and
     palette state to an active DGN face before rendering is possible.
+  - 2026-07-15 command-control update: the same static corridor also proves
+    `MOV #2,R1`, a PC-relative load of `0x25D00004` into `R0`, then
+    `MOV.W R1,@R0`. This is concrete original code for a VDP1 `+0x04`
+    control-register write, but not proof that a frame executes it or that a
+    command list is emitted. Preserve no-draw until a real Saturn trace joins
+    this path to VDP1 command bytes, palette state, transform state, and DGN.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's

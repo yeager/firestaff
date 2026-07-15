@@ -2129,6 +2129,7 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     Nexus_V1_DmBinVdp1StateWriteReceipt *out_receipt)
 {
     enum {
+        CONTROL_WINDOW_OFFSET = 0x7d3b6,
         CODE_WINDOW_OFFSET = 0x7d3c0,
         STATE_TABLE_OFFSET = 0x7d498
     };
@@ -2140,6 +2141,11 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
         UINT16_C(0xe300), UINT16_C(0xd235), UINT16_C(0xd136),
         UINT16_C(0xd039), UINT16_C(0x2121), UINT16_C(0xd235),
         UINT16_C(0x2231), UINT16_C(0xd336), UINT16_C(0x23d1)
+    };
+    static const uint16_t expected_control_words[8] = {
+        UINT16_C(0xe102), UINT16_C(0xd038), UINT16_C(0xe600),
+        UINT16_C(0xd438), UINT16_C(0xd336), UINT16_C(0xdd3a),
+        UINT16_C(0x2321), UINT16_C(0x2011)
     };
     Nexus_V1_DmBinVdp1StateWriteReceipt receipt;
     uint8_t *data;
@@ -2160,6 +2166,7 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     }
     data = nexus_v1_read_file(engine, "DM.BIN", &size);
     if (!data || CODE_WINDOW_OFFSET + (int)sizeof(expected_code_words) > size ||
+        CONTROL_WINDOW_OFFSET + (int)sizeof(expected_control_words) > size ||
         STATE_TABLE_OFFSET + 28 > size) {
         free(data);
         *out_receipt = receipt;
@@ -2176,10 +2183,29 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
             return 0;
         }
     }
+    for (word = 0;
+         word < (int)(sizeof(expected_control_words) / sizeof(expected_control_words[0]));
+         ++word) {
+        if (nexus_v1_dgn_read_be16(data + CONTROL_WINDOW_OFFSET + word * 2) !=
+            expected_control_words[word]) {
+            free(data);
+            *out_receipt = receipt;
+            return 0;
+        }
+    }
     /* PC-relative source literals for D235, D136, D235, D336 and DD3A.
      * The immediately following MOV.W opcodes encode Rm -> @Rn, so the
      * observed dataflow is: 0x8000 -> 0x25d00006, zero -> 0x25d00008,
      * and 0xffff -> 0x25d0000a. */
+    /* MOV #2,R1; MOV.L literal,R0; ...; MOV.W R1,@R0 is the original
+     * static +0x04 control-register write. It is capture evidence only: an
+     * execution trace is still needed before claiming command emission. */
+    receipt.vdp1_register_0x04_write_proven =
+        nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 4) ==
+            UINT32_C(0x25d00004);
+    receipt.vdp1_register_0x04_value = 2U;
+    receipt.vdp1_command_control_candidate_proven =
+        receipt.vdp1_register_0x04_write_proven;
     receipt.vdp1_register_0x06_write_proven =
         nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 8) ==
             UINT32_C(0x00008000) &&
@@ -2197,6 +2223,7 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
             UINT32_C(0x25d0000a);
     receipt.vdp1_register_0x0a_value = UINT16_C(0xffff);
     receipt.static_instruction_dataflow_proven =
+        receipt.vdp1_register_0x04_write_proven &&
         receipt.vdp1_register_0x06_write_proven &&
         receipt.vdp1_register_0x08_write_proven &&
         receipt.vdp1_register_0x0a_write_proven;

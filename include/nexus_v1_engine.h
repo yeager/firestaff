@@ -1298,6 +1298,9 @@ typedef struct {
     int code_window_offset;
     int state_table_offset;
     int static_instruction_dataflow_proven;
+    int vdp1_register_0x04_write_proven;
+    uint16_t vdp1_register_0x04_value;
+    int vdp1_command_control_candidate_proven;
     int vdp1_register_0x06_write_proven;
     uint16_t vdp1_register_0x06_value;
     int vdp1_register_0x08_write_proven;
