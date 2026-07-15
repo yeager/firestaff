@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Nexus DGN raster fallback removal: textured quads with missing
+  material now no-draw instead of becoming flat-color substitute geometry.
+
 - 2026-07-15 DM1 F0111 D3 door-front real-media gate: removed the active
   host-colored fallback from the F0676/F0677 C3700/C3710 panel route. It now
   presents only expanded GRAPHICS.DAT G0693 pixels or verified packed G0693
