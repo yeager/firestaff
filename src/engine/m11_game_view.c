@@ -37242,10 +37242,8 @@ static int m11_draw_v1_inventory_object_description_panel(
     int iconX = 0, iconY = 0, iconW = 0, iconH = 0;
     int nameX = 0, nameY = 0, nameW = 0, nameH = 0;
     int bodyX = 0, bodyY = 0;
-    int drewPanel = 0;
-    int drewCircle = 0;
-    int drewIcon = 0;
-    M11_TextStyle textStyle = g_text_small;
+    const M11_AssetSlot* panel;
+    const M11_AssetSlot* circle;
     char wrapped[6][24];
     size_t lineCount;
     size_t i;
@@ -37281,74 +37279,50 @@ static int m11_draw_v1_inventory_object_description_panel(
         }
     }
 
-    textStyle.color = M11_COLOR_SILVER;
-    textStyle.shadowDx = 0;
-    textStyle.shadowDy = 0;
-    textStyle.shadowColor = M11_COLOR_BLACK;
-
-    if (state->assetsAvailable) {
-        const M11_AssetSlot* panel = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)dm1_v1_graphic_panel_empty_pc34());
-        if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
-            M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
-                                 M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                                 M11_COLOR_RED);
-            drewPanel = 1;
-        }
+    /* PANEL.C F0342:1140-1145 owns C020/C029 and their layout-696
+     * destinations. Missing PC34 material leaves the C017 base intact; it
+     * must not become a host-drawn description panel. */
+    if (!state->assetsAvailable || iconW != 16 || iconH != 16) return 0;
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)dm1_v1_graphic_panel_empty_pc34());
+    circle = M11_AssetLoader_Load(
+        (M11_AssetLoader*)&state->assetLoader,
+        (unsigned int)dm1_v1_graphic_object_description_circle_pc34());
+    if (!panel || !circle ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_panel_empty_pc34(),
+            dm1_v1_graphic_panel_empty_pc34(),
+            panel->loaded, panel->pixels != NULL,
+            panel->width, panel->height, panelW, panelH) ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_object_description_circle_pc34(),
+            dm1_v1_graphic_object_description_circle_pc34(),
+            circle->loaded, circle->pixels != NULL,
+            circle->width, circle->height, circleW, circleH)) {
+        return 0;
     }
-    if (!drewPanel) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_LIGHT_GRAY);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_BROWN);
-    }
-
-    if (state->assetsAvailable) {
-        const M11_AssetSlot* circle = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)dm1_v1_graphic_object_description_circle_pc34());
-        if (circle && circle->pixels && circle->width > 0 && circle->height > 0 &&
-            (int)circle->width <= circleW &&
-            (int)circle->height <= circleH) {
-            M11_AssetLoader_Blit(circle, framebuffer, framebufferWidth, framebufferHeight,
-                                 M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
-                                 M11_COLOR_DARK_GRAY);
-            drewCircle = 1;
-        }
-    }
-    if (!drewCircle) {
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
-                      circleW, circleH, M11_COLOR_DARK_GRAY);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + circleX + 2, M11_VIEWPORT_Y + circleY + 2,
-                      circleW - 4, circleH - 4, M11_COLOR_BLACK);
-    }
+    M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                         M11_COLOR_RED);
+    M11_AssetLoader_Blit(circle, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
+                         M11_COLOR_DARK_GRAY);
 
     if (state->v1ObjectDescriptionIconIndex >= 0) {
-        drewIcon = m11_draw_dm_object_icon_index(state, framebuffer, framebufferWidth,
-                                                framebufferHeight,
-                                                state->v1ObjectDescriptionIconIndex,
-                                                M11_VIEWPORT_X + iconX,
-                                                M11_VIEWPORT_Y + iconY, 0);
-    }
-    if (!drewIcon) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + iconX, M11_VIEWPORT_Y + iconY,
-                      iconW, iconH, M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + iconX, M11_VIEWPORT_Y + iconY,
-                      iconW, iconH, M11_COLOR_SILVER);
+        (void)m11_draw_dm_object_icon_index(state, framebuffer, framebufferWidth,
+                                            framebufferHeight,
+                                            state->v1ObjectDescriptionIconIndex,
+                                            M11_VIEWPORT_X + iconX,
+                                            M11_VIEWPORT_Y + iconY, 0);
     }
 
+    if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return 1;
+    }
     {
         DM1_V1_LayoutZoneRectPc34 nameRect;
         if (dm1_v1_object_description_name_rect_for_text_pc34(
-                m11_measure_text_pixels(state->v1ObjectDescriptionName,
-                                        &textStyle),
+                M11_Font_MeasureString(state->v1ObjectDescriptionName),
                 7, &nameRect)) {
             nameX = nameRect.x;
             nameY = nameRect.y;
@@ -37362,20 +37336,23 @@ static int m11_draw_v1_inventory_object_description_panel(
     if (nameW > 0 && nameH > 0) {
         (void)nameW;
         (void)nameH;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + nameX, M11_VIEWPORT_Y + nameY,
-                      state->v1ObjectDescriptionName, &textStyle);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            M11_VIEWPORT_X + nameX, M11_VIEWPORT_Y + nameY,
+                            state->v1ObjectDescriptionName,
+                            M11_COLOR_SILVER, -1, 1);
     }
 
     memset(wrapped, 0, sizeof(wrapped));
     lineCount = INVENTORY_Compat_WrapObjectDescriptionText(
         state->v1ObjectDescriptionBody, &wrapped[0][0], 6u, sizeof(wrapped[0]), NULL);
     for (i = 0; i < lineCount && i < 6u; ++i) {
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + bodyX, M11_VIEWPORT_Y + 87 + (int)i * 7,
-                      wrapped[i], &textStyle);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            M11_VIEWPORT_X + bodyX,
+                            M11_VIEWPORT_Y + bodyY + (int)i * 7,
+                            wrapped[i], M11_COLOR_SILVER, -1, 1);
     }
-    (void)bodyY;
     return 1;
 }
 

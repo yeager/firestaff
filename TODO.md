@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 object-description follow-up: F0342 now requires exact
+  loaded-pixel C020/C029 and M653 font geometry, with the C556 continuation
+  origin used directly. Remaining work is a real PC34/Mac capture of weapon,
+  potion, and junk descriptions. Missing media must remain no-draw rather
+  than recreating the panel, circle, icon, or text in host primitives.
+
 - 2026-07-15 DM1 inventory panel follow-up: normal V1 F0355/F0341 now
   accepts only exact loaded-pixel C017/C023/C033 GRAPHICS.DAT surfaces and
   the original loaded font. Remaining work is a real PC34/Mac capture of
