@@ -5162,8 +5162,13 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
     Nexus_V1_BpkEntry last_entry;
     Nexus_V1_Engine engine;
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt target;
+    Nexus_V1_MenuBpkPaltTraceAdmissionReceipt trace_admission;
     char target_path[128];
     char target_text[2048];
+    char trace_manifest[2048];
+    const uint8_t raw_trace[] = "mednafen palt memory observation";
+    const uint8_t palette_state[] = { 0x10U, 0x32U, 0x54U, 0x76U };
+    const uint8_t vdp1_command[] = { 0x80U, 0x00U, 0x01U, 0x00U };
     FILE *target_file;
     size_t index;
     const char *data_dir;
@@ -5243,6 +5248,53 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
         CHECK(0, "PALT capture target can be read back");
     }
     remove(target_path);
+    snprintf(trace_manifest, sizeof(trace_manifest),
+             "magic=%s\nproducer=mednafen-debugger\n"
+             "trace_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+             "canonical_menu_bpk_md5=%s\npalt_record_offset=%x\n"
+             "palt_record_bytes=%x\npalt_entry_count=%x\npalt_entry_bytes=%x\n"
+             "palt_entry_bytes_fnv1a64=%016llx\nraw_trace_fnv1a64=%016llx\n"
+             "palt_memory_fnv1a64=%016llx\npalette_state_fnv1a64=%016llx\n"
+             "vdp1_command_fnv1a64=%016llx\n",
+             NEXUS_V1_MENU_BPK_PALT_TRACE_MAGIC,
+             target.canonical_menu_bpk_md5, target.palt_record_offset,
+             target.palt_record_bytes, target.palt_entry_count,
+             target.palt_entry_bytes,
+             (unsigned long long)target.palt_entry_bytes_fnv1a64,
+             (unsigned long long)fnv1a64(raw_trace, sizeof(raw_trace) - 1U),
+             (unsigned long long)fnv1a64(archive + 60U, 512U),
+             (unsigned long long)fnv1a64(palette_state, sizeof(palette_state)),
+             (unsigned long long)fnv1a64(vdp1_command, sizeof(vdp1_command)));
+    CHECK(nexus_v1_engine_admit_menu_bpk_palt_trace(
+              &engine, trace_manifest, strlen(trace_manifest), raw_trace,
+              sizeof(raw_trace) - 1U, archive + 60U, 512U, palette_state,
+              sizeof(palette_state), vdp1_command, sizeof(vdp1_command), 0,
+              &trace_admission) == 0 &&
+          trace_admission.status == NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_PROVENANCE &&
+          trace_admission.capture_target_bound &&
+          trace_admission.manifest_target_bound &&
+          trace_admission.raw_trace_bytes_bound &&
+          trace_admission.palt_memory_bytes_bound &&
+          trace_admission.palette_state_bytes_bound &&
+          trace_admission.vdp1_command_bytes_bound &&
+          !trace_admission.decoder_promoted && trace_admission.no_draw_only,
+          "PALT observations without independent Saturn provenance stay blocked");
+    CHECK(nexus_v1_engine_admit_menu_bpk_palt_trace(
+              &engine, trace_manifest, strlen(trace_manifest), raw_trace,
+              sizeof(raw_trace) - 1U, archive + 60U, 512U, palette_state,
+              sizeof(palette_state), vdp1_command, sizeof(vdp1_command), 1,
+              &trace_admission) == 1 &&
+          trace_admission.status == NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE &&
+          trace_admission.original_saturn_capture_verified &&
+          trace_admission.opaque_trace_admitted &&
+          trace_admission.palt_memory_fnv1a64 ==
+              target.palt_entry_bytes_fnv1a64 &&
+          !trace_admission.palt_palette_relation_proven &&
+          !trace_admission.decoder_promoted && trace_admission.no_draw_only &&
+          !trace_admission.fallback_visuals_permitted &&
+          engine.menu_bpk_palt_trace_admission.status ==
+              NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE,
+          "authentic PALT observations reach the engine only as an opaque no-draw receipt");
     engine.menu_bpk_source.canonical_hash_verified = 0;
     CHECK(nexus_v1_engine_build_menu_bpk_palt_capture_target(
               &engine, &target) == 0 && !target.valid,

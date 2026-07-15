@@ -102,6 +102,47 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_MenuBpkPaltCaptureTargetReceipt;
 
+/* Admission for one externally produced original-Saturn observation of the
+ * canonical PALT bytes. It proves source/capture identity only: matching
+ * palette and VDP1 observations do not establish a colour format, a CLUT
+ * relation, or a decoder. */
+#define NEXUS_V1_MENU_BPK_PALT_TRACE_MAGIC \
+    "FIRESTAFF_NEXUS_MENU_BPK_PALT_TRACE_V1"
+typedef enum {
+    NEXUS_V1_MENU_BPK_PALT_TRACE_MISSING = 0,
+    NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_OBSERVATIONS = 3,
+    NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_PROVENANCE = 4,
+    NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE = 5
+} Nexus_V1_MenuBpkPaltTraceStatus;
+
+typedef struct {
+    Nexus_V1_MenuBpkPaltTraceStatus status;
+    int capture_target_bound;
+    int manifest_target_bound;
+    int mednafen_debugger_provenance;
+    int trace_sha256_present;
+    int raw_trace_bytes_bound;
+    uint64_t raw_trace_fnv1a64;
+    size_t raw_trace_byte_count;
+    int palt_memory_bytes_bound;
+    uint64_t palt_memory_fnv1a64;
+    size_t palt_memory_byte_count;
+    int palette_state_bytes_bound;
+    uint64_t palette_state_fnv1a64;
+    size_t palette_state_byte_count;
+    int vdp1_command_bytes_bound;
+    uint64_t vdp1_command_fnv1a64;
+    size_t vdp1_command_byte_count;
+    int original_saturn_capture_verified;
+    int opaque_trace_admitted;
+    int palt_palette_relation_proven;
+    int decoder_promoted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_MenuBpkPaltTraceAdmissionReceipt;
+
 /* A DGN view plan is not renderable until every referenced material has a
  * decoded DMDF/BPK surface. PRS3-only entries intentionally remain blocked:
  * no synthetic colour is substituted for an unverified Saturn surface. */
@@ -1636,6 +1677,7 @@ struct Nexus_V1_Engine {
     Nexus_V1_BpkRuntimeUploadRow
         menu_bpk_upload_rows[NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS];
     int menu_bpk_upload_row_count;
+    Nexus_V1_MenuBpkPaltTraceAdmissionReceipt menu_bpk_palt_trace_admission;
 
     /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
      * dispatch remains blocked until a source-locked parser exists. */
@@ -2012,6 +2054,14 @@ int nexus_v1_engine_build_menu_bpk_palt_capture_target(
 int nexus_v1_engine_write_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine, const char *path,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);
+int nexus_v1_engine_admit_menu_bpk_palt_trace(
+    Nexus_V1_Engine *engine, const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    const uint8_t *palt_memory, size_t palt_memory_size,
+    const uint8_t *palette_state, size_t palette_state_size,
+    const uint8_t *vdp1_command, size_t vdp1_command_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_MenuBpkPaltTraceAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);

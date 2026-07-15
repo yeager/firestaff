@@ -17252,3 +17252,13 @@ visual path is enabled. The focused DGN test covers one bounded 08xx face and
 its source descriptor, plus the existing hash-verified retail-corpus route
 when local data is available. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus canonical PALT trace admission
+
+`nexus_v1_engine_admit_menu_bpk_palt_trace()` now admits an externally
+verified Mednafen trace only after it binds the active canonical MENU.BPK,
+exact PALT record fingerprint, raw trace, PALT-memory bytes, palette-state
+bytes, and VDP1-command bytes. The engine retains the result solely as an
+opaque no-draw receipt. It does not infer that PALT produced the palette, nor
+any palette format, PRS3 relationship, CLUT behavior, decoder, or drawing.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.
