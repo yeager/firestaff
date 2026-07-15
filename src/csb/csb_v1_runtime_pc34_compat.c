@@ -150,6 +150,12 @@ static int csb_v1_runtime_dsa_set_object_property(
 static int csb_v1_runtime_dsa_normalize_object_property(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t input_value, uint32_t *out_value);
+static int csb_v1_runtime_dsa_prepare_experience_plus(
+    void *user, int32_t character_selector, int32_t skill_number,
+    int32_t experience);
+static int csb_v1_runtime_dsa_add_experience_plus(
+    void *user, int32_t character_selector, int32_t skill_number,
+    int32_t experience);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -5074,6 +5080,108 @@ static int csb_v1_runtime_imported_skill_level(
     if (level < 1) level = 1;
     if (level > 16) level = 16;
     return level;
+}
+
+/* CSBWin Code17818.cpp::DetermineMastery called by Magic.cpp::AddToSkill
+ * supplies 0xc000, so possession and temporary-adjustment state are both
+ * excluded.  This narrow helper deliberately retains only that source path. */
+static int csb_v1_runtime_csbwin_unadjusted_mastery(uint32_t experience)
+{
+    int mastery = 1;
+
+    while (experience >= 500u) {
+        experience >>= 1;
+        ++mastery;
+    }
+    return mastery;
+}
+
+/* Magic.cpp::AddToSkill updates the selected SKILL, then its basic skill for
+ * subskills, with a UI16 increment and LimitSkillExperience cap.  LevelUp
+ * has random/stat/UI effects outside this accepted runtime transaction, so
+ * callers must reject a mastery transition rather than publishing half of it. */
+static int csb_v1_runtime_csbwin_prepare_add_to_skill(
+    const CSB_V1_RuntimeProfile *profile, int32_t character_selector,
+    int32_t skill_number, int32_t experience, uint32_t *out_skill_experience,
+    uint32_t *out_basic_experience, int *out_basic_skill)
+{
+    const CSB_V1_Champion *champion;
+    uint32_t increment;
+    uint32_t skill_experience;
+    uint32_t basic_experience;
+    uint64_t accumulated;
+    int basic_skill;
+
+    if (!profile || !out_skill_experience || !out_basic_experience ||
+        !out_basic_skill || !profile->party_state_valid ||
+        character_selector < 0 ||
+        character_selector >= profile->party_state.ChampionCount ||
+        character_selector >= CSB_V1_MAX_CHAMPIONS ||
+        skill_number < 0 || skill_number >= CSB_V1_FULL_SKILL_COUNT ||
+        experience <= 0) {
+        return -1;
+    }
+    champion = &profile->party_state.Champions[character_selector];
+    if (champion->CurrentHealth <= 0) return 0;
+    if (!champion->SkillExperienceValid) return -1;
+
+    basic_skill = skill_number < 4 ? skill_number : (skill_number - 4) / 4;
+    increment = (uint16_t)experience;
+    accumulated = (uint64_t)champion->SkillExperience[skill_number] + increment;
+    skill_experience = accumulated > 0x10000000u ? 0x10000000u :
+        (uint32_t)accumulated;
+    if (skill_number == basic_skill) {
+        basic_experience = skill_experience;
+    } else {
+        accumulated = (uint64_t)champion->SkillExperience[basic_skill] +
+            increment;
+        basic_experience = accumulated > 0x10000000u ? 0x10000000u :
+            (uint32_t)accumulated;
+    }
+
+    if (csb_v1_runtime_csbwin_unadjusted_mastery(
+            champion->SkillExperience[basic_skill]) !=
+        csb_v1_runtime_csbwin_unadjusted_mastery(basic_experience)) {
+        return -1;
+    }
+    *out_skill_experience = skill_experience;
+    *out_basic_experience = basic_experience;
+    *out_basic_skill = basic_skill;
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_prepare_experience_plus(
+    void *user, int32_t character_selector, int32_t skill_number,
+    int32_t experience)
+{
+    uint32_t skill_experience;
+    uint32_t basic_experience;
+    int basic_skill;
+
+    return csb_v1_runtime_csbwin_prepare_add_to_skill(
+        (const CSB_V1_RuntimeProfile *)user, character_selector, skill_number,
+        experience, &skill_experience, &basic_experience, &basic_skill);
+}
+
+static int csb_v1_runtime_dsa_add_experience_plus(
+    void *user, int32_t character_selector, int32_t skill_number,
+    int32_t experience)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    uint32_t skill_experience;
+    uint32_t basic_experience;
+    int basic_skill;
+    int prepared;
+
+    prepared = csb_v1_runtime_csbwin_prepare_add_to_skill(
+        profile, character_selector, skill_number, experience,
+        &skill_experience, &basic_experience, &basic_skill);
+    if (prepared <= 0) return prepared;
+    profile->party_state.Champions[character_selector]
+        .SkillExperience[skill_number] = skill_experience;
+    profile->party_state.Champions[character_selector]
+        .SkillExperience[basic_skill] = basic_experience;
+    return 1;
 }
 
 int csb_v1_runtime_get_champion_skill_level(
@@ -20782,6 +20890,9 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
         csb_v1_runtime_dsa_normalize_object_property;
     candidate.get_actuator_payload = csb_v1_runtime_dsa_get_actuator_payload;
     candidate.set_actuator_payload = csb_v1_runtime_dsa_set_actuator_payload;
+    candidate.prepare_experience_plus =
+        csb_v1_runtime_dsa_prepare_experience_plus;
+    candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -20815,6 +20926,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int expool_changed;
     int dsa_state_changed;
     int party_talents_changed;
+    int party_skill_experience_changed;
     int random_state_changed;
     int dungeon_changed = 0;
     int i;
@@ -20929,6 +21041,9 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         csb_v1_runtime_dsa_normalize_object_property;
     candidate.get_actuator_payload = csb_v1_runtime_dsa_get_actuator_payload;
     candidate.set_actuator_payload = csb_v1_runtime_dsa_set_actuator_payload;
+    candidate.prepare_experience_plus =
+        csb_v1_runtime_dsa_prepare_experience_plus;
+    candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
@@ -20975,6 +21090,16 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             party_talents_changed = 1;
         }
     }
+    party_skill_experience_changed = 0;
+    for (i = 0; i < candidate.party_champion_count; ++i) {
+        if (memcmp(profile_candidate.party_state.Champions[i].SkillExperience,
+                   profile->party_state.Champions[i].SkillExperience,
+                   sizeof(profile_candidate.party_state.Champions[i]
+                              .SkillExperience)) != 0) {
+            party_skill_experience_changed = 1;
+            break;
+        }
+    }
     dsa_state_changed = 0;
     if (profile_candidate.csbwin_appended_tail_valid &&
         profile_candidate.csbwin_appended_tail_preserved_size >=
@@ -21013,6 +21138,13 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         for (i = 0; i < candidate.party_champion_count; ++i) {
             profile->party_state.Champions[i].Talents =
                 profile_candidate.party_state.Champions[i].Talents;
+        }
+    }
+    if (party_skill_experience_changed) {
+        for (i = 0; i < candidate.party_champion_count; ++i) {
+            memcpy(profile->party_state.Champions[i].SkillExperience,
+                   profile_candidate.party_state.Champions[i].SkillExperience,
+                   sizeof(profile->party_state.Champions[i].SkillExperience));
         }
     }
     if (expool_changed) {
