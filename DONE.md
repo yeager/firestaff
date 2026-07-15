@@ -17052,3 +17052,8 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   cardinal direction is marked before its F0202 evaluation, including a
   blocker, and later directions remain untouched after a successful choice.
   Source: ReDMCSB `GROUP.C` F0203/F0202.
+- ✅ 2026-07-15 DM1 GROUP F0204: added the archenemy double-movement gate.
+  A first-step Fluxcage stops the source branch before the second step; the
+  second step consumes its own loaded F0202 facts. Regression covers Fluxcage,
+  blocked second square, and a verified clear second square. Source: ReDMCSB
+  `GROUP.C` F0204/F0202.

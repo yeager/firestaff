@@ -659,6 +659,35 @@ static void test_first_movement_direction_f0203_test_state(void) {
               "F0203 marks west before its source blocker result");
 }
 
+static void test_archenemy_double_movement_f0204(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1GroupMovementFacts_Compat secondStep;
+    int wall = 0, door = 0, party = 0, group = 0;
+
+    memset(&secondStep, 0, sizeof(secondStep));
+    secondStep.available = 1;
+    secondStep.inBounds = 1;
+    ctx.creatureInfo.attributes = DM1_ATTR_ARCHENEMY;
+
+    EXPECT_EQ(F0812b_DM1_GROUP_IsArchenemyDoubleMovementPossible_Compat(
+                  &ctx, 1, 1, &secondStep, &wall, &door, &party, &group), 0,
+              "F0204 rejects a first-step Fluxcage before second movement");
+    EXPECT_EQ(wall, 1, "F0204 reports the first-step Fluxcage blocker");
+
+    secondStep.isWall = 1;
+    wall = door = party = group = 0;
+    EXPECT_EQ(F0812b_DM1_GROUP_IsArchenemyDoubleMovementPossible_Compat(
+                  &ctx, 1, 0, &secondStep, &wall, &door, &party, &group), 0,
+              "F0204 runs F0202 against a blocked second square");
+    EXPECT_EQ(wall, 1, "F0204 returns the second F0202 terrain blocker");
+
+    secondStep.isWall = 0;
+    wall = door = party = group = 0;
+    EXPECT_EQ(F0812b_DM1_GROUP_IsArchenemyDoubleMovementPossible_Compat(
+                  &ctx, 1, 0, &secondStep, &wall, &door, &party, &group), 1,
+              "F0204 permits a source-proven clear second square");
+}
+
 /* =========================================================
  *  Test 12c: F0209 single-square move consumes F0202 facts
  * ========================================================= */
@@ -1783,6 +1812,7 @@ int main(void) {
     test_set_group_direction();
     test_group_movement_facts();
     test_first_movement_direction_f0203_test_state();
+    test_archenemy_double_movement_f0204();
     test_single_square_move_uses_typed_facts();
     test_smell_direction();
     test_visible_distance_requires_party_map();
