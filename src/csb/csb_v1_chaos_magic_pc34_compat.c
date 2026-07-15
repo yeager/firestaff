@@ -1575,6 +1575,25 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             goto underflow;
         }
         break;
+    case 109u: /* STKOP_ThisCell */
+    case 107u: /* STKOP_Neighbors */
+        /* CSBWin DSA.cpp:2210-2309,4819-4830 calls ExamineCell for the
+         * master square or its four cardinal neighbors.  The callback reads
+         * only the caller-owned original byte-map and DB chains. */
+        if (!context->inspect_cells ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        count = 0u;
+        if (context->inspect_cells(context->dungeon_user, w, v,
+                                   subcode == 109u ? 4u : 0u,
+                                   subcode == 109u ? 4u : 3u,
+                                   &count) < 0 ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, count)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        break;
     case 100u: /* STKOP_GeneratorDelayFetch */
         /* CSBWin DSA.cpp:4724-4735 queries the first type-six DB3 generator
          * at this real dungeon location and pushes its disableTime, or -1. */
@@ -2357,6 +2376,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.normalize_object_property = runner->normalize_object_property;
     context.get_champion_possession = runner->get_champion_possession;
     context.get_monster_possession = runner->get_monster_possession;
+    context.inspect_cells = runner->inspect_cells;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

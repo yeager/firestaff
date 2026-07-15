@@ -8,7 +8,8 @@
  * STKOP_TimeFetch:2512-2518, STKOP_ThisDSAId:4822-4828,
  * STKOP_WhoHasTalent:4363-4380, STKOP_CountInjury:4798-4817, and
  * STKOP_TalentsFetch:4243-4283, STKOP_DisableSaves:2946-2955, and
- * STKOP_ChPoss/STKOP_MonPoss:3330-3386. These
+ * STKOP_ChPoss/STKOP_MonPoss:3330-3386 and ExamineCell/THISCELL/NEIGHBORS
+ * 2210-2309,4819-4830. These
  * commands and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
@@ -39,6 +40,7 @@ static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 static int champion_possession_enabled;
 static int monster_possession_enabled;
+static int inspect_cells_enabled;
 
 static int wing_talents_enabled;
 
@@ -231,6 +233,21 @@ static int get_monster_possession(void *user, uint16_t monster_thing,
     return 1;
 }
 
+static int inspect_cells(void *user, uint32_t location,
+                         uint32_t criteria_mask, uint32_t first_cell,
+                         uint32_t last_cell, uint32_t *out_result)
+{
+    (void)user;
+    if (!inspect_cells_enabled || !out_result || location != 0x0c82u ||
+        criteria_mask != 0xa0000002u) {
+        return -1;
+    }
+    if (first_cell == 4u && last_cell == 4u) *out_result = 1u;
+    else if (first_cell == 0u && last_cell == 3u) *out_result = 0x05u;
+    else return -1;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -338,6 +355,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     if (monster_possession_enabled) {
         context.get_monster_possession = get_monster_possession;
     }
+    if (inspect_cells_enabled) context.inspect_cells = inspect_cells;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -518,6 +536,12 @@ int main(void)
     };
     uint16_t monster_possession[] = {
         0x0686u, 0x0123u, 0x0686u, 1u, 0x134bu, 0x000du
+    };
+    uint16_t this_cell[] = {
+        0x0686u, 0x0c82u, 0x0786u, 0x0002u, 0xa000u, 0x1b4bu, 0x000du
+    };
+    uint16_t neighbors[] = {
+        0x0686u, 0x0c82u, 0x0786u, 0x0002u, 0xa000u, 0x1acbu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -857,6 +881,20 @@ int main(void)
               parameters[0] == 0x0789u && execution.stack_depth == 0u,
           "MONPOSS preserves source DB4 possession-chain indexing");
     monster_possession_enabled = 0;
+    inspect_cells_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, this_cell,
+              (int)(sizeof(this_cell) / sizeof(this_cell[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 1u && execution.stack_depth == 0u,
+          "THISCELL uses the source center-cell ExamineCell range");
+    parameters[0] = 77u;
+    check(run(&state, &action, neighbors,
+              (int)(sizeof(neighbors) / sizeof(neighbors[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x05u && execution.stack_depth == 0u,
+          "NEIGHBORS uses the source cardinal ExamineCell range");
+    inspect_cells_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
