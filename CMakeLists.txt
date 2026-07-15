@@ -1350,6 +1350,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbgraphics_runtime_plan.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_csbwin_512_xor_pad_classify.c
+    src/csb/csb_v1_csbwin_graphics_signature_gate.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_utility_flow_pc34.c
     src/csb/csb_v1_utility_import_pc34.c
@@ -23047,6 +23048,25 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_csbwin_512_xor_pad_classify
     )
     set_tests_properties(csb_v1_csbwin_512_xor_pad_classify_unit PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;data_free"
+    )
+
+    add_executable(test_csb_v1_csbwin_graphics_signature_gate
+        tests/test_csb_v1_csbwin_graphics_signature_gate.c
+        src/csb/csb_v1_csbwin_graphics_signature_gate.c
+    )
+    target_include_directories(test_csb_v1_csbwin_graphics_signature_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_graphics_signature_gate PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_graphics_signature_gate_unit
+        COMMAND test_csb_v1_csbwin_graphics_signature_gate
+    )
+    set_tests_properties(csb_v1_csbwin_graphics_signature_gate_unit PROPERTIES
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 

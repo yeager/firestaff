@@ -51,6 +51,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
+#include "csb_v1_csbwin_graphics_signature_gate.h"
 #include "csb_v1_chaos_magic_pc34_compat.h"
 #include "csb_v1_monster_pc34_compat.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
@@ -63,6 +64,7 @@
 #include "memory_projectile_pc34_compat.h"
 
 struct CSB_V1_StartupRuntimePlan_PC34;
+typedef struct CSB_V1_CSBGraphicsRuntimePlan CSB_V1_CSBGraphicsRuntimePlan;
 
 #ifdef __cplusplus
 extern "C" {
@@ -728,6 +730,15 @@ int csb_v1_runtime_get_csbwin_save_policy(
     uint32_t *out_csbgraphics_signature,
     uint32_t *out_graphics_signature,
     uint32_t *out_version);
+
+/* Admit a hash-owned CSBgraphics.dat runtime plan only when the complete
+ * CSBWin save's Extended Features and EXPOOL signature gates accept its real
+ * cached MD5. This is an admission check, not a graphics loader: missing,
+ * unready, or mismatched plans remain unavailable to startup/HUD consumers. */
+int csb_v1_runtime_admit_csbwin_csbgraphics_plan(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    CSB_V1_CSBWinGraphicsSignatureReceipt *out_receipt);
 
 /* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
  * obtains its DSAselector from DB3::word2 bits 7..11 and maps that slot
