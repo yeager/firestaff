@@ -165,3 +165,72 @@ int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
     *out_receipt = receipt;
     return 1;
 }
+
+int theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+    const Theron_V1Track02IsoLevelObjectReadFacts *facts,
+    const uint8_t *payload,
+    size_t payload_bytes,
+    Theron_V1Track02IsoLevelObjectReceipt *out_receipt) {
+    Theron_V1Track02IsoLevelObjectReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!facts || !payload || !out_receipt ||
+        !facts->authenticated_original_iso_capture ||
+        !facts->cue_declares_mode1_2048 ||
+        facts->raw_bin_trace_borrowed ||
+        facts->sector_conversion_applied ||
+        facts->synthetic_dungeon_promoted ||
+        facts->track02_variant != THERON_TRACK02_VARIANT_US_ISO ||
+        facts->track02_record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
+        facts->destination != THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        facts->byte_count != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        !facts->complete_payload_witness_verified ||
+        !facts->level_envelope_witness_verified ||
+        !facts->post_envelope_witness_verified ||
+        facts->complete_payload_checksum == 0u ||
+        facts->level_envelope_checksum == 0u ||
+        facts->post_envelope_checksum == 0u ||
+        payload_bytes != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        theron_v1_track02_loader_intake_fnv1a32(payload, payload_bytes) !=
+            facts->complete_payload_checksum ||
+        theron_v1_track02_loader_intake_fnv1a32(
+            payload + THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES) !=
+            facts->level_envelope_checksum ||
+        theron_v1_track02_loader_intake_fnv1a32(
+            payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES) !=
+            facts->post_envelope_checksum) {
+        return 0;
+    }
+
+    receipt.handed_off = 1;
+    receipt.no_fallback = 1;
+    receipt.original_iso_capture = 1;
+    receipt.cue_mode1_2048 = 1;
+    receipt.no_raw_bin_trace_borrowing = 1;
+    receipt.no_sector_conversion = 1;
+    receipt.no_synthetic_dungeon = 1;
+    receipt.track02_variant = facts->track02_variant;
+    receipt.record = facts->track02_record;
+    receipt.destination = facts->destination;
+    receipt.payload_bytes = facts->byte_count;
+    receipt.payload_checksum = facts->complete_payload_checksum;
+    receipt.level_envelope_offset =
+        THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET;
+    receipt.level_envelope_bytes = THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES;
+    receipt.level_envelope_checksum = facts->level_envelope_checksum;
+    memcpy(receipt.level_envelope,
+           payload + THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
+           sizeof(receipt.level_envelope));
+    receipt.post_envelope_offset = THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET;
+    receipt.post_envelope_bytes = THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES;
+    receipt.post_envelope_checksum = facts->post_envelope_checksum;
+    memcpy(receipt.post_envelope,
+           payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+           sizeof(receipt.post_envelope));
+    receipt.status =
+        "iso_mode1_2048_initial_level_and_post_envelope_source_bytes_no_semantics";
+    *out_receipt = receipt;
+    return 1;
+}

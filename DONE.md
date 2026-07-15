@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Theron ISO first-sector source handoff gate: the Track 02
+  loader-intake boundary now has a separate MODE1/2048 ISO route for the
+  first `$0b52` sector. It accepts only authenticated US ISO capture facts,
+  rejects raw-BIN trace borrowing, sector conversion, JP zero ISO, and
+  synthetic dungeon promotion, and copies the initial level envelope plus the
+  post-envelope bytes as opaque source material with no object/bitmap
+  semantics. Verification: focused Ninja build plus CTests
+  `theron_v1_track02_loader_intake`,
+  `theron_v1_raw_loader_trace_initial_level_handoff`, and
+  `theron_v1_m11_launcher_handoff_boundary` pass in `build-local-ninja`.
+  Remaining blocker: operator-stage a real ISO capture through this gate and
+  independently prove object/bitmap semantics.
+
 - ✅ 2026-07-16 CSB title/opening source-tick sequence gate: the
   title/opening consumption receipt now requires PRESENTS, CHAOS, and
   STRIKES BACK C001 host captures to carry an ordered source-tick sequence

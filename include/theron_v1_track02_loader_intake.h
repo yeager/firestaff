@@ -36,6 +36,28 @@ typedef struct {
     uint32_t complete_payload_checksum;
 } Theron_V1Track02LoaderReadFacts;
 
+/* Independent MODE1/2048 ISO capture for the same first level sector. This
+ * is deliberately not accepted by the raw-BIN loader intake: an ISO handoff
+ * must prove its own CUE/user-data route and must not borrow raw-sector trace
+ * coordinates, apply a 2352->2048 conversion, or promote a synthetic dungeon. */
+typedef struct {
+    int authenticated_original_iso_capture;
+    int cue_declares_mode1_2048;
+    int raw_bin_trace_borrowed;
+    int sector_conversion_applied;
+    int synthetic_dungeon_promoted;
+    Theron_Track02Variant track02_variant;
+    uint32_t track02_record;
+    uint32_t destination;
+    uint32_t byte_count;
+    int complete_payload_witness_verified;
+    uint32_t complete_payload_checksum;
+    int level_envelope_witness_verified;
+    uint32_t level_envelope_checksum;
+    int post_envelope_witness_verified;
+    uint32_t post_envelope_checksum;
+} Theron_V1Track02IsoLevelObjectReadFacts;
+
 typedef struct {
     int observed;
     int payload_intake_admitted;
@@ -98,6 +120,33 @@ typedef struct {
     const char *status;
 } Theron_V1Track02LoaderPostEnvelopeReceipt;
 
+/* Byte-faithful ISO handoff for the first level sector. The post-envelope
+ * span is retained only as opaque source bytes; object/bitmap semantics stay
+ * blocked until an original ISO loader consumer proves them. */
+typedef struct {
+    int handed_off;
+    int no_fallback;
+    int original_iso_capture;
+    int cue_mode1_2048;
+    int no_raw_bin_trace_borrowing;
+    int no_sector_conversion;
+    int no_synthetic_dungeon;
+    Theron_Track02Variant track02_variant;
+    uint32_t record;
+    uint32_t destination;
+    uint32_t payload_bytes;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_offset;
+    uint32_t level_envelope_bytes;
+    uint32_t level_envelope_checksum;
+    uint8_t level_envelope[THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES];
+    uint32_t post_envelope_offset;
+    uint32_t post_envelope_bytes;
+    uint32_t post_envelope_checksum;
+    uint8_t post_envelope[THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES];
+    const char *status;
+} Theron_V1Track02IsoLevelObjectReceipt;
+
 /* Accepts only a provenance-authenticated later read of the source-locked
  * initial envelope. It deliberately leaves payload intake blocked until
  * authenticated trace must also retain the observed $3800 one-sector payload
@@ -132,5 +181,15 @@ int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
     const Theron_V1Track02LoaderPayloadReceipt *payload,
     uint32_t post_envelope_checksum,
     Theron_V1Track02LoaderPostEnvelopeReceipt *out_receipt);
+
+/* Copies the first MODE1/2048 ISO level-sector bytes only after a separate
+ * ISO capture proves the record, destination, and exact payload checksum.
+ * Raw-BIN variants, sector-converted payloads, borrowed raw traces, and
+ * synthetic dungeon promotion all fail closed. */
+int theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+    const Theron_V1Track02IsoLevelObjectReadFacts *facts,
+    const uint8_t *payload,
+    size_t payload_bytes,
+    Theron_V1Track02IsoLevelObjectReceipt *out_receipt);
 
 #endif
