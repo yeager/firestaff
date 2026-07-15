@@ -21103,6 +21103,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_composition_source_gate.py
         )
         add_test(
+            NAME dm1_v1_f0128_square_material_source_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_f0128_square_material_source_gate.py
+        )
+        add_test(
             NAME dm1_v1_projectile_wall_zone_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_projectile_wall_zone_gate.py
         )

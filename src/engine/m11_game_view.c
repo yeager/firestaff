@@ -22218,11 +22218,10 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         if (plan.relForward > maxVisibleForward) {
             continue;
         }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             plan.relForward,
-                                             plan.relSide)) {
-            continue;
-        }
+        /* F0128 dispatches F0116..F0124 for every D3..D1 square.  F0104
+         * pit material belongs to that square dispatch, not to the later
+         * F0115 side-content visibility lane; a nearer panel overpaints it
+         * naturally when the source zones overlap. */
         if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
@@ -22276,11 +22275,8 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         if (plan.relForward > maxVisibleForward) {
             continue;
         }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             plan.relForward,
-                                             plan.relSide)) {
-            continue;
-        }
+        /* F0108 runs from each F0116..F0124 square dispatch.  Do not use
+         * the F0115 side-content gate to suppress its material. */
         if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
@@ -23186,11 +23182,8 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         if (plan.relForward > maxVisibleForward) {
             continue;
         }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             plan.relForward,
-                                             plan.relSide)) {
-            continue;
-        }
+        /* F0104 stairs are square material, like pits, and remain in the
+         * D3..D1 F0128 dispatch until a later source panel covers them. */
         if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
@@ -23239,11 +23232,8 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
         if (plan.relForward > maxVisibleForward) {
             continue;
         }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             plan.relForward,
-                                             plan.relSide)) {
-            continue;
-        }
+        /* F0113 field masks belong to the processed square route; they are
+         * not culled by Firestaff's later side-content visibility gate. */
         if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
@@ -35670,10 +35660,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * panels using original wall-set bitmaps and original layout-696
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
      * doors, pits, stairs, fields, and exact object order remain next. */
+    /* ReDMCSB F0128 invokes every D3..D1 square route; geometry is hidden
+     * by later source panels, not pre-culled by a host visibility shortcut. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             maxVisibleForward, cells);
+                             3, cells);
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward, cells);
+                                  3, cells);
     /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in source order before
      * the same-depth center square (D3L/D3R before D3C, D2L/D2R before D2C,
      * D1L/D1R before D1C).  Do not cap the primary side-wall pass at the
@@ -35696,9 +35688,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        maxVisibleForward, cells);
+                        3, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward, cells);
+                                  3, cells);
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
