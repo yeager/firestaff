@@ -1533,6 +1533,48 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_excell_writes[*pending_excell_write_count].flags = w;
         ++*pending_excell_write_count;
         break;
+    case 46u: /* STKOP_ChPoss */
+        /* CSBWin DSA.cpp:3330-3356 normalizes the source character/slot
+         * selectors, then reads an existing CHARDESC possession or cursor
+         * hand. The runtime owns both source surfaces. */
+        if (!context->get_champion_possession ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if ((int32_t)w > 4) w = 0u;
+        if ((int32_t)w == 4) {
+            w = (uint32_t)(int32_t)context->party_leader_index;
+        }
+        if (v > 29u) v = 0u;
+        sv = -1;
+        if (context->get_champion_possession(context->dungeon_user,
+                                              (int32_t)w, v, &sv) < 0) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sv)) {
+            goto underflow;
+        }
+        break;
+    case 77u: /* STKOP_MonPoss */
+        /* CSBWin DSA.cpp:3358-3386 follows DB4.possession2 and the real
+         * DBCOMMON next links.  The runtime owns that loaded chain; absent
+         * or malformed original dungeon data is not replaced with a list. */
+        if (!context->get_monster_possession ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = -1;
+        if (w <= UINT16_MAX &&
+            context->get_monster_possession(context->dungeon_user,
+                                             (uint16_t)w, v, &sv) < 0) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sv)) {
+            goto underflow;
+        }
+        break;
     case 100u: /* STKOP_GeneratorDelayFetch */
         /* CSBWin DSA.cpp:4724-4735 queries the first type-six DB3 generator
          * at this real dungeon location and pushes its disableTime, or -1. */
@@ -2313,6 +2355,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_object_property = runner->get_object_property;
     context.set_object_property = runner->set_object_property;
     context.normalize_object_property = runner->normalize_object_property;
+    context.get_champion_possession = runner->get_champion_possession;
+    context.get_monster_possession = runner->get_monster_possession;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

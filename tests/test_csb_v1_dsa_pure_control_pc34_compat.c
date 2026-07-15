@@ -7,7 +7,8 @@
  * STKOP_PartyDistance:4057-4072,
  * STKOP_TimeFetch:2512-2518, STKOP_ThisDSAId:4822-4828,
  * STKOP_WhoHasTalent:4363-4380, STKOP_CountInjury:4798-4817, and
- * STKOP_TalentsFetch:4243-4283 and STKOP_DisableSaves:2946-2955. These
+ * STKOP_TalentsFetch:4243-4283, STKOP_DisableSaves:2946-2955, and
+ * STKOP_ChPoss/STKOP_MonPoss:3330-3386. These
  * commands and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
@@ -36,6 +37,8 @@ static CSB_V1_CSBWinDSAObjectProperty object_property_stored;
 static uint32_t object_property_stored_value;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
+static int champion_possession_enabled;
+static int monster_possession_enabled;
 
 static int wing_talents_enabled;
 
@@ -202,6 +205,32 @@ static int set_object_property(void *user, uint16_t thing,
     return 1;
 }
 
+static int get_champion_possession(void *user, int champion_index,
+                                   uint32_t slot_index, int32_t *out_thing)
+{
+    (void)user;
+    if (!champion_possession_enabled || !out_thing) return -1;
+    *out_thing = -1;
+    if (champion_index == 2 && slot_index == 7u) *out_thing = 0x0456;
+    if (champion_index < 0 && slot_index == 7u) *out_thing = 0x0789;
+    return 1;
+}
+
+static int get_monster_possession(void *user, uint16_t monster_thing,
+                                  uint32_t possession_index,
+                                  int32_t *out_thing)
+{
+    (void)user;
+    if (!monster_possession_enabled || !out_thing) return -1;
+    *out_thing = -1;
+    if (monster_thing == 0x0123u && possession_index == 0u) {
+        *out_thing = 0x0456;
+    } else if (monster_thing == 0x0123u && possession_index == 1u) {
+        *out_thing = 0x0789;
+    }
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -302,6 +331,12 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_object_property = get_object_property;
         context.set_object_property = set_object_property;
         context.normalize_object_property = normalize_object_property;
+    }
+    if (champion_possession_enabled) {
+        context.get_champion_possession = get_champion_possession;
+    }
+    if (monster_possession_enabled) {
+        context.get_monster_possession = get_monster_possession;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -474,6 +509,15 @@ int main(void)
     };
     uint16_t object_set_curse_then_bad[] = {
         0x0686u, 0x0456u, 0x0686u, 1u, 0x0d0bu, 0x0000u
+    };
+    uint16_t champion_possession[] = {
+        0x0686u, 4u, 0x0686u, 7u, 0x0b8bu, 0x000du
+    };
+    uint16_t champion_hand_possession[] = {
+        0x0786u, 0xffffu, 0xffffu, 0x0686u, 7u, 0x0b8bu, 0x000du
+    };
+    uint16_t monster_possession[] = {
+        0x0686u, 0x0123u, 0x0686u, 1u, 0x134bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -788,6 +832,31 @@ int main(void)
               object_property_store_count == 0,
           "SetCurse rejects a later unsupported word without DB5/DB6/DB10 mutation");
     object_property_enabled = 0;
+    champion_possession_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, champion_possession,
+              (int)(sizeof(champion_possession) /
+                    sizeof(champion_possession[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x0456u && execution.stack_depth == 0u,
+          "CHPOSS maps selector four through the live CSBWin hand character");
+    parameters[0] = 77u;
+    check(run(&state, &action, champion_hand_possession,
+              (int)(sizeof(champion_hand_possession) /
+                    sizeof(champion_hand_possession[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x0789u && execution.stack_depth == 0u,
+          "CHPOSS retains a signed negative selector for the cursor hand");
+    champion_possession_enabled = 0;
+    monster_possession_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, monster_possession,
+              (int)(sizeof(monster_possession) /
+                    sizeof(monster_possession[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x0789u && execution.stack_depth == 0u,
+          "MONPOSS preserves source DB4 possession-chain indexing");
+    monster_possession_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
