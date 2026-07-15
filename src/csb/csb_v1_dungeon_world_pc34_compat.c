@@ -1,5 +1,6 @@
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include <stdlib.h>
 #include <string.h>
 
 /* ================================================================
@@ -357,17 +358,40 @@ int csb_dungeon_move_thing_default(uint16_t thing,
                                    int source_map_x, int source_map_y,
                                    int destination_map_x, int destination_map_y) {
     CSB_V1_DungeonData *d = csb_v1_dungeon_get_current_mutable();
+    uint8_t *before = NULL;
+    int status = 0;
+
     if (!d || !d->raw_data || d->square_bytes != 1 ||
         thing == CSB_THING_ENDOFLIST || thing == CSB_THING_PARTY) return -1;
     if (source_map_x == destination_map_x && source_map_y == destination_map_y &&
         source_map_x >= 0) return 0;
+
+    /* F0163/F0164 mutate the same source-owned byte arena: a rejected target
+     * must not leave a valid source Thing unlinked.  Snapshot only the loaded
+     * original arena, never a decoded substitute; allocation failure closes
+     * the operation before F0164 can mutate it. */
+    before = (uint8_t *)malloc((size_t)d->raw_size);
+    if (!before) return -1;
+    memcpy(before, d->raw_data, (size_t)d->raw_size);
     if (source_map_x >= 0) {
-        if (csb_dungeon_unlink_thing(d, thing, source_map_x, source_map_y) != 0) return -2;
+        if (csb_dungeon_unlink_thing(d, thing, source_map_x, source_map_y) != 0) {
+            status = -2;
+            goto rollback;
+        }
     }
     if (destination_map_x >= 0) {
-        if (csb_dungeon_link_thing(d, thing, destination_map_x, destination_map_y) != 0) return -1;
+        if (csb_dungeon_link_thing(d, thing, destination_map_x, destination_map_y) != 0) {
+            status = -1;
+            goto rollback;
+        }
     }
+    free(before);
     return 0;
+
+rollback:
+    memcpy(d->raw_data, before, (size_t)d->raw_size);
+    free(before);
+    return status;
 }
 
 int csb_dungeon_move_thing_between_levels_default(
