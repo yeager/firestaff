@@ -17502,3 +17502,15 @@ is inferred. The bundle is capture-producer-only and remains no-draw until an
 authentic Saturn trace proves correlation, transforms, pixel/palette/VDP1
 semantics, and rendering behavior. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus owner/material Saturn capture target
+
+The owner/material bundle can now be written atomically as
+`FIRESTAFF_NEXUS_STRUCTURE1A_STRUCTURE3_MATERIAL_CAPTURE_TARGET_V1`. One
+producer request carries the active canonical LEV fingerprint, Structure1F/
+Structure1A ownership facts, exact typed Structure3 face fingerprints, and
+the bounded selected Structure2 image/palette candidate windows. It requests
+one original-Saturn source-read, palette, VDP1 VRAM/command, transform, and
+culling observation set. It creates no pixels, decoder contract, model-entry
+mapping, or draw permission. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.

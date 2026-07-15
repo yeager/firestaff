@@ -670,6 +670,8 @@ typedef struct {
 /* A producer-facing bundle with independently source-bound owner/face and
  * static material inputs. The owner-to-entry mapping remains explicitly
  * unproven; this requests a trace that can establish it, never a draw. */
+#define NEXUS_V1_STRUCTURE1A_STRUCTURE3_MATERIAL_CAPTURE_TARGET_MAGIC \
+    "FIRESTAFF_NEXUS_STRUCTURE1A_STRUCTURE3_MATERIAL_CAPTURE_TARGET_V1"
 typedef struct {
     int valid;
     int level_index;
@@ -1920,6 +1922,15 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
 int nexus_v1_engine_build_structure1a_structure3_material_capture_target(
     Nexus_V1_Engine *engine, int topology_candidate_index,
     uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt);
+/* Write one atomic external-Saturn capture request that preserves the owner,
+ * typed Structure3 face, and bounded Structure2 material lanes. It requests
+ * observations only and cannot become a decoder or renderer input. */
+int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *path,
     Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *out_target,
     Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt);
 /* Joins an exact typed Structure3 face/vertices/normal extraction to the
