@@ -5134,6 +5134,14 @@ static void test_slev_capture_target_binds_loaded_bytes(void) {
     Nexus_V1_Engine engine;
     Nexus_V1_LevelScriptCaptureTargetReceipt target;
     Nexus_V1_LevelScriptTraceAdmissionReceipt admission;
+    Nexus_V1_LevelScriptTraceHostReceipt host;
+    Nexus_V1_SlevDispatchEvidenceReceipt evidence;
+    static const uint8_t raw_trace[] =
+        "pc=00001000 opcode=2fe6\n"
+        "pc=00001002 opcode=1234\n"
+        "pc=00001004 kind=write\n"
+        "literal=00200010\n"
+        "literal=00200020\n";
     char trace[2048];
 
     memset(slev, 0, sizeof(slev));
@@ -5173,21 +5181,46 @@ static void test_slev_capture_target_binds_loaded_bytes(void) {
              "primary_literal_address=%x\nauxiliary_literal_address=%x\n"
              "entry_pc=1000\ntask_body_pc=1002\ntask_body_opcode=1234\n"
              "callback_or_write_pc=1004\ncallback_or_write_kind=write\n"
+             "raw_trace_fnv1a64=%016llx\n"
              "original_saturn_execution=1\n",
              NEXUS_V1_SLEV_TRACE_MAGIC, target.level_index,
              target.canonical_slev_name, target.canonical_slev_md5,
              target.source_byte_count, (unsigned long long)target.source_fnv1a64,
              target.first_opcode, target.task_header_size,
-             target.primary_literal_address, target.auxiliary_literal_address);
-    CHECK(nexus_v1_engine_admit_slev_execution_trace(
-              &engine, trace, strlen(trace), &admission) == 1 &&
+             target.primary_literal_address, target.auxiliary_literal_address,
+             (unsigned long long)fnv1a64(raw_trace, sizeof(raw_trace) - 1));
+    CHECK(nexus_v1_engine_admit_slev_execution_trace_with_raw(
+              &engine, trace, strlen(trace), raw_trace, sizeof(raw_trace) - 1,
+              &admission) == 1 &&
           admission.capture_target_bound &&
           admission.source_fnv1a64 == target.source_fnv1a64 &&
+          admission.raw_trace_bytes_bound &&
           !admission.dispatch_permitted && admission.blocks_real_script_dispatch,
           "SLEV trace admission retains loaded-byte identity without dispatch");
+    CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine, &host) == 0 &&
+          host.status == NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE &&
+          !host.dispatch_permitted,
+          "SLEV host blocks before raw observations are verified");
+    CHECK(nexus_v1_build_slev_dispatch_evidence(
+              &engine, raw_trace, sizeof(raw_trace) - 1, &evidence) == 1 &&
+          evidence.status == NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED &&
+          evidence.raw_trace_bound && evidence.observation_order_proven &&
+          evidence.literal_observation_proven && !evidence.dispatch_permitted,
+          "SLEV raw trace binds the required observations without dispatch");
+    CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine, &host) == 1 &&
+          host.status == NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE &&
+          host.host_consumed && !host.dispatch_permitted,
+          "SLEV host consumes verified observations without task execution");
+    engine.script_trace_admission.raw_trace_fnv1a64 ^= UINT64_C(1);
+    CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine, &host) == 0 &&
+          host.status == NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE &&
+          !host.dispatch_permitted,
+          "a changed SLEV trace cannot reuse older observation evidence");
+    engine.script_trace_admission.raw_trace_fnv1a64 ^= UINT64_C(1);
     engine.script_vm.candidate_source_fnv1a64 ^= UINT64_C(1);
-    CHECK(nexus_v1_engine_admit_slev_execution_trace(
-              &engine, trace, strlen(trace), &admission) == 0 &&
+    CHECK(nexus_v1_engine_admit_slev_execution_trace_with_raw(
+              &engine, trace, strlen(trace), raw_trace, sizeof(raw_trace) - 1,
+              &admission) == 0 &&
           admission.status == NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH &&
           !admission.dispatch_permitted,
           "a changed active SLEV byte receipt rejects a stale capture trace");

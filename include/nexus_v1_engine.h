@@ -1132,6 +1132,8 @@ typedef struct {
     Nexus_V1_SalDispatchEvidenceStatus status;
     int level_index;
     int raw_trace_bound;
+    uint64_t raw_trace_fnv1a64;
+    size_t raw_trace_byte_count;
     int selector_dispatch_observed;
     int sal_read_observed;
     int driver_output_observed;
@@ -1280,6 +1282,8 @@ typedef struct {
     Nexus_V1_SlevDispatchEvidenceStatus status;
     int level_index;
     int raw_trace_bound;
+    uint64_t raw_trace_fnv1a64;
+    size_t raw_trace_byte_count;
     int entry_observed;
     int task_body_observed;
     int callback_or_write_observed;
@@ -1567,6 +1571,7 @@ struct Nexus_V1_Engine {
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
     Nexus_V1_LevelScriptTraceAdmissionReceipt script_trace_admission;
     Nexus_V1_LevelScriptTraceHostReceipt script_trace_host_receipt;
+    Nexus_V1_SlevDispatchEvidenceReceipt script_dispatch_evidence;
     Nexus_V1_LevelSoundTraceAdmissionReceipt sound_trace_admission;
     Nexus_V1_LevelSoundTraceHostReceipt sound_trace_host_receipt;
     Nexus_V1_SalDispatchEvidenceReceipt sound_dispatch_evidence;
@@ -1854,7 +1859,7 @@ int nexus_v1_current_level_slev_trace_host_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptTraceHostReceipt *out_receipt);
 int nexus_v1_build_slev_dispatch_evidence(
-    const Nexus_V1_Engine *engine, const uint8_t *raw_trace,
+    Nexus_V1_Engine *engine, const uint8_t *raw_trace,
     size_t raw_trace_size, Nexus_V1_SlevDispatchEvidenceReceipt *out_receipt);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,

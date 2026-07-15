@@ -5235,6 +5235,8 @@ int nexus_v1_engine_consume_sal_driver_trace(
     if (evidence->status != NEXUS_V1_SAL_DISPATCH_EVIDENCE_OBSERVED ||
         evidence->level_index != receipt.level_index ||
         !evidence->raw_trace_bound || !evidence->selector_dispatch_observed ||
+        evidence->raw_trace_fnv1a64 != trace->raw_trace_fnv1a64 ||
+        evidence->raw_trace_byte_count != trace->raw_trace_byte_count ||
         !evidence->sal_read_observed || !evidence->driver_output_observed ||
         !evidence->observation_order_proven || evidence->driver_dispatch_proven ||
         evidence->sal_decode_proven || evidence->playback_permitted ||
@@ -5593,6 +5595,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
     Nexus_V1_LevelScriptTraceHostReceipt receipt;
     Nexus_V1_LevelScriptCaptureTargetReceipt target;
     const Nexus_V1_LevelScriptTraceAdmissionReceipt *trace;
+    const Nexus_V1_SlevDispatchEvidenceReceipt *evidence;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
@@ -5606,6 +5609,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
     }
     receipt.level_index = engine->level_aux_runtime_receipt.level_index;
     trace = &engine->script_trace_admission;
+    evidence = &engine->script_dispatch_evidence;
     if (trace->status != NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE ||
         trace->level_index != receipt.level_index ||
         !trace->capture_target_bound || !trace->mednafen_debugger_provenance ||
@@ -5615,6 +5619,24 @@ int nexus_v1_engine_consume_slev_execution_trace(
         !trace->trace_chain_complete || trace->task_body_dispatch_proven ||
         trace->dispatch_permitted || !trace->blocks_real_script_dispatch ||
         trace->fallback_visuals_permitted) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (evidence->status != NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED ||
+        evidence->level_index != receipt.level_index ||
+        !evidence->raw_trace_bound || !evidence->entry_observed ||
+        evidence->raw_trace_fnv1a64 != trace->raw_trace_fnv1a64 ||
+        evidence->raw_trace_byte_count != trace->raw_trace_byte_count ||
+        !evidence->task_body_observed ||
+        !evidence->callback_or_write_observed ||
+        !evidence->primary_literal_observed ||
+        !evidence->auxiliary_literal_observed ||
+        !evidence->observation_order_proven ||
+        !evidence->literal_observation_proven ||
+        evidence->task_body_dispatch_proven || evidence->dispatch_permitted ||
+        !evidence->blocks_real_script_dispatch ||
+        evidence->fallback_visuals_permitted) {
         receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE;
         *out_receipt = receipt;
         return 0;
@@ -5707,6 +5729,8 @@ int nexus_v1_build_sal_dispatch_evidence(
         return 0;
     }
     receipt.raw_trace_bound = 1;
+    receipt.raw_trace_fnv1a64 = trace->raw_trace_fnv1a64;
+    receipt.raw_trace_byte_count = trace->raw_trace_byte_count;
     snprintf(selector_dispatch, sizeof(selector_dispatch),
              "pc=%08x selector-dispatch", trace->selector_dispatch_pc);
     snprintf(sal_read, sizeof(sal_read), "pc=%08x sal-read",
@@ -5737,7 +5761,7 @@ int nexus_v1_build_sal_dispatch_evidence(
 }
 
 int nexus_v1_build_slev_dispatch_evidence(
-    const Nexus_V1_Engine *engine, const uint8_t *raw_trace,
+    Nexus_V1_Engine *engine, const uint8_t *raw_trace,
     size_t raw_trace_size, Nexus_V1_SlevDispatchEvidenceReceipt *out_receipt) {
     Nexus_V1_SlevDispatchEvidenceReceipt receipt;
     const Nexus_V1_LevelScriptTraceAdmissionReceipt *trace;
@@ -5769,6 +5793,8 @@ int nexus_v1_build_slev_dispatch_evidence(
         return 0;
     }
     receipt.raw_trace_bound = 1;
+    receipt.raw_trace_fnv1a64 = trace->raw_trace_fnv1a64;
+    receipt.raw_trace_byte_count = trace->raw_trace_byte_count;
     snprintf(entry, sizeof(entry), "pc=%08x opcode=%04x",
              trace->entry_pc, engine->script_vm.real_task_first_opcode);
     snprintf(task_body, sizeof(task_body), "pc=%08x opcode=%04x",
@@ -5809,6 +5835,7 @@ int nexus_v1_build_slev_dispatch_evidence(
     receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED;
     receipt.task_body_dispatch_proven = 0;
     receipt.dispatch_permitted = 0;
+    engine->script_dispatch_evidence = receipt;
     *out_receipt = receipt;
     return 1;
 }
