@@ -3,23 +3,23 @@
 @@ -30,6 +30,8 @@
  #include <mednafen/mednafen.h>
  #include "huc6280.h"
- 
+
 +#include <stdio.h>
 +#include <stdlib.h>
  #include <string.h>
- 
+
  #ifdef WANT_DEBUGGER
-@@ -38,7 +40,43 @@
- 
+@@ -39,6 +41,43 @@
  namespace MDFN_IEN_PCE
  {
-+
+
 +static FILE *TheronMainRAMLoaderTrace;
 +static bool TheronMainRAMLoaderTraceInitialized;
 +static unsigned TheronMainRAMLoaderTraceCount;
 +
 +static void TheronTraceMainRAMLoaderOperation(uint16 logical_pc, uint32 physical_pc, uint8 opcode,
-+                                              uint16 first, uint16 second, uint16 third)
++                                              uint16 first, uint16 second, uint16 third,
++                                              uint8 accumulator, uint8 x, uint8 y)
 +{
 + if(!TheronMainRAMLoaderTraceInitialized)
 + {
@@ -33,8 +33,8 @@
 +
 + if(opcode == 0x20)
 + {
-+  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x\n",
-+          logical_pc, physical_pc, first);
++  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x a=%02x x=%02x y=%02x\n",
++          logical_pc, physical_pc, first, accumulator, x, y);
 + }
 + else if(opcode == 0x73 || opcode == 0xc3 || opcode == 0xd3 || opcode == 0xe3 || opcode == 0xf3)
 + {
@@ -45,7 +45,7 @@
 + }
 + else
 +  return;
- 
++
 + TheronMainRAMLoaderTraceCount++;
 + fflush(TheronMainRAMLoaderTrace);
 +}
@@ -53,7 +53,7 @@
  INLINE void HuC6280::LastCycle(void)
  {
   /*assert(((P & I_FLAG) ? 0 : (uint32)~0) == PIMaskCache);*/
-@@ -573,6 +611,10 @@
+@@ -573,6 +612,10 @@
  NO_INLINE void HuC6280::RunSub(void)
  {
   uint32 old_PC;
@@ -61,16 +61,16 @@
 + uint16 first;
 + uint16 second;
 + uint16 third;
- 
+
   if(in_block_move)
   {
-@@ -677,9 +719,17 @@
+@@ -677,9 +720,17 @@
             }
  	  }
  	 }
 -         PC &= 0xFFFF;     // Our cpu core can only handle PC going about 8192 bytes over, so make sure it never gets that far...
 +	 PC &= 0xFFFF;     // Our cpu core can only handle PC going about 8192 bytes over, so make sure it never gets that far...
- 
+
  	 lastop = RdOp(PC);
 +	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)
@@ -78,8 +78,8 @@
 +	  first = RdOp(PC + 1) | (RdOp(PC + 2) << 8);
 +	  second = RdOp(PC + 3) | (RdOp(PC + 4) << 8);
 +	  third = RdOp(PC + 5) | (RdOp(PC + 6) << 8);
-+	  TheronTraceMainRAMLoaderOperation(PC, physical_pc, lastop, first, second, third);
++	  TheronTraceMainRAMLoaderOperation(PC, physical_pc, lastop, first, second, third, A, X, Y);
 +	 }
- 
+
  	 PC++;
- 
+
