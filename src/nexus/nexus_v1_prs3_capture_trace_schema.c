@@ -650,7 +650,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     if (!dm_bin || !source_hash_verified ||
-        dm_bin_size < SH2_LOOP_BRANCH_OFFSET + 2U ||
+        dm_bin_size < SH2_V1_CALLEE_OFFSET + 190U ||
         dm_bin_size < DM_BIN_V1_FRAME_OFFSET + 16U ||
         memcmp(dm_bin + DM_BIN_V1_FRAME_OFFSET, "PRS3", 4U) != 0 ||
         read_be32(dm_bin + DM_BIN_V1_FRAME_OFFSET + 4U) != 1U ||
@@ -697,6 +697,8 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.control_refill_failure_branch_offset = SH2_CONTROL_REFILL_FAILURE_BRANCH_OFFSET;
     receipt.control_refill_byte_read_offset = SH2_CONTROL_REFILL_BYTE_READ_OFFSET;
     receipt.control_refill_merge_offset = SH2_CONTROL_REFILL_MERGE_OFFSET;
+    receipt.terminal_result_offset = SH2_V1_CALLEE_OFFSET + 174U;
+    receipt.terminal_return_offset = SH2_V1_CALLEE_OFFSET + 188U;
     receipt.control_low_bit_test_offset = SH2_CONTROL_LOW_BIT_TEST_OFFSET;
     receipt.control_zero_branch_offset = SH2_CONTROL_ZERO_BRANCH_OFFSET;
     receipt.control_low_bit_mask = 1U;
@@ -725,6 +727,30 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
             SH2_CONTROL_ZERO_BRANCH_OFFSET,
             &receipt.control_zero_branch_target_offset) &&
         receipt.control_zero_branch_target_offset == SH2_V1_CALLEE_OFFSET + 100U;
+    /* Counter-exhaustion guards from refill, nonzero, and zero-side paths
+     * converge on one epilogue. It calls an opaque helper, sets R0 to zero,
+     * restores registers, then RTS. That is a source-level failure-shaped
+     * terminal path only: it does not prove an externally observed decoder
+     * status, stream-end token, or any pixel/decompression behavior. */
+    receipt.sh2_terminal_failure_path_proven =
+        sh2_conditional_branch_target(
+            read_be16(dm_bin + SH2_CONTROL_REFILL_FAILURE_BRANCH_OFFSET),
+            SH2_CONTROL_REFILL_FAILURE_BRANCH_OFFSET,
+            &receipt.terminal_refill_guard_target_offset) &&
+        sh2_conditional_branch_target(
+            read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 80U),
+            SH2_V1_CALLEE_OFFSET + 80U,
+            &receipt.terminal_nonzero_guard_target_offset) &&
+        sh2_conditional_branch_target(
+            read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 104U),
+            SH2_V1_CALLEE_OFFSET + 104U,
+            &receipt.terminal_zero_guard_target_offset) &&
+        receipt.terminal_refill_guard_target_offset == SH2_V1_CALLEE_OFFSET + 166U &&
+        receipt.terminal_nonzero_guard_target_offset == SH2_V1_CALLEE_OFFSET + 166U &&
+        receipt.terminal_zero_guard_target_offset == SH2_V1_CALLEE_OFFSET + 166U &&
+        (receipt.terminal_result_instruction = read_be16(
+            dm_bin + receipt.terminal_result_offset)) == 0xe000U &&
+        read_be16(dm_bin + receipt.terminal_return_offset) == 0x000bU;
     /* SH-2 `SHLR R11; TST R11,R3; BT zero-side` uses the immediately loaded
      * R3=1 mask. When the shifted low bit is nonzero the branch is not taken.
      * Its fallthrough has a remaining-input guard, reads one byte through
@@ -928,6 +954,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     return receipt.sh2_control_path_verified && receipt.sh2_stream_read_verified &&
         receipt.sh2_output_store_verified && receipt.sh2_loop_back_target_verified &&
         receipt.sh2_loop_body_bound && receipt.sh2_control_low_bit_semantics_proven &&
+        receipt.sh2_terminal_failure_path_proven &&
         receipt.sh2_nonzero_direct_byte_path_proven &&
         receipt.sh2_zero_side_index_read_verified &&
         receipt.sh2_zero_side_two_byte_input_span_proven &&

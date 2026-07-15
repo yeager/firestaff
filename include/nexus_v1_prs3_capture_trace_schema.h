@@ -103,6 +103,12 @@ typedef struct {
     uint32_t control_refill_failure_branch_offset;
     uint32_t control_refill_byte_read_offset;
     uint32_t control_refill_merge_offset;
+    uint32_t terminal_refill_guard_target_offset;
+    uint32_t terminal_nonzero_guard_target_offset;
+    uint32_t terminal_zero_guard_target_offset;
+    uint32_t terminal_result_offset;
+    uint16_t terminal_result_instruction;
+    uint32_t terminal_return_offset;
     uint32_t control_low_bit_test_offset;
     uint32_t control_zero_branch_offset;
     uint32_t control_zero_branch_target_offset;
@@ -110,6 +116,10 @@ typedef struct {
     uint16_t control_sentinel_word;
     uint16_t control_low_bit_mask;
     int sh2_control_refill_verified;
+    /* Three source-counter guards share one epilogue that writes zero to R0
+     * before RTS. This identifies a static failure-shaped terminal path, not
+     * a successful-stream terminator or decoder result contract. */
+    int sh2_terminal_failure_path_proven;
     /* Exact SH-2 semantics for the nonzero low-bit fallthrough. This proves
      * a guarded source-byte-to-output-byte path only, not a complete PRS3
      * token grammar, output buffer ownership, or drawable pixels. */

@@ -352,6 +352,12 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.control_shift_offset == 85430U &&
                receipt.control_refill_byte_read_offset == 85440U &&
                receipt.control_refill_merge_offset == 85446U &&
+               receipt.terminal_refill_guard_target_offset == 85542U &&
+               receipt.terminal_nonzero_guard_target_offset == 85542U &&
+               receipt.terminal_zero_guard_target_offset == 85542U &&
+               receipt.terminal_result_offset == 85550U &&
+               receipt.terminal_result_instruction == 0xe000U &&
+               receipt.terminal_return_offset == 85564U &&
                receipt.control_sentinel_literal_offset == 85644U &&
                receipt.control_sentinel_word == 0x0100U &&
                receipt.control_low_bit_mask == 1U &&
@@ -399,6 +405,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_stream_read_verified && receipt.sh2_output_store_verified &&
                receipt.sh2_output_store_predecessor_verified &&
                receipt.sh2_control_refill_verified &&
+               receipt.sh2_terminal_failure_path_proven &&
                receipt.sh2_control_low_bit_semantics_proven &&
                receipt.sh2_nonzero_direct_byte_path_proven &&
                receipt.sh2_zero_side_index_read_verified &&
@@ -432,6 +439,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    !receipt.sh2_control_low_bit_semantics_proven &&
                    !receipt.sh2_nonzero_direct_byte_path_proven,
                "changed low-bit mask setup rejects the source byte-path receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85456U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_terminal_failure_path_proven,
+               "changed counter guard rejects the terminal-path receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);
