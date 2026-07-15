@@ -16646,6 +16646,18 @@ viewport draws the original panel and both decoded labels at native 320x200
 coordinates only while the source dialogue command is active. Verification:
 canonical-PC-G1 `dm2_v1_dialogue_box_viewport_real_data`.
 
+# ✅ 2026-07-15 DM2 source save-dialogue pointer receipt
+
+The DM2 boot path now carries the original save/load selection geometry from
+`c_dialog.cpp` and `c_savegame.cpp` without a replacement hit layout. Its
+receipt takes only the source event's two rectangle IDs, expands/measures
+their `INTERFACE_GENERAL/0/raw4` entries, and calculates the selected row
+with the original `c_gfx_str.cpp` seven-pixel `strxplus` stride and maximum
+slot 10. A coordinate before the source-owned baseline clears the receipt and
+fails closed. Canonical PC G1 verification resolves `RECT_451`, proves exact
+row-seven selection, and verifies the rejected pre-baseline route:
+`dm2_v1_dialogue_box_viewport_real_data`.
+
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer

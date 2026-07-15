@@ -16,6 +16,8 @@ int main(void)
     DM2_V1_BootProfile boot;
     DM2_V1_DialogueBoxHostCommand command;
     DM2_V1_DialogueOpenPanelHostCommand open_panel;
+    DM2_V1_DialogueSavePointerReceipt save_pointer;
+    DM2_V1_DialogueSavePointerReceipt save_pointer_row_seven;
     DM2_V1_InterfacePalette interface_palette;
     DM2_V1_InterfaceActionTable action_table;
     DM2_V1_ViewportState viewport;
@@ -25,6 +27,7 @@ int main(void)
     uint32_t font_hash = 0u;
     int box_ok;
     int open_ok;
+    int pointer_ok;
     int failures = 0;
 
     if (root && root[0]) {
@@ -49,6 +52,8 @@ int main(void)
     dm2_v1_boot_profile_init(&boot);
     memset(&command, 0, sizeof(command));
     memset(&open_panel, 0, sizeof(open_panel));
+    memset(&save_pointer, 0, sizeof(save_pointer));
+    memset(&save_pointer_row_seven, 0, sizeof(save_pointer_row_seven));
     memset(&interface_palette, 0, sizeof(interface_palette));
     memset(&action_table, 0, sizeof(action_table));
     if (dm2_v1_boot_scan_assets(&boot, data_root) != 0 ||
@@ -59,12 +64,43 @@ int main(void)
     }
     box_ok = dm2_v1_boot_dialogue_box_host_command(&boot, &command);
     open_ok = dm2_v1_boot_dialogue_open_panel_host_command(&boot, &open_panel);
+    /* c_dialog.cpp::DM2_dialog_2066_398a expands RECT_451 and lays out ten
+     * rows from its source-owned y + 4 baseline. First admit the canonical
+     * RAW4 event rectangle, then prove row seven from its measured baseline. */
+    pointer_ok = dm2_v1_boot_dialogue_save_pointer_receipt(
+        &boot, 451u, 451u, 60, &save_pointer);
     if (!box_ok || !open_ok ||
         !dm2_v1_boot_interface_palette(&boot, &interface_palette) ||
         !dm2_v1_boot_interface_action_table(&boot, &action_table) ||
         !dm2_v1_boot_interface_font_table(&boot, &font_rows, &font_hash)) {
         fprintf(stderr, "FAIL: canonical save/load dialogue command was not admitted (box=%d open=%d)\n",
                 box_ok, open_ok);
+        dm2_v1_boot_cleanup(&boot);
+        return 1;
+    }
+    if (!pointer_ok || !save_pointer.valid ||
+        save_pointer.event_rect_index != 451u ||
+        save_pointer.event_top_left_index != 451u ||
+        save_pointer.row_stride != 7 ||
+        save_pointer.selected_slot < 0 || save_pointer.selected_slot > 10 ||
+        save_pointer.command_hash == 0u) {
+        fputs("FAIL: canonical save dialogue event rectangle did not admit source row selection\n",
+              stderr);
+        dm2_v1_boot_cleanup(&boot);
+        return 1;
+    }
+    pointer_ok = dm2_v1_boot_dialogue_save_pointer_receipt(
+        &boot, 451u, 451u,
+        save_pointer.event_rect.y + save_pointer.top_left_y + 7 * 7,
+        &save_pointer_row_seven);
+    if (!pointer_ok || !save_pointer_row_seven.valid ||
+        save_pointer_row_seven.selected_slot != 7 ||
+        dm2_v1_boot_dialogue_save_pointer_receipt(
+            &boot, 451u, 451u,
+            save_pointer.event_rect.y + save_pointer.top_left_y - 1,
+            &save_pointer_row_seven) || save_pointer_row_seven.valid) {
+        fputs("FAIL: canonical save dialogue selection did not preserve the source row boundary\n",
+              stderr);
         dm2_v1_boot_cleanup(&boot);
         return 1;
     }

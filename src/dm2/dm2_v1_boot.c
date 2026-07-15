@@ -5912,6 +5912,66 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
     return 1;
 }
 
+int dm2_v1_boot_dialogue_save_pointer_receipt(
+    DM2_V1_BootProfile *profile,
+    uint16_t event_rect_index,
+    uint16_t event_top_left_index,
+    int pointer_y,
+    DM2_V1_DialogueSavePointerReceipt *out_receipt)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    DM2_V1_InterfaceRect top_left;
+    int row;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat || event_rect_index == 0u ||
+        event_top_left_index == 0u) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    /* c_dialog.cpp:191-198 and c_savegame.cpp:775-780: expand the event
+     * rect, query the source top-left with a 1x1 metric, then clamp the row
+     * by the immutable c_gfx_str.cpp strxplus=7 line stride. */
+    if (!raw || raw_size < 4u ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size, event_rect_index,
+                                     &out_receipt->event_rect) ||
+        !dm2_v1_boot_query_blit_text_rect(raw, raw_size, event_top_left_index,
+                                          1, 1, &top_left)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    if (pointer_y < out_receipt->event_rect.y + top_left.y) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    row = (pointer_y - (out_receipt->event_rect.y + top_left.y)) / 7;
+    if (row > 10) row = 10;
+    out_receipt->event_rect_index = event_rect_index;
+    out_receipt->event_top_left_index = event_top_left_index;
+    out_receipt->top_left_x = top_left.x;
+    out_receipt->top_left_y = top_left.y;
+    out_receipt->row_stride = 7;
+    out_receipt->selected_slot = row;
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, event_rect_index);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, event_top_left_index);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                   (uint32_t)out_receipt->event_rect.x);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                   (uint32_t)out_receipt->event_rect.y);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)top_left.x);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)top_left.y);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)pointer_y);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)row);
+    out_receipt->command_hash = hash ? hash : 1u;
+    out_receipt->valid = 1;
+    return 1;
+}
+
 int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout)
