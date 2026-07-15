@@ -23,6 +23,9 @@ static int generator_delay_enabled;
 static int generator_delay_stored;
 static int generator_delay_store_count;
 static int monster_info_enabled;
+static int monster_info_store_count;
+static uint32_t monster_info_stored[8];
+static uint8_t monster_info_store_mask;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -115,6 +118,17 @@ static int get_monster_info(void *user, uint16_t thing,
     return 1;
 }
 
+static int set_monster_info(void *user, uint16_t thing,
+                            const uint32_t values[8], uint8_t write_mask)
+{
+    (void)user;
+    if (!monster_info_enabled || !values || thing != 0x0123u) return 0;
+    memcpy(monster_info_stored, values, sizeof(monster_info_stored));
+    monster_info_store_mask = write_mask;
+    ++monster_info_store_count;
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -176,7 +190,10 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_generator_delay = get_generator_delay;
         context.set_generator_delay = set_generator_delay;
     }
-    if (monster_info_enabled) context.get_monster_info = get_monster_info;
+    if (monster_info_enabled) {
+        context.get_monster_info = get_monster_info;
+        context.set_monster_info = set_monster_info;
+    }
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -303,6 +320,17 @@ int main(void)
     uint16_t monster_fetch_bad_span[] = {
         0x0686u, 0x0123u, 0x0686u, 99u, 0x0686u, 2u, 0x0f0bu,
         0x0686u, 99u, 0x098bu, 0x000du
+    };
+    uint16_t monster_store_then_fetch[] = {
+        0x0686u, 555u, 0x0686u, 2u, 0x09cbu,
+        0x0686u, 0x0123u, 0x0686u, 0u, 0x0686u, 3u, 0x0fcbu,
+        0x0686u, 0x0123u, 0x0686u, 0u, 0x0686u, 3u, 0x0f0bu,
+        0x0686u, 2u, 0x098bu, 0x000du
+    };
+    uint16_t monster_store_then_bad[] = {
+        0x0686u, 555u, 0x0686u, 2u, 0x09cbu,
+        0x0686u, 0x0123u, 0x0686u, 0u, 0x0686u, 3u, 0x0fcbu,
+        0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -535,6 +563,25 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 0u && execution.stack_depth == 0u,
           "Monster@ keeps CSBWin's out-of-bank local span as a no-op with undefined zero");
+    monster_info_store_count = 0;
+    monster_info_store_mask = 0u;
+    memset(monster_info_stored, 0, sizeof(monster_info_stored));
+    parameters[0] = 77u;
+    check(run(&state, &action, monster_store_then_fetch,
+              (int)(sizeof(monster_store_then_fetch) /
+                    sizeof(monster_store_then_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 555u && monster_info_store_count == 1 &&
+              monster_info_stored[2] == 555u &&
+              monster_info_store_mask == (1u << 2),
+          "Monster! stages DB4 hit points, exposes them to same-action Monster@, and commits once");
+    monster_info_store_count = 0;
+    check(run(&state, &action, monster_store_then_bad,
+              (int)(sizeof(monster_store_then_bad) /
+                    sizeof(monster_store_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              monster_info_store_count == 0,
+          "Monster! rejects a later unsupported source word without DB4 mutation");
     monster_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,

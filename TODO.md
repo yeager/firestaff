@@ -3274,9 +3274,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       and alternate graphic. The invisible/size-four/unique/poison bits use
       the authenticated Extended Features flags exactly as CSBWin `DB4` does.
       Invalid/non-DB4 Thing handles retain the original zero/`-1` result;
-      invalid DSAVARS spans are source no-ops. `MonsterStore` remains open
-      pending a complete transactional DB4 write route and original-save
-      corpus capture.
+      invalid DSAVARS spans are source no-ops. `MonsterStore` now stages only
+      the original DB4 hit-point, four feature-bit, and alternate-graphic
+      fields, commits after complete authenticated bytecode consumption, and
+      exposes the queued result to a later same-action `MonsterFetch`.
+      It does not allocate, delete, relink, or create a monster. Positive
+      original DSA-bearing save-corpus capture remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

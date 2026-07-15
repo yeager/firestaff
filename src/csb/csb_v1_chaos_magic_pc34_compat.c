@@ -740,6 +740,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES 100
 
 typedef struct {
     uint32_t location;
@@ -758,6 +759,12 @@ typedef struct {
      * type-zero fallback must therefore not change a later fetch. */
     int has_generator;
 } CSB_V1_CSBWinDSAPendingGeneratorWrite;
+
+typedef struct {
+    uint16_t thing;
+    uint32_t values[8];
+    uint8_t write_mask;
+} CSB_V1_CSBWinDSAPendingMonsterWrite;
 
 static int csb_v1_csbwin_dsa_pending_skin_lookup(
     const CSB_V1_CSBWinDSAPendingSkinWrite *writes,
@@ -787,7 +794,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingExCellWrite *pending_excell_writes,
     int *pending_excell_write_count,
     CSB_V1_CSBWinDSAPendingGeneratorWrite *pending_generator_writes,
-    int *pending_generator_write_count, int *staged_saves_disabled)
+    int *pending_generator_write_count,
+    CSB_V1_CSBWinDSAPendingMonsterWrite *pending_monster_writes,
+    int *pending_monster_write_count, int *staged_saves_disabled)
 {
     uint32_t v;
     uint32_t w;
@@ -803,9 +812,11 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_skin_writes || !pending_skin_write_count ||
         !pending_excell_writes || !pending_excell_write_count ||
         !pending_generator_writes || !pending_generator_write_count ||
+        !pending_monster_writes || !pending_monster_write_count ||
         !staged_saves_disabled ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
+        *pending_monster_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -998,7 +1009,27 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         {
             uint32_t monster_values[8] = { 0u, UINT32_MAX, 0u, 0u,
                                            0u, 0u, 0u, 0u };
+            int pending = -1;
+            uint32_t scan;
             if (w <= UINT16_MAX) {
+                for (scan = 0u;
+                     scan < (uint32_t)*pending_monster_write_count;
+                     ++scan) {
+                    if (pending_monster_writes[scan].thing == (uint16_t)w) {
+                        pending = (int)scan;
+                    }
+                }
+            }
+            if (pending >= 0) {
+                memcpy(monster_values, pending_monster_writes[pending].values,
+                       sizeof(monster_values));
+                if (!context->monster_invisible_enabled) {
+                    monster_values[6] &= ~1u;
+                }
+                if (!context->monster_size4_enabled) {
+                    monster_values[6] &= ~14u;
+                }
+            } else if (w <= UINT16_MAX) {
                 if (!context->get_monster_info ||
                     !context->get_monster_info(context->dungeon_user,
                                                 (uint16_t)w,
@@ -1010,6 +1041,87 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             for (sv = 0; sv < (int32_t)count; ++sv) {
                 variables[v + (uint32_t)sv] = monster_values[sv];
                 variable_state[v + (uint32_t)sv] = 1u;
+            }
+        }
+        break;
+    case 63u: /* STKOP_MonsterStore */
+        /* CSBWin DSA.cpp:4075-4125 updates selected DB4 hit-point, feature,
+         * and alternate-graphic fields only. The real record remains owned
+         * by the runtime, so retain its source write until this whole action
+         * has passed the authenticated bytecode boundary. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if (w > UINT16_MAX) break;
+        {
+            uint32_t monster_values[8] = { 0u, UINT32_MAX, 0u, 0u,
+                                           0u, 0u, 0u, 0u };
+            uint8_t write_mask = 0u;
+            int pending = -1;
+            uint32_t i;
+
+            for (i = 0u; i < (uint32_t)*pending_monster_write_count; ++i) {
+                if (pending_monster_writes[i].thing == (uint16_t)w) {
+                    pending = (int)i;
+                }
+            }
+            if (pending >= 0) {
+                memcpy(monster_values, pending_monster_writes[pending].values,
+                       sizeof(monster_values));
+            } else if (!context->get_monster_info ||
+                       !context->get_monster_info(context->dungeon_user,
+                                                   (uint16_t)w,
+                                                   monster_values)) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            if (monster_values[1] == UINT32_MAX) break;
+            if (count > 2u) {
+                uint32_t hp_count = count - 2u;
+                if (hp_count > 4u) hp_count = 4u;
+                if (v > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - 3u ||
+                    hp_count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v - 2u) {
+                    return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+                }
+                for (i = 0u; i < hp_count; ++i) {
+                    monster_values[2u + i] =
+                        (uint32_t)(uint16_t)variables[v + 2u + i];
+                    write_mask |= (uint8_t)(1u << (2u + i));
+                }
+            }
+            if (count > 6u) {
+                if (v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+                    v + 6u >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) {
+                    return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+                }
+                monster_values[6] = variables[v + 6u] & 0x0fu;
+                write_mask |= 1u << 6;
+            }
+            if (count > 7u) {
+                if (v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+                    v + 7u >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) {
+                    return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+                }
+                monster_values[7] = variables[v + 7u] & 0x07u;
+                write_mask |= 1u << 7;
+            }
+            if (write_mask == 0u) break;
+            if (pending >= 0) {
+                pending_monster_writes[pending].write_mask |= write_mask;
+                memcpy(pending_monster_writes[pending].values, monster_values,
+                       sizeof(monster_values));
+            } else {
+                if (!context->set_monster_info ||
+                    *pending_monster_write_count >=
+                        CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                pending_monster_writes[*pending_monster_write_count].thing =
+                    (uint16_t)w;
+                memcpy(pending_monster_writes[*pending_monster_write_count].values,
+                       monster_values, sizeof(monster_values));
+                pending_monster_writes[*pending_monster_write_count].write_mask =
+                    write_mask;
+                ++*pending_monster_write_count;
             }
         }
         break;
@@ -1496,6 +1608,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_excell_writes[CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES];
     CSB_V1_CSBWinDSAPendingGeneratorWrite
         pending_generator_writes[CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES];
+    CSB_V1_CSBWinDSAPendingMonsterWrite
+        pending_monster_writes[CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -1503,6 +1617,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_skin_write_count = 0;
     int pending_excell_write_count = 0;
     int pending_generator_write_count = 0;
+    int pending_monster_write_count = 0;
     int staged_saves_disabled;
     int i;
 
@@ -1718,7 +1833,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 context->parameter_count, &context_candidate, pending_skin_writes,
                 &pending_skin_write_count, pending_excell_writes,
                 &pending_excell_write_count, pending_generator_writes,
-                &pending_generator_write_count, &staged_saves_disabled);
+                &pending_generator_write_count, pending_monster_writes,
+                &pending_monster_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -1744,6 +1860,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         if (!context->set_generator_delay(
                 context->dungeon_user, pending_generator_writes[i].location,
                 pending_generator_writes[i].delay)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_monster_write_count; ++i) {
+        if (!context->set_monster_info(
+                context->dungeon_user, pending_monster_writes[i].thing,
+                pending_monster_writes[i].values,
+                pending_monster_writes[i].write_mask)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -1859,6 +1983,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_generator_delay = runner->get_generator_delay;
     context.set_generator_delay = runner->set_generator_delay;
     context.get_monster_info = runner->get_monster_info;
+    context.set_monster_info = runner->set_monster_info;
+    context.monster_invisible_enabled = runner->monster_invisible_enabled;
+    context.monster_size4_enabled = runner->monster_size4_enabled;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

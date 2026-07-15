@@ -104,6 +104,10 @@ static int csb_v1_runtime_dsa_set_generator_delay(void *user,
 static int csb_v1_runtime_dsa_get_monster_info(void *user,
                                                 uint16_t thing,
                                                 uint32_t out_values[8]);
+static int csb_v1_runtime_dsa_set_monster_info(void *user,
+                                                uint16_t thing,
+                                                const uint32_t values[8],
+                                                uint8_t write_mask);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -17201,6 +17205,45 @@ static int csb_v1_runtime_dsa_get_monster_info(void *user,
     return 1;
 }
 
+static int csb_v1_runtime_dsa_set_monster_info(void *user,
+                                                uint16_t thing,
+                                                const uint32_t values[8],
+                                                uint8_t write_mask)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *record;
+    uint16_t flags;
+    int type;
+    int size;
+    int i;
+
+    if (!profile || !profile->dungeon_handle || !values || write_mask == 0u) {
+        return 0;
+    }
+    dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
+    record = csb_v1_runtime_mutable_thing_record(dungeon, thing,
+                                                  &type, &size);
+    if (!record || type != CSB_V1_THING_TYPE_GROUP || size < 16) return 0;
+    for (i = 0; i < 4; ++i) {
+        if ((write_mask & (uint8_t)(1u << (2 + i))) != 0u) {
+            csb_v1_runtime_write_u16(record + 6 + i * 2,
+                                     (uint16_t)values[2 + i]);
+        }
+    }
+    if ((write_mask & (1u << 6)) != 0u) {
+        flags = csb_v1_runtime_read_u16(record + 14);
+        flags = (uint16_t)((flags & ~(uint16_t)0x7800u) |
+                           (uint16_t)((values[6] & 0x0fu) << 11));
+        csb_v1_runtime_write_u16(record + 14, flags);
+    }
+    if ((write_mask & (1u << 7)) != 0u) {
+        record[4] = (uint8_t)((record[4] & 0x1fu) |
+                              ((values[7] & 0x07u) << 5));
+    }
+    return 1;
+}
+
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report)
@@ -19783,6 +19826,11 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_generator_delay = csb_v1_runtime_dsa_get_generator_delay;
     candidate.set_generator_delay = csb_v1_runtime_dsa_set_generator_delay;
     candidate.get_monster_info = csb_v1_runtime_dsa_get_monster_info;
+    candidate.set_monster_info = csb_v1_runtime_dsa_set_monster_info;
+    candidate.monster_invisible_enabled =
+        (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
+    candidate.monster_size4_enabled =
+        (profile->csbwin_extended_features_flags32 & 0x00000004u) != 0u;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -19888,6 +19936,11 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_generator_delay = csb_v1_runtime_dsa_get_generator_delay;
     candidate.set_generator_delay = csb_v1_runtime_dsa_set_generator_delay;
     candidate.get_monster_info = csb_v1_runtime_dsa_get_monster_info;
+    candidate.set_monster_info = csb_v1_runtime_dsa_set_monster_info;
+    candidate.monster_invisible_enabled =
+        (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
+    candidate.monster_size4_enabled =
+        (profile_candidate.csbwin_extended_features_flags32 & 0x00000004u) != 0u;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
