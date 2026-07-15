@@ -13,6 +13,14 @@
   host-log entry after the C001-C004/C017 handoff and verifies all C015 rows
   remain black. Authentic CSB TextString/runtime message ownership remains
   required before text may render.
+- ✅ 2026-07-15 DM2 M11 catalog-shop overlay removal: removed the active
+  fixed-coordinate host shop panel and its buy/sell input route from the DM2
+  M11 runtime. SKProject `SkWinCore::_32cb_0f82_SHOP_GLASS` renders shops as
+  source-owned wall ornaments (`WALL_GFX` image offsets, `dt08` item lists,
+  and overlay field `0x0f`), so Firestaff now fails closed with `DM2 SHOP GDAT
+  REQUIRED` and keeps the verified dungeon frame rather than drawing a brown
+  catalog substitute. `test_dm2_v1_m11_startup_profile_gate` now verifies no
+  overlay pixels and no catalog transaction mutation.
 
 - 2026-07-15 Nexus STABG synthetic-surface removal: the old file-size based
   320x170/320x200 guess is removed. Original STABG.BIN remains no-surface

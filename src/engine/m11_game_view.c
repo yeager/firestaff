@@ -564,120 +564,6 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
 
 }
 
-static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
-                                                     M12_MenuInput input)
-{
-    int shop_id;
-    int result;
-    const DM2_V1_ShopState *shop_state;
-    const DM2_V1_ShopDescriptor *shop;
-    DM2_V1_GameState *world;
-
-    if (!dm2_v1_shop_is_active()) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    shop_id = dm2_v1_shop_get_active_shop();
-    shop = dm2_v1_shop_get_builtin(shop_id);
-    shop_state = dm2_v1_shop_get_state();
-    if (state->dm2ShopSelectedStockIndex < 0) {
-        state->dm2ShopSelectedStockIndex = 0;
-    }
-    if (state->dm2ShopSelectedInventoryIndex < 0) {
-        state->dm2ShopSelectedInventoryIndex = 0;
-    }
-    if (shop && shop->stock_count > 0 &&
-        state->dm2ShopSelectedStockIndex >= shop->stock_count) {
-        state->dm2ShopSelectedStockIndex = shop->stock_count - 1;
-    }
-    if (shop_state && shop_state->inventory_count > 0 &&
-        state->dm2ShopSelectedInventoryIndex >= shop_state->inventory_count) {
-        state->dm2ShopSelectedInventoryIndex = shop_state->inventory_count - 1;
-    }
-    if (input == M12_MENU_INPUT_BACK) {
-        if (dm2_v1_shop_leave(shop_id)) {
-            state->dm2ShopSelectedStockIndex = 0;
-            state->dm2ShopSelectedInventoryIndex = 0;
-            m11_set_status(state, "SHOP", "DM2 SHOP LEAVE");
-            return M11_GAME_INPUT_REDRAW;
-        }
-        m11_set_status(state, "SHOP", "DM2 SHOP LEAVE FAILED");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_UP) {
-        if (state->dm2ShopSelectedStockIndex > 0) {
-            --state->dm2ShopSelectedStockIndex;
-        }
-        m11_set_status(state, "SHOP", "DM2 SHOP STOCK");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_DOWN) {
-        if (shop && state->dm2ShopSelectedStockIndex + 1 < shop->stock_count) {
-            ++state->dm2ShopSelectedStockIndex;
-        }
-        m11_set_status(state, "SHOP", "DM2 SHOP STOCK");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_LEFT ||
-        input == M12_MENU_INPUT_TURN_LEFT) {
-        if (state->dm2ShopSelectedInventoryIndex > 0) {
-            --state->dm2ShopSelectedInventoryIndex;
-        }
-        m11_set_status(state, "SHOP", "DM2 SHOP INVENTORY");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_RIGHT ||
-        input == M12_MENU_INPUT_TURN_RIGHT) {
-        if (shop_state &&
-            state->dm2ShopSelectedInventoryIndex + 1 <
-                shop_state->inventory_count) {
-            ++state->dm2ShopSelectedInventoryIndex;
-        }
-        m11_set_status(state, "SHOP", "DM2 SHOP INVENTORY");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
-        result = dm2_v1_shop_buy(shop_id, state->dm2ShopSelectedStockIndex);
-        shop_state = dm2_v1_shop_get_state();
-        world = (DM2_V1_GameState *)state->dm2World;
-        if (world && shop_state) {
-            world->gold = (int)shop_state->party_gold;
-        }
-        if (shop_state && shop_state->inventory_count > 0 &&
-            state->dm2ShopSelectedInventoryIndex >=
-                shop_state->inventory_count) {
-            state->dm2ShopSelectedInventoryIndex =
-                shop_state->inventory_count - 1;
-        }
-        m11_sync_dm2_state_from_runtime(state);
-        m11_set_status(state, "SHOP",
-                       result == 1 ? "DM2 SHOP BUY" : "DM2 SHOP BUY FAILED");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_DROP_ITEM) {
-        result = dm2_v1_shop_sell(shop_id,
-                                  state->dm2ShopSelectedInventoryIndex);
-        shop_state = dm2_v1_shop_get_state();
-        world = (DM2_V1_GameState *)state->dm2World;
-        if (world && shop_state) {
-            world->gold = (int)shop_state->party_gold;
-        }
-        if (shop_state && shop_state->inventory_count > 0 &&
-            state->dm2ShopSelectedInventoryIndex >=
-                shop_state->inventory_count) {
-            state->dm2ShopSelectedInventoryIndex =
-                shop_state->inventory_count - 1;
-        } else if (!shop_state || shop_state->inventory_count <= 0) {
-            state->dm2ShopSelectedInventoryIndex = 0;
-        }
-        m11_sync_dm2_state_from_runtime(state);
-        m11_set_status(state, "SHOP",
-                       result == 1 ? "DM2 SHOP SELL" : "DM2 SHOP SELL FAILED");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    m11_set_status(state, "SHOP", "DM2 SHOP ACTIVE");
-    return M11_GAME_INPUT_REDRAW;
-}
-
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          DM2_V1_BootStartupLaunch *launch,
                                          const char *save_path);
@@ -16213,7 +16099,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int dir;
         int result;
-        M11_GameInputResult shop_result;
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -16226,10 +16111,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
-        }
-        shop_result = m11_handle_dm2_shop_input(state, input);
-        if (shop_result != M11_GAME_INPUT_IGNORED) {
-            return shop_result;
         }
         if (input == M12_MENU_INPUT_BACK) {
             if (state->inventoryPanelActive) {
@@ -16346,6 +16227,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             if (receipt.reset_shop_selection) {
                 state->dm2ShopSelectedStockIndex = 0;
                 state->dm2ShopSelectedInventoryIndex = 0;
+            }
+            if (receipt.action_kind == DM2_V1_BOOT_ACTION_SHOP) {
+                /* SKProject renders a shop from the active wall actuator:
+                 * _32cb_0f82_SHOP_GLASS resolves WALL_GFX image offsets,
+                 * dt08 item lists, and the navigation-board overlay before
+                 * it accepts interaction. The former M11 catalog used fixed
+                 * host rectangles and text instead. Do not retain its
+                 * transaction state while the actual G1 -> WALL_GFX chain
+                 * remains unbound. */
+                (void)dm2_v1_shop_leave(dm2_v1_shop_get_active_shop());
+                m11_set_status(state, "ACTION", "DM2 SHOP GDAT REQUIRED");
+                m11_sync_dm2_state_from_runtime(state);
+                return M11_GAME_INPUT_REDRAW;
             }
             m11_set_status(state,
                            receipt.status_scope ? receipt.status_scope
@@ -38865,75 +38759,6 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm2_shop_panel(const M11_GameViewState* state,
-                                    unsigned char* framebuffer,
-                                    int framebufferWidth,
-                                    int framebufferHeight)
-{
-    int i;
-    DM2_V1_ShopPanelRender panel;
-
-    if (!state || !dm2_v1_shop_is_active()) {
-        return;
-    }
-    if (!dm2_v1_shop_build_panel_render(state->dm2ShopSelectedStockIndex,
-                                         state->dm2ShopSelectedInventoryIndex,
-                                         &panel) ||
-        !panel.active) {
-        return;
-    }
-
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.panel_x, panel.panel_y, panel.panel_w, panel.panel_h,
-                  M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.panel_x, panel.panel_y, panel.panel_w, panel.panel_h,
-                  M11_COLOR_YELLOW);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.header_x, panel.header_y,
-                  panel.header_w, panel.header_h,
-                  M11_COLOR_DARK_BROWN);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.title_x, panel.title_y, panel.title, &g_text_shadow);
-
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.stock_label_x, panel.stock_label_y,
-                  "STOCK", &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.pack_label_x, panel.pack_label_y,
-                  "PACK", &g_text_small);
-
-    for (i = 0; i < panel.stock_row_count; ++i) {
-        const DM2_V1_ShopRenderRow *row = &panel.stock_rows[i];
-        if (row->highlighted) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          row->highlight_x, row->highlight_y,
-                          row->highlight_w, row->highlight_h,
-                          M11_COLOR_DARK_GRAY);
-        }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      row->x, row->y, row->text,
-                      row->highlighted ? &g_text_shadow : &g_text_small);
-    }
-
-    for (i = 0; i < panel.pack_row_count; ++i) {
-        const DM2_V1_ShopRenderRow *row = &panel.pack_rows[i];
-        if (row->highlighted) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          row->highlight_x, row->highlight_y,
-                          row->highlight_w, row->highlight_h,
-                          M11_COLOR_DARK_GRAY);
-        }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      row->x, row->y, row->text,
-                      row->highlighted ? &g_text_shadow : &g_text_small);
-    }
-
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.footer_x, panel.footer_y, panel.footer,
-                  &g_text_small);
-}
-
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
@@ -39345,8 +39170,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                            "DM2 RUNTIME GDAT");
         }
         if (runtime_frame_accepted) {
-            m11_draw_dm2_shop_panel(state, framebuffer,
-                                    framebufferWidth, framebufferHeight);
             if (state->inventoryPanelActive) {
                 m11_draw_inventory_panel(state, framebuffer,
                                          framebufferWidth, framebufferHeight);
