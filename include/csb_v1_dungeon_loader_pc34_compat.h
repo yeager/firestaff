@@ -68,6 +68,11 @@ typedef struct {
     int raw_map_data_base;
     int square_first_thing_base;
     int square_first_thing_count;
+    /* ReDMCSB DUNGEON.C F0168 text-word bank.  Keep its disk offset explicit
+     * so CSBWin timer paths can consume a real DB2 TextString rather than a
+     * host message substitute. */
+    int text_data_base;
+    int text_word_count;
     int thing_data_bases[16];
     int thing_type_counts[16];
     uint8_t *raw_data;

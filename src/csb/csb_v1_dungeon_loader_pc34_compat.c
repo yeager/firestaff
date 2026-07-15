@@ -226,6 +226,9 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->square_first_thing_base = CSB_DUNGEON_HEADER_SIZE +
                                        levels * CSB_DUNGEON_MAP_DESC_SIZE +
                                        total_columns * 2;
+        out->text_data_base = out->square_first_thing_base +
+                              (int)square_first_thing_count * 2;
+        out->text_word_count = (int)text_word_count;
         thing_data_base = out->square_first_thing_base +
                           (int)square_first_thing_count * 2 +
                           (int)text_word_count * 2;
@@ -240,7 +243,11 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->raw_map_data_base = thing_data_base + (int)thing_data_total;
         raw_map_data_base = out->raw_map_data_base;
 
-        if (raw_map_data_base < 0 || raw_map_data_base >= decoded_size) {
+        if (out->text_data_base < 0 ||
+            out->text_data_base > decoded_size ||
+            (long)out->text_data_base + (long)out->text_word_count * 2L >
+                decoded_size ||
+            raw_map_data_base < 0 || raw_map_data_base >= decoded_size) {
             csb_v1_dungeon_free(out);
             free(decoded);
             return -2;

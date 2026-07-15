@@ -38381,6 +38381,9 @@ static void m11_clear_csb_v1_message_area_source_owned(
     int framebufferHeight)
 {
     DM1_V1_LayoutZoneRectPc34 messageRect;
+    const CSB_V1_BootProfile *boot_profile;
+    const CSB_V1_RuntimeTextMessageReceipt *receipt;
+    int message_width;
 
     if (!state || !framebuffer || state->showDebugHUD ||
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -38395,6 +38398,25 @@ static void m11_clear_csb_v1_message_area_source_owned(
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   messageRect.x, messageRect.y,
                   messageRect.w, messageRect.h, M11_COLOR_BLACK);
+
+    /* CSBWin Timer.cpp::ProcessTT_OPENROOM queues a newly visible DB2 on the
+     * party square through QuePrintLines.  The runtime receipt contains only
+     * F0168-decoded bytes from that exact DUNGEON.DAT record.  Do not consult
+     * M11's host log and do not use its generic text fallback: absent source
+     * bytes or the original C015 font leaves the area black. */
+    boot_profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    receipt = boot_profile ? &boot_profile->runtime.csbwin_text_message_receipt
+                           : NULL;
+    if (!receipt || !receipt->valid || !receipt->text[0] ||
+        !g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return;
+    }
+    message_width = M11_Font_MeasureString(receipt->text);
+    if (message_width < 1 || message_width > messageRect.w) return;
+    M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                        framebufferWidth, framebufferHeight,
+                        messageRect.x, messageRect.y,
+                        receipt->text, M11_COLOR_WHITE, -1, 1);
 }
 
 static void m11_draw_v1_message_area(const M11_GameViewState* state,

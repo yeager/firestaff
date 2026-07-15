@@ -81,6 +81,17 @@ extern "C" {
  * consecutive EDT_Palette EXPOOL records: 3 channels * 512 entries. */
 #define CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES (3u * 512u)
 #define CSB_V1_CSBWIN_TIMER_QUEUE_NONE 0xffffu
+#define CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS 192
+
+/* A live TEXT.C message is admissible only when CSBWin Timer.cpp's exact
+ * TT_OPENROOM DB2 transition made it visible on the party square.  This is
+ * intentionally a one-message receipt, not a Firestaff log or queue. */
+typedef struct {
+    int valid;
+    uint16_t text_thing;
+    uint32_t source_game_time;
+    char text[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
+} CSB_V1_RuntimeTextMessageReceipt;
 
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
@@ -453,7 +464,9 @@ typedef struct {
      * live heap slot that owns it.  This is runtime-only and is cleared as
      * soon as that exact event is consumed. */
      uint16_t                csbwin_poison_event_attack[DM1_EVENT_MAX_COUNT];
-     uint8_t                 csbwin_poison_event_attack_valid[DM1_EVENT_MAX_COUNT];
+    uint8_t                 csbwin_poison_event_attack_valid[DM1_EVENT_MAX_COUNT];
+    CSB_V1_RuntimeTextMessageReceipt
+                            csbwin_text_message_receipt;
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
