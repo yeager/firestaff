@@ -241,6 +241,15 @@ int dm2_v1_weather_gdat_draw_plan(
     const DM2_V1_WeatherDrawContext *context,
     DM2_V1_WeatherDrawPlan *out);
 
+/* Realizes the exact live DME.h::DistantEnvironment register image used by
+ * ENVIRONMENT_DRAW_DISTANT_ELEMENT. cmFW, cmCD, w4/w6, and b8/b9 must agree
+ * with the selected GDAT command; disagreement is no-draw. */
+int dm2_v1_weather_gdat_draw_plan_from_distant_environment(
+    const DM2_V1_WeatherCommandReceipt *command,
+    const DM2_V1_DistantEnvironmentReceipt *slot,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherDrawPlan *out);
+
 /* Bounded QUERY_BLIT_RECT route for a verified weather command. The supplied
  * bytes must be the original INTERFACE_GENERAL/0/dt04/0 table. Unsupported
  * compressed-rectangle forms are deliberately rejected. */

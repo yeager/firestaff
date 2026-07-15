@@ -348,6 +348,11 @@ static int dm2_weather_add_i16(int16_t left, int16_t right,
     return 1;
 }
 
+static uint16_t dm2_weather_read_u16(const uint8_t *raw)
+{
+    return (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+}
+
 static int dm2_weather_image_bounds(const DM2_V1_GdatImageMetadata *metadata,
                                     int16_t *out_left, int16_t *out_top,
                                     int16_t *out_right, int16_t *out_bottom)
@@ -409,8 +414,9 @@ static int dm2_weather_flip_from_position(uint8_t kind,
     return (int)parity;
 }
 
-int dm2_v1_weather_gdat_draw_plan(
+static int dm2_weather_gdat_draw_plan_from_raw(
     const DM2_V1_WeatherCommandReceipt *command,
+    const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
     const DM2_V1_WeatherDrawContext *context,
     DM2_V1_WeatherDrawPlan *out)
 {
@@ -422,9 +428,11 @@ int dm2_v1_weather_gdat_draw_plan(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!command || !context || !command->material_valid ||
+    if (!command || !raw || !context || !command->material_valid ||
         !command->image_present || !command->query_metadata_valid ||
-        command->rect_number == 0u ||
+        command->rect_number == 0u || raw[0] != command->command ||
+        raw[1] != command->flip_mode ||
+        dm2_weather_read_u16(raw + 2u) != command->rect_number ||
         !dm2_weather_command_is_source_owned(command->command)) {
         return 0;
     }
@@ -432,15 +440,18 @@ int dm2_v1_weather_gdat_draw_plan(
     /* ENVIRONMENT_DRAW_DISTANT_ELEMENT chooses a mirror request only for
      * these four original FW values.  Other source FW values draw unflipped.
      */
-    if (command->flip_mode == 8u || command->flip_mode == 0x40u) {
+    if (raw[1] == 8u || raw[1] == 0x40u) {
         flip_kind = 1u;
-    } else if (command->flip_mode == 2u || command->flip_mode == 0x20u) {
+    } else if (raw[1] == 2u || raw[1] == 0x20u) {
         flip_kind = 0x20u;
     }
-    offset_x = 0;
-    offset_y = 0;
-    scale_x = 0x40;
-    scale_y = 0x40;
+    offset_x = (int16_t)dm2_weather_read_u16(raw + 4u);
+    offset_y = (int16_t)dm2_weather_read_u16(raw + 6u);
+    scale_x = raw[8];
+    scale_y = raw[9];
+    if (scale_x <= 0 || scale_y <= 0 || scale_x > 0x40 || scale_y > 0x40) {
+        return 0;
+    }
     if (context->player_moving) {
         if (!dm2_weather_stretch64(offset_x, 0x34, &offset_x) ||
             !dm2_weather_stretch64(offset_y, 0x34, &offset_y) ||
@@ -448,24 +459,28 @@ int dm2_v1_weather_gdat_draw_plan(
             !dm2_weather_stretch64(scale_y, 0x34, &scale_y)) {
             return 0;
         }
-        /* RETRIEVE_ENVIRONMENT_CMD_CD_FW initializes b8/b9 to 0x40.  Keep
-         * the exact moving branch, including the CD=6001 horizon exception.
-         */
-        if (!dm2_weather_add_i16(offset_x, context->movement_offset_x,
-                                 &offset_x)) {
+        if (raw[8] == 0x40u) {
+            /* ENVIRONMENT_DRAW_DISTANT_ELEMENT's full-size branch includes
+             * x movement and treats the horizon rect 6001 specially. */
+            if (!dm2_weather_add_i16(offset_x, context->movement_offset_x,
+                                     &offset_x)) {
+                return 0;
+            }
+            if (command->rect_number == 0x1771u) {
+                if (!dm2_weather_add_i16(offset_y,
+                                         context->moving_horizon_offset_y,
+                                         &offset_y)) {
+                    return 0;
+                }
+            } else if (!dm2_weather_add_i16(offset_y,
+                                             context->movement_offset_y,
+                                     &offset_y)) {
+                return 0;
+            }
+        } else if (!dm2_weather_add_i16(offset_y,
+                                         context->moving_other_offset_y,
+                                         &offset_y)) {
             return 0;
-        }
-        if (command->rect_number == 0x1771u) {
-            if (!dm2_weather_add_i16(offset_y,
-                                     context->moving_horizon_offset_y,
-                                     &offset_y)) {
-                return 0;
-            }
-        } else {
-            if (!dm2_weather_add_i16(offset_y, context->movement_offset_y,
-                                     &offset_y)) {
-                return 0;
-            }
         }
     }
     /* skproject c_querydb.cpp::DM2_QUERY_TEMP_PICST first realizes the
@@ -499,6 +514,43 @@ int dm2_v1_weather_gdat_draw_plan(
     out->material_hash = command->material_hash;
     out->valid = 1;
     return 1;
+}
+
+int dm2_v1_weather_gdat_draw_plan(
+    const DM2_V1_WeatherCommandReceipt *command,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherDrawPlan *out)
+{
+    uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES] = { 0 };
+
+    if (!command) return 0;
+    /* RETRIEVE_ENVIRONMENT_CMD_CD_FW initializes w4/w6 to zero and b8/b9
+     * to 0x40. This compatibility entry point models only that initial slot;
+     * runtime presentation uses the full source-owned receipt below. */
+    raw[0] = command->command;
+    raw[1] = command->flip_mode;
+    raw[2] = (uint8_t)(command->rect_number & 0xffu);
+    raw[3] = (uint8_t)(command->rect_number >> 8);
+    raw[8] = 0x40u;
+    raw[9] = 0x40u;
+    return dm2_weather_gdat_draw_plan_from_raw(command, raw, context, out);
+}
+
+int dm2_v1_weather_gdat_draw_plan_from_distant_environment(
+    const DM2_V1_WeatherCommandReceipt *command,
+    const DM2_V1_DistantEnvironmentReceipt *slot,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherDrawPlan *out)
+{
+    if (!slot || !slot->valid || slot->raw_hash == 0u || !command ||
+        slot->raw_hash != dm2_weather_hash_bytes(
+                              slot->raw, DM2_V1_DISTANT_ENVIRONMENT_BYTES) ||
+        slot->command != command->command) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return dm2_weather_gdat_draw_plan_from_raw(command, slot->raw, context,
+                                                out);
 }
 
 static uint16_t dm2_weather_le16(const uint8_t *p)
@@ -668,7 +720,8 @@ int dm2_v1_weather_gdat_renderer_receipt(
         command = &weather->commands[command_index];
         if (command_index >= 6u || command->command != slot->command ||
             !command->material_valid ||
-            !dm2_v1_weather_gdat_draw_plan(command, context, &out->draws[i]) ||
+            !dm2_v1_weather_gdat_draw_plan_from_distant_environment(
+                command, slot, context, &out->draws[i]) ||
             !dm2_v1_weather_gdat_destination_clip(rect_table, rect_table_size,
                                                    command, &out->clips[i])) {
             memset(out, 0, sizeof(*out));

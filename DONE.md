@@ -15627,6 +15627,14 @@ Important, and Charges from a hash-bound DB5 record. `w0`, ownership/location,
 and all links remain opaque. Verification: focused save/load 26/26 with a
 source-sized DB5 record and invalid-index rejection.
 
+# ✅ 2026-07-15 DM2 live DistantEnvironment weather materialization
+
+Outdoor presentation now consumes the exact ten-byte `DME.h::DistantEnvironment`
+slot at the final GDAT weather draw. The skproject `cmFW`, `cmCD`, `w4/w6`, and
+`b8/b9` registers select mirror mode, rectangle, offsets, and scale; the slot
+hash and GDAT command must still match or the layer is not drawn. Verification:
+focused weather receipt gate and renderer material gate passed.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at
