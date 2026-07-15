@@ -1036,8 +1036,10 @@ typedef struct {
     int level_index;
     char canonical_sal_name[16];
     char canonical_sal_md5[33];
+    uint64_t canonical_sal_fnv1a64;
     char canonical_map_name[16];
     char canonical_map_md5[33];
+    uint64_t canonical_map_fnv1a64;
     char canonical_driver_name[16];
     char canonical_driver_md5[33];
     int raw_map_selector;

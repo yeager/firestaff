@@ -71,8 +71,10 @@ typedef struct {
     /* SAL/MAP data for current level */
     uint8_t *sal_data;
     int sal_size;
+    uint64_t sal_source_fnv1a64;
     uint8_t *map_data;
     int map_size;
+    uint64_t map_source_fnv1a64;
     int sal_canonical_source_verified;
     int map_canonical_source_verified;
     /* Global SDDRVS.TSK source identity. It does not imply an understood

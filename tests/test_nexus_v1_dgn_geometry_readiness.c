@@ -5185,6 +5185,61 @@ static void test_slev_capture_target_binds_loaded_bytes(void) {
           "a changed active SLEV byte receipt rejects a stale capture trace");
 }
 
+static void test_sal_capture_target_binds_loaded_bytes(void) {
+    uint8_t sal[] = {'d', 's', 'p', '0', '1', '.', 'E', 'X', 1, 2, 3, 4};
+    uint8_t map[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelSoundCaptureTargetReceipt target;
+
+    memset(&engine, 0, sizeof(engine));
+    engine.level_loaded = 1;
+    engine.level_aux_runtime_receipt.level_index = 0;
+    engine.level_aux_runtime_receipt.sal.canonical_hash_verified = 1;
+    engine.level_aux_runtime_receipt.map.canonical_hash_verified = 1;
+    engine.level_aux_runtime_receipt.sound_driver.canonical_hash_verified = 1;
+    snprintf(engine.level_aux_runtime_receipt.sal.canonical_name,
+             sizeof(engine.level_aux_runtime_receipt.sal.canonical_name),
+             "SNDLEV00.SAL");
+    snprintf(engine.level_aux_runtime_receipt.sal.canonical_md5,
+             sizeof(engine.level_aux_runtime_receipt.sal.canonical_md5),
+             "ea8493341fd8ad4f20335629e6dbdbbc");
+    snprintf(engine.level_aux_runtime_receipt.map.canonical_name,
+             sizeof(engine.level_aux_runtime_receipt.map.canonical_name),
+             "SNDLEV00.MAP");
+    snprintf(engine.level_aux_runtime_receipt.map.canonical_md5,
+             sizeof(engine.level_aux_runtime_receipt.map.canonical_md5),
+             "232afa942754027ecf49702703c72e83");
+    snprintf(engine.level_aux_runtime_receipt.sound_driver.canonical_name,
+             sizeof(engine.level_aux_runtime_receipt.sound_driver.canonical_name),
+             "SDDRVS.TSK");
+    snprintf(engine.level_aux_runtime_receipt.sound_driver.canonical_md5,
+             sizeof(engine.level_aux_runtime_receipt.sound_driver.canonical_md5),
+             "00000000000000000000000000000000");
+    engine.audio.current_level = 0;
+    engine.audio.sal_data = sal;
+    engine.audio.sal_size = (int)sizeof(sal);
+    engine.audio.sal_source_fnv1a64 = fnv1a64(sal, sizeof(sal));
+    engine.audio.map_data = map;
+    engine.audio.map_size = (int)sizeof(map);
+    engine.audio.map_source_fnv1a64 = fnv1a64(map, sizeof(map));
+    engine.audio.map_record_table_supported = 1;
+    engine.audio.map_record_count = 1;
+    engine.audio.map_records[0].selector = 7;
+    engine.audio.map_records[0].attribute = 3;
+    engine.audio.map_records[0].sal_offset = 8;
+    engine.audio.map_records[0].sal_size = 4;
+
+    CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 1 &&
+          target.valid && target.canonical_sal_fnv1a64 ==
+              fnv1a64(sal, sizeof(sal)) &&
+          target.canonical_map_fnv1a64 == fnv1a64(map, sizeof(map)) &&
+          target.no_playback_only && !target.playback_permitted,
+          "SAL capture target binds the active raw SAL and MAP bytes");
+    engine.audio.map_source_fnv1a64 = 0U;
+    CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 0,
+          "missing active MAP byte identity blocks SAL capture acquisition");
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -5210,6 +5265,7 @@ int main(void) {
     test_menu_bpk_missing_handoff_blocks_fallback();
     test_menu_bpk_handoff_requires_canonical_source();
     test_slev_capture_target_binds_loaded_bytes();
+    test_sal_capture_target_binds_loaded_bytes();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);

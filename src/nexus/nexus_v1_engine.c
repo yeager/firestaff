@@ -4704,7 +4704,9 @@ int nexus_v1_engine_build_sal_capture_target(
         !route.canonical_map_source_verified ||
         !route.canonical_sound_driver_source_verified ||
         route.saturn_event_dispatch_proven || route.sal_decode_proven ||
-        route.playback_permitted || !engine) {
+        route.playback_permitted || !engine ||
+        !engine->audio.sal_source_fnv1a64 ||
+        !engine->audio.map_source_fnv1a64) {
         return 0;
     }
     sources = &engine->level_aux_runtime_receipt;
@@ -4720,10 +4722,12 @@ int nexus_v1_engine_build_sal_capture_target(
              "%s", sources->sal.canonical_name);
     snprintf(out_target->canonical_sal_md5, sizeof(out_target->canonical_sal_md5),
              "%s", sources->sal.canonical_md5);
+    out_target->canonical_sal_fnv1a64 = engine->audio.sal_source_fnv1a64;
     snprintf(out_target->canonical_map_name, sizeof(out_target->canonical_map_name),
              "%s", sources->map.canonical_name);
     snprintf(out_target->canonical_map_md5, sizeof(out_target->canonical_map_md5),
              "%s", sources->map.canonical_md5);
+    out_target->canonical_map_fnv1a64 = engine->audio.map_source_fnv1a64;
     snprintf(out_target->canonical_driver_name,
              sizeof(out_target->canonical_driver_name), "%s",
              sources->sound_driver.canonical_name);
@@ -4760,15 +4764,20 @@ int nexus_v1_engine_write_sal_capture_target(
     if (fprintf(file,
                 NEXUS_V1_SAL_CAPTURE_TARGET_MAGIC "\n"
                 "level_index=%x\ncanonical_sal_name=%s\ncanonical_sal_md5=%s\n"
+                "canonical_sal_fnv1a64=%016llx\n"
                 "canonical_map_name=%s\ncanonical_map_md5=%s\n"
+                "canonical_map_fnv1a64=%016llx\n"
                 "canonical_driver_name=%s\ncanonical_driver_md5=%s\n"
                 "raw_map_selector=%x\nmap_attribute=%x\nsal_offset=%x\n"
                 "sal_size=%x\ncapture_kind=original_saturn_sound_driver\n"
                 "required_observations=selector_dispatch,sal_read,driver_output\n"
                 "sal_decode_proven=0\nplayback_permitted=0\nno_playback_only=1\n",
                 target.level_index, target.canonical_sal_name,
-                target.canonical_sal_md5, target.canonical_map_name,
-                target.canonical_map_md5, target.canonical_driver_name,
+                target.canonical_sal_md5,
+                (unsigned long long)target.canonical_sal_fnv1a64,
+                target.canonical_map_name, target.canonical_map_md5,
+                (unsigned long long)target.canonical_map_fnv1a64,
+                target.canonical_driver_name,
                 target.canonical_driver_md5, target.raw_map_selector,
                 target.map_attribute, target.sal_offset, target.sal_size) < 0) {
         fclose(file);
