@@ -1033,6 +1033,24 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       material_target.descriptor_target.valid &&
                       material_target.descriptor_target.descriptor.image_id ==
                           material_target.static_texture_selector &&
+                      material_target.image_payload_byte_offset ==
+                          ((((int)data[0x14] << 8) | data[0x15]) *
+                           NEXUS_DGN_BLOCK_SIZE) +
+                              (int)material_target.descriptor_target.descriptor
+                                  .image_relative_offset &&
+                      material_target.image_payload_anchor_bound &&
+                      ((material_target.descriptor_target.descriptor
+                            .palette_relative_offset == 0U &&
+                        material_target.palette_payload_byte_offset == -1 &&
+                        !material_target.palette_payload_anchor_bound) ||
+                       (material_target.descriptor_target.descriptor
+                            .palette_relative_offset != 0U &&
+                        material_target.palette_payload_byte_offset ==
+                            ((((int)data[0x14] << 8) | data[0x15]) *
+                             NEXUS_DGN_BLOCK_SIZE) +
+                                (int)material_target.descriptor_target.descriptor
+                                    .palette_relative_offset &&
+                        material_target.palette_payload_anchor_bound)) &&
                       material_target.capture_producer_required &&
                       material_target.original_saturn_capture_required &&
                       material_target.no_draw_only &&

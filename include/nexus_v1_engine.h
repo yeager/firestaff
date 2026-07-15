@@ -454,6 +454,13 @@ typedef struct {
     uint8_t static_texture_selector;
     Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
     int static_selector_descriptor_bound;
+    /* Exact Structure2-relative byte anchors. These establish only where an
+     * external capture must observe source reads; zero palette offset remains
+     * an observed absent anchor, not a default-palette interpretation. */
+    int image_payload_byte_offset;
+    int palette_payload_byte_offset;
+    int image_payload_anchor_bound;
+    int palette_payload_anchor_bound;
     int capture_producer_required;
     int original_saturn_capture_required;
     int no_draw_only;

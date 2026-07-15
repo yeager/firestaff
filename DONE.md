@@ -16671,8 +16671,10 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
 `nexus_v1_engine_build_structure3_static_material_capture_target()` now joins
 one bounded, texture-flagged Structure3 face from the active canonical LEV to
 the exact matching static Structure2 descriptor, with independent hashes for
-the LEV source, the 12-byte face row, descriptor row, and opaque payload.
+the LEV source, the 12-byte face row, descriptor row, and opaque payload. It
+also resolves the exact image-payload byte anchor and, when nonzero, the
+palette-payload byte anchor from the observed Structure2-relative offsets.
 The focused corpus test verifies this against real hash-verified LEV00–LEV15
-package data. The target is capture-producer input only: pixels, palette,
-UVs, VDP1 state, transforms, and drawing remain unproved and blocked.
+package data. The target is capture-producer input only: pixels, palette
+format, UVs, VDP1 state, transforms, and drawing remain unproved and blocked.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.

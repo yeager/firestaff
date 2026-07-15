@@ -3052,6 +3052,7 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     uint32_t face_relative_offset;
     uint16_t face_count;
     int descriptor_index;
+    int structure2_byte_offset;
     int face_byte_offset;
 
     if (!out_target) return -1;
@@ -3114,6 +3115,34 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
             engine, descriptor_index, &descriptor_target) != 1) {
         return 0;
     }
+    structure2_byte_offset = descriptor_target.descriptor_byte_offset -
+        descriptor_target.descriptor_index * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+    if (structure2_byte_offset < 0 ||
+        descriptor_target.descriptor.image_relative_offset <
+            (uint32_t)(descriptor_target.opaque_payload_byte_offset -
+                       structure2_byte_offset) ||
+        descriptor_target.descriptor.image_relative_offset >=
+            (uint32_t)(descriptor_target.opaque_payload_byte_offset -
+                       structure2_byte_offset) +
+            (uint32_t)descriptor_target.opaque_payload_byte_count ||
+        structure2_byte_offset +
+            (int)descriptor_target.descriptor.image_relative_offset >=
+            engine->current_level_dgn_size) {
+        return 0;
+    }
+    if (descriptor_target.descriptor.palette_relative_offset != 0U &&
+        (descriptor_target.descriptor.palette_relative_offset <
+             (uint32_t)(descriptor_target.opaque_payload_byte_offset -
+                        structure2_byte_offset) ||
+         descriptor_target.descriptor.palette_relative_offset >=
+             (uint32_t)(descriptor_target.opaque_payload_byte_offset -
+                        structure2_byte_offset) +
+                 (uint32_t)descriptor_target.opaque_payload_byte_count ||
+         structure2_byte_offset +
+             (int)descriptor_target.descriptor.palette_relative_offset >=
+             engine->current_level_dgn_size)) {
+        return 0;
+    }
     out_target->valid = 1;
     out_target->level_index = engine->game.current_level;
     out_target->source_byte_count = engine->current_level_dgn_size;
@@ -3145,6 +3174,16 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     out_target->static_texture_selector = data[face_byte_offset + 11];
     out_target->descriptor_target = descriptor_target;
     out_target->static_selector_descriptor_bound = 1;
+    out_target->image_payload_byte_offset = structure2_byte_offset +
+        (int)descriptor_target.descriptor.image_relative_offset;
+    out_target->image_payload_anchor_bound = 1;
+    if (descriptor_target.descriptor.palette_relative_offset != 0U) {
+        out_target->palette_payload_byte_offset = structure2_byte_offset +
+            (int)descriptor_target.descriptor.palette_relative_offset;
+        out_target->palette_payload_anchor_bound = 1;
+    } else {
+        out_target->palette_payload_byte_offset = -1;
+    }
     out_target->capture_producer_required = 1;
     out_target->original_saturn_capture_required = 1;
     return 1;
