@@ -17286,6 +17286,13 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   inactive slot. The regression covers sparse active slots and malformed raw
   references failing before any mutation. Source: ReDMCSB `GROUP.C`
   F0194/F0184.
+- ✅ 2026-07-15 DM1 GROUP F0195: initial DUNGEON.DAT startup now consumes
+  the current map's loaded SFT/C04 chains in original X-major/Y-minor order.
+  Each first C04 receives F0181 exact-square C29..C41 deletion, the F0183
+  active-state bridge with the PC3.4 60-slot limit, and F0180 C37 scheduling
+  at GameTime + 1. The regression covers a mixed C03/C04 chain, raw C04
+  cells/directions, event retention, and both wandering events. Source:
+  ReDMCSB `GROUP.C` F0180/F0181/F0183/F0195 and `NEWMAP.C` F0003.
 - ✅ 2026-07-15 DM1 GROUP F0197-F0199: added the real sight/smell square
   predicates and source route walk. Closed opaque C3/C4 doors, fakewall
   imaginary-state distinction, diagonal branch blocking, and Manhattan route
