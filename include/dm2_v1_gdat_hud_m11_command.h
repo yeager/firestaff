@@ -71,6 +71,8 @@ int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
     uint32_t source_table_hash);
 uint32_t dm2_v1_gdat_hud_m11_command_pixel_hash(
     const DM2_V1_GdatHudM11Command *command);
+uint32_t dm2_v1_gdat_hud_m11_command_plan_hash(
+    const DM2_V1_GdatHudM11CommandPlan *plan);
 
 void dm2_v1_gdat_hud_m11_command_plan_free(
     DM2_V1_GdatHudM11CommandPlan *plan);

@@ -6328,7 +6328,9 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
         plan->command_count < DM2_V1_GDAT_HUD_M11_COMMAND_MAX -
                                   DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
-        plan->command_hash == 0u) return NULL;
+        plan->command_hash == 0u ||
+        plan->command_hash !=
+            dm2_v1_gdat_hud_m11_command_plan_hash(plan)) return NULL;
     for (int i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
         if (command->kind == kind && command->viewport_gdat_index == gdat_index &&
@@ -6557,7 +6559,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                         &s->gdat_interface_palette_consumed_count);
                     ++s->gdat_hud_material_plan_consumed_count;
                     ++s->asset_hud_portrait_drawn_count;
-                } else if (portrait_gdat != 0 &&
+                } else if (!s->source_materials_required &&
+                    portrait_gdat != 0 &&
                     dm2_v1_fetch_viewport_local_material(
                         s, portrait_gdat, &portrait_pixels, &portrait_w,
                         &portrait_h, &portrait_stride) == 0 &&

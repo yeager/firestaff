@@ -60,6 +60,12 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
     return hash ? hash : 1u;
 }
 
+uint32_t dm2_v1_gdat_hud_m11_command_plan_hash(
+    const DM2_V1_GdatHudM11CommandPlan *plan)
+{
+    return dm2_v1_gdat_hud_command_hash(plan);
+}
+
 void dm2_v1_gdat_hud_m11_command_plan_free(
     DM2_V1_GdatHudM11CommandPlan *plan)
 {
