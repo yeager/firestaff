@@ -18118,42 +18118,6 @@ static int m11_seed_dm1_v2_visible_effects_from_viewport(
     return count;
 }
 
-static void m11_draw_creature_cue(unsigned char* framebuffer,
-                                  int framebufferWidth,
-                                  int framebufferHeight,
-                                  int x,
-                                  int y,
-                                  int w,
-                                  int h,
-                                  int depthIndex) {
-    int bodyW = w / 3;
-    int bodyH = h / 3;
-    int bodyX;
-    int bodyY;
-    int eyeY;
-    unsigned char color = depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN;
-
-    if (bodyW < 4 || bodyH < 5) {
-        return;
-    }
-
-    bodyX = x + (w - bodyW) / 2;
-    bodyY = y + (h - bodyH) / 2;
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  bodyX + bodyW / 4, bodyY - 2, bodyW / 2, 3, color);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  bodyX, bodyY, bodyW, bodyH, color);
-    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                   bodyX + 1, bodyY + bodyH, bodyY + bodyH + 2, color);
-    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                   bodyX + bodyW - 2, bodyY + bodyH, bodyY + bodyH + 2, color);
-    eyeY = bodyY + 2;
-    m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
-                  bodyX + bodyW / 3, eyeY, M11_COLOR_BLACK);
-    m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
-                  bodyX + (bodyW * 2) / 3, eyeY, M11_COLOR_BLACK);
-}
-
 /* Draw a GRAPHICS.DAT-backed projectile sprite in the given area.
  * relativeDir: projectile direction relative to party facing (0-3), or -1.
  *   0 = flying away, 1 = flying right, 2 = flying toward, 3 = flying left.
@@ -20906,35 +20870,12 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         for (pi = 0; pi < plan.count; ++pi) {
             const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
             const DM1_CreatureDrawPlacement *placement = &entry->placement;
-            if (!g_drawState ||
-                !m11_draw_creature_sprite(g_drawState, framebuffer,
-                                          framebufferWidth, framebufferHeight,
-                                          placement->x, placement->y,
-                                          placement->w, placement->h,
-                                          entry->creature_type, depthIndex,
-                                          entry->creature_direction)) {
-                /* ReDMCSB DUNVIEW.C F0115 has no synthetic creature path.
-                 * On a verified GRAPHICS.DAT session, an absent C584+ pose
-                 * is intentionally no-draw; retain the cue for asset-free
-                 * fixture sessions only. */
-                if (!g_drawState || !g_drawState->assetsAvailable) {
-                    m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                          placement->x, placement->y,
-                                          placement->w, placement->h,
-                                          depthIndex);
-                }
-            }
-            if ((!g_drawState || !g_drawState->assetsAvailable) &&
-                entry->first_in_group && entry->creature_count > 1 &&
-                placement->w >= 12 && placement->h >= 12) {
-                char countStr[4];
-                int badgeX = placement->x + placement->w - 8;
-                int badgeY = placement->y + placement->h - 8;
-                snprintf(countStr, sizeof(countStr), "%d", entry->creature_count);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              badgeX, badgeY, countStr, &g_text_small);
+            if (g_drawState && g_drawState->assetsAvailable) {
+                (void)m11_draw_creature_sprite(
+                    g_drawState, framebuffer, framebufferWidth,
+                    framebufferHeight, placement->x, placement->y,
+                    placement->w, placement->h, entry->creature_type,
+                    depthIndex, entry->creature_direction);
             }
         }
     }
