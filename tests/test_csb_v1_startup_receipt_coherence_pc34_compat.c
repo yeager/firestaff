@@ -30,6 +30,7 @@ int main(void)
 {
     CSB_V1_StartupHostFacts_PC34 facts;
     CSB_V1_StartupPresentationReceipt_PC34 receipt;
+    CSB_V1_StartupTickReceipt_PC34 tick_receipt;
 
     make_entrance_facts(&facts);
     facts.title_active = 1;
@@ -64,6 +65,29 @@ int main(void)
               receipt.render_plan.title_dest_w == 16 &&
               receipt.render_plan.title_dest_h == 4,
           "CHAOS begins with ReDMCSB's 16x4 first reverse-zoom bitmap");
+
+    make_entrance_facts(&facts);
+    facts.title_active = 1;
+    facts.title_frame = csb_v1_startup_title_presents_ticks_pc34() - 1;
+    facts.title_source_step =
+        (int)csb_v1_startup_title_source_step_for_frame_pc34(
+            facts.title_frame);
+    check(csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+              &facts, &tick_receipt) &&
+              tick_receipt.state.title_frame ==
+                  csb_v1_startup_title_presents_ticks_pc34() &&
+              tick_receipt.state.title_source_step ==
+                  (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                      tick_receipt.state.title_frame),
+          "the first CHAOS tick publishes the current source step, not the stale PRESENTS step");
+    facts.title_frame = tick_receipt.state.title_frame;
+    facts.title_source_step = tick_receipt.state.title_source_step;
+    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+              &facts, &receipt) &&
+              receipt.valid &&
+              receipt.render_plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+          "the post-PRESENTS tick remains receipt-coherent for CHAOS");
 
     facts.title_frame = csb_v1_startup_title_presents_ticks_pc34() +
         csb_v1_startup_title_chaos_zoom_ticks_pc34() - 1;
@@ -100,6 +124,33 @@ int main(void)
               receipt.render_plan.title_dest_w == 320 &&
               receipt.render_plan.title_dest_h == 57,
           "STRIKES BACK follows the held full CHAOS bitmap");
+
+    make_entrance_facts(&facts);
+    facts.title_active = 1;
+    facts.title_frame = csb_v1_startup_title_total_ticks_pc34() - 1;
+    facts.title_source_step =
+        (int)csb_v1_startup_title_source_step_for_frame_pc34(
+            facts.title_frame);
+    check(csb_v1_startup_advance_tick_from_host_facts_with_receipt_pc34(
+              &facts, &tick_receipt) &&
+              tick_receipt.tick_result.title_finished &&
+              !tick_receipt.state.title_active &&
+              tick_receipt.state.entrance_source_step == 1,
+          "title completion enters the first ReDMCSB entrance source step");
+    facts.title_active = tick_receipt.state.title_active;
+    facts.title_frame = tick_receipt.state.title_frame;
+    facts.title_source_step = tick_receipt.state.title_source_step;
+    facts.entrance_source_step = tick_receipt.state.entrance_source_step;
+    facts.entrance_frame = tick_receipt.entrance_frame;
+    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+              &facts, &receipt) &&
+              receipt.valid &&
+              receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 &&
+              receipt.render_plan.render_command_count == 1 &&
+              receipt.render_plan.render_commands[0].kind ==
+                  CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34,
+          "the terminal title tick presents the ReDMCSB entrance black frame before C004/C002/C003");
 
     make_entrance_facts(&facts);
     facts.credits_active = 1;
