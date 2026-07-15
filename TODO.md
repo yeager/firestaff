@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 CSB HINTLOAD follow-up: F2262's PC34 input-wait timer boundary
+  is now isolated and tested, with the FM-Towns SND branch recorded as a
+  non-PC34 platform branch unless a future FM-Towns target supplies real
+  counter/volume state. Remaining CSB save/startup work from the current
+  ReDMCSB missing set is HINTLOAD `F1910_LoadSavedGamePart`,
+  `F1913_LoadAndDeobfuscateSavedGamePart`, and
+  `F1914_LoadAndDeobfuscateSavedGameHeader`, preferably through the existing
+  CSB save/header import path rather than a synthetic save envelope.
+
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
   directional HUD text-palette state, creature source identity, and runtime
