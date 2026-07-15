@@ -16978,3 +16978,8 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   inactive slot. The regression covers sparse active slots and malformed raw
   references failing before any mutation. Source: ReDMCSB `GROUP.C`
   F0194/F0184.
+- ✅ 2026-07-15 DM1 GROUP F0197-F0199: added the real sight/smell square
+  predicates and source route walk. Closed opaque C3/C4 doors, fakewall
+  imaginary-state distinction, diagonal branch blocking, and Manhattan route
+  result are covered; non-adjacent paths require a loaded-map callback.
+  Source: ReDMCSB `GROUP.C` F0197-F0199.

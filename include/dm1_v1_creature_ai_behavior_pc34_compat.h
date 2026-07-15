@@ -574,6 +574,36 @@ int F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
     struct DungeonGroup_Compat* groups,
     int groupCount);
 
+/* GROUP.C F0197/F0198 consume one already-decoded square.  The caller owns
+ * F0157 door lookup and supplies its real C04/door attributes; this layer
+ * never fabricates an empty square or a transparent door. */
+struct DM1GroupSightSquare_Compat {
+    int elementType;
+    int doorState;
+    int creaturesCanSeeThrough;
+    int fakeWallOpen;
+    int fakeWallImaginary;
+};
+
+typedef int (*DM1GroupSquareBlockedCallback_Compat)(
+    int mapX, int mapY, void* context);
+
+int F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(
+    const struct DM1GroupSightSquare_Compat* square);
+int F0817e_DM1_GROUP_IsSmellPartyBlocked_Compat(
+    const struct DM1GroupSightSquare_Compat* square);
+
+/* GROUP.C F0199. The callback must consult the loaded original map at every
+ * requested square. It returns the Manhattan distance on a clear source
+ * route, or zero when a source-tested square blocks the route. */
+int F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    DM1GroupSquareBlockedCallback_Compat isBlocked,
+    void* context);
+
 /*
  * F0818: Get distance to visible party considering sight/LoS.
  *

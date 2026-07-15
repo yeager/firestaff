@@ -936,6 +936,119 @@ int F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
     return removed;
 }
 
+/* ReDMCSB GROUP.C F0197/F0198. C3/C4 are the only door states that block
+ * sight; imaginary fake walls still block sight but not smell. */
+int F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(
+    const struct DM1GroupSightSquare_Compat* square)
+{
+    if (!square) return 1;
+    if (square->elementType == DUNGEON_ELEMENT_DOOR) {
+        return (square->doorState == 3 || square->doorState == 4) &&
+               !square->creaturesCanSeeThrough;
+    }
+    return square->elementType == DUNGEON_ELEMENT_WALL ||
+           (square->elementType == DUNGEON_ELEMENT_FAKEWALL &&
+            !square->fakeWallOpen);
+}
+
+int F0817e_DM1_GROUP_IsSmellPartyBlocked_Compat(
+    const struct DM1GroupSightSquare_Compat* square)
+{
+    if (!square) return 1;
+    return square->elementType == DUNGEON_ELEMENT_WALL ||
+           (square->elementType == DUNGEON_ELEMENT_FAKEWALL &&
+            !square->fakeWallOpen && !square->fakeWallImaginary);
+}
+
+static int dm1_abs_int(int value)
+{
+    return value < 0 ? -value : value;
+}
+
+/* ReDMCSB GROUP.C F0199:1208-1267. This is deliberately callback-bound:
+ * route obstruction is a property of the loaded current map, not a default
+ * grid that this AI module may invent. */
+int F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    DM1GroupSquareBlockedCallback_Compat isBlocked,
+    void* context)
+{
+    int distanceX = destinationMapX - sourceMapX;
+    int distanceY = destinationMapY - sourceMapY;
+    int sourceDistance = dm1_abs_int(distanceX) + dm1_abs_int(distanceY);
+    int pathMapX;
+    int pathMapY;
+    int xAxisStep;
+    int yAxisStep;
+    int largestAxisDistance;
+    int valueA;
+    int valueB;
+    int valueC;
+    int distanceXSmallerThanDistanceY;
+    int distanceXEqualsDistanceY;
+
+    if (sourceDistance <= 1) return 1;
+    if (!isBlocked) return 0;
+
+    distanceX = dm1_abs_int(distanceX);
+    distanceY = dm1_abs_int(distanceY);
+    distanceXSmallerThanDistanceY = distanceX < distanceY;
+    distanceXEqualsDistanceY = distanceX == distanceY;
+    pathMapX = destinationMapX;
+    pathMapY = destinationMapY;
+    xAxisStep = destinationMapX - sourceMapX > 0 ? -1 : 1;
+    yAxisStep = destinationMapY - sourceMapY > 0 ? -1 : 1;
+    largestAxisDistance = distanceXSmallerThanDistanceY
+        ? pathMapY - sourceMapY : pathMapX - sourceMapX;
+    valueC = largestAxisDistance
+        ? (distanceXSmallerThanDistanceY
+            ? ((pathMapX - sourceMapX) << 6) / largestAxisDistance
+            : ((pathMapY - sourceMapY) << 6) / largestAxisDistance)
+        : 0x80;
+
+    do {
+        if (distanceXEqualsDistanceY) {
+            if ((isBlocked(pathMapX + xAxisStep, pathMapY, context) &&
+                 isBlocked(pathMapX, pathMapY + yAxisStep, context)) ||
+                isBlocked(pathMapX += xAxisStep, pathMapY += yAxisStep,
+                          context)) {
+                return 0;
+            }
+        } else {
+            largestAxisDistance = distanceXSmallerThanDistanceY
+                ? pathMapY - sourceMapY : pathMapX + xAxisStep - sourceMapX;
+            valueA = dm1_abs_int((largestAxisDistance
+                ? (distanceXSmallerThanDistanceY
+                    ? ((pathMapX + xAxisStep - sourceMapX) << 6) /
+                        largestAxisDistance
+                    : ((pathMapY - sourceMapY) << 6) / largestAxisDistance)
+                : 0x80) - valueC);
+            largestAxisDistance = distanceXSmallerThanDistanceY
+                ? pathMapY + yAxisStep - sourceMapY : pathMapX - sourceMapX;
+            valueB = dm1_abs_int((largestAxisDistance
+                ? (distanceXSmallerThanDistanceY
+                    ? ((pathMapX - sourceMapX) << 6) / largestAxisDistance
+                    : ((pathMapY + yAxisStep - sourceMapY) << 6) /
+                        largestAxisDistance)
+                : 0x80) - valueC);
+            if (valueA < valueB) pathMapX += xAxisStep;
+            else pathMapY += yAxisStep;
+            if (isBlocked(pathMapX, pathMapY, context) &&
+                (valueA != valueB ||
+                 isBlocked(pathMapX += xAxisStep, pathMapY -= yAxisStep,
+                           context))) {
+                return 0;
+            }
+        }
+    } while (dm1_abs_int(pathMapX - sourceMapX) +
+             dm1_abs_int(pathMapY - sourceMapY) > 1);
+
+    return sourceDistance;
+}
+
 int F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
     struct DM1ActiveGroup_Compat* activeGroup,
     int direction,
