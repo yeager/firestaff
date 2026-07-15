@@ -1379,6 +1379,11 @@
     now consumed before M10's incompatible C60/C61 group path. Unsupported,
     malformed, off-party-square, and Lord-Chaos shapes create no successor
     and retain no generic movement or sound behavior.
+  - 2026-07-15 queue-retirement correction: the source-owned receipt is now
+    neutralized only after the common F0239 extraction. Marking the queued
+    event as `NONE` before extraction left the original TIMER in the heap and
+    could duplicate the authenticated `+5` successor. The source gate remains
+    fail-closed for every unsupported receipt.
 
 - 2026-07-13 CSBWin restored `TT_22` follow-up: the imported restart timer's
   exact source no-op is live. Its original creation context and the removed
