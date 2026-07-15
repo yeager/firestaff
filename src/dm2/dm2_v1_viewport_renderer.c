@@ -3775,6 +3775,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 
     s->last_floor_ceiling_material_required_mask = 0u;
     s->last_floor_ceiling_material_consumed_mask = 0u;
+    s->gdat_scene_draw_order_consumed_count = 0;
     if (s->source_materials_required) {
         const DM2_V1_GdatSceneM11CommandPlan *plan =
             s->gdat_scene_material_plan;
@@ -3844,6 +3845,11 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 plan->query_blit_rect_hash !=
                     dm2_v1_gdat_scene_query_blit_rect_hash(
                         &plan->query_blit_rect)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            if (!dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(plan)) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
@@ -3980,6 +3986,9 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
         if (s->source_materials_required) {
+            ++s->gdat_scene_draw_order_consumed_count;
+        }
+        if (s->source_materials_required) {
             s->last_floor_ceiling_material_consumed_mask |=
                 DM2_SCENE_PLANE_CEILING;
         }
@@ -4038,6 +4047,9 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                  &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
+        if (s->source_materials_required) {
+            ++s->gdat_scene_draw_order_consumed_count;
+        }
         if (s->source_materials_required) {
             s->last_floor_ceiling_material_consumed_mask |=
                 DM2_SCENE_PLANE_FLOOR;

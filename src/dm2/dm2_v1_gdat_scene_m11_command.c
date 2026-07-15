@@ -51,6 +51,52 @@ uint32_t dm2_v1_gdat_scene_m11_command_geometry_hash(
     return hash_bytes(hash, (const uint8_t *)rect, sizeof(*rect));
 }
 
+static uint32_t dm2_v1_gdat_scene_draw_order_hash(
+    const DM2_V1_GdatSceneM11CommandPlan *plan)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!plan || plan->draw_order[0] != 1u || plan->draw_order[1] != 0u ||
+        plan->commands[0].field != DM2_GDAT_GFXSET_FLOOR ||
+        plan->commands[1].field != DM2_GDAT_GFXSET_CEIL ||
+        plan->rects[0].rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+        plan->rects[1].rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER) {
+        return 0u;
+    }
+    for (size_t i = 0u; i < 2u; ++i) {
+        const DM2_V1_GdatSceneM11Command *command =
+            &plan->commands[plan->draw_order[i]];
+        const DM2_V1_GdatSceneBlitRect *rect =
+            &plan->rects[plan->draw_order[i]];
+
+        if (!command->raw_hash || !command->decoded_hash ||
+            !command->palette_hash || !command->geometry_hash) {
+            return 0u;
+        }
+        hash = hash_bytes(hash, &plan->draw_order[i],
+                          sizeof(plan->draw_order[i]));
+        hash = hash_bytes(hash, &command->field, sizeof(command->field));
+        hash = hash_bytes(hash, (const uint8_t *)&rect->rect_number,
+                          sizeof(rect->rect_number));
+        hash = hash_bytes(hash, (const uint8_t *)&command->raw_hash,
+                          sizeof(command->raw_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->decoded_hash,
+                          sizeof(command->decoded_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash,
+                          sizeof(command->palette_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->geometry_hash,
+                          sizeof(command->geometry_hash));
+    }
+    return hash;
+}
+
+int dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(
+    const DM2_V1_GdatSceneM11CommandPlan *plan)
+{
+    return plan && plan->draw_order_hash != 0u &&
+        plan->draw_order_hash == dm2_v1_gdat_scene_draw_order_hash(plan);
+}
+
 uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
     const DM2_V1_GdatSceneQueryBlitRectReceipt *receipt)
 {
@@ -374,6 +420,14 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
                               sizeof(candidate.commands[i].geometry_hash));
         }
     }
+    /* c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT: ceiling 0x2bc, then floor 0x2bd. */
+    candidate.draw_order[0] = 1u;
+    candidate.draw_order[1] = 0u;
+    candidate.draw_order_hash = dm2_v1_gdat_scene_draw_order_hash(&candidate);
+    if (!candidate.draw_order_hash) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&candidate);
+        return 0;
+    }
     hash = hash_bytes(hash,
                       (const uint8_t *)&candidate.query_blit_rect.table_hash,
                       sizeof(candidate.query_blit_rect.table_hash));
@@ -385,6 +439,8 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
                       sizeof(candidate.query_blit_rect.ceiling_row_hash));
     hash = hash_bytes(hash, (const uint8_t *)&candidate.query_blit_rect_hash,
                       sizeof(candidate.query_blit_rect_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.draw_order_hash,
+                      sizeof(candidate.draw_order_hash));
     hash ^= candidate.scene_colorkey; hash *= 16777619u;
     hash ^= candidate.scene_flags; hash *= 16777619u;
     hash ^= candidate.ambient_light; hash *= 16777619u;

@@ -51,6 +51,11 @@ typedef struct {
      * reject a plan that cannot retain this source receipt. */
     DM2_V1_GdatSceneQueryBlitRectReceipt query_blit_rect;
     uint32_t query_blit_rect_hash;
+    /* c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT submits ceiling (0x2bc) before
+     * floor (0x2bd). Each IMG3 binds its own local palette immediately
+     * before its source draw, so this order is part of the transaction. */
+    uint8_t draw_order[2];
+    uint32_t draw_order_hash;
 } DM2_V1_GdatSceneM11CommandPlan;
 
 /* skproject CHECK_RECOMPUTE_LIGHT consumes these GRAPHICSSET control words
@@ -136,6 +141,8 @@ uint32_t dm2_v1_gdat_scene_m11_command_pixel_hash(
 uint32_t dm2_v1_gdat_scene_m11_command_geometry_hash(
     const DM2_V1_GdatSceneM11Command *command,
     const DM2_V1_GdatSceneBlitRect *rect);
+int dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(
+    const DM2_V1_GdatSceneM11CommandPlan *plan);
 void dm2_v1_gdat_scene_m11_command_plan_free(
     DM2_V1_GdatSceneM11CommandPlan *plan);
 
