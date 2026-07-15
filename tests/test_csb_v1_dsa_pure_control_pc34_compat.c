@@ -693,6 +693,36 @@ static CSB_V1_CSBWinDSAStackResult run_modify_message(
     }
 }
 
+static CSB_V1_CSBWinDSAStackResult run_jitter(
+    CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
+    uint16_t *words, int word_count, int32_t offsets[4], int *changed)
+{
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&context, 0, sizeof(context));
+    memset(&execution, 0, sizeof(execution));
+    action->program_words = words;
+    action->program_word_count = word_count;
+    context.jitter_state_valid = 1;
+    context.x_graphic_jitter = offsets[0];
+    context.y_graphic_jitter = offsets[1];
+    context.x_overlay_jitter = offsets[2];
+    context.y_overlay_jitter = offsets[3];
+    context.jitter_changed = *changed;
+    {
+        CSB_V1_CSBWinDSAStackResult result =
+            csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                state, 7, 1u, 0, &context, &execution);
+        offsets[0] = context.x_graphic_jitter;
+        offsets[1] = context.y_graphic_jitter;
+        offsets[2] = context.x_overlay_jitter;
+        offsets[3] = context.y_overlay_jitter;
+        *changed = context.jitter_changed;
+        return result;
+    }
+}
+
 static CSB_V1_CSBWinDSAStackResult run_without_party_location(
     CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
     uint16_t *words, int word_count, uint32_t *parameters)
@@ -1020,12 +1050,21 @@ int main(void)
     uint16_t modify_message_then_bad[] = {
         0x0686u, 2u, 0x0686u, 9u, 0x0686u, 7u, 0x0295u, 0x0000u
     };
+    uint16_t jitter[] = {
+        0x0686u, 10u, 0x0686u, 11u, 0x0686u, 12u, 0x0686u, 13u, 0x0255u
+    };
+    uint16_t jitter_then_bad[] = {
+        0x0686u, 10u, 0x0686u, 11u, 0x0686u, 12u, 0x0686u, 13u,
+        0x0255u, 0x0000u
+    };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
     CSB_V1_CSBWinDSAStackExecution execution;
     int saves_disabled = -1;
     uint8_t timer_type_modifiers[3] = { 0u, 1u, 2u };
+    int32_t jitter_offsets[4] = { 1, 2, 3, 4 };
+    int jitter_changed = 0;
 
     memset(&action, 0, sizeof(action));
     memset(&execution, 0, sizeof(execution));
@@ -1930,6 +1969,32 @@ int main(void)
               timer_type_modifiers[1] == 1u &&
               timer_type_modifiers[2] == 2u,
           "MODIFYMESSAGE does not publish a timer remap before a later rejected word");
+
+    jitter_offsets[0] = 1;
+    jitter_offsets[1] = 2;
+    jitter_offsets[2] = 3;
+    jitter_offsets[3] = 4;
+    jitter_changed = 0;
+    check(run_jitter(&state, &action, jitter,
+              (int)(sizeof(jitter) / sizeof(jitter[0])), jitter_offsets,
+              &jitter_changed) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              jitter_offsets[0] == 10 && jitter_offsets[1] == 11 &&
+              jitter_offsets[2] == 12 && jitter_offsets[3] == 13 &&
+              jitter_changed == 1,
+          "JITTER preserves CSBWin graphic/overlay stack order and raises the redraw latch");
+    jitter_offsets[0] = 1;
+    jitter_offsets[1] = 2;
+    jitter_offsets[2] = 3;
+    jitter_offsets[3] = 4;
+    jitter_changed = 0;
+    check(run_jitter(&state, &action, jitter_then_bad,
+              (int)(sizeof(jitter_then_bad) / sizeof(jitter_then_bad[0])),
+              jitter_offsets, &jitter_changed) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              jitter_offsets[0] == 1 && jitter_offsets[1] == 2 &&
+              jitter_offsets[2] == 3 && jitter_offsets[3] == 4 &&
+              jitter_changed == 0,
+          "JITTER does not publish offsets or redraw state before a later rejected word");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;

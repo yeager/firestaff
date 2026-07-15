@@ -3685,6 +3685,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       every value above `MSG_TOGGLE` to three; a malformed later word leaves
       all three caller-owned values unchanged. The broader timer-handler
       consumer matrix remains separate source work.
+    - 2026-07-15 jitter update: authenticated `STKOP_Jitter` now stages
+      CSBWin's four caller-owned graphic/overlay offsets and raises the
+      redraw latch only when one differs. It retains the source pop order;
+      malformed later words publish neither offsets nor latch. Host-surface
+      consumption remains with the existing CSB renderer owner.
     - 2026-07-15 blocked: `TEXT@`, `TEXTSAY`, `CHARNAME@`, and
       `GLOBALTEXT!` remain closed pending the complete per-execution
       `DSADBANK` text owner (exactly ten slots plus DB2 decode and UI

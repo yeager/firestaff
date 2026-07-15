@@ -357,6 +357,15 @@ typedef struct {
      * authenticated action has been fully consumed. */
     int timer_type_modifiers_valid;
     uint8_t timer_type_modifiers[3];
+    /* CSBWin DSA.cpp:4898-4929 owns these four transient graphic offsets
+     * and the redraw latch in the current DSA/render context. They are not
+     * derived from host scaling or synthesized graphics. */
+    int jitter_state_valid;
+    int32_t x_graphic_jitter;
+    int32_t y_graphic_jitter;
+    int32_t x_overlay_jitter;
+    int32_t y_overlay_jitter;
+    int jitter_changed;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -634,6 +643,12 @@ typedef struct {
     int saves_disabled;
     int timer_type_modifiers_valid;
     uint8_t timer_type_modifiers[3];
+    int jitter_state_valid;
+    int32_t x_graphic_jitter;
+    int32_t y_graphic_jitter;
+    int32_t x_overlay_jitter;
+    int32_t y_overlay_jitter;
+    int jitter_changed;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;
