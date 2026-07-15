@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 DUNGEON F0168: HoC wall inscriptions use the original PC3.4
+  raw TEXTSTRING record for Visible and TextDataWordOffset before the source
+  glyph decoder builds the F0107 M648/C10 material receipt. The focused
+  real-DUNGEON.DAT gate proves that corrupting only the decoded mirror cannot
+  alter the rendered source material.
+
 - 2026-07-15 DM2 skproject vertical-door geometry: intermediate vertical
   `DRAW_DOOR` states 1..3 now resolve `tlbRectnoDoorPosition + state` through
   RAW4 `QUERY_BLIT_RECT` and M11 consumes the resulting source rectangle.

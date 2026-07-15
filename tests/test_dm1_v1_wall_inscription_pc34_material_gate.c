@@ -81,8 +81,9 @@ static int find_visible_wall_text(const struct DungeonDatState_Compat* dungeon,
                        safety++ < 64) {
                     if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
                         int textIndex = (int)THING_GET_INDEX(thing);
-                        if (textIndex >= 0 && textIndex < things->textStringCount &&
-                            things->textStrings[textIndex].visible) {
+                        int textDataWordOffset;
+                        if (dm1_v1_inscription_get_visible_raw_text_offset_pc34(
+                                things, textIndex, &textDataWordOffset)) {
                             *outTextIndex = textIndex;
                             *outFirstThing = firstThing;
                             return 1;
@@ -109,6 +110,7 @@ int main(void)
     unsigned char decoded[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
     unsigned short firstThing = THING_ENDOFLIST;
     int textIndex = -1;
+    int textDataWordOffset = -1;
     int decodedCount;
     int line;
     int result = 1;
@@ -138,6 +140,8 @@ int main(void)
         !F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon) ||
         !F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things) ||
         !find_visible_wall_text(&dungeon, &things, &textIndex, &firstThing) ||
+        !dm1_v1_inscription_get_visible_raw_text_offset_pc34(
+            &things, textIndex, &textDataWordOffset) ||
         !dm1_v1_inscription_host_material_from_world_pc34(
             &things, textIndex, firstThing, &receipt)) {
         fprintf(stderr, "could not build a real PC34 F0168/F0107 inscription receipt\n");
@@ -147,7 +151,7 @@ int main(void)
 
     decodedCount = DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
         things.textData, things.textDataWordCount,
-        (int)things.textStrings[textIndex].textDataWordOffset,
+        textDataWordOffset,
         decoded, (int)sizeof(decoded));
     if (!receipt.valid || receipt.textStringIndex != textIndex ||
         receipt.fontGraphicIndex != DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
@@ -158,6 +162,26 @@ int main(void)
         fprintf(stderr, "F0168 source bytes did not reach the M648 receipt exactly\n");
         result = 0;
         goto cleanup;
+    }
+
+    /* F0168's renderer input is G0284 raw TEXTSTRING, not the convenience
+     * decoded mirror produced by the loader. Corrupt the mirror only and
+     * require the real raw record to produce identical wall material. */
+    if (things.textStrings && textIndex < things.textStringCount) {
+        struct DungeonTextString_Compat saved = things.textStrings[textIndex];
+        DM1_V1_InscriptionHostMaterialReceiptPc34 rawReceipt;
+        things.textStrings[textIndex].visible = 0;
+        things.textStrings[textIndex].textDataWordOffset = 0;
+        memset(&rawReceipt, 0, sizeof(rawReceipt));
+        if (!dm1_v1_inscription_host_material_from_world_pc34(
+                &things, textIndex, firstThing, &rawReceipt) ||
+            memcmp(&rawReceipt, &receipt, sizeof(receipt)) != 0) {
+            fprintf(stderr, "F0168 HoC path consulted decoded TextString mirror\n");
+            result = 0;
+            things.textStrings[textIndex] = saved;
+            goto cleanup;
+        }
+        things.textStrings[textIndex] = saved;
     }
 
     for (line = 0; line < receipt.lineCount; ++line) {

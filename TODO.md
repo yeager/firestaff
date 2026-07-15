@@ -5,6 +5,12 @@
   the separately owned live F0312/F0294 callers through it. Do not derive a
   WeaponInfo row from a decoded mirror or accept a Type outside G0238.
 
+- 2026-07-15 DM1 DUNGEON F0168 follow-up: the HoC wall-inscription consumer
+  reads raw PC3.4 TEXTSTRING visible/offset fields through F0156 before
+  building its original glyph/M648 receipt. Remaining F0168 work belongs to
+  separately owned message and scroll consumers; do not route those through a
+  host-text or decoded-TextString fallback.
+
 - 2026-07-15 DM1 DUNGEON F0156 follow-up: the source-defined raw Thing-data
   accessor now owns the live door-button read path. Remaining work is to
   route other DM1 raw Thing consumers through this accessor while preserving
