@@ -10,6 +10,8 @@
 #define NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5 "c2776768ff25287c79013a1452253ca0"
 #define NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5 "e88d60859f65f08fa622e1992b02280f"
 #define NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES (1024U * 1024U)
+#define NEXUS_V1_PRS3_SH2_ZERO_SIDE_LINEAR_FNV1A64 \
+    UINT64_C(0xe0cc325e85a0e63f)
 
 static uint8_t *read_capture_file(const char *path, size_t max_size,
                                   size_t *out_size)
@@ -397,6 +399,7 @@ int nexus_v1_prs3_sh2_zero_side_trace_bind(
         plan.stream_size == trace->stream_size &&
         plan.expected_output_bytes == trace->expected_output_bytes;
     receipt.zero_side_instruction_route_matches =
+        sh2.sh2_zero_side_linear_route_verified &&
         trace->zero_branch_instruction_offset == sh2.control_zero_branch_offset &&
         trace->zero_branch_target_offset == sh2.control_zero_branch_target_offset &&
         trace->counter_decrement_offset == trace->zero_branch_target_offset &&
@@ -762,7 +765,15 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.zero_side_linear_begin_offset =
         receipt.control_zero_branch_target_offset;
     receipt.zero_side_linear_end_offset = SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET + 2U;
-    if (receipt.zero_side_linear_end_offset <= dm_bin_size) {
+    if (receipt.zero_side_linear_end_offset > receipt.zero_side_linear_begin_offset) {
+        receipt.zero_side_linear_byte_count = receipt.zero_side_linear_end_offset -
+            receipt.zero_side_linear_begin_offset;
+    }
+    if (receipt.zero_side_linear_end_offset <= dm_bin_size &&
+        receipt.zero_side_linear_byte_count != 0U) {
+        receipt.zero_side_linear_fnv1a64 = fnv1a64(
+            dm_bin + receipt.zero_side_linear_begin_offset,
+            receipt.zero_side_linear_byte_count);
         for (offset = receipt.zero_side_linear_begin_offset;
              offset + 2U <= receipt.zero_side_linear_end_offset; offset += 2U) {
             if (read_be16(dm_bin + offset) == 0x0d24U) {
@@ -770,8 +781,18 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
             }
         }
     }
+    /* The zero-side trace uses the complete observed static corridor, not
+     * merely its named read/merge instructions. This locks the branch and
+     * repeat-control neighbourhood to the retail DM.BIN bytes without
+     * assigning any copy, token, palette, or pixel semantics to it. */
+    receipt.sh2_zero_side_linear_route_verified =
+        receipt.zero_side_linear_byte_count ==
+            SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET + 2U -
+                (SH2_V1_CALLEE_OFFSET + 100U) &&
+        receipt.zero_side_linear_fnv1a64 ==
+            NEXUS_V1_PRS3_SH2_ZERO_SIDE_LINEAR_FNV1A64;
     receipt.sh2_zero_side_has_no_direct_output_store =
-        receipt.zero_side_linear_end_offset <= dm_bin_size &&
+        receipt.sh2_zero_side_linear_route_verified &&
         receipt.zero_side_output_store_instruction_count == 0U;
     /* Static code never proves that R13 is a history window or that this
      * control branch copies bytes. Only a source-bound execution trace can. */

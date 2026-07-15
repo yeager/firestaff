@@ -17864,6 +17864,15 @@ fabricating a creature visual.
 
 # ✅ 2026-07-15 Nexus Structure1F/Structure3 runtime correlation
 
+# ✅ 2026-07-15 Nexus PRS3 zero-side static corridor identity
+
+The retail `DM.BIN` zero-side SH-2 path is now retained as one exact 64-byte
+source corridor from its branch target through its outer-loop branch. The
+receipt requires FNV-1a `e0cc325e85a0e63f` before a zero-side external trace
+can bind, so mutation of an otherwise unnamed intermediary instruction fails
+closed. It establishes no PRS3 token, copy/backreference, palette, pixel, or
+decoder semantics. Verification: `test_nexus_v1_prs3_capture_trace_schema`.
+
 # ✅ 2026-07-15 DM2 c_dialog source panel viewport route
 
 `c_dialog.cpp::DM2_dialog_2066_3820` now reaches the DM2 viewport through a

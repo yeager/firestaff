@@ -7603,6 +7603,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     full-stream receipt. This proves capture coverage, not grammar: neither
     branch has a literal/copy/length/offset meaning until authenticated Saturn
     execution evidence supplies those facts.
+  - 2026-07-15 zero-side corridor update: the complete 64-byte SH-2 corridor
+    from the zero branch target through the outer-loop branch is now locked to
+    retail `DM.BIN` by FNV-1a `e0cc325e85a0e63f`. A changed unnamed instruction
+    blocks trace binding just like a changed named read/merge instruction.
+    This is source identity only: copy/backreference, token, palette, pixel,
+    and decoder semantics remain unproven and fail closed.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).
