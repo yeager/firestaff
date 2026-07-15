@@ -185,6 +185,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_DIALOGUE_BOX (-0x1500000)
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
+int dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(int skproject_cell);
 /* Source: SKProject dm2data.cpp::table1d7029 consumed by
  * c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES. Returns the source pass for the
  * directly mapped wall cell, or -1 when that mapping is not admitted. */
@@ -319,6 +320,9 @@ typedef struct {
 typedef struct {
     int view_square;
     int skproject_cell;
+    /* table1d7029 pass that dispatched this source door, or -1 for a
+     * compatibility-only caller. */
+    int source_pass;
     int door_record_type;
     int door_gfx_index;
     int door_gfx_admitted;

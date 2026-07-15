@@ -6,6 +6,12 @@
   rather than leaking stale HUD. Focused CTest:
   `m11_dm1_champion_panel_asset_fail_closed`.
 
+- ✅ 2026-07-15 DM2 source door scheduler: source-required center-door plans
+  now retain the real `DM2_DRAW_DUNGEON_TILES` passes for D3C, D2C and D1C.
+  D0C is excluded from this tile-loop route because cell zero is absent from
+  `table1d7029`; it cannot borrow the later player-tile route. Focused
+  coverage: `test_dm2_v1_door_side_frame_source_route`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0107 unreadable-inscription palette receipt:
   side/depth M648 substitutes now publish the exact source plan's C10 key and
   16-entry palette map together with their G0205 geometry. The real-PC34

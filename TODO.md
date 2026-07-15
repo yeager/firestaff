@@ -7224,6 +7224,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This proves only the wall subpass. The tile-type branches that interleave
     doors, creatures, static objects, pits, and teleporters still need real
     per-cell records.
+  - 2026-07-15 update: source-required center doors now follow the same
+    `table1d7029` scheduler: D3C/cell 11, D2C/cell 6, then D1C/cell 3.
+    D0C/cell 0 is deliberately no-draw in this pass because the source table
+    does not dispatch it; `DM2_DRAW_PLAYER_TILE` is a separate later route.
+    Remaining: bind that route and the tile-type record decision before
+    admitting front-cell doors or any interleaved object pass.
   - 2026-07-15 update: moving source-required frames now reject the cached
     stationary wall plan. `DM2_DRAW_WALL` changes the signed RAW4 request by
     the live `table1d6b15[iViewportCell]` distance; until that dynamic RAW4

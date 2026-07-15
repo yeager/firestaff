@@ -1447,10 +1447,16 @@ int dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(int view_square)
         DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
         return -1;
     }
+    return dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(view_square);
+}
+
+int dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(int skproject_cell)
+{
+    if (skproject_cell < 0 || skproject_cell > 0xff) return -1;
     for (int pass = 0; pass < (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
                                     sizeof(s_dm2_draw_dungeon_tiles_cells[0]));
          ++pass) {
-        if (s_dm2_draw_dungeon_tiles_cells[pass] == (uint8_t)view_square) {
+        if (s_dm2_draw_dungeon_tiles_cells[pass] == (uint8_t)skproject_cell) {
             return pass;
         }
     }
@@ -2214,13 +2220,36 @@ int dm2_v1_viewport_build_door_render_plan(
         return 1;
     }
 
-    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_TILE/DRAW_DOOR_FRAMES routes
-     * each visible DB0 door through center viewport cells 0,3,6 before
-     * drawing the panel, frame, and optional default/custom wall button. */
-    for (int square = 0; square < DM2_SQ_COUNT; ++square) {
-        const DM2_ViewSquare *vs = &s->squares[square];
+    /* Source frames follow DM2_DRAW_DUNGEON_TILES, not the local square
+     * ordinal. Only cells whose table1d7029 pass is known may render here.
+     * D0C maps to cell zero, which is not a tile-loop pass; it belongs to the
+     * later DRAW_PLAYER_TILE boundary and remains unavailable in strict mode. */
+    const int source_scheduler =
+        s->source_materials_required && s->gdat_scene_control_ready;
+    const int iteration_count = source_scheduler
+        ? (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
+                sizeof(s_dm2_draw_dungeon_tiles_cells[0]))
+        : DM2_SQ_COUNT;
+    for (int iteration = 0; iteration < iteration_count; ++iteration) {
+        int square = source_scheduler ? -1 : iteration;
+        int source_pass = source_scheduler ? iteration : -1;
+        const DM2_ViewSquare *vs = NULL;
         DM2_V1_DoorRender *row;
         DM2_V1_ViewportRect panel_rect;
+
+        if (source_scheduler) {
+            const int cell = s_dm2_draw_dungeon_tiles_cells[iteration];
+            for (int candidate = 0; candidate < DM2_SQ_COUNT; ++candidate) {
+                if (dm2_v1_viewport_skproject_cell_for_square(candidate) == cell) {
+                    square = candidate;
+                    break;
+                }
+            }
+            if (square < 0) continue;
+            vs = &s->squares[square];
+        } else {
+            vs = &s->squares[square];
+        }
 
         if (!(vs->flags & DM2_SQF_HAS_DOOR) ||
             out_plan->door_count >= DM2_V1_DOOR_RENDER_MAX) {
@@ -2239,6 +2268,7 @@ int dm2_v1_viewport_build_door_render_plan(
         row = &out_plan->doors[out_plan->door_count++];
         row->view_square = square;
         row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
+        row->source_pass = source_pass;
         row->door_record_type = vs->door_record_type;
         row->door_gfx_index = vs->door_gfx_index;
         row->door_gfx_admitted = vs->door_gfx_admitted;
