@@ -57,6 +57,13 @@ int main(int argc, char **argv)
         fputs("FAIL: map 0 runtime admission changed G1 provenance\n", stderr);
         return 1;
     }
+    if (!dungeon.initial_party_pose_valid || dungeon.initial_party_x != 3 ||
+        dungeon.initial_party_y != 5 || dungeon.initial_party_dir != 2 ||
+        dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 3, 5) < 0) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: canonical G1 start pose is not map-owned\n", stderr);
+        return 1;
+    }
     if (!dm2_v1_dungeon_validate_g1_runtime_map(&dungeon, 16, &map16) ||
         map16.committed != 1 || map16.incomplete_world != 1 ||
         map16.map != 16 || map16.map_data_hash == 0u ||
