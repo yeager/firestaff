@@ -7211,13 +7211,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     fallback draws, zero blocked source-material passes, and the existing
     atomic map/scene/palette identity are all mandatory. Remaining DM2-010
     work is the broader viewport-cell and dynamic-material coverage above.
-  - 2026-07-14 update: the original `INTERFACE_GENERAL/0/dt04/0` table now
-    has a source-owned receipt for the named floor/ceiling `QUERY_BLIT_RECT`
-    rows `700` and `701`, including exact raw-table and row hashes. This only
-    proves table ownership and bounded row lookup. The compressed-program
-    grammar and source call-site order remain unproven, so the viewport keeps
-    its current real plane draw and must not derive destinations from either
-    row.
+  - 2026-07-15 update: `DM2_DISPLAY_VIEWPORT` plane composition now retains
+    its source order: ceiling `GRAPHICSSET/1` through rect `0x2bc` before
+    floor `GRAPHICSSET/0` through rect `0x2bd`. The transaction binds each
+    decoded image, its own local palette, geometry, and ordering hash; a
+    swapped order or changed material is callback-free no-draw. Remaining:
+    source trim values for live D1/D2 occlusion and later tile/object passes.
   - 2026-07-13 update: source-selected `DOORS` and `WALL_GFX` image fields
     now publish no-draw material receipts only after the original image,
     metadata, decoded pixels, and `QUERY_GDAT_IMAGE_LOCALPAL` palette agree.

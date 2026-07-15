@@ -115,6 +115,7 @@ static int verify_direct_handoff(int style,
     dm2_v1_render_floor_ceiling(&viewport);
     if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 2 ||
         viewport.last_floor_ceiling_material_consumed_mask != 3u ||
+        viewport.gdat_scene_draw_order_consumed_count != 2 ||
         (needs_local_palette_remap &&
          viewport.gdat_material_palette_floor_ceiling_consumed_count == 0) ||
         viewport.fallback_floor_ceiling_drawn_count != 0 ||
@@ -253,6 +254,35 @@ int main(void)
         fputs("FAIL: no G1 MapGraphicsStyle yielded a complete plane plan\n", stderr);
         failures = 1;
         goto done;
+    }
+
+    {
+        DM2_V1_GdatSceneM11CommandPlan altered_order = mismatched;
+
+        altered_order.draw_order[0] = 0u;
+        altered_order.draw_order[1] = 1u;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        unexpected_fetches = 0;
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+        dm2_v1_viewport_set_asset_palette_provider(
+            &viewport, unexpected_palette_fetch, NULL);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, first_style, altered_order.command_hash,
+            altered_order.scene_colorkey, altered_order.scene_flags, 0u,
+            altered_order.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            altered_order.ambient_darkness);
+        dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &altered_order);
+        dm2_v1_render_floor_ceiling(&viewport);
+        if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
+            viewport.gdat_scene_draw_order_consumed_count != 0 ||
+            (viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
+            fputs("FAIL: altered c_gui_vp plane order was not callback-free no-draw\n",
+                  stderr);
+            failures = 1;
+        }
     }
 
     {

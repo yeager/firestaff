@@ -916,6 +916,8 @@ typedef struct {
      * transaction invalidates the pointer before any M10 wall draw. */
     uint32_t gdat_wall_material_plan_scene_control_hash;
     int gdat_scene_material_consumed_count;
+    /* Validated c_gui_vp ceiling/floor draws consumed in source order. */
+    int gdat_scene_draw_order_consumed_count;
     /* Counts only wall blits supplied by the boot-owned GRAPHICSSET plan. */
     int gdat_wall_material_plan_consumed_count;
     int gdat_interface_palette_ready;

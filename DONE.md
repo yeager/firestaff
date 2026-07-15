@@ -6,6 +6,12 @@
   trailing pixels into the fixed C026 portrait frame. Focused coverage:
   `m11_dm1_front_mirror_asset_fail_closed` and the real-PC34 HoC receipt
   regression.
+- ✅ 2026-07-15 DM2 source scene composition: M11 now retains SKProject
+  `DM2_DISPLAY_VIEWPORT`'s ceiling-then-floor transaction (`0x2bc` before
+  `0x2bd`) with each exact GRAPHICSSET image, local IMG3 palette, rectangle,
+  and material hash. Altering the order or any bound receipt is no-draw;
+  Firestaff does not share or synthesize a plane palette. Focused coverage:
+  `test_dm2_v1_gdat_scene_plan_viewport_real_data`.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0172 C127 projection gate: a C127 sensor now
   bypasses the generic F0107 wall-ornament loop. Only DUNVIEW's fixed D1C
