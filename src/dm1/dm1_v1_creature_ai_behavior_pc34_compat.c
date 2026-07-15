@@ -1390,6 +1390,28 @@ int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
     return 1;
 }
 
+/* ReDMCSB GROUP.C F0201. The direct route must be read from the current
+ * loaded map; a real party scent is separately supplied only for the source
+ * fallback after that direct route has failed. */
+int F0819c_DM1_GROUP_BuildSmelledPartyDirectionPlanWithRoute_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1GroupScent_Compat* scent,
+    struct RngState_Compat* rng,
+    struct DM1GroupSmellDirectionPlan_Compat* out)
+{
+    int smellRouteDistance;
+
+    if (!ctx || !rng || !out ||
+        ctx->currentMapIndex != ctx->partyMapIndex) {
+        return 0;
+    }
+    smellRouteDistance = F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+        ctx->currentGroupMapX, ctx->currentGroupMapY, ctx->partyMapX,
+        ctx->partyMapY, ctx->isSmellSquareBlocked, ctx->smellBlockerContext);
+    return F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
+        ctx, smellRouteDistance, scent, rng, out);
+}
+
 /* =========================================================================
  *  F0820: Flee direction computation
  *

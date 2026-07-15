@@ -6988,3 +6988,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now consumes active directions, visibility range, invisibility, palette,
   RNG, and F0197/F0199 route facts. Remaining work is to bind this live form
   in M10; cross-map or callback-free requests must remain non-visible.
+- 2026-07-15 DM1 GROUP F0201 follow-up: the live direct-scent and stored
+  scent ordering now consumes the F0198/F0199 loaded-map route. Remaining
+  work is binding M10's party-scent table and current-map reader; no scent
+  record or callback may be substituted with guessed direction data.
