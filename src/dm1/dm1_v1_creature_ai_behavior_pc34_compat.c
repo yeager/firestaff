@@ -148,6 +148,65 @@ int F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
     return temporary <= sourceMapX;
 }
 
+int F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    struct RngState_Compat* rng,
+    int* outPrimaryDirection,
+    int* outSecondaryDirection)
+{
+    int direction;
+    int secondary;
+
+    if (!rng || !outPrimaryDirection || !outSecondaryDirection) return 0;
+    if (sourceMapX == destinationMapX) {
+        *outSecondaryDirection =
+            (F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) + 1;
+        *outPrimaryDirection = sourceMapY > destinationMapY ? 0 : 2;
+        return 1;
+    }
+    if (sourceMapY == destinationMapY) {
+        *outSecondaryDirection =
+            F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02;
+        *outPrimaryDirection = sourceMapX > destinationMapX ? 3 : 1;
+        return 1;
+    }
+
+    for (direction = 0; direction < 4; ++direction) {
+        if (!F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                direction, sourceMapX, sourceMapY,
+                destinationMapX, destinationMapY)) {
+            continue;
+        }
+        secondary = (direction + 1) & 3;
+        if (!F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                secondary, sourceMapX, sourceMapY,
+                destinationMapX, destinationMapY)) {
+            if (direction != 0 ||
+                !F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                    (direction + 3) & 3, sourceMapX, sourceMapY,
+                    destinationMapX, destinationMapY)) {
+                *outSecondaryDirection =
+                    ((F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) +
+                     direction + 1) & 3;
+                *outPrimaryDirection = direction;
+                return 1;
+            }
+        }
+        if (F0732_COMBAT_RngRandom_Compat(rng, 2)) {
+            *outPrimaryDirection = secondary;
+            *outSecondaryDirection = direction;
+        } else {
+            *outPrimaryDirection = direction;
+            *outSecondaryDirection = secondary;
+        }
+        return 1;
+    }
+    return 0;
+}
+
 static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }
@@ -1379,47 +1438,6 @@ int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
     return 1;
 }
 
-static int f0228_group_direction_from_scent_pc34(
-    int sourceX, int sourceY, int destinationX, int destinationY,
-    struct RngState_Compat* rng, int* outPrimary, int* outSecondary)
-{
-    int primary;
-    int secondary;
-
-    if (!rng || !outPrimary || !outSecondary) return 0;
-
-    /* ReDMCSB PROJEXPL.C F0228 lines 1228-1282.  Its loop tests cardinal
-     * view cones in N/E/S/W order; the two diagonal cones are then randomly
-     * ordered with M005_RANDOM(2). */
-    if (sourceX == destinationX) {
-        primary = sourceY > destinationY ? 0 : 2;
-        secondary = (F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) + 1;
-    } else if (sourceY == destinationY) {
-        primary = sourceX > destinationX ? 3 : 1;
-        secondary = F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02;
-    } else {
-        if (destinationY < sourceY) {
-            primary = 0;
-            secondary = destinationX > sourceX ? 1 : 3;
-        } else if (destinationX > sourceX) {
-            primary = 1;
-            secondary = 2;
-        } else {
-            primary = 2;
-            secondary = 3;
-        }
-        if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
-            int swap = primary;
-            primary = secondary;
-            secondary = swap;
-        }
-    }
-
-    *outPrimary = primary;
-    *outSecondary = secondary;
-    return 1;
-}
-
 int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
     const struct DM1GroupBehaviorContext_Compat* ctx,
     int smellRouteDistance,
@@ -1457,7 +1475,7 @@ int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
         return 1;
     }
 
-    if (!f0228_group_direction_from_scent_pc34(
+    if (!F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
             ctx->currentGroupMapX, ctx->currentGroupMapY,
             scent->mapX, scent->mapY, rng,
             &out->primaryDirection, &out->secondaryDirection)) {

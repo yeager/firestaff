@@ -1819,6 +1819,37 @@ static void test_group_path_blockers_f0197_to_f0199(void) {
     EXPECT_EQ(F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
                   3, 0, 0, 1, 0),
               0, "F0227 rejects a destination behind west-facing source");
+    {
+        struct RngState_Compat rng = make_rng(42u);
+        struct RngState_Compat expected = make_rng(42u);
+        int primary = -1;
+        int secondary = -1;
+        int random16 = F0732_COMBAT_RngRandom_Compat(&expected, 65536);
+        EXPECT_EQ(F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
+                      0, 0, 0, -2, &rng, &primary, &secondary),
+                  1, "F0228 cardinal direction succeeds");
+        EXPECT_EQ(primary, 0, "F0228 cardinal primary is north");
+        EXPECT_EQ(secondary, (random16 & 2) + 1,
+                  "F0228 cardinal secondary consumes RANDOM(65536)");
+        EXPECT_EQ((int)rng.seed, (int)expected.seed,
+                  "F0228 cardinal preserves source RNG count");
+    }
+    {
+        struct RngState_Compat rng = make_rng(7u);
+        struct RngState_Compat expected = make_rng(7u);
+        int primary = -1;
+        int secondary = -1;
+        int random2 = F0732_COMBAT_RngRandom_Compat(&expected, 2);
+        EXPECT_EQ(F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
+                      0, 0, 1, -1, &rng, &primary, &secondary),
+                  1, "F0228 diagonal direction succeeds");
+        EXPECT_EQ(primary, random2 ? 1 : 0,
+                  "F0228 diagonal applies source tie random");
+        EXPECT_EQ(secondary, random2 ? 0 : 1,
+                  "F0228 diagonal retains the alternate direction");
+        EXPECT_EQ((int)rng.seed, (int)expected.seed,
+                  "F0228 diagonal consumes exactly one RNG value");
+    }
     square.elementType = DUNGEON_ELEMENT_DOOR;
     square.doorState = 3;
     EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 1,

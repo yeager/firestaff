@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 GROUP F0228: added exact `GROUP.C:13810-13859`
+  primary/secondary direction selection. M10 now consumes it before F0200
+  with source RNG order; F0201 stored-scent routing shares it. Focused
+  coverage locks cardinal and diagonal RNG branches.
+
 - 2026-07-15 DM1 GROUP F0227: unified the exact `GROUP.C:13772-13808`
   directional-cone transform behind one DM1 owner. F0200 and M10 now consume
   it before their loaded-map F0199 paths; focused coverage locks cardinal

@@ -250,6 +250,18 @@ int F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
     int destinationMapX,
     int destinationMapY);
 
+/* ReDMCSB GROUP.C F0228 lines 13810-13859. Produces the primary direction
+ * and the source global's secondary alternative, consuming the original RNG
+ * only in its cardinal/diagonal tie branches. */
+int F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    struct RngState_Compat* rng,
+    int* outPrimaryDirection,
+    int* outSecondaryDirection);
+
 /* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
  * decoding and supplies these facts; DM1 owns the original branch order. */
 struct DM1GroupMovementFacts_Compat {
