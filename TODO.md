@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSBWin `STKOP_Overlay`/`STKOP_Palette` blocker: source chain is
+  `DSA.cpp:2916-2943` -> `Bitmaps.cpp:650-723`. EXPOOL owns the 1536-byte
+  512xRGB overlay palette and save policy owns the CSBgraphics signatures;
+  `ReadCSBgraphic(CGT_Overlay/CGT_OverlayPalette)` still lacks a verified
+  compressed-overlay bitmap payload layout and authenticated MD5-bound entry
+  identity. Do not select an ordinal, blend a palette, or synthesize overlay
+  pixels until that exact CSBgraphics.dat entry contract is captured.
+
 - 2026-07-15 CSBWin `STKOP_ObjectID` now fail-closes without a live DSA-bank
   owner. Remaining work is binding the actual DSA execution context.
 
