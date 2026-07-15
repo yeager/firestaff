@@ -658,6 +658,28 @@ typedef struct {
 typedef int (*Nexus_V1_DgnStructure3UntexturedFaceConsumer)(
     void *context, const Nexus_V1_DgnStructure3UntexturedFacePacket *packet);
 
+/* Complete active Structure3 source scene. The three category traversals are
+ * jointly required before a later Saturn renderer may even consider the
+ * scene; this receipt remains no-draw until independent format evidence. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    Nexus_V1_DgnStructure3PackageGeometrySceneReceipt static_scene;
+    Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt animated_scene;
+    Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt untextured_scene;
+    int face_count;
+    int traversed_face_count;
+    int category_coverage_complete;
+    int transform_semantics_proven;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3CompleteSourceSceneReceipt;
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1398,6 +1420,11 @@ int nexus_v1_current_level_visit_structure3_untextured_faces(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3UntexturedFaceConsumer consumer, void *context,
     Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt *out_receipt);
+/* Require complete traversal coverage of static 00xx, animated 08xx, and
+ * non-textured Structure3 face categories from one active canonical LEV. */
+int nexus_v1_current_level_structure3_complete_source_scene_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3CompleteSourceSceneReceipt *out_receipt);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,

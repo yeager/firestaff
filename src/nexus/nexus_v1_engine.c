@@ -3918,6 +3918,61 @@ int nexus_v1_current_level_visit_structure3_untextured_faces(
     return receipt.complete ? 1 : 0;
 }
 
+int nexus_v1_current_level_structure3_complete_source_scene_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3CompleteSourceSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3CompleteSourceSceneReceipt receipt;
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine ||
+        nexus_v1_current_level_structure3_face_material_receipt(
+            engine, &material_receipt) != 1 || !material_receipt.valid ||
+        nexus_v1_current_level_visit_structure3_package_geometry(
+            engine, NULL, NULL, &receipt.static_scene) != 1 ||
+        nexus_v1_current_level_visit_structure3_animated_materials(
+            engine, NULL, NULL, &receipt.animated_scene) != 1 ||
+        nexus_v1_current_level_visit_structure3_untextured_faces(
+            engine, NULL, NULL, &receipt.untextured_scene) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = material_receipt.level_index;
+    receipt.source_byte_count = material_receipt.source_byte_count;
+    receipt.source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
+    receipt.face_count = material_receipt.faces.face_count;
+    receipt.traversed_face_count =
+        receipt.static_scene.consumed_face_count +
+        receipt.animated_scene.consumed_face_count +
+        receipt.untextured_scene.consumed_face_count;
+    receipt.category_coverage_complete =
+        receipt.static_scene.valid && receipt.static_scene.complete &&
+        receipt.animated_scene.valid && receipt.animated_scene.complete &&
+        receipt.untextured_scene.valid && receipt.untextured_scene.complete &&
+        receipt.static_scene.source_bytes_fnv1a64 ==
+            receipt.source_bytes_fnv1a64 &&
+        receipt.animated_scene.source_bytes_fnv1a64 ==
+            receipt.source_bytes_fnv1a64 &&
+        receipt.untextured_scene.source_bytes_fnv1a64 ==
+            receipt.source_bytes_fnv1a64 &&
+        receipt.static_scene.static_material_face_count ==
+            material_receipt.materials.static_texture_selector_count &&
+        receipt.animated_scene.animated_face_count ==
+            material_receipt.materials.animated_texture_selector_count &&
+        receipt.untextured_scene.untextured_face_count ==
+            material_receipt.materials.non_textured_face_count &&
+        material_receipt.materials.unsupported_textured_fill_count == 0 &&
+        receipt.traversed_face_count == receipt.face_count;
+    receipt.valid = receipt.category_coverage_complete;
+    *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

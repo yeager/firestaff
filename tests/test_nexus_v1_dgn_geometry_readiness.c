@@ -1420,8 +1420,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   "retail non-textured Structure3 face binds exact geometry and opaque fill no-draw");
             {
                 Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt scene;
+                Nexus_V1_DgnStructure3CompleteSourceSceneReceipt complete_scene;
                 UntexturedFaceVisitCount visit_count;
                 memset(&scene, 0, sizeof(scene));
+                memset(&complete_scene, 0, sizeof(complete_scene));
                 memset(&visit_count, 0, sizeof(visit_count));
                 CHECK(nexus_v1_current_level_visit_structure3_untextured_faces(
                           &active_engine, count_untextured_face_packet,
@@ -1444,6 +1446,34 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       !scene.fallback_visuals_permitted &&
                       scene.blocks_real_dgn_mesh_render,
                       "retail Structure3 traversal consumes every non-textured face no-draw");
+                CHECK(nexus_v1_current_level_structure3_complete_source_scene_receipt(
+                          &active_engine, &complete_scene) == 1 &&
+                      complete_scene.valid &&
+                      complete_scene.category_coverage_complete &&
+                      complete_scene.level_index == level &&
+                      complete_scene.source_byte_count == (int)size &&
+                      complete_scene.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      complete_scene.face_count ==
+                          loaded_level.structure3_faces.face_count &&
+                      complete_scene.traversed_face_count ==
+                          complete_scene.face_count &&
+                      complete_scene.static_scene.static_material_face_count ==
+                          loaded_level.structure3_face_materials
+                              .static_texture_selector_count &&
+                      complete_scene.animated_scene.animated_face_count ==
+                          loaded_level.structure3_face_materials
+                              .animated_texture_selector_count &&
+                      complete_scene.untextured_scene.untextured_face_count ==
+                          loaded_level.structure3_face_materials
+                              .non_textured_face_count &&
+                      !complete_scene.transform_semantics_proven &&
+                      !complete_scene.pixel_palette_vdp1_semantics_proven &&
+                      !complete_scene.decoder_permitted &&
+                      complete_scene.no_draw_only &&
+                      !complete_scene.fallback_visuals_permitted &&
+                      complete_scene.blocks_real_dgn_mesh_render,
+                      "complete retail Structure3 source scene accounts for every face category no-draw");
                 nexus_viewport_init(&untextured_viewport);
                 nexus_viewport_render(&untextured_viewport, &active_engine);
                 CHECK(untextured_viewport.last_dgn_render_receipt
@@ -1453,6 +1483,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.last_dgn_render_receipt
                           .structure3_untextured_face_scene.consumed_face_count ==
                           scene.consumed_face_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure3_complete_source_scene_consumed &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure3_complete_source_scene
+                              .traversed_face_count == complete_scene.face_count &&
                       untextured_viewport.structure3_untextured_face.valid &&
                       untextured_viewport.structure3_untextured_face
                           .raw_fill_selector == untextured_packet.raw_fill_selector &&
