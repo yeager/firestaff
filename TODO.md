@@ -3474,6 +3474,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This proves raw byte ordering only. It does not identify a PRS3 field,
     history-copy distance, run length, output ownership, or a pixel format;
     an authenticated Saturn execution trace remains required.
+  - The post-merge route now proves one exact `CMP/GT; BT` control edge back
+    to the PRS3 control re-entry after R7 is masked, incremented by two, and
+    added to merged R4. It is not yet a token rejection or termination rule:
+    original execution evidence must establish the register roles first.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

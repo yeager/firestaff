@@ -18961,3 +18961,11 @@ four bits, masked with the PC-relative `0x0f00`, and ORed into the first byte;
 the source then masks the second register with immediate `15`. This fixes the
 raw merge order as `byte0 | ((byte1 << 4) & 0x0f00)`. It does not assign the
 word a PRS3 semantic or permit decoding, palette application, or rendering.
+
+# Nexus PRS3 V1 post-merge control edge (2026-07-15)
+
+The zero-side receipt now binds the actual post-merge sequence: mask R7 with
+15, add 2, add merged R4, `CMP/GT R7,R4`, then `BT` back to the PRS3 control
+re-entry. It proves that exact static branch condition and target only. No
+register role, token rejection, termination, output, palette, decoder, or
+renderer meaning is inferred.

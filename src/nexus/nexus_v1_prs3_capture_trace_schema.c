@@ -757,6 +757,11 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.zero_low_mask_load_offset = SH2_V1_CALLEE_OFFSET + 106U;
     receipt.zero_low_mask_immediate = 15;
     receipt.zero_low_mask_and_offset = SH2_V1_CALLEE_OFFSET + 126U;
+    receipt.zero_low_fragment_increment_offset = SH2_V1_CALLEE_OFFSET + 128U;
+    receipt.zero_low_fragment_increment = 2;
+    receipt.zero_merged_value_add_offset = SH2_V1_CALLEE_OFFSET + 130U;
+    receipt.zero_merged_branch_compare_offset = SH2_V1_CALLEE_OFFSET + 132U;
+    receipt.zero_merged_branch_offset = SH2_V1_CALLEE_OFFSET + 134U;
     receipt.zero_index_mask_offset = SH2_ZERO_INDEX_MASK_OFFSET;
     receipt.zero_indexed_byte_read_offset = SH2_ZERO_INDEXED_BYTE_READ_OFFSET;
     receipt.sh2_zero_side_index_read_verified =
@@ -809,6 +814,22 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + receipt.zero_upper_mask_and_offset) == 0x2389U &&
         read_be16(dm_bin + receipt.zero_merge_or_offset) == 0x243bU &&
         read_be16(dm_bin + receipt.zero_low_mask_and_offset) == 0x2729U;
+    /* After the merge, the original route masks R7, adds 2, adds merged R4,
+     * then compares `R4 > R7`. Its BT branch returns to control re-entry.
+     * This establishes exactly one post-merge control edge, never a PRS3
+     * token class, failure reason, length, or decoded output rule. */
+    receipt.sh2_zero_merged_branch_condition_proven =
+        receipt.sh2_zero_byte_merge_order_proven &&
+        read_be16(dm_bin + receipt.zero_low_fragment_increment_offset) == 0x7702U &&
+        receipt.zero_low_fragment_increment == 2 &&
+        read_be16(dm_bin + receipt.zero_merged_value_add_offset) == 0x374cU &&
+        read_be16(dm_bin + receipt.zero_merged_branch_compare_offset) == 0x3477U &&
+        read_be16(dm_bin + receipt.zero_merged_branch_offset) == 0x89d5U &&
+        sh2_conditional_branch_target(
+            read_be16(dm_bin + receipt.zero_merged_branch_offset),
+            receipt.zero_merged_branch_offset,
+            &receipt.zero_merged_branch_target_offset) &&
+        receipt.zero_merged_branch_target_offset == SH2_CONTROL_REENTRY_OFFSET;
     receipt.zero_post_read_compare_offset = SH2_ZERO_POST_READ_COMPARE_OFFSET;
     receipt.zero_repeat_counter_increment_offset = SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET;
     receipt.zero_repeat_branch_offset = SH2_ZERO_REPEAT_BRANCH_OFFSET;
@@ -911,6 +932,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_zero_side_index_read_verified &&
         receipt.sh2_zero_side_two_byte_input_span_proven &&
         receipt.sh2_zero_byte_merge_order_proven &&
+        receipt.sh2_zero_merged_branch_condition_proven &&
         receipt.sh2_zero_side_repeat_control_verified &&
         receipt.sh2_zero_repeat_termination_proven &&
         receipt.sh2_zero_side_linear_route_verified &&
