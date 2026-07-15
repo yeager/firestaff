@@ -1471,6 +1471,51 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_copy(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryReceipt
+        entry;
+    const Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *parent;
+    size_t source_offset;
+    uint8_t source_byte;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry(
+            handoff, capture, &entry) || !entry.valid ||
+        !entry.transfer_destination_call_entry_proven ||
+        !entry.call.transfer.source_track02_bytes_proven ||
+        entry.entry_pc != entry.call.transfer.destination_address ||
+        entry.call.transfer.byte_count == 0u) {
+        return 0;
+    }
+    parent = &entry.call.transfer.next.entry.call.termination.call.execution.transfer;
+    if (entry.call.transfer.source_address < parent->destination_address) {
+        return 0;
+    }
+    source_offset = entry.call.transfer.source_address - parent->destination_address;
+    if (source_offset >= parent->byte_count ||
+        entry.call.transfer.original_source_address !=
+            parent->source_address + source_offset) {
+        return 0;
+    }
+    source_byte = handoff->loader_post_envelope.bytes[source_offset];
+    if (entry.entry_opcode != source_byte) {
+        return 0;
+    }
+    out->valid = 1;
+    out->entry = entry;
+    out->copied_source_address = entry.call.transfer.source_address;
+    out->original_source_address = entry.call.transfer.original_source_address;
+    out->copied_source_byte = source_byte;
+    out->copied_source_byte_proven = 1;
+    out->level_or_object_semantics_proven = 0;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,

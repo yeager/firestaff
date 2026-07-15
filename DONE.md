@@ -19204,3 +19204,9 @@ DM.BIN corridor, and their observed merge equals `byte0 | ((byte1 << 4) &
 0x0f00)`. The zero-side corridor has no proven direct output store, so V8
 deliberately records no fabricated output pair. This does not identify a
 token, offset, history copy, length, output, palette, decoded pixel, or draw.
+# ✅ 2026-07-15 Theron Track 02 destination copied-byte receipt
+
+The entered routine at the Track 02-derived TII destination now requires its
+observed opcode to equal the exact first source byte copied from `$3c88`.
+The receipt retains copied and original source addresses while leaving routine,
+level, object, palette, bitmap, and rendering semantics unclassified.
