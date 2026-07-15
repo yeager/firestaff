@@ -6006,6 +6006,51 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     return 1;
 }
 
+int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target)
+{
+    Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget target;
+
+    if (!out_target) return -1;
+    memset(&target, 0, sizeof(target));
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
+    if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
+            engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
+        !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
+        !target.direct_mesh.face_ordinal_proven ||
+        !target.direct_mesh.no_draw_only ||
+        target.direct_mesh.fallback_visuals_permitted ||
+        nexus_v1_engine_build_structure3_static_material_capture_target(
+            engine, target.direct_mesh.structure3_model_index,
+            target.direct_mesh.face_ordinal, &target.static_material) != 1 ||
+        !target.static_material.valid ||
+        !target.static_material.static_selector_descriptor_bound ||
+        !target.static_material.image_payload_anchor_bound ||
+        !target.static_material.image_payload_interval_bound ||
+        !target.static_material.capture_producer_required ||
+        !target.static_material.original_saturn_capture_required ||
+        !target.static_material.no_draw_only ||
+        target.static_material.fallback_visuals_permitted ||
+        target.static_material.level_index != target.direct_mesh.level_index ||
+        target.static_material.source_byte_count != target.direct_mesh.source_byte_count ||
+        target.static_material.source_bytes_fnv1a64 !=
+            target.direct_mesh.source_bytes_fnv1a64 ||
+        target.static_material.structure3_entry_index !=
+            target.direct_mesh.structure3_model_index ||
+        target.static_material.face_ordinal != target.direct_mesh.face_ordinal) {
+        *out_target = target;
+        return 0;
+    }
+    target.direct_face_material_bound = 1;
+    target.capture_producer_required = 1;
+    target.original_saturn_capture_required = 1;
+    target.valid = 1;
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {

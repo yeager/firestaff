@@ -17964,6 +17964,16 @@ before external trace analysis, but establishes no loader execution, token,
 palette, pixel, or menu-placement semantics. It remains no-draw with fallback
 visuals disabled. Verification: `test_m11_nexus_startup_gate`.
 
+# ✅ 2026-07-15 Nexus direct Structure1F static-material route
+
+`nexus_v1_engine_build_structure1f_direct_static_material_capture_target()`
+now joins a documented active `Structure1F -> Structure1A -> Structure3`
+face selection with the same face's exact static Structure2 descriptor and
+bounded payload windows. It fails closed for non-static or unresolved faces;
+the resulting target is capture-only and cannot assign texture, palette,
+transform, VDP1, or draw semantics. Verification:
+`test_nexus_v1_dgn_geometry_readiness` against LEV00--LEV15.
+
 # ✅ 2026-07-15 DM2 c_dialog source panel viewport route
 
 `c_dialog.cpp::DM2_dialog_2066_3820` now reaches the DM2 viewport through a
