@@ -66,6 +66,18 @@ int main(void)
 
     assert(dm2_v1_skproject_sound1(&state, &receipt) == 1);
     assert(state.pending_music_fade == 1);
+    assert(dm2_v1_skproject_get_music_index_from_modlist(
+        music_map, 4, 2, &receipt) == 6);
+    assert(receipt.valid);
+    assert(receipt.argument0 == 2);
+    assert(receipt.selected_music_track == 6);
+    assert(dm2_v1_skproject_get_music_index_from_modlist(
+        music_map, 4, 9, &receipt) == 0);
+    assert(receipt.valid);
+    assert(receipt.selected_music_track == 0);
+    assert(dm2_v1_skproject_get_music_index_from_modlist(
+        0, 4, 1, &receipt) == 0);
+    assert(receipt.valid);
     assert(dm2_v1_skproject_sound2(&state, 2, music_map, 4, &receipt) == 1);
     assert(receipt.selected_music_track == 6);
     assert(state.current_music_track == 6);

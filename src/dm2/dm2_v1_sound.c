@@ -570,6 +570,25 @@ int dm2_v1_skproject_sound1(DM2_V1_SkprojectSoundState *state,
     return 1;
 }
 
+int16_t dm2_v1_skproject_get_music_index_from_modlist(
+    const uint8_t *modlist,
+    uint16_t modlist_size,
+    int16_t map_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    int16_t music_index = 0;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = map_index;
+    if (modlist && map_index >= 0 && (uint16_t)map_index < modlist_size)
+        music_index = (int16_t)modlist[(uint16_t)map_index];
+    receipt.selected_music_track = music_index;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return music_index;
+}
+
 int dm2_v1_skproject_sound2(DM2_V1_SkprojectSoundState *state,
                             int16_t map_index,
                             const uint8_t *music_map,
@@ -588,7 +607,9 @@ int dm2_v1_skproject_sound2(DM2_V1_SkprojectSoundState *state,
     }
     if (state->pending_music_fade)
         state->pending_music_fade = 0;
-    state->pending_music_track = music_map[(uint16_t)map_index];
+    state->pending_music_track =
+        dm2_v1_skproject_get_music_index_from_modlist(
+            music_map, music_map_count, map_index, NULL);
     receipt.selected_music_track = state->pending_music_track;
     if (state->current_music_track != state->pending_music_track) {
         if (!state->midi_ready || state->pending_music_fade != 0)

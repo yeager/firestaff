@@ -280,6 +280,11 @@ void dm2_v1_skproject_sound_state_init(DM2_V1_SkprojectSoundState *state,
                                        uint16_t queue_capacity);
 int dm2_v1_skproject_sound1(DM2_V1_SkprojectSoundState *state,
                             DM2_V1_SkprojectSoundReceipt *out_receipt);
+int16_t dm2_v1_skproject_get_music_index_from_modlist(
+    const uint8_t *modlist,
+    uint16_t modlist_size,
+    int16_t map_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
 int dm2_v1_skproject_sound2(DM2_V1_SkprojectSoundState *state,
                             int16_t map_index,
                             const uint8_t *music_map,

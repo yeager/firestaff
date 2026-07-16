@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject sound handoff bundle: mapped
+  `DM2_GET_MUSIC_INDEX_FROM_MODLIST`, tightened `DM2_SOUND2` to consume that
+  helper, and promoted the existing `DM2_PLAY_MUSIC`/`DM2_PLAY_SOUND`
+  boundaries from uncertain to implemented-narrow. Coverage locks byte lookup
+  over real caller-provided MODLIST bytes, verified DATA-root music queueing,
+  and fail-closed sample playback when no source-resolved payload exists.
+  Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_sound_source_gate -j2`, `ctest --test-dir build-local-ninja
+  --output-on-failure -R '^dm2_v1_sound_source_gate$'`, direct test binary,
+  `ctest --test-dir build-local-ninja --output-on-failure -R
+  '^dm2_v1_startup_music_queue$'`, and `git diff --check` passed.
+
 - 2026-07-16 DM2 skproject wall attack helper: mapped `DM2_ATTACK_WALL`
   from `SKULLWIN/c_move.cpp`. Coverage locks matching wall-side scan,
   ornate-alcove RANDDIR missile relocation, class-0x22 actuator

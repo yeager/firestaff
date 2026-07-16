@@ -138,9 +138,10 @@
     `DM2_SOUND1` through `DM2_SOUND9`, `DM2_PROCESS_SOUND`, and
     `DM2_QUERY_SND_ENTRY_INDEX` are now source-mapped at receipt/runtime-state
     level in `dm2_v1_sound`. Remaining adjacent work is real sample payload
-    lookup, MODLIST support, live sample/MIDI backend playback, and
-    `DM2_PLAY_SOUND`/`DM2_PLAY_MUSIC` end-to-end handoff without synthetic
-    success.
+    lookup, live sample backend playback, and `DM2_PLAY_SOUND` end-to-end
+    handoff without synthetic success. `DM2_PLAY_MUSIC` is source-mapped at
+    verified DATA-root/MIDI schedule handoff level, with native backend
+    availability still explicit.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`
     `DM2_ALLOC_PICT_BUFF`, `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and
     `DM2_FREE_PICT_ENTRY` now have bounded source-named bitmap allocation/free
