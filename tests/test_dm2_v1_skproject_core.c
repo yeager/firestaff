@@ -251,6 +251,95 @@ static void test_palette_helpers(void)
           "DM2_xlat_palette rejects missing source palette for explicit colors");
 }
 
+static void test_move_admission_helpers(void)
+{
+    DM2_V1_SkprojectMoveSideOffsetReceipt side;
+    DM2_V1_SkprojectMoveAdmissionRequest request;
+    DM2_V1_SkprojectMoveAdmissionReceipt receipt;
+
+    memset(&request, 0, sizeof(request));
+    request.creature_at_destination = -1;
+    request.secondary_query_creature = -1;
+
+    CHECK(dm2_v1_skproject_move_side_offset(
+              0x0100u, 0, 7u, &side) == 0 &&
+              side.valid && side.facing == 1u &&
+              side.relative_direction == 1u &&
+              side.side_direction &&
+              side.creature_x_offset == 0 &&
+              !side.side_offset_nonzero,
+          "DM2_12b4_0953 admits side direction and returns zero at 5x5 center");
+    CHECK(dm2_v1_skproject_move_side_offset(
+              0x0100u, 0, 5u, &side) == 1 &&
+              side.valid && side.creature_x_offset == -2 &&
+              side.side_offset_nonzero,
+          "DM2_12b4_0953 returns nonzero for side creature offset");
+    CHECK(dm2_v1_skproject_move_side_offset(
+              0x0000u, 0, 5u, &side) == 0 &&
+              side.valid && side.relative_direction == 0u &&
+              !side.side_direction,
+          "DM2_12b4_0953 returns zero when relative direction is not side");
+
+    request.requested_move = 2u;
+    request.current_tile_value = (uint16_t)(3u << 5);
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 1 &&
+              receipt.valid && receipt.result_code == 1u &&
+              receipt.current_tile_type == 3u,
+          "DM2_12b4_0881 code 1 fires for requested move 2 on tile type 3");
+
+    memset(&request, 0, sizeof(request));
+    request.creature_at_destination = -1;
+    request.secondary_query_creature = -1;
+    request.destination_tile_value = (uint16_t)(3u << 5);
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 2 &&
+              receipt.result_code == 2u &&
+              receipt.destination_tile_type == 3u,
+          "DM2_12b4_0881 code 2 fires for destination tile type 3");
+
+    memset(&request, 0, sizeof(request));
+    request.creature_at_destination = -1;
+    request.secondary_query_creature = -1;
+    request.destination_tile_blocked = 1;
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 3 &&
+              receipt.result_code == 3u,
+          "DM2_12b4_0881 code 3 fires for blocked destination tile");
+
+    memset(&request, 0, sizeof(request));
+    request.creature_at_destination = 0x1234;
+    request.creature_ai_flags = 0u;
+    request.side_offset_nonzero = 0;
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 4 &&
+              receipt.result_code == 4u &&
+              receipt.stored_creature == 0x1234 &&
+              receipt.used_side_offset_test,
+          "DM2_12b4_0881 code 4 fires for creature blocked by side-offset test");
+
+    request.side_offset_nonzero = 1;
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 5 &&
+              receipt.result_code == 5u &&
+              receipt.used_side_offset_test,
+          "DM2_12b4_0881 code 5 fires when side-offset test admits creature");
+
+    memset(&request, 0, sizeof(request));
+    request.creature_at_destination = -1;
+    request.secondary_query_creature = -1;
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 6 &&
+              receipt.result_code == 6u &&
+              receipt.used_secondary_query,
+          "DM2_12b4_0881 code 6 fires when secondary query has no creature");
+
+    request.secondary_query_creature = 0x22;
+    request.secondary_query_ai_flags = 0u;
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 5 &&
+              receipt.result_code == 5u &&
+              receipt.used_secondary_query,
+          "DM2_12b4_0881 secondary creature without 0x8000 flag returns 5");
+    request.secondary_query_ai_flags = 0x8000u;
+    CHECK(dm2_v1_skproject_move_admission(&request, &receipt) == 6 &&
+              receipt.result_code == 6u,
+          "DM2_12b4_0881 secondary creature with 0x8000 flag returns 6");
+}
+
 static void test_calc_vector_w_dir(void)
 {
     DM2_V1_SkprojectVectorWDirReceipt receipt;
@@ -1013,6 +1102,7 @@ int main(void)
     test_random_helpers();
     test_util_helpers();
     test_palette_helpers();
+    test_move_admission_helpers();
     test_calc_vector_w_dir();
     test_cache_hash_helpers();
     test_picture_mement_helpers();
@@ -1068,6 +1158,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_QUERY_FONT") != 0,
           "source evidence names c_gfx_str helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_12b4_0881") != 0,
+          "source evidence names c_move admission helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

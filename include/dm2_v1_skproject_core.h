@@ -99,6 +99,42 @@ typedef struct {
     uint32_t palette_hash;
 } DM2_V1_SkprojectXlatPaletteReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t record_word_e;
+    int16_t direction_delta;
+    uint8_t facing;
+    uint8_t relative_direction;
+    uint8_t creature_5x5_pos;
+    int8_t creature_x_offset;
+    int side_direction;
+    int side_offset_nonzero;
+} DM2_V1_SkprojectMoveSideOffsetReceipt;
+
+typedef struct {
+    uint16_t requested_move;
+    uint16_t current_tile_value;
+    uint16_t destination_tile_value;
+    int destination_tile_blocked;
+    int16_t destination_x;
+    int16_t destination_y;
+    int16_t creature_at_destination;
+    uint16_t creature_ai_flags;
+    int side_offset_nonzero;
+    int16_t secondary_query_creature;
+    uint16_t secondary_query_ai_flags;
+} DM2_V1_SkprojectMoveAdmissionRequest;
+
+typedef struct {
+    int valid;
+    int16_t stored_creature;
+    uint8_t current_tile_type;
+    uint8_t destination_tile_type;
+    uint8_t result_code;
+    int used_side_offset_test;
+    int used_secondary_query;
+} DM2_V1_SkprojectMoveAdmissionReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -513,6 +549,14 @@ int dm2_v1_skproject_xlat_palette(
     uint16_t colors,
     const uint8_t *conversion_table,
     DM2_V1_SkprojectXlatPaletteReceipt *out_receipt);
+int dm2_v1_skproject_move_side_offset(
+    uint16_t record_word_e,
+    int16_t direction_delta,
+    uint8_t creature_5x5_pos,
+    DM2_V1_SkprojectMoveSideOffsetReceipt *out_receipt);
+int dm2_v1_skproject_move_admission(
+    const DM2_V1_SkprojectMoveAdmissionRequest *request,
+    DM2_V1_SkprojectMoveAdmissionReceipt *out_receipt);
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);
