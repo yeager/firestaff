@@ -205,6 +205,55 @@ typedef struct DM2_V1_MusicQueueReceipt {
  * glbXAmbientSoundActivated for weather ambient. */
 
 #define DM2_SFX_QUEUE_SIZE             16
+#define DM2_V1_SKPROJECT_SOUND_QUEUE_MAX 64u
+
+typedef struct {
+    int8_t b_02;
+    int8_t b_03;
+    int8_t b_04;
+    int16_t w_05;
+} DM2_V1_SkprojectSoundQueueEntry;
+
+typedef struct {
+    int sound_enabled;
+    int midi_handle_present;
+    int midi_transition_enabled;
+    int midi_ready;
+    int sfx_active;
+    int master_sfx_volume;
+    int midi_volume;
+    int pending_music_track;
+    int current_music_track;
+    int pending_music_fade;
+    uint16_t queued_count;
+    uint16_t queue_capacity;
+    uint16_t active_sample_count;
+    uint16_t pending_positional_count;
+    uint16_t pending_immediate_count;
+    DM2_V1_SkprojectSoundQueueEntry
+        queue[DM2_V1_SKPROJECT_SOUND_QUEUE_MAX];
+} DM2_V1_SkprojectSoundState;
+
+typedef struct {
+    int valid;
+    int rejected_duplicate;
+    int rejected_full;
+    int rejected_disabled;
+    int play_sound_requested;
+    int play_music_requested;
+    int stop_music_requested;
+    int queue_noise_requested;
+    uint16_t returned_index;
+    uint16_t queued_count_before;
+    uint16_t queued_count_after;
+    uint16_t removed_count;
+    uint16_t play_count;
+    int16_t argument0;
+    int16_t argument1;
+    int16_t argument2;
+    int16_t selected_music_track;
+    int16_t volume;
+} DM2_V1_SkprojectSoundReceipt;
 
 /* ── Sound definition entry (per-category lookup) ────────────────────────
  * Source: docs/dm2_audio.md (SoundEntryInfo, glbSoundList[64])
@@ -227,6 +276,47 @@ typedef struct {
 int  dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx);
 int  dm2_v1_sound_play(int sound_id, int volume);
 int  dm2_v1_sound_play_positional(int sound_id, int world_x, int world_y, int listener_x, int listener_y);
+void dm2_v1_skproject_sound_state_init(DM2_V1_SkprojectSoundState *state,
+                                       uint16_t queue_capacity);
+int dm2_v1_skproject_sound1(DM2_V1_SkprojectSoundState *state,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound2(DM2_V1_SkprojectSoundState *state,
+                            int16_t map_index,
+                            const uint8_t *music_map,
+                            uint16_t music_map_count,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound3(DM2_V1_SkprojectSoundState *state,
+                            int16_t volume,
+                            int16_t mode,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound4(DM2_V1_SkprojectSoundState *state,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound5(DM2_V1_SkprojectSoundState *state,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound6(DM2_V1_SkprojectSoundState *state,
+                            uint16_t queue_capacity,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+uint16_t dm2_v1_skproject_sound7(
+    const DM2_V1_SkprojectSoundState *state,
+    int16_t sound_handle);
+int dm2_v1_skproject_sound8(DM2_V1_SkprojectSoundState *state,
+                            int immediate,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound9(DM2_V1_SkprojectSoundState *state,
+                            int8_t cls1,
+                            int8_t cls2,
+                            int8_t cls3,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt);
+uint16_t dm2_v1_skproject_query_snd_entry_index(
+    const DM2_V1_SkprojectSoundState *state,
+    int8_t cls1,
+    int8_t cls2,
+    int8_t cls3);
+int dm2_v1_skproject_process_sound(DM2_V1_SkprojectSoundState *state,
+                                   uint16_t index,
+                                   int16_t current_map,
+                                   int16_t party_map,
+                                   DM2_V1_SkprojectSoundReceipt *out_receipt);
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
                                              int primary_assets_verified);
 int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,

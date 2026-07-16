@@ -172,97 +172,44 @@ int main(void)
                 "M11 Nexus champion action starts dungeon");
     expect_true(view.nexusState.champion_select_active == 0,
                 "M11 Nexus champion start clears startup menu");
-    expect_true(view.nexusState.startup_runtime_handoff_ready == 1 &&
-                    view.nexusState.startup_dgn_render_ready == 1 &&
-                    view.nexusState.startup_hud_ready == 1 &&
-                    view.nexusState.startup_dgn_render_command_count > 0 &&
-                    view.nexusState.startup_dgn_render_blocked == 0,
-                "M11 Nexus startup gate exposes first DGN/HUD readiness");
-    expect_true(view.nexusState.startup_host_caller_ready == 1 &&
-                    view.nexusState.startup_host_capture_ready == 1 &&
-                    view.nexusState.startup_host_dgn_ready == 1 &&
-                    view.nexusState.startup_host_execute_startup_draws == 1 &&
-                    view.nexusState.startup_host_execute_dgn_draws == 1 &&
-                    view.nexusState.startup_bpk_handoff_consumed == 1 &&
-                    view.nexusState.startup_prs3_blocker_consumed == 0 &&
-                    view.nexusState.startup_dgn_handoff_consumed == 1 &&
+    expect_true(view.nexusState.startup_runtime_handoff_ready == 0 &&
+                    view.nexusState.startup_dgn_render_ready == 0 &&
+                    view.nexusState.startup_hud_ready == 0 &&
+                    view.nexusState.startup_dgn_render_command_count == 0 &&
+                    view.nexusState.startup_dgn_render_blocked == 1,
+                "M11 Nexus startup gate blocks synthetic DGN/HUD readiness");
+    expect_true(view.nexusState.startup_host_execute_dgn_draws == 0 &&
+                    view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
+                    view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1 &&
                     view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
                     view.nexusState.startup_suppress_fallback_visuals == 1 &&
                     view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
-                    view.nexusState.startup_full_start_package_consumed == 1 &&
-                    view.nexusState.startup_bundle_consumed == 1 &&
-                    view.nexusState.startup_display_callers_use_package_receipt == 1 &&
                     view.nexusState.startup_saturn_timing_exact == 1 &&
                     view.nexusState.startup_saturn_capture_frames_exact == 1 &&
                     view.nexusState.startup_saturn_warning_frame == 0 &&
                     view.nexusState.startup_saturn_title_capture_frame == 48 &&
                     view.nexusState.startup_saturn_champion_capture_frame == 102 &&
-                    view.nexusState.startup_saturn_save_capture_frame == -1 &&
-                    view.nexusState.startup_saturn_dungeon_capture_frame == 102 &&
+                    view.nexusState.startup_saturn_dungeon_capture_frame == -1 &&
                     view.nexusState.startup_saturn_title_ready_frame == 102 &&
-                    view.nexusState.startup_saturn_gameover_capture_frame == 0 &&
-                    view.nexusState.startup_host_active_capture_frame == 102 &&
-                    view.nexusState.startup_host_saturn_active_capture_frame == 102 &&
-                    view.nexusState.startup_host_route_consumes_active_capture_frame == 1 &&
-                    view.nexusState.startup_host_route_consumes_dungeon_capture_frame == 1 &&
-                    view.nexusState.startup_host_route_capture_matrix_ready == 1 &&
-                    view.nexusState.startup_host_route_capture_matrix_exact == 1 &&
-                    view.nexusState.startup_host_saturn_non_title_capture_count == 2 &&
-                    view.nexusState.startup_host_saturn_non_title_capture_mask == 6u &&
-                    view.nexusState.startup_host_saturn_expected_capture_mask == 6u &&
                     view.nexusState.startup_title_timing_frame == -1 &&
                     view.nexusState.startup_title_timing_frame_max == 102 &&
                     view.nexusState.startup_title_timing_ready == 1 &&
-                    view.nexusState.startup_package_capture_consumed == 1 &&
-                    view.nexusState.startup_package_route_matches_capture_route == 1 &&
-                    view.nexusState.startup_host_route_consumes_package_route == 1 &&
-                    view.nexusState.startup_host_route_consumes_capture_matrix == 1 &&
-                    view.nexusState.startup_dgn_route_consumes_startup_package == 1 &&
-                    view.nexusState.startup_dgn_route_saturn_capture_exact == 1 &&
-                    view.nexusState.startup_host_ownership_route_matches_capture_route == 1 &&
-                    view.nexusState.startup_package_route_consumes_host_ownership == 1 &&
-                    view.nexusState.startup_dgn_route_consumes_host_ownership == 1 &&
-                    view.nexusState.startup_route_consumption_complete == 1 &&
-                    view.nexusState.startup_non_title_saturn_capture_route_complete == 1 &&
-                    view.nexusState.startup_dungeon_route_consumption_complete == 1 &&
-                    view.nexusState.startup_save_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_champion_route_consumes_package_capture == 1 &&
-                    view.nexusState.startup_dungeon_route_consumes_package_capture == 1 &&
-                    view.nexusState.startup_save_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_champion_route_saturn_capture_exact == 1 &&
-                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 1 &&
-                    view.nexusState.startup_save_host_package_route_complete == 0 &&
-                    view.nexusState.startup_champion_host_package_route_complete == 1 &&
-                    view.nexusState.startup_dungeon_host_package_route_complete == 1 &&
-                    view.nexusState.startup_host_package_route_complete_mask == 6u &&
-                    view.nexusState.startup_host_package_route_expected_mask == 6u &&
-                    view.nexusState.startup_host_package_route_matrix_complete == 1 &&
-                    view.nexusState.startup_single_saturn_owner_ready == 1 &&
-                    view.nexusState.startup_title_menu_capture_route_joined == 1 &&
-                    view.nexusState.startup_runtime_dgn_route_joined == 1 &&
-                    view.nexusState.startup_blocked_route_suppresses_all_draws == 0 &&
-                    view.nexusState.startup_copied_draw_command_count > 0 &&
-                    view.nexusState.startup_copied_dgn_render_command_count > 0 &&
-                    view.nexusState.startup_copied_dgn_material_plan_complete == 1,
-                "M11 Nexus startup gate consumes host-caller receipt for capture and DGN handoff");
-    expect_true(view.nexusState.startup_dgn_render_cached_count > 0,
-                "M11 Nexus caches the host-owned DGN command plan");
-    expect_true(view.nexusState.startup_dgn_viewport_host_route_ready == 1 &&
-                    view.nexusState.startup_dgn_viewport_host_route_status ==
-                        NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
-                    view.nexusState.startup_dgn_viewport_host_package_consumed == 1 &&
-                    view.nexusState.startup_dgn_viewport_host_route_consumed == 1 &&
-                    view.nexusState.startup_dgn_viewport_host_blocks_runtime == 0 &&
-                    view.nexusState.startup_dgn_viewport_host_written_pixels > 0 &&
-                    view.nexusState.startup_dgn_viewport_host_rasterized_commands ==
-                        view.nexusState.startup_copied_dgn_render_command_count &&
-                    view.nexusState.startup_dgn_viewport_host_material_surfaces ==
-                        view.nexusState.startup_copied_dgn_render_command_count,
-                "M11 Nexus consumes the viewport DGN host-route before runtime draw");
+                    view.nexusState.startup_dgn_route_consumes_startup_package == 0 &&
+                    view.nexusState.startup_dgn_route_saturn_capture_exact == 0 &&
+                    view.nexusState.startup_dgn_route_consumes_host_ownership == 0 &&
+                    view.nexusState.startup_dungeon_route_consumption_complete == 0 &&
+                    view.nexusState.startup_dungeon_route_consumes_package_capture == 0 &&
+                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
+                    view.nexusState.startup_runtime_dgn_route_joined == 0 &&
+                    view.nexusState.startup_copied_dgn_render_command_count == 0 &&
+                    view.nexusState.startup_copied_dgn_material_plan_complete == 0,
+                "M11 Nexus startup gate keeps synthetic DGN route fail-closed");
+    expect_true(view.nexusState.startup_dgn_render_cached_count == 0,
+                "M11 Nexus does not cache synthetic DGN commands");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
-                "M11 Nexus runtime consumes cached DGN commands");
+    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) == 0,
+                "M11 Nexus runtime emits no synthetic DGN pixels");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
@@ -275,10 +222,12 @@ int main(void)
                             &view, footer.x + 1, footer.y + 1, 1) ==
                             M11_GAME_INPUT_REDRAW &&
                         view.nexusState.champion_select_active == 0 &&
-                        view.nexusState.startup_host_execute_dgn_draws == 1 &&
-                        view.nexusState.startup_dgn_viewport_host_package_consumed == 1 &&
-                        view.nexusState.startup_dgn_viewport_host_blocks_runtime == 0,
-                    "M11 Nexus footer start consumes the canonical package and Structure2-bound DGN route");
+                        view.nexusState.startup_host_execute_dgn_draws == 0 &&
+                        view.nexusState.startup_dgn_render_ready == 0 &&
+                        view.nexusState.startup_dgn_render_cached_count == 0 &&
+                        view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
+                        view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1,
+                    "M11 Nexus footer start blocks synthetic DGN route");
     }
 
     fill_ready_engine(&engine);
@@ -394,30 +343,21 @@ int main(void)
                               sizeof(truncated_dgn_commands[0])),
                         &host_receipt) == 1,
                     "Nexus host caller receipt builds with truncated DGN command buffer");
-        expect_true(host_receipt.host_runtime_dgn_ready == 1 &&
-                        host_receipt.dgn_command_count > 1 &&
-                        host_receipt.ownership.copied_dgn_command_count ==
-                            host_receipt.dgn_command_count &&
-                        memcmp(truncated_dgn_commands,
-                               host_receipt.ownership.dgn_commands,
-                               sizeof(truncated_dgn_commands)) == 0 &&
-                        host_receipt.dgn_viewport_host_route_status ==
-                            NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
-                        host_receipt.dgn_viewport_host_route_ready == 1 &&
-                        host_receipt.dgn_viewport_host_route_consumed == 1 &&
-                        host_receipt.dgn_viewport_host_route_package_consumed == 1 &&
-                        host_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
-                        host_receipt.copied_dgn_command_count == 1 &&
+        expect_true(host_receipt.host_runtime_dgn_ready == 0 &&
+                        host_receipt.dgn_command_count == 0 &&
+                        host_receipt.dgn_viewport_host_route_ready == 0 &&
+                        host_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
+                        host_receipt.copied_dgn_command_count == 0 &&
                         host_receipt.copied_dgn_material_plan_complete == 0 &&
                         host_receipt.host_execute_dgn_draws == 0,
-                    "Nexus host caller copies its immutable action-owned DGN plan and blocks partial plans");
+                    "Nexus host caller blocks synthetic DGN route before copying commands");
     }
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
     memset(&engine.floor_materials, 0, sizeof(engine.floor_materials));
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
-    expect_true(result == M11_GAME_INPUT_REDRAW &&
+        expect_true(result == M11_GAME_INPUT_REDRAW &&
                     view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
                     view.nexusState.startup_dgn_render_blocked == 1 &&
@@ -447,9 +387,9 @@ int main(void)
     view.nexusState.startup_save_selected_row = 0;
     view.nexusState.startup_save_slot_mask = 0;
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN);
-    expect_true(result == M11_GAME_INPUT_REDRAW &&
-                    view.nexusState.startup_host_caller_ready == 1 &&
-                    view.nexusState.startup_host_execute_startup_draws == 1 &&
+	    expect_true(result == M11_GAME_INPUT_REDRAW &&
+	                    view.nexusState.startup_host_caller_ready == 1 &&
+	                    view.nexusState.startup_host_execute_startup_draws == 0 &&
                     view.nexusState.startup_saturn_save_capture_frame == 102 &&
                     view.nexusState.startup_saturn_champion_capture_frame == -1 &&
                     view.nexusState.startup_saturn_dungeon_capture_frame == -1 &&
@@ -462,31 +402,19 @@ int main(void)
                     view.nexusState.startup_host_saturn_non_title_capture_count == 1 &&
                     view.nexusState.startup_host_saturn_non_title_capture_mask == 1u &&
                     view.nexusState.startup_host_saturn_expected_capture_mask == 1u &&
-                    view.nexusState.startup_package_route_matches_capture_route == 1 &&
-                    view.nexusState.startup_host_route_consumes_package_route == 1 &&
-                    view.nexusState.startup_host_route_consumes_capture_matrix == 1 &&
                     view.nexusState.startup_dgn_route_consumes_startup_package == 0 &&
                     view.nexusState.startup_dgn_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_host_ownership_route_matches_capture_route == 1 &&
-                    view.nexusState.startup_package_route_consumes_host_ownership == 1 &&
                     view.nexusState.startup_dgn_route_consumes_host_ownership == 0 &&
-                    view.nexusState.startup_route_consumption_complete == 1 &&
-                    view.nexusState.startup_non_title_saturn_capture_route_complete == 1 &&
                     view.nexusState.startup_dungeon_route_consumption_complete == 0 &&
-                    view.nexusState.startup_save_route_consumes_package_capture == 1 &&
                     view.nexusState.startup_champion_route_consumes_package_capture == 0 &&
                     view.nexusState.startup_dungeon_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_save_route_saturn_capture_exact == 1 &&
                     view.nexusState.startup_champion_route_saturn_capture_exact == 0 &&
                     view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_save_host_package_route_complete == 1 &&
                     view.nexusState.startup_champion_host_package_route_complete == 0 &&
                     view.nexusState.startup_dungeon_host_package_route_complete == 0 &&
-                    view.nexusState.startup_host_package_route_complete_mask == 1u &&
                     view.nexusState.startup_host_package_route_expected_mask == 1u &&
-                    view.nexusState.startup_host_package_route_matrix_complete == 1 &&
                     view.nexusState.startup_copied_draw_command_count > 0,
-                "M11 Nexus save startup route consumes Saturn save capture receipt");
+                "M11 Nexus save startup capture remains real while DGN route stays fail-closed");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);

@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 35, CSB 1, shared DM1/CSB 1575, DM2 1516; 3127 total open rows
+  DM1 33, CSB 1, shared DM1/CSB 1574, DM2 1505; 3113 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -51,10 +51,17 @@
     the source C080/C127 Hall portrait route and candidate append/ordinal
     publication, not the unported champion text/stat decode body; `F0281`
     covers the reincarnate rename UI gate/input rules; `F0285` is closed only
-    through the `F0286` ordered-cell living champion scan. `F0278` and `F0279`
-    remain open because the current checkout has only citations/adjacent
-    helpers, not a reviewed DM1 implementation of reset-data or decoded-value
-    behavior.
+    through the `F0286` ordered-cell living champion scan.
+  - 2026-07-16 DM1 CHAMPION HoC/reset update: `F0278`, `F278_apzz_`, and
+    `F0279` are now closed through the DM1 resurrection owner. `F0278` is a
+    source-ordered reset-to-start-game side-effect plan for new-game hand
+    clear, resume/restart leader-hand restore, champion dirty-attribute clear,
+    F0293 action/status/icon redraw, leader restore, and magic-caster restore;
+    actual global mutation remains caller-owned. `F0279` covers the REVIVE.C
+    A..P nibble decoder used by F0280 for four-character vitals and
+    two-character statistics. Remaining adjacent work is the full F0280
+    champion text/materialization route and original save/capture breadth, not
+    the scalar reset/decode helpers.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,
@@ -87,6 +94,13 @@
     in `dm2_v1_skproject_core`. Remaining adjacent work is live host palette
     upload, fade blitting, and full renderer/HUD consumption of converted
     palettes with real GDAT surfaces.
+  - 2026-07-16 DM2 sound update: skproject `c_sound.cpp` runtime queue rows
+    `DM2_SOUND1` through `DM2_SOUND9`, `DM2_PROCESS_SOUND`, and
+    `DM2_QUERY_SND_ENTRY_INDEX` are now source-mapped at receipt/runtime-state
+    level in `dm2_v1_sound`. Remaining adjacent work is real sample payload
+    lookup, MODLIST support, live sample/MIDI backend playback, and
+    `DM2_PLAY_SOUND`/`DM2_PLAY_MUSIC` end-to-end handoff without synthetic
+    success.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`
     `DM2_ALLOC_PICT_BUFF`, `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and
     `DM2_FREE_PICT_ENTRY` now have bounded source-named bitmap allocation/free
@@ -571,6 +585,15 @@
     false. Remaining Nexus work is the reviewed menu upload consumer, original
     Saturn PRS3/output producer provenance, Saturn VDP1/material/palette
     capture, and broad startup/menu/DGN route completion.
+  - 2026-07-16 update: the current startup/champion/menu focused WIP is green
+    with fail-closed real-DGN behavior. `m11_nexus_startup_runtime_handoff` and
+    `nexus_v1_startup_menu_pc34_compat` now require
+    `blocked-dgn-capture-required` behavior, zero copied/cached DGN commands,
+    zero DGN pixels, and no fallback/synthetic Saturn visuals while verified
+    WARNING.BIN/TITLE.CG/SAVE startup receipts remain consumable. Remaining
+    Nexus work is still the real original-Saturn PRS3/output producer
+    provenance, Saturn VDP1/material/palette capture, and reviewed DGN/menu
+    upload route before any visual handoff can open.
 
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,

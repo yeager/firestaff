@@ -10421,6 +10421,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_inventory_item_panel_gate
     )
 
+    # ── DM2 V1 skproject sound queue/source gate ──
+    add_executable(test_dm2_v1_sound_source_gate
+        tests/test_dm2_v1_sound_source_gate.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_sound_source_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_sound_source_gate PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sound_source_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sound_source_gate
+        COMMAND test_dm2_v1_sound_source_gate
+    )
+
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
     add_executable(test_dm2_v1_combat_pc34_compat
         tests/test_dm2_v1_combat_pc34_compat.c

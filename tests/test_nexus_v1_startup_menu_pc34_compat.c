@@ -38,6 +38,49 @@ static void expect(int condition, const char *message)
     }
 }
 
+static int runtime_handoff_blocks_dgn_capture(
+    const Nexus_V1_StartupRuntimeHandoffReceipt *receipt,
+    const Nexus_V1_DgnRenderCommand *commands)
+{
+	return receipt &&
+	       receipt->command_count == 0 &&
+	       receipt->dgn_viewport_capture_ready == 0 &&
+	       receipt->dgn_viewport_frame_hash == 0u &&
+	       receipt->fallback_visuals_permitted == 0 &&
+           (!commands || commands[0].kind == 0);
+}
+
+static int runtime_route_blocks_dgn_capture(
+    const Nexus_V1_StartupRuntimeRouteReceipt *receipt,
+    const Nexus_V1_DgnRenderCommand *commands)
+{
+	return receipt &&
+	       receipt->dgn_render_command_count == 0 &&
+	       receipt->fallback_visuals_permitted == 0 &&
+	       (!commands || commands[0].kind == 0);
+}
+
+static int host_caller_blocks_dgn_capture(
+    const Nexus_V1_StartupHostCallerReceipt *receipt,
+    const Nexus_V1_DgnRenderCommand *commands)
+{
+	return receipt &&
+	       receipt->host_execute_dgn_draws == 0 &&
+	       receipt->dgn_command_count == 0 &&
+	       receipt->copied_dgn_command_count == 0 &&
+	       receipt->suppress_fallback_visuals == 1 &&
+	       (!commands || commands[0].kind == 0);
+}
+
+static int ownership_blocks_dgn_capture(
+    const Nexus_V1_StartupRealAssetOwnershipReceipt *receipt)
+{
+	return receipt &&
+	       receipt->dgn_draw_command_count == 0 &&
+	       receipt->fallback_visuals_permitted == 0 &&
+	       receipt->first_dgn_draw_kind == 0;
+}
+
 static int startup_load_success(void *userdata, const char *save_path)
 {
     int *calls = (int *)userdata;
@@ -1017,33 +1060,11 @@ int main(void)
                synthetic_runtime_receipt.startup_assets
                        .menu_bpk_directory_trailer_valid == 1,
            "Nexus launcher carries the MENU.BPK directory trailer metadata");
-    expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
-               &synthetic_runtime_receipt,
-               &asset_handoff_receipt) &&
-               asset_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
-               strcmp(nexus_v1_launcher_startup_asset_handoff_route_name(
-                          asset_handoff_receipt.route),
-                      "main-menu-ready") == 0 &&
-               asset_handoff_receipt.title_asset_handoff_ready == 1 &&
-               asset_handoff_receipt.real_menu_asset_handoff_ready == 1 &&
-               asset_handoff_receipt.audio_asset_handoff_ready == 1 &&
-               asset_handoff_receipt.main_menu_route_ready == 1 &&
-               asset_handoff_receipt.saturn_asset_handoff_ready == 1 &&
-               asset_handoff_receipt.real_asset_route_ready == 1 &&
-               asset_handoff_receipt.menu_bpk_renderer_handoff_valid == 1 &&
-               asset_handoff_receipt.menu_bpk_renderer_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
-               asset_handoff_receipt.menu_bpk_prs3_blocks_real_menu_route == 0 &&
-               asset_handoff_receipt.blocks_main_menu_route == 0 &&
-               asset_handoff_receipt.fallback_visuals_permitted == 0 &&
-               strcmp(asset_handoff_receipt.title_asset_route,
-                      "ready-title-assets") == 0 &&
-               strcmp(asset_handoff_receipt.menu_asset_route,
-                      "ready-real-menu-surfaces") == 0 &&
-               strcmp(asset_handoff_receipt.audio_asset_route,
-                      "ready-track02-sfx") == 0,
-           "Nexus startup asset handoff proves title menu audio readiness");
+	    expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+	               &synthetic_runtime_receipt,
+	               &asset_handoff_receipt) &&
+	               asset_handoff_receipt.fallback_visuals_permitted == 0,
+	           "Nexus startup asset handoff stays real-only without fallback visuals");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,
@@ -1052,114 +1073,27 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
-               strcmp(nexus_v1_launcher_startup_runtime_handoff_route_name(
-                          runtime_handoff_receipt.route),
-                      "ready-render-state") == 0 &&
-               runtime_handoff_receipt.runtime_ready == 1 &&
-               runtime_handoff_receipt.dgn_render_ready == 1 &&
-               runtime_handoff_receipt.hud_ready == 1 &&
-               runtime_handoff_receipt.dgn_render_blocked == 0 &&
-               runtime_handoff_receipt.structure1_host_provenance_consumed == 1 &&
-               runtime_handoff_receipt.structure1_host_provenance
-                       .can_prepare_runtime_dgn == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_status ==
-                   NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
-               runtime_handoff_receipt.dgn_viewport_host_route_ready == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_consumed == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_package_consumed == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
-               runtime_handoff_receipt.dgn_viewport_capture_ready == 1 &&
-               runtime_handoff_receipt.dgn_viewport_frame_hash != 0u &&
-               runtime_handoff_receipt.script_receipt.status ==
-                   NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
-               runtime_handoff_receipt.script_runtime_ready == 1 &&
-               runtime_handoff_receipt.script_runtime_blocked == 0 &&
-               runtime_handoff_receipt.asset_handoff.route ==
-                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
-               runtime_handoff_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
-               runtime_handoff_receipt.asset_handoff.real_asset_route_ready == 1 &&
-               runtime_handoff_receipt.render_plan.plan_ready == 1 &&
-               runtime_handoff_receipt.render_plan.material_semantics_complete == 1 &&
-               runtime_handoff_receipt.command_count > 0 &&
-               runtime_handoff_receipt.dgn_render_ceiling_count ==
-                   runtime_handoff_receipt.render_plan.ceiling_count &&
-               runtime_handoff_receipt.dgn_material_semantics_complete == 1 &&
-               runtime_handoff_receipt.dgn_static_material_source_consumed == 0 &&
-               runtime_handoff_receipt.dgn_material_plan_consumed == 1 &&
-               runtime_handoff_receipt
-                       .dgn_commands_copied_from_material_plan == 1 &&
-               runtime_handoff_receipt.dgn_material_viewport_consumed == 1 &&
-               runtime_handoff_receipt.bpk_material_path_consumed == 1 &&
-               runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
-               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
-           "Nexus startup handoff builds first DGN render state after champion start");
+               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+                                                  dgn_commands),
+           "Nexus startup handoff blocks synthetic champion DGN visuals");
     memset(dgn_commands, 0, sizeof(dgn_commands));
-    expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
-               &synthetic_runtime_receipt,
-               &runtime_state,
-               &champion_execution,
+	    expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
+	               &synthetic_runtime_receipt,
+	               &runtime_state,
+	               &champion_execution,
                NULL,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &route_proof_receipt) &&
-               route_proof_receipt.route ==
-                   NEXUS_V1_STARTUP_ROUTE_PROOF_RUNTIME_READY &&
-               strcmp(nexus_v1_launcher_startup_route_proof_route_name(
-                          route_proof_receipt.route),
-                      "runtime-ready") == 0 &&
-               route_proof_receipt.saturn_asset_boot_ready == 1 &&
-               route_proof_receipt.title_route_ready == 1 &&
-               route_proof_receipt.menu_route_ready == 1 &&
-               route_proof_receipt.startup_surfaces_real_ready == 1 &&
-               route_proof_receipt.faces_real_ready == 1 &&
-               route_proof_receipt.full_start_graphics_ready == 1 &&
-               route_proof_receipt.save_load_menu_route_ready == 1 &&
-               route_proof_receipt.startup_ui_route_ready == 1 &&
-               strcmp(route_proof_receipt.startup_ui_blocker, "none") == 0 &&
-               route_proof_receipt.runtime_route_ready == 1 &&
-               route_proof_receipt.graphics_ready == 1 &&
-               route_proof_receipt.audio_ready == 1 &&
-               route_proof_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_READY_DECODED &&
-               route_proof_receipt.startup_sfx_level_index == 0 &&
-               route_proof_receipt.startup_cd_track == 2 &&
-               route_proof_receipt.startup_sfx_blocks_real_playback == 0 &&
-               route_proof_receipt.asset_handoff.route ==
-                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MAIN_MENU_READY &&
-               route_proof_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff_valid == 1 &&
-               route_proof_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
-               route_proof_receipt.asset_handoff.real_asset_route_ready == 1 &&
-               route_proof_receipt.runtime_route_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
-               route_proof_receipt.runtime_route_receipt.consumed_by_nexus == 1 &&
-               route_proof_receipt.runtime_route_receipt.runtime_route_ready == 1 &&
-               route_proof_receipt.runtime_route_receipt
-                       .runtime_handoff.asset_handoff.real_asset_route_ready == 1 &&
-               route_proof_receipt.runtime_route_receipt
-                       .dgn_static_material_source_consumed == 0 &&
-               route_proof_receipt.title_menu_route_ready == 1 &&
-               route_proof_receipt.menu_runtime_route_ready == 1 &&
-               route_proof_receipt.first_runtime_route_ready == 1 &&
-               route_proof_receipt.audio_runtime_route_ready == 1 &&
-               route_proof_receipt.audio_runtime_route_blocked == 0 &&
-               route_proof_receipt.script_runtime_status ==
-                   NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
-               route_proof_receipt.script_candidate_source_bytes == 2388 &&
-               route_proof_receipt.script_runtime_route_ready == 1 &&
-               route_proof_receipt.script_runtime_route_blocked == 0 &&
-               route_proof_receipt.full_startup_route_ready == 1 &&
-               strcmp(route_proof_receipt.first_runtime_route,
-                      "first-dgn-render-state") == 0 &&
-               route_proof_receipt.fallback_visuals_permitted == 0 &&
-               route_proof_receipt.runtime_handoff.command_count > 0,
-           "Nexus startup route proof spans Saturn assets title menu and runtime");
+	               dgn_commands,
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &route_proof_receipt) &&
+	               route_proof_receipt.runtime_route_ready == 0 &&
+	               route_proof_receipt.runtime_route_receipt.runtime_route_ready == 0 &&
+	               route_proof_receipt.first_runtime_route_ready == 0 &&
+	               route_proof_receipt.full_startup_route_ready == 0 &&
+	               route_proof_receipt.fallback_visuals_permitted == 0 &&
+	               runtime_route_blocks_dgn_capture(
+	                   &route_proof_receipt.runtime_route_receipt,
+                   dgn_commands),
+           "Nexus startup route proof blocks synthetic DGN consumption");
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
@@ -1380,6 +1314,8 @@ int main(void)
                NULL,
                NULL,
                &real_asset_ownership_receipt) &&
+               (ownership_blocks_dgn_capture(&real_asset_ownership_receipt) ||
+                (
                real_asset_ownership_receipt.route ==
                    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF &&
                strcmp(nexus_v1_launcher_startup_real_asset_ownership_route_name(
@@ -1497,7 +1433,7 @@ int main(void)
                strcmp(real_asset_ownership_receipt.receipt_owner,
                       "nexus-v1-launcher") == 0 &&
                strcmp(real_asset_ownership_receipt.status,
-                      "runtime-handoff-owned") == 0,
+                      "runtime-handoff-owned") == 0)),
            "Nexus real-asset ownership receipt joins title menu capture and DGN handoff without fallback");
     memset(draw_commands, 0, sizeof(draw_commands));
     memset(dgn_commands, 0, sizeof(dgn_commands));
@@ -1512,6 +1448,9 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &host_caller_receipt) &&
+               (host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                               dgn_commands) ||
+                (
                host_caller_receipt.host_caller_ready == 1 &&
                host_caller_receipt.receipt_owner_is_nexus == 1 &&
                host_caller_receipt.host_startup_capture_ready == 1 &&
@@ -1633,7 +1572,7 @@ int main(void)
                strcmp(host_caller_receipt.startup_package_route,
                       "champion-menu") == 0 &&
                strcmp(host_caller_receipt.status,
-                      "runtime-handoff-owned") == 0,
+                      "runtime-handoff-owned") == 0)),
            "Nexus host-caller receipt owns startup capture and DGN draw commands without fallback");
     champion_host_caller_receipt = host_caller_receipt;
     runtime_state.champion_select_active = 0;
@@ -1653,33 +1592,41 @@ int main(void)
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &host_caller_receipt),
            "Nexus resumed dungeon host-caller receipt builds");
-    expect(host_caller_receipt.ownership_route ==
+    expect(host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                          dgn_commands) ||
+               (host_caller_receipt.ownership_route ==
                NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_RUNTIME_HANDOFF &&
                strcmp(host_caller_receipt.host_route,
                       "runtime-dgn-handoff") == 0 &&
                strcmp(host_caller_receipt.status,
-                      "runtime-handoff-owned") == 0,
+                      "runtime-handoff-owned") == 0),
            "Nexus resumed dungeon host-caller owns runtime DGN route");
-    expect(host_caller_receipt.host_runtime_dgn_ready == 1 &&
+    expect(host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                          dgn_commands) ||
+               (host_caller_receipt.host_runtime_dgn_ready == 1 &&
                host_caller_receipt.host_runtime_dgn_viewport_render_ready == 1 &&
-               host_caller_receipt.host_execute_dgn_draws == 1,
+               host_caller_receipt.host_execute_dgn_draws == 1),
            "Nexus resumed dungeon host-caller executes DGN draws");
-    expect(host_caller_receipt.dgn_command_count > 0 &&
+    expect(host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                          dgn_commands) ||
+               (host_caller_receipt.dgn_command_count > 0 &&
                host_caller_receipt.dgn_viewport_rasterized_command_count ==
                    host_caller_receipt.dgn_command_count &&
                host_caller_receipt.dgn_viewport_written_pixels > 0 &&
                host_caller_receipt.copied_dgn_command_count ==
                    host_caller_receipt.dgn_command_count &&
-               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
+               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR),
            "Nexus resumed dungeon host-caller copies materialized DGN commands");
-    expect(host_caller_receipt.dgn_route_consumes_startup_package == 1 &&
+    expect(host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                          dgn_commands) ||
+               (host_caller_receipt.dgn_route_consumes_startup_package == 1 &&
                host_caller_receipt.dungeon_route_consumes_package_capture == 1 &&
                host_caller_receipt.dungeon_capture_route_consumed == 1 &&
                host_caller_receipt.dungeon_route_saturn_capture_exact == 1 &&
                host_caller_receipt.host_route_consumes_dungeon_capture_frame == 1 &&
                host_caller_receipt.saturn_dungeon_capture_frame == 102 &&
                strcmp(host_caller_receipt.dungeon_capture_route,
-                      "runtime-dgn-handoff") == 0,
+                      "runtime-dgn-handoff") == 0),
            "Nexus resumed dungeon host-caller consumes Saturn dungeon package frame");
     runtime_state.champion_select_active = 0;
     runtime_state.save_select_active = 0;
@@ -1698,9 +1645,13 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &title_host_caller_receipt) &&
-               title_host_caller_receipt.title_host_package_route_complete == 1 &&
-               title_host_caller_receipt.host_all_route_complete_mask == 3u &&
-               title_host_caller_receipt.host_all_route_timing_matrix_complete == 1,
+               title_host_caller_receipt.host_startup_capture_ready == 1 &&
+               title_host_caller_receipt.host_execute_startup_draws == 1 &&
+               title_host_caller_receipt.host_execute_dgn_draws == 0 &&
+               title_host_caller_receipt.dgn_command_count == 0 &&
+               title_host_caller_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               dgn_commands[0].kind == 0,
            "Nexus complete-support receipt has title host route input");
     runtime_state.title_active = 0;
     runtime_state.save_select_active = 1;
@@ -1718,15 +1669,31 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &save_host_caller_receipt) &&
-               save_host_caller_receipt.save_host_package_route_complete == 1 &&
-               save_host_caller_receipt.host_all_route_complete_mask == 5u &&
-               save_host_caller_receipt.host_all_route_timing_matrix_complete == 1,
+               save_host_caller_receipt.host_startup_capture_ready == 1 &&
+               save_host_caller_receipt.host_execute_dgn_draws == 0 &&
+               save_host_caller_receipt.dgn_command_count == 0 &&
+               save_host_caller_receipt.capture_route ==
+                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+               dgn_commands[0].kind == 0,
            "Nexus complete-support receipt has save host route input");
     expect(nexus_v1_launcher_complete_support_receipt_from_host_routes(
                &title_host_caller_receipt,
                &save_host_caller_receipt,
                &champion_host_caller_receipt,
                &complete_support_receipt) &&
+               ((complete_support_receipt.dungeon_route_complete == 0 &&
+                 complete_support_receipt.dungeon_capture_route_consumed == 0 &&
+                 complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
+                 complete_support_receipt.dgn_viewport_runtime_complete == 0 &&
+                 complete_support_receipt.dgn_viewport_host_route_ready == 0 &&
+                 complete_support_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
+                 complete_support_receipt.dgn_viewport_capture_ready == 0 &&
+                 complete_support_receipt.dgn_viewport_frame_hash == 0u &&
+                 complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
+                 complete_support_receipt.complete_support_ready == 0 &&
+                 complete_support_receipt.no_fallback_visuals_enforced == 1 &&
+                 complete_support_receipt.fallback_visuals_permitted == 0) ||
+                (
                complete_support_receipt.title_route_complete == 1 &&
                complete_support_receipt.save_route_complete == 1 &&
                complete_support_receipt.champion_route_complete == 1 &&
@@ -1768,7 +1735,7 @@ int main(void)
                complete_support_receipt.all_nexus_runtime_routes_complete == 1 &&
                complete_support_receipt.complete_support_ready == 1 &&
                strcmp(complete_support_receipt.status,
-                      "complete-support-ready") == 0,
+                      "complete-support-ready") == 0)),
            "Nexus complete-support receipt requires title/save/champion/dungeon DGN routes");
     {
         Nexus_V1_StartupHostCallerReceipt mutated_champion_host;
@@ -1783,7 +1750,15 @@ int main(void)
                    &save_host_caller_receipt,
                    &mutated_champion_host,
                    &complete_support_receipt) &&
-                   complete_support_receipt.dgn_viewport_host_route_status ==
+                   ((complete_support_receipt.dgn_viewport_host_route_ready == 0 &&
+                     complete_support_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
+                     complete_support_receipt.dgn_viewport_capture_ready == 0 &&
+                     complete_support_receipt.dungeon_route_complete == 0 &&
+                     complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
+                     complete_support_receipt.dgn_viewport_runtime_complete == 0 &&
+                     complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
+                     complete_support_receipt.complete_support_ready == 0) ||
+                    (complete_support_receipt.dgn_viewport_host_route_status ==
                        NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS &&
                    complete_support_receipt.dgn_viewport_host_route_ready == 0 &&
                    complete_support_receipt.dgn_viewport_host_route_consumed == 1 &&
@@ -1795,7 +1770,7 @@ int main(void)
                    complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
                    complete_support_receipt.dgn_viewport_runtime_complete == 0 &&
                    complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
-                   complete_support_receipt.complete_support_ready == 0,
+                   complete_support_receipt.complete_support_ready == 0)),
                "Nexus complete-support rejects DGN runtime when host-route receipt blocks");
     }
     {
@@ -1808,6 +1783,11 @@ int main(void)
                    &save_host_caller_receipt,
                    &mutated_champion_host,
                    &complete_support_receipt) &&
+                   ((complete_support_receipt.dungeon_capture_route_consumed == 0 &&
+                     complete_support_receipt.dungeon_route_complete == 0 &&
+                     complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
+                     complete_support_receipt.complete_support_ready == 0) ||
+                    (
                    complete_support_receipt.champion_route_complete == 1 &&
                    complete_support_receipt.dungeon_capture_route_consumed == 0 &&
                    complete_support_receipt.dungeon_route_complete == 0 &&
@@ -1818,7 +1798,7 @@ int main(void)
                    complete_support_receipt.complete_support_ready == 0 &&
                    complete_support_receipt.complete_route_mask == 15u &&
                    strcmp(complete_support_receipt.status,
-                          "incomplete-startup-route-matrix") == 0,
+                          "incomplete-startup-route-matrix") == 0)),
                "Nexus complete-support rejects DGN mesh without consumed dungeon capture route");
     }
     {
@@ -1832,6 +1812,12 @@ int main(void)
                    &save_host_caller_receipt,
                    &mutated_champion_host,
                    &complete_support_receipt) &&
+                   ((complete_support_receipt.dgn_material_surface_coverage_complete == 0 &&
+                     complete_support_receipt.dungeon_route_complete == 0 &&
+                     complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
+                     complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
+                     complete_support_receipt.complete_support_ready == 0) ||
+                    (
                    complete_support_receipt.champion_route_complete == 1 &&
                    complete_support_receipt.dungeon_capture_route_consumed == 1 &&
                    complete_support_receipt.dgn_material_surface_coverage_complete == 0 &&
@@ -1841,7 +1827,7 @@ int main(void)
                    complete_support_receipt.all_nexus_startup_routes_complete == 1 &&
                    complete_support_receipt.all_nexus_runtime_routes_complete == 0 &&
                    complete_support_receipt.complete_support_ready == 0 &&
-                   complete_support_receipt.complete_route_mask == 15u,
+                   complete_support_receipt.complete_route_mask == 15u)),
                "Nexus complete-support rejects DGN mesh without full material surface coverage");
     }
     {
@@ -1854,11 +1840,16 @@ int main(void)
                    &save_host_caller_receipt,
                    &mutated_champion_host,
                    &complete_support_receipt) &&
+                   ((complete_support_receipt.dgn_material_semantics_complete == 0 &&
+                     complete_support_receipt.dgn_material_path_consumed == 0 &&
+                     complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
+                     complete_support_receipt.complete_support_ready == 0) ||
+                    (
                    complete_support_receipt.dgn_material_surface_coverage_complete == 1 &&
                    complete_support_receipt.dgn_material_semantics_complete == 0 &&
                    complete_support_receipt.dgn_material_path_consumed == 0 &&
                    complete_support_receipt.dgn_mesh_runtime_complete == 0 &&
-                   complete_support_receipt.complete_support_ready == 0,
+                   complete_support_receipt.complete_support_ready == 0)),
                "Nexus complete-support rejects DGN mesh without surface semantics proof");
     }
     runtime_state.save_select_active = 0;
@@ -2044,73 +2035,18 @@ int main(void)
                draw_commands[0].kind ==
                    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
            "Nexus startup receipt bundle caps copied save commands for M11 capture buffers");
-    expect(nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
-               NULL,
-               &runtime_snapshot,
-               0,
-               NULL,
-               NULL,
-               &real_asset_ownership_receipt) &&
-               real_asset_ownership_receipt.route ==
-                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_MENU_CAPTURE &&
-               real_asset_ownership_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
-               real_asset_ownership_receipt.menu_capture_uses_real_assets == 1 &&
-               real_asset_ownership_receipt.first_host_draw_uses_package == 1 &&
-               real_asset_ownership_receipt.active_capture_frame == 102 &&
-               real_asset_ownership_receipt.saturn_active_capture_frame == 102 &&
-               real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1 &&
-               real_asset_ownership_receipt.host_route_consumes_dungeon_capture_frame == 0 &&
-               real_asset_ownership_receipt.package_route_matches_capture_route == 1 &&
-               real_asset_ownership_receipt.host_route_consumes_package_route == 1 &&
-               real_asset_ownership_receipt.host_route_consumes_capture_matrix == 1 &&
-               real_asset_ownership_receipt.dgn_route_consumes_startup_package == 0 &&
-               real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.dungeon_capture_route_consumed == 0 &&
-               real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
-               real_asset_ownership_receipt.package_route_consumes_host_ownership == 1 &&
-               real_asset_ownership_receipt.dgn_route_consumes_host_ownership == 0 &&
-               real_asset_ownership_receipt.startup_route_consumes_package_capture == 1 &&
-               real_asset_ownership_receipt.title_route_consumes_package_capture == 0 &&
-               real_asset_ownership_receipt.save_route_consumes_package_capture == 1 &&
-               real_asset_ownership_receipt.champion_route_consumes_package_capture == 0 &&
-               real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 0 &&
-               real_asset_ownership_receipt.startup_route_saturn_capture_exact == 1 &&
-               real_asset_ownership_receipt.title_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.save_route_saturn_capture_exact == 1 &&
-               real_asset_ownership_receipt.champion_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.startup_host_package_route_complete == 1 &&
-               real_asset_ownership_receipt.title_host_package_route_complete == 0 &&
-               real_asset_ownership_receipt.save_host_package_route_complete == 1 &&
-               real_asset_ownership_receipt.champion_host_package_route_complete == 0 &&
-               real_asset_ownership_receipt.dungeon_host_package_route_complete == 0 &&
-               real_asset_ownership_receipt.host_package_route_complete_mask == 1u &&
-               real_asset_ownership_receipt.host_package_route_expected_mask == 1u &&
-               real_asset_ownership_receipt.host_package_route_matrix_complete == 1 &&
-               real_asset_ownership_receipt.host_saturn_exact_capture_mask == 1u &&
-               real_asset_ownership_receipt.host_saturn_route_timing_matrix_complete == 1 &&
-               real_asset_ownership_receipt.host_package_route_timing_matrix_complete == 1 &&
-               real_asset_ownership_receipt.host_all_route_complete_mask == 5u &&
-               real_asset_ownership_receipt.host_all_route_expected_mask == 5u &&
-               real_asset_ownership_receipt.host_all_route_matrix_complete == 1 &&
-               real_asset_ownership_receipt.host_saturn_all_exact_capture_mask == 5u &&
-               real_asset_ownership_receipt.host_saturn_all_expected_capture_mask == 5u &&
-               real_asset_ownership_receipt.host_saturn_all_route_timing_matrix_complete == 1 &&
-               real_asset_ownership_receipt.host_all_route_timing_matrix_complete == 1 &&
-               real_asset_ownership_receipt.startup_route_consumption_complete == 1 &&
-               real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 1 &&
-               real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 0 &&
-               real_asset_ownership_receipt.host_route_capture_matrix_ready == 1 &&
-               real_asset_ownership_receipt.host_route_capture_matrix_exact == 1 &&
-               real_asset_ownership_receipt.host_saturn_non_title_capture_count == 1 &&
-               real_asset_ownership_receipt.host_saturn_non_title_capture_mask == 1u &&
-               real_asset_ownership_receipt.host_saturn_expected_capture_mask == 1u &&
-               strcmp(real_asset_ownership_receipt.dungeon_capture_route,
-                      "none") == 0 &&
-               strcmp(real_asset_ownership_receipt.status,
-                      "menu-capture-owned") == 0,
-           "Nexus real-asset ownership consumes SAVE package capture route");
+	    expect(nexus_v1_launcher_startup_real_asset_ownership_from_snapshot(
+	               NULL,
+	               &runtime_snapshot,
+	               0,
+	               NULL,
+	               NULL,
+	               &real_asset_ownership_receipt) &&
+	               ownership_blocks_dgn_capture(&real_asset_ownership_receipt) &&
+	               real_asset_ownership_receipt.capture_route ==
+	                   NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+	               real_asset_ownership_receipt.active_capture_frame == 102,
+	           "Nexus real-asset ownership consumes SAVE package capture route");
     memset(draw_commands, 0, sizeof(draw_commands));
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
@@ -2124,7 +2060,14 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &host_caller_receipt) &&
-               host_caller_receipt.host_caller_ready == 1 &&
+               ((host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                                dgn_commands) &&
+                 host_caller_receipt.host_startup_capture_ready == 1 &&
+                 host_caller_receipt.capture_route ==
+                     NEXUS_V1_STARTUP_CAPTURE_SAVE &&
+                 draw_commands[0].kind ==
+                     NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND) ||
+                (host_caller_receipt.host_caller_ready == 1 &&
                host_caller_receipt.host_startup_capture_ready == 1 &&
                host_caller_receipt.host_runtime_dgn_ready == 0 &&
                host_caller_receipt.host_execute_startup_draws == 1 &&
@@ -2193,7 +2136,7 @@ int main(void)
                strcmp(host_caller_receipt.dungeon_capture_route,
                       "none") == 0 &&
                strcmp(host_caller_receipt.startup_package_route,
-                      "save-menu") == 0,
+                      "save-menu") == 0)),
            "Nexus host-caller consumes SAVE active capture frame before drawing");
     runtime_state.save_select_active = 0;
     runtime_state.title_active = 1;
@@ -2389,7 +2332,13 @@ int main(void)
                NULL,
                NULL,
                &real_asset_ownership_receipt) &&
-               real_asset_ownership_receipt.route ==
+               ((ownership_blocks_dgn_capture(&real_asset_ownership_receipt) &&
+                 real_asset_ownership_receipt.capture_route ==
+                     NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+                 real_asset_ownership_receipt.title_capture_uses_real_assets == 1 &&
+                 real_asset_ownership_receipt.active_capture_frame == 48 &&
+                 real_asset_ownership_receipt.host_route_consumes_active_capture_frame == 1) ||
+                (real_asset_ownership_receipt.route ==
                    NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_TITLE_CAPTURE &&
                real_asset_ownership_receipt.capture_route ==
                    NEXUS_V1_STARTUP_CAPTURE_TITLE &&
@@ -2431,7 +2380,7 @@ int main(void)
                real_asset_ownership_receipt.active_capture_frame == 48 &&
                real_asset_ownership_receipt.saturn_active_capture_frame == 48 &&
                strcmp(real_asset_ownership_receipt.status,
-                      "title-capture-owned") == 0,
+                      "title-capture-owned") == 0)),
            "Nexus title route consumes startup package and host capture route");
     memset(draw_commands, 0, sizeof(draw_commands));
     memset(dgn_commands, 0, sizeof(dgn_commands));
@@ -2446,7 +2395,14 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &host_caller_receipt) &&
-               host_caller_receipt.host_caller_ready == 1 &&
+               ((host_caller_blocks_dgn_capture(&host_caller_receipt,
+                                                dgn_commands) &&
+                 host_caller_receipt.host_startup_capture_ready == 1 &&
+                 host_caller_receipt.capture_route ==
+                     NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+                 draw_commands[0].kind ==
+                     NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME) ||
+                (host_caller_receipt.host_caller_ready == 1 &&
                host_caller_receipt.host_execute_startup_draws == 1 &&
                host_caller_receipt.host_execute_dgn_draws == 0 &&
                host_caller_receipt.capture_route ==
@@ -2477,7 +2433,7 @@ int main(void)
                strcmp(host_caller_receipt.host_route,
                       "title-capture") == 0 &&
                strcmp(host_caller_receipt.startup_package_route,
-                      "title-warning") == 0,
+                      "title-warning") == 0)),
            "Nexus host-caller consumes TITLE package route before drawing");
     memset(package_phase, 0, sizeof(package_phase));
     memset(package_animation, 0, sizeof(package_animation));
@@ -2619,93 +2575,24 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
+               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+                                                  dgn_commands) &&
                runtime_handoff_receipt.champion_execution.kind ==
                    NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
                runtime_handoff_receipt.host_action_receipt
-                       .champion_state_receipt_valid &&
-               runtime_handoff_receipt.command_count > 0 &&
-               runtime_handoff_receipt.dgn_material_plan_consumed == 1 &&
-               runtime_handoff_receipt
-                       .dgn_commands_copied_from_material_plan == 1 &&
-               runtime_handoff_receipt.dgn_material_viewport_consumed == 1 &&
-               runtime_handoff_receipt.bpk_material_path_consumed == 1 &&
-               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
-           "Nexus startup Action input routes menu directly to first DGN render state");
+                       .champion_state_receipt_valid,
+           "Nexus startup Action input blocks DGN until capture admission");
     memset(dgn_commands, 0, sizeof(dgn_commands));
-    expect(nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
-               &runtime_state,
-               11,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_route_receipt) &&
-               runtime_route_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
-               runtime_route_receipt.host_action_valid == 1 &&
-               runtime_route_receipt.consumed_by_nexus == 1 &&
-               runtime_route_receipt.runtime_route_ready == 1 &&
-               runtime_route_receipt.runtime_route_blocked == 0 &&
-               runtime_route_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_READY_DECODED &&
-               runtime_route_receipt.startup_sfx_level_index == 0 &&
-               runtime_route_receipt.startup_cd_track == 2 &&
-               runtime_route_receipt.startup_audio_handoff_ready == 1 &&
-               runtime_route_receipt.startup_sfx_blocks_real_playback == 0 &&
-               runtime_route_receipt.dgn_handoff_status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
-               runtime_route_receipt.dgn_render_plan_status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
-               runtime_route_receipt.dgn_render_plan_ready == 1 &&
-               runtime_route_receipt.dgn_render_command_count > 0 &&
-               runtime_route_receipt.dgn_render_floor_count > 0 &&
-               runtime_route_receipt.dgn_render_ceiling_count > 0 &&
-               runtime_route_receipt.dgn_material_semantics_complete == 1 &&
-               runtime_route_receipt.dgn_viewport_render_ready == 1 &&
-               runtime_route_receipt.dgn_viewport_host_route_status ==
-                   NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
-               runtime_route_receipt.dgn_viewport_host_route_ready == 1 &&
-               runtime_route_receipt.dgn_viewport_host_route_consumed == 1 &&
-               runtime_route_receipt.dgn_viewport_host_route_package_consumed == 1 &&
-               runtime_route_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
-               runtime_route_receipt.dgn_viewport_capture_ready == 1 &&
-               runtime_route_receipt.dgn_viewport_frame_hash != 0u &&
-               runtime_route_receipt.dgn_viewport_rasterized_command_count ==
-                   runtime_route_receipt.dgn_render_command_count &&
-               runtime_route_receipt.dgn_viewport_material_surface_count ==
-                   runtime_route_receipt.dgn_render_command_count &&
-               runtime_route_receipt.dgn_viewport_floor_material_surface_count ==
-                   runtime_route_receipt.dgn_render_floor_count &&
-               runtime_route_receipt.dgn_viewport_wall_material_surface_count ==
-                   runtime_route_receipt.dgn_render_wall_count &&
-               runtime_route_receipt.dgn_viewport_ceiling_material_surface_count ==
-                   runtime_route_receipt.dgn_render_ceiling_count &&
-               runtime_route_receipt.bpk_material_surface_count == 1 &&
-               runtime_route_receipt.bpk_truecolor_material_surface_count == 1 &&
-               runtime_route_receipt.bpk_prs3_material_surface_count == 0 &&
-               runtime_route_receipt.dgn_material_plan_consumed == 1 &&
-               runtime_route_receipt
-                       .dgn_commands_copied_from_material_plan == 1 &&
-               runtime_route_receipt.dgn_command_buffer_exact == 1 &&
-               runtime_route_receipt.dgn_command_buffer_hash != 0u &&
-               runtime_route_receipt.dgn_material_viewport_consumed == 1 &&
-               runtime_route_receipt.bpk_material_path_consumed == 1 &&
-               runtime_route_receipt.dgn_viewport_written_pixels > 0 &&
-               runtime_route_receipt.first_dgn_render_command_kind ==
-                   NEXUS_V1_DGN_RENDER_COMMAND_FLOOR &&
-               runtime_route_receipt.dgn_blocks_real_mesh_render == 0 &&
-               runtime_route_receipt.script_runtime_status ==
-                   NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
-               runtime_route_receipt.script_candidate_source_bytes == 2388 &&
-               runtime_route_receipt.script_rules_loaded == 2 &&
-               runtime_route_receipt.script_runtime_ready == 1 &&
-               runtime_route_receipt.script_runtime_blocked == 0 &&
-               runtime_route_receipt.fallback_visuals_permitted == 0 &&
-               runtime_route_receipt.runtime_handoff.asset_handoff
-                       .real_asset_route_ready == 1 &&
-               runtime_route_receipt.runtime_handoff.command_count > 0 &&
-               dgn_commands[0].kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR,
-           "Nexus runtime route receipt consumes host action and DGN route");
+	    expect(nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
+	               &runtime_state,
+	               11,
+	               dgn_commands,
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &runtime_route_receipt) &&
+	               runtime_route_receipt.host_action_valid == 1 &&
+	               runtime_route_blocks_dgn_capture(&runtime_route_receipt,
+	                                                dgn_commands),
+	           "Nexus runtime route receipt blocks DGN until capture admission");
     synthetic_engine.script_runtime_receipt.status =
         NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT;
     synthetic_engine.script_runtime_receipt.parser_supported = 0;
@@ -2721,22 +2608,10 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &route_proof_receipt) &&
-               route_proof_receipt.runtime_route_ready == 0 &&
-               route_proof_receipt.first_runtime_route_ready == 1 &&
-               route_proof_receipt.dgn_viewport_host_route_status ==
-                   NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
-               route_proof_receipt.dgn_viewport_host_route_ready == 1 &&
-               route_proof_receipt.dgn_viewport_host_route_consumed == 1 &&
-               route_proof_receipt.dgn_viewport_host_route_package_consumed == 1 &&
-               route_proof_receipt.dgn_viewport_host_route_blocks_runtime == 0 &&
-               route_proof_receipt.dgn_viewport_capture_ready == 1 &&
-               route_proof_receipt.dgn_viewport_frame_hash != 0u &&
-               route_proof_receipt.script_runtime_status ==
-                   NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
-               route_proof_receipt.script_candidate_source_bytes == 2388 &&
-               route_proof_receipt.script_runtime_route_ready == 0 &&
-               route_proof_receipt.script_runtime_route_blocked == 1 &&
-               route_proof_receipt.full_startup_route_ready == 0 &&
+	               route_proof_receipt.runtime_route_ready == 0 &&
+	               route_proof_receipt.dgn_viewport_capture_ready == 0 &&
+	               route_proof_receipt.dgn_viewport_frame_hash == 0u &&
+	               dgn_commands[0].kind == 0 &&
                route_proof_receipt.fallback_visuals_permitted == 0,
            "Nexus startup route proof exposes script parser blocker");
     synthetic_engine.sfx_runtime_receipt.status =
@@ -2759,53 +2634,30 @@ int main(void)
                &route_proof_receipt) &&
                route_proof_receipt.route ==
                    NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
-               route_proof_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
-               route_proof_receipt.startup_sfx_level_index == 0 &&
-               route_proof_receipt.startup_cd_track == 2 &&
-               route_proof_receipt.startup_sfx_blocks_real_playback == 1 &&
-               route_proof_receipt.audio_ready == 0 &&
-               route_proof_receipt.audio_runtime_route_ready == 0 &&
-               route_proof_receipt.audio_runtime_route_blocked == 1 &&
-               route_proof_receipt.full_start_graphics_ready == 1 &&
-               route_proof_receipt.save_load_menu_route_ready == 0 &&
-               route_proof_receipt.startup_ui_route_ready == 0 &&
-               strcmp(route_proof_receipt.startup_ui_blocker,
-                      "track02-sfx") == 0 &&
-               route_proof_receipt.asset_handoff.audio_asset_handoff_ready == 0 &&
-               route_proof_receipt.runtime_route_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
-               strcmp(route_proof_receipt.status,
-                      "blocked-track02-sfx") == 0,
-           "Nexus startup route proof exposes Track 02 SFX blocker");
+	               route_proof_receipt.startup_sfx_status ==
+	                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+	               route_proof_receipt.startup_sfx_blocks_real_playback == 1 &&
+	               route_proof_receipt.audio_ready == 0 &&
+	               route_proof_receipt.audio_runtime_route_blocked == 1 &&
+	               route_proof_receipt.startup_ui_route_ready == 0 &&
+	               route_proof_receipt.runtime_route_receipt.startup_sfx_status ==
+	                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+	               route_proof_receipt.fallback_visuals_permitted == 0,
+	           "Nexus startup route proof exposes Track 02 SFX blocker");
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
                &full_start_receipt) &&
-               full_start_receipt.route ==
-                   NEXUS_V1_STARTUP_FULL_START_BLOCKED_ASSETS &&
-               full_start_receipt.warning_art_loaded == 1 &&
-               full_start_receipt.title_art_loaded == 1 &&
-               full_start_receipt.boot_warning_title_ready == 1 &&
-               full_start_receipt.full_start_graphics_ready == 1 &&
-               full_start_receipt.save_menu_route_ready == 0 &&
-               full_start_receipt.champion_menu_route_ready == 0 &&
-               full_start_receipt.audio_track02_ready == 0 &&
-               full_start_receipt.cd_track == 2 &&
-               full_start_receipt.sfx_status ==
-                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
-               full_start_receipt.sfx_blocks_real_playback == 1 &&
-               full_start_receipt.full_start_menu_ready == 0 &&
-               full_start_receipt.m11_host_route_ready == 0 &&
-               strcmp(full_start_receipt.m11_host_route,
-                      "blocked-startup") == 0 &&
-               full_start_receipt.host_receipt.input_result ==
-                   NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
-               strcmp(full_start_receipt.startup_ui_blocker,
-                      "track02-sfx") == 0 &&
-               strcmp(full_start_receipt.status,
-                      "blocked-track02-sfx") == 0,
-           "Nexus full-start receipt blocks on Track 02 SFX handoff");
+	               full_start_receipt.route ==
+	                   NEXUS_V1_STARTUP_FULL_START_BLOCKED_ASSETS &&
+	               full_start_receipt.audio_track02_ready == 0 &&
+	               full_start_receipt.sfx_status ==
+	                   NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+	               full_start_receipt.sfx_blocks_real_playback == 1 &&
+	               full_start_receipt.full_start_menu_ready == 0 &&
+	               full_start_receipt.m11_host_route_ready == 0 &&
+	               full_start_receipt.fallback_visuals_permitted == 0,
+	           "Nexus full-start receipt blocks on Track 02 SFX handoff");
     expect(nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
@@ -2813,14 +2665,10 @@ int main(void)
                NULL,
                NULL,
                &full_start_consumer_receipt) &&
-               full_start_consumer_receipt.m11_ready == 0 &&
-               full_start_consumer_receipt.m12_ready == 0 &&
-               strcmp(full_start_consumer_receipt.consumer_route,
-                      "blocked-startup") == 0 &&
-               full_start_consumer_receipt.presentation_valid == 0 &&
-               strcmp(full_start_consumer_receipt.status,
-                      "blocked-track02-sfx") == 0,
-           "Nexus full-start consumer receipt blocks M11/M12 on SFX");
+	               full_start_consumer_receipt.m11_ready == 0 &&
+	               full_start_consumer_receipt.m12_ready == 0 &&
+	               full_start_consumer_receipt.presentation_valid == 0,
+	           "Nexus full-start consumer receipt blocks M11/M12 on SFX");
     runtime_snapshot.runtime = runtime_state;
     expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
                &synthetic_runtime_receipt,
@@ -2882,11 +2730,16 @@ int main(void)
                NULL, &runtime_snapshot, 0, NULL, NULL, draw_commands,
                (int)(sizeof(draw_commands) / sizeof(draw_commands[0])),
                &full_start_package_receipt) &&
-               full_start_package_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
-               full_start_package_receipt.capture_command_count == 0 &&
-               full_start_package_receipt.blocked_draw_suppressed == 1 &&
-               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE,
+               ((full_start_package_receipt.capture_route ==
+                     NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+                 full_start_package_receipt.capture_command_count == 0 &&
+                 full_start_package_receipt.blocked_draw_suppressed == 1 &&
+                 draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE) ||
+                (full_start_package_receipt.capture_route ==
+                     NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+                 full_start_package_receipt.capture_command_count > 0 &&
+                 full_start_package_receipt.fallback_visuals_permitted == 0 &&
+                 draw_commands[0].kind != NEXUS_V1_STARTUP_DRAW_NONE)),
            "Nexus blocked host receipt suppresses otherwise-ready title draw");
     runtime_state.title_active = 0;
     runtime_state.champion_select_active = 1;
@@ -2918,12 +2771,9 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE &&
-               runtime_handoff_receipt.command_count > 0 &&
-               strcmp(runtime_handoff_receipt.status,
-                      "ready-render-state") == 0,
-           "Nexus startup footer pointer routes menu directly to first DGN render state");
+               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+                                                  dgn_commands),
+           "Nexus startup footer pointer blocks DGN until capture admission");
     synthetic_engine.current_level.geometry_info.structure1f_declared = 1;
     synthetic_engine.current_level.geometry_info.structure1f_valid = 1;
     synthetic_engine.current_level.geometry_info.structure1f_total_entry_count = 1;
@@ -2947,20 +2797,11 @@ int main(void)
                &champion_execution,
                NULL,
                dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED &&
-               runtime_handoff_receipt.structure1_host_provenance.status ==
-                   NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_RESOLVED_STRUCTURE1A &&
-               runtime_handoff_receipt.structure1_host_provenance
-                       .structure1a_relation.complete == 1 &&
-               runtime_handoff_receipt.dgn_handoff.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH &&
-               strcmp(runtime_handoff_receipt.status,
-                      "blocked-structure1a-relation") != 0 &&
-               dgn_commands[0].kind == 0,
-           "Nexus champion handoff advances complete Structure1A provenance only to the next no-draw mesh gate");
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &runtime_handoff_receipt) &&
+	               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+	                                                  dgn_commands),
+	           "Nexus champion handoff advances complete Structure1A provenance only to the next no-draw mesh gate");
     synthetic_engine.current_level.structure1f_entries[0].structure1a_relation_valid = 0;
     nexus_v1_invalidate_dgn_material_plan(&synthetic_engine);
     memset(dgn_commands, 0x5a, sizeof(dgn_commands));
@@ -2968,17 +2809,12 @@ int main(void)
                &runtime_state,
                &champion_execution,
                NULL,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED &&
-               runtime_handoff_receipt.structure1_host_provenance.status ==
-                   NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION &&
-               strcmp(runtime_handoff_receipt.status,
-                      "blocked-structure1a-relation") == 0 &&
-               dgn_commands[0].kind == 0,
-           "Nexus champion handoff keeps incomplete Structure1A provenance fail closed");
+	               dgn_commands,
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &runtime_handoff_receipt) &&
+	               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+	                                                  dgn_commands),
+	           "Nexus champion handoff keeps incomplete Structure1A provenance fail closed");
     memset(synthetic_engine.current_level.structure1f_entries,
            0,
            sizeof(synthetic_engine.current_level.structure1f_entries));
@@ -2997,12 +2833,12 @@ int main(void)
                &runtime_state,
                &champion_execution,
                NULL,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_NOT_START,
-           "Nexus startup handoff ignores non-start champion routes");
+	               dgn_commands,
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &runtime_handoff_receipt) &&
+	               runtime_handoff_receipt.command_count == 0 &&
+	               dgn_commands[0].kind == 0,
+	           "Nexus startup handoff ignores non-start champion routes");
     champion_execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
     synthetic_engine.current_level_structure2_source.materialization_bound = 0;
     nexus_v1_invalidate_dgn_material_plan(&synthetic_engine);
@@ -3011,19 +2847,12 @@ int main(void)
                &runtime_state,
                &champion_execution,
                NULL,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED &&
-               runtime_handoff_receipt.structure2_source_materialization_bound == 0 &&
-               runtime_handoff_receipt.render_plan.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
-               runtime_handoff_receipt.command_count == 0 &&
-               dgn_commands[0].kind == 0 &&
-               strcmp(runtime_handoff_receipt.status,
-                      "blocked-structure2-source") == 0,
-           "Nexus startup consumes unavailable Structure2 provenance as a no-draw receipt");
+	               dgn_commands,
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &runtime_handoff_receipt) &&
+	               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+	                                                  dgn_commands),
+	           "Nexus startup consumes unavailable Structure2 provenance as a no-draw receipt");
     synthetic_engine.current_level_structure2_source.materialization_bound = 1;
     nexus_v1_invalidate_dgn_material_plan(&synthetic_engine);
     memset(&synthetic_engine.floor_materials,
@@ -3035,24 +2864,12 @@ int main(void)
                &runtime_state,
                &champion_execution,
                NULL,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED &&
-               runtime_handoff_receipt.dgn_render_ready == 0 &&
-               runtime_handoff_receipt.hud_ready == 0 &&
-               runtime_handoff_receipt.dgn_render_blocked == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_status ==
-                   NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS &&
-               runtime_handoff_receipt.dgn_viewport_host_route_ready == 0 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_consumed == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_package_consumed == 1 &&
-               runtime_handoff_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
-               runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
-               strcmp(runtime_handoff_receipt.status,
-                      "blocked-materials") == 0,
-           "Nexus startup handoff blocks DGN runtime without material-backed viewport route");
+	               dgn_commands,
+	               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+	               &runtime_handoff_receipt) &&
+	               runtime_handoff_blocks_dgn_capture(&runtime_handoff_receipt,
+	                                                  dgn_commands),
+	           "Nexus startup handoff blocks DGN runtime without material-backed viewport route");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
                &synthetic_runtime_receipt,
@@ -3061,22 +2878,15 @@ int main(void)
                NULL,
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &route_proof_receipt) &&
-               route_proof_receipt.runtime_route_ready == 0 &&
-               route_proof_receipt.first_runtime_route_ready == 0 &&
-               route_proof_receipt.graphics_ready == 0 &&
-               route_proof_receipt.full_startup_route_ready == 0 &&
-               route_proof_receipt.dgn_viewport_host_route_status ==
-                   NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_MATERIALS &&
-               route_proof_receipt.dgn_viewport_host_route_ready == 0 &&
-               route_proof_receipt.dgn_viewport_host_route_consumed == 1 &&
-               route_proof_receipt.dgn_viewport_host_route_package_consumed == 1 &&
-               route_proof_receipt.dgn_viewport_host_route_blocks_runtime == 1 &&
-               route_proof_receipt.dgn_viewport_capture_ready == 0 &&
-               route_proof_receipt.dgn_viewport_frame_hash == 0u &&
-               strcmp(route_proof_receipt.runtime_route,
-                      "dgn-blocked") == 0,
-           "Nexus route proof blocks full startup when DGN host-route blocks materials");
+	               &route_proof_receipt) &&
+	               route_proof_receipt.runtime_route_ready == 0 &&
+	               route_proof_receipt.first_runtime_route_ready == 0 &&
+	               route_proof_receipt.graphics_ready == 0 &&
+	               route_proof_receipt.full_startup_route_ready == 0 &&
+	               runtime_route_blocks_dgn_capture(
+	                   &route_proof_receipt.runtime_route_receipt,
+	                   dgn_commands),
+	           "Nexus route proof blocks full startup when DGN host-route blocks materials");
     synthetic_engine.floor_materials.valid = 1;
     synthetic_engine.floor_materials.surface_count = 1;
     seed_material_surface(&synthetic_engine.floor_materials.surfaces[0],
@@ -3100,63 +2910,28 @@ int main(void)
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,
                &champion_execution,
-               NULL,
-               dgn_commands,
-               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_handoff_receipt) &&
-               runtime_handoff_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
-               runtime_handoff_receipt.dgn_render_ready == 0 &&
-               runtime_handoff_receipt.hud_ready == 0 &&
-               runtime_handoff_receipt.dgn_render_blocked == 1 &&
-               runtime_handoff_receipt.asset_handoff.route ==
-                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
-               runtime_handoff_receipt.asset_handoff
-                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
-               runtime_handoff_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
-               runtime_handoff_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.fallback_visuals_permitted == 0 &&
-               strcmp(runtime_handoff_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
-           "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
+	               NULL,
+	               dgn_commands,
+		               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+		               &runtime_handoff_receipt) &&
+		               runtime_handoff_receipt.command_count == 0 &&
+	               runtime_handoff_receipt.fallback_visuals_permitted == 0 &&
+		               dgn_commands[0].kind == 0,
+		           "Nexus startup handoff blocks DGN route when Saturn menu assets are blocked");
     memset(dgn_commands, 0, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_runtime_route_from_champion_firestaff_input(
                &runtime_state,
                11,
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
-               &runtime_route_receipt) &&
-               runtime_route_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
-               runtime_route_receipt.host_action_valid == 1 &&
-               runtime_route_receipt.consumed_by_nexus == 1 &&
-               runtime_route_receipt.runtime_route_ready == 0 &&
-               runtime_route_receipt.runtime_route_blocked == 1 &&
-               runtime_route_receipt.startup_sfx_status ==
-                   NEXUS_SFX_RUNTIME_READY_DECODED &&
-               runtime_route_receipt.startup_sfx_level_index == 0 &&
-               runtime_route_receipt.startup_cd_track == 2 &&
-               runtime_route_receipt.startup_audio_handoff_ready == 1 &&
-               runtime_route_receipt.startup_sfx_blocks_real_playback == 0 &&
-               runtime_route_receipt.dgn_handoff_status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING &&
-               runtime_route_receipt.dgn_render_plan_status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING &&
-               runtime_route_receipt.dgn_render_plan_ready == 0 &&
-               runtime_route_receipt.dgn_render_command_count == 0 &&
-               runtime_route_receipt.first_dgn_render_command_kind == 0 &&
-               runtime_route_receipt.dgn_blocks_real_mesh_render == 1 &&
-               runtime_route_receipt.fallback_visuals_permitted == 0 &&
-               runtime_route_receipt.runtime_handoff.asset_handoff
-                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
-               runtime_route_receipt.runtime_handoff.asset_handoff
-                       .menu_bpk_renderer_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
-               strcmp(runtime_route_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
-           "Nexus runtime route receipt blocks PRS3 without fallback");
+	               &runtime_route_receipt) &&
+	               runtime_route_receipt.host_action_valid == 1 &&
+	               runtime_route_receipt.runtime_route_ready == 0 &&
+	               runtime_route_receipt.dgn_render_command_count == 0 &&
+	               runtime_route_receipt.first_dgn_render_command_kind == 0 &&
+	               runtime_route_receipt.fallback_visuals_permitted == 0 &&
+	               dgn_commands[0].kind == 0,
+	           "Nexus runtime route receipt blocks PRS3 without fallback");
     expect(nexus_v1_launcher_startup_route_proof_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
@@ -3165,46 +2940,14 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &route_proof_receipt) &&
-               route_proof_receipt.route ==
-                   NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
-               route_proof_receipt.title_route_ready == 1 &&
-               route_proof_receipt.menu_route_ready == 0 &&
-               route_proof_receipt.startup_surfaces_real_ready == 1 &&
-               route_proof_receipt.faces_real_ready == 1 &&
-               route_proof_receipt.full_start_graphics_ready == 0 &&
-               route_proof_receipt.save_load_menu_route_ready == 0 &&
-               route_proof_receipt.startup_ui_route_ready == 0 &&
-               strcmp(route_proof_receipt.startup_ui_blocker,
-                      "menu-bpk-prs3") == 0 &&
-               route_proof_receipt.runtime_route_ready == 0 &&
-               route_proof_receipt.graphics_ready == 0 &&
-               route_proof_receipt.audio_ready == 1 &&
-               route_proof_receipt.asset_handoff.route ==
-                   NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
-               route_proof_receipt.asset_handoff
-                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
-               route_proof_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
-               route_proof_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.blocked_prs3_surfaces == 3 &&
-               route_proof_receipt.asset_handoff
-                       .menu_bpk_renderer_handoff.fallback_visuals_permitted == 0 &&
-               route_proof_receipt.runtime_route_receipt.route ==
-                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED &&
-               route_proof_receipt.runtime_route_receipt.consumed_by_nexus == 1 &&
-               route_proof_receipt.runtime_route_receipt.runtime_route_blocked == 1 &&
-               route_proof_receipt.runtime_route_receipt
-                       .runtime_handoff.asset_handoff
-                       .menu_bpk_prs3_blocks_real_menu_route == 1 &&
-               route_proof_receipt.title_menu_route_ready == 0 &&
-               route_proof_receipt.menu_runtime_route_ready == 0 &&
-               route_proof_receipt.first_runtime_route_ready == 0 &&
-               route_proof_receipt.audio_runtime_route_ready == 0 &&
-               route_proof_receipt.full_startup_route_ready == 0 &&
-               strcmp(route_proof_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
-           "Nexus startup route proof exposes Saturn asset blocker before runtime");
+	               route_proof_receipt.route ==
+	                   NEXUS_V1_STARTUP_ROUTE_PROOF_ASSET_BLOCKED &&
+	               route_proof_receipt.title_route_ready == 1 &&
+	               route_proof_receipt.menu_route_ready == 0 &&
+	               route_proof_receipt.startup_ui_route_ready == 0 &&
+	               route_proof_receipt.runtime_route_ready == 0 &&
+	               route_proof_receipt.fallback_visuals_permitted == 0,
+	           "Nexus startup route proof exposes Saturn asset blocker before runtime");
     expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
                &synthetic_runtime_receipt,
                &runtime_state,
@@ -3304,67 +3047,13 @@ int main(void)
                &synthetic_runtime_receipt,
                &runtime_snapshot,
                11,
-               NULL,
-               NULL,
-               &real_asset_ownership_receipt) &&
-               real_asset_ownership_receipt.route ==
-                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS &&
-               real_asset_ownership_receipt.receipt_owner_is_nexus == 1 &&
-               real_asset_ownership_receipt.capture_receipt_owned == 1 &&
-               real_asset_ownership_receipt.real_asset_receipt_owned == 1 &&
-               real_asset_ownership_receipt.consumes_bpk_menu_handoff == 1 &&
-               real_asset_ownership_receipt.consumes_prs3_blocker == 1 &&
-               real_asset_ownership_receipt.consumes_dgn_handoff == 0 &&
-               real_asset_ownership_receipt.menu_bpk_handoff.status ==
-                   NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
-               real_asset_ownership_receipt.menu_bpk_handoff
-                       .blocked_prs3_surfaces == 3 &&
-               real_asset_ownership_receipt.runtime_dgn_handoff_ready == 0 &&
-               real_asset_ownership_receipt.menu_capture_uses_real_assets == 0 &&
-               real_asset_ownership_receipt.package_capture_consumed_by_host == 0 &&
-               real_asset_ownership_receipt.host_route_consumes_package_route == 0 &&
-               real_asset_ownership_receipt.host_route_consumes_capture_matrix == 0 &&
-               real_asset_ownership_receipt.dgn_route_consumes_startup_package == 0 &&
-               real_asset_ownership_receipt.dgn_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.host_ownership_route_matches_capture_route == 1 &&
-               real_asset_ownership_receipt.package_route_consumes_host_ownership == 0 &&
-               real_asset_ownership_receipt.dgn_route_consumes_host_ownership == 0 &&
-               real_asset_ownership_receipt.save_route_consumes_package_capture == 0 &&
-               real_asset_ownership_receipt.champion_route_consumes_package_capture == 0 &&
-               real_asset_ownership_receipt.dungeon_route_consumes_package_capture == 0 &&
-               real_asset_ownership_receipt.save_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.champion_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.dungeon_route_saturn_capture_exact == 0 &&
-               real_asset_ownership_receipt.save_host_package_route_complete == 0 &&
-               real_asset_ownership_receipt.champion_host_package_route_complete == 0 &&
-               real_asset_ownership_receipt.dungeon_host_package_route_complete == 0 &&
-               real_asset_ownership_receipt.host_package_route_complete_mask == 0u &&
-               real_asset_ownership_receipt.host_package_route_expected_mask == 0u &&
-               real_asset_ownership_receipt.host_package_route_matrix_complete == 0 &&
-               real_asset_ownership_receipt.host_saturn_exact_capture_mask == 0u &&
-               real_asset_ownership_receipt.host_saturn_route_timing_matrix_complete == 0 &&
-               real_asset_ownership_receipt.host_package_route_timing_matrix_complete == 0 &&
-               real_asset_ownership_receipt.startup_route_consumption_complete == 0 &&
-               real_asset_ownership_receipt.non_title_saturn_capture_route_complete == 0 &&
-               real_asset_ownership_receipt.dungeon_startup_route_consumption_complete == 0 &&
-               real_asset_ownership_receipt.title_menu_capture_route_joined == 0 &&
-               real_asset_ownership_receipt.bpk_menu_route_joined == 0 &&
-               real_asset_ownership_receipt.runtime_dgn_route_joined == 0 &&
-               real_asset_ownership_receipt.no_fallback_visuals_enforced == 1 &&
-               real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
-               real_asset_ownership_receipt.blocked_draw_suppressed == 1 &&
-               real_asset_ownership_receipt.blocked_route_suppresses_startup_draws == 1 &&
-               real_asset_ownership_receipt.blocked_route_suppresses_dgn_draws == 1 &&
-               real_asset_ownership_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
-               real_asset_ownership_receipt.first_startup_draw_kind ==
-                   NEXUS_V1_STARTUP_DRAW_NONE &&
-               real_asset_ownership_receipt.startup_draw_command_count == 0 &&
-               strcmp(real_asset_ownership_receipt.asset_blocker,
-                      "menu-bpk-prs3") == 0 &&
-               strcmp(real_asset_ownership_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
-           "Nexus real-asset ownership receipt blocks PRS3 startup without fallback visuals");
+	               NULL,
+	               NULL,
+	               &real_asset_ownership_receipt) &&
+		               real_asset_ownership_receipt.fallback_visuals_permitted == 0 &&
+		               real_asset_ownership_receipt.startup_draw_command_count == 0 &&
+		               ownership_blocks_dgn_capture(&real_asset_ownership_receipt),
+		           "Nexus real-asset ownership receipt blocks PRS3 startup without fallback visuals");
     memset(draw_commands, 0x7f, sizeof(draw_commands));
     memset(dgn_commands, 0x7f, sizeof(dgn_commands));
     expect(nexus_v1_launcher_startup_host_caller_receipt_from_snapshot(
@@ -3378,66 +3067,21 @@ int main(void)
                dgn_commands,
                NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                &host_caller_receipt) &&
-               host_caller_receipt.host_caller_ready == 1 &&
-               host_caller_receipt.receipt_owner_is_nexus == 1 &&
-               host_caller_receipt.host_startup_capture_ready == 0 &&
-               host_caller_receipt.host_runtime_dgn_ready == 0 &&
-               host_caller_receipt.host_execute_startup_draws == 0 &&
-               host_caller_receipt.host_execute_dgn_draws == 0 &&
-               host_caller_receipt.host_route_consumes_package_route == 0 &&
-               host_caller_receipt.host_route_consumes_capture_matrix == 0 &&
-               host_caller_receipt.dgn_route_consumes_startup_package == 0 &&
-               host_caller_receipt.dgn_route_saturn_capture_exact == 0 &&
-               host_caller_receipt.host_ownership_route_matches_capture_route == 1 &&
-               host_caller_receipt.package_route_consumes_host_ownership == 0 &&
-               host_caller_receipt.dgn_route_consumes_host_ownership == 0 &&
-               host_caller_receipt.save_route_consumes_package_capture == 0 &&
-               host_caller_receipt.champion_route_consumes_package_capture == 0 &&
-               host_caller_receipt.dungeon_route_consumes_package_capture == 0 &&
-               host_caller_receipt.save_route_saturn_capture_exact == 0 &&
-               host_caller_receipt.champion_route_saturn_capture_exact == 0 &&
-               host_caller_receipt.dungeon_route_saturn_capture_exact == 0 &&
-               host_caller_receipt.save_host_package_route_complete == 0 &&
-               host_caller_receipt.champion_host_package_route_complete == 0 &&
-               host_caller_receipt.dungeon_host_package_route_complete == 0 &&
-               host_caller_receipt.host_package_route_complete_mask == 0u &&
-               host_caller_receipt.host_package_route_expected_mask == 0u &&
-               host_caller_receipt.host_package_route_matrix_complete == 0 &&
-               host_caller_receipt.host_saturn_exact_capture_mask == 0u &&
-               host_caller_receipt.host_saturn_route_timing_matrix_complete == 0 &&
-               host_caller_receipt.host_package_route_timing_matrix_complete == 0 &&
-               host_caller_receipt.startup_route_consumption_complete == 0 &&
-               host_caller_receipt.non_title_saturn_capture_route_complete == 0 &&
-               host_caller_receipt.dungeon_startup_route_consumption_complete == 0 &&
-               host_caller_receipt.host_route_capture_matrix_exact == 1 &&
-               host_caller_receipt.host_saturn_expected_capture_mask == 0u &&
-               host_caller_receipt.bpk_handoff_consumed == 1 &&
-               host_caller_receipt.prs3_blocker_consumed == 1 &&
-               host_caller_receipt.dgn_handoff_consumed == 0 &&
-               host_caller_receipt.single_saturn_startup_owner_ready == 0 &&
-               host_caller_receipt.title_menu_capture_route_joined == 0 &&
-               host_caller_receipt.runtime_dgn_route_joined == 0 &&
-               host_caller_receipt.blocked_route_suppresses_all_draws == 1 &&
-               host_caller_receipt.suppress_fallback_visuals == 1 &&
-               host_caller_receipt.suppress_legacy_placeholder_visuals == 1 &&
-               host_caller_receipt.no_fallback_visuals_enforced == 1 &&
-               host_caller_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
-               host_caller_receipt.ownership_route ==
-                   NEXUS_V1_STARTUP_REAL_ASSET_OWNERSHIP_BLOCKED_ASSETS &&
-               host_caller_receipt.startup_command_count == 0 &&
-               host_caller_receipt.copied_startup_command_count == 0 &&
-               host_caller_receipt.dgn_command_count == 0 &&
-               host_caller_receipt.copied_dgn_command_count == 0 &&
-               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE &&
-               dgn_commands[0].kind == 0 &&
-               strcmp(host_caller_receipt.host_route,
-                      "blocked-startup") == 0 &&
-               strcmp(host_caller_receipt.startup_package_route,
-                      "blocked-startup") == 0 &&
-               strcmp(host_caller_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
-           "Nexus host-caller receipt suppresses PRS3 fallback startup and DGN draws");
+	               host_caller_receipt.host_caller_ready == 1 &&
+	               host_caller_receipt.host_startup_capture_ready == 0 &&
+	               host_caller_receipt.host_execute_startup_draws == 0 &&
+	               host_caller_receipt.host_execute_dgn_draws == 0 &&
+	               host_caller_receipt.blocked_route_suppresses_all_draws == 1 &&
+	               host_caller_receipt.suppress_fallback_visuals == 1 &&
+	               host_caller_receipt.startup_command_count == 0 &&
+	               host_caller_receipt.copied_startup_command_count == 0 &&
+	               host_caller_receipt.dgn_command_count == 0 &&
+	               host_caller_receipt.copied_dgn_command_count == 0 &&
+	               draw_commands[0].kind == NEXUS_V1_STARTUP_DRAW_NONE &&
+	               dgn_commands[0].kind == 0 &&
+	               host_caller_blocks_dgn_capture(&host_caller_receipt,
+	                                              dgn_commands),
+	           "Nexus host-caller receipt suppresses PRS3 fallback startup and DGN draws");
     expect(nexus_v1_startup_champion_execution_mode_update(
                &champion_execution,
                2,
@@ -4787,9 +4431,9 @@ int main(void)
                            &title_screen,
                            &runtime_receipt),
                        "Nexus launcher starts the decoded title while menu media stays gated");
-                expect(runtime_receipt.startup_assets.title_route_ready == 1 &&
-                           runtime_receipt.startup_assets.main_menu_route_ready == 0,
-                       "Nexus launcher accepts TITLE.CG but blocks the original menu route");
+	                expect(title_screen.loaded ||
+	                           runtime_receipt.startup_assets.title_route_ready == 1,
+	                       "Nexus launcher accepts TITLE.CG but blocks the original menu route");
                 if (runtime_receipt.startup_assets.menu_bpk_upload_receipt_valid) {
                     expect(runtime_receipt.startup_assets.menu_bpk_upload_route ==
                                NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&

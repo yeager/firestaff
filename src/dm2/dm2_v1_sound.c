@@ -374,6 +374,293 @@ static const char *const g_music_track_names[DM2_MUSIC_TRACK_COUNT] = {
     /* Tracks 16-27 (0x10-0x1b) additional dungeon/building themes */
 };
 
+static void dm2_v1_skproject_sound_clear_receipt(
+    DM2_V1_SkprojectSoundReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+}
+
+void dm2_v1_skproject_sound_state_init(DM2_V1_SkprojectSoundState *state,
+                                       uint16_t queue_capacity)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    if (queue_capacity > DM2_V1_SKPROJECT_SOUND_QUEUE_MAX)
+        queue_capacity = DM2_V1_SKPROJECT_SOUND_QUEUE_MAX;
+    state->queue_capacity = queue_capacity;
+    state->sound_enabled = 1;
+    state->midi_handle_present = 1;
+    state->midi_transition_enabled = 1;
+    state->midi_ready = 1;
+    state->sfx_active = 1;
+    state->current_music_track = -1;
+    state->pending_music_track = -1;
+    for (uint16_t i = 0; i < DM2_V1_SKPROJECT_SOUND_QUEUE_MAX; ++i)
+        state->queue[i].w_05 = -1;
+}
+
+uint16_t dm2_v1_skproject_query_snd_entry_index(
+    const DM2_V1_SkprojectSoundState *state,
+    int8_t cls1,
+    int8_t cls2,
+    int8_t cls3)
+{
+    if (!state) return 0;
+    for (uint16_t i = 0; i < state->queued_count; ++i) {
+        const DM2_V1_SkprojectSoundQueueEntry *entry = &state->queue[i];
+        if (entry->b_02 == cls1 && entry->b_03 == cls2 &&
+            entry->b_04 == cls3)
+            return (uint16_t)(i + 1u);
+    }
+    return 0;
+}
+
+int dm2_v1_skproject_sound9(DM2_V1_SkprojectSoundState *state,
+                            int8_t cls1,
+                            int8_t cls2,
+                            int8_t cls3,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = cls1;
+    receipt.argument1 = cls2;
+    receipt.argument2 = cls3;
+    if (!state) {
+        receipt.rejected_disabled = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.queued_count_before = state->queued_count;
+    if (dm2_v1_skproject_query_snd_entry_index(state, cls1, cls2, cls3) != 0u) {
+        receipt.rejected_duplicate = 1;
+        receipt.queued_count_after = state->queued_count;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (state->queued_count >= state->queue_capacity ||
+        state->queued_count >= DM2_V1_SKPROJECT_SOUND_QUEUE_MAX) {
+        receipt.rejected_full = 1;
+        receipt.queued_count_after = state->queued_count;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    state->queue[state->queued_count].b_02 = cls1;
+    state->queue[state->queued_count].b_03 = cls2;
+    state->queue[state->queued_count].b_04 = cls3;
+    state->queue[state->queued_count].w_05 = -1;
+    state->queued_count++;
+    receipt.returned_index = state->queued_count;
+    receipt.queued_count_after = state->queued_count;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+uint16_t dm2_v1_skproject_sound7(
+    const DM2_V1_SkprojectSoundState *state,
+    int16_t sound_handle)
+{
+    if (!state) return 0;
+    for (uint16_t i = 0; i < state->queued_count; ++i)
+        if (state->queue[i].w_05 == sound_handle)
+            return (uint16_t)(i + 1u);
+    return 0;
+}
+
+int dm2_v1_skproject_sound4(DM2_V1_SkprojectSoundState *state,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    receipt.queued_count_before = state->pending_positional_count;
+    state->pending_positional_count = 0;
+    receipt.queued_count_after = 0;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound5(DM2_V1_SkprojectSoundState *state,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    receipt.queued_count_before = state->queued_count;
+    for (uint16_t i = state->queued_count; i > 0u; --i) {
+        uint16_t idx = (uint16_t)(i - 1u);
+        int16_t handle = state->queue[idx].w_05;
+        int found_earlier = 0;
+        for (uint16_t scan = 0; scan < idx; ++scan) {
+            if (state->queue[scan].w_05 == handle) {
+                found_earlier = 1;
+                break;
+            }
+        }
+        if (handle != -1 && !found_earlier) {
+            for (uint16_t j = idx; j + 1u < state->queued_count; ++j)
+                state->queue[j] = state->queue[j + 1u];
+            state->queued_count--;
+            if (state->active_sample_count > 0u) state->active_sample_count--;
+            receipt.removed_count++;
+        }
+    }
+    state->pending_positional_count = 0;
+    receipt.queued_count_after = state->queued_count;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound6(DM2_V1_SkprojectSoundState *state,
+                            uint16_t queue_capacity,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    dm2_v1_skproject_sound_state_init(state, queue_capacity);
+    receipt.queued_count_after = state->queued_count;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound8(DM2_V1_SkprojectSoundState *state,
+                            int immediate,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    receipt.queued_count_before = immediate ? state->pending_immediate_count
+                                            : state->pending_positional_count;
+    if (receipt.queued_count_before > 0u) {
+        receipt.play_sound_requested = 1;
+        receipt.play_count = receipt.queued_count_before;
+    }
+    if (immediate)
+        state->pending_immediate_count = 0;
+    else
+        state->pending_positional_count = 0;
+    receipt.queued_count_after = 0;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound1(DM2_V1_SkprojectSoundState *state,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    if (state->midi_handle_present && state->midi_ready)
+        state->pending_music_fade = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound2(DM2_V1_SkprojectSoundState *state,
+                            int16_t map_index,
+                            const uint8_t *music_map,
+                            uint16_t music_map_count,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = map_index;
+    if (!state || !music_map || map_index < 0 ||
+        (uint16_t)map_index >= music_map_count) {
+        receipt.rejected_disabled = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (state->pending_music_fade)
+        state->pending_music_fade = 0;
+    state->pending_music_track = music_map[(uint16_t)map_index];
+    receipt.selected_music_track = state->pending_music_track;
+    if (state->current_music_track != state->pending_music_track) {
+        if (!state->midi_ready || state->pending_music_fade != 0)
+            receipt.play_music_requested = 1;
+        else
+            state->pending_music_fade = 127;
+        state->current_music_track = state->pending_music_track;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound3(DM2_V1_SkprojectSoundState *state,
+                            int16_t volume,
+                            int16_t mode,
+                            DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    int16_t clamped = volume;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    if (clamped > 7) clamped = 7;
+    if (clamped < 0) clamped = 0;
+    receipt.argument0 = volume;
+    receipt.argument1 = mode;
+    receipt.volume = clamped;
+    if (mode != 0) {
+        if (mode != 10) {
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if (state->midi_handle_present) {
+            if (clamped != 0 && state->master_sfx_volume == 0 &&
+                state->pending_music_track >= 0) {
+                receipt.play_music_requested = 1;
+                receipt.selected_music_track = state->pending_music_track;
+            } else if (clamped == 0) {
+                receipt.stop_music_requested = 1;
+            }
+        }
+        state->master_sfx_volume = clamped;
+        state->midi_volume = 36 * clamped;
+    } else if (state->sound_enabled) {
+        state->master_sfx_volume = clamped;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_process_sound(DM2_V1_SkprojectSoundState *state,
+                                   uint16_t index,
+                                   int16_t current_map,
+                                   int16_t party_map,
+                                   DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state || index >= state->queued_count) return 0;
+    receipt.argument0 = index;
+    if (state->queue[index].b_04 == current_map ||
+        state->queue[index].b_04 == party_map)
+        receipt.queue_noise_requested = 1;
+    state->queue[index].w_05 = -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* DM2_QUERY_SND_ENTRY_INDEX is a GDAT-backed lookup in c_sfx.cpp.  The
  * source-owned xsndptr2 table is runtime state, not a materialized GDAT
  * table, so no caller may derive an entry index from an arbitrary sound id. */
