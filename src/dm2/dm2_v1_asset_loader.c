@@ -302,6 +302,12 @@ static int dm2_img3_bits_per_pixel(uint16_t cy, uint16_t w4,
     return 1;
 }
 
+static int dm2_gdat_entry_owns_raw_payload(const DM2_V1_GdatEntry *entry) {
+    if (!entry) return 0;
+    return entry->cls3 != DM2_GDAT_ENTRY_TYPE_WORD_VALUE &&
+           entry->cls3 != DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
+}
+
 static const DM2_V1_GdatEntry *dm2_gdat_find_entry(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -342,6 +348,7 @@ static const uint8_t *dm2_gdat_raw_from_entry(
     if (!loader || !entry || !loader->raw_offsets || !loader->raw_sizes) {
         return NULL;
     }
+    if (!dm2_gdat_entry_owns_raw_payload(entry)) return NULL;
     raw_index = (uint16_t)(entry->data_index & 0x7fffu);
     if (raw_index >= loader->raw_data_count) return NULL;
     if (loader->raw_sizes[raw_index] == 0) return NULL;
@@ -746,8 +753,7 @@ int dm2_v1_asset_loader_validate_typed_graph(const DM2_V1_AssetLoader *loader) {
         const DM2_V1_GdatEntry *entry = &loader->entries[i];
         uint16_t raw_index;
 
-        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
-            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+        if (!dm2_gdat_entry_owns_raw_payload(entry)) {
             continue;
         }
         raw_index = (uint16_t)(entry->data_index & 0x7fffu);
@@ -789,6 +795,7 @@ const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
             (int)entry->cls4 != field) {
             continue;
         }
+        if (!dm2_gdat_entry_owns_raw_payload(entry)) continue;
         if (raw_index >= loader->raw_data_count) return NULL;
         if (loader->raw_sizes[raw_index] == 0) return NULL;
         if ((uint64_t)loader->raw_offsets[raw_index] +

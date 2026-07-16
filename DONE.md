@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 GDAT immediate scalar/raw gate: `dtWordValue` and
+  `dtImageOffset` entries no longer alias raw GDAT payload slots through the
+  generic asset lookup. Exact typed APIs still expose scalar values. This
+  prevents synthetic/raw-payload confusion in skproject-style GDAT consumers.
+
 - 2026-07-16 DM1 F0323 callable alias: exposed source-named
   `F0323_CHAMPION_Unpoison` alongside the existing compat wrapper and
   strengthened the registered regression so ReDMCSB symbol inventory can bind
