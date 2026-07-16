@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 35, CSB 1, shared DM1/CSB 1575, DM2 1524; 3135 total open rows
+  DM1 35, CSB 1, shared DM1/CSB 1575, DM2 1516; 3127 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -81,6 +81,12 @@
     or IMG9 decode hashes, and source allocation-byte formulas. Remaining
     adjacent work is overlay pixel composition, CPX cache-node lifecycle,
     preserved-GFX list ownership, and renderer/HUD consumption.
+  - 2026-07-16 DM2 palette update: skproject `c_gfx_pal.cpp` byte wrapper
+    rows, `DM2_CONVERT_DRIVERPALETTE`, `DM2_SELECT_PALETTE_SET`,
+    `DM2_UPDATE_BLIT_PALETTE`, and `DM2_xlat_palette` are now source-mapped
+    in `dm2_v1_skproject_core`. Remaining adjacent work is live host palette
+    upload, fade blitting, and full renderer/HUD consumption of converted
+    palettes with real GDAT surfaces.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`
     `DM2_ALLOC_PICT_BUFF`, `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and
     `DM2_FREE_PICT_ENTRY` now have bounded source-named bitmap allocation/free

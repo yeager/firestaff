@@ -161,6 +161,96 @@ static void test_util_helpers(void)
           "DM2_ATIMESB_RSHIFTC preserves unsignedlong conversion of signed words");
 }
 
+static void test_palette_helpers(void)
+{
+    DM2_V1_SkprojectDriverPaletteReceipt driver_receipt;
+    DM2_V1_SkprojectPaletteSetReceipt set_receipt;
+    DM2_V1_SkprojectXlatPaletteReceipt xlat_receipt;
+    uint8_t alpha_rgb[1024];
+    uint8_t palette[4] = { 1u, 2u, 3u, 4u };
+    uint8_t conv[256];
+    uint8_t byte = 0u;
+    const uint8_t *selected_palette = 0;
+
+    for (uint16_t i = 0; i < 256u; ++i) {
+        alpha_rgb[i * 4u + 0u] = 0xaau;
+        alpha_rgb[i * 4u + 1u] = (uint8_t)i;
+        alpha_rgb[i * 4u + 2u] = (uint8_t)(255u - i);
+        alpha_rgb[i * 4u + 3u] = (uint8_t)(i * 3u);
+        conv[i] = (uint8_t)(255u - i);
+    }
+
+    CHECK(dm2_v1_skproject_palettecolor_from_color(42u, &byte) == 1 &&
+              byte == 42u,
+          "color_to_palettecolor is the skproject byte wrapper");
+    CHECK(dm2_v1_skproject_palettecolor_from_ui8(43u, &byte) == 1 &&
+              byte == 43u,
+          "ui8_to_palettecolor preserves the palette byte");
+    CHECK(dm2_v1_skproject_palettecolor_to_ui8(44u, &byte) == 1 &&
+              byte == 44u,
+          "palettecolor_to_ui8 preserves the palette byte");
+    CHECK(dm2_v1_skproject_palettecolor_to_pixel(45u, &byte) == 1 &&
+              byte == 45u,
+          "palettecolor_to_pixel preserves the palette byte");
+
+    CHECK(dm2_v1_skproject_convert_driverpalette(
+              alpha_rgb, 1, &driver_receipt) == 1 &&
+              driver_receipt.valid &&
+              driver_receipt.converted_entries == 256u &&
+              driver_receipt.driver_setcolors_requested &&
+              driver_receipt.dmpal6[1][0] == (1u >> 2) &&
+              driver_receipt.dmpal6[1][1] == (254u >> 2) &&
+              driver_receipt.dmpal6[255][2] == ((uint8_t)(255u * 3u) >> 2) &&
+              driver_receipt.dmpal_hash != 0u,
+          "DM2_CONVERT_DRIVERPALETTE skips alpha and converts RGB8 to DMPAL RGB6");
+    CHECK(dm2_v1_skproject_convert_driverpalette(
+              0, 0, &driver_receipt) == 0 &&
+              driver_receipt.blocked_missing_input,
+          "DM2_CONVERT_DRIVERPALETTE fails closed without source palette");
+
+    CHECK(dm2_v1_skproject_select_palette_set(0, &set_receipt) == 1 &&
+              set_receipt.valid && set_receipt.fade_to_black_requested &&
+              !set_receipt.immediate_colors_after &&
+              set_receipt.vsync_waits == 2000u,
+          "DM2_SELECT_PALETTE_SET(0) records source fade-to-black timing");
+    CHECK(dm2_v1_skproject_select_palette_set(1, &set_receipt) == 1 &&
+              set_receipt.valid && set_receipt.driver_setcolors_requested &&
+              set_receipt.immediate_colors_after,
+          "DM2_SELECT_PALETTE_SET(1) requests immediate driver colors");
+    CHECK(dm2_v1_skproject_select_palette_set(2, &set_receipt) == 1 &&
+              set_receipt.valid && !set_receipt.immediate_colors_after &&
+              !set_receipt.driver_setcolors_requested,
+          "DM2_SELECT_PALETTE_SET preserves source no-op behavior for other modes");
+
+    CHECK(dm2_v1_skproject_update_blit_palette(
+              palette, 4u, &selected_palette) == 1 &&
+              selected_palette == palette,
+          "DM2_UPDATE_BLIT_PALETTE assigns the caller palette pointer");
+    CHECK(dm2_v1_skproject_update_blit_palette(
+              palette, 4u, 0) == 0,
+          "DM2_UPDATE_BLIT_PALETTE rejects missing output slot");
+
+    CHECK(dm2_v1_skproject_xlat_palette(
+              palette, 4u, conv, &xlat_receipt) == 1 &&
+              xlat_receipt.valid && xlat_receipt.colors_after == 4u &&
+              xlat_receipt.converted_colors == 4u &&
+              xlat_receipt.palette[0] == 254u &&
+              xlat_receipt.palette[3] == 251u &&
+              !xlat_receipt.large_palette_copy,
+          "DM2_xlat_palette applies the conversion table to explicit colors");
+    CHECK(dm2_v1_skproject_xlat_palette(
+              palette, 0u, conv, &xlat_receipt) == 1 &&
+              xlat_receipt.valid && xlat_receipt.colors_after == 256u &&
+              xlat_receipt.large_palette_copy &&
+              xlat_receipt.palette[0] == 255u &&
+              xlat_receipt.palette[255] == 0u,
+          "DM2_xlat_palette copies the large palette when colors is zero");
+    CHECK(dm2_v1_skproject_xlat_palette(
+              0, 4u, conv, &xlat_receipt) == 0 &&
+              xlat_receipt.blocked_missing_output,
+          "DM2_xlat_palette rejects missing source palette for explicit colors");
+}
+
 static void test_calc_vector_w_dir(void)
 {
     DM2_V1_SkprojectVectorWDirReceipt receipt;
@@ -922,6 +1012,7 @@ int main(void)
     test_temp_rect_ring();
     test_random_helpers();
     test_util_helpers();
+    test_palette_helpers();
     test_calc_vector_w_dir();
     test_cache_hash_helpers();
     test_picture_mement_helpers();

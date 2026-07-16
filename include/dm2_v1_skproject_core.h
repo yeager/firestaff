@@ -68,6 +68,37 @@ typedef struct {
     uint16_t written_entries;
 } DM2_V1_SkprojectFillI16TableReceipt;
 
+typedef struct {
+    int valid;
+    int blocked_missing_input;
+    int immediate_colors_before;
+    int driver_setcolors_requested;
+    uint32_t converted_entries;
+    uint8_t dmpal6[256][3];
+    uint32_t dmpal_hash;
+} DM2_V1_SkprojectDriverPaletteReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t set;
+    int fade_to_black_requested;
+    int driver_setcolors_requested;
+    int immediate_colors_after;
+    uint16_t vsync_waits;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectPaletteSetReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    uint16_t colors_before;
+    uint16_t colors_after;
+    uint16_t converted_colors;
+    uint8_t large_palette_copy;
+    uint8_t palette[256];
+    uint32_t palette_hash;
+} DM2_V1_SkprojectXlatPaletteReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -458,6 +489,30 @@ int dm2_v1_skproject_fill_i16table(
     int16_t value,
     uint16_t entries,
     DM2_V1_SkprojectFillI16TableReceipt *out_receipt);
+int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
+                                             uint8_t *out_palette);
+int dm2_v1_skproject_palettecolor_from_ui8(uint8_t color,
+                                           uint8_t *out_palette);
+int dm2_v1_skproject_palettecolor_to_ui8(uint8_t palette,
+                                         uint8_t *out_color);
+int dm2_v1_skproject_palettecolor_to_pixel(uint8_t palette,
+                                           uint8_t *out_pixel);
+int dm2_v1_skproject_convert_driverpalette(
+    const uint8_t *alpha_rgb8_palette,
+    int immediate_colors_before,
+    DM2_V1_SkprojectDriverPaletteReceipt *out_receipt);
+int dm2_v1_skproject_select_palette_set(
+    int16_t set,
+    DM2_V1_SkprojectPaletteSetReceipt *out_receipt);
+int dm2_v1_skproject_update_blit_palette(
+    const uint8_t *palette,
+    uint16_t colors,
+    const uint8_t **out_palette_ptr);
+int dm2_v1_skproject_xlat_palette(
+    const uint8_t *palette,
+    uint16_t colors,
+    const uint8_t *conversion_table,
+    DM2_V1_SkprojectXlatPaletteReceipt *out_receipt);
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);

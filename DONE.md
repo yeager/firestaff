@@ -1,12 +1,18 @@
 # Firestaff DONE - Completed Work
 
 - 2026-07-16 DM1 CHAMPION slot/hand redraw audit bundle: closed the
-  source-backed ReDMCSB dispositions for `F0292` alias, `F0293`, `F0295`,
-  `F0296`, `F0297`, `F0298`, `F0299`, `F0300`, `F0301`, `F0302`, and their
-  listed Atari ST aliases where bounded Firestaff routes already exist.
-  Verification: focused CTests for all-states redraw, hand-slot refresh,
-  action-hand priority, second-leader hand priority, and chest/action-hand
-  owner-change.
+  source-backed narrow ReDMCSB dispositions for `F0293`, `F0295`-`F0302`,
+  `F292_arzz_`, and the listed Atari ST aliases where bounded Firestaff
+  routes already exist. The bundle covers all-state redraw dispatch, changed
+  object icon refresh, leader-hand put/remove, slot remove/add, slot-box
+  command routing, and the bounded F0299 Rabbit's Foot / modifier-apply
+  evidence. Remaining blockers are the full F0299 all-item modifier matrix,
+  standalone all-callers coverage for the slot helpers, and original pixel
+  parity beyond the existing source-material gates. Verification: focused
+  Ninja target `test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat`;
+  focused CTests for inventory/chest owner changes, status-hand rotation,
+  portrait redraw states, hand-slot refresh, action-hand priority,
+  second-leader hand priority, and all-state redraw.
 
 - 2026-07-16 DM2 skproject GDAT image-structure bundle: added source-backed
   receipts for `DM2_TRACK_UNDERLAY`, `DM2_READ_GRAPHICS_STRUCTURE`, and the
@@ -21196,6 +21202,20 @@ event execution and DSA/save-corpus breadth remain separate. Verification:
 `cmake --build build-local-ninja --target test_csb_v1_boot_runtime_handoff
 -j2`, `ctest --test-dir build-local-ninja -R '^csb_v1_boot_runtime_handoff$'
 --output-on-failure`, and `git diff --check` passed.
+
+# ✅ 2026-07-16 DM2 skproject palette core symbol bundle
+
+DM2 now maps the `SKULLWIN/c_gfx_pal.cpp` palette-core block:
+`color_to_palettecolor`, `ui8_to_palettecolor`, `palettecolor_to_ui8`,
+`palettecolor_to_pixel`, `DM2_CONVERT_DRIVERPALETTE`,
+`DM2_SELECT_PALETTE_SET`, `DM2_UPDATE_BLIT_PALETTE`, and `DM2_xlat_palette`.
+The implementation follows skproject byte-wrapper semantics, ARGB-to-DMPAL
+RGB6 conversion, palette-set mode receipts, active blit palette pointer
+assignment, and conversion-table palette translation. Live host palette upload
+and fade blitting remain renderer work, so the driver/fade rows are deliberately
+marked narrow. Verification: `cmake --build build-local-ninja --target
+test_dm2_v1_skproject_core -j2` and `ctest --test-dir build-local-ninja
+--output-on-failure -R '^dm2_v1_skproject_core$'` passed.
 
 # ✅ 2026-07-16 DM1 ReDMCSB TIMELINE/MOVE/GROUP symbol bundle
 
