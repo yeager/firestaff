@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 CSB startup presented-frame route hash gate: Mac/app presented
+  capture now requires a 320x200 indexed real-CSB frame to carry a route hash
+  from the receipt-owned title, HUD/door, or credits capture path. Unrelated
+  presented-frame hashes and non-real CSB pixels fail closed without synthetic
+  fallback.
+
 - 2026-07-16 DM2 c_map accessors: `dm2_v1_dungeon_loader` now exposes
   source-bounded skproject `GET_TILE_VALUE`, `GET_ADDRESS_OF_TILE_RECORD`, and
   `IS_TILE_PASSAGE` helpers over the parsed byte-map, column-index, and

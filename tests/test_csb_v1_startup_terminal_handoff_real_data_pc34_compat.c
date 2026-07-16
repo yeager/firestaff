@@ -189,6 +189,87 @@ static void make_terminal_real_data_session(
             : -1;
 }
 
+static void make_release_receipt_ready(
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *receipt)
+{
+    csb_v1_boot_startup_release_app_capture_receipt_init_pc34(receipt);
+    receipt->valid = 1;
+    receipt->release_app_capture_ready = 1;
+    receipt->title_sequence_capture_ready = 1;
+    receipt->title_sequence_host_consumer_ready = 1;
+    receipt->title_sequence_same_capture_route = 1;
+    receipt->title_host_consumer_ready = 1;
+    receipt->closed_door_host_consumer_ready = 1;
+    receipt->utility_host_consumer_ready = 1;
+    receipt->door_opening_release_app_capture_ready = 1;
+    receipt->credits_release_app_capture_ready = 1;
+    receipt->credits_host_consumer_ready = 1;
+    receipt->route_specific_host_consumers_ready = 1;
+    receipt->hud_door_capture_ready = 1;
+    receipt->hud_door_host_consumers_ready = 1;
+    receipt->hud_door_same_capture_route = 1;
+    receipt->runtime_host_routes_ready = 1;
+    receipt->draw_consumes_receipt_only = 1;
+    receipt->input_consumes_receipt_only = 1;
+    receipt->no_fallback_callbacks = 1;
+    receipt->no_wrapper_fallback_routes = 1;
+    receipt->host_route_wrappers_retired = 1;
+    receipt->no_loose_render_plan_exports = 1;
+    receipt->release_app_real_asset_capture_ready = 1;
+    receipt->real_startup_assets_bound = 1;
+    receipt->title_runtime_phase_mask = 0x0b;
+    receipt->title_runtime_expected_phase_mask = 0x0b;
+    receipt->title_runtime_phase_hash_count =
+        CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34;
+    receipt->title_runtime_phase_hash = 0x11111111u;
+    receipt->release_app_capture_hash = 0x22222222u;
+    receipt->title_sequence_capture_hash = 0x33333333u;
+    receipt->closed_door_packaged_capture_hash = 0x44444444u;
+    receipt->utility_packaged_capture_hash = 0x55555555u;
+    receipt->door_opening_packaged_capture_hash = 0x66666666u;
+    receipt->credits_packaged_capture_hash = 0x77777777u;
+    receipt->hud_door_capture_hash = 0x88888888u;
+    receipt->release_app_real_asset_capture_hash = 0x99999999u;
+    receipt->runtime_host_gate_hash = 0xaaaabbbbu;
+    receipt->complete_support_hash = 0xbbbbccccu;
+}
+
+static void verify_presented_route_hash_gate(void)
+{
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release;
+    CSB_V1_StartupPresentedAppCaptureFacts_PC34 facts;
+    CSB_V1_StartupPresentedAppCaptureReceipt_PC34 receipt;
+
+    make_release_receipt_ready(&release);
+    memset(&facts, 0, sizeof(facts));
+    facts.running_from_macos_app_bundle = 1;
+    facts.mac_window_capture_ready = 1;
+    facts.presented_frame_captured = 1;
+    facts.presented_frame_width = 320;
+    facts.presented_frame_height = 200;
+    facts.presented_frame_indexed_pixels = 1;
+    facts.presented_frame_uses_real_csb_assets = 1;
+    facts.presented_frame_hash = 0x12345678u;
+    facts.presented_frame_route_hash = release.hud_door_capture_hash;
+    check(csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &release, &facts, &receipt) && receipt.valid &&
+              receipt.presented_frame_route_hash_ready,
+          "presented Mac/app capture accepts a receipt-owned HUD/door route hash");
+
+    facts.presented_frame_route_hash = 0xdeadbeefu;
+    check(!csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &release, &facts, &receipt) && !receipt.valid &&
+              !receipt.presented_frame_route_hash_ready,
+          "presented Mac/app capture rejects an unrelated frame route hash");
+
+    facts.presented_frame_route_hash = release.hud_door_capture_hash;
+    facts.presented_frame_uses_real_csb_assets = 0;
+    check(!csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
+              &release, &facts, &receipt) && !receipt.valid &&
+              !receipt.presented_frame_real_asset_ready,
+          "presented Mac/app capture rejects non-real CSB asset pixels");
+}
+
 int main(void)
 {
     CSB_V1_BootProfile profile;
@@ -336,5 +417,6 @@ int main(void)
                   CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_RUNTIME_BLOCKED_PC34,
           "a malformed C040 crop cannot cross the entrance runtime handoff");
 
+    verify_presented_route_hash_gate();
     return failures ? 1 : 0;
 }

@@ -1051,6 +1051,7 @@ typedef struct CSB_V1_StartupPresentedAppCaptureFacts_PC34 {
     int presented_frame_indexed_pixels;
     int presented_frame_uses_real_csb_assets;
     uint32_t presented_frame_hash;
+    uint32_t presented_frame_route_hash;
 } CSB_V1_StartupPresentedAppCaptureFacts_PC34;
 
 typedef struct CSB_V1_StartupPresentedAppCaptureReceipt_PC34 {
@@ -1062,6 +1063,7 @@ typedef struct CSB_V1_StartupPresentedAppCaptureReceipt_PC34 {
     int presented_frame_geometry_ready;
     int presented_frame_pixels_ready;
     int presented_frame_real_asset_ready;
+    int presented_frame_route_hash_ready;
     int presented_runtime_capture_boundary_ready;
     int presented_title_sequence_ready;
     int presented_title_phase_mask_ready;
@@ -1077,6 +1079,7 @@ typedef struct CSB_V1_StartupPresentedAppCaptureReceipt_PC34 {
     uint32_t credits_capture_hash;
     uint32_t presented_wrapper_cleanup_hash;
     uint32_t presented_frame_hash;
+    uint32_t presented_frame_route_hash;
     uint32_t presented_app_capture_hash;
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 release_app_capture;
     const char *source_evidence;

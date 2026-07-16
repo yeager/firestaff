@@ -35,6 +35,10 @@
   save/header load path. Remaining CSB startup work is real packaged
   title/PRESENTS/CHAOS/STRIKES/HUD capture and DSA/save-runtime handoff
   breadth, not a synthetic save envelope.
+  - 2026-07-16 update: presented Mac/app capture now also rejects any frame
+    whose route hash is not one of the receipt-owned title, HUD/door, or
+    credits capture hashes. Remaining CSB evidence is still real Mac/app
+    capture with local CSB data, not a synthetic title/door/HUD substitute.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,

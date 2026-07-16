@@ -1286,6 +1286,18 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
         release_app_capture->hud_door_capture_hash;
     out_receipt->credits_capture_hash =
         release_app_capture->credits_packaged_capture_hash;
+    out_receipt->presented_frame_route_hash =
+        presented_facts->presented_frame_route_hash;
+    out_receipt->presented_frame_route_hash_ready =
+        out_receipt->presented_frame_route_hash != 0u &&
+                (out_receipt->presented_frame_route_hash ==
+                     out_receipt->title_sequence_capture_hash ||
+                 out_receipt->presented_frame_route_hash ==
+                     out_receipt->hud_door_capture_hash ||
+                 out_receipt->presented_frame_route_hash ==
+                     out_receipt->credits_capture_hash)
+            ? 1
+            : 0;
     out_receipt->presented_wrapper_cleanup_hash =
         release_app_capture->runtime_host_gate_hash;
     out_receipt->presented_wrapper_cleanup_hash *= 16777619u;
@@ -1314,6 +1326,10 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
     hash ^= (uint32_t)out_receipt->presented_frame_pixels_ready;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->presented_frame_real_asset_ready;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->presented_frame_route_hash_ready;
+    hash *= 16777619u;
+    hash ^= out_receipt->presented_frame_route_hash;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->presented_title_sequence_ready;
     hash *= 16777619u;
@@ -1350,6 +1366,7 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
                 out_receipt->presented_frame_geometry_ready &&
                 out_receipt->presented_frame_pixels_ready &&
                 out_receipt->presented_frame_real_asset_ready &&
+                out_receipt->presented_frame_route_hash_ready &&
                 out_receipt->presented_title_sequence_ready &&
                 out_receipt->presented_title_phase_mask_ready &&
                 out_receipt->presented_hud_door_ready &&
@@ -1367,7 +1384,9 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
      * and ENTRANCE.C F0441/F0806. CSBWin separates graphic archive reads
      * from host viewport presentation. This receipt is deliberately stricter
      * than the release-app route proof: it requires an actual Mac app window
-     * frame carrying real CSB indexed pixels before capture is promoted. */
+     * frame carrying real CSB indexed pixels through one of the same
+     * receipt-owned title/HUD/credits route hashes before capture is
+     * promoted. */
     return out_receipt->valid;
 }
 
