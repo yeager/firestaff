@@ -82,6 +82,11 @@
     source-backed narrow receipts in `dm2_v1_skproject_core`. Remaining
     adjacent map work starts at `DM2_ARRANGE_DUNGEON` and broader live
     dungeon arrangement/global mutation.
+  - 2026-07-16 DM2 update: skproject other-level/cross-map rows
+    `DM_LOCATE_OTHER_LEVEL` and `DM2_map_3BF83` are now closed through
+    source-backed narrow receipts in `dm2_v1_skproject_core`. Remaining
+    adjacent work is live `DM2_ARRANGE_DUNGEON`, `DM2_LOAD_NEWMAP`,
+    full record relocation, and caller-owned map/global mutation.
   - 2026-07-16 DM2 update: skproject move/alcove helper rows
     `DM2_move_12b4_099e`, `DM2_move_12b4_0092`, `DM2_move_12b4_00af`,
     and `DM2_0cee_317f` are now closed through source-backed narrow receipts.

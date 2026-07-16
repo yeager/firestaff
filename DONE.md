@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject other-level/cross-map helper bundle: mapped
+  `DM_LOCATE_OTHER_LEVEL` and `DM2_map_3BF83` from `SKULLWIN/c_map.cpp`.
+  Coverage locks cursor/resume candidate scanning, world-to-local coordinate
+  conversion, wall/active-teleporter rejection, same-map record-move planning,
+  cross-map restore/LOAD_NEWMAP handoff, and party-rotation request without
+  claiming full live `DM2_ARRANGE_DUNGEON` or record relocation mutation.
+  Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_skproject_core -j2`, `ctest --test-dir build-local-ninja
+  --output-on-failure -R '^dm2_v1_skproject_core$'`, and `git diff --check`
+  passed.
+
 - 2026-07-16 DM1 CHAMPION scent F0315-F0317 bundle: added source-backed
   champion-needs scent helpers for `F0315_CHAMPION_GetScentOrdinal`,
   `F0316_CHAMPION_DeleteScent`, `F0317_CHAMPION_AddScentStrength`, and aliases

@@ -230,6 +230,53 @@ typedef struct {
 } DM2_V1_SkprojectTmpmapFlagReceipt;
 
 typedef struct {
+    uint8_t map_id;
+    int16_t world_x;
+    int16_t world_y;
+    int16_t width;
+    int16_t height;
+    uint8_t tile_type_at_local;
+    uint8_t teleporter_record_active;
+} DM2_V1_SkprojectMapDescriptor;
+
+typedef struct {
+    int valid;
+    int found;
+    uint8_t blocked_missing_descriptors;
+    uint8_t blocked_missing_output;
+    uint8_t used_resume_cursor;
+    uint8_t scanned_candidates;
+    int16_t source_map;
+    int16_t locate_delta;
+    int16_t source_world_x;
+    int16_t source_world_y;
+    int16_t selected_map;
+    int16_t selected_x;
+    int16_t selected_y;
+    uint8_t selected_tile_type;
+    uint8_t rejected_teleporter;
+} DM2_V1_SkprojectLocateOtherLevelReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t in_bounds;
+    uint8_t target_differs_from_current;
+    uint8_t requested_change_to_target;
+    uint8_t requested_restore_current;
+    uint8_t requested_load_newmap;
+    uint8_t requested_party_rotate;
+    int16_t current_map;
+    int16_t target_map;
+    int16_t x;
+    int16_t y;
+    int16_t rotation;
+    int16_t move_from_x;
+    int16_t move_from_y;
+    int16_t move_to_x;
+    int16_t move_to_y;
+} DM2_V1_SkprojectMap3BF83Receipt;
+
+typedef struct {
     int valid;
     uint16_t active_v1e0534;
     uint16_t arrow_panel;
@@ -788,6 +835,29 @@ int dm2_v1_skproject_tmpmap_or_flag(
     int16_t x,
     int16_t offset,
     DM2_V1_SkprojectTmpmapFlagReceipt *out_receipt);
+int dm2_v1_skproject_locate_other_level(
+    const DM2_V1_SkprojectMapDescriptor *maps,
+    uint16_t map_count,
+    int16_t source_map,
+    int16_t locate_delta,
+    int16_t *x,
+    int16_t *y,
+    const uint8_t *candidate_cursor,
+    uint16_t candidate_count,
+    uint16_t resume_offset,
+    uint16_t *out_resume_offset,
+    DM2_V1_SkprojectLocateOtherLevelReceipt *out_receipt);
+int dm2_v1_skproject_map_3bf83(
+    int16_t x,
+    int16_t y,
+    int16_t target_map,
+    int16_t rotation,
+    int16_t current_map,
+    int16_t current_x,
+    int16_t current_y,
+    int16_t target_width,
+    int16_t target_height,
+    DM2_V1_SkprojectMap3BF83Receipt *out_receipt);
 int dm2_v1_skproject_move_12b4_0092(
     uint16_t active_v1e0534,
     uint16_t arrow_panel,

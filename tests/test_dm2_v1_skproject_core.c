@@ -499,6 +499,88 @@ static void test_map_helpers(void)
     }
 
     {
+        DM2_V1_SkprojectMapDescriptor maps[4];
+        uint8_t cursor[4] = { 2u, 1u, 3u, 0xffu };
+        DM2_V1_SkprojectLocateOtherLevelReceipt locate;
+        DM2_V1_SkprojectMap3BF83Receipt map3bf83;
+        uint16_t resume = 0u;
+        int16_t x = 4;
+        int16_t y = 2;
+
+        memset(maps, 0, sizeof(maps));
+        maps[0].map_id = 0u;
+        maps[0].world_x = 20;
+        maps[0].world_y = 40;
+        maps[0].width = 10;
+        maps[0].height = 8;
+        maps[1].map_id = 1u;
+        maps[1].world_x = 23;
+        maps[1].world_y = 41;
+        maps[1].width = 7;
+        maps[1].height = 6;
+        maps[1].tile_type_at_local = 5u;
+        maps[1].teleporter_record_active = 1u;
+        maps[2].map_id = 2u;
+        maps[2].world_x = 24;
+        maps[2].world_y = 42;
+        maps[2].width = 8;
+        maps[2].height = 7;
+        maps[2].tile_type_at_local = 7u;
+        maps[3].map_id = 3u;
+        maps[3].world_x = 22;
+        maps[3].world_y = 39;
+        maps[3].width = 8;
+        maps[3].height = 9;
+        maps[3].tile_type_at_local = 1u;
+
+        CHECK(dm2_v1_skproject_locate_other_level(
+                  maps, 4u, 0, 1, &x, &y, cursor, 4u, 0u, &resume,
+                  &locate) == 3 &&
+                  locate.valid && locate.found &&
+                  locate.scanned_candidates == 3u &&
+                  locate.rejected_teleporter &&
+                  locate.selected_x == 2 && locate.selected_y == 3 &&
+                  x == 2 && y == 3 && resume == 3u,
+              "DM_LOCATE_OTHER_LEVEL scans cursor maps, rejects wall/active teleporter, and returns local coordinates");
+        CHECK(dm2_v1_skproject_locate_other_level(
+                  maps, 4u, 0, 1, &x, &y, cursor, 4u, resume, &resume,
+                  &locate) == -1 &&
+                  locate.valid && !locate.found &&
+                  locate.used_resume_cursor && resume == 0u,
+              "DM_LOCATE_OTHER_LEVEL resumes after caller cursor and fails closed at terminator");
+        CHECK(dm2_v1_skproject_locate_other_level(
+                  maps, 4u, 8, 0, &x, &y, cursor, 4u, 0u, &resume,
+                  &locate) == -1 &&
+                  locate.blocked_missing_descriptors,
+              "DM_LOCATE_OTHER_LEVEL rejects missing source map descriptor");
+
+        CHECK(dm2_v1_skproject_map_3bf83(
+                  5, 6, 2, 7, 2, 3, 4, 12, 9, &map3bf83) == 1 &&
+                  map3bf83.valid && map3bf83.in_bounds &&
+                  !map3bf83.target_differs_from_current &&
+                  map3bf83.move_to_x == 5 && map3bf83.move_to_y == 6 &&
+                  map3bf83.requested_party_rotate &&
+                  map3bf83.rotation == 3,
+              "DM2_map_3BF83 same-map route moves record to target square and rotates party");
+        CHECK(dm2_v1_skproject_map_3bf83(
+                  5, 6, 3, 1, 2, 3, 4, 12, 9, &map3bf83) == 1 &&
+                  map3bf83.target_differs_from_current &&
+                  map3bf83.requested_change_to_target &&
+                  map3bf83.requested_restore_current &&
+                  map3bf83.requested_load_newmap &&
+                  map3bf83.move_from_x == 3 &&
+                  map3bf83.move_from_y == 4 &&
+                  map3bf83.move_to_x == -1 &&
+                  map3bf83.move_to_y == 6,
+              "DM2_map_3BF83 cross-map route plans restore, LOAD_NEWMAP, and source-shaped move target");
+        CHECK(dm2_v1_skproject_map_3bf83(
+                  13, 6, 3, 1, 2, 3, 4, 12, 9, &map3bf83) == 0 &&
+                  map3bf83.valid && !map3bf83.in_bounds &&
+                  map3bf83.requested_restore_current,
+              "DM2_map_3BF83 out-of-bounds cross-map route only restores current map");
+    }
+
+    {
         DM2_V1_SkprojectArrowHighlightReceipt arrow;
         DM2_V1_SkprojectOtherLevelReceipt other_level;
         DM2_V1_SkprojectLiftRequest lift;
@@ -1400,6 +1482,12 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_SET_DESTINATION_OF_MINION_MAP") != 0,
           "source evidence names c_map helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM_LOCATE_OTHER_LEVEL") != 0,
+          "source evidence names other-level locator");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_map_3BF83") != 0,
+          "source evidence names cross-map record mover");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

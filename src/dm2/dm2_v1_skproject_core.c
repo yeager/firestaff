@@ -886,6 +886,149 @@ int dm2_v1_skproject_tmpmap_or_flag(
     return 1;
 }
 
+int dm2_v1_skproject_locate_other_level(
+    const DM2_V1_SkprojectMapDescriptor *maps,
+    uint16_t map_count,
+    int16_t source_map,
+    int16_t locate_delta,
+    int16_t *x,
+    int16_t *y,
+    const uint8_t *candidate_cursor,
+    uint16_t candidate_count,
+    uint16_t resume_offset,
+    uint16_t *out_resume_offset,
+    DM2_V1_SkprojectLocateOtherLevelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectLocateOtherLevelReceipt receipt;
+    int16_t world_x;
+    int16_t world_y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_map = source_map;
+    receipt.locate_delta = locate_delta;
+    if (!maps || source_map < 0 || source_map >= (int16_t)map_count) {
+        receipt.blocked_missing_descriptors = 1u;
+        if (out_resume_offset) *out_resume_offset = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+    if (!x || !y) {
+        receipt.blocked_missing_output = 1u;
+        if (out_resume_offset) *out_resume_offset = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    world_x = (int16_t)(*x + maps[source_map].world_x);
+    world_y = (int16_t)(*y + maps[source_map].world_y);
+    receipt.source_world_x = world_x;
+    receipt.source_world_y = world_y;
+
+    if (!candidate_cursor || candidate_count == 0u) {
+        candidate_cursor = &maps[source_map].map_id;
+        candidate_count = 1u;
+    }
+    if (resume_offset < candidate_count)
+        receipt.used_resume_cursor = resume_offset != 0u;
+    else
+        resume_offset = 0u;
+
+    for (uint16_t i = resume_offset; i < candidate_count; ++i) {
+        uint8_t map_id = candidate_cursor[i];
+        const DM2_V1_SkprojectMapDescriptor *candidate;
+        int16_t local_x;
+        int16_t local_y;
+
+        if (map_id == 0xffu)
+            break;
+        receipt.scanned_candidates++;
+        if (map_id >= map_count)
+            continue;
+        candidate = &maps[map_id];
+        local_x = (int16_t)(world_x - candidate->world_x);
+        local_y = (int16_t)(world_y - candidate->world_y);
+        if (local_x < -1 || local_y < -1 ||
+            local_x > candidate->width + 1 ||
+            local_y > candidate->height + 1)
+            continue;
+        if (candidate->tile_type_at_local == 7u ||
+            (candidate->tile_type_at_local == 5u &&
+             candidate->teleporter_record_active)) {
+            receipt.rejected_teleporter = 1u;
+            continue;
+        }
+
+        *x = local_x;
+        *y = local_y;
+        if (out_resume_offset)
+            *out_resume_offset = (uint16_t)(i + 1u);
+        receipt.selected_map = map_id;
+        receipt.selected_x = local_x;
+        receipt.selected_y = local_y;
+        receipt.selected_tile_type = candidate->tile_type_at_local;
+        receipt.found = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return map_id;
+    }
+
+    if (out_resume_offset) *out_resume_offset = 0u;
+    receipt.selected_map = -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+}
+
+int dm2_v1_skproject_map_3bf83(
+    int16_t x,
+    int16_t y,
+    int16_t target_map,
+    int16_t rotation,
+    int16_t current_map,
+    int16_t current_x,
+    int16_t current_y,
+    int16_t target_width,
+    int16_t target_height,
+    DM2_V1_SkprojectMap3BF83Receipt *out_receipt)
+{
+    DM2_V1_SkprojectMap3BF83Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.current_map = current_map;
+    receipt.target_map = target_map;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.rotation = (int16_t)(rotation & 3);
+    receipt.move_from_x = current_x;
+    receipt.move_from_y = current_y;
+    receipt.move_to_x = x;
+    receipt.move_to_y = y;
+    receipt.target_differs_from_current = target_map != current_map;
+
+    if (x < 0 || y < 0 || x >= target_width || y >= target_height) {
+        if (receipt.target_differs_from_current)
+            receipt.requested_restore_current = 1u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.in_bounds = 1u;
+    if (receipt.target_differs_from_current) {
+        receipt.requested_change_to_target = 1u;
+        receipt.requested_restore_current = 1u;
+        receipt.requested_load_newmap = 1u;
+        receipt.move_to_x = -1;
+        receipt.move_to_y = y;
+    }
+    receipt.requested_party_rotate = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_move_12b4_0092(
     uint16_t active_v1e0534,
     uint16_t arrow_panel,
@@ -2318,5 +2461,6 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881; "
            "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
-           "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001";
+           "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001/"
+           "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83";
 }
