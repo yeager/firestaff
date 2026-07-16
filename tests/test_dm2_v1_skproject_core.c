@@ -771,7 +771,71 @@ static void test_map_helpers(void)
         DM2_V1_SkprojectMapRecord records[8];
         DM2_V1_SkprojectMap20661F37Receipt f37;
         DM2_V1_SkprojectMap20661EC9Receipt ec9;
+        DM2_V1_SkprojectRecordAddressReceipt addr;
+        uint16_t record_counts[16];
+        uint16_t record_sizes[16];
         int16_t counter = 0;
+
+        for (uint8_t i = 0; i < 16u; ++i) {
+            record_counts[i] = (uint16_t)(8u + i);
+            record_sizes[i] = (uint16_t)(2u + i);
+        }
+
+        CHECK(dm2_v1_skproject_get_address_of_record(
+                  (uint16_t)((5u << 10) | 3u), record_counts,
+                  record_sizes, &addr) == 1 &&
+                  addr.valid &&
+                  addr.db_type == 5u &&
+                  addr.db_index == 3u &&
+                  addr.record_count == 13u &&
+                  addr.record_size == 7u &&
+                  addr.byte_offset == 21u,
+              "GET_ADDRESS_OF_RECORD applies skproject 4-bit table and 10-bit index addressing");
+        CHECK(dm2_v1_skproject_get_address_of_record(
+                  (uint16_t)((2u << 10) | 30u), record_counts,
+                  record_sizes, &addr) == 0 &&
+                  addr.blocked_index_out_of_range,
+              "GET_ADDRESS_OF_RECORD rejects indexes outside the source record count");
+        CHECK(dm2_v1_skproject_get_address_of_record(
+                  DM2_V1_SKPROJECT_MAP_RECORD_END, record_counts,
+                  record_sizes, &addr) == 0 &&
+                  addr.blocked_end_marker,
+              "GET_ADDRESS_OF_RECORD rejects OBJECT_END_MARKER");
+        CHECK(dm2_v1_skproject_get_typed_address_of_record(
+                  (uint16_t)((3u << 10) | 2u), 3u, record_counts,
+                  record_sizes, 0, &addr) == 1 &&
+                  addr.valid &&
+                  addr.typed_accessor &&
+                  addr.actuator_accessor &&
+                  addr.requested_type == 3u,
+              "GET_ADDRESS_OF_ACTU/RECORD3 require actuator DB type 3");
+        CHECK(dm2_v1_skproject_get_typed_address_of_record(
+                  (uint16_t)((4u << 10) | 2u), 0x04u, record_counts,
+                  record_sizes, 1, &addr) == 1 &&
+                  addr.valid &&
+                  addr.used_detached_record_route,
+              "GET_ADDRESS_OF_RECORDX4 uses the detached record route for creatures");
+        CHECK(dm2_v1_skproject_get_typed_address_of_record(
+                  0xff80u, 0x04u, record_counts, record_sizes, 1,
+                  &addr) == 0 &&
+                  addr.blocked_effect_record,
+              "GET_ADDRESS_OF_DETACHED_RECORD rejects effect records at or above OBJECT_EFFECT_FIREBALL");
+        CHECK(dm2_v1_skproject_get_typed_address_of_record(
+                  (uint16_t)((9u << 10) | 1u), 0x10u, record_counts,
+                  record_sizes, 0, &addr) == 1 &&
+                  addr.generic_container_accessor &&
+                  addr.db_type == 9u,
+              "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD accepts concrete item container pools");
+        CHECK(dm2_v1_skproject_get_typed_address_of_record(
+                  (uint16_t)((2u << 10) | 1u), 0x10u, record_counts,
+                  record_sizes, 0, &addr) == 0 &&
+                  addr.blocked_type_mismatch,
+              "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD rejects non-container DB pools");
+        CHECK(dm2_v1_skproject_get_typed_address_of_record(
+                  (uint16_t)((0x0bu << 10) | 1u), 0x0bu, record_counts,
+                  record_sizes, 0, &addr) == 1 &&
+                  addr.null_accessor,
+              "GET_ADDRESS_OF_RECORDB/C/D preserve skproject null-accessor slots");
 
         memset(records, 0, sizeof(records));
         records[0].next = 1u;
@@ -2365,6 +2429,13 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_SET_DESTINATION_OF_MINION_MAP") != 0,
           "source evidence names c_map helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_GET_ADDRESS_OF_RECORD") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "GET_ADDRESS_OF_RECORDX4") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD") != 0,
+          "source evidence names c_record address helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM_LOCATE_OTHER_LEVEL") != 0,
           "source evidence names other-level locator");

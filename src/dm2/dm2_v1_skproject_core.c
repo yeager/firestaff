@@ -1129,6 +1129,127 @@ static int dm2_v1_skproject_map_record_valid(uint16_t record,
     return record != DM2_V1_SKPROJECT_MAP_RECORD_END && record < count;
 }
 
+int dm2_v1_skproject_get_address_of_record(
+    uint16_t record_link,
+    const uint16_t record_counts[16],
+    const uint16_t record_sizes[16],
+    DM2_V1_SkprojectRecordAddressReceipt *out_receipt)
+{
+    DM2_V1_SkprojectRecordAddressReceipt receipt;
+    uint8_t db_type;
+    uint16_t db_index;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_link = record_link;
+    if (!record_counts) {
+        receipt.blocked_missing_counts = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!record_sizes) {
+        receipt.blocked_missing_sizes = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (record_link == DM2_V1_SKPROJECT_MAP_RECORD_END) {
+        receipt.blocked_end_marker = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (record_link == DM2_V1_SKPROJECT_OBJECT_NULL) {
+        receipt.blocked_object_null = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    db_type = (uint8_t)((record_link >> 10) & 0x0fu);
+    db_index = (uint16_t)(record_link & 0x03ffu);
+    receipt.db_type = db_type;
+    receipt.real_db_type = db_type;
+    receipt.db_index = db_index;
+    receipt.record_count = record_counts[db_type];
+    receipt.record_size = record_sizes[db_type];
+    if (db_index >= receipt.record_count) {
+        receipt.blocked_index_out_of_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.byte_offset =
+        (uint32_t)receipt.record_size * (uint32_t)db_index;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_get_typed_address_of_record(
+    uint16_t record_link,
+    uint8_t requested_type,
+    const uint16_t record_counts[16],
+    const uint16_t record_sizes[16],
+    int detached_route,
+    DM2_V1_SkprojectRecordAddressReceipt *out_receipt)
+{
+    DM2_V1_SkprojectRecordAddressReceipt receipt;
+    uint8_t db_type;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (requested_type > 0x10u) {
+        if (out_receipt) out_receipt->blocked_db_type_out_of_range = 1;
+        return 0;
+    }
+    if (detached_route && record_link >= DM2_V1_SKPROJECT_OBJECT_EFFECT_FIREBALL) {
+        if (out_receipt) {
+            out_receipt->record_link = record_link;
+            out_receipt->requested_type = requested_type;
+            out_receipt->used_detached_record_route = 1u;
+            out_receipt->blocked_effect_record = 1;
+        }
+        return 0;
+    }
+    if (!dm2_v1_skproject_get_address_of_record(
+            record_link, record_counts, record_sizes, &receipt)) {
+        receipt.requested_type = requested_type;
+        receipt.typed_accessor = 1u;
+        receipt.used_detached_record_route = detached_route ? 1u : 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    db_type = receipt.db_type;
+    receipt.requested_type = requested_type;
+    receipt.typed_accessor = 1u;
+    receipt.used_detached_record_route = detached_route ? 1u : 0u;
+    receipt.null_accessor =
+        (requested_type == 0x0bu || requested_type == 0x0cu ||
+         requested_type == 0x0du) ? 1u : 0u;
+    receipt.generic_container_accessor =
+        requested_type == 0x10u ? 1u : 0u;
+    receipt.actuator_accessor = requested_type == 0x03u ? 1u : 0u;
+
+    if (receipt.null_accessor) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (requested_type == 0x10u) {
+        if (db_type < 0x04u || db_type > 0x0au) {
+            receipt.valid = 0;
+            receipt.blocked_type_mismatch = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+    } else if (db_type != requested_type) {
+        receipt.valid = 0;
+        receipt.blocked_type_mismatch = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 static uint8_t dm2_v1_skproject_map_record_type(
     const DM2_V1_SkprojectMapRecord *records,
     uint16_t record)
@@ -4411,5 +4532,18 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "
            "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
            "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001/"
-           "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83";
+           "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83; "
+           "SKULLWIN/c_record.cpp DM2_GET_ADDRESS_OF_RECORD and "
+           "SKWIN/SkWinCore.cpp GET_ADDRESS_OF_RECORD/"
+           "GET_ADDRESS_OF_RECORD0/GET_ADDRESS_OF_RECORD1/"
+           "GET_ADDRESS_OF_RECORD2/GET_ADDRESS_OF_RECORD3/"
+           "GET_ADDRESS_OF_RECORD4/GET_ADDRESS_OF_RECORD5/"
+           "GET_ADDRESS_OF_RECORD6/GET_ADDRESS_OF_RECORD7/"
+           "GET_ADDRESS_OF_RECORD8/GET_ADDRESS_OF_RECORD9/"
+           "GET_ADDRESS_OF_RECORDA/GET_ADDRESS_OF_RECORDB/"
+           "GET_ADDRESS_OF_RECORDC/GET_ADDRESS_OF_RECORDD/"
+           "GET_ADDRESS_OF_RECORDE/GET_ADDRESS_OF_RECORDF/"
+           "GET_ADDRESS_OF_RECORDX4/"
+           "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD/"
+           "GET_ADDRESS_OF_ACTU/GET_ADDRESS_OF_DETACHED_RECORD";
 }

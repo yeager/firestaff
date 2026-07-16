@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 record-address receipt bundle: mapped
+  `DM2_GET_ADDRESS_OF_RECORD`, `GET_ADDRESS_OF_RECORD`, typed
+  `GET_ADDRESS_OF_RECORD0` through `GET_ADDRESS_OF_RECORDF`,
+  `GET_ADDRESS_OF_RECORDX4`, `GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD`,
+  `GET_ADDRESS_OF_ACTU`, and `GET_ADDRESS_OF_DETACHED_RECORD` to
+  skproject-backed bounded address receipts. The receipts use the source
+  4-bit table / 10-bit index formula and fail closed on invalid links.
+
 - 2026-07-16 DM2 SKWIN HUD alias receipt bundle: mapped
   `DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON`,
   `DRAW_SQUAD_SPELL_AND_LEADER_ICON`, `DRAW_SQUAD_POS_INTERFACE`,

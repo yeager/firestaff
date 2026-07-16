@@ -326,12 +326,39 @@ typedef struct {
 } DM2_V1_SkprojectWakeUpTextReceipt;
 
 #define DM2_V1_SKPROJECT_MAP_RECORD_END 0xfffeu
+#define DM2_V1_SKPROJECT_OBJECT_NULL 0xffffu
+#define DM2_V1_SKPROJECT_OBJECT_EFFECT_FIREBALL 0xff80u
 
 typedef struct {
     uint16_t next;
     uint16_t w2;
     uint8_t record_type;
 } DM2_V1_SkprojectMapRecord;
+
+typedef struct {
+    int valid;
+    uint16_t record_link;
+    uint8_t db_type;
+    uint8_t real_db_type;
+    uint16_t db_index;
+    uint16_t record_count;
+    uint16_t record_size;
+    uint32_t byte_offset;
+    uint8_t typed_accessor;
+    uint8_t requested_type;
+    uint8_t used_detached_record_route;
+    uint8_t null_accessor;
+    uint8_t generic_container_accessor;
+    uint8_t actuator_accessor;
+    int blocked_missing_counts;
+    int blocked_missing_sizes;
+    int blocked_end_marker;
+    int blocked_object_null;
+    int blocked_effect_record;
+    int blocked_db_type_out_of_range;
+    int blocked_index_out_of_range;
+    int blocked_type_mismatch;
+} DM2_V1_SkprojectRecordAddressReceipt;
 
 typedef struct {
     int valid;
@@ -1636,6 +1663,18 @@ int dm2_v1_skproject_tmpmap_or_flag(
     int16_t x,
     int16_t offset,
     DM2_V1_SkprojectTmpmapFlagReceipt *out_receipt);
+int dm2_v1_skproject_get_address_of_record(
+    uint16_t record_link,
+    const uint16_t record_counts[16],
+    const uint16_t record_sizes[16],
+    DM2_V1_SkprojectRecordAddressReceipt *out_receipt);
+int dm2_v1_skproject_get_typed_address_of_record(
+    uint16_t record_link,
+    uint8_t requested_type,
+    const uint16_t record_counts[16],
+    const uint16_t record_sizes[16],
+    int detached_route,
+    DM2_V1_SkprojectRecordAddressReceipt *out_receipt);
 int dm2_v1_skproject_locate_other_level(
     const DM2_V1_SkprojectMapDescriptor *maps,
     uint16_t map_count,
