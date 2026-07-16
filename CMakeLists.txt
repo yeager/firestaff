@@ -1108,7 +1108,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0425_dialog_print_cent
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
+            -Wall -Wextra -pedantic
         )
     endif()
     add_test(

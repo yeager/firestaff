@@ -1,7 +1,10 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "firestaff/dm1/v1/palette_credits_pc34_compat.h"
+#include "firestaff/dm1/v1/palette_entrance_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include <stdio.h>
@@ -3390,9 +3393,14 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
     {
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
         DM1OriginalSaveCorpusManifest corpus;
+        DM1OriginalSavePC34CorpusRoundtripReport corpus_receipt;
+        int first_pc34_index = -1;
         memset(&corpus, 0, sizeof(corpus));
+        memset(&corpus_receipt, 0, sizeof(corpus_receipt));
         if (dm1_v1_startup_resume_root_from_path_pc34(
                 resume_host.resume_path, corpus_root) &&
+            dm1_v1_original_save_classify_corpus_root(corpus_root,
+                                                       &corpus) &&
             dm1_v1_original_save_pc34_roundtrip_corpus_root(corpus_root,
                                                              &corpus_receipt) ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
