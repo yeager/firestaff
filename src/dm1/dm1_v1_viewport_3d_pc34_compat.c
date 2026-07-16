@@ -2466,6 +2466,40 @@ uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *sp
         : 0x0000u;
 }
 
+int dm1_v1_graphic_wallset0_index_pc34(int wall_index)
+{
+    if (wall_index < 0 || wall_index >= DM1_WALL_SET_COUNT) {
+        return -1;
+    }
+    return 93 + wall_index;
+}
+
+int dm1_viewport_3d_wall_host_material_receipt_pc34(
+    int map_wall_set,
+    int graphic_index,
+    int transparent_color,
+    bool flip_horizontally,
+    int expected_width,
+    int expected_height,
+    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt)
+{
+    DM1_ViewportWallHostMaterialReceiptPc34 receipt;
+    if (!out_receipt || graphic_index < 0 ||
+        expected_width <= 0 || expected_height <= 0) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = true;
+    receipt.map_wall_set = map_wall_set;
+    receipt.graphic_index = graphic_index;
+    receipt.transparent_color = transparent_color;
+    receipt.flip_horizontally = flip_horizontally;
+    receipt.expected_width = expected_width;
+    receipt.expected_height = expected_height;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     DM1_ViewSquareIndex square,
     bool parity_flip,

@@ -700,6 +700,47 @@ typedef struct {
     const char *occlusion_source_lines;
 } DM1_ViewportWallDrawSpec;
 
+typedef struct DM1_ViewportWallHostMaterialReceiptPc34 {
+    bool valid;
+    int map_wall_set;
+    int graphic_index;
+    int transparent_color;
+    bool flip_horizontally;
+    int expected_width;
+    int expected_height;
+} DM1_ViewportWallHostMaterialReceiptPc34;
+
+typedef struct DM1_ViewportD3SideWallHostHandoffPc34 {
+    bool handled;
+    bool draw_wall;
+    bool falls_through_to_f0115;
+    DM1_WallSetIndex selected_wall;
+    bool flip_horizontally;
+    uint16_t pc34_zone;
+    int dst_x;
+    int dst_y;
+    int width;
+    int height;
+    int transparent_color;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportD3SideWallHostHandoffPc34;
+
+typedef struct DM1_ViewportSideWallHostReceiptPc34 {
+    bool handled;
+    bool draw_wall;
+    bool falls_through_to_f0115;
+    DM1_ViewSquareIndex square;
+    uint16_t pc34_zone;
+    int dst_x;
+    int dst_y;
+    int width;
+    int height;
+    const char *redmcsb_function;
+    const char *source_lines;
+    DM1_ViewportWallHostMaterialReceiptPc34 material;
+} DM1_ViewportSideWallHostReceiptPc34;
+
 /* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
  * They are outside the original M597-M611 dense enum, so use stable negative
  * identifiers for metadata/probe reporting only. */
@@ -778,6 +819,14 @@ typedef struct {
     int16_t source_width;      /* Chunky source row stride in pixels */
     int16_t source_height;     /* Source bitmap height in pixels */
 } DM1_DoorButtonBitmapSpan;
+
+typedef struct DM1_ViewportCenterDoorButtonHostPlanPc34 {
+    bool valid;
+    DM1_ViewDoorButtonIndex view_index;
+    const DM1_WallFrame *frame;
+    const uint8_t *palette_remap;
+    int transparent_color;
+} DM1_ViewportCenterDoorButtonHostPlanPc34;
 
 /* Resolved source/destination rectangle for wall blits.  ReDMCSB passes the
  * frame/zone as the destination clip and frame[C6]/frame[C7] (or the bitmap
@@ -1201,6 +1250,33 @@ const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_side_wall_draw_spec_for_rel(
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
 bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
+int dm1_v1_graphic_wallset0_index_pc34(int wall_index);
+int dm1_viewport_3d_wall_host_material_receipt_pc34(
+    int map_wall_set,
+    int graphic_index,
+    int transparent_color,
+    bool flip_horizontally,
+    int expected_width,
+    int expected_height,
+    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt);
+int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+    DM1_ViewSquareIndex square,
+    bool parity_flip,
+    bool wall_like,
+    bool front_alcove,
+    DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff);
+int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+    DM1_ViewSquareIndex square,
+    int map_wall_set,
+    bool parity_flip,
+    bool wall_like,
+    bool front_alcove,
+    int max_visible_forward,
+    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
+    DM1_ViewportSideWallHostReceiptPc34 *out_receipt);
+int dm1_viewport_3d_center_door_button_host_plan_pc34(
+    int depth_index,
+    DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan);
 
 /*
  * Wire wall-frame bitmaps into the V1 viewport drawing pipeline.
