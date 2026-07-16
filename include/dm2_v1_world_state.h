@@ -59,14 +59,14 @@ typedef struct {
 #define DM2_CHAMP_MAX_HP  999
 #define DM2_CHAMP_MAX_MP  999
 
-typedef enum {
+enum {
     DM2_CHAMP_CLASS_NOVICE  = 0,
     DM2_CHAMP_CLASS_WARRIOR = 1,
     DM2_CHAMP_CLASS_PALADIN = 2,
     DM2_CHAMP_CLASS_ROBED   = 3,
     DM2_CHAMP_CLASS_MYSTIC  = 4,
     DM2_CHAMP_CLASS_NINJA   = 5,
-} DM2_ChampionClass;
+};
 
 typedef enum {
     DM2_CHAMP_CONDITION_HEALTHY   = 0,
