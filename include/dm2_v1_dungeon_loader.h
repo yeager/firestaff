@@ -1054,6 +1054,11 @@ typedef struct {
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out, const uint8_t *dat, int size);
 int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
+uint32_t dm2_v1_skproject_tile_to_ulong(uint16_t tile);
+uint8_t dm2_v1_skproject_tile_to_ubyte(uint16_t tile);
+uint16_t dm2_v1_skproject_mk_record(int16_t record);
+int16_t dm2_v1_skproject_record_to_word(uint16_t record);
+int32_t dm2_v1_skproject_record_to_long(uint16_t record);
 int dm2_v1_dungeon_c_map_get_tile_value(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_c_map_is_tile_passage(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_c_map_is_tile_solid(const DM2_V1_DungeonData *d, int level, int x, int y);

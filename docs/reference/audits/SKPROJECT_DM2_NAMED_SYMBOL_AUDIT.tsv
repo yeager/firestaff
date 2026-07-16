@@ -699,8 +699,8 @@ DM2_LOAD_LOCALLEVEL_DYN	SKULLWIN	SKULLWIN/c_loadlevel.cpp	203		MISSING
 DM2_LOAD_LOCALLEVEL_GRAPHICS_TABLE	SKULLWIN	SKULLWIN/c_loadlevel.cpp	1084		MISSING
 DM2_3a15_38b6	SKULLWIN	SKULLWIN/c_loadlevel.cpp	1125		MISSING
 DM2_LOAD_NEWMAP	SKULLWIN	SKULLWIN/c_loadlevel.cpp	1337		MISSING
-tile_to_ulong	SKULLWIN	SKULLWIN/c_map.cpp	25		MISSING
-tile_to_ubyte	SKULLWIN	SKULLWIN/c_map.cpp	30		MISSING
+tile_to_ulong	SKULLWIN	SKULLWIN/c_map.cpp	25	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject t_tile to unsigned-long cast preserving the full 16-bit tile payload.
+tile_to_ubyte	SKULLWIN	SKULLWIN/c_map.cpp	30	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject t_tile low-byte cast.
 init	SKULLWIN	SKULLWIN/c_map.cpp	35	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_GET_OBJECT_INDEX_FROM_TILE	SKULLWIN	SKULLWIN/c_map.cpp	44	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_object_index_from_tile	VERIFIED_SOURCE_MAPPING
 DM2_GET_TILE_RECORD_LINK	SKULLWIN	SKULLWIN/c_map.cpp	61	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
@@ -855,9 +855,9 @@ DM2_RAND16	SKULLWIN	SKULLWIN/c_random.cpp	21	include/dm2_v1_skproject_core.h:dm2
 DM2_RANDBIT	SKULLWIN	SKULLWIN/c_random.cpp	30	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randbit	VERIFIED_SOURCE_MAPPING
 DM2_RANDDIR	SKULLWIN	SKULLWIN/c_random.cpp	40	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randdir	VERIFIED_SOURCE_MAPPING
 init_global_records	SKULLWIN	SKULLWIN/c_record.cpp	33		MISSING
-mk_record	SKULLWIN	SKULLWIN/c_record.cpp	41		MISSING
-record_to_word	SKULLWIN	SKULLWIN/c_record.cpp	42		MISSING
-record_to_long	SKULLWIN	SKULLWIN/c_record.cpp	43		MISSING
+mk_record	SKULLWIN	SKULLWIN/c_record.cpp	41	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject record construction preserving signed sentinel values as raw object words.
+record_to_word	SKULLWIN	SKULLWIN/c_record.cpp	42	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject record-to-word signed sentinel restoration.
+record_to_long	SKULLWIN	SKULLWIN/c_record.cpp	43	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject record-to-long sign extension for sentinel records.
 DM2_GET_ADDRESS_OF_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	46	include/dm2_v1_world_model.h:257	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core implements the c_record 4-bit table / 10-bit index address receipt with bounded record counts and byte offsets.
 DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for APPEND_RECORD_TO: reject end/null append inputs, reset appended GenericRecord::w0 to OBJECT_END_MARKER, append through a parent link or existing tile chain, and insert into an empty byte-square tile with ground-stack shift plus column-index bump.
