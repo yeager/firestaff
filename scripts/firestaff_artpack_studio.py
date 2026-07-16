@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import hashlib
 import json
 import os
 import shutil
@@ -71,6 +72,7 @@ FSART_SUFFIX = ".fsart"
 IMAGE_EXTENSIONS = {".png", ".bmp", ".gif", ".jpg", ".jpeg", ".tga", ".webp"}
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIRESTAFF_LOGO = REPO_ROOT / "assets" / "branding" / "firestaff-logo.png"
+VERIFIED_HASHES = REPO_ROOT / "docs" / "VERIFIED_HASHES.md"
 
 COMMON_CATEGORIES = (
     "wall_shapes",
@@ -219,6 +221,495 @@ class ReferenceAsset:
     path: Path
     width: int
     height: int
+
+
+@dataclass
+class GameDataAsset:
+    category: str
+    asset_id: str
+    path: Path
+    width: int
+    height: int
+    source_game: str
+    source_kind: str
+    index: int
+    offset: int
+    compressed_bytes: int
+    decompressed_bytes: int
+    sha256: str
+    warning: str = ""
+
+
+@dataclass
+class GameDataImportResult:
+    path: Path
+    detected_game: str
+    detected_variant: str
+    file_sha256: str
+    file_size: int
+    assets: list[GameDataAsset]
+    warnings: list[str]
+
+
+DM1_DUNGEON_PALETTE = [
+    (0x00, 0x00, 0x00, 255),
+    (0x66, 0x66, 0x66, 255),
+    (0x88, 0x88, 0x88, 255),
+    (0x66, 0x22, 0x00, 255),
+    (0x00, 0xCC, 0xCC, 255),
+    (0x88, 0x44, 0x00, 255),
+    (0x00, 0x88, 0x00, 255),
+    (0x00, 0xCC, 0x00, 255),
+    (0xFF, 0x00, 0x00, 255),
+    (0xFF, 0xAA, 0x00, 255),
+    (0xCC, 0x88, 0x66, 255),
+    (0xFF, 0xFF, 0x00, 255),
+    (0x44, 0x44, 0x44, 255),
+    (0xAA, 0xAA, 0xAA, 255),
+    (0x00, 0x00, 0xFF, 255),
+    (0xFF, 0xFF, 0xFF, 255),
+]
+
+
+def le16(data: bytes, offset: int) -> int:
+    return data[offset] | (data[offset + 1] << 8)
+
+
+def be16(data: bytes, offset: int) -> int:
+    return (data[offset] << 8) | data[offset + 1]
+
+
+def parse_verified_hashes() -> dict[str, tuple[str, str, int]]:
+    out: dict[str, tuple[str, str, int]] = {}
+    if not VERIFIED_HASHES.exists():
+        return out
+    for line in VERIFIED_HASHES.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) != 4 or cells[0].lower() in {"game", "---"}:
+            continue
+        game, filename, sha, size = cells
+        sha = sha.strip("`").lower()
+        try:
+            byte_count = int(size.replace(",", ""))
+        except ValueError:
+            continue
+        if len(sha) == 64:
+            out[sha] = (game, filename, byte_count)
+    return out
+
+
+def game_from_variant(variant: str) -> str:
+    if variant.startswith("dm1"):
+        return "dm1"
+    if variant.startswith("csb"):
+        return "csb"
+    if variant.startswith("dm2"):
+        return "dm2"
+    if variant.startswith("theron"):
+        return "theron"
+    if variant.startswith("nexus"):
+        return "nexus"
+    return variant if variant in GAMES else "dm1"
+
+
+def category_for_graphics_index(index: int, game: str) -> str:
+    if index <= 8:
+        return "title_frames" if index <= 1 else "entrance_frames"
+    if 78 <= index <= 117:
+        return "wall_shapes"
+    if 118 <= index <= 189:
+        return "object_shapes"
+    if 190 <= index <= 339:
+        return "creature_shapes"
+    if 340 <= index <= 450:
+        return "projectile_shapes"
+    if 451 <= index <= 520:
+        return "explosion_shapes"
+    if 521 <= index <= 590:
+        return "ui_chrome"
+    if game == "dm2":
+        return "menu_surfaces" if index < 80 else "object_shapes"
+    return "floor_shapes"
+
+
+class NibbleReader:
+    def __init__(self, source: bytes) -> None:
+        self.source = source
+        self.nibble_offset = 8
+
+    def nibble(self) -> int:
+        byte = self.source[self.nibble_offset >> 1]
+        value = (byte & 0x0F) if (self.nibble_offset & 1) else (byte >> 4)
+        self.nibble_offset += 1
+        return value
+
+    def pixel_count(self) -> int:
+        count = self.nibble()
+        if count == 15:
+            count = (self.nibble() << 4) | self.nibble()
+            if count == 255:
+                count = (
+                    (self.nibble() << 12)
+                    | (self.nibble() << 8)
+                    | (self.nibble() << 4)
+                    | self.nibble()
+                )
+            else:
+                count += 17
+        else:
+            count += 2
+        return count
+
+
+def expand_img3_to_image(source: bytes, width: int, height: int) -> Image.Image:
+    if len(source) < 8:
+        raise ValueError("entry too short for IMG3")
+    if le16(source, 0) != width or le16(source, 2) != height:
+        raise ValueError("entry-local width/height prefix mismatch")
+    stride_pixels = (width + 1) & ~1
+    packed = bytearray((stride_pixels * height) // 2)
+
+    def get_pixel(pixel_offset: int) -> int:
+        if pixel_offset < 0:
+            return 0
+        byte = packed[pixel_offset >> 1]
+        return byte & 0x0F if (pixel_offset & 1) else byte >> 4
+
+    def set_pixel(pixel_offset: int, color: int) -> None:
+        byte_index = pixel_offset >> 1
+        if byte_index < 0 or byte_index >= len(packed):
+            return
+        color &= 0x0F
+        if pixel_offset & 1:
+            packed[byte_index] = (packed[byte_index] & 0xF0) | color
+        else:
+            packed[byte_index] = (packed[byte_index] & 0x0F) | (color << 4)
+
+    reader = NibbleReader(source)
+    local_palette = [reader.nibble() for _ in range(6)]
+    destination_offset = 0
+    total_visible_pixels = width * height
+    if width == stride_pixels:
+        while destination_offset < total_visible_pixels:
+            command = reader.nibble()
+            kind = command & 0x07
+            if kind == 6:
+                color = 0
+            else:
+                color = local_palette[kind] if kind < 6 else reader.nibble()
+            count = reader.pixel_count() if (command & 0x08) else 1
+            for _ in range(count):
+                if destination_offset >= total_visible_pixels:
+                    break
+                set_pixel(destination_offset, get_pixel(destination_offset - stride_pixels) if kind == 6 else color)
+                destination_offset += 1
+    else:
+        total_done = 0
+        remaining_in_line = width
+        while total_done < total_visible_pixels:
+            command = reader.nibble()
+            kind = command & 0x07
+            color = local_palette[kind] if kind < 6 else (0 if kind == 6 else reader.nibble())
+            count = reader.pixel_count() if (command & 0x08) else 1
+            left = count
+            while left > 0:
+                chunk = remaining_in_line if left >= remaining_in_line else left
+                for _ in range(chunk):
+                    set_pixel(destination_offset, get_pixel(destination_offset - stride_pixels) if kind == 6 else color)
+                    destination_offset += 1
+                left -= chunk
+                remaining_in_line -= chunk
+                if remaining_in_line == 0:
+                    destination_offset += stride_pixels - width
+                    remaining_in_line = width
+            total_done += count
+    img = Image.new("RGBA", (max(1, width), max(1, height)))
+    pix = img.load()
+    for y in range(height):
+        for x in range(width):
+            pix[x, y] = DM1_DUNGEON_PALETTE[get_pixel(y * stride_pixels + x) & 0x0F]
+    return img
+
+
+def parse_graphics_dat_assets(path: Path, data: bytes, detected_game: str) -> tuple[list[GameDataAsset], list[str]]:
+    warnings: list[str] = []
+    assets: list[GameDataAsset] = []
+    if len(data) < 6:
+        return assets, ["file is too small for GRAPHICS.DAT"]
+    signature_le = le16(data, 0)
+    big_endian = False
+    if signature_le == 0x0180:
+        signature = 0x8001
+        big_endian = True
+    else:
+        signature = signature_le
+    read16 = be16 if big_endian else le16
+    if signature & 0x8000:
+        fmt = signature & 0x7FFF
+        if fmt != 1:
+            return assets, [f"unsupported GRAPHICS.DAT format {fmt}"]
+        count = read16(data, 2)
+        header_bytes = 4 + count * 8
+        if count <= 0 or count > 4096 or len(data) < header_bytes:
+            return assets, [f"invalid GRAPHICS.DAT header count={count}"]
+        cursor = header_bytes
+        for index in range(count):
+            comp = read16(data, 4 + 2 * index)
+            decomp = read16(data, 4 + 2 * count + 2 * index)
+            width = read16(data, 4 + 4 * count + 4 * index)
+            height = read16(data, 4 + 4 * count + 4 * index + 2)
+            warning = ""
+            if width <= 0 or height <= 0:
+                warning = "zero-size entry"
+            if cursor + comp > len(data):
+                warning = "entry exceeds file size"
+            record = data[cursor : min(len(data), cursor + comp)]
+            if record and not warning:
+                try:
+                    expand_img3_to_image(record, width, height)
+                except Exception as exc:
+                    warning = f"metadata only; IMG3 decode warning: {exc}"
+            assets.append(
+                GameDataAsset(
+                    category=category_for_graphics_index(index, detected_game),
+                    asset_id=f"graphics_{index:04d}",
+                    path=path,
+                    width=width,
+                    height=height,
+                    source_game=detected_game,
+                    source_kind="GRAPHICS.DAT",
+                    index=index,
+                    offset=cursor,
+                    compressed_bytes=comp,
+                    decompressed_bytes=decomp,
+                    sha256=hashlib.sha256(record).hexdigest() if record else "",
+                    warning=warning,
+                )
+            )
+            cursor += comp
+        if cursor != len(data):
+            warnings.append(f"record byte sum {cursor} differs from file size {len(data)}")
+        if big_endian:
+            warnings.append("big-endian GRAPHICS.DAT header detected")
+        return assets, warnings
+    count = signature
+    if count <= 0 or count > 4096:
+        return assets, [f"unsupported or invalid old GRAPHICS.DAT count={count}"]
+    header_bytes = 2 + count * 2
+    if len(data) < header_bytes:
+        return assets, ["file too small for old GRAPHICS.DAT header"]
+    cursor = header_bytes
+    for index in range(count):
+        comp = read16(data, 2 + 2 * index)
+        width = read16(data, cursor) if cursor + 4 <= len(data) else 0
+        height = read16(data, cursor + 2) if cursor + 4 <= len(data) else 0
+        assets.append(
+            GameDataAsset(
+                category=category_for_graphics_index(index, detected_game),
+                asset_id=f"graphics_{index:04d}",
+                path=path,
+                width=width,
+                height=height,
+                source_game=detected_game,
+                source_kind="GRAPHICS.DAT-old",
+                index=index,
+                offset=cursor,
+                compressed_bytes=comp,
+                decompressed_bytes=0,
+                sha256=hashlib.sha256(data[cursor : min(len(data), cursor + comp)]).hexdigest(),
+                warning="old-format metadata; preview decode not implemented",
+            )
+        )
+        cursor += comp
+    return assets, warnings
+
+
+def dm2_category_to_artpack_category(category: int) -> str:
+    if category == 0x05:
+        return "title_frames"
+    if category in (0x01, 0x07, 0x1A):
+        return "ui_chrome"
+    if category in (0x08, 0x09):
+        return "wall_shapes"
+    if category == 0x0A:
+        return "floor_shapes"
+    if category in (0x0B, 0x0C, 0x0E):
+        return "door_shapes"
+    if category in (0x0D,):
+        return "projectile_shapes"
+    if category == 0x0F:
+        return "creature_shapes"
+    if category in (0x10, 0x11, 0x12, 0x13, 0x14, 0x15):
+        return "object_shapes"
+    if category == 0x17:
+        return "weather_shapes"
+    return "menu_surfaces"
+
+
+def dm2_parse_gdat_assets(path: Path, data: bytes) -> tuple[list[GameDataAsset], list[str]]:
+    warnings: list[str] = []
+    assets: list[GameDataAsset] = []
+    if len(data) < 8 or le16(data, 0) != 0x8005:
+        return assets, ["not a supported DM2 GDAT container"]
+    raw_count = le16(data, 2)
+    if raw_count <= 0 or raw_count > 20000:
+        return assets, [f"invalid DM2 raw count {raw_count}"]
+    if len(data) < 8 + ((raw_count - 1) * 2):
+        return assets, ["DM2 raw table exceeds file"]
+    raw_offsets = [0] * raw_count
+    raw_sizes = [0] * raw_count
+    raw0_size = int.from_bytes(data[4:8], "little")
+    offset = 6 + raw_count * 2
+    if offset + raw0_size > len(data):
+        return assets, ["DM2 raw[0] exceeds file"]
+    raw_offsets[0] = offset
+    raw_sizes[0] = raw0_size
+    offset += raw0_size
+    for i in range(1, raw_count):
+        size = le16(data, 8 + ((i - 1) * 2))
+        raw_offsets[i] = offset
+        raw_sizes[i] = size
+        if offset + size > len(data):
+            return assets, [f"DM2 raw[{i}] exceeds file"]
+        offset += size
+    if offset != len(data):
+        warnings.append(f"DM2 raw byte sum {offset} differs from file size {len(data)}")
+    ent = data[raw_offsets[0] : raw_offsets[0] + raw_sizes[0]]
+    if len(ent) < 6:
+        return assets, ["DM2 ENT1 raw is too small"]
+    if le16(ent, 0) == 0x8001:
+        read16 = le16
+    elif be16(ent, 0) == 0x8001:
+        read16 = be16
+    else:
+        return assets, ["DM2 ENT1 marker missing"]
+    entry_count = read16(ent, 2)
+    group_count = read16(ent, 4)
+    if entry_count <= 0 or group_count <= 0 or 6 + group_count * 2 > len(ent):
+        return assets, ["DM2 ENT1 has invalid counts"]
+    ep_for = {ord("T"): 0, ord("I"): 1, ord("D"): 2, ord("S"): 3, ord("P"): 4, ord("F"): 5, ord("G"): 6}
+    offsets = [None] * 7
+    lengths = [0] * 7
+    stride = 0
+    pos = 6
+    for _ in range(group_count):
+        ep = ep_for.get(ent[pos])
+        length = ent[pos + 1]
+        if ep is not None:
+            offsets[ep] = stride
+            lengths[ep] = length
+        stride += length
+        pos += 2
+    required = (0, 1, 2, 3, 4)
+    if stride <= 0 or any(offsets[i] is None for i in required):
+        return assets, ["DM2 ENT1 missing required T/I/D/S/P groups"]
+    if pos + entry_count * stride > len(ent):
+        return assets, ["DM2 ENT1 rows exceed raw[0]"]
+
+    def read_group(row: bytes, ep: int) -> int:
+        start = offsets[ep]
+        if start is None:
+            return 0
+        value = 0
+        for b in row[start : start + lengths[ep]]:
+            value = (value << 8) | b
+        return value
+
+    for i in range(entry_count):
+        row = ent[pos + i * stride : pos + (i + 1) * stride]
+        cls1 = read_group(row, 0)
+        cls2 = read_group(row, 1)
+        cls3 = read_group(row, 2)
+        cls4 = read_group(row, 3)
+        data_index = read_group(row, 4) & 0x7FFF
+        if data_index >= raw_count:
+            warning = "GDAT entry data index exceeds raw table"
+            raw = b""
+            raw_offset = 0
+            raw_size = 0
+            width = 0
+            height = 0
+        else:
+            raw_offset = raw_offsets[data_index]
+            raw_size = raw_sizes[data_index]
+            raw = data[raw_offset : raw_offset + raw_size]
+            width = (le16(raw, 0) & 0x03FF) if raw_size >= 10 and cls3 == 1 else 0
+            height = (le16(raw, 2) & 0x03FF) if raw_size >= 10 and cls3 == 1 else 0
+            warning = "" if cls3 == 1 and width and height else "metadata only; non-image or unsupported GDAT payload"
+        assets.append(
+            GameDataAsset(
+                category=dm2_category_to_artpack_category(cls1),
+                asset_id=f"gdat_c{cls1:02x}_i{cls2:02x}_t{cls3:02x}_f{cls4:02x}_{i:04d}",
+                path=path,
+                width=width,
+                height=height,
+                source_game="dm2",
+                source_kind="DM2-GDAT",
+                index=i,
+                offset=raw_offset,
+                compressed_bytes=raw_size,
+                decompressed_bytes=width * height if width and height else raw_size,
+                sha256=hashlib.sha256(raw).hexdigest() if raw else "",
+                warning=warning,
+            )
+        )
+    warnings.append(f"DM2 GDAT raw records: {raw_count}; ENT1 rows: {entry_count}")
+    return assets, warnings
+
+
+def import_game_data_file(path: Path) -> GameDataImportResult:
+    path = path.expanduser().resolve()
+    data = path.read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    known = parse_verified_hashes().get(sha)
+    detected_variant = known[0] if known else "unknown"
+    detected_game = game_from_variant(detected_variant)
+    warnings: list[str] = []
+    if known and known[2] != len(data):
+        warnings.append(f"verified hash row size {known[2]} differs from file size {len(data)}")
+    if not known:
+        lower = path.name.lower()
+        if "graphics" in lower or lower.endswith(".dat"):
+            if len(data) > 2_000_000:
+                detected_game = "dm2"
+            elif len(data) > 380_000:
+                detected_game = "csb"
+            else:
+                detected_game = "dm1"
+            detected_variant = f"{detected_game}-unverified"
+            warnings.append("unknown SHA256; game inferred from filename/size only")
+    assets: list[GameDataAsset] = []
+    if detected_game == "dm2" and path.name.lower().endswith(".dat"):
+        parsed, parse_warnings = dm2_parse_gdat_assets(path, data)
+        assets.extend(parsed)
+        warnings.extend(parse_warnings)
+    elif path.name.lower().endswith(".dat") and ("graphics" in path.name.lower() or known):
+        parsed, parse_warnings = parse_graphics_dat_assets(path, data, detected_game)
+        assets.extend(parsed)
+        warnings.extend(parse_warnings)
+    if not assets and path.suffix.lower() in IMAGE_EXTENSIONS:
+        with Image.open(path) as img:
+            assets.append(
+                GameDataAsset(
+                    category=infer_category(path, detected_game),
+                    asset_id=path.stem,
+                    path=path,
+                    width=img.width,
+                    height=img.height,
+                    source_game=detected_game,
+                    source_kind="image",
+                    index=0,
+                    offset=0,
+                    compressed_bytes=len(data),
+                    decompressed_bytes=img.width * img.height,
+                    sha256=sha,
+                )
+            )
+    if not assets:
+        warnings.append("no supported graphical assets found in file")
+    return GameDataImportResult(path, detected_game, detected_variant, sha, len(data), assets, warnings)
 
 
 def scan_reference_assets(game: str, root: Path) -> list[ReferenceAsset]:
@@ -590,13 +1081,18 @@ class ArtpackStudio(tk.Tk):
         self.generator = tk.StringVar(value="operator_import")
         self.ai_command = tk.StringVar(value=os.environ.get("FIRESTAFF_ARTPACK_AI_COMMAND", ""))
         self.status = tk.StringVar(value="Ready")
+        self.stats = tk.StringVar(value="No game data imported")
         self.pack: Artpack | None = None
         self.reference_assets: list[ReferenceAsset] = []
-        self.asset_rows: list[ReferenceAsset | AssetEntry] = []
+        self.game_data_result: GameDataImportResult | None = None
+        self.game_data_assets: list[GameDataAsset] = []
+        self.asset_rows: list[ReferenceAsset | AssetEntry | GameDataAsset] = []
         self.source_path: Path | None = None
         self.target_path: Path | None = None
+        self.prompt_extra = tk.StringVar(value="")
         self.watermark_photo: ImageTk.PhotoImage | None = None
         self._build_ui()
+        self.enable_drag_and_drop()
         self.open_pack()
 
     def _build_ui(self) -> None:
@@ -632,6 +1128,13 @@ class ArtpackStudio(tk.Tk):
         ttk.Label(ref, text="V1 root").pack(side="left")
         ttk.Entry(ref, textvariable=self.reference_root, width=28).pack(side="left", fill="x", expand=True, padx=4)
         ttk.Button(ref, text="Browse", command=self.browse_reference_root).pack(side="left")
+        data_buttons = ttk.Frame(left)
+        data_buttons.pack(fill="x", padx=6, pady=(0, 4))
+        ttk.Button(data_buttons, text="Import game data", command=self.import_game_data_dialog).pack(side="left", fill="x", expand=True)
+        ttk.Button(data_buttons, text="Warnings", command=self.show_game_data_warnings).pack(side="left", padx=(4, 0))
+        ttk.Label(left, textvariable=self.stats, background="#101214", foreground="#b8c6ca", wraplength=330).pack(
+            fill="x", padx=6, pady=(0, 4)
+        )
         self.asset_list = tk.Listbox(
             left,
             height=22,
@@ -666,9 +1169,14 @@ class ArtpackStudio(tk.Tk):
 
         ai = ttk.LabelFrame(left, text="AI generation hook", padding=6)
         ai.pack(fill="x", pady=8)
+        ttk.Entry(ai, textvariable=self.prompt_extra).pack(fill="x", pady=(0, 2))
         ttk.Entry(ai, textvariable=self.ai_command).pack(fill="x")
         ttk.Button(ai, text="Write prompt", command=self.write_prompt_only).pack(fill="x", pady=2)
         ttk.Button(ai, text="Run AI command", command=self.run_ai_command).pack(fill="x", pady=2)
+        batch_ai = ttk.Frame(ai)
+        batch_ai.pack(fill="x")
+        ttk.Button(batch_ai, text="AI selected", command=self.run_ai_command).pack(side="left", fill="x", expand=True)
+        ttk.Button(batch_ai, text="AI missing/all", command=self.run_ai_batch).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
         right = ttk.PanedWindow(main, orient="vertical")
         main.add(right, weight=1)
@@ -691,6 +1199,35 @@ class ArtpackStudio(tk.Tk):
         self.log.insert("end", msg + "\n")
         self.log.see("end")
         self.status.set(msg)
+
+    def enable_drag_and_drop(self) -> None:
+        try:
+            self.tk.call("package", "require", "tkdnd")
+            for widget in (self, self.asset_list, self.target_canvas.canvas):
+                widget.tk.call("tkdnd::drop_target", "register", widget, "DND_Files")
+                widget.bind("<<Drop>>", self.on_drop_file)
+            self.log_line("Drag-and-drop enabled")
+        except Exception:
+            pass
+
+    def on_drop_file(self, event: tk.Event) -> None:
+        raw = getattr(event, "data", "")
+        if not raw:
+            return
+        first = self.tk.splitlist(raw)[0]
+        path = Path(first)
+        if path.suffix.lower() == FSART_SUFFIX:
+            if self.pack:
+                self.pack.import_fsart(path)
+                self.refresh_asset_list()
+                self.log_line(f"Imported .fsart: {path}")
+            return
+        if path.suffix.lower() in IMAGE_EXTENSIONS:
+            self.target_path = path
+            self.target_canvas.load(path)
+            self.log_line(f"Loaded dropped target: {path}")
+            return
+        self.import_game_data(path)
 
     def on_game_changed(self) -> None:
         self.root.set(str(default_modern_dir(self.game.get())))
@@ -760,6 +1297,18 @@ class ArtpackStudio(tk.Tk):
                 "end",
                 f"{status:2} V1 {ref.category}/{ref.asset_id} {dims:>9}  | V2.2 {target_dims}",
             )
+        for gd in self.game_data_assets:
+            key = (gd.category, gd.asset_id)
+            seen.add(key)
+            target = target_by_key.get(key)
+            status = "OK" if target else "!!" if gd.warning else "--"
+            dims = f"{gd.width}x{gd.height}"
+            target_dims = f"{target.width}x{target.height}" if target else "missing"
+            self.asset_rows.append(gd)
+            self.asset_list.insert(
+                "end",
+                f"{status:2} DAT {gd.category}/{gd.asset_id} {dims:>9}  | V2.2 {target_dims}",
+            )
         for entry in self.pack.entries():
             key = (entry.category, entry.asset_id)
             if key in seen:
@@ -807,6 +1356,31 @@ class ArtpackStudio(tk.Tk):
                     self.target_path = path
                     self.target_canvas.load(path)
             return
+        if isinstance(row, GameDataAsset):
+            self.source_path = row.path
+            img = self.decode_game_data_asset(row)
+            if img is not None:
+                self.source_canvas.set_image(img, row.path)
+            else:
+                self.source_canvas.set_image(self.metadata_image(row), row.path)
+            target = self.pack.find_raw_entry(row.category, row.asset_id)
+            if target is not None:
+                entry = AssetEntry(
+                    row.category,
+                    row.asset_id,
+                    str(target.get("source_file") or safe_asset_filename(row.asset_id)),
+                    int(target.get("width") or 0),
+                    int(target.get("height") or 0),
+                    str(target.get("generator") or ""),
+                    str(target.get("notes") or ""),
+                )
+                path = self.pack.asset_path(entry)
+                if path.exists():
+                    self.target_path = path
+                    self.target_canvas.load(path)
+            if row.warning:
+                self.log_line(f"{row.asset_id}: {row.warning}")
+            return
         entry = row
         self.generator.set(entry.generator or "operator_import")
         path = self.pack.asset_path(entry)
@@ -833,6 +1407,81 @@ class ArtpackStudio(tk.Tk):
             self.target_path = Path(path)
             self.target_canvas.load(self.target_path)
             self.log_line(f"Loaded target: {self.target_path}")
+
+    def import_game_data_dialog(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Import original game data",
+            filetypes=[
+                ("Game data", "*.dat *.DAT *.bin *.BIN *.iso *.ISO *.cue *.CUE"),
+                ("Images", "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"),
+                ("All files", "*.*"),
+            ],
+        )
+        if path:
+            self.import_game_data(Path(path))
+
+    def import_game_data(self, path: Path) -> None:
+        try:
+            result = import_game_data_file(path)
+            self.game_data_result = result
+            self.game_data_assets = result.assets
+            if result.detected_game in GAMES and result.detected_game != self.game.get():
+                self.game.set(result.detected_game)
+                self.root.set(str(default_modern_dir(result.detected_game)))
+                self.reference_root.set(str(default_reference_dir(result.detected_game)))
+                self.category_box.configure(values=categories_for_game(result.detected_game))
+                self.pack = Artpack(result.detected_game, Path(self.root.get()))
+                self.pack.load_or_create()
+                self.pack.save()
+            self.refresh_asset_list()
+            warning_count = sum(1 for asset in result.assets if asset.warning) + len(result.warnings)
+            self.stats.set(
+                f"{result.detected_variant}: {len(result.assets)} assets, "
+                f"{warning_count} warnings, {result.file_size:,} bytes"
+            )
+            self.log_line(f"Imported game data: {result.path} ({result.detected_variant})")
+            if result.warnings:
+                self.log_line("Warnings: " + "; ".join(result.warnings[:4]))
+        except Exception as exc:
+            messagebox.showerror("Game data import failed", str(exc), parent=self)
+
+    def show_game_data_warnings(self) -> None:
+        if not self.game_data_result:
+            messagebox.showinfo("Warnings", "No game data imported.", parent=self)
+            return
+        lines = list(self.game_data_result.warnings)
+        lines.extend(f"{asset.asset_id}: {asset.warning}" for asset in self.game_data_assets if asset.warning)
+        if not lines:
+            lines = ["No warnings."]
+        messagebox.showwarning("Game data warnings", "\n".join(lines[:80]), parent=self)
+
+    def decode_game_data_asset(self, asset: GameDataAsset) -> Image.Image | None:
+        if asset.source_kind.startswith("GRAPHICS.DAT"):
+            data = asset.path.read_bytes()
+            record = data[asset.offset : asset.offset + asset.compressed_bytes]
+            try:
+                return expand_img3_to_image(record, asset.width, asset.height)
+            except Exception:
+                return None
+        if asset.source_kind == "image":
+            return ensure_rgba(Image.open(asset.path))
+        return None
+
+    def metadata_image(self, asset: GameDataAsset) -> Image.Image:
+        img = Image.new("RGBA", (max(320, asset.width or 320), max(160, asset.height or 160)), "#202020")
+        draw = ImageDraw.Draw(img)
+        lines = [
+            f"{asset.source_game} {asset.source_kind}",
+            asset.asset_id,
+            f"{asset.width}x{asset.height} offset={asset.offset}",
+            f"compressed={asset.compressed_bytes} decompressed={asset.decompressed_bytes}",
+            asset.warning or "metadata only",
+        ]
+        y = 14
+        for line in lines:
+            draw.text((14, y), line[:90], fill="#d9e4e6")
+            y += 22
+        return img
 
     def import_target(self) -> None:
         if not self.pack:
@@ -875,7 +1524,8 @@ class ArtpackStudio(tk.Tk):
         target_size = "same as reference"
         if self.source_canvas.image:
             target_size = f"{self.source_canvas.image.width}x{self.source_canvas.image.height}"
-        return (
+        extra = self.prompt_extra.get().strip()
+        prompt = (
             f"Create Firestaff V2.2 modern art for {self.game.get()}.\n"
             f"Category: {self.category.get()}\n"
             f"Asset id: {self.asset_id.get()}\n"
@@ -886,6 +1536,9 @@ class ArtpackStudio(tk.Tk):
             "transparent background only when the reference uses transparency, "
             "and no copyrighted replacement from another game.\n"
         )
+        if extra:
+            prompt += f"Custom prompt: {extra}\n"
+        return prompt
 
     def write_prompt_only(self) -> None:
         path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text", "*.txt")])
@@ -932,6 +1585,45 @@ class ArtpackStudio(tk.Tk):
                 self.log_line("AI command generated target image")
             except Exception as exc:
                 messagebox.showerror("AI generation failed", str(exc), parent=self)
+
+    def run_ai_batch(self) -> None:
+        if not self.pack:
+            return
+        command = self.ai_command.get().strip()
+        if not command:
+            messagebox.showinfo("AI command not configured", "Enter an AI command template first.", parent=self)
+            return
+        rows = [row for row in self.asset_rows if isinstance(row, (ReferenceAsset, GameDataAsset))]
+        target_keys = {(entry.category, entry.asset_id) for entry in self.pack.entries()}
+        missing = [row for row in rows if (row.category, row.asset_id) not in target_keys]
+        if not missing:
+            missing = rows
+        limit = simpledialog.askinteger(
+            "AI batch",
+            f"Generate how many assets? {len(missing)} available.",
+            initialvalue=min(10, len(missing)),
+            minvalue=1,
+            maxvalue=max(1, len(missing)),
+            parent=self,
+        )
+        if not limit:
+            return
+        generated = 0
+        for row in missing[:limit]:
+            self.category.set(row.category)
+            self.asset_id.set(row.asset_id)
+            if isinstance(row, ReferenceAsset):
+                self.source_path = row.path
+                self.source_canvas.load(row.path)
+            else:
+                img = self.decode_game_data_asset(row)
+                self.source_path = row.path
+                self.source_canvas.set_image(img if img else self.metadata_image(row), row.path)
+            self.run_ai_command()
+            if self.target_canvas.image is not None:
+                self.import_target()
+                generated += 1
+        self.log_line(f"AI batch generated/imported {generated} assets")
 
     def validate_pack(self) -> None:
         if not self.pack:
@@ -1018,6 +1710,20 @@ def self_test() -> int:
         assert imported.validate_required() == []
         refs = scan_reference_assets("dm1", root)
         assert any(ref.asset_id == "wall_d3_carved_hero_01" for ref in refs)
+        graphics_dat = Path(td) / "GRAPHICS.DAT"
+        graphics_dat.write_bytes(
+            b"\x01\x80"  # new-format little-endian signature 0x8001
+            b"\x01\x00"  # one entry
+            b"\x08\x00"  # compressed bytes
+            b"\x08\x00"  # decompressed bytes
+            b"\x02\x00\x02\x00"  # width/height table
+            b"\x02\x00\x02\x00\x01\x23\x45\x67"  # deliberately tiny IMG3-like record
+        )
+        imported_data = import_game_data_file(graphics_dat)
+        assert imported_data.detected_game == "dm1"
+        assert len(imported_data.assets) == 1
+        assert imported_data.assets[0].asset_id == "graphics_0000"
+        assert imported_data.assets[0].width == 2
     print("firestaff_artpack_studio self-test: PASS")
     return 0
 
@@ -1044,14 +1750,19 @@ def render_demo_screenshot(out_path: Path, game: str) -> Path:
     draw.text((44, 102), "V1 assets / V2.2 targets", fill="#e8f4f5")
     draw.rounded_rectangle((44, 134, 388, 166), radius=4, fill="#202830", outline="#41515a")
     draw.text((56, 143), f"V1 root  ~/.firestaff/data/{game}", fill="#b8c6ca")
+    draw.rounded_rectangle((44, 174, 220, 206), radius=4, fill="#225b62", outline="#50bfc8")
+    draw.text((58, 183), "Import game data", fill="#e8f4f5")
+    draw.rounded_rectangle((230, 174, 388, 206), radius=4, fill="#202830", outline="#ffcc66")
+    draw.text((244, 183), "Warnings", fill="#ffcc66")
+    draw.text((52, 218), "dm1 GRAPHICS.DAT: 713 assets, 18 warnings", fill="#91d7df")
     rows = [
-        ("OK", "wall_shapes/wall_d3_carved_hero_01", "224x136", "224x136"),
-        ("OK", "floor_shapes/floor_plain_hero_01", "224x136", "224x136"),
-        ("--", "champion_portraits/champion_warrior", "32x29", "missing"),
-        ("OK", "title_frames/title_0001", "320x200", "640x400"),
-        ("--", "object_shapes/torch", "16x16", "missing"),
+        ("OK", "DAT title_frames/graphics_0001", "320x200", "640x400"),
+        ("--", "DAT wall_shapes/graphics_0107", "224x136", "missing"),
+        ("!!", "DAT object_shapes/graphics_0144", "16x16", "decode warning"),
+        ("OK", "V1 wall_shapes/wall_d3_carved_hero_01", "224x136", "224x136"),
+        ("--", "DAT creature_shapes/graphics_0221", "48x56", "missing"),
     ]
-    y = 190
+    y = 250
     for status, name, v1_size, v22_size in rows:
         color = "#30d4a0" if status == "OK" else "#ffcc66"
         draw.text((52, y), status, fill=color)
