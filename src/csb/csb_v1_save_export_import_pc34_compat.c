@@ -32,7 +32,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <io.h>
+#define csb_v1_save_export_fsync_pc34(fd) _commit(fd)
+#else
 #include <unistd.h>
+#define csb_v1_save_export_fsync_pc34(fd) fsync(fd)
+#endif
 
 /* ── Internal: little-endian byte writers/parsers ──────────────────── */
 
@@ -432,8 +439,8 @@ int csb_v1_save_export_write_envelope(const char *path,
         return CSB_V1_SAVE_EXPORT_ERR_IO;
     }
     got = fwrite(envelope, 1u, envelope_len, f);
-    if (got != envelope_len || fflush(f) != 0 || fsync(fd) != 0 ||
-        fclose(f) != 0) {
+    if (got != envelope_len || fflush(f) != 0 ||
+        csb_v1_save_export_fsync_pc34(fd) != 0 || fclose(f) != 0) {
         unlink(temporary_path);
         free(temporary_path);
         return CSB_V1_SAVE_EXPORT_ERR_IO;

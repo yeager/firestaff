@@ -426,6 +426,10 @@ typedef int (*CSB_V1_StartupOpeningCompositeExecutor_PC34)(
     void *user,
     const CSB_V1_StartupOpeningComposite_PC34 *composite);
 
+int csb_v1_startup_source_render_plan_from_state_pc34(
+    const CSB_V1_StartupRenderState_PC34 *state,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
+
 struct CSB_V1_UtilRenderPlan;
 
 typedef struct CSB_V1_StartupRenderExecutor_PC34 {
