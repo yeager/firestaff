@@ -8,6 +8,9 @@
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_startup_flow.h"
 #include "theron/theron_v1_asset_loader.h"
+#include "theron_v1_capture_manifest.h"
+#include "theron_v1_irq2_live_trace_gate.h"
+#include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 
@@ -120,6 +123,17 @@ typedef struct Theron_V1_BootProfile {
  *   Format: between-dungeon only. In-dungeon saves mocked.
  *   (TQ design: you can save only at dungeon entrance, not mid-dungeon)
  */
+typedef struct {
+    int valid;
+    int trace_file_hash_verified;
+    char trace_md5[33];
+    int system_card_file_hash_verified;
+    char system_card_md5[33];
+    int trace_file_consumed;
+    Theron_V1SystemCardControllerWaitReceipt controller_wait;
+    Theron_V1Irq2FullMediaTraceReceipt runtime_handoff;
+} Theron_V1_BootTrack02RuntimeTraceIntakeReceipt;
+
 typedef struct {
     /* ── Identity ────────────────────────────────────────── */
     char             game_id[8];       /* "theron" */
@@ -280,6 +294,7 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
     Theron_StartupHostReceipt launch_host_receipt;
+    Theron_V1Irq2PreflightLauncherReceipt irq2_preflight_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
 

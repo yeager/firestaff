@@ -14,6 +14,8 @@ extern "C" {
  */
 bool redmcsb_f1032_hatch_box_pc34_compat(void);
 
+bool F1032_GRF1_12_HatchBox(void);
+
 const char *redmcsb_f1032_hatch_box_source_evidence_pc34(void);
 
 #ifdef __cplusplus
