@@ -1,7 +1,6 @@
 /* ReDMCSB GROUP.C F0190 -> F0213 tick-domain handoff regression. */
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,16 +27,20 @@ int main(void)
 
     fill_valid_input(&input);
     input.currentTick = (unsigned int)INT_MAX;
-    assert(dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
-               &input, &plan) &&
-           plan.valid && plan.shouldPresentSourceSmoke &&
-           plan.sourceSmokeCreateInput.currentTick == INT_MAX);
+    if (!dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+            &input, &plan) ||
+        !plan.valid || !plan.shouldPresentSourceSmoke ||
+        plan.sourceSmokeCreateInput.currentTick != INT_MAX) {
+        return 1;
+    }
 
     input.currentTick = (unsigned int)INT_MAX + 1u;
-    assert(dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
-               &input, &plan) &&
-           !plan.valid && !plan.shouldPresentSourceSmoke &&
-           !plan.requiresDeferredDestinationCleanup && plan.groupIndex == -1);
+    if (!dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+            &input, &plan) ||
+        plan.valid || plan.shouldPresentSourceSmoke ||
+        plan.requiresDeferredDestinationCleanup || plan.groupIndex != -1) {
+        return 1;
+    }
 
     puts("PASS dm1_v1_f0190_moving_killed_all_tick_boundary_pc34_compat");
     return 0;

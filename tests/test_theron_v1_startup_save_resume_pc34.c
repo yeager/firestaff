@@ -1761,6 +1761,7 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
+    Theron_V1_BootStartupRawMediaGraphicsReceipt raw_media_graphics_receipt = {0};
     Theron_V1_BootStartupFullStartReceipt full_start_receipt;
     Theron_V1_BootStartupHostRenderReceipt host_render_receipt;
     Theron_V1_BootStartupMenuRuntimeHandoffReceipt handoff_receipt;

@@ -1,4 +1,5 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>

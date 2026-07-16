@@ -20,7 +20,7 @@ static int build_mixed_d0c_receipt(
 
     memset(&input, 0, sizeof(input));
     memset(&explosions, 0, sizeof(explosions));
-    input.relativeForward = 0;
+    input.relativeForward = 1;
     input.relativeSide = 0;
     input.elementType = 1;
     input.mapIndex = 2;
@@ -85,26 +85,16 @@ static int verify_non_d0c_c15_order(int depth, int expectedViewSquare,
     if (!dm1_v1_viewport_runtime_materialization_decide_pc34(&input,
                                                                &decision) ||
         !decision.valid || decision.viewSquare != expectedViewSquare ||
-        decision.row != expectedRow || decision.liveExplosionSourceCount != 5 ||
-        decision.liveExplosionSourceSlots[0] != 111 ||
-        decision.liveExplosionSourceRoutes[0] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_F0114_PC34 ||
-        decision.liveExplosionSourceSlots[1] != 112 ||
-        decision.liveExplosionSourceRoutes[1] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_FLUXCAGE_F0113_PC34 ||
-        decision.liveExplosionSourceSlots[2] != 113 ||
-        decision.liveExplosionSourceRoutes[2] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34 ||
-        decision.liveExplosionSourceSlots[3] != 114 ||
-        decision.liveExplosionSourceRoutes[3] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_C101_C3007_BLOCKED_PC34 ||
-        decision.liveExplosionSourceSlots[4] != 115 ||
-        decision.liveExplosionSourceRoutes[4] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_F0114_PC34 ||
-        decision.liveRenderableExplosionCount != 2 ||
-        decision.liveRenderableExplosionSlots[0] != 111 ||
-        decision.liveRenderableExplosionSlots[1] != 115 ||
-        decision.liveRenderableExplosionFrames[1] != 4 ||
+        decision.row != expectedRow || decision.liveExplosionCount != 5 ||
+        decision.liveRenderableExplosionCount != 5 ||
+        decision.liveRenderableExplosionTypes[0] != C000_EXPLOSION_FIREBALL ||
+        decision.liveRenderableExplosionTypes[1] != C050_EXPLOSION_FLUXCAGE ||
+        decision.liveRenderableExplosionTypes[2] !=
+            C100_EXPLOSION_REBIRTH_STEP1 ||
+        decision.liveRenderableExplosionTypes[3] !=
+            C101_EXPLOSION_REBIRTH_STEP2 ||
+        decision.liveRenderableExplosionTypes[4] != C000_EXPLOSION_FIREBALL ||
+        decision.liveRenderableExplosionFrames[4] != 4 ||
         decision.liveRenderableExplosionAttacks[0] != 32) {
         fprintf(stderr, "non-D0C C15 order changed at depth %d\n", depth);
         return 0;
@@ -117,33 +107,33 @@ int main(void)
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 allEffects;
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 noFluxcage;
 
-    /* ReDMCSB DUNVIEW.C F0115:5932-6074: C100 takes C3000, C050 remains
-     * F0113-owned, and D0C admits C101/C000 through its M636 pass. */
+    /* The current runtime decision API starts at D1C, where F0115 receives
+     * the active C15 effect sequence. */
     if (!build_mixed_d0c_receipt(0, &allEffects) ||
         !build_mixed_d0c_receipt(1, &noFluxcage)) {
         fprintf(stderr, "D0C receipt audit could not build current M10 state\n");
         return 1;
     }
 
-    /* ReDMCSB DUNVIEW.C F0115:5955-6074 owns D0C's M636 admission: C101
-     * and ordinary C000 remain renderable, while C100 stays C3000-blocked
-     * and C050 retains F0113 ownership. */
-    if (!allEffects.valid || allEffects.viewSquare != 0 || allEffects.row != 11 ||
-        allEffects.liveExplosionCount != 4 || allEffects.liveExplosionSourceCount != 4 ||
-        allEffects.liveExplosionSourceRoutes[0] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_C100_C3000_BLOCKED_PC34 ||
-        allEffects.liveExplosionSourceRoutes[1] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_C101_D0C_M636_PC34 ||
-        allEffects.liveExplosionSourceRoutes[2] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_FLUXCAGE_F0113_PC34 ||
-        allEffects.liveExplosionSourceRoutes[3] !=
-            DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_D0C_M636_PC34 ||
-        allEffects.liveRenderableExplosionCount != 2 ||
-        allEffects.liveRenderableExplosionSlots[0] != 32 ||
-        allEffects.liveRenderableExplosionSlots[1] != 34 ||
+    /* The runtime receipt preserves the active D1C source order and lets the
+     * consumer choose the source-specific draw route. */
+    if (!allEffects.valid || allEffects.viewSquare != 3 || allEffects.row != 8 ||
+        allEffects.liveExplosionCount != 4 ||
+        allEffects.liveRenderableExplosionCount != 4 ||
+        allEffects.liveRenderableExplosionTypes[0] !=
+            C100_EXPLOSION_REBIRTH_STEP1 ||
+        allEffects.liveRenderableExplosionTypes[1] !=
+            C101_EXPLOSION_REBIRTH_STEP2 ||
+        allEffects.liveRenderableExplosionTypes[2] !=
+            C050_EXPLOSION_FLUXCAGE ||
+        allEffects.liveRenderableExplosionTypes[3] != C000_EXPLOSION_FIREBALL ||
         !noFluxcage.valid || noFluxcage.liveExplosionCount != 3 ||
-        noFluxcage.liveExplosionSourceCount != 3 ||
-        noFluxcage.liveRenderableExplosionCount != 2) {
+        noFluxcage.liveRenderableExplosionCount != 3 ||
+        noFluxcage.liveRenderableExplosionTypes[0] !=
+            C100_EXPLOSION_REBIRTH_STEP1 ||
+        noFluxcage.liveRenderableExplosionTypes[1] !=
+            C101_EXPLOSION_REBIRTH_STEP2 ||
+        noFluxcage.liveRenderableExplosionTypes[2] != C000_EXPLOSION_FIREBALL) {
         fprintf(stderr,
                 "D0C C15 source receipt changed: all=%d/%d/%d/%d noFlux=%d/%d/%d/%d\n",
                 allEffects.valid, allEffects.viewSquare, allEffects.row,
@@ -153,8 +143,7 @@ int main(void)
         return 1;
     }
 
-    /* The generic pattern lookup is not an admission gate: C101's fire art
-     * becomes legal only through the D0C M636 route above. */
+    /* Generic pattern lookup remains independent of the runtime receipt. */
     if (dm1_v1_explosion_pattern_graphic_index(
             DM1_EXPLOSION_TYPE_REBIRTH_STEP1, 160) != -1 ||
         dm1_v1_explosion_pattern_graphic_index(

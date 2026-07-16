@@ -48,6 +48,7 @@
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "firestaff_cmp_decode.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>

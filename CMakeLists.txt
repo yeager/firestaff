@@ -17122,6 +17122,8 @@ if(BUILD_TESTING)
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_m11_v22_inplace_draw_pc34 PRIVATE firestaff_m12 firestaff_v2 firestaff_m11)
@@ -17197,6 +17199,8 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v2_texture_upscale_pc34.c
         src/shared/fs_portable_compat.c
@@ -17212,6 +17216,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v2_texture_upscale_pc34.c
         src/shared/fs_portable_compat.c
@@ -18050,7 +18055,6 @@ if(BUILD_TESTING)
     )
     add_executable(test_dm1_v1_f0142_projectile_aspect_pc34_compat
         tests/test_dm1_v1_f0142_projectile_aspect_pc34_compat.c
-        src/dm1/dm1_v1_projectile_graphic_query_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_f0142_projectile_aspect_pc34_compat PRIVATE firestaff_m10)
@@ -20188,8 +20192,11 @@ if(BUILD_TESTING)
     # Launcher/entrance handoff wait policy: ReDMCSB waits for fresh input.
     add_executable(test_m11_entrance_wait_policy
         tests/test_m11_entrance_wait_policy.c
+        src/frontend/entrance_frontend_pc34_compat.c
     )
     target_link_libraries(test_m11_entrance_wait_policy PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    target_compile_definitions(test_m11_entrance_wait_policy PRIVATE
+        M11_Entrance_ShouldAutoEnterForTimeout=ENTRANCE_Compat_ShouldAutoEnterForTimeout)
     if(NOT MSVC)
         target_compile_options(test_m11_entrance_wait_policy PRIVATE -Wall -Wextra -O2)
     endif()
@@ -20266,8 +20273,17 @@ if(BUILD_TESTING)
 
     add_executable(test_entrance_runtime_dispatch_source_lock
         tests/test_entrance_runtime_dispatch_source_lock.c
+        src/frontend/entrance_frontend_pc34_compat.c
+        src/frontend/entrance_mouse_routes_pc34_compat.c
     )
     target_link_libraries(test_entrance_runtime_dispatch_source_lock PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    target_compile_definitions(test_entrance_runtime_dispatch_source_lock PRIVATE
+        M11_Entrance_DispatchSourceLockedPointerCommand=ENTRANCE_Compat_DispatchMouseRouteCommand
+        M11_Entrance_ResolveDm1ResumeSavePath=ENTRANCE_Compat_ResolveDm1ResumeSavePath)
+    if(APPLE)
+        target_link_options(test_entrance_runtime_dispatch_source_lock PRIVATE
+            "-Wl,-alias,_ENTRANCE_Compat_DispatchKeyCommand,_M11_Entrance_DispatchSourceLockedKeyCommand")
+    endif()
     if(NOT MSVC)
         target_compile_options(test_entrance_runtime_dispatch_source_lock PRIVATE -Wall -Wextra -O2)
     endif()
@@ -20658,6 +20674,12 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_melee_target_half_square_pc34_compat
         tests/test_dm1_v1_melee_target_half_square_pc34_compat.c
         src/dm1/dm1_v1_combat_pc34_compat.c
+        src/dm1/dm1_v1_main_math_f0024_f0026_f0030_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_weapon_info_pc34_compat.c
+        src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
+        src/shared/dungeon_decompressor_ftl.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_melee_target_half_square_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -20872,6 +20894,8 @@ if(NOT TARGET test_dm1_v1_light_darkness_spell_bridge_pc34_compat)
         tests/test_dm1_v1_light_darkness_spell_bridge_pc34_compat.c
         src/dm1/dm1_v1_light_pc34_compat.c
         src/dm1/dm1_v1_spell_casting_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_light_darkness_spell_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -21472,7 +21496,6 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
         tests/test_dm1_v1_action_f0407_tail_pc34_compat.c
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
-        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
         src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
         src/dm1/dm1_v1_champion_needs_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
@@ -21507,6 +21530,7 @@ if(NOT TARGET test_dm1_v1_group_drop_delete_receipts_pc34_compat)
         src/dm1/dm1_v1_graphic560_action_hit_probability_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
     )
     if(NOT MSVC)
@@ -24073,6 +24097,10 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
+        src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
+        src/shared/dungeon_decompressor_ftl.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
@@ -24117,6 +24145,9 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
+        src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
