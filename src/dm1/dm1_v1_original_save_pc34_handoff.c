@@ -152,6 +152,28 @@ static uint32_t dm1_original_save_corpus_fingerprint_mix(uint32_t hash,
     return hash;
 }
 
+static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
+                                                   uint32_t value)
+{
+    return dm1_original_save_corpus_fingerprint_mix(hash, value);
+}
+
+static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
+                                             size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes && byte_count != 0u) {
+        return 0u;
+    }
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int dm1_original_save_c13_runtime_event_matches(
     const struct DM1_Event_V1 *source,
     const struct TimelineEvent_Compat *runtime)
@@ -396,6 +418,13 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
 #define DM1_PC34_PARTY_INFO_SCENT_COUNT_OFFSET 10u
 #define DM1_PC34_PARTY_INFO_FREEZE_LIFE_TICKS_OFFSET 11u
 #define DM1_PC34_PARTY_INFO_FIRST_SCENT_INDEX_OFFSET 84u
+#define DM1_PC34_ORIGINAL_PARTY_INFO_MAGICAL_LIGHT_AMOUNT_OFFSET DM1_PC34_PARTY_INFO_MAGICAL_LIGHT_OFFSET
+#define DM1_PC34_ORIGINAL_PARTY_INFO_EVENT73_COUNT_OFFSET DM1_PC34_PARTY_INFO_THIEVES_EYE_COUNT_OFFSET
+#define DM1_PC34_ORIGINAL_PARTY_INFO_EVENT79_COUNT_OFFSET DM1_PC34_PARTY_INFO_FOOTPRINTS_COUNT_OFFSET
+#define DM1_PC34_ORIGINAL_PARTY_INFO_SHIELD_DEFENSE_OFFSET DM1_PC34_PARTY_INFO_SHIELD_DEFENSE_OFFSET
+#define DM1_PC34_ORIGINAL_PARTY_INFO_FIRE_SHIELD_DEFENSE_OFFSET DM1_PC34_PARTY_INFO_FIRE_SHIELD_DEFENSE_OFFSET
+#define DM1_PC34_ORIGINAL_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET DM1_PC34_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET
+#define DM1_PC34_ORIGINAL_PARTY_INFO_EVENT71_COUNT_OFFSET 86u
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT 16u
 #define DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT 10u
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT 3u
@@ -1284,6 +1313,159 @@ static int original_pc34_event_type_is_status_timeout(int type)
            type == DM1_EVENT_FOOTPRINTS;
 }
 
+static uint16_t original_pc34_next_thing(
+    const struct DungeonThings_Compat *things,
+    uint16_t thing)
+{
+    int type;
+    int index;
+
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    if (index < 0) {
+        return THING_ENDOFLIST;
+    }
+    switch (type) {
+    case THING_TYPE_DOOR:
+        return (things->doors && index < things->doorCount) ?
+            things->doors[index].next : THING_ENDOFLIST;
+    case THING_TYPE_TELEPORTER:
+        return (things->teleporters && index < things->teleporterCount) ?
+            things->teleporters[index].next : THING_ENDOFLIST;
+    case THING_TYPE_TEXTSTRING:
+        return (things->textStrings && index < things->textStringCount) ?
+            things->textStrings[index].next : THING_ENDOFLIST;
+    case THING_TYPE_SENSOR:
+        return (things->sensors && index < things->sensorCount) ?
+            things->sensors[index].next : THING_ENDOFLIST;
+    case THING_TYPE_GROUP:
+        return (things->groups && index < things->groupCount) ?
+            things->groups[index].next : THING_ENDOFLIST;
+    case THING_TYPE_WEAPON:
+        return (things->weapons && index < things->weaponCount) ?
+            things->weapons[index].next : THING_ENDOFLIST;
+    case THING_TYPE_ARMOUR:
+        return (things->armours && index < things->armourCount) ?
+            things->armours[index].next : THING_ENDOFLIST;
+    case THING_TYPE_SCROLL:
+        return (things->scrolls && index < things->scrollCount) ?
+            things->scrolls[index].next : THING_ENDOFLIST;
+    case THING_TYPE_POTION:
+        return (things->potions && index < things->potionCount) ?
+            things->potions[index].next : THING_ENDOFLIST;
+    case THING_TYPE_CONTAINER:
+        return (things->containers && index < things->containerCount) ?
+            things->containers[index].next : THING_ENDOFLIST;
+    case THING_TYPE_JUNK:
+        return (things->junks && index < things->junkCount) ?
+            things->junks[index].next : THING_ENDOFLIST;
+    case THING_TYPE_PROJECTILE:
+        return (things->projectiles && index < things->projectileCount) ?
+            things->projectiles[index].next : THING_ENDOFLIST;
+    case THING_TYPE_EXPLOSION:
+        return (things->explosions && index < things->explosionCount) ?
+            things->explosions[index].next : THING_ENDOFLIST;
+    default:
+        return THING_ENDOFLIST;
+    }
+}
+
+static int original_pc34_event_type_is_group_reaction(int type)
+{
+    return type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+           type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
+}
+
+static int original_pc34_group_on_square(
+    const struct GameWorld_Compat *world,
+    int map_index,
+    int map_x,
+    int map_y,
+    int *out_group_index)
+{
+    uint16_t thing;
+    int matches = 0;
+    int group_index = -1;
+    int safety = 0;
+
+    if (out_group_index) *out_group_index = -1;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->groups || map_index < 0 ||
+        map_index >= (int)world->dungeon->header.mapCount ||
+        map_x < 0 || map_y < 0 ||
+        map_x >= (int)world->dungeon->maps[map_index].width ||
+        map_y >= (int)world->dungeon->maps[map_index].height) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, map_index, map_x, map_y);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP &&
+            index >= 0 && index < world->things->groupCount) {
+            group_index = index;
+            ++matches;
+        }
+        thing = original_pc34_next_thing(world->things, thing);
+    }
+    if (matches != 1) {
+        return 0;
+    }
+    if (out_group_index) *out_group_index = group_index;
+    return 1;
+}
+
+static int original_pc34_explosion_event_slot_is_valid(
+    const struct DM1_Event_V1 *src,
+    const struct GameWorld_Compat *world,
+    int require_fluxcage,
+    int *out_source_index)
+{
+    uint16_t source_thing;
+    uint16_t thing;
+    int source_index;
+    int map_index;
+    int matches = 0;
+    int safety = 0;
+
+    if (out_source_index) *out_source_index = -1;
+    if (!src || !world || !world->dungeon || !world->things ||
+        !world->things->explosions) {
+        return 0;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    source_thing = read_u16_le(&src->c_cell);
+    source_index = (int)THING_GET_INDEX(source_thing);
+    if (THING_GET_TYPE(source_thing) != THING_TYPE_EXPLOSION ||
+        source_index < 0 || source_index >= world->things->explosionCount ||
+        map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height) {
+        return 0;
+    }
+    if (require_fluxcage &&
+        world->things->explosions[source_index].type != C050_EXPLOSION_FLUXCAGE) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, map_index, src->b_mapX, src->b_mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
+            (int)THING_GET_INDEX(thing) == source_index) {
+            ++matches;
+        }
+        thing = original_pc34_next_thing(world->things, thing);
+    }
+    if (matches != 1) {
+        return 0;
+    }
+    if (out_source_index) *out_source_index = source_index;
+    return 1;
+}
+
 int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     const struct DM1_Event_V1 *src,
     int source_index,
@@ -1922,12 +2104,13 @@ static int materialize_original_pc34_generator_reenable_event(
 
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
+    struct GameWorld_Compat *world,
     struct TimelineQueue_Compat *timeline)
 {
     int i;
     uint16_t source_indices[DM1_EVENT_MAX_COUNT];
 
-    if (!report || !timeline) {
+    if (!report || !world || !timeline) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
     if (report->original_event_count < 0 ||
@@ -3804,7 +3987,7 @@ static int load_world_from_bytes_uncommitted(
     if (result < 0) {
         return result;
     }
-    result = materialize_original_pc34_timeline(report, &world->timeline);
+    result = materialize_original_pc34_timeline(report, world, &world->timeline);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }
@@ -5100,6 +5283,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     for (i = 0; i < corpus.present_count &&
                 i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
         DM1OriginalSavePC34RoundtripReport roundtrip;
+        DM1OriginalSavePC34CorpusReceipt *receipt;
+        uint8_t *source_bytes = NULL;
+        size_t source_size = 0u;
         size_t exported_size = 0u;
         int result;
         int firestaff_manifest = 0;
@@ -5150,10 +5336,29 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             snprintf(report.first_pc34_path, sizeof(report.first_pc34_path),
                      "%s", corpus.paths[i]);
         }
+        if (report.receipt_count >=
+            (int)DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP) {
+            continue;
+        }
+        receipt = &report.receipts[report.receipt_count++];
+        memset(receipt, 0, sizeof(*receipt));
+        snprintf(receipt->path, sizeof(receipt->path), "%s", corpus.paths[i]);
+        result = read_original_pc34_file_bytes(
+            corpus.paths[i], &source_bytes, &source_size);
+        if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+            receipt->source_handoff_result = result;
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result = result;
+            }
+            continue;
+        }
         dm1_original_save_corpus_receipt_source_handoff(
             source_bytes, source_size, receipt);
         dm1_original_save_corpus_receipt_runtime_stage(
             source_bytes, source_size, receipt);
+        free(source_bytes);
+        source_bytes = NULL;
         ++report.runtime_stage_attempted_count;
         if (receipt->source_runtime_stage_committed) {
             ++report.runtime_stage_succeeded_count;
