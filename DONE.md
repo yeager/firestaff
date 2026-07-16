@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 CSB PANEL.C F0347 HUD-panel receipt: added a CSB-owned
+  `F0347_INVENTORY_DrawPanel` adapter over the existing real C017/C040
+  startup HUD-panel blit receipt. The route accepts only source-owned
+  real-asset panel receipts, carries C017 and optional C040 hashes unchanged,
+  rejects synthetic/wrapper receipts, and refuses stray or missing C040
+  material at the resurrect-panel boundary. Verification: strict direct C11
+  build/run and Ninja target
+  `test_csb_v1_f0347_inventory_draw_panel_pc34_compat`.
+
 - 2026-07-16 DM2 skproject core helpers: added source-mapped
   `BETWEEN_VALUE`, `DM2_BETWEEN_VALUE`, `ALLOC_TEMP_RECT`, and
   `ALLOC_TEMP_ORIGIN_RECT`. The temp rectangles use the original four-slot
