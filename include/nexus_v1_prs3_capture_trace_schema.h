@@ -488,6 +488,26 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Vdp1ProducerAttestationReceipt;
 
+/* Reviewed MENU.BPK upload-path receipt for a source-bound PRS3 capture
+ * bundle. Review can prove that raw sidecars, ledger, and producer attestation
+ * all describe the same artifact set. It still cannot authenticate original
+ * Saturn execution or permit runtime upload. */
+typedef struct {
+    int raw_sidecars_bound;
+    int provenance_complete;
+    int producer_attestation_bound;
+    int producer_binary_bound;
+    int artifact_hashes_bound;
+    int original_saturn_execution_claimed;
+    int independent_authentication_required;
+    int reviewed_upload_path_bound;
+    int original_saturn_capture_authenticated;
+    int menu_bpk_upload_reviewed;
+    int runtime_upload_permitted;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3Vdp1ReviewedUploadReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -779,5 +799,15 @@ int nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
     const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
     const Nexus_V1_Prs3Vdp1ProvenanceReceipt *provenance,
     Nexus_V1_Prs3Vdp1ProducerAttestationReceipt *out_receipt);
+
+/* Join sidecar, ledger, and producer-attestation receipts into a reviewed
+ * upload-path receipt. This is an audit boundary only: it records that the
+ * evidence set is internally consistent while preserving the fail-closed
+ * runtime gate until independent Saturn authentication exists. */
+int nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    const Nexus_V1_Prs3Vdp1ProvenanceReceipt *provenance,
+    const Nexus_V1_Prs3Vdp1ProducerAttestationReceipt *attestation,
+    Nexus_V1_Prs3Vdp1ReviewedUploadReceipt *out_receipt);
 
 #endif

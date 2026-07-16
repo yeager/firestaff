@@ -961,6 +961,7 @@ static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
     char command_path[1200];
     char palette_path[1200];
     char producer_path[1200];
+    char attestation_path[1200];
     char ledger_path[1200];
     unsigned char *menu = NULL;
     unsigned char *dm_bin = NULL;
@@ -973,9 +974,12 @@ static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
     uint32_t entry_index;
     Nexus_V1_BpkPrs3StreamPlan plan;
     char trace[4096];
+    char attestation[1024];
     int wrote = 0;
     Nexus_V1_Prs3Vdp1RawSidecarReceipt raw_sidecars;
     Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance;
+    Nexus_V1_Prs3Vdp1ProducerAttestationReceipt producer_attestation;
+    Nexus_V1_Prs3Vdp1ReviewedUploadReceipt reviewed_upload;
 
     if (!home) {
         puts("SKIP: HOME is unset; no local Nexus PRS3 V3 sidecar provenance check");
@@ -1076,13 +1080,33 @@ static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
              (long)getpid());
     snprintf(ledger_path, sizeof(ledger_path), "/tmp/nexus-v3-ledger-%ld.txt",
              (long)getpid());
+    snprintf(attestation_path, sizeof(attestation_path),
+             "/tmp/nexus-v3-attestation-%ld.txt", (long)getpid());
+    snprintf(attestation, sizeof(attestation),
+             "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1\n"
+             "producer_name=MEDNAFEN\n"
+             "capture_mode=SH2_VDP1_BUS_TRACE\n"
+             "original_saturn_execution=CLAIMED\n"
+             "trace_fnv1a64=%llx\n"
+             "output_fnv1a64=%llx\n"
+             "vdp1_command_fnv1a64=%llx\n"
+             "palette_fnv1a64=%llx\n"
+             "producer_binary_fnv1a64=%llx\n",
+             fnv1a64((const unsigned char *)trace, strlen(trace)),
+             fnv1a64(output, plan.expected_output_bytes),
+             fnv1a64(command, sizeof(command)),
+             fnv1a64(palette, sizeof(palette)),
+             fnv1a64(producer, sizeof(producer) - 1U));
 
     wrote = write_file_bytes(trace_path, (const unsigned char *)trace,
                              strlen(trace)) &&
             write_file_bytes(output_path, output, plan.expected_output_bytes) &&
             write_file_bytes(command_path, command, sizeof(command)) &&
             write_file_bytes(palette_path, palette, sizeof(palette)) &&
-            write_file_bytes(producer_path, producer, sizeof(producer) - 1U);
+            write_file_bytes(producer_path, producer, sizeof(producer) - 1U) &&
+            write_file_bytes(attestation_path,
+                             (const unsigned char *)attestation,
+                             strlen(attestation));
     expect(wrote, "V3 sidecar provenance fixtures write to temp files");
     if (wrote) {
         memset(&raw_sidecars, 0, sizeof(raw_sidecars));
@@ -1118,6 +1142,53 @@ static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
                    !provenance.capture_producer_authenticated &&
                    !provenance.runtime_import_permitted,
                "real MENU.BPK V3 provenance ledger remains evidence-only");
+        memset(&producer_attestation, 0, sizeof(producer_attestation));
+        expect(nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
+                   attestation_path, trace_path, output_path, command_path,
+                   palette_path, producer_path, &raw_sidecars, &provenance,
+                   &producer_attestation) &&
+                   producer_attestation.attestation_file_read &&
+                   producer_attestation.attestation_parsed &&
+                   producer_attestation.raw_sidecars_bound &&
+                   producer_attestation.provenance_complete &&
+                   producer_attestation.producer_binary_bound &&
+                   producer_attestation.capture_mode_declared &&
+                   producer_attestation.original_saturn_execution_claimed &&
+                   producer_attestation.artifact_hashes_bound &&
+                   producer_attestation.workflow_complete &&
+                   producer_attestation.independent_authentication_required &&
+                   !producer_attestation.capture_producer_authenticated &&
+                   !producer_attestation.runtime_import_permitted &&
+                   !producer_attestation.decoder_promoted &&
+                   !producer_attestation.fallback_visuals_permitted,
+               "real MENU.BPK V3 producer attestation binds but does not authenticate Saturn execution");
+        memset(&reviewed_upload, 0, sizeof(reviewed_upload));
+        expect(nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
+                   &raw_sidecars, &provenance, &producer_attestation,
+                   &reviewed_upload) &&
+                   reviewed_upload.raw_sidecars_bound &&
+                   reviewed_upload.provenance_complete &&
+                   reviewed_upload.producer_attestation_bound &&
+                   reviewed_upload.producer_binary_bound &&
+                   reviewed_upload.artifact_hashes_bound &&
+                   reviewed_upload.original_saturn_execution_claimed &&
+                   reviewed_upload.independent_authentication_required &&
+                   reviewed_upload.reviewed_upload_path_bound &&
+                   reviewed_upload.menu_bpk_upload_reviewed &&
+                   !reviewed_upload.original_saturn_capture_authenticated &&
+                   !reviewed_upload.runtime_upload_permitted &&
+                   !reviewed_upload.decoder_promoted &&
+                   !reviewed_upload.fallback_visuals_permitted,
+               "reviewed MENU.BPK upload path stays fail-closed without independent Saturn authentication");
+        producer_attestation.artifact_hashes_bound = 0;
+        expect(!nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
+                   &raw_sidecars, &provenance, &producer_attestation,
+                   &reviewed_upload) &&
+                   !reviewed_upload.reviewed_upload_path_bound &&
+                   !reviewed_upload.menu_bpk_upload_reviewed &&
+                   !reviewed_upload.runtime_upload_permitted &&
+                   !reviewed_upload.fallback_visuals_permitted,
+               "reviewed MENU.BPK upload path rejects attestation artifact drift");
     }
 
     remove(trace_path);
@@ -1125,6 +1196,7 @@ static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
     remove(command_path);
     remove(palette_path);
     remove(producer_path);
+    remove(attestation_path);
     remove(ledger_path);
     free(output);
     free(menu);
@@ -1387,6 +1459,7 @@ int main(void) {
         Nexus_V1_Prs3Vdp1RawSidecarReceipt sidecar_receipt;
         Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance_receipt;
         Nexus_V1_Prs3Vdp1ProducerAttestationReceipt attestation_receipt;
+        Nexus_V1_Prs3Vdp1ReviewedUploadReceipt reviewed_upload_receipt;
         expect(!nexus_v1_prs3_vdp1_capture_validate_files(
                    "/missing/nexus-v3.trace", "/missing/MENU.BPK",
                    "/missing/DM.BIN", &file_receipt) &&
@@ -1444,6 +1517,19 @@ int main(void) {
                    !attestation_receipt.decoder_promoted &&
                    !attestation_receipt.fallback_visuals_permitted,
                "producer attestation rejects absent evidence without authenticating a capture source");
+        expect(!nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
+                   &sidecar_receipt, &provenance_receipt,
+                   &attestation_receipt, &reviewed_upload_receipt) &&
+                   reviewed_upload_receipt.independent_authentication_required &&
+                   !reviewed_upload_receipt.raw_sidecars_bound &&
+                   !reviewed_upload_receipt.provenance_complete &&
+                   !reviewed_upload_receipt.producer_attestation_bound &&
+                   !reviewed_upload_receipt.reviewed_upload_path_bound &&
+                   !reviewed_upload_receipt.menu_bpk_upload_reviewed &&
+                   !reviewed_upload_receipt.runtime_upload_permitted &&
+                   !reviewed_upload_receipt.decoder_promoted &&
+                   !reviewed_upload_receipt.fallback_visuals_permitted,
+               "reviewed MENU.BPK upload path rejects missing evidence without a runtime route");
     }
 
     test_dm_bin_prs3_catalog();

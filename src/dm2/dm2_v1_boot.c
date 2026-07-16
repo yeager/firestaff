@@ -6623,6 +6623,46 @@ int dm2_v1_boot_interface_rect14_host_receipt(
     return 1;
 }
 
+int dm2_v1_boot_load_gdat_interface_00_0a_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_LoadGdatInterface000AReceipt *out_receipt)
+{
+    DM2_V1_InterfaceRect14HostReceipt host;
+    uint32_t hash = 0x4c303041u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_boot_interface_rect14_host_receipt(profile, &host) ||
+        !host.valid || host.row_count == 0u || host.table_hash == 0u ||
+        host.placement_hash == 0u ||
+        host.placement_count < host.row_count ||
+        host.rotated_cell_mask == 0u ||
+        host.max_stretched_size == 0u) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->host_receipt_consumed = 1;
+    out_receipt->table_hash = host.table_hash;
+    out_receipt->row_count = host.row_count;
+    out_receipt->stride = 14u;
+    out_receipt->byte_count = host.row_count * 14u;
+    out_receipt->placement_hash = host.placement_hash;
+    out_receipt->placement_count = host.placement_count;
+    out_receipt->rotated_cell_mask = host.rotated_cell_mask;
+    out_receipt->max_stretched_size = host.max_stretched_size;
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, host.table_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, host.row_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, host.placement_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, host.placement_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                  host.rotated_cell_mask);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                  host.max_stretched_size);
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,

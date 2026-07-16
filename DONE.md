@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Nexus MENU.BPK reviewed upload receipt: added a PRS3 V3 review
+  boundary that binds raw sidecars, provenance ledger, producer binary and
+  attestation into one source evidence chain. Runtime upload, decoder
+  promotion and fallback visuals remain blocked until independent Saturn
+  capture authentication exists. Verification:
+  `test_nexus_v1_prs3_capture_trace_schema` and `git diff --check` passed.
+
+- 2026-07-16 DM2 LOAD_GDAT_INTERFACE_00_0A Rect14 receipt: added the named
+  skproject source-symbol boundary for INTERFACE_GENERAL dt07/0x0A. It
+  consumes real GDAT Rect14 rows and the bounded host placement proof, with no
+  synthetic creature placement data. Verification: `test_dm2_v1_boot_profile_smoke`
+  and `git diff --check` passed.
+
 - 2026-07-16 DM2 querydb equipment bundle: mapped
   `DM2_QUERY_CREATURES_ITEM_MASK`, `QUERY_CREATURES_ITEM_MASK`,
   `DM2_IS_ITEM_FIT_FOR_EQUIP`, and `IS_ITEM_FIT_FOR_EQUIP` to skproject

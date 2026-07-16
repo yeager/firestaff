@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1462; 2999 total open rows
+  shared DM1/CSB 1537, DM2 1461; 2998 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -89,6 +89,15 @@
     `IS_ITEM_FIT_FOR_EQUIP` are now closed through real parsed GDAT text/word
     rows in the DM2 asset loader. The remaining querydb rows stay open until
     they have source-backed code or explicit non-applicability evidence.
+  - 2026-07-16 DM2 GDAT interface update: `DM2_LOAD_GDAT_INTERFACE_00_0A`
+    is now closed through the explicit Rect14 receipt over real
+    INTERFACE_GENERAL dt07/0x0A rows and the existing runtime host placement
+    proof. Adjacent GDAT loader rows remain open until they have the same
+    named source-symbol boundary.
+  - 2026-07-16 Nexus update: MENU.BPK PRS3 V3 now has a reviewed upload-path
+    receipt that binds sidecars, ledger and producer attestation. Full runtime
+    upload remains open until independent Saturn capture authentication and
+    decoder promotion are proven.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
