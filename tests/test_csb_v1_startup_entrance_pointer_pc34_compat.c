@@ -487,7 +487,7 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 16 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
+                  VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
               plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.fallback_title_text == NULL &&
@@ -519,10 +519,7 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title clear and draw command");
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_chaos_zoom_ticks_pc34() == 20 &&
-              csb_v1_startup_title_chaos_hold_ticks_pc34() == 20 &&
-              csb_v1_startup_title_strikes_back_ticks_pc34() == 2 &&
-              csb_v1_startup_title_total_ticks_pc34() == 102 &&
+              csb_v1_startup_title_total_ticks_pc34() == 81 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
               csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
@@ -547,14 +544,14 @@ int main(void)
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
               plan.title_empty_fallback_text == NULL &&
-              plan.title_dest_x == 152 &&
-              plan.title_dest_y == 78 &&
-              plan.title_dest_w == 16 &&
-              plan.title_dest_h == 4 &&
+              plan.title_dest_x == 136 &&
+              plan.title_dest_y == 74 &&
+              plan.title_dest_w == 48 &&
+              plan.title_dest_h == 12 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.asset_command_count == 1 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
@@ -563,10 +560,10 @@ int main(void)
               plan.asset_commands[0].source_y == 0 &&
               plan.asset_commands[0].source_w == 320 &&
               plan.asset_commands[0].source_h == 80 &&
-              plan.asset_commands[0].dest_x == 152 &&
-              plan.asset_commands[0].dest_y == 78 &&
-              plan.asset_commands[0].dest_w == 16 &&
-              plan.asset_commands[0].dest_h == 4,
+              plan.asset_commands[0].dest_x == 136 &&
+              plan.asset_commands[0].dest_y == 74 &&
+              plan.asset_commands[0].dest_w == 48 &&
+              plan.asset_commands[0].dest_h == 12,
           "startup render plan exposes title CHAOS zoom stage, boxes, palette, and asset blit");
 
     render_state.title_frame =
@@ -607,9 +604,9 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 57 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.asset_command_count == 1 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
@@ -661,7 +658,7 @@ int main(void)
               plan.closed_left_source_x == 0 &&
               plan.closed_left_source_y == 0 &&
               plan.closed_left_dest_x == 0 &&
-              plan.closed_left_dest_y == 30 &&
+              plan.closed_left_dest_y == 28 &&
               plan.closed_left_w == 105 &&
               plan.closed_left_h == 161 &&
               plan.closed_left_fallback_fill_color == 12 &&
@@ -670,7 +667,7 @@ int main(void)
               plan.closed_right_source_x == 0 &&
               plan.closed_right_source_y == 0 &&
               plan.closed_right_dest_x == 105 &&
-              plan.closed_right_dest_y == 30 &&
+              plan.closed_right_dest_y == 28 &&
               plan.closed_right_w == 127 &&
               plan.closed_right_h == 161 &&
               plan.closed_right_fallback_fill_color == 12 &&
@@ -886,12 +883,12 @@ int main(void)
               plan.opening_door_step == 2 &&
               plan.opening_left_source_x == 0 &&
               plan.opening_left_dest_x == 0 &&
-              plan.opening_left_dest_y == 30 &&
+              plan.opening_left_dest_y == 28 &&
               plan.opening_left_w == 97 &&
               plan.opening_left_h == 161 &&
               plan.opening_right_source_x == 8 &&
               plan.opening_right_dest_x == 113 &&
-              plan.opening_right_dest_y == 30 &&
+              plan.opening_right_dest_y == 28 &&
               plan.opening_right_w == 119 &&
               plan.opening_right_h == 161 &&
               plan.opening_composite_valid &&
@@ -900,12 +897,11 @@ int main(void)
               plan.opening_composite_right_asset_id == 3 &&
               plan.opening_composite_animation_step == 2 &&
               plan.opening_composite_left_box_x == 0 &&
-              plan.opening_composite_left_box_y == 30 &&
+              plan.opening_composite_left_box_y == 28 &&
               plan.opening_composite_left_box_w == 97 &&
               plan.opening_composite_left_box_h == 161 &&
-              plan.opening_composite_left_source_y == 0 &&
               plan.opening_composite_right_box_x == 113 &&
-              plan.opening_composite_right_box_y == 30 &&
+              plan.opening_composite_right_box_y == 28 &&
               plan.opening_composite_right_box_w == 119 &&
               plan.opening_composite_right_box_h == 161 &&
               plan.opening_composite_left_source_x == 0 &&

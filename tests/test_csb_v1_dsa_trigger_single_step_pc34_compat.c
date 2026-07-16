@@ -44,8 +44,6 @@
  */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
-#include "csb_v1_monster_pc34_compat.h"
-#include "csb_v1_runtime_pc34_compat.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -69,50 +67,6 @@ static void check(int cond, const char *anchor, const char *msg)
         ++g_failures;
         printf("  FAIL: %s [%s]\n", msg, anchor);
     }
-}
-
-static void put_le16(uint8_t *bytes, size_t offset, uint16_t value)
-{
-    bytes[offset] = (uint8_t)value;
-    bytes[offset + 1u] = (uint8_t)(value >> 8);
-}
-
-static void put_le32(uint8_t *bytes, size_t offset, uint32_t value)
-{
-    bytes[offset] = (uint8_t)value;
-    bytes[offset + 1u] = (uint8_t)(value >> 8);
-    bytes[offset + 2u] = (uint8_t)(value >> 16);
-    bytes[offset + 3u] = (uint8_t)(value >> 24);
-}
-
-static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
-{
-    uint32_t hash = 2166136261u;
-    size_t i;
-
-    for (i = 0u; i < size; ++i) {
-        hash ^= bytes[i];
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-typedef struct {
-    int calls;
-    uint32_t location;
-    uint8_t skin;
-} PendingSkinWriteProbe;
-
-static int pending_skin_write_probe(void *user, uint32_t location,
-                                    uint8_t skin)
-{
-    PendingSkinWriteProbe *probe = (PendingSkinWriteProbe *)user;
-
-    if (!probe) return 0;
-    ++probe->calls;
-    probe->location = location;
-    probe->skin = skin;
-    return 1;
 }
 
 static void install_single_script(CSB_V1_ChaosMagicState *chaos,
@@ -1478,17 +1432,6 @@ int main(void)
     test_malformed_target_operands_reject_cleanly();
     test_trigger_out_of_range_script_id_rejects_cleanly();
     test_single_step_message_records_dispatch();
-    test_csbwin_load_opcode_family();
-    test_csbwin_load_store_rejects_unowned_action();
-    test_csbwin_authenticated_stack_opcode_family();
-    test_csbwin_setskin_waits_for_complete_action();
-    test_csbwin_authenticated_filter_stack_runner();
-    test_csbwin_runtime_filter_adapter();
-    test_csbwin_authenticated_local_variable_opcode_family();
-    test_csbwin_authenticated_global_variable_opcode_family();
-    test_csbwin_authenticated_state_column_jump_dispatch();
-    test_csbwin_authenticated_state_column_gosub_dispatch();
-    test_csbwin_authenticated_execute_transfer_subset();
     test_source_evidence_anchors();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);

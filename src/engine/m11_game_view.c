@@ -3404,6 +3404,38 @@ static void m11_csb_boot_runtime_startup_snapshot(
     out_snapshot->runtime_tick_count = state->csbState.tick_count;
 }
 
+static int m11_csb_complete_door_runtime_handoff(M11_GameViewState *state)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupDoorRuntimeReceipt_PC34 handoff;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    /* ReDMCSB ENTRANCE.C F0806 returns to the game only after the prison
+     * doors finish.  CSBWin CSBCode.cpp OpenPrisonDoors follows the same
+     * ownership boundary.  Use the package-verified receipt here rather
+     * than moving M11 directly into the HUD playback stage. */
+    if (!csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+            &snapshot, session, &handoff) || !handoff.valid ||
+        !handoff.door_opening_finished || !handoff.runtime_view_ready ||
+        !handoff.hud_session_ready || handoff.route !=
+            CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_HUD_READY_PC34) {
+        return 0;
+    }
+    m11_apply_csb_runtime_m11_mirror_receipt(state, &handoff.runtime_mirror);
+    if (handoff.status) {
+        m11_set_status(state, handoff.status_scope ? handoff.status_scope : "BOOT",
+                       handoff.status);
+    }
+    return 1;
+}
+
 static int m11_csb_boot_runtime_startup_keyboard_dispatch(
     const M11_GameViewState *state,
     int menu_input,
@@ -3918,13 +3950,7 @@ static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
             state,
             &receipt->finish_receipt);
         if (state->csbState.startup_entrance_dismissed) {
-            CSB_V1_StartupRuntimeAssetSession_PC34 *session =
-                (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                    state->csbStartupRuntimeAssetSession;
-            if (!session ||
-                !csb_v1_boot_startup_playback_complete_entrance_pc34(
-                    session) ||
-                !csb_v1_boot_startup_playback_enter_hud_pc34(session)) {
+            if (!m11_csb_complete_door_runtime_handoff(state)) {
                 return M11_GAME_INPUT_IGNORED;
             }
         }

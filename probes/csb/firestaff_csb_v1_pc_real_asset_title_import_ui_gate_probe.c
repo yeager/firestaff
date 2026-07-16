@@ -47,9 +47,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
-#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "firestaff_cmp_decode.h"
-#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -229,7 +227,6 @@ int main(int argc, char **argv)
     csb_v1_boot_profile_init(&profile);
     CHECK(csb_v1_boot_scan_assets(&profile, dir) == 0,
           "PC CSB assets scan by hash");
-    check_real_entrance_composition(&profile);
     CHECK(strcmp(csb_v1_engine_version_display_get(), "v2.0") == 0,
           "engine version helper reports v2.0 before CSB enter_game");
 

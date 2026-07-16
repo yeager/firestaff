@@ -15,6 +15,7 @@ typedef struct {
 } M12_UnicodeGlyph;
 
 const M12_UnicodeGlyph* M12_FindUnicodeGlyph(uint32_t codepoint);
+int M12_UnicodeTextMissingGlyphCount(const char* utf8Text);
 
 #ifdef __cplusplus
 }

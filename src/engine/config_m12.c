@@ -227,6 +227,46 @@ int M12_Config_GetAutoLanguageIndex(void) {
     return 0;
 }
 
+int M12_Config_FindDefaultUnicodeFontPath(char* out, size_t outSize) {
+    static const char* const candidates[] = {
+#if defined(__APPLE__)
+        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+        "/System/Library/Fonts/PingFang.ttc",
+        "/System/Library/Fonts/Apple Symbols.ttf",
+        "/Library/Fonts/Arial Unicode.ttf",
+#elif defined(_WIN32)
+        "C:\\Windows\\Fonts\\NotoSans-Regular.ttf",
+        "C:\\Windows\\Fonts\\arialuni.ttf",
+        "C:\\Windows\\Fonts\\seguiemj.ttf",
+        "C:\\Windows\\Fonts\\segoeui.ttf",
+#else
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/local/share/fonts/NotoSans-Regular.ttf",
+#endif
+    };
+    size_t i;
+    if (!out || outSize == 0U) {
+        return 0;
+    }
+    out[0] = '\0';
+    {
+        const char* override = getenv("FIRESTAFF_UI_FONT");
+        if (override && override[0] != '\0' && FSP_FileExists(override)) {
+            m12_copy_string(out, outSize, override);
+            return out[0] != '\0';
+        }
+    }
+    for (i = 0U; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
+        if (FSP_FileExists(candidates[i])) {
+            m12_copy_string(out, outSize, candidates[i]);
+            return out[0] != '\0';
+        }
+    }
+    return 0;
+}
+
 /* m12_build_parent_dir, m12_ensure_directory, m12_default_data_dir,
  * m12_default_config_path — replaced by fs_portable_compat. */
 
@@ -365,6 +405,10 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->ambientEnabled = 0;
     config->ambientVolume = 40;
     config->uiScale = 100;
+    if (!M12_Config_FindDefaultUnicodeFontPath(config->unicodeFontPath,
+                                               sizeof(config->unicodeFontPath))) {
+        config->unicodeFontPath[0] = '\0';
+    }
     config->quickResumeEnabled = 1;
     config->artpackPath[0] = '\0';
     config->retroAchievementsEnabled = 0;
@@ -379,6 +423,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->screenshotPath[0] = '\0';
     config->streamerMode = 0;
     config->v22_modern_assets_installed = 0;
+    config->artpackPath[0] = '\0';
     config->cloudSyncEnabled = 0;
     config->cloudSyncPolicy = 0;  /* M12_SYNC_POLICY_NEWER_WINS */
     config->cloudSyncDir[0] = '\0';
@@ -837,6 +882,11 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->uiScale = val;
         return;
     }
+    if (m12_string_equals(key, "unicode_font_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->unicodeFontPath, sizeof(config->unicodeFontPath), quoted);
+        return;
+    }
     if (m12_string_equals(key, "data_dir") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), quoted);
@@ -918,6 +968,11 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "v22_modern_assets_installed")) {
         config->v22_modern_assets_installed = m12_parse_int(value, 0) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "artpack_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->artpackPath, sizeof(config->artpackPath), quoted);
         return;
     }
     if (m12_string_equals(key, "last_save_path") &&
@@ -1042,6 +1097,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "ambient_enabled = %d\n", config->ambientEnabled ? 1 : 0);
     fprintf(fp, "ambient_volume = %d\n", config->ambientVolume);
     fprintf(fp, "ui_scale = %d\n", config->uiScale);
+    fputs("unicode_font_path = ", fp); m12_escape_and_write(fp, config->unicodeFontPath); fputc('\n', fp);
     fprintf(fp, "quick_resume_enabled = %d\n", config->quickResumeEnabled ? 1 : 0);
     fputs("artpack_path = ", fp);
     m12_escape_and_write(fp, config->artpackPath);
@@ -1065,6 +1121,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "cloud_sync_policy = %d\n", config->cloudSyncPolicy);
     fprintf(fp, "cloud_sync_dir = "); m12_escape_and_write(fp, config->cloudSyncDir); fputc('\n', fp);
     fprintf(fp, "v22_modern_assets_installed = %d\n", config->v22_modern_assets_installed ? 1 : 0);
+    fputs("artpack_path = ", fp); m12_escape_and_write(fp, config->artpackPath); fputc('\n', fp);
     fputs("data_dir = ", fp);
     m12_escape_and_write(fp, config->dataDir);
     fputc('\n', fp);
@@ -1344,6 +1401,9 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"ambient_enabled\": %d,\n", config->ambientEnabled ? 1 : 0);
     fprintf(fp, "  \"ambient_volume\": %d,\n", config->ambientVolume);
     fprintf(fp, "  \"ui_scale\": %d,\n", config->uiScale);
+    fprintf(fp, "  \"unicode_font_path\": ");
+    m12_json_write_string(fp, config->unicodeFontPath);
+    fprintf(fp, ",\n");
     fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
     fprintf(fp, "  \"unicode_font_path\": ");
     m12_json_write_string(fp, config->unicodeFontPath);
@@ -1367,6 +1427,9 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"cloud_sync_enabled\": %d,\n", config->cloudSyncEnabled ? 1 : 0);
     fprintf(fp, "  \"cloud_sync_policy\": %d,\n", config->cloudSyncPolicy);
     fprintf(fp, "  \"cloud_sync_dir\": "); m12_json_write_string(fp, config->cloudSyncDir); fprintf(fp, ","); fputc('\n', fp);
+    fprintf(fp, "  \"artpack_path\": ");
+    m12_json_write_string(fp, config->artpackPath);
+    fprintf(fp, ",\n");
     fprintf(fp, "  \"custom_music_path\": ");
     m12_json_write_string(fp, config->customMusicPath);
     fprintf(fp, ",\n  \"custom_dungeon_path\": ");
@@ -1678,6 +1741,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_BOOL("ambient_enabled", ambientEnabled)
         SET_INT("ambient_volume", ambientVolume)
         SET_INT("ui_scale", uiScale)
+        SET_STRING("unicode_font_path", unicodeFontPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_BOOL("quick_resume_enabled", quickResumeEnabled)
         SET_STRING("unicode_font_path", unicodeFontPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("artpack_path", artpackPath, M12_CONFIG_DATA_DIR_CAPACITY)
@@ -1691,6 +1755,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_BOOL("cloud_sync_enabled", cloudSyncEnabled)
         SET_INT("cloud_sync_policy", cloudSyncPolicy)
         SET_STRING("cloud_sync_dir", cloudSyncDir, M12_CONFIG_DATA_DIR_CAPACITY)
+        SET_STRING("artpack_path", artpackPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("custom_music_path", customMusicPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("custom_dungeon_path", customDungeonPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("screenshot_path", screenshotPath, M12_CONFIG_DATA_DIR_CAPACITY)

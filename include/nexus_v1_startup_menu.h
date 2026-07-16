@@ -238,12 +238,10 @@ typedef struct {
     int selected_row;
     int selected_slot;
     int slot_mask;
+    int action_receipt_valid;
+    Nexus_V1_StartupHostActionReceipt action_receipt;
     int save_state_receipt_valid;
     Nexus_V1_StartupMenuStateReceipt save_state_receipt;
-    /* Retain the one action evaluation that selected/confirmed this route.
-     * Host consumers must not reconstruct it from availability-only facts. */
-    Nexus_V1_StartupHostActionReceipt action_receipt;
-    int action_receipt_valid;
     Nexus_V1_StartupActionKind action_kind;
     Nexus_V1_StartupSaveExecutionKind execution_kind;
     Nexus_V1_StartupHostInputResult host_input_result;
@@ -266,7 +264,8 @@ typedef enum {
     NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD = 1,
     NEXUS_V1_STARTUP_TITLE_ROUTE_SAVE_SELECT = 2,
     NEXUS_V1_STARTUP_TITLE_ROUTE_CHAMPION_SELECT = 3,
-    NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER = 4
+    NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER = 4,
+    NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED = 5
 } Nexus_V1_StartupTitleRoute;
 
 typedef struct {

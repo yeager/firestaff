@@ -81,10 +81,6 @@ typedef enum {
     /* skproject SKWIN/DME.h dtText.  QUERY_GDAT_TEXT selects this exact
      * type; it must not be confused with a drawable environment image. */
     DM2_GDAT_ENTRY_TYPE_TEXT         = 0x05,
-    /* skproject/SKWIN/DME.h dtIndex: dtRectangle/dt04 = 4.
-     * LOAD_RECTS_AND_COMPRESS reads this exact typed payload before it
-     * expands the title-menu and HUD rectangle tables. */
-    DM2_GDAT_ENTRY_TYPE_RAW4         = 0x04,
     DM2_GDAT_ENTRY_TYPE_RAW6         = 0x06,
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
@@ -98,12 +94,15 @@ typedef enum {
  * skproject/SKWIN/defines.h GRAPHICSSET and map-chip field identifiers. */
 #define DM2_GDAT_GFXSET_FLOOR 0x00
 #define DM2_GDAT_GFXSET_CEIL  0x01
+#define DM2_GDAT_GFXSET_DOOR_FRAME_FRONT_D1 0x06
+#define DM2_GDAT_GFXSET_DOOR_FRAME_D1C      0x07
+#define DM2_GDAT_GFXSET_DOOR_FRAME_D2C      0x09
 #define DM2_GDAT_IMG_MAP_CHIP 0xF9
 
 #define DM2_GDAT_GFXSET_SCENE_COLORKEY       0x64
 #define DM2_GDAT_GFXSET_SCENE_FLAGS          0x65
-#define DM2_GDAT_GFXSET_SCENE_RAIN           0x66
-#define DM2_GDAT_GFXSET_AMBIANT_LIGHT        0x67
+#define DM2_GDAT_GFXSET_AMBIANT_LIGHT        0x66
+#define DM2_GDAT_GFXSET_SCENE_RAIN           0x67
 #define DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL  0x68
 #define DM2_GDAT_GFXSET_MISTY_MAP            0x69
 #define DM2_GDAT_GFXSET_VOID_RANDOM_FALL     0x6A
@@ -176,24 +175,6 @@ typedef struct {
     uint32_t hash;
 } DM2_V1_InterfacePalette;
 
-/* Exact non-pixel portion of the original IMG3 record consumed by
- * QUERY_GDAT_SUMMARY_IMAGE/QUERY_TEMP_PICST.  Width and height come from
- * the IMG3 header; the two offsets are the category-wide field 0xfe and the
- * image-specific field.  No image decoder or generated surface is involved. */
-typedef struct {
-    uint16_t width;
-    uint16_t height;
-    uint16_t bits_per_pixel;
-    int graphicsset_offset_present;
-    int image_offset_present;
-    int8_t graphicsset_offset_x;
-    int8_t graphicsset_offset_y;
-    int8_t image_offset_x;
-    int8_t image_offset_y;
-    int16_t query_offset_x;
-    int16_t query_offset_y;
-    uint32_t metadata_hash;
-} DM2_V1_GdatImageMetadata;
 
 typedef struct {
     uint8_t accepted;
@@ -995,16 +976,6 @@ int dm2_v1_asset_load_image_offset(
     int field,
     uint16_t *out_value);
 
-/* Read only the source metadata that QUERY_TEMP_PICST receives before image
- * realization. Returns zero unless the exact dtImage record is present;
- * absent original dtImageOffset fields retain the source's zero offset. */
-int dm2_v1_asset_load_image_metadata(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    DM2_V1_GdatImageMetadata *out_metadata);
-
 /* Decode INTERFACE_GENERAL's paired dtPalIRGB/dtPalette16 entries.  The
  * original stores 256 four-byte IRGB rows and 16 one-byte palette indices;
  * only an exact typed pair is accepted. */
@@ -1014,17 +985,6 @@ int dm2_v1_asset_load_interface_palette(
     int index,
     int field,
     DM2_V1_InterfacePalette *out_palette);
-
-/* Read the 16-byte palette stored at the tail of one four-bit IMG3 GDAT
- * image.  skproject QUERY_GDAT_IMAGE_LOCALPAL returns this exact payload to
- * DRAW_CHIP_OF_MAGIC_MAP; it is not the global INTERFACE palette. */
-int dm2_v1_asset_load_image_local_palette(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.
@@ -1043,6 +1003,7 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
                                         int category, int index, int field,
                                         int *out_width, int *out_height,
                                         DM2_ImageFormat *out_format);
+
 
 /* Get GDAT category count and index range for a category.
  * Returns number of entries in category.

@@ -39,7 +39,6 @@
 #include "theron_v1_startup_receipt.h"
 #include "asset_status_m12.h"
 #include "theron_v1_chapter_marker.h"
-#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 
@@ -419,30 +418,6 @@ static int read_file_bytes(const char *path, uint8_t **out, size_t *out_size) {
     return 1;
 }
 
-/* The static IPL parser and the original runtime trace establish one complete
- * JP/US route only: CD_EXEC $3e7 -> $4000, then $4090 CD_READ -> $3800.
- * Keep startup receipt publication behind that whole chain, not merely a
- * structurally similar stage-three sector. */
-static int theron_v1_startup_receipt_stage3_loader_chain_valid(
-    const uint8_t *track02_data,
-    size_t track02_size,
-    const char *md5_hex,
-    const Theron_Track02Stage2DynamicPayloadReceipt *payload) {
-    Theron_V1Stage2RuntimeHandoff handoff;
-
-    if (!track02_data || track02_size == 0u || !md5_hex || !payload ||
-        !payload->valid) {
-        return 0;
-    }
-    memset(&handoff, 0, sizeof(handoff));
-    return theron_v1_stage2_runtime_handoff_from_original_media(
-               track02_data, track02_size, md5_hex, &handoff) &&
-           handoff.variant == payload->variant &&
-           handoff.track02_record == payload->track02_record &&
-           handoff.user_data_hash == payload->user_data_hash &&
-           handoff.physical_stage3_entry_verified;
-}
-
 /* ── Real-asset receipt ───────────────────────────────────────────── */
 
 int theron_v1_startup_receipt_from_file(const char *track02_path,
@@ -450,7 +425,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
                                          Theron_V1_StartupReceipt *receipt) {
     Theron_V1_BootProfile profile;
     Theron_Track02BankSignal signal;
-    Theron_Track02Stage2DynamicPayloadReceipt stage2_dynamic;
     Theron_Track02SignalStatus signal_status;
     uint8_t *data = NULL;
     size_t size = 0;
@@ -507,7 +481,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         safe_str_copy(receipt->track02_path, sizeof(receipt->track02_path), track02_path);
         safe_str_copy(receipt->track02_md5_hex, sizeof(receipt->track02_md5_hex), expected_md5);
         safe_str_copy(receipt->skip_reason_note, sizeof(receipt->skip_reason_note),
-                      "CUE Track 02 mount did not resolve one readable MODE1 payload");
+                      "CUE Track 02 mount did not resolve one readable MODE1/2352 payload");
         receipt->m11_dispatch_source_kind = -1;
         receipt->session_tick_token = theron_v1_startup_receipt_session_tick(receipt);
         return 0;
@@ -636,56 +610,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         receipt->session_tick_token =
             theron_v1_startup_receipt_session_tick(receipt);
         return 0;
-    }
-
-    /* The original CUE debugger trace fixes this first dynamic read only for
-     * raw JP/US Track 02 images.  Carry its bounded manifest receipt through
-     * startup so later runtime code can consume the exact record without
-     * reopening a byte scan.  Its 218 entries remain deliberately opaque. */
-    memset(&stage2_dynamic, 0, sizeof(stage2_dynamic));
-    if (receipt->variant == THERON_TRACK02_VARIANT_JP_BIN ||
-        receipt->variant == THERON_TRACK02_VARIANT_US_BIN) {
-        if (theron_v1_track02_inspect_stage2_dynamic_payload(
-                data, size, expected_md5, &stage2_dynamic) !=
-                THERON_TRACK02_SIGNAL_OK || !stage2_dynamic.valid) {
-            free(data);
-            set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
-            safe_str_copy(receipt->skip_reason_note,
-                          sizeof(receipt->skip_reason_note),
-                          "stage-two dynamic record receipt did not validate");
-            receipt->m11_dispatch_source_kind = -1;
-            receipt->session_tick_token =
-                theron_v1_startup_receipt_session_tick(receipt);
-            return 0;
-        }
-        /* The stage-two loader enters this exact sector at $3800. Require
-         * the physical BRK $ff bytes before its loader handoff can reach
-         * runtime; descriptor contents stay deliberately unclassified. */
-        if (!theron_v1_startup_receipt_stage3_loader_chain_valid(
-                data, size, expected_md5, &stage2_dynamic)) {
-            free(data);
-            set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
-            safe_str_copy(receipt->skip_reason_note,
-                          sizeof(receipt->skip_reason_note),
-                          "IPL-to-stage-three loader chain did not validate");
-            receipt->m11_dispatch_source_kind = -1;
-            receipt->session_tick_token =
-                theron_v1_startup_receipt_session_tick(receipt);
-            return 0;
-        }
-        receipt->stage2_dynamic_manifest_valid = 1;
-        receipt->stage2_dynamic_record = stage2_dynamic.track02_record;
-        receipt->stage2_dynamic_raw_sector = stage2_dynamic.raw_sector;
-        receipt->stage2_dynamic_user_data_offset =
-            stage2_dynamic.user_data_offset;
-        receipt->stage2_dynamic_user_data_bytes =
-            stage2_dynamic.user_data_bytes;
-        receipt->stage2_dynamic_header_word0 = stage2_dynamic.header_word0;
-        receipt->stage2_dynamic_header_word1 = stage2_dynamic.header_word1;
-        receipt->stage2_dynamic_manifest_bytes = stage2_dynamic.manifest_bytes;
-        receipt->stage2_dynamic_manifest_entry_count =
-            stage2_dynamic.manifest_entry_count;
-        receipt->stage2_dynamic_user_data_hash = stage2_dynamic.user_data_hash;
     }
 
     memset(&signal, 0, sizeof(signal));
@@ -1150,26 +1074,6 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->initial_candidate_user_data_offset_valid), h);
     h = fnv1a_32(&receipt->initial_candidate_user_data_offset,
                  sizeof(receipt->initial_candidate_user_data_offset), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_manifest_valid,
-                 sizeof(receipt->stage2_dynamic_manifest_valid), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_record,
-                 sizeof(receipt->stage2_dynamic_record), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_raw_sector,
-                 sizeof(receipt->stage2_dynamic_raw_sector), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_user_data_offset,
-                 sizeof(receipt->stage2_dynamic_user_data_offset), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_user_data_bytes,
-                 sizeof(receipt->stage2_dynamic_user_data_bytes), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_header_word0,
-                 sizeof(receipt->stage2_dynamic_header_word0), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_header_word1,
-                 sizeof(receipt->stage2_dynamic_header_word1), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_manifest_bytes,
-                 sizeof(receipt->stage2_dynamic_manifest_bytes), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_manifest_entry_count,
-                 sizeof(receipt->stage2_dynamic_manifest_entry_count), h);
-    h = fnv1a_32(&receipt->stage2_dynamic_user_data_hash,
-                 sizeof(receipt->stage2_dynamic_user_data_hash), h);
     h = fnv1a_32(&receipt->startup_mirror_count,
                  sizeof(receipt->startup_mirror_count), h);
     h = fnv1a_32(&receipt->startup_companion_limit,

@@ -1,5 +1,6 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
-#include "dm1_v1_resurrection_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
@@ -49,6 +50,13 @@
     (ORIGINAL_PC34_EVENT_BYTES * ORIGINAL_PC34_EVENT_MAXIMUM_COUNT)
 #define ORIGINAL_PC34_TIMELINE_PART_BYTES \
     (2 * ORIGINAL_PC34_EVENT_MAXIMUM_COUNT)
+#define ORIGINAL_PC34_PARTY_INFO_EVENT73_COUNT_OFFSET 2
+#define ORIGINAL_PC34_PARTY_INFO_MAGICAL_LIGHT_AMOUNT_OFFSET 0
+#define ORIGINAL_PC34_PARTY_INFO_EVENT79_COUNT_OFFSET 3
+#define ORIGINAL_PC34_PARTY_INFO_SHIELD_DEFENSE_OFFSET 4
+#define ORIGINAL_PC34_PARTY_INFO_FIRE_SHIELD_DEFENSE_OFFSET 6
+#define ORIGINAL_PC34_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET 8
+#define ORIGINAL_PC34_PARTY_INFO_EVENT71_COUNT_OFFSET 86
 
 static void wr16le(unsigned char *p, uint16_t v)
 {
@@ -66,6 +74,15 @@ static uint16_t rd16le(const unsigned char *p)
 {
     return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
 }
+
+static void write_original_event(unsigned char *dst,
+                                 uint32_t map_time,
+                                 int type,
+                                 int priority,
+                                 int map_x,
+                                 int map_y,
+                                 int cell,
+                                 int effect);
 
 static uint16_t checksum_first_half(const unsigned char *header)
 {
@@ -155,6 +172,505 @@ static int write_part(unsigned char *dst,
     return 2 + byte_count;
 }
 
+static int rewrite_fixture_timeline_with_duplicate_index(unsigned char *bytes,
+                                                         int byte_count)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    uint16_t part_key = 0u;
+    uint16_t part_checksum;
+    int part;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+
+        if (cursor + 2u > (size_t)byte_count) goto fail;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > (size_t)byte_count ||
+            (part_size & 1u) != 0u) goto fail;
+        if (part == SAVEGAME_PC34_PART_TIMELINE) {
+            if (part_size < 4u) goto fail;
+            part_key = rd16le(header + 310u + (size_t)part * 2u);
+            xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+            /* Keep every byte/part checksum valid while making the first
+             * two heap entries name the same EVENT index. */
+            wr16le(bytes + cursor + 2u, rd16le(bytes + cursor));
+            part_checksum = checksum_and_xor_words(
+                bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(header + 342u + (size_t)part * 2u, part_checksum);
+            {
+                uint16_t second_sum = checksum_second_half_plain(header);
+                uint16_t first_before_last = checksum_first_half(header);
+                uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                           first_before_last ^ second_sum);
+                wr16le(header + 254u, last);
+            }
+            xor_obfuscate_second_half(header, header_key);
+            return 1;
+        }
+        cursor += part_size;
+    }
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_event_zero(unsigned char *bytes,
+                                      int byte_count,
+                                      uint32_t map_time,
+                                      int type,
+                                      int priority,
+                                      int map_x,
+                                      int map_y,
+                                      int cell,
+                                      int effect)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    int part;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+
+        if (cursor + 2u > (size_t)byte_count) goto fail;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > (size_t)byte_count ||
+            (part_size & 1u) != 0u) goto fail;
+        if (part == SAVEGAME_PC34_PART_EVENTS) {
+            uint16_t part_key;
+            uint16_t part_checksum;
+
+            if (part_size < ORIGINAL_PC34_EVENT_BYTES) goto fail;
+            part_key = rd16le(header + 310u + (size_t)part * 2u);
+            xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+            write_original_event(bytes + cursor, map_time, type, priority,
+                                 map_x, map_y, cell, effect);
+            part_checksum = checksum_and_xor_words(
+                bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(header + 342u + (size_t)part * 2u, part_checksum);
+            {
+                uint16_t second_sum = checksum_second_half_plain(header);
+                uint16_t first_before_last = checksum_first_half(header);
+                uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                           first_before_last ^ second_sum);
+                wr16le(header + 254u, last);
+            }
+            xor_obfuscate_second_half(header, header_key);
+            return 1;
+        }
+        cursor += part_size;
+    }
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_party_status_count(unsigned char *bytes,
+                                              int byte_count,
+                                              int party_info_offset,
+                                              unsigned char count)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    int part;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+
+        if (cursor + 2u > (size_t)byte_count) goto fail;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > (size_t)byte_count ||
+            (part_size & 1u) != 0u) goto fail;
+        if (part == SAVEGAME_PC34_PART_PARTY) {
+            uint16_t part_key;
+            uint16_t part_checksum;
+            size_t count_offset;
+
+            if (party_info_offset < 0 ||
+                party_info_offset >= ORIGINAL_PC34_PARTY_INFO_BYTES) goto fail;
+            count_offset = (size_t)ORIGINAL_PC34_CHAMPION_BYTES *
+                               CHAMPION_MAX_PARTY +
+                           (size_t)party_info_offset;
+
+            if (part_size != ORIGINAL_PC34_PARTY_BYTES ||
+                count_offset >= part_size) goto fail;
+            part_key = rd16le(header + 310u + (size_t)part * 2u);
+            xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+            bytes[cursor + count_offset] = count;
+            part_checksum = checksum_and_xor_words(
+                bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(header + 342u + (size_t)part * 2u, part_checksum);
+            {
+                uint16_t second_sum = checksum_second_half_plain(header);
+                uint16_t first_before_last = checksum_first_half(header);
+                uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                           first_before_last ^ second_sum);
+                wr16le(header + 254u, last);
+            }
+            xor_obfuscate_second_half(header, header_key);
+            return 1;
+        }
+        cursor += part_size;
+    }
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_party_status_i16(unsigned char *bytes,
+                                            int byte_count,
+                                            int party_info_offset,
+                                            int16_t value)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    int part;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2 ||
+        party_info_offset < 0 ||
+        party_info_offset + 2 > ORIGINAL_PC34_PARTY_INFO_BYTES) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+
+        if (cursor + 2u > (size_t)byte_count) goto fail;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > (size_t)byte_count ||
+            (part_size & 1u) != 0u) goto fail;
+        if (part == SAVEGAME_PC34_PART_PARTY) {
+            uint16_t part_key;
+            uint16_t part_checksum;
+            size_t value_offset = (size_t)ORIGINAL_PC34_CHAMPION_BYTES *
+                                      CHAMPION_MAX_PARTY +
+                                  (size_t)party_info_offset;
+
+            if (part_size != ORIGINAL_PC34_PARTY_BYTES ||
+                value_offset + 2u > part_size) goto fail;
+            part_key = rd16le(header + 310u + (size_t)part * 2u);
+            xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(bytes + cursor + value_offset, (uint16_t)value);
+            part_checksum = checksum_and_xor_words(
+                bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(header + 342u + (size_t)part * 2u, part_checksum);
+            {
+                uint16_t second_sum = checksum_second_half_plain(header);
+                uint16_t first_before_last = checksum_first_half(header);
+                uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                           first_before_last ^ second_sum);
+                wr16le(header + 254u, last);
+            }
+            xor_obfuscate_second_half(header, header_key);
+            return 1;
+        }
+        cursor += part_size;
+    }
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static const struct DM1_Event_V1 *find_report_event_by_type(
+    const DM1OriginalSavePC34HandoffReport *report,
+    int type)
+{
+    int i;
+
+    if (!report) return NULL;
+    for (i = 0; i < report->decoded_event_count; ++i) {
+        if (report->events[i].type == type) {
+            return &report->events[i];
+        }
+    }
+    return NULL;
+}
+
+static int rewrite_fixture_global_with_invalid_active_champion(
+    unsigned char *bytes,
+    int byte_count)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    uint16_t part_size;
+    uint16_t part_key;
+    uint16_t part_checksum;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    part_size = rd16le(bytes + cursor);
+    cursor += 2u;
+    if (part_size != SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT ||
+        cursor + part_size > (size_t)byte_count) {
+        goto fail;
+    }
+    part_key = rd16le(header + 310u +
+                      SAVEGAME_PC34_PART_GLOBAL_DATA * 2u);
+    xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+    /* A two-champion party may use slots 0 and 1 only. Keep the byte shape,
+     * part checksum, header checksum, and F0417 obfuscation all valid. */
+    wr16le(bytes + cursor + 10u, 2u);
+    wr16le(bytes + cursor + 20u, 2u);
+    part_checksum = checksum_and_xor_words(
+        bytes + cursor, (size_t)part_size / 2u, part_key);
+    wr16le(header + 342u +
+           SAVEGAME_PC34_PART_GLOBAL_DATA * 2u, part_checksum);
+    {
+        uint16_t second_sum = checksum_second_half_plain(header);
+        uint16_t first_before_last = checksum_first_half(header);
+        uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                   first_before_last ^ second_sum);
+        wr16le(header + 254u, last);
+    }
+    xor_obfuscate_second_half(header, header_key);
+    return 1;
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_global_current_active_group_count(
+    unsigned char *bytes,
+    int byte_count,
+    uint16_t active_group_count)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    uint16_t part_size;
+    uint16_t part_key;
+    uint16_t part_checksum;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    part_size = rd16le(bytes + cursor);
+    cursor += 2u;
+    if (part_size != SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT ||
+        cursor + part_size > (size_t)byte_count) {
+        goto fail;
+    }
+    part_key = rd16le(header + 310u +
+                      SAVEGAME_PC34_PART_GLOBAL_DATA * 2u);
+    xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+    wr16le(bytes + cursor + 30u, active_group_count);
+    part_checksum = checksum_and_xor_words(
+        bytes + cursor, (size_t)part_size / 2u, part_key);
+    wr16le(header + 342u +
+           SAVEGAME_PC34_PART_GLOBAL_DATA * 2u, part_checksum);
+    {
+        uint16_t second_sum = checksum_second_half_plain(header);
+        uint16_t first_before_last = checksum_first_half(header);
+        uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                   first_before_last ^ second_sum);
+        wr16le(header + 254u, last);
+    }
+    xor_obfuscate_second_half(header, header_key);
+    return 1;
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_global_party_pose(unsigned char *bytes,
+                                             int byte_count,
+                                             uint16_t map_index,
+                                             uint16_t map_x,
+                                             uint16_t map_y)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    uint16_t part_size;
+    uint16_t part_key;
+    uint16_t part_checksum;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    part_size = rd16le(bytes + cursor);
+    cursor += 2u;
+    if (part_size != SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT ||
+        cursor + part_size > (size_t)byte_count) {
+        goto fail;
+    }
+    part_key = rd16le(header + 310u +
+                      SAVEGAME_PC34_PART_GLOBAL_DATA * 2u);
+    xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+    /* ReDMCSB DEFS.H GLOBAL_DATA PartyMapX/Y/MapIndex fields, consumed by
+     * LOADSAVE.C F0435 before F0434 restores the saved dungeon tail. */
+    wr16le(bytes + cursor + 12u, map_x);
+    wr16le(bytes + cursor + 14u, map_y);
+    wr16le(bytes + cursor + 18u, map_index);
+    part_checksum = checksum_and_xor_words(
+        bytes + cursor, (size_t)part_size / 2u, part_key);
+    wr16le(header + 342u +
+           SAVEGAME_PC34_PART_GLOBAL_DATA * 2u, part_checksum);
+    {
+        uint16_t second_sum = checksum_second_half_plain(header);
+        uint16_t first_before_last = checksum_first_half(header);
+        uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                   first_before_last ^ second_sum);
+        wr16le(header + 254u, last);
+    }
+    xor_obfuscate_second_half(header, header_key);
+    return 1;
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_party_hand_reference(unsigned char *bytes,
+                                                int byte_count,
+                                                uint16_t thing)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    int part;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+
+        if (cursor + 2u > (size_t)byte_count) goto fail;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > (size_t)byte_count ||
+            (part_size & 1u) != 0u) goto fail;
+        if (part == SAVEGAME_PC34_PART_PARTY) {
+            uint16_t part_key;
+            uint16_t part_checksum;
+
+            if (part_size != ORIGINAL_PC34_PARTY_BYTES) goto fail;
+            part_key = rd16le(header + 310u + (size_t)part * 2u);
+            xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(bytes + cursor + 211u +
+                   (size_t)CHAMPION_SLOT_HAND_RIGHT * 2u, thing);
+            part_checksum = checksum_and_xor_words(
+                bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(header + 342u + (size_t)part * 2u, part_checksum);
+            {
+                uint16_t second_sum = checksum_second_half_plain(header);
+                uint16_t first_before_last = checksum_first_half(header);
+                uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                           first_before_last ^ second_sum);
+                wr16le(header + 254u, last);
+            }
+            xor_obfuscate_second_half(header, header_key);
+            return 1;
+        }
+        cursor += part_size;
+    }
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
+static int rewrite_fixture_party_current_health(unsigned char *bytes,
+                                                int byte_count,
+                                                uint16_t health)
+{
+    unsigned char *header;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t header_key;
+    int part;
+
+    if (!bytes || byte_count < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE + 2) {
+        return 0;
+    }
+    header = bytes;
+    header_key = rd16le(header + 10u * 2u);
+    xor_obfuscate_second_half(header, header_key);
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t part_size;
+
+        if (cursor + 2u > (size_t)byte_count) goto fail;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (cursor + part_size > (size_t)byte_count ||
+            (part_size & 1u) != 0u) goto fail;
+        if (part == SAVEGAME_PC34_PART_PARTY) {
+            uint16_t part_key;
+            uint16_t part_checksum;
+
+            if (part_size != ORIGINAL_PC34_PARTY_BYTES) goto fail;
+            part_key = rd16le(header + 310u + (size_t)part * 2u);
+            xor_words(bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(bytes + cursor + 52u, health);
+            part_checksum = checksum_and_xor_words(
+                bytes + cursor, (size_t)part_size / 2u, part_key);
+            wr16le(header + 342u + (size_t)part * 2u, part_checksum);
+            {
+                uint16_t second_sum = checksum_second_half_plain(header);
+                uint16_t first_before_last = checksum_first_half(header);
+                uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                           first_before_last ^ second_sum);
+                wr16le(header + 254u, last);
+            }
+            xor_obfuscate_second_half(header, header_key);
+            return 1;
+        }
+        cursor += part_size;
+    }
+
+fail:
+    xor_obfuscate_second_half(header, header_key);
+    return 0;
+}
+
 static void write_original_champion(unsigned char *dst,
                                     const char *name,
                                     const char *title,
@@ -177,6 +693,8 @@ static void write_original_champion(unsigned char *dst,
     memcpy(dst + 0, name, strlen(name));
     memcpy(dst + 8, title, strlen(title));
     dst[28] = (unsigned char)direction;
+    dst[32] = 0xffu; /* ReDMCSB ActionIndex no-action sentinel. */
+    dst[42] = 3u;
     wr16le(dst + 48, 0x1234u);
     wr16le(dst + 50, wounds);
     wr16le(dst + 52, (uint16_t)hp_current);
@@ -345,7 +863,7 @@ static int build_original_pc34_fixture(unsigned char *out,
                          DM1_EFFECT_TOGGLE);
     write_original_event(events + 2 * ORIGINAL_PC34_EVENT_BYTES,
                          DM1_MAP_TIME_MAKE(1, 123490u),
-                         DM1_EVENT_ENABLE_CHAMPION_ACTION, 2, 0, 0, 0, 0);
+                         DM1_EVENT_LIGHT, 2, 0, 0, 0, 9);
     write_original_event(events + 3 * ORIGINAL_PC34_EVENT_BYTES,
                          0u, DM1_EVENT_NONE, 0, 0, 0, 0, 0);
     wr16le(timeline + 0u, 1u);
@@ -412,6 +930,160 @@ static int build_original_pc34_fixture(unsigned char *out,
 
     *out_written = cursor;
     return SAVEGAME_PC34_OK;
+}
+
+static int append_minimal_original_pc34_dungeon_tail(unsigned char *bytes,
+                                                       int capacity,
+                                                       int *in_out_size)
+{
+    unsigned char *tail;
+    int tail_size = 65;
+    int i;
+    uint16_t checksum = 0u;
+
+    if (!bytes || !in_out_size || *in_out_size < 0 ||
+        *in_out_size > capacity || capacity - *in_out_size < tail_size) {
+        return 0;
+    }
+    tail = bytes + *in_out_size;
+    memset(tail, 0, (size_t)tail_size);
+
+    /* ReDMCSB LOADSAVE.C F0433:1641-1682 writes DUNGEON_HEADER, one
+     * MAP, one column cumulative count, raw map data, then the F0422
+     * byte-sum. This is a complete 1x1, no-Thing dungeon tail. */
+    wr16le(tail + 2, 1u);
+    tail[4] = 1u;
+    tail[44] = 0u;
+    tail[45] = 0u;
+    wr16le(tail + 52, 0u);
+    tail[62] = 0u;
+    for (i = 0; i < tail_size - 2; ++i) {
+        checksum = (uint16_t)(checksum + tail[i]);
+    }
+    wr16le(tail + tail_size - 2, checksum);
+    *in_out_size += tail_size;
+    return 1;
+}
+
+static void refresh_original_pc34_dungeon_tail_checksum(unsigned char *tail,
+                                                         int tail_size)
+{
+    uint16_t checksum = 0u;
+    int i;
+
+    for (i = 0; i < tail_size - 2; ++i) {
+        checksum = (uint16_t)(checksum + tail[i]);
+    }
+    wr16le(tail + tail_size - 2, checksum);
+}
+
+static int append_textstring_original_pc34_dungeon_tail(unsigned char *bytes,
+                                                          int capacity,
+                                                          int *in_out_size)
+{
+    unsigned char *tail;
+    const int tail_size = 75;
+
+    if (!bytes || !in_out_size || *in_out_size < 0 ||
+        *in_out_size > capacity || capacity - *in_out_size < tail_size) {
+        return 0;
+    }
+    tail = bytes + *in_out_size;
+    memset(tail, 0, (size_t)tail_size);
+
+    /* ReDMCSB LOADSAVE.C F0433:1641-1682 writes TextData before the
+     * TextString stream. This complete 1x1 tail has two text words and
+     * one visible TextString whose offset begins at the first word. */
+    wr16le(tail + 2, 1u);
+    tail[4] = 1u;
+    wr16le(tail + 6, 2u);
+    wr16le(tail + 10, 1u);
+    wr16le(tail + 12 + THING_TYPE_TEXTSTRING * 2, 1u);
+    wr16le(tail + 52, 0u);
+    wr16le(tail + 62, 0xffffu);
+    wr16le(tail + 64, 0x0041u);
+    wr16le(tail + 66, 0x0000u);
+    wr16le(tail + 68, 0xffffu);
+    wr16le(tail + 70, 0x0001u);
+    tail[72] = 0u;
+    refresh_original_pc34_dungeon_tail_checksum(tail, tail_size);
+    *in_out_size += tail_size;
+    return 1;
+}
+
+static int append_group_list_original_pc34_dungeon_tail(unsigned char *bytes,
+                                                         int capacity,
+                                                         int *in_out_size)
+{
+    unsigned char *tail;
+    const int tail_size = 131;
+    int group_index;
+
+    if (!bytes || !in_out_size || *in_out_size < 0 ||
+        *in_out_size > capacity || capacity - *in_out_size < tail_size) {
+        return 0;
+    }
+    tail = bytes + *in_out_size;
+    memset(tail, 0, (size_t)tail_size);
+
+    /* ReDMCSB LOADSAVE.C F0433:1641-1682 writes SquareFirstThings before
+     * type-4 GROUP data. The save fixture's ACTIVE_GROUP records name GROUP
+     * indexes 1 and 2, and the square list begins at GROUP index 1. */
+    wr16le(tail + 2, 1u);
+    tail[4] = 1u;
+    wr16le(tail + 10, 1u);
+    wr16le(tail + 12 + THING_TYPE_GROUP * 2, 4u);
+    wr16le(tail + 52, 0u);
+    wr16le(tail + 62, (uint16_t)(THING_TYPE_GROUP << 10 | 1));
+    for (group_index = 0; group_index < 4; ++group_index) {
+        unsigned char *group = tail + 64 + group_index * 16;
+
+        wr16le(group + 0, THING_ENDOFLIST);
+        wr16le(group + 2, THING_ENDOFLIST);
+        group[4] = (unsigned char)(8 + group_index);
+        group[5] = (unsigned char)(1u << (group_index & 3));
+        wr16le(group + 14, (uint16_t)group_index);
+    }
+    tail[128] = 0u;
+    refresh_original_pc34_dungeon_tail_checksum(tail, tail_size);
+    *in_out_size += tail_size;
+    return 1;
+}
+
+static int append_weapon_inventory_original_pc34_dungeon_tail(
+    unsigned char *bytes,
+    int capacity,
+    int *in_out_size)
+{
+    unsigned char *tail;
+    const int weapon_count = 342;
+    const int tail_size = 1435;
+    int weapon_index;
+
+    if (!bytes || !in_out_size || *in_out_size < 0 ||
+        *in_out_size > capacity || capacity - *in_out_size < tail_size) {
+        return 0;
+    }
+    tail = bytes + *in_out_size;
+    memset(tail, 0, (size_t)tail_size);
+
+    /* ReDMCSB LOADSAVE.C F0433 writes all type streams after
+     * SquareFirstThings. The champion fixture's hand is WEAPON index 341;
+     * all earlier weapon slots are explicitly free and index 341 is live. */
+    wr16le(tail + 2, 1u);
+    tail[4] = 1u;
+    wr16le(tail + 10, 1u);
+    wr16le(tail + 12 + THING_TYPE_WEAPON * 2, (uint16_t)weapon_count);
+    wr16le(tail + 52, 0u);
+    wr16le(tail + 62, THING_NONE);
+    for (weapon_index = 0; weapon_index < weapon_count; ++weapon_index) {
+        wr16le(tail + 64 + weapon_index * 4, THING_NONE);
+    }
+    wr16le(tail + 64 + 341 * 4, THING_ENDOFLIST);
+    tail[1432] = 0u;
+    refresh_original_pc34_dungeon_tail_checksum(tail, tail_size);
+    *in_out_size += tail_size;
+    return 1;
 }
 
 static int write_fixture_file(const char *path,
@@ -808,79 +1480,6 @@ static void make_temp_save_path(char *out, size_t out_size)
           "temporary save path fits");
 }
 
-static uint16_t byte_sum16(const unsigned char *bytes, size_t count)
-{
-    uint16_t sum = 0u;
-    size_t i;
-
-    for (i = 0u; i < count; ++i) {
-        sum = (uint16_t)(sum + bytes[i]);
-    }
-    return sum;
-}
-
-static size_t original_pc34_tail_offset(const unsigned char *bytes, size_t size)
-{
-    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
-    int part;
-
-    if (!bytes || size < cursor) return 0u;
-    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
-        uint16_t part_size;
-        if (cursor + 2u > size) return 0u;
-        part_size = rd16le(bytes + cursor);
-        cursor += 2u;
-        if (cursor + part_size > size) return 0u;
-        cursor += part_size;
-    }
-    if (cursor + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT >= size) {
-        return 0u;
-    }
-    return cursor + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
-}
-
-static int export_local_dm1_dungeon_save(unsigned char *out,
-                                         size_t capacity,
-                                         int *out_written)
-{
-    const char *root = getenv("FIRESTAFF_DM1_DATA");
-    char path[1024];
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonThings_Compat things;
-    struct GameWorld_Compat world;
-    int rc;
-
-    if (!root || root[0] == '\0') {
-        const char *home = getenv("HOME");
-        if (!home || home[0] == '\0') return 0;
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
-    } else {
-        snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
-    }
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&things, 0, sizeof(things));
-    memset(&world, 0, sizeof(world));
-    if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &dungeon) ||
-        !F0502_DUNGEON_LoadTileData_Compat(path, &dungeon) ||
-        !F0504_DUNGEON_LoadThingData_Compat(path, &dungeon, &things)) {
-        F0504_DUNGEON_FreeThingData_Compat(&things);
-        F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
-        return 0;
-    }
-    world.dungeon = &dungeon;
-    world.things = &things;
-    world.party.championCount = 1;
-    world.party.mapIndex = 0;
-    world.party.mapX = 0;
-    world.party.mapY = 0;
-    world.gameTick = 1u;
-    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-        &world, 0x44554e31u, out, (int)capacity, out_written);
-    F0504_DUNGEON_FreeThingData_Compat(&things);
-    F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
-    return rc == SAVEGAME_PC34_OK;
-}
-
 static void test_pc34_handoff_imports_party_state(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -1049,6 +1648,8 @@ static void test_pc34_handoff_imports_party_state(void)
           "champion 0 signed water imported");
     CHECK(imported.party->champions[0].wounds == 0x0021u,
           "champion 0 wounds imported");
+    CHECK(imported.party->champions[0].poisonDose == 3u,
+          "champion 0 PoisonEventCount imported");
     CHECK(imported.party->champions[0].attributes[CHAMPION_ATTR_STRENGTH] == 31,
           "champion 0 current strength imported");
     CHECK(imported.party->champions[0].attributeMaximums[CHAMPION_ATTR_STRENGTH] == 41,
@@ -1159,139 +1760,6 @@ static void test_pc34_handoff_imports_party_state(void)
           "event queue heap root points to first original timeline event");
 }
 
-static void test_pc34_timeline_rebuild_ignores_raw_tombstone_link(void)
-{
-    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
-    int written = 0;
-    int event_one_timeline_count = 0;
-    int i;
-    int rc;
-    struct SaveGame_Compat imported;
-    struct PartyState_Compat party;
-    struct DM1_EventQueue_V1 event_queue;
-    DM1OriginalSavePC34HandoffReport report;
-
-    memset(&imported, 0, sizeof(imported));
-    memset(&party, 0, sizeof(party));
-    imported.party = &party;
-
-    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
-                                     1, 0, 1, 2, 3, 0,
-                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
-    CHECK(rc == SAVEGAME_PC34_OK &&
-              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 0, 1) &&
-              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 1, 0),
-          "raw tombstone link fixture remains checksum-authenticated");
-
-    memset(&report, 0, sizeof(report));
-    rc = dm1_v1_original_save_pc34_handoff_bytes(
-        bytes, (size_t)written, &imported, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-              report.original_first_unused_event_index == 3 &&
-              !report.first_unused_event_index_points_to_active &&
-              report.timeline_invalid_slot == -1 &&
-              report.events[1].type == DM1_EVENT_DOOR &&
-              report.events[3].type == DM1_EVENT_NONE,
-          "F0651-shaped handoff ignores stale raw tombstone link");
-
-    memset(&event_queue, 0, sizeof(event_queue));
-    CHECK(dm1v1_event_queue_init(&event_queue, 0u),
-          "initialize queue for raw tombstone-link import");
-    rc = dm1_v1_original_save_pc34_handoff_apply_event_queue(
-        &report, &event_queue);
-    CHECK(rc == ORIGINAL_PC34_EVENT_COUNT &&
-              event_queue.eventCount == ORIGINAL_PC34_EVENT_COUNT &&
-              event_queue.firstUnusedIndex == 3 &&
-              event_queue.events[3].type == DM1_EVENT_NONE,
-          "raw tombstone link cannot promote its free EVENT slot");
-    for (i = 0; i < event_queue.eventCount; ++i) {
-        if (event_queue.timeline[i] == 1u) {
-            ++event_one_timeline_count;
-        }
-    }
-    CHECK(event_one_timeline_count == 1 &&
-              event_queue.events[event_queue.timeline[0]].type ==
-                  DM1_EVENT_DOOR,
-          "valid C4 owner remains active after free-list rebuild");
-}
-
-static void test_pc34_timeline_rebuild_ignores_chained_tombstone_links(void)
-{
-    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
-    int written = 0;
-    int event_one_timeline_count = 0;
-    int i;
-    int rc;
-    struct SaveGame_Compat imported;
-    struct PartyState_Compat party;
-    struct DM1_EventQueue_V1 event_queue;
-    struct DM1_Event_V1 added_event;
-    DM1OriginalSavePC34HandoffReport report;
-
-    memset(&imported, 0, sizeof(imported));
-    memset(&party, 0, sizeof(party));
-    imported.party = &party;
-
-    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
-                                     1, 0, 1, 2, 3, 0,
-                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
-    CHECK(rc == SAVEGAME_PC34_OK &&
-              rewrite_fixture_event_type(bytes, (size_t)written, 2,
-                                          DM1_EVENT_NONE) &&
-              rewrite_fixture_global_u16(bytes, (size_t)written, 24u, 2u) &&
-              rewrite_fixture_first_unused_event_index(
-                  bytes, (size_t)written, 2u) &&
-              rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 0u) &&
-              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 0, 3) &&
-              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 1, 0) &&
-              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 0, 1) &&
-              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 1, 0),
-          "chained tombstone-link fixture remains checksum-authenticated");
-
-    memset(&report, 0, sizeof(report));
-    rc = dm1_v1_original_save_pc34_handoff_bytes(
-        bytes, (size_t)written, &imported, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-              report.original_event_count == 2 &&
-              report.original_first_unused_event_index == 2 &&
-              !report.first_unused_event_index_points_to_active &&
-              report.events[1].type == DM1_EVENT_DOOR &&
-              report.events[2].type == DM1_EVENT_NONE &&
-              report.events[3].type == DM1_EVENT_NONE,
-          "F0651-shaped handoff ignores chained raw tombstone links");
-
-    memset(&event_queue, 0, sizeof(event_queue));
-    CHECK(dm1v1_event_queue_init(&event_queue, 0u),
-          "initialize queue for chained tombstone-link import");
-    rc = dm1_v1_original_save_pc34_handoff_apply_event_queue(
-        &report, &event_queue);
-    CHECK(rc == 2 && event_queue.firstUnusedIndex == 2 &&
-              event_queue.events[2].type == DM1_EVENT_NONE &&
-              event_queue.events[3].type == DM1_EVENT_NONE,
-          "chained tombstones remain free after queue import");
-
-    memset(&added_event, 0, sizeof(added_event));
-    added_event.map_time = DM1_MAP_TIME_MAKE(0, 123600u);
-    added_event.type = DM1_EVENT_WALL;
-    added_event.b_mapX = 31u;
-    added_event.b_mapY = 30u;
-    CHECK(dm1v1_event_add(&event_queue, &added_event) == 2 &&
-              event_queue.firstUnusedIndex == 3,
-          "first queue insertion consumes the first tombstone");
-    added_event.b_mapX = 32u;
-    CHECK(dm1v1_event_add(&event_queue, &added_event) == 3 &&
-              event_queue.firstUnusedIndex == 4,
-          "queue rebuild scans tombstones instead of following raw links");
-    for (i = 0; i < event_queue.eventCount; ++i) {
-        if (event_queue.timeline[i] == 1u) {
-            ++event_one_timeline_count;
-        }
-    }
-    CHECK(event_one_timeline_count == 1 &&
-              event_queue.events[1].type == DM1_EVENT_DOOR,
-          "chained tombstone link cannot free the active C4 owner");
-}
-
 static void test_rejects_non_pc34_and_truncated_parts(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -1302,7 +1770,6 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
     struct GameWorld_Compat world;
     struct DM1_EventQueue_V1 event_queue;
     DM1OriginalSavePC34HandoffReport report;
-    DM1OriginalSavePC34HandoffReport duplicate_report;
     int rc;
 
     memset(&imported, 0, sizeof(imported));
@@ -1627,8 +2094,6 @@ static void test_file_runtime_world_loader(void)
     struct DungeonGroup_Compat groups[4];
     struct DM1_EventQueue_V1 event_queue;
     DM1OriginalSavePC34HandoffReport report;
-    int i;
-    int found_enable_action = 0;
     int rc;
 
     rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
@@ -1636,8 +2101,6 @@ static void test_file_runtime_world_loader(void)
                                      ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
     CHECK(rc == SAVEGAME_PC34_OK,
           "file loader fixture build succeeds");
-    CHECK(rewrite_fixture_event_byte(bytes, (size_t)written, 2, 6, 2),
-          "C11 fixture writes MENU.C C01 SlotOrdinal");
     make_temp_save_path(path, sizeof(path));
     remove(path);
     CHECK(write_fixture_file(path, bytes, written),
@@ -1662,19 +2125,6 @@ static void test_file_runtime_world_loader(void)
           "world game tick imported from original GameTime");
     CHECK(world.timeline.nowTick == 123456u,
           "world M10 timeline tick follows original GameTime");
-    for (i = 0; i < world.timeline.count; ++i) {
-        const struct TimelineEvent_Compat *event = &world.timeline.events[i];
-        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION) {
-            CHECK(event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION,
-                  "C11 source type survives runtime materialization");
-            CHECK(event->aux4 == 2 && event->aux1 == 2 &&
-                      event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION,
-                  "C11 priority and C01 SlotOrdinal survive runtime materialization");
-            found_enable_action = 1;
-        }
-    }
-    CHECK(found_enable_action,
-          "C11 enable-action event materializes into the live timeline");
     CHECK(world.partyMapIndex == 3,
           "world party map index imported");
     CHECK(world.newPartyMapIndex == 3,
@@ -1819,20 +2269,7 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     CHECK(hoc.inventory_panel_active == 1,
           "valid HoC candidate reopens inventory panel");
 
-    hoc.candidate_party_index = 0;
-    hoc.inventory_panel_active = 1;
-    dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
-        &start_world, &hoc);
-    CHECK(hoc.candidate_panel_active == 0,
-          "stale HoC candidate cannot reopen over an older party slot");
-    CHECK(hoc.candidate_mirror_ordinal == -1 && hoc.candidate_party_index == -1,
-          "stale HoC candidate clears both source indices");
-    CHECK(hoc.inventory_panel_active == 0,
-          "stale HoC candidate closes dependent inventory render panel");
-
-    hoc.candidate_mirror_ordinal = 7;
     hoc.candidate_party_index = CHAMPION_MAX_PARTY;
-    hoc.candidate_panel_active = 1;
     hoc.inventory_panel_active = 1;
     dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         &start_world, &hoc);
@@ -2197,70 +2634,6 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
           "rejected byte handoff leaves event queue untouched");
     CHECK(report.original_game_time == 999u,
           "rejected byte handoff leaves receipt untouched");
-
-    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
-                                     2, 3, 9, 10, 2, 1,
-                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
-    CHECK(rc == SAVEGAME_PC34_OK &&
-          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 1u),
-          "duplicate C4 runtime fixture remains checksum-authenticated");
-    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-        bytes, (size_t)written, &world, &event_queue, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "duplicate C4 reference rejects the complete runtime handoff");
-    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
-          world.party.mapIndex == 6,
-          "duplicate C4 reference leaves live world untouched");
-    CHECK(event_queue.gameTick == 888u && event_queue.eventCount == 1,
-          "duplicate C4 reference leaves live queue untouched");
-    CHECK(report.original_game_time == 999u,
-          "duplicate C4 reference leaves caller receipt untouched");
-
-    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
-                                     2, 3, 9, 10, 2, 1,
-                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
-    CHECK(rc == SAVEGAME_PC34_OK &&
-          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 4u),
-          "out-of-range C4 runtime fixture remains checksum-authenticated");
-    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-        bytes, (size_t)written, &world, &event_queue, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "out-of-range C4 reference rejects the complete runtime handoff");
-    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
-          world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
-          event_queue.eventCount == 1 && report.original_game_time == 999u,
-          "out-of-range C4 reference preserves world queue and receipt");
-
-    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
-                                     2, 3, 9, 10, 2, 1,
-                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
-    CHECK(rc == SAVEGAME_PC34_OK &&
-          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 3u),
-          "C4 free-list tombstone runtime fixture remains authenticated");
-    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-        bytes, (size_t)written, &world, &event_queue, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "C4 free-list tombstone reference rejects runtime handoff");
-    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
-          world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
-          event_queue.eventCount == 1 && report.original_game_time == 999u,
-          "C4 free-list tombstone preserves world queue and receipt");
-
-    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
-                                     2, 3, 9, 10, 2, 1,
-                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
-    CHECK(rc == SAVEGAME_PC34_OK &&
-          rewrite_fixture_first_unused_event_index(
-              bytes, (size_t)written, 1u),
-          "active FirstUnusedEventIndex runtime fixture remains authenticated");
-    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-        bytes, (size_t)written, &world, &event_queue, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "active free-list owner rejects the complete runtime handoff");
-    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
-          world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
-          event_queue.eventCount == 1 && report.original_game_time == 999u,
-          "active free-list owner preserves world queue and receipt");
 
     make_temp_save_path(path, sizeof(path));
     snprintf(backup_path, sizeof(backup_path), "%s.bak", path);
@@ -4550,9 +4923,7 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     DM1OriginalSaveClassifyResult classified;
     struct SaveGame_Compat imported;
     struct PartyState_Compat party;
-    unsigned char party_info[PARTY_PC34_SAVE_INFO_BYTE_COUNT];
     int rc;
-    int i;
 
     memset(&spec, 0, sizeof(spec));
     spec.champion_count = 3;
@@ -4572,11 +4943,6 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
         &spec, bytes, sizeof(bytes), &written);
     CHECK(rc == SAVEGAME_PC34_OK,
           "roundtrip helper fixture build succeeds");
-    for (i = 0; i < PARTY_PC34_SAVE_INFO_BYTE_COUNT; ++i) {
-        party_info[i] = (unsigned char)(0x80u + (unsigned int)i);
-    }
-    CHECK(rewrite_fixture_party_info_bytes(bytes, written, party_info),
-          "roundtrip helper keeps a checksummed original C2 PARTY_INFO tail");
 
     snprintf(fixture_path, sizeof(fixture_path),
              "/tmp/firestaff_dm1_original_save_roundtrip_%lu.dat",
@@ -4613,6 +4979,30 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           "roundtrip helper preserves GameTime through export");
     CHECK(verify_report.original_current_active_group_count == 2,
           "roundtrip helper preserves current active group count");
+    CHECK(verify_report.active_groups[0].directions ==
+              import_report.active_groups[0].directions &&
+          verify_report.active_groups[1].directions ==
+              import_report.active_groups[1].directions &&
+          verify_report.active_groups[0].home_map_x ==
+              import_report.active_groups[0].home_map_x &&
+          verify_report.active_groups[0].home_map_y ==
+              import_report.active_groups[0].home_map_y &&
+          verify_report.active_groups[1].home_map_x ==
+              import_report.active_groups[1].home_map_x &&
+          verify_report.active_groups[1].home_map_y ==
+              import_report.active_groups[1].home_map_y,
+          "multi-group packed directions and home positions survive export");
+    CHECK(verify_report.active_groups[0].last_move_time ==
+              import_report.active_groups[0].last_move_time &&
+          verify_report.active_groups[0].delay_fleeing_from_target ==
+              import_report.active_groups[0].delay_fleeing_from_target &&
+          verify_report.active_groups[1].target_map_x ==
+              import_report.active_groups[1].target_map_x &&
+          verify_report.active_groups[1].prior_map_y ==
+              import_report.active_groups[1].prior_map_y &&
+          memcmp(verify_report.active_groups[1].aspect,
+                 import_report.active_groups[1].aspect, 4u) == 0,
+          "multi-group position, countdown, and aspect fields survive export");
     CHECK(verify_report.original_event_count == ORIGINAL_PC34_EVENT_COUNT,
           "roundtrip helper preserves event count");
 
@@ -4656,10 +5046,6 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           imported.party->champions[0].portraitBitmap[0] == 0x30u &&
           imported.party->champions[2].portraitBitmap[0] == 0x32u,
           "roundtrip helper preserves original external portraits");
-    CHECK(imported.party->pc34PartyInfoBytesValid &&
-          imported.party->pc34PartyInfoBytes[0] == 0x80u &&
-          imported.party->pc34PartyInfoBytes[127] == 0xffu,
-          "roundtrip helper preserves opaque PC34 PARTY_INFO bytes");
 
     memset(roundtrip, 0, sizeof(roundtrip));
     roundtrip_written = 0u;
@@ -4703,31 +5089,6 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
           roundtrip_report.exported_active_group_count == 2 &&
           roundtrip_report.reloaded_active_group_count == 2,
           "roundtrip reload helper preserves active group count");
-    CHECK(roundtrip_report.party_info_byte_receipt_available &&
-          roundtrip_report.source_party_info_byte_count ==
-              PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
-          roundtrip_report.exported_party_info_byte_count ==
-              PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
-          roundtrip_report.source_party_info_fingerprint != 0u &&
-          roundtrip_report.source_party_info_fingerprint ==
-              roundtrip_report.exported_party_info_fingerprint &&
-          roundtrip_report.party_info_byte_preservation_ok,
-          "roundtrip reload helper preserves opaque PC34 PARTY_INFO bytes");
-    CHECK(roundtrip_report.c13_byte_receipt_available &&
-          roundtrip_report.c13_timeline_byte_receipt_available &&
-          roundtrip_report.source_c13_event_count == 0 &&
-          roundtrip_report.exported_c13_event_count == 0 &&
-          roundtrip_report.c13_byte_preservation_ok &&
-          roundtrip_report.c13_timeline_byte_preservation_ok &&
-          roundtrip_report.c24_union_slot_byte_receipt_available &&
-          roundtrip_report.source_c24_event_count == 0 &&
-          roundtrip_report.exported_c24_event_count == 0 &&
-          roundtrip_report.c24_union_slot_byte_preservation_ok &&
-          roundtrip_report.c25_union_slot_byte_receipt_available &&
-          roundtrip_report.source_c25_event_count == 0 &&
-          roundtrip_report.exported_c25_event_count == 0 &&
-          roundtrip_report.c25_union_slot_byte_preservation_ok,
-          "empty optional C13/C24/C25 rows require positive receipts");
 
     memset(roundtrip, 0, sizeof(roundtrip));
     roundtrip_written = 0u;
@@ -4781,19 +5142,19 @@ static void test_world_roundtrip_helper_exports_verified_pc34(void)
     remove(fixture_path);
 }
 
-static void test_original_pc34_party_info_runtime_materialization(void)
+static void test_world_handoff_rejects_duplicate_timeline_reference(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
-    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
-    unsigned char party_info[PARTY_PC34_SAVE_INFO_BYTE_COUNT];
+    unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
     struct GameWorld_Compat world;
     struct DM1_EventQueue_V1 queue;
     struct SaveGame_Compat reimported;
     struct PartyState_Compat reimported_party;
     struct SpellEffect_Compat footprints_effect;
     DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34RoundtripReport roundtrip_report;
     int written = 0;
-    int exported_size = 0;
+    size_t roundtrip_written = 0u;
     int rc;
 
     memset(bytes, 0, sizeof(bytes));
@@ -4868,6 +5229,373 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           reimported_party.pc34PartyInfoBytes[84u] == 29u,
           "F0433 preserves source PARTY_INFO field ownership on export");
     F0883_WORLD_Free_Compat(&world);
+
+    memset(&roundtrip_report, 0, sizeof(roundtrip_report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x48414e44u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written, &roundtrip_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          roundtrip_report.source_dungeon_tail_byte_count == 1435u &&
+          roundtrip_report.exported_dungeon_tail_byte_count == 1435u &&
+          roundtrip_report.reloaded_dungeon_tail_byte_count == 1435u &&
+          roundtrip_report.dungeon_tail_matches == 1,
+          "champion hand reference survives F0435/F0433/F0435 roundtrip");
+
+    CHECK(rewrite_fixture_party_hand_reference(bytes, written, 0x1556u),
+          "champion-hand fixture rewrites valid PARTY envelope");
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT,
+          "out-of-range champion hand remains a valid F0435 part envelope");
+
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 777u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "out-of-range champion hand Thing rejects runtime handoff");
+    CHECK(world.gameTick == 777u && report.original_game_time == 999u,
+          "rejected champion hand leaves runtime receipt untouched");
+}
+
+static void test_world_handoff_rejects_invalid_champion_vitals(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct PartyState_Compat party_before;
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 0, 0, 0, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "champion-vitals fixture build succeeds");
+    CHECK(rewrite_fixture_party_current_health(bytes, written, 0xffffu),
+          "champion-vitals fixture rewrites valid PARTY envelope");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0xa5, sizeof(party));
+    party_before = party;
+    imported.party = &party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+          report.part_checksum_ok_count == 3 &&
+          report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "negative champion health passes checksum then fails PARTY bounds");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "invalid champion vital leaves direct PARTY import unchanged");
+
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 777u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "invalid champion vital rejects candidate-world handoff");
+    CHECK(world.gameTick == 777u && report.original_game_time == 999u,
+          "invalid champion vital leaves runtime receipt untouched");
+}
+
+static void test_world_handoff_rejects_current_active_groups_over_maximum(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct PartyState_Compat party_before;
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 0, 0, 0, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "active-group count fixture build succeeds");
+    CHECK(rewrite_fixture_global_current_active_group_count(
+              bytes, written,
+              (uint16_t)(ORIGINAL_PC34_ACTIVE_GROUP_COUNT + 1)),
+          "active-group count fixture rewrites valid GLOBAL_DATA envelope");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0xa5, sizeof(party));
+    party_before = party;
+    imported.party = &party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+          report.part_checksum_ok_count == 1 &&
+          report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE,
+          "current ACTIVE_GROUP count over maximum fails after checksum");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "invalid ACTIVE_GROUP count leaves direct PARTY import unchanged");
+
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 777u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "current ACTIVE_GROUP count over maximum rejects candidate world");
+    CHECK(world.gameTick == 777u && report.original_game_time == 999u,
+          "rejected ACTIVE_GROUP count leaves runtime receipt untouched");
+}
+
+static void test_world_roundtrip_preserves_materialized_dungeon_tail(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    DM1OriginalSavePC34RoundtripReport report;
+    int written = 0;
+    size_t roundtrip_written = 0u;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     0, 0, 0, 0, 0, -1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "dungeon-tail roundtrip fixture build succeeds");
+    CHECK(append_minimal_original_pc34_dungeon_tail(
+              bytes, (int)sizeof(bytes), &written),
+          "dungeon-tail roundtrip fixture appends complete source tail");
+
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x5441494cu,
+        roundtrip, sizeof(roundtrip), &roundtrip_written, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "dungeon-tail roundtrip reload succeeds");
+    CHECK(roundtrip_written > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+          "dungeon-tail roundtrip writes a complete PC34 export");
+    CHECK(report.source_dungeon_tail_present == 1 &&
+          report.exported_dungeon_tail_present == 1 &&
+          report.reloaded_dungeon_tail_present == 1,
+          "dungeon tail is present at every F0435/F0433 handoff edge");
+    CHECK(report.source_dungeon_tail_byte_count == 65u &&
+          report.exported_dungeon_tail_byte_count == 65u &&
+          report.reloaded_dungeon_tail_byte_count == 65u,
+          "dungeon tail byte count survives materialization and export");
+    CHECK(report.source_dungeon_tail_checksum ==
+              report.exported_dungeon_tail_checksum &&
+          report.source_dungeon_tail_checksum ==
+              report.reloaded_dungeon_tail_checksum,
+          "dungeon tail checksum survives materialization and export");
+    CHECK(report.dungeon_tail_matches == 1 && report.core_state_matches == 1,
+          "roundtrip receipt requires the materialized dungeon tail");
+}
+
+static void test_world_handoff_materializes_and_validates_textstring_tail(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34RoundtripReport roundtrip_report;
+    int tail_offset;
+    int written = 0;
+    size_t roundtrip_written = 0u;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     0, 0, 0, 0, 0, -1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "TextString dungeon-tail fixture build succeeds");
+    tail_offset = written;
+    CHECK(append_textstring_original_pc34_dungeon_tail(
+              bytes, (int)sizeof(bytes), &written),
+          "TextString dungeon-tail fixture appends complete source tail");
+
+    memset(&world, 0, sizeof(world));
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "TextString dungeon tail materializes through F0435 handoff");
+    CHECK(report.dungeon_tail_text_data_word_count == 2 &&
+          report.dungeon_tail_text_string_count == 1,
+          "tail receipt reports TextData and TextString sections");
+    CHECK(world.things && world.things->textDataWordCount == 2 &&
+          world.things->textStringCount == 1,
+          "runtime materializes TextData and TextString sections");
+    CHECK(world.things->textStrings[0].visible == 1 &&
+          world.things->textStrings[0].textDataWordOffset == 0,
+          "runtime materializes the legal TextString offset");
+    F0883_WORLD_Free_Compat(&world);
+
+    memset(&roundtrip_report, 0, sizeof(roundtrip_report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x54585453u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written, &roundtrip_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "TextString dungeon tail survives F0435/F0433/F0435 roundtrip");
+    CHECK(roundtrip_report.source_dungeon_tail_byte_count == 75u &&
+          roundtrip_report.exported_dungeon_tail_byte_count == 75u &&
+          roundtrip_report.reloaded_dungeon_tail_byte_count == 75u &&
+          roundtrip_report.dungeon_tail_matches == 1,
+          "TextString tail bytes survive every handoff edge");
+
+    /* This is checksum-correct and structurally complete, but F0435 must
+     * not publish a TEXTSTRING that DUNGEON.C would read past TextData. */
+    wr16le(bytes + tail_offset + 70, 0x0011u);
+    refresh_original_pc34_dungeon_tail_checksum(bytes + tail_offset, 75);
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 777u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "out-of-range TextString offset rejects an otherwise legal tail");
+    CHECK(world.gameTick == 777u && report.original_game_time == 999u,
+          "rejected TextString tail leaves runtime and receipt untouched");
+}
+
+static void test_world_handoff_rejects_party_pose_outside_dungeon_tail(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     0, 0, 0, 0, 0, -1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "party-pose dungeon-tail fixture build succeeds");
+    CHECK(append_minimal_original_pc34_dungeon_tail(
+              bytes, (int)sizeof(bytes), &written),
+          "party-pose fixture appends a one-map one-square tail");
+    CHECK(rewrite_fixture_global_party_pose(bytes, written, 1u, 0u, 0u),
+          "fixture keeps F0417/header checksums valid for bad map index");
+
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 777u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "party map index outside restored dungeon tail rejects handoff");
+    CHECK(world.gameTick == 777u && report.original_game_time == 999u,
+          "bad party map index leaves runtime and receipt untouched");
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     0, 0, 0, 0, 0, -1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          append_minimal_original_pc34_dungeon_tail(
+              bytes, (int)sizeof(bytes), &written) &&
+          rewrite_fixture_global_party_pose(bytes, written, 0u, 1u, 0u),
+          "fixture keeps F0417/header checksums valid for bad map square");
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 778u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 998u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "party coordinates outside restored dungeon tail reject handoff");
+    CHECK(world.gameTick == 778u && report.original_game_time == 998u,
+          "bad party square leaves runtime and receipt untouched");
+}
+
+static void test_world_handoff_roundtrips_group_list_and_active_groups(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34HandoffReport invalid_active_group_report;
+    DM1OriginalSavePC34RoundtripReport roundtrip_report;
+    int tail_offset;
+    int written = 0;
+    size_t roundtrip_written = 0u;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     0, 0, 0, 0, 0, -1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "group-list dungeon-tail fixture build succeeds");
+    tail_offset = written;
+    CHECK(append_group_list_original_pc34_dungeon_tail(
+              bytes, (int)sizeof(bytes), &written),
+          "group-list dungeon-tail fixture appends complete source tail");
+
+    memset(&world, 0, sizeof(world));
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "GROUP list tail materializes through F0435 handoff");
+    CHECK(world.things && world.things->groupCount == 4 &&
+          world.things->squareFirstThings[0] ==
+              (unsigned short)(THING_TYPE_GROUP << 10 | 1),
+          "GROUP list retains its SquareFirstThings root");
+    CHECK(report.active_group_runtime_resolved_count == 2 &&
+          world.creatureAI[0].reserved0 == 1 &&
+          world.creatureAI[0].creatureType == 9 &&
+          world.things->groups[1].behavior == 1,
+          "ACTIVE_GROUP records resolve with GROUP behavior from tail");
+    invalid_active_group_report = report;
+    invalid_active_group_report.active_groups[0].group_thing_index =
+        (THING_TYPE_GROUP << 10) | 4;
+    rc = dm1_v1_original_save_pc34_handoff_apply_active_groups(
+        &invalid_active_group_report, &world);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "out-of-range ACTIVE_GROUP Thing rejects before runtime mutation");
+    CHECK(world.creatureAI[0].reserved0 == 1 &&
+          world.creatureAI[0].creatureType == 9,
+          "rejected ACTIVE_GROUP Thing leaves resolved runtime state intact");
+    F0883_WORLD_Free_Compat(&world);
+
+    memset(&roundtrip_report, 0, sizeof(roundtrip_report));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x47525053u,
+        roundtrip, sizeof(roundtrip), &roundtrip_written, &roundtrip_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "GROUP list tail survives F0435/F0433/F0435 roundtrip");
+    CHECK(roundtrip_report.source_dungeon_tail_byte_count == 131u &&
+          roundtrip_report.exported_dungeon_tail_byte_count == 131u &&
+          roundtrip_report.reloaded_dungeon_tail_byte_count == 131u &&
+          roundtrip_report.dungeon_tail_matches == 1 &&
+          roundtrip_report.source_active_group_count == 2 &&
+          roundtrip_report.reloaded_active_group_count == 2,
+          "GROUP list and active-group counts retain byte integrity");
+
+    /* The checksum and section sizes remain valid, but this root names a
+     * nonexistent GROUP slot. It must fail before candidate-world commit. */
+    wr16le(bytes + tail_offset + 62,
+           (uint16_t)(THING_TYPE_GROUP << 10 | 4));
+    refresh_original_pc34_dungeon_tail_checksum(bytes + tail_offset, 131);
+    memset(&world, 0, sizeof(world));
+    world.gameTick = 777u;
+    memset(&report, 0, sizeof(report));
+    report.original_game_time = 999u;
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "out-of-range GROUP list root rejects a rechecksummed tail");
+    CHECK(world.gameTick == 777u && report.original_game_time == 999u,
+          "rejected GROUP list tail leaves runtime and receipt untouched");
 }
 
 static void test_strings(void)
@@ -4915,18 +5643,9 @@ static void test_corpus_roundtrip_proof(void)
     char nested[256];
     char first_path[512];
     char second_path[512];
-    char corrupt_path[512];
     char rejected_path[512];
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
-    int i;
-    int receipts_valid = 1;
-    int failed_eligible_discoveries = 0;
-    int tail_failed_receipts = 0;
-    int rejected_discoveries = 0;
-    int envelope_provenance_rows = 0;
-    uint32_t normal_f7057_trailing_bytes = 0u;
-    uint32_t corrupt_f7057_trailing_bytes = 0u;
     DM1OriginalSavePC34CorpusRoundtripReport report;
     int rc;
 
@@ -4939,7 +5658,6 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(test_mkdir(nested) == 0, "create corpus nested root");
     snprintf(first_path, sizeof(first_path), "%s/first-original.bin", root);
     snprintf(second_path, sizeof(second_path), "%s/second-original.bin", nested);
-    snprintf(corrupt_path, sizeof(corrupt_path), "%s/corrupt-c4.bin", root);
     snprintf(rejected_path, sizeof(rejected_path), "%s/not-a-save.txt", root);
     rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
                                      2, 1, 4, 5, 2, 1,
@@ -4949,9 +5667,6 @@ static void test_corpus_roundtrip_proof(void)
           "write first corpus PC34 fixture");
     CHECK(write_fixture_file(second_path, bytes, written),
           "write second corpus PC34 fixture");
-    bytes[written++] = 0x7fu;
-    CHECK(write_fixture_file(corrupt_path, bytes, written),
-          "write malformed-tail PC34 corpus fixture");
     CHECK(write_fixture_file(rejected_path, (const unsigned char *)"no", 2),
           "write rejected corpus file");
 
@@ -4960,59 +5675,9 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "corpus roundtrip scan succeeds");
     CHECK(report.scan_succeeded == 1, "corpus scan receipt succeeds");
-    CHECK(report.scanned_file_count == 4, "corpus scans all files");
-    CHECK(report.discovery_file_count == 4 &&
-          report.discovery_receipt_count == 4 &&
-          report.discovery_pc34_header_count == 3 &&
-          report.discovery_pc34_version_platform_identity_count == 3 &&
-          report.discovery_pc34_version_platform_rejected_count == 0 &&
-          report.discovery_loader_envelope_count == 3 &&
-          report.discovery_rejected_count == 1 &&
-          report.discovery_truncated_count == 0,
-          "corpus discovery records accepted and rejected files separately");
-    for (i = 0; i < report.discovery_receipt_count; ++i) {
-        const DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
-            &report.discovery_receipts[i];
-        if (discovery->roundtrip_eligible) {
-            if (discovery->f7057_envelope_end_offset >
-                    SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
-                discovery->f7057_envelope_end_offset +
-                        discovery->f7057_trailing_byte_count ==
-                    discovery->source_byte_count) {
-                ++envelope_provenance_rows;
-                if (strstr(discovery->path, "corrupt-c4.bin")) {
-                    corrupt_f7057_trailing_bytes =
-                        discovery->f7057_trailing_byte_count;
-                } else {
-                    normal_f7057_trailing_bytes =
-                        discovery->f7057_trailing_byte_count;
-                }
-            }
-            if (discovery->header_prefix_fingerprint != 0u &&
-                discovery->pc34_version_platform_identity_ok &&
-                discovery->save_format_id == SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC &&
-                discovery->save_platform == SAVEGAME_PC34_PLATFORM_PC &&
-                discovery->save_dungeon_id == SAVEGAME_PC34_DUNGEON_ID_DM &&
-                discovery->external_original && discovery->result ==
-                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT) {
-                ++failed_eligible_discoveries;
-            }
-        } else if (discovery->result ==
-                       DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34 &&
-                   discovery->reason[0] != '\0') {
-            ++rejected_discoveries;
-        }
-    }
-    CHECK(failed_eligible_discoveries == 3,
-          "empty-subtype candidates retain explicit corpus failure receipts");
-    CHECK(envelope_provenance_rows == 3 && normal_f7057_trailing_bytes > 0u &&
-              corrupt_f7057_trailing_bytes ==
-                  normal_f7057_trailing_bytes + 1u,
-          "F7057 receipt separates authentic tail boundary from corrupt suffix");
-    CHECK(rejected_discoveries == 1,
-          "rejected discovery receipt retains explicit reason");
-    CHECK(report.pc34_candidate_count == 3, "corpus selects only PC34 files");
-    CHECK(report.roundtrip_attempted_count == 3,
+    CHECK(report.scanned_file_count == 3, "corpus scans all files");
+    CHECK(report.pc34_candidate_count == 2, "corpus selects only PC34 files");
+    CHECK(report.roundtrip_attempted_count == 2,
           "corpus roundtrips every eligible file");
     CHECK(report.runtime_stage_attempted_count == 3 &&
               report.runtime_stage_succeeded_count == 0 &&
@@ -5115,15 +5780,8 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(NULL, &report) ==
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "corpus helper rejects null root");
-    memset(&report, 0, sizeof(report));
-    CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(
-              "missing-firestaff-dm1-pc34-corpus", &report) ==
-              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE &&
-          report.discovery_root_error && !report.scan_succeeded,
-          "missing corpus root publishes an explicit discovery error");
 
     remove(rejected_path);
-    remove(corrupt_path);
     remove(second_path);
     remove(first_path);
     test_rmdir(nested);
@@ -5150,14 +5808,6 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
           "real PC34 corpus scan completes");
     CHECK(report.scan_succeeded == 1,
           "real PC34 corpus publishes a scan receipt");
-    CHECK(!report.discovery_root_error && report.discovery_receipt_count ==
-              report.discovery_file_count &&
-          report.discovery_truncated_count == 0,
-          "real PC34 corpus discovery is complete and explicitly scoped");
-    CHECK(report.discovery_pc34_version_platform_identity_count ==
-              report.pc34_candidate_count &&
-          report.discovery_pc34_version_platform_rejected_count == 0,
-          "real PC34 corpus rejects non-PC34 version or platform identities");
     CHECK(report.roundtrip_failed_count == 0,
           "real PC34 corpus has no failed external roundtrip");
     CHECK(report.firestaff_manifest_rejected_count == 0,
@@ -5335,62 +5985,7 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
     }
 }
 
-static void test_original_projectile_event_plan_preserves_c48_bits(void)
-{
-    struct DungeonProjectile_Compat projectiles[6];
-    struct DungeonThings_Compat things;
-    struct DM1_Event_V1 event;
-    DM1OriginalSavePC34ProjectileEventPlan plan;
-    uint16_t projectile_thing;
-    uint16_t motion;
-
-    memset(projectiles, 0, sizeof(projectiles));
-    memset(&things, 0, sizeof(things));
-    memset(&event, 0, sizeof(event));
-    memset(&plan, 0, sizeof(plan));
-    things.projectiles = projectiles;
-    things.projectileCount = 6;
-    projectiles[5].eventIndex = 7;
-    projectiles[5].slot = 0xff80u; /* ReDMCSB fireball explosion thing */
-    projectiles[5].kineticEnergy = 83;
-    projectiles[5].attack = 91;
-    projectile_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 5u |
-                                  (2u << 14));
-    motion = (uint16_t)(17u | (9u << 5) | (3u << 10) | (6u << 12));
-    event.map_time = DM1_MAP_TIME_MAKE(2, 123456u);
-    event.type = DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS;
-    event.priority = 4;
-    wr16le(&event.b_mapX, projectile_thing);
-    wr16le(&event.c_cell, motion);
-
-    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
-              &event, 7, &things, &plan) == 1,
-          "C48 projectile event binds its original projectile record");
-    CHECK(plan.valid && plan.projectile_index == 5 && plan.map_index == 2,
-          "C48 plan preserves event identity");
-    CHECK(plan.map_x == 17 && plan.map_y == 9 && plan.cell == 2 &&
-              plan.direction == 3 && plan.step_energy == 6,
-          "C48 plan decodes ReDMCSB C.Projectile bitfields");
-    CHECK(plan.first_move_grace == 1 &&
-              plan.projectile_category == PROJECTILE_CATEGORY_MAGICAL &&
-              plan.projectile_subtype == PROJECTILE_SUBTYPE_FIREBALL,
-          "C48 plan preserves first-move and fireball identity");
-    CHECK(plan.kinetic_energy == 83 && plan.attack == 91,
-          "C48 plan binds the original projectile kinetic fields");
-
-    event.type = DM1_EVENT_MOVE_PROJECTILE;
-    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
-              &event, 7, &things, &plan) == 1 &&
-              plan.first_move_grace == 0,
-          "C49 preserves the source immediate-impact state");
-
-    projectiles[5].eventIndex = 8;
-    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
-              &event, 7, &things, &plan) == 0,
-          "mismatched original EventIndex rejects projectile materialization");
-}
-
-static void test_world_export_rebuilds_c48_c49_projectile_union(void)
+static void test_world_roundtrip_preserves_champion_poison_count(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     struct GameWorld_Compat world;
@@ -5504,9 +6099,14 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
     uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
                                        (1u << 14));
     int written = 0;
+    int roundtrip_written = 0;
     int rc;
 
-    memset(&world, 0, sizeof(world));
+    /* Local format regression only, never corpus evidence. */
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 0, 0, 0, 0, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "poison fixture builds");
     memset(&imported, 0, sizeof(imported));
     memset(&imported_party, 0, sizeof(imported_party));
     memset(&report, 0, sizeof(report));
@@ -5575,18 +6175,19 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
     rc = dm1_v1_original_save_pc34_handoff_bytes(
         bytes, (size_t)written, &imported, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-              report.original_event_count == 1 &&
-              report.events[0].type == DM1_EVENT_EXPLOSION &&
-              report.events[0].b_mapX == 11 && report.events[0].b_mapY == 12 &&
-              rd16le(&report.events[0].c_cell) == source_thing &&
-              report.events[0].priority == 5,
-          "C25 export restores original Location, Slot, and priority union");
-
-    first_things[0] = THING_ENDOFLIST;
-    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-              &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==
-              SAVEGAME_PC34_ERROR_INTERNAL,
-          "world export rejects an unbound C25 instead of inventing Cell/Effect");
+          imported.party.champions[0].poisonDose == 3u,
+          "F0435 materializes source PoisonEventCount");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &imported, 0x504f4953u, roundtrip, (int)sizeof(roundtrip),
+        &roundtrip_written);
+    CHECK(rc == SAVEGAME_PC34_OK && roundtrip_written > 0,
+          "F0433 exports bounded champion poison count");
+    memset(&restored, 0, sizeof(restored));
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        roundtrip, (size_t)roundtrip_written, &restored, NULL, NULL);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          restored.party.champions[0].poisonDose == 3u,
+          "F0435-to-F0433-to-F0435 preserves PoisonEventCount exactly");
 }
 
 static void test_world_export_rebuilds_c29_group_reaction_union(void)
@@ -5684,216 +6285,61 @@ static void test_world_export_rebuilds_c29_group_reaction_union(void)
 static void test_world_export_roundtrips_c13_vi_altar_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
-    unsigned char reexported[SAVEGAME_PC34_MAX_FILE_SIZE];
-    struct GameWorld_Compat world;
-    struct SaveGame_Compat imported;
-    struct PartyState_Compat imported_party;
-    DM1OriginalSavePC34HandoffReport report;
-    DM1OriginalSavePC34RoundtripReport roundtrip;
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat maps[1];
-    struct DungeonMapTiles_Compat tiles[1];
-    struct DungeonThings_Compat things;
-    struct DungeonJunk_Compat junks[1];
-    unsigned char square_data[32 * 32];
-    unsigned short square_first_things[32 * 32];
-    unsigned char raw_junk[4];
-    int written = 0;
-    size_t reexported_size = 0u;
+    unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    DM1OriginalSavePC34FixtureSpec spec;
+    struct GameWorld_Compat imported;
+    struct GameWorld_Compat restored;
+    size_t written = 0u;
+    int roundtrip_written = 0;
     int rc;
-    int i;
 
-    memset(&world, 0, sizeof(world));
+    /* Local keyed/checksummed format regression only, never corpus evidence. */
+    memset(&spec, 0, sizeof(spec));
+    spec.champion_count = 3;
+    spec.map_index = 2;
+    spec.active_champion_index = 1;
+    spec.maximum_active_group_count = ORIGINAL_PC34_ACTIVE_GROUP_COUNT;
+    spec.event_count = ORIGINAL_PC34_EVENT_COUNT;
+    spec.event_maximum_count = ORIGINAL_PC34_EVENT_MAXIMUM_COUNT;
+    rc = dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+        &spec, bytes, sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK, "multi-champion food/water fixture builds");
     memset(&imported, 0, sizeof(imported));
-    memset(&imported_party, 0, sizeof(imported_party));
-    memset(&report, 0, sizeof(report));
-    memset(&roundtrip, 0, sizeof(roundtrip));
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(maps, 0, sizeof(maps));
-    memset(tiles, 0, sizeof(tiles));
-    memset(&things, 0, sizeof(things));
-    memset(junks, 0, sizeof(junks));
-    memset(square_data, 0, sizeof(square_data));
-    memset(raw_junk, 0, sizeof(raw_junk));
-    for (i = 0; i < (int)(sizeof(square_first_things) /
-                          sizeof(square_first_things[0])); ++i) {
-        square_first_things[i] = THING_ENDOFLIST;
-    }
-    maps[0].width = 32;
-    maps[0].height = 32;
-    maps[0].rawMapDataByteOffset = 0;
-    tiles[0].squareData = square_data;
-    tiles[0].squareCount = 32 * 32;
-    dungeon.header.mapCount = 1;
-    dungeon.header.rawMapDataByteCount = 32 * 32;
-    dungeon.header.squareFirstThingCount = 32 * 32;
-    dungeon.maps = maps;
-    dungeon.tiles = tiles;
-    dungeon.loaded = 1;
-    dungeon.tilesLoaded = 1;
-    things.squareFirstThings = square_first_things;
-    things.squareFirstThingCount = 32 * 32;
-    /* ReDMCSB CLIKVIEW.C F0374: C13's Priority is the matching bones
-     * JUNK.ChargeCount, not a free-standing C2 champion selector. */
-    square_data[11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    square_first_things[0] = (unsigned short)((1u << 14) |
-                                               (THING_TYPE_JUNK << 10));
-    wr16le(raw_junk, THING_ENDOFLIST);
-    raw_junk[2] = (unsigned char)(DM1_JUNK_TYPE_BONES | 0x80u);
-    raw_junk[3] = 0x80u; /* ChargeCount 2 in the PC34 two-bit field. */
-    junks[0].next = THING_ENDOFLIST;
-    junks[0].type = DM1_JUNK_TYPE_BONES;
-    junks[0].doNotDiscard = 1u;
-    junks[0].chargeCount = 2u;
-    things.junks = junks;
-    things.junkCount = 1;
-    things.rawThingData[THING_TYPE_JUNK] = raw_junk;
-    things.thingCounts[THING_TYPE_JUNK] = 1;
-    dungeon.header.thingCounts[THING_TYPE_JUNK] = 1;
-    things.loaded = 1;
-    world.dungeon = &dungeon;
-    world.things = &things;
-    world.party.championCount = 3;
-    world.party.champions[2].present = 1;
-    world.timeline.count = 1;
-    world.timeline.events[0].kind = TIMELINE_EVENT_VI_ALTAR_REBIRTH;
-    world.timeline.events[0].fireAtTick = 1234u;
-    world.timeline.events[0].mapIndex = 0;
-    world.timeline.events[0].mapX = 11;
-    world.timeline.events[0].mapY = 12;
-    world.timeline.events[0].cell = 1;
-    world.timeline.events[0].aux0 = DM1_EVENT_VI_ALTAR_REBIRTH;
-    world.timeline.events[0].aux1 = 2;
-    world.timeline.events[0].aux4 = 2;
-
-    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
-    CHECK(rc == SAVEGAME_PC34_OK && written > 0,
-          "world export writes source-proven C13 Vi Altar state");
-    imported.party = &imported_party;
-    rc = dm1_v1_original_save_pc34_handoff_bytes(
-        bytes, (size_t)written, &imported, &report);
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, written, &imported, NULL, NULL);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-              report.original_event_count == 1 &&
-              report.events[0].type == DM1_EVENT_VI_ALTAR_REBIRTH &&
-              report.events[0].priority == 2 &&
-              report.events[0].b_mapX == 11 && report.events[0].b_mapY == 12 &&
-              report.events[0].c_cell == 1 && report.events[0].c_effect == 2,
-          "C13 export roundtrips original Priority Location Cell Effect union");
-
-    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
-        bytes, (size_t)written, 0x43313445u, reexported,
-        sizeof(reexported), &reexported_size, &roundtrip);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && reexported_size > 0u &&
-              roundtrip.c13_byte_receipt_available &&
-              roundtrip.source_c13_event_count == 1 &&
-              roundtrip.exported_c13_event_count == 1 &&
-              roundtrip.c13_byte_preserved_count == 1 &&
-              roundtrip.c13_byte_mismatch_count == 0 &&
-              roundtrip.c13_byte_preservation_ok &&
-              roundtrip.source_c13_event_byte_count == 10u &&
-              roundtrip.source_c13_event_byte_count ==
-                  roundtrip.exported_c13_event_byte_count &&
-              roundtrip.source_c13_event_fingerprint ==
-                  roundtrip.exported_c13_event_fingerprint &&
-              roundtrip.c13_timeline_byte_receipt_available &&
-              roundtrip.source_c13_timeline_reference_count == 1 &&
-              roundtrip.exported_c13_timeline_reference_count == 1 &&
-              roundtrip.c13_timeline_byte_preserved_count == 1 &&
-              roundtrip.c13_timeline_byte_mismatch_count == 0 &&
-              roundtrip.c13_timeline_byte_preservation_ok &&
-              roundtrip.source_c13_timeline_reference_byte_count == 2u &&
-              roundtrip.source_c13_timeline_reference_byte_count ==
-                  roundtrip.exported_c13_timeline_reference_byte_count &&
-              roundtrip.source_c13_timeline_reference_fingerprint ==
-                  roundtrip.exported_c13_timeline_reference_fingerprint &&
-              roundtrip.c13_champion_record_byte_receipt_available &&
-              roundtrip.source_c13_champion_record_reference_count == 1 &&
-              roundtrip.c13_champion_record_byte_preserved_count == 1 &&
-              roundtrip.c13_champion_record_byte_mismatch_count == 0 &&
-              roundtrip.c13_champion_record_byte_preservation_ok &&
-              roundtrip.party_info_byte_receipt_available &&
-              roundtrip.source_party_info_byte_count ==
-                  PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
-              roundtrip.exported_party_info_byte_count ==
-                  PARTY_PC34_SAVE_INFO_BYTE_COUNT &&
-              roundtrip.source_party_info_fingerprint != 0u &&
-              roundtrip.source_party_info_fingerprint ==
-                  roundtrip.exported_party_info_fingerprint &&
-              roundtrip.party_info_byte_preservation_ok,
-          "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
-
-    /* C13 has no independent live meaning: removing its source-owned bones
-     * must fail the F0435 materializer at step 1, where ReDMCSB F0255
-     * actually reads and unlinks the square-chain owner. */
-    square_data[11 * 32 + 12] &= (unsigned char)~DUNGEON_SQUARE_MASK_THING_LIST;
-    square_first_things[0] = THING_ENDOFLIST;
-    world.timeline.events[0].aux1 = 1;
+          imported.party.champions[0].food == 1500 &&
+          imported.party.champions[0].water == -32 &&
+          imported.party.champions[1].food == 1200 &&
+          imported.party.champions[1].water == 1100 &&
+          imported.party.champions[2].food == 900 &&
+          imported.party.champions[2].water == 800 &&
+          imported.party.champions[0].actionIndex == 0xff &&
+          imported.party.champions[1].actionIndex == 0xff &&
+          imported.party.champions[2].actionIndex == 0xff,
+          "F0435 preserves signed food/water and action state in slot order");
+    imported.party.champions[0].actionIndex = 7u;
+    imported.party.champions[1].actionIndex = 9u;
+    imported.party.champions[2].actionIndex = 11u;
     rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
-    CHECK(rc == SAVEGAME_PC34_OK,
-          "native F0433 can expose a C13 candidate for F0435 validation");
-    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
-        bytes, (size_t)written, 0x43313445u, reexported,
-        sizeof(reexported), &reexported_size, &roundtrip);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "C13 handoff rejects a save whose original bones owner is absent");
-
-    /* ReDMCSB TIMELINE.C F0255 unlinks the matching bones in step 1, then
-     * queues step 0. A save made at that terminal point is valid without a
-     * square-chain bones record because F0255:1697-1699 only revives by its
-     * saved Priority; F0435 must therefore admit the step-0 handoff. */
-    world.timeline.events[0].aux1 = 0;
-    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
-    CHECK(rc == SAVEGAME_PC34_OK,
-          "native F0433 writes a terminal C13 candidate without bones");
-    memset(&roundtrip, 0, sizeof(roundtrip));
-    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
-        bytes, (size_t)written, 0x43313445u, reexported,
-        sizeof(reexported), &reexported_size, &roundtrip);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && reexported_size > 0u &&
-              roundtrip.c13_byte_preservation_ok &&
-              roundtrip.c13_timeline_byte_preservation_ok,
-          "C13 terminal step resumes after F0255 has unlinked bones");
-    world.timeline.events[0].aux1 = 2;
-    square_data[11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    square_first_things[0] = (unsigned short)((1u << 14) |
-                                               (THING_TYPE_JUNK << 10));
-
-    /* This uses F0802's native PC34 output, not a fixture save. The C13
-     * record begins in EVENT slot 0 while its later fire time places its
-     * C4 TIMELINE reference after C53. F0435 rebuilds a compact live queue,
-     * so F0433 would move C13 to slot 1. The new raw-index receipt must
-     * reject that changed two-byte reference instead of certifying it. */
-    world.timeline.count = 2;
-    memset(&world.timeline.events[1], 0, sizeof(world.timeline.events[1]));
-    world.timeline.events[1].kind = TIMELINE_EVENT_WATCHDOG;
-    world.timeline.events[1].fireAtTick = 100u;
-    world.timeline.events[1].aux0 = DM1_EVENT_WATCHDOG;
-    world.timeline.events[1].aux2 = DM1_EVENT_WATCHDOG;
-    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
-    CHECK(rc == SAVEGAME_PC34_OK,
-          "native F0433 writes the C13/C53 timeline-order candidate");
-    memset(&roundtrip, 0, sizeof(roundtrip));
-    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
-        bytes, (size_t)written, 0x43313445u, reexported,
-        sizeof(reexported), &reexported_size, &roundtrip);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
-              roundtrip.source_c13_timeline_reference_count == 1 &&
-              roundtrip.exported_c13_timeline_reference_count == 1 &&
-              roundtrip.c13_timeline_byte_preserved_count == 0 &&
-              roundtrip.c13_timeline_byte_mismatch_count == 1 &&
-              !roundtrip.c13_timeline_byte_preservation_ok,
-          "changed C13 C4 timeline index fails closed after native F0435 handoff");
-
-    world.timeline.count = 1;
-    world.timeline.events[0].aux1 = 3;
-    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
-              &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==
-              SAVEGAME_PC34_ERROR_INTERNAL,
-          "world export rejects an unproven C13 rebirth step");
+        &imported, 0x46574452u, roundtrip, (int)sizeof(roundtrip),
+        &roundtrip_written);
+    CHECK(rc == SAVEGAME_PC34_OK && roundtrip_written > 0,
+          "F0433 exports multi-champion food/water");
+    memset(&restored, 0, sizeof(restored));
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        roundtrip, (size_t)roundtrip_written, &restored, NULL, NULL);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          restored.party.champions[0].food == 1500 &&
+          restored.party.champions[0].water == -32 &&
+          restored.party.champions[1].food == 1200 &&
+          restored.party.champions[1].water == 1100 &&
+          restored.party.champions[2].food == 900 &&
+          restored.party.champions[2].water == 800 &&
+          restored.party.champions[0].actionIndex == 7 &&
+          restored.party.champions[1].actionIndex == 9 &&
+          restored.party.champions[2].actionIndex == 11,
+          "F0435-to-F0433-to-F0435 preserves food/water/action slot order");
 }
 
 static void test_original_square_state_events_materialize_and_roundtrip(void)
@@ -6322,8 +6768,6 @@ int main(void)
 {
     test_f0421_tail_read_checksum_gate();
     test_pc34_handoff_imports_party_state();
-    test_pc34_timeline_rebuild_ignores_raw_tombstone_link();
-    test_pc34_timeline_rebuild_ignores_chained_tombstone_links();
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
@@ -6362,7 +6806,25 @@ int main(void)
     test_real_dm1_door_animation_save_handoff();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
-    test_original_pc34_party_info_runtime_materialization();
+    test_world_handoff_rejects_duplicate_timeline_reference();
+    test_world_roundtrip_preserves_timeline_event_semantics();
+    test_world_roundtrip_preserves_status_event_semantics();
+    test_world_roundtrip_preserves_invisibility_event_semantics();
+    test_world_roundtrip_restores_thieves_eye_viewport_material();
+    test_world_roundtrip_preserves_footprints_party_count();
+    test_world_roundtrip_preserves_invisibility_party_count();
+    test_world_roundtrip_preserves_party_shield_defense();
+    test_world_roundtrip_preserves_party_fire_shield_defense();
+    test_world_roundtrip_preserves_party_spell_shield_defense();
+    test_world_roundtrip_preserves_magical_light_amount();
+    test_world_handoff_rejects_invalid_party_active_champion();
+    test_world_handoff_roundtrips_champion_hand_thing_reference();
+    test_world_handoff_rejects_invalid_champion_vitals();
+    test_world_handoff_rejects_current_active_groups_over_maximum();
+    test_world_roundtrip_preserves_materialized_dungeon_tail();
+    test_world_handoff_materializes_and_validates_textstring_tail();
+    test_world_handoff_rejects_party_pose_outside_dungeon_tail();
+    test_world_handoff_roundtrips_group_list_and_active_groups();
     test_corpus_roundtrip_proof();
     test_optional_real_pc34_corpus_roundtrip();
     test_original_projectile_event_plan_preserves_c48_bits();

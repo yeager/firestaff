@@ -15,8 +15,7 @@
  * Status: STUB. SAL/MAP format unknown, no actual SFX playback.
  * Stub provides API surface and future hook points. */
 
-/* Firestaff sound requests. These numeric values are not claimed to be
- * SNDLEV*.MAP event IDs: the original event-dispatch ABI is still unproven. */
+/* Sound event types (matching SNDLEV*.MAP event IDs) */
 typedef enum {
     NEXUS_SFX_NONE = 0,
     NEXUS_SFX_FOOTSTEP       = 1,   /* party footstep */
@@ -146,6 +145,19 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
+    int sal_canonical_source_verified;
+    int map_canonical_source_verified;
+    int sound_driver_canonical_source_verified;
+    uint16_t event_sample_index[32];
+    uint32_t event_sal_offset[32];
+    uint16_t event_sal_size[32];
+    uint16_t event_sal_checksum16[32];
+    uint16_t event_sal_nonzero_byte_count[32];
+    uint16_t event_sal_high_bit_byte_count[32];
+    uint16_t event_sal_first_nonzero_relative_offset[32];
+    uint16_t event_sal_last_nonzero_relative_offset[32];
+    uint16_t event_sal_distinct_byte_count[32];
+    uint16_t event_sal_transition_count[32];
 } Nexus_SoundEngine;
 
 typedef enum {
@@ -162,9 +174,6 @@ typedef struct {
     int cd_track;
     int sal_loaded;
     int map_loaded;
-    int sal_canonical_source_verified;
-    int map_canonical_source_verified;
-    int sound_driver_canonical_source_verified;
     int sal_decode_supported;
     int map_decode_supported;
     int map_event_count;
@@ -229,14 +238,14 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
+    int sal_canonical_source_verified;
+    int map_canonical_source_verified;
+    int sound_driver_canonical_source_verified;
     int playback_enabled;
     int blocks_real_sfx_playback;
     int fallback_visuals_permitted;
     Nexus_V1_AudioReceipt sal_receipt;
     Nexus_V1_AudioReceipt map_receipt;
-    /* Expected identity for the globally hash-bound SDDRVS.TSK image.
-     * `sound_driver_canonical_source_verified` remains the actual engine
-     * ownership gate because the sound module never reads arbitrary files. */
     Nexus_V1_AudioReceipt sound_driver_receipt;
 } Nexus_SfxRuntimeReceipt;
 
@@ -251,9 +260,12 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng);
 int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
                             const uint8_t *sal_data, int sal_size,
                             const uint8_t *map_data, int map_size);
-int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
-                                      const uint8_t *sal_data, int sal_size,
-                                      const uint8_t *map_data, int map_size,
+int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng,
+                                      int level_index,
+                                      const uint8_t *sal_data,
+                                      int sal_size,
+                                      const uint8_t *map_data,
+                                      int map_size,
                                       int sal_canonical_source_verified,
                                       int map_canonical_source_verified);
 void nexus_sound_set_driver_canonical_source_verified(

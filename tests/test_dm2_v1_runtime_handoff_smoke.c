@@ -24,7 +24,6 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_viewport_renderer.h"
-#include "dm2_v1_world_model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,53 +61,6 @@ static uint8_t s_projectile_pixels[16 * 8];
 static uint8_t s_hud_core_pixels[16 * 8];
 static uint8_t s_hud_portrait_pixels[16 * 8];
 static int s_last_door_panel_index;
-
-static int paired_scene_asset_fetch(void *user, int gdat_index,
-                                    const uint8_t **out_pixels,
-                                    int *out_w, int *out_h, int *out_stride)
-{
-    static const uint8_t ceiling_pixels[1] = { 1u };
-    static const uint8_t floor_pixels[1] = { 2u };
-    int graphicsset = 0;
-    int field = 0;
-    int *allow = (int *)user;
-
-    if (!allow || !*allow ||
-        !dm2_v1_viewport_scene_material_graphic_address(
-            gdat_index, &graphicsset, &field) || graphicsset != 0) {
-        return -1;
-    }
-    if (out_pixels) *out_pixels = field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING
-        ? ceiling_pixels : floor_pixels;
-    if (out_w) *out_w = 1;
-    if (out_h) *out_h = 1;
-    if (out_stride) *out_stride = 1;
-    return 0;
-}
-
-static int paired_scene_palette_fetch(void *user, int gdat_index,
-                                      uint8_t out_palette16[16],
-                                      uint32_t *out_hash)
-{
-    int graphicsset = 0;
-    int field = 0;
-    int *allow = (int *)user;
-
-    if (!allow || !*allow || !out_palette16 || !out_hash ||
-        !dm2_v1_viewport_scene_material_graphic_address(
-            gdat_index, &graphicsset, &field) || graphicsset != 0) {
-        return -1;
-    }
-    memset(out_palette16, 0, 16u);
-    if (field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING) {
-        out_palette16[1] = 0x21u;
-        *out_hash = 0x4345494cu;
-    } else {
-        out_palette16[2] = 0x42u;
-        *out_hash = 0x464c4f52u;
-    }
-    return 0;
-}
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -287,165 +239,6 @@ static int synthetic_viewport_asset_fetch(void *user,
         return 0;
     }
     return -1;
-}
-
-static int missing_viewport_asset_fetch(void *user,
-                                        int gdat_index,
-                                        const uint8_t **out_pixels,
-                                        int *out_w,
-                                        int *out_h,
-                                        int *out_stride)
-{
-    (void)user;
-    (void)gdat_index;
-    if (out_pixels) *out_pixels = NULL;
-    if (out_w) *out_w = 0;
-    if (out_h) *out_h = 0;
-    if (out_stride) *out_stride = 0;
-    return -1;
-}
-
-static void test_source_material_missing_is_blocked_without_paint(void)
-{
-    DM2_V1_ViewportState viewport;
-    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
-
-    memset(framebuffer, 0x5a, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    viewport.squares[DM2_SQ_D0C].square_type = DM2_SQUARE_WALL;
-    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR;
-    viewport.creature_count = 1;
-    viewport.creatures[0].creature_type = 1;
-    viewport.creatures[0].screen_x = 40;
-    viewport.creatures[0].screen_y = 50;
-    viewport.item_count = 1;
-    viewport.items[0].item_category = 0x10;
-    viewport.items[0].item_type = 1;
-    viewport.items[0].screen_x = 80;
-    viewport.items[0].screen_y = 90;
-    viewport.creature_possession_item_count = 1;
-    viewport.creature_possession_items[0].item_category = 0x10;
-    viewport.creature_possession_items[0].item_type = 2;
-    viewport.creature_possession_items[0].screen_x = 100;
-    viewport.creature_possession_items[0].screen_y = 80;
-    viewport.carried_item_present = 1;
-    viewport.carried_item.item_category = 0x15;
-    viewport.carried_item.item_type = 3;
-    viewport.carried_item.screen_x = 120;
-    viewport.carried_item.screen_y = 70;
-    viewport.projectile_count = 1;
-    viewport.projectiles[0].projectile_category = 0x0d;
-    viewport.projectiles[0].projectile_type = 1;
-    viewport.projectiles[0].screen_x = 140;
-    viewport.projectiles[0].screen_y = 60;
-    dm2_v1_viewport_set_asset_provider(
-        &viewport, missing_viewport_asset_fetch, NULL);
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_render_floor_ceiling(&viewport);
-    dm2_v1_render_walls(&viewport);
-    dm2_v1_render_doors(&viewport);
-    dm2_v1_render_creatures(&viewport);
-    dm2_v1_render_items(&viewport);
-    dm2_v1_render_creature_possession_items(&viewport);
-    dm2_v1_render_carried_item(&viewport);
-    dm2_v1_render_projectiles(&viewport);
-
-    CHECK(viewport.asset_floor_ceiling_drawn_count == 0 &&
-              viewport.fallback_floor_ceiling_drawn_count == 0 &&
-              viewport.asset_wall_drawn_count == 0 &&
-              viewport.fallback_wall_drawn_count == 0 &&
-              viewport.blocked_material_draw_count >= 3 &&
-              (viewport.blocked_material_mask &
-               (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM |
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE)) ==
-                  (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM |
-                   DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE),
-          "mandatory GDAT failures produce class-specific blocked no-draw receipts");
-    CHECK(framebuffer[0] == 0x5a &&
-              framebuffer[100 * DM2_VP_WIDTH] == 0x5a &&
-              framebuffer[(28 * DM2_VP_WIDTH) + 160] == 0x5a &&
-              framebuffer[(50 * DM2_VP_WIDTH) + 40] == 0x5a &&
-              framebuffer[(90 * DM2_VP_WIDTH) + 80] == 0x5a &&
-              framebuffer[(80 * DM2_VP_WIDTH) + 100] == 0x5a &&
-              framebuffer[(70 * DM2_VP_WIDTH) + 120] == 0x5a &&
-              framebuffer[(60 * DM2_VP_WIDTH) + 140] == 0x5a &&
-              viewport.fallback_door_drawn_count == 0 &&
-              viewport.fallback_creature_drawn_count == 0 &&
-              viewport.fallback_item_drawn_count == 0 &&
-              viewport.fallback_creature_possession_item_drawn_count == 0 &&
-              viewport.fallback_carried_item_drawn_count == 0 &&
-              viewport.fallback_projectile_drawn_count == 0,
-          "mandatory GDAT failure leaves door and map-chip fallback pixels unpainted");
-}
-
-static void test_scene_materials_keep_their_own_local_palettes(void)
-{
-    DM2_V1_ViewportState viewport;
-    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
-    int allow = 1;
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    dm2_v1_viewport_set_asset_provider(&viewport, paired_scene_asset_fetch,
-                                       &allow);
-    dm2_v1_viewport_set_asset_palette_provider(
-        &viewport, paired_scene_palette_fetch, &allow);
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport, 1, 0, 0x53434e45u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-    dm2_v1_render_floor_ceiling(&viewport);
-    CHECK(framebuffer[0] == 0x21u &&
-              framebuffer[100 * DM2_VP_WIDTH] == 0x42u &&
-              viewport.gdat_local_palette_consumed_count > 0 &&
-              viewport.blocked_material_draw_count == 0,
-          "indoor ceiling and floor each consume their decoded IMG3 local palette");
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    dm2_v1_viewport_set_outdoor(&viewport, 1);
-    dm2_v1_viewport_set_asset_provider(&viewport, paired_scene_asset_fetch,
-                                       &allow);
-    dm2_v1_viewport_set_asset_palette_provider(
-        &viewport, paired_scene_palette_fetch, &allow);
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport, 1, 0, 0x53434e45u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-    dm2_v1_viewport_render(&viewport);
-    CHECK(framebuffer[40 * DM2_VP_WIDTH + 100] == 0x21u &&
-              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x42u &&
-              viewport.asset_outdoor_sky_drawn_count == 1 &&
-              viewport.asset_outdoor_ground_drawn_count == 1,
-          "outdoor sky and ground retain their own source-local palette bindings");
-
-    allow = 0;
-    memset(framebuffer, 0x7eu, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    dm2_v1_viewport_set_outdoor(&viewport, 1);
-    dm2_v1_viewport_set_asset_provider(&viewport, paired_scene_asset_fetch,
-                                       &allow);
-    dm2_v1_viewport_set_asset_palette_provider(
-        &viewport, paired_scene_palette_fetch, &allow);
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport, 1, 0, 0x53434e45u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-    dm2_v1_viewport_render(&viewport);
-    CHECK(framebuffer[40 * DM2_VP_WIDTH + 100] == 0x7eu &&
-              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x7eu &&
-              (viewport.blocked_material_mask &
-               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) != 0u,
-          "missing outdoor source material is blocked without a synthetic scene fill");
 }
 
 static void put16le(uint8_t *p, uint16_t v)
@@ -1027,10 +820,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
               ownership.runtime_frame_owned &&
               ownership.gdat_provider_bound &&
-              ownership.runtime_weather == DM2_WEATHER_CLEAR &&
-              ownership.runtime_weather_intensity == 0 &&
               ownership.floor_ceiling_gdat_blits == 2 &&
-              ownership.floor_ceiling_materials_complete == 1 &&
               ownership.wall_gdat_blits == 10 &&
               ownership.gdat_wall_material_plan_consumed == 0 &&
               ownership.hud_core_gdat_blits == 9 &&
@@ -1077,8 +867,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "outdoor viewport fetches both real material planes without a generated fallback");
         CHECK(dm2_v1_runtime_last_frame_ownership(&ownership) &&
               ownership.is_outdoor == 1 &&
-              ownership.runtime_weather == DM2_WEATHER_RAIN &&
-              ownership.runtime_weather_intensity == 64 &&
               ownership.outdoor_sky_gdat_blits == 1 &&
               ownership.outdoor_ground_gdat_blits == 1 &&
               ownership.gdat_scene_material_index == 0 &&
@@ -1376,7 +1164,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   inst->world_x == door_x &&
                   inst->world_y == door_y,
                   "runtime creature world position writes back after passable door");
-
         }
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
@@ -1469,8 +1256,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.button_gdat_index ==
                           dm2_v1_viewport_door_button_graphic_index_for_state(1) &&
                       door_receipt.button_source_kind == 1 &&
-                      door_receipt.button_clickable == 1 &&
-                      door_receipt.button_rectno == 4 &&
                       door_receipt.wall_button_index == 0 &&
                       door_receipt.wall_button_field == 0 &&
                       door_receipt.panel_blit_ready == 1 &&
@@ -1588,7 +1373,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           obs.field_moved == 1 &&
                           obs.field_door_open_pct == 100,
                           "runtime DB0 destroyed door passes creature and reports fully open");
-
                 }
                 memset(framebuffer, 0, sizeof(framebuffer));
                 fetch_count = 0;
@@ -1684,8 +1468,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
                     CHECK(dm2_v1_runtime_last_door_render_receipt(
                               &door_receipt) == 1 &&
                           door_receipt.button_source_kind == 2 &&
-                          door_receipt.button_clickable == 0 &&
-                          door_receipt.button_rectno == 4 &&
                           door_receipt.wall_button_index == 0x2a &&
                           door_receipt.wall_button_field > 0 &&
                           door_receipt.button_gdat_index ==
@@ -1824,18 +1606,14 @@ static void test_first_tick_after_boot_profile_handoff(void)
 
     {
         int tick_before = dm2_v1_runtime_get_tick_count();
-        char message_before[160];
-        const char *message = dm2_v1_runtime_get_last_target_message();
-        snprintf(message_before, sizeof(message_before), "%s",
-                 message ? message : "");
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_tick_count() == tick_before + 1,
               "deterministic DM2 V1 runtime tick advances by one");
-        CHECK(dm2_v1_runtime_get_last_target_message() != NULL &&
-              strcmp(dm2_v1_runtime_get_last_target_message(),
-                     message_before) == 0,
-              "runtime tick does not invent a timeline message without an original corpus");
     }
+    CHECK(dm2_v1_runtime_get_last_target_message() != NULL &&
+          strstr(dm2_v1_runtime_get_last_target_message(),
+                 "dungeon awakens") != NULL,
+          "runtime tick applies timeline display-message target");
     CHECK(dm2_v1_runtime_get_party_x() >= 0 &&
           dm2_v1_runtime_get_party_y() >= 0 &&
           dm2_v1_runtime_get_party_dir() == 0,
@@ -2131,8 +1909,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
 int main(void)
 {
     printf("=== DM2 V1 Runtime Handoff Smoke Gate ===\n\n");
-    test_source_material_missing_is_blocked_without_paint();
-    test_scene_materials_keep_their_own_local_palettes();
     test_first_tick_after_boot_profile_handoff();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

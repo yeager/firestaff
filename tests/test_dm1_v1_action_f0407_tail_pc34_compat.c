@@ -1,9 +1,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
-#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -36,27 +34,6 @@ static void test_melee_contact_gate(void) {
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(DM1_ACTION_FIREBALL, &tail), 1,
              "fireball tail builds");
     CHECK_EQ(tail.isMeleeContact, 0, "fireball is not contact melee");
-}
-
-static void test_status_graphic_ownership(void) {
-    DM1_ActionStatusGraphicRoutePc34 route;
-
-    CHECK_EQ(dm1_v1_action_status_graphic_route_f0407_pc34(
-                 DM1_ACTION_SPELLSHIELD, &route), 1,
-             "spellshield owns source HUD graphic");
-    CHECK_EQ(route.valid, 1, "spellshield graphic route valid");
-    CHECK_EQ(route.graphicIndex, DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34,
-             "spellshield owns C039 only");
-    CHECK_EQ(dm1_v1_action_status_graphic_route_f0407_pc34(
-                 DM1_ACTION_FIRESHIELD, &route), 1,
-             "fireshield owns source HUD graphic");
-    CHECK_EQ(route.graphicIndex, DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34,
-             "fireshield owns C038 only");
-    CHECK_EQ(dm1_v1_action_status_graphic_route_f0407_pc34(
-                 DM1_ACTION_FIREBALL, &route), 0,
-             "unowned action gets no substitute graphic");
-    CHECK_EQ(route.valid, 0, "unowned action route invalid");
-    CHECK_EQ(route.graphicIndex, -1, "unowned action has no graphic");
 }
 
 static void test_stamina_and_special_flags(void) {
@@ -327,13 +304,11 @@ static void test_tail_adjustments(void) {
     completionIn.performed = 1;
     completionIn.actionExperienceGain = 0;
     completionIn.disabledTicks = 4;
-    completionIn.pendingActionEnableSlotOrdinal =
-        DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
+    completionIn.pendingActionEnableSlotOrdinal = 1;
     CHECK_EQ(dm1_v1_action_completion_plan_f0407_pc34(
                  &completionIn, &completionOut), 1,
              "throw completion plan builds");
-    CHECK_EQ(completionOut.actionEnableSlotOrdinal,
-             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
+    CHECK_EQ(completionOut.actionEnableSlotOrdinal, 1,
              "throw completion keeps action-hand slot");
 
     completionIn.disabledTicks = 0;
@@ -342,8 +317,7 @@ static void test_tail_adjustments(void) {
              "throw f0328-owned completion plan builds");
     CHECK_EQ(completionOut.preservesExistingActionDisable, 1,
              "throw preserves f0328 action disable");
-    CHECK_EQ(completionOut.actionEnableSlotOrdinal,
-             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
+    CHECK_EQ(completionOut.actionEnableSlotOrdinal, 1,
              "throw f0328 completion keeps action-hand slot");
 
     memset(&completionIn, 0, sizeof(completionIn));
@@ -398,13 +372,11 @@ static void test_action_state_plans(void) {
     CHECK_EQ(disableOut.shouldRefillReadyHandNow, 0,
              "nonzero disable does not refill now");
 
-    disableIn.pendingActionEnableSlotOrdinal =
-        DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
+    disableIn.pendingActionEnableSlotOrdinal = 1;
     CHECK_EQ(dm1_v1_action_disable_plan_f0407_pc34(
                  &disableIn, &disableOut), 1,
              "disable preserves pending slot ordinal");
-    CHECK_EQ(disableOut.actionEnableSlotOrdinal,
-             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
+    CHECK_EQ(disableOut.actionEnableSlotOrdinal, 1,
              "disable keeps action-hand slot ordinal");
 
     disableIn.disabledTicks = 0;
@@ -633,8 +605,10 @@ static void test_light_and_window_plans(void) {
     memset(&in, 0, sizeof(in));
     in.earthSkillLevel = 1;
     in.randomDraw = 100;
-    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 0,
-             "window rejects out-of-domain draw");
+    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 1,
+             "window plan clamps draw");
+    CHECK_EQ(out.randomRange, 9, "window clamp range");
+    CHECK_EQ(out.durationTicks, 6, "window clamped duration");
 }
 
 static void test_shield_plan(void) {
@@ -990,8 +964,7 @@ static void test_flip_and_direction_plans(void) {
              "throw post-spawn plan builds");
     CHECK_EQ(throwOut.performed, 1, "throw post-spawn performed");
     CHECK_EQ(throwOut.shouldClearActionHand, 1, "throw clears action hand");
-    CHECK_EQ(throwOut.actionEnableSlotOrdinal,
-             DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
+    CHECK_EQ(throwOut.actionEnableSlotOrdinal, CHAMPION_SLOT_ACTION_HAND,
              "throw requests action-hand enable slot");
     CHECK_EQ(throwOut.disableActionTicks, 4,
              "throw F0328 disables action for four ticks");
@@ -1102,7 +1075,7 @@ static void test_melee_action_tick_plan(void) {
     in.championIndex = 2;
     in.actionIndex = DM1_ACTION_CHOP;
     in.championPresent = 1;
-    in.championDirection = DIR_EAST;
+    in.championDirection = 5;
     CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 1,
              "melee tick plan builds");
     CHECK_EQ(out.valid, 1, "melee tick plan valid");
@@ -1113,8 +1086,7 @@ static void test_melee_action_tick_plan(void) {
     CHECK_EQ(out.reserved, CMD_ATTACK_CREATURE_AUTO_PC34,
              "melee tick auto creature");
     CHECK_EQ(out.hasTargetDirection, 1, "melee tick target direction flag");
-    CHECK_EQ(out.targetDirection, DIR_EAST,
-             "melee tick target direction retained");
+    CHECK_EQ(out.targetDirection, 1, "melee tick target direction normalized");
     CHECK_EQ((out.reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u,
              1, "melee tick action valid bit");
     CHECK_EQ((int)(out.reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK),
@@ -1124,13 +1096,7 @@ static void test_melee_action_tick_plan(void) {
     CHECK_EQ((int)((out.reserved2 &
                     CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
                    CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT),
-             DIR_EAST, "melee tick direction bits");
-
-    in.championDirection = 5;
-    CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
-             "out-of-range champion direction rejects receipt");
-    CHECK_EQ(out.valid, 0, "out-of-range direction plan invalid");
-    in.championDirection = DIR_EAST;
+             1, "melee tick direction bits");
 
     in.actionIndex = DM1_ACTION_BLOCK;
     CHECK_EQ(dm1_v1_melee_action_tick_plan_f0402_pc34(&in, &out), 0,
@@ -1179,49 +1145,49 @@ static void test_melee_action_tick_plan(void) {
              "F0402 command decode west target y");
 
     decodeIn.commandArg2 = 7;
-    decodeIn.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
-    decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
-                         (unsigned int)DM1_ACTION_CHOP |
-                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-                         (3u << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
-    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
-                 &decodeIn, &decodeOut), 0,
-             "F0402 rejects direct group receipt");
-    CHECK_EQ(decodeOut.valid, 0,
-             "F0402 direct group receipt remains invalid");
-
-    decodeIn.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
     decodeIn.reserved = 2;
-    CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
-                 &decodeIn, &decodeOut), 0,
-             "F0402 rejects direct creature receipt");
-    CHECK_EQ(decodeOut.valid, 0,
-             "F0402 direct creature receipt remains invalid");
-
-    decodeIn.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
-    decodeIn.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
     decodeIn.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
-                         (unsigned int)DM1_ACTION_CHOP |
-                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-                         (3u << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) |
+                         (unsigned int)DM1_GRAPHIC560_ACTION_COUNT |
                          CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID;
     CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
-                 &decodeIn, &decodeOut), 0,
-             "F0402 rejects legacy marker receipt");
-    CHECK_EQ(decodeOut.valid, 0,
-             "F0402 legacy marker receipt remains invalid");
-    CHECK_EQ(decodeOut.actionIndex, -1,
-             "F0402 legacy receipt has no default action");
+                 &decodeIn, &decodeOut), 1,
+             "F0402 invalid action decode builds");
+    CHECK_EQ(decodeOut.actionIndex, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
+             "F0402 invalid action defaults to MELEE");
+    CHECK_EQ(decodeOut.hasLiveActionIndex, 1,
+             "F0402 invalid action keeps live bit");
+    CHECK_EQ(decodeOut.hasLegacyMarker, 1,
+             "F0402 legacy marker bit");
+    CHECK_EQ(decodeOut.targetDirection, 2,
+             "F0402 missing direction falls back to party");
+    CHECK_EQ(decodeOut.requestedAutoTarget, 0,
+             "F0402 direct target flag");
+    CHECK_EQ(decodeOut.directGroupIndex, 7,
+             "F0402 direct group index");
+    CHECK_EQ(decodeOut.requestedAutoCreature, 0,
+             "F0402 direct creature flag");
+    CHECK_EQ(decodeOut.directCreatureIndex, 2,
+             "F0402 direct creature index");
+    CHECK_EQ(decodeOut.targetMapX, 10,
+             "F0402 south target x");
+    CHECK_EQ(decodeOut.targetMapY, 21,
+             "F0402 south target y");
 
     decodeIn.commandArg2 = 0;
     decodeIn.reserved = 0;
     decodeIn.reserved2 = 0u;
     decodeIn.partyDirection = 7;
     CHECK_EQ(dm1_v1_melee_command_decode_plan_f0402_pc34(
-                 &decodeIn, &decodeOut), 0,
-             "F0402 rejects receipt without source action and direction");
-    CHECK_EQ(decodeOut.valid, 0,
-             "F0402 incomplete receipt remains invalid");
+                 &decodeIn, &decodeOut), 1,
+             "F0402 default command decode builds");
+    CHECK_EQ(decodeOut.hasLiveActionIndex, 0,
+             "F0402 default command no live action");
+    CHECK_EQ(decodeOut.actionIndex, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
+             "F0402 default command action");
+    CHECK_EQ(decodeOut.targetDirection, 3,
+             "F0402 default command party direction masked");
+    CHECK_EQ(decodeOut.targetMapX, 9,
+             "F0402 default command west target x");
 }
 
 static void test_melee_damage_emission_plan(void) {
@@ -1259,7 +1225,7 @@ static void test_melee_damage_emission_plan(void) {
 
     memset(&runtimeIn, 0, sizeof(runtimeIn));
     runtimeIn.actionIndex = DM1_ACTION_CHOP;
-    runtimeIn.defaultDisabledTicks = 1;
+    runtimeIn.defaultDisabledTicks = 8;
     runtimeIn.observedAttackDamage = 13;
     runtimeIn.combatOutcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
     CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
@@ -1271,10 +1237,8 @@ static void test_melee_damage_emission_plan(void) {
     CHECK_EQ(runtimeOut.showDamageFeedback, 1,
              "melee runtime positive damage feedback");
     CHECK_EQ(runtimeOut.damage, 13, "melee runtime damage copied");
-    CHECK_EQ(runtimeOut.disabledTicks,
-             dm1_v1_graphic560_action_disabled_ticks_get_pc34(
-                 DM1_ACTION_CHOP),
-             "melee runtime damage uses G0491 disabled ticks");
+    CHECK_EQ(runtimeOut.disabledTicks, 8,
+             "melee runtime damage keeps disabled ticks");
 
     runtimeIn.observedAttackDamage = 0;
     runtimeIn.combatOutcome = COMBAT_OUTCOME_MISS;
@@ -1289,10 +1253,10 @@ static void test_melee_damage_emission_plan(void) {
 
     memset(&runtimeIn, 0, sizeof(runtimeIn));
     runtimeIn.actionIndex = DM1_ACTION_BASH;
-    runtimeIn.defaultDisabledTicks = 99;
+    runtimeIn.defaultDisabledTicks = 9;
     runtimeIn.combatOutcome = COMBAT_OUTCOME_INVALID;
     runtimeIn.closedDoorBranchPerformed = 1;
-    runtimeIn.closedDoorDisabledTicks = 99;
+    runtimeIn.closedDoorDisabledTicks = 6;
     CHECK_EQ(dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
                  &runtimeIn, &runtimeOut), 1,
              "melee runtime closed-door outcome builds");
@@ -1312,10 +1276,8 @@ static void test_melee_damage_emission_plan(void) {
     CHECK_EQ(runtimeOut.performed, 0, "empty-front parry not performed");
     CHECK_EQ(runtimeOut.meleeFailureTail, 1,
              "empty-front parry uses failure tail");
-    CHECK_EQ(runtimeOut.disabledTicks,
-             dm1_v1_graphic560_action_disabled_ticks_get_pc34(
-                 DM1_ACTION_PARRY),
-             "failure outcome uses G0491 ticks before tail adjustment");
+    CHECK_EQ(runtimeOut.disabledTicks, 5,
+             "failure outcome keeps base ticks before tail adjustment");
 
     memset(&killIn, 0, sizeof(killIn));
     killIn.creatureType = 6;
@@ -1327,18 +1289,16 @@ static void test_melee_damage_emission_plan(void) {
              "kill notify plan builds");
     CHECK_EQ(killOut.valid, 1, "kill notify valid");
     CHECK_EQ(killOut.shouldLogDefeated, 1, "kill notify logs defeated");
-    CHECK_EQ(killOut.shouldAwardKillXp, 0,
-             "F0231 kill notification adds no synthetic XP");
-    CHECK_EQ(killOut.championIndex, -1,
-             "F0231 kill notification has no XP recipient");
+    CHECK_EQ(killOut.shouldAwardKillXp, 1, "kill notify awards legacy xp");
+    CHECK_EQ(killOut.championIndex, 2, "kill notify champion");
     CHECK_EQ(killOut.creatureType, 6, "kill notify creature");
-    CHECK_EQ(killOut.xpBonus, 0, "F0231 kill notification has no XP bonus");
+    CHECK_EQ(killOut.xpBonus, 15, "kill notify base health xp");
 
     killIn.creatureBaseHealth = 3;
     CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
                  &killIn, &killOut), 1,
-             "kill notify zero-XP receipt remains stable");
-    CHECK_EQ(killOut.xpBonus, 0, "creature health never changes kill receipt XP");
+             "kill notify minimum xp builds");
+    CHECK_EQ(killOut.xpBonus, 5, "kill notify minimum xp");
 
     killIn.activeChampionPresent = 0;
     CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
@@ -1441,11 +1401,14 @@ static void test_melee_pre_f0231_gates(void) {
 static void test_melee_weapon_profile_plan(void) {
     DM1_MeleeWeaponProfileInputPc34 in;
     DM1_MeleeWeaponProfilePlanPc34 out;
-    DM1_ActionXpRoute route;
     int chopHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
         DM1_ACTION_CHOP);
     int chopDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
         DM1_ACTION_CHOP);
+    int meleeHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
+        DM1_ACTION_MELEE);
+    int meleeDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        DM1_ACTION_MELEE);
     int disruptHit = dm1_v1_graphic560_action_hit_probability_get_pc34(
         DM1_ACTION_DISRUPT);
     int disruptDamage = dm1_v1_graphic560_action_damage_factor_get_pc34(
@@ -1458,9 +1421,7 @@ static void test_melee_weapon_profile_plan(void) {
     in.kineticEnergy = 18;
     in.weaponAttributes = 0x55;
     in.actionIndex = DM1_ACTION_CHOP;
-    CHECK_EQ(dm1_v1_action_xp_route(DM1_ACTION_CHOP, &route), 1,
-             "CHOP source XP route builds");
-    in.actionSkillIndex = route.skillIndex;
+    in.actionSkillIndex = 6;
     CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
                  &in, &out), 1,
              "CHOP weapon profile builds");
@@ -1495,9 +1456,6 @@ static void test_melee_weapon_profile_plan(void) {
 
     in.weaponType = 12;
     in.actionIndex = DM1_ACTION_DISRUPT;
-    CHECK_EQ(dm1_v1_action_xp_route(DM1_ACTION_DISRUPT, &route), 1,
-             "DISRUPT source XP route builds");
-    in.actionSkillIndex = route.skillIndex;
     CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
                  &in, &out), 1,
              "DISRUPT weapon profile builds");
@@ -1511,16 +1469,16 @@ static void test_melee_weapon_profile_plan(void) {
     CHECK_EQ(out.weaponProfile.damageFactor, disruptDamage,
              "DISRUPT damage factor from G0492");
 
-    in.actionSkillIndex = 6;
-    CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
-                 &in, &out), 0,
-             "mismatched source XP skill rejects profile");
-
     in.actionIndex = 999;
     CHECK_EQ(dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
-                 &in, &out), 0,
-             "invalid action profile rejects without default");
-    CHECK_EQ(out.valid, 0, "invalid profile remains invalid");
+                 &in, &out), 1,
+             "invalid action profile falls back");
+    CHECK_EQ(out.normalizedActionIndex, DM1_ACTION_MELEE,
+             "invalid action falls back to MELEE");
+    CHECK_EQ(out.weaponProfile.hitProbability, meleeHit,
+             "fallback hit probability");
+    CHECK_EQ(out.weaponProfile.damageFactor, meleeDamage,
+             "fallback damage factor");
 }
 
 static void test_melee_f0231_side_effect_plan(void) {
@@ -1643,11 +1601,11 @@ static void test_melee_f0402_weapon_availability_and_preflight(void) {
     memset(&preIn, 0, sizeof(preIn));
     preIn.targetResolved = 0;
     CHECK_EQ(dm1_v1_melee_preflight_plan_f0402_pc34(&preIn, &preOut), 1,
-             "F0402 no-target preflight builds");
-    CHECK_EQ(preOut.shouldReturnHandled, 1,
-             "F0402 no-target is handled without fallback");
-    CHECK_EQ(preOut.canUseLegacyMarker, 0,
-             "F0402 no-target cannot use legacy marker");
+             "F0402 marker fallback preflight builds");
+    CHECK_EQ(preOut.shouldReturnHandled, 0,
+             "F0402 marker fallback not handled yet");
+    CHECK_EQ(preOut.canUseLegacyMarker, 1,
+             "F0402 marker fallback allowed");
 
     memset(&preIn, 0, sizeof(preIn));
     preIn.targetResolved = 1;
@@ -2023,7 +1981,6 @@ static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathPlanPc34 out;
     DM1_MeleeF0231RawGroupWritebackPlanPc34 rawWritebackOut;
     DM1_MeleeF0231AftermathApplyPlanPc34 applyOut;
-    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 killedAllAfterplay;
 
     memset(&in, 0, sizeof(in));
     in.groupIndex = 4;
@@ -2115,29 +2072,6 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-all apply notify");
     CHECK_EQ(applyOut.killNotifyGroupIndex, 4,
              "F0231 killed-all apply notify group");
-    CHECK_EQ(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
-                 &applyOut, &killedAllAfterplay), 1,
-             "F0190 killed-all afterplay receipt builds");
-    CHECK_EQ(killedAllAfterplay.valid, 1,
-             "F0190 killed-all afterplay receipt valid");
-    CHECK_EQ(killedAllAfterplay.shouldPresentSourceSmoke, 1,
-             "F0190 killed-all afterplay keeps source smoke");
-    CHECK_EQ(killedAllAfterplay.requiresKilledAllMutationFirst, 1,
-             "F0190 killed-all afterplay orders deletion before smoke");
-    CHECK_EQ(killedAllAfterplay.groupIndex, 4,
-             "F0190 killed-all afterplay group");
-    CHECK_EQ(killedAllAfterplay.sourceSmokeCreateInput.explosionType,
-             C040_EXPLOSION_SMOKE,
-             "F0190 killed-all afterplay uses source C040 smoke");
-    CHECK_EQ(killedAllAfterplay.sourceSmokeCreateInput.attack, 255,
-             "F0190 killed-all afterplay keeps source attack");
-    applyOut.smokeCreateInput.attack = 111;
-    CHECK_EQ(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
-                 &applyOut, &killedAllAfterplay), 1,
-             "F0190 malformed afterplay receipt remains inspectable");
-    CHECK_EQ(killedAllAfterplay.shouldPresentSourceSmoke, 0,
-             "F0190 malformed afterplay rejects synthetic smoke");
-    applyOut.smokeCreateInput.attack = 255;
     CHECK_EQ(out.shouldScheduleReaction, 0,
              "F0231 killed-all suppresses reaction");
 
@@ -2157,8 +2091,6 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldCreateDeathSmoke, 1, "F0231 killed-some smoke");
     CHECK_EQ(out.shouldApplyKilledSomeState, 1,
              "F0231 killed-some state/fear");
-    CHECK_EQ(out.mutationOriginalGroupCount, 3,
-             "F0231 killed-some retains original group count");
     CHECK_EQ(out.mutationKilledCreatureIndex, 2,
              "F0231 killed-some mutation creature");
     CHECK_EQ(out.mutationCreatureProperties, 0x0230,
@@ -2183,12 +2115,6 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-some reaction creature type");
     CHECK_EQ(out.reactionEventKind, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
              "F0231 reaction event kind");
-    CHECK_EQ(dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
-                 &out, &applyOut), 1,
-             "F0231 killed-some aftermath apply receipt builds");
-    CHECK_EQ(applyOut.mutationDispatchPlan.killedSomeStatePlan
-                 .originalGroupCount, 3,
-             "F0190 fear receipt retains F0231 original group count");
 
     in.fearTriggered = 1;
     CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
@@ -2844,20 +2770,6 @@ static void test_melee_f0231_reaction_and_group_apply(void) {
     CHECK_EQ(dispatchApplyOut.killedAllStatePlan.groupIndex, 9,
              "F0190 mutation dispatch killed-all apply group");
 
-    dispatchIn.partyMapIndex = 3;
-    CHECK_EQ(dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
-                 &dispatchIn, &dispatchOut), 1,
-             "F0190 off-map killed-all dispatch builds");
-    CHECK_EQ(dispatchOut.shouldApplyKilledAllSideEffects, 1,
-             "F0190 off-map killed-all retains unlink aftermath");
-    CHECK_EQ(dispatchOut.killedAllStatePlan.shouldUnlinkGroupFromSquare, 1,
-             "F0190 off-map killed-all unlinks source group");
-    CHECK_EQ(dispatchOut.killedAllStatePlan.shouldClearGroupNext, 1,
-             "F0190 off-map killed-all clears source group next");
-    CHECK_EQ(dispatchOut.killedAllStatePlan.shouldRemoveActiveGroupState, 0,
-             "F0190 off-map killed-all keeps non-party active state");
-    dispatchIn.partyMapIndex = 2;
-
     dispatchIn.outcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
     dispatchIn.killedCell = 6;
     CHECK_EQ(dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
@@ -3339,7 +3251,6 @@ static void test_invalid_action(void) {
 
 int main(void) {
     test_melee_contact_gate();
-    test_status_graphic_ownership();
     test_stamina_and_special_flags();
     test_xp_award_and_direct_dispatch_plans();
     test_tail_adjustments();

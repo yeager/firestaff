@@ -1,6 +1,7 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_dmdf_model.h"
+#include "nexus_v1_engine.h"
 #include "nexus_v1_game.h"
 
 #include <stdio.h>
@@ -140,6 +141,19 @@ int main(void) {
     uint8_t floor_pixel;
     uint8_t wall_pixel;
     uint8_t *structure1;
+    static const uint8_t canonical_dgn_bytes[] = {'a', 'b', 'c'};
+
+    expect(nexus_v1_dgn_bytes_match_canonical_md5(
+               canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes),
+               "900150983cd24fb0d6963f7d28e17f72") == 1,
+           "canonical DGN bytes are accepted by the exact-buffer hash gate");
+    expect(nexus_v1_dgn_bytes_match_canonical_md5(
+               canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes),
+               "00000000000000000000000000000000") == 0 &&
+               nexus_v1_dgn_bytes_match_canonical_md5(
+                   canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes) - 1,
+                   "900150983cd24fb0d6963f7d28e17f72") == 0,
+           "mismatched DGN bytes stay blocked before Structure3 binding");
 
     nexus_fb_init(&fb);
     nexus_fb_clear(&fb);
@@ -310,32 +324,16 @@ int main(void) {
             }
         }
     }
-    /* Hash identity and decoded MNS bytes do not establish Structure1B's
-     * wall-selector transform. The real retail corpus has raw bytes above
-     * the 15-entry wall bank, so this route must stay closed until a Saturn
-     * decoder/capture supplies a binding proof. */
-    nexus_v1_invalidate_dgn_material_plan(&engine);
-    nexus_viewport_render(&viewport, &engine);
-    expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
-               receipt.attempted && receipt.blocked &&
-               !receipt.fallback_visuals_permitted,
-           "unbound Structure1B wall selectors block the real MNS route");
-    expect(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL &&
-               engine.dgn_material_plan.receipt.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR &&
-               engine.dgn_material_plan.receipt.static_mns_source_pair_bound &&
-               !engine.dgn_material_plan.receipt
-                    .structure1b_selector_binding_proven &&
-               !engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
-               !engine.dgn_material_plan.receipt.uses_bpk_material_route,
-           "material-plan package route names the unproved Structure1B selector blocker");
-
-    engine.dgn_static_material_sources.structure1b_selector_binding_proven = 1;
     nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
                receipt.ready && !receipt.blocked &&
-               receipt.bpk_material_surface_count == 0,
+               receipt.bpk_material_surface_count == 0 &&
+               receipt.static_mns_material_surface_count ==
+                   receipt.material_surface_count &&
+               receipt.static_mns_floor_material_surface_count ==
+                   receipt.floor_material_surface_count &&
+               receipt.static_mns_floor_material_surface_count > 0,
            "hash-bound SN_FLOOR/SN_WALL route renders without BPK substitution");
     expect(engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
                !engine.dgn_material_plan.receipt.uses_bpk_material_route,
@@ -462,7 +460,6 @@ int main(void) {
         expect(nexus_v1_dgn_static_material_source_receipt(
                    &engine, &source_receipt) == 0 &&
                    source_receipt.canonical_pair_bound &&
-                   source_receipt.structure1b_selector_binding_proven &&
                    strcmp(source_receipt.floor_mns.canonical_name,
                           "SN_FLOOR.MNS") == 0 &&
                    strcmp(source_receipt.wall_mns.canonical_name,
@@ -493,6 +490,10 @@ int main(void) {
                 receipt.first_missing_material_kind ==
                     NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT),
            "DGN material plan reports the first missing wall material instead of falling back");
+    expect(!viewport.material_palette_valid &&
+               viewport.material_engine == NULL &&
+               viewport.fb.palette[16] == viewport.base_palette[16],
+           "blocked DGN handoff clears the previous MNS material palette");
 
     return failures ? 1 : 0;
 }

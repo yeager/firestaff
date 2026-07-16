@@ -1,0 +1,7 @@
+#ifndef FIRESTAFF_REDMCSB_F1089_CLOSE_AMIGA_STUFF_PC34_COMPAT_H
+#define FIRESTAFF_REDMCSB_F1089_CLOSE_AMIGA_STUFF_PC34_COMPAT_H
+
+void redmcsb_f1089_close_amiga_stuff_pc34_compat(void);
+const char *redmcsb_f1089_close_amiga_stuff_source_evidence_pc34(void);
+
+#endif

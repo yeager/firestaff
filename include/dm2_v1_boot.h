@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 #include "dm2_v1_asset_loader.h"
-#include "dm2_v1_dialogue_gdat.h"
-#include "dm2_v1_dungeon_loader.h"
-#include "dm2_v1_gdat_scene_m11_command.h"
-#include "dm2_v1_weather_gdat.h"
 #include <stddef.h>
+
+#define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
+#define DM2_V1_GRAPHICSSET_SCENE_FLAGS_PRESENT_MASK    (1u << 1)
+#define DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK \
+    (DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK | \
+     DM2_V1_GRAPHICSSET_SCENE_FLAGS_PRESENT_MASK)
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
@@ -305,12 +307,6 @@ typedef struct {
     int runtime_render_fallback_carried_item_count;
     int runtime_render_asset_projectile_count;
     int runtime_render_fallback_projectile_count;
-    /* The runtime owns this receipt after the viewport has decided whether
-     * every requested GDAT material was available.  A zero fallback count is
-     * insufficient: a source-required frame can intentionally leave missing
-     * pixels untouched instead of painting a substitute. */
-    int runtime_render_blocked_material_draw_count;
-    uint32_t runtime_render_blocked_material_mask;
     int runtime_render_no_core_fallbacks;
     /* Atomic source-required frame identity consumed by M11. */
     int runtime_m11_frame_receipt_consumed;
@@ -1355,20 +1351,6 @@ int dm2_v1_boot_startup_execute_pointer_from_snapshot(
     void *apply_userdata,
     struct DM2_V1_StartupExecution *out_execution,
     struct DM2_V1_StartupHostActionReceipt *out_receipt);
-int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
-    int x,
-    int y,
-    int (*apply_session)(void *userdata,
-                         const struct DM2_V1_SessionState *session),
-    void *apply_userdata,
-    struct DM2_V1_StartupExecution *out_execution,
-    struct DM2_V1_StartupHostActionReceipt *out_receipt);
 
 int dm2_v1_boot_startup_presentation_build_from_runtime_state(
     const DM2_V1_BootProfile *profile,
@@ -1825,22 +1807,6 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int *out_h,
                                      int *out_stride);
 
-/* Resolve Firestaff's renderer-private HUD key to the exact skproject
- * INTERFACE_GENERAL dtImage address. The mapping is shared by the live
- * viewport provider and the fail-closed M11 HUD command bridge. */
-int dm2_v1_boot_hud_core_asset_address(int field,
-                                       int *out_category,
-                                       int *out_index,
-                                       int *out_field);
-
-/* Retrieve the source IMG3 local palette for a virtual viewport image.
- * Runtime GDAT presentation must consume this palette with its pixels. */
-int dm2_v1_boot_viewport_asset_palette_fetch(
-    void *user,
-    int gdat_index,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash);
-
 /* Fetch a DM2 object icon image from the boot-owned GRAPHICS.DAT handle.
  * The returned pixel buffer is owned by the caller and must be freed with
  * dm2_v1_boot_object_icon_asset_free(). Returns 0 on success. */
@@ -1894,15 +1860,6 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
     uint32_t seed,
     uint32_t *out_hash,
     uint32_t *out_byte_count);
-
-/* Validate one skproject Champion::HeroType against its complete original
- * GDAT family and return the first-name spelling REVIVE_PLAYER copies from
- * CHAMPIONS[type]/dtText/0x18.  This is deliberately a source gate: a
- * renderer may not turn a Firestaff-local portrait ordinal into HeroType. */
-int dm2_v1_boot_champion_hero_type_source_ready(
-    DM2_V1_BootProfile *profile,
-    uint8_t hero_type,
-    char out_first_name[8]);
 
 int dm2_v1_boot_graphicsset_scene_control(
     DM2_V1_BootProfile *profile,

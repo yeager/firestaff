@@ -1,9 +1,7 @@
 #include "main_loop_m11.h"
-#include "m11_game_view.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
-#include "vga_palette_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -499,7 +497,7 @@ static void check_title_to_menu_boundary(void) {
              V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&titleTiming));
     expect_u("DM1 full graphics media receipt menu boundary",
              media.title_menu_boundary_frame,
-             dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1u);
+             V1_TITLE_DAT_FRAME_MAX + 1u);
     expect_i("DM1 full graphics media receipt PRESENTS palette",
              media.title_presents_palette,
              expected_presents_palette);
@@ -563,13 +561,8 @@ static void check_title_to_menu_boundary(void) {
                  entranceStep.kind == ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY,
              1);
     expect_u("DM1 full graphics media receipt entrance pre-open delay",
-            media.entrance_pre_open_delay_ms,
-            ENTRANCE_Compat_GetRuntimeDelayMs(&entranceStep));
-    expect_i("DM1 full graphics media receipt entrance palette is PC34 source palette",
-             media.entrance_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
-                 media.entrance_palette_entry_count == 16u &&
-                 media.entrance_palette_fingerprint != 0u,
-             1);
+             media.entrance_pre_open_delay_ms,
+             ENTRANCE_Compat_GetRuntimeDelayMs(&entranceStep));
     expect_i("DM1 full graphics media receipt entrance timing valid",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media),
              1);
@@ -606,11 +599,6 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 entrance timing validator rejects too-fast pre-open",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
              0);
-    badMedia = media;
-    badMedia.entrance_palette_fingerprint ^= 1u;
-    expect_i("DM1 entrance timing validator rejects altered palette evidence",
-             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
-             0);
     expect_i("DM1 entrance command builds closed-door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(
                  &media,
@@ -625,10 +613,7 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.source_timing_receipt_consumed &&
                  entranceCommand.lower_level_renderer_helper_owned &&
                  entranceCommand.lower_level_audio_helper_owned &&
-                 entranceCommand.present_entrance_palette &&
-                 entranceCommand.entrance_palette == media.entrance_palette &&
-                 entranceCommand.entrance_palette_fingerprint ==
-                     media.entrance_palette_fingerprint,
+                 entranceCommand.present_entrance_palette,
              1);
     expect_i("DM1 entrance command builds rattle door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(
@@ -673,24 +658,6 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.audio_sound_index == 0 &&
                  entranceCommand.audio_volume == 0u,
              1);
-    expect_i("DM1 entrance command rejects altered source vblank",
-             dm1_v1_startup_entrance_render_audio_command_pc34(
-                 &media,
-                 doorStep.sourceStepOrdinal,
-                 (int)doorStep.kind,
-                 doorStep.delayTicks,
-                 0u,
-                 &entranceCommand),
-             0);
-    expect_i("DM1 entrance command rejects altered source kind",
-             dm1_v1_startup_entrance_render_audio_command_pc34(
-                 &media,
-                 doorStep.sourceStepOrdinal,
-                 (int)ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN,
-                 doorStep.delayTicks,
-                 doorStep.vblankLoopCount,
-                 &entranceCommand),
-             0);
     badMedia = media;
     badMedia.entrance_vblank_ms = 1u;
     expect_i("DM1 entrance command rejects bad timing receipt",
@@ -860,10 +827,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
         hoc_presented_publish;
     DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34
         hoc_presented_export;
-    DM1_V1_StartupHoCPresentedCaptureM12ImportFacts_PC34
-        hoc_presented_m12_import_facts;
-    DM1_V1_StartupHoCPresentedCaptureM12ImportReceipt_PC34
-        hoc_presented_m12_import;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 hoc_enter_handoff;
     DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34
         hoc_save_capture_readiness;
@@ -1402,9 +1365,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  post.media_receipt.entrance_vblank_ms ==
                      ENTRANCE_Compat_GetVblankDelayMs(),
              1);
-    expect_i("DM1 post-launch plan requires fresh entrance command",
+    expect_i("DM1 post-launch plan keeps entrance timeout",
              post.entrance_auto_enter_ms,
-             0);
+             1200);
     expect_i("DM1 post-launch plan carries title boundary frame",
              post.title_menu_boundary_frame,
              (int)dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1);
@@ -1796,8 +1759,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_capture_proof.real_asset_capture &&
                  hoc_capture_proof.mac_window_capture &&
                  hoc_capture_proof.release_app_capture &&
-                 hoc_capture_proof.release_app_identity_ready &&
-                 hoc_capture_proof.release_app_identity_hash != 0u &&
                  hoc_capture_proof.host_capture_route_matches &&
                  hoc_capture_proof.hoc_asset_capture &&
                  hoc_capture_proof.required_asset_capture &&
@@ -1833,9 +1794,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_runtime_apply.real_asset_capture &&
                  hoc_runtime_apply.mac_window_capture &&
                  hoc_runtime_apply.release_app_capture &&
-                 hoc_runtime_apply.release_app_identity_ready &&
-                 hoc_runtime_apply.release_app_identity_hash ==
-                     hoc_capture_proof.release_app_identity_hash &&
                  hoc_runtime_apply.host_capture_route_matches &&
                  hoc_runtime_apply.hoc_asset_capture &&
                  hoc_runtime_apply.host_window_capture &&
@@ -1916,9 +1874,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_production_consumer.real_asset_capture &&
                  hoc_production_consumer.mac_window_capture &&
                  hoc_production_consumer.release_app_capture &&
-                 hoc_production_consumer.release_app_identity_ready &&
-                 hoc_production_consumer.release_app_identity_hash ==
-                     hoc_capture_proof.release_app_identity_hash &&
                  hoc_production_consumer.host_capture_route_matches &&
                  hoc_production_consumer.hoc_asset_capture &&
                  hoc_production_consumer.host_window_capture &&
@@ -1982,10 +1937,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.captured_from_release_app = 1;
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
     hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
-    /* This fixture represents the first actual Hall frame after ENTRANCE.C,
-     * not the static bootstrap receipt. */
-    hoc_host_probe_facts.observed_live_hoc_c127_material_request = 1;
-    hoc_host_probe_facts.observed_live_hoc_f0115_material_request = 1;
     hoc_host_probe_facts.observed_host_window_present = 1;
     hoc_host_probe_facts.observed_presented_rgba_capture = 1;
     hoc_host_probe_facts.presented_capture_width = 320;
@@ -2051,8 +2002,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_release_capture_ownership.real_asset_capture &&
                  hoc_release_capture_ownership.mac_window_capture &&
                  hoc_release_capture_ownership.release_app_capture &&
-                 hoc_release_capture_ownership.release_app_identity_ready &&
-                 hoc_release_capture_ownership.release_app_identity_hash != 0u &&
                  hoc_release_capture_ownership.host_capture_route_matches &&
                  hoc_release_capture_ownership.hoc_asset_capture &&
                  hoc_release_capture_ownership.required_asset_capture &&
@@ -2229,63 +2178,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     hoc_presented_publish_facts.required_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
-    memset(&hoc_presented_m12_import_facts, 0,
-           sizeof(hoc_presented_m12_import_facts));
-    memset(&hoc_presented_m12_import, 0,
-           sizeof(hoc_presented_m12_import));
-    hoc_presented_m12_import_facts.source_id = "dm1";
-    hoc_presented_m12_import_facts.presented_capture_ready = 1;
-    hoc_presented_m12_import_facts.host_window_present = 1;
-    hoc_presented_m12_import_facts.captured_from_mac_window = 1;
-    hoc_presented_m12_import_facts.captured_from_release_app = 1;
-    hoc_presented_m12_import_facts.width = 320;
-    hoc_presented_m12_import_facts.height = 200;
-    hoc_presented_m12_import_facts.byte_count = 320 * 200 * 4;
-    hoc_presented_m12_import_facts.framebuffer_hash = 0x4d314843u;
-    hoc_presented_m12_import_facts.consumer_mask =
-        DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
-    hoc_presented_m12_import_facts.chain_hash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            hoc_presented_m12_import_facts.width,
-            hoc_presented_m12_import_facts.height,
-            hoc_presented_m12_import_facts.byte_count,
-            hoc_presented_m12_import_facts.framebuffer_hash,
-            hoc_presented_m12_import_facts.consumer_mask);
-    expect_i("DM1 HoC M12 import consumes DM1 presented-capture chain",
-             dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
-                 &hoc_presented_m12_import_facts,
-                 &hoc_presented_m12_import) &&
-                 hoc_presented_m12_import.handled &&
-                 hoc_presented_m12_import.ready &&
-                 hoc_presented_m12_import.consumed_publish_receipt &&
-                 hoc_presented_m12_import.consumed_host_export_receipt &&
-                 hoc_presented_m12_import.consumed_m12_presented_capture &&
-                 hoc_presented_m12_import.chain_hash_matches &&
-                 hoc_presented_m12_import.expected_chain_hash ==
-                     hoc_presented_m12_import_facts.chain_hash &&
-                 strstr(hoc_presented_m12_import.source_evidence,
-                        "ENTRANCE.C") != NULL,
-             1);
-    hoc_presented_m12_import_facts.chain_hash ^= 0x51u;
-    memset(&hoc_presented_m12_import, 0,
-           sizeof(hoc_presented_m12_import));
-    expect_i("DM1 HoC M12 import rejects stale presented-capture chain",
-             dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34(
-                 &hoc_presented_m12_import_facts,
-                 &hoc_presented_m12_import) &&
-                 hoc_presented_m12_import.handled &&
-                 !hoc_presented_m12_import.ready &&
-                 !hoc_presented_m12_import.chain_hash_matches &&
-                 hoc_presented_m12_import.expected_chain_hash !=
-                     hoc_presented_m12_import.observed_chain_hash,
-             1);
-    hoc_presented_m12_import_facts.chain_hash =
-        dm1_v1_startup_hoc_presented_capture_chain_hash_pc34(
-            hoc_presented_m12_import_facts.width,
-            hoc_presented_m12_import_facts.height,
-            hoc_presented_m12_import_facts.byte_count,
-            hoc_presented_m12_import_facts.framebuffer_hash,
-            hoc_presented_m12_import_facts.consumer_mask);
     hoc_host_probe_facts.consumed_m12_startup_capture_consumer = 0;
     hoc_host_probe_facts.presented_capture_consumer_mask =
         DM1_V1_HOC_CAPTURE_CONSUMER_ALL_PC34;
@@ -2991,9 +2883,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch executor returns entrance command",
              entrance_command,
              2);
-    expect_i("DM1 post-launch executor requires fresh entrance command",
+    expect_i("DM1 post-launch executor keeps entrance timeout",
              fake.entrance_timeout_ms,
-             0);
+             1200);
     memset(&outcome, 0, sizeof(outcome));
     expect_i("DM1 post-launch outcome executor succeeds",
              dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
@@ -3269,9 +3161,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_facts.observed_user_save_corpus_classified = 2;
     save_resume_facts.observed_user_save_corpus_pc34 = 1;
     save_resume_facts.observed_user_save_corpus_part_envelope = 1;
-    save_resume_facts.observed_user_save_corpus_roundtrip_verified = 1;
-    save_resume_facts.observed_user_save_corpus_roundtrip_failed = 0;
-    save_resume_facts.observed_user_save_corpus_roundtrip_hash = 0x44533143u;
     save_resume_facts.observed_user_save_corpus_rejected = 1;
     save_resume_facts.observed_user_save_corpus_truncated = 0;
     save_resume_facts.observed_user_save_corpus_first_pc34_path =
@@ -3309,10 +3198,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                 save_resume_capture.user_save_corpus_classified == 2 &&
                 save_resume_capture.user_save_corpus_pc34 == 1 &&
                 save_resume_capture.user_save_corpus_part_envelope == 1 &&
-                save_resume_capture.user_save_corpus_roundtrip_verified == 1 &&
-                save_resume_capture.user_save_corpus_roundtrip_failed == 0 &&
-                save_resume_capture.user_save_corpus_roundtrip_hash ==
-                    0x44533143u &&
                 save_resume_capture.user_save_corpus_rejected == 1 &&
                  save_resume_capture.user_save_corpus_truncated == 0 &&
                  strcmp(save_resume_capture.user_save_corpus_first_pc34_path,
@@ -3329,8 +3214,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
     hoc_host_probe_facts.captured_from_release_app = 1;
     hoc_host_probe_facts.observed_c026_portrait_asset = 1;
     hoc_host_probe_facts.observed_c346_mirror_backing_asset = 1;
-    hoc_host_probe_facts.observed_live_hoc_c127_material_request = 1;
-    hoc_host_probe_facts.observed_live_hoc_f0115_material_request = 1;
     hoc_host_probe_facts.observed_host_window_present = 1;
     hoc_host_probe_facts.observed_presented_rgba_capture = 1;
     hoc_host_probe_facts.presented_capture_width = 320;
@@ -3387,9 +3270,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_save_capture_readiness.save_capture_ready &&
                  hoc_save_capture_readiness.enter_route_ready &&
                  hoc_save_capture_readiness.consume_dm1_receipts_only &&
-                 hoc_save_capture_readiness.release_app_identity_ready &&
-                 hoc_save_capture_readiness.release_app_identity_hash ==
-                     hoc_release_capture_ownership.release_app_identity_hash &&
                  hoc_save_capture_readiness.host_capture_route_matches &&
                  hoc_save_capture_readiness.render_hall_mirror_overlay &&
                  hoc_save_capture_readiness.host_draw_uses_owned_receipt &&
@@ -3420,11 +3300,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  complete_support.user_save_corpus_scan_consumed &&
                  complete_support.user_save_corpus_pc34_ready &&
                  complete_support.user_save_corpus_part_envelope_ready &&
-                 complete_support.user_save_corpus_roundtrip_ready &&
-                 complete_support.user_save_corpus_roundtrip_verified == 1 &&
-                 complete_support.user_save_corpus_roundtrip_failed == 0 &&
-                 complete_support.user_save_corpus_roundtrip_hash ==
-                     0x44533143u &&
                  complete_support.user_save_corpus_rejected == 1 &&
                  complete_support.user_save_corpus_truncated == 0 &&
                  strcmp(complete_support.user_save_corpus_first_pc34_path,
@@ -3578,8 +3453,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.host_render_plan_ready &&
                  hoc_boot_summary.capture_proof_passed &&
                  hoc_boot_summary.release_capture_ownership_ready &&
-                 hoc_boot_summary.release_app_identity_ready &&
-                 hoc_boot_summary.release_app_identity_hash != 0u &&
                  hoc_boot_summary.host_render_consumer_ready &&
                  hoc_boot_summary.m11_boot_probe_consumer_ready &&
                  hoc_boot_summary.launch_path_ready &&
@@ -3825,9 +3698,6 @@ static void check_dm1_launch_path_bypass_contract(void) {
     save_resume_facts.observed_user_save_corpus_classified = 0;
     save_resume_facts.observed_user_save_corpus_pc34 = 0;
     save_resume_facts.observed_user_save_corpus_part_envelope = 0;
-    save_resume_facts.observed_user_save_corpus_roundtrip_verified = 0;
-    save_resume_facts.observed_user_save_corpus_roundtrip_failed = 0;
-    save_resume_facts.observed_user_save_corpus_roundtrip_hash = 0u;
     save_resume_facts.observed_user_save_corpus_rejected = 0;
     save_resume_facts.observed_user_save_corpus_truncated = 0;
     save_resume_facts.observed_user_save_corpus_first_pc34_path = NULL;
@@ -4193,117 +4063,11 @@ static void check_dm1_launch_path_bypass_contract(void) {
     }
 }
 
-static void check_m11_hoc_live_material_observation_gate(void) {
-    M11_GameViewState view;
-    M11_BootProbeReceipt receipt;
-
-    M11_GameView_Init(&view);
-    snprintf(view.sourceId, sizeof(view.sourceId), "%s", "dm1");
-    view.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
-    expect_i("M11 HoC bootstrap boot receipt succeeds",
-             M11_GameView_GetBootProbeReceipt(&view, &receipt),
-             1);
-    expect_i("M11 HoC bootstrap has no live C127 material request",
-             receipt.dm1HoCLiveC127MaterialRequest,
-             0);
-    expect_i("M11 HoC bootstrap has no live F0115 material request",
-             receipt.dm1HoCLiveF0115MaterialRequest,
-             0);
-    expect_i("M11 HoC bootstrap keeps release capture closed",
-             receipt.dm1HoCReleaseAppCapture,
-             0);
-    M11_GameView_Shutdown(&view);
-}
-
-static void check_m11_floor_item_host_receipt_direct_draw(void) {
-    M11_GameViewState view;
-    M11_Dm1FloorItemHostPresentationReceipt receipt;
-    unsigned char framebuffer[320 * 200];
-    unsigned char source_pixels[32 * 32];
-    int i;
-
-    M11_GameView_Init(&view);
-    memset(framebuffer, 0, sizeof(framebuffer));
-    memset(source_pixels, 7, sizeof(source_pixels));
-    view.assetsAvailable = 1;
-    view.assetLoader.initialized = 1;
-    view.assetLoader.cacheUsed = M11_ASSET_CACHE_SLOTS;
-    for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
-        view.assetLoader.cache[i].loaded = 1;
-        view.assetLoader.cache[i].graphicIndex = (unsigned int)i;
-        view.assetLoader.cache[i].width = 32;
-        view.assetLoader.cache[i].height = 32;
-        view.assetLoader.cache[i].pixels = source_pixels;
-    }
-
-    M11_GameView_Draw(&view, framebuffer, 320, 200);
-    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    expect_i("M11 F0115 receipt begins invalid", receipt.valid, 0);
-    expect_i("M11 HoC item-present capture rejects bootstrap receipt",
-             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
-    expect_i("M11 F0115 projectile draw completes",
-             M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
-                 &view, framebuffer, 320, 200),
-             1);
-    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    expect_i("M11 F0115 projectile never publishes floor receipt",
-             receipt.valid, 0);
-    expect_i("M11 HoC projectile capture rejects item-present claim",
-             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
-
-    view.assetsAvailable = 0;
-    expect_i("M11 F0115 invalid item draw rejects",
-             M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
-                 &view, framebuffer, 320, 200),
-             0);
-    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    expect_i("M11 F0115 invalid item draw keeps receipt invalid",
-             receipt.valid, 0);
-
-    view.assetsAvailable = 1;
-    expect_i("M11 F0115 item draw completes",
-             M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
-                 &view, framebuffer, 320, 200),
-             1);
-    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    expect_i("M11 F0115 item draw publishes receipt", receipt.valid, 1);
-    expect_i("M11 F0115 item receipt uses C10", receipt.transparentColor, 10);
-    expect_i("M11 F0115 item receipt records F0791", receipt.usesF0791Blit, 1);
-    expect_truth("M11 F0115 item receipt has destination geometry",
-                 receipt.destinationW > 0 && receipt.destinationH > 0);
-    expect_i("M11 HoC item-present capture requires actual item receipt",
-             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 1);
-    expect_i("M11 HoC midair capture rejects item receipt without item",
-             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(0), 0);
-
-    M11_GameView_Draw(&view, framebuffer, 320, 200);
-    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    expect_i("M11 next frame clears F0115 receipt", receipt.valid, 0);
-    expect_i("M11 HoC stale item receipt rejects next-frame capture",
-             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
-    expect_i("M11 F0115 projectile after clear completes",
-             M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
-                 &view, framebuffer, 320, 200),
-             1);
-    M11_GameView_GetDm1FloorItemHostPresentationReceipt(&receipt);
-    expect_i("M11 projectile after clear remains receipt-free", receipt.valid, 0);
-    expect_i("M11 HoC projectile after clear rejects capture",
-             M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1), 0);
-
-    /* The fixture pixels are stack-owned, not asset-loader allocations. */
-    view.assetLoader.cacheUsed = 0;
-    view.assetLoader.initialized = 0;
-    view.assetsAvailable = 0;
-    M11_GameView_Shutdown(&view);
-}
-
 int main(void) {
     check_swsh_to_title_boundary();
     check_title_to_menu_boundary();
     check_menu_to_entrance_wait_boundary();
     check_dm1_launch_path_bypass_contract();
-    check_m11_hoc_live_material_observation_gate();
-    check_m11_floor_item_host_receipt_direct_draw();
 
     expect_truth("startup stage order is source-valid",
                  dm1_v1_startup_sequence_source_order_valid_pc34());

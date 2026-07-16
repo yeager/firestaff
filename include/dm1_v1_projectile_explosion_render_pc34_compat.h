@@ -72,13 +72,9 @@
 
 #include <stdint.h>
 
-#include "memory_projectile_pc34_compat.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct GameWorld_Compat;
 
 /* ── GRAPHICS.DAT index constants ────────────────────────────────── */
 
@@ -176,61 +172,18 @@ int dm1_v1_c100_rebirth_lightning_graphic_index_pc34(void);
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
+int F0142_DUNGEON_GetProjectileAspect(int subtype);
 int dm1_v1_projectile_subtype_to_aspect(int subtype);
 int dm1_v1_projectile_renderable_pc34(int projectileCount,
                                       int graphicIndex);
-
-/* ReDMCSB DUNGEON.C F0142 and DUNVIEW.C F0115:5691-5900 distinguish a
- * spell/weapon projectile-aspect bitmap (M613, 454..) from an ordinary
- * thrown object's G0209/M612 bitmap (498..).  The caller supplies the
- * already-decoded Projectile.Slot type/subtype; this helper never invents
- * a material when the original object tables cannot resolve it. */
-typedef struct DM1_ProjectileMaterialResolutionPc34 {
-    int valid;
-    int uses_object_aspect;
-    int graphic_index;
-    int aspect_index;
-    int transparent_color;
-} DM1_ProjectileMaterialResolutionPc34;
-
-int dm1_v1_projectile_material_resolve_pc34(
-    int projectileSubtype,
-    int associatedThingType,
-    int associatedThingSubtype,
-    int weaponProjectileAspectOrdinal,
-    DM1_ProjectileMaterialResolutionPc34 *outResolution);
-
-typedef struct DM1_ThrownObjectProjectileBlitPlanPc34 {
-    int graphic_index;
-    int transparent_color;
-    int use_mirror;
-    int scale_units;
-    int source_scale_index;
-    int draw_x;
-    int draw_y;
-    int draw_w;
-    int draw_h;
-    int uses_source_row;
-} DM1_ThrownObjectProjectileBlitPlanPc34;
-
-int dm1_v1_thrown_object_projectile_blit_plan_pc34(
-    DM1_ThrownObjectProjectileBlitPlanPc34 *outPlan,
-    int graphicIndex,
-    int objectAspectIndex,
-    int depthIndex,
-    int relativeCell,
-    int viewLane,
-    int sourceZoneRow,
-    int viewportX,
-    int viewportY,
-    int viewportW,
-    int viewportH,
-    int spriteW,
-    int spriteH);
-
 int dm1_v1_projectile_effect_particle_pc34(int subtype,
                                            uint32_t *outColor,
                                            float *outSize);
+int dm1_v1_projectile_d4_far_box(int relSide,
+                                 int *outX,
+                                 int *outY,
+                                 int *outW,
+                                 int *outH);
 
 typedef struct DM1_ProjectileSpriteBlitPlan {
     int graphic_index;
@@ -312,7 +265,6 @@ int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
 #define DM1_F0115_LAYER_FLUXCAGE_FIELD   5
 #define DM1_F0115_LAYER_COUNT            6
 #define DM1_F0115_MAX_RECEIPT_ITEMS      8
-#define DM1_F0115_MAX_WORLD_GROUPS        4
 
 typedef struct DM1_F0115ThingRouteInputPc34 {
     unsigned short thing;
@@ -359,53 +311,6 @@ typedef struct DM1_F0115RuntimeSummaryPc34 {
     int doors;
 } DM1_F0115RuntimeSummaryPc34;
 
-/* ReDMCSB DUNVIEW.C F0115 restarts the static thing chain for its live
- * projectile/explosion passes. M11 supplies its private static chain, while
- * DM1 owns active-instance filtering against the typed runtime lists. */
-typedef struct DM1_F0115RuntimeInstanceInputPc34 {
-    const unsigned short* thingRefs;
-    int thingCount;
-    const struct ProjectileList_Compat* projectiles;
-    const struct ExplosionList_Compat* explosions;
-    int mapIndex;
-    int mapX;
-    int mapY;
-} DM1_F0115RuntimeInstanceInputPc34;
-
-/* M11 supplies only the Hall-of-Champions catalogue lookup.  The caller
- * never exposes raw Thing traversal: DUNGEON.C F0160/F0161 remain M10-owned. */
-typedef int (*DM1_F0115MirrorOrdinalLookupPc34)(void* user,
-                                                 int textStringIndex);
-
-typedef struct DM1_F0115WorldGroupCandidatePc34 {
-    unsigned short thing;
-    int creatureType;
-    int creatureCount;
-    int direction;
-} DM1_F0115WorldGroupCandidatePc34;
-
-typedef struct DM1_F0115WorldItemCandidatePc34 {
-    unsigned short thing;
-    int thingType;
-    int subtype;
-    int cell;
-} DM1_F0115WorldItemCandidatePc34;
-
-/* Source-backed static F0115 candidates for one loaded PC34 map square.
- * ReDMCSB DUNVIEW.C F0115:4547-4581 walks the compact SFT chain, then
- * defers groups and draws admissible objects.  This receipt keeps that
- * traversal and typed record decoding below the M11 host boundary. */
-typedef struct DM1_F0115WorldCandidatesPc34 {
-    int valid;
-    int chainCount;
-    int overflow;
-    int groupCount;
-    DM1_F0115WorldGroupCandidatePc34 groups[DM1_F0115_MAX_WORLD_GROUPS];
-    int itemCount;
-    DM1_F0115WorldItemCandidatePc34 items[DM1_F0115_MAX_RECEIPT_ITEMS];
-    DM1_F0115ThingLayerReceiptPc34 staticReceipt;
-} DM1_F0115WorldCandidatesPc34;
-
 int dm1_v1_verify_f0115_draw_order(const int* order, int count);
 int dm1_v1_f0115_thing_layer_receipt_pc34(
     const unsigned short* thingRefs,
@@ -427,16 +332,6 @@ int dm1_v1_f0115_runtime_summary_pc34(
     int liveProjectileCount,
     int liveExplosionCount,
     DM1_F0115RuntimeSummaryPc34* outSummary);
-int dm1_v1_f0115_runtime_instance_summary_pc34(
-    const DM1_F0115RuntimeInstanceInputPc34* input,
-    DM1_F0115RuntimeSummaryPc34* outSummary);
-int dm1_v1_f0115_runtime_summary_from_world_pc34(
-    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
-    DM1_F0115RuntimeSummaryPc34* outSummary);
-int dm1_v1_f0115_world_candidates_pc34(
-    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
-    DM1_F0115MirrorOrdinalLookupPc34 mirrorOrdinalLookup, void* mirrorUser,
-    DM1_F0115WorldCandidatesPc34* outCandidates);
 
 #ifdef __cplusplus
 }

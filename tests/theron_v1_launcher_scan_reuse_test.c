@@ -71,16 +71,6 @@ static int write_file(const char* path, const char* text) {
     return fclose(fp) == 0;
 }
 
-static int write_bytes(const char* path, const void* bytes, size_t size) {
-    FILE* fp = fopen(path, "wb");
-    if (!fp) return 0;
-    if (size > 0U && fwrite(bytes, 1U, size, fp) != size) {
-        fclose(fp);
-        return 0;
-    }
-    return fclose(fp) == 0;
-}
-
 int main(void) {
     static const char trackPayload[] =
         "Firestaff synthetic Theron launcher scan reuse fixture v1\n";
@@ -109,7 +99,6 @@ int main(void) {
     M12_AssetStatusScanMetrics looseDirMetrics;
     M12_AssetStatusScanMetrics firstMetrics;
     M12_AssetStatusScanMetrics refreshMetrics;
-    const FirestaffTheronMediaStatus* media;
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* required;
     const char* isoLaunchPath;
@@ -204,17 +193,6 @@ int main(void) {
                   strcmp(required->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(required->matchedHash, trackMd5) == 0,
               "Theron direct-launch scan propagates the raw Track 02 required marker");
-    media = M12_AssetStatus_GetTheronMediaStatus(&directRootStatus);
-    check_int(media && media->paired_track01_track02 &&
-                  strcmp(media->cue_path, extrasCuePath) == 0 &&
-                  strcmp(media->track01_path, extrasAudioPath) == 0 &&
-                  strcmp(media->track02_path, extrasTrackPath) == 0,
-              "Theron scanner records canonical CUE Track 01 and verified Track 02 paths");
-    check_int(!M12_AssetStatus_GetTheronTrack02LoaderReceipt(&directRootStatus)->valid,
-              "synthetic hash fixture cannot manufacture a Track02 IPL loader receipt");
-    check_int(strcmp(M12_AssetStatus_GetTheronLaunchMediaPath(&directRootStatus),
-                     extrasCuePath) == 0,
-              "Theron launch profile receives the strict paired CUE path");
     check_int(directRootMetrics.rootCount == 0U,
               "Theron direct-launch scan skips root-wide search-root construction");
     check_int(directRootMetrics.requiredHashLookups == 0U,

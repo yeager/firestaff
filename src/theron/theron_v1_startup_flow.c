@@ -2449,6 +2449,31 @@ static void tqr_startup_render_plan_add_title_and_chapter(
     }
 }
 
+static void tqr_startup_render_plan_add_title_graphics(
+    Theron_StartupRenderPlan *plan)
+{
+    if (!plan) {
+        return;
+    }
+
+    /* THQUEST.ASM T000/T080 title and startup entry:
+     * keep startup imagery in the Theron-owned render plan.  This bounded
+     * command layer is the handoff point for raw Track 02 / Track 03 title
+     * surfaces when their bitmap decoder is complete. */
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT,
+        0, 0, 320, 200, 0, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT,
+        18, 14, 284, 172, 1, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT,
+        18, 14, 284, 172, 11, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK,
+        74, 62, 172, 70, 14, 5, 0, 0, 0);
+}
+
 static void tqr_startup_render_plan_add_stage_graphics(
     Theron_StartupRenderPlan *plan,
     const Theron_StartupLayoutElement *elements,
@@ -2549,9 +2574,13 @@ int theron_v1_startup_render_plan_build(
         out_plan, elements, element_count);
 
     if (state->phase == THERON_STARTUP_PHASE_TITLE) {
-        /* The original title bitmap belongs to the raw Track02 route. Until
-         * that route is proven, emit no substitute rectangles or text. */
-        return 1;
+        tqr_startup_render_plan_add_title_graphics(out_plan);
+        return tqr_startup_render_plan_add_text(
+            out_plan,
+            34,
+            76,
+            THERON_STARTUP_RENDER_TEXT_SHADOW,
+            "PRESS ENTER TO START");
     }
 
     if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
@@ -3076,7 +3105,8 @@ int theron_v1_startup_render_rows_build(
     }
 
     if (state->phase == THERON_STARTUP_PHASE_TITLE) {
-        return count;
+        return tqr_startup_render_add_row(
+            rows, max_rows, count, "PRESS ENTER TO START");
     }
 
     if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {

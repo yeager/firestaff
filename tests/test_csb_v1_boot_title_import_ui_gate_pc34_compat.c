@@ -581,9 +581,7 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
 static void test_runtime_asset_gate_binds_session_and_owned_artwork(void)
 {
     CSB_V1_BootProfile p;
-    CSB_V1_BootStartupLaunch_PC34 launch_owner;
     CSB_V1_BootStartupLaunchReceipts_PC34 launch;
-    CSB_V1_BootStartupRuntimeReceipt_PC34 runtime;
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 gate;
 
     prime_verified_profile(&p);
@@ -594,44 +592,22 @@ static void test_runtime_asset_gate_binds_session_and_owned_artwork(void)
     memset(&launch, 0, sizeof(launch));
     launch.session_state.import_selected_action_index = 0;
     csb_v1_boot_startup_assets_resolve_pc34(&p);
-    memset(&launch_owner, 0, sizeof(launch_owner));
-    memset(&runtime, 0, sizeof(runtime));
-    launch_owner.profile = &p;
-    launch_owner.receipts = launch;
-    CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
-              &launch_owner, &runtime) == 1 &&
-              runtime.startup_asset_gate_valid &&
-              runtime.startup_asset_gate.valid &&
-              runtime.startup_asset_gate.title_assets_owned &&
-              runtime.startup_asset_gate.entrance_assets_owned &&
-              runtime.startup_asset_gate.hud_assets_owned &&
-              runtime.startup_asset_gate.session_state_valid &&
-              runtime.startup_asset_gate.rejects_fallback_sources,
-          "runtime gate binds verified title, entrance, HUD, and session ownership");
-    gate = runtime.startup_asset_gate;
-    CHECK(gate.valid &&
+    CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+              &p, &launch, &gate) == 1 && gate.valid &&
               gate.title_assets_owned && gate.entrance_assets_owned &&
               gate.hud_assets_owned && gate.session_state_valid &&
               gate.rejects_fallback_sources,
-          "runtime gate receipt exposes verified title, entrance, HUD, and session ownership");
+          "runtime gate binds verified title, entrance, HUD, and session ownership");
 
-    {
-        CSB_V1_BootProfile p_bad = p;
-        p_bad.graphics_verified = 0;
-        memset(&runtime, 0, sizeof(runtime));
-        launch_owner.profile = &p_bad;
-        launch_owner.receipts = launch;
-        CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
-                  &launch_owner, &runtime) == 0,
-              "runtime gate rejects unverified startup artwork acceptance");
-    }
+    p.startup_assets.bindings[CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34]
+        .source = CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
+    CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+              &p, &launch, &gate) == 0,
+          "runtime gate rejects a fallback entrance-door binding");
     csb_v1_boot_startup_assets_resolve_pc34(&p);
     launch.session_state.entrance_resume_available = 1;
-    memset(&runtime, 0, sizeof(runtime));
-    launch_owner.profile = &p;
-    launch_owner.receipts = launch;
-    CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
-              &launch_owner, &runtime) == 0,
+    CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
+              &p, &launch, &gate) == 0,
           "runtime gate rejects a resume session without its owned save path");
     csb_v1_boot_cleanup(&p);
 }
@@ -903,9 +879,9 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
               frame.title_surface->pixels == title_pixels,
           "CHAOS render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 80, &plan, &audio_action) == 1 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              plan.title_source_step == 21,
-          "completed CHAOS hold retains the verified title bitmap");
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_source_step == 20,
+          "STRIKES BACK follows the CHAOS hold without a synthetic frame");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 3u, &frame) == 1 &&
               frame.title_surface->pixels == title_pixels,
@@ -924,10 +900,6 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
               audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
               session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34,
           "title completion hands original entrance music to the owned entrance session");
-    CHECK(csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 0,
-          "HUD remains blocked until the source entrance door completes");
-    CHECK(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) == 1,
-          "completed entrance door releases the owned runtime handoff");
     CHECK(csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 1 &&
               session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
           "entrance hands the same verified session to the runtime HUD");

@@ -807,7 +807,7 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   1);
         memset(runtime_receipt, 0, sizeof(runtime_receipt));
         check_int(
-            "synthetic startup semantic runtime rejects non-authenticated media",
+            "synthetic startup semantic runtime route rc",
             theron_v1_startup_runtime_load_initial_level_with_host_receipts(
                 &runtime_world,
                 runtime_track,
@@ -820,14 +820,14 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                 &runtime_state_receipt,
                 runtime_receipt,
                 sizeof(runtime_receipt)),
-            0);
-        check_int("synthetic startup semantic runtime route is blocked",
+            1);
+        check_int("synthetic startup semantic runtime route source",
                   runtime_result.runtime_level_source,
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
-        check_int("synthetic startup semantic runtime has no handoff",
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
+        check_int("synthetic startup semantic runtime handoff flag",
                   runtime_result.track02_semantic_handoff,
-                  0);
-        check_int("synthetic startup semantic runtime has no bank identity",
+                  1);
+        check_int("synthetic startup semantic runtime keeps bank identity",
                   runtime_world.runtime_media.identity.ready &&
                   runtime_world.runtime_media.identity.track02_variant ==
                       THERON_TRACK02_VARIANT_US_BIN &&
@@ -835,27 +835,27 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   runtime_world.runtime_media.identity.bank_descriptor_offset ==
                       runtime_descriptor_offsets[0] &&
                   runtime_world.runtime_media.identity.bank_stride == 0x0400u,
-            0);
-        check_int("synthetic startup semantic runtime blocks fallback",
+                  1);
+        check_int("synthetic startup semantic runtime no blocked fallback",
                   runtime_result.fallback_visuals_blocked,
-                  1);
-        check_int("synthetic startup semantic runtime emits no state receipt",
-                  runtime_state_receipt.runtime_level_source,
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_NONE);
-        check_int("synthetic startup semantic runtime state has no handoff",
-                  runtime_state_receipt.runtime_track02_semantic_handoff,
                   0);
-        check_int("synthetic startup semantic runtime receipt is rejected",
+        check_int("synthetic startup semantic runtime state route",
+                  runtime_state_receipt.runtime_level_source,
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
+        check_int("synthetic startup semantic runtime state handoff",
+                  runtime_state_receipt.runtime_track02_semantic_handoff,
+                  1);
+        check_int("synthetic startup semantic runtime receipt text",
                   strstr(runtime_receipt,
-                         "stage-three loader bytes rejected") != NULL,
+                         "Track 02 semantic initial level") != NULL,
                   1);
-        check_int("synthetic startup semantic runtime host text is rejected",
+        check_int("synthetic startup semantic runtime host text",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "stage-three loader bytes rejected") != NULL,
+                         "Track 02 semantic initial level") != NULL,
                   1);
-        check_int("synthetic startup semantic runtime host route is blocked",
+        check_int("synthetic startup semantic runtime host route",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "route=track02-blocked") != NULL,
+                         "route=track02-semantic") != NULL,
                   1);
         free(runtime_track);
     }

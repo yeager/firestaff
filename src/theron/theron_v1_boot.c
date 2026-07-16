@@ -35,14 +35,11 @@
 
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
-#include "asset_status_m12.h"
 #include "theron_v1_mechanics.h"
-#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include <stdio.h>
-#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -935,10 +932,6 @@ int theron_v1_boot_prepare_startup_profile(
     if (tr_asset_load(profile->graphics_path, assets) != TR_ASSET_OK) {
         result = THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED;
         goto fail;
-    }
-    assets->assets_verified = profile->assets_verified ? 1 : 0;
-    if (profile->assets_verified) {
-        tr_asset_block_synthetic_rendering_for_verified_media(assets);
     }
 
     if (out_result) {
@@ -1991,16 +1984,6 @@ void theron_v1_boot_startup_render_route_receipt_init(
     receipt->status = "NO RENDER ROUTE";
 }
 
-static int theron_v1_boot_startup_has_track02_not_bound_block(
-    const Theron_V1_BootStartupViewModel *view_model) {
-
-    return view_model && view_model->runtime_fallback_visuals_blocked &&
-           view_model->runtime_level_source ==
-               THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
-           view_model->object_table_no_fallback_ready &&
-           view_model->object_table_blocked_anchor_mask != 0u;
-}
-
 int theron_v1_boot_startup_render_route_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_V1_BootStartupRenderRouteReceipt *out_receipt)
@@ -2062,12 +2045,8 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->object_table_route_hash;
     out_receipt->level_route_hash = view_model->level_route_hash;
     out_receipt->startup_menu_render_allowed =
-        view_model->render_plan_valid &&
-                !theron_v1_boot_startup_has_track02_not_bound_block(view_model)
-            ? 1
-            : 0;
+        view_model->render_plan_valid ? 1 : 0;
     out_receipt->track02_title_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
         view_model->startup_media_state_valid &&
                 view_model->startup_media_state_receipt.startup_media_ready
             ? 1
@@ -2093,7 +2072,6 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         out_receipt->runtime_level_render_allowed &&
         out_receipt->hud_ready ? 1 : 0;
     out_receipt->title_menu_runtime_handoff_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
         out_receipt->track02_title_menu_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
     out_receipt->save_resume_claim = view_model->resume_claim;
@@ -2102,10 +2080,7 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->save_resume_srm_import_status =
         view_model->srm_import_status;
     out_receipt->save_resume_start_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
-                view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE
-            ? 1
-            : 0;
+        view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE ? 1 : 0;
     out_receipt->save_resume_runtime_handoff_ready =
         out_receipt->save_resume_start_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
@@ -3778,13 +3753,6 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "TRACK02 ATLAS ROUTE MISSING";
         return 0;
-    } else if (plan.required_bitmap_route_mask != 0u) {
-        out_receipt->graphics_blocked = 1;
-        out_receipt->no_fallback_startup_graphics_proof = 1;
-        out_receipt->fallback_visuals_allowed = 0;
-        out_receipt->status_scope = "STARTUP";
-        out_receipt->status = "RAW TRACK02 BITMAP REQUIRED";
-        return 0;
     } else {
         out_receipt->graphics_executed =
             theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
@@ -3812,141 +3780,6 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status = "TRACK02 ATLAS GRAPHICS EXECUTED";
     }
     return out_receipt->graphics_executed;
-}
-
-void theron_v1_boot_startup_raw_media_graphics_receipt_init(
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *receipt)
-{
-    if (!receipt) {
-        return;
-    }
-    memset(receipt, 0, sizeof(*receipt));
-    receipt->status = "TRACK02 RAW MEDIA RECEIPT REQUIRED";
-}
-
-int theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    int cd_read_receipt_verified,
-    int palette_descriptor_relation_verified,
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
-{
-    Theron_Track02Variant variant;
-
-    theron_v1_boot_startup_raw_media_graphics_receipt_init(out_receipt);
-    if (!startup_media_receipt || !out_receipt) {
-        return 0;
-    }
-    variant = (Theron_Track02Variant)startup_media_receipt->track02_variant;
-    out_receipt->track02_variant = (int)variant;
-    snprintf(out_receipt->track02_md5, sizeof(out_receipt->track02_md5), "%s",
-             startup_media_receipt->track02_md5);
-    out_receipt->raw_track02_verified =
-        startup_media_receipt->startup_media_ready &&
-                (variant == THERON_TRACK02_VARIANT_JP_BIN ||
-                 variant == THERON_TRACK02_VARIANT_US_BIN)
-            ? 1
-            : 0;
-    out_receipt->cd_read_receipt_verified = cd_read_receipt_verified ? 1 : 0;
-    out_receipt->bitmap_route_mask =
-        startup_media_receipt->startup_bitmap_raw_route_mask;
-    out_receipt->bitmap_atlas_checksum =
-        startup_media_receipt->startup_bitmap_atlas_checksum;
-    out_receipt->bitmap_route_receipt_verified =
-        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            startup_media_receipt) &&
-                out_receipt->bitmap_route_mask != 0u &&
-                out_receipt->bitmap_atlas_checksum != 0u
-            ? 1
-            : 0;
-    out_receipt->palette_descriptor_relation_verified =
-        palette_descriptor_relation_verified ? 1 : 0;
-    out_receipt->no_fallback_visuals = 1;
-    out_receipt->valid = out_receipt->raw_track02_verified &&
-                         out_receipt->cd_read_receipt_verified &&
-                         out_receipt->bitmap_route_receipt_verified;
-    out_receipt->status = out_receipt->valid
-                              ? (out_receipt->palette_descriptor_relation_verified
-                                     ? "TRACK02 RAW MEDIA GRAPHICS READY"
-                                     : "TRACK02 PALETTE DESCRIPTOR UNPROVEN")
-                              : "TRACK02 RAW MEDIA RECEIPT REQUIRED";
-    return out_receipt->valid;
-}
-
-int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    const Theron_V1RawLoaderTraceReceipt *trace_receipt,
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
-{
-    Theron_V1RawLoaderTraceReceipt bound;
-
-    if (!startup_media_receipt) {
-        return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-            NULL, 0, 0, out_receipt);
-    }
-    if (!theron_v1_raw_loader_trace_final_bind(trace_receipt,
-                                                startup_media_receipt,
-                                                &bound)) {
-        return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-            startup_media_receipt, 0, 0, out_receipt);
-    }
-    return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-        startup_media_receipt,
-        bound.valid,
-        bound.palette_descriptor_relation_verified,
-        out_receipt);
-}
-
-int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
-    const Theron_V1_BootStartupViewModel *view_model,
-    const Theron_V1_BootStartupRawMediaGraphicsReceipt *raw_media_receipt,
-    const Theron_StartupGraphicExecutor *executor,
-    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt)
-{
-    Theron_StartupRenderPlan plan;
-    const Theron_StartupMediaStateReceipt *media;
-
-    if (out_receipt) {
-        theron_v1_boot_startup_graphics_route_receipt_init(out_receipt);
-    }
-    if (!view_model || !raw_media_receipt || !executor || !out_receipt ||
-        !view_model->startup_media_state_valid ||
-        !theron_v1_boot_startup_render_plan_from_view_model(view_model, &plan)) {
-        return 0;
-    }
-    media = &view_model->startup_media_state_receipt;
-    out_receipt->host_consumes_view_model = 1;
-    out_receipt->graphics_plan_valid = 1;
-    out_receipt->track02_real_media_ready = media->startup_media_ready ? 1 : 0;
-    out_receipt->required_bitmap_route_mask = plan.required_bitmap_route_mask;
-    out_receipt->required_bitmap_route_count = plan.required_bitmap_route_count;
-    if (!raw_media_receipt->valid ||
-        !raw_media_receipt->raw_track02_verified ||
-        !raw_media_receipt->cd_read_receipt_verified ||
-        !raw_media_receipt->bitmap_route_receipt_verified ||
-        !raw_media_receipt->no_fallback_visuals ||
-        raw_media_receipt->track02_variant != media->track02_variant ||
-        strcmp(raw_media_receipt->track02_md5, media->track02_md5) != 0 ||
-        (raw_media_receipt->bitmap_route_mask & plan.required_bitmap_route_mask) !=
-            plan.required_bitmap_route_mask ||
-        raw_media_receipt->bitmap_atlas_checksum !=
-            media->startup_bitmap_atlas_checksum) {
-        out_receipt->graphics_blocked = 1;
-        out_receipt->no_fallback_startup_graphics_proof = 1;
-        out_receipt->fallback_visuals_allowed = 0;
-        out_receipt->status_scope = "STARTUP";
-        out_receipt->status = "TRACK02 RAW MEDIA RECEIPT REQUIRED";
-        return 0;
-    }
-    if (!raw_media_receipt->palette_descriptor_relation_verified) {
-        out_receipt->graphics_blocked = 1;
-        out_receipt->no_fallback_startup_graphics_proof = 1;
-        out_receipt->fallback_visuals_allowed = 0;
-        out_receipt->status_scope = "STARTUP";
-        out_receipt->status = "TRACK02 PALETTE DESCRIPTOR UNPROVEN";
-        return 0;
-    }
-    return theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
-        view_model, executor, out_receipt);
 }
 
 int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
@@ -3999,21 +3832,14 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
     out_receipt->view_model_valid = 1;
     out_receipt->view_model = *view_model;
     out_receipt->stage_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
-                view_model->startup_phase != THERON_STARTUP_PHASE_TITLE
-            ? 1
-            : 0;
+        view_model->startup_phase != THERON_STARTUP_PHASE_TITLE ? 1 : 0;
     out_receipt->soul_room_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
-                (view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
-                 view_model->startup_phase == THERON_STARTUP_PHASE_READY)
-            ? 1
-            : 0;
-    out_receipt->forcefield_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
+        view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
                 view_model->startup_phase == THERON_STARTUP_PHASE_READY
             ? 1
             : 0;
+    out_receipt->forcefield_menu_ready =
+        view_model->startup_phase == THERON_STARTUP_PHASE_READY ? 1 : 0;
 
     if (theron_v1_boot_startup_host_view_receipt_from_view_model(
             view_model,
@@ -4407,15 +4233,6 @@ int theron_v1_boot_startup_execute_input_from_full_start_receipt(
         }
         return 0;
     }
-    if (theron_v1_boot_startup_has_track02_not_bound_block(
-            &receipt->view_model)) {
-        out_receipt->result = THERON_STARTUP_ERR_NOT_READY;
-        out_receipt->host_receipt.input_result =
-            THERON_STARTUP_INPUT_RESULT_REDRAW;
-        out_receipt->host_receipt.status_scope = "TRACK02";
-        out_receipt->host_receipt.status = "TRACK02 NOT_BOUND BLOCKED";
-        return 0;
-    }
     return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
         &receipt->view_model,
         input,
@@ -4439,15 +4256,6 @@ int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
             out_receipt->host_receipt.status_scope = "STARTUP";
             out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
         }
-        return 0;
-    }
-    if (theron_v1_boot_startup_has_track02_not_bound_block(
-            &receipt->view_model)) {
-        out_receipt->result = THERON_STARTUP_ERR_NOT_READY;
-        out_receipt->host_receipt.input_result =
-            THERON_STARTUP_INPUT_RESULT_REDRAW;
-        out_receipt->host_receipt.status_scope = "TRACK02";
-        out_receipt->host_receipt.status = "TRACK02 NOT_BOUND BLOCKED";
         return 0;
     }
     return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
@@ -6080,13 +5888,6 @@ int theron_v1_boot_startup_launch_alloc(
         out_launch->assets ? out_launch->assets->hucard_rom_size : 0u,
         out_launch->profile->graphics_md5,
         &out_launch->startup_media_state_receipt);
-    /* CUE Track 01 provenance is an audio-only handoff.  Do not couple it
-     * to the Track 02 bitmap receipt: an unbound graphics route must not
-     * suppress original narration, and no unavailable path gets a fallback. */
-    theron_v1_track01_cdda_handoff_from_verified_media(
-        verified_path && verified_path[0] ? verified_path : out_launch->profile->graphics_path,
-        out_launch->profile->graphics_md5,
-        &out_launch->track01_cdda_handoff);
     theron_v1_boot_startup_launch_build_host_receipt(out_launch);
     return 1;
 }
@@ -6099,8 +5900,7 @@ int theron_v1_boot_startup_launch_detach_runtime(
         return 0;
     }
     memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!launch || launch->irq2_preflight_receipt.runtime_blocked ||
-        !launch->profile || !launch->world ||
+    if (!launch || !launch->profile || !launch->world ||
         !launch->viewport || !launch->assets) {
         return 0;
     }
@@ -6113,7 +5913,6 @@ int theron_v1_boot_startup_launch_detach_runtime(
     out_receipt->save_resume_state_receipt = launch->save_resume_state_receipt;
     out_receipt->startup_media_state_receipt =
         launch->startup_media_state_receipt;
-    out_receipt->track01_cdda_handoff = launch->track01_cdda_handoff;
     out_receipt->launch_host_receipt = launch->launch_host_receipt;
     snprintf(out_receipt->boot_asset_md5,
              sizeof(out_receipt->boot_asset_md5),

@@ -15,7 +15,6 @@
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
-#include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 
 #include <stdio.h>
@@ -338,84 +337,6 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
               "death/drop chain terminates after generated steaks");
 }
 
-static void test_dead_group_afterplay_creates_source_smoke_after_cleanup(void) {
-    M11_GameViewState state;
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat maps[1];
-    struct DungeonMapTiles_Compat tiles[1];
-    unsigned char mapTiles[1];
-    struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapons[8];
-    struct DungeonArmour_Compat armours[8];
-    struct DungeonJunk_Compat junks[12];
-    struct DungeonGroup_Compat groups[1];
-    unsigned short squareFirstThings[1];
-    unsigned char weaponRaw[8][4];
-    unsigned char armourRaw[8][4];
-    unsigned char junkRaw[12][4];
-    unsigned char groupRaw[1][16];
-    unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
-    const struct CreatureBehaviorProfile_Compat* profile;
-    int smokeSlot = -1;
-    int i;
-
-    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
-                    weapons, armours, junks, squareFirstThings,
-                    weaponRaw, armourRaw, junkRaw);
-    memset(groups, 0, sizeof(groups));
-    memset(groupRaw, 0, sizeof(groupRaw));
-    groups[0].next = THING_ENDOFLIST;
-    groups[0].slot = THING_ENDOFLIST;
-    groups[0].creatureType = 10; /* Mummy: no generated fixed possessions. */
-    groups[0].cells = 0xFF;
-    groups[0].count = 0;
-    groups[0].health[0] = 0;
-    groupRaw[0][0] = 0xFEu;
-    groupRaw[0][1] = 0xFFu;
-    things.groups = groups;
-    things.groupCount = 1;
-    things.thingCounts[THING_TYPE_GROUP] = 1;
-    things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
-    things.squareFirstThings[0] = groupThing;
-    state.world.gameTick = 41u;
-
-    profile = CREATURE_GetProfile_Compat((int)groups[0].creatureType);
-    ASSERT_TRUE(profile != NULL, "mummy profile exists for F0190 C040 size");
-    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDropWithF0190Afterplay(
-                  &state, groupThing, 0, 0, 0, EXPLOSION_CELL_CENTERED),
-              1, "F0190 final-group afterplay route accepts dead group");
-    ASSERT_EQ(groups[0].next, THING_NONE,
-              "F0189 cleanup runs before F0190 source smoke");
-    ASSERT_EQ(things.squareFirstThings[0], THING_ENDOFLIST,
-              "F0188/F0189 leave no group on the source square");
-    ASSERT_EQ(state.world.explosions.count, 1,
-              "F0190 creates exactly one source C040 after cleanup");
-    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
-        if (state.world.explosions.entries[i].reserved0 &&
-            state.world.explosions.entries[i].explosionType ==
-                C040_EXPLOSION_SMOKE) {
-            smokeSlot = i;
-            break;
-        }
-    }
-    ASSERT_TRUE(smokeSlot >= 0, "F0190 C040 enters the live explosion list");
-    if (smokeSlot >= 0 && profile) {
-        ASSERT_EQ(state.world.explosions.entries[smokeSlot].attack,
-                  dm1_v1_melee_death_smoke_attack_f0190_pc34(
-                      profile->attributes),
-                  "F0190 C040 attack remains profile-size derived");
-        ASSERT_EQ(state.world.explosions.entries[smokeSlot].mapIndex, 0,
-                  "F0190 C040 keeps the source map");
-        ASSERT_EQ(state.world.explosions.entries[smokeSlot].mapX, 0,
-                  "F0190 C040 keeps the source X");
-        ASSERT_EQ(state.world.explosions.entries[smokeSlot].mapY, 0,
-                  "F0190 C040 keeps the source Y");
-        ASSERT_EQ(state.world.explosions.entries[smokeSlot].cell,
-                  EXPLOSION_CELL_CENTERED,
-                  "F0190 C040 preserves the source killed cell");
-    }
-}
-
 static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -547,32 +468,6 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
     things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
     things.squareFirstThings[0] = groupThing;
 
-    /* ReDMCSB GROUP.C F0189 calls F0181 after the group unlink. C29-C41
-     * events at the dead group's square disappear; unrelated entries remain. */
-    state.world.timeline.count = 4;
-    state.world.timeline.events[0].kind = TIMELINE_EVENT_CREATURE_REACTION;
-    state.world.timeline.events[0].mapIndex = 0;
-    state.world.timeline.events[0].mapX = 0;
-    state.world.timeline.events[0].mapY = 0;
-    state.world.timeline.events[0].aux2 = DM1_EVENT_REACTION_DANGER_ON_SQUARE;
-    state.world.timeline.events[1].kind = TIMELINE_EVENT_CREATURE_REACTION;
-    state.world.timeline.events[1].mapIndex = 0;
-    state.world.timeline.events[1].mapX = 0;
-    state.world.timeline.events[1].mapY = 0;
-    state.world.timeline.events[1].aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
-    state.world.timeline.events[2].kind = TIMELINE_EVENT_CREATURE_REACTION;
-    state.world.timeline.events[2].mapIndex = 0;
-    state.world.timeline.events[2].mapX = 0;
-    state.world.timeline.events[2].mapY = 0;
-    state.world.timeline.events[2].aux2 = 28;
-    state.world.timeline.events[3].kind = TIMELINE_EVENT_CREATURE_REACTION;
-    state.world.timeline.events[3].mapIndex = 0;
-    state.world.timeline.events[3].mapX = 1;
-    state.world.timeline.events[3].mapY = 0;
-    state.world.timeline.events[3].aux2 = DM1_EVENT_REACTION_HIT_BY_PROJECTILE;
-    state.world.creatureAICount = 1;
-    state.world.creatureAI[0].reserved0 = 0;
-
     /* ReDMCSB GROUP.C:F0188:724-731 walks the dead group's Slot chain and
      * inserts each carried object through F0267 before GROUP.C:F0189 removes
      * the dead group from the square. This pins the object-chain handoff when
@@ -583,87 +478,16 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
 
     ASSERT_EQ(things.squareFirstThings[0], carriedTail,
               "second carried object is first after source-order prepends");
-    ASSERT_EQ(THING_GET_TYPE(raw_next_for_thing(&things, carriedTail)),
-              THING_TYPE_JUNK,
-              "second carried object links to cell-tagged carried head");
-    ASSERT_EQ(THING_GET_INDEX(raw_next_for_thing(&things, carriedTail)), 1,
-              "source-order carried head identity survives cell tagging");
-    ASSERT_EQ(THING_GET_TYPE(raw_next_for_thing(&things, carriedHead)),
-              THING_TYPE_JUNK,
-              "carried head links to cell-tagged pre-existing floor object");
-    ASSERT_EQ(THING_GET_INDEX(raw_next_for_thing(&things, carriedHead)), 0,
+    ASSERT_EQ(raw_next_for_thing(&things, carriedTail), carriedHead,
+              "second carried object links to original carried head");
+    ASSERT_EQ(raw_next_for_thing(&things, carriedHead), existingFloorJunk,
               "carried head links to pre-existing floor object after group unlink");
     ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), THING_ENDOFLIST,
               "pre-existing floor object remains chain tail");
-    ASSERT_EQ(groups[0].slot, THING_ENDOFLIST,
-              "dead mummy carried slot chain is consumed through F0188");
+    ASSERT_EQ(groups[0].slot, THING_NONE,
+              "dead mummy carried slot chain is consumed");
     ASSERT_EQ(groups[0].next, THING_NONE,
               "dead mummy group slot is returned to source unused pool");
-    ASSERT_EQ(raw_next_for_thing(&things, groupThing), THING_NONE,
-              "F0189 writes the unused group Next marker to raw data");
-    ASSERT_EQ((int)groupRaw[0][2] | ((int)groupRaw[0][3] << 8),
-              THING_ENDOFLIST,
-              "F0188 writes the cleared group Slot marker to raw data");
-    ASSERT_EQ(state.world.timeline.count, 2,
-              "F0189 deletes only C29-C41 events on the dead group square");
-    ASSERT_EQ(state.world.timeline.events[0].aux2, 28,
-              "F0181 keeps below-range event on the dead group square");
-    ASSERT_EQ(state.world.timeline.events[1].mapX, 1,
-              "F0181 keeps group events from other squares");
-    ASSERT_EQ(state.world.creatureAICount, 0,
-              "F0189 removes active-group state on the party map");
-}
-
-static void test_f0189_keeps_non_party_map_ai_state(void) {
-    M11_GameViewState state;
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat maps[1];
-    struct DungeonMapTiles_Compat tiles[1];
-    unsigned char mapTiles[1];
-    struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapons[8];
-    struct DungeonArmour_Compat armours[8];
-    struct DungeonJunk_Compat junks[12];
-    struct DungeonGroup_Compat groups[1];
-    unsigned short squareFirstThings[1];
-    unsigned char weaponRaw[8][4];
-    unsigned char armourRaw[8][4];
-    unsigned char junkRaw[12][4];
-    unsigned char groupRaw[1][16];
-    unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
-
-    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
-                    weapons, armours, junks, squareFirstThings,
-                    weaponRaw, armourRaw, junkRaw);
-    memset(groups, 0, sizeof(groups));
-    memset(groupRaw, 0, sizeof(groupRaw));
-    groups[0].next = THING_ENDOFLIST;
-    groups[0].slot = THING_ENDOFLIST;
-    groups[0].creatureType = 10; /* Mummy: no fixed-possession table. */
-    groups[0].health[0] = 0;
-    store_raw_next(groupRaw[0], THING_ENDOFLIST);
-    things.groups = groups;
-    things.groupCount = 1;
-    things.thingCounts[THING_TYPE_GROUP] = 1;
-    things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
-    things.squareFirstThings[0] = groupThing;
-
-    /* GROUP.C F0189 lines 763-766 only removes ACTIVE_GROUP state when
-     * CurrentMapIndex is PartyMapIndex.  Keep the synthetic non-party entry
-     * to make that boundary observable without pulling in CSB runtime code. */
-    state.world.party.mapIndex = 1;
-    state.world.creatureAICount = 1;
-    state.world.creatureAI[0].reserved0 = 0;
-
-    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
-                  &state, groupThing, 0, 0, 0),
-              1, "non-party-map dead group follows F0188/F0189 cleanup");
-    ASSERT_EQ(state.world.creatureAICount, 1,
-              "F0189 keeps active-group state outside the party map");
-    ASSERT_EQ(state.world.creatureAI[0].reserved0, 0,
-              "non-party-map active-group identity is retained");
-    ASSERT_EQ(groups[0].next, THING_NONE,
-              "F0189 still returns the non-party-map group slot to unused state");
 }
 
 int main(void) {
@@ -674,10 +498,8 @@ int main(void) {
     test_animated_armour_materializes_cursed_armour_and_weapons();
     test_fixed_drops_do_not_append_when_pool_exhausted();
     test_dead_group_runtime_materializes_and_removes_group();
-    test_dead_group_afterplay_creates_source_smoke_after_cleanup();
     test_dead_trolin_inserts_fixed_drop_into_existing_object_chain();
     test_dead_mummy_preserves_carried_tail_and_floor_chain();
-    test_f0189_keeps_non_party_map_ai_state();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

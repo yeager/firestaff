@@ -82,6 +82,8 @@ typedef struct {
     int floor_material_surface_count;
     int ceiling_material_surface_count;
     int wall_material_surface_count;
+    int static_mns_material_surface_count;
+    int static_mns_floor_material_surface_count;
     int bpk_material_surface_count;
     int bpk_floor_material_surface_count;
     int bpk_ceiling_material_surface_count;
@@ -127,6 +129,8 @@ typedef struct {
     int ceiling_count;
     int wall_count;
     int material_surface_count;
+    int static_mns_material_surface_count;
+    int static_mns_floor_material_surface_count;
     int bpk_material_surface_count;
     int bpk_floor_material_surface_count;
     int bpk_ceiling_material_surface_count;

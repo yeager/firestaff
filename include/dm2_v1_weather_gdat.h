@@ -5,23 +5,51 @@
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_graphics_data_open.h"
 #include "dm2_v1_weather.h"
 
-/* skproject/SKULLWIN/c_weather.cpp DM2_UPDATE_WEATHER writes one of these
- * environment-command IDs and resolves it through QUERY_GDAT_TEXT(0x17,
- * MapGraphicsStyle(), id).  These are command text, not image fields. */
+/* These are retained here while the weather receipt owns the historic
+ * QUERY_TEMP_PICST contract. They are metadata identities only. */
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+    uint8_t bits_per_pixel;
+    int16_t query_offset_x;
+    int16_t query_offset_y;
+    uint32_t metadata_hash;
+} DM2_V1_GdatImageMetadata;
+
+#ifndef DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED
+typedef struct {
+    int valid;
+    uint8_t weather;
+    uint8_t intensity;
+    uint16_t time_of_day;
+    uint32_t weather_seed;
+    uint32_t state_hash;
+} DM2_V1_WeatherRestoredStateReceipt;
+#define DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED 1
+#endif
+
+const uint8_t *dm2_v1_asset_load_text_sized(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    size_t *out_size);
+int dm2_v1_asset_load_image_metadata(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    DM2_V1_GdatImageMetadata *out_metadata);
+int dm2_v1_asset_load_image_local_palette(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    uint8_t out_palette16[16], uint32_t *out_hash);
+
 #define DM2_V1_WEATHER_CLOUD_LIGHT_CMD  0x67u
 #define DM2_V1_WEATHER_CLOUD_HEAVY_CMD  0x68u
 #define DM2_V1_WEATHER_CLOUD_STORM_CMD  0x69u
 #define DM2_V1_WEATHER_RAIN_LIGHT_CMD   0x6au
 #define DM2_V1_WEATHER_RAIN_HEAVY_CMD   0x6bu
 #define DM2_V1_WEATHER_RAIN_STORM_CMD   0x6cu
-
 #define DM2_V1_WEATHER_COMMAND_MASK(command_) \
     (1u << ((unsigned int)(command_) - DM2_V1_WEATHER_CLOUD_LIGHT_CMD))
 
-/* skproject DME.h::DistantEnvironment is a ten-byte live c_weather record.
- * This is provenance only: it deliberately has no renderer-facing meaning. */
 #define DM2_V1_DISTANT_ENVIRONMENT_BYTES 10u
 typedef struct {
     int valid;
@@ -43,32 +71,16 @@ typedef struct {
     const uint8_t *raw_text;
     uint32_t byte_count;
     uint32_t raw_hash;
-    /* c_bkgrnd.cpp RETRIEVE_ENVIRONMENT_CMD_CD_FW consumes these exact
-     * CMDSTR fields before QUERY_TEMP_PICST.  A command is not drawable
-     * until CD is present and non-zero in its original, NUL-terminated
-     * dtText payload. */
     int material_valid;
     uint16_t rect_number;
     uint8_t flip_mode;
-    /* ENVIRONMENT_DRAW_DISTANT_ELEMENT passes the same environment command
-     * number to QUERY_TEMP_PICST as an actual dtImage field.  CMDSTR CD/FW
-     * alone is layout metadata, never drawable source material. */
     int image_present;
     uint8_t image_field;
-    /* Exact QUERY_TEMP_PICST metadata, sourced from the matching dtImage
-     * IMG3 header and its two dtImageOffset records.  Missing metadata makes
-     * the command non-material, rather than inventing a placement. */
     int query_metadata_valid;
     DM2_V1_GdatImageMetadata query_metadata;
-    /* QUERY_TEMP_PICST realizes this exact environment IMG3. Keep the
-     * QUERY_GDAT_IMAGE_LOCALPAL receipt with it even while no-draw owns the
-     * still-unproven destination clip. */
     int local_palette_valid;
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
-    /* QUERY_TEMP_PICST consumes the decoded IMG3 pixels, not just the header.
-     * Retain an ownership receipt for the exact decoded plane while the
-     * destination path stays no-draw. */
     int decoded_pixels_valid;
     uint16_t decoded_width;
     uint16_t decoded_height;
@@ -88,20 +100,11 @@ typedef struct {
     DM2_V1_WeatherCommandReceipt commands[6];
 } DM2_V1_WeatherGdatReceipt;
 
-/* One source-owned environment picture command prepared by
- * DM2_UPDATE_WEATHER.  c_weather.cpp lays command records out in ten-byte
- * slots, first cloud and then rain; this contract retains that order without
- * assuming the still-unproven QUERY_TEMP_PICST image decoder. */
 typedef struct {
     uint8_t command;
     uint8_t slot_index;
     uint16_t rect_number;
     uint8_t flip_mode;
-    /* skproject/SKWIN/DME.h::DistantEnvironment is exactly ten bytes.
-     * RETRIEVE_ENVIRONMENT_CMD_CD_FW initializes w4/w6 to zero and b8/b9
-     * to 0x40 before ENVIRONMENT_DRAW_DISTANT_ELEMENT reaches
-     * QUERY_TEMP_PICST.  Keep those source values with the command plan;
-     * this is placement/scale provenance, not a locally invented overlay. */
     int16_t source_offset_x;
     int16_t source_offset_y;
     uint8_t source_scale_x;
@@ -124,9 +127,6 @@ typedef struct {
     DM2_V1_WeatherGdatOverlayCommand commands[2];
 } DM2_V1_WeatherOverlayPlan;
 
-/* Source inputs to skproject's ENVIRONMENT_DRAW_DISTANT_ELEMENT.  The
- * caller supplies live map/movement values; this module does not invent a
- * destination rectangle, map parity, or movement vector. */
 typedef struct {
     uint8_t direction;
     int16_t map_x;
@@ -144,9 +144,6 @@ typedef struct {
     int16_t moving_other_offset_y;
 } DM2_V1_WeatherDrawContext;
 
-/* One source-realized QUERY_TEMP_PICST request.  The GDAT image itself stays
- * owned by the asset loader; the plan only carries the verified source
- * rectangle and transform inputs that DRAW_TEMP_PICST consumes. */
 typedef struct {
     int valid;
     uint8_t command;
@@ -157,9 +154,6 @@ typedef struct {
     uint8_t scale_y;
     int16_t draw_offset_x;
     int16_t draw_offset_y;
-    /* QUERY_GDAT_SUMMARY_IMAGE applies the two dtImageOffset values before
-     * QUERY_TEMP_PICST. These are source-image bounds, not an invented
-     * viewport clip: right/bottom are exclusive like the IMG3 dimensions. */
     int source_bounds_valid;
     int16_t source_left;
     int16_t source_top;
@@ -175,9 +169,6 @@ typedef struct {
     uint32_t material_hash;
 } DM2_V1_WeatherDrawPlan;
 
-/* QUERY_TEMP_PICST resolves CD through the compressed dt04 rectangle table
- * before DRAW_TEMP_PICST. This is a destination clip receipt only; it never
- * grants permission to synthesize or blit weather pixels. */
 typedef struct {
     int valid;
     int16_t x;
@@ -187,10 +178,6 @@ typedef struct {
     uint32_t table_hash;
 } DM2_V1_WeatherDestinationClip;
 
-/* The renderer consumes only source-owned DistantEnvironment slots.  This
- * receipt joins a save-restored runtime state with its selected, decoded GDAT
- * materials and the original rectangle-table clips.  It is a no-draw
- * contract: no command is promoted from weather intensity or timer bytes. */
 typedef struct {
     int valid;
     DM2_V1_WeatherRestoredStateReceipt restored_state;
@@ -201,25 +188,57 @@ typedef struct {
     DM2_V1_WeatherDestinationClip clips[2];
 } DM2_V1_WeatherRendererReceipt;
 
-int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader, uint8_t graphicsset, DM2_V1_WeatherGdatReceipt *out);
-int dm2_v1_weather_gdat_command_receipt(
-    const DM2_V1_AssetLoader *loader,
-    uint8_t graphicsset,
-    uint8_t command,
-    DM2_V1_WeatherCommandReceipt *out);
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t graphics_data_open_hash;
+    uint32_t weather_receipt_hash;
+    uint32_t command_mask;
+    uint32_t material_mask;
+    uint32_t command_text_hash;
+    uint32_t renderer_hash;
+    int source_text_ready;
+    int material_ready;
+    int renderer_ready;
+    int palette_required;
+    int blit_authorized;
+    int no_fallback_blit;
+    uint32_t admission_hash;
+} DM2_V1_WeatherRuntimeAdmissionReceipt;
 
-/* Exact bounded form of skproject DM2_QUERY_CMDSTR_TEXT.  The original
- * searches every occurrence, accepts an optional '=' and '-', and folds
- * decimal digits into the running result.  `out_found` distinguishes an
- * absent key from the source's legitimate numeric zero result. */
+/* UPDATE_WEATHER selects these ENVIRONMENT fields.  They are source GDAT
+ * addresses, not locally generated cloud or ground textures. */
+#define DM2_V1_ENVIRONMENT_SKY_CLOUDS_MEDIUM 0x40u
+#define DM2_V1_ENVIRONMENT_WET_GROUND_MEDIUM 0x80u
+
+typedef struct {
+    uint8_t environment_field;
+    int32_t command_cd;
+    uint8_t command_fw;
+    uint32_t text_hash;
+    uint32_t image_hash;
+    uint32_t image_byte_count;
+} DM2_V1_EnvironmentWeatherMaterialReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t map_load_token;
+    unsigned int material_count;
+    uint32_t receipt_hash;
+    DM2_V1_EnvironmentWeatherMaterialReceipt materials[2];
+} DM2_V1_EnvironmentWeatherReceipt;
+
+int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader,
+                                uint8_t graphicsset,
+                                DM2_V1_WeatherGdatReceipt *out);
+int dm2_v1_weather_gdat_command_receipt(const DM2_V1_AssetLoader *loader,
+                                        uint8_t graphicsset,
+                                        uint8_t command,
+                                        DM2_V1_WeatherCommandReceipt *out);
 int dm2_v1_weather_cmdstr_query(const uint8_t *text, size_t text_size,
                                  const char *name, int *out_found,
                                  int32_t *out_value);
-
-/* c_weather.cpp thresholds: cloud conditions use 0x10/0x40/0x80 and rain
- * conditions use 0x40/0x80/0xc0.  A value below the first threshold emits
- * no command.  This only binds source bytes; CMDSTR decoding is deliberately
- * outside this boundary. */
 uint8_t dm2_v1_weather_gdat_cloud_command_for_level(uint8_t level);
 uint8_t dm2_v1_weather_gdat_rain_command_for_level(uint8_t level);
 
@@ -266,24 +285,31 @@ int dm2_v1_weather_gdat_destination_clip(
 int dm2_v1_weather_gdat_renderer_receipt(
     const DM2_V1_WeatherRestoredStateReceipt *restored_state,
     const DM2_V1_WeatherGdatReceipt *weather,
-    const DM2_V1_DistantEnvironmentReceipt *slots,
-    unsigned int slot_count,
-    const DM2_V1_WeatherDrawContext *context,
-    const uint8_t *rect_table,
-    size_t rect_table_size,
-    DM2_V1_WeatherRendererReceipt *out);
-
-/* Retain one source-owned c_weather slot only after its selected ENVIRONMENT
- * command is already material-valid. No generic weather state is accepted. */
-int dm2_v1_weather_distant_environment_receipt(
+    const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count,
+    const DM2_V1_WeatherDrawContext *context, const uint8_t *rect_table,
+    size_t rect_table_size, DM2_V1_WeatherRendererReceipt *out);
+int dm2_v1_weather_runtime_admission_receipt(
+    const DM2_V1_GraphicsDataOpenReceipt *graphics_open,
     const DM2_V1_WeatherGdatReceipt *weather,
-    uint8_t command,
-    uint8_t slot_index,
-    const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    DM2_V1_WeatherRuntimeAdmissionReceipt *out);
+int dm2_v1_weather_distant_environment_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather, uint8_t command,
+    uint8_t slot_index, const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
     DM2_V1_DistantEnvironmentReceipt *out);
 int dm2_v1_weather_timer_transaction_receipt(
-    const DM2_V1_WeatherGdatReceipt *weather,
-    const uint8_t *timer_bytes, size_t timer_size,
+    const DM2_V1_WeatherGdatReceipt *weather, const uint8_t *timer_bytes,
+    size_t timer_size,
     const uint8_t distant_environment[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
     DM2_V1_WeatherTimerTransactionReceipt *out);
+
+/* Each requested environmental layer must retain both its QUERY_GDAT_TEXT
+ * command data and matching dtImage entry. Missing selected data rejects the
+ * full receipt; disabled weather remains an explicit, material-free state. */
+int dm2_v1_weather_gdat_environment_receipt(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    uint32_t map_load_token, int outdoor_scene, int weather_enabled,
+    uint8_t cloud_field, uint8_t wet_ground_field, int draw_clouds,
+    int draw_wet_ground, DM2_V1_EnvironmentWeatherReceipt *out);
+
 #endif

@@ -191,15 +191,6 @@ void FirestaffTheronMedia_Init(FirestaffTheronMediaStatus* status) {
     status->data_track_number = 0;
 }
 
-static int th_path_is_readable(const char* path) {
-    FILE* fp = path ? fopen(path, "rb") : NULL;
-    if (!fp) {
-        return 0;
-    }
-    fclose(fp);
-    return 1;
-}
-
 static void th_finalize(FirestaffTheronMediaStatus* status) {
     if (!status) {
         return;
@@ -305,12 +296,6 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
             q = th_ltrim(q);
             if (th_starts_with_i(q, "AUDIO")) {
                 ++status->audio_track_count;
-                if (track == 1) {
-                    ++track01_audio_count;
-                    th_copy(status->track01_path,
-                            sizeof(status->track01_path),
-                            current_file);
-                }
             } else if (th_starts_with_i(q, "MODE1/") ||
                        th_starts_with_i(q, "MODE2/")) {
                 if (track == 2) {
@@ -341,13 +326,6 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
             th_starts_with_i(p, "POSTGAP ")) {
             if (!saw_track || current_track <= 0) {
                 return -1;
-            }
-            if (th_starts_with_i(p, "INDEX 01")) {
-                if (current_track == 1) {
-                    ++track01_index_count;
-                } else if (current_track == 2) {
-                    ++track02_index_count;
-                }
             }
             continue;
         }
@@ -412,17 +390,17 @@ static int th_read_file_to_buffer(const char* path, char** out, size_t* out_len)
     return 1;
 }
 
-static int th_resolve_cue_member_path(const char* cue_path,
-                                      char path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY]) {
+static int th_resolve_cue_candidate_path(const char* cue_path,
+                                         FirestaffTheronMediaStatus* status) {
     char parent[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
     char resolved[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-    if (!cue_path || !path || path[0] == '\0') {
+    if (!cue_path || !status || status->candidate_path[0] == '\0') {
         return 0;
     }
     if (!FSP_ParentDir(parent, sizeof(parent), cue_path)) {
         return 0;
     }
-    if (!FSP_JoinPath(resolved, sizeof(resolved), parent, path)) {
+    if (!FSP_JoinPath(resolved, sizeof(resolved), parent, status->candidate_path)) {
         return 0;
     }
     th_copy(path, FIRESTAFF_THERON_MEDIA_PATH_CAPACITY, resolved);
@@ -649,73 +627,6 @@ static int th_scan_dir(const char* root,
     return *best_rank > 0 ? 1 : 0;
 }
 
-static int th_find_cue_pair_dir(const char* root,
-                                int depth,
-                                int* visited,
-                                const char* verified_track02_path,
-                                FirestaffTheronMediaStatus* status) {
-#if defined(_WIN32)
-    char pattern[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-    intptr_t handle;
-    struct _finddata_t ent;
-#else
-    DIR* dir;
-    struct dirent* ent;
-#endif
-    if (!root || !visited || !verified_track02_path || !status ||
-        depth > THERON_SCAN_MAX_DEPTH || *visited >= THERON_SCAN_MAX_FILES) {
-        return 0;
-    }
-#if defined(_WIN32)
-    if (!FSP_JoinPath(pattern, sizeof(pattern), root, "*")) return 0;
-    handle = _findfirst(pattern, &ent);
-    if (handle == -1) return 0;
-    do {
-        char child[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-        if (strcmp(ent.name, ".") == 0 || strcmp(ent.name, "..") == 0 ||
-            !FSP_JoinPath(child, sizeof(child), root, ent.name)) continue;
-        if (ent.attrib & _A_SUBDIR) {
-            if (th_find_cue_pair_dir(child, depth + 1, visited,
-                                     verified_track02_path, status)) break;
-        } else if (th_has_ext(child, ".cue")) {
-            FirestaffTheronMediaStatus candidate;
-            ++(*visited);
-            if (FirestaffTheronMedia_ClassifyPath(child, &candidate) == 0 &&
-                candidate.paired_track01_track02 &&
-                strcmp(candidate.track02_path, verified_track02_path) == 0) {
-                *status = candidate;
-                break;
-            }
-        }
-    } while (*visited < THERON_SCAN_MAX_FILES && _findnext(handle, &ent) == 0);
-    _findclose(handle);
-#else
-    dir = opendir(root);
-    if (!dir) return 0;
-    while (*visited < THERON_SCAN_MAX_FILES && (ent = readdir(dir)) != NULL) {
-        char child[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0 ||
-            !FSP_JoinPath(child, sizeof(child), root, ent->d_name)) continue;
-        if (FSP_DirExists(child)) {
-            if (th_find_cue_pair_dir(child, depth + 1, visited,
-                                     verified_track02_path, status)) break;
-        } else if (th_has_ext(child, ".cue")) {
-            FirestaffTheronMediaStatus candidate;
-            ++(*visited);
-            if (FirestaffTheronMedia_ClassifyPath(child, &candidate) == 0 &&
-                candidate.paired_track01_track02 &&
-                strcmp(candidate.track02_path, verified_track02_path) == 0) {
-                *status = candidate;
-                break;
-            }
-        }
-    }
-    closedir(dir);
-#endif
-    return status->paired_track01_track02 &&
-        strcmp(status->track02_path, verified_track02_path) == 0;
-}
-
 int FirestaffTheronMedia_ClassifyDirectory(const char* root,
                                            FirestaffTheronMediaStatus* status) {
     int visited = 0;
@@ -728,20 +639,6 @@ int FirestaffTheronMedia_ClassifyDirectory(const char* root,
         return -1;
     }
     return th_scan_dir(root, 0, &visited, status, &best_rank) && best_rank > 0 ? 0 : -1;
-}
-
-int FirestaffTheronMedia_FindCuePairForTrack02(
-    const char* root,
-    const char* verified_track02_path,
-    FirestaffTheronMediaStatus* status) {
-    int visited = 0;
-    if (!root || !verified_track02_path || !status || !FSP_DirExists(root) ||
-        !th_path_is_readable(verified_track02_path)) {
-        return -1;
-    }
-    FirestaffTheronMedia_Init(status);
-    return th_find_cue_pair_dir(root, 0, &visited, verified_track02_path, status)
-        ? 0 : -1;
 }
 
 const char* FirestaffTheronMedia_LayoutId(FirestaffTheronMediaLayout layout) {

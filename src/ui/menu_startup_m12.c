@@ -1,5 +1,6 @@
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+#include "artpack_admission_m12.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 #include "firestaff_retroachievements.h"
@@ -170,6 +171,10 @@ _Static_assert(M12_STARTUP_SETTINGS_ROW_EXPORT == M12_SETTINGS_ROW_EXPORT,
                "settings row contract: export");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_IMPORT == M12_SETTINGS_ROW_IMPORT,
                "settings row contract: import");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_UNICODE_FONT == M12_SETTINGS_ROW_UNICODE_FONT,
+               "settings row contract: unicode font");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_ARTPACK == M12_SETTINGS_ROW_ARTPACK,
+               "settings row contract: artpack");
 
 enum {
     M12_MUSEUM_CATEGORY_DM1 = 0,
@@ -946,6 +951,33 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
     return &state->entries[index];
 }
 
+const char* M12_StartupMenu_GetUnicodeFontPath(const M12_StartupMenuState* state) {
+    return state ? state->settings.unicodeFontPath : "";
+}
+
+const char* M12_StartupMenu_GetArtpackPath(const M12_StartupMenuState* state) {
+    return state ? state->settings.artpackPath : "";
+}
+
+int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,
+                                      const char* path,
+                                      M12_ArtpackAdmissionReceipt* outReceipt) {
+    M12_ArtpackAdmissionReceipt localReceipt;
+    M12_ArtpackAdmissionReceipt* receipt =
+        outReceipt ? outReceipt : &localReceipt;
+    if (!state) {
+        return 0;
+    }
+    if (!M12_ArtpackAdmission_Check(path, receipt)) {
+        return 0;
+    }
+    snprintf(state->settings.artpackPath,
+             sizeof(state->settings.artpackPath),
+             "%s",
+             path ? path : "");
+    return 1;
+}
+
 static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
                                        const char* gameId) {
     int i;
@@ -1027,6 +1059,7 @@ const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
         M12_SETTINGS_ROW_GRAPHICS,
         M12_SETTINGS_ROW_RENDERER_BACKEND,
         M12_SETTINGS_ROW_WINDOW_MODE,
+        M12_SETTINGS_ROW_ARTPACK,
         M12_SETTINGS_ROW_SCALE_MODE,
         M12_SETTINGS_ROW_DISPLAY_ASPECT,
         M12_SETTINGS_ROW_INTEGER_SCALING,
@@ -1061,6 +1094,7 @@ const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
         M12_SETTINGS_ROW_THEME,
         M12_SETTINGS_ROW_BACKGROUND,
         M12_SETTINGS_ROW_UI_SCALE,
+        M12_SETTINGS_ROW_UNICODE_FONT,
         M12_SETTINGS_ROW_STREAMER_MODE
     };
     static const int onlineRows[] = {
@@ -3038,6 +3072,8 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.ambientEnabled = state->settings.ambientEnabled;
     config.ambientVolume = state->settings.ambientVolume;
     config.uiScale = state->settings.uiScale;
+    snprintf(config.unicodeFontPath, sizeof(config.unicodeFontPath), "%s",
+             state->settings.unicodeFontPath);
     config.streamerMode = state->settings.streamerMode;
     config.gameSpeedMultiplier = state->settings.gameSpeedMultiplier;
     config.controlSchemeIndex = state->settings.controlSchemeIndex;
@@ -3079,6 +3115,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     snprintf(config.customMusicPath, sizeof(config.customMusicPath), "%s", state->settings.customMusicPath);
     snprintf(config.customDungeonPath, sizeof(config.customDungeonPath), "%s", state->settings.customDungeonPath);
     snprintf(config.screenshotPath, sizeof(config.screenshotPath), "%s", state->settings.screenshotPath);
+    snprintf(config.artpackPath, sizeof(config.artpackPath), "%s", state->settings.artpackPath);
     config.windowWidth = state->settings.windowWidth;
     config.windowHeight = state->settings.windowHeight;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -3319,6 +3356,19 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     if (config.uiScale <= 100) state->settings.uiScale = 100;
     else if (config.uiScale <= 150) state->settings.uiScale = 150;
     else state->settings.uiScale = 200;
+    snprintf(state->settings.unicodeFontPath, sizeof(state->settings.unicodeFontPath),
+             "%s", config.unicodeFontPath);
+    if (state->settings.unicodeFontPath[0] == '\0') {
+        if (M12_Config_FindDefaultUnicodeFontPath(
+            state->settings.unicodeFontPath,
+            sizeof(state->settings.unicodeFontPath))) {
+            snprintf(config.unicodeFontPath,
+                     sizeof(config.unicodeFontPath),
+                     "%s",
+                     state->settings.unicodeFontPath);
+            M12_Config_Save(&config);
+        }
+    }
     state->settings.streamerMode = config.streamerMode ? 1 : 0;
     state->settings.controlSchemeIndex = config.controlSchemeIndex;
     if (state->settings.controlSchemeIndex < 0 || state->settings.controlSchemeIndex > 1) {
@@ -3392,6 +3442,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     snprintf(state->settings.customMusicPath, sizeof(state->settings.customMusicPath), "%s", config.customMusicPath);
     snprintf(state->settings.customDungeonPath, sizeof(state->settings.customDungeonPath), "%s", config.customDungeonPath);
     snprintf(state->settings.screenshotPath, sizeof(state->settings.screenshotPath), "%s", config.screenshotPath);
+    snprintf(state->settings.artpackPath, sizeof(state->settings.artpackPath), "%s", config.artpackPath);
     state->settings.windowWidth = config.windowWidth > 0 ? config.windowWidth : 960;
     state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -4073,9 +4124,11 @@ const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_AMBIENT: return m12_tr(state, "AMBIENT SOUND");
         case M12_SETTINGS_ROW_AMBIENT_VOLUME: return m12_tr(state, "AMBIENT VOLUME");
         case M12_SETTINGS_ROW_UI_SCALE: return m12_tr(state, "UI SCALE");
+        case M12_SETTINGS_ROW_UNICODE_FONT: return m12_tr(state, "UI FONT");
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_tr(state, "CUSTOM MUSIC");
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
+        case M12_SETTINGS_ROW_ARTPACK: return m12_tr(state, "ARTPACK");
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_tr(state, "STREAMER MODE");
         case M12_SETTINGS_ROW_EXPORT:
             return (state && state->quickResumeAvailable &&
@@ -4148,9 +4201,11 @@ const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_AMBIENT: return m12_settings_value_ambient(state);
         case M12_SETTINGS_ROW_AMBIENT_VOLUME: return m12_settings_value_ambient_volume(state);
         case M12_SETTINGS_ROW_UI_SCALE: return m12_settings_value_ui_scale(state);
+        case M12_SETTINGS_ROW_UNICODE_FONT: return m12_settings_value_path_status(state, state ? state->settings.unicodeFontPath : NULL);
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_settings_value_path_status(state, state ? state->settings.customMusicPath : NULL);
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
+        case M12_SETTINGS_ROW_ARTPACK: return m12_settings_value_path_status(state, state ? state->settings.artpackPath : NULL);
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_settings_value_streamer_mode(state);
         case M12_SETTINGS_ROW_EXPORT:
             return (state && state->quickResumeAvailable &&
@@ -4800,6 +4855,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.uiScale = state->settings.uiScale < 150 ? 150 :
                                           state->settings.uiScale < 200 ? 200 : 100;
             }
+            break;
+        case M12_SETTINGS_ROW_UNICODE_FONT:
+            m12_begin_unicode_font_browse(state);
+            break;
+        case M12_SETTINGS_ROW_ARTPACK:
+            m12_begin_artpack_browse(state);
             break;
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH:
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH:

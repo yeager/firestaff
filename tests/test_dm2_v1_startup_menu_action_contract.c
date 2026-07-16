@@ -12,12 +12,6 @@ static int g_apply_calls;
 static int g_apply_result;
 static DM2_V1_SessionState g_applied_session;
 
-typedef struct {
-    int gdat_result;
-    int gdat_calls;
-    int other_calls;
-} StartupDrawProbe;
-
 static void check(int condition, const char *message)
 {
     if (condition) {
@@ -38,29 +32,6 @@ static int test_apply_session(void *userdata,
         g_applied_session = *session;
     }
     return g_apply_result;
-}
-
-static int test_draw_gdat_image(void *userdata,
-                                const DM2_V1_StartupDrawCommand *command)
-{
-    StartupDrawProbe *probe = (StartupDrawProbe *)userdata;
-    if (!probe || !command) return 0;
-    ++probe->gdat_calls;
-    return probe->gdat_result;
-}
-
-static void test_draw_rect(void *userdata,
-                           const DM2_V1_StartupDrawCommand *command)
-{
-    StartupDrawProbe *probe = (StartupDrawProbe *)userdata;
-    (void)command;
-    if (probe) ++probe->other_calls;
-}
-
-static void test_draw_text(void *userdata,
-                           const DM2_V1_StartupDrawCommand *command)
-{
-    test_draw_rect(userdata, command);
 }
 
 int main(void)
@@ -107,8 +78,6 @@ int main(void)
     int row_slot;
     int startup_active;
     int row_count;
-    StartupDrawProbe draw_probe;
-    DM2_V1_StartupDrawExecutor draw_executor;
 
     check(dm2_v1_startup_input_from_firestaff_menu_code(0) ==
               DM2_V1_STARTUP_INPUT_NONE &&
@@ -447,7 +416,12 @@ int main(void)
         &menu,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    check(row_count > 0 &&
+    check(row_count == 1 &&
+              commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+              commands[0].gdat_category == DM2_GDAT_CATEGORY_TITLE &&
+              commands[0].gdat_index == 0 &&
+              commands[0].gdat_field == 4 &&
+              commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU &&
               dm2_v1_startup_presentation_render_receipt(
                   &menu, commands, row_count, 1, &render_receipt) &&
               render_receipt.valid &&
@@ -484,25 +458,7 @@ int main(void)
               render_receipt.save_slot_menu_ready == 1 &&
               render_receipt.new_game_menu_ready == 1 &&
               render_receipt.full_start_graphics_ready == 1,
-          "startup render receipt exposes full title/save-menu graphics readiness");
-    memset(&draw_executor, 0, sizeof(draw_executor));
-    draw_executor.userdata = &draw_probe;
-    draw_executor.draw_gdat_image = test_draw_gdat_image;
-    draw_executor.fill_rect = test_draw_rect;
-    draw_executor.outline_rect = test_draw_rect;
-    draw_executor.draw_text = test_draw_text;
-    memset(&draw_probe, 0, sizeof(draw_probe));
-    draw_probe.gdat_result = 0;
-    check(!dm2_v1_startup_execute_draw_commands(
-              commands, row_count, &draw_executor) &&
-              draw_probe.gdat_calls == 1 && draw_probe.other_calls == 0,
-          "startup draw stops when original TITLE menu surface is unavailable");
-    memset(&draw_probe, 0, sizeof(draw_probe));
-    draw_probe.gdat_result = 1;
-    check(dm2_v1_startup_execute_draw_commands(
-              commands, row_count, &draw_executor) &&
-              draw_probe.gdat_calls == 1,
-          "startup draw accepts a consumed original TITLE menu surface");
+          "startup presentation emits SHOW_MENU_SCREEN and receipt title evidence");
     host_facts.startup_menu_active = 1;
     check(dm2_v1_startup_presentation_view_receipt_from_host_facts(
               &host_facts,

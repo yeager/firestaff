@@ -136,8 +136,6 @@ static void put_le32(uint8_t *buf, int off, uint32_t value)
     buf[off + 3] = (uint8_t)(value >> 24);
 }
 
-static uint32_t phase7_fnv1a32(const uint8_t *bytes, size_t size);
-
 static uint16_t pack3_codes(int a, int b, int c)
 {
     return (uint16_t)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
@@ -1338,8 +1336,6 @@ static void test_runtime_custom_background_skin_grid_from_csbwin_tail(void)
     profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
     profile.csbwin_appended_tail_truncated = 0;
     memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
-    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(
-        appended_tail, sizeof(appended_tail));
     memset(skins, 0xff, sizeof(skins));
 
     CHECK(csb_v1_runtime_custom_background_skin_grid(
@@ -1622,106 +1618,6 @@ static void test_combat_attack_parameters(void)
     CHECK(p.distanceToParty >= 0, "distanceToParty is non-negative");
     CHECK(p.directionToParty >= 0 && p.directionToParty <= 3,
           "directionToParty is valid (0-3)");
-}
-
-typedef struct {
-    int called;
-    int parameter_count;
-    int source_monster_index;
-    int source_disable_time;
-} CSB_V1_AttackFilterAbiProbe;
-
-static int csb_v1_attack_filter_abi_runner(
-    const CSB_V1_DSAImportedAction *action, int *parameters,
-    int parameter_count, int flgs_inout[2], void *user)
-{
-    CSB_V1_AttackFilterAbiProbe *probe = user;
-
-    (void)flgs_inout;
-    if (!action || !parameters || !probe || parameter_count != 20) return 0;
-    probe->called++;
-    probe->parameter_count = parameter_count;
-    probe->source_monster_index = parameters[2];
-    probe->source_disable_time = parameters[18];
-
-    /* CSBWin Monster.cpp:1164-1167 copies the whole ATTACK_PARAMETERES
-     * through pDSAparameters. Exercise fields absent from the former
-     * nine-word Firestaff bridge as well as the trailing signed field. */
-    parameters[2] = 93;
-    parameters[7] = 72;
-    parameters[12] = 61;
-    parameters[14] = 1;
-    parameters[17] = 51;
-    parameters[18] = 41;
-    parameters[19] = -1;
-    return 1;
-}
-
-static void test_combat_attack_filter_full_source_abi(void)
-{
-    CSB_V1_DSAImportedAction action;
-    CSB_V1_ChaosMagicState programs;
-    CSB_V1_DSAFilterRuntime runtime;
-    CSB_V1_AttackFilterAbiProbe probe;
-    CSB_V1_AttackParameters p;
-
-    memset(&action, 0, sizeof(action));
-    memset(&runtime, 0, sizeof(runtime));
-    memset(&probe, 0, sizeof(probe));
-    csb_v1_chaos_init(&programs);
-    action.dsa_id = 7;
-    action.state_index = 3u;
-    programs.imported_actions = &action;
-    programs.imported_action_count = 1;
-    runtime.programs = &programs;
-    runtime.runner = csb_v1_attack_filter_abi_runner;
-    runtime.runner_user = &probe;
-    runtime.loaded_level = 6;
-    runtime.attack_filter_dsa_id = 7;
-    runtime.attack_filter_state = 3u;
-    runtime.attack_filter_action = 0;
-
-    memset(&p, 0, sizeof(p));
-    p.monsterID = 11;
-    p.monsterType = 12;
-    p.monsterIndex = 13;
-    p.monsterLevel = 14;
-    p.monsterX = 15;
-    p.monsterY = 16;
-    p.monsterPos = 17;
-    p.missileOriginPosition = 18;
-    p.missileRange = 19;
-    p.missileDamage = 20;
-    p.missileDecayRate = 21;
-    p.directionToParty = 22;
-    p.distanceToParty = 23;
-    p.missileType = 24;
-    p.monsterShouldLaunchMissile = 25;
-    p.monsterShouldSteal = 26;
-    p.heroToDamage = 27;
-    p.attackSoundOrdinal = 28;
-    p.disableTime = 29;
-    p.supressPoison = 30;
-
-    CHECK(csb_v1_dsa_filter_attack_preprocess_live(&p, &runtime) == 1,
-          "attack filter runs authenticated source action");
-    CHECK(probe.called == 1 && probe.parameter_count == 20,
-          "attack filter exposes all 20 CSBWin ATTACK_PARAMETERES words");
-    CHECK(probe.source_monster_index == 13 && probe.source_disable_time == 29,
-          "attack filter preserves CSBWin source word ordering");
-    CHECK(p.monsterIndex == 93 && p.missileOriginPosition == 72 &&
-          p.distanceToParty == 61,
-          "attack filter commits mid-structure DSA mutations");
-    CHECK(p.monsterShouldLaunchMissile == 1 && p.attackSoundOrdinal == 51 &&
-          p.disableTime == 41 && p.supressPoison == -1,
-          "attack filter commits trailing DSA mutations");
-    CHECK(runtime.loaded_level == 6,
-          "attack filter restores loaded level after source callback");
-
-    /* `programs` borrows the stack-owned action in this test. */
-    programs.imported_actions = NULL;
-    programs.imported_action_count = 0;
-    csb_v1_chaos_cleanup(&programs);
 }
 
 static void test_combat_respawn_timing(void)
@@ -2360,10 +2256,6 @@ int main(void)
     test_dungeon_live_mutable_thing_chain_between_levels();
     test_dungeon_real_format_expool_db11_skin_lookup();
     test_dungeon_decode_dsa_filter_location();
-    test_runtime_csbwin_dsa_filter_binding();
-    test_runtime_csbwin_dsa_skin_expool_bridge();
-    test_runtime_csbwin_expool_global_variable_handoff();
-    test_runtime_csbwin_disable_saves_expool_policy();
     test_runtime_custom_background_skin_grid_from_expool();
     test_runtime_custom_background_skin_grid_from_csbwin_tail();
     test_dungeon_decode_square();
@@ -2382,7 +2274,6 @@ int main(void)
     test_combat_attack_resolve();
     test_combat_monster_defense();
     test_combat_attack_parameters();
-    test_combat_attack_filter_full_source_abi();
     test_combat_respawn_timing();
     test_combat_drop_sound();
     test_combat_monsterdesc_parse();

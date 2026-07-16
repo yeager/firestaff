@@ -262,7 +262,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "reaches a deterministic local 24-bit BMP while DGN remains",
         "blocked before original Saturn capture/admission. It runs through",
         "`nexus_viewport_render` + `nexus_viewport_to_rgba` +",
-        "the probe-owned 24-bit BMP receipt writer for every verified Nexus data root",
+        "`M11_Screenshot_CaptureRGBA` for every verified Nexus data root",
         "that is present on the host. It is a *readiness* receipt for",
         "the E1 Track 1 phase-launch row; it does not promote screenshots",
         "and it does not rewrite public docs.",

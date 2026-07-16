@@ -339,8 +339,6 @@ static void test_log_render_plan(void) {
               0, "suppress Firestaff synthetic HoC advance prompt reroute");
     ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("A DOOR OPENS"),
               1, "accept player-facing message");
-    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("THE WALL READS RUN"),
-              1, "keep explicit wall inscription reads player-facing");
 
     DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(texts, colors, 8, &plan);
     ASSERT_EQ(plan.rowCount, 3, "render plan accepted count");

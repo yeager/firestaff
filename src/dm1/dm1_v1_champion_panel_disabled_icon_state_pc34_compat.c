@@ -22,17 +22,19 @@
  *     cell at C089_ZONE_ACTION_AREA_CHAMPION_0_ACTION.
  *   - ReDMCSB shield-border disabled state: when partyShieldDefense,
  *     spellShieldDefense, and fireShieldDefense are all 0, the
- *     F0292 append loop model in dm1_v1_champion_status_shield_border_graphics_pc34
- *     returns 0 borders and produces the disabled/inactive side.
+ *     F0292 append loop in m11_game_view.c's
+ *     m11_collect_v1_status_shield_border_graphics returns 0 borders
+ *     and the M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion
+ *     path produces the disabled/inactive side.
  *
  * Companion to:
  *   - dm1_v1_graphic560_action_disabled_ticks_pc34_compat
  *     (G0491 table bytes; this gate re-uses the values for the
  *      per-action predicate).
- *   - dm1_v1_champion_status_shield_border_graphics_pc34
+ *   - M11_GameView_GetV1StatusShieldBorderGraphicForChampion
  *     (asset-backed ENABLED pixel path; separate lane).
- *   - dm1_v1_champion_panel_action_icon_global_hatch_pc34
- *     (global hatch gate).
+ *   - M11_GameView_ShouldHatchV1ActionIconCells
+ *     (global hatch gate; separate lane).
  *   - firestaff_dm1_v1_champion_panel_shield_border_pixel_probe
  *     (asset-backed ENABLED shield pixel probe; separate lane).
  *   - firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe
@@ -64,7 +66,6 @@
  */
 
 #include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
-#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -114,12 +115,13 @@ static const DM1_V1_ChampionPanelDisabledIconEvidencePc34Compat s_evidence = {
     /* g0491_action_disabled_ticks_anchor */
     "MENU.C G0491_auc_Graphic560_ActionDisabledTicks[44]:27,157 PC 3.4 EN init",
     /* shield_border_disabled_anchor */
-    "dm1_v1_champion_status_shield_border_graphics_pc34 appends 0 "
-    "borders when partyShieldDefense/spellShieldDefense/fireShieldDefense "
-    "are all 0",
+    "M11 m11_collect_v1_status_shield_border_graphics (m11_game_view.c) "
+    "appends 0 borders when partyShieldDefense/spellShieldDefense/"
+    "fireShieldDefense are all 0 — M11_GameView_GetV1StatusShieldBorder"
+    "GraphicCountForChampion returns 0",
     /* global_hatch_gate_anchor */
-    "dm1_v1_champion_panel_action_icon_global_hatch_pc34: "
-    "candidateChampionOrdinal > 0 || candidateMirrorPanelActive || resting",
+    "M11_GameView_ShouldHatchV1ActionIconCells (m11_game_view.c:17904) "
+    "candidateMirrorOrdinal > 0 || candidateMirrorPanelActive || resting",
     /* defs_action_hand_anchor */
     "DEFS.H MASK0x8000_ACTION_HAND = 0x8000",
     /* defs_disable_action_anchor */
@@ -149,47 +151,6 @@ int DM1_V1_ChampionPanelDisabledIconState_DisabledTicksPc34Compat(
         return -1;
     }
     return (int)s_g0491_disabled_ticks[action_index];
-}
-
-int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
-    int candidate_champion_ordinal,
-    bool candidate_mirror_panel_active,
-    bool party_is_resting)
-{
-    /*
-     * ReDMCSB ACTIDRAW.C F0386:282 hatches on
-     * G0299_ui_CandidateChampionOrdinal || G0300_B_PartyIsResting;
-     * Firestaff's candidate panel flag is the live C040 host equivalent.
-     */
-    return candidate_champion_ordinal > 0 ||
-           candidate_mirror_panel_active ||
-           party_is_resting;
-}
-
-int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
-    int color_index,
-    bool apply_action_palette)
-{
-    /*
-     * ReDMCSB ACTIDRAW.C F0386 applies the action-area palette changes
-     * before blitting extracted object icons into the C093..C096 cells:
-     * G0498[12] maps C12_COLOR_DARKEST_GRAY to C04_COLOR_CYAN for the
-     * action-hand icon surface.
-     */
-    if (apply_action_palette &&
-        (color_index & 0x0F) == 12) {
-        return DM1_V1_ACTION_AREA_CYAN_PC34;
-    }
-    return color_index;
-}
-
-int dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
-    bool champion_present,
-    bool champion_dead)
-{
-    if (!champion_present) return -1;
-    return champion_dead ? DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34
-                         : DM1_V1_ACTION_AREA_CYAN_PC34;
 }
 
 const DM1_V1_ChampionPanelDisabledIconEvidencePc34Compat *
@@ -459,7 +420,7 @@ int DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
          * has the same priority as candidate / resting; the first
          * one matching already triggers the hatch).  We report the
          * per-champion bit first because the existing M11 hatch
-         * predicate (`dm1_v1_champion_panel_action_icon_global_hatch_pc34`)
+         * predicate (`M11_GameView_ShouldHatchV1ActionIconCells`)
          * covers candidate+resting independently. */
         if (r->disable_action_bit_set) {
             r->state = DM1_V1_CPDIS_STATE_PER_CHAMPION_DISABLE_ACTION_PC34;
@@ -506,11 +467,13 @@ int DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
     }
 
     /* Shield-border disabled state — when ALL three defenses are
-     * zero, dm1_v1_champion_status_shield_border_graphics_pc34
+     * zero, M11's m11_collect_v1_status_shield_border_graphics
      * returns 0 borders.  Conversely, when any one is positive
      * the per-champion append order (fire, spell, party — drawn
-     * in reverse) produces >=1 border.  This pins the disabled side
-     * for the same per-champion loop as the ENABLED pixel path. */
+     * in reverse) produces >=1 border.  This mirrors the contract
+     * surface M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion
+     * exposes for the M11 ENABLED pixel path; the disabled side
+     * is what the gate here pins for the same per-champion loop. */
     for (i = 0; i < state->party_champion_count &&
                 i < DM1_V1_CPDIS_CHAMPION_COUNT_PC34; ++i) {
         const DM1_V1_ChampionPanelDisabledIconChampionPc34Compat *row =

@@ -499,7 +499,6 @@ static void parse_timer_summaries(const uint8_t *decoded,
         memset(timer, 0, sizeof(*timer));
         timer->valid = 1;
         timer->truncated = (total > CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES);
-        timer->source_index = (uint16_t)i;
         timer->time = read_le32(record, 0u);
         timer->function = record[4u];
         timer->ubyte5 = record[5u];
@@ -1127,16 +1126,13 @@ int csb_v1_csbwin_512_inspect_extended_dsa_section(
         uint32_t state_index;
         uint32_t state_ordinal;
 
-        /* SaveGame.cpp ReadDSAs + DSA.cpp DSA::Read.  The DSA header is
-         * dsa number, 80-byte description, then ui16 state/ui8 local state/
-         * ui8 group id followed by three i32 values.  It is 100 bytes, not
-         * a host-sized structure. */
-        if (size - offset < 4u + 80u + 4u + 12u) {
+        /* SaveGame.cpp ReadDSAs + DSA.cpp DSA::Read. */
+        if (size - offset < 4u + 80u + 24u) {
             return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
         }
         dsa_id = read_le32(bytes, offset);
         offset += 4u + 80u;
-        offset += 4u; /* m_state (ui16), m_localState (ui8), m_groupID (ui8) */
+        offset += 12u; /* m_state, m_localState, m_groupID */
         state_slots = read_le32(bytes, offset);
         offset += 4u;
         offset += 4u; /* m_firstDisplayedState */
@@ -1189,9 +1185,15 @@ int csb_v1_csbwin_512_inspect_extended_dsa_section(
                 offset += 4u;
                 if (!checked_mul_size((size_t)program_words, 2u,
                                       &program_bytes) ||
-                    program_bytes > size - offset ||
-                    total_program_words > UINT32_MAX - program_words) {
+                    program_bytes > size - offset) {
                     return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+                }
+                if (program_words >
+                        CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS ||
+                    total_program_words >
+                        CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS -
+                            program_words) {
+                    return CSB_V1_CSBWIN_EXTENDED_ERR_DSA;
                 }
                 total_program_words += program_words;
                 offset += program_bytes;

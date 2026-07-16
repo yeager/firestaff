@@ -10,7 +10,6 @@
  */
 
 #include "dm2_v1_creature.h"
-#include "dm2_v1_ccm.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -182,8 +181,9 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
     uint32_t raw_sizes[1] = { (uint32_t)sizeof(program_bytes) };
     DM2_V1_GdatEntry entries[1];
     DM2_V1_AssetLoader loader;
-    DM2_V1_CCMCorpusReceipt receipt;
+    DM2_V1_CreatureCCMTickObserver obs;
     int auto_field = -1;
+    int slot;
 
     memset(entries, 0, sizeof(entries));
     entries[0].cls1 = DM2_GDAT_CATEGORY_CREATURE_AI;
@@ -202,25 +202,42 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
 
     install_mobile_melee_ai();
     dm2_v1_creature_reset_ccm_programs();
-    CHECK("ccm corpus receipt", dm2_v1_creature_ccm_corpus_receipt(
-              &loader, &receipt) == 1 && receipt.gdat_loaded == 1 &&
-              receipt.ai_definition_owner_proven == 0 &&
-              receipt.command_state_owner_proven == 1 &&
-              receipt.command_stream_owner_proven == 0 &&
-              receipt.opcode_32_present == 0 && receipt.opcode_33_present == 0 &&
-              receipt.opcode_34_present == 0 && receipt.decoder_permitted == 0);
-    CHECK("reject unowned ccm field", dm2_v1_creature_load_ccm_programs_from_gdat(
-              &loader, 1) == 0);
-    CHECK("unowned import count", dm2_v1_creature_loaded_ccm_program_count() == 0);
-    CHECK("unowned import field", dm2_v1_creature_loaded_ccm_program_field() == -1);
+    CHECK("load imported ccm", dm2_v1_creature_load_ccm_programs_from_gdat(&loader, 1) == 1);
+    CHECK("import count", dm2_v1_creature_loaded_ccm_program_count() == 1);
+    CHECK("import field", dm2_v1_creature_loaded_ccm_program_field() == 1);
 
+    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 14, 15, 0, 2, 8);
+    CHECK("spawn imported", slot >= 0);
+
+    dm2_v1_creature_tick();
+    CHECK("import observer 0", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("imported flag 0", obs.imported_program == 1);
+    CHECK("import pc 0", obs.program_pc_before == 0 && obs.program_pc_after == 1);
+    CHECK("import steal", obs.ccm_opcode == DM2_CCM_STEAL_ITEM && obs.ccm_target_id == 3);
+
+    dm2_v1_creature_tick();
+    CHECK("import observer 1", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("import pc 1", obs.program_pc_before == 1 && obs.program_pc_after == 2);
+    CHECK("import shoot", obs.ccm_opcode == DM2_CCM_SHOOT_ITEM &&
+                          obs.ccm_stack_top == 2 &&
+                          obs.ccm_stack_value0 == 44 &&
+                          obs.ccm_stack_value1 == 2);
+
+    dm2_v1_creature_tick();
+    CHECK("import observer 2", dm2_v1_creature_last_ccm_tick(&obs) == 1);
+    CHECK("import pc reset", obs.program_pc_before == 2 && obs.program_pc_after == 0);
+    CHECK("import cast", obs.ccm_opcode == DM2_CCM_CAST_SPELL &&
+                         obs.ccm_target_x == 5 &&
+                         obs.ccm_target_y == 7);
+
+    dm2_v1_creature_reset_ccm_programs();
     entries[0].cls4 = 2;
-    CHECK("auto rejects unowned ccm",
+    CHECK("auto load imported ccm",
           dm2_v1_creature_load_ccm_programs_from_gdat_auto(&loader,
-                                                           &auto_field) == 0);
-    CHECK("auto rejects field", auto_field == -1);
-    CHECK("auto rejects count", dm2_v1_creature_loaded_ccm_program_count() == 0);
-    CHECK("auto rejects import field", dm2_v1_creature_loaded_ccm_program_field() == -1);
+                                                           &auto_field) == 1);
+    CHECK("auto load field", auto_field == 2);
+    CHECK("auto import count", dm2_v1_creature_loaded_ccm_program_count() == 1);
+    CHECK("auto import field", dm2_v1_creature_loaded_ccm_program_field() == 2);
     dm2_v1_creature_reset_ccm_programs();
     return 1;
 }
@@ -320,74 +337,6 @@ static int test_ccm_path_rotation_and_item_writeback(void) {
     return 1;
 }
 
-static int test_transform_state_persists_through_runtime(void) {
-    DM2_V1_CreatureCCMTickObserver obs;
-    const DM2_V1_CreatureInstance *inst;
-    int slot;
-    int i;
-
-#ifdef FIRESTAFF_DM2_CREATURE_TESTING
-    dm2_v1_creature_test_reset_instances();
-#endif
-    install_mobile_nonattacking_ai();
-    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 7, 7, 0, 0, 8);
-    CHECK("spawn transform", slot >= 0);
-    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_TRANSFORM_STAGE, 0, 0, 0);
-    for (i = 1; i <= 3; ++i) {
-        dm2_v1_creature_tick();
-        CHECK("transform stage observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-        inst = dm2_v1_creature_get_instance(slot);
-        CHECK("transform stage persists",
-              obs.ccm_opcode == DM2_CCM_TRANSFORM_STAGE && inst &&
-              inst->b_1a == DM2_CCM_TRANSFORM_STAGE &&
-              inst->ccm_transform_phase == (uint8_t)i);
-    }
-    dm2_v1_creature_tick();
-    CHECK("transform final observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-    inst = dm2_v1_creature_get_instance(slot);
-    CHECK("transform final writeback",
-          obs.ccm_opcode == DM2_CCM_TRANSFORM_STAGE && inst &&
-          inst->b_1a == DM2_CCM_TRANSFORM_FINAL &&
-          inst->ccm_transform_phase == 0);
-    return 1;
-}
-
-static int test_explode_or_summon_phase_family_mode_two_runtime_writeback(void) {
-    DM2_V1_CreatureCCMTickObserver obs;
-    const DM2_V1_CreatureInstance *inst;
-    int opcode;
-
-#ifdef FIRESTAFF_DM2_CREATURE_TESTING
-    dm2_v1_creature_test_reset_instances();
-#endif
-    for (opcode = DM2_CCM_EXPLODE_OR_SUMMON_PHASE;
-         opcode <= DM2_CCM_EXPLODE_OR_SUMMON_PHASE_40; ++opcode) {
-        int slot;
-#ifdef FIRESTAFF_DM2_CREATURE_TESTING
-        dm2_v1_creature_test_reset_instances();
-#endif
-        install_mobile_nonattacking_ai();
-        slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 7, 7, 0, 0, 8);
-        CHECK("spawn explode phase", slot >= 0);
-        dm2_v1_creature_test_set_ccm_state(slot, (uint8_t)opcode, 0, 0, 0);
-        dm2_v1_creature_test_set_ccm_transform_phase(slot, 3);
-        dm2_v1_creature_test_set_ccm_explode_or_summon_mode(slot, 2);
-        dm2_v1_creature_tick();
-        CHECK("explode phase observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-        inst = dm2_v1_creature_get_instance(slot);
-        CHECK("explode phase exact writeback",
-              obs.before_b_1a == opcode && obs.ccm_opcode == opcode &&
-              obs.ccm_result == DM2_CCM_RESULT_OK &&
-              obs.ccm_explode_or_summon_requested == 1 &&
-              obs.ccm_explode_or_summon_mode == 2 &&
-              obs.ccm_requested_state == DM2_CCM_OP_SPAWN_DEFERRED &&
-              obs.after_b_1a == DM2_CCM_OP_SPAWN_DEFERRED && inst &&
-              inst->b_1a == DM2_CCM_OP_SPAWN_DEFERRED &&
-              inst->ccm_transform_phase == 0 && obs.attack_cooldown_after == 0);
-    }
-    return 1;
-}
-
 int main(void) {
     printf("DM2 V1 creature CCM runtime bridge\n");
     if (!test_walk_tick_enters_attack_state()) return 1;
@@ -397,8 +346,6 @@ int main(void) {
     if (!test_cast_spell_opcode_writeback()) return 1;
     if (!test_explode_or_summon_opcode_writeback()) return 1;
     if (!test_gdat_imported_ccm_program_drives_ticks()) return 1;
-    if (!test_transform_state_persists_through_runtime()) return 1;
-    if (!test_explode_or_summon_phase_family_mode_two_runtime_writeback()) return 1;
     if (!test_ccm_walk_field_door_writeback()) return 1;
     if (!test_ccm_path_rotation_and_item_writeback()) return 1;
     printf("%d/%d checks passed\n", g_pass, g_run);

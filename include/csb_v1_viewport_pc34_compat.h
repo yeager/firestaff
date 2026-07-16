@@ -129,11 +129,6 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     void *explosion_sprite_user;
     int runtime_explosion_sprite_drawn_count;
     int runtime_explosion_marker_drawn_count;
-    /* A hash-verified original GRAPHICS.DAT session must never turn a
-     * missing source material into Firestaff diagnostic marker pixels.
-     * Keep asset-free fixtures eligible for their explicit marker route. */
-    int real_graphics_session;
-    int runtime_real_asset_blocked_count;
 
     /* The shared F0128/F0098 core asks its caller for the PC3.4-expanded
      * C079/C078 aperture.  CSB owns this bridge so a verified session never
@@ -192,7 +187,6 @@ typedef struct {
     int projectile_marker_drawn_count;
     int explosion_sprite_drawn_count;
     int explosion_marker_drawn_count;
-    int real_asset_blocked_count;
 } CSB_V1_ViewportRuntimeDrawCounts;
 
 typedef struct {
@@ -1041,175 +1035,7 @@ int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSp
                                            uint8_t *destination,
                                            int destination_stride,
                                            int width,
-    int height);
-
-/* ReDMCSB DUNVIEW.C F0115:5691-5885.  This is the first complete CSB
- * native-material lane: the M715 projectile aspect uses original PC34
- * GRAPHICS.DAT entries 454 and 455.  `source_pixels` must be decoded indexed
- * pixels from one of those entries; this routine never manufactures art. */
-int csb_v1_viewport_f0115_blit_first_projectile_family_pc34(
-    int graphic_index,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int flip_flags);
-
-/* ReDMCSB DUNVIEW.C F0115:5691-5885. M715 (454/455), M716 (457/458),
- * and M717 (460/461/462) share the F0791 indexed-pixel path. This broader
- * entry point remains fail-closed for every other family, including 456 and
- * 459, which are not native bitmaps for these three aspect families. */
-int csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
-    int graphic_index,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int flip_flags);
-
-/* ReDMCSB DUNVIEW.C G0210:1514 and F0115:5691-5885. M718 is aspect type 2
- * (no back graphic, rotation), so its relative bitmap 9 has only deltas 0/1:
- * PC CSB GRAPHICS.DAT 463/464. Entry 465 and positive object-as-projectile
- * aspects remain fail-closed until their distinct F0115 paths are proven. */
-int csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
-    int graphic_index,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int flip_flags);
-
-/* ReDMCSB DUNVIEW.C F0115:5222-5627 and G0219:1625-1635. Returns only
- * source-proven default-front PC CSB graphics: Giant Scorpion (type 0) is
- * M618 + 0 = 584, Swamp Slime (type 1) is M618 + 4 = 588, and Giggler
- * (type 2) is M618 + 6 = 590. Screamer (type 6) is M618 + 19 = 603, and
- * Rockpile (type 7) is M618 + 21 = 605, and Ghost (type 8) is M618 + 23 =
- * 607.
- * Types 3-5 remain fail-closed because their aspect color selectors require
- * F0093's current-map replacement palette. Other families and every non-front
- * pose remain fail-closed. */
-int csb_v1_viewport_f0115_native_group_front_graphic_pc34(int creature_type);
-
-/* ReDMCSB DUNVIEW.C F0115:5201-5627, G0219:1625-1635, and DEFS.H:2392.
- * Composites only the source-proven Giant Scorpion, Swamp Slime, Giggler, and
- * Screamer, Rockpile, and Ghost default fronts through the C3200 creature
- * occlusion band. The compositor derives C13/C11/C4 transparency from each
- * G0219 aspect and applies
- * G0222/G0221 D2/D3 palette rows. All other group families, graphics, and
- * poses fail closed. */
-int csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
-    int creature_type,
-    int graphic_index,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int source_zone,
-    int flip_flags);
-
-/* ReDMCSB DUNVIEW.C F0093:1996-2024,2805-2815 and F0115:5222-5627.
- * Draws only Wizard Eye/Pain Rat/Ruster default fronts (594/596/600) after
- * F0093 has accepted the loaded current-map creature order and full PC 3.4
- * Graphic 558 aspect/replacement-set receipt. Missing or malformed input is
- * a no-draw gate. */
-int csb_v1_viewport_f0115_blit_f0093_group_front_family_pc34(
-    int creature_type,
-    const struct DungeonMapDesc_Compat *loaded_map,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int source_zone,
-    int flip_flags);
-
-/* ReDMCSB DUNGEON.C F0141:1136-1165, G0237:79-258 and DUNVIEW.C
- * G0209:1423-1515/F0115:4923-5110. This source-owned resolver accepts
- * F0115's zero-cell-order alcove predicate. Chest uses 499 only in that
- * alcove branch. The completed rows are chests, scrolls, potions, all 46
- * PC34 weapon subtypes, all 58 armour subtypes, and all 53 junk subtypes;
- * object types outside those G0237/F0141 ranges fail closed. */
-int csb_v1_viewport_f0115_object_native_graphic_pc34(
-    int thing_type,
-    int subtype_index,
-    int draw_alcove_objects);
-
-/* Non-alcove compatibility wrapper for existing floor-object callers. */
-int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
-    int thing_type,
-    int subtype_index);
-
-int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
-    int graphic_index,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int flip_flags);
-
-/* Kept for callers that only need the first two completed native families. */
-int csb_v1_viewport_f0115_blit_m715_m716_projectile_family_pc34(
-    int graphic_index,
-    const uint8_t *source_pixels,
-    int source_width,
-    int source_height,
-    uint8_t *screen_pixels,
-    int screen_width,
-    int screen_height,
-    int screen_stride,
-    int destination_x,
-    int destination_y,
-    int destination_width,
-    int destination_height,
-    int view_depth,
-    int flip_flags);
+                                           int height);
 
 size_t csb_v1_viewport_creature_visibility_spec_count(void);
 const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec(size_t index);

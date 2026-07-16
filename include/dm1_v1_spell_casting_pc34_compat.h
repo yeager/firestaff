@@ -251,7 +251,6 @@ typedef struct {
     int projectileKineticEnergy;
     int projectileStepEnergy;
     int projectileRequiredMana;
-    int projectileMaximumMana;
 
     int createsEvent;
     int eventType;
@@ -263,43 +262,12 @@ typedef struct {
     int lightAmountDelta;
     int potionType;
     int potionPower;
-    int requestsChangedObjectIconRedraw;
     int shieldDefenseBefore;
     int shieldDefenseDelta;
     int shieldDefenseAfter;
     int createsZokathraJunk;
     int fireShieldPower;
-
-    /* Original visual ownership from MENU.C F0412.  statusGraphicIndex is
-     * -1 until a spell reaches a CHAMDRAW.C shield border; palette refresh
-     * is only the F0404 light/darkness/torch route. */
-    int statusGraphicIndex;
-    int requestsDungeonViewPaletteRefresh;
-
-    /* MENU.C F0412 invisibility -> CHAMDRAW.C F0286 icon material route.
-     * These stay -1/0 for every other F0412 spell family. */
-    int championIconGraphicIndex;
-    int championIconFillColor;
-    int appliesChampionIconInvisibilityPalette;
 } DM1_SpellF0412RuntimeReceipt;
-
-/* Original viewport material created by an F0412 projectile spell.  The
- * route terminates at a native Graphic558 projectile bitmap; it does not
- * select a synthetic particle or an arbitrary explosion graphic. */
-typedef struct {
-    int valid;
-    uint16_t projectileThing;
-    int projectileAspectIndex;
-    int graphicIndex;
-} DM1_SpellProjectileGraphicRoutePc34;
-
-/* DUNVIEW.C's Thieves' Eye wall material is valid only for its front D1C
- * wall branch while the C73 event is active. */
-typedef struct {
-    int valid;
-    int graphicIndex;
-    int transparentColor;
-} DM1_SpellThievesEyeViewportMaterialRoutePc34;
 
 /* ── Symbol encoding helpers ───────────────────────────────────── */
 
@@ -438,7 +406,6 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     int champIdx,
     const DM1_ChampionSpellStats* stats,
     uint16_t experienceRng16,
-    /* Exact ReDMCSB M003_RANDOM(16) result, not an unbounded RNG word. */
     uint16_t potionPowerRng16,
     int hasEmptyFlask,
     DM1_SpellF0412RuntimeReceipt* outReceipt);
@@ -452,35 +419,6 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
     const DM1_SpellF0412RuntimeReceipt* receipt,
     int currentFireShieldDefense,
     struct SpellEffect_Compat* outEffect);
-
-/* ReDMCSB MENU.C F0412:1861-1870 and CHAMPION.C F0327:2091-2102.
- * Accept only a complete, internally source-consistent PC34 projectile
- * receipt before a caller can materialize the F0212 projectile. */
-int dm1_spell_f0412ValidateProjectileReceiptPc34(
-    const DM1_SpellF0412RuntimeReceipt* receipt);
-
-/* ReDMCSB MENU.C F0412 -> CHAMPION.C F0327 -> DUNGEON.C F0142 ->
- * DUNVIEW.C F0115.  Accepts only the six projectile spell types in PC34
- * G0487; unknown receipts fail closed. */
-int dm1_spell_f0412ProjectileGraphicRoutePc34(
-    const DM1_SpellF0412RuntimeReceipt* receipt,
-    int relativeDirection,
-    DM1_SpellProjectileGraphicRoutePc34* outRoute);
-
-/* ReDMCSB MENU.C F0412 C2 -> DUNVIEW.C D1C front-wall Thieves' Eye path.
- * frontWallD1C must be the already-resolved source view condition. */
-int dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
-    const DM1_SpellF0412RuntimeReceipt* receipt,
-    int activeThievesEyeCount,
-    int frontWallD1C,
-    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute);
-
-/* Runtime DUNVIEW consumer for a live or save-restored C73 count.  It shares
- * the same source-locked D1C material gate as the F0412 receipt adapter. */
-int dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
-    int activeThievesEyeCount,
-    int frontWallD1C,
-    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute);
 
 /** Get the name string for a symbol character. */
 const char* dm1_spell_symbolName(char sym);

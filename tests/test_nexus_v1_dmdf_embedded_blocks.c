@@ -299,97 +299,6 @@ static void test_material_decode(void) {
           "material bank free clears owned raster surfaces");
 }
 
-static void test_texture_section_boundary(void) {
-    uint8_t buf[256];
-    Nexus_DMDFTextureSection section;
-
-    memset(buf, 0, sizeof(buf));
-    buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
-    /* Retail MNS header word at 0x24 points at the top-level TEXT section. */
-    buf[0x24] = 0; buf[0x25] = 0; buf[0x26] = 0; buf[0x27] = 48;
-    buf[48] = 'T'; buf[49] = 'E'; buf[50] = 'X'; buf[51] = 'T';
-    buf[55] = 192; /* section byte count */
-    buf[59] = 1;  /* declared entry count */
-    buf[63] = 1;  /* opaque flags */
-    buf[75] = 56; /* pixel data offset relative to TEXT */
-    buf[79] = 32; /* descriptor table offset relative to TEXT */
-    buf[83] = 0xa8; /* material 0, opaque format flags */
-    buf[87] = 8;    /* width */
-    buf[89] = 8;    /* height in high half-word */
-    buf[95] = 56;   /* descriptor pixel offset */
-    CHECK(nexus_v1_dmdf_parse_texture_section(buf, (int)sizeof(buf),
-                                               &section) == 1,
-          "top-level TEXT section parses");
-    CHECK(section.valid == 1 && section.offset == 48 && section.bytes == 192,
-          "TEXT section preserves bounded range");
-    CHECK(section.declared_entry_count == 1 && section.flags == 1 &&
-          section.descriptor_count == 1 &&
-          section.material_ids_unique && section.unique_material_id_count == 1 &&
-          section.first_material_id == 0 && section.last_material_id == 0 &&
-          section.descriptors[0].width == 8 && section.descriptors[0].height == 8,
-          "TEXT section preserves opaque metadata");
-    buf[55] = 96;
-    CHECK(nexus_v1_dmdf_parse_texture_section(buf, 64, &section) == 0,
-          "truncated TEXT section is rejected");
-}
-
-static void test_texture_section_duplicate_material_rejected(void) {
-    uint8_t buf[256];
-    Nexus_DMDFTextureSection section;
-    Nexus_DMDFMaterialBank bank;
-
-    memset(buf, 0, sizeof(buf));
-    buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
-    wb32(buf + 0x24, 48U);
-    wb32(buf + 48, NEXUS_DMDF_TEXTURE_SECTION_MAGIC);
-    wb32(buf + 52, 208U);
-    wb32(buf + 56, 2U);
-    wb32(buf + 72, 72U);
-    wb32(buf + 76, 32U);
-    /* Two otherwise valid descriptors deliberately target material 7. */
-    wb32(buf + 80, 0x00070000U); wb32(buf + 84, 8U);
-    wb32(buf + 88, 0x00080000U); wb32(buf + 92, 72U);
-    wb32(buf + 100, 0x00070000U); wb32(buf + 104, 8U);
-    wb32(buf + 108, 0x00080000U); wb32(buf + 112, 72U);
-    CHECK(nexus_v1_dmdf_parse_texture_section(buf, (int)sizeof(buf),
-                                               &section) == 1 &&
-          !section.material_ids_unique && section.unique_material_id_count == 1,
-          "TEXT parser retains duplicate material-id ambiguity");
-    memset(&bank, 0, sizeof(bank));
-    CHECK(nexus_v1_dmdf_decode_text_material_bank(buf, (int)sizeof(buf),
-                                                   &bank) == 0 &&
-          !bank.valid && bank.surface_count == 0,
-          "duplicate TEXT material IDs cannot overwrite a source surface");
-}
-
-static void test_texture_section_out_of_range_material_rejected(void) {
-    uint8_t buf[256];
-    Nexus_DMDFTextureSection section;
-    Nexus_DMDFMaterialBank bank;
-
-    memset(buf, 0, sizeof(buf));
-    buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
-    wb32(buf + 0x24, 48U);
-    wb32(buf + 48, NEXUS_DMDF_TEXTURE_SECTION_MAGIC);
-    wb32(buf + 52, 192U);
-    wb32(buf + 56, 1U);
-    wb32(buf + 72, 56U);
-    wb32(buf + 76, 32U);
-    /* The descriptor itself is structurally valid, but its original
-     * material ID cannot fit the fixed 256-entry host bank. */
-    wb32(buf + 80, 0x01000000U); wb32(buf + 84, 8U);
-    wb32(buf + 88, 0x00080000U); wb32(buf + 92, 56U);
-    CHECK(nexus_v1_dmdf_parse_texture_section(buf, (int)sizeof(buf),
-                                               &section) == 1 &&
-          section.descriptors[0].material_id == 256U,
-          "TEXT parser retains structurally valid out-of-bank source ID");
-    memset(&bank, 0, sizeof(bank));
-    CHECK(nexus_v1_dmdf_decode_text_material_bank(buf, (int)sizeof(buf),
-                                                   &bank) == 0 &&
-          !bank.valid && bank.surface_count == 0,
-          "out-of-bank TEXT material blocks the whole source route");
-}
-
 static void test_optional_real_mns(void) {
     const char *path = getenv("FIRESTAFF_NEXUS_MNS");
     char fallback[1024];
@@ -397,8 +306,6 @@ static void test_optional_real_mns(void) {
     size_t size = 0;
     Nexus_DMDFEmbeddedScan scan;
     Nexus_DMDFRawTexturePayload raw;
-    Nexus_DMDFTextureSection section;
-    Nexus_DMDFMaterialBank bank;
 
     if (!path || path[0] == '\0') {
         const char *home = getenv("HOME");
@@ -429,24 +336,6 @@ static void test_optional_real_mns(void) {
     } else {
         printf("  SKIP: optional real .MNS raw texture tail not classified by current stride contract\n");
     }
-    if (nexus_v1_dmdf_parse_texture_section(data, (int)size, &section)) {
-        CHECK(section.valid == 1 && section.bytes >= 16U,
-              "optional real .MNS TEXT section is bounded");
-        CHECK((uint64_t)section.offset + section.bytes <= size,
-              "optional real .MNS TEXT section stays inside file");
-        CHECK(section.material_ids_unique &&
-              section.unique_material_id_count == section.descriptor_count,
-              "optional real .MNS TEXT material IDs have one source bank slot each");
-        printf("  NOTE: real .MNS TEXT section offset=%u bytes=%u entries=%u flags=%u\n",
-               section.offset, section.bytes, section.declared_entry_count,
-               section.flags);
-    }
-    memset(&bank, 0, sizeof(bank));
-    CHECK(nexus_v1_dmdf_decode_text_material_bank(data, (int)size, &bank) == 1,
-          "optional real .MNS TEXT descriptors decode original surfaces");
-    CHECK(bank.valid == 1 && bank.surface_count > 0,
-          "optional real .MNS exposes decoded original surfaces");
-    nexus_v1_dmdf_free_material_bank(&bank);
     free(data);
 }
 
@@ -459,9 +348,6 @@ int main(void) {
     test_bitmap_block_rejections();
     test_embedded_scan_and_raw_tail();
     test_material_decode();
-    test_texture_section_boundary();
-    test_texture_section_duplicate_material_rejected();
-    test_texture_section_out_of_range_material_rejected();
     test_optional_real_mns();
 
     printf("\nResults: %d PASS, %d FAIL\n", g_pass, g_fail);

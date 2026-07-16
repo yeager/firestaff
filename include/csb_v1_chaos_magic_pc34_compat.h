@@ -470,8 +470,6 @@ typedef struct {
     uint32_t loaded_bytecode_magic;
     CSB_V1_DSAImportedAction *imported_actions;
     int imported_action_count;
-    CSB_V1_CSBWinDSAImportedHeader
-        imported_headers[CSB_V1_MAX_DSA_SCRIPTS];
 } CSB_V1_ChaosMagicState;
 
 void csb_v1_chaos_init(CSB_V1_ChaosMagicState *state);

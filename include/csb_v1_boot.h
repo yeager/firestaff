@@ -1105,6 +1105,7 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
+    int special_palette;
     int title_phase_tick;
     int title_phase_tick_count;
     const CSB_V1_StartupRuntimeSurface_PC34 *title_surface;
@@ -1113,12 +1114,6 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     const CSB_V1_StartupRuntimeSurface_PC34 *right_door_surface;
     const CSB_V1_StartupRuntimeSurface_PC34 *hud_inventory_surface;
     const CSB_V1_StartupRuntimeSurface_PC34 *hud_resurrect_surface;
-    /* ReDMCSB PANEL.C F0352/F0376 consumes C017/C040 after the entrance
-     * handoff.  Bind their original decoded pixels to this frame so a later
-     * HUD consumer cannot silently substitute a wrapper-owned surface. */
-    uint32_t hud_inventory_pixel_hash;
-    uint32_t hud_resurrect_pixel_hash;
-    uint32_t hud_binding_hash;
     int opening_step;
     int uses_verified_hud_bindings;
 } CSB_V1_StartupRuntimeAssetFrame_PC34;
@@ -1128,6 +1123,11 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
  * composition before presentation, keeping it out of legacy callbacks. */
 #define CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 320
 #define CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 200
+#define CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 224
+#define CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 136
+#define CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 144
+#define CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 73
+#define CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34 6
 
 typedef struct CSB_V1_StartupRuntimeRaster_PC34 {
     unsigned char *pixels;
@@ -1462,12 +1462,15 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
-/* Capture the first runtime HUD presentation from original C017 and C040
- * surfaces. C017 is the opaque viewport base; C040 uses its original
- * dark-green transparency key. */
 int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
-    int draw_resurrect_panel,
+    int include_resurrection_panel,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+int csb_v1_boot_terminal_ui_state_host_raster_pc34(
+    const CSB_V1_TerminalUiStateReceipt_PC34 *terminal_ui,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    int include_resurrection_panel,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
 int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -1515,17 +1518,6 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
     const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
     const CSB_V1_StartupPresentedAppCaptureFacts_PC34 *presented_facts,
     CSB_V1_StartupPresentedAppCaptureReceipt_PC34 *out_receipt);
-/* Build presentation facts only from an actual M11 indexed frame and the
- * terminal C001-C005/C017/C040 package session. This records evidence for a
- * later macOS app capture; it never manufactures a frame or promotes one. */
-int csb_v1_boot_startup_presented_app_capture_facts_from_indexed_frame_pc34(
-    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
-    const unsigned char *indexed_pixels,
-    int width,
-    int height,
-    int running_from_macos_app_bundle,
-    int mac_window_capture_ready,
-    CSB_V1_StartupPresentedAppCaptureFacts_PC34 *out_facts);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(
@@ -1543,6 +1535,16 @@ int csb_v1_boot_startup_playback_complete_entrance_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 int csb_v1_boot_startup_playback_enter_hud_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupCompleteTimelineReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_authorize_live_hud_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupCompleteTimelineReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_live_hud_terminal_receipt_current_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    uint32_t terminal_source_tick,
+    uint32_t terminal_generation);
 const char *csb_v1_boot_startup_asset_source_name_pc34(
     CSB_V1_StartupAssetSource_PC34 source);
 int csb_v1_boot_probe_available(const char *data_dir);
@@ -1714,10 +1716,6 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
     CSB_V1_BootProfile *profile,
     const char *path,
     uint32_t *out_game_time);
-int csb_v1_boot_runtime_load_original_save_receipt_pc34(
-    CSB_V1_BootProfile *profile,
-    const char *path,
-    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_save_import_receipt_pc34(
     const CSB_V1_BootProfile *profile,
     const char *dm1_import_path,

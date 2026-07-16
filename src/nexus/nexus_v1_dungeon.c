@@ -155,6 +155,7 @@ static int nexus_v1_level_copy_structure3_payload(
     Nexus_V1_DgnStructure3DirectoryReceipt directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
+    Nexus_V1_DgnStructure3EdgeReceipt edges;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
     Nexus_V1_DgnStructure3FaceGeometryReceipt face_geometry;
     Nexus_V1_DgnStructure3FaceEdgeReceipt face_edges;
@@ -190,6 +191,7 @@ static int nexus_v1_level_copy_structure3_payload(
     memset(&directory, 0, sizeof(directory));
     memset(&entry_headers, 0, sizeof(entry_headers));
     memset(&faces, 0, sizeof(faces));
+    memset(&edges, 0, sizeof(edges));
     memset(&vectors, 0, sizeof(vectors));
     memset(&face_geometry, 0, sizeof(face_geometry));
     memset(&face_edges, 0, sizeof(face_edges));
@@ -759,6 +761,74 @@ static int nexus_v1_level_copy_structure3_payload(
     /* Record grammar alone cannot select material data or issue a draw. */
     faces.draw_semantics_proven = 0;
     level->structure3_faces = faces;
+    edges.face_receipt_valid = faces.valid;
+    edges.entry_count = directory.entry_count;
+    if (faces.valid) {
+        uint64_t *edge_keys;
+        int edge_cursor = 0;
+        int entry;
+        int expected_edge_count = faces.triangle_count * 3 +
+            faces.quad_count * 4;
+
+        edge_keys = (uint64_t *)calloc((size_t)expected_edge_count,
+                                       sizeof(*edge_keys));
+        if (edge_keys) {
+            for (entry = 0; entry < directory.entry_count; ++entry) {
+                uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+                const uint8_t *header = data + byte_offset + entry_offset;
+                uint16_t face_count = rb16(header + 6);
+                uint32_t face_offset = rb32(header + 16);
+                int face_index;
+
+                for (face_index = 0; face_index < (int)face_count; ++face_index) {
+                    const uint8_t *face = data + byte_offset + face_offset +
+                        face_index * 12;
+                    uint16_t indexes[4] = {
+                        rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                    };
+                    int endpoint_count = indexes[2] == indexes[3] ? 3 : 4;
+                    int endpoint;
+
+                    for (endpoint = 0; endpoint < endpoint_count; ++endpoint) {
+                        uint32_t first = ((uint32_t)entry << 16) | indexes[endpoint];
+                        uint32_t second = ((uint32_t)entry << 16) |
+                            indexes[(endpoint + 1) % endpoint_count];
+                        if (first == second) ++edges.degenerate_edge_count;
+                        edge_keys[edge_cursor++] =
+                            nexus_v1_dgn_structure3_edge_key(first, second);
+                    }
+                }
+            }
+            qsort(edge_keys, (size_t)edge_cursor, sizeof(*edge_keys),
+                  nexus_v1_dgn_structure3_edge_compare);
+            for (int edge = 0; edge < edge_cursor;) {
+                int uses = 1;
+                while (edge + uses < edge_cursor &&
+                       edge_keys[edge] == edge_keys[edge + uses]) {
+                    ++uses;
+                }
+                ++edges.unique_edge_count;
+                if (uses == 1) ++edges.single_use_edge_count;
+                else if (uses == 2) ++edges.shared_edge_count;
+                else ++edges.nonmanifold_edge_count;
+                if (uses > edges.maximum_edge_use_count) {
+                    edges.maximum_edge_use_count = uses;
+                }
+                edge += uses;
+            }
+            edges.edge_count = edge_cursor;
+            edges.topology_measurement_complete =
+                edge_cursor == expected_edge_count;
+            free(edge_keys);
+        }
+    }
+    edges.valid = edges.face_receipt_valid &&
+        edges.topology_measurement_complete &&
+        edges.edge_count == faces.triangle_count * 3 + faces.quad_count * 4 &&
+        edges.unique_edge_count == edges.single_use_edge_count +
+            edges.shared_edge_count + edges.nonmanifold_edge_count;
+    edges.topology_semantics_proven = 0;
+    level->structure3_edges = edges;
     vectors.face_receipt_valid = faces.valid;
     vectors.vertex_count = faces.vertex_count;
     vectors.normal_count = faces.normal_count;
@@ -777,6 +847,7 @@ static int nexus_v1_level_copy_structure3_payload(
             uint16_t vertex_count = rb16(header + 4);
             uint16_t face_count = rb16(header + 6);
             uint32_t vertex_offset = rb32(header + 8);
+            uint32_t face_offset = rb32(header + 16);
             uint32_t normal_offset = rb32(header + 20);
             int vector_index;
             int entry_pairs_unit_length = 1;
@@ -812,8 +883,17 @@ static int nexus_v1_level_copy_structure3_payload(
                  ++vector_index) {
                 const uint8_t *normal = data + byte_offset + normal_offset +
                     vector_index * 12;
+                const uint8_t *face = data + byte_offset + face_offset +
+                    vector_index * 12;
+                uint16_t indexes[4] = {
+                    rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                };
+                int32_t vertices[4][3];
+                int32_t normal_vector[3] = {
+                    rbs32(normal), rbs32(normal + 4), rbs32(normal + 8)
+                };
                 uint64_t length_squared = nexus_v1_fixed_vector_length_squared(
-                    rbs32(normal), rbs32(normal + 4), rbs32(normal + 8));
+                    normal_vector[0], normal_vector[1], normal_vector[2]);
                 uint64_t error = length_squared > unit_length_squared
                     ? length_squared - unit_length_squared
                     : unit_length_squared - length_squared;
@@ -841,7 +921,11 @@ static int nexus_v1_level_copy_structure3_payload(
     vectors.valid = vectors.fixed_point_vectors_valid &&
         vectors.vertex_vector_count == vectors.vertex_count &&
         vectors.normal_vector_count == vectors.normal_count &&
-        vectors.normal_unit_length_count == vectors.normal_count;
+        vectors.normal_unit_length_count == vectors.normal_count &&
+        vectors.normal_face_plane_pair_count ==
+            faces.triangle_count * 2 + faces.quad_count * 4 &&
+        vectors.normal_face_plane_within_tolerance_count ==
+            vectors.normal_face_plane_pair_count;
     vectors.transform_or_draw_semantics_proven = 0;
     level->structure3_vectors = vectors;
     face_geometry.face_receipt_valid = faces.valid;
@@ -2308,7 +2392,10 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
              * later evidence; never turn opaque bytes into collision shapes. */
             level->has_3d_geometry = 1;
             level->geometry_offset = info.geometry_offset;
-            level->geometry_size = size - info.geometry_offset;
+            /* Structure1's useful-size field ends the DGN geometry span.
+             * Later container blocks can hold Structure2/3 data and must not
+             * be exposed through the Structure1 geometry boundary. */
+            level->geometry_size = info.geometry_size;
             level->geometry_info = info;
             if (nexus_v1_dgn_structure1_layout(&layout, data, size) == 0) {
                 if (nexus_v1_level_copy_structure2_textures(level, data, size) != 0) {
@@ -3963,6 +4050,93 @@ int nexus_v1_level_structure3_face_material_receipt(
     return 0;
 }
 
+int nexus_v1_level_collect_structure3_face_material_bindings(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    Nexus_V1_DgnFaceMaterialBinding *out_bindings, int max_bindings,
+    int *out_binding_count)
+{
+    const Nexus_V1_DgnStructure3PayloadReceipt *payload;
+    int entry;
+    int output = 0;
+
+    if (out_binding_count) *out_binding_count = 0;
+    if (!level || !data || size <= 0 || !out_bindings || max_bindings <= 0 ||
+        !out_binding_count || !level->structure3_payload.valid ||
+        !level->structure3_directory.valid ||
+        !level->structure3_entry_headers.valid ||
+        !level->structure3_faces.valid ||
+        !level->structure3_face_materials.valid ||
+        !level->structure3_face_materials.selector_bindings_complete) {
+        return -1;
+    }
+    payload = &level->structure3_payload;
+    if (payload->byte_offset < 0 || payload->byte_size <= 0 ||
+        payload->byte_offset > size || payload->byte_size > size - payload->byte_offset ||
+        level->structure3_directory.entry_count <= 0 ||
+        level->structure3_directory.directory_byte_count < 4 ||
+        level->structure3_directory.directory_byte_count > payload->byte_size) {
+        return -1;
+    }
+
+    for (entry = 0; entry < level->structure3_directory.entry_count; ++entry) {
+        uint32_t entry_offset = rb32(data + payload->byte_offset + 4 + entry * 4);
+        uint32_t entry_end = entry + 1 < level->structure3_directory.entry_count
+            ? rb32(data + payload->byte_offset + 4 + (entry + 1) * 4)
+            : (uint32_t)payload->byte_size;
+        const uint8_t *header;
+        uint16_t face_count;
+        uint32_t face_offset;
+        int face_index;
+
+        if (entry_offset >= (uint32_t)payload->byte_size || entry_end < entry_offset ||
+            entry_end - entry_offset < NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES) {
+            return -1;
+        }
+        header = data + payload->byte_offset + entry_offset;
+        face_count = rb16(header + 6);
+        face_offset = rb32(header + 16);
+        if (face_offset < entry_offset || face_offset > entry_end ||
+            (uint64_t)face_offset + (uint64_t)face_count * 12U > entry_end ||
+            output > max_bindings - (int)face_count) {
+            return -1;
+        }
+        for (face_index = 0; face_index < (int)face_count; ++face_index) {
+            const uint8_t *face = data + payload->byte_offset + face_offset +
+                face_index * 12;
+            uint16_t fill = rb16(face + 10);
+            Nexus_V1_DgnFaceMaterialBinding *binding = &out_bindings[output];
+
+            binding->face_ordinal = (uint16_t)output;
+            binding->material_selector = 0;
+            if ((face[8] & 0x40U) == 0U) {
+                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR;
+            } else if ((fill & 0xff00U) == 0U) {
+                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC;
+                binding->material_selector = (uint16_t)(fill & 0xffU);
+            } else if ((fill & 0xff00U) == 0x0800U) {
+                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED;
+                binding->material_selector = (uint16_t)(fill & 0xffU);
+            } else {
+                return -1;
+            }
+            ++output;
+        }
+    }
+    if (output != level->structure3_faces.face_count || output <= 0) return -1;
+    *out_binding_count = output;
+    return 0;
+}
+
+int nexus_v1_level_structure3_edge_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3EdgeReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_edges;
+    return 0;
+}
+
 int nexus_v1_level_structure3_vector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3VectorReceipt *out_receipt)
@@ -4670,6 +4844,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_faces);
     (void)nexus_v1_level_structure3_face_material_receipt(
         level, &out_receipt->structure3_face_materials);
+    (void)nexus_v1_level_structure3_edge_receipt(
+        level, &out_receipt->structure3_edges);
     (void)nexus_v1_level_structure3_vector_receipt(
         level, &out_receipt->structure3_vectors);
     (void)nexus_v1_level_structure3_face_geometry_receipt(
@@ -4854,6 +5030,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure3-face-semantics";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR:
         return "blocked-structure1b-selector";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE:
+        return "blocked-canonical-source";
     default: return "unknown";
     }
 }
@@ -5187,6 +5365,52 @@ static void nexus_v1_dgn_plan_project_quad(Nexus_V1_DgnRenderCommand *command) {
     }
 }
 
+static int nexus_v1_dgn_structure3_face_materials_plan_bound(
+    const Nexus_V1_DgnRendererHandoffReceipt *handoff)
+{
+    const Nexus_V1_DgnStructure3FaceReceipt *faces;
+    const Nexus_V1_DgnStructure3FaceMaterialReceipt *materials;
+    const Nexus_V1_DgnStructure3EdgeReceipt *edges;
+    const Nexus_V1_DgnStructure3VectorReceipt *vectors;
+
+    if (!handoff) return 0;
+    faces = &handoff->structure3_faces;
+    materials = &handoff->structure3_face_materials;
+    edges = &handoff->structure3_edges;
+    vectors = &handoff->structure3_vectors;
+    return materials->face_receipt_valid && materials->valid &&
+        faces->valid && materials->face_count == faces->face_count &&
+        materials->textured_face_count == faces->textured_face_count &&
+        edges->face_receipt_valid && edges->valid &&
+        edges->edge_count == faces->triangle_count * 3 +
+            faces->quad_count * 4 &&
+        edges->unique_edge_count == edges->single_use_edge_count +
+            edges->shared_edge_count + edges->nonmanifold_edge_count &&
+        !edges->topology_semantics_proven &&
+        vectors->face_receipt_valid && vectors->valid &&
+        vectors->vertex_count == faces->vertex_count &&
+        vectors->normal_count == faces->normal_count &&
+        vectors->vertex_vector_count == faces->vertex_count &&
+        vectors->normal_vector_count == faces->normal_count &&
+        vectors->normal_unit_length_count == faces->normal_count &&
+        vectors->normal_non_unit_length_count == 0 &&
+        vectors->normal_face_plane_pair_count ==
+            faces->triangle_count * 2 + faces->quad_count * 4 &&
+        vectors->normal_face_plane_within_tolerance_count ==
+            vectors->normal_face_plane_pair_count &&
+        vectors->normal_face_plane_outside_tolerance_count == 0 &&
+        !vectors->transform_or_draw_semantics_proven &&
+        materials->static_texture_selector_count ==
+            materials->static_texture_bound_count &&
+        materials->animated_texture_selector_count ==
+            materials->animated_texture_bound_count &&
+        materials->static_texture_unbound_count == 0 &&
+        materials->animated_texture_unbound_count == 0 &&
+        materials->unsupported_textured_fill_count == 0 &&
+        materials->selector_bindings_complete &&
+        !materials->material_or_draw_semantics_proven;
+}
+
 int nexus_v1_level_build_dgn_view_render_plan(
     const Nexus_V1_Level *level,
     int party_x,
@@ -5322,9 +5546,14 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1g_structure2_image_instruction_unbound_count;
     receipt.structure1g_structure2_bindings_complete =
         handoff.structure1g_structure2_bindings_complete;
+    /* Preserve bounded source commands for Structure3 only after every
+     * parser-validated face fill remains joined to its declared source. This
+     * is a no-draw consumer: it retains neither mesh geometry nor pixel,
+     * palette, transform, or raster semantics. */
     structure3_topology_no_draw =
         handoff.status ==
-        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS;
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
+        nexus_v1_dgn_structure3_face_materials_plan_bound(&handoff);
     if ((handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
          !structure3_topology_no_draw) ||
         (!handoff.can_render_dgn_mesh && !structure3_topology_no_draw)) {

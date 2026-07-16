@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_g1_scene_runtime_bridge.h"
@@ -41,11 +42,6 @@ typedef struct {
     unsigned int generation;
     int runtime_frame_owned;
     int is_outdoor;
-    /* Exact live weather state forwarded into the V1 viewport.  This is
-     * state/command provenance only; the viewport remains fail-closed until
-     * skproject's source-backed weather material route is decoded. */
-    int runtime_weather;
-    int runtime_weather_intensity;
     int gdat_provider_bound;
     int startup_title_gdat_blits;
     int startup_menu_gdat_blits;
@@ -56,9 +52,6 @@ typedef struct {
     int creature_gdat_material_evidence_count;
     uint32_t creature_gdat_material_evidence_hash;
     int floor_ceiling_gdat_blits;
-    uint8_t floor_ceiling_material_required_mask;
-    uint8_t floor_ceiling_material_consumed_mask;
-    int floor_ceiling_materials_complete;
     int outdoor_sky_gdat_blits;
     int outdoor_ground_gdat_blits;
     int wall_gdat_blits;
@@ -73,8 +66,6 @@ typedef struct {
     uint32_t projectile_gdat_material_evidence_hash;
     int total_runtime_gdat_blits;
     int total_runtime_fallback_draws;
-    int blocked_material_draws;
-    uint32_t blocked_material_mask;
     int full_gdat_frame_valid;
     int outdoor_gdat_frame_valid;
     int real_gdat_evidence_valid;
@@ -113,38 +104,8 @@ typedef struct {
     int gdat_scene_light_consumed;
     int gdat_scene_weather_consumed;
     int gdat_sprite_palette_consumed;
-    int gdat_local_palette_consumed;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed;
-    int gdat_interface_action_palette_ready;
-    int gdat_interface_action_palette_consumed;
-    uint32_t gdat_interface_action_palette_hash;
-    uint8_t gdat_interface_action_palette_darkness;
-    int gdat_interface_font_host_ready;
-    int gdat_interface_font_consumed;
-    uint32_t gdat_interface_font_hash;
-    /* The save/load panel is source-bound for this runtime, but not counted
-     * as drawn until the M11 dialogue owner opens it and expands RECT_453. */
-    int gdat_save_dialogue_material_bound;
-    int gdat_save_dialogue_host_command_ready;
-    int gdat_save_dialogue_open_panel_ready;
-    uint32_t gdat_save_dialogue_material_hash;
-    uint32_t gdat_save_dialogue_host_command_hash;
-    uint32_t gdat_save_dialogue_open_panel_hash;
-    uint32_t gdat_save_dialogue_rect_index;
-    uint32_t gdat_save_dialogue_open_panel_rect_index;
-    uint32_t gdat_save_dialogue_open_panel_save_list_rect_index;
-    int gdat_save_dialogue_x;
-    int gdat_save_dialogue_y;
-    int gdat_save_dialogue_w;
-    int gdat_save_dialogue_h;
-    int gdat_interface_hud_layout_ready;
-    uint32_t gdat_interface_hud_layout_hash;
-    int gdat_interface_rect14_host_ready;
-    int gdat_interface_rect14_consumed;
-    uint32_t gdat_interface_rect14_table_hash;
-    uint32_t gdat_interface_rect14_placement_hash;
-    uint32_t gdat_interface_rect14_placement_count;
     int gdat_material_palette_floor_ceiling_consumed;
     int gdat_material_palette_wall_consumed;
     int gdat_material_palette_door_frame_consumed;
@@ -328,6 +289,8 @@ void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
 int  dm2_v1_runtime_can_move(void);
 int  dm2_v1_runtime_move(int direction);        /* 0=N 1=E 2=S 3=W, returns 0=ok -1=blocked */
+int  dm2_v1_runtime_last_perform_move_receipt(
+    DM2_V1_PerformMoveReceipt *out_receipt);
 int  dm2_v1_runtime_turn(int delta);            /* -1=left, +1=right, returns 0=ok -1=unbooted */
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
@@ -413,8 +376,6 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int side_frame_offset_y[2];
     int button_gdat_index;
     int button_source_kind; /* 1=default door button, 2=wall-gfx button */
-    int button_clickable;
-    int button_rectno;
     int wall_button_index;
     int wall_button_field;
     int panel_blit_ready;

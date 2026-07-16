@@ -144,37 +144,6 @@ static int write_bad_last_session_file(const char *dir)
     return 0;
 }
 
-static int write_valid_sksave_file_at_path(const char *path,
-                                           const char *name,
-                                           const uint8_t *payload,
-                                           size_t payload_size)
-{
-    uint8_t hdr[42];
-    FILE *f;
-    if (!path || !payload || payload_size == 0u) return -1;
-    memset(hdr, 0, sizeof(hdr));
-    hdr[0] = 1;
-    if (name) {
-        size_t nlen = strlen(name);
-        if (nlen > 33) nlen = 33;
-        memcpy(hdr + 2, name, nlen);
-    }
-    hdr[36] = 0x30;
-    hdr[38] = 0xEF;
-    hdr[39] = 0xBE;
-    hdr[40] = 0xAD;
-    hdr[41] = 0xDE;
-    f = fopen(path, "wb");
-    if (!f) return -1;
-    if (fwrite(hdr, sizeof(hdr), 1, f) != 1 ||
-        fwrite(payload, 1, payload_size, f) != payload_size) {
-        fclose(f);
-        return -1;
-    }
-    fclose(f);
-    return 0;
-}
-
 /* ── Test 1: SUPPRESS all-1s mask round-trip ──────────────────── */
 
 static int test_suppress_all1_roundtrip(void)
@@ -1657,11 +1626,8 @@ static int test_sksave_corpus_scan_receipt(void)
     uint8_t payload_a[2048];
     uint8_t payload_b[2048];
     uint8_t payload_c[4096];
-    uint8_t imported_payload[4096];
     size_t payload_a_size = 0u;
     size_t payload_b_size = 0u;
-    size_t imported_payload_size = 0u;
-    size_t largest_payload_size = 0u;
     size_t enc_gs_size = 0u;
     size_t enc_champ_size = 0u;
     uint8_t loaded_payload[DM2_SESSION_MAX_SIZE];
@@ -1682,8 +1648,6 @@ static int test_sksave_corpus_scan_receipt(void)
     DM2_TimerEntry raw_timer;
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     DM2_SKSaveCorpusReceipt receipt;
-    DM2_OriginalTimerFormatCorpusReceipt timer_receipt;
-    DM2_OriginalSaveStateCorpusReceipt state_receipt;
     int r;
 
     memset(&gs_store, 0, sizeof(gs_store));
@@ -1759,6 +1723,7 @@ static int test_sksave_corpus_scan_receipt(void)
         cleanup_slot_dir(tmpdir);
         return 0;
     }
+
     r = dm2_sl_save(tmpdir, 3, "Slot3", payload_c, (size_t)payload_c_size);
     if (r != 0) {
         printf("    FAIL: could not write slot corpus save (%d)\n", r);
@@ -1806,7 +1771,7 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.importable_payload_hash == 0u ||
         receipt.total_importable_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
-        receipt.largest_payload_size != largest_payload_size ||
+        receipt.largest_payload_size != (size_t)payload_c_size ||
         receipt.total_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
         strstr(receipt.first_importable_path, "SKSave.dat") == NULL ||
@@ -1822,7 +1787,7 @@ static int test_sksave_corpus_scan_receipt(void)
                receipt.firestaff_session_candidate_count,
                receipt.original_envelope_candidate_count,
                receipt.original_raw_candidate_count,
-               receipt.largest_payload_size, largest_payload_size,
+               receipt.largest_payload_size, (size_t)payload_c_size,
                receipt.total_payload_size,
                payload_b_size + (size_t)payload_c_size,
                receipt.first_valid_path,
@@ -2090,63 +2055,6 @@ static int test_sksave_corpus_scan_receipt(void)
            "payload sizes, invalid saves, timer-format rejection evidence and "
            "first-importable payload promotion\n");
     cleanup_slot_dir(tmpdir);
-    return 1;
-}
-
-static int test_sksave_receipted_candidate_hash_gate(void)
-{
-    char tmpdir[256];
-    char path[320];
-    uint8_t payload[DM2_SESSION_MAX_SIZE];
-    uint8_t loaded[DM2_SESSION_MAX_SIZE];
-    size_t payload_size;
-    size_t loaded_size = 0u;
-    DM2_V1_SessionState session;
-    DM2_SKSaveCorpusReceipt corpus;
-    const DM2_SKSaveCandidateReceipt *candidate = NULL;
-    FILE *file;
-
-    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_sksave_hash_%d",
-             FS_GETPID());
-    FS_MKDIR(tmpdir);
-    dm2_v1_session_new(&session);
-    session.game_tick = 0x5a5au;
-    payload_size = (size_t)dm2_v1_session_serialize(
-        &session, payload, sizeof(payload));
-    if (payload_size == 0u ||
-        dm2_sl_save(tmpdir, 4u, "HashGate", payload, payload_size) != 0 ||
-        !dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
-        corpus.candidate_receipt_count != 1u ||
-        corpus.candidate_receipts[0].source_file_hash == 0u) {
-        cleanup_slot_dir(tmpdir);
-        return 0;
-    }
-    candidate = &corpus.candidate_receipts[0];
-    if (!dm2_v1_sksave_corpus_load_receipted_candidate(
-            candidate, loaded, sizeof(loaded), &loaded_size) ||
-        loaded_size != payload_size || memcmp(loaded, payload, payload_size) != 0) {
-        cleanup_slot_dir(tmpdir);
-        return 0;
-    }
-    snprintf(path, sizeof(path), "%s/SKSave04.dat", tmpdir);
-    file = fopen(path, "ab");
-    if (!file) {
-        cleanup_slot_dir(tmpdir);
-        return 0;
-    }
-    if (fputc(0xA5, file) == EOF || fclose(file) != 0) {
-        cleanup_slot_dir(tmpdir);
-        return 0;
-    }
-    loaded_size = 99u;
-    if (dm2_v1_sksave_corpus_load_receipted_candidate(
-            candidate, loaded, sizeof(loaded), &loaded_size) ||
-        loaded_size != 0u) {
-        cleanup_slot_dir(tmpdir);
-        return 0;
-    }
-    cleanup_slot_dir(tmpdir);
-    printf("    PASS: receipted corpus candidate rejects changed original bytes\n");
     return 1;
 }
 

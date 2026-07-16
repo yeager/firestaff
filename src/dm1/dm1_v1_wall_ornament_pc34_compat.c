@@ -28,24 +28,21 @@ enum {
 };
 
 static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
-    /* ReDMCSB DUNVIEW.C G0205 is [8][13][6], indexed only by the
-     * F0107 wall-ornament projections below.  PC34 MEDIA720's D3L2/D3R2
-     * planes have logical view-wall ids 0/1 but are drawn by F0676/F0677;
-     * they never enter F0107.  Do not shift G0205's compact 0..12 indices
-     * by those extra planes or draw a D3 ornament twice on another cell. */
-    {3, -1,  0, 1}, /* D3L right */
-    {3,  1,  1, 1}, /* D3R left */
-    {3, -1,  2, 0}, /* D3L front */
-    {3,  0,  3, 0}, /* D3C front */
-    {3,  1,  4, 0}, /* D3R front */
-    {2, -1,  5, 1}, /* D2L right */
-    {2,  1,  6, 1}, /* D2R left */
-    {2, -1,  7, 0}, /* D2L front */
-    {2,  0,  8, 0}, /* D2C front */
-    {2,  1,  9, 0}, /* D2R front */
-    {1, -1, 10, 1}, /* D1L right */
-    {1,  1, 11, 1}, /* D1R left */
-    {1,  0, 12, 0}  /* D1C front */
+    {3, -2,  0, 1},
+    {3,  2,  1, 1},
+    {3, -1,  2, 0},
+    {3,  1,  4, 0},
+    {3, -1,  2, 0},
+    {3,  0,  3, 0},
+    {3,  1,  4, 0},
+    {2, -1,  5, 0},
+    {2,  1,  6, 0},
+    {2, -1,  7, 0},
+    {2,  0,  8, 0},
+    {2,  1,  9, 0},
+    {1, -1, 10, 0},
+    {1,  1, 11, 0},
+    {1,  0, 12, 0}
 };
 
 static const unsigned char s_wallOrnamentPaletteD3[16] = {
@@ -178,23 +175,6 @@ int dm1_v1_wall_ornament_zone_pc34(int coordSet,
     return outBlit->width > 0 && outBlit->height > 0;
 }
 
-int dm1_v1_wall_ornament_zone_xywh_pc34(int coordSet,
-                                        int viewWallIndex,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH) {
-    DM1_WallOrnamentZoneBlitPc34 blit;
-    if (!dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) {
-        return 0;
-    }
-    if (outX) *outX = blit.dstX;
-    if (outY) *outY = blit.dstY;
-    if (outW) *outW = blit.width;
-    if (outH) *outH = blit.height;
-    return 1;
-}
-
 int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex) {
     /* ReDMCSB DUNVIEW.C F0107: for PC34/I34E the wall-ornament bitmap is
      * flipped only for right-side left-wall projections:
@@ -277,27 +257,6 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     return 1;
 }
 
-int dm1_v1_wall_ornament_host_material_receipt_pc34(
-    int globalOrnamentIndex,
-    int viewWallIndex,
-    int maxHeight,
-    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt)
-{
-    DM1_WallOrnamentHostMaterialReceiptPc34 receipt;
-    if (!outReceipt || !dm1_v1_wall_ornament_render_plan_pc34(
-            globalOrnamentIndex, viewWallIndex, maxHeight, &receipt.plan)) {
-        return 0;
-    }
-    /* ReDMCSB DUNVIEW.C F0107:3502-3717 selects G0194/G0205 geometry,
-     * the PC34 ornament graphic, C10 transparency, D2/D3 palette, and the
-     * side-view flip before its host blit. No host substitute is permitted. */
-    receipt.valid = 1;
-    receipt.globalOrnamentIndex = globalOrnamentIndex;
-    receipt.viewWallIndex = viewWallIndex;
-    *outReceipt = receipt;
-    return 1;
-}
-
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan) {
@@ -334,21 +293,5 @@ int dm1_v1_front_mirror_render_plan_pc34(
     outPlan->backingSourceHeight = DM1_FRONT_MIRROR_BACKING_SOURCE_HEIGHT_PC34;
     outPlan->backingWidth = outPlan->ornament.width;
     outPlan->backingHeight = outPlan->ornament.height;
-    return 1;
-}
-
-int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
-    int* outX,
-    int* outY,
-    int* outW,
-    int* outH) {
-    DM1_FrontMirrorRenderPlanPc34 plan;
-    if (!dm1_v1_front_mirror_render_plan_pc34(0, &plan)) {
-        return 0;
-    }
-    if (outX) *outX = plan.backingDstX;
-    if (outY) *outY = plan.backingDstY;
-    if (outW) *outW = plan.backingWidth;
-    if (outH) *outH = plan.backingHeight;
     return 1;
 }

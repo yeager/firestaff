@@ -523,34 +523,6 @@ typedef struct {
     struct ExplosionCreateInput_Compat createInput;
 } DM1_MeleeF0190DeathSmokePlanPc34;
 
-/* GROUP.C F0190's P0374_B_NotMoving == false branch: F0188/F0189 are
- * deferred to F0267 on the destination square, while F0213 still receives
- * the smoke on the source square. Both locations are required facts. */
-typedef struct {
-    int outcome;
-    int groupIndex;
-    int creatureAttributes;
-    int sourceMapIndex;
-    int sourceMapX;
-    int sourceMapY;
-    int sourceCell;
-    int destinationMapIndex;
-    int destinationMapX;
-    int destinationMapY;
-    unsigned int currentTick;
-} DM1_MeleeF0190MovingKilledAllAfterplayInputPc34;
-
-typedef struct {
-    int valid;
-    int shouldPresentSourceSmoke;
-    int requiresDeferredDestinationCleanup;
-    int groupIndex;
-    int destinationMapIndex;
-    int destinationMapX;
-    int destinationMapY;
-    struct ExplosionCreateInput_Compat sourceSmokeCreateInput;
-} DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34;
-
 typedef struct {
     int outcome;
     int creatureType;
@@ -726,7 +698,6 @@ typedef struct {
     int shouldUnlinkGroupFromSquare;
     int shouldClearGroupNext;
     int shouldRemoveActiveGroupState;
-    int shouldDeleteGroupEvents;
     int shouldWriteRawGroup;
     int groupIndex;
     int mapIndex;
@@ -739,7 +710,6 @@ typedef struct {
     int shouldUnlinkGroupFromSquare;
     int shouldClearGroupNext;
     int shouldRemoveActiveGroupState;
-    int shouldDeleteGroupEvents;
     int groupIndex;
     int mapIndex;
     int mapX;
@@ -852,19 +822,6 @@ typedef struct {
     int reactionEventKind;
 } DM1_MeleeF0231AftermathApplyPlanPc34;
 
-/* ReDMCSB GROUP.C F0190 deletes the final group before it creates the
- * source C040 smoke explosion. This receipt carries only that ordering. */
-typedef struct {
-    int valid;
-    int shouldPresentSourceSmoke;
-    int requiresKilledAllMutationFirst;
-    int groupIndex;
-    int mapIndex;
-    int mapX;
-    int mapY;
-    struct ExplosionCreateInput_Compat sourceSmokeCreateInput;
-} DM1_MeleeF0190KilledAllAfterplayReceiptPc34;
-
 typedef struct {
     int valid;
     int shouldDropPossessions;
@@ -956,18 +913,12 @@ int dm1_v1_melee_aftermath_raw_group_writeback_plan_f0231_pc34(
 int dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
     const DM1_MeleeF0231AftermathPlanPc34* aftermathPlan,
     DM1_MeleeF0231AftermathApplyPlanPc34* out);
-int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
-    const DM1_MeleeF0231AftermathApplyPlanPc34* aftermathApplyPlan,
-    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* out);
 int dm1_v1_melee_reaction_plan_f0231_pc34(
     const DM1_MeleeF0231ReactionInputPc34* in,
     DM1_MeleeF0231ReactionPlanPc34* out);
 int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     const DM1_MeleeF0190DeathSmokeInputPc34* in,
     DM1_MeleeF0190DeathSmokePlanPc34* out);
-int dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
-    const DM1_MeleeF0190MovingKilledAllAfterplayInputPc34* in,
-    DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34* out);
 int dm1_v1_melee_death_smoke_attack_f0190_pc34(int creatureAttributes);
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,

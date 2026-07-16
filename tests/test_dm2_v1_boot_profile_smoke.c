@@ -572,8 +572,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_fallback_door_count == 0 &&
               render_receipt.runtime_render_fallback_item_count == 0 &&
               render_receipt.runtime_render_fallback_carried_item_count == 0 &&
-              render_receipt.runtime_render_blocked_material_draw_count == 0 &&
-              render_receipt.runtime_render_blocked_material_mask == 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns source GDAT frame/HUD receipt without invented portraits");
     memset(framebuffer, 0, sizeof(framebuffer));
@@ -600,8 +598,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.valid == 1 &&
               frame_ownership.full_gdat_frame_valid == 1 &&
               frame_ownership.real_gdat_evidence_valid == 1 &&
-              frame_ownership.blocked_material_draws == 0 &&
-              frame_ownership.blocked_material_mask == 0u &&
               frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
               frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
               frame_ownership.viewport_raw_gdat_hash != 0u &&
@@ -610,16 +606,12 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.viewport_decoded_gdat_pixel_count > 0u &&
               frame_ownership.gdat_scene_control_ready == 1 &&
               frame_ownership.gdat_scene_control_consumed > 0 &&
+              frame_ownership.gdat_scene_material_index == 2 &&
               frame_ownership.gdat_scene_light_consumed > 0 &&
-              frame_ownership.gdat_interface_palette_ready == 1 &&
-              frame_ownership.gdat_interface_palette_consumed > 0 &&
-              (frame_ownership.gdat_interface_rect14_host_ready == 0 ||
-               (frame_ownership.gdat_interface_rect14_table_hash != 0u &&
-                frame_ownership.gdat_interface_rect14_placement_hash != 0u &&
-                frame_ownership.gdat_interface_rect14_placement_count > 0u)) &&
+              frame_ownership.gdat_sprite_palette_consumed > 0 &&
               frame_ownership.gdat_scene_control_hash != 0u &&
               (frame_ownership.gdat_scene_control_present_mask & 0x03u) == 0x03u,
-          "real-profile frame consumes GDAT materials without blocked or painted fallbacks");
+          "runtime frame ownership consumes real GDAT sprite palette and scene light controls");
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,

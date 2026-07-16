@@ -1,4 +1,4 @@
-#include "nexus_v1_audio_receipt.h"
+#include "nexus_v1_sal_corpus_receipt.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -310,6 +310,58 @@ int nexus_v1_audio_decode_supported(Nexus_V1_AudioKind kind) {
         return 1;
     }
     return 0;
+}
+
+int nexus_v1_audio_sal_shared_prefix_receipt(
+    const uint8_t *const banks[NEXUS_V1_AUDIO_LEVEL_COUNT],
+    const uint32_t sizes[NEXUS_V1_AUDIO_LEVEL_COUNT],
+    Nexus_V1_SalSharedPrefixReceipt *out) {
+    Nexus_V1_SalSharedPrefixReceipt receipt;
+    uint32_t offset;
+    int bank;
+
+    if (!out) return NEXUS_V1_AUDIO_ERR_NULL;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.expected_bank_count = NEXUS_V1_AUDIO_LEVEL_COUNT;
+    receipt.supplied_bank_count = NEXUS_V1_AUDIO_LEVEL_COUNT;
+    receipt.first_divergent_bank_index = -1;
+    receipt.first_divergent_offset = 0;
+    if (!banks || !sizes) {
+        *out = receipt;
+        return NEXUS_V1_AUDIO_ERR_NULL;
+    }
+    for (bank = 0; bank < NEXUS_V1_AUDIO_LEVEL_COUNT; ++bank) {
+        if (!banks[bank] || sizes[bank] == 0U) {
+            ++receipt.missing_bank_count;
+            continue;
+        }
+        ++receipt.present_bank_count;
+        if (receipt.shortest_bank_size == 0U ||
+            sizes[bank] < receipt.shortest_bank_size) {
+            receipt.shortest_bank_size = sizes[bank];
+        }
+    }
+    if (receipt.missing_bank_count != 0) {
+        *out = receipt;
+        return NEXUS_V1_AUDIO_OK;
+    }
+    for (offset = 0; offset < receipt.shortest_bank_size; ++offset) {
+        uint8_t baseline = banks[0][offset];
+        for (bank = 1; bank < NEXUS_V1_AUDIO_LEVEL_COUNT; ++bank) {
+            if (banks[bank][offset] != baseline) {
+                receipt.shared_prefix_byte_count = offset;
+                receipt.first_divergent_bank_index = bank;
+                receipt.first_divergent_offset = offset;
+                receipt.complete = 1;
+                *out = receipt;
+                return NEXUS_V1_AUDIO_OK;
+            }
+        }
+    }
+    receipt.shared_prefix_byte_count = receipt.shortest_bank_size;
+    receipt.complete = 1;
+    *out = receipt;
+    return NEXUS_V1_AUDIO_OK;
 }
 
 const char *nexus_v1_audio_kind_name(Nexus_V1_AudioKind kind) {

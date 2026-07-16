@@ -66,7 +66,6 @@
 #include <string.h>
 
 #include "dm1_v1_event_timer_pc34_compat.h"
-#include "memory_door_action_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"  /* F0770_SAVEGAME_CRC32_Compat */
@@ -813,30 +812,6 @@ static void unpack_global_data(const unsigned char* src,
     state->party->activeChampionIndex = (int)gd.leaderIndex;
 }
 
-static int pc34_validate_active_group_part(int partLen,
-                                           const struct PC34GlobalData* globalData)
-{
-    size_t expectedLen;
-
-    if (partLen < 0 || globalData == 0) {
-        return 0;
-    }
-    expectedLen = (size_t)globalData->maximumActiveGroupCount *
-                  PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT;
-    return expectedLen <= (size_t)SAVEGAME_PC34_TIMELINE_BYTE_COUNT &&
-           (size_t)partLen == expectedLen;
-}
-
-static int pc34_validate_party_part(int partLen)
-{
-    /* ReDMCSB LOADSAVE.C F0435:2766-2777 reads exactly
-     * sizeof(M516_CHAMPIONS) + sizeof(G0407_s_Party): four packed
-     * 319-byte CHAMPION_EXCLUDING_PORTRAIT records followed by the
-     * 128-byte PARTY_INFO. This is a fixed PC34 save-part contract,
-     * not an extensible Firestaff payload. */
-    return partLen == SAVEGAME_PC34_PARTY_PART_BYTE_COUNT;
-}
-
 static void pack_champion_excluding_portrait(
     unsigned char* dst,
     const struct ChampionState_Compat* champion)
@@ -957,6 +932,18 @@ static int pack_party(unsigned char* dst, int dstCap,
             party_info[84u] = (unsigned char)state->magic->firstScentIndex;
         }
     }
+    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 0u,
+                 (uint16_t)state->party->championCount);
+    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 2u,
+                 (uint16_t)state->party->mapX);
+    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 4u,
+                 (uint16_t)state->party->mapY);
+    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 6u,
+                 (uint16_t)state->party->direction);
+    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 8u,
+                 (uint16_t)state->party->mapIndex);
+    write_u16_le(dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u + 10u,
+                 (uint16_t)state->party->activeChampionIndex);
     return needed;
 }
 
@@ -972,7 +959,8 @@ static int pc34_write_external_portraits(unsigned char* dst,
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         const struct ChampionState_Compat* champion = 0;
-        if (state != 0 && state->party != 0) {
+        if (state != 0 && state->party != 0 &&
+            slot < state->party->championCount) {
             champion = &state->party->champions[slot];
         }
         if (champion != 0 && champion->portraitBitmapValid) {
@@ -1039,7 +1027,7 @@ static void unpack_party(const unsigned char* src,
     if (state == 0 || state->party == 0) {
         return;
     }
-    if (!pc34_validate_party_part(partLen)) {
+    if (partLen < SAVEGAME_PC34_PARTY_PART_BYTE_COUNT) {
         return;
     }
     count = state->party->championCount;
@@ -1063,10 +1051,6 @@ static void unpack_party(const unsigned char* src,
     for (; slot < CHAMPION_MAX_PARTY; ++slot) {
         F0600_CHAMPION_InitEmpty_Compat(&state->party->champions[slot]);
     }
-    memcpy(state->party->pc34PartyInfoBytes,
-           src + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u,
-           PARTY_PC34_SAVE_INFO_BYTE_COUNT);
-    state->party->pc34PartyInfoBytesValid = 1u;
 }
 
 static int pc34_event_type_from_timeline_kind(int kind, int aux0)
@@ -1076,8 +1060,6 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
         return DM1_EVENT_DOOR_ANIMATION;
     case TIMELINE_EVENT_DOOR_DESTRUCTION:
         return DM1_EVENT_DOOR_DESTRUCTION;
-    case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
-        return DM1_EVENT_ENABLE_CHAMPION_ACTION;
     case TIMELINE_EVENT_PROJECTILE_MOVE:
         return DM1_EVENT_MOVE_PROJECTILE;
     case TIMELINE_EVENT_EXPLOSION_ADVANCE:
@@ -1090,22 +1072,12 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
         return DM1_EVENT_REMOVE_FLUXCAGE;
     case TIMELINE_EVENT_PLAY_SOUND:
         return DM1_EVENT_PLAY_SOUND;
-    case TIMELINE_EVENT_CPSE_CHECK:
-        return DM1_EVENT_CPSE;
-    case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
-        return DM1_EVENT_VI_ALTAR_REBIRTH;
     case TIMELINE_EVENT_WATCHDOG:
         return DM1_EVENT_WATCHDOG;
     case TIMELINE_EVENT_MOVE_GROUP_SILENT:
         return DM1_EVENT_MOVE_GROUP_SILENT;
     case TIMELINE_EVENT_MOVE_GROUP_AUDIBLE:
         return DM1_EVENT_MOVE_GROUP_AUDIBLE;
-    case TIMELINE_EVENT_CREATURE_REACTION:
-        if (aux0 >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
-            aux0 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-            return aux0;
-        }
-        return DM1_EVENT_NONE;
     case TIMELINE_EVENT_SQUARE_STATE:
     case TIMELINE_EVENT_SENSOR_DELAYED:
         if (aux0 >= DM1_EVENT_CORRIDOR && aux0 <= DM1_EVENT_DOOR) {
@@ -1121,8 +1093,6 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
          * them back to the source event ids instead of falling through
          * to C72 champion shield. */
         switch (aux0) {
-        case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
-            return DM1_EVENT_HIDE_DAMAGE_RECEIVED;
         case TIMELINE_AUX_INVISIBILITY:
             return DM1_EVENT_INVISIBILITY;
         case TIMELINE_AUX_THIEVES_EYE:
@@ -1211,12 +1181,6 @@ static int timeline_kind_from_pc34_event_type(int type)
         return TIMELINE_EVENT_DOOR_ANIMATE;
     case DM1_EVENT_DOOR_DESTRUCTION:
         return TIMELINE_EVENT_DOOR_DESTRUCTION;
-    case DM1_EVENT_ENABLE_CHAMPION_ACTION:
-        return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
-    case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
-        return TIMELINE_EVENT_STATUS_TIMEOUT;
-    case DM1_EVENT_VI_ALTAR_REBIRTH:
-        return TIMELINE_EVENT_VI_ALTAR_REBIRTH;
     case DM1_EVENT_MOVE_PROJECTILE:
     case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
         return TIMELINE_EVENT_PROJECTILE_MOVE;
@@ -1230,28 +1194,12 @@ static int timeline_kind_from_pc34_event_type(int type)
         return TIMELINE_EVENT_REMOVE_FLUXCAGE;
     case DM1_EVENT_PLAY_SOUND:
         return TIMELINE_EVENT_PLAY_SOUND;
-    case DM1_EVENT_CPSE:
-        return TIMELINE_EVENT_CPSE_CHECK;
     case DM1_EVENT_WATCHDOG:
         return TIMELINE_EVENT_WATCHDOG;
     case DM1_EVENT_MOVE_GROUP_SILENT:
         return TIMELINE_EVENT_MOVE_GROUP_SILENT;
     case DM1_EVENT_MOVE_GROUP_AUDIBLE:
         return TIMELINE_EVENT_MOVE_GROUP_AUDIBLE;
-    case DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE:
-    case DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE:
-    case DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT:
-    case DM1_EVENT_UPDATE_ASPECT_GROUP:
-    case DM1_EVENT_UPDATE_ASPECT_CREATURE_0:
-    case DM1_EVENT_UPDATE_ASPECT_CREATURE_1:
-    case DM1_EVENT_UPDATE_ASPECT_CREATURE_2:
-    case DM1_EVENT_UPDATE_ASPECT_CREATURE_3:
-    case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
-    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0:
-    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1:
-    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_2:
-    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3:
-        return TIMELINE_EVENT_CREATURE_REACTION;
     case DM1_EVENT_CORRIDOR:
     case DM1_EVENT_WALL:
     case DM1_EVENT_FAKEWALL:
@@ -1425,11 +1373,6 @@ static int pc34_original_group_thing_for_runtime_event(
 }
 
 static int pack_events_and_timeline(const struct SaveGame_Compat* state,
-                                    const struct ProjectileList_Compat* projectiles,
-                                    const struct DungeonDatState_Compat* dungeon,
-                                    const struct DungeonThings_Compat* things,
-                                    const struct ExplosionList_Compat* explosions,
-                                    int projectileEventIndices[PROJECTILE_LIST_CAPACITY],
                                     unsigned char* events,
                                     int eventsCap,
                                     unsigned char* timeline,
@@ -1451,11 +1394,6 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
     if (!events || !timeline || eventsCap < 0 || timelineCap < 0) {
         return 0;
     }
-    if (projectileEventIndices) {
-        for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
-            projectileEventIndices[i] = -1;
-        }
-    }
     memset(events, 0, (size_t)eventsCap);
     memset(timeline, 0, (size_t)timelineCap);
     if (!state || !state->timeline) {
@@ -1467,9 +1405,7 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
     }
     for (i = 0; i < state->timeline->count; ++i) {
         const struct TimelineEvent_Compat* src = &state->timeline->events[i];
-        int type = pc34_event_type_from_timeline_kind(
-            src->kind,
-            src->kind == TIMELINE_EVENT_CREATURE_REACTION ? src->aux2 : src->aux0);
+        int type = pc34_event_type_from_timeline_kind(src->kind, src->aux0);
         unsigned char* dst;
         if (type == DM1_EVENT_NONE) {
             continue;
@@ -1485,212 +1421,9 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         write_u32_le(dst + 0u,
                      (((uint32_t)src->mapIndex & 0xffu) << 24) |
                      (src->fireAtTick & 0x00ffffffu));
-        /* ReDMCSB DEFS.H stores C48/C49 in a different union arm from
-         * ordinary square events: B.Slot is a C14 THING and C.Projectile
-         * packs MapX, MapY, Direction and StepEnergy.  F0802 is world-aware,
-         * so it can reconstruct those bytes from the live slot rather than
-         * exporting a syntactically valid but semantically unrelated C49. */
-        if (type == DM1_EVENT_MOVE_PROJECTILE && projectiles) {
-            const struct ProjectileInstance_Compat* projectile;
-            int projectileIndex = src->aux0;
-            uint16_t thing;
-            uint16_t motion;
-
-            if (projectileIndex < 0 ||
-                projectileIndex >= PROJECTILE_LIST_CAPACITY ||
-                projectileIndex >= projectiles->count) {
-                return 0;
-            }
-            projectile = &projectiles->entries[projectileIndex];
-            if (projectile->reserved3 == 0 ||
-                projectile->slotIndex != projectileIndex ||
-                projectile->mapIndex < 0 || projectile->mapIndex > 0xff ||
-                projectile->mapX < 0 || projectile->mapX > 0x1f ||
-                projectile->mapY < 0 || projectile->mapY > 0x1f ||
-                projectile->cell < 0 || projectile->cell > 3 ||
-                projectile->direction < 0 || projectile->direction > 3 ||
-                projectile->stepEnergy < 0 || projectile->stepEnergy > 0x0f) {
-                return 0;
-            }
-            type = projectile->firstMoveGraceFlag
-                ? DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS
-                : DM1_EVENT_MOVE_PROJECTILE;
-            thing = (uint16_t)(pc34_make_thing_ref(THING_TYPE_PROJECTILE,
-                                                    projectileIndex) |
-                               ((uint16_t)projectile->cell << 14));
-            motion = (uint16_t)(projectile->mapX |
-                                (projectile->mapY << 5) |
-                                (projectile->direction << 10) |
-                                (projectile->stepEnergy << 12));
-            write_u32_le(dst + 0u,
-                         (((uint32_t)projectile->mapIndex & 0xffu) << 24) |
-                         (src->fireAtTick & 0x00ffffffu));
-            dst[4] = (uint8_t)type;
-            dst[5] = (uint8_t)(src->aux4 & 0xff);
-            write_u16_le(dst + 6u, thing);
-            write_u16_le(dst + 8u, motion);
-            if (projectileEventIndices) {
-                projectileEventIndices[projectileIndex] = count;
-            }
-            write_u16_le(timeline + (size_t)count * 2u, (uint16_t)count);
-            ++count;
-            continue;
-        }
         dst[4] = (uint8_t)type;
         dst[5] = (uint8_t)(src->aux4 & 0xff);
-        if (type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
-            /* ReDMCSB DEFS.H EVENT.B.SlotOrdinal is one byte. C11 is made
-             * by CHAMPION.C F0330 with zero, and MENU.C F0407 may change
-             * it to ordinal two for C01_SLOT_ACTION_HAND. The remaining
-             * B/C bytes are unowned; retain imported opaque bytes only. */
-            if (src->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
-                src->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
-                src->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
-                (src->aux1 != 0 && src->aux1 != 2) ||
-                src->aux4 < 0 || src->aux4 >= CHAMPION_MAX_PARTY ||
-                !state->party ||
-                src->mapX < 0 || src->mapX > 0xff ||
-                src->mapY < 0 || src->mapY > 0xff ||
-                src->cell < 0 || src->cell > 0xff) return 0;
-            dst[6] = (uint8_t)src->aux1;
-            dst[7] = (uint8_t)src->mapX;
-            dst[8] = (uint8_t)src->mapY;
-            dst[9] = (uint8_t)src->cell;
-        } else if (type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
-            /* ReDMCSB CHAMPION.C F0320 leaves B/C outside C12's contract;
-             * preserve no invented Location/Cell/Effect bytes. */
-        } else if (type == DM1_EVENT_DOOR_DESTRUCTION) {
-            if (src->kind != TIMELINE_EVENT_DOOR_DESTRUCTION || src->aux0 != DM1_EVENT_DOOR_DESTRUCTION || src->aux2 != DM1_EVENT_DOOR_DESTRUCTION || src->aux1 != 0 || src->aux3 != 0 || src->cell != 0 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
-            dst[6] = (uint8_t)src->mapX;
-            dst[7] = (uint8_t)src->mapY;
-        } else if (type == DM1_EVENT_DOOR_ANIMATION) {
-            const struct DungeonMapTiles_Compat* tiles;
-            unsigned char square;
-            /* ReDMCSB TIMELINE.C F0244:894-913 changes C10 into C01 only
-             * after resolving C.A.Effect to SET/CLEAR. F0241:749-816 reads
-             * B.Location and C.A.Effect, never C.A.Cell. Keep C01 source
-             * locked: no generic host event or invented cell may escape in
-             * an original PC34 EVENT record. */
-            if (src->kind != TIMELINE_EVENT_DOOR_ANIMATE ||
-                src->aux0 != DM1_EVENT_DOOR_ANIMATION ||
-                src->aux1 < DOOR_EFFECT_SET || src->aux1 > DOOR_EFFECT_CLEAR ||
-                src->aux2 != DM1_EVENT_DOOR_ANIMATION || src->aux3 != 0 ||
-                src->cell != 0 || !dungeon || !dungeon->maps || !dungeon->tiles ||
-                !dungeon->tilesLoaded || src->mapIndex < 0 ||
-                src->mapIndex >= (int)dungeon->header.mapCount ||
-                src->mapX < 0 || src->mapY < 0 ||
-                src->mapX >= (int)dungeon->maps[src->mapIndex].width ||
-                src->mapY >= (int)dungeon->maps[src->mapIndex].height) {
-                return 0;
-            }
-            tiles = &dungeon->tiles[src->mapIndex];
-            if (!tiles->squareData) return 0;
-            square = tiles->squareData[(size_t)src->mapX *
-                                       (size_t)dungeon->maps[src->mapIndex].height +
-                                       (size_t)src->mapY];
-            if ((square >> 5) != DUNGEON_ELEMENT_DOOR) return 0;
-            dst[6] = (uint8_t)src->mapX;
-            dst[7] = (uint8_t)src->mapY;
-            dst[9] = (uint8_t)src->aux1;
-        } else if (type == DM1_EVENT_FAKEWALL) {
-            if (src->kind != TIMELINE_EVENT_SQUARE_STATE || src->aux0 != DM1_EVENT_FAKEWALL || src->aux2 != DM1_EVENT_FAKEWALL || src->aux3 != 0 || src->cell != 0 || src->aux1 < 0 || src->aux1 > 2 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
-            dst[6] = (uint8_t)src->mapX; dst[7] = (uint8_t)src->mapY; dst[9] = (uint8_t)src->aux1;
-        } else if (type == DM1_EVENT_INVISIBILITY) {
-            /* ReDMCSB MENU.C F0412:1922-1964 creates C71 with zero
-             * Priority. TIMELINE.C C71:1953-1964 reads no B/C union arm,
-             * so native export must require the typed receipt and leave
-             * both union words zero. */
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_INVISIBILITY ||
-                src->aux1 != 0 ||
-                src->aux2 != DM1_EVENT_INVISIBILITY || src->aux4 != 0) {
-                return 0;
-            }
-        } else if (type == DM1_EVENT_THIEVES_EYE) {
-            /* ReDMCSB MENU.C F0407:1542-1546 and F0412 create C73 with
-             * zero Priority; TIMELINE.C C73:1972-1974 reads no B/C union.
-             * Export only its typed receipt and retain zeroed union bytes. */
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_THIEVES_EYE || src->aux1 != 0 ||
-                src->aux2 != DM1_EVENT_THIEVES_EYE || src->aux4 != 0) {
-                return 0;
-            }
-        } else if (type == DM1_EVENT_PARTY_SHIELD) {
-            /* ReDMCSB MENU.C F0412:1965-1978 writes zero Priority and a
-             * positive signed B.Defense. C74 dispatch consumes no C union
-             * arm, so export only its typed receipt. */
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_PARTY_SHIELD || src->aux1 <= 0 ||
-                src->aux2 != DM1_EVENT_PARTY_SHIELD || src->aux4 != 0) {
-                return 0;
-            }
-            write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
-        } else if (type == DM1_EVENT_POISON_CHAMPION) {
-            /* ReDMCSB CHAMPION.C F0322:1954-1960 and TIMELINE.C
-             * C75:1991-1993 own only champion Priority and B.Attack.
-             * Reject host poison timers that lack this native receipt. */
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_POISON_CHAMPION || src->aux1 <= 0 ||
-                src->aux2 != DM1_EVENT_POISON_CHAMPION || src->aux4 < 0 ||
-                src->aux4 >= CHAMPION_MAX_PARTY || !state->party ||
-                !state->party->champions[src->aux4].present) {
-                return 0;
-            }
-            write_u16_le(dst + 6u, (uint16_t)src->aux1);
-        } else if (type == DM1_EVENT_SPELLSHIELD) {
-            /* ReDMCSB MENU.C F0403:1099-1115 and TIMELINE.C C77 own
-             * zero Priority plus positive B.Defense only. */
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_SPELLSHIELD || src->aux1 <= 0 ||
-                src->aux2 != DM1_EVENT_SPELLSHIELD || src->aux4 != 0) {
-                return 0;
-            }
-            write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
-        } else if (type == DM1_EVENT_FIRESHIELD) {
-            /* ReDMCSB MENU.C F0403:1099-1115 and TIMELINE.C C78 own
-             * zero Priority plus positive B.Defense only. */
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_FIRESHIELD || src->aux1 <= 0 ||
-                src->aux2 != DM1_EVENT_FIRESHIELD || src->aux4 != 0) return 0;
-            write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
-        } else if (type == DM1_EVENT_FOOTPRINTS) {
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT || src->aux0 != DM1_EVENT_FOOTPRINTS || src->aux1 != 0 || src->aux2 != DM1_EVENT_FOOTPRINTS || src->aux4 != 0) return 0;
-        } else if (type == DM1_EVENT_CHAMPION_SHIELD) {
-            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
-                src->aux0 != DM1_EVENT_CHAMPION_SHIELD ||
-                src->aux2 != DM1_EVENT_CHAMPION_SHIELD ||
-                src->aux4 < 0 || src->aux4 >= CHAMPION_MAX_PARTY ||
-                !state->party || !state->party->champions[src->aux4].present) {
-                return 0;
-            }
-            write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
-        } else if (type == DM1_EVENT_LIGHT) {
-            int light_power = src->aux0;
-            int abs_power = light_power < 0 ? -light_power : light_power;
-            /* ReDMCSB TIMELINE.C F0257:1747-1765 uses B.LightPower as a
-             * signed int16_t and writes no C union member. Export only the
-             * typed original-save receipt; generic host light events have
-             * no proven native PC34 union provenance. */
-            if (src->kind != TIMELINE_EVENT_MAGIC_LIGHT_DECAY ||
-                src->aux1 != DM1_EVENT_LIGHT || src->aux4 != 0 ||
-                light_power == 0 || abs_power > RUNTIME_LIGHT_POWER_MAX) {
-                return 0;
-            }
-            write_u16_le(dst + 6u, (uint16_t)(int16_t)light_power);
-        } else if (type == DM1_EVENT_ENABLE_GROUP_GENERATOR) {
-            if (src->kind != TIMELINE_EVENT_GROUP_GENERATOR ||
-                src->aux0 != GENERATOR_EVENT_AUX0_REENABLE ||
-                src->aux2 != DM1_EVENT_ENABLE_GROUP_GENERATOR || src->aux4 != 0 ||
-                !dungeon || !things || !things->sensors || src->aux1 < 0 ||
-                src->aux1 >= things->sensorCount ||
-                things->sensors[src->aux1].sensorType != RUNTIME_SENSOR_TYPE_DISABLED ||
-                src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount ||
-                src->mapX < 0 || src->mapY < 0 ||
-                src->mapX >= (int)dungeon->maps[src->mapIndex].width ||
-                src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
-            dst[6] = (uint8_t)src->mapX;
-            dst[7] = (uint8_t)src->mapY;
-        } else if (pc34_event_type_is_status_timeout(type)) {
+        if (pc34_event_type_is_status_timeout(type)) {
             int defense = pc34_status_event_defense_from_timeline(src, type);
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));
         } else if (type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
@@ -1726,120 +1459,13 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         } else if (type == DM1_EVENT_REMOVE_FLUXCAGE) {
             /* ReDMCSB PROJEXPL.C F0224 lines 989-993 stores the
              * fluxcage explosion THING in EVENT.C.Slot while B.Location
-             * remains the target square. The materialized event retains
-             * that exact C15 reference in aux2; a host slot number is not
-             * a source Slot and must not be exported as one. */
-            uint16_t thing;
-            if (src->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE ||
-                src->aux1 != C050_EXPLOSION_FLUXCAGE || src->aux4 != 0 ||
-                src->cell != 0 || src->aux2 < 0 || src->aux2 > 0xffff ||
-                !pc34_original_explosion_thing_for_runtime_event(
-                    dungeon, things, explosions, src, &thing) ||
-                thing != (uint16_t)src->aux2 ||
-                explosions->entries[src->aux0].explosionType !=
-                    C050_EXPLOSION_FLUXCAGE) {
-                return 0;
-            }
+             * remains the target square. Firestaff runtime keeps only the
+             * ExplosionList slot index in aux0, so native export rebuilds
+             * the source C15 thing reference here. */
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
-            write_u16_le(dst + 8u, thing);
-        } else if (type == DM1_EVENT_MOVE_GROUP_SILENT) {
-            uint16_t group_thing = (uint16_t)src->aux1;
-            int expected_kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
-            /* ReDMCSB MOVESENS.C F0265 owns C60/C61's C04 group Slot. */
-            if (src->kind != expected_kind || src->aux0 < 0 || !things ||
-                !things->groups || src->aux0 >= things->groupCount ||
-                THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
-                (int)THING_GET_INDEX(group_thing) != src->aux0 ||
-                src->aux2 != type || src->aux3 != 0 || src->aux4 != 0 ||
-                src->cell != 0 || src->mapIndex < 0 || src->mapIndex > 0xff ||
-                src->mapX < 0 || src->mapX > 0xff || src->mapY < 0 || src->mapY > 0xff) return 0;
-            dst[6] = (uint8_t)src->mapX;
-            dst[7] = (uint8_t)src->mapY;
-            write_u16_le(dst + 8u, group_thing);
-        } else if (type == DM1_EVENT_MOVE_GROUP_AUDIBLE &&
-                   src->aux2 == DM1_EVENT_MOVE_GROUP_AUDIBLE) {
-            uint16_t group_thing = (uint16_t)src->aux1;
-            if (src->kind != TIMELINE_EVENT_MOVE_GROUP_AUDIBLE ||
-                src->aux0 < 0 || !things || !things->groups ||
-                src->aux0 >= things->groupCount ||
-                THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
-                (int)THING_GET_INDEX(group_thing) != src->aux0 ||
-                src->aux3 != 0 || src->aux4 != 0 || src->cell != 0 ||
-                src->mapIndex < 0 || src->mapIndex > 0xff ||
-                src->mapX < 0 || src->mapX > 0xff || src->mapY < 0 ||
-                src->mapY > 0xff) {
-                return 0;
-            }
-            dst[6] = (uint8_t)src->mapX;
-            dst[7] = (uint8_t)src->mapY;
-            write_u16_le(dst + 8u, group_thing);
-        } else if (type == DM1_EVENT_PLAY_SOUND) {
-            /* ReDMCSB SOUND.C:1536-1543 schedules C20 with B.Location
-             * and the signed C.SoundIndex union member.  C.Cell/Effect is
-             * unrelated for this event family.  Only an imported typed
-             * receipt may re-enter a native PC34 save. */
-            if (src->kind != TIMELINE_EVENT_PLAY_SOUND || src->aux0 < 0 ||
-                src->aux0 > 0x7fff ||
-                src->aux1 != 0 || src->aux2 != DM1_EVENT_PLAY_SOUND ||
-                src->aux3 != 0 || src->aux4 < 0 || src->aux4 > 0xff ||
-                src->cell != 0 || src->mapIndex < 0 || src->mapIndex > 0xff ||
-                src->mapX < 0 || src->mapX > 0xff ||
-                src->mapY < 0 || src->mapY > 0xff) {
-                return 0;
-            }
-            dst[6] = (uint8_t)(src->mapX & 0xff);
-            dst[7] = (uint8_t)(src->mapY & 0xff);
-            write_u16_le(dst + 8u, (uint16_t)(src->aux0 & 0xffff));
-        } else if (type == DM1_EVENT_CPSE) {
-            /* ReDMCSB NEWMAP.C schedules C22 with Map_Time alone.  The
-             * copy-protection branch is compiled out here, so retain only
-             * a verified imported receipt and canonicalize all unowned
-             * Priority/B/C bytes rather than inventing a sector result. */
-            if (src->kind != TIMELINE_EVENT_CPSE_CHECK ||
-                src->aux0 != DM1_EVENT_CPSE || src->aux1 != 0 ||
-                src->aux2 != DM1_EVENT_CPSE || src->aux3 != 0 ||
-                src->aux4 != 0 || src->mapIndex < 0 || src->mapIndex > 0xff ||
-                src->mapX != 0 || src->mapY != 0 || src->cell != 0) {
-                return 0;
-            }
-        } else if (type == DM1_EVENT_WATCHDOG) {
-            /* ReDMCSB TIMELINE.C F0256:1710-1715 owns only Type and
-             * Map_Time for C53.  Native export may canonicalize the
-             * uninitialized Priority/B/C bytes to zero, but only after the
-             * exact imported receipt has survived runtime. */
-            if (src->kind != TIMELINE_EVENT_WATCHDOG ||
-                src->aux0 != DM1_EVENT_WATCHDOG || src->aux1 != 0 ||
-                src->aux2 != DM1_EVENT_WATCHDOG || src->aux3 != 0 ||
-                src->aux4 != 0 || src->mapIndex != 0 || src->mapX != 0 ||
-                src->mapY != 0 || src->cell != 0) {
-                return 0;
-            }
-        } else if (type == DM1_EVENT_VI_ALTAR_REBIRTH) {
-            /* ReDMCSB CLIKVIEW.C F0374:179-186 creates C13 with
-             * Priority=JUNK.ChargeCount, B.Location, and C.A.Cell/Effect.
-             * TIMELINE.C F0255:1665-1699 consumes exactly that union for
-             * its 2 -> 1 -> 0 rebirth transaction.  Export only the
-             * materialized source-owned state; never turn a generic square
-             * event into a syntactically plausible C13. */
-            if (src->kind != TIMELINE_EVENT_VI_ALTAR_REBIRTH ||
-                src->aux0 != DM1_EVENT_VI_ALTAR_REBIRTH ||
-                src->aux4 < 0 || src->aux4 >= CHAMPION_MAX_PARTY ||
-                src->aux1 < 0 || src->aux1 > 2 ||
-                src->cell < 0 || src->cell > 3 ||
-                !state->party || !state->party->champions[src->aux4].present ||
-                !dungeon || !dungeon->maps ||
-                src->mapIndex < 0 ||
-                src->mapIndex >= (int)dungeon->header.mapCount ||
-                src->mapX < 0 || src->mapY < 0 ||
-                src->mapX >= (int)dungeon->maps[src->mapIndex].width ||
-                src->mapY >= (int)dungeon->maps[src->mapIndex].height) {
-                return 0;
-            }
-            dst[6] = (uint8_t)(src->mapX & 0xff);
-            dst[7] = (uint8_t)(src->mapY & 0xff);
-            dst[8] = (uint8_t)src->cell;
-            dst[9] = (uint8_t)src->aux1;
+            write_u16_le(dst + 8u,
+                         pc34_make_thing_ref(THING_TYPE_EXPLOSION, src->aux0));
         } else {
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
@@ -1908,11 +1534,7 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
         dst->kind = kind;
         dst->fireAtTick = mapTime & 0x00ffffffu;
         dst->mapIndex = (int)((mapTime >> 24) & 0xffu);
-        if (src[4u] == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
-            dst->aux0 = DM1_EVENT_HIDE_DAMAGE_RECEIVED;
-            dst->aux4 = src[5u];
-            continue;
-        } else if (pc34_event_type_is_status_timeout(src[4u])) {
+        if (pc34_event_type_is_status_timeout(src[4u])) {
             dst->mapX = 0;
             dst->mapY = 0;
             dst->aux1 = (int)read_u16_le(src + 6u);
@@ -1925,20 +1547,6 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
                 ? pc34_thing_ref_index(thing) : (int)thing;
             dst->aux1 = C050_EXPLOSION_FLUXCAGE;
             dst->aux4 = src[5u];
-            continue;
-        } else if (src[4u] == DM1_EVENT_PLAY_SOUND) {
-            /* ReDMCSB TIMELINE.C:1903-1905 consumes C.SoundIndex together
-             * with B.Location.  Preserve the 16-bit union payload exactly
-             * so a native PC34 save does not turn it into Cell/Effect. */
-            dst->mapX = src[6u];
-            dst->mapY = src[7u];
-            dst->aux0 = (int)(int16_t)read_u16_le(src + 8u);
-            dst->aux4 = src[5u];
-            continue;
-        } else if (src[4u] == DM1_EVENT_CPSE) {
-            /* C22 has no initialized union or priority member. */
-            dst->aux0 = DM1_EVENT_CPSE;
-            dst->aux2 = DM1_EVENT_CPSE;
             continue;
         } else {
             dst->mapX = src[6u];
@@ -2142,9 +1750,7 @@ static int pc34_can_pack_decoded_things(const struct DungeonThings_Compat* thing
 static void pc34_pack_decoded_thing_slot(unsigned char* out,
                                          const struct DungeonThings_Compat* things,
                                          int type,
-                                         int index,
-                                         const int projectileEventIndices[
-                                             PROJECTILE_LIST_CAPACITY])
+                                         int index)
 {
     switch (type) {
     case THING_TYPE_DOOR: {
@@ -2303,12 +1909,7 @@ static void pc34_pack_decoded_thing_slot(unsigned char* out,
         write_u16_le(out + 2u, p->slot);
         out[4u] = p->kineticEnergy;
         out[5u] = p->attack;
-        write_u16_le(out + 6u,
-                     projectileEventIndices && index >= 0 &&
-                             index < PROJECTILE_LIST_CAPACITY &&
-                             projectileEventIndices[index] >= 0
-                         ? (uint16_t)projectileEventIndices[index]
-                         : p->eventIndex);
+        write_u16_le(out + 6u, p->eventIndex);
         break;
     }
     case THING_TYPE_EXPLOSION: {
@@ -2331,7 +1932,6 @@ static int pc34_write_dungeon_thing_chunk(
     const struct DungeonThings_Compat* things,
     int type,
     int expectedCount,
-    const int projectileEventIndices[PROJECTILE_LIST_CAPACITY],
     uint16_t* inOutChecksum)
 {
     int byteCount = (int)s_thingDataByteCount[type] * expectedCount;
@@ -2352,8 +1952,7 @@ static int pc34_write_dungeon_thing_chunk(
         }
         for (i = 0; i < expectedCount; ++i) {
             pc34_pack_decoded_thing_slot(packed + (size_t)i * slotBytes,
-                                         things, type, i,
-                                         projectileEventIndices);
+                                         things, type, i);
         }
         rc = pc34_write_dungeon_chunk(dst, dstAvail, packed, byteCount,
                                       inOutChecksum);
@@ -2368,8 +1967,7 @@ static int pc34_write_dungeon_tail(
     unsigned char* dst,
     int dstAvail,
     const struct DungeonDatState_Compat* dungeon,
-    const struct DungeonThings_Compat* things,
-    const int projectileEventIndices[PROJECTILE_LIST_CAPACITY])
+    const struct DungeonThings_Compat* things)
 {
     int cursor = 0;
     int mapIndex;
@@ -2447,8 +2045,7 @@ static int pc34_write_dungeon_tail(
                     (int)dungeon->header.thingCounts[type];
         if (pc34_write_dungeon_thing_chunk(
                 dst + cursor, dstAvail - cursor, things, type,
-                (int)dungeon->header.thingCounts[type], projectileEventIndices,
-                &checksum) < 0) {
+                (int)dungeon->header.thingCounts[type], &checksum) < 0) {
             return -1;
         }
         cursor += bytes;
@@ -2509,8 +2106,6 @@ static int export_pc34_core(
     int activeGroupsLen,
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
-    const struct ProjectileList_Compat* projectiles,
-    const struct ExplosionList_Compat* explosions,
     uint32_t gameTime,
     int currentActiveGroupCount,
     int maximumActiveGroupCount,
@@ -2534,7 +2129,6 @@ static int export_pc34_core(
     int eventCount = 0;
     int firstUnusedEventIndex = 0;
     int eventMaximumCount = 0;
-    int projectileEventIndices[PROJECTILE_LIST_CAPACITY];
     int dungeonTailLen = 0;
     int i;
     int totalNeeded;
@@ -2551,8 +2145,7 @@ static int export_pc34_core(
     prngSeed = gameID ^ 0xC0DECAFEu;
     if (prngSeed == 0) prngSeed = 0xDEADBEEFu;
 
-    if (!pack_events_and_timeline(state, projectiles, dungeon, things,
-                                  explosions, projectileEventIndices,
+    if (!pack_events_and_timeline(state,
                                   eventsPart, (int)sizeof(eventsPart),
                                   timelinePart, (int)sizeof(timelinePart),
                                   &eventsLen, &timelineLen,
@@ -2571,7 +2164,7 @@ static int export_pc34_core(
                   + SAVEGAME_PC34_PARTY_PART_BYTE_COUNT
                   + eventsLen
                   + timelineLen
-                  + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT
+                  + CHAMPION_MAX_PARTY * CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT
                   + dungeonTailLen;
     if (outBufSize < totalNeeded)
         return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
@@ -2682,8 +2275,7 @@ static int export_pc34_core(
     partLen = pc34_write_dungeon_tail(p + cursor,
                                       outBufSize - cursor,
                                       dungeon,
-                                      things,
-                                      projectileEventIndices);
+                                      things);
     if (partLen < 0) return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
     cursor += partLen;
 
@@ -2713,7 +2305,6 @@ int F0795_SAVEGAME_ExportPC34_Compat(
     int* outBytesWritten)
 {
     return export_pc34_core(state,
-                            0, 0,
                             0, 0,
                             0, 0,
                             0u,
@@ -2763,8 +2354,6 @@ int F0802_SAVEGAME_ExportPC34FromWorld_Compat(
                             activeGroupsLen,
                             world->dungeon,
                             world->things,
-                            &world->projectiles,
-                            &world->explosions,
                             world->gameTick,
                             currentActiveGroupCount,
                             maximumActiveGroupCount,
@@ -2802,32 +2391,11 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     int eventsLen = 0;
     int timelineLen = 0;
     uint16_t actualChecksum = 0;
-    struct SaveGame_Compat stagedState;
-    struct PartyState_Compat stagedParty;
-    struct TimelineQueue_Compat stagedTimeline;
-    int hasStagedParty = 0;
-    int hasStagedTimeline = 0;
     if (buf == 0 || outState == 0) return SAVEGAME_PC34_ERROR_NULL_ARG;
     if (bufSize < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE)
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     if (bufSize > (int)SAVEGAME_PC34_MAX_FILE_SIZE)
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
-    /* ReDMCSB LOADSAVE.C F0435 reads every section into the loaded
-     * game state only after the preceding envelope has succeeded.
-     * Keep the Firestaff publication boundary equivalent: all parser
-     * writes target local candidates until the five parts and the four
-     * fixed portrait bitmaps have been consumed. */
-    stagedState = *outState;
-    if (outState->party != 0) {
-        stagedParty = *outState->party;
-        stagedState.party = &stagedParty;
-        hasStagedParty = 1;
-    }
-    if (outState->timeline != 0) {
-        stagedTimeline = *outState->timeline;
-        stagedState.timeline = &stagedTimeline;
-        hasStagedTimeline = 1;
-    }
     memset(&globalData, 0, sizeof(globalData));
 
     if (pc34_read_header(buf, bufSize, &gameID, keys, checksums,
@@ -2864,14 +2432,10 @@ int F0796_SAVEGAME_ImportPC34_Compat(
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
     }
     if (partLen == SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT) {
-        unpack_global_data(partBuf, &stagedState, &globalData);
+        unpack_global_data(partBuf, outState, &globalData);
     }
 
-    /* ReDMCSB LOADSAVE.C F0435 lines 2749-2754 initializes the active
-     * group storage, then reads exactly sizeof(ACTIVE_GROUP) times the
-     * MaximumActiveGroupCount restored from GLOBAL_DATA. F0796 has no
-     * GameWorld destination to publish these records into, but it must
-     * still validate this native block before any staged state commits. */
+    /* Part 1: ACTIVE_GROUP (skip; LSV-01 v1 does not restore). */
     partLen = pc34_read_part(buf, bufSize, &cursor, partBuf,
                              (int)sizeof(partBuf),
                              keys[SAVEGAME_PC34_PART_ACTIVE_GROUP],
@@ -2880,9 +2444,6 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     if (strictChecksums &&
         actualChecksum != checksums[SAVEGAME_PC34_PART_ACTIVE_GROUP]) {
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
-    }
-    if (!pc34_validate_active_group_part(partLen, &globalData)) {
-        return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
 
     /* Part 2: PARTY. */
@@ -2895,10 +2456,7 @@ int F0796_SAVEGAME_ImportPC34_Compat(
         actualChecksum != checksums[SAVEGAME_PC34_PART_PARTY]) {
         return SAVEGAME_PC34_ERROR_BAD_CHECKSUM;
     }
-    if (!pc34_validate_party_part(partLen)) {
-        return SAVEGAME_PC34_ERROR_BAD_SIZE;
-    }
-    unpack_party(partBuf, partLen, &stagedState,
+    unpack_party(partBuf, partLen, outState,
                  portraitIndexes, portraitIndexesPresent);
 
     /* Part 3: EVENTS. */
@@ -2934,36 +2492,31 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     memset(timelinePart, 0, sizeof(timelinePart));
     memcpy(timelinePart, partBuf, (size_t)partLen);
     timelineLen = partLen;
-    if (stagedState.timeline != 0) {
+    if (outState->timeline != 0) {
         unpack_events_and_timeline(&globalData,
                                    eventsPart, eventsLen,
                                    timelinePart, timelineLen,
-                                   stagedState.timeline);
+                                   outState->timeline);
     }
-    /* LOADSAVE.C F0433 lines 1630-1635 writes four 32x29 portrait
-     * payloads after the five save parts. They are a fixed section,
-     * not optional trailing decoration: reject a short read before
-     * publishing any staged GLOBAL_DATA/PARTY/TIMELINE state. */
-    if (cursor + SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT > bufSize) {
-        return SAVEGAME_PC34_ERROR_BAD_SIZE;
-    }
-    if (stagedState.party != 0) {
+    if (outState->party != 0) {
         int slot;
-        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-            memcpy(stagedState.party->champions[slot].portraitBitmap,
+        for (slot = 0; slot < outState->party->championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            if (cursor + CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT > bufSize) {
+                break;
+            }
+            memcpy(outState->party->champions[slot].portraitBitmap,
                    buf + cursor,
                    CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
-            stagedState.party->champions[slot].portraitBitmapValid = 1;
+            outState->party->champions[slot].portraitBitmapValid = 1;
             cursor += CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT;
         }
-    } else {
-        cursor += SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
     }
 
     /* Stash gameID into the Firestaff header reserved area so the
      * rest of the engine can find it. The reserved[] array is always
      * present in the header struct, so no null check is needed. */
-    write_u32_le(stagedState.header.reserved +
+    write_u32_le(outState->header.reserved +
                  SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET, gameID);
     /* LSV-02: also stamp the manifest-derived gameCode into the
      * reserved area (next to gameID) so a M12 launcher can quote
@@ -2971,15 +2524,8 @@ int F0796_SAVEGAME_ImportPC34_Compat(
      * reserved[36] to avoid clashing with the existing
      * MusicOn slot at byte 4. */
     if (manifestPresent) {
-        stagedState.header.reserved[5] = (unsigned char)(manifestGameCode & 0xFFu);
-        stagedState.header.reserved[6] = (unsigned char)((manifestGameCode >> 8) & 0xFFu);
-    }
-    outState->header = stagedState.header;
-    if (hasStagedParty) {
-        *outState->party = stagedParty;
-    }
-    if (hasStagedTimeline) {
-        *outState->timeline = stagedTimeline;
+        outState->header.reserved[5] = (unsigned char)(manifestGameCode & 0xFFu);
+        outState->header.reserved[6] = (unsigned char)((manifestGameCode >> 8) & 0xFFu);
     }
     /* Suppress unused-warnings for now. */
     (void)platform;

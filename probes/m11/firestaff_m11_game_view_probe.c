@@ -5505,6 +5505,40 @@ int main(int argc, char** argv) {
                              "focused viewport: D3 side walls and D2L2/D2R2 wall slivers render and stay clipped inside C007");
             }
 
+            {
+                static const ProbeFocusedPos kD2SideWallPositions[] = {
+                    {2, -1}, {2, 1}
+                };
+                int changedD2SideWalls = 0;
+                int clippedD2SideWalls = 0;
+                for (pi = 0; pi < sizeof(kD2SideWallPositions) / sizeof(kD2SideWallPositions[0]); ++pi) {
+                    probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
+                    memset(baseFb, 0, sizeof(baseFb));
+                    M11_GameView_Draw(&focusView, baseFb, 320, 200);
+                    probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                            focusView.world.party.mapX + kD2SideWallPositions[pi].relSide,
+                                            focusView.world.party.mapY - kD2SideWallPositions[pi].relForward,
+                                            (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+                    memset(teleporterFb, 0, sizeof(teleporterFb));
+                    M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
+                    if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
+                        ++changedD2SideWalls;
+                    }
+                    if (probe_count_diffs_outside_rect(baseFb, teleporterFb,
+                                                       320, 200,
+                                                       PROBE_DM1_VIEWPORT_X,
+                                                       PROBE_DM1_VIEWPORT_Y,
+                                                       PROBE_DM1_VIEWPORT_W,
+                                                       PROBE_DM1_VIEWPORT_H) == 0) {
+                        ++clippedD2SideWalls;
+                    }
+                }
+                probe_record(&tally, "INV_GV_38AN",
+                             changedD2SideWalls == (int)(sizeof(kD2SideWallPositions) / sizeof(kD2SideWallPositions[0])) &&
+                             clippedD2SideWalls == (int)(sizeof(kD2SideWallPositions) / sizeof(kD2SideWallPositions[0])),
+                             "focused viewport: F0119/F0120 D2 side walls accept G0163 zones within 78x74 source assets");
+            }
+
             /* INV_GV_38AK: ReDMCSB DUNVIEW.C F0128 draws full view
              * squares far-to-near (D3, then D2, then D1), while F0115
              * places objects/creatures/projectiles from that square via

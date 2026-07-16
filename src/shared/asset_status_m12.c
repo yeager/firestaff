@@ -801,20 +801,6 @@ static void m12_refresh_theron_media_status(
     FirestaffTheronMedia_Init(&status->theronMedia);
     version = m12_first_matched_version(status, theronIndex);
     if (version && version->matchedPath[0] != '\0') {
-        char parent[M12_ASSET_DATA_DIR_CAPACITY];
-        if (FSP_ParentDir(parent, sizeof(parent), version->matchedPath) &&
-            FirestaffTheronMedia_FindCuePairForTrack02(parent,
-                                                        version->matchedPath,
-                                                        &status->theronMedia) == 0) {
-            return;
-        }
-        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-            if (FirestaffTheronMedia_FindCuePairForTrack02(
-                    roots[rootIndex], version->matchedPath,
-                    &status->theronMedia) == 0) {
-                return;
-            }
-        }
         m12_classify_theron_media_path(status, version->matchedPath);
         if (status->theronMedia.layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
             return;
@@ -1789,10 +1775,10 @@ static int m12_try_match_direct_theron_request(
         if (versionIndex < 0) {
             return 0;
         }
-        if (!m12_derive_theron_runtime_root_for_file(payloadPath, runtimeRoot)) {
+        if (!m12_derive_theron_runtime_root_for_file(requestedDataDir, runtimeRoot)) {
             return 0;
         }
-        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, payloadPath);
+        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, requestedDataDir);
         m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5);
         if (outVersionIndex) {
             *outVersionIndex = versionIndex;
@@ -2272,7 +2258,9 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* fileStatus = &status->requiredFiles[gameIndex][i];
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char oldMatchedPath[M12_ASSET_DATA_DIR_CAPACITY];
         const char* cacheLeaf = m12_required_runtime_cache_leaf(gameId, fileStatus);
+        size_t versionIndex;
         if (!fileStatus->matched || !fileStatus->label ||
             !cacheLeaf ||
             !FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, cacheLeaf)) {
@@ -2281,14 +2269,26 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         if (optionalSeedPath[0] == '\0' && fileStatus->matchedPath[0] != '\0') {
             m12_copy_string(optionalSeedPath, sizeof(optionalSeedPath), fileStatus->matchedPath);
         }
+        m12_copy_string(oldMatchedPath, sizeof(oldMatchedPath), fileStatus->matchedPath);
         if (!m12_materialize_required_file(fileStatus, outPath)) {
             return 0;
         }
         m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), outPath);
-        /* Keep the version match as provenance for the original asset.  The
-         * required-file row is the runtime contract and may point at the
-         * materialized cache leaf; replacing the version path would hide the
-         * archive entry that was hash-verified during discovery. */
+        for (versionIndex = 0U;
+             versionIndex < g_games[gameIndex].versionCount &&
+             versionIndex < M12_ASSET_MAX_VERSIONS_PER_GAME;
+             ++versionIndex) {
+            M12_AssetVersionStatus* version =
+                &status->versions[gameIndex][versionIndex];
+            if (version->matched &&
+                strcmp(version->matchedPath, oldMatchedPath) == 0 &&
+                version->matchedMd5[0] != '\0' &&
+                strcmp(version->matchedMd5, fileStatus->matchedHash) == 0) {
+                m12_copy_string(version->matchedPath,
+                                sizeof(version->matchedPath),
+                                outPath);
+            }
+        }
     }
     if (strcmp(gameId, "dm1") == 0 && optionalSeedPath[0] != '\0') {
         /* ReDMCSB boot order needs SWOOSH.C -> TITLE.C before ENTRANCE.C.
@@ -2439,15 +2439,8 @@ static int m12_publish_direct_theron_match(
         return 0;
     }
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
-    if (FirestaffTheronMedia_FindCuePairForTrack02(
-            runtimeRoot,
-            status->versions[theronIndex][versionIndex].matchedPath,
-            &status->theronMedia) != 0) {
-        m12_classify_theron_media_path(
-            status,
-            status->versions[theronIndex][versionIndex].matchedPath);
-    }
-    m12_refresh_theron_track02_loader_receipt(status);
+    m12_classify_theron_media_path(status,
+                                   status->versions[theronIndex][versionIndex].matchedPath);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -2696,16 +2689,6 @@ static int m12_reuse_verified_theron_refresh(M12_AssetStatus* status,
                 strcmp(required->matchedHash, version->matchedMd5) != 0) {
                 return 0;
             }
-            /* The payload MD5 is the durable launch gate; paired CUE media
-             * is refreshed on reuse so a removed or replaced Track 01 never
-             * leaves a stale CDDA handoff in the launcher. */
-            if (FirestaffTheronMedia_FindCuePairForTrack02(
-                    status->runtimeDataDirs[theronIndex],
-                    version->matchedPath,
-                    &status->theronMedia) != 0) {
-                m12_classify_theron_media_path(status, version->matchedPath);
-            }
-            m12_refresh_theron_track02_loader_receipt(status);
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
             g_m12ScanMetrics.reusableTheronRefreshes++;
 #endif
@@ -2973,7 +2956,6 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         return 0;
     }
     m12_refresh_theron_media_status(status, roots, rootCount);
-    m12_refresh_theron_track02_loader_receipt(status);
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
@@ -3062,7 +3044,6 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
     }
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
-        m12_refresh_theron_track02_loader_receipt(status);
     } else if (strcmp(gameId, "nexus") == 0) {
         m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     } else if (strcmp(gameId, "dm1") == 0) {
@@ -3238,31 +3219,6 @@ int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId) 
 const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
     const M12_AssetStatus* status) {
     return status ? &status->theronMedia : NULL;
-}
-
-const Theron_Track02StartupLoaderReceipt*
-M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status) {
-    return status ? &status->theronTrack02LoaderReceipt : NULL;
-}
-
-const char* M12_AssetStatus_GetTheronLaunchMediaPath(
-    const M12_AssetStatus* status) {
-    int theronIndex = m12_game_index_from_id("theron");
-    const M12_AssetVersionStatus* version;
-    if (!status) {
-        return NULL;
-    }
-    if (status->theronMedia.paired_track01_track02 &&
-        status->theronMedia.cue_path[0] != '\0' &&
-        status->theronMedia.track02_path[0] != '\0') {
-        version = m12_first_matched_version(status, theronIndex);
-        if (version && strcmp(version->matchedPath,
-                              status->theronMedia.track02_path) == 0) {
-            return status->theronMedia.cue_path;
-        }
-    }
-    version = m12_first_matched_version(status, theronIndex);
-    return version && version->matchedPath[0] != '\0' ? version->matchedPath : NULL;
 }
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and

@@ -51,7 +51,6 @@ typedef struct {
     int displayAspectMode;
     int paletteLevel;
     int windowMode;
-    int restoreWindowMode; /* last explicit non-fullscreen mode */
     int integerScaling;
     int scaleFilter;
     int vsync;
@@ -85,7 +84,6 @@ typedef struct {
     int v2_sharpen_enabled;
     int v2_sharpen_strength;
     int v2_palette_lut_built;
-    int v2_presentation_active;
     unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3];
 
     /* DM2 SkWinCore::INIT installs a 256-colour IRGB table before title,
@@ -123,43 +121,6 @@ typedef struct {
 
 static M11_RenderState g_state = {0};
 
-/* EPX presentation is currently bounded to DM1's 320x200 source frame. */
-static unsigned char g_epx_present_buffer[M11_FB_WIDTH * 2 * M11_FB_HEIGHT * 2];
-
-static int m11_epx_expand_indexed(const unsigned char* src,
-                                  int source_width,
-                                  int source_height) {
-    int x;
-    int y;
-    if (!src || source_width <= 0 || source_height <= 0 ||
-        source_width > M11_FB_WIDTH || source_height > M11_FB_HEIGHT) {
-        return 0;
-    }
-    for (y = 0; y < source_height; ++y) {
-        for (x = 0; x < source_width; ++x) {
-            unsigned char p = src[y * source_width + x];
-            unsigned char a = y > 0 ? src[(y - 1) * source_width + x] : p;
-            unsigned char b = x + 1 < source_width
-                ? src[y * source_width + x + 1] : p;
-            unsigned char c = x > 0 ? src[y * source_width + x - 1] : p;
-            unsigned char d = y + 1 < source_height
-                ? src[(y + 1) * source_width + x] : p;
-            int dst_x = x * 2;
-            int dst_y = y * 2;
-            int dst_width = source_width * 2;
-            g_epx_present_buffer[dst_y * dst_width + dst_x] =
-                (c == a && c != d && a != b) ? a : p;
-            g_epx_present_buffer[dst_y * dst_width + dst_x + 1] =
-                (a == b && a != c && b != d) ? b : p;
-            g_epx_present_buffer[(dst_y + 1) * dst_width + dst_x] =
-                (d == c && d != b && c != a) ? c : p;
-            g_epx_present_buffer[(dst_y + 1) * dst_width + dst_x + 1] =
-                (b == d && b != a && d != c) ? b : p;
-        }
-    }
-    return 1;
-}
-
 static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
                                                        int *out_level)
 {
@@ -175,8 +136,7 @@ static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
     if (level == 0) level = g_state.paletteLevel;
     if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;
     if (out_level) *out_level = level;
-    return (g_state.v2_presentation_active &&
-            g_state.v2_palette_enabled && g_state.v2_palette_lut_built)
+    return (g_state.v2_palette_enabled && g_state.v2_palette_lut_built)
         ? g_state.v2_palette_corrected[level][index]
         : G9010_auc_VgaPaletteAll_Compat[level][index];
 }
@@ -495,23 +455,6 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
      * here causes the game content to render at half size. */
     int rw = g_state.renderW > 0 ? g_state.renderW : g_state.windowW;
     int rh = g_state.renderH > 0 ? g_state.renderH : g_state.windowH;
-#if SDL_VERSION_ATLEAST(3, 0, 0)
-    /* Cocoa can expose the newly maximized drawable before its resize event
-     * reaches the game loop.  Rendering from the cached 960x540 output in
-     * that interval leaves the native 320x200 frame tiny inside a correctly
-     * maximized window.  Prefer only a larger live drawable here: it covers
-     * the asynchronous maximize path while preserving deterministic probes
-     * that intentionally inject synthetic smaller/larger resize dimensions. */
-    if (g_state.renderer) {
-        int liveW = 0;
-        int liveH = 0;
-        SDL_GetRenderOutputSize(g_state.renderer, &liveW, &liveH);
-        if (liveW >= rw && liveH >= rh && (liveW > rw || liveH > rh)) {
-            rw = liveW;
-            rh = liveH;
-        }
-    }
-#endif
     (void)M11_Render_ComputePresentationRect(rw,
                                              rh,
                                              contentW,
@@ -531,9 +474,6 @@ static int m11_apply_window_mode(int windowMode) {
     }
     if (!m11_validate_window_mode(windowMode)) {
         return M11_RENDER_ERR_INVALID_ARG;
-    }
-    if (windowMode != M11_WINDOW_MODE_FULLSCREEN) {
-        g_state.restoreWindowMode = windowMode;
     }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     if (!SDL_SetWindowFullscreen(g_state.window,
@@ -685,9 +625,6 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
 static void m11_apply_v2_filters_indexed_pre(unsigned char* fb,
                                              int w,
                                              int h) {
-    if (!g_state.v2_presentation_active) {
-        return;
-    }
     /* Run on indexed framebuffer before palette expansion.
      * Order: palette_interpolate -> dither_cleanup.
      * Palette interpolation requires the original indexed level field
@@ -801,7 +738,7 @@ static void m11_snapshot_prev_frame(int w, int h) {
 
 static void m11_apply_v2_filters_rgba_post(int w, int h) {
     unsigned char* rgba = g_state.presentBuffer;
-    if (!g_state.v2_presentation_active || !rgba) {
+    if (!rgba) {
         return;
     }
     if (g_state.v2_sharpen_enabled && g_state.v2_sharpen_strength > 0) {
@@ -1114,7 +1051,6 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
-    g_state.restoreWindowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;
@@ -1126,17 +1062,6 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.presentedW = 0;
     g_state.presentedH = 0;
     g_state.initialised = 1;
-
-    /* SDL_WINDOW_MAXIMIZED is only an initial creation hint on macOS.  Some
-     * SDL3/Cocoa combinations create a normal window while the renderer's
-     * cached mode still says maximized, so the launcher never issues a real
-     * maximize request.  Ask the native window manager explicitly after the
-     * renderer and drawable have been created; M12 can still restore a saved
-     * explicit Windowed setting immediately afterwards. */
-    if (m11_apply_window_mode(M11_WINDOW_MODE_MAXIMIZED) != M11_RENDER_OK) {
-        M11_Render_Shutdown();
-        return M11_RENDER_ERR_WINDOW;
-    }
     return M11_RENDER_OK;
 }
 
@@ -1330,7 +1255,7 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
-    if ((g_state.v2_palette_interp_enabled || g_state.v2_dither_enabled)
+    if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
@@ -1483,7 +1408,7 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
-    if ((g_state.v2_palette_interp_enabled || g_state.v2_dither_enabled)
+    if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
@@ -1757,7 +1682,7 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     }
     g_state.presentedW = uploadW;
     g_state.presentedH = uploadH;
-    if ((g_state.v2_palette_interp_enabled || g_state.v2_dither_enabled)
+    if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
@@ -2351,14 +2276,9 @@ int M11_Render_ToggleFullscreen(void) {
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
     }
-    if (g_state.windowMode == M11_WINDOW_MODE_FULLSCREEN) {
-        int restoreMode = m11_validate_window_mode(g_state.restoreWindowMode) &&
-                              g_state.restoreWindowMode != M11_WINDOW_MODE_FULLSCREEN
-            ? g_state.restoreWindowMode
-            : M11_WINDOW_MODE_MAXIMIZED;
-        return m11_apply_window_mode(restoreMode);
-    }
-    return m11_apply_window_mode(M11_WINDOW_MODE_FULLSCREEN);
+    return m11_apply_window_mode(g_state.windowMode == M11_WINDOW_MODE_FULLSCREEN
+                                     ? M11_WINDOW_MODE_WINDOWED
+                                     : M11_WINDOW_MODE_FULLSCREEN);
 }
 
 int M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH) {
@@ -2502,9 +2422,6 @@ int M11_Render_SyncWindowModeFromWindow(void) {
         return M11_RENDER_ERR_NOT_INIT;
     }
     g_state.windowMode = m11_window_mode_from_sdl_window();
-    if (g_state.windowMode != M11_WINDOW_MODE_FULLSCREEN) {
-        g_state.restoreWindowMode = g_state.windowMode;
-    }
     return g_state.windowMode;
 }
 
@@ -2671,10 +2588,6 @@ int M11_Render_SetV2Filters(int crtEnabled,
     g_state.v2_dither_enabled = ditherEnabled ? 1 : 0;
     g_state.v2_sharpen_enabled = sharpenEnabled ? 1 : 0;
     g_state.v2_sharpen_strength = sharpenStrength;
-    /* Direct render callers and the M12 configuration path retain the
-     * historical active default. M11 disables this per frame for V1/other
-     * games through M11_Render_SetV2PresentationActive(). */
-    g_state.v2_presentation_active = 1;
 
     if (needRebuild) {
         if (dm1_v2_filter_palette_build_lut(paletteGamma100,
@@ -2687,10 +2600,6 @@ int M11_Render_SetV2Filters(int crtEnabled,
         }
     }
     return M11_RENDER_OK;
-}
-
-void M11_Render_SetV2PresentationActive(int active) {
-    g_state.v2_presentation_active = active ? 1 : 0;
 }
 
 int M11_Render_GetV2Filters(int* outCrtEnabled,

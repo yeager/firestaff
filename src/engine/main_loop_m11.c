@@ -397,6 +397,19 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     return result == M11_RENDER_OK;
 }
 
+static void m11_record_csb_presented_frame(M11_GameViewState *gameView)
+{
+    int width = 0;
+    int height = 0;
+    const unsigned char *rgba;
+
+    if (!gameView || gameView->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return;
+    }
+    rgba = M11_Render_GetPresentedRGBA(&width, &height);
+    (void)M11_GameView_RecordCsbPresentedFrame(gameView, rgba, width, height);
+}
+
 static void m11_publish_dm1_hoc_presented_capture_to_m12(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
@@ -559,15 +572,10 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
         menuState->settings.windowModeIndex = actualWindowMode;
     }
     requestedScaleMode = menuState->settings.scaleModeIndex;
-    /* A fixed 1x--4x framebuffer inside a maximized Cocoa window leaves
-     * every game looking like a 320x200 thumbnail. M11 is the shared host
-     * for all five engines, so maximized/fullscreen presentation must use
-     * FIT unless the user explicitly selects the stretch mode. Windowed mode
-     * keeps the original fixed-scale choices for pixel inspection. */
+    requestedScaleMode = M11_ResolveScaleModeForWindowMode(requestedScaleMode,
+                                                            requestedWindowMode);
     if (requestedWindowMode != M11_WINDOW_MODE_WINDOWED &&
-        requestedScaleMode >= M11_SCALE_1X &&
-        requestedScaleMode <= M11_SCALE_4X) {
-        requestedScaleMode = M11_SCALE_FIT;
+        menuState->settings.scaleModeIndex != requestedScaleMode) {
         menuState->settings.scaleModeIndex = requestedScaleMode;
     }
     if (M11_Render_GetPaletteLevel() != M12_StartupMenu_GetRenderPaletteLevel(menuState)) {
@@ -591,6 +599,20 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     if (M11_Render_GetVSync() != menuState->settings.vsyncIndex) {
         M11_Render_SetVSync(menuState->settings.vsyncIndex);
     }
+}
+
+int M11_ResolveScaleModeForWindowMode(int requestedScaleMode, int windowMode) {
+    /* A fixed 1x--4x framebuffer inside a maximized Cocoa window leaves
+     * DM1's 320x200 V1 frame looking like a thumbnail. M11 is the shared
+     * host for all game views, so maximized/fullscreen presentation uses FIT
+     * unless the user explicitly selected STRETCH. Windowed mode retains
+     * fixed-scale choices for pixel inspection. */
+    if (windowMode != M11_WINDOW_MODE_WINDOWED &&
+        requestedScaleMode >= M11_SCALE_1X &&
+        requestedScaleMode <= M11_SCALE_4X) {
+        return M11_SCALE_FIT;
+    }
+    return requestedScaleMode;
 }
 
 static int m11_is_default_window_size(int width, int height) {
@@ -658,6 +680,27 @@ static void m11_sync_and_save_window_size(M12_StartupMenuState* menuState) {
     menuState->settings.windowWidth = M11_Render_GetWindowWidth();
     menuState->settings.windowHeight = M11_Render_GetWindowHeight();
     M12_StartupMenu_SaveConfig(menuState);
+}
+
+
+static void m11_fill_rect_indexed(unsigned char* framebuffer,
+                                  int framebufferWidth,
+                                  int framebufferHeight,
+                                  int x,
+                                  int y,
+                                  int w,
+                                  int h,
+                                  unsigned char color) {
+    int yy;
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 || w <= 0 || h <= 0) return;
+    if (x < 0) { w += x; x = 0; }
+    if (y < 0) { h += y; y = 0; }
+    if (x + w > framebufferWidth) w = framebufferWidth - x;
+    if (y + h > framebufferHeight) h = framebufferHeight - y;
+    if (w <= 0 || h <= 0) return;
+    for (yy = 0; yy < h; ++yy) {
+        memset(framebuffer + (size_t)(y + yy) * (size_t)framebufferWidth + (size_t)x, color, (size_t)w);
+    }
 }
 
 
@@ -748,10 +791,7 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
     while (SDL_PollEvent(&ev)) {
         (void)ev;
     }
-    if (wait_ticks == 0U || vblank_delay_ms == 0U) {
-        return M11_ENTRANCE_COMMAND_NONE;
-    }
-    for (ticks = 0U; ticks < wait_ticks; ++ticks) {
+    for (ticks = 0U; ticks < ENTRANCE_Compat_GetCreditsWaitTicks(); ++ticks) {
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
@@ -803,9 +843,15 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
     Uint64 presentationStartedMs;
     int waitResult;
-    if (!gameView || !framebuffer || !media_receipt || !out_command ||
-        !gameView->assetsAvailable) {
-        return M11_ENTRANCE_COMMAND_NONE;
+    if (!gameView || !framebuffer) return M11_ENTRANCE_COMMAND_NONE;
+    if (!m11_draw_entrance_credits_asset(gameView, framebuffer)) {
+        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                              0, 0, M11_FB_WIDTH, M11_FB_HEIGHT, 1);
+        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                              36, 88, 248, 24, 15);
+        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                              40, 92, 240, 16, 0);
     }
     credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
     if (!credits || !dm1_v1_startup_entrance_credits_presentation_command_pc34(
@@ -961,7 +1007,7 @@ static int m11_play_redmcsb_entrance_transition(
         framebuffer,
         M11_FB_WIDTH,
         M11_FB_HEIGHT,
-        entrancePalette);
+        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
 
     /* ReDMCSB ENTRANCE.C source-lock:
      * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
@@ -1018,14 +1064,8 @@ static int m11_play_redmcsb_entrance_transition(
                 door.leftSourceX = command.door_left_source_x;
                 door.rightSourceX = command.door_right_source_x;
                 if (command.audio_request_ready) {
-                    /* ReDMCSB ENTRANCE.C F0438 uses the PC34 door-rattle
-                     * sound. A startup sequence with authoritative graphics
-                     * must not silently replace it with an M11 marker. */
-                    if (!M11_Audio_EmitOriginalSoundIndexOnly(
-                            &gameView->audioState, command.audio_sound_index)) {
-                        free(dungeonFrame);
-                        return 0;
-                    }
+                    (void)M11_Audio_EmitSourceSoundIndex(
+                        &gameView->audioState, command.audio_sound_index);
                 }
                 if (!m11_draw_entrance_opening_doors_asset(
                         gameView,
@@ -1045,7 +1085,7 @@ static int m11_play_redmcsb_entrance_transition(
             M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        command.entrance_palette);
+                                                        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
         }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
@@ -1058,47 +1098,14 @@ static int m11_play_redmcsb_entrance_transition(
                 return M11_ENTRANCE_COMMAND_RESUME;
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
-                for (;;) {
-                    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34
-                        creditsCommand;
-                    DM1_V1_StartupEntranceCreditsReturnCommand_PC34 returnCommand;
-                    int creditsResult;
-
-                    memset(&creditsCommand, 0, sizeof(creditsCommand));
-                    memset(&returnCommand, 0, sizeof(returnCommand));
-                    creditsResult = m11_show_redmcsb_entrance_credits(
-                        gameView, framebuffer, mediaReceipt, &creditsCommand);
-                    if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
-                        free(dungeonFrame);
-                        return M11_ENTRANCE_COMMAND_QUIT;
-                    }
-                    if (!dm1_v1_startup_entrance_credits_return_command_pc34(
-                            mediaReceipt, &creditsCommand, &returnCommand) ||
-                        !returnCommand.redraw_closed_entrance ||
-                        !returnCommand.present_entrance_palette ||
-                        !m11_draw_entrance_screen_asset(gameView, framebuffer) ||
-                        !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
-                        free(dungeonFrame);
-                        return 0;
-                    }
-                    (void)M11_Render_PresentIndexedWithSpecialPalette(
-                        framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                        returnCommand.special_palette);
-
-                    /* F0441 discards the credits-dismissal input before its
-                     * fresh C099 wait; this helper performs that drain. */
-                    cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
-                    if (cmd == M11_ENTRANCE_COMMAND_CREDITS) continue;
-                    if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
-                        free(dungeonFrame);
-                        return M11_ENTRANCE_COMMAND_QUIT;
-                    }
-                    if (cmd == M11_ENTRANCE_COMMAND_RESUME) {
-                        free(dungeonFrame);
-                        return M11_ENTRANCE_COMMAND_RESUME;
-                    }
-                    break;
+                int creditsResult =
+                    m11_show_redmcsb_entrance_credits(gameView, framebuffer);
+                if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
+                    free(dungeonFrame);
+                    return M11_ENTRANCE_COMMAND_QUIT;
                 }
+                sourceStep = 0U;
+                continue;
             }
         }
         {
@@ -1122,16 +1129,6 @@ static M11_EntranceCommand m11_entrance_route_framebuffer_pointer(int fbX,
     return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromPointerCommand(fbX,
                                                                               fbY,
                                                                               buttonMask);
-}
-
-/* ReDMCSB ENTRANCE.C -> COMMAND.C pointer route exported for the focused
- * HiDPI gate. The event loop uses the same framebuffer-space helper. */
-int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
-                                                    int framebufferY,
-                                                    unsigned int buttonMask) {
-    return ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX,
-                                                      framebufferY,
-                                                      buttonMask);
 }
 
 static M11_EntranceCommand m11_entrance_route_window_pointer(int windowX,
@@ -1274,16 +1271,6 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
     }
 }
 
-int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
-                                           int autoEnterAfterMs,
-                                           uint64_t elapsedMs) {
-    uint64_t timeoutMs;
-
-    if (!allowHeadlessTimeout) return 0;
-    timeoutMs = autoEnterAfterMs > 0 ? (uint64_t)autoEnterAfterMs : 5000u;
-    return elapsedMs > timeoutMs;
-}
-
 /* Play the FTL swoosh palette animation. ReDMCSB SWSH.C: static logo on black palette,
  * then V0901006_PaletteCommands lights colors sequentially via Setcolor()/Vsync.
  * ESC/Enter/click skips. Skipped when --game was used (direct launch skips full intro). */
@@ -1388,14 +1375,10 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     FILE* f = NULL; long fsize = 0;
     SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
-    M11_AudioState swshAudio;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
-    int dm1Route = gameId && strcmp(gameId, "dm1") == 0;
-    int swshAudioInitialized = 0;
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
-    memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&dm1Media, 0, sizeof(dm1Media));
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
@@ -1406,11 +1389,6 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                 gameId,
                 &dm1Media);
     }
-    /* ReDMCSB SWSH.C is a concrete PC34 program: DM1 may present the FTL
-     * bitmap only when M10 supplied its source-locked timing/event receipt.
-     * Do not silently borrow the generic V1 intro cadence when that receipt
-     * is unavailable or stale. */
-    if (dm1Route && (!hasDm1Media || !dm1Media.play_swsh)) return;
     if (!V1_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
                                             gameId,
@@ -1455,42 +1433,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
       }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
-          DM1_V1_StartupSwooshPresentationCommand_PC34 dm1Command;
           if (M11_Render_PumpEvents()) break;
           if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
-          memset(&dm1Command, 0, sizeof(dm1Command));
-          if (dm1Route &&
-              !dm1_v1_startup_swoosh_presentation_command_pc34(
-                  &dm1Media, sourceStep, &dm1Command)) {
-              goto cleanup;
-          }
-          if (dm1Route &&
-              (dm1Command.source_event_kind != (unsigned int)step.kind ||
-               (step.kind == SWSH_COMPAT_SOURCE_EVENT_LOAD_LOGO_BITMAP &&
-                !dm1Command.load_logo_bitmap) ||
-               (step.kind == SWSH_COMPAT_SOURCE_EVENT_START_SOUND &&
-                !dm1Command.start_sound))) {
-              goto cleanup;
-          }
-          if (step.kind == SWSH_COMPAT_SOURCE_EVENT_START_SOUND && dm1Route) {
-              unsigned int programBytes = 0u;
-              const unsigned char* program = SWSH_Compat_GetPc34DosoundProgram(
-                  &programBytes);
-              if (!M11_Audio_Init(&swshAudio)) goto cleanup;
-              swshAudioInitialized = 1;
-              if (!M11_Audio_PlayDm1SwshDosoundProgram(
-                      &swshAudio, program, (int)programBytes,
-                      dm1Media.swsh_vblank_ms)) {
-                  goto cleanup;
-              }
-          }
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
-              if (dm1Route &&
-                  (!dm1Command.set_palette_color ||
-                   dm1Command.palette_color_index != step.colorIndex ||
-                   dm1Command.palette_color_value != step.colorValue)) {
-                  goto cleanup;
-              }
               SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
                                                        swshPalette[step.colorIndex & 0x0FU]);
               m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
@@ -1503,28 +1448,22 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                * The previous dead-code `paletteDirty` flag was removed:
                * the WAIT_VBLANKS branch never had a palette to "re-render"
                * because every SET_PALETTE_COLOR step renders its own frame. */
-              if (dm1Route &&
-                  (!dm1Command.wait_vblanks ||
-                   dm1Command.vblank_count != step.vblankCount)) {
-                  goto cleanup;
-              }
               if (m11_delay_ms_with_intro_event_pump(
-                      dm1Route ? dm1Command.delay_ms :
-                          (hasDm1Media ?
-                              m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
-                              SWSH_Compat_GetRuntimeDelayMsForVblankCount(
-                                  step.vblankCount)))) {
+                      hasDm1Media ?
+                          m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
+                          SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                              step.vblankCount))) {
                   break;
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
-              if (dm1Route && !dm1Command.run_start_program) goto cleanup;
+              /* No palette was queued between the previous SET_PALETTE_COLOR
+               * and now (the dead paletteDirty=1 path was never reachable). */
           }
       }
       (void)m11_delay_ms_with_intro_event_pump(
           hasDm1Media ? dm1Media.swsh_final_hold_ms :
                         SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
-    if (swshAudioInitialized) M11_Audio_Shutdown(&swshAudio);
     SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     if (logoImg) free(logoImg);
     if (screenFbPacked) free(screenFbPacked);
@@ -1552,13 +1491,14 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
     unsigned char* framebuffer;
+    V1_TitleFrontendSourceTiming timing;
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
     int titlePalette = -1;
     Uint64 presentationStartedMs = 0U;
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
-    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
+    int hasDm1Media;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -1589,26 +1529,20 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             return 0;
         }
     }
-    memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
-    if (!dm1_v1_startup_title_runtime_asset_receipt_pc34(
-            "dm1", titleGraphic ? titleGraphic->pixels : NULL,
-            titleGraphic ? titleGraphic->width : 0U,
-            titleGraphic ? titleGraphic->height : 0U,
-            &titleAssetReceipt) ||
-        !titleAssetReceipt.release_c001_ready) {
-        return 0;
-    }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) {
         return 0;
     }
+    timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
-    if (dm1_v1_startup_title_timing_receipt_valid_pc34(dm1MediaReceipt)) {
+    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
-    } else if (!dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
-                   "dm1", &dm1Media) ||
-               !dm1_v1_startup_title_timing_receipt_valid_pc34(&dm1Media)) {
-        return 0;
+        hasDm1Media = 1;
+    } else {
+        hasDm1Media =
+            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                "dm1",
+                &dm1Media);
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
@@ -1635,7 +1569,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
         V1_TitleFrontendSourceAnimationStep step;
         V1_TitleFrontendC001BlitPlan blitPlan;
-        DM1_V1_StartupTitlePresentationCommand_PC34 command;
+        int stepPalette;
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             break;
         }
@@ -1675,7 +1609,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                                                             command.special_palette) != M11_RENDER_OK) {
                 break;
             }
-            titlePalette = command.special_palette;
         }
         /* ReDMCSB TITLE.C F0437:385-387 waits before each prepared
          * zoom bitmap is blitted. Steps 20, 21, and 23 model the two
@@ -1731,10 +1664,9 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        command.special_palette) != M11_RENDER_OK) {
+                                                        stepPalette) != M11_RENDER_OK) {
             break;
         }
-        titlePalette = command.special_palette;
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
@@ -1760,14 +1692,25 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                       int* outPlayedAnyFrame,
                                                       const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
                                                           dm1MediaReceipt) {
-    /* TITLE.C:309-409 is the DM1 PC/F20 branch. CSB enters the distinct
-     * A31 branch at TITLE.C:412 and must use its own title implementation. */
-    (void)menuState;
-    if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
-        return;
-    }
+    char titlePath[FSP_PATH_MAX];
+    unsigned char* packedStorage;
+    unsigned char* packedScreen;
+    unsigned char* indexedScreen;
+    char err[160];
+    unsigned int step;
+    V1_TitleFrontendSourceTiming timing;
+    M11_AudioState titleAudio;
+    int titleAudioInitialized = 0;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
+    int hasDm1Media;
+
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
+    }
+    /* TITLE.C:309-409 is the DM1 PC/F20 branch. CSB enters the distinct
+     * A31 branch at TITLE.C:412 and must use its own title implementation. */
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
+        return;
     }
     if (m11_play_redmcsb_title_graphic_intro_if_available(gameView,
                                                           sourceId,
@@ -1775,9 +1718,114 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                           dm1MediaReceipt)) {
         return;
     }
-    /* No TITLE.DAT frame-bank fallback: ReDMCSB PC34 F0437 presents C001.
-     * With no verified C001 receipt, leave this phase unpresented rather than
-     * inventing an alternate title sequence. */
+    if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
+        fprintf(stderr,
+                "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
+                "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
+                "the canonical original-data anchor at "
+                "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
+        return;
+    }
+    packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
+    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES);
+    if (!packedStorage || !indexedScreen) {
+        free(packedStorage);
+        free(indexedScreen);
+        return;
+    }
+    packedScreen = packedStorage + 4U;
+    timing = V1_TitleFrontend_GetSourceTimingEvidence();
+    memset(&dm1Media, 0, sizeof(dm1Media));
+    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
+        dm1Media = *dm1MediaReceipt;
+        hasDm1Media = 1;
+    } else {
+        hasDm1Media =
+            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+                "dm1",
+                &dm1Media);
+    }
+
+    memset(&titleAudio, 0, sizeof(titleAudio));
+    if (M11_Audio_Init(&titleAudio)) {
+        titleAudioInitialized = 1;
+        (void)M11_Audio_PlayTitleMusic(&titleAudio);
+    }
+
+    /* ReDMCSB TITLE.C PC/F20 source-lock:
+     *   TITLE.C:319-324 draws PRESENTS from the decompressed title graphic.
+     *   TITLE.C:340-360 builds 18 shrinked title bitmaps; TITLE.C:385-387
+     *               waits M526_WaitVerticalBlank() before each reverse-order zoom blit.
+     *   TITLE.C:395-402 waits two more VBlanks and draws STRIKES BACK.
+     *   TITLE.C:409 adds the final guard before the next screen.
+     * Runtime normally uses GRAPHICS.DAT C001 above.  If that bitmap is not
+     * available, keep the hash-locked TITLE.DAT bank as a last-resort visible
+     * fallback rather than skipping straight to the entrance. */
+    for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
+        V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
+        V1_TitleFrontendRenderResult renderResult;
+        int stepPalette;
+        memset(packedStorage, 0, 4U + 32000U);
+        memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
+        memset(&renderResult, 0, sizeof(renderResult));
+        err[0] = '\0';
+        if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
+                                                  d.renderFrameOrdinal,
+                                                  packedScreen,
+                                                  &renderResult,
+                                                  err,
+                                                  sizeof(err))) {
+            fprintf(stderr,
+                    "Firestaff V1 original TITLE intro stopped: failed to render frame %u from %s: %s\n",
+                    d.renderFrameOrdinal,
+                    titlePath,
+                    err[0] ? err : "unknown TITLE decode error");
+            break;
+        }
+        (void)V1_TitleFrontend_Unpack4bppScreenToIndexed(packedScreen,
+                                                         M11_FB_WIDTH,
+                                                         M11_FB_HEIGHT,
+                                                         indexedScreen,
+                                                         M11_FB_WIDTH);
+        /* TITLE.DAT is the bank-of-frames fallback used when the
+         * GRAPHICS.DAT C001 graphic is not available.  Keep its palette
+         * choice behind the same ReDMCSB TITLE.C source-lock helper as
+         * the normal GRAPHICS.DAT path; the runtime must not hard-code a
+         * different interpretation of the C12_PRESENTS -> C13_DUNGEON +
+         * C14_MASTER switch. */
+        (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
+                                                       &stepPalette);
+        if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
+                                                        M11_FB_WIDTH,
+                                                        M11_FB_HEIGHT,
+                                                        stepPalette) != M11_RENDER_OK) {
+            fprintf(stderr,
+                    "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
+                    d.renderFrameOrdinal);
+            break;
+        }
+        if (outPlayedAnyFrame) {
+            *outPlayedAnyFrame = 1;
+        }
+        /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
+         * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
+         * smash straight into the entrance screen.  Bind the runtime delay
+         * through the TITLE frontend helper so the observable handoff cadence
+         * remains tied to the source timing evidence. */
+        if (m11_delay_ms_with_intro_event_pump(
+                hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
+                              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+            break;
+        }
+    }
+    (void)m11_delay_ms_with_intro_event_pump(
+        hasDm1Media ? dm1Media.title_post_zoom_guard_ms :
+                      V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
+    if (titleAudioInitialized) {
+        M11_Audio_Shutdown(&titleAudio);
+    }
+    free(packedStorage);
+    free(indexedScreen);
 }
 
 typedef struct M11_DM1StartupHandoffContext {
@@ -2051,6 +2099,9 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     DM1_V1_StartupSelectedLaunchRouteReceipt_PC34 dm1RouteReceipt;
     const M12_MenuEntry* launchEntry;
     if (!gameView || !menuState || !menuState->launchRequested) {
+        return 0;
+    }
+    if (!M12_StartupMenu_PrepareSelectedGameLaunch(menuState)) {
         return 0;
     }
     memset(&dm1HandoffContext, 0, sizeof(dm1HandoffContext));
@@ -3008,10 +3059,9 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         return 1;
     }
     if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
-        if (!M11_Render_MapWindowToFramebuffer(x, y, &x, &y)) {
+        if (!m11_map_window_pointer_to_game_source(gameView, x, y, &x, &y)) {
             return 1;
         }
-        m11_map_presented_game_point_to_source(gameView, &x, &y);
         if (outResult) {
             *outResult = M11_GameView_HandlePointerButton(
                 gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
@@ -3022,10 +3072,9 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
-        if (!M11_Render_MapWindowToFramebuffer(x, y, &x, &y)) {
+        if (!m11_map_window_pointer_to_game_source(gameView, x, y, &x, &y)) {
             return 1;
         }
-        m11_map_presented_game_point_to_source(gameView, &x, &y);
         if (outResult) {
             *outResult = M11_GameView_HandlePointerMove(gameView, x, y);
         } else {
@@ -3107,12 +3156,28 @@ static M12_MenuInput m11_menu_input_for_m11_action(int action) {
     }
 }
 
-static M12_MenuInput m11_dm1_v1_fixed_turn_input_from_scancode(SDL_Scancode scancode) {
-    /* ReDMCSB: COMMAND.C 677-684 maps PC34 keypad turn keys to C001/C002;
-     * Firestaff's DM1 V1 keyboard convention also exposes Q/E + Home/End as
-     * turn aliases.  Resolve these before persisted keymaps so stale pre-v2.8
-     * bindings cannot route Q/E into cooldown-gated strafe commands. */
+M12_MenuInput M11_DM1V1_NavigationInputFromScancode(int scancode) {
+    /* ReDMCSB COMMAND.C:677-684 maps the PC34 navigation keys into the
+     * same C068..C073 movement-arrow commands used by mouse clicks. Keep
+     * the host keyboard route on those tokens so presentation can highlight
+     * the exact clicked arrow zone. */
     switch (scancode) {
+        case SDL_SCANCODE_UP:
+        case SDL_SCANCODE_W:
+        case SDL_SCANCODE_KP_5:
+            return M12_MENU_INPUT_UP;
+        case SDL_SCANCODE_DOWN:
+        case SDL_SCANCODE_S:
+        case SDL_SCANCODE_KP_2:
+            return M12_MENU_INPUT_DOWN;
+        case SDL_SCANCODE_LEFT:
+        case SDL_SCANCODE_A:
+        case SDL_SCANCODE_KP_1:
+            return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDL_SCANCODE_RIGHT:
+        case SDL_SCANCODE_D:
+        case SDL_SCANCODE_KP_3:
+            return M12_MENU_INPUT_STRAFE_RIGHT;
         case SDL_SCANCODE_HOME:
         case SDL_SCANCODE_Q:
         case SDL_SCANCODE_KP_4:
@@ -3153,8 +3218,8 @@ static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     return m11_menu_input_for_m11_action(action);
 }
 
-static M12_MenuInput m11_menu_input_for_m12_gamepad_action(M12_InputAction action,
-                                                           int gameplayActive) {
+M12_MenuInput M11_GamepadActionToMenuInput(M12_InputAction action,
+                                           int gameplayActive) {
     switch (action) {
         case M12_ACTION_MOVE_FORWARD:
             return M12_MENU_INPUT_UP;
@@ -3220,7 +3285,41 @@ static M12_MenuInput m11_gamepad_button_input(const M12_GamepadMap* map,
     if (!map || !map->enabled) return M12_MENU_INPUT_NONE;
     action = M12_GamepadMap_ActionForButton(map, button);
     if (action == M12_ACTION_COUNT) return M12_MENU_INPUT_NONE;
-    return m11_menu_input_for_m12_gamepad_action(action, gameplayActive);
+    return M11_GamepadActionToMenuInput(action, gameplayActive);
+}
+
+M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
+                                         M12_AxisRole role,
+                                         int processedValue,
+                                         int gameplayActive) {
+    if (processedValue > -16000 && processedValue < 16000) {
+        return M12_MENU_INPUT_NONE;
+    }
+
+    /* ReDMCSB COMMAND.C F0358/F0359 consumes the same source-locked
+     * navigation commands regardless of host device. Keep controller
+     * directions on the tokens used by keyboard and click-arrow receipts. */
+    if (role == M12_AXIS_ROLE_MOVE) {
+        if (axis == SDL_GAMEPAD_AXIS_LEFTY || axis == SDL_GAMEPAD_AXIS_RIGHTY) {
+            return processedValue < 0 ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN;
+        }
+        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
+            if (gameplayActive) {
+                return processedValue < 0 ? M12_MENU_INPUT_STRAFE_LEFT
+                                          : M12_MENU_INPUT_STRAFE_RIGHT;
+            }
+            return processedValue < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
+        }
+    } else if (role == M12_AXIS_ROLE_TURN) {
+        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
+            if (gameplayActive) {
+                return processedValue < 0 ? M12_MENU_INPUT_TURN_LEFT
+                                          : M12_MENU_INPUT_TURN_RIGHT;
+            }
+            return processedValue < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
+        }
+    }
+    return M12_MENU_INPUT_NONE;
 }
 
 static M12_MenuInput m11_gamepad_axis_input(const M12_GamepadMap* map,
@@ -3233,29 +3332,7 @@ static M12_MenuInput m11_gamepad_axis_input(const M12_GamepadMap* map,
     cfg = M12_GamepadMap_GetAxisConfig(map, axis);
     if (!cfg) return M12_MENU_INPUT_NONE;
     value = M12_GamepadAxis_Process(cfg, rawValue);
-    if (value > -16000 && value < 16000) return M12_MENU_INPUT_NONE;
-
-    if (cfg->role == M12_AXIS_ROLE_MOVE) {
-        if (axis == SDL_GAMEPAD_AXIS_LEFTY || axis == SDL_GAMEPAD_AXIS_RIGHTY) {
-            return value < 0 ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN;
-        }
-        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
-            if (gameplayActive) {
-                return value < 0 ? M12_MENU_INPUT_STRAFE_LEFT
-                                 : M12_MENU_INPUT_STRAFE_RIGHT;
-            }
-            return value < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
-        }
-    } else if (cfg->role == M12_AXIS_ROLE_TURN) {
-        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
-            if (gameplayActive) {
-                return value < 0 ? M12_MENU_INPUT_TURN_LEFT
-                                 : M12_MENU_INPUT_TURN_RIGHT;
-            }
-            return value < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
-        }
-    }
-    return M12_MENU_INPUT_NONE;
+    return M11_GamepadAxisToMenuInput(axis, cfg->role, value, gameplayActive);
 }
 
 static M12_MenuInput m11_held_motion_input_from_gamepad(
@@ -3338,7 +3415,7 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
         if (sc >= 0 && sc < count && keys[sc]) {
             M12_MenuInput input =
                 m11_game_view_is_dm1(gameView)
-                    ? m11_dm1_v1_fixed_turn_input_from_scancode(preferred[i])
+                    ? M11_DM1V1_NavigationInputFromScancode((int)preferred[i])
                     : M12_MENU_INPUT_NONE;
             if (input == M12_MENU_INPUT_NONE) {
                 input = m11_motion_input_from_scancode(preferred[i]);
@@ -3542,6 +3619,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (menuState) {
                 menuState->settings.windowWidth = M11_Render_GetWindowWidth();
                 menuState->settings.windowHeight = M11_Render_GetWindowHeight();
+                /* An OS maximize can arrive while a DM1 game is active.
+                 * Reapply the host presentation policy immediately so the
+                 * next pointer event maps through the same FIT rect M11
+                 * presents, rather than a stale 1x--4x rectangle. */
+                M11_ApplyStartupMenuRuntime(menuState);
             }
             if (gameView && gameView->active && gameViewResult) {
                 *gameViewResult = M11_GAME_INPUT_REDRAW;
@@ -3579,13 +3661,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_EVENT_MOUSE_MOTION &&
             gameView && gameView->active) {
             if (gameViewResult &&
-                M11_Render_MapWindowToFramebuffer((int)ev.motion.x,
-                                                  (int)ev.motion.y,
-                                                  &mappedX,
-                                                  &mappedY)) {
-                m11_map_presented_game_point_to_source(gameView,
+                m11_map_window_pointer_to_game_source(gameView,
+                                                       (int)ev.motion.x,
+                                                       (int)ev.motion.y,
                                                        &mappedX,
-                                                       &mappedY);
+                                                       &mappedY)) {
                 *gameViewResult = M11_GameView_HandlePointerMove(
                     gameView,
                     mappedX,
@@ -3610,11 +3690,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             gameView && gameView->active &&
             (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
             if (gameViewResult &&
-                M11_Render_MapWindowToFramebuffer((int)ev.button.x,
-                                                  (int)ev.button.y,
-                                                  &mappedX,
-                                                  &mappedY)) {
-                m11_map_presented_game_point_to_source(gameView, &mappedX, &mappedY);
+                m11_map_window_pointer_to_game_source(gameView,
+                                                       (int)ev.button.x,
+                                                       (int)ev.button.y,
+                                                       &mappedX,
+                                                       &mappedY)) {
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -3668,6 +3748,24 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return csbInput;
                 }
             }
+            if (gameView && gameView->active &&
+                m11_game_view_is_dm1(gameView) && ev.key.repeat) {
+                M12_MenuInput repeatInput =
+                    M11_DM1V1_NavigationInputFromScancode((int)ev.key.scancode);
+                if (repeatInput == M12_MENU_INPUT_NONE) {
+                    repeatInput =
+                        m11_motion_input_from_scancode(ev.key.scancode);
+                }
+                if (DM1_V1_InputMenuTokenUsesHeldRepeatPc34Compat(
+                        (int)repeatInput)) {
+                    /* ReDMCSB COMMAND.C F0361 -> F0380 consumes one
+                     * keyboard command at a source boundary.  Ignore the
+                     * OS autorepeat copy; m11_held_motion_input_from_keyboard
+                     * will issue the next held command when that boundary
+                     * opens, including Q/E and arrow-key feedback routes. */
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
                 if ((ev.key.mod & SDL_KMOD_CTRL) && ev.key.scancode == SDL_SCANCODE_S) {
@@ -3675,7 +3773,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 }
                 if (m11_game_view_is_dm1(gameView)) {
                     mappedInput =
-                        m11_dm1_v1_fixed_turn_input_from_scancode(ev.key.scancode);
+                        M11_DM1V1_NavigationInputFromScancode((int)ev.key.scancode);
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
                     }
@@ -3910,6 +4008,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (menuState) {
                 menuState->settings.windowWidth = M11_Render_GetWindowWidth();
                 menuState->settings.windowHeight = M11_Render_GetWindowHeight();
+                M11_ApplyStartupMenuRuntime(menuState);
             }
             continue;
         }
@@ -3944,13 +4043,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_MOUSEMOTION &&
             gameView && gameView->active) {
             if (gameViewResult &&
-                M11_Render_MapWindowToFramebuffer(ev.motion.x,
-                                                  ev.motion.y,
-                                                  &mappedX,
-                                                  &mappedY)) {
-                m11_map_presented_game_point_to_source(gameView,
+                m11_map_window_pointer_to_game_source(gameView,
+                                                       ev.motion.x,
+                                                       ev.motion.y,
                                                        &mappedX,
-                                                       &mappedY);
+                                                       &mappedY)) {
                 *gameViewResult = M11_GameView_HandlePointerMove(
                     gameView,
                     mappedX,
@@ -3975,11 +4072,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             gameView && gameView->active &&
             (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
             if (gameViewResult &&
-                M11_Render_MapWindowToFramebuffer(ev.button.x,
-                                                  ev.button.y,
-                                                  &mappedX,
-                                                  &mappedY)) {
-                m11_map_presented_game_point_to_source(gameView, &mappedX, &mappedY);
+                m11_map_window_pointer_to_game_source(gameView,
+                                                       ev.button.x,
+                                                       ev.button.y,
+                                                       &mappedX,
+                                                       &mappedY)) {
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -4069,6 +4166,21 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return csbInput;
                 }
             }
+            if (gameView && gameView->active &&
+                m11_game_view_is_dm1(gameView) && ev.key.repeat) {
+                M12_MenuInput repeatInput =
+                    M11_DM1V1_NavigationInputFromScancode((int)ev.key.keysym.scancode);
+                if (repeatInput == M12_MENU_INPUT_NONE) {
+                    repeatInput =
+                        m11_motion_input_from_scancode(ev.key.keysym.scancode);
+                }
+                if (DM1_V1_InputMenuTokenUsesHeldRepeatPc34Compat(
+                        (int)repeatInput)) {
+                    /* See the SDL3 branch above: held-key polling owns
+                     * DM1's paced repeat after F0361/F0380. */
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
                 if ((ev.key.keysym.mod & KMOD_CTRL) && ev.key.keysym.scancode == SDL_SCANCODE_S) {
@@ -4076,7 +4188,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 }
                 if (m11_game_view_is_dm1(gameView)) {
                     mappedInput =
-                        m11_dm1_v1_fixed_turn_input_from_scancode(ev.key.keysym.scancode);
+                        M11_DM1V1_NavigationInputFromScancode((int)ev.key.keysym.scancode);
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
                     }

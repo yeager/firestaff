@@ -16,9 +16,6 @@
 
 #define CSB_V1_DSA_FLAG_COUNT 256
 #define CSB_V1_DSA_LOADED_BYTECODE_MAGIC 0x43534244u /* 'CSBD' */
-#define CSB_V1_CSBWIN_DSA_VARIABLE_COUNT 100
-
-static int csb_v1_csbwin_dsa_sign_extend(uint16_t value, int bits);
 
 static int csb_v1_dsa_has_operands(const CSB_V1_DSAScript *script, int count) {
     return script && count >= 0 && script->pc <= script->bytecode_len &&
@@ -88,7 +85,6 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
     CSB_V1_CSBWinExtendedDSAReport report;
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_DSAImportedAction *actions = NULL;
-    CSB_V1_CSBWinDSAImportedHeader headers[CSB_V1_MAX_DSA_SCRIPTS];
     size_t offset;
     int action_count = 0;
     uint16_t dsa_ordinal;
@@ -106,42 +102,19 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
         actions = calloc((size_t)report.action_count, sizeof(*actions));
         if (!actions) return -1;
     }
-    memset(headers, 0, sizeof(headers));
 
     offset = features.extension_payload_offset;
     for (dsa_ordinal = 0u; dsa_ordinal < features.dsa_count; ++dsa_ordinal) {
         uint32_t dsa_id;
-        uint32_t state_slots;
         uint32_t non_empty_states;
         uint32_t state_ordinal;
-        CSB_V1_CSBWinDSAImportedHeader header;
-
-        /* DSA.cpp DSA::Read consumes ui16 m_state, ui8 m_localState and
-         * ui8 m_groupID after its 80-byte description.  Do not advance by
-         * host int widths: the bytes are part of CSBWin save provenance. */
-        if (offset > (size_t)size || (size_t)size - offset < 100u) goto reject;
+        if (offset > (size_t)size || (size_t)size - offset < 108u) goto reject;
         dsa_id = csb_v1_read_le32(bytes + offset);
-        if (dsa_id >= CSB_V1_MAX_DSA_SCRIPTS || headers[dsa_id].valid) {
-            goto reject;
-        }
-        offset += 4u + 80u;
-        memset(&header, 0, sizeof(header));
-        header.persistent_state = (uint32_t)bytes[offset] |
-            ((uint32_t)bytes[offset + 1u] << 8);
-        header.local_state = bytes[offset + 2u];
-        header.group_id = bytes[offset + 3u];
-        offset += 4u;
-        state_slots = csb_v1_read_le32(bytes + offset);
-        header.state_slot_count = state_slots;
-        offset += 4u;
+        offset += 4u + 80u + 12u;
+        offset += 4u; /* DSAState slot count, already validated by inspector. */
         offset += 4u; /* first displayed state */
         non_empty_states = csb_v1_read_le32(bytes + offset);
         offset += 4u;
-        if (header.local_state > 3u ||
-            state_slots > CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES ||
-            non_empty_states > state_slots) goto reject;
-        header.valid = 1;
-        headers[dsa_id] = header;
         for (state_ordinal = 0u; state_ordinal < non_empty_states; ++state_ordinal) {
             uint32_t state_index;
             uint32_t program_count;
@@ -187,7 +160,6 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
     csb_v1_dsa_free_imported_actions(state);
     state->imported_actions = actions;
     state->imported_action_count = action_count;
-    memcpy(state->imported_headers, headers, sizeof(headers));
     return action_count;
 
 reject:
@@ -3414,11 +3386,8 @@ const char *csb_v1_chaos_source_evidence(void) {
         "CSBWin/Chaos.cpp:584 InitializeE\n"
         "CSBWin/Chaos.cpp:60-69 _CALL0-_CALL9 DSA dispatch\n"
         "CSBWin/DSA.cpp DSA interpreter (5806 lines)\n"
-        "CSBWin/DSA.cpp:5053-5293 Execute continuation and return flow\n"
         "CSBWin/DSA.cpp:523-531 QueueDSASwitchAction TT_DESSAGE timer dispatch\n"
         "CSBWin/DSA.cpp:5415-5441 ProcessDSATimer6 message column execution\n"
-        "CSBWin/Data.h:1686-1708 DSACOMMAND; 1947-1984 DSAloadCmd\n"
-        "CSBWin/DSA.cpp:1074-1189 EX_LOAD; 1317-1385 EX_STORE\n"
         "ReDMCSB TEXT.C:1670-1775 F0047_TEXT_MESSAGEAREA_PrintMessage\n"
         "CSBWin/CSBCode.cpp:9196 _DisplayChaosStrikesBack\n"
         "CSBWin/CSBCode.cpp:11414 StartChaos\n"

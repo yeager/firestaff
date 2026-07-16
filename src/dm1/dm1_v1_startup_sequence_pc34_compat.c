@@ -1,18 +1,15 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
-#include "dm1_v1_original_save_pc34_handoff.h"
 #include "entrance_frontend_pc34_compat.h"
-#include "firestaff/dm1/v1/palette_entrance_pc34_compat.h"
-#include "firestaff/dm1/v1/palette_credits_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
-#include "vga_palette_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
 #define DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 18u
 #define DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 23u
+#define DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 53u
 #define DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 2u
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
 /* C001's 53-frame production bank shares the game's V1 55 ms cadence. */
@@ -78,27 +75,6 @@ static unsigned int dm1_v1_startup_hoc_host_capture_route_hash_pc34(
     hash ^= presented_hash;
     hash *= 16777619u;
     hash ^= 0xD1C0A11u;
-    return hash ? hash : 1u;
-}
-
-static unsigned int dm1_v1_startup_hoc_release_app_identity_hash_pc34(
-    const char* source_id,
-    unsigned int consumer_hash,
-    unsigned int route_hash,
-    unsigned int presented_chain_hash) {
-    unsigned int hash = 2166136261u;
-    const unsigned char* p = (const unsigned char*)source_id;
-    while (p && *p) {
-        hash ^= (unsigned int)*p++;
-        hash *= 16777619u;
-    }
-    hash ^= consumer_hash;
-    hash *= 16777619u;
-    hash ^= route_hash;
-    hash *= 16777619u;
-    hash ^= presented_chain_hash;
-    hash *= 16777619u;
-    hash ^= 0xA9C0DEu;
     return hash ? hash : 1u;
 }
 
@@ -356,70 +332,6 @@ int dm1_v1_startup_hoc_host_probe_facts_set_presented_hash_pc34(
     return facts->observed_presented_rgba_capture;
 }
 
-int dm1_v1_startup_hoc_capture_facts_apply_host_observation_pc34(
-    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
-    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation) {
-    int host_presented;
-
-    if (!facts || !observation) {
-        return 0;
-    }
-    host_presented =
-        observation->host_window_present &&
-        observation->presented_capture_ready &&
-        facts->observed_presented_rgba_capture;
-    facts->captured_from_real_assets =
-        observation->captured_from_real_assets ? 1 : 0;
-    facts->observed_c026_portrait_asset =
-        observation->observed_c026_portrait_asset ? 1 : 0;
-    facts->observed_c346_mirror_backing_asset =
-        observation->observed_c346_mirror_backing_asset ? 1 : 0;
-    facts->observed_required_graphics_hash_match =
-        observation->observed_required_graphics_hash_match ? 1 : 0;
-    facts->observed_required_dungeon_hash_match =
-        observation->observed_required_dungeon_hash_match ? 1 : 0;
-    facts->observed_host_window_present =
-        observation->host_window_present ? 1 : 0;
-    facts->captured_from_mac_window = host_presented ? 1 : 0;
-    facts->captured_from_release_app =
-        host_presented &&
-        observation->started_from_launcher &&
-        observation->intro_not_bypassed ? 1 : 0;
-    return 1;
-}
-
-int dm1_v1_startup_hoc_host_probe_facts_apply_host_observation_pc34(
-    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
-    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation) {
-    int host_presented;
-
-    if (!facts || !observation) {
-        return 0;
-    }
-    host_presented =
-        observation->host_window_present &&
-        observation->presented_capture_ready &&
-        facts->observed_presented_rgba_capture;
-    facts->captured_from_real_assets =
-        observation->captured_from_real_assets ? 1 : 0;
-    facts->observed_c026_portrait_asset =
-        observation->observed_c026_portrait_asset ? 1 : 0;
-    facts->observed_c346_mirror_backing_asset =
-        observation->observed_c346_mirror_backing_asset ? 1 : 0;
-    facts->observed_required_graphics_hash_match =
-        observation->observed_required_graphics_hash_match ? 1 : 0;
-    facts->observed_required_dungeon_hash_match =
-        observation->observed_required_dungeon_hash_match ? 1 : 0;
-    facts->observed_host_window_present =
-        observation->host_window_present ? 1 : 0;
-    facts->captured_from_mac_window = host_presented ? 1 : 0;
-    facts->captured_from_release_app =
-        host_presented &&
-        observation->started_from_launcher &&
-        observation->intro_not_bypassed ? 1 : 0;
-    return 1;
-}
-
 static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
     int backing_asset_available,
@@ -429,42 +341,6 @@ static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
            out_receipt->valid &&
            out_receipt->drawMirrorBackingAsset &&
            !out_receipt->drawMirrorBackingFallbackRect;
-}
-
-static void dm1_v1_startup_entrance_door_geometry_pc34(
-    unsigned int animation_step,
-    DM1_V1_StartupEntranceRenderAudioCommand_PC34* command) {
-    unsigned int left_right;
-    unsigned int right_left;
-
-    if (!command || animation_step == 0U || animation_step >= 32U) {
-        return;
-    }
-
-    /* ReDMCSB ENTRANCE.C F0438:189-231 starts with left {0,100} and
-     * right {109,231}; each source step draws the remaining strips, then
-     * moves them four pixels outward.  Keep signed source bounds here: the
-     * final five steps intentionally have no left strip, while the right
-     * strip remains visible through step 31. */
-    right_left = 109U + 4U * (animation_step - 1U);
-    command->door_geometry_ready = 1;
-    if (animation_step <= 26U) {
-        left_right = 100U - 4U * (animation_step - 1U);
-        command->door_left_box_x = 0U;
-        command->door_left_box_y = 0U;
-        command->door_left_box_w = left_right + 1U;
-        command->door_left_box_h = 161U;
-        command->door_left_source_x =
-            (animation_step & 0x00FCU) << 2;
-    }
-    if (right_left <= 231U) {
-        command->door_right_box_x = right_left;
-        command->door_right_box_y = 0U;
-        command->door_right_box_w = 231U - right_left + 1U;
-        command->door_right_box_h = 161U;
-        command->door_right_source_x =
-            (animation_step & 0x0003U) << 2;
-    }
 }
 
 static int dm1_v1_startup_hoc_host_draw_rejects_backing_fallback_pc34(
@@ -1164,14 +1040,6 @@ int dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
             out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34;
             out_outcome->status = "DM1 QUIT";
             break;
-        case ENTRANCE_COMPAT_COMMAND_PATH_CREDITS:
-            /* ReDMCSB ENTRANCE.C F0442:1091 restores C202 after its
-             * 1800-VBlank credits window so F0441 redraws the entrance.
-             * Credits is therefore an entrance-local loop command, never a
-             * terminal game/resume/quit startup handoff. */
-            out_outcome->action = DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34;
-            out_outcome->status = "DM1 ENTRANCE CREDITS LOOP";
-            break;
         case ENTRANCE_COMPAT_COMMAND_PATH_NONE:
             out_outcome->action =
                 DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34;
@@ -1538,10 +1406,7 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
         (facts->observed_save_part_count ==
          DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34) ||
         (receipt.user_save_corpus_scan_consumed &&
-         receipt.user_save_corpus_part_envelope > 0 &&
-         receipt.user_save_corpus_roundtrip_verified ==
-             receipt.user_save_corpus_part_envelope &&
-         receipt.user_save_corpus_roundtrip_failed == 0);
+         receipt.user_save_corpus_part_envelope > 0);
     receipt.champion_portrait_corpus_present =
         facts->observed_champion_portrait_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
@@ -2155,25 +2020,6 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
                 facts->presented_capture_byte_count,
                 facts->presented_capture_hash,
                 facts->presented_capture_consumer_mask);
-    receipt.release_app_identity_ready =
-        receipt.release_app_capture &&
-        receipt.mac_window_capture &&
-        receipt.host_window_capture &&
-        receipt.real_asset_capture &&
-        receipt.required_asset_capture &&
-        receipt.presented_capture_chain_ready;
-    receipt.release_app_identity_hash =
-        receipt.release_app_identity_ready
-            ? dm1_v1_startup_hoc_release_app_identity_hash_pc34(
-                  "dm1",
-                  dm1_v1_startup_hoc_capture_consumer_hash_pc34(
-                      facts->presented_capture_consumer_mask),
-                  dm1_v1_startup_hoc_host_capture_route_hash_pc34(
-                      facts->presented_capture_consumer_mask,
-                      receipt.presented_capture_chain_hash,
-                      receipt.presented_capture_hash),
-                  receipt.presented_capture_chain_hash)
-            : 0u;
     receipt.capture_phase = artifact->capture_phase;
     receipt.source_evidence =
         "ReDMCSB TITLE.C:319-409; ENTRANCE.C:68-80; ENTRANCE.C:850-883";
@@ -2209,7 +2055,6 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.presented_capture_geometry_matches &&
         receipt.presented_capture_pixels_present &&
         receipt.presented_capture_chain_ready &&
-        receipt.release_app_identity_ready &&
         receipt.release_app_capture;
     receipt.stale_title_absent =
         artifact->title_surface_forbidden && !facts->saw_title_surface;
@@ -2242,8 +2087,6 @@ int dm1_v1_startup_hoc_full_graphics_capture_proof_receipt_pc34(
         receipt.presented_capture_pixels_present &&
         receipt.presented_capture_chain_ready &&
         receipt.release_app_capture &&
-        receipt.release_app_identity_ready &&
-        receipt.release_app_identity_hash != 0u &&
         receipt.stale_title_absent &&
         receipt.stale_door_absent &&
         receipt.host_fallback_absent &&
@@ -2275,8 +2118,6 @@ int dm1_v1_startup_hoc_full_graphics_runtime_apply_receipt_pc34(
     receipt.real_asset_capture = proof->real_asset_capture;
     receipt.mac_window_capture = proof->mac_window_capture;
     receipt.release_app_capture = proof->release_app_capture;
-    receipt.release_app_identity_ready = proof->release_app_identity_ready;
-    receipt.release_app_identity_hash = proof->release_app_identity_hash;
     receipt.host_capture_route_matches = proof->host_capture_route_matches;
     receipt.hoc_asset_capture = proof->hoc_asset_capture;
     receipt.host_window_capture = proof->host_window_capture;
@@ -2429,8 +2270,6 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
     receipt.release_app_capture = apply->release_app_capture;
-    receipt.release_app_identity_ready = apply->release_app_identity_ready;
-    receipt.release_app_identity_hash = apply->release_app_identity_hash;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.hoc_asset_capture = apply->hoc_asset_capture;
     receipt.host_window_capture = apply->host_window_capture;
@@ -2463,8 +2302,6 @@ int dm1_v1_startup_hoc_full_graphics_production_consumer_receipt_pc34(
     receipt.real_asset_capture = apply->real_asset_capture;
     receipt.mac_window_capture = apply->mac_window_capture;
     receipt.release_app_capture = apply->release_app_capture;
-    receipt.release_app_identity_ready = apply->release_app_identity_ready;
-    receipt.release_app_identity_hash = apply->release_app_identity_hash;
     receipt.host_capture_route_matches = apply->host_capture_route_matches;
     receipt.hoc_asset_capture = apply->hoc_asset_capture;
     receipt.host_window_capture = apply->host_window_capture;
@@ -2758,11 +2595,6 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.release_app_capture = consumer.release_app_capture;
     receipt.host_capture_route_matches = consumer.host_capture_route_matches;
     receipt.hoc_asset_capture = consumer.hoc_asset_capture;
-    /* C026/C346 prove the expected Hall composition, but only M11's actual
-     * C127/F0115 requests prove that this is a live post-entrance viewport. */
-    receipt.observed_live_hoc_material_request =
-        facts->observed_live_hoc_c127_material_request &&
-        facts->observed_live_hoc_f0115_material_request;
     receipt.consumed_required_graphics_asset =
         facts->observed_required_graphics_hash_match ? 1 : 0;
     receipt.consumed_required_dungeon_asset =
@@ -2811,28 +2643,6 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
     receipt.presented_capture_route_packaged =
         receipt.presented_capture_chain_ready &&
         receipt.host_capture_route_hash != 0u;
-    receipt.release_app_identity_ready =
-        dm1_v1_startup_source_visible_handoff_required_pc34(
-            facts->source_id) &&
-        receipt.consumed_launch_path_receipt &&
-        receipt.launch_path_started_from_launcher &&
-        receipt.launch_path_intro_not_bypassed &&
-        receipt.consumed_all_named_host_consumers &&
-        receipt.release_app_capture &&
-        consumer.release_app_identity_ready &&
-        receipt.mac_window_capture &&
-        receipt.host_window_capture &&
-        receipt.real_asset_capture &&
-        receipt.required_asset_capture &&
-        receipt.presented_capture_route_packaged;
-    receipt.release_app_identity_hash =
-        receipt.release_app_identity_ready
-            ? dm1_v1_startup_hoc_release_app_identity_hash_pc34(
-                  facts->source_id,
-                  receipt.named_consumer_hash,
-                  receipt.host_capture_route_hash,
-                  receipt.presented_capture_chain_hash)
-            : 0u;
     receipt.draw_opened_entrance_frame = consumer.draw_opened_entrance_frame;
     receipt.render_hall_mirror_overlay = consumer.render_hall_mirror_overlay;
     receipt.suppress_host_fallback_visuals =
@@ -2879,15 +2689,12 @@ int dm1_v1_startup_hoc_release_app_capture_ownership_receipt_pc34(
         receipt.real_asset_capture &&
         receipt.mac_window_capture &&
         receipt.release_app_capture &&
-        receipt.release_app_identity_ready &&
-        receipt.release_app_identity_hash != 0u &&
         receipt.host_capture_route_matches &&
         receipt.presented_capture &&
         receipt.presented_capture_geometry_matches &&
         receipt.presented_capture_pixels_present &&
         receipt.presented_capture_chain_ready &&
         receipt.hoc_asset_capture &&
-        receipt.observed_live_hoc_material_request &&
         receipt.required_asset_capture &&
         receipt.host_window_capture &&
         receipt.draw_opened_entrance_frame &&
@@ -3193,10 +3000,6 @@ int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
     receipt.real_asset_capture = ownership->real_asset_capture;
     receipt.mac_window_capture = ownership->mac_window_capture;
     receipt.release_app_capture = ownership->release_app_capture;
-    receipt.release_app_identity_ready =
-        ownership->release_app_identity_ready;
-    receipt.release_app_identity_hash =
-        ownership->release_app_identity_hash;
     receipt.host_capture_route_matches =
         ownership->host_capture_route_matches;
     receipt.hoc_asset_capture = ownership->hoc_asset_capture;
@@ -3237,8 +3040,6 @@ int dm1_v1_startup_hoc_save_capture_host_readiness_receipt_pc34(
         receipt.real_asset_capture &&
         receipt.mac_window_capture &&
         receipt.release_app_capture &&
-        receipt.release_app_identity_ready &&
-        receipt.release_app_identity_hash != 0u &&
         receipt.host_capture_route_matches &&
         receipt.hoc_asset_capture &&
         receipt.host_window_capture &&
@@ -3359,10 +3160,7 @@ int dm1_v1_complete_support_receipt_pc34(
         original_save->observed_champion_portrait_count ==
         DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34 &&
         (!original_save->user_save_corpus_scan_consumed ||
-         (original_save->user_save_corpus_part_envelope > 0 &&
-          original_save->user_save_corpus_roundtrip_verified ==
-              original_save->user_save_corpus_part_envelope &&
-          original_save->user_save_corpus_roundtrip_failed == 0));
+         original_save->user_save_corpus_part_envelope > 0);
     receipt.user_save_corpus_scan_consumed =
         original_save->user_save_corpus_scan_consumed;
     receipt.user_save_corpus_pc34_ready =
@@ -3434,8 +3232,7 @@ int dm1_v1_complete_support_receipt_pc34(
         receipt.redmcsb_hoc_thing_layer_suppression_ready &&
         receipt.redmcsb_save_part_corpus_ready &&
         (!receipt.user_save_corpus_scan_consumed ||
-         (receipt.user_save_corpus_part_envelope_ready &&
-          receipt.user_save_corpus_roundtrip_ready)) &&
+         receipt.user_save_corpus_part_envelope_ready) &&
         receipt.host_capture_route_packaged &&
         receipt.presented_capture_chain_ready &&
         receipt.host_draw_uses_owned_receipt &&
@@ -3592,8 +3389,8 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         complete_facts->dungeon_loaded ? 1 : 0;
     {
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
-        DM1OriginalSavePC34CorpusRoundtripReport corpus_receipt;
-        memset(&corpus_receipt, 0, sizeof(corpus_receipt));
+        DM1OriginalSaveCorpusManifest corpus;
+        memset(&corpus, 0, sizeof(corpus));
         if (dm1_v1_startup_resume_root_from_path_pc34(
                 resume_host.resume_path, corpus_root) &&
             dm1_v1_original_save_pc34_roundtrip_corpus_root(corpus_root,
@@ -3606,11 +3403,11 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
             corpus_receipt.roundtrip_failed_count == 0) {
             save_facts.observed_user_save_corpus_scan = 1;
             save_facts.observed_user_save_corpus_files =
-                corpus_receipt.scanned_file_count;
+                corpus.scanned_file_count;
             save_facts.observed_user_save_corpus_classified =
-                corpus_receipt.pc34_candidate_count;
+                corpus.classified_count;
             save_facts.observed_user_save_corpus_pc34 =
-                corpus_receipt.pc34_candidate_count;
+                corpus.pc34_importer_candidate_count;
             save_facts.observed_user_save_corpus_part_envelope =
                 corpus_receipt.pc34_candidate_count;
             save_facts.observed_user_save_corpus_roundtrip_verified =
@@ -3626,10 +3423,19 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
             save_facts.observed_user_save_corpus_runtime_adopt_failed =
                 corpus_receipt.runtime_adopt_failed_count;
             save_facts.observed_user_save_corpus_rejected =
-                corpus_receipt.rejected_count;
-            save_facts.observed_user_save_corpus_truncated = 0;
-            save_facts.observed_user_save_corpus_first_pc34_path =
-                corpus_receipt.first_pc34_path;
+                corpus.rejected_count;
+            save_facts.observed_user_save_corpus_truncated =
+                corpus.truncated_count;
+            for (int i = 0; i < corpus.present_count; ++i) {
+                if (corpus.results[i].pc34_loader_part_envelope_candidate) {
+                    first_pc34_index = i;
+                    break;
+                }
+            }
+            if (first_pc34_index >= 0) {
+                save_facts.observed_user_save_corpus_first_pc34_path =
+                    corpus.paths[first_pc34_index];
+            }
             save_facts.observed_save_part_count =
                 DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
         }
@@ -3721,10 +3527,6 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     summary.mac_window_capture = receipt->production_consumer.mac_window_capture;
     summary.release_app_capture =
         receipt->production_consumer.release_app_capture;
-    summary.release_app_identity_ready =
-        receipt->ownership.release_app_identity_ready;
-    summary.release_app_identity_hash =
-        receipt->ownership.release_app_identity_hash;
     summary.host_capture_route_matches =
         receipt->production_consumer.host_capture_route_matches;
     summary.release_capture_ownership_ready = receipt->ownership.ready;
@@ -3789,14 +3591,6 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
     summary.map_height = receipt->production_consumer.map_height;
     summary.render_command_count =
         receipt->production_consumer.render_command_count;
-    summary.consumed_hoc_save_capture_host_readiness =
-        receipt->consumed_hoc_save_capture_host_readiness;
-    summary.hoc_save_capture_ready =
-        receipt->complete_support.consumed_hoc_save_capture_host_readiness &&
-        receipt->complete_support.complete_hoc_render_route;
-    summary.hoc_original_save_capture_ready =
-        receipt->complete_support.consumed_original_save_capture_receipt &&
-        receipt->complete_support.complete_original_save_roundtrip_route;
     summary.complete_support_ready = receipt->complete_support.ready;
     summary.complete_source_visible_startup =
         receipt->complete_support.complete_source_visible_startup;
@@ -4573,10 +4367,7 @@ int dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
             &receipt) ||
         !receipt.valid) {
         *out_receipt = receipt;
-        /* A missing C346 backing asset is a handled, fail-closed draw
-         * decision. The caller must receive the invalid receipt so it can
-         * block the host fallback rather than treating it as an API failure. */
-        return 1;
+        return 0;
     }
     if (!receipt.candidatePanelOwnsCell &&
         (!receipt.drawMirrorBackingAsset ||
@@ -4929,8 +4720,6 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 receipt;
     V1_TitleFrontendSourceTiming title_timing;
     EntranceCompatSourceAnimationStep entrance_pre_open_step;
-    DM1_V1_PaletteEntranceResultPc34 entrance_palette;
-    DM1_V1_PaletteCreditsResultPc34 credits_palette;
     int presents_palette = 0;
     int title_palette = 0;
 
@@ -4938,35 +4727,18 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
-    memset(&entrance_palette, 0, sizeof(entrance_palette));
-    memset(&credits_palette, 0, sizeof(credits_palette));
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
         *out_receipt = receipt;
         return 1;
     }
 
     title_timing = V1_TitleFrontend_GetSourceTimingEvidence();
-    if (!V1_TitleFrontend_GetStepPalette(
-            V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
-            &presents_palette) ||
-        !V1_TitleFrontend_GetStepPalette(
-            V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
-            &title_palette) ||
-        presents_palette != VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS ||
-        title_palette != VGA_PALETTE_PC34_SPECIAL_TITLE) {
-        /* ReDMCSB TITLE.C F0437:319-324 uses C12_PRESENTS, then
-         * F0437:362-402 installs C13_DUNGEON + C14_MASTER.  A shared or
-         * unresolved palette would visibly corrupt the original transition. */
-        return 0;
-    }
-    if (!dm1_v1_palette_entrance_run_pc34(&entrance_palette) ||
-        !entrance_palette.accepted ||
-        dm1_v1_startup_entrance_palette_fingerprint_pc34() == 0U ||
-        !dm1_v1_palette_credits_run_pc34(&credits_palette) ||
-        !credits_palette.accepted ||
-        dm1_v1_startup_credits_palette_fingerprint_pc34() == 0U) {
-        return 0;
-    }
+    (void)V1_TitleFrontend_GetStepPalette(
+        V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
+        &presents_palette);
+    (void)V1_TitleFrontend_GetStepPalette(
+        V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT,
+        &title_palette);
 
     receipt.handled = 1;
     receipt.play_swsh = 1;
@@ -5005,27 +4777,12 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.title_zoom_palette = title_palette;
     receipt.title_menu_eligible = 1;
     receipt.title_consume_pending_input = 1;
-    /* ReDMCSB ENTRANCE.C F0441:850-883 drains the command that reached
-     * the entrance, then waits for a fresh command. Headless verification
-     * has its separately gated escape hatch at the SDL boundary. */
-    receipt.entrance_auto_enter_ms = 0;
+    receipt.entrance_auto_enter_ms = 1200;
     receipt.entrance_source_animation_steps =
         ENTRANCE_Compat_GetSourceAnimationStepCount();
     receipt.entrance_door_step_count =
         ENTRANCE_Compat_GetDoorAnimationStepCount();
     receipt.entrance_vblank_ms = ENTRANCE_Compat_GetVblankDelayMs();
-    receipt.entrance_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
-    receipt.entrance_palette_entry_count =
-        (unsigned int)entrance_palette.tableSize;
-    receipt.entrance_palette_fingerprint =
-        dm1_v1_startup_entrance_palette_fingerprint_pc34();
-    receipt.entrance_credits_wait_ticks =
-        ENTRANCE_Compat_GetCreditsWaitTicks();
-    receipt.entrance_credits_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
-    receipt.entrance_credits_palette_entry_count =
-        (unsigned int)credits_palette.tableSize;
-    receipt.entrance_credits_palette_fingerprint =
-        dm1_v1_startup_credits_palette_fingerprint_pc34();
     memset(&entrance_pre_open_step, 0, sizeof(entrance_pre_open_step));
     if (ENTRANCE_Compat_GetSourceAnimationStep(6u, &entrance_pre_open_step) &&
         entrance_pre_open_step.kind ==
@@ -5185,157 +4942,21 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     receipt.graphics_c001_usable = decision.graphicsC001Usable ? 1 : 0;
     receipt.title_dat_fallback_usable =
         decision.titleDatFallbackUsable ? 1 : 0;
-    /* ReDMCSB TITLE.C F0437 PC/F20 loads C001 itself. TITLE.DAT is a
-     * different file-format route and cannot stand in for the source-visible
-     * PC34 startup animation when C001 is absent or malformed. */
-    if (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK) {
-        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP;
-    }
     receipt.selected_runtime_source = (int)decision.source;
     receipt.require_graphics_c001_for_release_start =
         (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001)
             ? 1
             : 0;
-    receipt.fallback_is_visible_last_resort = 0;
+    receipt.fallback_is_visible_last_resort =
+        (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK)
+            ? 1
+            : 0;
     receipt.source_evidence =
         "ReDMCSB TITLE.C F0437 lines 309-324 loads C001_GRAPHIC_TITLE "
         "before PRESENTS; DM1 PC34 startup requires the exact 320x200 "
         "C001 surface and rejects TITLE.DAT substitution when C001 is "
         "unavailable, cropped, or malformed.";
     *out_receipt = receipt;
-    return 1;
-}
-
-static int dm1_v1_startup_title_region_has_pixels_pc34(
-    const unsigned char* pixels,
-    unsigned int width,
-    unsigned int source_y,
-    unsigned int source_height) {
-    unsigned int y;
-    unsigned int x;
-
-    for (y = source_y; y < source_y + source_height; ++y) {
-        for (x = 0U; x < width; ++x) {
-            if (pixels[y * width + x] != 0U) return 1;
-        }
-    }
-    return 0;
-}
-
-int dm1_v1_startup_title_runtime_asset_receipt_pc34(
-    const char* source_id,
-    const unsigned char* graphics_c001_pixels,
-    unsigned int graphics_c001_width,
-    unsigned int graphics_c001_height,
-    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt) {
-    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
-    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 source;
-    unsigned int hash = 2166136261u;
-    unsigned int index;
-
-    if (!out_receipt) return 0;
-    memset(&receipt, 0, sizeof(receipt));
-    memset(&source, 0, sizeof(source));
-    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
-        *out_receipt = receipt;
-        return 1;
-    }
-    if (!dm1_v1_startup_title_runtime_source_receipt_pc34(
-            source_id, graphics_c001_pixels != NULL, graphics_c001_width,
-            graphics_c001_height, 0, &source) ||
-        !source.handled ||
-        source.selected_runtime_source !=
-            (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
-        *out_receipt = receipt;
-        return 1;
-    }
-
-    receipt.handled = 1;
-    receipt.graphics_c001_dimensions_valid =
-        graphics_c001_width == 320U && graphics_c001_height == 200U;
-    if (!receipt.graphics_c001_dimensions_valid) {
-        *out_receipt = receipt;
-        return 1;
-    }
-    /* TITLE.C F0437:319-324, 333-340, and 340-360 respectively. */
-    receipt.dungeon_source_pixels_present =
-        dm1_v1_startup_title_region_has_pixels_pc34(
-            graphics_c001_pixels, graphics_c001_width, 0U, 80U);
-    receipt.master_source_pixels_present =
-        dm1_v1_startup_title_region_has_pixels_pc34(
-            graphics_c001_pixels, graphics_c001_width, 80U, 57U);
-    receipt.presents_source_pixels_present =
-        dm1_v1_startup_title_region_has_pixels_pc34(
-            graphics_c001_pixels, graphics_c001_width, 137U, 16U);
-    for (index = 0U; index < graphics_c001_width * graphics_c001_height;
-         ++index) {
-        hash ^= graphics_c001_pixels[index];
-        hash *= 16777619u;
-    }
-    receipt.graphics_c001_pixel_fingerprint = hash ? hash : 1U;
-    receipt.release_c001_ready =
-        receipt.dungeon_source_pixels_present &&
-        receipt.master_source_pixels_present &&
-        receipt.presents_source_pixels_present &&
-        receipt.graphics_c001_pixel_fingerprint != 0U;
-    receipt.source_evidence =
-        "ReDMCSB TITLE.C F0437:309-310,319-324,333-340,340-360";
-    *out_receipt = receipt;
-    return 1;
-}
-
-int dm1_v1_startup_title_presentation_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    const DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* asset_receipt,
-    unsigned int source_step,
-    DM1_V1_StartupTitlePresentationCommand_PC34* out_command) {
-    DM1_V1_StartupTitlePresentationCommand_PC34 command;
-    V1_TitleFrontendSourceAnimationStep step;
-    V1_TitleFrontendC001BlitPlan plan;
-    int palette = 0;
-
-    if (!out_command || !media_receipt || !asset_receipt ||
-        !dm1_v1_startup_title_timing_receipt_valid_pc34(media_receipt) ||
-        !asset_receipt->release_c001_ready || source_step == 0U) {
-        return 0;
-    }
-    memset(&command, 0, sizeof(command));
-    memset(&step, 0, sizeof(step));
-    memset(&plan, 0, sizeof(plan));
-    if (!V1_TitleFrontend_GetSourceAnimationStep(source_step, &step) ||
-        !V1_TitleFrontend_GetC001BlitPlanForStep(&step, &plan) ||
-        !V1_TitleFrontend_GetStepPalette(step.kind, &palette)) {
-        return 0;
-    }
-
-    /* ReDMCSB TITLE.C F0437:313 installs C12 only for PRESENTS. Lines
-     * 363-367 install C13+C14 before the C001 zoom/reveal path. */
-    if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
-        if (palette != media_receipt->title_presents_palette) return 0;
-    } else if (palette != media_receipt->title_zoom_palette) {
-        return 0;
-    }
-
-    command.handled = 1;
-    command.source_step = source_step;
-    command.present_frame = plan.kind != V1_TITLE_FRONTEND_C001_BLIT_NONE;
-    command.clear_before_present = plan.clearBeforeBlit ? 1 : 0;
-    command.special_palette = palette;
-    /* ReDMCSB TITLE.C F0437:362-367 installs the C13_DUNGEON and
-     * C14_MASTER colors before TITLE.C:385 waits for the first zoom
-     * VBlank. PRESENTS has no preceding VBlank in this sequence. */
-    command.palette_before_pre_present_delay =
-        step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT &&
-        step.zoomSourceIndex == 17U;
-    command.pre_present_delay_ms = step.vblankBeforeEvent
-        ? media_receipt->title_zoom_frame_delay_ms : 0U;
-    command.post_present_delay_ms =
-        step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS
-            ? media_receipt->title_presents_hold_ms : 0U;
-    command.source_timing_receipt_consumed = 1;
-    command.source_asset_receipt_consumed = 1;
-    command.source_evidence = step.sourceLineEvidence;
-    *out_command = command;
     return 1;
 }
 
@@ -5371,13 +4992,11 @@ unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
 int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt) {
     EntranceCompatSourceAnimationStep pre_open_step;
-    DM1_V1_PaletteEntranceResultPc34 entrance_palette;
 
     if (!media_receipt || !media_receipt->handled) {
         return 0;
     }
     memset(&pre_open_step, 0, sizeof(pre_open_step));
-    memset(&entrance_palette, 0, sizeof(entrance_palette));
     if (!ENTRANCE_Compat_GetSourceAnimationStep(6U, &pre_open_step) ||
         pre_open_step.kind != ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
         return 0;
@@ -5390,112 +5009,7 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
         media_receipt->entrance_vblank_ms ==
             ENTRANCE_Compat_GetVblankDelayMs() &&
         media_receipt->entrance_pre_open_delay_ms ==
-            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step) &&
-        dm1_v1_palette_entrance_run_pc34(&entrance_palette) &&
-        entrance_palette.accepted &&
-        media_receipt->entrance_palette ==
-            VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
-        media_receipt->entrance_palette_entry_count ==
-            (unsigned int)entrance_palette.tableSize &&
-        media_receipt->entrance_palette_fingerprint ==
-            dm1_v1_startup_entrance_palette_fingerprint_pc34();
-}
-
-int dm1_v1_startup_entrance_credits_presentation_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    const unsigned char* graphics_c005_pixels,
-    unsigned int graphics_c005_width,
-    unsigned int graphics_c005_height,
-    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34* out_command) {
-    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
-    DM1_V1_PaletteCreditsResultPc34 palette;
-    unsigned int hash = 2166136261u;
-    unsigned int index;
-    int has_pixels = 0;
-
-    if (!out_command || !media_receipt || !graphics_c005_pixels ||
-        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
-        graphics_c005_width != 320U || graphics_c005_height != 200U) {
-        return 0;
-    }
-    memset(&palette, 0, sizeof(palette));
-    if (!dm1_v1_palette_credits_run_pc34(&palette) || !palette.accepted ||
-        media_receipt->entrance_credits_wait_ticks !=
-            ENTRANCE_Compat_GetCreditsWaitTicks() ||
-        media_receipt->entrance_credits_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CREDITS ||
-        media_receipt->entrance_credits_palette_entry_count !=
-            (unsigned int)palette.tableSize ||
-        media_receipt->entrance_credits_palette_fingerprint !=
-            dm1_v1_startup_credits_palette_fingerprint_pc34()) {
-        return 0;
-    }
-    for (index = 0U; index < graphics_c005_width * graphics_c005_height;
-         ++index) {
-        const unsigned char pixel = graphics_c005_pixels[index];
-        has_pixels |= pixel != 0U;
-        hash ^= pixel;
-        hash *= 16777619u;
-    }
-    if (!has_pixels) return 0;
-
-    /* ReDMCSB ENTRANCE.C F0442:1004-1061 presents C005, restores the
-     * normal curtain, fades to DATA.C G0019, then waits on L1406=1800. */
-    memset(&command, 0, sizeof(command));
-    command.handled = 1;
-    command.present_credits_frame = 1;
-    command.source_asset_receipt_consumed = 1;
-    command.source_palette_receipt_consumed = 1;
-    command.source_timing_receipt_consumed = 1;
-    command.special_palette = media_receipt->entrance_credits_palette;
-    command.credits_wait_ticks = media_receipt->entrance_credits_wait_ticks;
-    command.vblank_delay_ms = media_receipt->entrance_vblank_ms;
-    command.graphics_c005_pixel_fingerprint = hash ? hash : 1U;
-    command.source_evidence =
-        "ReDMCSB ENTRANCE.C F0442:1004-1091; DATA.C G0019 PC34";
-    *out_command = command;
-    return 1;
-}
-
-int dm1_v1_startup_entrance_credits_return_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    const DM1_V1_StartupEntranceCreditsPresentationCommand_PC34*
-        credits_command,
-    DM1_V1_StartupEntranceCreditsReturnCommand_PC34* out_command) {
-    DM1_V1_StartupEntranceCreditsReturnCommand_PC34 command;
-
-    if (!out_command || !media_receipt || !credits_command ||
-        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
-        !credits_command->handled ||
-        !credits_command->present_credits_frame ||
-        !credits_command->source_asset_receipt_consumed ||
-        !credits_command->source_palette_receipt_consumed ||
-        !credits_command->source_timing_receipt_consumed ||
-        media_receipt->entrance_credits_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CREDITS ||
-        credits_command->special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CREDITS ||
-        credits_command->credits_wait_ticks !=
-            media_receipt->entrance_credits_wait_ticks ||
-        credits_command->vblank_delay_ms != media_receipt->entrance_vblank_ms ||
-        credits_command->graphics_c005_pixel_fingerprint == 0U) {
-        return 0;
-    }
-
-    /* ReDMCSB ENTRANCE.C F0441:846-883 is an outer do-loop: after F0442
-     * returns C202, it redraws C004/doors, discards the credits-dismissal
-     * input, restores C099, and waits for a fresh entrance command. */
-    memset(&command, 0, sizeof(command));
-    command.handled = 1;
-    command.credits_phase_receipt_consumed = 1;
-    command.redraw_closed_entrance = 1;
-    command.discard_pending_input = 1;
-    command.present_entrance_palette = 1;
-    command.special_palette = media_receipt->entrance_palette;
-    command.wait_vblank_delay_ms = media_receipt->entrance_vblank_ms;
-    command.source_evidence = "ReDMCSB ENTRANCE.C F0441:846-883; F0442:1004-1091";
-    *out_command = command;
-    return 1;
+            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step);
 }
 
 int dm1_v1_startup_entrance_render_audio_command_pc34(
@@ -5506,7 +5020,6 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     unsigned int vblank_loop_count,
     DM1_V1_StartupEntranceRenderAudioCommand_PC34* out_command) {
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
-    EntranceCompatSourceAnimationStep source_step_evidence;
 
     /* ReDMCSB ENTRANCE.C F0441 lines 850-883 drives the entrance as an
      * ordered render/wait loop before the dungeon handoff.  Keep M11 on this
@@ -5518,17 +5031,6 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
         source_step > media_receipt->entrance_source_animation_steps) {
         return 0;
     }
-    memset(&source_step_evidence, 0, sizeof(source_step_evidence));
-    if (!ENTRANCE_Compat_GetSourceAnimationStep(
-            source_step, &source_step_evidence) ||
-        (int)source_step_evidence.kind != entrance_event_kind ||
-        source_step_evidence.delayTicks != delay_ticks ||
-        source_step_evidence.vblankLoopCount != vblank_loop_count) {
-        /* ReDMCSB ENTRANCE.C F0441/F0438 owns the event ordering; do not
-         * execute a caller-supplied delay or event kind that differs from
-         * the original entrance schedule. */
-        return 0;
-    }
     memset(&command, 0, sizeof(command));
     command.handled = 1;
     command.consume_media_receipt_only = 1;
@@ -5537,9 +5039,6 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     command.lower_level_audio_helper_owned = 1;
     command.source_step = source_step;
     command.present_entrance_palette = 1;
-    command.entrance_palette = media_receipt->entrance_palette;
-    command.entrance_palette_fingerprint =
-        media_receipt->entrance_palette_fingerprint;
     command.delay_ms =
         dm1_v1_startup_entrance_step_delay_ms_pc34(media_receipt,
                                                    entrance_event_kind,
@@ -5553,19 +5052,10 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
             break;
         case ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN:
         case ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT:
+        case ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND:
         case ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY:
             command.render_kind =
                 DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34;
-            break;
-        case ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND:
-            command.render_kind =
-                DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34;
-            /* ReDMCSB ENTRANCE.C F0441:906-920 submits C01_SOUND_SWITCH
-             * at volume 112 immediately after a real entrance command,
-             * before F0022_MAIN_Delay(20) and F0438 door opening. */
-            command.audio_request_ready = 1;
-            command.audio_sound_index = 1;
-            command.audio_volume = 112U;
             break;
         case ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP:
             command.render_kind =
@@ -5580,9 +5070,17 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
                         &door_step)) {
                     return 0;
                 }
-                (void)door_step;
-                dm1_v1_startup_entrance_door_geometry_pc34(
-                    command.door_animation_step, &command);
+                command.door_geometry_ready = 1;
+                command.door_left_box_x = door_step.leftBoxX;
+                command.door_left_box_y = door_step.leftBoxY;
+                command.door_left_box_w = door_step.leftBoxW;
+                command.door_left_box_h = door_step.leftBoxH;
+                command.door_right_box_x = door_step.rightBoxX;
+                command.door_right_box_y = door_step.rightBoxY;
+                command.door_right_box_w = door_step.rightBoxW;
+                command.door_right_box_h = door_step.rightBoxH;
+                command.door_left_source_x = door_step.leftSourceX;
+                command.door_right_source_x = door_step.rightSourceX;
             }
             command.play_door_rattle_sound =
                 (command.door_animation_step > 0U &&
@@ -5642,7 +5140,8 @@ unsigned int dm1_v1_startup_title_zoom_steps_pc34(void) {
 
 unsigned int dm1_v1_startup_title_source_animation_steps_pc34(void) {
     /* PRESENTS + 18 zoom blits + 2 post-zoom waits + STRIKES BACK + final
-     * guard. This is the complete PC/F20 C001 source event count. */
+     * guard. This is the source event count before Firestaff's frame-bank
+     * cadence padding. */
     return DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
 }
 

@@ -5,8 +5,7 @@
  * See header for full source reference list.
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "firestaff/dm1/v1/G0485_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include <string.h>
 
@@ -210,24 +209,18 @@ int dm1_spell_addSymbol(DM1_SpellCastingState* s, int champIdx,
      * rejects corrupted external state before indexing G0485. */
     if (step >= DM1_SYMBOL_STEP_COUNT) return 0;
 
-    /* Compute mana cost (SYMBOL.C F0399 lines 20-25) */
-    unsigned int manaCost = dm1_symbolBaseManaCost[step][symbolIdx];
-    /* BUG-007 fix: validate power symbol index before multiplier lookup.
-     * ReDMCSB SYMBOL.C F0399: symbols[0] is encoded as 96 + symbolIdx (step 0).
-     * Contract: dm1_encodeSymbol(0, idx) MUST return 96..101. */
-    if (step > 0) {
-        /* Multiply by power symbol's multiplier, then >>3 */
-        int powerIdx = powerSymbolIndex(inp->symbols[0]);
-        if (powerIdx < 0) return 0; /* invalid encoding */
-        manaCost = (manaCost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
+    DM1_V1_G0485SymbolManaCostPc34 costReceipt;
+    if (!dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(
+            (int)step, symbolIdx, inp->symbols[0], &costReceipt)) {
+        return 0;
     }
 
-    if (manaCost > (unsigned int)stats->currentMana) {
+    if ((unsigned int)costReceipt.manaCost > (unsigned int)stats->currentMana) {
         return 0; /* Insufficient mana */
     }
 
     /* Deduct mana */
-    stats->currentMana -= (int16_t)manaCost;
+    stats->currentMana -= (int16_t)costReceipt.manaCost;
 
     /* Store symbol character (SYMBOL.C F0399 line 36) */
     inp->symbols[step] = dm1_encodeSymbol(step, symbolIdx);
@@ -321,15 +314,14 @@ int dm1_spell_symbolManaCost(const DM1_SpellCastingState* s, int champIdx, int s
     unsigned int step = inp->symbolStep;
     if (step >= DM1_SYMBOL_STEP_COUNT) return 0;
 
-    unsigned int cost = dm1_symbolBaseManaCost[step][symbolIdx];
-
-    if (step > 0) {
-        int powerIdx = powerSymbolIndex(inp->symbols[0]);
-        if (powerIdx < 0) return 0;
-        cost = (cost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
+    {
+        DM1_V1_G0485SymbolManaCostPc34 receipt;
+        if (!dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(
+                (int)step, symbolIdx, inp->symbols[0], &receipt)) {
+            return 0;
+        }
+        return receipt.manaCost;
     }
-
-    return (int)cost;
 }
 
 const DM1_SpellFailureFeedback* dm1_spell_failureFeedback(int failureType) {
@@ -651,15 +643,11 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
     receipt.spellType = -1;
     receipt.skillIndex = -1;
     receipt.projectileThing = DM1_SPELL_THING_NONE_PC34;
-    receipt.projectileMaximumMana = -1;
     receipt.championDirectionBefore = championDirection;
     receipt.championDirectionAfter = championDirection;
     receipt.eventType = -1;
     receipt.shieldDefenseBefore = partyShieldDefense;
     receipt.shieldDefenseAfter = partyShieldDefense;
-    receipt.statusGraphicIndex = -1;
-    receipt.championIconGraphicIndex = -1;
-    receipt.championIconFillColor = -1;
 
     if (!s || !stats || champIdx < 0 || champIdx >= 4) {
         *outReceipt = receipt;
@@ -750,7 +738,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
         receipt.projectileStepEnergy =
             dm1_spell_projectileStepEnergy(stats->maximumMana);
         receipt.projectileRequiredMana = 0;
-        receipt.projectileMaximumMana = stats->maximumMana;
         *outReceipt = receipt;
         return 1;
     }
@@ -771,9 +758,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
             receipt.eventTicks = 10000 + ((spellPower - 8) << 9);
-            /* MENU.C F0404 follows the C70 event insertion with
-             * F0337_INVENTORY_SetDungeonViewPalette. */
-            receipt.requestsDungeonViewPaletteRefresh = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_MAGIC_TORCH:
             receipt.lightPower = (spellPower >> 2) + 1;
@@ -781,7 +765,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
             receipt.eventTicks = 2000 + ((spellPower - 3) << 7);
-            receipt.requestsDungeonViewPaletteRefresh = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_DARKNESS:
             receipt.lightPower = spellPower >> 2;
@@ -789,7 +772,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_LIGHT_PC34;
             receipt.eventTicks = 98;
-            receipt.requestsDungeonViewPaletteRefresh = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_THIEVES_EYE:
             receipt.createsEvent = 1;
@@ -801,13 +783,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.createsEvent = 1;
             receipt.eventType = DM1_SPELL_EVENT_INVISIBILITY_PC34;
             receipt.eventTicks = spellPower << 3;
-            /* MENU.C F0412 increments Event71 then redraws champion icons.
-             * CHAMDRAW.C F0286 uses C028_GRAPHIC_CHAMPION_ICONS, fills with
-             * C01_COLOR_DARK_GRAY, and applies G2362 palette changes. */
-            receipt.championIconGraphicIndex =
-                DM1_V1_GRAPHIC_CHAMPION_ICONS_PC34;
-            receipt.championIconFillColor = 1; /* DEFS.H C01_COLOR_DARK_GRAY */
-            receipt.appliesChampionIconInvisibilityPalette = 1;
             break;
         case DM1_SPELL_TYPE_OTHER_PARTY_SHIELD:
             receipt.createsEvent = 1;
@@ -816,10 +791,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             receipt.shieldDefenseDelta = receipt.eventDefense;
             receipt.shieldDefenseAfter = partyShieldDefense + receipt.eventDefense;
             receipt.eventTicks = spellPower * spellPower;
-            /* MENU.C F0412 updates Party.ShieldDefense; CHAMDRAW.C
-             * F0293 then consumes C037_GRAPHIC_BORDER_PARTY_SHIELD. */
-            receipt.statusGraphicIndex =
-                DM1_V1_GRAPHIC_PARTY_SHIELD_BORDER_PC34;
             break;
         case DM1_SPELL_TYPE_OTHER_FOOTPRINTS:
             receipt.createsEvent = 1;
@@ -831,10 +802,6 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
             break;
         case DM1_SPELL_TYPE_OTHER_FIRESHIELD:
             receipt.fireShieldPower = (spellPower * spellPower) + 100;
-            /* MENU.C F0412 delegates to F0403; its FireShieldDefense is
-             * consumed by CHAMDRAW.C as C038_GRAPHIC_BORDER_PARTY_FIRESHIELD. */
-            receipt.statusGraphicIndex =
-                DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34;
             break;
         default:
             break;
@@ -869,16 +836,7 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
         outReceipt->spellIndex = -1;
         return 1;
     }
-    if (powerOrdinal < 1 || powerOrdinal > 6) {
-        /* ReDMCSB: MENU.C F0412 lines 1804-1807 derives this directly from
-         * Champion.Symbols[0] - '_', whose source domain is 1..6.  The
-         * table-index bridge must not turn malformed command state into Lo. */
-        memset(outReceipt, 0, sizeof(*outReceipt));
-        outReceipt->castResult = DM1_SPELL_CAST_FAILURE;
-        outReceipt->failureType = DM1_FAILURE_MEANINGLESS_SPELL;
-        outReceipt->spellIndex = -1;
-        return 0;
-    }
+    if (powerOrdinal < 1 || powerOrdinal > 6) powerOrdinal = 1;
     if (champIdx < 0 || champIdx >= 4) return 0;
 
     memset(&s, 0, sizeof(s));
@@ -923,10 +881,6 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     if (!dm1_spell_f0412RuntimeReceiptForTableIndex(
             spellTableIndex, powerOrdinal, champIdx, stats, experienceRng16,
             0, 0, 0, &receipt)) {
-        /* Keep the F0412 handoff atomic: an inner source-domain rejection
-         * already constructed an explicit failure receipt, so never leave a
-         * stale successful potion receipt in the caller's storage. */
-        *outReceipt = receipt;
         return 0;
     }
     if (receipt.spellKind != DM1_SPELL_KIND_POTION) {
@@ -939,16 +893,6 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
         *outReceipt = receipt;
         return 1;
     }
-    if (potionPowerRng16 >= 16u) {
-        /* ReDMCSB: MENU.C F0412 lines 1851-1854 uses M003_RANDOM(16)
-         * directly for the flask power.  Reject an out-of-domain runtime
-         * fact before the successful receipt can authorize flask mutation. */
-        memset(outReceipt, 0, sizeof(*outReceipt));
-        outReceipt->castResult = DM1_SPELL_CAST_FAILURE;
-        outReceipt->failureType = DM1_FAILURE_MEANINGLESS_SPELL;
-        outReceipt->spellIndex = -1;
-        return 0;
-    }
 
     /* ReDMCSB MENU.C F0412 lines 1850-1860: after the F0411 empty-flask
      * lookup succeeds, the potion type is M068_SPELL_TYPE and power is
@@ -956,12 +900,8 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     receipt.castResult = DM1_SPELL_CAST_SUCCESS;
     receipt.failureType = -1;
     receipt.potionType = receipt.spellType;
-    receipt.potionPower = (int)potionPowerRng16 +
+    receipt.potionPower = (int)(potionPowerRng16 & 0x000Fu) +
                           (receipt.powerOrdinal * 40);
-    /* ReDMCSB MENU.C F0412:1850-1856 mutates the real flask, then calls
-     * F0296_CHAMPION_DrawChangedObjectIcons.  The icon itself remains owned
-     * by the mutated potion/object record; do not invent an icon from type. */
-    receipt.requestsChangedObjectIconRedraw = 1;
     receipt.symbolsCleared =
         dm1_spell_castClearsSymbolsForResult(receipt.castResult);
     *outReceipt = receipt;
@@ -1056,150 +996,6 @@ int dm1_spell_f0412ReceiptToSpellEffectPc34(
             break;
     }
 
-    return 1;
-}
-
-int dm1_spell_f0412ValidateProjectileReceiptPc34(
-    const DM1_SpellF0412RuntimeReceipt* receipt)
-{
-    const DM1_Spell* spell;
-    int expectedKineticEnergy;
-
-    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
-        receipt->spellKind != DM1_SPELL_KIND_PROJECTILE ||
-        !receipt->createsProjectile || receipt->spellIndex < 0 ||
-        receipt->spellIndex >= DM1_SPELL_COUNT || receipt->powerOrdinal < 1 ||
-        receipt->powerOrdinal > 6 || receipt->skillLevel < 0 ||
-        receipt->projectileMaximumMana < 0 ||
-        receipt->championDirectionBefore < 0 ||
-        receipt->championDirectionBefore > 3 ||
-        receipt->championDirectionAfter < 0 ||
-        receipt->championDirectionAfter > 3) {
-        return 0;
-    }
-
-    spell = &dm1_spells[receipt->spellIndex];
-    if (DM1_SPELL_KIND(spell) != DM1_SPELL_KIND_PROJECTILE ||
-        receipt->spellType != DM1_SPELL_TYPE(spell) ||
-        receipt->skillIndex != spell->skillIndex ||
-        receipt->requiredSkillLevel !=
-            spell->baseRequiredSkillLevel + receipt->powerOrdinal ||
-        receipt->disabledTicks != DM1_SPELL_DISABLED_TICKS(spell) ||
-        receipt->projectileThing !=
-            (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                       receipt->spellType) ||
-        receipt->projectileRequiredMana != 0 ||
-        receipt->projectileStepEnergy !=
-            dm1_spell_projectileStepEnergy(
-                (int16_t)receipt->projectileMaximumMana) ||
-        receipt->rotatesChampion !=
-            (receipt->championDirectionBefore !=
-             receipt->championDirectionAfter) ||
-        receipt->redrawChampionState != receipt->rotatesChampion) {
-        return 0;
-    }
-
-    expectedKineticEnergy = dm1_spell_projectileKineticEnergy(
-        receipt->powerOrdinal, receipt->skillLevel, receipt->spellType);
-    return receipt->projectileKineticEnergy == expectedKineticEnergy;
-}
-
-int dm1_spell_f0412ProjectileGraphicRoutePc34(
-    const DM1_SpellF0412RuntimeReceipt* receipt,
-    int relativeDirection,
-    DM1_SpellProjectileGraphicRoutePc34* outRoute)
-{
-    int aspectIndex;
-
-    if (!outRoute) return 0;
-    memset(outRoute, 0, sizeof(*outRoute));
-    outRoute->projectileThing = DM1_SPELL_THING_NONE_PC34;
-    outRoute->projectileAspectIndex = -1;
-    outRoute->graphicIndex = -1;
-
-    if (!dm1_spell_f0412ValidateProjectileReceiptPc34(receipt)) {
-        return 0;
-    }
-
-    /* ReDMCSB DUNGEON.C F0142 maps F0412's actual spell explosion things:
-     * C0 fireball -> C10, C2 lightning -> C3, C6/C7 poison -> C13, and
-     * C3 harm/C4 open-door -> C11 default spell. Do not apply F0142's
-     * generic explosion default to a thing outside F0412's G0487 corpus. */
-    switch (receipt->projectileThing) {
-        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                        DM1_EXPLOSION_FIREBALL):
-            aspectIndex = DM1_PROJ_ASPECT_FIREBALL;
-            break;
-        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                        DM1_EXPLOSION_LIGHTNING_BOLT):
-            aspectIndex = DM1_PROJ_ASPECT_LIGHTNING_BOLT;
-            break;
-        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                        DM1_EXPLOSION_HARM_NON_MATERIAL):
-        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                        DM1_EXPLOSION_OPEN_DOOR):
-            aspectIndex = DM1_PROJ_ASPECT_DEFAULT;
-            break;
-        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                        DM1_EXPLOSION_POISON_BOLT):
-        case (uint16_t)(DM1_SPELL_THING_FIRST_EXPLOSION_PC34 +
-                        DM1_EXPLOSION_POISON_CLOUD):
-            aspectIndex = DM1_PROJ_ASPECT_POISON;
-            break;
-        default:
-            return 0;
-    }
-
-    outRoute->projectileThing = receipt->projectileThing;
-    outRoute->projectileAspectIndex = aspectIndex;
-    outRoute->graphicIndex =
-        dm1_v1_projectile_graphic_index(aspectIndex, relativeDirection);
-    if (outRoute->graphicIndex < 0) return 0;
-    outRoute->valid = 1;
-    return 1;
-}
-
-int dm1_spell_f0412ThievesEyeD1CViewportMaterialRoutePc34(
-    const DM1_SpellF0412RuntimeReceipt* receipt,
-    int activeThievesEyeCount,
-    int frontWallD1C,
-    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute)
-{
-    if (!receipt || receipt->castResult != DM1_SPELL_CAST_SUCCESS ||
-        receipt->spellKind != DM1_SPELL_KIND_OTHER ||
-        receipt->spellType != DM1_SPELL_TYPE_OTHER_THIEVES_EYE ||
-        receipt->eventType != DM1_SPELL_EVENT_THIEVES_EYE_PC34) {
-        if (outRoute) {
-            outRoute->valid = 0;
-            outRoute->graphicIndex = -1;
-            outRoute->transparentColor = -1;
-        }
-        return 0;
-    }
-
-    return dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
-        activeThievesEyeCount, frontWallD1C, outRoute);
-}
-
-int dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
-    int activeThievesEyeCount,
-    int frontWallD1C,
-    DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute)
-{
-    if (!outRoute) return 0;
-    outRoute->valid = 0;
-    outRoute->graphicIndex = -1;
-    outRoute->transparentColor = -1;
-
-    if (activeThievesEyeCount <= 0 || !frontWallD1C) return 0;
-
-    /* ReDMCSB DUNVIEW.C F0117 D1C wall branch: after C73 becomes active,
-     * C041_GRAPHIC_HOLE_IN_WALL is copied into the visible-area buffer with
-     * C10_COLOR_FLESH transparency. This state gate also covers a C73
-     * restored from an original save, which DUNVIEW consumes identically. */
-    outRoute->graphicIndex = DM1_V1_GRAPHIC_THIEVES_EYE_HOLE_IN_WALL_PC34;
-    outRoute->transparentColor = 10; /* DEFS.H C10_COLOR_FLESH */
-    outRoute->valid = 1;
     return 1;
 }
 

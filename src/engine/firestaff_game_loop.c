@@ -126,29 +126,6 @@ void fs_init_default_palette(void) {
 static void fs_game_render_viewport(FS_GameState *state) {
     int x, y, px, py, dir;
     if (!state) return;
-
-    /* skproject's startup/render route does not invent a dungeon surface
-     * while GRAPHICS.DAT and DUNGEON.DAT are unavailable.  Keep the prior
-     * launcher frame visible and publish an explicit failure instead of the
-     * old red/brown DM2 placeholder viewport. */
-    if (state->config.game == FS_GAME_DM2) {
-        DM2_V1_BootProfile *boot =
-            (DM2_V1_BootProfile *)state->dm2_boot;
-        if (!boot || !boot->assets_verified || !boot->graphics_dat ||
-            !boot->dungeon_data || !boot->dm2_state) {
-            state->last_error.code = -2;
-            snprintf(state->last_error.message,
-                     sizeof(state->last_error.message),
-                     "DM2 ORIGINAL DATA REQUIRED");
-            snprintf(state->last_error.detail,
-                     sizeof(state->last_error.detail),
-                     "Verified GRAPHICS.DAT and DUNGEON.DAT must finish boot before rendering.");
-            snprintf(state->last_error.suggestion,
-                     sizeof(state->last_error.suggestion),
-                     "Select a hash-verified DM2 installation in the launcher.");
-            return;
-        }
-    }
     px = state->party_x;
     py = state->party_y;
     dir = state->party_direction;
@@ -167,16 +144,19 @@ static void fs_game_render_viewport(FS_GameState *state) {
         cv->viewport_pixels = g_framebuffer;
         cv->viewport_stride  = FS_FB_W;  /* 320 bytes/row */
 
-        /* Wire the hash-verified CSB dungeon grid for wall/door decisions.
-         * ReDMCSB DUNVIEW.C F0128 never substitutes a diagnostic maze when
-         * DUNGEON.DAT is unavailable: there is simply no live dungeon view. */
+        /* Wire dungeon grid for wall/door decision making.
+         * When no dungeon is loaded, fall back to the test maze pattern
+         * so the view cone has valid data even without CSB DUNGEON.DAT. */
         static uint8_t s_csb_dungeon[32*32];
         const CSB_V1_DungeonData *dun = csb_v1_dungeon_get_current();
         if (!csb_v1_viewport_build_dungeon_grid(
                 dun,
                 csb_v1_dungeon_get_current_level(),
                 s_csb_dungeon)) {
-            return;
+            /* Fallback test maze: corridor pattern for no-dungeon case. */
+            for (int my = 0; my < 32; my++)
+                for (int mx = 0; mx < 32; mx++)
+                    s_csb_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
         }
         cv->dungeon_grid  = s_csb_dungeon;
         cv->dungeon_width  = 32;
@@ -198,19 +178,24 @@ static void fs_game_render_viewport(FS_GameState *state) {
                                                state->party_x, state->party_y,
                                                g_framebuffer, FS_FB_W,
                                                FS_VP_W, FS_VP_H);
-            /* V2 HUD reuses the boot-owned original GDAT route.  It only
-             * composites decoded INTERFACE_GENERAL/CHAMPIONS pixels; a
-             * missing original image has no generated replacement. */
-            dm2_v2_hud_runtime_set_gdat_source(
-                dm2_v1_boot_viewport_asset_fetch,
-                dm2_v1_boot_viewport_asset_palette_fetch, boot,
-                boot->graphics_dat != NULL);
+            /* Phase 3: V2 HUD overlay (gated on phase gate).
+             * Renders compass, depth, gold, champion bars, action strip
+             * on top of the V1 viewport.  No-op when V1 is active
+             * (framebuffer preserved for V1 chrome). */
             dm2_v2_hud_runtime_render(g_framebuffer, FS_FB_W, FS_FB_H);
             /* Phase 4: V2 lighting tick (gated on phase gate).
              * Advances lighting.bloom_timer + outdoor FX state.
              * Per V1 tick cadence (55ms).  No-op when V1 is active
              * (lighting state preserved for V1 palette). */
             dm2_v2_lighting_runtime_tick(0.055f /* V1 tick = 55ms */, 0);
+        } else {
+            /* DM2 boot not complete — render placeholder ceiling/floor */
+            for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
+                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 4;  /* dark red ceiling */
+            for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
+                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
+                    g_framebuffer[y * FS_FB_W + x] = 6;  /* brown floor */
         }
 
     } else {
@@ -222,7 +207,7 @@ static void fs_game_render_viewport(FS_GameState *state) {
         if (!bg_loaded) {
             int bw = 0, bh = 0;
             if (fs_gfx_get_bitmap(&g_gfx_dat, 0, gfx_extract_bg,
-                                  sizeof(gfx_extract_bg), &bw, &bh) > 0) {
+                    sizeof(gfx_extract_bg), &bw, &bh) > 0) {
                 bg_loaded = 1;
             }
         }
@@ -232,6 +217,7 @@ static void fs_game_render_viewport(FS_GameState *state) {
                     g_framebuffer[(FS_VP_Y + y) * FS_FB_W + FS_VP_X + x] =
                         gfx_extract_bg[y * 224 + x];
         } else {
+            /* Fallback: gray ceiling + brown floor */
             for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
                 for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
                     g_framebuffer[y * FS_FB_W + x] = 8;

@@ -81,43 +81,6 @@ typedef struct {
 #define NEXUS_DMDF_BITMAP_BLOCK_MAGIC   0x4249544DU  /* "BITM" */
 #define NEXUS_DMDF_PALETTE_BLOCK_MAGIC  0x504C5442U  /* "PLTB" */
 #define NEXUS_DMDF_STRING_BLOCK_MAGIC   0x53545242U  /* "STRB" */
-#define NEXUS_DMDF_TEXTURE_SECTION_MAGIC 0x54455854U /* "TEXT" */
-
-/* Retail MNS environment resources such as SN_FLOOR.MNS and SN_WALL.MNS
- * carry a top-level TEXT section.  It is not an embedded BITM block: the
- * DMDF header points to it through the big-endian word at 0x24 and the
- * section starts with TEXT + a bounded section byte count.  The remaining
- * descriptor grammar and texel codec are intentionally not guessed here. */
-typedef struct {
-    uint16_t material_id;
-    uint16_t flags;
-    uint16_t width;
-    uint16_t height;
-    uint32_t pixel_offset;
-    uint32_t reserved;
-    int valid;
-} Nexus_DMDFTextureDescriptor;
-
-#define NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS 32
-
-typedef struct {
-    uint32_t offset;
-    uint32_t bytes;
-    uint32_t declared_entry_count;
-    uint32_t flags;
-    uint32_t descriptor_offset;
-    uint32_t pixel_data_offset;
-    uint32_t descriptor_count;
-    /* TEXT descriptors feed a material-id-addressed bank. Retain the
-     * observed ID domain so an ambiguous duplicate slot cannot silently
-     * replace original texels. */
-    uint16_t first_material_id;
-    uint16_t last_material_id;
-    uint32_t unique_material_id_count;
-    int material_ids_unique;
-    Nexus_DMDFTextureDescriptor descriptors[NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS];
-    int valid;
-} Nexus_DMDFTextureSection;
 
 /* Hard ceilings — derived from Saturn VDP1 Color RAM (256 entries) and
  *  DM1-style name tables. Tuned so any genuine DMDF block fits and
@@ -129,6 +92,8 @@ typedef struct {
 #define NEXUS_DMDF_MAX_STRING_BYTES     4096
 #define NEXUS_DMDF_MAX_BITMAP_DIM       256
 #define NEXUS_DMDF_MAX_BITMAP_BYTES     (256U * 256U * 2U)
+#define NEXUS_DMDF_TEXTURE_SECTION_MAGIC 0x54455854U  /* "TEXT" */
+#define NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS 256
 
 typedef struct {
     uint32_t width;            /* parsed width (power of two, 8..256)    */
@@ -176,6 +141,32 @@ typedef struct {
     int      valid;
 } Nexus_DMDFRawTexturePayload;
 
+typedef struct {
+    uint16_t material_id;
+    uint16_t flags;
+    uint16_t width;
+    uint16_t height;
+    uint32_t pixel_offset;
+    uint32_t reserved;
+    int valid;
+} Nexus_DMDFTextureDescriptor;
+
+typedef struct {
+    uint32_t offset;
+    uint32_t bytes;
+    uint32_t declared_entry_count;
+    uint32_t flags;
+    uint32_t descriptor_offset;
+    uint32_t pixel_data_offset;
+    uint32_t descriptor_count;
+    Nexus_DMDFTextureDescriptor descriptors[NEXUS_DMDF_MAX_TEXTURE_DESCRIPTORS];
+    uint32_t unique_material_id_count;
+    uint16_t first_material_id;
+    uint16_t last_material_id;
+    int material_ids_unique;
+    int valid;
+} Nexus_DMDFTextureSection;
+
 /* Runtime-ready indexed surface decoded from a bounded BITM/PLTB pair.
  * `pixels` is owned by the surface and already contains global palette
  * indices, so it can be passed directly to the V1 software rasterizer. */
@@ -212,10 +203,10 @@ typedef enum {
 typedef struct {
     Nexus_V1_DgnMaterialCategory category;
     uint32_t command_count;
-    uint32_t material_surface_count;
-    uint32_t missing_material_count;
     uint32_t unique_material_id_count;
     uint32_t covered_unique_material_id_count;
+    uint32_t material_surface_count;
+    uint32_t missing_material_count;
     uint8_t first_missing_material_id;
     int covered;
     int fallback_visuals_permitted;
@@ -231,6 +222,11 @@ typedef struct {
     uint32_t blocked_truncated_uploads;
     uint64_t expected_upload_bytes;
     uint64_t extractable_upload_bytes;
+    int prs3_evidence_only;
+    int prs3_decoder_promoted;
+    uint32_t prs3_decoded_pixels_emitted;
+    int prs3_upload_blocked;
+    int renderer_handoff_blocked;
     int blocks_real_surface_render;
     int fallback_visuals_permitted;
     int before_surface_count;
@@ -240,6 +236,9 @@ typedef struct {
     int imported_truecolor_surface_count;
     int imported_prs3_surface_count;
     int host_consumed_surfaces;
+    int material_pixel_promotion_blocked;
+    int material_promotion_blocked;
+    int material_bank_mutation_blocked;
 } Nexus_V1_BpkMaterialHostRouteReceipt;
 
 /* Parser-level bounds gates. Return 1 on success, 0 on any bounds
@@ -275,16 +274,8 @@ int nexus_v1_dmdf_scan_embedded_blocks(const uint8_t *data, int size,
  * tail is present without dereferencing past EOF. */
 int nexus_v1_dmdf_estimate_raw_texture_payload(
     const uint8_t *data, int size, Nexus_DMDFRawTexturePayload *out);
-
-/* Read the authoritative top-level TEXT section boundary from a retail DMDF
- * MNS resource.  This only authenticates and bounds original bytes; it does
- * not claim that the opaque payload has been decoded into VDP1 texels. */
 int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
                                         Nexus_DMDFTextureSection *out);
-
-/* Decode retail MNS TEXT descriptors carrying BGR555 texels into the
- * existing indexed material-bank format. A texture needing more than 256
- * distinct source colours is rejected instead of quantized or synthesized. */
 int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
                                             Nexus_DMDFMaterialBank *out);
 

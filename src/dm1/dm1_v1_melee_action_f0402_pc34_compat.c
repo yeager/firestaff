@@ -7,7 +7,6 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
-#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -61,7 +60,6 @@ static int dm1_v1_f0176_creature_occupies_cell_pc34(
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out) {
-    DM1_ActionXpRoute route;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!in) return 0;
@@ -76,28 +74,17 @@ int dm1_v1_melee_action_tick_plan_f0402_pc34(
     if (!dm1_v1_action_is_melee_contact_f0407_pc34(in->actionIndex)) {
         return 0;
     }
-    if (dm1_v1_graphic560_action_damage_factor_get_pc34(in->actionIndex) < 0 ||
-        dm1_v1_graphic560_action_hit_probability_get_pc34(in->actionIndex) < 0 ||
-        !dm1_v1_action_xp_route(in->actionIndex, &route) || !route.valid) {
-        return 0;
-    }
-    if (in->championDirection < DIR_NORTH ||
-        in->championDirection > DIR_WEST) {
-        return 0;
-    }
 
     /* ReDMCSB: MENU.C F0407 lines 1266-1269 computes the target square from
      * the acting champion direction, then lines 1331-1334 dispatch F0402.
-     * F0402 lines 1021-1056 consumes only that selected contact action and
-     * the concrete front-square group/creature lookup.  M10 still resolves
-     * F0177/F0231; this receipt keeps M11 from inventing a target, direction,
-     * or default action while assembling the source-shaped CMD_ATTACK. */
+     * M10 still resolves F0177/F0231; this receipt keeps M11 from assembling
+     * the source-shaped CMD_ATTACK transport inline. */
     out->valid = 1;
     out->command = CMD_ATTACK;
     out->commandArg1 = (unsigned char)in->championIndex;
     out->commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
     out->reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
-    out->targetDirection = in->championDirection;
+    out->targetDirection = in->championDirection & 3;
     out->hasTargetDirection = 1;
     out->reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
                      (unsigned int)(in->actionIndex &
@@ -131,7 +118,6 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
     DM1_MeleeRuntimeOutcomePlanPc34* out) {
     DM1_MeleeDamageEmissionInputPc34 damageIn;
     DM1_MeleeDamageEmissionPlanPc34 damagePlan;
-    int sourceDisabledTicks;
     int ticks;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -144,10 +130,9 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
         return 0;
     }
 
-    sourceDisabledTicks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(
-        in->actionIndex);
-    if (sourceDisabledTicks < 0) return 0;
-    ticks = sourceDisabledTicks;
+    ticks = in->defaultDisabledTicks;
+    if (ticks < 0) ticks = 0;
+    if (ticks > 255) ticks = 255;
 
     memset(&damageIn, 0, sizeof(damageIn));
     damageIn.damage = in->observedAttackDamage;
@@ -165,14 +150,13 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
     out->showDamageFeedback = damagePlan.showDamageFeedback;
     out->damage = damagePlan.damage;
 
-    /* ReDMCSB: MENU.C F0407 lines 1270-1275 takes G0491's source graphic
-     * table entry before dispatch, then lines 1308-1342 treat the closed-door
+    /* ReDMCSB: MENU.C F0407 lines 1308-1342 treat the closed-door
      * BASH/HACK/BERZERK/KICK/SWING/CHOP branch as performed before F0402 and
-     * override ActionDisabledTicks to the literal source value 6.  The host
-     * input fields do not supply either cooldown value. Other failed F0402
-     * melee actions enter the halved XP/tick tail at lines 1331-1337. */
-    if (in->closedDoorBranchPerformed) {
-        ticks = 6;
+     * override ActionDisabledTicks to 6.  Other failed F0402 melee actions
+     * enter the halved XP/tick tail at lines 1331-1337. */
+    if (in->closedDoorBranchPerformed && in->closedDoorDisabledTicks > 0) {
+        ticks = in->closedDoorDisabledTicks;
+        if (ticks > 255) ticks = 255;
     }
     out->disabledTicks = ticks;
     out->meleeFailureTail = !out->performed;
@@ -182,6 +166,7 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
 int dm1_v1_melee_kill_notify_plan_f0231_pc34(
     const DM1_MeleeKillNotifyInputPc34* in,
     DM1_MeleeKillNotifyPlanPc34* out) {
+    int xp;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!in) return 0;
@@ -193,14 +178,17 @@ int dm1_v1_melee_kill_notify_plan_f0231_pc34(
     out->valid = 1;
     out->shouldLogDefeated = 1;
     out->creatureType = in->creatureType;
-    /* ReDMCSB PROJEXPL.C F0231:1531-1539 only awards F0304 skill XP
-     * from the damage amount before the F0190 outcome/notification path.
-     * A group death does not add a second base-health kill bonus.  Keep the
-     * presentation receipt source-owned and fail closed so M11's existing
-     * consumer can never double-award XP after a melee kill. */
-    out->shouldAwardKillXp = 0;
-    out->championIndex = -1;
-    out->xpBonus = 0;
+    if (in->activeChampionIndex < 0 ||
+        in->activeChampionIndex >= CHAMPION_MAX_PARTY ||
+        !in->activeChampionPresent) {
+        return 1;
+    }
+
+    xp = in->creatureBaseHealth > 0 ? in->creatureBaseHealth / 2 : 10;
+    if (xp < 5) xp = 5;
+    out->shouldAwardKillXp = 1;
+    out->championIndex = in->activeChampionIndex;
+    out->xpBonus = xp;
     return 1;
 }
 
@@ -262,7 +250,6 @@ int dm1_v1_melee_reach_gate_plan_f0402_pc34(
 int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
     const DM1_MeleeWeaponProfileInputPc34* in,
     DM1_MeleeWeaponProfilePlanPc34* out) {
-    DM1_ActionXpRoute route;
     int actionIndex;
     int hitProbability;
     int damageFactor;
@@ -271,15 +258,17 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
     if (!in) return 0;
 
     actionIndex = in->actionIndex;
-    if (!dm1_v1_action_is_melee_contact_f0407_pc34(actionIndex) ||
-        !dm1_v1_action_xp_route(actionIndex, &route) || !route.valid ||
-        in->actionSkillIndex != route.skillIndex) {
-        return 0;
-    }
     hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
         actionIndex);
     damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
         actionIndex);
+    if (hitProbability < 0 || damageFactor < 0) {
+        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+        hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
+            actionIndex);
+        damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+            actionIndex);
+    }
     if (hitProbability < 0 || damageFactor < 0) {
         return 0;
     }
@@ -294,19 +283,17 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
         out->hitNonMaterialFlagSet = 1;
     }
 
-    /* ReDMCSB: MENU.C F0407 lines 1269-1273 selects the real G0496 skill
-     * route, then F0402 lines 1045-1056 reads G0493 hit probability and
-     * G0492 damage factor, sets MASK0x8000_HIT_NON_MATERIAL_CREATURES for
-     * Vorpal Blade or DISRUPT, and calls PROJEXPL.C F0231 with those exact
-     * action parameters. Invalid or mismatched host inputs have no source
-     * default action and are therefore rejected. */
+    /* ReDMCSB: MENU.C F0402 lines 1045-1056 reads G0493 hit probability
+     * and G0492 damage factor, sets MASK0x8000_HIT_NON_MATERIAL_CREATURES
+     * for Vorpal Blade or DISRUPT, then calls PROJEXPL.C F0231 with those
+     * action parameters. */
     out->weaponProfile.weaponType = in->weaponType;
     out->weaponProfile.weaponClass = in->weaponClass;
     out->weaponProfile.weaponStrength = in->weaponStrength;
     out->weaponProfile.kineticEnergy = in->kineticEnergy;
     out->weaponProfile.hitProbability = hitProbability;
     out->weaponProfile.damageFactor = damageFactor;
-    out->weaponProfile.skillIndex = route.skillIndex;
+    out->weaponProfile.skillIndex = in->actionSkillIndex;
     out->weaponProfile.attributes = in->weaponAttributes;
     return 1;
 }
@@ -403,62 +390,72 @@ int dm1_v1_melee_command_decode_plan_f0402_pc34(
     const DM1_MeleeF0402CommandDecodeInputPc34* in,
     DM1_MeleeF0402CommandDecodePlanPc34* out) {
     DM1_ActionXpRoute route;
-    unsigned int allowedReceiptBits;
     int actionIndex;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    out->actionIndex = -1;
+    out->actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
     out->actionSkillIndex = -1;
     out->directGroupIndex = -1;
     out->directCreatureIndex = -1;
     if (!in) return 0;
 
-    allowedReceiptBits = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
-                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK |
-                         CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK;
-    if ((in->reserved2 & ~allowedReceiptBits) != 0u ||
-        (in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) == 0u ||
-        (in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) == 0u ||
-        in->commandArg2 != CMD_ATTACK_TARGET_AUTO_GROUP_PC34 ||
-        in->reserved != CMD_ATTACK_CREATURE_AUTO_PC34) {
-        return 0;
-    }
-
-    actionIndex =
-        (int)(in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK);
-    if (!dm1_v1_action_is_melee_contact_f0407_pc34(actionIndex) ||
-        dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
-        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0 ||
-        !dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
-        return 0;
-    }
-
-    out->targetDirection =
-        (int)((in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
-              CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
+    out->valid = 1;
+    out->targetDirection = in->partyDirection & 3;
     out->targetMapIndex = in->partyMapIndex;
     out->targetMapX = in->partyMapX;
     out->targetMapY = in->partyMapY;
-    out->hasLiveActionIndex = 1;
-    out->hasTargetDirection = 1;
-    out->requestedAutoTarget = 1;
-    out->requestedAutoCreature = 1;
-    out->actionIndex = actionIndex;
-    out->actionSkillIndex = route.skillIndex;
-    switch (out->targetDirection) {
+    out->hasLiveActionIndex =
+        (in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u;
+    out->hasLegacyMarker =
+        (in->reserved2 & CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID) != 0u;
+    out->hasTargetDirection =
+        (in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) != 0u;
+    if (out->hasTargetDirection) {
+        out->targetDirection =
+            (int)((in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
+                  CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) & 3;
+    }
+    switch (out->targetDirection & 3) {
     case DIR_NORTH: out->targetMapY--; break;
     case DIR_EAST:  out->targetMapX++; break;
     case DIR_SOUTH: out->targetMapY++; break;
     case DIR_WEST:  out->targetMapX--; break;
     }
 
+    out->requestedAutoTarget =
+        in->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+    out->requestedAutoCreature =
+        in->reserved == CMD_ATTACK_CREATURE_AUTO_PC34;
+    if (!out->requestedAutoTarget) {
+        out->directGroupIndex = (int)in->commandArg2;
+    }
+    if (!out->requestedAutoCreature) {
+        out->directCreatureIndex = (int)in->reserved;
+    }
+
+    actionIndex = out->hasLiveActionIndex
+        ? (int)(in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK)
+        : CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    if (dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
+        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0) {
+        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    }
+    out->actionIndex = actionIndex;
+
+    if (!dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
+        if (!dm1_v1_action_xp_route(
+                CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, &route) ||
+            !route.valid) {
+            return 1;
+        }
+    }
+    out->actionSkillIndex = route.skillIndex;
+
     /* ReDMCSB: MENU.C F0407 lines 1266-1272 selects target square/direction,
-     * G0496 skill route, and G0492/G0493 action tables before F0402.  Unlike
-     * the former host transport, a missing action, target direction, or auto
-     * target lookup is not replaced with a default: F0402 has no such source
-     * branch and therefore receives no receipt. */
-    out->valid = 1;
+     * G0496 skill route, and G0492/G0493 action tables before F0402.  The
+     * Firestaff CMD_ATTACK transport stores those source facts in arg/reserved2
+     * fields; DM1 owns the decode/default policy, M10 supplies the raw tick and
+     * later resolves live thing-list data. */
     return 1;
 }
 
@@ -534,11 +531,17 @@ int dm1_v1_melee_preflight_plan_f0402_pc34(
 
     out->valid = 1;
     if (!in->targetResolved) {
-        /* ReDMCSB: MENU.C F0402 lines 1021-1057 reaches F0231 only after a
-         * concrete G0517 action-target group and creature ordinal exist.
-         * A strict receipt with no live target is a handled no-op; the source
-         * has no marker-only or host-fallback damage branch. */
-        out->shouldReturnHandled = 1;
+        if (in->requestedAutoTarget ||
+            in->hasLiveActionIndex ||
+            in->hasLiveGroupTable) {
+            /* ReDMCSB: MENU.C F0402 lines 1021-1057 reaches F0231 only
+             * after a concrete G0517 action-target group and creature
+             * ordinal exist.  Live runtime calls without that target are
+             * handled no-ops, not synthetic marker damage. */
+            out->shouldReturnHandled = 1;
+            return 1;
+        }
+        out->canUseLegacyMarker = 1;
         return 1;
     }
 
@@ -1524,13 +1527,12 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     out->shouldUnlinkGroupFromSquare = 1;
     out->shouldClearGroupNext = 1;
     out->shouldRemoveActiveGroupState = 1;
-    out->shouldDeleteGroupEvents = 1;
     out->shouldWriteRawGroup = 1;
 
-    /* ReDMCSB: GROUP.C F0190 lines 834-839 drops possessions then calls
-     * F0189_GROUP_Delete. F0189 lines 759-766 clears health, unlinks the
-     * group, retires active state, and calls F0181 to delete C29-C41 events.
-     * Firestaff keeps the live writes in its hosts, but DM1 owns their gate. */
+    /* ReDMCSB: GROUP.C F0190 lines 824-829 drops possessions and calls
+     * F0189_GROUP_Delete when the last creature dies.  Firestaff keeps the
+     * live unlink/raw-write operations in M10, but DM1 owns the branch
+     * policy and target square. */
     return 1;
 }
 
@@ -1553,15 +1555,14 @@ int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     out->shouldClearGroupNext = statePlan->shouldClearGroupNext;
     out->shouldRemoveActiveGroupState =
         statePlan->shouldRemoveActiveGroupState;
-    out->shouldDeleteGroupEvents = statePlan->shouldDeleteGroupEvents;
     out->groupThing = (unsigned short)(
         ((unsigned short)THING_TYPE_GROUP << 10) |
         ((unsigned short)statePlan->groupIndex & 0x03FFu));
     out->clearedNextThing = THING_NONE;
 
     /* ReDMCSB: GROUP.C F0189 lines 753-767 unlinks the GROUP thing,
-     * clears GROUP.Next, retires active state, and deletes C29-C41 events.
-     * DM1 owns the concrete apply receipt; hosts only perform its writes. */
+     * clears GROUP.Next, and removes the active-group entry.  DM1 owns the
+     * concrete apply receipt; M10 only performs the requested live writes. */
     return 1;
 }
 
@@ -1815,19 +1816,10 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
         memset(out, 0, sizeof(*out));
         return 0;
     }
-    /* ReDMCSB GROUP.C F0189 lines 759-766 removes the ACTIVE_GROUP entry
-     * only when G0272_CurrentMapIndex is G0309_PartyMapIndex. F0190 can
-     * kill an off-map group through a moving/falling timeline route: its
-     * Thing must still unlink and clear Next, but its non-party-map active
-     * state must not be retired by this aftermath consumer. */
-    if (in->mapIndex != in->partyMapIndex) {
-        out->killedAllStatePlan.shouldRemoveActiveGroupState = 0;
-    }
     out->shouldApplyKilledAllSideEffects =
         out->killedAllStatePlan.shouldUnlinkGroupFromSquare ||
         out->killedAllStatePlan.shouldClearGroupNext ||
-        out->killedAllStatePlan.shouldRemoveActiveGroupState ||
-        out->killedAllStatePlan.shouldDeleteGroupEvents;
+        out->killedAllStatePlan.shouldRemoveActiveGroupState;
 
     /* ReDMCSB: GROUP.C F0190 lines 824-917 orders possession drops,
      * killed-some event/fear cleanup, killed-all group deletion, and death
@@ -1932,60 +1924,6 @@ int dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
      * 824-917 pair death smoke, mutation dispatch, raw group writeback, kill
      * notification, and reaction scheduling after melee damage.  DM1 owns
      * the combined apply receipt; M10 only materializes it. */
-    return 1;
-}
-
-int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
-    const DM1_MeleeF0231AftermathApplyPlanPc34* aftermathApplyPlan,
-    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* out) {
-    const DM1_MeleeF0190KilledAllStatePlanPc34* killedAll;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    out->groupIndex = -1;
-    if (!aftermathApplyPlan || !aftermathApplyPlan->valid) return 0;
-
-    out->valid = 1;
-    if (aftermathApplyPlan->killNotifyOutcome !=
-            COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
-        !aftermathApplyPlan->shouldCreateDeathSmoke ||
-        !aftermathApplyPlan->shouldApplyMutationDispatch ||
-        !aftermathApplyPlan->shouldEmitKillNotify) {
-        return 1;
-    }
-
-    killedAll = &aftermathApplyPlan->mutationDispatchPlan.killedAllStatePlan;
-    if (!aftermathApplyPlan->mutationDispatchPlan.valid ||
-        !aftermathApplyPlan->mutationDispatchPlan
-             .shouldApplyKilledAllSideEffects ||
-        !killedAll->valid || !killedAll->shouldUnlinkGroupFromSquare ||
-        !killedAll->shouldClearGroupNext ||
-        !killedAll->shouldDeleteGroupEvents ||
-        aftermathApplyPlan->killNotifyGroupIndex < 0 ||
-        aftermathApplyPlan->killNotifyGroupIndex != killedAll->groupIndex ||
-        aftermathApplyPlan->smokeCreateInput.explosionType !=
-            C040_EXPLOSION_SMOKE ||
-        (aftermathApplyPlan->smokeCreateInput.attack != 110 &&
-         aftermathApplyPlan->smokeCreateInput.attack != 190 &&
-         aftermathApplyPlan->smokeCreateInput.attack != 255) ||
-        aftermathApplyPlan->smokeCreateInput.mapIndex != killedAll->mapIndex ||
-        aftermathApplyPlan->smokeCreateInput.mapX != killedAll->mapX ||
-        aftermathApplyPlan->smokeCreateInput.mapY != killedAll->mapY) {
-        return 1;
-    }
-
-    out->shouldPresentSourceSmoke = 1;
-    out->requiresKilledAllMutationFirst = 1;
-    out->groupIndex = killedAll->groupIndex;
-    out->mapIndex = killedAll->mapIndex;
-    out->mapX = killedAll->mapX;
-    out->mapY = killedAll->mapY;
-    out->sourceSmokeCreateInput = aftermathApplyPlan->smokeCreateInput;
-
-    /* ReDMCSB: GROUP.C F0190 lines 834-839 runs F0188/F0189 for a final
-     * creature, then lines 907-916 derive the 110/190/255 attack and call
-     * F0213 with the original C040 smoke thing. The receipt carries only
-     * that source materialization; it never invents a visual or palette. */
     return 1;
 }
 
