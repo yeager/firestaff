@@ -5587,7 +5587,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0473_memory_sort_value
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c"
-        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0496_lzw_output_character_pc34_compat.c")
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0496_lzw_output_character_pc34_compat.c"
+        AND NOT TARGET test_csb_v1_f0496_lzw_output_character_pc34_compat)
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c
         src/csb/csb_v1_f0496_lzw_output_character_pc34_compat.c
@@ -11947,40 +11948,42 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_boot_runtime_handoff
     )
 
-    add_executable(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
-        tests/test_csb_v1_startup_terminal_handoff_real_data_pc34_compat.c
-        src/csb/csb_v1_boot.c
-        src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
-        src/csb/csb_v1_startup_playback_pc34_compat.c
-        src/csb/csb_v1_startup_terminal_receipt_pc34_compat.c
-        src/csb/csb_v1_startup_real_asset_receipt.c
-        src/csb/csb_v1_runtime_pc34_compat.c
-        src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
-        src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
-        src/csb/csb_v1_startup_sequence_pc34_compat.c
-        src/csb/csb_v1_dungeon_loader_pc34_compat.c
-        src/csb/csb_v1_character_pc34_compat.c
-        src/csb/csb_v1_utility_flow_pc34.c
-        src/csb/csb_v1_utility_import_pc34.c
-        src/csb/csb_v1_save_load_pc34_compat.c
-        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
-        src/dm1/dm1_v1_event_timer_pc34_compat.c
-        src/frontend/title_frontend_v1.c
-        src/frontend/title_dat_loader_v1.c
-        src/shared/asset_find_by_hash.c
-        src/shared/dungeon_decompressor_ftl.c
-        src/shared/fs_portable_compat.c
-    )
-    target_include_directories(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
-            PRIVATE -Wall -Wextra -O2)
+    if(NOT TARGET test_csb_v1_startup_terminal_handoff_real_data_pc34_compat)
+        add_executable(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
+            tests/test_csb_v1_startup_terminal_handoff_real_data_pc34_compat.c
+            src/csb/csb_v1_boot.c
+            src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+            src/csb/csb_v1_startup_playback_pc34_compat.c
+            src/csb/csb_v1_startup_terminal_receipt_pc34_compat.c
+            src/csb/csb_v1_startup_real_asset_receipt.c
+            src/csb/csb_v1_runtime_pc34_compat.c
+            src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
+            src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
+            src/csb/csb_v1_startup_sequence_pc34_compat.c
+            src/csb/csb_v1_dungeon_loader_pc34_compat.c
+            src/csb/csb_v1_character_pc34_compat.c
+            src/csb/csb_v1_utility_flow_pc34.c
+            src/csb/csb_v1_utility_import_pc34.c
+            src/csb/csb_v1_save_load_pc34_compat.c
+            src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+            src/dm1/dm1_v1_event_timer_pc34_compat.c
+            src/frontend/title_frontend_v1.c
+            src/frontend/title_dat_loader_v1.c
+            src/shared/asset_find_by_hash.c
+            src/shared/dungeon_decompressor_ftl.c
+            src/shared/fs_portable_compat.c
+        )
+        target_include_directories(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
+            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
+                PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v1_startup_terminal_handoff_real_data_pc34_compat
+            COMMAND test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
+        )
     endif()
-    add_test(
-        NAME csb_v1_startup_terminal_handoff_real_data_pc34_compat
-        COMMAND test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
-    )
 
     # CSB V1 bounded route gate: Utility NEW_GAME -> verified runtime
     # handoff -> first viewport frame -> one queued movement step ->
@@ -13043,20 +13046,22 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0450_floppy_force_media_change_detection_pc34_compat
     )
 
-    add_executable(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat
-        tests/test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat.c
-        src/csb/csb_v1_f0469_memory_free_at_heap_top_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat PRIVATE -Wall -Wextra -O2)
+    if(NOT TARGET test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat)
+        add_executable(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat
+            tests/test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat.c
+            src/csb/csb_v1_f0469_memory_free_at_heap_top_pc34_compat.c
+        )
+        target_include_directories(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        if(NOT MSVC)
+            target_compile_options(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v1_f0469_memory_free_at_heap_top_pc34_compat
+            COMMAND test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat
+        )
     endif()
-    add_test(
-        NAME csb_v1_f0469_memory_free_at_heap_top_pc34_compat
-        COMMAND test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat
-    )
 
     add_executable(test_csb_v1_f0470_memory_free_at_heap_bottom_pc34_compat
         tests/test_csb_v1_f0470_memory_free_at_heap_bottom_pc34_compat.c
