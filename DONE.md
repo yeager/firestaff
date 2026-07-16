@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 ReDMCSB platform-symbol disposition cleanup: added
+  source-backed `SYMBOL_DISPOSITIONS.tsv` rows for reviewed non-applicable
+  platform boundaries and Atari ST/PRIM ABI aliases. The DM1/CSB callable
+  backlog drops from 1537 to 1228 open rows; no runtime shim, fallback, or
+  synthetic gameplay path was added.
+
 - 2026-07-16 V2.2 artpack studio: added `scripts/firestaff_artpack_studio.py`,
   a cross-platform Tk/Pillow GUI for DM1, CSB, DM2, Theron, and Nexus V2.2
   artpack creation. It opens/creates `modern_asset_manifest.json`, displays
