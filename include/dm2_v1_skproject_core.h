@@ -1149,6 +1149,35 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint16_t player;
+    uint16_t yy;
+    uint8_t relative_pos;
+    uint8_t mirror_flip;
+    uint8_t leader_icon_entry;
+    uint8_t spell_icon_entry;
+    uint16_t leader_rect_no;
+    uint16_t spell_rect_no;
+    uint8_t requested_fill_rect_summary;
+    uint8_t requested_leader_summary_image;
+    uint8_t requested_spell_summary_image;
+    uint8_t requested_gray_overlay;
+    int blocked_dead_champion;
+} DM2_V1_SkprojectDrawSquadSpellLeaderReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t squad_gfx_set;
+    uint8_t champion_count;
+    uint8_t drawn_champions;
+    DM2_V1_SkprojectGdatIconPlan base_icon;
+    uint8_t requested_alloc_pict_buff;
+    uint8_t requested_free_pict_buff;
+    uint8_t requested_squad_icon_palette;
+    uint8_t requested_aura_summary_image;
+} DM2_V1_SkprojectDrawSquadPosInterfaceReceipt;
+
+typedef struct {
+    int valid;
     uint16_t champion_index;
     uint8_t aura_of_speed;
     uint8_t aura_rand_y;
@@ -1199,6 +1228,66 @@ typedef struct {
     uint8_t drew_poison;
     uint8_t inventory_subpanel;
 } DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt;
+
+typedef struct {
+    int valid;
+    int16_t current_value;
+    int16_t floor_value;
+    uint16_t rect_no;
+    uint16_t color;
+    uint16_t tail_color;
+    int16_t scaled_value;
+    uint16_t selected_color;
+    uint8_t requested_scale_rect;
+    uint8_t requested_black_background_fill;
+    uint8_t requested_value_fill;
+    uint8_t requested_tail_fill;
+    int blocked_missing_rect;
+    int blocked_invalid_range;
+} DM2_V1_SkprojectDrawPowerStatBarReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    uint16_t line_count;
+    uint16_t first_text_rect;
+    uint8_t inventory_subpanel;
+    uint8_t requested_message_text;
+    uint8_t requested_scroll_background;
+    uint8_t requested_scroll_overlay;
+    uint8_t requested_centered_lines;
+    int blocked_not_scroll;
+} DM2_V1_SkprojectDrawScrollTextReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t rect_no;
+    uint16_t foreground_color;
+    uint16_t background_color;
+    int16_t draw_x;
+    int16_t draw_y;
+    uint16_t text_len;
+    uint8_t requested_query_str_metrics;
+    uint8_t requested_query_blit_rect;
+    uint8_t requested_draw_string;
+    uint8_t requested_dirty_rect;
+    int blocked_missing_text;
+    int blocked_missing_rect;
+} DM2_V1_SkprojectDrawSimpleStrReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t champion_index;
+    uint8_t skill_lines;
+    uint8_t attribute_lines;
+    uint8_t inventory_subpanel;
+    uint16_t skill_text_rect;
+    uint16_t attribute_text_rect;
+    uint8_t requested_blank_panel;
+    uint8_t requested_skill_names;
+    uint8_t requested_attribute_names;
+    uint8_t requested_ability_values;
+} DM2_V1_SkprojectDrawSkillPanelReceipt;
 
 typedef struct {
     int valid;
@@ -1860,6 +1949,25 @@ int dm2_v1_skproject_draw_spell_to_be_cast(
 int dm2_v1_skproject_draw_spell_panel(
     uint8_t nrunes,
     DM2_V1_SkprojectDrawSpellPanelReceipt *out_receipt);
+int dm2_v1_skproject_draw_squad_spell_and_leader_icon(
+    uint16_t player,
+    uint16_t yy,
+    uint8_t player_pos,
+    uint8_t player_dir,
+    int cur_hp,
+    uint16_t champion_leader,
+    uint8_t sleeping,
+    uint8_t hero_b44,
+    DM2_V1_SkprojectDrawSquadSpellLeaderReceipt *out_receipt);
+int dm2_v1_skproject_draw_squad_pos_interface(
+    uint8_t squad_gfx_set,
+    const uint8_t *champion_pos,
+    const uint8_t *champion_alive,
+    const uint8_t *champion_enchanted,
+    uint8_t champion_count,
+    uint8_t player_dir,
+    uint8_t selected_pos_plus_one,
+    DM2_V1_SkprojectDrawSquadPosInterfaceReceipt *out_receipt);
 int dm2_v1_skproject_draw_player_attack_dir(
     uint16_t champion_index,
     uint8_t squad_gfx_set,
@@ -1884,6 +1992,31 @@ int dm2_v1_skproject_draw_food_water_poison_panel(
     int16_t water,
     int16_t poison,
     DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt *out_receipt);
+int dm2_v1_skproject_draw_power_stat_bar(
+    int16_t current_value,
+    uint16_t rect_no,
+    uint16_t color,
+    int16_t floor_value,
+    uint16_t tail_color,
+    int rect_exists,
+    DM2_V1_SkprojectDrawPowerStatBarReceipt *out_receipt);
+int dm2_v1_skproject_draw_scroll_text(
+    uint16_t object_id,
+    int object_is_scroll,
+    const char *message_text,
+    DM2_V1_SkprojectDrawScrollTextReceipt *out_receipt);
+int dm2_v1_skproject_draw_simple_str(
+    uint16_t rect_no,
+    uint16_t foreground_color,
+    uint16_t background_color,
+    const char *text,
+    int rect_exists,
+    DM2_V1_SkprojectDrawSimpleStrReceipt *out_receipt);
+int dm2_v1_skproject_draw_skill_panel(
+    uint16_t champion_index,
+    uint8_t visible_skill_lines,
+    uint8_t visible_attribute_lines,
+    DM2_V1_SkprojectDrawSkillPanelReceipt *out_receipt);
 int dm2_v1_skproject_draw_cryocell_lever(
     uint8_t lever_is_on,
     DM2_V1_SkprojectDrawCryocellLeverReceipt *out_receipt);

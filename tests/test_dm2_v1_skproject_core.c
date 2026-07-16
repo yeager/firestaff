@@ -360,11 +360,20 @@ static void test_gui_receipt_helpers(void)
     DM2_V1_SkprojectDrawPlayerDamageReceipt damage;
     DM2_V1_SkprojectDrawSpellToBeCastReceipt spell_cast;
     DM2_V1_SkprojectDrawSpellPanelReceipt spell_panel;
+    DM2_V1_SkprojectDrawSquadSpellLeaderReceipt squad_spell;
+    DM2_V1_SkprojectDrawSquadPosInterfaceReceipt squad_pos;
     DM2_V1_SkprojectDrawItemIconReceipt item_icon;
     DM2_V1_SkprojectDrawItemInHandReceipt item_hand;
     DM2_V1_SkprojectDrawItemSurveyReceipt item_survey;
     DM2_V1_SkprojectDrawHandActionIconsReceipt hand_actions;
+    DM2_V1_SkprojectDrawPowerStatBarReceipt power_bar;
+    DM2_V1_SkprojectDrawScrollTextReceipt scroll_text;
+    DM2_V1_SkprojectDrawSimpleStrReceipt simple_str;
+    DM2_V1_SkprojectDrawSkillPanelReceipt skill_panel;
     uint8_t palette[16] = { 0 };
+    const uint8_t champion_pos[4] = { 0u, 1u, 2u, 3u };
+    const uint8_t champion_alive[4] = { 1u, 1u, 0u, 1u };
+    const uint8_t champion_enchanted[4] = { 0u, 1u, 0u, 1u };
 
     CHECK(dm2_v1_skproject_draw_icon_pict_entry(
               1u, 4u, 20u, 1, 0x3cu, -1, &icon_entry) == 1 &&
@@ -442,6 +451,35 @@ static void test_gui_receipt_helpers(void)
               spell_panel.drew_rune_choice_buttons &&
               spell_panel.requested_player_attack_dir,
           "DRAW_SPELL_PANEL plans rune choices, current spell, and attack dir");
+    CHECK(dm2_v1_skproject_draw_squad_spell_and_leader_icon(
+              1u, 1u, 2u, 0u, 100, 1u, 0u, 1u, &squad_spell) == 1 &&
+              squad_spell.valid &&
+              squad_spell.relative_pos == 2u &&
+              squad_spell.mirror_flip &&
+              squad_spell.leader_icon_entry == 13u &&
+              squad_spell.spell_icon_entry == 9u &&
+              squad_spell.leader_rect_no == 0x55u &&
+              squad_spell.spell_rect_no == 0x59u &&
+              squad_spell.requested_gray_overlay,
+          "DRAW_SQUAD_SPELL_AND_LEADER_ICON maps skproject relative slots, icons, and overlays");
+    CHECK(dm2_v1_skproject_draw_squad_spell_and_leader_icon(
+              1u, 0u, 2u, 0u, 0, 0u, 0u, 0u, &squad_spell) == 0 &&
+              squad_spell.blocked_dead_champion,
+          "DRAW_SQUAD_SPELL_AND_LEADER_ICON skips dead champions");
+    CHECK(dm2_v1_skproject_draw_squad_pos_interface(
+              3u, champion_pos, champion_alive, champion_enchanted,
+              4u, 1u, 2u, &squad_pos) == 1 &&
+              squad_pos.valid &&
+              squad_pos.base_icon.category == 8u &&
+              squad_pos.base_icon.cls2 == 3u &&
+              squad_pos.base_icon.entry == 0xf5u &&
+              squad_pos.base_icon.button_id == 47u &&
+              squad_pos.drawn_champions == 3u &&
+              squad_pos.requested_alloc_pict_buff &&
+              squad_pos.requested_squad_icon_palette &&
+              squad_pos.requested_aura_summary_image &&
+              squad_pos.requested_free_pict_buff,
+          "DRAW_SQUAD_POS_INTERFACE draws alive non-selected positions from the source squad panel route");
 
     CHECK(dm2_v1_skproject_draw_item_icon(
               0x1401u, 1u, 2u, 7u, 0x2eu, 3u, 1, &item_icon) == 1 &&
@@ -468,6 +506,62 @@ static void test_gui_receipt_helpers(void)
               hand_actions.requested_dialogue_pict &&
               hand_actions.requested_icon_entry,
           "DRAW_HAND_ACTION_ICONS binds action icons to player hand buttons");
+    CHECK(dm2_v1_skproject_draw_power_stat_bar(
+              512, 496u, 6u, -1024, 0u, 1, &power_bar) == 1 &&
+              power_bar.valid &&
+              power_bar.scaled_value == 5000 &&
+              power_bar.selected_color == 6u &&
+              power_bar.requested_scale_rect &&
+              power_bar.requested_black_background_fill &&
+              power_bar.requested_value_fill,
+          "DRAW_POWER_STAT_BAR scales the source 2048-floor range into a fill rect");
+    CHECK(dm2_v1_skproject_draw_power_stat_bar(
+              -100, 496u, 6u, -1024, 9u, 1, &power_bar) == 1 &&
+              power_bar.selected_color == 11u &&
+              power_bar.requested_tail_fill,
+          "DRAW_POWER_STAT_BAR switches to warning colour below zero and emits tail fill");
+    CHECK(dm2_v1_skproject_draw_power_stat_bar(
+              0, 496u, 6u, -1024, 0u, 0, &power_bar) == 0 &&
+              power_bar.blocked_missing_rect,
+          "DRAW_POWER_STAT_BAR rejects missing rects");
+    CHECK(dm2_v1_skproject_draw_scroll_text(
+              0x3000u, 1, "A\nB\nC", &scroll_text) == 1 &&
+              scroll_text.valid &&
+              scroll_text.inventory_subpanel == 5u &&
+              scroll_text.first_text_rect == 0x230u &&
+              scroll_text.line_count == 3u &&
+              scroll_text.requested_message_text &&
+              scroll_text.requested_scroll_background &&
+              scroll_text.requested_centered_lines,
+          "DRAW_SCROLL_TEXT binds scroll objects to message text and centered scroll lines");
+    CHECK(dm2_v1_skproject_draw_scroll_text(
+              0x3000u, 0, "A", &scroll_text) == 0 &&
+              scroll_text.blocked_not_scroll,
+          "DRAW_SCROLL_TEXT rejects non-scroll objects");
+    CHECK(dm2_v1_skproject_draw_simple_str(
+              0x123u, 15u, 0x4000u, "80", 1, &simple_str) == 1 &&
+              simple_str.valid &&
+              simple_str.text_len == 2u &&
+              simple_str.requested_query_str_metrics &&
+              simple_str.requested_query_blit_rect &&
+              simple_str.requested_draw_string &&
+              simple_str.requested_dirty_rect,
+          "DRAW_SIMPLE_STR queries metrics, blits the target rect, and draws text");
+    CHECK(dm2_v1_skproject_draw_simple_str(
+              0x123u, 15u, 0x4000u, "80", 0, &simple_str) == 0 &&
+              simple_str.blocked_missing_rect,
+          "DRAW_SIMPLE_STR rejects missing rects");
+    CHECK(dm2_v1_skproject_draw_skill_panel(
+              2u, 4u, 6u, &skill_panel) == 1 &&
+              skill_panel.valid &&
+              skill_panel.inventory_subpanel == 2u &&
+              skill_panel.skill_text_rect == 557u &&
+              skill_panel.attribute_text_rect == 559u &&
+              skill_panel.requested_blank_panel &&
+              skill_panel.requested_skill_names &&
+              skill_panel.requested_attribute_names &&
+              skill_panel.requested_ability_values,
+          "DRAW_SKILL_PANEL binds the charsheet skill and attribute text routes");
 }
 
 static void test_move_admission_helpers(void)
@@ -2283,7 +2377,11 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_DRAW_SPELL_PANEL") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
-                     "DM2_DRAW_ITEM_ICON") != 0,
+                     "DM2_DRAW_ITEM_ICON") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DRAW_SQUAD_POS_INTERFACE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DRAW_SKILL_PANEL") != 0,
           "source evidence names bundled c_gui_draw receipt helpers");
 
     if (failed) {
