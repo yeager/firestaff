@@ -195,6 +195,29 @@ typedef struct {
     uint8_t blocked_missing_output;
 } DM2_V1_SkprojectMap185AReceipt;
 
+typedef struct {
+    int valid;
+    int blocked_missing_rect;
+    int blocked_missing_overlay;
+    uint16_t width;
+    uint16_t height;
+    uint16_t xend;
+    uint16_t initial_srcofs;
+    uint16_t pixperline;
+    int16_t alpha_mask;
+    uint8_t palette_update_requested;
+    uint8_t used_plain_path;
+    uint8_t used_overlay_path;
+    uint8_t used_alpha_blit;
+    uint16_t blit_runs;
+    uint16_t skipped_prefix_pixels;
+    uint16_t skipped_suffix_pixels;
+    uint16_t odd_width_source_advances;
+    uint32_t dest_start_offset;
+    uint32_t dest_final_offset;
+    uint32_t source_cursor_hash;
+} DM2_V1_SkprojectBlitSpecialEffectsReceipt;
+
 #define DM2_V1_SKPROJECT_MAP_RECORD_END 0xfffeu
 
 typedef struct {
@@ -916,6 +939,16 @@ int dm2_v1_skproject_xlat_palette(
     uint16_t colors,
     const uint8_t *conversion_table,
     DM2_V1_SkprojectXlatPaletteReceipt *out_receipt);
+int dm2_v1_skproject_sub_blit_specialeffects_receipt(
+    const DM2_V1_SkprojectRect *rect,
+    uint16_t xend,
+    uint16_t srcofs,
+    uint16_t overlay_origin,
+    uint16_t overlay_stride,
+    uint16_t pixperline,
+    int16_t alpha_mask,
+    const uint8_t *overlay_mask,
+    DM2_V1_SkprojectBlitSpecialEffectsReceipt *out_receipt);
 int dm2_v1_skproject_move_side_offset(
     uint16_t record_word_e,
     int16_t direction_delta,

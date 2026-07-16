@@ -404,7 +404,7 @@ stretch16_sub2	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	934		MISSING
 stretch16	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	963		MISSING
 stretch256	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1004		MISSING
 _hlp	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1021		MISSING
-DM2_sub_blit_specialeffects	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1078		MISSING
+DM2_sub_blit_specialeffects	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1078	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_sub_blit_specialeffects_receipt; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_blit_specialeffects	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1242	include/dm2_v1_viewport_renderer.h:33	UNCERTAIN
 stretch_4to8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1252		MISSING
 getbmpheader	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	8		MISSING

@@ -166,9 +166,12 @@ static void test_palette_helpers(void)
     DM2_V1_SkprojectDriverPaletteReceipt driver_receipt;
     DM2_V1_SkprojectPaletteSetReceipt set_receipt;
     DM2_V1_SkprojectXlatPaletteReceipt xlat_receipt;
+    DM2_V1_SkprojectBlitSpecialEffectsReceipt blit;
+    DM2_V1_SkprojectRect rect;
     uint8_t alpha_rgb[1024];
     uint8_t palette[4] = { 1u, 2u, 3u, 4u };
     uint8_t conv[256];
+    uint8_t overlay[16];
     uint8_t byte = 0u;
     const uint8_t *selected_palette = 0;
 
@@ -249,6 +252,39 @@ static void test_palette_helpers(void)
               0, 4u, conv, &xlat_receipt) == 0 &&
               xlat_receipt.blocked_missing_output,
           "DM2_xlat_palette rejects missing source palette for explicit colors");
+
+    rect = (DM2_V1_SkprojectRect){ 2, 3, 5, 2 };
+    CHECK(dm2_v1_skproject_sub_blit_specialeffects_receipt(
+              &rect, 4u, 1u, 0u, 0u, 16u, -1, 0, &blit) == 1 &&
+              blit.valid &&
+              blit.palette_update_requested &&
+              blit.used_plain_path &&
+              !blit.used_alpha_blit &&
+              blit.blit_runs == 4u &&
+              blit.odd_width_source_advances == 2u &&
+              blit.dest_start_offset == 50u &&
+              blit.dest_final_offset == 82u,
+          "DM2_sub_blit_specialeffects plain path splits source runs and advances odd-width rows");
+    CHECK(dm2_v1_skproject_sub_blit_specialeffects_receipt(
+              &rect, 4u, 1u, 0u, 0u, 16u, 7, 0, &blit) == 1 &&
+              blit.used_plain_path &&
+              blit.used_alpha_blit &&
+              blit.alpha_mask == 7,
+          "DM2_sub_blit_specialeffects records source alpha-mask blit variant");
+
+    memset(overlay, 0, sizeof(overlay));
+    overlay[1] = 1u;
+    overlay[2] = 1u;
+    overlay[3] = 1u;
+    rect = (DM2_V1_SkprojectRect){ 0, 0, 5, 1 };
+    CHECK(dm2_v1_skproject_sub_blit_specialeffects_receipt(
+              &rect, 6u, 2u, 0u, 8u, 16u, -1, overlay, &blit) == 1 &&
+              blit.valid &&
+              blit.used_overlay_path &&
+              blit.blit_runs == 1u &&
+              blit.skipped_prefix_pixels == 1u &&
+              blit.skipped_suffix_pixels == 1u,
+          "DM2_sub_blit_specialeffects overlay path trims transparent prefix and suffix before blit");
 }
 
 static void test_move_admission_helpers(void)
