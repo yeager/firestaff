@@ -54,6 +54,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0145_f0148_group_overl
              COMMAND test_dm1_v1_f0145_f0148_group_overlay_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0173_f0174_current_map_pc34_compat.c")
+    add_executable(test_dm1_v1_f0173_f0174_current_map_pc34_compat
+        tests/test_dm1_v1_f0173_f0174_current_map_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_data_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
+        src/dm1/dm1_v1_event_timer_pc34_compat.c
+        src/dm1/dm1_v1_object_world_pc34_compat.c)
+    target_include_directories(test_dm1_v1_f0173_f0174_current_map_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0173_f0174_current_map_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm1_v1_f0173_f0174_current_map_pc34_compat
+             COMMAND test_dm1_v1_f0173_f0174_current_map_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0420_save_part_pc34_compat.c")
     add_executable(test_dm1_v1_f0420_save_part_pc34_compat
         tests/test_dm1_v1_f0420_save_part_pc34_compat.c)

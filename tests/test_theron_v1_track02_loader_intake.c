@@ -61,14 +61,37 @@ static Theron_V1Track02IsoLevelObjectReadFacts valid_iso_facts(
     return facts;
 }
 
+static Theron_V1Track02Post3800ConsumerTraceFacts valid_consumer_facts(
+    const Theron_V1Track02LoaderSemanticGateReceipt *gate) {
+    Theron_V1Track02Post3800ConsumerTraceFacts facts;
+
+    memset(&facts, 0, sizeof(facts));
+    facts.authenticated_original_trace = 1;
+    facts.post_3800_execution_observed = 1;
+    facts.same_capture_as_loader_payload = 1;
+    facts.track02_variant = gate->track02_variant;
+    facts.record = gate->record;
+    facts.payload_checksum = gate->payload_checksum;
+    facts.level_envelope_checksum = gate->level_envelope_checksum;
+    facts.post_envelope_checksum = gate->post_envelope_checksum;
+    facts.consumer_trace_checksum = 0x3a17b502u;
+    facts.dungeon_record_consumer_observed = 1;
+    facts.object_table_consumer_observed = 1;
+    facts.bitmap_consumer_observed = 1;
+    facts.palette_consumer_observed = 1;
+    return facts;
+}
+
 int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
     Theron_V1Track02IsoLevelObjectReadFacts iso_facts;
+    Theron_V1Track02Post3800ConsumerTraceFacts consumer_facts;
     Theron_V1Track02LoaderIntakeReceipt receipt;
     Theron_V1Track02LoaderPayloadReceipt payload_receipt;
     Theron_V1Track02LoaderLevelEnvelopeReceipt level_envelope_receipt;
     Theron_V1Track02LoaderPostEnvelopeReceipt post_envelope_receipt;
     Theron_V1Track02LoaderSemanticGateReceipt semantic_gate;
+    Theron_V1Track02Post3800ConsumerSemanticReceipt consumer_semantic;
     Theron_V1Track02IsoLevelObjectReceipt iso_receipt;
     uint8_t payload[THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES];
     uint8_t raw_track02[THERON_TRACK02_RAW_SECTOR_BYTES * 2u];
@@ -184,6 +207,54 @@ int main(void) {
     CHECK(!semantic_gate.fallback_visuals_allowed);
     CHECK(strcmp(semantic_gate.status,
                  "real_loader_bytes_available_semantic_routes_blocked_no_fallback") == 0);
+    consumer_facts = valid_consumer_facts(&semantic_gate);
+    CHECK(theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    CHECK(consumer_semantic.valid && consumer_semantic.no_fallback);
+    CHECK(consumer_semantic.original_consumer_trace_bound);
+    CHECK(consumer_semantic.track02_variant == semantic_gate.track02_variant);
+    CHECK(consumer_semantic.record == THERON_V1_INITIAL_ENVELOPE_RECORD);
+    CHECK(consumer_semantic.payload_checksum == semantic_gate.payload_checksum);
+    CHECK(consumer_semantic.level_envelope_checksum ==
+          semantic_gate.level_envelope_checksum);
+    CHECK(consumer_semantic.post_envelope_checksum ==
+          semantic_gate.post_envelope_checksum);
+    CHECK(consumer_semantic.consumer_trace_checksum ==
+          consumer_facts.consumer_trace_checksum);
+    CHECK(consumer_semantic.dungeon_record_semantics_proven);
+    CHECK(consumer_semantic.object_table_semantics_proven);
+    CHECK(consumer_semantic.bitmap_route_bound);
+    CHECK(consumer_semantic.palette_binding_verified);
+    CHECK(consumer_semantic.rgba_output_allowed);
+    CHECK(!consumer_semantic.fallback_visuals_allowed);
+    CHECK(strcmp(consumer_semantic.status,
+                 "post_3800_original_consumer_semantics_bound_no_fallback") == 0);
+    consumer_facts.payload_checksum ^= 1u;
+    CHECK(!theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    CHECK(!consumer_semantic.valid && consumer_semantic.status == NULL);
+    consumer_facts = valid_consumer_facts(&semantic_gate);
+    consumer_facts.object_table_consumer_observed = 0;
+    CHECK(!theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    consumer_facts = valid_consumer_facts(&semantic_gate);
+    consumer_facts.palette_consumer_observed = 0;
+    CHECK(!theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    consumer_facts = valid_consumer_facts(&semantic_gate);
+    consumer_facts.synthetic_bitmap_promoted = 1;
+    CHECK(!theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    consumer_facts = valid_consumer_facts(&semantic_gate);
+    consumer_facts.fallback_visuals_observed = 1;
+    CHECK(!theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    consumer_facts = valid_consumer_facts(&semantic_gate);
+    semantic_gate.bitmap_route_bound = 1;
+    CHECK(!theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+        &semantic_gate, &consumer_facts, &consumer_semantic));
+    CHECK(!consumer_semantic.valid && consumer_semantic.status == NULL);
+    semantic_gate.bitmap_route_bound = 0;
     ++level_envelope_receipt.envelope[0];
     CHECK(!theron_v1_track02_loader_intake_semantic_gate(
         &payload_receipt, &level_envelope_receipt, &post_envelope_receipt,

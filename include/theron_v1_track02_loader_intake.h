@@ -144,6 +144,51 @@ typedef struct {
     const char *status;
 } Theron_V1Track02LoaderSemanticGateReceipt;
 
+/* Original post-$3800 consumer evidence for the same Track 02 loader sector.
+ * This is the first place semantic names may be asserted, and only as trace
+ * facts.  Synthetic promotion or fallback drawing keeps the route closed even
+ * when the raw loader bytes are otherwise available. */
+typedef struct {
+    int authenticated_original_trace;
+    int post_3800_execution_observed;
+    int same_capture_as_loader_payload;
+    Theron_Track02Variant track02_variant;
+    uint32_t record;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    int dungeon_record_consumer_observed;
+    int object_table_consumer_observed;
+    int bitmap_consumer_observed;
+    int palette_consumer_observed;
+    int synthetic_dungeon_promoted;
+    int synthetic_object_table_promoted;
+    int synthetic_bitmap_promoted;
+    int synthetic_palette_promoted;
+    int fallback_visuals_observed;
+    int fallback_visuals_allowed;
+} Theron_V1Track02Post3800ConsumerTraceFacts;
+
+typedef struct {
+    int valid;
+    int no_fallback;
+    int original_consumer_trace_bound;
+    Theron_Track02Variant track02_variant;
+    uint32_t record;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    int dungeon_record_semantics_proven;
+    int object_table_semantics_proven;
+    int bitmap_route_bound;
+    int palette_binding_verified;
+    int rgba_output_allowed;
+    int fallback_visuals_allowed;
+    const char *status;
+} Theron_V1Track02Post3800ConsumerSemanticReceipt;
+
 /* Byte-faithful ISO handoff for the first level sector. The post-envelope
  * span is retained only as opaque source bytes; object/bitmap semantics stay
  * blocked until an original ISO loader consumer proves them. */
@@ -213,6 +258,15 @@ int theron_v1_track02_loader_intake_semantic_gate(
     const Theron_V1Track02LoaderLevelEnvelopeReceipt *level_envelope,
     const Theron_V1Track02LoaderPostEnvelopeReceipt *post_envelope,
     Theron_V1Track02LoaderSemanticGateReceipt *out_receipt);
+
+/* Promotes the already source-locked loader bytes to semantic availability
+ * only when a same-capture original post-$3800 consumer trace proves every
+ * required consumer. Synthetic dungeon/object/bitmap/palette paths and all
+ * fallback visuals remain fail-closed. */
+int theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+    const Theron_V1Track02LoaderSemanticGateReceipt *loader_gate,
+    const Theron_V1Track02Post3800ConsumerTraceFacts *facts,
+    Theron_V1Track02Post3800ConsumerSemanticReceipt *out_receipt);
 
 /* Copies the first MODE1/2048 ISO level-sector bytes only after a separate
  * ISO capture proves the record, destination, and exact payload checksum.

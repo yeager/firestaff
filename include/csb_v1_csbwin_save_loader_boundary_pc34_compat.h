@@ -199,6 +199,27 @@ typedef struct {
     const char               *decision_label;
 } CSB_V1_CSBWinSaveDiscoveryResult;
 
+typedef struct {
+    int                       valid;        /* receipt itself populated */
+    int                       corpus_positive; /* exact DSA save corpus admission */
+    int                       runtime_handoff_ready; /* may bind DSA runtime */
+    CSB_V1_CSBWinSaveFileKind file_kind;
+    int                       filename_candidate;
+    int                       extended_tail_valid;
+    int                       dsa_section_valid;
+    int                       dsa_has_runtime_actions;
+    int                       gameblock1_valid;
+    size_t                    gameblock1_offset;
+    int                       extended_result;
+    int                       gameblock1_result;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedTailReport tail;
+    CSB_V1_CSBWin512Report   gameblock1;
+    const char               *file_kind_label;
+    const char               *decision_label;
+} CSB_V1_CSBWinDSASaveCorpusReceipt;
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 /* Build a synthetic byte buffer for the given shape into `out_buf`
@@ -290,6 +311,23 @@ int csb_v1_csbwin_save_loader_boundary_classify_file(
     size_t max_size,
     CSB_V1_CSBWinSaveDiscoveryResult *out);
 
+/* Strict corpus gate for CSBWin Extended Features DSA saves. This is the
+ * positive counterpart to classify(): it refuses synthetic CSBGAME fixtures,
+ * DSA-less saves, bad DSA checksums, non-CSBWin filenames, and tails that are
+ * not followed by a valid CSBWin GAMEBLOCK1 header. A positive receipt means
+ * the save bytes contain an authenticated CSBWin DSA section and the runtime
+ * is allowed to consider DSA handoff; it still does not import mutable state. */
+int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+    const char *path_hint,
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinDSASaveCorpusReceipt *out);
+
+int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+    const char *path,
+    size_t max_size,
+    CSB_V1_CSBWinDSASaveCorpusReceipt *out);
+
 /* ── Lookup helpers (used by tests + probe + docs) ───────────────────── */
 
 const char *csb_v1_csbwin_save_loader_boundary_shape_name(
@@ -300,6 +338,9 @@ const char *csb_v1_csbwin_save_loader_boundary_file_kind_name(
 
 const char *csb_v1_csbwin_save_loader_boundary_decision_name(
     const CSB_V1_CSBWinSaveDiscoveryResult *result);
+
+const char *csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(
+    const CSB_V1_CSBWinDSASaveCorpusReceipt *receipt);
 
 /* Source-evidence string for tests + docs. */
 const char *csb_v1_csbwin_save_loader_boundary_source_evidence(void);

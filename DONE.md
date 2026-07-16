@@ -1,5 +1,53 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 CSBWin DSA/save-runtime corpus gate: added
+  `csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt()` and the file
+  wrapper beside the CSBWin save loader-boundary classifier. The receipt
+  admits only recognised CSBWin save filenames carrying a checksum-authenticated
+  Extended Features DSA section with real actions/program words, a verified
+  game-info/level-index tail, and a following valid GAMEBLOCK1 header before
+  marking DSA runtime handoff ready. DSA-less, bad-tail, bad-checksum,
+  non-CSBWin filename, and missing-GAMEBLOCK1 cases remain fail-closed.
+  Verification: focused Ninja/CTest
+  `csb_v1_csbwin_save_loader_boundary_pc34_compat_unit` and sibling
+  `csb_v1_csbwin_512_xor_pad_classify_unit` passed.
+
+- 2026-07-16 DM1 DUNGEON F0173/F0174 current-map receipts: added
+  source-named `DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat` and
+  `DM1_V1_DungeonData_F0174SetCurrentMapAndPartyMapPc34Compat` wrappers over
+  the central DM1 dungeon-data store. F0173 now publishes a receipt for the
+  loaded current-map index/dimensions update and preserves party metadata;
+  F0174 composes F0173 then updates only the party map index while preserving
+  party x/y/direction. Invalid map indices reject before either current-map or
+  party-map mutation. Verification:
+  `dm1_v1_f0173_f0174_current_map_pc34_compat` covers F0173-only, F0174
+  current+party, and invalid-map no-partial-mutation cases. Audit rows
+  `F0173_DUNGEON_SetCurrentMap` and
+  `F0174_DUNGEON_SetCurrentMapAndPartyMap` are closed as
+  `VERIFIED_SOURCE_MAPPING`.
+
+- 2026-07-16 DM2 skproject picture-mement helper slice: added source-named
+  bounded receipts for `TEST_MEMENT`, `RECYCLE_MEMENTI`, `ALLOC_NEW_PICT`,
+  `ALLOC_IMAGE_MEMENT`, `ALLOC_PICT_MEMENT`, `CALC_PICT_ENT_HASH`,
+  `FREE_IMAGE_MEMENT`, and `FREE_PICT_MEMENT`. The route preserves
+  skproject's picture payload/header sizing, ExtendedPicture hash packing,
+  image-backed versus Picture.w12 cache-index picture mement branches, the
+  default-image fallback only after an absent primary entry, and the original
+  Y=-32/8bpp image mement admission gate while failing closed instead of
+  fabricating decoded graphics. Verification: strict direct C11 build/run and
+  focused Ninja/CTest `dm2_v1_skproject_core`.
+
+- 2026-07-16 Nexus MENU.BPK PRS3 opcode-prefix witness: added a bounded
+  `nexus_v1_bpk_archive_prs3_opcode_prefix_witness()` receipt for validated
+  PRS3 frames. It walks at most a caller-specified command count under an
+  explicit LSB/MSB control-bit order, records control/operand byte
+  consumption, literal/backref command counts, first backref operands, and
+  stop reason, but never allocates output, promotes a decoder, or changes the
+  MENU.BPK renderer/upload route. Verification: strict direct C99 build/run
+  of `test_nexus_v1_bpk_prs3_payload_evidence` and focused Ninja/CTest
+  `nexus_v1_bpk_prs3_payload_evidence` passed, including optional local
+  MENU.BPK evidence where present.
+
 - 2026-07-16 Nexus MENU.BPK/DGN fail-closed route slice: wired the
   `test_nexus_v1_menu_bpk_renderer_handoff_gate` CMake/CTest target, fixed
   the MENU.BPK `READY_DECODED` contract so generic decoded PRS3 remains
@@ -20494,6 +20542,19 @@ blocked until an original consumer proves them. Verification:
 `ctest --test-dir build-local-ninja -R
 'theron_v1_track02_loader_intake|theron_v1_raw_loader_trace_initial_level_handoff'
 --output-on-failure` passes.
+
+# ✅ 2026-07-16 Theron post-$3800 consumer semantic gate
+
+The Track 02 loader intake now exposes a separate post-`$3800`
+consumer-trace gate. It promotes dungeon-record, object-table, bitmap,
+palette, and source RGBA availability only when the original same-capture
+consumer trace matches the already rehashed loader payload, level-envelope,
+and post-envelope checksums. Synthetic dungeon/object/bitmap/palette
+promotion and fallback visuals remain hard blockers. Verification: strict
+compile of `theron_v1_track02_loader_intake.c` and focused
+`theron_v1_track02_loader_intake` coverage for positive source admission,
+stale checksum, missing consumer, synthetic, fallback, and pre-promoted-gate
+rejections.
 
 # ✅ 2026-07-16 DM1 GROUP F0179 aspect update source mapping
 

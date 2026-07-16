@@ -42,6 +42,9 @@ static void wr32_be(uint8_t *p, uint32_t v) {
 
 static uint8_t archive[ARCHIVE_SIZE];
 
+#define OPCODE_ARCHIVE_SIZE (24 + 8 + 20 + 32 + 12)
+static uint8_t opcode_archive[OPCODE_ARCHIVE_SIZE];
+
 static void build_archive(void) {
     const uint32_t trailer_off = 24U + 16U;          /* = 40 */
     const uint32_t entry1_off  = trailer_off + 20U;   /* = 60 */
@@ -90,6 +93,42 @@ static void build_archive(void) {
         wr32_be(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 4U, 1U);
         wr32_be(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 8U, 8U * 4U);
         wr32_be(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 12U, 0x07U);
+    }
+}
+
+static void build_opcode_archive(void) {
+    const uint32_t trailer_off = 24U + 8U;
+    const uint32_t entry1_off = trailer_off + 20U;
+
+    memset(opcode_archive, 0, sizeof(opcode_archive));
+    memcpy(opcode_archive, "BPPK", 4);
+    wr32_be(opcode_archive + 4, (uint32_t)sizeof(opcode_archive));
+    memcpy(opcode_archive + 12, "BMPD", 4);
+    wr32_be(opcode_archive + 16, (uint32_t)(sizeof(opcode_archive) - 20U));
+    wr32_be(opcode_archive + 20, 2U);
+    wr32_be(opcode_archive + 24, trailer_off);
+    wr32_be(opcode_archive + 28, entry1_off);
+
+    opcode_archive[trailer_off + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+
+    {
+        uint8_t *r = opcode_archive + entry1_off;
+        memset(r, 0, NEXUS_V1_BPK_ENTRY_PREFIX_BYTES);
+        wr16_be(r + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 4U);
+        r[NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 2U;
+        r[NEXUS_V1_BPK_PREFIX_MODE_OFFSET] = NEXUS_V1_BPK_MODE_8BPP;
+        memcpy(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, "PRS3", 4);
+        wr32_be(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 4U, 1U);
+        wr32_be(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 8U, 8U);
+        /* stream_size is 12, so the validated frame word is stream+4. */
+        wr32_be(r + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 12U, 16U);
+        /* LSB-first witness: literal 0xaa, backref 0x34 0x20, literal 0xbb. */
+        r[NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 16U] = 0x05U;
+        r[NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 17U] = 0xaaU;
+        r[NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 18U] = 0x34U;
+        r[NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 19U] = 0x20U;
+        r[NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 20U] = 0xbbU;
     }
 }
 
@@ -350,6 +389,58 @@ static void test_framed_decode_evaluation(void) {
            "framed evaluation rejects an unknown bit order");
 }
 
+static void test_opcode_prefix_witness(void) {
+    Nexus_V1_BpkPrs3OpcodePrefixEvidence rows[4];
+    Nexus_V1_BpkPrs3OpcodePrefixSummary summary;
+    int rc;
+
+    build_opcode_archive();
+    memset(rows, 0, sizeof(rows));
+    memset(&summary, 0, sizeof(summary));
+
+    rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
+        opcode_archive, sizeof(opcode_archive),
+        NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST,
+        3U, rows, 4U, &summary);
+    expect(rc == 0, "opcode-prefix witness accepts validated synthetic frame");
+    expect(summary.prs3_surfaces == 1U &&
+               summary.frame_validated == 1U &&
+               summary.witnessed == 1U &&
+               summary.command_limit_reached == 1U &&
+               summary.decoder_promoted == 0,
+           "opcode-prefix witness reports one bounded diagnostic row");
+    expect(rows[0].entry_index == 1U &&
+               rows[0].body_size == 8U &&
+               rows[0].first_control_byte == 0x05U &&
+               rows[0].commands_observed == 3U,
+           "opcode-prefix row preserves frame body and first control byte");
+    expect(rows[0].literal_commands == 2U &&
+               rows[0].backref_commands == 1U &&
+               rows[0].control_bytes_consumed == 1U &&
+               rows[0].operand_bytes_consumed == 4U &&
+               rows[0].body_bytes_consumed == 5U,
+           "opcode-prefix row counts LSB-first control and operands only");
+    expect(rows[0].first_backref_observed == 1 &&
+               rows[0].first_backref_raw_offset == 0x234U &&
+               rows[0].first_backref_length == 3U,
+           "opcode-prefix row records first backref operands without output");
+    expect(strcmp(nexus_v1_bpk_prs3_opcode_prefix_status_name(rows[0].status),
+                  "command-limit") == 0,
+           "opcode-prefix status name is stable");
+
+    rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
+        opcode_archive, sizeof(opcode_archive),
+        NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST,
+        0U, rows, 4U, &summary);
+    expect(rc != 0, "opcode-prefix witness rejects zero command limit");
+
+    rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
+        opcode_archive, sizeof(opcode_archive),
+        (Nexus_V1_BpkPrs3CandidateBitOrder)99,
+        3U, rows, 4U, &summary);
+    expect(rc != 0, "opcode-prefix witness rejects unknown bit order");
+}
+
 static void test_optional_local_menumenu_bpk(void) {
     const char *home = getenv("HOME");
     char path[1024];
@@ -411,6 +502,8 @@ static void test_optional_local_menumenu_bpk(void) {
     {
         Nexus_V1_BpkPrs3FramedEvalEvidence framed_rows[256];
         Nexus_V1_BpkPrs3FramedEvalSummary framed;
+        Nexus_V1_BpkPrs3OpcodePrefixEvidence opcode_rows[256];
+        Nexus_V1_BpkPrs3OpcodePrefixSummary opcode;
         for (int order = NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST;
              order <= NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST;
              ++order) {
@@ -424,6 +517,15 @@ static void test_optional_local_menumenu_bpk(void) {
                        framed.complete_exact == 0U &&
                        framed.decoder_promoted == 0,
                    "local MENU.BPK framed evaluation has no promoting exact result");
+            rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
+                data, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
+                16U, opcode_rows, 256U, &opcode);
+            expect(rc == 0 && opcode.prs3_surfaces == 162U &&
+                       opcode.frame_validated == 161U &&
+                       opcode.unvalidated_frames == 1U &&
+                       opcode.witnessed == 161U &&
+                       opcode.decoder_promoted == 0,
+                   "local MENU.BPK opcode-prefix witness remains diagnostic-only");
         }
     }
 
@@ -438,6 +540,7 @@ int main(void) {
     test_rejections();
     test_framing_evidence();
     test_framed_decode_evaluation();
+    test_opcode_prefix_witness();
     test_optional_local_menumenu_bpk();
 
     if (g_failures) {
