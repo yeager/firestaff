@@ -197,6 +197,17 @@
     Remaining Theron work is still the real original capture that produces the
     post-$3800 consumer semantic receipt for the admitted runtime session; no
     synthetic consumer route or fallback visual path is admitted.
+  - 2026-07-16 Theron render-asset admission update: the runtime admission
+    surface now has a second fail-closed gate after consumer semantics for
+    decoded real render assets. The receipt requires the same admitted US raw
+    Track 02 session, matching level/object/all-dungeon route hashes, matching
+    payload/envelope/consumer trace checksums, nonzero decoded level,
+    object-table, bitmap, and palette hashes, explicit level/object/bitmap/
+    palette consumer proof, decoded bitmap-pixel and palette-word proof, and
+    rejects any synthetic promotion or fallback observation. Remaining Theron
+    work is the real decoder/capture producer that supplies those decoded
+    level, object-table, bitmap, and palette proofs from captured Track 02
+    data; fallback visuals remain closed.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -280,10 +291,20 @@
     including wall-cell separation and C02 same-map door/animation cleanup,
     and F0239 extract-then-delete flow. Verification used focused
     `dm1_v1_event_timer_source_lock` coverage; no synthetic gameplay data was
-    added. The broader F0240/F0261 execution bodies remain separate backlog
-    work.
-  Prioritized backlog `F0185`-`F0208`, `F0224`, and `F0233`-`F0239` rows are
-  now disposed.
+    added.
+  - 2026-07-16 update: adjacent stale rows `F0240`, `F0261`, and `F0265`
+    are now closed against the same DM1-owned event timer queue. F0240
+    expires only the first heap entry by ReDMCSB low-24-bit `Map_Time` <=
+    game tick, F0261 drains expired events through F0239 ordering while
+    preserving unrecorded expired events when the bounded dispatch result is
+    full, and F0265 builds the exact C60/C61 move-group retry record with
+    `gameTime + 5`, destination `B.Location`, zero priority, silent/audible
+    type, and the source C04 Thing word in `C.Slot`. Verification used focused
+    `dm1_v1_event_timer_source_lock` coverage; no synthetic gameplay data was
+    added. Broader square-event, champion-action, spell, and real-map
+    side-effect bodies remain separate backlog work.
+  Prioritized backlog `F0185`-`F0208`, `F0224`, `F0233`-`F0240`, `F0261`,
+  and `F0265` rows are now disposed.
   Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
@@ -372,6 +393,13 @@
     adding a synthetic DSA-positive save. Remaining CSB work is still positive
     operator-supplied DSA-bearing corpus execution and real Mac/app
     title/HUD/door capture breadth.
+  - 2026-07-16 update: CSB now has a runtime-owned receipt for ReDMCSB
+    `TIMELINE.C F0240_IsFirstEventExpired`. It inspects only the live CSB
+    `timeline_queue` heap root and runtime `game_time`, compares the low
+    24-bit `Map_Time` value, and rejects malformed heap roots instead of
+    fabricating a timer/event. Remaining CSB TIMER work is the broader F0261
+    event body/corpus execution surface and positive DSA-bearing save breadth,
+    not the first-event expiry predicate.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
@@ -970,8 +998,9 @@
 
 - 2026-07-15 DM1 MOVE F0265 follow-up: blocked C04 movement now builds the
   original C60/C61 `Map_Time`, `B.Location`, and exact little-endian `C.Slot`
-  record before M10 schedules its retry. Remaining F0265 work is real
-  original-save corpus capture; do not replace C.Slot with a host-only index.
+  record before M10 schedules its retry. The source-shaped event builder is
+  now audit-closed; remaining F0265 work is real original-save corpus capture,
+  not replacement of C.Slot with a host-only index.
 
 - 2026-07-15 DM1 MOVE F0264 follow-up: the source-defined C04 raw-attribute,
   C14 projectile, and C15 explosion levitation classifier now drives the live

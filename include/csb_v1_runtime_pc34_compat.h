@@ -93,6 +93,17 @@ typedef struct {
     char text[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
 } CSB_V1_RuntimeTextMessageReceipt;
 
+typedef struct {
+    int valid;
+    int expired;
+    int event_count;
+    int first_event_index;
+    uint32_t game_time;
+    uint32_t first_event_time;
+    uint8_t first_event_type;
+    const char *status;
+} CSB_V1_F0240_FirstEventExpiredReceipt;
+
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
  * CSB uses a 55ms per-tick clock (same as DM1).
@@ -1248,6 +1259,13 @@ void csb_v1_runtime_tick(CSB_V1_RuntimeProfile *profile, uint32_t dt_ms);
  * Deterministic stepping function.  Returns 1 if a tick fired, 0 if paused,
  * game-over, victorious, or profile is NULL. */
 int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
+
+/* CSB-owned ReDMCSB TIMELINE.C F0240 receipt. It inspects only the live
+ * runtime's source event heap and compares the first event's low 24-bit time
+ * to G0313_ul_GameTime; malformed or empty heaps fail closed. */
+int csb_v1_runtime_f0240_is_first_event_expired(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_F0240_FirstEventExpiredReceipt *out_receipt);
 
 /* Check if a V1 tick is due at accumulated wall-clock time now_ms.
  * Pass 0 to use profile->total_play_ms. */

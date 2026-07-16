@@ -22679,6 +22679,59 @@ int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile)
     return 1;
 }
 
+int csb_v1_runtime_f0240_is_first_event_expired(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_F0240_FirstEventExpiredReceipt *out_receipt)
+{
+    const struct DM1_EventQueue_V1 *queue;
+    int event_index;
+    const struct DM1_Event_V1 *event;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile) {
+        out_receipt->status = "missing-profile";
+        return 0;
+    }
+
+    queue = &profile->timeline_queue;
+    out_receipt->game_time = profile->game_time & 0x00ffffffu;
+    out_receipt->event_count = queue->eventCount;
+    if (queue->eventCount <= 0) {
+        out_receipt->valid = 1;
+        out_receipt->first_event_index = -1;
+        out_receipt->status = "empty-timeline";
+        return 1;
+    }
+    if (queue->eventCount > DM1_EVENT_MAX_COUNT ||
+        queue->maxEvents <= 0 || queue->maxEvents > DM1_EVENT_MAX_COUNT) {
+        out_receipt->status = "malformed-timeline-count";
+        return 0;
+    }
+    event_index = queue->timeline[0];
+    out_receipt->first_event_index = event_index;
+    if (event_index < 0 || event_index >= queue->maxEvents ||
+        event_index >= DM1_EVENT_MAX_COUNT) {
+        out_receipt->status = "malformed-first-event-index";
+        return 0;
+    }
+    event = &queue->events[event_index];
+    if (event->type == DM1_EVENT_NONE) {
+        out_receipt->status = "malformed-empty-first-event";
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->first_event_type = event->type;
+    out_receipt->first_event_time = DM1_MAP_TIME_TIME(event->map_time);
+    out_receipt->expired =
+        out_receipt->first_event_time <= out_receipt->game_time;
+    out_receipt->status = out_receipt->expired
+        ? "expired-first-event"
+        : "waiting-first-event";
+    return 1;
+}
+
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms)
 {
     uint64_t wall_ms;

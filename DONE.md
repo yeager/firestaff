@@ -1,5 +1,31 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Theron runtime Track 02 render-asset admission gate: added
+  `Theron_V1RuntimeTrack02RenderAssetProof`,
+  `Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt`, and
+  `theron_v1_runtime_bind_track02_render_asset_admission()` so the runtime
+  path cannot promote consumer semantics into render admission until the same
+  admitted US raw Track 02 session also supplies matching route hashes,
+  payload/envelope/consumer checksums, nonzero decoded level/object-table/
+  bitmap/palette hashes, explicit consumer proof for each domain, decoded
+  bitmap-pixel and palette-word proof, and no synthetic promotion or fallback
+  observation. This adds no decoded art and no fallback visual path; it only
+  admits caller-supplied real proof. Verification: focused Ninja target
+  `firestaff_theron_v1_runtime_admission_probe`, direct probe run, focused
+  CTest `theron_v1_runtime_admission`, and `git diff --check`.
+
+- 2026-07-16 DM1 TIMELINE/MOVE audit closure: tightened
+  `dm1v1_event_process_tick()` so the bounded F0261 dispatch recorder stops
+  before extracting an event it cannot publish, preserving the real expired
+  EVENT for the next pass. The callable audit now closes ReDMCSB `F0240`,
+  `F0261`/`F261_hzzz_`, and `F0265` as DM1-owned source mappings: F0240 uses
+  the first heap entry's low-24-bit `Map_Time`, F0261 drains through F0239
+  order into source-shaped dispatch records, and F0265 builds the exact C60/
+  C61 move-group retry EVENT with `gameTime + 5`, zero priority, destination
+  `B.Location`, and the source C04 Thing word in `C.Slot`. Verification:
+  focused Ninja target and focused CTest `dm1_v1_event_timer_source_lock` in
+  both `build-local-ninja` and `build-dm1-worker`, plus `git diff --check`.
+
 - 2026-07-16 DM2 skproject utility helper receipts: added bounded
   `dm2_v1_skproject_abs()`, `dm2_v1_skproject_calc_square_distance()`,
   `dm2_v1_skproject_calc_vector_dir()`,
@@ -11,7 +37,9 @@
   caller-owned table writes, and unsigned-word multiply-before-shift behavior
   without creating movement/pathfinding/HUD/GDAT consumers or synthetic
   storage. Verification: strict direct C99 build/run of
-  `test_dm2_v1_skproject_core`.
+  `test_dm2_v1_skproject_core`, focused Ninja target
+  `test_dm2_v1_skproject_core`, focused CTest `dm2_v1_skproject_core`, and
+  `git diff --check`.
 
 - 2026-07-16 DM2 skproject attribute/UI event receipts: added bounded
   `dm2_v1_skproject_boost_attribute()` and
@@ -21017,3 +21045,16 @@ coverage verifies priority/address ties, wall-cell merge separation,
 door-destruction scope, and caller reschedule repair. Verification:
 `ctest --test-dir build-local-ninja -R '^dm1_v1_event_timer_source_lock$'
 --output-on-failure` passed.
+
+# ✅ 2026-07-16 CSB TIMELINE F0240 first-event expiry receipt
+
+CSB now exposes a source-named `F0240_TIMELINE_IsFirstEventExpired` receipt
+over the live runtime timeline heap. The receipt reads only the CSB
+`timeline_queue` root and runtime `game_time`, compares ReDMCSB's low-24-bit
+`TIME(Map_Time) <= G0313_ul_GameTime` predicate, reports empty timelines as
+non-expired, and rejects malformed heap roots without creating substitute
+events. This closes the CSB TIMER symbol gap for F0240 only; broader F0261
+event execution and DSA/save-corpus breadth remain separate. Verification:
+`cmake --build build-local-ninja --target test_csb_v1_boot_runtime_handoff
+-j2`, `ctest --test-dir build-local-ninja -R '^csb_v1_boot_runtime_handoff$'
+--output-on-failure`, and `git diff --check` passed.
