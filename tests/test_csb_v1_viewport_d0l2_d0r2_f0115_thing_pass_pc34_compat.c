@@ -1,6 +1,7 @@
 #include "csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /*
@@ -65,6 +66,92 @@ static void expect_contains(const char *id, const char *haystack,
     } else {
         printf("PASS %s contains=%s anchor=%s\n", id, needle, anchor);
     }
+}
+
+static unsigned read_be16(const unsigned char *p)
+{
+    return ((unsigned)p[0] << 8) | (unsigned)p[1];
+}
+
+static uint32_t fnv1a32(const unsigned char *data, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int read_real_graphics_item_hash(const char *path,
+                                        unsigned item_index,
+                                        size_t *out_size,
+                                        uint32_t *out_hash)
+{
+    FILE *fp;
+    unsigned char header[4];
+    unsigned char *table = NULL;
+    unsigned char *payload = NULL;
+    unsigned count;
+    size_t table_bytes;
+    size_t data_offset;
+    size_t payload_offset;
+    size_t payload_size;
+    unsigned i;
+    int ok = 0;
+
+    if (!path || !out_size || !out_hash) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(header, 1u, sizeof(header), fp) != sizeof(header)) {
+        fclose(fp);
+        return 0;
+    }
+    if (read_be16(header) != 0x8001u) {
+        fclose(fp);
+        return 0;
+    }
+    count = read_be16(header + 2u);
+    if (count == 0u || item_index >= count || count > 2048u) {
+        fclose(fp);
+        return 0;
+    }
+
+    table_bytes = (size_t)count * 4u;
+    table = (unsigned char *)malloc(table_bytes);
+    if (!table || fread(table, 1u, table_bytes, fp) != table_bytes) {
+        free(table);
+        fclose(fp);
+        return 0;
+    }
+
+    data_offset = 4u + table_bytes;
+    payload_offset = data_offset;
+    for (i = 0; i < item_index; ++i) {
+        payload_offset += read_be16(table + (size_t)i * 2u);
+    }
+    payload_size = read_be16(table + (size_t)item_index * 2u);
+    if (payload_size == 0u ||
+        read_be16(table + (size_t)count * 2u + (size_t)item_index * 2u) == 0u ||
+        fseek(fp, (long)payload_offset, SEEK_SET) != 0) {
+        free(table);
+        fclose(fp);
+        return 0;
+    }
+
+    payload = (unsigned char *)malloc(payload_size);
+    if (payload &&
+        fread(payload, 1u, payload_size, fp) == payload_size) {
+        *out_size = payload_size;
+        *out_hash = fnv1a32(payload, payload_size);
+        ok = *out_hash != 0u;
+    }
+    free(payload);
+    free(table);
+    fclose(fp);
+    return ok;
 }
 
 static const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture_for_index(int index)
@@ -494,6 +581,89 @@ static void test_csb_lineage_cross_references(void)
                     "5668-5683", A_F0115_PROJECTILE);
 }
 
+static void test_real_graphics_dat_frame_receipts(void)
+{
+    const char *path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *d0l2 = fixture_for_index(0);
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *d0r2 = fixture_for_index(1);
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixtures[2] = {d0l2, d0r2};
+    int i;
+
+    if (!path || path[0] == '\0') {
+        path = "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
+    }
+
+    for (i = 0; i < 2; ++i) {
+        const CSB_V1_D0L2D0R2F0115ThingPassPc34 *f = fixtures[i];
+        CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34 receipt;
+        size_t payload_size = 0u;
+        uint32_t payload_hash = 0u;
+        char label[96];
+
+        if (!f ||
+            !read_real_graphics_item_hash(path, (unsigned)f->wall_frame_row,
+                                          &payload_size, &payload_hash)) {
+            printf("SKIP real GRAPHICS.DAT frame row %d path=%s\n",
+                   f ? f->wall_frame_row : -1, path);
+            continue;
+        }
+
+        snprintf(label, sizeof(label), "real_frame%d.size_positive", i + 1);
+        expect_int(label, payload_size > 0u, 1, A_FRAMES);
+        snprintf(label, sizeof(label), "real_frame%d.hash_nonzero", i + 1);
+        expect_int(label, payload_hash != 0u, 1,
+                   "real GRAPHICS.DAT payload hash, no decoded-pixel claim");
+        snprintf(label, sizeof(label), "real_frame%d.receipt", i + 1);
+        expect_int(label,
+                   csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       f, 1, 1, 1, f->wall_frame_row, payload_size,
+                       payload_hash, &receipt),
+                   1, A_F0674);
+        snprintf(label, sizeof(label), "real_frame%d.valid", i + 1);
+        expect_int(label, receipt.valid, 1, A_F0674);
+        snprintf(label, sizeof(label), "real_frame%d.item", i + 1);
+        expect_int(label, receipt.source_graphics_item_index,
+                   f->wall_frame_row, A_FRAMES);
+        snprintf(label, sizeof(label), "real_frame%d.hash_preserved", i + 1);
+        expect_int(label, receipt.source_payload_hash == payload_hash, 1,
+                   "receipt preserves measured GRAPHICS.DAT payload hash");
+        snprintf(label, sizeof(label), "real_frame%d.no_synthetic", i + 1);
+        expect_int(label, receipt.no_synthetic_pixels, 1,
+                   "no generated viewport pixels");
+        snprintf(label, sizeof(label), "real_frame%d.no_fallback", i + 1);
+        expect_int(label, receipt.no_fallback_visuals, 1,
+                   "fallback visuals remain closed");
+        snprintf(label, sizeof(label), "real_frame%d.g2028_disabled", i + 1);
+        expect_int(label, receipt.item_projectile_disabled_by_g2028, 1,
+                   A_F0115_ITEM);
+
+        snprintf(label, sizeof(label), "real_frame%d.wrong_index", i + 1);
+        expect_int(label,
+                   csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       f, 1, 1, 1, f->wall_frame_row + 1, payload_size,
+                       payload_hash, &receipt),
+                   0, "fail closed on wrong GRAPHICS.DAT item index");
+        snprintf(label, sizeof(label), "real_frame%d.synthetic", i + 1);
+        expect_int(label,
+                   csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       f, 1, 0, 1, f->wall_frame_row, payload_size,
+                       payload_hash, &receipt),
+                   0, "fail closed on synthetic pixels");
+        snprintf(label, sizeof(label), "real_frame%d.fallback", i + 1);
+        expect_int(label,
+                   csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       f, 1, 1, 0, f->wall_frame_row, payload_size,
+                       payload_hash, &receipt),
+                   0, "fail closed on fallback visuals");
+        snprintf(label, sizeof(label), "real_frame%d.zero_hash", i + 1);
+        expect_int(label,
+                   csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       f, 1, 1, 1, f->wall_frame_row, payload_size,
+                       0u, &receipt),
+                   0, "fail closed on missing payload hash");
+    }
+}
+
 static void test_evidence_strings(void)
 {
     const char *e =
@@ -565,6 +735,7 @@ int main(void)
     test_clip_no_write_and_blend_contract();
     test_zone_bindings_and_draw_order();
     test_csb_lineage_cross_references();
+    test_real_graphics_dat_frame_receipts();
     test_evidence_strings();
 
     expect_int("assertion_count_at_least_100", g_assertions >= 100, 1, A_F0115);

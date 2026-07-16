@@ -161,35 +161,15 @@ static void mark_plan_walls_visible(
 static int style_has_complete_wall_plan(const DM2_V1_AssetLoader *loader,
                                         int graphicsset)
 {
-    DM2_V1_ViewportState viewport;
-    DM2_V1_WallPanelRenderPlan plan;
-    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    DM2_V1_GdatWallM11CommandPlan plan;
+    int complete;
 
-    memset(framebuffer, 0, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport, 1, graphicsset, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-        0u);
-    if (!dm2_v1_viewport_build_wall_panel_render_plan(&viewport, &plan) ||
-        plan.panel_count <= 0) {
-        return 0;
-    }
-    for (int i = 0; i < plan.panel_count; ++i) {
-        int field = -1;
-        uint8_t palette16[16];
-        uint32_t palette_hash = 0u;
-
-        if (!wall_provider_address(plan.panels[i].gdat_index, graphicsset,
-                                   &field) ||
-            !dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
-                                      graphicsset, field, NULL) ||
-            !dm2_v1_asset_load_image_local_palette(
-                loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
-                palette16, &palette_hash) || !palette_hash) {
-            return 0;
-        }
-    }
-    return 1;
+    memset(&plan, 0, sizeof(plan));
+    complete = dm2_v1_gdat_wall_m11_command_plan_build(
+        loader, (uint8_t)graphicsset, &plan) && plan.valid &&
+        plan.command_count > 0 && plan.command_hash != 0u;
+    dm2_v1_gdat_wall_m11_command_plan_free(&plan);
+    return complete;
 }
 
 int main(void)
@@ -202,6 +182,7 @@ int main(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_GdatSceneM11CommandPlan scene_plan;
     DM2_V1_GdatWallM11CommandPlan wall_plan;
+    DM2_V1_GdatWallM11CommandPlan moving_wall_plan;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     WallTrace trace;
@@ -217,6 +198,7 @@ int main(void)
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&scene_plan, 0, sizeof(scene_plan));
     memset(&wall_plan, 0, sizeof(wall_plan));
+    memset(&moving_wall_plan, 0, sizeof(moving_wall_plan));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0) {
         fputs("FAIL: canonical DM2 GDAT/G1 input was not accepted\n", stderr);
@@ -245,6 +227,18 @@ int main(void)
         wall_plan.graphicsset != (uint8_t)graphicsset ||
         wall_plan.command_count == 0 || wall_plan.command_hash == 0u) {
         fputs("FAIL: canonical GRAPHICSSET wall command plan was incomplete\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    if (!dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
+            &loader, (uint8_t)graphicsset, 1, &moving_wall_plan) ||
+        !moving_wall_plan.valid ||
+        moving_wall_plan.graphicsset != (uint8_t)graphicsset ||
+        moving_wall_plan.command_count != wall_plan.command_count ||
+        moving_wall_plan.command_hash == 0u ||
+        moving_wall_plan.command_hash == wall_plan.command_hash) {
+        fputs("FAIL: canonical moving GRAPHICSSET wall command plan was incomplete\n",
+              stderr);
         failures = 1;
         goto done;
     }
@@ -459,6 +453,31 @@ int main(void)
               stderr);
         failures = 1;
     }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash,
+        scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+        scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+        scene_plan.ambient_darkness);
+    dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &moving_wall_plan);
+    mark_plan_walls_visible(&viewport, &moving_wall_plan);
+    dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
+    dm2_v1_render_walls(&viewport);
+    if (viewport.asset_wall_drawn_count != moving_wall_plan.command_count ||
+        viewport.gdat_wall_material_plan_consumed_count !=
+            moving_wall_plan.command_count ||
+        viewport.fallback_wall_drawn_count != 0 ||
+        viewport.last_dungeon_wall_material_required_mask == 0u ||
+        viewport.last_dungeon_wall_material_required_mask !=
+            viewport.last_dungeon_wall_material_consumed_mask ||
+        (viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) != 0u) {
+        fputs("FAIL: moving M10 frame did not consume the signed RAW4 wall plan\n",
+              stderr);
+        failures = 1;
+    }
     /* UPDATE_GFXSET is a single G1 transaction.  A wall plan retained from
      * the old control hash must be detached before M10 can query any fallback
      * provider or draw a stale GRAPHICSSET panel. */
@@ -513,6 +532,7 @@ int main(void)
     free_wall_pixels(&trace);
 
 done:
+    dm2_v1_gdat_wall_m11_command_plan_free(&moving_wall_plan);
     dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
     dm2_v1_asset_loader_free(&loader);

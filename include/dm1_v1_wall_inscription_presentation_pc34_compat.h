@@ -40,10 +40,20 @@ int dm1_v1_wall_inscription_presentation_from_world_pc34(
     int preferredTextIndex,
     unsigned short firstThing,
     DM1_V1_WallInscriptionPresentationReceiptPc34* outReceipt);
+int dm1_v1_wall_inscription_presentation_from_selected_wall_pc34(
+    const struct DungeonThings_Compat* things,
+    int selectedTextIndex,
+    DM1_V1_WallInscriptionPresentationReceiptPc34* outReceipt);
 int dm1_v1_viewport_inscription_receipt_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
     unsigned short firstThing,
+    DM1_V1_ViewportInscriptionProjectionPc34 projection,
+    int championMirror,
+    DM1_V1_ViewportInscriptionReceiptPc34* outReceipt);
+int dm1_v1_viewport_inscription_receipt_from_selected_wall_pc34(
+    const struct DungeonThings_Compat* things,
+    int selectedTextIndex,
     DM1_V1_ViewportInscriptionProjectionPc34 projection,
     int championMirror,
     DM1_V1_ViewportInscriptionReceiptPc34* outReceipt);

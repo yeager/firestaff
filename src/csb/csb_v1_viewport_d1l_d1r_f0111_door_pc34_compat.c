@@ -36,6 +36,7 @@ enum {
     CSB_C6_UNKNOWN = 6,
     CSB_MASK_4000_SHIFT = 0x4000,
     CSB_C10_COLOR_FLESH = 10,
+    CSB_STANDARD_DOOR_GRAPHICS_ITEM_INDEX = 558,
     CSB_RENDER_WIDTH = 16,
     CSB_RENDER_HEIGHT = 12
 };
@@ -139,7 +140,9 @@ static const CSB_V1_ViewportD1LD1RF0111Step s_steps[][5] = {
 };
 
 static const CSB_V1_ViewportD1LD1RF0111Evidence s_evidence = {
-    "CSB V1 source-lock contract only; no real-asset runtime regression.",
+    "CSB V1 source-lock contract with a fail-closed real GRAPHICS.DAT "
+    "receipt for the D1L/D1R standard door graphic; no decoded pixels or "
+    "fallback visuals are admitted by the receipt.",
     "ReDMCSB DUNVIEW.C:4218-4337 F0111: non-open guard, state decrement "
     "for frame selection, LeftHorizontal/RightHorizontal split, zone + state, "
     "MASK 0x4000 half-door shift, C10 transparent F0791 blit.",
@@ -163,7 +166,9 @@ static const char s_source_lock_header[] =
     "F0164 lines 1840-1878, F0172 lines 2466-2621; DEFS.H lines 2088, "
     "2596-2611, 2662, 2668-2677, 4045-4046, 4139-4153; CSB-lineage "
     "Viewport.cpp lines 1192-1209, 1865-1879, 1903-1915, 1930-1944, "
-    "6507-6548 plus D1 side door-facing arrays at 1892-1900 and 1919-1927.";
+    "6507-6548 plus D1 side door-facing arrays at 1892-1900 and 1919-1927; "
+    "the real-asset receipt binds StdDoorGraphicsF1 to DMCSB1 GRAPHICS.DAT "
+    "item 558.";
 
 static uint32_t fnv1a(uint32_t hash, uint32_t value)
 {
@@ -333,6 +338,65 @@ uint32_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(
         hash = fnv1a(hash, viewport[i]);
     }
     return hash;
+}
+
+int csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD1LD1RF0111Route *d1l_route,
+    const CSB_V1_ViewportD1LD1RF0111Route *d1r_route,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34){0};
+    }
+    if (!d1l_route || !d1r_route || !out_receipt ||
+        !source_graphics_dat_bound || !no_synthetic_pixels ||
+        !no_fallback_visuals ||
+        source_graphics_item_index != CSB_STANDARD_DOOR_GRAPHICS_ITEM_INDEX ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        d1l_route->view_square != CSB_D1L_VIEW_SQUARE ||
+        d1r_route->view_square != CSB_D1R_VIEW_SQUARE ||
+        d1l_route->door_zone != CSB_D1L_DOOR_ZONE ||
+        d1r_route->door_zone != CSB_D1R_DOOR_ZONE ||
+        d1l_route->lineage_door_graphics != CSB_STD_DOOR_GRAPHICS_F1 ||
+        d1r_route->lineage_door_graphics != CSB_STD_DOOR_GRAPHICS_F1) {
+        return 0;
+    }
+
+    receipt =
+        (CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34){0};
+    receipt.valid = 1;
+    receipt.route_backed_by_real_graphics_dat = 1;
+    receipt.source_graphics_dat_bound = 1;
+    receipt.no_synthetic_pixels = 1;
+    receipt.no_fallback_visuals = 1;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.d1l_view_square = d1l_route->view_square;
+    receipt.d1r_view_square = d1r_route->view_square;
+    receipt.d1l_door_zone = d1l_route->door_zone;
+    receipt.d1r_door_zone = d1r_route->door_zone;
+    receipt.d1l_top_track_zone = d1l_route->top_track_zone;
+    receipt.d1r_top_track_zone = d1r_route->top_track_zone;
+    receipt.d1l_rear_order = d1l_route->rear_order;
+    receipt.d1r_rear_order = d1r_route->rear_order;
+    receipt.d1l_front_order = d1l_route->front_order;
+    receipt.d1r_front_order = d1r_route->front_order;
+    receipt.standard_door_graphics_f1 = CSB_STD_DOOR_GRAPHICS_F1;
+    receipt.c10_transparency = CSB_C10_COLOR_FLESH;
+    receipt.redmcsb_d1l_dispatch = d1l_route->redmcsb_dispatch;
+    receipt.redmcsb_d1r_dispatch = d1r_route->redmcsb_dispatch;
+    *out_receipt = receipt;
+    return 1;
 }
 
 const CSB_V1_ViewportD1LD1RF0111Evidence *

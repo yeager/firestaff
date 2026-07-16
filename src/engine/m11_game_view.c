@@ -135,6 +135,7 @@
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
+#include "firestaff/dm1/v1/palette_credits_pc34_compat.h"
 #include "firestaff/dm1/v1/champion_panel/dm1_v1_champion_panel_spell_area_overlay_pc34_compat.h"
 #include "firestaff/dm1/v1/champion_panel/name_box_clip_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
@@ -8876,6 +8877,69 @@ static int m11_cast_nexus_light_spell(M11_GameViewState* state) {
     return 1;
 }
 
+static int m11_apply_dm1_spell_failure_feedback_f0412(
+    M11_GameViewState* state,
+    int casterIndex,
+    int failureReason,
+    const char* championName,
+    const char* fallbackText)
+{
+    const DM1_SpellFailureFeedback* sourceFeedback;
+    DM1_V1_SpellFailureHudFeedbackPc34 feedback;
+    DM1_V1_ActionSpellHudPresentationReceiptPc34 receipt;
+    char line[M11_MESSAGE_MAX_LENGTH];
+
+    if (!state) return 0;
+    sourceFeedback = dm1_spell_failureFeedback(failureReason);
+    if (!sourceFeedback) return 0;
+    memset(&feedback, 0, sizeof(feedback));
+    feedback.failureType = sourceFeedback->failureType;
+    feedback.messageColor = sourceFeedback->messageColor;
+    feedback.printsLineFeed = sourceFeedback->printsLineFeed;
+    feedback.printsChampionName = sourceFeedback->printsChampionName;
+    feedback.appendsBaseSkillName = sourceFeedback->appendsBaseSkillName;
+    feedback.clearsSymbolsOnCastClick =
+        sourceFeedback->clearsSymbolsOnCastClick;
+    feedback.redrawsAvailableSymbols =
+        sourceFeedback->redrawsAvailableSymbols;
+    feedback.redrawsChampionSymbols =
+        sourceFeedback->redrawsChampionSymbols;
+    feedback.messageBeforeSkill = sourceFeedback->messageBeforeSkill;
+    feedback.messageAfterSkill = sourceFeedback->messageAfterSkill;
+    if (!dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
+            &feedback, casterIndex, &receipt) ||
+        !receipt.valid ||
+        receipt.presentationKind !=
+            DM1_V1_ACTION_HUD_PRESENTATION_SPELL_FAILURE_PC34 ||
+        receipt.layoutKind != DM1_V1_ACTION_HUD_LAYOUT_SPELL_AREA_PC34) {
+        return 0;
+    }
+
+    if (receipt.printsChampionName && championName && championName[0] != '\0') {
+        snprintf(line, sizeof(line), "%s%s%s",
+                 championName,
+                 receipt.messageBeforeSkill ? receipt.messageBeforeSkill : "",
+                 receipt.messageAfterSkill ? receipt.messageAfterSkill : "");
+    } else {
+        snprintf(line, sizeof(line), "%s%s",
+                 receipt.messageBeforeSkill ? receipt.messageBeforeSkill : "",
+                 receipt.messageAfterSkill ? receipt.messageAfterSkill : "");
+    }
+    M11_MessageLog_Push(&state->messageLog, line,
+                        (unsigned char)receipt.textColor);
+    m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s",
+                  (unsigned int)state->world.gameTick,
+                  fallbackText ? fallbackText : receipt.text);
+    m11_set_status(state, "CAST", fallbackText ? fallbackText : receipt.text);
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s", line);
+    if (receipt.clearsSymbolsOnCastClick) {
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+    }
+    return 1;
+}
+
 int M11_GameView_CastSpell(M11_GameViewState* state) {
     DM1_V1_SpellPanelStatePc34 panel =
         m11_dm1_spell_panel_state_pc34(state);
@@ -8930,14 +8994,15 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
 
     /* Look up spell in table */
     if (!F0752_MAGIC_LookupSpellInTable_Compat(packed, &tableIndex, &spell)) {
-        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — MEANINGLESS SPELL",
-                      (unsigned int)state->world.gameTick, champName);
-        m11_set_status(state, "CAST", "UNKNOWN SPELL");
-        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
-        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "NO MATCHING SPELL IN TABLE");
-        M11_GameView_ClearSpell(state);
-        state->spellPanelOpen = 0;
+        if (!m11_apply_dm1_spell_failure_feedback_f0412(
+                state, casterIndex, SPELL_FAILURE_MEANINGLESS_SPELL,
+                champName, "MEANINGLESS SPELL")) {
+            m11_log_event(state, M11_COLOR_LIGHT_RED,
+                          "T%u: %s MEANINGLESS SPELL",
+                          (unsigned int)state->world.gameTick, champName);
+            M11_GameView_ClearSpell(state);
+            state->spellPanelOpen = 0;
+        }
         return 1; /* consumed the input even though spell failed */
     }
 
@@ -9025,13 +9090,17 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         if (failureReason == SPELL_FAILURE_MEANINGLESS_SPELL) failMsg = "MEANINGLESS SPELL";
         else if (failureReason == SPELL_FAILURE_NEEDS_FLASK_IN_HAND) failMsg = "NEED FLASK";
         else if (failureReason == SPELL_FAILURE_NEEDS_MAGIC_MAP) failMsg = "NEED MAGIC MAP";
-        m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — %s",
-                      (unsigned int)state->world.gameTick, champName, failMsg);
-        m11_set_status(state, "CAST", failMsg);
-        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
-        snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s", failMsg);
-        M11_GameView_ClearSpell(state);
-        state->spellPanelOpen = 0;
+        if (!m11_apply_dm1_spell_failure_feedback_f0412(
+                state, casterIndex, failureReason, champName, failMsg)) {
+            m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s %s",
+                          (unsigned int)state->world.gameTick, champName,
+                          failMsg);
+            m11_set_status(state, "CAST", failMsg);
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s", failMsg);
+            M11_GameView_ClearSpell(state);
+            state->spellPanelOpen = 0;
+        }
         return 1;
     }
 
@@ -15580,6 +15649,10 @@ static void m11_repair_mirror_candidate_survival_fields(M11_GameViewState* state
 
 static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
                                                   int mirrorOrdinal) {
+    ChampionPortraitClickInput_Compat click;
+    HocMirrorCandidateSelectionReceipt_Compat routeReceipt;
+    struct ChampionState_Compat sourceRecord;
+    const M11_AssetSlot* portraits;
     int previousPartyCount;
     char mirrorName[16];
     char mirrorTitle[32];
@@ -15615,6 +15688,40 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     }
 
     previousPartyCount = state->world.party.championCount;
+    F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
+    portraits = M11_AssetLoader_Load(&state->assetLoader, 26u);
+    memset(&click, 0, sizeof(click));
+    click.command = DM1_COMMAND_CLICK_IN_DUNGEON_VIEW;
+    click.leaderEmptyHanded =
+        (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE);
+    click.leaderIndex = state->world.party.activeChampionIndex;
+    click.frontWallOrnamentHit = 1;
+    click.frontSquareInBounds = 1;
+    click.sensorType = DM1_SENSOR_WALL_CHAMPION_PORTRAIT;
+    click.sensorData = (uint16_t)mirrorOrdinal;
+    click.sensorCell = 0;
+    click.clickedWallCell = 0;
+    click.partyChampionCount = (uint16_t)previousPartyCount;
+    routeReceipt =
+        F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+            &click,
+            F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(
+                &state->mirrorCatalog, mirrorOrdinal, &sourceRecord),
+            portraits && portraits->loaded && portraits->pixels &&
+                portraits->width >= CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 &&
+                portraits->height >= CHAMPION_PORTRAIT_BITMAP_HEIGHT * 3,
+            state->candidateMirrorPanelActive ||
+                state->candidateMirrorRenameActive);
+    if (!routeReceipt.valid ||
+        routeReceipt.candidateChampionIndex !=
+            (uint16_t)previousPartyCount ||
+        routeReceipt.partyChampionCountAfter !=
+            (uint16_t)(previousPartyCount + 1)) {
+        m11_set_status(state, "MIRROR", "SOURCE DATA MISSING");
+        m11_set_inspect_readout(state, "CHAMPION MIRROR",
+                                "ORIGINAL RECORD AND C026 PORTRAIT ARE REQUIRED");
+        return 0;
+    }
     if (M11_GameView_RecruitChampionByMirrorOrdinal(state, mirrorOrdinal) != 1) {
         return 0;
     }
@@ -15653,6 +15760,8 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
 
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate) {
+    CandidatePanelState_Compat panelState;
+    HocMirrorCandidateFinalizeReceipt_Compat finalizeReceipt;
     int championIndex;
     int firstSensorIndex;
     char mirrorName[16];
@@ -15672,6 +15781,19 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
         !state->world.party.champions[championIndex].present) {
+        return 0;
+    }
+    panelState.partyChampionCount =
+        (uint16_t)state->world.party.championCount;
+    panelState.candidateChampionOrdinal =
+        (uint16_t)(state->candidateMirrorPartyIndex + 1);
+    finalizeReceipt =
+        F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+            panelState,
+            reincarnate ? DM1_COMMAND_REINCARNATE : DM1_COMMAND_RESURRECT,
+            1);
+    if (!finalizeReceipt.valid ||
+        finalizeReceipt.candidateChampionIndex != (uint16_t)championIndex) {
         return 0;
     }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, state->candidateMirrorOrdinal,
@@ -15728,6 +15850,8 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
 }
 
 int M11_GameView_BeginMirrorCandidateReincarnateRename(M11_GameViewState* state) {
+    CandidatePanelState_Compat panelState;
+    HocMirrorCandidateFinalizeReceipt_Compat finalizeReceipt;
     int championIndex;
 
     if (!state || !state->active || !state->candidateMirrorPanelActive ||
@@ -15738,6 +15862,18 @@ int M11_GameView_BeginMirrorCandidateReincarnateRename(M11_GameViewState* state)
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
         !state->world.party.champions[championIndex].present) {
+        return 0;
+    }
+    panelState.partyChampionCount =
+        (uint16_t)state->world.party.championCount;
+    panelState.candidateChampionOrdinal =
+        (uint16_t)(state->candidateMirrorPartyIndex + 1);
+    finalizeReceipt =
+        F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+            panelState, DM1_COMMAND_REINCARNATE, 0);
+    if (finalizeReceipt.valid ||
+        !finalizeReceipt.renameRequiredBeforeFinalize ||
+        finalizeReceipt.candidateChampionIndex != (uint16_t)championIndex) {
         return 0;
     }
 
@@ -22571,9 +22707,8 @@ static int m11_dm1_visible_wall_inscription_presentation(
     if (!state || !cell || !state->world.things) {
         return 0;
     }
-    return dm1_v1_wall_inscription_presentation_from_world_pc34(
-        state->world.things, cell->inscriptionTextIndex, cell->firstThing,
-        outReceipt);
+    return dm1_v1_wall_inscription_presentation_from_selected_wall_pc34(
+        state->world.things, cell->inscriptionTextIndex, outReceipt);
 }
 
 static int m11_dm1_unreadable_inscription_box_height(int relForward,
@@ -23256,15 +23391,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (!m11_viewport_cell_is_wall_like(&cell)) {
             continue;
         }
-        /* ReDMCSB DUNGEON.C F0172 publishes C127 as a current wall fact,
-         * but DUNVIEW.C:3913-3928 consumes C346/C026 only in the fixed D1C
-         * route.  Letting this general F0107 projection loop render its
-         * sensor ornament would create an invented D2/D3 or side mirror
-         * image.  The dedicated D1C route below is the sole C127 consumer;
-         * a non-front mirror therefore remains no-draw. */
-        if (cell.championPortraitOrdinal >= 0) {
-            continue;
-        }
         mapIdx = state->world.party.mapIndex;
         if (cell.wallOrnamentOrdinal <= 0) {
             continue;
@@ -23276,6 +23402,29 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 state->wallOrnamentIndices[mapIdx], 16,
                 cell.wallOrnamentOrdinal, &ornGlobalIdx)) {
             continue;
+        }
+        if (cell.championPortraitOrdinal >= 0) {
+            DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 mirrorProjection;
+            if (!DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+                    spec.relForward, spec.relSide, spec.viewWallIndex,
+                    cell.championPortraitOrdinal, ornGlobalIdx,
+                    &mirrorProjection) ||
+                !mirrorProjection.valid ||
+                !mirrorProjection.consumedC127WallFact) {
+                continue;
+            }
+            /* D1C is consumed later as the exact C346->C026 HoC overlay.
+             * Side/depth C127 walls keep the original F0107 backing ornament
+             * so Hall mirrors are visible while the portrait atlas remains
+             * front-wall only. */
+            if (mirrorProjection.suppressGenericWallOrnament) {
+                continue;
+            }
+            if (!mirrorProjection.drawWallOrnamentBacking ||
+                !mirrorProjection.suppressChampionPortrait ||
+                !mirrorProjection.suppressHostFallbackVisuals) {
+                continue;
+            }
         }
         if (ornGlobalIdx == 0) {
             (void)m11_dm1_visible_wall_inscription_presentation(
@@ -35775,9 +35924,8 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
         !frontCell.valid || !m11_viewport_cell_is_wall_like(&frontCell)) {
         return;
     }
-    if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
+    if (!dm1_v1_viewport_inscription_receipt_from_selected_wall_pc34(
             state->world.things, frontCell.inscriptionTextIndex,
-            frontCell.firstThing,
             DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34,
             frontCell.championPortraitOrdinal >= 0, &viewportReceipt)) {
         return;
@@ -40641,13 +40789,34 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * >40 = full (88×45), 15-40 = medium (64×37), <15 = small (42×37).
      * Ref: ReDMCSB MELEE.C, G2093-G2096. */
     if (state->creatureHitOverlayTimer > 0) {
+        DM1_V1_ActionSpellHudPresentationReceiptPc34 hudReceipt;
+        const DM1_V1_LiveActionEffectPc34* liveDamage = NULL;
         int vCX = 110, vCY = 78; /* viewport center */
-        int drawn = 0;
-        if (state->assetsAvailable) {
+        int i;
+        memset(&hudReceipt, 0, sizeof(hudReceipt));
+        for (i = 0; i < state->dm1LiveActionEffects.count; ++i) {
+            const DM1_V1_LiveActionEffectPc34* entry =
+                &state->dm1LiveActionEffects.entries[i];
+            if (entry->kind == DM1_V1_LIVE_ACTION_EFFECT_DAMAGE_PC34 &&
+                entry->damage == state->creatureHitDamageAmount &&
+                dm1_v1_live_action_effect_hud_presentation_pc34(
+                    entry, &hudReceipt) &&
+                hudReceipt.valid &&
+                hudReceipt.presentationKind ==
+                    DM1_V1_ACTION_HUD_PRESENTATION_DAMAGE_PC34 &&
+                hudReceipt.layoutKind ==
+                    DM1_V1_ACTION_HUD_LAYOUT_CREATURE_DAMAGE_PC34) {
+                liveDamage = entry;
+                break;
+            }
+        }
+        if (liveDamage && state->assetsAvailable &&
+            m11_dm1_pc34_hud_font_is_source_bound(state)) {
             const M11_AssetSlot* dmg14 = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
                 (unsigned int)dm1_v1_graphic_creature_damage_pc34());
-            if (dmg14 && dmg14->width > 0 && dmg14->height > 0) {
+            if (dmg14 && dmg14->loaded && dmg14->pixels &&
+                (int)dmg14->width == 88 && (int)dmg14->height == 45) {
                 int blitW, blitH;
                 if (state->creatureHitDamageAmount > 40) {
                     blitW = 88; blitH = 45;
@@ -40660,23 +40829,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     framebufferWidth, framebufferHeight,
                     vCX - blitW / 2, vCY - blitH / 2,
                     blitW, blitH, 0);
-                drawn = 1;
+                /* The number is deliberately printed only through the
+                 * original PC34 HUD font.  Missing M653 or missing C014 is
+                 * a no-draw source failure, not permission to substitute
+                 * a host rectangle/font over the viewport. */
+                {
+                    char hitNum[8];
+                    snprintf(hitNum, sizeof(hitNum), "%d",
+                             state->creatureHitDamageAmount);
+                    m11_draw_v1_damage_number_text(
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        vCX - 6, vCY - 3, hitNum);
+                }
             }
-        }
-        if (!drawn) {
-            /* Fallback: tinted rectangle */
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          vCX - 32, vCY - 16, 64, 32, M11_COLOR_LIGHT_RED);
-        }
-        /* Damage number centered on overlay */
-        {
-            char hitNum[8];
-            M11_TextStyle hitStyle = g_text_small;
-            hitStyle.color = M11_COLOR_WHITE;
-            snprintf(hitNum, sizeof(hitNum), "%d",
-                     state->creatureHitDamageAmount);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          vCX - 6, vCY - 3, hitNum, &hitStyle);
         }
     }
 
@@ -40931,6 +41096,54 @@ int M11_GameView_GetEndgameFuseReplayCurrentEvent(const M11_GameViewState* state
     }
     return state->endgameFuseSequenceCurrentReplayType !=
            M11_ENDGAME_F0445_EVENT_NONE;
+}
+
+int M11_GameView_BuildEndgameFinalPresentationReceipt(
+    const M11_GameViewState* state,
+    DM1_V1_EndgameFinalPresentationReceiptPc34* outReceipt) {
+    DM1_V1_EndgameFinalPresentationInputPc34 input;
+    DM1_V1_EndgameRectPc34 theEndRect;
+    if (!outReceipt) return 0;
+    memset(&input, 0, sizeof(input));
+    if (!state) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+        return 0;
+    }
+    input.gameWon = state->gameWon;
+    input.finalPresentationReady =
+        M11_GameView_GetEndgameFinalPresentationReady(state);
+    input.endgameCalledWithTrue = state->endgameCalledWithTrue;
+    input.restartAllowed = state->endgameRestartAllowed;
+    input.replayCursor = state->endgameFuseSequenceReplayCursor;
+    input.replayEventCount = state->endgameFuseSequenceReplayEventCount;
+    input.replayFrameRemainingTicks =
+        state->endgameFuseSequenceFrameReplayRemainingTicks;
+    input.fuseDelayRemainingTicks =
+        state->endgameFuseSequenceDelayRemainingTicks;
+    input.textMessageDelayTicks = state->endgameTextMessageDelayTicks;
+    input.finalDelayTicks = state->endgameFinalDelayTicks;
+    input.requestedMusicTrackId = state->audioState.lastMusicTrackId;
+    input.expectedVictoryMusicId =
+        DM1_Endgame_GetEndingParams()->victoryMusicId;
+    input.musicPlayRequestCount = state->audioState.titleMusicPlayRequestCount;
+    input.assetsAvailable = state->assetsAvailable;
+    input.theEndGraphicId = dm1_v1_graphic_the_end_pc34();
+    input.championMirrorGraphicId =
+        dm1_v1_graphic_endgame_champion_mirror_pc34();
+    input.championPortraitsGraphicId =
+        dm1_v1_graphic_champion_portraits_pc34();
+    if (dm1_v1_endgame_the_end_rect_pc34(&theEndRect)) {
+        input.theEndX = theEndRect.x;
+        input.theEndY = theEndRect.y;
+        input.theEndW = theEndRect.w;
+        input.theEndH = theEndRect.h;
+    }
+    input.creditsPaletteSize = dm1_v1_palette_credits_size_pc34();
+    input.creditsPaletteFirstEntry = dm1_v1_palette_credits_pc34(0);
+    input.creditsPaletteLastEntry =
+        dm1_v1_palette_credits_pc34(input.creditsPaletteSize - 1);
+    return dm1_v1_endgame_final_presentation_receipt_pc34(&input,
+                                                          outReceipt);
 }
 
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {

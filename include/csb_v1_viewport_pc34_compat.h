@@ -28,6 +28,97 @@ typedef struct CSB_V1_ViewportRuntimeGroupSpriteBlit
 typedef struct CSB_V1_ViewportRuntimeExplosionSpriteBlit
     CSB_V1_ViewportRuntimeExplosionSpriteBlit;
 
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0111_DOOR 0x0001u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0115_THING 0x0002u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0111_DOOR 0x0004u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0115_THING 0x0008u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR 0x0010u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES \
+    (CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0111_DOOR | \
+     CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0115_THING | \
+     CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0111_DOOR | \
+     CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0115_THING | \
+     CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR)
+
+typedef struct {
+    int valid;
+    unsigned int route_mask;
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int shared_palette_material_proof;
+    uint32_t shared_palette_hash;
+    uint32_t d0_door_hash;
+    uint32_t d0_thing_hash;
+    uint32_t d1_door_hash;
+    uint32_t d1_thing_hash;
+    uint32_t d2_door_hash;
+    size_t source_item_count;
+    const char *source_evidence;
+} CSB_V1_ViewportFirstFrameMaterialProof;
+
+typedef struct {
+    int valid;
+    int consumed_by_m11_render;
+    unsigned int route_mask;
+    uint32_t combined_material_hash;
+    int required_route_count;
+    int real_graphics_session;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    const char *source_evidence;
+} CSB_V1_ViewportFirstFrameMaterializationReceipt;
+
+typedef enum {
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_NONE_PC34 = 0,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0111_DOOR_PC34,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0115_THING_PC34,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0115_THING_PC34,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34
+} CSB_V1_ViewportRuntimeDrawRoutePc34;
+
+#define CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34 5
+
+typedef struct {
+    CSB_V1_ViewportRuntimeDrawRoutePc34 route;
+    unsigned int route_bit;
+    uint32_t material_hash;
+    uint32_t palette_hash;
+    int view_depth;
+    int view_square;
+    int draw_order;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    int transparent_color;
+    int party_dir;
+    int party_x;
+    int party_y;
+    int input_forward;
+    int input_side;
+} CSB_V1_ViewportRuntimeDrawCommandPc34;
+
+typedef struct {
+    int valid;
+    int consumed_by_m11_render;
+    int real_graphics_session;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int palette_bound;
+    int clip_bound;
+    int state_bound;
+    int input_bound;
+    unsigned int route_mask;
+    int command_count;
+    uint32_t shared_palette_hash;
+    uint32_t plan_hash;
+    CSB_V1_ViewportRuntimeDrawCommandPc34
+        commands[CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34];
+    const char *source_evidence;
+} CSB_V1_ViewportRuntimeDrawPlanPc34;
+
 typedef int (*CSB_V1_ViewportProjectileSpriteDrawer)(
     void *user,
     const CSB_V1_ViewportRuntimeProjectileSpriteBlit *blit,
@@ -130,6 +221,15 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int runtime_explosion_sprite_drawn_count;
     int runtime_explosion_marker_drawn_count;
     int real_graphics_session;
+    const CSB_V1_ViewportFirstFrameMaterialProof *first_frame_material_proof;
+    int first_frame_material_consumed_count;
+    int first_frame_material_blocked_count;
+    uint32_t first_frame_material_hash;
+    int first_frame_draw_plan_consumed_count;
+    int first_frame_draw_plan_blocked_count;
+    int first_frame_draw_plan_command_count;
+    uint32_t first_frame_draw_plan_hash;
+    uint32_t first_frame_draw_plan_palette_hash;
 
     /* The shared F0128/F0098 core asks its caller for the PC3.4-expanded
      * C079/C078 aperture.  CSB owns this bridge so a verified session never
@@ -172,6 +272,7 @@ typedef struct {
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
     void *explosion_sprite_user;
     int real_graphics_session;
+    const CSB_V1_ViewportFirstFrameMaterialProof *first_frame_material_proof;
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
 } CSB_V1_ViewportRuntimeDrawerBinding;
@@ -189,6 +290,14 @@ typedef struct {
     int explosion_sprite_drawn_count;
     int explosion_marker_drawn_count;
     int real_asset_blocked_count;
+    int first_frame_material_consumed_count;
+    int first_frame_material_blocked_count;
+    uint32_t first_frame_material_hash;
+    int first_frame_draw_plan_consumed_count;
+    int first_frame_draw_plan_blocked_count;
+    int first_frame_draw_plan_command_count;
+    uint32_t first_frame_draw_plan_hash;
+    uint32_t first_frame_draw_plan_palette_hash;
 } CSB_V1_ViewportRuntimeDrawCounts;
 
 typedef struct {
@@ -766,6 +875,22 @@ void csb_v1_viewport_runtime_draw_counts_reset(
 void csb_v1_viewport_runtime_draw_counts_from_config(
     const CSB_V1_ViewportConfig *cfg,
     CSB_V1_ViewportRuntimeDrawCounts *counts);
+int csb_v1_viewport_first_frame_material_proof_valid_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof);
+int csb_v1_viewport_admit_first_frame_materialization_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    int real_graphics_session,
+    CSB_V1_ViewportFirstFrameMaterializationReceipt *out_receipt);
+int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    int real_graphics_session,
+    int party_dir,
+    int party_x,
+    int party_y,
+    CSB_V1_ViewportRuntimeDrawPlanPc34 *out_plan);
+void csb_v1_viewport_set_first_frame_material_proof_pc34(
+    CSB_V1_ViewportConfig *cfg,
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof);
 size_t csb_v1_viewport_custom_background_slot_spec_count(void);
 const CSB_V1_ViewportCustomBackgroundSlotSpec *
 csb_v1_viewport_get_custom_background_slot_spec(size_t index);

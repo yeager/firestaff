@@ -1,6 +1,6 @@
 # Pass1053 DM1 V1 original champion candidate-panel gate
 
-Status: `PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_GATE`
+Status: `FAIL`
 
 This CTest gate keeps the existing original-PC34 candidate/resurrect-panel
 evidence reproducible. It verifies manifest status, image hashes, crop
@@ -12,8 +12,8 @@ reference captures.
 - Original evidence: `verification-screens/pass1053-dm1-original-champion-candidate-panel`
 - Source report: `parity-evidence/pass1053_dm1_v1_original_champion_candidate_panel_capture.md`
 - Firestaff-side references:
-  - `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm` dims=[320, 200] ok=True
-  - `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm` dims=[320, 200] ok=True
+  - `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm` dims=None ok=False
+  - `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm` dims=None ok=False
 
 ## Original frames
 

@@ -75,21 +75,25 @@
       "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
       "file": "src/engine/m11_game_view.c",
       "kind": "firestaff_product_lock",
-      "missingMarkers": [],
-      "ok": true
+      "missingMarkers": [
+        "m11_dm1_v1_pipeline_command_for_input"
+      ],
+      "ok": false
     },
     {
       "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
       "file": "src/engine/m11_game_view.c",
       "kind": "firestaff_product_lock",
-      "missingMarkers": [],
-      "ok": true
+      "missingMarkers": [
+        "m11_draw_dm1_side_contents(state"
+      ],
+      "ok": false
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_viewport",
       "kind": "firestaff_viewport_order_lock",
-      "ok": true,
+      "ok": false,
       "orderedMarkers": [
         "m11_draw_viewport_background(state",
         "m11_draw_dm1_floor_pits(state",
@@ -107,14 +111,14 @@
         "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": true,
+      "ok": false,
       "result": {
         "cmd": [
           "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
         ],
-        "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
-        "returncode": 0
+        "outputTail": "status=FAIL_PASS361_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE reason=[Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass361_dm1_v1_viewport_occlusion_redraw_order_gate/manifest.json'\n",
+        "returncode": 1
       }
     },
     {
@@ -139,14 +143,14 @@
         "tools/verify_v1_viewport_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": true,
+      "ok": false,
       "result": {
         "cmd": [
           "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:13558\n- pits gate before sampling: m11_game_view.c:13656\n- floor ornaments gate before sampling: m11_game_view.c:13724\n- stairs gate before sampling: m11_game_view.c:14426\n- teleporter fields gate before sampling: m11_game_view.c:14496\n- side walls gate before sampling: m11_game_view.c:14567\n- side doors gate before sampling: m11_game_view.c:15003\n- side door ornaments gate before sampling: m11_game_view.c:15103\n- side destroyed-door masks gate before sampling: m11_game_view.c:15181\n- viewport call-site wiring: m11_game_view.c:24619\n",
-        "returncode": 0
+        "outputTail": "FAIL: missing function m11_dm1_max_visible_forward_from_center\n",
+        "returncode": 1
       }
     },
     {
@@ -155,14 +159,14 @@
         "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": true,
+      "ok": false,
       "result": {
         "cmd": [
           "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:13836, 13861\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:16812\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:14567\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:14242\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:15003\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:15103\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:15181\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:24619\n",
-        "returncode": 0
+        "outputTail": "FAIL: missing function body for m11_dm1_side_lane_clear_before_depth\n",
+        "returncode": 1
       }
     },
     {
@@ -172,13 +176,13 @@
         "cmd": [
           "cmake",
           "-S",
-          "/Users/bosse/.openclaw/workspace-main",
+          "/Users/bosse/Documents/Firestaff",
           "-B",
           "/Users/bosse/.openclaw/data/firestaff-builds/pass373-verify",
           "-G",
           "Ninja"
         ],
-        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Found zlib - asset-scanner ZIP deflate path enabled\n-- Configuring done (0.8s)\n-- Generating done (0.5s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Found zlib via bundled miniz - ZIP/gzip inflate paths enabled\n-- Configuring done (1.1s)\n-- Generating done (1.7s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
         "returncode": 0
       }
     },
@@ -195,13 +199,13 @@
           "--parallel",
           "1"
         ],
-        "outputTail": "mands_pc34_compat.c.o\n[1089/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/render_sdl_m11.c.o\n[1090/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/color_presets_m11.c.o\n[1091/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/colorblind_m11.c.o\n[1092/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/input_remap_m11.c.o\n[1093/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/screenshot_m11.c.o\n[1094/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/ui_scale_m11.c.o\n[1095/1141] Building C object CMakeFiles/firestaff_m11.dir/src/audio/soundtrack_selector_m11.c.o\n[1096/1141] Building C object CMakeFiles/firestaff_m11.dir/src/audio/ambient_layer_m11.c.o\n[1097/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/audio_sdl_m11.c.o\n[1098/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/graphics_dat_snd3_loader_v1.c.o\n[1099/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/song_dat_loader_v1.c.o\n[1100/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/sound_event_snd3_map_v1.c.o\n[1101/1141] Building C object CMakeFiles/firestaff_m11.dir/src/frontend/title_dat_loader_v1.c.o\n[1102/1141] Building C object CMakeFiles/firestaff_m11.dir/src/frontend/title_frontend_v1.c.o\n[1103/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/asset_loader_m11.c.o\n[1104/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/dungeon_decompressor_ftl.c.o\n[1105/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/font_m11.c.o\n[1106/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/fs_portable_compat.c.o\n[1107/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_vblank_timing.c.o\n[1108/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load.c.o\n[1109/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_viewport_3d_pc34_compat.c.o\n[1110/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dungeon_loader_pc34_compat.c.o\n[1111/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_title_screen_pc34_compat.c.o\n[1112/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_palette_font_pc34_compat.c.o\n[1113/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_object_world_pc34_compat.c.o\n[1114/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_graphics_loader_pc34_compat.c.o\n[1115/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_fade_transition_pc34_compat.c.o\n[1116/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_room_transition_pc34_compat.c.o\n[1117/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_portrait_panel_pc34_compat.c.o\n[1118/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_wall_ornament_pc34_compat.c.o\n[1119/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c.o\n[1120/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c.o\n[1121/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_game_loop_integration_pc34_compat.c.o\n[1122/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_creature_viewport_pc34_compat.c.o\n[1123/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c.o\n[1124/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o\n[1125/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_blit_fill_pc34_compat.c.o\n[1126/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o\n[1127/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[1128/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o\n[1129/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[1130/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o\n[1131/1141] Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o\n[1132/1141] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o\n[1133/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_touch.c.o\n[1134/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_input.c.o\n[1135/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/swsh_intro_pathfinder_m11.c.o\n[1136/1141] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_game_input_mapping.c.o\n[1137/1141] Linking C static library libfirestaff_m12.a\n[1138/1141] Linking C static library libfirestaff_m11.a\n[1139/1141] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[1140/1141] Linking C executable firestaff\n",
+        "outputTail": "loader_pc34_compat.c.o\n[1712/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_fade_transition_pc34_compat.c.o\n[1713/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_room_transition_pc34_compat.c.o\n[1714/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_portrait_panel_pc34_compat.c.o\n[1715/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_center_door_render_pc34_compat.c.o\n[1716/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_door_ornament_render_pc34_compat.c.o\n[1717/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_floor_ornament_pc34_compat.c.o\n[1718/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_floor_pit_pc34_compat.c.o\n[1719/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_side_door_render_pc34_compat.c.o\n[1720/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_stairs_render_pc34_compat.c.o\n[1721/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_wall_ornament_pc34_compat.c.o\n[1722/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c.o\n[1723/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c.o\n[1724/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_game_loop_integration_pc34_compat.c.o\n[1725/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_creature_viewport_pc34_compat.c.o\n[1726/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c.o\n[1727/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o\n[1728/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_blit_fill_pc34_compat.c.o\n[1729/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o\n[1730/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_layout_pc34_compat.c.o\n[1731/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[1732/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o\n[1733/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_endgame_layout_pc34_compat.c.o\n[1734/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_endgame_presentation_pc34_compat.c.o\n[1735/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0180_pc34_compat.c.o\n[1736/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0179_pc34_compat.c.o\n[1737/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0181_pc34_compat.c.o\n[1738/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0182_pc34_compat.c.o\n[1739/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0183_pc34_compat.c.o\n[1740/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0184_pc34_compat.c.o\n[1741/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0185_pc34_compat.c.o\n[1742/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0186_pc34_compat.c.o\n[1743/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0187_pc34_compat.c.o\n[1744/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[1745/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o\n[1746/1761] Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o\n[1747/1761] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o\n[1748/1761] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_touch.c.o\n[1749/1761] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_input.c.o\n[1750/1761] Building C object CMakeFiles/firestaff_m11.dir/src/engine/runtime_gesture_navigation_gate_pc34_compat.c.o\n[1751/1761] Building C object CMakeFiles/firestaff_m11.dir/src/frontend/v1_swsh_intro_pathfinder_pc34_compat.c.o\n[1752/1761] Building C object CMakeFiles/firestaff_m11.dir/src/frontend/v1_title_intro_pathfinder_pc34_compat.c.o\n[1753/1761] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_game_input_mapping.c.o\n[1754/1761] Building C object CMakeFiles/firestaff_m11.dir/src/shared/session_timer_runtime.c.o\n[1755/1761] Building C object CMakeFiles/firestaff_m11.dir/src/engine/runtime_gesture_navigation_gate.c.o\n[1756/1761] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_dm2_runtime_frame_receipt_gate.c.o\n[1757/1761] Linking C static library libfirestaff_m12.a\n[1758/1761] Linking C static library libfirestaff_m11.a\n[1759/1761] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[1760/1761] Linking C executable firestaff\nld: warning: ignoring duplicate libraries: 'libfirestaff_m11.a', 'libfirestaff_m12.a'\n",
         "returncode": 0
       }
     },
     {
       "kind": "launcher_route_runtime_probe",
-      "ok": true,
+      "ok": false,
       "result": {
         "cmd": [
           "timeout",
@@ -218,8 +222,8 @@
           "--script",
           "enter,down,down,down,down,down,down,enter,right"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT]\n",
-        "returncode": 0
+        "outputTail": "LOADING DUNGEON: [/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/Dungeon-Master_DOS_EN.zip::dungeon-master/dmaster/DATA/DUNGEON.DAT]\nfirestaff: launch smoke failed: no launch reached before exit\nfirestaff: phase-a run failed (rc=3)\n",
+        "returncode": 1
       },
       "script": "enter,down,down,down,down,down,down,enter,right"
     },
@@ -227,27 +231,27 @@
       "expected": "launcher route reaches active DM1 V1 state; turn-right command applies one facing update and sets viewportDirty=1",
       "kind": "live_runtime_redraw_state",
       "observed": {
-        "active": 1,
-        "gameTick": 19,
-        "lastAction": "WAIT",
-        "lastOutcome": "IDLE TICK ADVANCED",
-        "launchedEver": 1,
+        "active": 0,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "FAILED TO LOAD DUNGEON.DAT",
+        "launchedEver": 0,
         "party": {
           "championCount": 0,
-          "direction": 3,
+          "direction": 0,
           "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 3
+          "mapX": 0,
+          "mapY": 0
         },
         "pipeline": {
           "anyMovementOccurred": 0,
-          "anyTurnOccurred": 1,
-          "command": 2,
-          "dequeued": 1,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
           "movementBlocked": 0,
           "stepApplied": 0,
-          "turnApplied": 1,
-          "viewportDirty": 1
+          "turnApplied": 0,
+          "viewportDirty": 0
         },
         "presentation": {
           "height": 200,
@@ -255,19 +259,19 @@
           "width": 320
         },
         "redraw": {
-          "inputRedrawAfterViewportDirtyCount": 1,
-          "inputRedrawDrawCount": 1,
-          "lastInputRedrawAfterViewportDirty": 1
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
         },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
-        "sourceId": "dm1",
-        "title": "DUNGEON MASTER"
+        "sourceId": "",
+        "title": ""
       },
-      "ok": true
+      "ok": false
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
+  "head": "c857febe309b9a28531a7fe1eaa3e6a69069f439",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -286,7 +290,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c"
+      "path": "/Users/bosse/Documents/Firestaff/src/engine/main_loop_m11.c"
     },
     {
       "claim": "runtime probe records the same live movement pipeline result used by the redraw route",
@@ -298,7 +302,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c"
+      "path": "/Users/bosse/Documents/Firestaff/src/engine/main_loop_m11.c"
     },
     {
       "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
@@ -310,9 +314,11 @@
         "lastDm1V1MovementPipelineResult.viewportDirty",
         "return M11_GAME_INPUT_REDRAW"
       ],
-      "missingMarkers": [],
-      "ok": true,
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c"
+      "missingMarkers": [
+        "m11_dm1_v1_pipeline_command_for_input"
+      ],
+      "ok": false,
+      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c"
     },
     {
       "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
@@ -327,12 +333,14 @@
         "m11_draw_dm1_side_contents(state",
         "if (state->showDebugHUD)"
       ],
-      "missingMarkers": [],
-      "ok": true,
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c"
+      "missingMarkers": [
+        "m11_draw_dm1_side_contents(state"
+      ],
+      "ok": false,
+      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c"
     }
   ],
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/Documents/Firestaff",
   "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
   "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
   "script": "enter,down,down,down,down,down,down,enter,right",
@@ -448,6 +456,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-06-25T21:03:24.743506+00:00"
+  "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
+  "timestampUtc": "2026-07-16T19:13:33.813188+00:00"
 }

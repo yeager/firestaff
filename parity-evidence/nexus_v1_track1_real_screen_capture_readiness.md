@@ -1,12 +1,12 @@
 # Nexus V1 Track 1 real-screen-capture-required readiness
 
-Status: `PASS`
+Status: `FAIL`
 
 This gate proves the DM.BIN/FONT256.S2D/MNS runtime handoff
 reaches a deterministic local 24-bit BMP while DGN remains
 blocked before original Saturn capture/admission. It runs through
 `nexus_viewport_render` + `nexus_viewport_to_rgba` +
-the probe-owned 24-bit BMP receipt writer for every verified Nexus data root
+`M11_Screenshot_CaptureRGBA` for every verified Nexus data root
 that is present on the host. It is a *readiness* receipt for
 the E1 Track 1 phase-launch row; it does not promote screenshots
 and it does not rewrite public docs.
@@ -15,8 +15,6 @@ and it does not rewrite public docs.
 
 | Case | Status | Probe | Valid no-draw BMPs | Non-black (first BMP) | SHA-deterministic |
 |---|---:|---:|---:|---:|---:|
-| Nexus extracted Track 1 root | PASS | yes | `4` | `0` | yes |
-| Nexus saturn-ja Track 1 .bin | PASS | yes | `4` | `0` | yes |
 
 ## Public Screenshot Boundary
 

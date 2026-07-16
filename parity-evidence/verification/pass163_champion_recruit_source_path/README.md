@@ -19,6 +19,6 @@ This pass narrows Lane A after pass162/pass166/pass173: Resurrect/Reincarnate bo
 
 ## Pass162 linkage
 
-- pass162 completed: 2
-- pass162 buckets: {'blocked/portrait-c080-no-visible-delta': 2}
+- pass162 completed: missing
+- pass162 buckets: missing
 - Interpretation: the current blocker is before final panel choice: C080 viewport/mirror portrait delivery must visibly trigger the C127/F0280 candidate transition before C160/C161 can complete recruitment. More Resurrect/Reincarnate panel coordinate permutations are low value unless preceded by proof of candidate state.

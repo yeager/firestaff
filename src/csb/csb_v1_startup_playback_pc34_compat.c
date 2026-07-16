@@ -133,6 +133,25 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_playback_complete_entrance_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    if (!csb_v1_startup_playback_session_owned_pc34(session) ||
+        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
+        session->playback.title_phase_mask != 0x0f ||
+        !session->playback.entrance_music_active ||
+        !session->surfaces.entrance_screen_ready ||
+        !session->surfaces.opening_frame_ready ||
+        !session->surfaces.hud_surfaces_ready) {
+        return 0;
+    }
+    /* ENTRANCE.C F0807 only authorizes the dungeon handoff after the same
+     * verified C001-C005/C017/C040 package has reached the terminal loop. */
+    session->playback.entrance_complete = 1;
+    session->playback.no_fallback_routes = 1;
+    return 1;
+}
+
 int csb_v1_boot_startup_playback_enter_hud_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session)
 {

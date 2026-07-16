@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 
 #include "asset_find_by_hash.h"
 #include "csb_v1_cmp_import_pc34_compat.h"
@@ -1811,10 +1812,12 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
     }
 
     /* ReDMCSB ENTRANCE.C F0806/F0807 reaches the dungeon only after the
-     * title/opening playback receipts above are complete. This terminal
-     * handoff consumes the C017/C040 HUD surfaces; the full C001/C004/C002/
-     * C003 visual package is gated separately by the startup capture path. */
-    if (!csb_v1_startup_session_hud_surface_contract_pc34(session)) {
+     * complete C001 title sequence and C004/C002/C003 opening package have
+     * run. The terminal handoff is therefore not allowed to validate C017/C040
+     * in isolation; otherwise a stale title phase or swapped door strip can
+     * open the runtime HUD through an old wrapper path. */
+    if (session->playback.title_phase_mask != 0x0f ||
+        !csb_v1_startup_session_full_surface_contract_pc34(session)) {
         return 0;
     }
 

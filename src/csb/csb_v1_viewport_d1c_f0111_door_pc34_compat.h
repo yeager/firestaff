@@ -1,6 +1,9 @@
 #ifndef FIRESTAFF_CSB_V1_VIEWPORT_D1C_F0111_DOOR_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_VIEWPORT_D1C_F0111_DOOR_PC34_COMPAT_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,8 +39,40 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_ViewportD1CF0111DoorPc34Contract;
 
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int view_square_d1c;
+    int element_door_front;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int door_native_width;
+    int door_native_height;
+    int door_native_byte_count;
+    int door_zone_d1c;
+    int view_door_ornament_d1lcr;
+    int doorpass1_order;
+    int doorpass2_order;
+    const char *redmcsb_d1c_call_anchor;
+    const char *door_frame_symbol;
+} CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34;
+
 const CSB_V1_ViewportD1CF0111DoorPc34Contract *
 csb_v1_viewport_d1c_f0111_door_pc34_contract(void);
+
+int csb_v1_viewport_d1c_f0111_door_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD1CF0111DoorPc34Contract *contract,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34 *out_receipt);
 
 const char *
 csb_v1_viewport_d1c_f0111_door_pc34_source_evidence(void);

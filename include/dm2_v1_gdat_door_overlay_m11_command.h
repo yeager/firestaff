@@ -44,6 +44,7 @@ typedef struct {
     uint8_t draw_distance;
     uint8_t stretch_dual;
     uint8_t light_palette;
+    uint8_t movement_active;
     /* QUERY_TEMP_PICST applies _32cb_0804 after the source local palette is
      * loaded. Nonzero entries retain the c_light receipt that authorized the
      * dt07/2 remap; a base IMG3 palette is never reused as a dark retry. */
@@ -87,6 +88,11 @@ typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan {
 int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_DoorRenderPlan *door_plan,
+    DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan);
+int dm2_v1_gdat_door_overlay_m11_command_plan_build_for_movement(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_DoorRenderPlan *door_plan,
+    int movement_active,
     DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan);
 /* Verifies the DRAW_DOOR distance/image/stretch/light control tuple before
  * a source-owned M11 plan reaches the viewport. */

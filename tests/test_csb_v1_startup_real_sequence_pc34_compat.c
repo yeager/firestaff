@@ -1,0 +1,297 @@
+/*
+ * Real CSB startup sequence gate:
+ * GRAPHICS.DAT C001-C005/C017/C040 -> PRESENTS/CHAOS/STRIKES -> Entrance
+ * closed/opening/credits -> terminal HUD/runtime handoff.
+ *
+ * This test uses only operator-staged real CSB media.  If no verified CSB
+ * corpus is available it exits as SKIP and does not manufacture image bytes.
+ */
+
+#include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_startup_real_asset_receipt.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int failures;
+
+static void check(int condition, const char *message)
+{
+    if (condition) {
+        printf("PASS: %s\n", message);
+    } else {
+        fprintf(stderr, "FAIL: %s\n", message);
+        ++failures;
+    }
+}
+
+static const char *data_dir(char *buffer, size_t buffer_size)
+{
+    const char *env = getenv("FIRESTAFF_CSB_STARTUP_DATA");
+    const char *home;
+
+    if (env && env[0] != '\0') return env;
+    env = getenv("FIRESTAFF_DATA_DIR");
+    if (env && env[0] != '\0') return env;
+    home = getenv("HOME");
+    if (!home || home[0] == '\0' || buffer_size == 0u) return NULL;
+    snprintf(buffer, buffer_size, "%s/.firestaff/data/csb", home);
+    return buffer;
+}
+
+static int receipt_for_plan(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt)
+{
+    return csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+        session, plan, source_tick, receipt) &&
+        receipt->valid && receipt->real_asset_matched &&
+        receipt->no_legacy_wrappers && receipt->no_synthetic_surface &&
+        receipt->raster.valid && receipt->raster.pixel_hash != 0u &&
+        receipt->host_surface_hash != 0u;
+}
+
+static int render_plan_from_state(
+    int title_active,
+    int title_frame,
+    int credits_active,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    CSB_V1_StartupRenderState_PC34 state;
+
+    memset(&state, 0, sizeof(state));
+    state.entrance_active = 1;
+    state.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
+    state.title_active = title_active;
+    state.title_frame = title_frame;
+    state.credits_active = credits_active;
+    state.opening_active = opening_active;
+    state.opening_delay_ticks = opening_delay_ticks;
+    state.opening_step = opening_step;
+    return csb_v1_startup_source_render_plan_from_state_pc34(&state, plan);
+}
+
+int main(void)
+{
+    char default_data_dir[1024];
+    const char *root = data_dir(default_data_dir, sizeof(default_data_dir));
+    CSB_V1_BootProfile profile;
+    CSB_V1_StartupRealReceipt real_receipt;
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupAudioAction_PC34 audio_action;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 presents_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_hold_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 closed_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
+    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package;
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupDoorRuntimeReceipt_PC34 door_receipt;
+
+    memset(&presents_host, 0, sizeof(presents_host));
+    memset(&chaos_host, 0, sizeof(chaos_host));
+    memset(&chaos_hold_host, 0, sizeof(chaos_hold_host));
+    memset(&strikes_host, 0, sizeof(strikes_host));
+    memset(&closed_host, 0, sizeof(closed_host));
+    memset(&opening_host, 0, sizeof(opening_host));
+    memset(&credits_host, 0, sizeof(credits_host));
+    memset(&hud_host, 0, sizeof(hud_host));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&snapshot, 0, sizeof(snapshot));
+    printf("data_dir=%s\n", root ? root : "(none)");
+
+    csb_v1_boot_profile_init(&profile);
+    if (!root || csb_v1_boot_scan_assets(&profile, root) != 0 ||
+        !profile.assets_verified || !profile.graphics_verified ||
+        !profile.dungeon_verified ||
+        profile.variant_id != CSB_V1_VARIANT_PC34_EN) {
+        printf("SKIP: no verified PC34 CSB startup corpus was found.\n");
+        return 0;
+    }
+    if (csb_v1_startup_real_scan_and_receipt(root, 6, &real_receipt) !=
+            CSB_V1_STARTUP_REAL_OK ||
+        !real_receipt.matched ||
+        real_receipt.variant_id != CSB_V1_VARIANT_PC34_EN) {
+        printf("SKIP: CSB startup real-asset receipt did not match PC34.\n");
+        return 0;
+    }
+
+    check(csb_v1_boot_startup_runtime_asset_session_open_pc34(
+              &profile, &session),
+          "real GRAPHICS.DAT opens one C001-C005/C017/C040 startup session");
+    if (failures) return 1;
+    check(csb_v1_startup_session_full_surface_contract_pc34(&session),
+          "real session keeps C001 title, C004 entrance, C002/C003 doors and C017/C040 HUD");
+
+    check(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) &&
+              audio_action ==
+                  CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34,
+          "startup begins through the owned FTL swoosh route");
+    check(csb_v1_boot_startup_playback_complete_swoosh_pc34(
+              &session, &audio_action) &&
+              audio_action ==
+                  CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34,
+          "swoosh release enters the real title route");
+
+    check(csb_v1_boot_startup_playback_title_frame_pc34(
+              &session, 0, &plan, &audio_action) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.title_source_step == 1 &&
+              receipt_for_plan(&session, &plan, 1u, &presents_host) &&
+              presents_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34,
+          "real C001 PRESENTS raster reaches host surface receipt");
+    check(csb_v1_boot_startup_playback_title_frame_pc34(
+              &session, 60, &plan, &audio_action) &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_step == 2 &&
+              receipt_for_plan(&session, &plan, 2u, &chaos_host),
+          "real C001 CHAOS zoom raster reaches host surface receipt");
+    check(csb_v1_boot_startup_playback_title_frame_pc34(
+              &session, 80, &plan, &audio_action) &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_step == 21 &&
+              receipt_for_plan(&session, &plan, 3u, &chaos_hold_host),
+          "real C001 CHAOS hold raster reaches host surface receipt");
+    check(csb_v1_boot_startup_playback_title_frame_pc34(
+              &session, 100, &plan, &audio_action) &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_source_step == 22 &&
+              receipt_for_plan(&session, &plan, 4u, &strikes_host),
+          "real C001 STRIKES BACK raster reaches host surface receipt");
+    check(csb_v1_boot_startup_playback_title_frame_pc34(
+              &session, csb_v1_startup_title_total_ticks_pc34(), &plan,
+              &audio_action) &&
+              audio_action ==
+                  CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
+              session.playback.stage ==
+                  CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 &&
+              session.playback.title_phase_mask == 0x0fu,
+          "title completion hands the same session to Entrance with all title phases consumed");
+
+    check(render_plan_from_state(0, 0, 0, 0, 0, 0, &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              receipt_for_plan(&session, &plan, 5u, &closed_host) &&
+              closed_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
+              closed_host.raster.source_surface_count == 3,
+          "real C004+C002+C003 closed Entrance reaches host surface receipt");
+    check(render_plan_from_state(0, 0, 0, 1, 0, 31, &plan) &&
+              plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              receipt_for_plan(&session, &plan, 6u, &opening_host) &&
+              opening_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34,
+          "real C004+C002/C003 opening frame reaches host surface receipt");
+    check(render_plan_from_state(0, 0, 1, 0, 0, 0, &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
+              receipt_for_plan(&session, &plan, 7u, &credits_host) &&
+              credits_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_CREDITS_PC34,
+          "real C005 credits reaches host surface receipt");
+
+    check(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) &&
+              csb_v1_boot_startup_playback_enter_hud_pc34(&session),
+          "Entrance completion moves the same session to runtime HUD");
+    memset(&plan, 0, sizeof(plan));
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    plan.special_palette = -1;
+    plan.title_special_palette = -1;
+    check(receipt_for_plan(&session, &plan, 8u, &hud_host) &&
+              hud_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 &&
+              hud_host.uses_c017_inventory && hud_host.uses_c040_resurrect,
+          "real C017/C040 HUD reaches terminal runtime host surface receipt");
+
+    check(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              &session, &full_runtime) &&
+              full_runtime.valid && full_runtime.playback_reaches_title &&
+              full_runtime.playback_reaches_entrance &&
+              full_runtime.playback_reaches_hud &&
+              full_runtime.title_to_hud_same_session &&
+              full_runtime.no_legacy_wrappers,
+          "full runtime receipt joins title, Entrance, door and HUD in one session");
+    check(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+              &real_receipt, &session, &package_receipt) &&
+              package_receipt.valid &&
+              package_receipt.c001_presents_consumed &&
+              package_receipt.c001_chaos_consumed &&
+              package_receipt.c001_chaos_hold_consumed &&
+              package_receipt.c001_strikes_back_consumed &&
+              package_receipt.c002_left_door_consumed &&
+              package_receipt.c003_right_door_consumed &&
+              package_receipt.c004_entrance_consumed &&
+              package_receipt.c005_credits_consumed &&
+              package_receipt.c017_hud_consumed &&
+              package_receipt.c040_hud_consumed,
+          "real package consumption receipt covers C001-C005/C017/C040");
+    check(csb_v1_startup_session_terminal_package_receipt_pc34(
+              &session, &package_receipt, &terminal_package) &&
+              terminal_package.valid &&
+              terminal_package.real_package_matched &&
+              terminal_package.terminal_f0807_complete,
+          "terminal package receipt accepts only the same verified session");
+
+    session.playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session.playback.entrance_complete = 1;
+    check(csb_v1_dungeon_load_from_file(&dungeon, profile.dungeon_path) == 0,
+          "real DUNGEON.DAT loads for terminal runtime mirror");
+    profile.runtime.dungeon_handle = &dungeon;
+    profile.runtime.party_state_valid = 1;
+    profile.runtime.current_level = 0;
+    profile.runtime.party_x = 1;
+    profile.runtime.party_y = 1;
+    profile.runtime.party_dir = 0;
+    profile.runtime.party_state.ChampionCount = 1;
+    profile.runtime.party_state.PartyDirection = 0;
+    profile.runtime.party_state.LeaderIndex = 0;
+    csb_v1_dungeon_set_current(&dungeon);
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.boot_profile = &profile;
+    snapshot.entrance_active = 1;
+    snapshot.opening_active = 1;
+    snapshot.opening_step = 31;
+    snapshot.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    check(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+              &snapshot, &session, &door_receipt) &&
+              door_receipt.valid &&
+              door_receipt.route ==
+                  CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_HUD_READY_PC34 &&
+              door_receipt.hud_session_ready &&
+              door_receipt.runtime_view_ready,
+          "terminal F0807 handoff reaches stable runtime HUD only after full real startup");
+
+    csb_v1_dungeon_free(&dungeon);
+    csb_v1_dungeon_set_current(NULL);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&presents_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&chaos_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&chaos_hold_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&strikes_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&closed_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&opening_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&credits_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&hud_host);
+    csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
+
+    printf("Summary: %s\n", failures ? "FAILED" : "PASSED");
+    return failures ? 1 : 0;
+}

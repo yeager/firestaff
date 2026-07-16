@@ -69,6 +69,47 @@ int dm2_suppress_decode(const uint8_t *in, size_t in_capacity,
                         const uint8_t *mask, size_t count,
                         uint8_t *out, uint8_t fill);
 
+enum {
+    DM2_V1_SAVE_SUPPRESS_SYMBOL_INIT = 1u << 0,
+    DM2_V1_SAVE_SUPPRESS_SYMBOL_WRITER = 1u << 1,
+    DM2_V1_SAVE_SUPPRESS_SYMBOL_FLUSH = 1u << 2,
+    DM2_V1_SAVE_SUPPRESS_SYMBOL_READER = 1u << 3,
+    DM2_V1_SAVE_SUPPRESS_SYMBOL_WRITE_1BIT = 1u << 4,
+    DM2_V1_SAVE_SUPPRESS_SYMBOL_READ_1BIT = 1u << 5
+};
+
+typedef struct {
+    int valid;
+    uint32_t covered_symbol_mask;
+    int init_ready;
+    int writer_ready;
+    int flush_ready;
+    int reader_ready;
+    int write_1bit_ready;
+    int read_1bit_ready;
+    int section_carry_ready;
+    int fill_zero_ready;
+    int fill_one_ready;
+    int underflow_rejected;
+    uint8_t source_vector_hash;
+    uint8_t mask_vector_hash;
+    uint8_t encoded_vector_hash;
+    uint8_t decoded_vector_hash;
+    uint8_t carry_encoded_byte;
+    uint8_t first_section_decoded;
+    uint8_t second_section_decoded;
+    size_t encoded_size;
+    size_t reader_position_after_decode;
+    uint32_t receipt_hash;
+} DM2_V1_SaveSuppressSymbolReceipt;
+
+/* Source-named receipt for SKProject c_savegame.cpp's SUPPRESS_INIT,
+ * SUPPRESS_WRITER, SUPPRESS_FLUSH, SUPPRESS_READER, WRITE_1BIT, and READ_1BIT
+ * bitstream contract. It proves MSB-first source-bit selection, cross-section
+ * carry, fill policy, and underflow rejection without inventing save payloads. */
+int dm2_v1_save_suppress_symbol_receipt(
+    DM2_V1_SaveSuppressSymbolReceipt *out_receipt);
+
 /* Self-test: encode + decode a known vector; verify round-trip. */
 int dm2_suppress_self_verification(void);
 

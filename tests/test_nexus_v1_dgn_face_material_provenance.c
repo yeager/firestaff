@@ -488,6 +488,49 @@ int main(void)
            "joined DGN/PRS3 route proof requires retained real-DGN mesh render blocker");
     consumer.blocks_real_dgn_mesh_render = 1;
 
+    consumer.original_saturn_capture_required = 0;
+    expect(!nexus_v1_dgn_menu_prs3_route_gate(
+               &route_input, &route_receipt) &&
+               !route_receipt.dgn_package_host_bound &&
+               route_receipt.prs3_output_upload_bound &&
+               route_receipt.dgn_no_draw_only &&
+               route_receipt.dgn_blocks_real_dgn_mesh_render &&
+               !route_receipt.route_proof_bound &&
+               route_receipt.original_saturn_capture_required &&
+               !route_receipt.runtime_dgn_render_permitted &&
+               !route_receipt.startup_menu_render_permitted &&
+               !route_receipt.fallback_visuals_permitted,
+           "joined DGN/PRS3 route proof requires retained DGN original-Saturn capture requirement");
+    consumer.original_saturn_capture_required = 1;
+
+    consumer.original_saturn_rendering_proven = 1;
+    expect(!nexus_v1_dgn_menu_prs3_route_gate(
+               &route_input, &route_receipt) &&
+               !route_receipt.dgn_package_host_bound &&
+               route_receipt.prs3_output_upload_bound &&
+               route_receipt.dgn_no_draw_only &&
+               route_receipt.dgn_blocks_real_dgn_mesh_render &&
+               !route_receipt.route_proof_bound &&
+               !route_receipt.runtime_dgn_render_permitted &&
+               !route_receipt.startup_menu_render_permitted &&
+               !route_receipt.fallback_visuals_permitted,
+           "joined DGN/PRS3 route proof rejects pre-promoted DGN Saturn rendering");
+    consumer.original_saturn_rendering_proven = 0;
+
+    consumer.material_semantics_proven = 1;
+    expect(!nexus_v1_dgn_menu_prs3_route_gate(
+               &route_input, &route_receipt) &&
+               !route_receipt.dgn_package_host_bound &&
+               route_receipt.prs3_output_upload_bound &&
+               route_receipt.dgn_no_draw_only &&
+               route_receipt.dgn_blocks_real_dgn_mesh_render &&
+               !route_receipt.route_proof_bound &&
+               !route_receipt.runtime_dgn_render_permitted &&
+               !route_receipt.startup_menu_render_permitted &&
+               !route_receipt.fallback_visuals_permitted,
+           "joined DGN/PRS3 route proof rejects pre-promoted DGN material semantics");
+    consumer.material_semantics_proven = 0;
+
     consumer.observed_structure2_descriptor_count = 1;
     expect(!nexus_v1_dgn_menu_prs3_route_gate(
                &route_input, &route_receipt) &&
@@ -559,6 +602,76 @@ int main(void)
                consumer.blocks_real_dgn_mesh_render,
            "stale host face-count metadata cannot consume the package route");
     consumer_input.observed_face_count = 3;
+
+    consumer_input.host_route_requested = 0;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE &&
+               consumer.material_receipt_ready &&
+               !consumer.host_route_requested &&
+               consumer.package_route_consumed &&
+               !consumer.source_route_consumed_by_host &&
+               !consumer.real_dgn_source_consumed_by_host &&
+               !consumer.package_host_route_bound &&
+               consumer.material_pixel_promotion_blocked &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted,
+           "host route consumption requires an explicit real-DGN host request");
+    consumer_input.host_route_requested = 1;
+
+    consumer_input.observed_level_index = 1;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE &&
+               consumer.material_receipt_ready &&
+               !consumer.level_index_matches &&
+               consumer.observed_level_index == -1 &&
+               !consumer.source_route_consumed_by_host &&
+               !consumer.real_dgn_source_consumed_by_host &&
+               !consumer.package_host_route_bound &&
+               consumer.material_pixel_promotion_blocked &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted,
+           "host route consumption requires retained DGN level identity");
+    consumer_input.observed_level_index = 0;
+
+    consumer_input.observed_canonical_dgn_size =
+        (int)sizeof(retail_dgn) - 1;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE &&
+               consumer.material_receipt_ready &&
+               !consumer.canonical_dgn_size_matches &&
+               consumer.observed_canonical_dgn_size == 0 &&
+               !consumer.source_route_consumed_by_host &&
+               !consumer.real_dgn_source_consumed_by_host &&
+               !consumer.package_host_route_bound &&
+               consumer.material_pixel_promotion_blocked &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted,
+           "host route consumption requires retained canonical DGN size identity");
+    consumer_input.observed_canonical_dgn_size = (int)sizeof(retail_dgn);
+
+    consumer_input.observed_structure2_descriptor_count = 3;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE &&
+               consumer.material_receipt_ready &&
+               !consumer.structure2_descriptor_count_matches &&
+               consumer.observed_structure2_descriptor_count == 0 &&
+               !consumer.static_selectors_within_structure2_descriptors &&
+               !consumer.source_route_consumed_by_host &&
+               !consumer.real_dgn_source_consumed_by_host &&
+               !consumer.package_host_route_bound &&
+               consumer.material_pixel_promotion_blocked &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted,
+           "host route consumption requires retained Structure2 descriptor-count identity");
+    consumer_input.observed_structure2_descriptor_count = 4;
 
     receipt.material_semantics_proven = 1;
     expect(!nexus_v1_dgn_package_host_consumer_gate(

@@ -104,6 +104,7 @@ typedef struct {
     uint8_t light_level;
     uint8_t dynamic_map;
     uint32_t scene_control_hash;
+    uint32_t map_descriptor_hash;
     uint32_t source_state_hash;
     uint32_t receipt_hash;
 } DM2_V1_CLightM11Receipt;

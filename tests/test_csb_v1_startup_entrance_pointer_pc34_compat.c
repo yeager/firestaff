@@ -519,7 +519,7 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title clear and draw command");
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_total_ticks_pc34() == 81 &&
+              csb_v1_startup_title_total_ticks_pc34() == 101 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
               csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&

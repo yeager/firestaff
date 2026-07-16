@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.csb_v1_parity_surface_matrix.v1",
-  "pass": true,
+  "pass": false,
   "scope": "First countable CSB V1 parity surface matrix; source/evidence boundary only.",
   "surface_count": 6,
   "surfaces": [
@@ -177,7 +177,7 @@
         },
         {
           "id": "firestaff_sample_blocker",
-          "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+          "path": "/Users/bosse/Documents/Firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
           "lines": "1-20",
           "needles": [
             "BLOCKED",
@@ -353,14 +353,17 @@
     {
       "surface": "save_new_adventure",
       "id": "firestaff_sample_blocker",
-      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
+      "path": "/Users/bosse/Documents/Firestaff/parity-evidence/blocker-n2-csb-sample-save-search-20260430.md",
       "lines": "1-20",
       "needles": [
         "BLOCKED",
         "CSBGAME*.DAT"
       ],
-      "missing": [],
-      "ok": true,
+      "missing": [
+        "BLOCKED",
+        "CSBGAME*.DAT"
+      ],
+      "ok": false,
       "skippedHostMissingOptionalRoot": false
     }
   ],
@@ -429,5 +432,7 @@
     "No menu_startup_m12.c or other launch/runtime code is modified by this gate.",
     "Atari ST and Amiga CSB payloads remain separate; this matrix anchors the current Atari ST v2.x lane only."
   ],
-  "failures": []
+  "failures": [
+    "save_new_adventure/firestaff_sample_blocker missing ['BLOCKED', 'CSBGAME*.DAT'] path_exists=False"
+  ]
 }

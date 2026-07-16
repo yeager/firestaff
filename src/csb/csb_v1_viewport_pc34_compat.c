@@ -188,6 +188,235 @@ static void csb_v1_viewport_runtime_relative_position(
     if (out_side) *out_side = side;
 }
 
+static uint32_t csb_v1_viewport_mix_u32_pc34(uint32_t hash, uint32_t value)
+{
+    hash ^= value & 0xffu;
+    hash *= 16777619u;
+    hash ^= (value >> 8) & 0xffu;
+    hash *= 16777619u;
+    hash ^= (value >> 16) & 0xffu;
+    hash *= 16777619u;
+    hash ^= (value >> 24) & 0xffu;
+    hash *= 16777619u;
+    return hash;
+}
+
+int csb_v1_viewport_first_frame_material_proof_valid_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof)
+{
+    if (!proof || !proof->valid) {
+        return 0;
+    }
+    if ((proof->route_mask & CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES) !=
+        CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES) {
+        return 0;
+    }
+    if (!proof->source_graphics_dat_bound ||
+        !proof->no_synthetic_pixels ||
+        !proof->no_fallback_visuals ||
+        !proof->shared_palette_material_proof) {
+        return 0;
+    }
+    if (proof->source_item_count < 5u) {
+        return 0;
+    }
+    return proof->shared_palette_hash != 0u &&
+           proof->d0_door_hash != 0u &&
+           proof->d0_thing_hash != 0u &&
+           proof->d1_door_hash != 0u &&
+           proof->d1_thing_hash != 0u &&
+           proof->d2_door_hash != 0u;
+}
+
+int csb_v1_viewport_admit_first_frame_materialization_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    int real_graphics_session,
+    CSB_V1_ViewportFirstFrameMaterializationReceipt *out_receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!real_graphics_session ||
+        !csb_v1_viewport_first_frame_material_proof_valid_pc34(proof)) {
+        return 0;
+    }
+
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->route_mask);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->shared_palette_hash);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d0_door_hash);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d0_thing_hash);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d1_door_hash);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d1_thing_hash);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d2_door_hash);
+
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->consumed_by_m11_render = 1;
+        out_receipt->route_mask = proof->route_mask;
+        out_receipt->combined_material_hash = hash;
+        out_receipt->required_route_count = 5;
+        out_receipt->real_graphics_session = 1;
+        out_receipt->no_synthetic_pixels = proof->no_synthetic_pixels;
+        out_receipt->no_fallback_visuals = proof->no_fallback_visuals;
+        out_receipt->source_evidence = proof->source_evidence;
+    }
+    return 1;
+}
+
+static void csb_v1_viewport_runtime_draw_command_init_pc34(
+    CSB_V1_ViewportRuntimeDrawCommandPc34 *command,
+    CSB_V1_ViewportRuntimeDrawRoutePc34 route,
+    unsigned int route_bit,
+    uint32_t material_hash,
+    uint32_t palette_hash,
+    int view_depth,
+    int view_square,
+    int draw_order,
+    int clip_x,
+    int clip_y,
+    int clip_w,
+    int clip_h,
+    int transparent_color,
+    int party_dir,
+    int party_x,
+    int party_y,
+    int input_forward,
+    int input_side)
+{
+    if (!command) return;
+    memset(command, 0, sizeof(*command));
+    command->route = route;
+    command->route_bit = route_bit;
+    command->material_hash = material_hash;
+    command->palette_hash = palette_hash;
+    command->view_depth = view_depth;
+    command->view_square = view_square;
+    command->draw_order = draw_order;
+    command->clip_x = clip_x;
+    command->clip_y = clip_y;
+    command->clip_w = clip_w;
+    command->clip_h = clip_h;
+    command->transparent_color = transparent_color;
+    command->party_dir = party_dir;
+    command->party_x = party_x;
+    command->party_y = party_y;
+    command->input_forward = input_forward;
+    command->input_side = input_side;
+}
+
+int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    int real_graphics_session,
+    int party_dir,
+    int party_x,
+    int party_y,
+    CSB_V1_ViewportRuntimeDrawPlanPc34 *out_plan)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (out_plan) {
+        memset(out_plan, 0, sizeof(*out_plan));
+    }
+    if (!out_plan || !real_graphics_session ||
+        !csb_v1_viewport_first_frame_material_proof_valid_pc34(proof) ||
+        party_dir < 0 || party_dir > 3 || party_x < 0 || party_y < 0) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0128 consumes the near-to-mid door and thing
+     * routes through indexed GRAPHICS.DAT materials selected by the same
+     * viewport input state.  This is a command plan for M11 consumption, not
+     * a fallback rasterizer. */
+    csb_v1_viewport_runtime_draw_command_init_pc34(
+        &out_plan->commands[0],
+        CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34,
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR,
+        proof->d2_door_hash, proof->shared_palette_hash, 2, 10, 0x0111,
+        76, 47, 72, 74, CSB_V1_DOOR_TRANSPARENT_COLOR,
+        party_dir, party_x, party_y, 2, 0);
+    csb_v1_viewport_runtime_draw_command_init_pc34(
+        &out_plan->commands[1],
+        CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34,
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0111_DOOR,
+        proof->d1_door_hash, proof->shared_palette_hash, 1, 14, 0x0218,
+        48, 33, 128, 102, CSB_V1_DOOR_TRANSPARENT_COLOR,
+        party_dir, party_x, party_y, 1, 0);
+    csb_v1_viewport_runtime_draw_command_init_pc34(
+        &out_plan->commands[2],
+        CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0115_THING_PC34,
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0115_THING,
+        proof->d1_thing_hash, proof->shared_palette_hash, 1, 14, 0x0349,
+        40, 33, 144, 104, CSB_V1_F0115_TRANSPARENT_COLOR,
+        party_dir, party_x, party_y, 1, 0);
+    csb_v1_viewport_runtime_draw_command_init_pc34(
+        &out_plan->commands[3],
+        CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0111_DOOR_PC34,
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0111_DOOR,
+        proof->d0_door_hash, proof->shared_palette_hash, 0, 12, 0x0439,
+        0, 33, 112, 136, CSB_V1_DOOR_TRANSPARENT_COLOR,
+        party_dir, party_x, party_y, 0, -1);
+    csb_v1_viewport_runtime_draw_command_init_pc34(
+        &out_plan->commands[4],
+        CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0115_THING_PC34,
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0115_THING,
+        proof->d0_thing_hash, proof->shared_palette_hash, 0, 13, 0x0615,
+        112, 33, 112, 136, CSB_V1_F0115_TRANSPARENT_COLOR,
+        party_dir, party_x, party_y, 0, 1);
+
+    out_plan->valid = 1;
+    out_plan->consumed_by_m11_render = 1;
+    out_plan->real_graphics_session = 1;
+    out_plan->no_synthetic_pixels = proof->no_synthetic_pixels;
+    out_plan->no_fallback_visuals = proof->no_fallback_visuals;
+    out_plan->palette_bound = proof->shared_palette_hash != 0u;
+    out_plan->clip_bound = 1;
+    out_plan->state_bound = 1;
+    out_plan->input_bound = 1;
+    out_plan->route_mask = proof->route_mask;
+    out_plan->command_count =
+        CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34;
+    out_plan->shared_palette_hash = proof->shared_palette_hash;
+    out_plan->source_evidence = proof->source_evidence;
+
+    hash = csb_v1_viewport_mix_u32_pc34(hash, out_plan->route_mask);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, out_plan->shared_palette_hash);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)party_dir);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)party_x);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)party_y);
+    for (i = 0; i < out_plan->command_count; ++i) {
+        const CSB_V1_ViewportRuntimeDrawCommandPc34 *command =
+            &out_plan->commands[i];
+        if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_NONE_PC34 ||
+            command->material_hash == 0u || command->palette_hash == 0u ||
+            command->clip_w <= 0 || command->clip_h <= 0 ||
+            command->clip_x < 0 || command->clip_y < 0 ||
+            command->clip_x + command->clip_w > 224 ||
+            command->clip_y + command->clip_h > 169 ||
+            command->party_dir != party_dir ||
+            command->party_x != party_x ||
+            command->party_y != party_y) {
+            memset(out_plan, 0, sizeof(*out_plan));
+            return 0;
+        }
+        hash = csb_v1_viewport_mix_u32_pc34(hash, command->route_bit);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, command->material_hash);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)command->draw_order);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)command->clip_x);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)command->clip_y);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)command->clip_w);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)command->clip_h);
+        hash = csb_v1_viewport_mix_u32_pc34(
+            hash, (uint32_t)(command->input_forward + 4));
+        hash = csb_v1_viewport_mix_u32_pc34(
+            hash, (uint32_t)(command->input_side + 4));
+    }
+    out_plan->plan_hash = hash ? hash : 1u;
+    return 1;
+}
+
 void csb_v1_viewport_runtime_map_from_relative(
     int party_dir,
     int party_x,
@@ -2933,6 +3162,15 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->explosion_sprite_drawer = NULL;
         cfg->explosion_sprite_user = NULL;
         cfg->real_graphics_session = 0;
+        cfg->first_frame_material_proof = NULL;
+        cfg->first_frame_material_consumed_count = 0;
+        cfg->first_frame_material_blocked_count = 0;
+        cfg->first_frame_material_hash = 0u;
+        cfg->first_frame_draw_plan_consumed_count = 0;
+        cfg->first_frame_draw_plan_blocked_count = 0;
+        cfg->first_frame_draw_plan_command_count = 0;
+        cfg->first_frame_draw_plan_hash = 0u;
+        cfg->first_frame_draw_plan_palette_hash = 0u;
         cfg->graphic_provider_callback = NULL;
         cfg->graphic_provider_user_data = NULL;
         return;
@@ -2948,6 +3186,15 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
     cfg->explosion_sprite_user = binding->explosion_sprite_user;
     cfg->real_graphics_session = binding->real_graphics_session ? 1 : 0;
+    cfg->first_frame_material_proof = binding->first_frame_material_proof;
+    cfg->first_frame_material_consumed_count = 0;
+    cfg->first_frame_material_blocked_count = 0;
+    cfg->first_frame_material_hash = 0u;
+    cfg->first_frame_draw_plan_consumed_count = 0;
+    cfg->first_frame_draw_plan_blocked_count = 0;
+    cfg->first_frame_draw_plan_command_count = 0;
+    cfg->first_frame_draw_plan_hash = 0u;
+    cfg->first_frame_draw_plan_palette_hash = 0u;
     cfg->graphic_provider_callback = binding->graphic_provider_callback;
     cfg->graphic_provider_user_data = binding->graphic_provider_user_data;
 }
@@ -2993,6 +3240,40 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->runtime_explosion_sprite_drawn_count;
     counts->explosion_marker_drawn_count =
         cfg->runtime_explosion_marker_drawn_count;
+    counts->first_frame_material_consumed_count =
+        cfg->first_frame_material_consumed_count;
+    counts->first_frame_material_blocked_count =
+        cfg->first_frame_material_blocked_count;
+    counts->first_frame_material_hash =
+        cfg->first_frame_material_hash;
+    counts->first_frame_draw_plan_consumed_count =
+        cfg->first_frame_draw_plan_consumed_count;
+    counts->first_frame_draw_plan_blocked_count =
+        cfg->first_frame_draw_plan_blocked_count;
+    counts->first_frame_draw_plan_command_count =
+        cfg->first_frame_draw_plan_command_count;
+    counts->first_frame_draw_plan_hash =
+        cfg->first_frame_draw_plan_hash;
+    counts->first_frame_draw_plan_palette_hash =
+        cfg->first_frame_draw_plan_palette_hash;
+}
+
+void csb_v1_viewport_set_first_frame_material_proof_pc34(
+    CSB_V1_ViewportConfig *cfg,
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof)
+{
+    if (!cfg) {
+        return;
+    }
+    cfg->first_frame_material_proof = proof;
+    cfg->first_frame_material_consumed_count = 0;
+    cfg->first_frame_material_blocked_count = 0;
+    cfg->first_frame_material_hash = 0u;
+    cfg->first_frame_draw_plan_consumed_count = 0;
+    cfg->first_frame_draw_plan_blocked_count = 0;
+    cfg->first_frame_draw_plan_command_count = 0;
+    cfg->first_frame_draw_plan_hash = 0u;
+    cfg->first_frame_draw_plan_palette_hash = 0u;
 }
 
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set) {
@@ -3608,6 +3889,49 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
         cfg, party_dir, party_x, party_y, 1);
     if (cfg->runtime_profile) {
         csb_v1_viewport_draw_runtime_thing_overlays(cfg);
+    }
+    if (cfg->first_frame_material_proof) {
+        CSB_V1_ViewportFirstFrameMaterializationReceipt receipt;
+        CSB_V1_ViewportRuntimeDrawPlanPc34 draw_plan;
+        if (csb_v1_viewport_admit_first_frame_materialization_pc34(
+                cfg->first_frame_material_proof,
+                cfg->real_graphics_session,
+                &receipt) &&
+            csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+                cfg->first_frame_material_proof,
+                cfg->real_graphics_session,
+                party_dir,
+                party_x,
+                party_y,
+                &draw_plan)) {
+            cfg->first_frame_material_consumed_count = 1;
+            cfg->first_frame_material_blocked_count = 0;
+            cfg->first_frame_material_hash = receipt.combined_material_hash;
+            cfg->first_frame_draw_plan_consumed_count = 1;
+            cfg->first_frame_draw_plan_blocked_count = 0;
+            cfg->first_frame_draw_plan_command_count = draw_plan.command_count;
+            cfg->first_frame_draw_plan_hash = draw_plan.plan_hash;
+            cfg->first_frame_draw_plan_palette_hash =
+                draw_plan.shared_palette_hash;
+        } else {
+            cfg->first_frame_material_consumed_count = 0;
+            cfg->first_frame_material_blocked_count = 1;
+            cfg->first_frame_material_hash = 0u;
+            cfg->first_frame_draw_plan_consumed_count = 0;
+            cfg->first_frame_draw_plan_blocked_count = 1;
+            cfg->first_frame_draw_plan_command_count = 0;
+            cfg->first_frame_draw_plan_hash = 0u;
+            cfg->first_frame_draw_plan_palette_hash = 0u;
+        }
+    } else {
+        cfg->first_frame_material_consumed_count = 0;
+        cfg->first_frame_material_blocked_count = 0;
+        cfg->first_frame_material_hash = 0u;
+        cfg->first_frame_draw_plan_consumed_count = 0;
+        cfg->first_frame_draw_plan_blocked_count = 0;
+        cfg->first_frame_draw_plan_command_count = 0;
+        cfg->first_frame_draw_plan_hash = 0u;
+        cfg->first_frame_draw_plan_palette_hash = 0u;
     }
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);

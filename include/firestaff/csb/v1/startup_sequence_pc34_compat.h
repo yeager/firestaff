@@ -353,7 +353,9 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int opening_composite_right_box_w;
     int opening_composite_right_box_h;
     int opening_composite_left_source_x;
+    int opening_composite_left_source_y;
     int opening_composite_right_source_x;
+    int opening_composite_right_source_y;
     int fallback_title_x;
     int fallback_title_y;
     int fallback_title_style;

@@ -3,6 +3,7 @@
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int checks;
@@ -13,6 +14,142 @@ static int passed;
     if (condition) ++passed; \
     else printf("FAIL: %s\n", label); \
 } while (0)
+
+static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
+{
+    FILE *f;
+    long size;
+    uint8_t *data;
+
+    if (out_data) *out_data = NULL;
+    if (out_size) *out_size = 0u;
+    if (!path || !out_data || !out_size) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return 0;
+    }
+    size = ftell(f);
+    if (size <= 0) {
+        fclose(f);
+        return 0;
+    }
+    rewind(f);
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data) {
+        fclose(f);
+        return 0;
+    }
+    if (fread(data, 1u, (size_t)size, f) != (size_t)size) {
+        free(data);
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    *out_data = data;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int candidate_path(char *out, size_t out_size, const char *suffix)
+{
+    const char *data = getenv("FIRESTAFF_DATA");
+    const char *home = getenv("HOME");
+
+    if (!out || out_size == 0u || !suffix) return 0;
+    if (data && data[0]) {
+        snprintf(out, out_size, "%s/%s", data, suffix);
+        return 1;
+    }
+    if (home && home[0]) {
+        snprintf(out, out_size, "%s/.firestaff/data/%s", home, suffix);
+        return 1;
+    }
+    return 0;
+}
+
+static int load_dungeon(uint8_t **out_data, size_t *out_size,
+                        char *path, size_t path_size)
+{
+    static const char *suffixes[] = {
+        "dm2/DUNGEON.DAT",
+        "dm2/dungeon.dat",
+        "dm2/data/DUNGEON.DAT",
+        "dm2/data/dungeon.dat"
+    };
+    size_t i;
+
+    for (i = 0u; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+        if (candidate_path(path, path_size, suffixes[i]) &&
+            read_file(path, out_data, out_size)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void test_real_dungeon_c_light_receipts(
+    const DM2_V1_GdatSceneLightM11Receipt *scene)
+{
+    uint8_t *data = NULL;
+    size_t size = 0u;
+    char path[1024];
+    DM2_V1_DungeonData real_dungeon;
+    int evaluated = 0;
+    int dynamic_maps = 0;
+    int fixed_maps = 0;
+    int map_bound = 1;
+
+    if (!load_dungeon(&data, &size, path, sizeof(path))) {
+        printf("SKIP: real DM2 DUNGEON.DAT not found for c_light scan\n");
+        return;
+    }
+    CHECK("real DM2 DUNGEON.DAT loads for c_light descriptor scan",
+          dm2_v1_dungeon_load(&real_dungeon, data, (int)size) == 0);
+    if (real_dungeon.raw_data) {
+        for (int level = 0; level < real_dungeon.level_count; ++level) {
+            DM2_V1_CLightMapDescriptorReceipt map;
+            DM2_V1_CLightSourceState real_source;
+            DM2_V1_CLightM11Receipt real_receipt;
+            uint32_t first_hash;
+
+            memset(&map, 0, sizeof(map));
+            if (!dm2_v1_dungeon_c_light_map_descriptor_receipt(
+                    &real_dungeon, level, &map)) {
+                continue;
+            }
+            memset(&real_source, 0, sizeof(real_source));
+            real_source.valid = 1;
+            real_source.dynamic_map = map.dynamic_light;
+            real_source.base_light = map.dynamic_light ? 5u : 0u;
+            real_source.darkness_offset = map.dynamic_light ? 2u : 0u;
+            real_source.source_state_hash = 0x52434c54u ^ map.descriptor_hash;
+            if (!dm2_v1_c_light_m11_receipt_build_for_map(
+                    scene, &map, &real_source, &real_receipt)) {
+                map_bound = 0;
+                continue;
+            }
+            ++evaluated;
+            if (map.dynamic_light) ++dynamic_maps;
+            else ++fixed_maps;
+            first_hash = real_receipt.receipt_hash;
+            ++map.descriptor_hash;
+            if (dm2_v1_c_light_m11_receipt_build_for_map(
+                    scene, &map, &real_source, &real_receipt) &&
+                real_receipt.receipt_hash == first_hash) {
+                map_bound = 0;
+            }
+        }
+    }
+    CHECK("real DUNGEON.DAT exposes c_light map descriptors", evaluated > 0);
+    CHECK("real c_light receipts are bound to descriptor hashes", map_bound);
+    CHECK("real DUNGEON.DAT exposes dynamic c_light branch", dynamic_maps > 0);
+    CHECK("real DUNGEON.DAT exposes fixed or bounded c_light branch",
+          fixed_maps > 0 || dynamic_maps == evaluated);
+    dm2_v1_dungeon_free(&real_dungeon);
+    free(data);
+}
 
 int main(void)
 {
@@ -175,11 +312,24 @@ int main(void)
     CHECK("c_light state must match source map fixed-light branch",
           dm2_v1_c_light_m11_receipt_build_for_map(
               &scene, &map_receipt, &source, &receipt) &&
-              receipt.light_level == 1u);
+              receipt.light_level == 1u &&
+              receipt.map_descriptor_hash == map_receipt.descriptor_hash);
+    {
+        uint32_t fixed_receipt_hash = receipt.receipt_hash;
+
+        ++map_receipt.descriptor_hash;
+        CHECK("c_light map-bound receipt hash changes with descriptor identity",
+              dm2_v1_c_light_m11_receipt_build_for_map(
+                  &scene, &map_receipt, &source, &receipt) &&
+                  receipt.light_level == 1u &&
+                  receipt.receipt_hash != fixed_receipt_hash);
+    }
     source.dynamic_map = 1u;
     CHECK("c_light rejects state from a different map light branch",
           !dm2_v1_c_light_m11_receipt_build_for_map(
               &scene, &map_receipt, &source, &receipt) && !receipt.valid);
+
+    test_real_dungeon_c_light_receipts(&scene);
 
     printf("DM2 c_light receipt: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;

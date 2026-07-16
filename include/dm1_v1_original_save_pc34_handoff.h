@@ -501,6 +501,7 @@ typedef struct {
  * imported, exported into transient memory, and reloaded from that buffer. */
 typedef struct {
     int scan_succeeded;
+    int discovery_root_error;
     int scanned_file_count;
     int rejected_count;
     int truncated_count;

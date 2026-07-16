@@ -1776,6 +1776,34 @@ typedef struct {
     DM2_V1_InterfaceRect rect;
 } DM2_V1_StartupMenuPointerHitReceipt;
 
+typedef struct {
+    int valid;
+    int graphics_dat_ready;
+    int title_image_ready;
+    int menu_image_ready;
+    int pointer_layout_ready;
+    int new_game_click_ready;
+    int resume_click_surface_ready;
+    int interface_palette_ready;
+    int hud_static_plan_ready;
+    int hud_palette_ready;
+    int title_width;
+    int title_height;
+    int menu_width;
+    int menu_height;
+    DM2_ImageFormat title_format;
+    DM2_ImageFormat menu_format;
+    uint32_t title_raw_hash;
+    uint32_t title_pixel_hash;
+    uint32_t menu_raw_hash;
+    uint32_t menu_pixel_hash;
+    uint32_t pointer_table_hash;
+    uint32_t interface_palette_hash;
+    uint32_t hud_static_plan_hash;
+    int hud_static_command_count;
+    uint32_t receipt_hash;
+} DM2_V1_BootStartupMenuHudGdatReceipt;
+
 /* skproject SHOW_MENU_SCREEN installs the raw4 rect table before handling
  * event 0xD7 (NEW) and 0xD9 (RESUME). */
 int dm2_v1_boot_startup_menu_pointer_layout(
@@ -1797,6 +1825,14 @@ int dm2_v1_boot_startup_menu_pointer_hit_from_layout(
     int x,
     int y,
     DM2_V1_StartupMenuPointerHitReceipt *out_receipt);
+
+/* Source-owned startup/HUD material join for M11. This proves the visible
+ * title/menu GDAT surfaces, 0xD7/0xD9 click rectangles, interface palette,
+ * and static HUD chrome command plan are all present in the same verified
+ * GRAPHICS.DAT before the dungeon viewport renderer consumes anything. */
+int dm2_v1_boot_startup_menu_hud_gdat_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootStartupMenuHudGdatReceipt *out_receipt);
 
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */

@@ -202,6 +202,480 @@ typedef struct {
 } DM2_V1_SkprojectMoveSideOffsetReceipt;
 
 typedef struct {
+    uint8_t rgb6[256][3];
+    uint8_t base_rgb6[16][3];
+    uint8_t active_set;
+    uint8_t update_palette;
+} DM2_V1_SkprojectIbmioPaletteState;
+
+typedef struct {
+    int valid;
+    int blocked_missing_palette;
+    uint8_t set;
+    uint8_t driver_update_requested;
+    uint8_t base_palette_updated;
+    uint32_t palette_hash;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectIbmioPaletteReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_buffer;
+    int blocked_missing_palette;
+    int blocked_out_of_bounds;
+    uint16_t off_src_pixels;
+    uint16_t off_dst_pixels;
+    uint16_t width_pixels;
+    uint32_t copied_pixels;
+    uint32_t palette_hash;
+    uint32_t dest_hash;
+} DM2_V1_SkprojectIbmioBlit4To8Receipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_buffer;
+    int blocked_out_of_bounds;
+    uint16_t off_src_pixels;
+    uint16_t off_dst_pixels;
+    uint16_t width_pixels;
+    uint32_t copied_pixels;
+    uint32_t buffer_hash;
+} DM2_V1_SkprojectAnimCopy4BppReceipt;
+
+typedef struct {
+    uint16_t hide_depth;
+    uint16_t cursor_shape;
+    uint16_t cursor_bounds[4];
+    uint16_t cursor_bounds_mode;
+    uint8_t cursor_bounds_dirty;
+    uint8_t cursor_redraws;
+    uint8_t event_lock_depth;
+} DM2_V1_SkprojectMouseState;
+
+typedef struct {
+    int valid;
+    uint16_t hide_depth_before;
+    uint16_t hide_depth_after;
+    uint8_t locked_mouse_event;
+    uint8_t redrew_cursor;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseHideReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t shape_before;
+    uint16_t shape_after;
+    uint8_t redrew_before_shape_change;
+    uint8_t redrew_after_shape_change;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseShapeReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_bounds;
+    uint16_t bounds[4];
+    uint16_t mode;
+    uint8_t bounds_dirty;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseBoundsReceipt;
+
+typedef struct {
+    uint32_t interrupt_ff_vector;
+    uint32_t interrupt_fe_vector;
+    uint32_t active_interrupt_fe_vector;
+    uint16_t timer_reload_ticks;
+    int32_t anim_countdown;
+    DM2_V1_SkprojectRect screen_rect;
+    uint8_t sound_card_type;
+    uint8_t display_mode_active;
+    uint8_t display_callback_installed;
+    uint16_t event_queue[10];
+    uint8_t event_read_index;
+    uint8_t event_count;
+} DM2_V1_SkprojectAnimRuntimeState;
+
+typedef struct {
+    int valid;
+    uint32_t captured_vector;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectAnimVectorReceipt;
+
+typedef struct {
+    int valid;
+    uint32_t captured_vector;
+    uint32_t active_vector;
+    uint16_t timer_reload_ticks;
+    uint8_t callback_installed;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectAnimTimerInstallReceipt;
+
+typedef struct {
+    int valid;
+    int32_t countdown_before;
+    int32_t countdown_after;
+    uint16_t timer_reload_ticks;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectAnimTimerTickReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t display_callback_called;
+    uint8_t event_available;
+    uint8_t event_count;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectIbmioPollReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_no_event;
+    uint16_t event_word;
+    uint8_t event_count_before;
+    uint8_t event_count_after;
+    uint8_t event_read_index_after;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectIbmioWaitEventReceipt;
+
+typedef struct {
+    int valid;
+    DM2_V1_SkprojectRect rect;
+    uint8_t color;
+    uint32_t filled_pixels;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectScreenRectFillReceipt;
+
+typedef struct {
+    int valid;
+    uint32_t lfsr_lines_visited;
+    uint32_t lines_filled;
+    uint8_t color;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectScreenClearReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t sound_card_type;
+    uint8_t available;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectSoundAvailableReceipt;
+
+enum {
+    DM2_V1_SKPROJECT_UI_PRED_RETURN_1 = 0,
+    DM2_V1_SKPROJECT_UI_PRED_IS_GAME_ENDED = 1,
+    DM2_V1_SKPROJECT_UI_PRED_1031_0023 = 2,
+    DM2_V1_SKPROJECT_UI_PRED_1031_003E = 3,
+    DM2_V1_SKPROJECT_UI_PRED_1031_007B = 4,
+    DM2_V1_SKPROJECT_UI_PRED_1031_009E = 5,
+    DM2_V1_SKPROJECT_UI_PRED_1031_00C5 = 6,
+    DM2_V1_SKPROJECT_UI_PRED_1031_00F3 = 7,
+    DM2_V1_SKPROJECT_UI_PRED_1031_012D = 8,
+    DM2_V1_SKPROJECT_UI_PRED_1031_014F = 9,
+    DM2_V1_SKPROJECT_UI_PRED_1031_0184 = 10,
+    DM2_V1_SKPROJECT_UI_PRED_1031_01BA = 11
+};
+
+typedef struct {
+    uint8_t b0;
+    uint8_t b1;
+    uint16_t w2;
+} DM2_V1_SkprojectUiNodeRef;
+
+typedef struct {
+    uint8_t game_has_ended;
+    uint8_t selected_panel_token;
+    uint8_t champion_inventory;
+    uint16_t champion_hp[4];
+    int8_t player_at_position[4];
+    uint8_t player_dir;
+    uint8_t toggle_5dbc;
+    uint8_t champion_index;
+    uint8_t selected_spell_panel;
+    uint8_t champion_runes_count[4];
+    uint16_t magical_map_flags;
+    uint8_t right_panel_type;
+} DM2_V1_SkprojectUiPredicateState;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_ref;
+    int blocked_unknown_predicate;
+    int blocked_champion_index;
+    uint8_t predicate_index;
+    uint8_t ref_b0;
+    uint8_t ref_b1;
+    uint16_t ref_w2;
+    uint8_t player_position_index;
+    int8_t player_at_position;
+    uint8_t result;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiPredicateReceipt;
+
+typedef struct {
+    uint16_t w0;
+    uint16_t w2;
+    uint16_t w4;
+    uint8_t b6;
+} DM2_V1_SkprojectUiLeafMeta;
+
+typedef struct {
+    int valid;
+    uint16_t child_offset;
+    uint8_t first_child_index;
+    uint8_t first_child_has_stop_bit;
+    uint8_t blocked_missing_ref;
+    uint8_t blocked_missing_child_bytes;
+    uint8_t blocked_child_offset;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiChildListReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t input_rectno;
+    uint16_t base_rectno;
+    uint16_t offset_rectno;
+    uint8_t applied_8000_offset;
+    uint8_t applied_4000_offset;
+    uint8_t blocked_missing_rects;
+    uint8_t blocked_missing_output;
+    uint8_t blocked_rect_out_of_bounds;
+    DM2_V1_SkprojectRect rect;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiResolveRectReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t visited_nodes;
+    uint16_t marked_leaves;
+    uint16_t recursed_nodes;
+    uint16_t rejected_nodes;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_missing_nodes;
+    uint8_t blocked_missing_child_bytes;
+    uint8_t blocked_missing_leaf_meta;
+    uint8_t blocked_node_index;
+    uint8_t blocked_child_offset;
+    uint8_t blocked_leaf_index;
+    uint8_t blocked_recursion_limit;
+    uint8_t last_predicate_index;
+    uint8_t last_node_index;
+    uint32_t leaf_meta_hash;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiTraverseReceipt;
+
+typedef struct {
+    uint16_t w0;
+    uint16_t w2;
+    uint16_t w4;
+} DM2_V1_SkprojectUiAction;
+
+typedef struct {
+    uint16_t event_code;
+    uint16_t rectno;
+    uint16_t mask;
+} DM2_V1_SkprojectUiResolvedAction;
+
+typedef struct {
+    int valid;
+    uint16_t leaf_index;
+    uint16_t action_index;
+    uint8_t found;
+    uint8_t blocked_missing_ref;
+    uint8_t blocked_missing_leaf_meta;
+    uint8_t blocked_leaf_index;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiActionListReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t visited_nodes;
+    uint16_t tested_leaves;
+    uint16_t recursed_nodes;
+    uint16_t rejected_nodes;
+    uint16_t selected_event;
+    uint16_t selected_leaf_index;
+    uint16_t selected_action_index;
+    uint16_t selected_rectno;
+    uint16_t selected_action_ordinal;
+    int16_t point_x;
+    int16_t point_y;
+    uint16_t action_mask;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_missing_nodes;
+    uint8_t blocked_missing_child_bytes;
+    uint8_t blocked_missing_leaf_meta;
+    uint8_t blocked_missing_actions;
+    uint8_t blocked_missing_rects;
+    uint8_t blocked_node_index;
+    uint8_t blocked_child_offset;
+    uint8_t blocked_leaf_index;
+    uint8_t blocked_action_index;
+    uint8_t blocked_rect_lookup;
+    uint8_t blocked_recursion_limit;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiHitTestReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t visited_nodes;
+    uint16_t tested_leaves;
+    uint16_t recursed_nodes;
+    uint16_t selected_event;
+    uint16_t selected_leaf_index;
+    uint16_t selected_action_index;
+    uint16_t searched_action_code;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_missing_nodes;
+    uint8_t blocked_missing_child_bytes;
+    uint8_t blocked_missing_leaf_meta;
+    uint8_t blocked_missing_actions;
+    uint8_t blocked_node_index;
+    uint8_t blocked_child_offset;
+    uint8_t blocked_leaf_index;
+    uint8_t blocked_action_index;
+    uint8_t blocked_recursion_limit;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiActionSearchReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t scanned_actions;
+    uint16_t selected_event;
+    uint16_t selected_action_index;
+    uint16_t selected_action_ordinal;
+    uint16_t selected_rectno;
+    uint16_t selected_offset_rectno;
+    uint16_t selected_event_delta;
+    int16_t selected_x;
+    int16_t selected_y;
+    int16_t point_x;
+    int16_t point_y;
+    uint16_t action_mask;
+    uint8_t found;
+    uint8_t blocked_missing_runtime;
+    uint8_t blocked_missing_actions;
+    uint8_t blocked_missing_rects;
+    uint8_t blocked_action_index;
+    uint8_t blocked_rect_lookup;
+    DM2_V1_SkprojectRect rect;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiActionResolveReceipt;
+
+typedef struct {
+    uint8_t flags_b3;
+    uint8_t refresh_link_1;
+    uint8_t refresh_link_2;
+} DM2_V1_SkprojectUiClickRectNode;
+
+typedef struct {
+    int valid;
+    int16_t previous_tree;
+    int16_t selected_tree;
+    uint16_t scanned_leaves;
+    uint16_t activated_leaves;
+    uint16_t deactivated_leaves;
+    uint16_t clickrect_refresh_1;
+    uint16_t clickrect_refresh_2;
+    uint8_t requested_event_reset;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_missing_roots;
+    uint8_t blocked_missing_leaf_meta;
+    uint8_t blocked_missing_clickrects;
+    uint8_t blocked_tree_index;
+    DM2_V1_SkprojectUiTraverseReceipt traverse_receipt;
+    uint32_t leaf_meta_hash;
+    uint32_t clickrect_hash;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiSelectTreeReceipt;
+
+typedef struct {
+    uint16_t button;
+    int16_t x;
+    int16_t y;
+} DM2_V1_SkprojectUiMouseEvent;
+
+typedef struct {
+    uint8_t pending_capture_redraw;
+    uint8_t show_item_stats;
+    uint8_t capture_item_stats;
+    uint8_t capture_panel;
+    uint8_t mouse_visibility;
+    uint8_t requested_guidraw_29ee_000f;
+    uint8_t requested_mouse_release_capture;
+    uint8_t requested_show_mouse_cursor;
+    uint8_t queue_busy;
+    uint8_t pending_mouse_event;
+    DM2_V1_SkprojectUiMouseEvent pending_event;
+    DM2_V1_SkprojectUiMouseEvent event_queue[11];
+    uint8_t event_read_index;
+    uint8_t event_write_index;
+    uint8_t event_count;
+    uint8_t filter_active;
+    uint16_t active_tree;
+    uint16_t previous_tree;
+    uint16_t saved_tree;
+    uint16_t selected_rectno;
+    uint16_t selected_offset_rectno;
+    int16_t selected_x;
+    int16_t selected_y;
+    uint16_t ui_event_code;
+    uint16_t ui_event_delta;
+    uint16_t queued_action_code;
+} DM2_V1_SkprojectUiRuntimeState;
+
+typedef struct {
+    int valid;
+    uint8_t cleared_pending_capture_redraw;
+    uint8_t requested_guidraw_29ee_000f;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiPendingRedrawReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t cleared_sources;
+    uint8_t requested_mouse_release_capture;
+    uint8_t requested_show_mouse_cursor;
+    uint8_t mouse_visibility;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiMouseCaptureReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t drained_host_events;
+    uint8_t kept_events;
+    uint8_t dropped_events;
+    uint8_t queued_pending_event;
+    uint16_t previous_event_code;
+    uint16_t event_code_after;
+    uint16_t selected_rectno_after;
+    uint32_t queue_hash;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiEventResetReceipt;
+
+typedef struct {
+    uint16_t button_dbidx;
+    DM2_V1_SkprojectRect rect;
+    uint8_t allocated_clickrectdata;
+    uint8_t copied_mouse_rect;
+} DM2_V1_SkprojectUiButtonGroup;
+
+typedef struct {
+    int valid;
+    uint16_t button_dbidx_before;
+    uint16_t button_dbidx_after;
+    DM2_V1_SkprojectRect mouse_rect;
+    DM2_V1_SkprojectRect container_rect;
+    DM2_V1_SkprojectRect centered_rect;
+    uint16_t width;
+    uint16_t height;
+    uint8_t copied_mouse_rect;
+    uint8_t requested_alloc_clickrectdata;
+    uint8_t blocked_missing_group;
+    uint8_t blocked_missing_container;
+    uint8_t blocked_missing_output;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiCenteredButtonReceipt;
+
+typedef struct {
     uint16_t requested_move;
     uint16_t current_tile_value;
     uint16_t destination_tile_value;
@@ -371,6 +845,45 @@ typedef struct {
 } DM2_V1_SkprojectMap185AReceipt;
 
 typedef struct {
+    int16_t map_width;
+    int16_t map_height;
+    int16_t current_map_index;
+    int16_t x;
+    int16_t y;
+    uint16_t dungeon_seed;
+    uint16_t wall_random_decoration_count;
+    uint16_t gates[4];
+    uint16_t rotation;
+    const uint8_t *candidate_table;
+    uint16_t candidate_table_count;
+    const uint8_t *ornate_alcove_flags;
+} DM2_V1_SkprojectMap0CEEWallDecorationState;
+
+typedef struct {
+    int valid;
+    uint16_t divisor;
+    uint16_t range_input;
+    uint16_t step_plus_one;
+    uint16_t random_input[4];
+    uint16_t selected_index[4];
+    uint16_t values[4];
+    uint8_t gates[4];
+    uint8_t used_candidate[4];
+    uint8_t returned_default[4];
+    uint8_t sanitized[4];
+    uint8_t requested_random_17e7[4];
+    uint8_t requested_wall_random_decoration_count;
+    uint8_t requested_wall_ornate_alcove_type;
+    uint8_t out_of_map;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_missing_output;
+    uint8_t blocked_missing_candidates;
+    uint8_t blocked_zero_range;
+    uint32_t candidate_hash;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMap0CEEWallDecorationReceipt;
+
+typedef struct {
     int valid;
     int blocked_missing_rect;
     int blocked_missing_overlay;
@@ -429,6 +942,71 @@ typedef struct {
     uint8_t requested_local_palette;
     uint8_t requested_icon_pict_buff;
 } DM2_V1_SkprojectDrawIconPictEntryReceipt;
+
+typedef struct {
+    int16_t blit_x;
+    int16_t blit_y;
+    int16_t inflate;
+} DM2_V1_Skproject2405RectState;
+
+typedef struct {
+    int valid;
+    uint16_t rectno;
+    DM2_V1_SkprojectRect source_rect;
+    DM2_V1_SkprojectRect rect;
+    int16_t blit_x;
+    int16_t blit_y;
+    int16_t inflate;
+    uint8_t requested_query_blit_rect;
+    uint8_t requested_inflate_rect;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_missing_rects;
+    uint8_t blocked_missing_output;
+    uint8_t blocked_rect_out_of_bounds;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject2405RectReceipt;
+
+typedef struct {
+    uint16_t object_id;
+    uint16_t dbspec_word6;
+    uint16_t item_w2;
+    uint16_t game_tick;
+    uint16_t player_dir;
+    uint16_t random16;
+    uint8_t fit_for_equip;
+    uint8_t champion_index;
+    uint8_t selected_hand_action;
+    const uint16_t *selected_hand_items;
+    uint16_t selected_hand_item_count;
+} DM2_V1_Skproject2405ItemState;
+
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    uint16_t dbspec_word6;
+    uint16_t frame_count;
+    uint16_t animation_mode;
+    uint16_t selected_entry;
+    uint16_t charge;
+    uint16_t max_charge;
+    uint16_t bucket_width;
+    uint16_t tick_input;
+    uint16_t random_input;
+    uint16_t player_dir;
+    uint8_t base_entry;
+    uint8_t used_equip_variant;
+    uint8_t used_tick_mode;
+    uint8_t used_random_mode;
+    uint8_t used_direction_mode;
+    uint8_t used_charge_mode;
+    uint8_t used_charge_tick_mode;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_not_drawn;
+    uint8_t blocked_not_fit_for_equip;
+    uint8_t blocked_selected_hand;
+    uint8_t blocked_zero_bucket_width;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject2405ItemEntryReceipt;
 
 typedef struct {
     int valid;
@@ -880,6 +1458,108 @@ typedef struct {
     uint16_t w52;
     uint16_t w54;
 } DM2_V1_SkprojectExtendedPictureRef;
+
+typedef struct {
+    uint16_t cache_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t word22;
+    uint8_t payload_available;
+} DM2_V1_Skproject0B36CachePicture;
+
+typedef struct {
+    uint16_t w4;
+    uint16_t w12;
+    uint16_t w14;
+    uint16_t w16;
+    uint16_t w22;
+    uint16_t width;
+    uint16_t height;
+    uint16_t rect_no;
+    int16_t color_key_passthrough;
+    uint8_t has_bits;
+} DM2_V1_Skproject0B36Picture;
+
+typedef struct {
+    uint16_t dbidx;
+    DM2_V1_SkprojectRect rect;
+    uint16_t group_size;
+    DM2_V1_SkprojectRect dirty_rects[5];
+} DM2_V1_Skproject0B36ButtonGroup;
+
+typedef struct {
+    int valid;
+    uint16_t cache_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t word22;
+    uint8_t assigned_picture;
+    uint8_t requested_mement_buffer;
+    uint8_t blocked_missing_cache_picture;
+    uint8_t blocked_missing_payload;
+    uint8_t blocked_cache_index_mismatch;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject0B36CachePictureReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t previous_group_size;
+    uint16_t new_group_size;
+    uint8_t reused_covering_rect;
+    uint8_t replaced_contained_rect;
+    uint8_t requested_compaction;
+    uint8_t clipped_to_group;
+    uint8_t dropped_empty_clip;
+    uint8_t blocked_missing_group;
+    uint8_t blocked_missing_rect;
+    DM2_V1_SkprojectRect input_rect;
+    DM2_V1_SkprojectRect stored_rect;
+    uint32_t dirty_rect_hash;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject0B36DirtyRectReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t rectno;
+    uint16_t allocated_cache_index;
+    uint16_t width;
+    uint16_t height;
+    uint8_t bpp;
+    uint8_t requested_query_expanded_rect;
+    uint8_t requested_alloc_temp_cache_index;
+    uint8_t requested_alloc_new_pict;
+    uint8_t requested_initial_dirty_rect;
+    uint8_t blocked_missing_group;
+    uint8_t blocked_missing_rects;
+    uint8_t blocked_rect_out_of_bounds;
+    DM2_V1_Skproject0B36DirtyRectReceipt dirty_receipt;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject0B36ButtonGroupInitReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t cache_index;
+    uint16_t rectno;
+    int16_t color_key;
+    uint16_t width_before;
+    uint16_t height_before;
+    uint16_t width_after;
+    uint16_t height_after;
+    uint8_t requested_group_cache_bits;
+    uint8_t requested_query_pict_bits;
+    uint8_t requested_query_blit_rect;
+    uint8_t requested_offset_rect;
+    uint8_t requested_draw_def_pict;
+    uint8_t requested_dirty_rect;
+    uint8_t blocked_missing_picture;
+    uint8_t blocked_missing_group;
+    uint8_t blocked_missing_blit_rects;
+    uint8_t blocked_rect_out_of_bounds;
+    DM2_V1_SkprojectRect blit_rect;
+    DM2_V1_SkprojectRect picture_rect;
+    DM2_V1_Skproject0B36DirtyRectReceipt dirty_receipt;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject0B36DrawCachedPictureReceipt;
 
 typedef struct {
     uint8_t cls1;
@@ -1936,6 +2616,299 @@ int dm2_v1_skproject_xlat_palette(
     uint16_t colors,
     const uint8_t *conversion_table,
     DM2_V1_SkprojectXlatPaletteReceipt *out_receipt);
+void dm2_v1_skproject_ibmio_palette_state_init(
+    DM2_V1_SkprojectIbmioPaletteState *state);
+int dm2_v1_skproject_00eb_04bc_palette_set(
+    DM2_V1_SkprojectIbmioPaletteState *state,
+    const uint8_t rgb888[16][3],
+    uint16_t set,
+    DM2_V1_SkprojectIbmioPaletteReceipt *out_receipt);
+int dm2_v1_skproject_0759_0688_palette_set(
+    DM2_V1_SkprojectIbmioPaletteState *state,
+    const uint8_t rgb888[16][3],
+    uint16_t set,
+    DM2_V1_SkprojectIbmioPaletteReceipt *out_receipt);
+int dm2_v1_skproject_0759_06a1_select_palette_set(
+    DM2_V1_SkprojectIbmioPaletteState *state,
+    uint8_t set,
+    DM2_V1_SkprojectPaletteSetReceipt *out_receipt);
+int dm2_v1_skproject_00eb_070c_blit_4to8(
+    const uint8_t *src4,
+    size_t src4_size,
+    uint16_t off_src_pixels,
+    uint8_t *dst8,
+    size_t dst8_size,
+    uint16_t off_dst_pixels,
+    uint16_t width_pixels,
+    const uint8_t palette16[16],
+    DM2_V1_SkprojectIbmioBlit4To8Receipt *out_receipt);
+int dm2_v1_skproject_0759_0310_blit_4to8_self(
+    const uint8_t *src4,
+    size_t src4_size,
+    uint16_t off_pixels,
+    uint8_t *dst8,
+    size_t dst8_size,
+    uint16_t width_pixels,
+    const uint8_t palette16[16],
+    DM2_V1_SkprojectIbmioBlit4To8Receipt *out_receipt);
+int dm2_v1_skproject_0759_02c6_copy_4bpp_sequence(
+    uint8_t *buffer4,
+    size_t buffer4_size,
+    uint16_t off_dst_pixels,
+    uint16_t off_src_pixels,
+    uint16_t width_pixels,
+    DM2_V1_SkprojectAnimCopy4BppReceipt *out_receipt);
+void dm2_v1_skproject_mouse_state_init(
+    DM2_V1_SkprojectMouseState *state);
+int dm2_v1_skproject_01b0_0adb_hide_mouse(
+    DM2_V1_SkprojectMouseState *state,
+    DM2_V1_SkprojectMouseHideReceipt *out_receipt);
+int dm2_v1_skproject_01b0_0c70_set_cursor_shape(
+    DM2_V1_SkprojectMouseState *state,
+    uint16_t shape,
+    DM2_V1_SkprojectMouseShapeReceipt *out_receipt);
+int dm2_v1_skproject_01b0_0ca4_set_cursor_bounds(
+    DM2_V1_SkprojectMouseState *state,
+    const uint16_t bounds[4],
+    uint16_t mode,
+    DM2_V1_SkprojectMouseBoundsReceipt *out_receipt);
+void dm2_v1_skproject_anim_runtime_state_init(
+    DM2_V1_SkprojectAnimRuntimeState *state);
+int dm2_v1_skproject_anim_runtime_push_event(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    uint16_t event_word);
+int dm2_v1_skproject_0759_0126_capture_int_ff(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    uint32_t host_vector,
+    DM2_V1_SkprojectAnimVectorReceipt *out_receipt);
+int dm2_v1_skproject_0759_06db_install_timer(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    uint32_t host_vector,
+    uint16_t timer_reload_ticks,
+    DM2_V1_SkprojectAnimTimerInstallReceipt *out_receipt);
+int dm2_v1_skproject_0759_06c2_timer_tick(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectAnimTimerTickReceipt *out_receipt);
+int dm2_v1_skproject_0759_072c_poll_ibmio(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectIbmioPollReceipt *out_receipt);
+int dm2_v1_skproject_0759_071b_wait_ibmio_event(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectIbmioWaitEventReceipt *out_receipt);
+int dm2_v1_skproject_0759_065f_fill_screen_rect(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectScreenRectFillReceipt *out_receipt);
+int dm2_v1_skproject_0759_06b5_clear_screen(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectScreenClearReceipt *out_receipt);
+int dm2_v1_skproject_01b0_1ed2_sound_available(
+    const DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectSoundAvailableReceipt *out_receipt);
+void dm2_v1_skproject_ui_predicate_state_init(
+    DM2_V1_SkprojectUiPredicateState *state);
+int dm2_v1_skproject_return_1(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_is_game_ended(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_0023(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_003e(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_007b(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_009e(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_00c5(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_00f3(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_012d(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_014f(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_0184(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_01ba(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_dispatch_predicate(
+    uint8_t predicate_index,
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt);
+int dm2_v1_skproject_1031_023b_child_list(
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiChildListReceipt *out_receipt);
+int dm2_v1_skproject_1031_01d5_resolve_rect(
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectUiResolveRectReceipt *out_receipt);
+int dm2_v1_skproject_1031_027e_traverse(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiTraverseReceipt *out_receipt);
+int dm2_v1_skproject_1031_024c_action_list(
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiActionListReceipt *out_receipt);
+void dm2_v1_skproject_ui_runtime_state_init(
+    DM2_V1_SkprojectUiRuntimeState *state);
+int dm2_v1_skproject_1031_0a88_action_hit(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    int16_t point_x,
+    int16_t point_y,
+    uint16_t action_mask,
+    DM2_V1_SkprojectUiActionResolveReceipt *out_receipt);
+int dm2_v1_skproject_1031_0c58_select_event(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    uint16_t event_code,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    DM2_V1_SkprojectUiActionResolveReceipt *out_receipt);
+int dm2_v1_skproject_1031_0b7e_flush_pending_mouse(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    DM2_V1_SkprojectUiEventResetReceipt *out_receipt);
+int dm2_v1_skproject_1031_10c8_center_button(
+    DM2_V1_SkprojectUiButtonGroup *group,
+    const DM2_V1_SkprojectRect *container_rect,
+    const DM2_V1_SkprojectRect *mouse_rect,
+    uint16_t width,
+    uint16_t height,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectUiCenteredButtonReceipt *out_receipt);
+int dm2_v1_skproject_1031_030a_hit_test(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    int16_t point_x,
+    int16_t point_y,
+    uint16_t action_mask,
+    DM2_V1_SkprojectUiHitTestReceipt *out_receipt);
+int dm2_v1_skproject_1031_03f2_find_action(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_code,
+    DM2_V1_SkprojectUiActionSearchReceipt *out_receipt);
+int dm2_v1_skproject_1031_04f5_clear_pending_redraw(
+    DM2_V1_SkprojectUiRuntimeState *state,
+    DM2_V1_SkprojectUiPendingRedrawReceipt *out_receipt);
+int dm2_v1_skproject_1031_050c_release_item_capture(
+    DM2_V1_SkprojectUiRuntimeState *state,
+    DM2_V1_SkprojectUiMouseCaptureReceipt *out_receipt);
+int dm2_v1_skproject_1031_098e_reset_events(
+    DM2_V1_SkprojectUiRuntimeState *state,
+    DM2_V1_SkprojectUiEventResetReceipt *out_receipt);
+int dm2_v1_skproject_1031_0541_select_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    uint16_t tree_index,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt);
+int dm2_v1_skproject_1031_0667_restore_active_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt);
+int dm2_v1_skproject_1031_0675_reset_and_select_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    uint16_t tree_index,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt);
 int dm2_v1_skproject_sub_blit_specialeffects_receipt(
     const DM2_V1_SkprojectRect *rect,
     uint16_t xend,
@@ -1969,6 +2942,25 @@ int dm2_v1_skproject_draw_icon_pict_entry(
     uint16_t button_id,
     int16_t alpha_mask,
     DM2_V1_SkprojectDrawIconPictEntryReceipt *out_receipt);
+int dm2_v1_skproject_2405_00ec_query_blit_rect(
+    const DM2_V1_Skproject2405RectState *state,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *blit_rects,
+    uint16_t blit_rect_count,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_Skproject2405RectReceipt *out_receipt);
+int dm2_v1_skproject_2405_011f_query_inflated_rect(
+    const DM2_V1_Skproject2405RectState *state,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *blit_rects,
+    uint16_t blit_rect_count,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_Skproject2405RectReceipt *out_receipt);
+uint8_t dm2_v1_skproject_2405_014a_item_entry(
+    const DM2_V1_Skproject2405ItemState *state,
+    uint16_t equip_slot,
+    uint16_t tick_modulus,
+    DM2_V1_Skproject2405ItemEntryReceipt *out_receipt);
 int dm2_v1_skproject_draw_def_pict(
     const DM2_V1_SkprojectExtendedPictureRef *picture,
     uint16_t rect_no,
@@ -2133,6 +3125,10 @@ int dm2_v1_skproject_map_0cee_185a(
     uint16_t candidate_count,
     const uint8_t *ornate_alcove_flags,
     DM2_V1_SkprojectMap185AReceipt *out_receipt);
+int dm2_v1_skproject_map_0cee_wall_decoration_chain(
+    const DM2_V1_SkprojectMap0CEEWallDecorationState *state,
+    uint16_t out_words4[4],
+    DM2_V1_SkprojectMap0CEEWallDecorationReceipt *out_receipt);
 int dm2_v1_skproject_map_2066_1f37(
     DM2_V1_SkprojectMapRecord *records,
     uint16_t record_count,
@@ -2336,6 +3332,30 @@ int dm2_v1_skproject_alloc_new_pict(
     DM2_V1_SkprojectNewPictReceipt *out_receipt);
 uint32_t dm2_v1_skproject_calc_pict_ent_hash(
     const DM2_V1_SkprojectExtendedPictureRef *ref);
+int dm2_v1_skproject_0b36_00c3_cache_picture(
+    const DM2_V1_Skproject0B36CachePicture *cache_picture,
+    DM2_V1_Skproject0B36Picture *picture,
+    DM2_V1_Skproject0B36CachePictureReceipt *out_receipt);
+int dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_Skproject0B36DirtyRectReceipt *out_receipt);
+int dm2_v1_skproject_0b36_0c52_init_button_group(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t rectno,
+    uint16_t add_initial_dirty_rect,
+    uint16_t allocated_cache_index,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    DM2_V1_Skproject0B36ButtonGroupInitReceipt *out_receipt);
+int dm2_v1_skproject_0b36_11c0_draw_cached_picture(
+    DM2_V1_Skproject0B36Picture *picture,
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t rectno,
+    int16_t color_key,
+    const DM2_V1_SkprojectRect *blit_rects,
+    uint16_t blit_rect_count,
+    DM2_V1_Skproject0B36DrawCachedPictureReceipt *out_receipt);
 int dm2_v1_skproject_alloc_image_mement(
     DM2_V1_SkprojectCacheState *state,
     const DM2_V1_SkprojectImageMementRequest *request,

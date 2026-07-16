@@ -9,7 +9,9 @@
  */
 
 #include "dm2_v1_sound.h"
+#include "dm2_v1_midi_backend.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ── Sound name tables by category ────────────────────────────────────────
@@ -81,6 +83,248 @@ static const uint16_t g_skproject_sound_bearing_table[24] = {
     0x4400u, 0x5300u, 0x6200u, 0x7100u, 0x8f00u, 0x9e00u,
     0xad00u, 0xbc00u, 0xcb00u, 0xda00u, 0xe900u, 0xf800u
 };
+
+static char g_dm2_music_asset_root[256];
+static int g_dm2_music_asset_root_verified;
+static DM2_V1_MusicScheduledEvent g_dm2_music_events[64];
+static uint16_t g_dm2_music_event_count;
+static uint32_t g_dm2_music_loop_duration_us;
+static int g_dm2_music_loop_enabled;
+static int g_dm2_music_backend_proven;
+static uint16_t g_dm2_music_ticks_per_quarter = 96u;
+
+static uint16_t dm2_read_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static uint32_t dm2_read_be32(const uint8_t *p)
+{
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | p[3];
+}
+
+static uint32_t dm2_read_le32(const uint8_t *p)
+{
+    return ((uint32_t)p[0]) | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static int dm2_read_vlq(const uint8_t *data,
+                        size_t size,
+                        size_t *offset,
+                        uint32_t *out_value)
+{
+    uint32_t value = 0;
+    unsigned count = 0;
+    if (!data || !offset || !out_value) return 0;
+    do {
+        uint8_t byte;
+        if (*offset >= size || count >= 4u) return 0;
+        byte = data[(*offset)++];
+        value = (value << 7) | (uint32_t)(byte & 0x7fu);
+        count++;
+        if ((byte & 0x80u) == 0u) {
+            *out_value = value;
+            return 1;
+        }
+    } while (1);
+}
+
+static int dm2_read_hmp_vlq(const uint8_t *data,
+                            size_t size,
+                            size_t *offset,
+                            uint32_t *out_value)
+{
+    uint32_t value = 0;
+    unsigned count = 0;
+    if (!data || !offset || !out_value) return 0;
+    do {
+        uint8_t byte;
+        if (*offset >= size || count >= 4u) return 0;
+        byte = data[(*offset)++];
+        value = (value << 7) | (uint32_t)(byte & 0x7fu);
+        count++;
+        if ((byte & 0x80u) != 0u) {
+            *out_value = value;
+            return 1;
+        }
+    } while (1);
+}
+
+static void dm2_music_receipt_clear(DM2_V1_MusicStreamReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+}
+
+static void dm2_music_store_event(uint32_t tick,
+                                  uint8_t status,
+                                  uint8_t data1,
+                                  uint8_t data2,
+                                  uint8_t data_size)
+{
+    if (g_dm2_music_event_count >=
+        (uint16_t)(sizeof(g_dm2_music_events) / sizeof(g_dm2_music_events[0])))
+        return;
+    g_dm2_music_events[g_dm2_music_event_count].tick = tick;
+    g_dm2_music_events[g_dm2_music_event_count].status = status;
+    g_dm2_music_events[g_dm2_music_event_count].data1 = data1;
+    g_dm2_music_events[g_dm2_music_event_count].data2 = data2;
+    g_dm2_music_events[g_dm2_music_event_count].data_size = data_size;
+    g_dm2_music_event_count++;
+}
+
+static uint32_t dm2_music_ticks_to_us(uint32_t ticks, uint16_t division)
+{
+    if (division == 0u) return 0u;
+    return (uint32_t)(((uint64_t)ticks * 500000u) / division);
+}
+
+static int dm2_inspect_smf_track(const uint8_t *data,
+                                 size_t size,
+                                 uint16_t division,
+                                 DM2_V1_MusicStreamReceipt *receipt,
+                                 DM2_V1_MusicTrackReceipt *track)
+{
+    size_t offset = 0;
+    uint32_t tick = 0;
+    uint8_t running_status = 0;
+    while (offset < size) {
+        uint32_t delta = 0;
+        uint8_t status;
+        if (!dm2_read_vlq(data, size, &offset, &delta)) return 0;
+        tick += delta;
+        if (offset >= size) return 0;
+        status = data[offset++];
+        if (status < 0x80u) {
+            if (running_status == 0u) return 0;
+            offset--;
+            status = running_status;
+        } else if (status < 0xf0u) {
+            running_status = status;
+        }
+
+        receipt->event_count++;
+        if (status == 0xffu) {
+            uint8_t meta_type;
+            uint32_t meta_len = 0;
+            if (offset >= size) return 0;
+            meta_type = data[offset++];
+            if (!dm2_read_vlq(data, size, &offset, &meta_len)) return 0;
+            if (offset + meta_len > size) return 0;
+            receipt->meta_event_count++;
+            if (meta_type == 0x2fu) track->end_of_track_count++;
+            dm2_music_store_event(tick, status, meta_type, 0u, 0u);
+            offset += meta_len;
+        } else if (status == 0xf0u || status == 0xf7u) {
+            uint32_t sysex_len = 0;
+            if (!dm2_read_vlq(data, size, &offset, &sysex_len)) return 0;
+            if (offset + sysex_len > size) return 0;
+            offset += sysex_len;
+        } else if (status < 0xf0u) {
+            uint8_t data_size =
+                (uint8_t)(((status & 0xf0u) == 0xc0u ||
+                           (status & 0xf0u) == 0xd0u) ? 1u : 2u);
+            uint8_t data1;
+            uint8_t data2 = 0;
+            if (offset + data_size > size) return 0;
+            data1 = data[offset++];
+            if (data_size == 2u) data2 = data[offset++];
+            receipt->channel_event_count++;
+            dm2_music_store_event(tick, status, data1, data2, data_size);
+        } else {
+            return 0;
+        }
+        if (tick > receipt->duration_ticks) receipt->duration_ticks = tick;
+    }
+    receipt->loop_duration_us =
+        dm2_music_ticks_to_us(receipt->duration_ticks, division);
+    return 1;
+}
+
+static int dm2_inspect_smf(const uint8_t *data,
+                           size_t size,
+                           DM2_V1_MusicStreamReceipt *receipt)
+{
+    size_t offset;
+    uint16_t tracks;
+    uint16_t division;
+    if (size < 14u || memcmp(data, "MThd", 4u) != 0 ||
+        dm2_read_be32(data + 4) != 6u) {
+        return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    }
+    tracks = dm2_read_be16(data + 10);
+    division = dm2_read_be16(data + 12);
+    if (division == 0u) return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    g_dm2_music_ticks_per_quarter = division;
+    receipt->format = DM2_V1_MUSIC_FORMAT_STANDARD_MIDI;
+    receipt->track_count = tracks;
+    offset = 14u;
+    for (uint16_t i = 0; i < tracks; ++i) {
+        uint32_t track_size;
+        if (offset + 8u > size || memcmp(data + offset, "MTrk", 4u) != 0)
+            return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+        track_size = dm2_read_be32(data + offset + 4u);
+        offset += 8u;
+        if (offset + track_size > size) return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+        if (i < (uint16_t)(sizeof(receipt->tracks) / sizeof(receipt->tracks[0]))) {
+            if (!dm2_inspect_smf_track(data + offset, track_size, division,
+                                       receipt, &receipt->tracks[i]))
+                return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
+        }
+        offset += track_size;
+    }
+    receipt->schedule_event_count = (uint16_t)receipt->event_count;
+    receipt->schedule_handoff_ready = receipt->channel_event_count > 0u;
+    receipt->midi_handoff_ready = receipt->schedule_handoff_ready;
+    receipt->pcm_handoff_ready = 0;
+    receipt->valid = 1;
+    return DM2_V1_MUSIC_INSPECT_OK;
+}
+
+static int dm2_inspect_hmp(const uint8_t *data,
+                           size_t size,
+                           DM2_V1_MusicStreamReceipt *receipt)
+{
+    uint32_t tracks;
+    uint32_t chunk_size;
+    size_t offset = 788u;
+    uint32_t tick = 0;
+    if (size < 792u || memcmp(data, "HMIMIDIP", 8u) != 0)
+        return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    tracks = dm2_read_le32(data + 48u);
+    chunk_size = dm2_read_le32(data + 780u);
+    if (chunk_size < 12u || 780u + chunk_size > size)
+        return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    receipt->format = DM2_V1_MUSIC_FORMAT_HMP_V1;
+    receipt->track_count = (uint16_t)tracks;
+    g_dm2_music_ticks_per_quarter = 96u;
+    while (offset < 780u + chunk_size) {
+        uint32_t delta = 0;
+        uint8_t status;
+        if (!dm2_read_hmp_vlq(data, 780u + chunk_size, &offset, &delta))
+            return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
+        tick += delta;
+        if (offset >= 780u + chunk_size) return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
+        status = data[offset++];
+        if (status < 0x80u || status >= 0xf0u)
+            return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
+        if (offset + 2u > 780u + chunk_size)
+            return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
+        receipt->event_count++;
+        receipt->channel_event_count++;
+        dm2_music_store_event(tick, status, data[offset], data[offset + 1u], 2u);
+        offset += 2u;
+    }
+    receipt->duration_ticks = tick;
+    receipt->loop_duration_us = dm2_music_ticks_to_us(tick, 96u);
+    receipt->schedule_event_count = (uint16_t)receipt->event_count;
+    receipt->schedule_handoff_ready = receipt->channel_event_count > 0u;
+    receipt->midi_handoff_ready = receipt->schedule_handoff_ready;
+    receipt->pcm_handoff_ready = 0;
+    receipt->valid = 1;
+    return DM2_V1_MUSIC_INSPECT_OK;
+}
 
 static void dm2_v1_skproject_sound_clear_receipt(
     DM2_V1_SkprojectSoundReceipt *receipt)
@@ -722,6 +966,152 @@ int dm2_v1_sound_play_positional(int sound_id,
     (void)listener_x;
     (void)listener_y;
     return -1;
+}
+
+void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
+                                             int primary_assets_verified)
+{
+    memset(g_dm2_music_asset_root, 0, sizeof(g_dm2_music_asset_root));
+    g_dm2_music_asset_root_verified = 0;
+    g_dm2_music_event_count = 0;
+    g_dm2_music_loop_duration_us = 0;
+    g_dm2_music_loop_enabled = 0;
+    g_dm2_music_backend_proven = 0;
+    g_dm2_music_ticks_per_quarter = 96u;
+    if (asset_root && asset_root[0] && primary_assets_verified) {
+        snprintf(g_dm2_music_asset_root, sizeof(g_dm2_music_asset_root),
+                 "%s", asset_root);
+        g_dm2_music_asset_root_verified = 1;
+    }
+}
+
+int dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
+                                    DM2_V1_MusicStreamReceipt *out_receipt)
+{
+    int result;
+    g_dm2_music_event_count = 0;
+    dm2_music_receipt_clear(out_receipt);
+    if (!data || size == 0u || !out_receipt)
+        return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    if (size >= 4u && memcmp(data, "MThd", 4u) == 0)
+        result = dm2_inspect_smf(data, size, out_receipt);
+    else if (size >= 8u && memcmp(data, "HMIMIDIP", 8u) == 0)
+        result = dm2_inspect_hmp(data, size, out_receipt);
+    else
+        result = DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    if (result != DM2_V1_MUSIC_INSPECT_OK) {
+        out_receipt->midi_handoff_ready = 0;
+        out_receipt->schedule_handoff_ready = 0;
+        g_dm2_music_event_count = 0;
+    }
+    return result;
+}
+
+int dm2_v1_sound_queue_music(int track, int loop,
+                             DM2_V1_MusicQueueReceipt *out_receipt)
+{
+    DM2_V1_MusicStreamReceipt stream;
+    unsigned char *data = NULL;
+    size_t size;
+    FILE *file;
+    int inspect_result;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (track < 0 || track >= DM2_MUSIC_TRACK_COUNT)
+        return DM2_V1_MUSIC_QUEUE_TRACK_OUT_OF_RANGE;
+    if (!g_dm2_music_asset_root_verified)
+        return DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED;
+    if (out_receipt) {
+        snprintf(out_receipt->asset_path, sizeof(out_receipt->asset_path),
+                 "%s/%02x.hmp.mid", g_dm2_music_asset_root, track);
+    }
+    file = fopen(out_receipt ? out_receipt->asset_path : "", "rb");
+    if (!file) return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    }
+    {
+        long end = ftell(file);
+        if (end <= 0) {
+            fclose(file);
+            return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+        }
+        size = (size_t)end;
+    }
+    if (fseek(file, 0, SEEK_SET) != 0 || size == 0u) {
+        fclose(file);
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    }
+    data = (unsigned char *)malloc(size);
+    if (!data) {
+        fclose(file);
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    }
+    if (fread(data, 1u, size, file) != size) {
+        free(data);
+        fclose(file);
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    }
+    fclose(file);
+
+    inspect_result = dm2_v1_sound_inspect_music_data(data, size, &stream);
+    free(data);
+    if (inspect_result != DM2_V1_MUSIC_INSPECT_OK)
+        return DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
+
+    g_dm2_music_loop_enabled = loop ? 1 : 0;
+    g_dm2_music_loop_duration_us = stream.loop_duration_us;
+    g_dm2_music_backend_proven =
+        dm2_v1_midi_backend_open() == DM2_V1_MIDI_BACKEND_READY;
+    if (out_receipt) {
+        out_receipt->asset_resolved = 1;
+        out_receipt->decoder_proven = 1;
+        out_receipt->backend_proven = g_dm2_music_backend_proven;
+        out_receipt->schedule_handoff_ready = stream.schedule_handoff_ready;
+        out_receipt->loop_duration_us = stream.loop_duration_us;
+        out_receipt->schedule_event_count = stream.schedule_event_count;
+        out_receipt->request_queued = g_dm2_music_event_count > 0u;
+    }
+    return g_dm2_music_backend_proven
+               ? DM2_V1_MUSIC_QUEUE_READY
+               : DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
+}
+
+int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
+                                DM2_V1_MusicScheduleReceipt *out_receipt)
+{
+    uint32_t playhead = elapsed_us;
+    uint16_t loop_count = 0;
+    uint16_t due = 0;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (g_dm2_music_event_count == 0u || !out_receipt) return 0;
+    if (g_dm2_music_loop_enabled && g_dm2_music_loop_duration_us != 0u &&
+        elapsed_us >= g_dm2_music_loop_duration_us) {
+        loop_count = (uint16_t)(elapsed_us / g_dm2_music_loop_duration_us);
+        playhead = elapsed_us % g_dm2_music_loop_duration_us;
+        if (playhead == 0u) playhead = g_dm2_music_loop_duration_us;
+    }
+    for (uint16_t i = 0; i < g_dm2_music_event_count; ++i) {
+        uint32_t event_us =
+            g_dm2_music_loop_duration_us && g_dm2_music_events[i].tick != 0u
+                ? dm2_music_ticks_to_us(g_dm2_music_events[i].tick,
+                                        g_dm2_music_ticks_per_quarter)
+                : 0u;
+        if (event_us <= playhead) {
+            due++;
+            if (g_dm2_music_backend_proven &&
+                g_dm2_music_events[i].status >= 0x80u &&
+                g_dm2_music_events[i].status < 0xf0u) {
+                (void)dm2_v1_midi_backend_send(&g_dm2_music_events[i]);
+            }
+        }
+    }
+    out_receipt->valid = 1;
+    out_receipt->event_count_due = due;
+    out_receipt->loop_count = loop_count;
+    out_receipt->backend_proven = g_dm2_music_backend_proven;
+    out_receipt->pcm_handoff_ready = 0;
+    return 1;
 }
 
 /* dm2_v1_sound_play_music — play music track

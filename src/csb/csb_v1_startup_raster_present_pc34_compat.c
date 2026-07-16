@@ -22,6 +22,41 @@ static uint32_t csb_v1_startup_present_fnv1a_pc34(
     return hash ? hash : 1U;
 }
 
+static uint32_t csb_v1_startup_present_hash_step_pc34(uint32_t hash,
+                                                       uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash ? hash : 2166136261u;
+}
+
+static uint32_t csb_v1_startup_present_expected_host_hash_pc34(
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (receipt == NULL) return 0u;
+    hash = csb_v1_startup_present_hash_step_pc34(
+        hash, receipt->frame.frame_route_hash);
+    hash = csb_v1_startup_present_hash_step_pc34(
+        hash, receipt->raster.route_hash);
+    hash = csb_v1_startup_present_hash_step_pc34(
+        hash, receipt->raster.pixel_hash);
+    hash = csb_v1_startup_present_hash_step_pc34(
+        hash, (uint32_t)receipt->host_surface);
+    hash = csb_v1_startup_present_hash_step_pc34(
+        hash, receipt->frame.hud_binding_hash);
+    if (receipt->host_surface == CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+        receipt->host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34) {
+        hash = csb_v1_startup_present_hash_step_pc34(
+            hash, (uint32_t)(receipt->special_palette + 1));
+        hash = csb_v1_startup_present_hash_step_pc34(
+            hash, (uint32_t)(receipt->title_special_palette + 1));
+    }
+    return hash;
+}
+
 static int csb_v1_startup_present_host_receipt_matches_pc34(
     const csb_v1_startup_real_raster_pc34_compat *raster)
 {
@@ -39,6 +74,8 @@ static int csb_v1_startup_present_host_receipt_matches_pc34(
         !receipt->no_legacy_wrappers || !receipt->no_synthetic_surface ||
         receipt->host_surface == CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 ||
         receipt->host_surface_hash != raster->source_host_surface_hash ||
+        receipt->host_surface_hash !=
+            csb_v1_startup_present_expected_host_hash_pc34(receipt) ||
         !receipt->raster.valid || !receipt->raster.real_asset_matched ||
         receipt->raster.pixels != raster->indexed_pixels ||
         receipt->raster.width != CSB_V1_PC34_PRESENT_WIDTH ||

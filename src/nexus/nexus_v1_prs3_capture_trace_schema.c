@@ -2128,6 +2128,12 @@ int nexus_v1_prs3_vdp1_capture_review_output_upload(
         output_proof->status ==
             NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME &&
         output_proof->decoded_output_proof_ready != 0 &&
+        output_proof->capture_source_bound != 0 &&
+        output_proof->length_matches != 0 &&
+        output_proof->hash_matches != 0 &&
+        output_proof->observed_output_bytes ==
+            output_proof->expected_output_bytes &&
+        output_proof->observed_output_fnv1a64 != 0 &&
         receipt.decoded_output_sidecar_bound &&
         output_proof->original_saturn_provenance_verified != 0 &&
         output_proof->opcode_grammar_proven == 0 &&

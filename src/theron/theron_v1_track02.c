@@ -560,6 +560,10 @@ Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(
     parent[parent_len] = '\0';
     snprintf(out_payload_path, THERON_TRACK02_MOUNT_PATH_CAPACITY, "%s%s", parent, selected_file);
     payload = fopen(out_payload_path, "rb");
+    if (!payload && tqr_cue_known_split_track02_path(media_path, selected_file,
+                                                     out_payload_path)) {
+        payload = fopen(out_payload_path, "rb");
+    }
     if (!payload) {
         out_payload_path[0] = '\0';
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
@@ -1559,6 +1563,7 @@ Theron_Track02SignalStatus theron_v1_track02_inspect_4bpp_palette_window(
             sizeof(palette_bytes), palette_bytes, sizeof(palette_bytes),
             &user_data_offset);
         if (status != THERON_TRACK02_SIGNAL_OK) {
+            memset(out_evidence, 0, sizeof(*out_evidence));
             return status;
         }
         out_evidence->raw_offset_is_user_data = 1;
@@ -1576,6 +1581,7 @@ Theron_Track02SignalStatus theron_v1_track02_inspect_4bpp_palette_window(
     status = theron_v1_track02_decode_4bpp_palette(
         palette_bytes, sizeof(palette_bytes), &out_evidence->palette);
     if (status != THERON_TRACK02_SIGNAL_OK) {
+        memset(out_evidence, 0, sizeof(*out_evidence));
         return status;
     }
 
@@ -2101,6 +2107,11 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
         out_atlas->checksum ^=
             out_atlas->routes[i].checksum +
             (uint32_t)(out_atlas->routes[i].route_bit * 2166136261u);
+    }
+    if (out_atlas->total_tile_count == 0u ||
+        out_atlas->total_nonzero_pixel_count == 0u) {
+        memset(out_atlas, 0, sizeof(*out_atlas));
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     return out_atlas->route_count > 0u ? THERON_TRACK02_SIGNAL_OK
                                        : THERON_TRACK02_SIGNAL_NOT_FOUND;

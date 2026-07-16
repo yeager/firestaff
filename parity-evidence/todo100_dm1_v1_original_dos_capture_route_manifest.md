@@ -1,6 +1,6 @@
 # TODO100 DM1 V1 original DOS capture route manifest
 
-Status: `TODO100_DM1_V1_ORIGINAL_DOS_CAPTURE_ROUTE_MANIFEST_READY`
+Status: `FAIL`
 
 This gate defines one deterministic original PC 3.4 DOSBox capture route for a future same-state viewport pairing. It is intentionally skip-safe: it validates route metadata and local tooling only.
 
@@ -23,7 +23,7 @@ This gate defines one deterministic original PC 3.4 DOSBox capture route for a f
 
 - capture script: `scripts/dosbox_dm1_original_viewport_reference_capture.sh` ok=True
 - Firestaff pairing probe: `probes/m11/firestaff_dm1_v1_champion_mirror_portrait_13_south_return_portrait_rect_position_runtime_probe.c` ok=True
-- gap document: `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md` ok=True
+- gap document: `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md` ok=False
 
 ## Source Anchors
 

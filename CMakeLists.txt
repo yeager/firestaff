@@ -197,6 +197,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_terminal_handof
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_real_sequence_pc34_compat.c")
+    add_executable(test_csb_v1_startup_real_sequence_pc34_compat
+        tests/test_csb_v1_startup_real_sequence_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_startup_real_sequence_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_startup_real_sequence_pc34_compat PRIVATE
+        firestaff_m11 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_startup_real_sequence_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME csb_v1_startup_real_sequence_pc34_compat
+        COMMAND test_csb_v1_startup_real_sequence_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_receipt_coherence_pc34_compat.c")
     add_executable(test_csb_v1_startup_receipt_coherence_pc34_compat
         tests/test_csb_v1_startup_receipt_coherence_pc34_compat.c
@@ -1079,6 +1100,193 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_pro
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_runtime_materialization.c")
+    add_executable(test_nexus_v1_dgn_runtime_materialization
+        tests/test_nexus_v1_dgn_runtime_materialization.c
+        src/nexus/nexus_v1_dgn_runtime_materialization.c
+        src/nexus/nexus_v1_dgn_mesh.c
+        src/nexus/nexus_v1_dgn_face_material_provenance.c
+    )
+    target_include_directories(test_nexus_v1_dgn_runtime_materialization PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_runtime_materialization PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_runtime_materialization
+        COMMAND test_nexus_v1_dgn_runtime_materialization
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_intake.c")
+    add_executable(test_nexus_v1_prs3_structure2_intake
+        tests/test_nexus_v1_prs3_structure2_intake.c
+        src/nexus/nexus_v1_prs3_structure2_intake.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_prs3_structure2_intake PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_structure2_intake PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_structure2_intake
+        COMMAND test_nexus_v1_prs3_structure2_intake
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decoder_admission.c")
+    add_executable(test_nexus_v1_prs3_decoder_admission
+        tests/test_nexus_v1_prs3_decoder_admission.c
+        src/nexus/nexus_v1_prs3_decoder_admission.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_prs3_decoder_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_decoder_admission PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_decoder_admission
+        COMMAND test_nexus_v1_prs3_decoder_admission
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_loader_control_flow.c")
+    add_executable(test_nexus_v1_prs3_loader_control_flow
+        tests/test_nexus_v1_prs3_loader_control_flow.c
+        src/nexus/nexus_v1_prs3_loader_control_flow.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_prs3_loader_control_flow PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_loader_control_flow PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_loader_control_flow
+        COMMAND test_nexus_v1_prs3_loader_control_flow
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_sh2_subset_trace.c")
+    add_executable(test_nexus_v1_prs3_sh2_subset_trace
+        tests/test_nexus_v1_prs3_sh2_subset_trace.c
+        src/nexus/nexus_v1_prs3_sh2_subset_trace.c
+        src/nexus/nexus_v1_prs3_loader_control_flow.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_prs3_sh2_subset_trace PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_sh2_subset_trace PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_sh2_subset_trace
+        COMMAND test_nexus_v1_prs3_sh2_subset_trace
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c")
+    add_executable(test_nexus_v1_prs3_structure2_abi
+        tests/test_nexus_v1_prs3_structure2_abi.c
+        src/nexus/nexus_v1_prs3_structure2_abi.c
+        src/nexus/nexus_v1_prs3_sh2_subset_trace.c
+        src/nexus/nexus_v1_prs3_structure2_intake.c
+        src/nexus/nexus_v1_prs3_loader_control_flow.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_prs3_structure2_abi PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_structure2_abi PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_structure2_abi
+        COMMAND test_nexus_v1_prs3_structure2_abi
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_scene_runtime_plan.c")
+    add_executable(test_nexus_v1_dgn_scene_runtime_plan
+        tests/test_nexus_v1_dgn_scene_runtime_plan.c
+        src/nexus/nexus_v1_dgn_scene_runtime_plan.c
+        src/nexus/nexus_v1_dgn_mesh.c
+        src/nexus/nexus_v1_dungeon.c
+    )
+    target_include_directories(test_nexus_v1_dgn_scene_runtime_plan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_scene_runtime_plan PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_scene_runtime_plan
+        COMMAND test_nexus_v1_dgn_scene_runtime_plan
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_consumer_evidence.c")
+    add_executable(test_nexus_v1_prs3_vdp1_consumer_evidence
+        tests/test_nexus_v1_prs3_vdp1_consumer_evidence.c
+        src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
+        src/nexus/nexus_v1_prs3_structure2_abi.c
+        src/nexus/nexus_v1_prs3_sh2_subset_trace.c
+        src/nexus/nexus_v1_prs3_structure2_intake.c
+        src/nexus/nexus_v1_prs3_loader_control_flow.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_vdp1_consumer_evidence
+        COMMAND test_nexus_v1_prs3_vdp1_consumer_evidence
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c")
     add_executable(test_dm1_f0135_video_fillbox_planar_20260714_pc34_compat
         tests/test_dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c
@@ -1594,6 +1802,14 @@ if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 m)
+    if(APPLE)
+        # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly.
+        # Keep the framework dependency on its owning library so the app and
+        # standalone DM2 test executables link the same real MIDI boundary.
+        target_link_libraries(firestaff_dm2 PUBLIC
+            "-framework CoreMIDI"
+            "-framework CoreFoundation")
+    endif()
     if(NOT MSVC)
         target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
     endif()
@@ -1625,6 +1841,10 @@ file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/thero
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES})
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    # Theron's Track 01 CDDA bridge includes SDL3 directly.  Keep that
+    # dependency on the owning target so standalone test targets configured
+    # with Ninja receive SDL's headers as well as the final M11 executable.
+    target_link_libraries(firestaff_theron PUBLIC SDL3::SDL3)
     firestaff_link_zlib(firestaff_theron PUBLIC)
     if(NOT MSVC)
         target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2 -fcommon)
@@ -1756,6 +1976,7 @@ set(M11_SOURCES
     src/engine/m11_game_input_mapping.c
     src/shared/session_timer_runtime.c
     src/engine/runtime_gesture_navigation_gate.c
+    src/engine/m11_dm2_runtime_frame_receipt_gate.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -4782,6 +5003,14 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
         PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v1_csbwin_extended_dsa_handoff
+    COMMAND firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
+)
+set_tests_properties(csb_v1_csbwin_extended_dsa_handoff PROPERTIES
+    LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe;dsa"
+    TIMEOUT 120
+)
 
 # CSB V1 CSBWin 512-byte XOR-pad save-header classifier probe
 # Real-asset CSBWin / DM1 save -> csb_v1_csbwin_512_xor_pad_classify
@@ -5874,6 +6103,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_throw_projectile_runtime_materialization_pc34.c")
+        add_executable(test_m11_dm1_throw_projectile_runtime_materialization_pc34
+            tests/test_m11_dm1_throw_projectile_runtime_materialization_pc34.c)
+        target_link_libraries(test_m11_dm1_throw_projectile_runtime_materialization_pc34 PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_throw_projectile_runtime_materialization_pc34 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_throw_projectile_runtime_materialization_pc34
+            COMMAND test_m11_dm1_throw_projectile_runtime_materialization_pc34
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_door_host_presentation_receipt.c")
         add_executable(test_m11_dm1_door_host_presentation_receipt
             tests/test_m11_dm1_door_host_presentation_receipt.c)
@@ -6010,6 +6253,20 @@ if(BUILD_TESTING)
         add_test(
             NAME m11_dm1_hoc_c127_c162_rotation_owner_pc34
             COMMAND test_m11_dm1_hoc_c127_c162_rotation_owner_pc34
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34.c")
+        add_executable(test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34
+            tests/test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34.c)
+        target_link_libraries(test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34 PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34
+            COMMAND test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
     endif()
@@ -8915,6 +9172,28 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_runtime_tick_accumulator
     )
 
+    add_executable(test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat
+        tests/test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0213_f0220_explosion_runtime_pc34_compat
+        COMMAND test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat
+    )
+    set_tests_properties(csb_v1_f0213_f0220_explosion_runtime_pc34_compat PROPERTIES
+        LABELS "tier2;csb;runtime;redmcsb;f0213;f0220"
+    )
+
     add_executable(test_csb_v1_csbwin_timer_restart_export
         tests/test_csb_v1_csbwin_timer_restart_export.c
     )
@@ -9032,6 +9311,7 @@ if(BUILD_TESTING)
     target_include_directories(test_dm2_v1_skproject_core PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm2_v1_skproject_core PRIVATE firestaff_dm2 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_skproject_core PRIVATE -Wall -Wextra -O2)
     endif()
@@ -9085,8 +9365,8 @@ if(BUILD_TESTING)
             PRIVATE -Wall -Wextra -O2)
     endif()
 
-    # Canonical-user-media M10 UPDATE_GFXSET -> M11 plane handoff. This is
-    # build-only because it reads the user's hash-verified DM2 GDAT/G1 files.
+    # Canonical-user-media M10 UPDATE_GFXSET -> M11 plane handoff. The test
+    # skips cleanly when the user's hash-verified DM2 GDAT/G1 files are absent.
     add_executable(test_dm2_v1_gdat_scene_plan_viewport_real_data
         tests/test_dm2_v1_gdat_scene_plan_viewport_real_data.c
     )
@@ -9099,6 +9379,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm2_v1_gdat_scene_plan_viewport_real_data
             PRIVATE -Wall -Wextra -O2)
     endif()
+    add_test(NAME dm2_v1_gdat_scene_plan_viewport_real_data
+             COMMAND test_dm2_v1_gdat_scene_plan_viewport_real_data)
 
     add_executable(test_dm2_v1_gdat_m11_material_receipt_real_data
         tests/test_dm2_v1_gdat_m11_material_receipt_real_data.c
@@ -9117,8 +9399,7 @@ if(BUILD_TESTING)
              COMMAND test_dm2_v1_gdat_m11_material_receipt_real_data)
 
     # Canonical-user-media skproject DRAW_WALL material proof. Like the
-    # floor/ceiling handoff gate, this is build-only because it reads the
-    # user's original GRAPHICS.DAT and DUNGEON.DAT corpus.
+    # floor/ceiling handoff gate, this skips when the original corpus is absent.
     add_executable(test_dm2_v1_gdat_wall_plan_viewport_real_data
         tests/test_dm2_v1_gdat_wall_plan_viewport_real_data.c
     )
@@ -9131,6 +9412,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm2_v1_gdat_wall_plan_viewport_real_data
             PRIVATE -Wall -Wextra -Werror -O2)
     endif()
+    add_test(NAME dm2_v1_gdat_wall_plan_viewport_real_data
+             COMMAND test_dm2_v1_gdat_wall_plan_viewport_real_data)
 
     add_executable(test_dm2_v1_gdat_door_overlay_plan_real_data
         tests/test_dm2_v1_gdat_door_overlay_plan_real_data.c
@@ -11103,6 +11386,29 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
+    add_executable(test_dm2_v1_scene_weather_light_runtime_chain_real_data
+        tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c
+    )
+    target_include_directories(
+        test_dm2_v1_scene_weather_light_runtime_chain_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(
+        test_dm2_v1_scene_weather_light_runtime_chain_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(
+            test_dm2_v1_scene_weather_light_runtime_chain_real_data PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_scene_weather_light_runtime_chain_real_data
+        COMMAND test_dm2_v1_scene_weather_light_runtime_chain_real_data
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
     add_executable(test_dm2_v1_weather_environment_materials
         tests/test_dm2_v1_weather_environment_materials.c
     )
@@ -11544,6 +11850,31 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_phase3_rendering
     )
 
+    add_executable(test_csb_v1_viewport_first_frame_materialization_pc34_compat
+        tests/test_csb_v1_viewport_first_frame_materialization_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
+        src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
+        src/csb/csb_v1_viewport_d2c_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_first_frame_materialization_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/csb
+    )
+    target_link_libraries(test_csb_v1_viewport_first_frame_materialization_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_first_frame_materialization_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_first_frame_materialization_pc34_compat
+        COMMAND test_csb_v1_viewport_first_frame_materialization_pc34_compat
+    )
+
     add_executable(test_csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
         tests/test_csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
@@ -11558,6 +11889,122 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
         COMMAND test_csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
+        tests/test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
+        src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
+        COMMAND test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d1c_f0111_door_pc34_compat
+        tests/test_csb_v1_viewport_d1c_f0111_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d1c_f0111_door_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d1c_f0111_door_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d1c_f0111_door_pc34_compat
+        COMMAND test_csb_v1_viewport_d1c_f0111_door_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+        tests/test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+        COMMAND test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat
+        tests/test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d2c_f0111_door_front_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/csb
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d2c_f0111_door_front_pc34_compat
+        COMMAND test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
+        tests/test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
+        COMMAND test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
+        tests/test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
+        src/csb/csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
+        COMMAND test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
+        tests/test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/csb
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
+        COMMAND test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
     )
 
     add_executable(test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat
@@ -13150,6 +13597,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_move_075f_1bc2
         tests/test_dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_move_075f_1bc2.c
+        src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_dungeon_loader.c
     )
     target_include_directories(test_dm2_v1_move_075f_1bc2 PRIVATE
@@ -21114,6 +21562,22 @@ if(NOT TARGET test_dm1_v1_endgame_presentation_pc34_compat)
     add_test(
         NAME dm1_v1_endgame_presentation_pc34_compat
         COMMAND test_dm1_v1_endgame_presentation_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_m11_dm1_endgame_final_presentation_receipt_pc34)
+    add_executable(test_m11_dm1_endgame_final_presentation_receipt_pc34
+        tests/test_m11_dm1_endgame_final_presentation_receipt_pc34.c
+    )
+    target_link_libraries(test_m11_dm1_endgame_final_presentation_receipt_pc34
+        PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_endgame_final_presentation_receipt_pc34
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_dm1_endgame_final_presentation_receipt_pc34
+        COMMAND test_m11_dm1_endgame_final_presentation_receipt_pc34
     )
 endif()
 

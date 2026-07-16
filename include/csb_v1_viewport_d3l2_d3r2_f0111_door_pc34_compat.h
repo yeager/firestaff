@@ -67,6 +67,31 @@ typedef struct {
     const char *source_lock_evidence;
 } CSB_V1_ViewportD3L2D3R2F0111DoorResultPc34;
 
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int d3l2_view_square;
+    int d3r2_view_square;
+    int d3l2_door_zone;
+    int d3r2_door_zone;
+    int d3l2_pass1_order;
+    int d3r2_pass1_order;
+    int d3l2_pass2_order;
+    int d3r2_pass2_order;
+    int door_ornament_view;
+    int transparent_color;
+    int native_bitmap_byte_width;
+    int native_bitmap_height;
+    const char *redmcsb_d3l2_function;
+    const char *redmcsb_d3r2_function;
+} CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34;
+
 size_t csb_v1_viewport_d3l2_d3r2_f0111_door_count_pc34(void);
 
 const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *
@@ -89,6 +114,17 @@ int csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
     int destination_stride,
     int width,
     int height);
+
+int csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3l2,
+    const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3r2,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d3l2_d3r2_f0111_door_source_evidence_pc34(void);
 

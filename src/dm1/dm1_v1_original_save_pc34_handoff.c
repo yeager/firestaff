@@ -404,6 +404,73 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
     return 1;
 }
 
+static void dm1_original_save_corpus_record_discovery(
+    DM1OriginalSavePC34CorpusRoundtripReport *report,
+    const DM1OriginalSaveClassifyResult *result,
+    const char *path)
+{
+    DM1OriginalSavePC34CorpusDiscoveryReceipt *receipt;
+    int firestaff_manifest = 0;
+
+    if (!report || !result ||
+        report->discovery_receipt_count >=
+            (int)DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP) {
+        return;
+    }
+    receipt = &report->discovery_receipts[report->discovery_receipt_count++];
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->source_byte_count = (uint32_t)result->size_bytes;
+    receipt->header_prefix_fingerprint = result->prefix_checksum32;
+    receipt->shape = (int)result->shape;
+    receipt->readiness = (int)result->readiness;
+    receipt->save_format_id = result->format_id;
+    receipt->save_platform = result->platform;
+    receipt->save_dungeon_id = result->dungeon_id;
+    receipt->save_game_id = result->game_id;
+    receipt->pc34_version_platform_identity_ok =
+        result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
+        result->format_id == 5u &&
+        result->platform == 1u &&
+        result->dungeon_id == 0u;
+    receipt->pc34_importer_candidate = result->pc34_importer_candidate;
+    receipt->pc34_loader_part_envelope_candidate =
+        result->pc34_loader_part_envelope_candidate;
+    receipt->f7057_envelope_end_offset =
+        result->save_part_loader_envelope_payload_bytes
+            ? (uint32_t)SAVEGAME_PC34_DM_SAVE_HEADER_SIZE +
+                  result->save_part_loader_envelope_payload_bytes
+            : 0u;
+    receipt->f7057_trailing_byte_count =
+        result->size_bytes > receipt->f7057_envelope_end_offset
+            ? (uint32_t)(result->size_bytes -
+                         receipt->f7057_envelope_end_offset)
+            : 0u;
+    receipt->external_original =
+        result->pc34_loader_part_envelope_candidate &&
+        dm1_original_save_corpus_external_pc34_file(
+            path, &firestaff_manifest);
+    receipt->roundtrip_eligible = receipt->external_original;
+    receipt->result = result->pc34_loader_part_envelope_candidate
+        ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK
+        : DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+    if (path) {
+        snprintf(receipt->path, sizeof(receipt->path), "%s", path);
+    }
+    if (firestaff_manifest) {
+        snprintf(receipt->reason, sizeof(receipt->reason),
+                 "firestaff-export-manifest");
+    } else if (!result->pc34_loader_part_envelope_candidate) {
+        snprintf(receipt->reason, sizeof(receipt->reason),
+                 "%s", result->reason);
+    } else if (!receipt->external_original) {
+        snprintf(receipt->reason, sizeof(receipt->reason),
+                 "nonexternal-original-envelope");
+    } else {
+        snprintf(receipt->reason, sizeof(receipt->reason),
+                 "external-original-pc34");
+    }
+}
+
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
 #define DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT 128u
 #define DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT \
@@ -5262,6 +5329,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     report.provenance_fingerprint = 2166136261u;
     memset(&corpus, 0, sizeof(corpus));
     if (!dm1_v1_original_save_classify_corpus_root(root, &corpus)) {
+        report.discovery_root_error = 1;
         *out_report = report;
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
@@ -5270,6 +5338,11 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     report.scanned_file_count = corpus.scanned_file_count;
     report.rejected_count = corpus.rejected_count;
     report.truncated_count = corpus.truncated_count;
+    for (i = 0; i < corpus.present_count &&
+                i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
+        dm1_original_save_corpus_record_discovery(
+            &report, &corpus.results[i], corpus.paths[i]);
+    }
     exported_bytes = (uint8_t *)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
     if (!exported_bytes) {
         *out_report = report;

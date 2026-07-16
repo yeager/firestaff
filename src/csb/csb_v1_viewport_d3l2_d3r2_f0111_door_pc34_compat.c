@@ -31,6 +31,8 @@ enum {
 
 static const char s_source_evidence[] =
     "DUNVIEW.C F0676/F0677 C17_ELEMENT_DOOR_FRONT path; "
+    "fail-closed real GRAPHICS.DAT receipt binds the G0693 door bitmap "
+    "family before the D3L2/D3R2 route is source-backed; "
     "F0111_DUNGEONVIEW_DrawDoor; ReDMCSB DUNVIEW.C:6268-6274 F0676 "
     "calls F0108 with M552_FRONT_WALL_ORNAMENT_ORDINAL and "
     "C00_VIEW_FLOOR_D3L2, F0115 C14 order 0x0218, F0111 with "
@@ -204,6 +206,68 @@ int csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
     }
 
     return copied;
+}
+
+int csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3l2,
+    const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3r2,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34){0};
+    }
+    if (!d3l2 || !d3r2 || !out_receipt || !source_graphics_dat_bound ||
+        !no_synthetic_pixels || !no_fallback_visuals ||
+        source_graphics_item_index != CSB_DOOR_NATIVE_BITMAP_FRONT_D3LCR ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        d3l2->side != CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3L2_PC34 ||
+        d3r2->side != CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3R2_PC34 ||
+        d3l2->door_native_bitmap_index_family !=
+            CSB_DOOR_NATIVE_BITMAP_FRONT_D3LCR ||
+        d3r2->door_native_bitmap_index_family !=
+            CSB_DOOR_NATIVE_BITMAP_FRONT_D3LCR ||
+        d3l2->door_zone != CSB_C3700_ZONE_DOOR_D3L2 ||
+        d3r2->door_zone != CSB_C3710_ZONE_DOOR_D3R2 ||
+        d3l2->transparent_color != CSB_C10_COLOR_FLESH ||
+        d3r2->transparent_color != CSB_C10_COLOR_FLESH) {
+        return 0;
+    }
+
+    receipt =
+        (CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34){0};
+    receipt.valid = CSB_ROUTE_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_ROUTE_PRESENT;
+    receipt.source_graphics_dat_bound = CSB_ROUTE_PRESENT;
+    receipt.no_synthetic_pixels = CSB_ROUTE_PRESENT;
+    receipt.no_fallback_visuals = CSB_ROUTE_PRESENT;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.d3l2_view_square = d3l2->view_square;
+    receipt.d3r2_view_square = d3r2->view_square;
+    receipt.d3l2_door_zone = d3l2->door_zone;
+    receipt.d3r2_door_zone = d3r2->door_zone;
+    receipt.d3l2_pass1_order = d3l2->door_pass1_order;
+    receipt.d3r2_pass1_order = d3r2->door_pass1_order;
+    receipt.d3l2_pass2_order = d3l2->door_pass2_order;
+    receipt.d3r2_pass2_order = d3r2->door_pass2_order;
+    receipt.door_ornament_view = d3l2->door_ornament_view;
+    receipt.transparent_color = CSB_C10_COLOR_FLESH;
+    receipt.native_bitmap_byte_width = d3l2->native_bitmap_byte_width;
+    receipt.native_bitmap_height = d3l2->native_bitmap_height;
+    receipt.redmcsb_d3l2_function = d3l2->redmcsb_function;
+    receipt.redmcsb_d3r2_function = d3r2->redmcsb_function;
+    *out_receipt = receipt;
+    return 1;
 }
 
 const char *csb_v1_viewport_d3l2_d3r2_f0111_door_source_evidence_pc34(void)

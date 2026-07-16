@@ -1585,6 +1585,68 @@ int main(void) {
                    !output_upload.fallback_visuals_permitted,
                "output/upload review rejects a pre-promoted runtime upload route");
         reviewed_upload_receipt.runtime_upload_permitted = 0;
+        output_proof.capture_source_bound = 0;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.decoded_output_proof_bound &&
+                   output_upload.decoded_output_sidecar_bound &&
+                   output_upload.reviewed_upload_path_bound &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.decoder_promoted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review requires retained PRS3 capture source binding");
+        output_proof.capture_source_bound = 1;
+
+        output_proof.length_matches = 0;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.decoded_output_proof_bound &&
+                   output_upload.reviewed_upload_path_bound &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review requires retained PRS3 output length match");
+        output_proof.length_matches = 1;
+
+        output_proof.hash_matches = 0;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.decoded_output_proof_bound &&
+                   output_upload.reviewed_upload_path_bound &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review requires retained PRS3 output hash match");
+        output_proof.hash_matches = 1;
+
+        output_proof.observed_output_bytes = 0x40U;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.decoded_output_proof_bound &&
+                   output_upload.expected_output_bytes == 0x80U &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review rejects drift between observed and expected PRS3 output bytes");
+        output_proof.observed_output_bytes = 0x80U;
+
+        output_proof.observed_output_fnv1a64 = 0;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.decoded_output_proof_bound &&
+                   output_upload.output_fnv1a64 == 0 &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review requires a concrete PRS3 output fingerprint");
+        output_proof.observed_output_fnv1a64 = 0x12345678U;
+
         output_proof.fallback_visuals_permitted = 1;
         expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
                    &output_proof, &reviewed_upload_receipt,

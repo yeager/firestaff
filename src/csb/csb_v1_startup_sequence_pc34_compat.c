@@ -8,16 +8,12 @@
 enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
     /* ReDMCSB TITLE.C F0437 presents the PC-path CHAOS raster sequence
-     * through source steps 2..19, keeps the full CHAOS image for the two
-     * post-zoom vblanks, then blits STRIKES BACK once before ENTRANCE.C. */
-    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 18,
-    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
+     * through source steps 2..21, keeps the full CHAOS image through the
+     * post-zoom hold, then blits STRIKES BACK before ENTRANCE.C. */
+    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
     CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
-    CSB_V1_TITLE_TOTAL_TICKS_PC34 =
-        CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
-        CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
-        CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 +
-        CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34,
+    CSB_V1_TITLE_TOTAL_TICKS_PC34 = 101,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
@@ -200,6 +196,9 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
 {
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
+    }
+    if (frame >= CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) {
+        return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     }
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
                     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
@@ -1101,7 +1100,9 @@ static void csb_v1_startup_set_opening_composite_pc34(
     plan->opening_composite_right_box_w = plan->opening_right_w;
     plan->opening_composite_right_box_h = plan->opening_right_h;
     plan->opening_composite_left_source_x = plan->opening_left_source_x;
+    plan->opening_composite_left_source_y = plan->opening_left_source_y;
     plan->opening_composite_right_source_x = plan->opening_right_source_x;
+    plan->opening_composite_right_source_y = plan->opening_right_source_y;
 }
 
 static void csb_v1_startup_set_title_rect_pc34(
@@ -1140,7 +1141,7 @@ static void csb_v1_startup_set_title_rect_pc34(
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
         plan->title_source_step >= 2 &&
-        plan->title_source_step <= 19) {
+        plan->title_source_step <= 21) {
         /* ReDMCSB TITLE.C F0437:190-199 applies C425's CSB-only gold and
          * dark-blue slots before the source-ordered zoom raster. */
         plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
@@ -1150,7 +1151,9 @@ static void csb_v1_startup_set_title_rect_pc34(
          * blit those bitmaps centered on the screen.  Do not crop the
          * source: the animation grows the full CHAOS image from 16x4 to
          * 320x80. */
-        zoom_index = 19 - plan->title_source_step;
+        zoom_index = plan->title_source_step <= 19
+            ? 19 - plan->title_source_step
+            : 0;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;
         plan->title_source_x = 0;
@@ -2911,7 +2914,7 @@ int csb_v1_startup_begin_door_opening_pc34(
         CSB_V1_STARTUP_STAGE_ENTRANCE_PRE_OPEN_DELAY_PC34;
     state->opening_delay_ticks =
         csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
-    state->opening_step = 0;
+    state->opening_step = 1;
     state->pending_command = pending_command;
     return 1;
 }

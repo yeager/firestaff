@@ -1,6 +1,6 @@
 # Pass206 — DM1 V1 original-runner minimal gate
 
-Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
+Status: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`
 
 Scope: N2 Linux-only original DM1 PC34 runner/capture readiness for movement/viewport evidence. No Firestaff renderer code changed; no pixel parity is claimed.
 
@@ -15,16 +15,16 @@ Scope: N2 Linux-only original DM1 PC34 runner/capture readiness for movement/vie
 
 ## N2 runner prerequisites
 
-- `dosbox`: `/usr/bin/dosbox`
-- `xvfb-run`: `/usr/bin/xvfb-run`
-- `xdotool`: `/usr/bin/xdotool`
+- `dosbox`: `/opt/homebrew/bin/dosbox`
+- `xvfb-run`: `MISSING`
+- `xdotool`: `/opt/homebrew/bin/xdotool`
 - `python3`: `/usr/bin/python3`
-- `convert`: `/usr/bin/convert`
-- `ffmpeg`: `/usr/bin/ffmpeg`
+- `convert`: `MISSING`
+- `ffmpeg`: `/opt/homebrew/bin/ffmpeg`
 
-- PASS `DM.EXE` `4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` at `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-- PASS `DATA/DUNGEON.DAT` `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` at `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
-- PASS `DATA/GRAPHICS.DAT` `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` at `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
+- PASS `DM.EXE` `4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` at `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
+- PASS `DATA/DUNGEON.DAT` `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` at `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
+- PASS `DATA/GRAPHICS.DAT` `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` at `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
 
 ## Reproducible dry-run command
 
@@ -39,7 +39,7 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 
 ## Existing N2 route attempt audit
 
-- Attempt: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`
+- Attempt: `/Users/bosse/Documents/Firestaff/verification-screens/pass112-n2-stable-hud-route`
 - Classifier status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
 - Capture count/dimensions: `6` / `{'320x200': 6}`
 - Viewport crop PPM count: `0`
@@ -52,14 +52,6 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 - shot 4: `wall_closeup` expected `spell_panel` (`verification-screens/pass112-n2-stable-hud-route/image0004-raw.png`)
 - shot 5: `wall_closeup` expected `dungeon_gameplay` (`verification-screens/pass112-n2-stable-hud-route/image0005-raw.png`)
 - shot 6: `wall_closeup` expected `inventory` (`verification-screens/pass112-n2-stable-hud-route/image0006-raw.png`)
-
-## Supersession
-
-The early pass206 six-shot route blocker is retired as an active blocker by the later pass304/pass308 batch capture lane.
-- pass304: `BLOCKED_ORIGINAL_PC34_STATE_ORACLE_REQUIRED` / route label coverage `True`
-- pass308: `PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING` / coverage `{'requiredLabelCoverage': True, 'requiredPromotionRowsGameplayOrWallCloseup': True}`
-- Remaining blocker: state-oracle proof for binding original runtime party tuple/F0128 to those route labels.
-
 
 ## Decision
 

@@ -1368,6 +1368,8 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
         dst->height = rb16(src + 8);
         dst->image_relative_offset = rb32(src + 12);
         dst->palette_relative_offset = rb32(src + 16);
+        if ((dst->encoding != 0x0008U && dst->encoding != 0x0028U) ||
+            dst->width == 0U || dst->height == 0U) return -1;
         level->structure2_texture_count++;
         cursor += NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
     }
@@ -6503,6 +6505,12 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
             continue;
         }
         ++receipt.source_cell_match_count;
+        if (binding->palette_index != 0xffU ||
+            binding->image_index != 0xffU ||
+            binding->packed_4bpp_texels != NULL) {
+            ++receipt.blocked_invalid_binding_count;
+            continue;
+        }
         expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
         if (!floor->palette_bound || !floor->packed_4bpp_valid ||
             floor->encoding != 8U || !floor->width || !floor->height ||

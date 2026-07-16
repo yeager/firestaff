@@ -595,6 +595,9 @@ const Theron_RuntimeMediaSurface *theron_v1_world_runtime_media_for_level(
     if (forcefield_active && world->runtime_media.forcefield.ready) {
         return &world->runtime_media.forcefield;
     }
+    if (level_index == 0 && world->runtime_media.soul_room.ready) {
+        return &world->runtime_media.soul_room;
+    }
     if (level_index > 0 && world->runtime_media.stage.ready) {
         return &world->runtime_media.stage;
     }

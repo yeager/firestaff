@@ -20,11 +20,14 @@
  *     match() recognises a hand-rolled v2.0/v2.1 buffer and
  *     rejects every non-accept shape.
  *   - When a user-staged CSBWin save is present, the probe
- *     verifies the loader-boundary verdict on the real bytes.
+ *     verifies the loader-boundary and DSA runtime-handoff verdicts
+ *     on the real bytes. Plain CSBGAME loader-ready saves must stay
+ *     DSA-runtime blocked unless a real Extended Features DSA corpus
+ *     and following GAMEBLOCK1 header authenticate.
  *
  * Skip-safe by design: hosts without a known CSBWin / DM1 save
- * exit 0 with a SKIP message after the synthetic-fixture portion
- * has already proven the contract — matches the existing
+ * exit 0 with a SKIP message after the data-free contract portion
+ * has already pinned the loader boundary — matches the existing
  * firestaff_csb_v1_csbgraphics_dat_real_scan_probe / HCSB.HTC
  * pattern. The probe never errors on missing real data because
  * the loader-boundary gate itself is data-free.
@@ -97,19 +100,39 @@ static int join_path(char *out, size_t out_cap,
  * by basename. Discovery is case-insensitive and shared with the public
  * classifier, so the real-data probe and launcher-facing gate cannot
  * drift. */
-static int find_candidate_file(const char *dir,
-                               int max_depth,
-                               char *out_path, size_t out_path_cap)
+enum {
+    MAX_REAL_SAVE_CANDIDATES = 64,
+    REAL_SAVE_PATH_BYTES = 1024
+};
+
+static int copy_candidate(char out_paths[][REAL_SAVE_PATH_BYTES],
+                          size_t out_cap,
+                          size_t *count,
+                          const char *path)
+{
+    if (!out_paths || !count || !path) return 0;
+    if (*count >= out_cap) return 0;
+    if (!copy_path(out_paths[*count], REAL_SAVE_PATH_BYTES, path)) return 0;
+    ++(*count);
+    return 1;
+}
+
+static int collect_candidate_files(const char *dir,
+                                   int max_depth,
+                                   char out_paths[][REAL_SAVE_PATH_BYTES],
+                                   size_t out_cap,
+                                   size_t *count,
+                                   int *overflow)
 {
     DIR *d;
     struct dirent *ent;
 
-    if (!dir || max_depth < 0) return 0;
+    if (!dir || max_depth < 0 || !count) return 0;
     d = opendir(dir);
     if (!d) return 0;
 
     while ((ent = readdir(d)) != NULL) {
-        char path[1024];
+        char path[REAL_SAVE_PATH_BYTES];
         struct stat st;
         if (ent->d_name[0] == '.' &&
             (ent->d_name[1] == '\0' ||
@@ -125,20 +148,18 @@ static int find_candidate_file(const char *dir,
         if (S_ISREG(st.st_mode) &&
             csb_v1_csbwin_save_loader_boundary_file_kind(path) !=
                 CSB_V1_CSBWIN_SAVE_FILE_NONE) {
-            int ok = copy_path(out_path, out_path_cap, path);
-            closedir(d);
-            return ok;
+            if (!copy_candidate(out_paths, out_cap, count, path) && overflow) {
+                *overflow = 1;
+            }
+            continue;
         }
         if (S_ISDIR(st.st_mode) && max_depth > 0) {
-            if (find_candidate_file(path, max_depth - 1,
-                                    out_path, out_path_cap)) {
-                closedir(d);
-                return 1;
-            }
+            collect_candidate_files(path, max_depth - 1,
+                                    out_paths, out_cap, count, overflow);
         }
     }
     closedir(d);
-    return 0;
+    return *count > 0u;
 }
 
 int main(int argc, char **argv)
@@ -202,54 +223,134 @@ int main(int argc, char **argv)
      * public discovery classifier on the real bytes. If not, we
      * SKIP cleanly. */
     {
-        char found_path[1024];
-        CSB_V1_CSBWinSaveDiscoveryResult disc;
-        int found;
-        int rc;
+        char found_paths[MAX_REAL_SAVE_CANDIDATES][REAL_SAVE_PATH_BYTES];
+        size_t found_count = 0u;
+        size_t real_loader_ready_count = 0u;
+        size_t real_dsa_positive_count = 0u;
+        size_t real_dsa_blocked_count = 0u;
+        int overflow = 0;
+        size_t candidate_index;
 
         dir = data_dir_arg(argc, argv, default_dir, sizeof(default_dir));
         printf("data_dir=%s\n", dir ? dir : "(none)");
 
-        found = (dir != NULL) &&
-            find_candidate_file(dir, 6, found_path, sizeof(found_path));
+        if (dir != NULL) {
+            struct stat st;
+            if (stat(dir, &st) == 0 && S_ISREG(st.st_mode) &&
+                csb_v1_csbwin_save_loader_boundary_file_kind(dir) !=
+                    CSB_V1_CSBWIN_SAVE_FILE_NONE) {
+                copy_candidate(found_paths, MAX_REAL_SAVE_CANDIDATES,
+                               &found_count, dir);
+            } else {
+                collect_candidate_files(dir, 6, found_paths,
+                                        MAX_REAL_SAVE_CANDIDATES,
+                                        &found_count, &overflow);
+            }
+        }
 
-        if (!found) {
+        if (found_count == 0u) {
             printf("SKIP: no user-staged CSBWin / DM1 save file "
                    "(csbgame.dat / csbgame.bak / dmsave.dat / dmsave.bak) "
                    "found under data_dir; loader-boundary gate has "
-                   "still been proven on synthetic fixtures.\n");
+                   "data-free contract coverage, but no positive real DSA "
+                   "corpus was claimed.\n");
             return 0;
         }
-        printf("real_save=%s\n", found_path);
+        printf("real_save_candidate_count=%zu%s\n", found_count,
+               overflow ? " (truncated to probe cap)" : "");
 
-        rc = csb_v1_csbwin_save_loader_boundary_classify_file(
-            found_path, 4u * 1024u * 1024u, &disc);
-        if ((rc == CSB_SAVE_IMPORT_ERR_TRUNCATED ||
-             rc == CSB_SAVE_IMPORT_ERR_NULL) &&
-            disc.shape == CSB_V1_CSBWIN_SHAPE_COUNT) {
-            printf("SKIP: failed to read %s "
-                   "(larger than 4 MiB or unreadable); synthetic-fixture "
-                   "gate still stands.\n", found_path);
-            return 0;
+        for (candidate_index = 0u;
+             candidate_index < found_count;
+             ++candidate_index) {
+            const char *found_path = found_paths[candidate_index];
+            CSB_V1_CSBWinSaveDiscoveryResult disc;
+            CSB_V1_CSBWinDSASaveCorpusReceipt dsa_receipt;
+            char msg[240];
+            int rc;
+            int dsa_rc;
+
+            printf("real_save[%zu]=%s\n", candidate_index, found_path);
+
+            rc = csb_v1_csbwin_save_loader_boundary_classify_file(
+                found_path, 4u * 1024u * 1024u, &disc);
+            if ((rc == CSB_SAVE_IMPORT_ERR_TRUNCATED ||
+                 rc == CSB_SAVE_IMPORT_ERR_NULL) &&
+                disc.shape == CSB_V1_CSBWIN_SHAPE_COUNT) {
+                snprintf(msg, sizeof(msg),
+                         "real staged path %zu failed bounded read cleanly",
+                         candidate_index);
+                CHECK(1, msg);
+                continue;
+            }
+            printf("  discovery: rc=%d, file_kind=%s, shape=%s, "
+                   "loader_code=%d, contract_match=%d, "
+                   "should_attempt_import=%d, decision=%s\n",
+                   rc,
+                   disc.file_kind_label,
+                   csb_v1_csbwin_save_loader_boundary_shape_name(disc.shape),
+                   disc.loader.loader_code,
+                   disc.loader.contract_match,
+                   disc.should_attempt_import,
+                   disc.decision_label);
+            snprintf(msg, sizeof(msg),
+                     "real staged path %zu uses a recognised CSBWin filename",
+                     candidate_index);
+            CHECK(disc.filename_candidate == 1, msg);
+            snprintf(msg, sizeof(msg),
+                     "real staged path %zu has deterministic loader verdict",
+                     candidate_index);
+            CHECK(disc.loader.contract_match == 1, msg);
+            CHECK(disc.should_attempt_import ==
+                      (disc.loader.loader_code > 0 &&
+                       disc.loader.contract_match == 1),
+                  "real should_attempt_import mirrors accepted loader verdict");
+
+            dsa_rc =
+                csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+                    found_path, 4u * 1024u * 1024u, &dsa_receipt);
+            printf("  dsa_corpus: rc=%d, positive=%d, handoff_ready=%d, "
+                   "extended_tail=%d, dsa=%d, actions=%d, gameblock1=%d, "
+                   "gameblock1_offset=%zu, decision=%s\n",
+                   dsa_rc,
+                   dsa_receipt.corpus_positive,
+                   dsa_receipt.runtime_handoff_ready,
+                   dsa_receipt.extended_tail_valid,
+                   dsa_receipt.dsa_section_valid,
+                   dsa_receipt.dsa_has_runtime_actions,
+                   dsa_receipt.gameblock1_valid,
+                   dsa_receipt.gameblock1_offset,
+                   dsa_receipt.decision_label);
+            snprintf(msg, sizeof(msg),
+                     "real staged path %zu keeps DSA handoff tied to corpus positivity",
+                     candidate_index);
+            CHECK(dsa_receipt.runtime_handoff_ready ==
+                      dsa_receipt.corpus_positive,
+                  msg);
+            if (disc.should_attempt_import && !dsa_receipt.corpus_positive) {
+                ++real_dsa_blocked_count;
+                snprintf(msg, sizeof(msg),
+                         "loader-ready real path %zu is not DSA-runtime ready without corpus proof",
+                         candidate_index);
+                CHECK(dsa_receipt.runtime_handoff_ready == 0, msg);
+            }
+            if (disc.should_attempt_import) {
+                ++real_loader_ready_count;
+            }
+            if (dsa_receipt.runtime_handoff_ready) {
+                ++real_dsa_positive_count;
+                snprintf(msg, sizeof(msg),
+                         "DSA-positive real path %zu carries authenticated runtime actions and GAMEBLOCK1",
+                         candidate_index);
+                CHECK(dsa_receipt.extended_tail_valid &&
+                      dsa_receipt.dsa_has_runtime_actions &&
+                      dsa_receipt.gameblock1_valid,
+                      msg);
+            }
         }
-        printf("real discovery verdict: rc=%d, file_kind=%s, shape=%s, "
-               "loader_code=%d, contract_match=%d, should_attempt_import=%d, "
-               "decision=%s\n",
-               rc,
-               disc.file_kind_label,
-               csb_v1_csbwin_save_loader_boundary_shape_name(disc.shape),
-               disc.loader.loader_code,
-               disc.loader.contract_match,
-               disc.should_attempt_import,
-               disc.decision_label);
-        CHECK(disc.filename_candidate == 1,
-              "real staged path uses a recognised CSBWin save filename");
-        CHECK(disc.loader.contract_match == 1,
-              "real staged bytes have a deterministic loader-boundary verdict");
-        CHECK(disc.should_attempt_import ==
-                  (disc.loader.loader_code > 0 &&
-                   disc.loader.contract_match == 1),
-              "real should_attempt_import mirrors accepted loader verdict");
+        printf("real_loader_ready_count=%zu\n", real_loader_ready_count);
+        printf("real_dsa_blocked_loader_ready_count=%zu\n",
+               real_dsa_blocked_count);
+        printf("real_dsa_positive_count=%zu\n", real_dsa_positive_count);
     }
 
     printf("\n=== Summary: %d checks, %d failures ===\n",

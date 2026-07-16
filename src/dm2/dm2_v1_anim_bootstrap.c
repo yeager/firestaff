@@ -10,6 +10,20 @@
 
 static FILE *dm2_v1_anim_files[DM2_V1_ANIM_MAX_FILE_HANDLES];
 
+static uint32_t dm2_v1_anim_hash_bytes(const void *data, size_t size)
+{
+    const uint8_t *bytes = (const uint8_t *)data;
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!data) return 0u;
+    for (i = 0; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void dm2_v1_anim_file_receipt_set(DM2_V1_AnimFileReceipt *receipt,
                                          const char *symbol,
                                          int source_line,
@@ -266,6 +280,194 @@ uint32_t dm2_v1_anim_farcoreleft(DM2_V1_AnimFileReceipt *out_receipt)
         out_receipt->file_size = 1024u * 1024u;
     }
     return 1024u * 1024u;
+}
+
+void dm2_v1_anim_stream_state_init(DM2_V1_AnimStreamState *state,
+                                   uint8_t *arena,
+                                   uint32_t arena_size)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->arena = arena;
+    state->arena_size = arena_size;
+}
+
+int dm2_v1_anim_0759_0855_reset_stream(
+    DM2_V1_AnimStreamState *state,
+    DM2_V1_AnimStreamResetReceipt *out_receipt)
+{
+    DM2_V1_AnimStreamResetReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.symbol = "_0759_0855";
+    receipt.source_file = "SKWIN/SkWinCore.cpp";
+    receipt.source_line = 1074;
+    if (!state) {
+        receipt.blocked_missing_state = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    state->active = 0u;
+    state->last_offset = 0u;
+    state->reset_count++;
+    receipt.valid = 1;
+    receipt.reset_stream = 1u;
+    receipt.receipt_hash = dm2_v1_anim_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+uint8_t *dm2_v1_anim_0759_0869_resolve_stream_ptr(
+    DM2_V1_AnimStreamState *state,
+    uint32_t offset,
+    DM2_V1_AnimStreamPtrReceipt *out_receipt)
+{
+    DM2_V1_AnimStreamPtrReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.symbol = "_0759_0869";
+    receipt.source_file = "SKWIN/SkWinCore.cpp";
+    receipt.source_line = 1077;
+    receipt.offset = offset;
+    if (!state) {
+        receipt.blocked_missing_state = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return NULL;
+    }
+    receipt.arena_size = state->arena_size;
+    if (!state->active || !state->arena) {
+        receipt.blocked_inactive_stream = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return NULL;
+    }
+    if (offset >= state->arena_size) {
+        receipt.blocked_out_of_bounds = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return NULL;
+    }
+    state->last_offset = offset;
+    receipt.ptr = state->arena + offset;
+    receipt.resolved_pointer = 1u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_anim_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.ptr;
+}
+
+static int dm2_v1_anim_arg_is(const char *arg, char flag)
+{
+    return arg && arg[0] == '+' && dm2_v1_anim_toupper(arg[1], NULL) == 'A' &&
+           dm2_v1_anim_toupper(arg[2], NULL) == flag;
+}
+
+int dm2_v1_anim_0759_08e7_plan_main(
+    const DM2_V1_AnimMainRequest *request,
+    DM2_V1_AnimStreamState *stream_state,
+    DM2_V1_AnimMainReceipt *out_receipt)
+{
+    DM2_V1_AnimMainReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.symbol = "_0759_08e7";
+    receipt.source_file = "SKWIN/SkWinCore.cpp";
+    receipt.source_line = 1565;
+    receipt.volume = 0x0fu;
+    if (!request) {
+        receipt.blocked_missing_request = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.argc = request->argc;
+    for (int i = 1; i < request->argc &&
+                    i < DM2_V1_ANIM_BOOTSTRAP_MAX_ARGS; ++i) {
+        const char *arg = request->argv[i];
+        if (dm2_v1_anim_arg_is(arg, 'B')) receipt.flag_abort_on_event = 1u;
+        else if (dm2_v1_anim_arg_is(arg, 'L')) {
+            receipt.flag_abort_on_event = 1u;
+            receipt.flag_loop = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'D')) {
+            receipt.flag_no_display = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'H')) {
+            receipt.flag_hide_after = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'E')) {
+            receipt.flag_clear_after = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'S')) {
+            receipt.flag_clear_before = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'M')) {
+            receipt.flag_force_stream = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'F')) {
+            receipt.flag_preload_file = 1u;
+        } else if (dm2_v1_anim_arg_is(arg, 'V') && arg[3] >= '0' &&
+                   arg[3] <= '9') {
+            receipt.volume = (uint8_t)(arg[3] - '0');
+            if (receipt.volume > 15u) receipt.volume = 15u;
+        } else if (dm2_v1_anim_arg_is(arg, 'O') && arg[3] >= '0' &&
+                   arg[3] <= '9') {
+            receipt.output_channel = (uint16_t)(arg[3] - '0');
+        } else if (!receipt.parsed_filename && arg && arg[0] != '+') {
+            receipt.parsed_filename = 1u;
+        }
+    }
+    if (request->input_name && request->input_name[0] != '\0')
+        receipt.parsed_filename = 1u;
+    receipt.input_size = request->input_size;
+    receipt.farcoreleft_bytes = request->farcoreleft_bytes;
+    receipt.stream_capacity = request->stream_capacity;
+    receipt.requested_capture_int_ff = 1u;
+    receipt.requested_install_timer = 1u;
+    receipt.drained_pending_events = 1u;
+    if (!receipt.parsed_filename || request->input_size == 0u) {
+        receipt.blocked_missing_input = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.allocated_screen_buffer = 1u;
+    if (request->sound_available) {
+        receipt.requested_sound_reload = 1u;
+        receipt.allocated_sound_buffer = request->sound_reload_ok ? 1u : 0u;
+    }
+    if (receipt.flag_force_stream ||
+        request->farcoreleft_bytes < request->input_size) {
+        DM2_V1_AnimStreamPtrReceipt ptr_receipt;
+        receipt.stream_mode = 1u;
+        if (!stream_state || request->stream_capacity < request->input_size) {
+            receipt.blocked_stream_capacity = 1u;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        stream_state->active = 1u;
+        stream_state->arena_size = request->stream_capacity;
+        if (!dm2_v1_anim_0759_0869_resolve_stream_ptr(
+                stream_state, 0u, &ptr_receipt)) {
+            receipt.blocked_stream_capacity = 1u;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.requested_0759_0869 = 1u;
+        receipt.first_stream_offset = ptr_receipt.offset;
+    } else {
+        receipt.heap_mode = 1u;
+    }
+    receipt.requested_palette_zero = 1u;
+    receipt.requested_screen_clear_before = receipt.flag_clear_before;
+    receipt.requested_screen_clear_after = receipt.flag_clear_after;
+    if (receipt.stream_mode) {
+        DM2_V1_AnimStreamResetReceipt reset_receipt;
+        dm2_v1_anim_0759_0855_reset_stream(stream_state, &reset_receipt);
+        receipt.requested_0759_0855 = reset_receipt.valid ? 1u : 0u;
+    }
+    if (receipt.flag_preload_file || receipt.allocated_sound_buffer)
+        receipt.requested_mouse_sound_release = 1u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_anim_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 int dm2_v1_anim_setpixel_seq_4bpp(uint8_t *dst,

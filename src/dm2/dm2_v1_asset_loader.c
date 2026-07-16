@@ -400,6 +400,8 @@ static int dm2_v1_asset_load_image_metadata(
     }
     out_metadata->bits_per_pixel = (uint8_t)bpp;
     out_metadata->query_offset_y = (int16_t)dm2_img3_signed_offset(cy);
+    out_metadata->graphicsset_offset_present = 0;
+    out_metadata->image_offset_present = 0;
     out_metadata->metadata_hash = dm2_gdat_file_receipt_hash(
         entry ? entry->data_index : 0u,
         ((uint32_t)out_metadata->width << 16) | out_metadata->height,

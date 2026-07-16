@@ -294,6 +294,75 @@ static void test_candidate_panel_path(void) {
     CHECK(r.valid == 0, "unknown panel command invalid");
 }
 
+static void test_hoc_mirror_candidate_receipts(void) {
+    ChampionPortraitClickInput_Compat in;
+    HocMirrorCandidateSelectionReceipt_Compat select;
+    CandidatePanelState_Compat panel;
+    HocMirrorCandidateFinalizeReceipt_Compat finalize;
+
+    printf("[hoc_mirror_candidate_receipts]\n");
+
+    in = base_portrait_click_input();
+    in.sensorData = 4;
+    in.partyChampionCount = 1;
+    select = F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+        &in, 1, 1, 0);
+    CHECK(select.valid == 1, "F0871 accepts source C080/C127 with original record and C026");
+    CHECK(select.triggersCandidateAdd == 1, "F0871 keeps F0866 candidate-add ownership");
+    CHECK(select.mirrorOrdinal == 4, "F0871 carries C127 sensorData as mirror ordinal");
+    CHECK(select.candidateChampionIndex == 1, "F0871 candidate index is previous G0305");
+    CHECK(select.candidateChampionOrdinal == 2, "F0871 candidate ordinal is previous G0305 + 1");
+    CHECK(select.partyChampionCountBefore == 1 &&
+          select.partyChampionCountAfter == 2,
+          "F0871 records before/after party count");
+    CHECK(select.requiresOriginalChampionRecord == 1 &&
+          select.requiresC026PortraitAtlas == 1 &&
+          select.opensCandidatePanel == 1,
+          "F0871 records real-record/C026/C040 boundary requirements");
+
+    select = F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+        &in, 0, 1, 0);
+    CHECK(select.valid == 0, "F0871 rejects missing original champion record");
+    select = F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+        &in, 1, 0, 0);
+    CHECK(select.valid == 0, "F0871 rejects missing C026 portrait atlas");
+    select = F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+        &in, 1, 1, 1);
+    CHECK(select.valid == 0, "F0871 rejects an already-active candidate panel");
+    in.leaderEmptyHanded = 0;
+    select = F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+        &in, 1, 1, 0);
+    CHECK(select.valid == 0, "F0871 preserves F0866 empty-hand requirement");
+
+    panel.partyChampionCount = 2;
+    panel.candidateChampionOrdinal = 2;
+    finalize = F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+        panel, DM1_COMMAND_RESURRECT, 1);
+    CHECK(finalize.valid == 1 && finalize.resurrected == 1,
+          "F0872 accepts C160 resurrect after a live candidate");
+    CHECK(finalize.candidateChampionIndex == 1 &&
+          finalize.disablesMirrorSensor == 1 &&
+          finalize.requiresFirstMirrorSensorOwner == 1,
+          "F0872 records G0305-1 and source mirror disable ownership");
+
+    finalize = F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+        panel, DM1_COMMAND_REINCARNATE, 0);
+    CHECK(finalize.valid == 0 &&
+          finalize.renameRequiredBeforeFinalize == 1 &&
+          finalize.candidateChampionIndex == 1,
+          "F0872 requires F0281 rename before C161 can commit");
+    finalize = F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+        panel, DM1_COMMAND_REINCARNATE, 1);
+    CHECK(finalize.valid == 1 && finalize.reincarnated == 1,
+          "F0872 accepts C161 only after rename has been accepted");
+    finalize = F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+        panel, DM1_COMMAND_CANCEL, 0);
+    CHECK(finalize.valid == 1 && finalize.cancelled == 1 &&
+          finalize.nextPartyChampionCount == 1 &&
+          finalize.disablesMirrorSensor == 0,
+          "F0872 preserves C162 cancel semantics");
+}
+
 static void test_candidate_append_clear_cycles(void) {
     ChampionPortraitClickInput_Compat in;
     CandidateChampionAddResult_Compat add;
@@ -565,6 +634,7 @@ int main(void) {
     test_reincarnation();
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
+    test_hoc_mirror_candidate_receipts();
     test_candidate_append_clear_cycles();
     test_mirror_sensor_disable_order();
     test_vi_altar_full_cycle_transition();

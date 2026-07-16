@@ -879,7 +879,7 @@ typedef struct CSB_V1_StartupPlaybackState_PC34 {
  * while TITLE.C changes zones, then keeps C002-C005 resident through the
  * entrance loop; CSBWin's Graphics.cpp ReadGraphic keeps the archive read
  * boundary separate from its consumers. */
-typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
+struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     int valid;
     int real_asset_matched;
     int title_assets_ready;
@@ -897,7 +897,7 @@ typedef struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     CSB_V1_StartupAssetBinding_PC34 hud_resurrect_binding;
     CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
     CSB_V1_StartupPlaybackState_PC34 playback;
-} CSB_V1_StartupRuntimeAssetSession_PC34;
+};
 
 typedef enum CSB_V1_BootStartupDoorRuntimeRoute_PC34 {
     CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_NONE_PC34 = 0,

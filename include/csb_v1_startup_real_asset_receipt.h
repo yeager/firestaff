@@ -50,6 +50,9 @@
 extern "C" {
 #endif
 
+typedef struct CSB_V1_StartupRuntimeAssetSession_PC34
+    CSB_V1_StartupRuntimeAssetSession_PC34;
+
 /* ── Result codes ─────────────────────────────────────────────────── */
 
 typedef enum {
@@ -212,6 +215,11 @@ int csb_v1_startup_real_receipt_from_profile_fields(
 int csb_v1_startup_real_scan_and_receipt(const char *data_dir,
                                           int max_depth,
                                           CSB_V1_StartupRealReceipt *receipt);
+
+int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+    const CSB_V1_StartupRealReceipt *real_asset_receipt,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *out_receipt);
 
 /*
  * Recompute the FNV-1a receipt hash in place over an already

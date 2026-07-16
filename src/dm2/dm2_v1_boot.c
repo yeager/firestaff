@@ -4850,6 +4850,171 @@ int dm2_v1_boot_gdat_hud_static_m11_command_plan(
     return dm2_v1_gdat_hud_m11_command_plan_build(&gfx->loader, out_plan);
 }
 
+static uint32_t dm2_v1_boot_hash_u8_span(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, bytes[i]);
+    }
+    return hash ? hash : 1u;
+}
+
+static int dm2_v1_boot_startup_image_receipt(
+    DM2_V1_BootGraphicsDat *gfx,
+    int field,
+    int *out_width,
+    int *out_height,
+    DM2_ImageFormat *out_format,
+    uint32_t *out_raw_hash,
+    uint32_t *out_pixel_hash)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint8_t *pixels;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
+    if (out_raw_hash) *out_raw_hash = 0u;
+    if (out_pixel_hash) *out_pixel_hash = 0u;
+    if (!gfx || !out_width || !out_height || !out_format ||
+        !out_raw_hash || !out_pixel_hash) {
+        return 0;
+    }
+    raw = dm2_v1_asset_load_sized(&gfx->loader, DM2_GDAT_CATEGORY_TITLE,
+                                  0, field, &raw_size);
+    pixels = dm2_v1_asset_load_image_field(&gfx->loader,
+                                           DM2_GDAT_CATEGORY_TITLE,
+                                           0, field,
+                                           &width, &height, &format);
+    if (!raw || raw_size == 0u || !pixels || width != 320 || height != 200 ||
+        format == DM2_IMG_FMT_UNKNOWN) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    *out_width = width;
+    *out_height = height;
+    *out_format = format;
+    *out_raw_hash = dm2_v1_boot_hash_u8_span(raw, raw_size);
+    *out_pixel_hash = dm2_v1_boot_hash_u8_span(
+        pixels, (size_t)width * (size_t)height);
+    dm2_v1_asset_free_pixels(pixels);
+    return *out_raw_hash != 0u && *out_pixel_hash != 0u;
+}
+
+int dm2_v1_boot_startup_menu_hud_gdat_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootStartupMenuHudGdatReceipt *out_receipt)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_StartupMenuPointerLayout layout;
+    DM2_V1_StartupMenuPointerHitReceipt new_hit;
+    DM2_V1_StartupMenuPointerHitReceipt resume_hit;
+    DM2_V1_InterfacePalette palette;
+    DM2_V1_GdatHudM11CommandPlan hud;
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !out_receipt || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    out_receipt->graphics_dat_ready = 1;
+
+    out_receipt->title_image_ready = dm2_v1_boot_startup_image_receipt(
+        gfx, 1, &out_receipt->title_width, &out_receipt->title_height,
+        &out_receipt->title_format, &out_receipt->title_raw_hash,
+        &out_receipt->title_pixel_hash);
+    out_receipt->menu_image_ready = dm2_v1_boot_startup_image_receipt(
+        gfx, 4, &out_receipt->menu_width, &out_receipt->menu_height,
+        &out_receipt->menu_format, &out_receipt->menu_raw_hash,
+        &out_receipt->menu_pixel_hash);
+
+    memset(&layout, 0, sizeof(layout));
+    out_receipt->pointer_layout_ready =
+        dm2_v1_boot_startup_menu_pointer_layout(profile, &layout) &&
+        layout.valid && layout.table_hash != 0u &&
+        layout.new_game.w > 0 && layout.new_game.h > 0 &&
+        layout.resume_game.w > 0 && layout.resume_game.h > 0;
+    out_receipt->pointer_table_hash = layout.table_hash;
+    memset(&new_hit, 0, sizeof(new_hit));
+    memset(&resume_hit, 0, sizeof(resume_hit));
+    if (out_receipt->pointer_layout_ready) {
+        out_receipt->new_game_click_ready =
+            dm2_v1_boot_startup_menu_pointer_hit_from_layout(
+                &layout,
+                layout.new_game.x + layout.new_game.w / 2,
+                layout.new_game.y + layout.new_game.h / 2,
+                &new_hit) &&
+            new_hit.target == DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME;
+        out_receipt->resume_click_surface_ready =
+            dm2_v1_boot_startup_menu_pointer_hit_from_layout(
+                &layout,
+                layout.resume_game.x + layout.resume_game.w / 2,
+                layout.resume_game.y + layout.resume_game.h / 2,
+                &resume_hit) &&
+            resume_hit.target ==
+                DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE;
+    }
+
+    memset(&palette, 0, sizeof(palette));
+    out_receipt->interface_palette_ready =
+        dm2_v1_boot_interface_palette(profile, &palette) &&
+        palette.hash != 0u;
+    out_receipt->interface_palette_hash = palette.hash;
+
+    memset(&hud, 0, sizeof(hud));
+    out_receipt->hud_static_plan_ready =
+        dm2_v1_boot_gdat_hud_static_m11_command_plan(profile, &hud) &&
+        hud.valid && hud.command_count == 9 && hud.command_hash != 0u;
+    out_receipt->hud_static_command_count = hud.command_count;
+    out_receipt->hud_static_plan_hash = hud.command_hash;
+    out_receipt->hud_palette_ready = out_receipt->hud_static_plan_ready;
+    for (i = 0; i < hud.command_count; ++i) {
+        if (hud.commands[i].palette_hash == 0u) {
+            out_receipt->hud_palette_ready = 0;
+            break;
+        }
+    }
+    dm2_v1_gdat_hud_m11_command_plan_free(&hud);
+
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->title_raw_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->title_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_raw_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->menu_pixel_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->pointer_table_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->interface_palette_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->hud_static_plan_hash);
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    out_receipt->valid =
+        out_receipt->graphics_dat_ready &&
+        out_receipt->title_image_ready &&
+        out_receipt->menu_image_ready &&
+        out_receipt->pointer_layout_ready &&
+        out_receipt->new_game_click_ready &&
+        out_receipt->resume_click_surface_ready &&
+        out_receipt->interface_palette_ready &&
+        out_receipt->hud_static_plan_ready &&
+        out_receipt->hud_palette_ready &&
+        out_receipt->receipt_hash != 0u;
+    if (!out_receipt->valid) {
+        return 0;
+    }
+    return 1;
+}
+
 int dm2_v1_boot_weather_gdat_receipt(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,

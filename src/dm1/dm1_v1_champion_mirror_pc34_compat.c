@@ -584,6 +584,56 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+    int relForward,
+    int relSide,
+    int viewWallIndex,
+    int championPortraitOrdinal,
+    int globalOrnamentIndex,
+    DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 *outReceipt)
+{
+    DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 receipt;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.relForward = relForward;
+    receipt.relSide = relSide;
+    receipt.viewWallIndex = viewWallIndex;
+    receipt.globalOrnamentIndex = globalOrnamentIndex;
+    receipt.sourceAnchor =
+        "ReDMCSB DUNGEON.C:2608-2612 C127/G0289 wall fact; "
+        "DUNVIEW.C F0107:3502-3938 wall-ornament projection; "
+        "DUNVIEW.C:3913-3928 D1C C346/C026 portrait overlay";
+
+    if (championPortraitOrdinal < 0) {
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    receipt.consumedC127WallFact = 1;
+    receipt.suppressHostFallbackVisuals = 1;
+    receipt.suppressChampionPortrait = 1;
+
+    if (relForward == 1 && relSide == 0 && viewWallIndex == 12) {
+        receipt.drawChampionPortrait = 1;
+        receipt.suppressChampionPortrait = 0;
+        receipt.suppressGenericWallOrnament = 1;
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    if (globalOrnamentIndex ==
+        DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT) {
+        receipt.drawWallOrnamentBacking = 1;
+    }
+
+    *outReceipt = receipt;
+    return 1;
+}
+
 int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
     const DM1_V1_ChampionMirrorRuntimeRenderInputPc34 *input,
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 *outDecision)
@@ -652,7 +702,9 @@ const char *DM1_V1_ChampionMirror_SourceEvidencePc34(void)
            "DUNGEON.C:2573,2608-2612 F0172/F0174 and COMPILE.H:1038 map "
            "C127 front-wall sensor data to the 1-based G0289 champion "
            "portrait ordinal; DUNVIEW.C:3913-3928 blits C026 champion "
-           "portraits through G0109 {96,127,35,63}; DUNGEON.C:2558 resets "
+           "portraits through G0109 {96,127,35,63}; DUNVIEW.C F0107:3502-3938 "
+           "still projects the source wall ornament for side/depth C127 "
+           "mirror walls while suppressing C026 outside D1C; DUNGEON.C:2558 resets "
            "G0289 when a wall square is present, preventing stale mirror "
            "payloads from leaking into later dungeon-view layers; "
            "DUNVIEW.C:4547-4581,5075,5668-5683 keep F0115 floor items and "

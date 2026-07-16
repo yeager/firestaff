@@ -2581,12 +2581,11 @@ int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
     receipt.source_lines = spec->source_lines;
 
     /* ReDMCSB DUNVIEW.C F0128:8478-8533 invokes each side square before
-     * its center square. The active replay ceiling is passed by the caller;
-     * lane masks keep the opposite/open side ownership in DM1 rather than
-     * leaving a host-specific clip decision in M11. */
-    if (!wall_like || spec->runtime_rel_forward > max_visible_forward ||
-        !dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
-            visibility, spec->runtime_rel_forward, spec->runtime_rel_side)) {
+     * its center square. Side-wall material is not pre-culled by nearer
+     * same-lane occupancy; the nearer source wall panel overpaints the farther
+     * one in the same far-to-near wall pass. Lane masks remain for later
+     * floor/content/effect passes, not for F0116/F0117/F0119/F0120 walls. */
+    if (!wall_like || spec->runtime_rel_forward > max_visible_forward) {
         receipt.falls_through_to_f0115 =
             !wall_like || (front_alcove && spec->front_alcove_reveals_contents);
         *out_receipt = receipt;

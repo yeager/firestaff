@@ -327,11 +327,13 @@ static void m12_save_config(const M12_StartupMenuState* state);
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
-                                          const char* gameId);
+                                          const char* gameId,
+                                          int looseFilesOnlyAssetScan);
 static int m12_startup_data_dir_is_game_leaf(const char* dataDir);
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
-                                    const char* gameId);
+                                    const char* gameId,
+                                    const M12_StartupMenuInitOptions* options);
 static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
 static void m12_begin_unicode_font_browse(M12_StartupMenuState* state);
 static void m12_begin_artpack_browse(M12_StartupMenuState* state);
@@ -2296,7 +2298,7 @@ static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
     m12_enter_message_view(state);
     if (M12_Config_ImportSaveManifestJSON(&config, NULL)) {
         M12_Config_Save(&config);
-        m12_apply_loaded_config(state, NULL, NULL);
+        m12_apply_loaded_config(state, NULL, NULL, NULL);
         m12_sync_entries_from_assets(state);
         m12_publish_game_availability(state);
         m12_sync_card_art(state);
@@ -3159,15 +3161,22 @@ static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
-                                          const char* gameId) {
+                                          const char* gameId,
+                                          int looseFilesOnlyAssetScan) {
+    M12_AssetStatusScanOptions gameScanOptions;
+    const M12_AssetStatusScanOptions* gameScan =
+        looseFilesOnlyAssetScan ? &gameScanOptions : NULL;
     if (!state || !config) {
         return;
     }
+    memset(&gameScanOptions, 0, sizeof(gameScanOptions));
+    gameScanOptions.looseFilesOnly = looseFilesOnlyAssetScan ? 1 : 0;
     if (hasExplicitDataDirOverride) {
         if (gameId && gameId[0] != '\0') {
-            M12_AssetStatus_ScanGame(&state->assetStatus,
-                                     config->dataDir,
-                                     gameId);
+            M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
+                                                config->dataDir,
+                                                gameId,
+                                                gameScan);
             return;
         }
         if ((!gameId || gameId[0] == '\0') &&
@@ -3184,7 +3193,10 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         return;
     }
     if (gameId && gameId[0] != '\0') {
-        M12_AssetStatus_ScanGame(&state->assetStatus, config->dataDir, gameId);
+        M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
+                                            config->dataDir,
+                                            gameId,
+                                            gameScan);
     } else {
         M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
     }
@@ -3194,7 +3206,10 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         int defaultReadyCount;
         memset(&defaultStatus, 0, sizeof(defaultStatus));
         if (gameId && gameId[0] != '\0') {
-            M12_AssetStatus_ScanGame(&defaultStatus, NULL, gameId);
+            M12_AssetStatus_ScanGameWithOptions(&defaultStatus,
+                                                NULL,
+                                                gameId,
+                                                gameScan);
         } else {
             M12_AssetStatus_Scan(&defaultStatus, NULL);
         }
@@ -3220,9 +3235,10 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             int fallbackReadyCount;
             memset(&fallbackStatus, 0, sizeof(fallbackStatus));
             if (gameId && gameId[0] != '\0') {
-                M12_AssetStatus_ScanGame(&fallbackStatus,
-                                         resolvedDataDir,
-                                         gameId);
+                M12_AssetStatus_ScanGameWithOptions(&fallbackStatus,
+                                                    resolvedDataDir,
+                                                    gameId,
+                                                    gameScan);
             } else {
                 M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
             }
@@ -3242,7 +3258,8 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
 
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
-                                    const char* gameId) {
+                                    const char* gameId,
+                                    const M12_StartupMenuInitOptions* options) {
     M12_Config config;
     int gi;
     int hasExplicitDataDirOverride;
@@ -3513,7 +3530,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     m12_scan_startup_asset_status(state,
                                   &config,
                                   hasExplicitDataDirOverride,
-                                  gameId);
+                                  gameId,
+                                  options && options->looseFilesOnlyAssetScan);
     /* Mirror V2.2 modern-assets installation state into the config struct
      * so the value is persisted on save (even though it's set by
      * M12_AssetStatus_Scan at runtime, not by the user). */
@@ -3549,7 +3567,7 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
             m12_init_game_options(&state->gameOptions[gi]);
         }
     }
-    m12_apply_loaded_config(state, dataDir, gameId);
+    m12_apply_loaded_config(state, dataDir, gameId, options);
     m12_sync_entries_from_assets(state);
     {
         FS_GameAvailability avail;

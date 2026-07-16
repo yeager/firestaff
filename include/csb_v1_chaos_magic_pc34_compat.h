@@ -26,6 +26,11 @@
 #define CSB_V1_CSBWIN_DSACMD_EQUAL 8u
 #define CSB_V1_CSBWIN_DSACMD_QUESTION 9u
 #define CSB_V1_CSBWIN_DSACMD_GOSUB 5u
+#define CSB_V1_CSBWIN_DSACMD_MESSAGE 1u
+#define CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER 4u
+#define CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32 14u
+#define CSB_V1_CSBWIN_DSACMD_MESSAGE32 15u
+#define CSB_V1_CSBWIN_DSACMD_DESSAGE32 22u
 #define CSB_V1_CSBWIN_DSACMD_AMPERSAND 11u
 #define CSB_V1_CSBWIN_DSACMD_JUMP 12u
 #define CSB_V1_CSBWIN_DSACMD_AMPERSAND2 21u
@@ -129,6 +134,31 @@ typedef enum {
     CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL = -2
 } CSB_V1_CSBWinDSAStackResult;
 
+typedef enum {
+    CSB_V1_CSBWIN_DSA_CORE_OK = 0,
+    CSB_V1_CSBWIN_DSA_CORE_NOT_AUTHENTICATED = 1,
+    CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED = 2,
+    CSB_V1_CSBWIN_DSA_CORE_MALFORMED = -1,
+    CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL = -2
+} CSB_V1_CSBWinDSACoreVerifyResult;
+
+typedef struct {
+    int valid;
+    int transfer_only;
+    int stack_core;
+    int requires_runtime_owner;
+    int conditional_core;
+    int arithmetic_core;
+    int variable_core;
+    int timer_core;
+    int message_core;
+    int dungeon_mutation_core;
+    uint16_t command_count;
+    uint16_t words_consumed;
+    uint8_t unsupported_opcode;
+    uint16_t unsupported_subcode;
+} CSB_V1_CSBWinDSACoreProgramReceipt;
+
 /* The master location is packed exactly as CSBWin LOCATIONREL::Integer():
  * position bits 16-17, level 10-15, X 5-9, Y 0-4.  `parameters` models the
  * ordered A..Z type-47 actuator chain used by EX_LOAD; unavailable entries
@@ -164,9 +194,9 @@ typedef struct {
 } CSB_V1_CSBWinDSALoadStoreExecution;
 
 /* The source STACK has 100 signed 32-bit cells (CSBWin DSA.cpp:98-426).
- * This boundary implements only the pure stack/arithmetic/control STKOP
- * subset of EX_AMPERSAND; world, timer, variable, and filter operations are
- * deliberately not promoted into this authenticated action surface. */
+ * Runtime-owned callers may bind the verified EX_AMPERSAND/AMPERSAND2 subset
+ * to save, timer, and dungeon callbacks. Unsupported opcodes and unowned
+ * callbacks remain outside this authenticated action surface. */
 #define CSB_V1_CSBWIN_DSA_STACK_CAPACITY 100
 #define CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY 100
 #define CSB_V1_CSBWIN_DSA_VARIABLE_COUNT 100
@@ -234,6 +264,12 @@ typedef int (*CSB_V1_CSBWinDSASetCellInfoFn)(void *user,
                                              uint32_t location,
                                              const uint32_t values[5],
                                              uint8_t write_mask);
+/* CSBWin DSA.cpp EX_COPYTELEPORTER copies the first source DB1 teleporter
+ * record and the source CELLFLAG byte to an existing destination teleporter.
+ * The runtime owner must reject missing real cells/records rather than
+ * creating a substitute teleporter. */
+typedef int (*CSB_V1_CSBWinDSACopyTeleporterFn)(
+    void *user, uint32_t source_location, uint32_t destination_location);
 
 /* DSA.cpp's object attribute opcodes address the original DB5/DB6/DB8/DB10
  * record selected by an authenticated Thing integer.  The runtime owns the
@@ -343,6 +379,12 @@ typedef int (*CSB_V1_CSBWinDSASetAdjustSkillsParametersFn)(
  * triples after a complete authenticated DSA action. */
 typedef int (*CSB_V1_CSBWinDSADescribeFn)(
     void *user, int32_t location, int32_t index, int32_t color);
+/* CSBWin DSA.cpp EX_MESSAGE/QueueDSASwitchAction schedules a source TIMER,
+ * not an immediate visual/text mutation.  The runtime owner must validate the
+ * target cell for M routes and enqueue exactly the selected timer record. */
+typedef int (*CSB_V1_CSBWinDSAQueueSwitchActionFn)(
+    void *user, uint32_t delay, uint32_t action, uint32_t target_location,
+    int message_route, uint8_t *out_event_type);
 
 typedef struct {
     uint32_t master_location;
@@ -395,6 +437,7 @@ typedef struct {
     uint8_t monster_move_inhibit[4];
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
+    CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -421,6 +464,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetCellInfoFn get_cell_info;
     CSB_V1_CSBWinDSAResolveCellStoreFn resolve_cell_store;
     CSB_V1_CSBWinDSASetCellInfoFn set_cell_info;
+    CSB_V1_CSBWinDSACopyTeleporterFn copy_teleporter;
     CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
     CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
@@ -449,14 +493,6 @@ typedef struct {
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
-
-typedef struct {
-    int next_state;
-    int forced_state;
-    uint16_t words_consumed;
-    uint16_t command_count;
-    uint16_t stack_depth;
-} CSB_V1_CSBWinDSAStackExecution;
 
 typedef struct {
     CSB_V1_DSAScript scripts[CSB_V1_MAX_DSA_SCRIPTS];
@@ -588,9 +624,32 @@ typedef struct {
     int initial_subroutine_depth;
     int final_state;
     uint16_t transfer_count;
+    uint16_t return_count;
+    uint16_t frame_push_count;
+    uint16_t frame_pop_count;
     uint16_t words_consumed;
     uint8_t maximum_subroutine_depth;
+    int returned_by_missing_program;
 } CSB_V1_CSBWinDSAExecuteReceipt;
+
+typedef struct {
+    int next_state;
+    int forced_state;
+    int transfer_executed;
+    uint16_t words_consumed;
+    uint16_t command_count;
+    uint16_t stack_depth;
+    CSB_V1_CSBWinDSAExecuteReceipt transfer;
+    uint16_t timer_scheduled_count;
+    uint8_t last_scheduled_event_type;
+    uint32_t last_scheduled_target_location;
+    uint16_t teleporter_copy_count;
+    uint32_t last_teleporter_copy_source_location;
+    uint32_t last_teleporter_copy_destination_location;
+    uint16_t actuator_copy_count;
+    uint16_t last_actuator_copy_source_thing;
+    uint16_t last_actuator_copy_destination_thing;
+} CSB_V1_CSBWinDSAStackExecution;
 
 CSB_V1_CSBWinDSAExecuteResult
 csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
@@ -617,7 +676,7 @@ csb_v1_csbwin_dsa_execute_authenticated_load_store_action(
 
 /* Executes a complete authenticated action composed solely of CSBWin LOAD,
  * STORE, local VARIABLEFETCH/VARIABLESTORE, global GLOBALFETCH/GLOBALSTORE,
- * and the pure EX_AMPERSAND stack/arithmetic/control STKOP subset. The source
+ * conditionals, and verified EX_AMPERSAND/AMPERSAND2 STKOP families. The source
  * creates a fresh 100-cell DSAVARS bank for each ProcessDSATimer6 invocation;
  * this boundary does the same and does not expose it after a successful
  * execution. Global access requires the caller-owned source-sized bank above,
@@ -626,14 +685,25 @@ csb_v1_csbwin_dsa_execute_authenticated_load_store_action(
  * save-backed SKIN_CACHE; SETSKIN callbacks are deferred until the complete
  * action has consumed every source word, while later GETSKIN observes the
  * action-local pending value. Every source word must be consumed.
- * Unsupported DSA words, filter/world paths, malformed extensions, stack
- * faults, and source-illegal LOAD_ABS32 reject without changing the caller's
- * parameter surface. */
+ * Unsupported DSA words, unowned filter/world paths, malformed extensions,
+ * stack faults, and source-illegal LOAD_ABS32 reject without changing the
+ * caller's parameter surface. */
 CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     const CSB_V1_ChaosMagicState *state, int dsa_id, uint32_t state_index,
     int action_ordinal, CSB_V1_CSBWinDSAStackContext *context,
     CSB_V1_CSBWinDSAStackExecution *out_execution);
+
+/* Decode-only admission for the production CSBWin DSA interpreter. It accepts
+ * only a checksum-imported action from the current DSA catalog, consumes the
+ * exact source word grammar, and reports whether the action belongs to the
+ * implemented transfer or stack-core subset before any runtime mutation is
+ * attempted. This is a verifier, not a fixture runner: unsupported opcodes
+ * and unproved subcodes fail closed. */
+CSB_V1_CSBWinDSACoreVerifyResult
+csb_v1_csbwin_dsa_verify_authenticated_core_program(
+    const CSB_V1_ChaosMagicState *state, int dsa_id, uint32_t state_index,
+    int action_ordinal, CSB_V1_CSBWinDSACoreProgramReceipt *out_receipt);
 
 /* Runtime-owned adapter for the already admitted pure ProcessDSAFilter action
  * subset.  It has the same callback shape as the CSB monster-filter boundary,
@@ -687,6 +757,7 @@ typedef struct {
     uint8_t monster_move_inhibit[4];
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
+    CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;
@@ -709,6 +780,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetCellInfoFn get_cell_info;
     CSB_V1_CSBWinDSAResolveCellStoreFn resolve_cell_store;
     CSB_V1_CSBWinDSASetCellInfoFn set_cell_info;
+    CSB_V1_CSBWinDSACopyTeleporterFn copy_teleporter;
     CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
     CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;

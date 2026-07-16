@@ -1,5 +1,7 @@
 #include "dm2_v1_perform_move.h"
 
+#include "dm2_v1_world_model.h"
+
 #include <string.h>
 
 static uint32_t dm2_perform_move_hash_step(uint32_t hash, uint32_t value)
@@ -46,7 +48,10 @@ int dm2_v1_DM2_PERFORM_MOVE_plan(
     } else if (!out->outdoor && !out->target_raw_valid) {
         out->blocked = 1;
         out->block_reason = DM2_V1_PERFORM_MOVE_BLOCK_NO_TARGET_TILE;
-    } else if (!out->outdoor && request->target_square_type == 0) {
+    } else if (!out->outdoor &&
+               (request->target_square_type == DM2_SQUARE_WALL ||
+                request->target_square_type == DM2_SQUARE_SECRET_DOOR ||
+                request->target_square_type == DM2_SQUARE_FAKE_WALL)) {
         out->blocked = 1;
         out->block_reason = DM2_V1_PERFORM_MOVE_BLOCK_WALL;
     } else if (!out->outdoor && request->target_square_type == 5) {

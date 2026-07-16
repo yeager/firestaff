@@ -83,6 +83,28 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_D1CF0115ThingPassPc34;
 
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int door_pass;
+    int d1c_view_square;
+    int source_graphics_dat_bound;
+    int native_object_family_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int native_object_graphic_min;
+    int native_object_graphic_max;
+    uint16_t order_word;
+    uint16_t order_after_marker;
+    int expected_door_pass;
+    int c10_transparency;
+    const char *redmcsb_call_anchor;
+    const char *redmcsb_order_anchor;
+} CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34;
+
 const CSB_V1_D1CF0115ThingPassContractPc34 *
 csb_v1_viewport_d1c_f0115_thing_pass_contract_pc34(void);
 
@@ -97,6 +119,17 @@ csb_v1_viewport_d1c_f0115_thing_pass_for_pass_pc34(int door_pass);
 int csb_v1_viewport_d1c_f0115_decode_order_pc34(
     uint16_t ordered_view_cell_ordinals,
     CSB_V1_D1CF0115DecodedOrderPc34 *out_decoded);
+
+int csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_D1CF0115ThingPassPc34 *pass,
+    int source_graphics_dat_bound,
+    int native_object_family_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34 *out_receipt);
 
 const char *
 csb_v1_viewport_d1c_f0115_thing_pass_source_evidence_pc34(void);

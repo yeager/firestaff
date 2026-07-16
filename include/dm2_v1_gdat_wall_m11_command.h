@@ -32,6 +32,8 @@ typedef struct {
      * QUERY_BLIT_RECT result with the image command, not in M11 defaults. */
     uint16_t rect_number;
     uint8_t mirror_flip;
+    uint8_t movement_active;
+    int8_t movement_query_offset_y;
     uint32_t rect_table_hash;
     uint32_t rect_row_hash;
     uint32_t metadata_hash;
@@ -49,6 +51,9 @@ typedef struct DM2_V1_GdatWallM11CommandPlan {
 int dm2_v1_gdat_wall_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatWallM11CommandPlan *out_plan);
+int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    int movement_active, DM2_V1_GdatWallM11CommandPlan *out_plan);
 void dm2_v1_gdat_wall_m11_command_plan_free(
     DM2_V1_GdatWallM11CommandPlan *plan);
 

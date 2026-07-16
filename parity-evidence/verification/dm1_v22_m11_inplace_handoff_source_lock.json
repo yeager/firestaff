@@ -13,26 +13,41 @@
     },
     {
       "marker": "raw_squares[d][s] = cells[d][s].square;",
-      "offset": 1044
+      "offset": 1371
     },
     {
       "marker": "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
-      "offset": 1116
+      "offset": 1443
     },
     {
       "marker": "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 3022
+      "offset": 3177
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 16915
+      "offset": 17922
     },
     {
-      "marker": "(void)m11_v22_inplace_render_pass(framebuffer,",
-      "offset": 17748
+      "marker": "if (m11_v22_inplace_render_pass(framebuffer,",
+      "offset": -1
+    },
+    {
+      "marker": "m11_v22_render_overlay_with_palette(framebuffer,",
+      "offset": -1
     }
   ],
-  "errors": [],
+  "errors": [
+    "m11_game_view.c missing marker: #include \"m11_v22_render_overlay_pc34.h\"",
+    "m11_game_view.c missing marker: if (dm1_v2_shape_runtime_v22_active() && spec->gameId",
+    "m11_game_view.c missing marker: (void)m11_v22_inplace_draw_init();",
+    "m11_game_view.c missing marker: if (m11_v22_inplace_render_pass(framebuffer,",
+    "m11_game_view.c missing marker: m11_v22_render_overlay_with_palette(framebuffer,",
+    "V22 in-place init is not visibly gated to DM1",
+    "V22 in-place init is not in the DM1 V22-active start branch",
+    "missing ordered marker: if (m11_v22_inplace_render_pass(framebuffer,",
+    "missing ordered marker: m11_v22_render_overlay_with_palette(framebuffer,",
+    "placeholder overlay is not guarded as the in-place-render fallback"
+  ],
   "firestaffAnchors": {
     "cellRects": "src/dm1v2/m11_v22_cell_rects_pc34.c",
     "gameView": "src/engine/m11_game_view.c",
@@ -47,5 +62,5 @@
   ],
   "redmcsbAnchor": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
   "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
-  "status": "passed"
+  "status": "failed"
 }

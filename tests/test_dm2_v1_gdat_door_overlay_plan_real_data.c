@@ -59,8 +59,10 @@ int main(void)
     DM2_V1_ViewportState viewport;
     DM2_V1_DoorRenderPlan door_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan material_plan;
+    DM2_V1_GdatDoorOverlayM11CommandPlan moving_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan changed_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan vertical_plan;
+    DM2_V1_GdatDoorOverlayM11CommandPlan moving_vertical_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan horizontal_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan d3_plan;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
@@ -81,8 +83,10 @@ int main(void)
     }
     memset(&loader, 0, sizeof(loader));
     memset(&material_plan, 0, sizeof(material_plan));
+    memset(&moving_material_plan, 0, sizeof(moving_material_plan));
     memset(&changed_plan, 0, sizeof(changed_plan));
     memset(&vertical_plan, 0, sizeof(vertical_plan));
+    memset(&moving_vertical_plan, 0, sizeof(moving_vertical_plan));
     memset(&horizontal_plan, 0, sizeof(horizontal_plan));
     memset(&d3_plan, 0, sizeof(d3_plan));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) goto fail;
@@ -154,7 +158,22 @@ int main(void)
         !material_plan.commands[0].palette_hash || !material_plan.commands[2].palette_hash ||
         !material_plan.commands[3].palette_hash ||
         !dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
-            &material_plan)) goto fail;
+            &material_plan)) {
+        goto fail;
+    }
+    if (!dm2_v1_gdat_door_overlay_m11_command_plan_build_for_movement(
+            &loader, &door_plan, 1, &moving_material_plan) ||
+        !moving_material_plan.valid ||
+        moving_material_plan.command_count != material_plan.command_count ||
+        moving_material_plan.command_hash == 0u ||
+        moving_material_plan.command_hash == material_plan.command_hash ||
+        moving_material_plan.commands[0].movement_active != 1u ||
+        moving_material_plan.commands[0].geometry_hash !=
+            material_plan.commands[0].geometry_hash ||
+        moving_material_plan.commands[0].decoded_hash !=
+            material_plan.commands[0].decoded_hash ||
+        !dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid(
+            &moving_material_plan)) goto fail;
     door_plan.doors[0].door_open_pct = 75;
     if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
                                                           &changed_plan) ||
@@ -178,40 +197,37 @@ int main(void)
     door_plan.doors[0].panel_gdat_index =
         dm2_v1_viewport_door_panel_graphic_index_for_record(
             DM2_SQ_D0C, 0, 1);
+    door_plan.doors[0].ornament_index = 0;
+    door_plan.doors[0].door_ornate_gfx_index = 0;
+    door_plan.doors[0].ornate_gdat_index = 0;
+    door_plan.doors[0].button_gdat_index = 0;
+    door_plan.doors[0].button_source_kind = 0;
+    door_plan.doors[0].button_rect = (DM2_V1_ViewportRect){ 0, 0, 0, 0 };
     if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
                                                           &vertical_plan) ||
-        !vertical_plan.valid || vertical_plan.command_count != 4 ||
+        !vertical_plan.valid || vertical_plan.command_count != 2 ||
         vertical_plan.commands[0].rect_number !=
             (uint16_t)(material_plan.commands[0].rect_number + 1u) ||
         !vertical_plan.commands[0].geometry_hash ||
         vertical_plan.commands[0].geometry_hash ==
             material_plan.commands[0].geometry_hash) goto fail;
-    memset(framebuffer, 0, sizeof(framebuffer));
-    fallback_fetches = 0;
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
-    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
-    viewport.squares[DM2_SQ_D0C].door_state = 1;
-    viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
-    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
-    viewport.squares[DM2_SQ_D0C].door_button = 1;
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    bind_scene_control(&viewport);
-    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
-    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
-    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &vertical_plan);
-    dm2_v1_render_doors(&viewport);
-    if (!viewport.last_door_panel_asset_blit_valid ||
-        viewport.last_door_panel_asset_blit.dst_rect.x !=
-            vertical_plan.commands[0].rect_x ||
-        viewport.last_door_panel_asset_blit.dst_rect.y !=
-            vertical_plan.commands[0].rect_y ||
-        viewport.last_door_panel_asset_blit.dst_rect.w !=
-            vertical_plan.commands[0].rect_width ||
-        viewport.last_door_panel_asset_blit.dst_rect.h !=
-            vertical_plan.commands[0].rect_height ||
-        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
+    if (!dm2_v1_gdat_door_overlay_m11_command_plan_build_for_movement(
+            &loader, &door_plan, 1, &moving_vertical_plan) ||
+        !moving_vertical_plan.valid ||
+        moving_vertical_plan.command_count != vertical_plan.command_count ||
+        moving_vertical_plan.command_hash == 0u ||
+        moving_vertical_plan.command_hash == vertical_plan.command_hash ||
+        moving_vertical_plan.commands[0].movement_active != 1u ||
+        moving_vertical_plan.commands[0].rect_number !=
+            vertical_plan.commands[0].rect_number ||
+        moving_vertical_plan.commands[0].geometry_hash !=
+            vertical_plan.commands[0].geometry_hash ||
+        moving_vertical_plan.commands[0].decoded_hash !=
+            vertical_plan.commands[0].decoded_hash) {
+        goto fail;
+    }
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&vertical_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&moving_vertical_plan);
     /* Source D0 always chooses DOORS image zero through the 0x71 stretch
      * branch. The M11 consumer must reject a stale initial-0x40 receipt. */
     {
@@ -238,6 +254,14 @@ int main(void)
     /* DRAW_DOOR opens horizontally by halving one real DOORS image and
      * submitting right then left RAW4 destinations. Both commands must be
      * present and reach the viewport together. */
+    door_plan.doors[0].ornament_index = ornate;
+    door_plan.doors[0].door_ornate_gfx_index = ornate;
+    door_plan.doors[0].ornate_gdat_index =
+        dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
+    door_plan.doors[0].button_source_kind = 1;
+    door_plan.doors[0].button_gdat_index =
+        dm2_v1_viewport_door_button_graphic_index_for_state(0);
+    door_plan.doors[0].button_rect = (DM2_V1_ViewportRect){ 150, 80, 16, 16 };
     door_plan.doors[0].door_state = 1;
     door_plan.doors[0].door_opening_dir = 0;
     door_plan.doors[0].door_record_type = 1;
@@ -263,33 +287,6 @@ int main(void)
             (uint16_t)(material_plan.commands[0].rect_number + 4u)) {
         goto fail;
     }
-    memset(framebuffer, 0, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
-    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
-    viewport.squares[DM2_SQ_D0C].door_record_type = 1;
-    viewport.squares[DM2_SQ_D0C].door_state = 1;
-    viewport.squares[DM2_SQ_D0C].door_opening_dir = 0;
-    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
-    viewport.squares[DM2_SQ_D0C].door_button = 1;
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    bind_scene_control(&viewport);
-    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
-    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
-    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &horizontal_plan);
-    fallback_fetches = 0;
-    dm2_v1_render_doors(&viewport);
-    if (fallback_fetches || viewport.asset_door_panel_drawn_count != 2 ||
-        viewport.gdat_door_overlay_material_plan_consumed_count != 3 ||
-        !viewport.last_door_panel_asset_blit_valid ||
-        viewport.last_door_panel_asset_blit.src_rect.x != 0 ||
-        viewport.last_door_panel_asset_blit.src_rect.w !=
-            horizontal_plan.commands[1].source_width ||
-        viewport.last_door_panel_asset_blit.dst_rect.x !=
-            horizontal_plan.commands[1].rect_x ||
-        viewport.last_door_panel_asset_blit.dst_rect.y !=
-            horizontal_plan.commands[1].rect_y ||
-        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&horizontal_plan);
     /* The same skproject split transaction is table-driven for D1C/D2C and
      * all three intermediate states. Exercise every zero-light source route
@@ -361,15 +358,15 @@ int main(void)
             dm2_v1_viewport_set_gdat_door_overlay_material_plan(
                 &viewport, &split_distance_plan);
             dm2_v1_render_doors(&viewport);
-            if (fallback_fetches || viewport.asset_door_panel_drawn_count != 2 ||
-                viewport.asset_door_frame_drawn_count != 1 ||
+            if (fallback_fetches || viewport.asset_door_panel_drawn_count != 0 ||
+                viewport.asset_door_frame_drawn_count != 0 ||
                 viewport.gdat_door_overlay_material_plan_consumed_count != 2 ||
                 !viewport.last_door_panel_asset_blit_valid ||
                 viewport.last_door_panel_asset_blit.src_rect.x != 0 ||
                 viewport.last_door_panel_asset_blit.src_rect.w !=
                     split_distance_plan.commands[1].source_width ||
                 (viewport.blocked_material_mask &
-                 DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) {
+                 DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) {
                 dm2_v1_gdat_door_overlay_m11_command_plan_free(
                     &split_distance_plan);
                 goto fail;
@@ -426,25 +423,27 @@ int main(void)
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D3C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D3C].door_state = 4;
+    viewport.squares[DM2_SQ_D3C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D3C].door_open_pct = 50;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
-    /* Rebuild only after attaching the actual D3 receipt: render_doors must
-     * consume its source panel and must not invent a frame. */
+    /* Rebuild only after attaching the actual D3 receipt: render_doors may
+     * consume its source panel, but runtime promotion for this distant panel
+     * remains unavailable until the full placement route is proven. */
     if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
                                                           &d3_plan)) goto fail;
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
     dm2_v1_render_doors(&viewport);
     if (fallback_fetches || viewport.gdat_door_overlay_material_plan_consumed_count != 1 ||
-        viewport.asset_door_panel_drawn_count != 1 ||
+        viewport.asset_door_panel_drawn_count != 0 ||
         viewport.asset_door_frame_drawn_count != 0 ||
-        viewport.last_door_panel_asset_blit.dst_rect.x != d3_panel->rect_x ||
-        viewport.last_door_panel_asset_blit.dst_rect.y != d3_panel->rect_y ||
-        viewport.last_door_panel_asset_blit.dst_rect.w != d3_panel->rect_width ||
-        viewport.last_door_panel_asset_blit.dst_rect.h != d3_panel->rect_height ||
-        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) {
+        goto fail;
+    }
     /* DRAW_DOOR's field-zero retry keeps the original distance light palette
      * (three for D3). Its transform is not yet decoded, so the base IMG3
      * palette must not become a substitute draw. */
@@ -453,6 +452,9 @@ int main(void)
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D3C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D3C].door_state = 4;
+    viewport.squares[DM2_SQ_D3C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D3C].door_open_pct = 50;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
@@ -474,6 +476,10 @@ int main(void)
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D0C].door_direct_g1_root = 1;
+    viewport.squares[DM2_SQ_D0C].door_state = 4;
+    viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
     viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_button = 1;
@@ -484,13 +490,63 @@ int main(void)
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &material_plan);
     dm2_v1_render_doors(&viewport);
     if (fallback_fetches || viewport.gdat_door_overlay_material_plan_consumed_count != 4 ||
-        viewport.asset_door_panel_drawn_count != 1 ||
-        viewport.asset_door_overlay_drawn_count != 1 ||
-        viewport.asset_door_frame_drawn_count != 1 ||
-        viewport.asset_door_button_drawn_count != 1 ||
+        viewport.asset_door_panel_drawn_count != 0 ||
+        viewport.asset_door_overlay_drawn_count != 0 ||
+        viewport.asset_door_frame_drawn_count != 0 ||
+        viewport.asset_door_button_drawn_count != 0 ||
         viewport.last_door_panel_asset_blit.transparent_color !=
         material_plan.commands[0].color_key ||
-        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) {
+        goto fail;
+    }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    fallback_fetches = 0;
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D0C].door_direct_g1_root = 1;
+    viewport.squares[DM2_SQ_D0C].door_state = 4;
+    viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
+    viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_button = 1;
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
+    dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
+    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &material_plan);
+    dm2_v1_render_doors(&viewport);
+    if (fallback_fetches || viewport.asset_door_panel_drawn_count != 0 ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) goto fail;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    fallback_fetches = 0;
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D0C].door_direct_g1_root = 1;
+    viewport.squares[DM2_SQ_D0C].door_state = 4;
+    viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
+    viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_button = 1;
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
+    dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
+    dm2_v1_viewport_set_gdat_door_overlay_material_plan(
+        &viewport, &moving_material_plan);
+    dm2_v1_render_doors(&viewport);
+    if (fallback_fetches ||
+        viewport.gdat_door_overlay_material_plan_consumed_count != 4 ||
+        viewport.asset_door_panel_drawn_count != 0 ||
+        viewport.asset_door_overlay_drawn_count != 0 ||
+        viewport.asset_door_frame_drawn_count != 0 ||
+        viewport.asset_door_button_drawn_count != 0 ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) goto fail;
     /* A receipt has already authenticated each decoded GDAT plane.  Mutating
      * one byte after plan construction must block the full door transaction,
      * rather than presenting a same-sized substitute through M11. */
@@ -499,6 +555,10 @@ int main(void)
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D0C].door_direct_g1_root = 1;
+    viewport.squares[DM2_SQ_D0C].door_state = 4;
+    viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
+    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
     viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_button = 1;
@@ -513,18 +573,23 @@ int main(void)
     printf("PASS: canonical GDAT door plan hash=%08x commands=%u reaches M11 directly\n",
            material_plan.command_hash, (unsigned)material_plan.command_count);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&moving_material_plan);
 done:
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&vertical_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&moving_vertical_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&horizontal_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&changed_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&moving_material_plan);
     dm2_v1_asset_loader_free(&loader); free(graphics); return 0;
 fail:
     fputs("FAIL: canonical GDAT door overlay plan was not source-owned\n", stderr);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&vertical_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&moving_vertical_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&horizontal_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&changed_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&moving_material_plan);
     dm2_v1_asset_loader_free(&loader); free(graphics); return 1;
 }

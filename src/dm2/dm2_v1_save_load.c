@@ -155,6 +155,168 @@ int dm2_suppress_decode(const uint8_t *in, size_t in_capacity,
     return (int)reader.position;
 }
 
+static uint32_t dm2_v1_save_hash_bytes(uint32_t hash,
+                                       const uint8_t *bytes,
+                                       size_t size)
+{
+    size_t i;
+
+    if (!bytes && size != 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static uint8_t dm2_v1_save_u8_hash(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = dm2_v1_save_hash_bytes(2166136261u, bytes, size);
+    hash ^= hash >> 16;
+    hash ^= hash >> 8;
+    return (uint8_t)(hash ? hash : 1u);
+}
+
+int dm2_v1_save_suppress_symbol_receipt(
+    DM2_V1_SaveSuppressSymbolReceipt *out_receipt)
+{
+    const uint8_t source[3] = { 0x81u, 0x00u, 0xD2u };
+    const uint8_t mask[3] = { 0x81u, 0x42u, 0xFFu };
+    const uint8_t expected[2] = { 0xCDu, 0x20u };
+    uint8_t encoded[8] = { 0u };
+    uint8_t decoded[3] = { 0u };
+    uint8_t decoded_fill[3] = { 0u };
+    uint8_t truncated[2] = { 0xCDu, 0x00u };
+    uint8_t first_data = 0x80u;
+    uint8_t first_mask = 0xC0u;
+    uint8_t first_out = 0u;
+    uint8_t second_data = 0x0Fu;
+    uint8_t second_mask = 0x0Fu;
+    uint8_t second_out = 0u;
+    DM2_SuppressWriter writer;
+    DM2_SuppressReader reader;
+    size_t written = 0u;
+    size_t flushed = 0u;
+    int encoded_size;
+    uint32_t hash;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+
+    dm2_suppress_writer_init(&writer);
+    out_receipt->init_ready =
+        writer.pending_byte == 0u && writer.pending_bits == 0u;
+    encoded_size = dm2_suppress_encode(
+        source, mask, sizeof(source), encoded, sizeof(encoded));
+    out_receipt->writer_ready =
+        encoded_size == (int)sizeof(expected) &&
+        memcmp(encoded, expected, sizeof(expected)) == 0;
+    out_receipt->flush_ready = out_receipt->writer_ready;
+    out_receipt->encoded_size =
+        encoded_size > 0 ? (size_t)encoded_size : 0u;
+
+    dm2_suppress_reader_init(&reader, encoded, sizeof(expected));
+    out_receipt->reader_ready =
+        reader.data == encoded && reader.size == sizeof(expected) &&
+        reader.position == 0u && reader.bits_remaining == 0u &&
+        dm2_suppress_reader_read(
+            &reader, mask, sizeof(mask), decoded, 0u) == 0 &&
+        memcmp(decoded, source, sizeof(source)) == 0;
+    out_receipt->reader_position_after_decode = reader.position;
+
+    dm2_suppress_writer_init(&writer);
+    out_receipt->write_1bit_ready =
+        dm2_suppress_writer_write(&writer, &first_data, &first_mask, 1u,
+                                  encoded, sizeof(encoded), &written) == 0 &&
+        written == 0u && writer.pending_bits == 2u &&
+        dm2_suppress_writer_write(&writer, &second_data, &second_mask, 1u,
+                                  encoded, sizeof(encoded), &written) == 0 &&
+        written == 0u && writer.pending_bits == 6u &&
+        dm2_suppress_writer_flush(&writer, encoded, sizeof(encoded),
+                                  &flushed) == 0 &&
+        flushed == 1u && encoded[0] == 0xBCu &&
+        writer.pending_bits == 0u && writer.pending_byte == 0u;
+    out_receipt->carry_encoded_byte = encoded[0];
+
+    dm2_suppress_reader_init(&reader, encoded, 1u);
+    out_receipt->read_1bit_ready =
+        dm2_suppress_reader_read(
+            &reader, &first_mask, 1u, &first_out, 0u) == 0 &&
+        dm2_suppress_reader_read(
+            &reader, &second_mask, 1u, &second_out, 0u) == 0 &&
+        first_out == first_data && second_out == second_data &&
+        reader.position == 1u;
+    out_receipt->first_section_decoded = first_out;
+    out_receipt->second_section_decoded = second_out;
+    out_receipt->section_carry_ready =
+        out_receipt->write_1bit_ready && out_receipt->read_1bit_ready;
+
+    memset(decoded, 0xAA, sizeof(decoded));
+    memset(decoded_fill, 0xAA, sizeof(decoded_fill));
+    out_receipt->fill_zero_ready =
+        dm2_suppress_decode(expected, sizeof(expected), mask, sizeof(mask),
+                            decoded, 0u) == (int)sizeof(expected) &&
+        decoded[1] == 0x00u;
+    out_receipt->fill_one_ready =
+        dm2_suppress_decode(expected, sizeof(expected), mask, sizeof(mask),
+                            decoded_fill, 1u) == (int)sizeof(expected) &&
+        decoded_fill[1] == 0xBDu;
+    out_receipt->underflow_rejected =
+        dm2_suppress_decode(truncated, 1u, mask, sizeof(mask), decoded,
+                            0u) < 0;
+
+    out_receipt->source_vector_hash =
+        dm2_v1_save_u8_hash(source, sizeof(source));
+    out_receipt->mask_vector_hash =
+        dm2_v1_save_u8_hash(mask, sizeof(mask));
+    out_receipt->encoded_vector_hash =
+        dm2_v1_save_u8_hash(expected, sizeof(expected));
+    out_receipt->decoded_vector_hash =
+        dm2_v1_save_u8_hash(decoded, sizeof(decoded));
+    out_receipt->covered_symbol_mask =
+        DM2_V1_SAVE_SUPPRESS_SYMBOL_INIT |
+        DM2_V1_SAVE_SUPPRESS_SYMBOL_WRITER |
+        DM2_V1_SAVE_SUPPRESS_SYMBOL_FLUSH |
+        DM2_V1_SAVE_SUPPRESS_SYMBOL_READER |
+        DM2_V1_SAVE_SUPPRESS_SYMBOL_WRITE_1BIT |
+        DM2_V1_SAVE_SUPPRESS_SYMBOL_READ_1BIT;
+
+    hash = 2166136261u;
+    hash = dm2_v1_save_hash_bytes(
+        hash, (const uint8_t *)&out_receipt->covered_symbol_mask,
+        sizeof(out_receipt->covered_symbol_mask));
+    hash = dm2_v1_save_hash_bytes(hash, source, sizeof(source));
+    hash = dm2_v1_save_hash_bytes(hash, mask, sizeof(mask));
+    hash = dm2_v1_save_hash_bytes(hash, expected, sizeof(expected));
+    hash = dm2_v1_save_hash_bytes(
+        hash, &out_receipt->carry_encoded_byte,
+        sizeof(out_receipt->carry_encoded_byte));
+    hash = dm2_v1_save_hash_bytes(
+        hash, &out_receipt->first_section_decoded,
+        sizeof(out_receipt->first_section_decoded));
+    hash = dm2_v1_save_hash_bytes(
+        hash, &out_receipt->second_section_decoded,
+        sizeof(out_receipt->second_section_decoded));
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    out_receipt->valid =
+        out_receipt->init_ready &&
+        out_receipt->writer_ready &&
+        out_receipt->flush_ready &&
+        out_receipt->reader_ready &&
+        out_receipt->write_1bit_ready &&
+        out_receipt->read_1bit_ready &&
+        out_receipt->section_carry_ready &&
+        out_receipt->fill_zero_ready &&
+        out_receipt->fill_one_ready &&
+        out_receipt->underflow_rejected &&
+        out_receipt->source_vector_hash != 0u &&
+        out_receipt->mask_vector_hash != 0u &&
+        out_receipt->encoded_vector_hash != 0u &&
+        out_receipt->decoded_vector_hash != 0u &&
+        out_receipt->receipt_hash != 0u;
+    return out_receipt->valid;
+}
+
 int dm2_suppress_self_verification(void)
 {
     /* SKProject c_savegame.cpp DM2_SUPPRESS_WRITER: masks select source
@@ -933,6 +1095,9 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 
     if (!save_base || !out_receipt) return false;
     memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->recursive_scan_depth_limit = DM2_SK_CORPUS_RECURSE_DEPTH;
+    out_receipt->recursive_scan_candidate_cap =
+        DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP;
 
     /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
      * preference so real corpus scans tell the runtime which file would win.

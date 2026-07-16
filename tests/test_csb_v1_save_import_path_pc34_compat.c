@@ -351,8 +351,8 @@ int main(void) {
               "runtime CSBWin load imports object-in-hand");
         CHECK(runtime.csbwin_runtime_item16_count == 2u,
               "runtime CSBWin load materializes ITEM16 summaries");
-        CHECK(runtime.timeline_queue.eventCount == 3,
-              "runtime CSBWin load materializes timer queue");
+        CHECK(runtime.timeline_queue.eventCount == 2,
+              "runtime CSBWin load materializes active NumTimer queue");
         remove(path);
     }
 

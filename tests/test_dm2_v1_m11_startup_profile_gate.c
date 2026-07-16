@@ -2463,9 +2463,8 @@ int main(void) {
         int viewport_x = 0, viewport_y = 0;
         int slot_x = 0, slot_y = 0, slot_w = 0, slot_h = 0;
         int status_x = 0, status_y = 0, status_w = 0, status_h = 0;
-        int source_slot =
-            dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
-                CHAMPION_SLOT_HEAD);
+        DM1_V1_InventorySlotBoxZonePc34 source_slot_zone;
+        int source_slot = CHAMPION_SLOT_HEAD;
         expect_true(M11_GameView_GetDm2InventoryObject(
                         &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                     "M11 DM2 resume mirrors champion inventory ObjectID without THING casting");
@@ -2479,13 +2478,15 @@ int main(void) {
             viewport_x = viewport_rect.x;
             viewport_y = viewport_rect.y;
         }
+        if (dm1_v1_inventory_source_slot_box_zone_pc34(
+                source_slot, &source_slot_zone)) {
+            slot_x = source_slot_zone.x;
+            slot_y = source_slot_zone.y;
+            slot_w = source_slot_zone.w;
+            slot_h = source_slot_zone.h;
+        }
         expect_true(dm1_v1_viewport_zone_id_pc34() != 0 &&
-                        dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
-                            source_slot,
-                            &slot_x,
-                            &slot_y,
-                            &slot_w,
-                            &slot_h),
+                        slot_w > 0 && slot_h > 0,
                     "M11 DM2 resume inventory source slot zone is available");
         view.dm2State.champion_inventory_objects[0][CHAMPION_SLOT_HEAD] = 0u;
         memset(framebuffer_without_hand, 0, sizeof(framebuffer_without_hand));

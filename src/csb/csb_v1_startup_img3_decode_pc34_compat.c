@@ -166,10 +166,9 @@ int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
         uint8_t color;
         size_t count;
         /* CSBWin's ExpandGraphic has no source-length argument. The verified
-         * PC C001 stream ends on a 16-pixel group before its descriptor's
-         * final partial line; its zeroed planar destination supplies those
-         * untouched pixels. Preserve that package-defined blank tail, but do
-         * not read beyond the owned record. */
+         * PC C001 stream ends before the descriptor's full 320x153 rectangle;
+         * the zeroed planar destination supplies that package-defined blank
+         * tail. Stop at the owned record boundary instead of reading past it. */
         if (decoder.source_offset >= decoder.source_size) break;
         command = decoder.source[decoder.source_offset++];
         color = (uint8_t)(command & 0x0fU);
@@ -195,7 +194,6 @@ int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
             }
         }
     }
-
     for (pixel = 0U; pixel < pixel_count; ++pixel) {
         uint8_t color = 0U;
         size_t column = pixel % expected_width;

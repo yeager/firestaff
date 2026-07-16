@@ -67,10 +67,12 @@ int dm2_v1_asset_load_image_metadata(
     } else {
         out_metadata->bits_per_pixel = 4u;
     }
-    (void)dm2_v1_asset_load_image_offset(loader, category, index, 0xfe,
-                                         &category_offset);
-    (void)dm2_v1_asset_load_image_offset(loader, category, index, field,
-                                         &image_offset);
+    out_metadata->graphicsset_offset_present =
+        dm2_v1_asset_load_image_offset(loader, category, index, 0xfe,
+                                       &category_offset);
+    out_metadata->image_offset_present =
+        dm2_v1_asset_load_image_offset(loader, category, index, field,
+                                       &image_offset);
     out_metadata->query_offset_x =
         (int16_t)((int8_t)(category_offset >> 8) +
                   (int8_t)(image_offset >> 8));
@@ -81,6 +83,10 @@ int dm2_v1_asset_load_image_metadata(
     hash = dm2_weather_hash_step(hash, out_metadata->bits_per_pixel);
     hash = dm2_weather_hash_step(hash, (uint16_t)category_offset);
     hash = dm2_weather_hash_step(hash, (uint16_t)image_offset);
+    hash = dm2_weather_hash_step(hash,
+                                 (uint32_t)out_metadata->graphicsset_offset_present);
+    hash = dm2_weather_hash_step(hash,
+                                 (uint32_t)out_metadata->image_offset_present);
     out_metadata->metadata_hash = hash;
     return hash != 0u;
 }
@@ -1059,6 +1065,154 @@ int dm2_v1_weather_timer_transaction_receipt(
                                                     out->distant_environment_hash);
     out->proven = out->timer_hash != 0u && out->distant_environment_hash != 0u;
     return out->proven;
+}
+
+int dm2_v1_weather_query_rainfall_param_receipt(
+    uint8_t rain_intensity,
+    uint16_t weather_turn,
+    uint16_t party_turn,
+    DM2_V1_RainfallParamReceipt *out)
+{
+    uint16_t delta;
+    uint8_t base;
+    uint8_t turn = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    delta = (uint16_t)((weather_turn - party_turn) & 0x3u);
+    base = (delta != 0u && delta != 2u) ? 0x6du : 0x71u;
+    if (rain_intensity < 0x10u) {
+        turn = 1u;
+    } else if (rain_intensity < 0x40u) {
+        turn = 0u;
+    } else if (rain_intensity < 0x80u) {
+        turn = 2u;
+    } else {
+        turn = 3u;
+    }
+    out->valid = 1;
+    out->rain_intensity = rain_intensity;
+    out->weather_turn = weather_turn;
+    out->party_turn = party_turn;
+    out->turn_delta = delta;
+    out->image_field = (uint8_t)(base + turn);
+    out->mirror_phase = (uint8_t)(delta == 1u || delta == 3u);
+    hash = dm2_weather_hash_step(hash, rain_intensity);
+    hash = dm2_weather_hash_step(hash, weather_turn);
+    hash = dm2_weather_hash_step(hash, party_turn);
+    hash = dm2_weather_hash_step(hash, out->image_field);
+    hash = dm2_weather_hash_step(hash, out->mirror_phase);
+    out->receipt_hash = hash;
+    return out->receipt_hash != 0u;
+}
+
+int dm2_v1_scene_weather_light_runtime_receipt(
+    const DM2_V1_GdatSceneLightM11Receipt *scene_light_receipt,
+    const DM2_V1_CLightM11Receipt *c_light_receipt,
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    const DM2_V1_WeatherRuntimeAdmissionReceipt *admission,
+    const DM2_V1_EnvironmentWeatherReceipt *environment,
+    const DM2_V1_RainfallParamReceipt *rainfall,
+    DM2_V1_SceneWeatherLightRuntimeReceipt *out)
+{
+    uint32_t hash = 2166136261u;
+    uint32_t source_hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!scene_light_receipt || !scene_light_receipt->valid ||
+        scene_light_receipt->receipt_hash == 0u ||
+        scene_light_receipt->scene_control_hash == 0u ||
+        !c_light_receipt || !c_light_receipt->valid ||
+        c_light_receipt->receipt_hash == 0u ||
+        c_light_receipt->graphicsset != scene_light_receipt->graphicsset ||
+        c_light_receipt->scene_control_hash !=
+            scene_light_receipt->scene_control_hash ||
+        !weather || !weather->valid || weather->receipt_hash == 0u ||
+        weather->graphicsset != scene_light_receipt->graphicsset ||
+        !admission || !admission->valid ||
+        admission->admission_hash == 0u ||
+        admission->weather_receipt_hash != weather->receipt_hash ||
+        admission->graphicsset != weather->graphicsset ||
+        !admission->source_text_ready || !admission->no_fallback_blit) {
+        return 0;
+    }
+    out->graphicsset = weather->graphicsset;
+    out->scene_light_hash = scene_light_receipt->receipt_hash;
+    out->c_light_hash = c_light_receipt->receipt_hash;
+    out->weather_receipt_hash = weather->receipt_hash;
+    out->weather_admission_hash = admission->admission_hash;
+    out->command_mask = weather->command_mask;
+    out->material_mask = weather->material_mask;
+    out->no_synthetic_weather_fallback = 1;
+    if (renderer) {
+        if (!renderer->valid || renderer->renderer_hash == 0u ||
+            renderer->restored_state.state_hash == 0u ||
+            renderer->command_count == 0u ||
+            !admission->renderer_ready ||
+            admission->renderer_hash != renderer->renderer_hash ||
+            !admission->blit_authorized) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->weather_renderer_hash = renderer->renderer_hash;
+        out->renderer_command_count = renderer->command_count;
+        out->distant_environment_display_bound = 1;
+    }
+    if (environment) {
+        if (!environment->valid || environment->receipt_hash == 0u ||
+            environment->graphicsset != weather->graphicsset) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->map_load_token = environment->map_load_token;
+        out->environment_receipt_hash = environment->receipt_hash;
+        out->environment_material_count = environment->material_count;
+    }
+    if (rainfall) {
+        unsigned int index;
+        if (!rainfall->valid || rainfall->receipt_hash == 0u ||
+            rainfall->image_field < DM2_V1_WEATHER_RAIN_LIGHT_CMD ||
+            rainfall->image_field > 0x74u) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        index = (unsigned int)(rainfall->image_field -
+                               DM2_V1_WEATHER_RAIN_LIGHT_CMD);
+        if (index < 3u) {
+            const DM2_V1_WeatherCommandReceipt *command =
+                &weather->commands[3u + index];
+            if (command->command != rainfall->image_field ||
+                !command->material_valid) {
+                memset(out, 0, sizeof(*out));
+                return 0;
+            }
+        }
+        out->rainfall_receipt_hash = rainfall->receipt_hash;
+        out->draw_rain_bound = 1;
+    }
+    source_hash = dm2_weather_hash_step(source_hash, 0x44524e45u);
+    source_hash = dm2_weather_hash_step(source_hash, 0x44534554u);
+    source_hash = dm2_weather_hash_step(source_hash, 0x44524149u);
+    source_hash = dm2_weather_hash_step(source_hash, 0x51524149u);
+    source_hash = dm2_weather_hash_step(source_hash, 0x41424c54u);
+    source_hash = dm2_weather_hash_step(source_hash, 0x434b524cu);
+    out->source_symbol_hash = source_hash;
+    hash = dm2_weather_hash_step(hash, out->scene_light_hash);
+    hash = dm2_weather_hash_step(hash, out->c_light_hash);
+    hash = dm2_weather_hash_step(hash, out->weather_receipt_hash);
+    hash = dm2_weather_hash_step(hash, out->weather_renderer_hash);
+    hash = dm2_weather_hash_step(hash, out->weather_admission_hash);
+    hash = dm2_weather_hash_step(hash, out->environment_receipt_hash);
+    hash = dm2_weather_hash_step(hash, out->rainfall_receipt_hash);
+    hash = dm2_weather_hash_step(hash, out->command_mask);
+    hash = dm2_weather_hash_step(hash, out->material_mask);
+    hash = dm2_weather_hash_step(hash, out->source_symbol_hash);
+    out->receipt_hash = hash;
+    out->valid = out->receipt_hash != 0u;
+    return out->valid;
 }
 
 int dm2_v1_weather_gdat_command_receipt(

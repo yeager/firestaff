@@ -251,6 +251,55 @@ CandidatePanelResult_Compat F0867_RESURRECTION_ProcessCandidatePanelCommand_Comp
     CandidatePanelState_Compat state,
     int16_t command);
 
+/* -------- HoC mirror runtime route receipt -------------------------- */
+
+typedef struct {
+    int valid;
+    int triggersCandidateAdd;
+    uint16_t mirrorOrdinal;
+    uint16_t candidateChampionIndex;
+    uint16_t candidateChampionOrdinal;
+    uint16_t partyChampionCountBefore;
+    uint16_t partyChampionCountAfter;
+    int setLeaderToFirstChampion;
+    int requiresOriginalChampionRecord;
+    int requiresC026PortraitAtlas;
+    int opensCandidatePanel;
+} HocMirrorCandidateSelectionReceipt_Compat;
+
+/* F0871: Source-locked HoC candidate-selection receipt for the live
+ * C080 -> C127 -> F0280 path.  Callers provide the already-decoded mirror
+ * source-data proof; this helper rejects synthetic/fallback candidates before
+ * a C040 panel can be published. */
+HocMirrorCandidateSelectionReceipt_Compat
+F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+    const ChampionPortraitClickInput_Compat* click,
+    int originalChampionRecordAvailable,
+    int c026PortraitAtlasAvailable,
+    int candidatePanelAlreadyActive);
+
+typedef struct {
+    int valid;
+    int cancelled;
+    int resurrected;
+    int reincarnated;
+    int renameRequiredBeforeFinalize;
+    uint16_t candidateChampionIndex;
+    uint16_t nextPartyChampionCount;
+    uint16_t nextCandidateChampionOrdinal;
+    int disablesMirrorSensor;
+    int requiresFirstMirrorSensorOwner;
+} HocMirrorCandidateFinalizeReceipt_Compat;
+
+/* F0872: Source-locked HoC C160/C161/C162 finalization receipt.  It wraps
+ * F0867 while preserving the runtime boundary that C161 must pass through
+ * the real F0281 rename UI before it may commit world/HUD/save state. */
+HocMirrorCandidateFinalizeReceipt_Compat
+F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+    CandidatePanelState_Compat state,
+    int16_t command,
+    int renameAccepted);
+
 /* -------- Vi Altar full-cycle gate (F0374 -> TIMELINE.C -> F0283) ---- */
 
 typedef struct {

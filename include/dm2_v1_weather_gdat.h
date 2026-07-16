@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_graphics_data_open.h"
 #include "dm2_v1_weather.h"
 
@@ -17,6 +18,8 @@ typedef struct {
     uint8_t bits_per_pixel;
     int16_t query_offset_x;
     int16_t query_offset_y;
+    int graphicsset_offset_present;
+    int image_offset_present;
     uint32_t metadata_hash;
 } DM2_V1_GdatImageMetadata;
 #define DM2_V1_GDAT_IMAGE_METADATA_DEFINED 1
@@ -232,6 +235,39 @@ typedef struct {
     DM2_V1_EnvironmentWeatherMaterialReceipt materials[2];
 } DM2_V1_EnvironmentWeatherReceipt;
 
+typedef struct {
+    int valid;
+    uint8_t rain_intensity;
+    uint16_t weather_turn;
+    uint16_t party_turn;
+    uint16_t turn_delta;
+    uint8_t image_field;
+    uint8_t mirror_phase;
+    uint32_t receipt_hash;
+} DM2_V1_RainfallParamReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t map_load_token;
+    uint32_t scene_light_hash;
+    uint32_t c_light_hash;
+    uint32_t weather_receipt_hash;
+    uint32_t weather_renderer_hash;
+    uint32_t weather_admission_hash;
+    uint32_t environment_receipt_hash;
+    uint32_t rainfall_receipt_hash;
+    uint32_t command_mask;
+    uint32_t material_mask;
+    unsigned int renderer_command_count;
+    unsigned int environment_material_count;
+    int distant_environment_display_bound;
+    int draw_rain_bound;
+    int no_synthetic_weather_fallback;
+    uint32_t source_symbol_hash;
+    uint32_t receipt_hash;
+} DM2_V1_SceneWeatherLightRuntimeReceipt;
+
 int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader,
                                 uint8_t graphicsset,
                                 DM2_V1_WeatherGdatReceipt *out);
@@ -305,6 +341,18 @@ int dm2_v1_weather_timer_transaction_receipt(
     size_t timer_size,
     const uint8_t distant_environment[DM2_V1_DISTANT_ENVIRONMENT_BYTES],
     DM2_V1_WeatherTimerTransactionReceipt *out);
+int dm2_v1_weather_query_rainfall_param_receipt(
+    uint8_t rain_intensity, uint16_t weather_turn, uint16_t party_turn,
+    DM2_V1_RainfallParamReceipt *out);
+int dm2_v1_scene_weather_light_runtime_receipt(
+    const DM2_V1_GdatSceneLightM11Receipt *scene_light_receipt,
+    const DM2_V1_CLightM11Receipt *c_light_receipt,
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    const DM2_V1_WeatherRuntimeAdmissionReceipt *admission,
+    const DM2_V1_EnvironmentWeatherReceipt *environment,
+    const DM2_V1_RainfallParamReceipt *rainfall,
+    DM2_V1_SceneWeatherLightRuntimeReceipt *out);
 
 /* Each requested environmental layer must retain both its QUERY_GDAT_TEXT
  * command data and matching dtImage entry. Missing selected data rejects the

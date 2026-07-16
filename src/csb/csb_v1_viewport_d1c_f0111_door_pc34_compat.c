@@ -10,6 +10,7 @@ enum {
     CSB_D1C_DOOR_NATIVE_WIDTH = 96,
     CSB_D1C_DOOR_NATIVE_HEIGHT = 88,
     CSB_D1C_DOOR_NATIVE_BYTE_COUNT = 4224,
+    CSB_D1C_DOOR_GRAPHICS_ITEM_INDEX = 558,
     CSB_C2_VIEW_DOOR_ORNAMENT_D1LCR = 2,
     CSB_M631_ZONE_DOOR_D1C = 3790,
     CSB_DOORPASS1_ORDER = 0x0218,
@@ -17,7 +18,10 @@ enum {
 };
 
 static const char s_source_evidence[] =
-    "Source-locked contract gate only; contract_only=1 and no fixture state. "
+    "Source-locked D1C F0111 door gate; the base contract keeps "
+    "contract_only=1 and no fixture state, while the fail-closed real-asset "
+    "receipt binds G0186_s_Graphic558_Frames_Door_D1C to real DMCSB1 "
+    "GRAPHICS.DAT item 558 bytes before the route can be source-backed. "
     "ReDMCSB DUNVIEW.C:F0124_DUNGEONVIEW_DrawSquareD1C:7873-7911 locks "
     "the D1C C17_ELEMENT_DOOR_FRONT path. DUNVIEW.C:F0124:7905-7908 "
     "draws the D1C F0111 door with "
@@ -75,6 +79,61 @@ const CSB_V1_ViewportD1CF0111DoorPc34Contract *
 csb_v1_viewport_d1c_f0111_door_pc34_contract(void)
 {
     return &s_contract;
+}
+
+int csb_v1_viewport_d1c_f0111_door_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD1CF0111DoorPc34Contract *contract,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34){0};
+    }
+    if (!contract || !out_receipt || !source_graphics_dat_bound ||
+        !no_synthetic_pixels || !no_fallback_visuals ||
+        source_graphics_item_index != CSB_D1C_DOOR_GRAPHICS_ITEM_INDEX ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        !contract->contract_only ||
+        contract->view_square_d1c != CSB_VIEW_SQUARE_D1C ||
+        contract->element_door_front != CSB_ELEMENT_DOOR_FRONT ||
+        contract->door_native_width != CSB_D1C_DOOR_NATIVE_WIDTH ||
+        contract->door_native_height != CSB_D1C_DOOR_NATIVE_HEIGHT ||
+        contract->door_native_byte_count != CSB_D1C_DOOR_NATIVE_BYTE_COUNT ||
+        contract->door_zone_d1c != CSB_M631_ZONE_DOOR_D1C) {
+        return 0;
+    }
+
+    receipt =
+        (CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_PRESENT;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.view_square_d1c = contract->view_square_d1c;
+    receipt.element_door_front = contract->element_door_front;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.door_native_width = contract->door_native_width;
+    receipt.door_native_height = contract->door_native_height;
+    receipt.door_native_byte_count = contract->door_native_byte_count;
+    receipt.door_zone_d1c = contract->door_zone_d1c;
+    receipt.view_door_ornament_d1lcr = contract->view_door_ornament_d1lcr;
+    receipt.doorpass1_order = contract->doorpass1_order;
+    receipt.doorpass2_order = contract->doorpass2_order;
+    receipt.redmcsb_d1c_call_anchor = contract->redmcsb_d1c_call_anchor;
+    receipt.door_frame_symbol = contract->door_frame_symbol;
+    *out_receipt = receipt;
+    return 1;
 }
 
 const char *

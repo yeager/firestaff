@@ -68,6 +68,31 @@ typedef struct {
     const char *csb_lineage_viewport;
 } CSB_V1_ViewportD1LD1RF0111Evidence;
 
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int d1l_view_square;
+    int d1r_view_square;
+    int d1l_door_zone;
+    int d1r_door_zone;
+    int d1l_top_track_zone;
+    int d1r_top_track_zone;
+    int d1l_rear_order;
+    int d1r_rear_order;
+    int d1l_front_order;
+    int d1r_front_order;
+    int standard_door_graphics_f1;
+    int c10_transparency;
+    const char *redmcsb_d1l_dispatch;
+    const char *redmcsb_d1r_dispatch;
+} CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34;
+
 size_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_count(void);
 const CSB_V1_ViewportD1LD1RF0111Route *
 csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_at(size_t index);
@@ -97,6 +122,17 @@ int csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
 uint32_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(
     const CSB_V1_ViewportD1LD1RF0111Route *route,
     int door_state);
+
+int csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD1LD1RF0111Route *d1l_route,
+    const CSB_V1_ViewportD1LD1RF0111Route *d1r_route,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34 *out_receipt);
 
 const CSB_V1_ViewportD1LD1RF0111Evidence *
 csb_v1_viewport_d1l_d1r_f0111_door_pc34_evidence(void);

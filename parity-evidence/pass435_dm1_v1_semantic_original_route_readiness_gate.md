@@ -21,18 +21,18 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## Runtime semantic proof carried forward
 
-- pass385 status: `BLOCKED_PASS385_F0365_F0366_COMMAND_DISPATCH_NOT_PROVEN`
-- pass385 F0380 command queue hit: `True`
-- pass385 F0365/F0366 command dispatch hit: `False`
-- pass391 status: `PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN`
-- pass391 F0380 pop/load after queue write: `True`
-- pass391 F0365/F0366 command dispatch observed: `True`
-- G0321 stop-wait write observed: `True`
-- later F0128 after stop-wait observed: `True`
+- pass385 status: `None`
+- pass385 F0380 command queue hit: `None`
+- pass385 F0365/F0366 command dispatch hit: `None`
+- pass391 status: `None`
+- pass391 F0380 pop/load after queue write: `None`
+- pass391 F0365/F0366 command dispatch observed: `None`
+- G0321 stop-wait write observed: `None`
+- later F0128 after stop-wait observed: `None`
 
 ## Artifact semantics
 
-- pass434 readiness: `PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
+- pass434 readiness: `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
 - raw classifier sequence ok: `False`; classes: `['dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay', 'dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay']`
 - raw duplicate hashes: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 4, 'fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde': 2}`
 - crop manifest rows_all_224x136: `True`
@@ -89,6 +89,11 @@ Promotion still requires:
 
 ## Blockers
 
+- pass434 crop/source readiness is not green
+- runtime does not prove F0380 command queue hit/pop-load
+- runtime still does not prove F0365/F0366 command dispatch
+- runtime does not prove G0321 stop-wait write
+- runtime does not prove later F0128 viewport draw after stop-wait
 - pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence
 - latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven
 

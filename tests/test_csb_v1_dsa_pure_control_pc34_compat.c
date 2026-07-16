@@ -2213,8 +2213,11 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               actuator_copy_store_count == 2 &&
               memcmp(actuator_copy_payloads[1], "ABCDEF", 6u) == 0 &&
-              memcmp(actuator_copy_payloads[2], "ABCDEF", 6u) == 0,
-          "COPY stages CSBWin DB3 payloads and exposes chained source bytes");
+              memcmp(actuator_copy_payloads[2], "ABCDEF", 6u) == 0 &&
+              execution.actuator_copy_count == 2 &&
+              execution.last_actuator_copy_source_thing == 0x0456u &&
+              execution.last_actuator_copy_destination_thing == 0x0789u,
+          "COPY stages CSBWin DB3 payloads and receipts chained source bytes");
     memcpy(actuator_copy_payloads[0], "ABCDEF", 6u);
     memcpy(actuator_copy_payloads[1], "ghijkl", 6u);
     actuator_copy_store_count = 0;
@@ -2231,6 +2234,7 @@ int main(void)
                     sizeof(actuator_copy_non_db3[0])), parameters,
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               actuator_copy_store_count == 0 &&
+              execution.actuator_copy_count == 0 &&
               memcmp(actuator_copy_payloads[1], "ghijkl", 6u) == 0,
           "COPY retains CSBWin's non-DB3 source no-op");
     actuator_copy_enabled = 0;

@@ -5146,6 +5146,65 @@ int dm2_v1_runtime_last_weather_timer_receipt(
     return 1;
 }
 
+int dm2_v1_runtime_import_sksave_receipted_candidate(
+    const DM2_SKSaveCandidateReceipt *candidate_receipt,
+    DM2_V1_RuntimeCorpusImportReceipt *out)
+{
+    DM2_V1_SaveCandidate candidate;
+    uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    int restored = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
+    if (!candidate_receipt || !candidate_receipt->path[0] ||
+        candidate_receipt->payload_size == 0u ||
+        candidate_receipt->payload_hash == 0u ||
+        candidate_receipt->source_file_hash == 0u ||
+        candidate_receipt->kind < DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
+        candidate_receipt->kind > DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+
+    /* The corpus receipt identifies one exact file and payload. Reload it
+     * through the scanner-owned verifier before parsing or changing runtime
+     * state, so GAME_LOAD cannot silently select another save or accept a
+     * changed file. */
+    payload = (uint8_t *)malloc(candidate_receipt->payload_size);
+    if (!payload ||
+        !dm2_v1_sksave_corpus_load_receipted_candidate(
+            candidate_receipt, payload, candidate_receipt->payload_size,
+            &payload_size) ||
+        payload_size != candidate_receipt->payload_size ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                             payload_size) != 0 ||
+        (int)candidate.kind != candidate_receipt->kind) {
+        free(payload);
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+
+    restored = dm2_v1_runtime_restore_save_candidate(payload, payload_size) == 0;
+    free(payload);
+    if (!restored) {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+
+    out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_OK;
+    out->restored = 1;
+    out->candidate_kind = candidate_receipt->kind;
+    out->selected_payload_size = candidate_receipt->payload_size;
+    out->selected_payload_hash = candidate_receipt->payload_hash;
+    out->selected_source_file_hash = candidate_receipt->source_file_hash;
+    out->rejected_original_candidate = 0;
+    snprintf(out->selected_path, sizeof(out->selected_path), "%s",
+             candidate_receipt->path);
+    return 1;
+}
+
 static int dm2_runtime_original_corpus_entry_matches(
     const DM2_OriginalSaveStateCorpusEntry *expected,
     const DM2_OriginalSaveStateCorpusEntry *actual)

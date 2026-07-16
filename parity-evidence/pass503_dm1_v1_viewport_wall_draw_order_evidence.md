@@ -1,6 +1,6 @@
 # Pass503 - DM1 V1 viewport wall draw-order evidence
 
-Status: PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE
+Status: FAIL_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE
 
 ## ReDMCSB source locks
 - DUNVIEW.C F0128_DUNGEONVIEW_Draw_CPSF lines 8318-8543 ok=True: Viewport composition replays source square functions from far to near before presentation.
@@ -62,12 +62,12 @@ Status: PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE
 
 ## Firestaff hooks
 
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 159 ok=True: firestaff-draw-order-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 505 ok=True: firestaff-wall-spec-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 236 ok=True: firestaff-thing-layer-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 279 ok=True: firestaff-door-front-occlusion-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 175 ok=True: firestaff-draw-order-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 1157 ok=True: firestaff-wall-spec-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 888 ok=True: firestaff-thing-layer-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 931 ok=True: firestaff-door-front-occlusion-table
 - tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py line 17 ok=True: pass496-matrix-gate-present
-- parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line 38 ok=True: pass502-blocker-doc-present
+- parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line None ok=False: pass502-blocker-doc-present
 
 ## DM1 anchors
 
@@ -88,3 +88,7 @@ Status: PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE
 
 - This is source/probe evidence only.
 - Pixel parity still needs the same-viewport original/Firestaff runtime capture described by pass502.
+
+## Problems
+
+- pass502-blocker-doc-present

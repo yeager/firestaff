@@ -1430,6 +1430,7 @@ typedef struct {
      * plan. These are never synthesized and are preferred over a second GDAT
      * lookup during the same M11 frame. */
     const DM2_V1_GdatSceneM11CommandPlan *gdat_scene_material_plan;
+    int gdat_scene_material_plan_rejected;
     const DM2_V1_GdatDoorOverlayM11CommandPlan *gdat_door_overlay_material_plan;
     int gdat_door_overlay_material_plan_consumed_count;
     const DM2_V1_GdatWallM11CommandPlan *gdat_wall_material_plan;

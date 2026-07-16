@@ -380,6 +380,56 @@ int csb_v1_viewport_d0l2_d0r2_f0115_side_explosion_zone_pc34(
     return CSB_C3031_ZONE_SIDE_EXPLOSION + fixture->explosion_row * 2 + view_cell;
 }
 
+int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34){0};
+    }
+    if (!fixture || !out_receipt || !source_graphics_dat_bound ||
+        !no_synthetic_pixels || !no_fallback_visuals ||
+        source_graphics_item_index != fixture->wall_frame_row ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        !fixture->f0674_per_frame_bitmap_copy ||
+        !fixture->item_projectile_disabled_by_g2028 ||
+        fixture->f0115_call_count != 1) {
+        return 0;
+    }
+
+    receipt =
+        (CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_PRESENT;
+    receipt.side = fixture->side;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.wall_frame_row = fixture->wall_frame_row;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.viewport_clip_x1 = fixture->viewport_clip_x1;
+    receipt.viewport_clip_x2 = fixture->viewport_clip_x2;
+    receipt.viewport_clip_y1 = fixture->viewport_clip_y1;
+    receipt.viewport_clip_y2 = fixture->viewport_clip_y2;
+    receipt.item_projectile_disabled_by_g2028 =
+        fixture->item_projectile_disabled_by_g2028;
+    receipt.creature_cell_gate = fixture->creature_cell_gate;
+    receipt.redmcsb_f0115_anchor = fixture->redmcsb_f0115_anchor;
+    *out_receipt = receipt;
+    return 1;
+}
+
 const char *csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void)
 {
     return s_source_evidence;

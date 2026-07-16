@@ -1,5 +1,6 @@
 {
   "blockerReasons": [
+    "pass498 did not narrow the blocker to post-command state delta",
     "current route classes do not match the expected six-state semantic sequence",
     "current raw route captures contain duplicate frame hashes",
     "current viewport crops contain duplicate hashes"
@@ -134,15 +135,21 @@
       ]
     },
     "pass435Blockers": [
-      "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
+      "pass434 crop/source readiness is not green",
+      "runtime does not prove F0380 command queue hit/pop-load",
+      "runtime still does not prove F0365/F0366 command dispatch",
+      "runtime does not prove G0321 stop-wait write",
+      "runtime does not prove later F0128 viewport draw after stop-wait",
+      "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence",
+      "latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven"
     ],
     "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-    "pass498NarrowedBlocker": "Original DM1 V1 capture is blocked specifically at the post-gameplay, post-command state-delta boundary: the next evidence must connect a real F0380-dequeued movement/turn command through F0365/F0366 to the subsequent F0128 composition and F0097/VIDRV present, and must not collapse to the repeated static 48ed gameplay frame.",
-    "pass498Status": "PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA"
+    "pass498NarrowedBlocker": null,
+    "pass498Status": null
   },
   "ok": true,
   "remainingBlocker": "Original route-state diversity is still blocked at the post-command state-delta proof boundary. The current pass376/pass435 artifacts are useful as quarantined regression inputs, but they do not prove that distinct raw/cropped states came after source-visible F0380 -> F0365/F0366 -> G0321 -> F0128/F0097 transitions.",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/Documents/Firestaff",
   "requiredNextEvidence": [
     "capture route begins from a verified post-entry gameplay state, not an entrance/setup echo",
     "each command label is backed by original F0380 queue pop/load/decrement evidence",

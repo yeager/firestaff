@@ -203,18 +203,20 @@ int main(void)
         goto fail_direct;
     }
     /* The next viewport redraw is not C162: it is the post-C160 normal DUNVIEW
-     * frame. F0172 may reveal a real visible TextString on this now-disabled
-     * portrait wall, but it must be freshly decoded, never retained M648. */
+     * frame. The source mirror wall used by the local PC34 corpus carries no
+     * visible C02 TextString after the C127 sensor is disabled, so F0128/F0107
+     * must publish clear-only M648 state here rather than retaining the prior
+     * inscription or inventing a host/fallback glyph run. */
     draw_at(&state, &mirror, framebuffer);
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
-    if (!is_real_m648(&receipt) || receipt.textStringIndex == before.textStringIndex) goto fail_close;
+    if (!is_clear_m648(&receipt) ||
+        M11_GameView_GetFrontMirrorOrdinal(&state) != -1) goto fail_close;
     postClose = receipt;
     draw_at(&state, &mirror, framebuffer);
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
-    if (!is_real_m648(&receipt) || receipt.textStringIndex != postClose.textStringIndex ||
+    if (!is_clear_m648(&receipt) ||
         receipt.glyphByteCount != postClose.glyphByteCount ||
-        memcmp(receipt.glyphBytes, postClose.glyphBytes,
-               (size_t)postClose.glyphByteCount) != 0) goto fail_close;
+        receipt.lineCount != postClose.lineCount) goto fail_close;
 
     draw_at(&state, &text, framebuffer);
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&restored);
@@ -222,8 +224,8 @@ int main(void)
         restored.glyphByteCount != before.glyphByteCount ||
         memcmp(restored.glyphBytes, before.glyphBytes, (size_t)before.glyphByteCount) != 0 ||
         fontHash != hash_pixels(font->pixels, (int)font->width * (int)font->height)) goto fail_restore;
-    printf("ok: real PC34 C127 C040 redraw/C160 close replaces M648 text=%d with source text=%d\\n",
-           before.textStringIndex, postClose.textStringIndex);
+    printf("ok: real PC34 C127 C040 redraw/C160 close clears mirror M648 and repaints source text=%d\\n",
+           nextText.textIndex);
     M11_GameView_Shutdown(&state);
     return 0;
 unavailable: fprintf(stderr, "authentic PC34 HoC C127/M648 corpus route unavailable\\n"); goto fail;

@@ -633,7 +633,7 @@ int main(void)
                   boot_consumer_receipt.startup_draw_command_count &&
               boot_render_ownership_receipt.executed_command_count ==
                   boot_render_ownership_receipt.draw_command_count &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
               boot_render_ownership_receipt.menu_gdat_command_count == 1 &&
               boot_render_ownership_receipt.executed_rect_count == 0 &&
@@ -752,7 +752,7 @@ int main(void)
               boot_render_ownership_receipt.title_frame_remaining_ticks == 5 &&
               boot_render_ownership_receipt.next_title_tick_delta == 0 &&
               boot_render_ownership_receipt.title_next_frame_tick == 18 &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
               boot_render_ownership_receipt.menu_gdat_command_count == 1 &&
               boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
@@ -1007,6 +1007,7 @@ int main(void)
     memset(&host_facts, 0, sizeof(host_facts));
     host_facts.save_root = "/tmp/firestaff-dm2-startup-missing";
     host_facts.fallback_save_root = "/tmp/firestaff-dm2-startup-missing";
+    host_facts.startup_menu_active = 1;
     host_facts.resume_available = 1;
     host_facts.slot_mask = (1u << 2);
     host_facts.selected_row = 0;
@@ -1451,6 +1452,21 @@ int main(void)
     check(!dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
               &host_facts, 1, &idle_receipt),
           "startup idle receipt rejects inactive DM2 menu");
+    check(!dm2_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
+              &state_receipt,
+              &host_facts,
+              2,
+              &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE,
+          "inactive DM2 menu rejects host input consumption");
+    check(!dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+              &state_receipt,
+              &host_facts,
+              panel_rect.x + 8,
+              panel_rect.y + 8,
+              &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE,
+          "inactive DM2 menu rejects host pointer consumption");
     check(dm2_v1_startup_receipt_phase(
               1, phase, sizeof(phase), &startup_active) &&
               strcmp(phase, "dm2-startup-menu") == 0 &&

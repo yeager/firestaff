@@ -3,18 +3,11 @@
   "decision": "The next original capture attempt has a machine-checked, source-backed target row: one original PC/I34E transcript for 02_turn_right_west_1_3 must prove queue write/pop, F0380->F0365 dispatch, party tuple 0/1/3/3, F0128 redraw, and F0097/VIDRV viewport present before its crop can be paired with the locked Firestaff viewport hash.",
   "gateStatusChecks": [
     {
-      "duplicateCropGroups": {
-        "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
-          3,
-          4,
-          5,
-          6
-        ]
-      },
+      "duplicateCropGroups": {},
       "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
       "id": "pass608_same_viewport_blocker",
-      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
-      "ok": true,
+      "observed": null,
+      "ok": false,
       "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
       "runtimeTranscriptOk": false,
       "runtimeTranscriptProvided": false
@@ -23,16 +16,16 @@
       "blocker": "missing original runtime transcript row paired to a Firestaff viewport frame for the same map/X/Y/direction/wall-door tuple",
       "expected": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
       "id": "pass622_viewport_wall_capture_gap",
-      "manifestOk": true,
-      "observed": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
-      "ok": true,
+      "manifestOk": false,
+      "observed": "FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP",
+      "ok": false,
       "path": "parity-evidence/verification/pass622_dm1_v1_viewport_wall_capture_closure_gap/manifest.json"
     },
     {
       "expected": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
       "id": "pass623_input_capture_bridge",
-      "observed": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-      "ok": true,
+      "observed": null,
+      "ok": false,
       "path": "parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json"
     }
   ],
@@ -43,7 +36,7 @@
     "no non-N2 original asset path is used",
     "no push, tag, package, or release action"
   ],
-  "ok": true,
+  "ok": false,
   "originalAssetLocks": [
     {
       "bytes": 12002,
@@ -123,7 +116,12 @@
       "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"
     }
   ],
-  "problems": [],
+  "problems": [
+    "gate status drifted: pass608_same_viewport_blocker",
+    "gate status drifted: pass622_viewport_wall_capture_gap",
+    "gate status drifted: pass623_input_capture_bridge",
+    "pass623 target row missing"
+  ],
   "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
   "sourceAudit": [
     {
@@ -200,37 +198,13 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+  "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
   "targetRowAudit": {
-    "ok": true,
-    "pass623Row": {
-      "claim": "right input resolves to C002 turn-right and changes facing only",
-      "commandIds": [
-        2
-      ],
-      "inputTokens": [
-        "M12_MENU_INPUT_RIGHT"
-      ],
-      "label": "02_turn_right_west_1_3",
-      "observed": {
-        "crop": "02_turn_right_west_1_3_viewport_224x136.ppm",
-        "direction": 3,
-        "label": "02_turn_right_west_1_3",
-        "map": 0,
-        "sha": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
-        "x": 1,
-        "y": 3
-      },
-      "ok": true,
-      "postTuple": {
-        "direction": 3,
-        "map": 0,
-        "x": 1,
-        "y": 3
-      },
-      "problems": []
-    },
-    "problems": [],
+    "ok": false,
+    "pass623Row": {},
+    "problems": [
+      "pass623 target row missing"
+    ],
     "target": {
       "f0128Tuple": {
         "direction": 3,
@@ -257,7 +231,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-06-25T21:17:13.593785+00:00",
+  "timestampUtc": "2026-07-16T19:12:01.785362+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,

@@ -31,7 +31,7 @@
   },
   "pass223_input": "parity-evidence/verification/pass223_dm1_v1_post_redraw_instrumentation_lock.json",
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/Documents/Firestaff",
   "runtime_api_audit": {
     "classification": "blocked/missing-original-runtime-state-hook-api",
     "dosbox_version": {
@@ -40,7 +40,7 @@
         "-version"
       ],
       "output_head": [
-        "2026-06-25 23:01:37.816 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
+        "2026-07-16 21:11:50.942 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
         "dosbox-staging, version 0.82.2 ()",
         "",
         "Copyright (C) 2020-2024  The DOSBox Staging Team",
@@ -59,7 +59,7 @@
       ],
       "output_head": [
         "",
-        "DOSBox-X version 2026.06.02 SDL2, copyright 2011-2026 The DOSBox-X Team.",
+        "DOSBox-X version 2026.07.02 SDL2, copyright 2011-2026 The DOSBox-X Team.",
         "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
         "",
         "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",

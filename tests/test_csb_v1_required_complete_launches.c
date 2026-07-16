@@ -254,6 +254,60 @@ static void check_csb_v1_required_complete_launches(void) {
     check_csb_intent_reaches_boot_runtime_boundary(&intent, graphics, dungeon);
 }
 
+static int path_is_dir(const char* path) {
+    struct stat st;
+    return path && path[0] && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+static void check_real_csb_startup_session_if_available(void) {
+    const char* explicit_dir = getenv("FIRESTAFF_CSB_REAL_DATA_DIR");
+    const char* home = getenv("HOME");
+    char default_dir[512];
+    const char* data_dir = explicit_dir;
+    CSB_V1_BootStartupLaunch_PC34 launch;
+    CSB_V1_BootStartupRuntimeReceipt_PC34 receipt;
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+
+    if (!data_dir || !data_dir[0]) {
+        if (!home || !home[0]) {
+            puts("SKIP: CSB real startup session: HOME is unset");
+            return;
+        }
+        snprintf(default_dir, sizeof(default_dir), "%s/.firestaff/data", home);
+        data_dir = default_dir;
+    }
+    if (!path_is_dir(data_dir)) {
+        puts("SKIP: CSB real startup session: no real data dir");
+        return;
+    }
+
+    memset(&launch, 0, sizeof(launch));
+    memset(&receipt, 0, sizeof(receipt));
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    if (!csb_v1_boot_startup_launch_alloc_pc34(
+            data_dir, NULL, NULL, NULL, &launch)) {
+        puts("SKIP: CSB real startup session: canonical files not present");
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return;
+    }
+    CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(&launch, &receipt));
+    CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(
+        receipt.profile, &session));
+    CHECK(session.valid == 1);
+    CHECK(session.title_presents_ready == 1);
+    CHECK(session.title_chaos_ready == 1);
+    CHECK(session.title_strikes_back_ready == 1);
+    CHECK(session.entrance_assets_ready == 1);
+    CHECK(session.door_assets_ready == 1);
+    CHECK(session.rejects_legacy_wrappers == 1);
+    CHECK(session.surfaces.surfaces[
+              CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].width == 320);
+    CHECK(session.surfaces.surfaces[
+              CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height >= 153);
+    csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
+    csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+}
+
 static int isolate_home(void) {
 #ifdef _WIN32
     char path[256];
@@ -274,6 +328,7 @@ static int isolate_home(void) {
 }
 
 int main(void) {
+    check_real_csb_startup_session_if_available();
     CHECK(isolate_home());
     check_csb_v1_required_complete_launches();
 

@@ -1,11 +1,13 @@
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 
+#include <stdio.h>
 #include <string.h>
 
 const char *dm1_v1_live_action_effects_source_evidence_pc34(void)
 {
-    return "ReDMCSB MENU.C F0407:1053-1056,1270; PROJEXPL.C F0231:1416-1550; "
-           "TIMELINE.C F0253:1574-1605";
+    return "ReDMCSB MENU.C F0407:1053-1056,1270,1398-1541,1613-1628; "
+           "MENU.C F0412:1817-2039; PROJEXPL.C F0231:1416-1550; "
+           "TIMELINE.C F0253:1574-1605; PANEL.C F0346/F0347 spell/action HUD redraw";
 }
 
 void dm1_v1_live_action_effects_reset_pc34(DM1_V1_LiveActionEffectsPc34 *effects)
@@ -59,6 +61,143 @@ int dm1_v1_live_action_effect_materialize_pc34(
         outReceipt->replaced = slot < effects->count - 1;
         outReceipt->slot = slot;
     }
+    return 1;
+}
+
+static int dm1_v1_live_action_champion_index_valid(int championIndex)
+{
+    return championIndex >= 0 && championIndex < 4;
+}
+
+static void dm1_v1_live_action_receipt_base(
+    const DM1_V1_LiveActionEffectPc34 *effect,
+    DM1_V1_ActionSpellHudPresentationReceiptPc34 *receipt)
+{
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->sourceEffectKind = effect->kind;
+    receipt->championIndex = effect->championIndex;
+    receipt->actionIndex = effect->actionIndex;
+    receipt->damage = effect->damage;
+    receipt->combatOutcome = effect->combatOutcome;
+    receipt->remainingTicks = effect->remainingTicks;
+    receipt->sourceTick = effect->sourceTick;
+    receipt->serial = effect->serial;
+    receipt->requiresSourceFont = 1;
+    receipt->suppressSyntheticFallback = 1;
+    receipt->sourceAnchor = dm1_v1_live_action_effects_source_evidence_pc34();
+}
+
+int dm1_v1_live_action_effect_hud_presentation_pc34(
+    const DM1_V1_LiveActionEffectPc34 *effect,
+    DM1_V1_ActionSpellHudPresentationReceiptPc34 *outReceipt)
+{
+    if (!effect || !outReceipt) return 0;
+    dm1_v1_live_action_receipt_base(effect, outReceipt);
+    switch (effect->kind) {
+        case DM1_V1_LIVE_ACTION_EFFECT_DAMAGE_PC34:
+            if (!dm1_v1_live_action_champion_index_valid(effect->championIndex) ||
+                effect->damage <= 0) {
+                return 0;
+            }
+            outReceipt->valid = 1;
+            outReceipt->drawable = 1;
+            outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_DAMAGE_PC34;
+            outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_CREATURE_DAMAGE_PC34;
+            outReceipt->textColor = 4;
+            snprintf(outReceipt->text, sizeof(outReceipt->text), "DAMAGE %d", effect->damage);
+            return 1;
+        case DM1_V1_LIVE_ACTION_EFFECT_MISS_PC34:
+            if (!dm1_v1_live_action_champion_index_valid(effect->championIndex)) return 0;
+            outReceipt->valid = 1;
+            outReceipt->drawable = 1;
+            outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_MISS_PC34;
+            outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_MESSAGE_LINE_PC34;
+            outReceipt->textColor = 4;
+            snprintf(outReceipt->text, sizeof(outReceipt->text), "MISS");
+            return 1;
+        case DM1_V1_LIVE_ACTION_EFFECT_DOOR_PC34:
+            if (!effect->doorAffected) return 0;
+            outReceipt->valid = 1;
+            outReceipt->drawable = 1;
+            outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_DOOR_PC34;
+            outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_MESSAGE_LINE_PC34;
+            snprintf(outReceipt->text, sizeof(outReceipt->text), "DOOR");
+            return 1;
+        case DM1_V1_LIVE_ACTION_EFFECT_ACTION_LOCK_PC34:
+            if (!dm1_v1_live_action_champion_index_valid(effect->championIndex) ||
+                effect->actionIndex < 0 || effect->remainingTicks == 0) {
+                return 0;
+            }
+            outReceipt->valid = 1;
+            outReceipt->drawable = 1;
+            outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34;
+            outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_ACTION_MENU_ROW_PC34;
+            outReceipt->requiresRealActionMenuLayout = 1;
+            snprintf(outReceipt->text, sizeof(outReceipt->text), "ACTION %d", effect->actionIndex);
+            return 1;
+        case DM1_V1_LIVE_ACTION_EFFECT_SPELL_PC34:
+            if (!dm1_v1_live_action_champion_index_valid(effect->championIndex) ||
+                effect->damage <= 0) {
+                return 0;
+            }
+            outReceipt->valid = 1;
+            outReceipt->drawable = 1;
+            outReceipt->spellPowerOrdinal = effect->damage;
+            outReceipt->spellKind = effect->combatOutcome;
+            outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_SPELL_AREA_PC34;
+            outReceipt->requiresRealSpellAreaLayout = 1;
+            if (effect->combatOutcome == 1) {
+                outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34;
+                snprintf(outReceipt->text, sizeof(outReceipt->text), "POTION");
+            } else if (effect->combatOutcome == 2) {
+                outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34;
+                snprintf(outReceipt->text, sizeof(outReceipt->text), "PROJECTILE");
+            } else if (effect->combatOutcome == 3 || effect->combatOutcome == 4) {
+                outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34;
+                snprintf(outReceipt->text, sizeof(outReceipt->text), "SPELL EFFECT");
+            } else {
+                memset(outReceipt, 0, sizeof(*outReceipt));
+                return 0;
+            }
+            return 1;
+        default:
+            memset(outReceipt, 0, sizeof(*outReceipt));
+            return 0;
+    }
+}
+
+int dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
+    const DM1_V1_SpellFailureHudFeedbackPc34 *feedback,
+    int championIndex,
+    DM1_V1_ActionSpellHudPresentationReceiptPc34 *outReceipt)
+{
+    if (!feedback || !outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!dm1_v1_live_action_champion_index_valid(championIndex) ||
+        !feedback->messageBeforeSkill || !feedback->messageAfterSkill ||
+        feedback->messageColor < 0) {
+        return 0;
+    }
+    outReceipt->valid = 1;
+    outReceipt->drawable = 1;
+    outReceipt->sourceEffectKind = DM1_V1_LIVE_ACTION_EFFECT_SPELL_PC34;
+    outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_FAILURE_PC34;
+    outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_SPELL_AREA_PC34;
+    outReceipt->championIndex = championIndex;
+    outReceipt->textColor = feedback->messageColor;
+    outReceipt->requiresSourceFont = 1;
+    outReceipt->requiresRealSpellAreaLayout = 1;
+    outReceipt->suppressSyntheticFallback = 1;
+    outReceipt->printsLineFeed = feedback->printsLineFeed;
+    outReceipt->printsChampionName = feedback->printsChampionName;
+    outReceipt->appendsBaseSkillName = feedback->appendsBaseSkillName;
+    outReceipt->clearsSymbolsOnCastClick = feedback->clearsSymbolsOnCastClick;
+    outReceipt->redrawsAvailableSymbols = feedback->redrawsAvailableSymbols;
+    outReceipt->redrawsChampionSymbols = feedback->redrawsChampionSymbols;
+    outReceipt->messageBeforeSkill = feedback->messageBeforeSkill;
+    outReceipt->messageAfterSkill = feedback->messageAfterSkill;
+    snprintf(outReceipt->text, sizeof(outReceipt->text), "SPELL FAILURE %d", feedback->failureType);
+    outReceipt->sourceAnchor = dm1_v1_live_action_effects_source_evidence_pc34();
     return 1;
 }
 

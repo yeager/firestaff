@@ -1,14 +1,13 @@
 {
-  "errors": [],
+  "errors": [
+    "missing PNG parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png"
+  ],
   "explicitBlocker": "PNG is a deterministic Firestaff composition/materialization seam only; original asset-backed renderer pixels are not wired and no matched original-vs-Firestaff pixel comparison was performed.",
   "pass": "pass285_dm1_v2_entry_viewport_png_export_gate",
   "pixelParityClaim": false,
   "png": "parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png",
-  "pngSha256": "5105608387856212d7f600571eb69eab3f3469eaa1bb1913e937f4532ea95894",
-  "pngSize": {
-    "height": 136,
-    "width": 224
-  },
+  "pngSha256": null,
+  "pngSize": null,
   "redmcsbSourceRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "Firestaff-side PNG export seam for dm1_v2_vp_build_composition_from_dungeon(map=0,x=1,y=3,dir=2)",
   "sourceAnchors": [
@@ -43,5 +42,5 @@
       "needle": "F0097_DUNGEONVIEW_DrawViewport"
     }
   ],
-  "status": "passed"
+  "status": "failed"
 }

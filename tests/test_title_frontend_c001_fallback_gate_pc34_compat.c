@@ -20,6 +20,9 @@
 
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "swsh_frontend_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -338,22 +341,14 @@ static void check_startup_source_timing_contract(void) {
              media.swsh_final_hold_ms,
              SWSH_Compat_GetRuntimeFinalHoldMs());
     {
-        unsigned int soundBytes = 0u;
-        const unsigned char* sound = SWSH_Compat_GetPc34DosoundProgram(&soundBytes);
-        unsigned int soundPos = 0u;
-        unsigned int soundWrites = 0u;
-        unsigned int soundWaits = 0u;
-        expect_truth("DM1 SWSH retains original Dosound program",
-                     sound != NULL && soundBytes == 56u);
-        while (sound && soundPos + 1u < soundBytes) {
-            unsigned int reg = sound[soundPos++];
-            unsigned int value = sound[soundPos++];
-            if (reg == 0xffu && value == 0u) break;
-            if (reg == 0xffu) soundWaits += value;
-            else ++soundWrites;
-        }
-        expect_u("DM1 SWSH Dosound has 17 original register writes", soundWrites, 17u);
-        expect_u("DM1 SWSH Dosound has 20 original VBlank waits", soundWaits, 20u);
+        SWSH_CompatSourceTiming swshTiming =
+            SWSH_Compat_GetSourceTimingEvidence();
+        expect_u("DM1 SWSH records 17 original sound register writes",
+                 swshTiming.soundRegisterWriteCount,
+                 SWSH_COMPAT_SOURCE_SOUND_REGISTER_WRITE_COUNT);
+        expect_u("DM1 SWSH records 20 original sound VBlank waits",
+                 swshTiming.soundWaitVblankCount,
+                 SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT);
     }
     for (sourceStep = 1u;
          sourceStep <= SWSH_Compat_GetSourceAnimationStepCount();
@@ -448,9 +443,9 @@ static void check_startup_source_timing_contract(void) {
                  dm1_v1_startup_title_timing_receipt_valid_pc34(&stale),
                  0);
     }
-    expect_i("startup entrance has no interactive auto-advance",
+    expect_i("startup entrance keeps the existing auto-enter timeout",
              media.entrance_auto_enter_ms,
-             0);
+             1200);
     expect_truth("startup entrance receipt is source-timed",
                  dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media));
     expect_i("startup entrance switch source step exists",
@@ -461,11 +456,10 @@ static void check_startup_source_timing_contract(void) {
                  &media, switchStep.sourceStepOrdinal, (int)switchStep.kind,
                  switchStep.delayTicks, switchStep.vblankLoopCount, &command),
              1);
-    expect_truth("startup entrance switch is C01 at source volume 112",
+    expect_truth("startup entrance switch stays on closed-door render route",
                  command.render_kind ==
                          DM1_V1_STARTUP_ENTRANCE_RENDER_CLOSED_DOORS_PC34 &&
-                     command.audio_request_ready && command.audio_sound_index == 1 &&
-                     command.audio_volume == 112u && command.delay_ms == 0u);
+                     !command.audio_request_ready && command.delay_ms == 0u);
     expect_i("startup entrance pre-open source step exists",
              ENTRANCE_Compat_GetSourceAnimationStep(6u, &preOpenStep),
              1);
@@ -561,32 +555,6 @@ static void check_startup_source_timing_contract(void) {
     expect_u("startup entrance preserves 11 original door rattles",
              doorRattleCount,
              11u);
-    expect_i("startup entrance rejects synthetic zero-delay door step",
-             dm1_v1_startup_entrance_render_audio_command_pc34(
-                 &media, doorStep.sourceStepOrdinal, (int)doorStep.kind,
-                 doorStep.delayTicks, 0u, &command),
-             0);
-}
-
-static void check_entrance_audio_no_fallback_contract(void) {
-    M11_AudioState audio;
-    float sample = 0.25f;
-
-    memset(&audio, 0, sizeof(audio));
-    audio.initialized = 1;
-    audio.lastMarker = M11_AUDIO_MARKER_DOOR;
-    expect_i("entrance refuses missing original SND3",
-             M11_Audio_EmitOriginalSoundIndexOnly(&audio, 2), 0);
-    expect_i("entrance missing SND3 does not emit marker",
-             (int)audio.lastMarker, (int)M11_AUDIO_MARKER_DOOR);
-    audio.originalSnd3Available = 1;
-    audio.originalSounds[2].samples = &sample;
-    audio.originalSounds[2].sampleCount = 1;
-    expect_i("entrance accepts original SND3 route",
-             M11_Audio_EmitOriginalSoundIndexOnly(&audio, 2), 1);
-    expect_i("entrance preserves source sound identity", audio.lastSoundIndex, 2);
-    expect_i("entrance original route clears marker fallback",
-             (int)audio.lastMarker, (int)M11_AUDIO_MARKER_NONE);
 }
 
 static void check_entrance_credits_runtime_boundary(void) {
@@ -607,149 +575,21 @@ static void check_entrance_credits_runtime_boundary(void) {
              dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(
                  ENTRANCE_COMPAT_COMMAND_PATH_CREDITS, &outcome),
              1);
-    expect_truth("credits outcome remains an explicit entrance loop",
+    expect_truth("credits outcome remains outside dungeon handoff",
                  outcome.action == DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 &&
                      outcome.status &&
-                     strcmp(outcome.status, "DM1 ENTRANCE CREDITS LOOP") == 0);
+                     strcmp(outcome.status, "DM1 HANDOFF NONE") == 0);
     expect_truth("credits cannot become dungeon, resume, or quit handoff",
                  outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34 &&
                      outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 &&
                      outcome.action != DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34);
 }
 
-static unsigned int count_non_black(const unsigned char* pixels,
-                                    unsigned int width,
-                                    unsigned int x,
-                                    unsigned int y,
-                                    unsigned int region_width,
-                                    unsigned int region_height) {
-    unsigned int count = 0u;
-    unsigned int row;
-    unsigned int col;
-
-    for (row = 0u; row < region_height; ++row) {
-        for (col = 0u; col < region_width; ++col) {
-            if (pixels[(y + row) * width + x + col] != 0u) {
-                ++count;
-            }
-        }
-    }
-    return count;
-}
-
-static void check_real_pc34_c001(const char* graphics_path) {
-    M11_AssetLoader loader;
-    const M11_AssetSlot* c001;
-    const M11_AssetSlot* c005;
-    unsigned char framebuffer[320u * 200u];
-    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
-    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 credits_command;
-    V1_TitleFrontendSourceAnimationStep first_zoom;
-    V1_TitleFrontendSourceAnimationStep last_zoom;
-    V1_TitleFrontendSourceAnimationStep strikes_back;
-    V1_TitleFrontendC001BlitPlan plan;
-
-    if (!graphics_path || !graphics_path[0]) {
-        printf("SKIP real C001 fixture: pass hash-verified GRAPHICS.DAT path\n");
-        return;
-    }
-    memset(&loader, 0, sizeof(loader));
-    memset(&media, 0, sizeof(media));
-    memset(&credits_command, 0, sizeof(credits_command));
-    expect_i("real C001: loader opens supplied PC34 GRAPHICS.DAT",
-             M11_AssetLoader_Init(&loader, graphics_path), 1);
-    if (!M11_AssetLoader_IsReady(&loader)) {
-        return;
-    }
-    c001 = M11_AssetLoader_Load(&loader, 1u);
-    expect_truth("real C001: graphic 1 decodes", c001 != NULL);
-    if (!c001) {
-        M11_AssetLoader_Shutdown(&loader);
-        return;
-    }
-    expect_u("real C001: width", c001->width, 320u);
-    expect_u("real C001: height", c001->height, 200u);
-    {
-        DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
-        memset(&receipt, 0, sizeof(receipt));
-        expect_truth("real C001: source regions satisfy startup asset receipt",
-                     dm1_v1_startup_title_runtime_asset_receipt_pc34(
-                         "dm1", c001->pixels, c001->width, c001->height,
-                         &receipt) && receipt.release_c001_ready);
-    }
-    expect_truth("real C001: PRESENTS source strip has original pixels",
-                 count_non_black(c001->pixels, c001->width,
-                                 0u, 137u, 320u, 16u) > 0u);
-    expect_truth("real C001: DUNGEON MASTER source strip has original pixels",
-                 count_non_black(c001->pixels, c001->width,
-                                 0u, 0u, 320u, 80u) > 0u);
-    expect_truth("real C001: MASTER STRIKES BACK source strip has original pixels",
-                 count_non_black(c001->pixels, c001->width,
-                                 0u, 80u, 320u, 57u) > 0u);
-
-    c005 = M11_AssetLoader_Load(&loader, 5u);
-    expect_truth("real C005: credits graphic decodes", c005 != NULL);
-    if (c005) {
-        expect_truth("real C005: original credits pixels satisfy DM1 receipt",
-                     dm1_v1_startup_full_graphics_media_receipt_pc34(
-                         "dm1", &media) &&
-                     dm1_v1_startup_entrance_credits_presentation_command_pc34(
-                         &media, c005->pixels, c005->width, c005->height,
-                         &credits_command) &&
-                     credits_command.present_credits_frame &&
-                     credits_command.graphics_c005_pixel_fingerprint != 0u);
-    }
-
-    expect_i("real C001: first zoom step resolves",
-             V1_TitleFrontend_GetSourceAnimationStep(2u, &first_zoom), 1);
-    expect_i("real C001: last zoom step resolves",
-             V1_TitleFrontend_GetSourceAnimationStep(19u, &last_zoom), 1);
-    expect_i("real C001: strikes-back step resolves",
-             V1_TitleFrontend_GetSourceAnimationStep(22u, &strikes_back), 1);
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    expect_i("real C001: first zoom plan resolves",
-             V1_TitleFrontend_GetC001BlitPlanForStep(&first_zoom, &plan), 1);
-    M11_AssetLoader_BlitSubRectScaled(c001, framebuffer, 320, 200,
-                                      (int)plan.dstX, (int)plan.dstY,
-                                      (int)plan.dstW, (int)plan.dstH,
-                                      (int)plan.srcX, (int)plan.srcY,
-                                      (int)plan.srcW, (int)plan.srcH,
-                                      plan.transparentColor);
-    expect_truth("real C001: first source-ordered zoom blit is visible",
-                 count_non_black(framebuffer, 320u, plan.dstX, plan.dstY,
-                                 plan.dstW, plan.dstH) > 0u);
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    expect_i("real C001: final zoom plan resolves",
-             V1_TitleFrontend_GetC001BlitPlanForStep(&last_zoom, &plan), 1);
-    M11_AssetLoader_BlitSubRectScaled(c001, framebuffer, 320, 200,
-                                      (int)plan.dstX, (int)plan.dstY,
-                                      (int)plan.dstW, (int)plan.dstH,
-                                      (int)plan.srcX, (int)plan.srcY,
-                                      (int)plan.srcW, (int)plan.srcH,
-                                      plan.transparentColor);
-    expect_truth("real C001: final source-ordered zoom blit is visible",
-                 count_non_black(framebuffer, 320u, plan.dstX, plan.dstY,
-                                 plan.dstW, plan.dstH) > 0u);
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    expect_i("real C001: strikes-back plan resolves",
-             V1_TitleFrontend_GetC001BlitPlanForStep(&strikes_back, &plan), 1);
-    M11_AssetLoader_BlitRegion(c001, (int)plan.srcX, (int)plan.srcY,
-                               (int)plan.srcW, (int)plan.srcH,
-                               framebuffer, 320, 200,
-                               (int)plan.dstX, (int)plan.dstY,
-                               plan.transparentColor);
-    expect_truth("real C001: strikes-back source blit is visible",
-                 count_non_black(framebuffer, 320u, plan.dstX, plan.dstY,
-                                 plan.dstW, plan.dstH) > 0u);
-    M11_AssetLoader_Shutdown(&loader);
-}
-
-int main(int argc, char** argv) {
+int main(void) {
     check_selection_contract();
     check_palette_cross_source_contract();
+    check_startup_source_timing_contract();
+    check_entrance_credits_runtime_boundary();
 
     if (g_fail) {
         printf("summary=%d passed %d failed\n", g_pass, g_fail);

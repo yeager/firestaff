@@ -94,6 +94,18 @@ static uint32_t dm2_v1_wall_command_geometry_hash(
         hash = dm2_v1_wall_hash_bytes(hash, (const uint8_t *)&mirror_flip,
                                       sizeof(mirror_flip));
     }
+    {
+        uint32_t movement_active = command->movement_active;
+        hash = dm2_v1_wall_hash_bytes(hash, (const uint8_t *)&movement_active,
+                                      sizeof(movement_active));
+    }
+    {
+        uint32_t movement_query_offset_y =
+            (uint8_t)command->movement_query_offset_y;
+        hash = dm2_v1_wall_hash_bytes(hash,
+                                      (const uint8_t *)&movement_query_offset_y,
+                                      sizeof(movement_query_offset_y));
+    }
     hash = dm2_v1_wall_hash_bytes(hash,
                                   (const uint8_t *)&command->rect_table_hash,
                                   sizeof(command->rect_table_hash));
@@ -1157,6 +1169,7 @@ void dm2_v1_viewport_set_gdat_scene_control(
              s->gdat_scene_control_hash)) {
         s->gdat_scene_material_plan = NULL;
     }
+    s->gdat_scene_material_plan_rejected = 0;
     if (s->gdat_wall_material_plan &&
         (!s->gdat_scene_control_ready ||
          s->gdat_wall_material_plan->graphicsset !=
@@ -1210,13 +1223,27 @@ void dm2_v1_viewport_set_gdat_scene_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatSceneM11CommandPlan *plan)
 {
+    int attached;
+    int sidecar_bound;
+
     if (!s) return;
     /* The material pair is only meaningful as the same source transaction
-     * that produced the current G1 MapGraphicsStyle control receipt. */
-    s->gdat_scene_material_plan = plan && plan->valid &&
+     * that produced the current G1 MapGraphicsStyle control receipt.  The
+     * QUERY_BLIT_RECT and c_gui_vp draw-order sidecars are part of that
+     * transaction, so reject stale or edited sidecars before M11 can retain
+     * the plan pointer. */
+    sidecar_bound = plan && plan->query_blit_rect.valid &&
+        plan->query_blit_rect_hash != 0u &&
+        plan->query_blit_rect_hash ==
+            dm2_v1_gdat_scene_query_blit_rect_hash(&plan->query_blit_rect) &&
+        dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(plan);
+    attached = plan && plan->valid &&
         s->gdat_scene_control_ready &&
         plan->graphicsset == (uint8_t)s->gdat_scene_material_index &&
-        plan->command_hash == s->gdat_scene_control_hash ? plan : NULL;
+        plan->command_hash == s->gdat_scene_control_hash &&
+        sidecar_bound;
+    s->gdat_scene_material_plan = attached ? plan : NULL;
+    s->gdat_scene_material_plan_rejected = plan && !attached ? 1 : 0;
     s->dirty = 1;
 }
 
@@ -2765,7 +2792,10 @@ static int dm2_v1_viewport_door_m11_has_no_frames(
             &plan->commands[i];
         if (command->kind == DM2_V1_GDAT_DOOR_PANEL &&
             command->gdat_index == door->panel_gdat_index &&
-            command->view_square == door->view_square) {
+            command->view_square == door->view_square &&
+            command->door_opening_dir == door->door_opening_dir &&
+            command->door_state == door->door_state &&
+            command->door_open_pct == door->door_open_pct) {
             return command->no_frames != 0u;
         }
     }
@@ -2851,9 +2881,10 @@ int dm2_v1_viewport_build_door_render_plan(
         row->door_ornate_gfx_index = vs->door_ornate_gfx_index;
         row->door_button = vs->door_button;
         row->door_button_state = vs->door_button_state;
-        if (vs->door_gfx_index != 0 ||
-            vs->door_record_type != 0 ||
-            vs->door_opening_dir != 0) {
+        if (vs->door_state < 4u &&
+            (vs->door_gfx_index != 0 ||
+             vs->door_record_type != 0 ||
+             vs->door_opening_dir != 0)) {
             row->panel_gdat_index =
                 dm2_v1_viewport_door_panel_graphic_index_for_record(
                     square,
@@ -4416,6 +4447,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         s->last_floor_ceiling_material_required_mask =
             DM2_SCENE_PLANE_FLOOR | DM2_SCENE_PLANE_CEILING;
         if (!s->gdat_scene_control_ready ||
+            s->gdat_scene_material_plan_rejected ||
             (!plan && (!s->asset_fetch || !s->asset_palette_fetch))) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
@@ -4877,18 +4909,6 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         return;
     }
 
-    /* SKProject c_gui_vp.cpp::DM2_DRAW_WALL changes QUERY_TEMP_PICST's
-     * signed RAW4 query by `-table1d6b15[iViewportCell]` while a move is in
-     * progress. The cached command plan proves only its stationary RAW4
-     * crop/destination. Replaying that plan during movement would be a
-     * source-incorrect wall placement, so leave the pass unavailable until
-     * the live signed-RAW4 transaction is captured and bound. */
-    if (s->source_materials_required && s->gdat_scene_movement_active) {
-        dm2_v1_block_source_material(
-            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
-        return;
-    }
-
     if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
         return;
     }
@@ -4930,6 +4950,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                     !command->decoded_hash || !command->palette_hash ||
                     !command->rect_table_hash || !command->rect_row_hash ||
                     !command->metadata_hash || !command->geometry_hash ||
+                    command->movement_active !=
+                        (uint8_t)(s->gdat_scene_movement_active ? 1u : 0u) ||
                     dm2_v1_wall_command_geometry_hash(command) !=
                         command->geometry_hash) {
                     dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
@@ -5119,6 +5141,19 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
         return;
     }
+    if (s->source_materials_required &&
+        s->gdat_door_overlay_material_plan) {
+        const DM2_V1_GdatDoorOverlayM11CommandPlan *overlay_plan =
+            s->gdat_door_overlay_material_plan;
+        for (int i = 0; i < overlay_plan->command_count; ++i) {
+            if (overlay_plan->commands[i].movement_active !=
+                (uint8_t)(s->gdat_scene_movement_active ? 1u : 0u)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                return;
+            }
+        }
+    }
     if (s->source_materials_required) {
         for (int square = 0; square < DM2_SQ_COUNT; ++square) {
             const DM2_ViewSquare *vs = &s->squares[square];
@@ -5199,7 +5234,11 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             &overlay_plan->commands[j];
                         if (candidate->gdat_index == gdat_indices[kind] &&
                             candidate->view_square == door->view_square &&
-                            candidate->kind == wanted_kind) {
+                            candidate->kind == wanted_kind &&
+                            candidate->door_opening_dir ==
+                                door->door_opening_dir &&
+                            candidate->door_state == door->door_state &&
+                            candidate->door_open_pct == door->door_open_pct) {
                             if (!command) command = candidate;
                             if (kind == DM2_DOOR_MATERIAL_PANEL &&
                                 material->panel_command_count < 2) {
@@ -5740,7 +5779,10 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         &s->gdat_door_overlay_material_plan->commands[j];
                     if (candidate->kind == kind &&
                         candidate->view_square == door->view_square &&
-                        candidate->gdat_index == wanted_gdat) {
+                        candidate->gdat_index == wanted_gdat &&
+                        candidate->door_opening_dir == door->door_opening_dir &&
+                        candidate->door_state == door->door_state &&
+                        candidate->door_open_pct == door->door_open_pct) {
                         command = candidate;
                         break;
                     }

@@ -18,11 +18,18 @@ int main(void)
     DM2_V1_AnimBootstrapReceipt boot;
     DM2_V1_AnimDecodeImg1Receipt decode;
     DM2_V1_AnimFileReceipt file_receipt;
+    DM2_V1_AnimStreamState stream_state;
+    DM2_V1_AnimStreamResetReceipt reset_receipt;
+    DM2_V1_AnimStreamPtrReceipt ptr_receipt;
+    DM2_V1_AnimMainRequest main_request;
+    DM2_V1_AnimMainReceipt main_receipt;
     uint8_t pixels[16];
     uint8_t file_bytes[40000];
     uint8_t file_read[40000];
+    uint8_t stream_arena[64];
     char text[32];
     void *heap_block;
+    uint8_t *stream_ptr;
     const char *tmp_path = "/tmp/firestaff_dm2_anim_bootstrap_test.bin";
     FILE *tmp;
     int handle;
@@ -122,6 +129,100 @@ int main(void)
               file_receipt.file_size == 1024u * 1024u &&
               file_receipt.source_line == 1060,
           "ANIM_farcoreleft exposes skproject Win32 memory pool sentinel");
+
+    dm2_v1_anim_stream_state_init(&stream_state,
+                                  stream_arena,
+                                  (uint32_t)sizeof(stream_arena));
+    stream_state.active = 1u;
+    stream_ptr = dm2_v1_anim_0759_0869_resolve_stream_ptr(
+        &stream_state, 12u, &ptr_receipt);
+    check(stream_ptr == stream_arena + 12 &&
+              ptr_receipt.valid &&
+              ptr_receipt.source_line == 1077 &&
+              ptr_receipt.resolved_pointer &&
+              stream_state.last_offset == 12u,
+          "_0759_0869 resolves streamed ANIM offsets into caller-owned arena");
+    check(dm2_v1_anim_0759_0855_reset_stream(&stream_state,
+                                             &reset_receipt) &&
+              reset_receipt.valid &&
+              reset_receipt.source_line == 1074 &&
+              reset_receipt.reset_stream &&
+              stream_state.active == 0u &&
+              stream_state.reset_count == 1u,
+          "_0759_0855 resets the streamed ANIM arena state");
+    check(dm2_v1_anim_0759_0869_resolve_stream_ptr(
+              &stream_state, 12u, &ptr_receipt) == NULL &&
+              ptr_receipt.blocked_inactive_stream,
+          "_0759_0869 fails closed when streamed ANIM storage is inactive");
+
+    {
+        static const char *const heap_argv[] = {
+            "ANIM", "title", "+ah", "+as"
+        };
+        memset(&main_request, 0, sizeof(main_request));
+        main_request.argc = 4;
+        main_request.argv[0] = heap_argv[0];
+        main_request.argv[1] = heap_argv[1];
+        main_request.argv[2] = heap_argv[2];
+        main_request.argv[3] = heap_argv[3];
+        main_request.input_name = "title";
+        main_request.input_size = 32u;
+        main_request.farcoreleft_bytes = 1024u;
+        main_request.stream_capacity = (uint32_t)sizeof(stream_arena);
+        main_request.sound_available = 1u;
+        main_request.sound_reload_ok = 1u;
+        check(dm2_v1_anim_0759_08e7_plan_main(
+                  &main_request, &stream_state, &main_receipt) &&
+                  main_receipt.valid &&
+                  main_receipt.source_line == 1565 &&
+                  main_receipt.heap_mode &&
+                  !main_receipt.stream_mode &&
+                  main_receipt.flag_hide_after &&
+                  main_receipt.flag_clear_before &&
+                  main_receipt.allocated_screen_buffer &&
+                  main_receipt.requested_sound_reload &&
+                  main_receipt.allocated_sound_buffer &&
+                  main_receipt.requested_capture_int_ff &&
+                  main_receipt.requested_install_timer &&
+                  main_receipt.requested_palette_zero,
+              "_0759_08e7 plans heap-backed ANIM main setup from source flags");
+    }
+
+    {
+        static const char *const stream_argv[] = {
+            "ANIM", "clip", "+am", "+ae", "+af"
+        };
+        dm2_v1_anim_stream_state_init(&stream_state,
+                                      stream_arena,
+                                      (uint32_t)sizeof(stream_arena));
+        memset(&main_request, 0, sizeof(main_request));
+        main_request.argc = 5;
+        for (i = 0; i < 5u; ++i)
+            main_request.argv[i] = stream_argv[i];
+        main_request.input_name = "clip";
+        main_request.input_size = 40u;
+        main_request.farcoreleft_bytes = 8u;
+        main_request.stream_capacity = (uint32_t)sizeof(stream_arena);
+        check(dm2_v1_anim_0759_08e7_plan_main(
+                  &main_request, &stream_state, &main_receipt) &&
+                  main_receipt.valid &&
+                  main_receipt.stream_mode &&
+                  !main_receipt.heap_mode &&
+                  main_receipt.flag_force_stream &&
+                  main_receipt.flag_clear_after &&
+                  main_receipt.flag_preload_file &&
+                  main_receipt.requested_0759_0869 &&
+                  main_receipt.requested_0759_0855 &&
+                  main_receipt.requested_mouse_sound_release &&
+                  stream_state.reset_count == 1u,
+              "_0759_08e7 plans streamed ANIM main setup with offset resolver and reset");
+        main_request.input_size = 80u;
+        main_request.stream_capacity = 32u;
+        check(!dm2_v1_anim_0759_08e7_plan_main(
+                  &main_request, &stream_state, &main_receipt) &&
+                  main_receipt.blocked_stream_capacity,
+              "_0759_08e7 rejects streamed ANIM input beyond caller arena");
+    }
 
     memset(pixels, 0, sizeof(pixels));
     check(dm2_v1_anim_decode_img1(img_fill, sizeof(img_fill), pixels,

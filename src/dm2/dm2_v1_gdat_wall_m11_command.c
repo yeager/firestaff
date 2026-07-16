@@ -5,6 +5,16 @@
 #include <limits.h>
 #include <string.h>
 
+#define DM2_V1_GDAT_WALL_IMG_HEADER_SIZE 10u
+#define DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE 16u
+
+/* Exact SKProject dm2data.cpp::table1d6b15, consumed by
+ * c_gui_vp.cpp::DM2_DRAW_WALL for moving signed RAW4 queries. */
+static const int8_t s_dm2_draw_wall_movement_offsets[23] = {
+    0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2,
+    3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
+};
+
 static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 {
     for (size_t i = 0; i < size; ++i) { hash ^= bytes[i]; hash *= 16777619u; }
@@ -31,6 +41,38 @@ static uint16_t read_le16(const uint8_t *bytes)
 static int16_t read_le16s(const uint8_t *bytes)
 {
     return (int16_t)read_le16(bytes);
+}
+
+static int load_graphicsset_wall_local_palette(
+    const DM2_V1_AssetLoader *loader, int graphicsset, int field,
+    uint8_t out_palette16[16], uint32_t *out_hash)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+
+    if (out_hash) *out_hash = 0u;
+    if (!out_palette16) return 0;
+    memset(out_palette16, 0, DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE);
+    raw = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_ENTRY_TYPE_IMAGE, field, &raw_size);
+    if (!raw ||
+        raw_size < DM2_V1_GDAT_WALL_IMG_HEADER_SIZE +
+            DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE) {
+        return 0;
+    }
+    /* DM2_DRAW_WALL consumes QUERY_TEMP_PICST's image-local palette from the
+     * source GRAPHICSSET image record. Canonical wall fields include C8/IMG9
+     * records that weather/environment helpers intentionally reject, so bind
+     * the wall command to the source record's trailing 16-byte palette here. */
+    memcpy(out_palette16,
+           raw + raw_size - DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE,
+           DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE);
+    if (out_hash) {
+        *out_hash = hash_bytes(2166136261u, out_palette16,
+                               DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE);
+    }
+    return !out_hash || *out_hash != 0u;
 }
 
 static const uint8_t *find_raw4_row(const uint8_t *table, size_t table_size,
@@ -306,9 +348,9 @@ void dm2_v1_gdat_wall_m11_command_plan_free(DM2_V1_GdatWallM11CommandPlan *plan)
     memset(plan, 0, sizeof(*plan));
 }
 
-int dm2_v1_gdat_wall_m11_command_plan_build(
+int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
-    DM2_V1_GdatWallM11CommandPlan *out_plan)
+    int movement_active, DM2_V1_GdatWallM11CommandPlan *out_plan)
 {
     DM2_V1_GdatWallM11CommandPlan candidate;
     uint32_t hash = 2166136261u;
@@ -341,9 +383,9 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
             &width, &height, NULL);
         if (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0 ||
-            !dm2_v1_asset_load_image_local_palette(
-                loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
-                command->palette16, &command->palette_hash) || !command->palette_hash ||
+            !load_graphicsset_wall_local_palette(
+                loader, graphicsset, field, command->palette16,
+                &command->palette_hash) || !command->palette_hash ||
             !dm2_v1_asset_load_image_metadata(
                 loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
                 &metadata)) goto fail;
@@ -354,6 +396,18 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
         raw4_row = find_raw4_row(raw4, raw4_size, command->rect_number);
         offset_x = metadata.query_offset_x;
         offset_y = metadata.query_offset_y;
+        command->movement_active = movement_active ? 1u : 0u;
+        command->movement_query_offset_y = 0;
+        if (command->movement_active) {
+            if (cell < 0 ||
+                cell >= (int)(sizeof(s_dm2_draw_wall_movement_offsets) /
+                               sizeof(s_dm2_draw_wall_movement_offsets[0]))) {
+                goto fail;
+            }
+            command->movement_query_offset_y =
+                (int8_t)-s_dm2_draw_wall_movement_offsets[cell];
+            offset_y += command->movement_query_offset_y;
+        }
         if (mirror_flip) offset_x = -offset_x;
         if (!raw4 || !raw4_size || !raw4_row ||
             !query_raw4_wall_blit_rect(raw4, raw4_size, command->rect_number,
@@ -392,6 +446,10 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
         command->geometry_hash = hash_u32(command->geometry_hash,
                                           command->mirror_flip);
         command->geometry_hash = hash_u32(command->geometry_hash,
+                                          command->movement_active);
+        command->geometry_hash = hash_u32(command->geometry_hash,
+                                          (uint8_t)command->movement_query_offset_y);
+        command->geometry_hash = hash_u32(command->geometry_hash,
                                           command->rect_table_hash);
         command->geometry_hash = hash_u32(command->geometry_hash,
                                           command->rect_row_hash);
@@ -417,4 +475,12 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
 fail:
     dm2_v1_gdat_wall_m11_command_plan_free(&candidate);
     return 0;
+}
+
+int dm2_v1_gdat_wall_m11_command_plan_build(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    DM2_V1_GdatWallM11CommandPlan *out_plan)
+{
+    return dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
+        loader, graphicsset, 0, out_plan);
 }
