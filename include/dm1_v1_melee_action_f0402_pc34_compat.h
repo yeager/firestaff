@@ -593,6 +593,28 @@ typedef struct {
     int dropCells[4];
 } DM1_MeleeF0190FixedDropCellsPlanPc34;
 
+typedef struct {
+    int valid;
+    int creatureType;
+    int sourceCell;
+    int dropCount;
+    int weaponDropped;
+    int sourceLineStart;
+    int sourceLineEnd;
+    const char *sourceSymbol;
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+} DM1_MeleeF0186FixedPossessionReceiptPc34;
+
+typedef struct {
+    int valid;
+    int movingFixedDropCellCount;
+    int dropCellCount;
+    int dropCells[4];
+    int sourceLineStart;
+    int sourceLineEnd;
+    const char *sourceSymbol;
+} DM1_MeleeF0187MovingFixedPossessionReceiptPc34;
+
 #define DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34 64
 
 typedef struct {
@@ -628,6 +650,21 @@ typedef struct {
     DM1_MeleeF0188GroupSlotDropStepPc34
         steps[DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34];
 } DM1_MeleeF0188GroupSlotDropPlanPc34;
+
+typedef struct {
+    int valid;
+    int shouldDrop;
+    int shouldClearGroupSlot;
+    int stepCount;
+    int truncated;
+    int weaponDropped;
+    int soundId;
+    int sourceLineStart;
+    int sourceLineEnd;
+    const char *sourceSymbol;
+    DM1_MeleeF0188GroupSlotDropStepPc34
+        steps[DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34];
+} DM1_MeleeF0188GroupPossessionReceiptPc34;
 
 typedef struct {
     int outcome;
@@ -710,6 +747,23 @@ typedef struct {
     unsigned short groupThing;
     unsigned short clearedNextThing;
 } DM1_MeleeF0190KilledAllStateApplyPlanPc34;
+
+typedef struct {
+    int valid;
+    int groupIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int shouldUnlinkGroupFromSquare;
+    int shouldClearGroupNext;
+    int shouldRemoveActiveGroupState;
+    int shouldDeleteGroupEvents;
+    unsigned short groupThing;
+    unsigned short clearedNextThing;
+    int sourceLineStart;
+    int sourceLineEnd;
+    const char *sourceSymbol;
+} DM1_MeleeF0189DeleteGroupReceiptPc34;
 
 typedef struct {
     int eventKind;
@@ -925,13 +979,25 @@ int dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
 int dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
     const struct DungeonGroup_Compat* group,
     DM1_MeleeF0190FixedDropCellsPlanPc34* out);
+int dm1_v1_melee_drop_creature_fixed_possessions_receipt_f0186_pc34(
+    int creatureType,
+    int sourceCell,
+    struct RngState_Compat* rng,
+    DM1_MeleeF0186FixedPossessionReceiptPc34* out);
 int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
     const unsigned char* movingFixedDropCells,
     int movingFixedDropCellCount,
     DM1_MeleeF0190FixedDropCellsPlanPc34* out);
+int dm1_v1_melee_drop_moving_creature_fixed_possessions_receipt_f0187_pc34(
+    const unsigned char* movingFixedDropCells,
+    int movingFixedDropCellCount,
+    DM1_MeleeF0187MovingFixedPossessionReceiptPc34* out);
 int dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
     const DM1_MeleeF0188GroupSlotDropInputPc34* in,
     DM1_MeleeF0188GroupSlotDropPlanPc34* out);
+int dm1_v1_melee_drop_group_possessions_receipt_f0188_pc34(
+    const DM1_MeleeF0188GroupSlotDropInputPc34* in,
+    DM1_MeleeF0188GroupPossessionReceiptPc34* out);
 int dm1_v1_melee_killed_some_state_plan_f0190_pc34(
     const DM1_MeleeF0190KilledSomeStateInputPc34* in,
     DM1_MeleeF0190KilledSomeStatePlanPc34* out);
@@ -954,6 +1020,9 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
 int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
     DM1_MeleeF0190KilledAllStateApplyPlanPc34* out);
+int dm1_v1_melee_delete_group_receipt_f0189_pc34(
+    const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
+    DM1_MeleeF0189DeleteGroupReceiptPc34* out);
 int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
     const DM1_MeleeF0190TimelineCleanupInputPc34* in,
     DM1_MeleeF0190TimelineCleanupPlanPc34* out);

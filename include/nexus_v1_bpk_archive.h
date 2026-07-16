@@ -698,6 +698,37 @@ typedef struct {
 } Nexus_V1_BpkPrs3OpcodePrefixSummary;
 
 typedef enum {
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_INVALID = 0,
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_STREAM_BLOCKED = 1,
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_OUTPUT_MISSING = 2,
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SIZE_MISMATCH = 3,
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_HASH_MISMATCH = 4,
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_PROVENANCE_REQUIRED = 5,
+    NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME = 6
+} Nexus_V1_BpkPrs3DecodedOutputProofStatus;
+
+typedef struct {
+    uint32_t entry_index;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint32_t expected_output_bytes;
+    uint32_t observed_output_bytes;
+    uint64_t expected_output_fnv1a64;
+    uint64_t observed_output_fnv1a64;
+    int length_matches;
+    int hash_matches;
+    int capture_source_bound;
+    int decoded_output_sidecar_bound;
+    int original_saturn_provenance_verified;
+    int decoded_output_proof_ready;
+    int opcode_grammar_proven;
+    int decoder_promoted;
+    int runtime_upload_permitted;
+    int fallback_visuals_permitted;
+    Nexus_V1_BpkPrs3DecodedOutputProofStatus status;
+} Nexus_V1_BpkPrs3DecodedOutputProofReceipt;
+
+typedef enum {
     NEXUS_V1_BPK_DECODE_ROUTE_INVALID = 0,
     NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED = 1,
     NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 = 2,
@@ -870,6 +901,21 @@ int nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
     uint32_t entry_capacity,
     Nexus_V1_BpkPrs3OpcodePrefixSummary *out_summary);
 
+/* Bind a caller-supplied PRS3 output sidecar to one MENU.BPK stream plan by
+ * exact byte count and FNV. Even a source-bound sidecar cannot authorize
+ * runtime upload here: original Saturn provenance and opcode grammar review
+ * remain explicit blockers. */
+int nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    const uint8_t *decoded_output,
+    size_t decoded_output_size,
+    uint64_t expected_output_fnv1a64,
+    int capture_source_bound,
+    int original_saturn_provenance_verified,
+    Nexus_V1_BpkPrs3DecodedOutputProofReceipt *out_receipt);
+
 const char *nexus_v1_bpk_prs3_candidate_bit_order_name(
     Nexus_V1_BpkPrs3CandidateBitOrder bit_order);
 
@@ -881,6 +927,9 @@ const char *nexus_v1_bpk_prs3_framed_eval_status_name(
 
 const char *nexus_v1_bpk_prs3_opcode_prefix_status_name(
     Nexus_V1_BpkPrs3OpcodePrefixStatus status);
+
+const char *nexus_v1_bpk_prs3_decoded_output_proof_status_name(
+    Nexus_V1_BpkPrs3DecodedOutputProofStatus status);
 
 int nexus_v1_bpk_archive_runtime_decode_receipt(
     const uint8_t *data,

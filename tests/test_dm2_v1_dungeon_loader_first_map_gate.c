@@ -695,6 +695,121 @@ static void test_skproject_append_record_to_empty_tile_inserts_root(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_cut_record_from_single_tile_root(void)
+{
+    uint8_t dat[128];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SkprojectCutRecordReceipt receipt;
+    size_t size = build_skproject_layout_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "cut single-root fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts cut single-root fixture");
+    CHECK(dm2_v1_skproject_cut_record_from(
+              &dungeon, 0x0000, NULL, 0, 1, 0, &receipt) == 1,
+          "CUT_RECORD_FROM removes a single tile root");
+    CHECK(receipt.valid && receipt.tile_single_root_remove_route &&
+              receipt.object_index == 0 &&
+              receipt.shifted_ground_stack_words == 0 &&
+              receipt.decremented_column_offsets == 0 &&
+              receipt.source_reset_to_end,
+          "CUT_RECORD_FROM receipt names the single-root compaction route");
+    CHECK(receipt.source_symbol &&
+              strcmp(receipt.source_symbol, "DM2_CUT_RECORD_FROM") == 0 &&
+              receipt.source_line == 121,
+          "CUT_RECORD_FROM receipt preserves the SKULLWIN c_record source row");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x80,
+          "CUT_RECORD_FROM clears the tile record-list bit");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0) == -1,
+          "CUT_RECORD_FROM leaves the square without a root ObjectID");
+    CHECK(dm2_v1_skproject_cut_record_from(
+              &dungeon, 0xffff, NULL, 0, 1, 0, &receipt) == 0 &&
+              receipt.blocked_null_or_end_cut,
+          "CUT_RECORD_FROM rejects OBJECT_NULL input");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
+static void test_skproject_cut_record_from_tile_root_replaces_with_next(void)
+{
+    uint8_t dat[160];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SkprojectCutRecordReceipt receipt;
+    size_t size = build_skproject_chained_door_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "cut root-replace fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts cut root-replace fixture");
+    CHECK(dm2_v1_skproject_cut_record_from(
+              &dungeon, 0x8800, NULL, 0, 1, 0, &receipt) == 1,
+          "CUT_RECORD_FROM cuts a directed root by its masked ObjectID");
+    CHECK(receipt.valid && receipt.tile_root_replace_route &&
+              receipt.masked_object_id == 0x0800 &&
+              receipt.tile_previous_root == 0x0800 &&
+              receipt.tile_new_root == 0x0000 &&
+              receipt.source_previous_next == 0x0000,
+          "CUT_RECORD_FROM receipt records root replacement with source next");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0) == 0x0000,
+          "CUT_RECORD_FROM installs the cut root's next link as square root");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0800) == 0xfffe,
+          "CUT_RECORD_FROM resets the cut record next link to end marker");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
+static void test_skproject_cut_record_from_tile_chain_unlinks_middle(void)
+{
+    uint8_t dat[160];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SkprojectCutRecordReceipt receipt;
+    size_t size = build_skproject_chained_door_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "cut chain fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts cut chain fixture");
+    CHECK(dm2_v1_skproject_cut_record_from(
+              &dungeon, 0x0000, NULL, 0, 1, 0, &receipt) == 1,
+          "CUT_RECORD_FROM unlinks a non-root tile-chain record");
+    CHECK(receipt.valid && receipt.tile_chain_unlink_route &&
+              receipt.preceding_object_id == 0x0800 &&
+              receipt.tile_new_root == 0x0800 &&
+              receipt.source_previous_next == 0xfffe,
+          "CUT_RECORD_FROM receipt records the predecessor rewrite route");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0) == 0x0800,
+          "CUT_RECORD_FROM preserves the square root for middle unlink");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0800) == 0xfffe,
+          "CUT_RECORD_FROM rewires the predecessor to the cut record's next");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
+static void test_skproject_cut_record_from_parent_link_route(void)
+{
+    uint8_t dat[160];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SkprojectCutRecordReceipt receipt;
+    uint16_t parent = 0x0800;
+    size_t size = build_skproject_chained_door_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "cut parent-link fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts cut parent-link fixture");
+    CHECK(dm2_v1_skproject_cut_record_from(
+              &dungeon, 0x0000, &parent, 0, -1, 0, &receipt) == 1,
+          "CUT_RECORD_FROM follows the source parent-link route");
+    CHECK(receipt.valid && receipt.parent_link_route &&
+              receipt.parent_previous_link == 0x0800 &&
+              receipt.parent_new_link == 0x0800 &&
+              receipt.preceding_object_id == 0x0800,
+          "CUT_RECORD_FROM receipt records parent predecessor unlink");
+    CHECK(parent == 0x0800,
+          "CUT_RECORD_FROM preserves the parent head when cutting a child");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0800) == 0xfffe,
+          "CUT_RECORD_FROM rewires the parent-owned chain");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 static void test_skproject_text_wall_gfx_metadata(void)
 {
     uint8_t dat[160];
@@ -1024,6 +1139,10 @@ int main(void)
     test_skproject_chained_first_thing_finds_door_record();
     test_skproject_append_record_to_existing_tile_chain();
     test_skproject_append_record_to_empty_tile_inserts_root();
+    test_skproject_cut_record_from_single_tile_root();
+    test_skproject_cut_record_from_tile_root_replaces_with_next();
+    test_skproject_cut_record_from_tile_chain_unlinks_middle();
+    test_skproject_cut_record_from_parent_link_route();
     test_skproject_text_wall_gfx_metadata();
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();

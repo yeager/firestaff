@@ -23,6 +23,8 @@ int main(void)
     };
     Nexus_V1_DgnFaceMaterialInput input;
     Nexus_V1_DgnFaceMaterialReceipt receipt;
+    Nexus_V1_DgnPackageHostConsumerInput consumer_input;
+    Nexus_V1_DgnPackageHostConsumerReceipt consumer;
 
     memset(&input, 0, sizeof(input));
     input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN;
@@ -116,6 +118,87 @@ int main(void)
                !receipt.can_submit_raster_input &&
                !receipt.permits_fallback_visuals,
            "Structure2/Structure3 binding proof is not drawable material semantics");
+
+    memset(&consumer_input, 0, sizeof(consumer_input));
+    consumer_input.material_receipt = &receipt;
+    consumer_input.host_route_requested = 1;
+    consumer_input.package_route_consumed = 1;
+    consumer_input.expected_level_index = 0;
+    consumer_input.observed_level_index = 0;
+    consumer_input.expected_canonical_dgn_size = (int)sizeof(retail_dgn);
+    consumer_input.observed_canonical_dgn_size = (int)sizeof(retail_dgn);
+    consumer_input.expected_face_count = 3;
+    consumer_input.observed_face_count = 3;
+    consumer_input.expected_structure2_descriptor_count = 4;
+    consumer_input.observed_structure2_descriptor_count = 4;
+
+    expect(nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) == 1 &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_READY_NO_DRAW &&
+               consumer.material_receipt_ready &&
+               consumer.host_route_requested &&
+               consumer.package_route_consumed &&
+               consumer.level_index_matches &&
+               consumer.canonical_dgn_size_matches &&
+               consumer.face_count_matches &&
+               consumer.structure2_descriptor_count_matches &&
+               consumer.source_route_consumed_by_host &&
+               consumer.package_host_route_bound &&
+               consumer.original_saturn_capture_required &&
+               !consumer.original_saturn_rendering_proven &&
+               !consumer.material_semantics_proven &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted &&
+               consumer.blocks_real_dgn_mesh_render &&
+               consumer.no_draw_only,
+           "host route consumes bounded real DGN receipt without opening rendering");
+
+    consumer_input.observed_face_count = 2;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE &&
+               consumer.material_receipt_ready &&
+               !consumer.face_count_matches &&
+               !consumer.source_route_consumed_by_host &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted &&
+               consumer.blocks_real_dgn_mesh_render,
+           "stale host face-count metadata cannot consume the package route");
+    consumer_input.observed_face_count = 3;
+
+    receipt.material_semantics_proven = 1;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_MATERIAL &&
+               !consumer.material_receipt_ready &&
+               !consumer.source_route_consumed_by_host &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted &&
+               strcmp(nexus_v1_dgn_package_host_consumer_status_name(
+                          consumer.status),
+                      "blocked-material") == 0,
+           "consumer rejects receipts that claim unreviewed material semantics");
+    receipt.material_semantics_proven = 0;
+
+    consumer_input.package_route_consumed = 0;
+    expect(!nexus_v1_dgn_package_host_consumer_gate(
+               &consumer_input, &consumer) &&
+               consumer.status ==
+                   NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE &&
+               consumer.material_receipt_ready &&
+               !consumer.package_route_consumed &&
+               !consumer.package_host_route_bound &&
+               !consumer.can_submit_raster_input &&
+               !consumer.fallback_visuals_permitted &&
+               strcmp(nexus_v1_dgn_package_host_consumer_status_name(
+                          consumer.status),
+                      "blocked-route") == 0,
+           "host route consumption requires an explicit package-consumed bit");
+    consumer_input.package_route_consumed = 1;
+
     bindings[1].material_selector = 4;
     expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
                receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING &&

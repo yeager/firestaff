@@ -540,6 +540,73 @@ int dm2_v1_skproject_free_pict_mement(
     return 1;
 }
 
+uint16_t dm2_v1_skproject_add_item_charge(
+    uint16_t object_id,
+    uint16_t *record_w2,
+    int16_t delta,
+    DM2_V1_SkprojectItemChargeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectItemChargeReceipt receipt;
+    uint16_t charge = 0u;
+    uint16_t max_charge = 0u;
+    uint16_t mask = 0u;
+    unsigned shift = 0u;
+    int db_type;
+    int adjusted;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.delta = delta;
+    db_type = (int)((object_id >> 10) & 0x0fu);
+    receipt.db_type = db_type;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0u;
+    }
+    if (!record_w2) {
+        receipt.blocked_unsupported_db_type = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0u;
+    }
+    receipt.previous_w2 = *record_w2;
+    switch (db_type) {
+    case 5:
+        shift = 10u;
+        max_charge = 0x000fu;
+        mask = (uint16_t)(0x000fu << 10);
+        break;
+    case 6:
+        shift = 9u;
+        max_charge = 0x000fu;
+        mask = (uint16_t)(0x000fu << 9);
+        break;
+    case 10:
+        shift = 14u;
+        max_charge = 0x0003u;
+        mask = (uint16_t)(0x0003u << 14);
+        break;
+    default:
+        receipt.blocked_unsupported_db_type = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0u;
+    }
+    charge = (uint16_t)((*record_w2 & mask) >> shift);
+    adjusted = (int)charge + (int)delta;
+    charge = (uint16_t)dm2_v1_skproject_between_value(
+        0, (int16_t)adjusted, (int16_t)max_charge);
+    *record_w2 = (uint16_t)((*record_w2 & (uint16_t)~mask) |
+                            (uint16_t)(charge << shift));
+    receipt.valid = 1;
+    receipt.previous_charge = (uint16_t)((receipt.previous_w2 & mask) >> shift);
+    receipt.new_charge = charge;
+    receipt.max_charge = max_charge;
+    receipt.new_w2 = *record_w2;
+    if (out_receipt) *out_receipt = receipt;
+    return charge;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -552,5 +619,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "QUERY_MEMENT_BUFF_FROM_CACHE_INDEX/GET_TEMP_CACHE_HASH/"
            "ALLOC_TEMP_CACHE_INDEX/RECYCLE_MEMENTI/TEST_MEMENT/"
            "ALLOC_NEW_PICT/ALLOC_IMAGE_MEMENT/ALLOC_PICT_MEMENT/"
-           "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT";
+           "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT; "
+           "SKWIN/SkWinCore.cpp ADD_ITEM_CHARGE and "
+           "SKULLWIN/c_item.cpp DM2_ADD_ITEM_CHARGE";
 }

@@ -72,6 +72,11 @@ static uint16_t rd16le(const uint8_t *p) {
 
 #define RD16(p) rd16le(p)
 
+static void wr16le(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)(v >> 8);
+}
+
 static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 {
     uint32_t hash = 2166136261u;
@@ -1455,6 +1460,220 @@ int dm2_v1_skproject_append_record_to(
     receipt.blocked_unbounded_graph = 1;
     *out = receipt;
     return 0;
+}
+
+int dm2_v1_skproject_cut_record_from(
+    DM2_V1_DungeonData *d,
+    uint16_t record_to_cut,
+    uint16_t *parent_link,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectCutRecordReceipt *out) {
+    DM2_V1_SkprojectCutRecordReceipt receipt;
+    uint16_t masked_record;
+    uint8_t *cut_record;
+    uint16_t source_next;
+    int max_steps = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.cut_object_id = record_to_cut;
+    receipt.source_symbol = "DM2_CUT_RECORD_FROM";
+    receipt.source_line = 121;
+
+    if (record_to_cut == DM2_THING_END_MARKER ||
+        record_to_cut == DM2_THING_NULL_MARKER) {
+        receipt.blocked_null_or_end_cut = 1;
+        *out = receipt;
+        return 0;
+    }
+
+    masked_record = (uint16_t)(record_to_cut & 0x3fffu);
+    receipt.masked_object_id = masked_record;
+    cut_record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+        d, masked_record, &receipt.cut_type, &receipt.cut_index,
+        &receipt.cut_record_size);
+    if (!cut_record || receipt.cut_record_size < 2) {
+        receipt.blocked_missing_cut_record = 1;
+        *out = receipt;
+        return 0;
+    }
+    source_next = RD16(cut_record);
+    receipt.source_previous_next = source_next;
+    for (int type = 0; d && type < DM2_THING_TYPE_COUNT; ++type)
+        max_steps += d->thing_type_counts[type] +
+                     d->g1_extension_record_counts[type];
+    if (max_steps <= 0) max_steps = 1;
+
+    if (x < 0) {
+        uint16_t current;
+        int steps = 0;
+
+        if (!d || !parent_link) {
+            receipt.blocked_invalid_parent = 1;
+            *out = receipt;
+            return 0;
+        }
+        receipt.parent_link_route = 1;
+        receipt.parent_previous_link = *parent_link;
+        if (((*parent_link) & 0x3fffu) == masked_record) {
+            *parent_link = source_next;
+            receipt.parent_new_link = *parent_link;
+            wr16le(cut_record, DM2_THING_END_MARKER);
+            receipt.source_reset_to_end = 1;
+            receipt.valid = 1;
+            *out = receipt;
+            return 1;
+        }
+        current = *parent_link;
+        while (current != DM2_THING_END_MARKER &&
+               ((current & 0x3fffu) != masked_record)) {
+            uint8_t *record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+                d, (uint16_t)(current & 0x3fffu), NULL, NULL, NULL);
+            uint16_t next;
+            if (!record || ++steps > max_steps) {
+                receipt.blocked_unbounded_graph = 1;
+                *out = receipt;
+                return 0;
+            }
+            next = RD16(record);
+            if ((next & 0x3fffu) == masked_record) {
+                wr16le(record, source_next);
+                wr16le(cut_record, DM2_THING_END_MARKER);
+                receipt.preceding_object_id = current;
+                receipt.parent_new_link = *parent_link;
+                receipt.source_reset_to_end = 1;
+                receipt.valid = 1;
+                *out = receipt;
+                return 1;
+            }
+            current = next;
+        }
+        wr16le(cut_record, DM2_THING_END_MARKER);
+        receipt.parent_new_link = *parent_link;
+        receipt.source_reset_to_end = 1;
+        receipt.valid = 1;
+        *out = receipt;
+        return 1;
+    } else {
+        int square_offset;
+        int object_index = -1;
+        int object_index_offset = -1;
+        uint16_t root;
+
+        square_offset = dm2_v1_dungeon_byte_square_offset(d, level, x, y);
+        if (!d || !d->raw_data || square_offset < 0 ||
+            (d->raw_data[square_offset] & 0x10u) == 0u ||
+            !dm2_v1_dungeon_compute_object_index_for_square(
+                d, level, x, y, &object_index, &object_index_offset)) {
+            receipt.blocked_invalid_tile = 1;
+            *out = receipt;
+            return 0;
+        }
+        root = RD16(d->raw_data + object_index_offset);
+        receipt.object_index = object_index;
+        receipt.object_index_offset = object_index_offset;
+        receipt.tile_previous_root = root;
+
+        if (source_next == DM2_THING_END_MARKER &&
+            (root & 0x3fffu) == masked_record) {
+            int last_offset = d->square_first_thing_base +
+                              (d->square_first_thing_count - 1) * 2;
+            int column_base;
+            int total_columns;
+            int moved_words;
+
+            if (last_offset < object_index_offset ||
+                last_offset + 1 >= d->raw_size) {
+                receipt.blocked_invalid_tile = 1;
+                *out = receipt;
+                return 0;
+            }
+            moved_words = d->square_first_thing_count - object_index - 1;
+            if (moved_words > 0) {
+                memmove(d->raw_data + object_index_offset,
+                        d->raw_data + object_index_offset + 2,
+                        (size_t)moved_words * 2u);
+            }
+            wr16le(d->raw_data + last_offset, DM2_THING_NULL_MARKER);
+            d->raw_data[square_offset] &= 0xefu;
+
+            column_base = dm2_v1_dungeon_column_base_index(d, level);
+            total_columns = dm2_v1_dungeon_total_columns(d);
+            for (int col = column_base + x + 1; col < total_columns; ++col) {
+                int offset = d->column_index_base + col * 2;
+                uint16_t value;
+                if (offset < 0 || offset + 1 >= d->raw_size) {
+                    receipt.blocked_invalid_tile = 1;
+                    *out = receipt;
+                    return 0;
+                }
+                value = (uint16_t)(RD16(d->raw_data + offset) - 1u);
+                wr16le(d->raw_data + offset, value);
+                receipt.decremented_column_offsets++;
+            }
+            wr16le(cut_record, DM2_THING_END_MARKER);
+            receipt.shifted_ground_stack_words = moved_words;
+            receipt.tile_single_root_remove_route = 1;
+            receipt.tile_new_root = DM2_THING_NULL_MARKER;
+            receipt.source_reset_to_end = 1;
+            receipt.valid = 1;
+            *out = receipt;
+            return 1;
+        }
+
+        if ((root & 0x3fffu) == masked_record) {
+            wr16le(d->raw_data + object_index_offset, source_next);
+            wr16le(cut_record, DM2_THING_END_MARKER);
+            receipt.tile_root_replace_route = 1;
+            receipt.tile_new_root = source_next;
+            receipt.source_reset_to_end = 1;
+            receipt.valid = 1;
+            *out = receipt;
+            return 1;
+        }
+
+        {
+            uint16_t current = root;
+            int steps = 0;
+
+            while (current != DM2_THING_END_MARKER &&
+                   ((current & 0x3fffu) != masked_record)) {
+                uint8_t *record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+                    d, (uint16_t)(current & 0x3fffu), NULL, NULL, NULL);
+                uint16_t next;
+                if (!record || ++steps > max_steps) {
+                    receipt.blocked_unbounded_graph = 1;
+                    *out = receipt;
+                    return 0;
+                }
+                next = RD16(record);
+                if ((next & 0x3fffu) == masked_record) {
+                    wr16le(record, source_next);
+                    wr16le(cut_record, DM2_THING_END_MARKER);
+                    receipt.tile_chain_unlink_route = 1;
+                    receipt.preceding_object_id = current;
+                    receipt.tile_new_root = root;
+                    receipt.source_reset_to_end = 1;
+                    receipt.valid = 1;
+                    *out = receipt;
+                    return 1;
+                }
+                current = next;
+            }
+        }
+    }
+
+    wr16le(cut_record, DM2_THING_END_MARKER);
+    receipt.source_reset_to_end = 1;
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
 }
 
 const uint8_t *dm2_v1_dungeon_get_thing_record(

@@ -1195,6 +1195,35 @@ int dm1_v1_melee_group_fixed_drop_cells_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_drop_creature_fixed_possessions_receipt_f0186_pc34(
+    int creatureType,
+    int sourceCell,
+    struct RngState_Compat* rng,
+    DM1_MeleeF0186FixedPossessionReceiptPc34* out) {
+    int dropCount = 0;
+    int weaponDropped = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!rng) return 0;
+    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+            creatureType, sourceCell, rng, out->drops,
+            DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount,
+            &weaponDropped)) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->creatureType = creatureType;
+    out->sourceCell = sourceCell;
+    out->dropCount = dropCount;
+    out->weaponDropped = weaponDropped;
+    out->sourceLineStart = 580;
+    out->sourceLineEnd = 645;
+    out->sourceSymbol = "F0186_GROUP_DropCreatureFixedPossessions";
+    return 1;
+}
+
 int dm1_v1_melee_possession_drop_apply_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan,
     const struct DungeonGroup_Compat* group,
@@ -1259,6 +1288,33 @@ int dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
     return 1;
 }
 
+int dm1_v1_melee_drop_moving_creature_fixed_possessions_receipt_f0187_pc34(
+    const unsigned char* movingFixedDropCells,
+    int movingFixedDropCellCount,
+    DM1_MeleeF0187MovingFixedPossessionReceiptPc34* out) {
+    DM1_MeleeF0190FixedDropCellsPlanPc34 plan;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_melee_moving_fixed_drop_cells_plan_f0187_pc34(
+            movingFixedDropCells, movingFixedDropCellCount, &plan)) {
+        return 0;
+    }
+
+    out->valid = plan.valid;
+    out->movingFixedDropCellCount = movingFixedDropCellCount;
+    out->dropCellCount = plan.dropCellCount;
+    for (i = 0; i < plan.dropCellCount && i < 4; ++i) {
+        out->dropCells[i] = plan.dropCells[i];
+    }
+    out->sourceLineStart = 648;
+    out->sourceLineEnd = 674;
+    out->sourceSymbol = "F0187_GROUP_DropMovingCreatureFixedPossessions";
+    return 1;
+}
+
 int dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
     const DM1_MeleeF0188GroupSlotDropInputPc34* in,
     DM1_MeleeF0188GroupSlotDropPlanPc34* out) {
@@ -1312,6 +1368,36 @@ int dm1_v1_melee_group_slot_drop_plan_f0188_pc34(
      * order, snapshots NextThing before M015_THING_WITH_NEW_CELL(random 4),
      * records whether any dropped thing is C05 weapon for the thud sound,
      * then materializes the dropped thing at the group square. */
+    return 1;
+}
+
+int dm1_v1_melee_drop_group_possessions_receipt_f0188_pc34(
+    const DM1_MeleeF0188GroupSlotDropInputPc34* in,
+    DM1_MeleeF0188GroupPossessionReceiptPc34* out) {
+    DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
+    int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&plan, 0, sizeof(plan));
+    if (!dm1_v1_melee_group_slot_drop_plan_f0188_pc34(in, &plan)) {
+        return 0;
+    }
+
+    out->valid = plan.valid;
+    out->shouldDrop = plan.shouldDrop;
+    out->shouldClearGroupSlot = plan.shouldClearGroupSlot;
+    out->stepCount = plan.stepCount;
+    out->truncated = plan.truncated;
+    out->weaponDropped = plan.weaponDropped;
+    out->soundId = plan.soundId;
+    for (i = 0; i < plan.stepCount &&
+                i < DM1_MELEE_F0188_GROUP_SLOT_DROP_MAX_PC34; ++i) {
+        out->steps[i] = plan.steps[i];
+    }
+    out->sourceLineStart = 676;
+    out->sourceLineEnd = 737;
+    out->sourceSymbol = "F0188_GROUP_DropGroupPossessions";
     return 1;
 }
 
@@ -1476,6 +1562,36 @@ int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     /* ReDMCSB: GROUP.C F0189 lines 753-767 unlinks the GROUP thing,
      * clears GROUP.Next, retires active state, and deletes C29-C41 events.
      * DM1 owns the concrete apply receipt; hosts only perform its writes. */
+    return 1;
+}
+
+int dm1_v1_melee_delete_group_receipt_f0189_pc34(
+    const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
+    DM1_MeleeF0189DeleteGroupReceiptPc34* out) {
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34 apply;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&apply, 0, sizeof(apply));
+    if (!dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+            statePlan, &apply)) {
+        return 0;
+    }
+
+    out->valid = apply.valid;
+    out->groupIndex = apply.groupIndex;
+    out->mapIndex = apply.mapIndex;
+    out->mapX = apply.mapX;
+    out->mapY = apply.mapY;
+    out->shouldUnlinkGroupFromSquare = apply.shouldUnlinkGroupFromSquare;
+    out->shouldClearGroupNext = apply.shouldClearGroupNext;
+    out->shouldRemoveActiveGroupState = apply.shouldRemoveActiveGroupState;
+    out->shouldDeleteGroupEvents = apply.shouldDeleteGroupEvents;
+    out->groupThing = apply.groupThing;
+    out->clearedNextThing = apply.clearedNextThing;
+    out->sourceLineStart = 739;
+    out->sourceLineEnd = 762;
+    out->sourceSymbol = "F0189_GROUP_Delete";
     return 1;
 }
 

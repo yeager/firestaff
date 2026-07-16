@@ -53,6 +53,7 @@ int main(void)
     uint8_t exported_save[8192] = { 0 };
     size_t exported_save_size = 0u;
     uint16_t store_global[] = { 0x0686u, 0x55aau, 0x0054u };
+    uint16_t discard_text[] = { 0x1ccbu };
     const uint32_t message_record_id = (1u << 24);
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
     const uint32_t message_bucket = 32u +
@@ -256,6 +257,32 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[102] == 0u &&
               profile.csbwin_global_variables[1] == 0x55aau,
           "DSA-owned TT_OPENROOM blocks generic text mutation after receipt");
+
+    /* STKOP_DiscardText reaches the same one-message owner through the
+     * restored TIMER path; without that owner it remains a no-op and cannot
+     * create, preserve, or route a host message log. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    profile.csbwin_text_message_receipt.valid = 1;
+    profile.csbwin_text_message_receipt.text_thing =
+        (uint16_t)(CSB_TEST_THING_TYPE_TEXTSTRING << 10);
+    strcpy(profile.csbwin_text_message_receipt.text, "HEL");
+    action.program_words = discard_text;
+    action.program_word_count = (int)(sizeof(discard_text) /
+                                      sizeof(discard_text[0]));
+    profile.csbwin_timers[0].function = 5u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[102] == 0u &&
+              !profile.csbwin_text_message_receipt.valid &&
+              profile.csbwin_text_message_receipt.text[0] == '\0',
+          "restored DSA DiscardText clears only the authenticated DB2 message receipt");
+    action.program_words = store_global;
+    action.program_word_count = (int)(sizeof(store_global) /
+                                      sizeof(store_global[0]));
 
     /* ProcessTT_STONEROOM selects the DB2 by saved Thing position and has no
      * QuePrintLines branch, so a sole matching record owns this update. */

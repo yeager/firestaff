@@ -1783,6 +1783,88 @@ int nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
     return 0;
 }
 
+int nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t index,
+    const uint8_t *decoded_output,
+    size_t decoded_output_size,
+    uint64_t expected_output_fnv1a64,
+    int capture_source_bound,
+    int original_saturn_provenance_verified,
+    Nexus_V1_BpkPrs3DecodedOutputProofReceipt *out_receipt) {
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_BpkPrs3DecodedOutputProofReceipt receipt;
+    int stream_status;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_INVALID;
+    receipt.entry_index = index;
+    receipt.fallback_visuals_permitted = 0;
+    stream_status = nexus_v1_bpk_archive_prs3_stream_plan(
+        data, data_size, index, &plan);
+    if (stream_status != NEXUS_V1_BPK_PRS3_STREAM_OK) {
+        receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_STREAM_BLOCKED;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.stream_offset = plan.stream_offset;
+    receipt.stream_size = plan.stream_size;
+    receipt.expected_output_bytes = plan.expected_output_bytes;
+    receipt.observed_output_bytes =
+        (decoded_output_size > UINT32_MAX) ? UINT32_MAX
+                                           : (uint32_t)decoded_output_size;
+    receipt.expected_output_fnv1a64 = expected_output_fnv1a64;
+    receipt.capture_source_bound = capture_source_bound ? 1 : 0;
+    receipt.original_saturn_provenance_verified =
+        original_saturn_provenance_verified ? 1 : 0;
+
+    if (!decoded_output || decoded_output_size == 0U) {
+        receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_OUTPUT_MISSING;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.observed_output_fnv1a64 =
+        fnv1a64(decoded_output, decoded_output_size);
+    receipt.length_matches =
+        decoded_output_size == (size_t)plan.expected_output_bytes;
+    receipt.hash_matches =
+        expected_output_fnv1a64 != 0U &&
+        receipt.observed_output_fnv1a64 == expected_output_fnv1a64;
+    if (!receipt.length_matches) {
+        receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SIZE_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!receipt.hash_matches) {
+        receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_HASH_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.decoded_output_sidecar_bound =
+        receipt.capture_source_bound && receipt.length_matches &&
+        receipt.hash_matches;
+    if (!receipt.decoded_output_sidecar_bound ||
+        !receipt.original_saturn_provenance_verified) {
+        receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_PROVENANCE_REQUIRED;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.decoded_output_proof_ready = 1;
+    receipt.opcode_grammar_proven = 0;
+    receipt.decoder_promoted = 0;
+    receipt.runtime_upload_permitted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    receipt.status = NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME;
+    *out_receipt = receipt;
+    return 1;
+}
+
 const char *nexus_v1_bpk_prs3_candidate_bit_order_name(
     Nexus_V1_BpkPrs3CandidateBitOrder bit_order) {
     switch (bit_order) {
@@ -1790,6 +1872,27 @@ const char *nexus_v1_bpk_prs3_candidate_bit_order_name(
         return "lsb-first";
     case NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST:
         return "msb-first";
+    default:
+        return "unknown";
+    }
+}
+
+const char *nexus_v1_bpk_prs3_decoded_output_proof_status_name(
+    Nexus_V1_BpkPrs3DecodedOutputProofStatus status) {
+    switch (status) {
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_INVALID: return "invalid";
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_STREAM_BLOCKED:
+        return "stream-blocked";
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_OUTPUT_MISSING:
+        return "output-missing";
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SIZE_MISMATCH:
+        return "size-mismatch";
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_HASH_MISMATCH:
+        return "hash-mismatch";
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_PROVENANCE_REQUIRED:
+        return "provenance-required";
+    case NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME:
+        return "source-bound-no-runtime";
     default:
         return "unknown";
     }

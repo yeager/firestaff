@@ -288,6 +288,52 @@ static void test_picture_mement_helpers(void)
           "FREE_PICT_MEMENT frees cache-backed pictures by w12 index");
 }
 
+static void test_item_charge_helpers(void)
+{
+    DM2_V1_SkprojectItemChargeReceipt receipt;
+    uint16_t w2;
+
+    w2 = (uint16_t)(7u << 10);
+    CHECK(dm2_v1_skproject_add_item_charge(0x1400u, &w2, 3, &receipt) ==
+              10u &&
+              receipt.valid && receipt.db_type == 5 &&
+              receipt.previous_charge == 7u && receipt.new_charge == 10u &&
+              receipt.max_charge == 15u && ((w2 >> 10) & 0x0fu) == 10u,
+          "ADD_ITEM_CHARGE updates DB5 weapon charges in bits 10..13");
+
+    w2 = (uint16_t)(14u << 10);
+    CHECK(dm2_v1_skproject_add_item_charge(0x1400u, &w2, 9, &receipt) ==
+              15u &&
+              ((w2 >> 10) & 0x0fu) == 15u,
+          "ADD_ITEM_CHARGE clamps DB5 weapon charges to 15");
+
+    w2 = (uint16_t)(2u << 9);
+    CHECK(dm2_v1_skproject_add_item_charge(0x1800u, &w2, -5, &receipt) ==
+              0u &&
+              receipt.valid && receipt.db_type == 6 &&
+              ((w2 >> 9) & 0x0fu) == 0u,
+          "ADD_ITEM_CHARGE clamps DB6 cloth charges to zero");
+
+    w2 = (uint16_t)(1u << 14);
+    CHECK(dm2_v1_skproject_add_item_charge(0x2800u, &w2, 5, &receipt) ==
+              3u &&
+              receipt.valid && receipt.db_type == 10 &&
+              receipt.max_charge == 3u && ((w2 >> 14) & 0x03u) == 3u,
+          "ADD_ITEM_CHARGE clamps DB10 miscellaneous charges to 3");
+
+    w2 = 0xaaaau;
+    CHECK(dm2_v1_skproject_add_item_charge(0xffffu, &w2, 1, &receipt) ==
+              0u &&
+              receipt.blocked_null_object && w2 == 0xaaaau,
+          "ADD_ITEM_CHARGE rejects OBJECT_NULL without mutation");
+
+    w2 = 0x5555u;
+    CHECK(dm2_v1_skproject_add_item_charge(0x0800u, &w2, 1, &receipt) ==
+              0u &&
+              receipt.blocked_unsupported_db_type && w2 == 0x5555u,
+          "ADD_ITEM_CHARGE rejects unsupported DB type without mutation");
+}
+
 int main(void)
 {
     test_between_value();
@@ -295,6 +341,7 @@ int main(void)
     test_random_helpers();
     test_cache_hash_helpers();
     test_picture_mement_helpers();
+    test_item_charge_helpers();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -310,6 +357,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_IMAGE_MEMENT") != 0,
           "source evidence names picture mement helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "ADD_ITEM_CHARGE") != 0,
+          "source evidence names item charge helper");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
