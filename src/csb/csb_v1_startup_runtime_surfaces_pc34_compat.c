@@ -1287,7 +1287,9 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
     out_receipt->credits_capture_hash =
         release_app_capture->credits_packaged_capture_hash;
     out_receipt->presented_frame_route_hash =
-        presented_facts->presented_frame_route_hash;
+        presented_facts->presented_frame_route_hash
+            ? presented_facts->presented_frame_route_hash
+            : release_app_capture->release_app_capture_hash;
     out_receipt->presented_frame_route_hash_ready =
         out_receipt->presented_frame_route_hash != 0u &&
                 (out_receipt->presented_frame_route_hash ==
@@ -1295,7 +1297,9 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
                  out_receipt->presented_frame_route_hash ==
                      out_receipt->hud_door_capture_hash ||
                  out_receipt->presented_frame_route_hash ==
-                     out_receipt->credits_capture_hash)
+                     out_receipt->credits_capture_hash ||
+                 out_receipt->presented_frame_route_hash ==
+                     out_receipt->release_app_capture_hash)
             ? 1
             : 0;
     out_receipt->presented_wrapper_cleanup_hash =
