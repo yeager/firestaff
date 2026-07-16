@@ -433,10 +433,14 @@ static void expect_dm2_startup_layout_contract(void) {
         &snapshot,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 1 &&
+    expect_true(command_count == 2 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 4 &&
+                    commands[0].gdat_field == 1 &&
                     commands[0].frame_owner ==
+                        DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
+                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[1].gdat_field == 4 &&
+                    commands[1].frame_owner ==
                         DM2_V1_FRAME_OWNER_STARTUP_MENU,
                 "DM2 startup presentation builds from snapshot");
     command_count = dm2_v1_startup_presentation_build_from_facts(
@@ -447,10 +451,14 @@ static void expect_dm2_startup_layout_contract(void) {
         9,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 1 &&
+    expect_true(command_count == 2 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 4 &&
+                    commands[0].gdat_field == 1 &&
                     commands[0].frame_owner ==
+                        DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
+                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[1].gdat_field == 4 &&
+                    commands[1].frame_owner ==
                         DM2_V1_FRAME_OWNER_STARTUP_MENU,
                 "DM2 startup presentation builds directly from runtime facts");
     memset(&host_facts, 0, sizeof(host_facts));
@@ -463,10 +471,14 @@ static void expect_dm2_startup_layout_contract(void) {
         &host_facts,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 1 &&
+    expect_true(command_count == 2 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 4 &&
+                    commands[0].gdat_field == 1 &&
                     commands[0].frame_owner ==
+                        DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
+                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[1].gdat_field == 4 &&
+                    commands[1].frame_owner ==
                         DM2_V1_FRAME_OWNER_STARTUP_MENU,
                 "DM2 startup presentation builds from host facts");
     memset(&boot_snapshot, 0, sizeof(boot_snapshot));

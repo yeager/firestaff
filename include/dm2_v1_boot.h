@@ -1928,6 +1928,11 @@ int dm2_v1_boot_gdat_hud_static_m11_command_plan(
     DM2_V1_BootProfile *profile,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
+int dm2_v1_boot_hud_core_asset_address(int field,
+                                       int *out_category,
+                                       int *out_index,
+                                       int *out_field);
+
 /* c_weather.cpp resolves ENVIRONMENT command text and the matching IMG3 by
  * the live MapGraphicsStyle. The returned receipt remains boot-owned evidence;
  * callers must not infer a viewport destination from it. */

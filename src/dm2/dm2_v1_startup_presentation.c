@@ -85,9 +85,25 @@ int dm2_v1_startup_presentation_build(
     for (i = 0; i < max_commands; ++i) {
         dm2_v1_startup_draw_clear(&out_commands[i]);
     }
-    /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN presents TITLE/0
-     * dt07/4 as the menu surface. TITLE/0 dt07/1 remains source-query
-     * evidence for the preceding title phase, not a second host draw. */
+    /* skproject/SKWIN/SkWinCore.cpp::INIT presents TITLE/0 dt07/1 before
+     * SHOW_MENU_SCREEN switches to TITLE/0 dt07/4. Keep both source GDAT
+     * draw commands in the startup package; the host chooses which phase
+     * to execute from the title timing receipt. */
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = 320;
+    rect.h = 200;
+    if (!dm2_v1_startup_push_gdat_image(out_commands,
+                                        max_commands,
+                                        &count,
+                                        DM2_GDAT_CATEGORY_TITLE,
+                                        0,
+                                        1,
+                                        &rect,
+                                        -1,
+                                        DM2_V1_FRAME_OWNER_STARTUP_TITLE)) {
+        return 0;
+    }
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;

@@ -106,9 +106,15 @@ typedef struct {
     int gdat_sprite_palette_consumed;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed;
+    uint32_t gdat_interface_action_palette_hash;
+    int gdat_interface_action_palette_consumed;
     int gdat_material_palette_floor_ceiling_consumed;
     int gdat_material_palette_wall_consumed;
     int gdat_material_palette_door_frame_consumed;
+    uint8_t floor_ceiling_material_required_mask;
+    uint8_t floor_ceiling_material_consumed_mask;
+    int floor_ceiling_materials_complete;
+    int blocked_material_draws;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
     int viewport_raw_gdat_asset_count;

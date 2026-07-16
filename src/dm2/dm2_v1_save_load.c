@@ -19,6 +19,15 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+#if !defined(_WIN32)
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
+#define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64u
+#define DM2_SK_CORPUS_RECURSE_DEPTH 4
+
 /* docs/dm2_save_format.md § Game state block identifies skload_table_60 as
  * a fixed 56-byte SUPPRESS block. Keep this wire-layout view byte-exact so
  * the mask below cannot drift when compiled on hosts with stricter alignment. */
@@ -295,6 +304,60 @@ static uint32_t dm2_sksave_corpus_words_hash(const uint16_t *words,
         hash = dm2_sksave_corpus_hash_step(hash, words[i] >> 8);
     }
     return hash;
+}
+
+static int dm2_sksave_ascii_lower(int c)
+{
+    return (c >= 'A' && c <= 'Z') ? (c + ('a' - 'A')) : c;
+}
+
+static int dm2_sksave_ascii_equal_ci(const char *a, const char *b)
+{
+    if (!a || !b) return 0;
+    while (*a && *b) {
+        if (dm2_sksave_ascii_lower((unsigned char)*a) !=
+            dm2_sksave_ascii_lower((unsigned char)*b)) {
+            return 0;
+        }
+        ++a;
+        ++b;
+    }
+    return *a == '\0' && *b == '\0';
+}
+
+static int dm2_sksave_basename_is_canonical_direct(const char *name)
+{
+    if (!name) return 0;
+    if (strcmp(name, "SKSave.dat") == 0 ||
+        strcmp(name, "SKSave.bak") == 0) {
+        return 1;
+    }
+    if (strncmp(name, "SKSave", 6) == 0 &&
+        name[6] >= '0' && name[6] <= '9' &&
+        name[7] >= '0' && name[7] <= '9' &&
+        strcmp(name + 8, ".dat") == 0) {
+        return 1;
+    }
+    return 0;
+}
+
+static int dm2_sksave_basename_is_candidate_ci(const char *name)
+{
+    char canonical_slot[16];
+
+    if (!name) return 0;
+    if (dm2_sksave_ascii_equal_ci(name, "SKSave.dat") ||
+        dm2_sksave_ascii_equal_ci(name, "SKSave.bak")) {
+        return 1;
+    }
+    for (unsigned int slot = 0u; slot < DM2_SLOT_MAX; ++slot) {
+        snprintf(canonical_slot, sizeof(canonical_slot),
+                 "SKSave%02u.dat", slot);
+        if (dm2_sksave_ascii_equal_ci(name, canonical_slot)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static uint32_t dm2_sksave_corpus_file_hash(const char *path)

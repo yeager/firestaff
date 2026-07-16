@@ -299,6 +299,12 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);
 
+bool dm2_v1_sksave_corpus_load_receipted_candidate(
+    const DM2_SKSaveCandidateReceipt *candidate_receipt,
+    uint8_t *out_payload,
+    size_t out_capacity,
+    size_t *out_payload_size);
+
 /* ════════════════════════════════════════════════════════════════
  * Cross-version diagnostics
  * ════════════════════════════════════════════════════════════════ */
