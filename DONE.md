@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 c_map real-data tile access receipts: closed the
+  skproject `c_map.cpp`/SKWIN `xxx.cpp` tile accessor slice for
+  `GET_TILE_VALUE`, `GET_ADDRESS_OF_TILE_RECORD`, `IS_TILE_PASSAGE`, and
+  `IS_TILE_SOLID`. The new real-data focus test accepts only canonical PC G1
+  `DUNGEON.DAT`, walks map 0 source bytes, proves the 22 map-root tiles via
+  the column-index/ground-stack tables, and rejects plain tiles before any
+  synthetic record address can appear. Verification: strict direct C11
+  build/run of `test_dm2_v1_c_map_tile_access_real_data` against local
+  canonical DM2 data, direct existing `test_dm2_v1_c_map_tile_access`, and
+  strict `-fsyntax-only` for `src/dm2/dm2_v1_dungeon_loader.c`.
+
 - 2026-07-16 CSB PANEL.C F0347 HUD-panel receipt: added a CSB-owned
   `F0347_INVENTORY_DrawPanel` adapter over the existing real C017/C040
   startup HUD-panel blit receipt. The route accepts only source-owned

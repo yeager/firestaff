@@ -836,6 +836,18 @@ typedef struct {
     int x;
     int y;
     uint16_t raw_tile;
+    uint8_t tile_value;
+    int is_solid;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectTileSolidReceipt;
+
+typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t raw_tile;
     uint16_t object_id;
     int type;
     int index;
@@ -907,6 +919,7 @@ int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x
 int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_c_map_get_tile_value(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_c_map_is_tile_passage(const DM2_V1_DungeonData *d, int level, int x, int y);
+int dm2_v1_dungeon_c_map_is_tile_solid(const DM2_V1_DungeonData *d, int level, int x, int y);
 const uint8_t *dm2_v1_dungeon_c_map_get_address_of_tile_record(
     const DM2_V1_DungeonData *d,
     int level,
@@ -928,6 +941,12 @@ int dm2_v1_skproject_is_tile_passage(
     int x,
     int y,
     DM2_V1_SkprojectTilePassageReceipt *out);
+int dm2_v1_skproject_is_tile_solid(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTileSolidReceipt *out);
 int dm2_v1_skproject_get_address_of_tile_record(
     const DM2_V1_DungeonData *d,
     int level,
