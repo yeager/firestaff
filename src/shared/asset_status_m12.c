@@ -2,6 +2,7 @@
 #include "asset_find_by_hash.h"
 #include "fs_portable_compat.h"
 #include "nexus_v1_bpk_archive.h"
+#include "theron_v1_track02.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -2956,6 +2957,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         return 0;
     }
     m12_refresh_theron_media_status(status, roots, rootCount);
+    m12_refresh_theron_track02_loader_receipt(status);
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
@@ -3044,6 +3046,7 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
     }
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
+        m12_refresh_theron_track02_loader_receipt(status);
     } else if (strcmp(gameId, "nexus") == 0) {
         m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     } else if (strcmp(gameId, "dm1") == 0) {

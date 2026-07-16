@@ -2,6 +2,7 @@
 
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_weather_gdat.h"
 
 #include <stdio.h>
 #include <stdlib.h>

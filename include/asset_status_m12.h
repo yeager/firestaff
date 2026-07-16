@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "firestaff_theron_media_classify.h"
+#include "theron_v1_track02.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -102,6 +103,7 @@ typedef struct {
     char runtimeDataDirs[M12_ASSET_GAME_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     M12_NexusBpkTrailerMetadata nexusBpkTrailer;
     FirestaffTheronMediaStatus theronMedia;
+    Theron_Track02StartupLoaderReceipt theronTrack02LoaderReceipt;
     M12_AssetScanProgress scanProgress;
 } M12_AssetStatus;
 

@@ -1427,11 +1427,6 @@ static const char* m12_tr(const M12_StartupMenuState* state, const char* english
     return m12_translate_for_locale(m12_locale_index(state), english);
 }
 
-const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
-                                      const char* english) {
-    return m12_tr(state, english);
-}
-
 static const M12_GraphicsTheme* m12_theme(const M12_StartupMenuState* state) {
     int index = state ? m12_clamp_index(state->settings.graphicsIndex,
                                         (int)(sizeof(g_graphicsThemes) / sizeof(g_graphicsThemes[0])))
