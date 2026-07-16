@@ -613,26 +613,37 @@ static void test_fixture_pict_allocation_receipts(void)
 static void test_querydb_word_and_ornate_receipts(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[64];
-    uint32_t raw_offsets[2];
-    uint32_t raw_sizes[2];
-    DM2_V1_GdatEntry entries[16];
+    uint8_t data[128];
+    uint32_t raw_offsets[4];
+    uint32_t raw_sizes[4];
+    DM2_V1_GdatEntry entries[19];
     DM2_V1_QueryOrnateAnimFrameReceipt frame;
     DM2_V1_GetOrnateAnimLenReceipt len;
     DM2_V1_GdatWordQueryReceipt word;
     DM2_V1_DoorStrengthReceipt strength;
     DM2_V1_CreaturesItemMaskReceipt mask;
     DM2_V1_ItemFitForEquipReceipt fit;
+    DM2_V1_GdatNameReceipt name;
+    DM2_V1_CmdstrEntryReceipt cmdstr;
+    DM2_V1_CurCmdstrContext curcmd;
     uint8_t cache3[3] = {0x21u, 0xffu, 0x44u};
 
     memset(&loader, 0, sizeof(loader));
     memset(data, 0, sizeof(data));
     memcpy(data, "2A4", 4u);
     memcpy(data + 8u, "A1-2J0P3S0C1W4", 16u);
+    memcpy(data + 32u, "AXE:SK=7LV-2CM=11", 18u);
+    data[50u] = 0u;
+    memcpy(data + 64u, "BLADE:SK=4SK=8DM=-5HN=12", 26u);
+    data[90u] = 0u;
     raw_offsets[0] = 0u;
     raw_sizes[0] = 4u;
     raw_offsets[1] = 8u;
     raw_sizes[1] = 16u;
+    raw_offsets[2] = 32u;
+    raw_sizes[2] = 19u;
+    raw_offsets[3] = 64u;
+    raw_sizes[3] = 27u;
 
     memset(entries, 0, sizeof(entries));
     entries[0] = (DM2_V1_GdatEntry){
@@ -683,16 +694,25 @@ static void test_querydb_word_and_ornate_receipts(void)
     entries[15] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_DOORS, 6u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
         0x10u, 0u, 0u, 0x0009u};
+    entries[16] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WEAPONS, 1u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x18u, 0u, 0u, 2u};
+    entries[17] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WEAPONS, 2u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x08u, 0u, 0u, 3u};
+    entries[18] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WEAPONS, 3u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x08u, 0u, 0u, 0x8003u};
 
     loader.data = data;
     loader.data_size = sizeof(data);
     loader.loaded = 1;
     loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader.raw_data_count = 2u;
+    loader.raw_data_count = 4u;
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 16u;
+    loader.entry_count = 19u;
 
     CHECK(dm2_v1_query_ornate_anim_frame_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
@@ -747,6 +767,44 @@ static void test_querydb_word_and_ornate_receipts(void)
           "DM2_query_0cee_3275 binds DOORS dtWordValue field 0x10");
     CHECK(!dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word),
           "DM2_GET_GRAPHICS_FOR_DOOR rejects absent door rows without fallback");
+    CHECK(dm2_v1_query_gdat_item_name_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 1, &name) &&
+              name.accepted && name.field == 0x18u &&
+              strcmp(name.text, "AXE") == 0 &&
+              name.text_hash != 0u,
+          "DM2_QUERY_GDAT_ITEM_NAME binds real dtText field 0x18 and stops at colon");
+    CHECK(dm2_v1_query_cmdstr_name_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 2, 0x08u, &name) &&
+              name.accepted && strcmp(name.text, "BLADE") == 0,
+          "DM2_QUERY_CMDSTR_NAME returns the source command string name prefix");
+    CHECK(dm2_v1_query_cmdstr_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 2, 0x08u, 0, &cmdstr) &&
+              cmdstr.accepted && cmdstr.found &&
+              strcmp(cmdstr.key, "SK") == 0 &&
+              cmdstr.value == 48,
+          "DM2_QUERY_CMDSTR_ENTRY preserves source repeated-key digit accumulation");
+    CHECK(dm2_v1_query_cmdstr_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 2, 0x08u, 11, &cmdstr) &&
+              cmdstr.accepted && cmdstr.found &&
+              strcmp(cmdstr.key, "DM") == 0 &&
+              cmdstr.value == -5,
+          "DM2_QUERY_CMDSTR_ENTRY parses signed decimal values");
+    CHECK(dm2_v1_query_cmdstr_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 2, 0x08u, 17, &cmdstr) &&
+              cmdstr.accepted && !cmdstr.found && cmdstr.value == 0,
+          "DM2_QUERY_CMDSTR_ENTRY preserves source zero result for absent keys");
+    CHECK(!dm2_v1_query_cmdstr_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 2, 0x08u, 18, &cmdstr),
+          "DM2_QUERY_CMDSTR_ENTRY rejects key indexes outside table1d6912");
+    curcmd.category = DM2_GDAT_CATEGORY_WEAPONS;
+    curcmd.index = 2u;
+    curcmd.field = 0x08u;
+    CHECK(dm2_v1_query_cur_cmdstr_entry_receipt(
+              &loader, &curcmd, 15, &cmdstr) &&
+              cmdstr.accepted && cmdstr.found &&
+              strcmp(cmdstr.key, "HN") == 0 &&
+              cmdstr.value == 12,
+          "DM2_QUERY_CUR_CMDSTR_ENTRY reuses the caller-owned current command string context");
     CHECK(dm2_v1_query_gdat_creature_word_value_receipt(
               &loader, 5, 1, NULL, 0u, &word) &&
               word.accepted && !word.used_cache_byte && word.value == 0x0044u,

@@ -2145,6 +2145,204 @@ static int dm2_gdat_word_receipt(
     return 1;
 }
 
+static const char *dm2_v1_cmdstr_key(uint8_t key_index)
+{
+    static const char *keys[DM2_V1_CMDSTR_KEY_COUNT] = {
+        "SK", "LV", "CM", "BZ", "TR", "ST",
+        "PA", "TA", "NC", "EX", "PB", "DM",
+        "MS", "SD", "RP", "HN", "AT", "WH"
+    };
+    return key_index < DM2_V1_CMDSTR_KEY_COUNT ? keys[key_index] : NULL;
+}
+
+static int dm2_v1_text_has_nul(const uint8_t *text, size_t text_size,
+                               size_t *out_len)
+{
+    size_t i;
+
+    if (out_len) *out_len = 0u;
+    if (!text) return 0;
+    for (i = 0; i < text_size; ++i) {
+        if (text[i] == 0u) {
+            if (out_len) *out_len = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int dm2_v1_query_cmdstr_text_value(
+    const uint8_t *text,
+    size_t text_size,
+    const char *key,
+    int *out_found,
+    int32_t *out_value)
+{
+    size_t key_size;
+    size_t cursor = 0u;
+    int found = 0;
+    int32_t value = 0;
+
+    if (out_found) *out_found = 0;
+    if (out_value) *out_value = 0;
+    if (!text || !key || key[0] == '\0' ||
+        !dm2_v1_text_has_nul(text, text_size, NULL)) {
+        return 0;
+    }
+    key_size = strlen(key);
+    while (cursor + key_size <= text_size) {
+        size_t at = text_size;
+        int negative = 0;
+
+        for (size_t i = cursor; i + key_size <= text_size; ++i) {
+            if (text[i] == '\0') break;
+            if (memcmp(text + i, key, key_size) == 0) {
+                at = i;
+                break;
+            }
+        }
+        if (at == text_size) break;
+        found = 1;
+        at += key_size;
+        if (at < text_size && text[at] == '=') ++at;
+        if (at < text_size && text[at] == '-') {
+            negative = 1;
+            ++at;
+        }
+        while (at < text_size && text[at] >= '0' && text[at] <= '9') {
+            if (value > (INT32_MAX - (int32_t)(text[at] - '0')) / 10)
+                return 0;
+            value = value * 10 + (int32_t)(text[at] - '0');
+            ++at;
+        }
+        if (negative) value = -value;
+        cursor = at > cursor ? at : cursor + 1u;
+    }
+    if (out_found) *out_found = found;
+    if (out_value) *out_value = value;
+    return 1;
+}
+
+int dm2_v1_query_gdat_item_name_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatNameReceipt *out_receipt)
+{
+    enum { ITEM_NAME_FIELD = 0x18 };
+    return dm2_v1_query_cmdstr_name_receipt(
+        loader, category, index, ITEM_NAME_FIELD, out_receipt);
+}
+
+int dm2_v1_query_cmdstr_name_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatNameReceipt *out_receipt)
+{
+    const uint8_t *text;
+    size_t text_size = 0u;
+    size_t text_len = 0u;
+    size_t copy_len = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || category < 0 || category > 0xff ||
+        index < 0 || index > 0xff || field < 0 || field > 0xff) {
+        return 0;
+    }
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = (uint8_t)field;
+    text = dm2_v1_asset_load_text_sized(loader, category, index, field,
+                                        &text_size);
+    if (!text || !dm2_v1_text_has_nul(text, text_size, &text_len) ||
+        text_len == 0u) {
+        return 0;
+    }
+
+    while (copy_len < text_len && text[copy_len] != ':') ++copy_len;
+    if (copy_len >= sizeof(out_receipt->text)) {
+        copy_len = sizeof(out_receipt->text) - 1u;
+        out_receipt->truncated = 1u;
+    }
+    memcpy(out_receipt->text, text, copy_len);
+    out_receipt->text[copy_len] = '\0';
+    out_receipt->byte_count = (uint16_t)copy_len;
+    out_receipt->text_hash = dm2_fnv1a_bytes(text, text_len);
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        (uint32_t)category, (uint32_t)index,
+        ((uint32_t)(uint8_t)field << 16) | (uint32_t)copy_len,
+        out_receipt->text_hash);
+    out_receipt->accepted = 1u;
+    return 1;
+}
+
+int dm2_v1_query_cmdstr_entry_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int key_index,
+    DM2_V1_CmdstrEntryReceipt *out_receipt)
+{
+    const char *key;
+    const uint8_t *text;
+    size_t text_size = 0u;
+    size_t text_len = 0u;
+    int found = 0;
+    int32_t value = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || category < 0 || category > 0xff ||
+        index < 0 || index > 0xff || field < 0 || field > 0xff ||
+        key_index < 0 || key_index >= (int)DM2_V1_CMDSTR_KEY_COUNT) {
+        return 0;
+    }
+    key = dm2_v1_cmdstr_key((uint8_t)key_index);
+    if (!key) return 0;
+    out_receipt->key_index = (uint8_t)key_index;
+    out_receipt->key[0] = key[0];
+    out_receipt->key[1] = key[1];
+    out_receipt->key[2] = '\0';
+
+    text = dm2_v1_asset_load_text_sized(loader, category, index, field,
+                                        &text_size);
+    if (!text || !dm2_v1_text_has_nul(text, text_size, &text_len) ||
+        text_len == 0u) {
+        return 0;
+    }
+    if (!dm2_v1_query_cmdstr_text_value(text, text_size, key, &found, &value))
+        return 0;
+
+    out_receipt->accepted = 1u;
+    out_receipt->found = (uint8_t)(found ? 1u : 0u);
+    out_receipt->value = value;
+    out_receipt->text_hash = dm2_fnv1a_bytes(text, text_len);
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        (uint32_t)category, (uint32_t)index,
+        ((uint32_t)(uint8_t)field << 16) | (uint32_t)(uint8_t)key_index,
+        (uint32_t)value ^ out_receipt->text_hash);
+    return 1;
+}
+
+int dm2_v1_query_cur_cmdstr_entry_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_CurCmdstrContext *context,
+    int key_index,
+    DM2_V1_CmdstrEntryReceipt *out_receipt)
+{
+    if (!context) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_query_cmdstr_entry_receipt(
+        loader, context->category, context->index, context->field, key_index,
+        out_receipt);
+}
+
 int dm2_v1_query_door_damage_resist_receipt(
     const DM2_V1_AssetLoader *loader,
     int door_index,
