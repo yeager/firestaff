@@ -990,6 +990,267 @@ int dm2_v1_skproject_map_0cee_04e5(
     return (int)receipt.tile_value;
 }
 
+static int dm2_v1_skproject_passage_at(
+    const uint8_t *passage,
+    int16_t width,
+    int16_t x,
+    int16_t y)
+{
+    return passage[(int)y * (int)width + (int)x] != 0u;
+}
+
+int dm2_v1_skproject_get_tile_value(
+    const uint8_t *tiles,
+    const uint8_t *passage,
+    int16_t width,
+    int16_t height,
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectGetTileValueReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetTileValueReceipt receipt;
+    int x_in;
+    int y_in;
+    int16_t si = x;
+    int16_t di = y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+    receipt.width = width;
+    receipt.height = height;
+    if (!tiles || width <= 0 || height <= 0) {
+        receipt.blocked_missing_tiles = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!passage) {
+        receipt.blocked_missing_passage = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    x_in = si >= 0 && si < width;
+    y_in = di >= 0 && di < height;
+    receipt.x_in_bounds = x_in;
+    receipt.y_in_bounds = y_in;
+    if (x_in && y_in) {
+        receipt.in_bounds = 1;
+        receipt.probed_x = si;
+        receipt.probed_y = di;
+        receipt.returned_tile_value = tiles[(int)di * (int)width + (int)si];
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return (int)receipt.returned_tile_value;
+    }
+
+    if (y_in) {
+        if (si == -1) {
+            si = 0;
+            receipt.returned_boundary_mask = 4u;
+            receipt.used_left_boundary = 1u;
+        } else {
+            if (si != width) {
+                receipt.returned_blocked_value = 0xe0u;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0xe0;
+            }
+            si--;
+            receipt.returned_boundary_mask = 1u;
+            receipt.used_right_boundary = 1u;
+        }
+        receipt.probed_x = si;
+        receipt.probed_y = di;
+        receipt.checked_primary_passage = 1u;
+        if (dm2_v1_skproject_passage_at(passage, width, si, di)) {
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return (int)receipt.returned_boundary_mask;
+        }
+        if (di > 0 &&
+            dm2_v1_skproject_passage_at(passage, width, si,
+                                        (int16_t)(di - 1))) {
+            receipt.checked_side_passage = 1u;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if (di + 1 >= height ||
+            !dm2_v1_skproject_passage_at(passage, width, si,
+                                         (int16_t)(di + 1))) {
+            receipt.returned_blocked_value = 0xe0u;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0xe0;
+        }
+        receipt.checked_side_passage = 1u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (x_in) {
+        if (di == -1) {
+            di = 0;
+            receipt.returned_boundary_mask = 2u;
+            receipt.used_top_boundary = 1u;
+        } else {
+            if (di != height) {
+                receipt.returned_blocked_value = 0xe0u;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0xe0;
+            }
+            di--;
+            receipt.returned_boundary_mask = 8u;
+            receipt.used_bottom_boundary = 1u;
+        }
+        receipt.probed_x = si;
+        receipt.probed_y = di;
+        receipt.checked_primary_passage = 1u;
+        if (dm2_v1_skproject_passage_at(passage, width, si, di)) {
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return (int)receipt.returned_boundary_mask;
+        }
+        if (si > 0 &&
+            dm2_v1_skproject_passage_at(passage, width,
+                                        (int16_t)(si - 1), di)) {
+            receipt.checked_side_passage = 1u;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if (si + 1 >= width ||
+            !dm2_v1_skproject_passage_at(passage, width,
+                                         (int16_t)(si + 1), di)) {
+            receipt.returned_blocked_value = 0xe0u;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0xe0;
+        }
+        receipt.checked_side_passage = 1u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.used_corner_boundary = 1u;
+    if (si == -1) {
+        si = 0;
+    } else {
+        if (si != width) {
+            receipt.returned_blocked_value = 0xe0u;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0xe0;
+        }
+        si--;
+    }
+    receipt.probed_x = si;
+    receipt.checked_primary_passage = 1u;
+    if (di == -1 && dm2_v1_skproject_passage_at(passage, width, si, 0)) {
+        receipt.probed_y = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (di != height) {
+        receipt.returned_blocked_value = 0xe0u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0xe0;
+    }
+    receipt.probed_y = (int16_t)(di - 1);
+    if (!dm2_v1_skproject_passage_at(passage, width, si,
+                                     (int16_t)(di - 1))) {
+        receipt.returned_blocked_value = 0xe0u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0xe0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_get_address_of_tile_record(
+    int16_t x,
+    int16_t y,
+    uint16_t tile_record_link,
+    const uint16_t record_counts[16],
+    const uint16_t record_sizes[16],
+    DM2_V1_SkprojectRecordAddressReceipt *out_receipt)
+{
+    (void)x;
+    (void)y;
+    return dm2_v1_skproject_get_address_of_record(
+        tile_record_link, record_counts, record_sizes, out_receipt);
+}
+
+int dm2_v1_skproject_fill_entire_pict(
+    uint16_t width,
+    uint16_t height,
+    uint8_t bpp,
+    uint8_t fill,
+    DM2_V1_SkprojectFillReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFillReceipt receipt;
+    uint16_t align;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.width = width;
+    receipt.height = height;
+    receipt.bpp = bpp;
+    receipt.fill = fill;
+    align = bpp == 4u ? 2u : 1u;
+    receipt.aligned_width = (uint16_t)((width + align - 1u) & ~(align - 1u));
+    receipt.pixel_count = (uint32_t)receipt.aligned_width * height;
+    receipt.requested_fill_rect_any = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_fill_rect_summary(
+    uint16_t rect_width,
+    uint16_t rect_height,
+    uint8_t fill,
+    int has_buffer,
+    int has_rect,
+    DM2_V1_SkprojectFillReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFillReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.width = rect_width;
+    receipt.height = rect_height;
+    receipt.bpp = 8u;
+    receipt.fill = fill;
+    if (!has_buffer) {
+        receipt.blocked_missing_buffer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!has_rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.aligned_width = rect_width;
+    receipt.pixel_count = (uint32_t)rect_width * rect_height;
+    receipt.requested_offset_rect = 1u;
+    receipt.requested_fill_rect_any = 1u;
+    receipt.requested_dirty_rect = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_map_3b001(
     int16_t current_map,
     int16_t value_0270,
@@ -4526,7 +4787,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
            "SKWIN/SkWinCore.cpp DRAW_ICON_PICT_BUFF/DRAW_DEF_PICT/"
-           "DRAW_GRAY_OVERLAY; "
+           "DRAW_GRAY_OVERLAY/FILL_ENTIRE_PICT/FILL_RECT_SUMMARY; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
            "DM2_ATTACK_WALL/DM2_ATTACK_DOOR/DM2_move_12b4_0d75/"
            "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "
@@ -4545,5 +4806,6 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "GET_ADDRESS_OF_RECORDE/GET_ADDRESS_OF_RECORDF/"
            "GET_ADDRESS_OF_RECORDX4/"
            "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD/"
-           "GET_ADDRESS_OF_ACTU/GET_ADDRESS_OF_DETACHED_RECORD";
+           "GET_ADDRESS_OF_ACTU/GET_ADDRESS_OF_DETACHED_RECORD/"
+           "GET_ADDRESS_OF_TILE_RECORD/GET_TILE_VALUE";
 }
