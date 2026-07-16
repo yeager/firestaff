@@ -708,7 +708,7 @@ DM2_GET_ADDRESS_OF_TILE_RECORD	SKULLWIN	SKULLWIN/c_map.cpp	69	src/dm2/dm2_v1_dun
 DM2_IS_TILE_PASSAGE	SKULLWIN	SKULLWIN/c_map.cpp	79	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_is_tile_passage	VERIFIED_SOURCE_MAPPING
 DM2_GET_TILE_VALUE	SKULLWIN	SKULLWIN/c_map.cpp	107	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_tile_value	VERIFIED_SOURCE_MAPPING
 DM2_CHANGE_CURRENT_MAP_TO	SKULLWIN	SKULLWIN/c_map.cpp	328	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
-DM_LOCATE_OTHER_LEVEL	SKULLWIN	SKULLWIN/c_map.cpp	384		MISSING
+DM_LOCATE_OTHER_LEVEL	SKULLWIN	SKULLWIN/c_map.cpp	384	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_locate_other_level; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_SET_DESTINATION_OF_MINION_MAP	SKULLWIN	SKULLWIN/c_map.cpp	540	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_set_destination_of_minion_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_map_0cee_1815	SKULLWIN	SKULLWIN/c_map.cpp	583	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_1815; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_map_0cee_185a	SKULLWIN	SKULLWIN/c_map.cpp	615	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_185a; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -719,7 +719,7 @@ DM2_ARRANGE_DUNGEON	SKULLWIN	SKULLWIN/c_map.cpp	823		MISSING
 DM2_map_0cee_04e5	SKULLWIN	SKULLWIN/c_map.cpp	1255	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_04e5; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_map_0cee_17e7	SKULLWIN	SKULLWIN/c_map.cpp	1271	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_17e7; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_map_3B001	SKULLWIN	SKULLWIN/c_map.cpp	1291	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_3b001; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_map_3BF83	SKULLWIN	SKULLWIN/c_map.cpp	1304		MISSING
+DM2_map_3BF83	SKULLWIN	SKULLWIN/c_map.cpp	1304	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_3bf83; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 init_mousecursors	SKULLWIN	SKULLWIN/c_mcursor.cpp	20		MISSING
 generate_cursor	SKULLWIN	SKULLWIN/c_mcursor.cpp	33		MISSING
 DM2_INITBASICCURSORS	SKULLWIN	SKULLWIN/c_mcursor.cpp	78		MISSING
