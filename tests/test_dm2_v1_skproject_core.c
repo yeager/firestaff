@@ -398,6 +398,105 @@ static void test_map_helpers(void)
               -1, 1, 2, &map3b001) == 1 &&
               !map3b001.requested_change_to_previous_map,
           "DM2_map_3B001 preserves no-op restore when previous map is -1");
+
+    {
+        uint8_t candidates[30];
+        uint8_t alcoves[256] = { 0 };
+        uint16_t words[4] = { 0 };
+        uint8_t tmpmap[64] = { 0 };
+        DM2_V1_SkprojectMap1815Receipt map1815;
+        DM2_V1_SkprojectMap185AReceipt map185a;
+        DM2_V1_SkprojectTmpmapFlagReceipt tmpflag;
+
+        for (uint8_t i = 0; i < 30u; ++i)
+            candidates[i] = (uint8_t)(0x40u + i);
+        CHECK(dm2_v1_skproject_map_0cee_1815(
+                  1, 12, 8, 3, 4, 5, 30, 0x2222u,
+                  candidates, 30u, &map1815) ==
+                  candidates[map1815.selected_index] &&
+                  map1815.valid && map1815.selected_index < 30u &&
+                  map1815.mixed_random != 0u,
+              "DM2_map_0cee_1815 selects v1e02cc entry through skproject random mix");
+        CHECK(dm2_v1_skproject_map_0cee_1815(
+                  0, 12, 8, 3, 4, 5, 30, 0x2222u,
+                  candidates, 30u, &map1815) == -1 &&
+                  map1815.blocked_zero_gate,
+              "DM2_map_0cee_1815 returns -1 when source gate is zero");
+
+        alcoves[0xffu] = 1u;
+        candidates[0] = 0xffu;
+        CHECK(dm2_v1_skproject_map_0cee_185a(
+                  words, 12, 8, 3, 1, 1, 1, 1, 20, -1, 0, 0,
+                  0u, candidates, 1u, alcoves, &map185a) == 1 &&
+                  map185a.valid && words[0] == 0x00ffu &&
+                  words[1] == 0x00ffu && map185a.sanitized[0] &&
+                  map185a.sanitized[3],
+              "DM2_map_0cee_185a fills four words and sanitizes ornate alcoves outside map bounds");
+        CHECK(dm2_v1_skproject_map_0cee_185a(
+                  0, 12, 8, 3, 1, 1, 1, 1, 20, -1, 0, 0,
+                  0u, candidates, 1u, alcoves, &map185a) == 0 &&
+                  map185a.blocked_missing_output,
+              "DM2_map_0cee_185a rejects missing output words");
+
+        CHECK(dm2_v1_skproject_tmpmap_or_flag(
+                  tmpmap, sizeof(tmpmap), 2, 3, 1, &tmpflag) == 1 &&
+                  tmpflag.valid && tmpflag.offset == 21u &&
+                  tmpmap[21] == 2u,
+              "SKW_2066_1ea3 ORs bit 1 at the tmpmap pointer-derived byte");
+        tmpmap[21] = 5u;
+        CHECK(dm2_v1_skproject_tmpmap_or_flag(
+                  tmpmap, sizeof(tmpmap), 2, 3, 1, &tmpflag) == 1 &&
+                  tmpflag.previous_value == 5u && tmpflag.new_value == 7u,
+              "SKW_2066_1ea3 preserves existing tmpmap flags");
+        CHECK(dm2_v1_skproject_tmpmap_or_flag(
+                  tmpmap, sizeof(tmpmap), 9, 9, 9, &tmpflag) == 0 &&
+                  tmpflag.blocked_out_of_bounds,
+              "SKW_2066_1ea3 rejects out-of-range tmpmap writes");
+    }
+
+    {
+        DM2_V1_SkprojectMapRecord records[8];
+        DM2_V1_SkprojectMap20661F37Receipt f37;
+        DM2_V1_SkprojectMap20661EC9Receipt ec9;
+        int16_t counter = 0;
+
+        memset(records, 0, sizeof(records));
+        records[0].next = 1u;
+        records[1].next = 2u;
+        records[1].record_type = 3u;
+        records[1].w2 = 0x0027u;
+        records[2].next = DM2_V1_SKPROJECT_MAP_RECORD_END;
+        records[2].record_type = 3u;
+        records[2].w2 = 0x00a7u;
+        CHECK(dm2_v1_skproject_map_2066_1f37(
+                  records, 8u, 0u, 4u, &counter, &f37) == 1 &&
+                  f37.valid && f37.scanned_records == 2u &&
+                  f37.matched_records == 2u &&
+                  f37.updated_records == 1u && counter == 1 &&
+                  records[1].w2 == (uint16_t)(0x0027u | (5u << 7)) &&
+                  records[2].w2 == 0x00a7u,
+              "DM2_map_2066_1f37 scans linked records and only updates unset type-0x27 records");
+
+        memset(records, 0, sizeof(records));
+        records[1].next = 2u;
+        records[1].record_type = 2u;
+        records[2].next = 6u;
+        records[2].record_type = 3u;
+        records[6].next = DM2_V1_SKPROJECT_MAP_RECORD_END;
+        records[6].record_type = 5u;
+        CHECK(dm2_v1_skproject_map_2066_1ec9(
+                  records, 8u, 5u, 1u, &ec9) == 2u &&
+                  ec9.valid && ec9.rewired_records == 2u &&
+                  ec9.appended_tail == 6u &&
+                  records[2].next == 6u &&
+                  records[1].next == 5u,
+              "DM2_map_2066_1ec9 prepends low-type record chain before existing head");
+        CHECK(dm2_v1_skproject_map_2066_1ec9(
+                  records, 8u, DM2_V1_SKPROJECT_MAP_RECORD_END, 3u,
+                  &ec9) == 3u &&
+                  ec9.valid && ec9.returned_head == 3u,
+              "DM2_map_2066_1ec9 returns append chain when existing head is end marker");
+    }
 }
 
 static void test_calc_vector_w_dir(void)

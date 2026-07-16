@@ -710,11 +710,11 @@ DM2_GET_TILE_VALUE	SKULLWIN	SKULLWIN/c_map.cpp	107	src/dm2/dm2_v1_dungeon_loader
 DM2_CHANGE_CURRENT_MAP_TO	SKULLWIN	SKULLWIN/c_map.cpp	328	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
 DM_LOCATE_OTHER_LEVEL	SKULLWIN	SKULLWIN/c_map.cpp	384		MISSING
 DM2_SET_DESTINATION_OF_MINION_MAP	SKULLWIN	SKULLWIN/c_map.cpp	540	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_set_destination_of_minion_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_map_0cee_1815	SKULLWIN	SKULLWIN/c_map.cpp	583		MISSING
-DM2_map_0cee_185a	SKULLWIN	SKULLWIN/c_map.cpp	615		MISSING
-DM2_map_2066_1f37	SKULLWIN	SKULLWIN/c_map.cpp	712		MISSING
-DM2_map_2066_1ec9	SKULLWIN	SKULLWIN/c_map.cpp	760		MISSING
-SKW_2066_1ea3	SKULLWIN	SKULLWIN/c_map.cpp	806		MISSING
+DM2_map_0cee_1815	SKULLWIN	SKULLWIN/c_map.cpp	583	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_1815; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DM2_map_0cee_185a	SKULLWIN	SKULLWIN/c_map.cpp	615	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_185a; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DM2_map_2066_1f37	SKULLWIN	SKULLWIN/c_map.cpp	712	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_2066_1f37; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DM2_map_2066_1ec9	SKULLWIN	SKULLWIN/c_map.cpp	760	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_2066_1ec9; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+SKW_2066_1ea3	SKULLWIN	SKULLWIN/c_map.cpp	806	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_tmpmap_or_flag; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_ARRANGE_DUNGEON	SKULLWIN	SKULLWIN/c_map.cpp	823		MISSING
 DM2_map_0cee_04e5	SKULLWIN	SKULLWIN/c_map.cpp	1255	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_04e5; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_map_0cee_17e7	SKULLWIN	SKULLWIN/c_map.cpp	1271	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_17e7; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING

@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject map/list helper bundle: mapped
+  `DM2_map_0cee_1815`, `DM2_map_0cee_185a`, `DM2_map_2066_1f37`,
+  `DM2_map_2066_1ec9`, and `SKW_2066_1ea3` from `SKULLWIN/c_map.cpp`.
+  Coverage locks candidate-table random selection, four-slot map decoration
+  fill/sanitize behavior, linked-record 0x27 updates, low-type chain prepend,
+  and tmpmap flag mutation without claiming full live `DM2_ARRANGE_DUNGEON`
+  global mutation. Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_skproject_core -j2` and `ctest --test-dir build-local-ninja
+  --output-on-failure -R '^dm2_v1_skproject_core$'` passed.
+
 - 2026-07-16 DM2 skproject map helper bundle: mapped
   `DM2_SET_DESTINATION_OF_MINION_MAP`, `DM2_map_0cee_17e7`,
   `DM2_map_0cee_04e5`, and `DM2_map_3B001` from `SKULLWIN/c_map.cpp`.
