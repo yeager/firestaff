@@ -540,6 +540,37 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_ItemFitForEquipReceipt;
 
+#define DM2_V1_CMDSTR_KEY_COUNT 18u
+#define DM2_V1_CMDSTR_TEXT_CAP 128u
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t truncated;
+    uint16_t byte_count;
+    char text[DM2_V1_CMDSTR_TEXT_CAP];
+    uint32_t text_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GdatNameReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t found;
+    uint8_t key_index;
+    char key[3];
+    int32_t value;
+    uint32_t text_hash;
+    uint32_t receipt_hash;
+} DM2_V1_CmdstrEntryReceipt;
+
+typedef struct {
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+} DM2_V1_CurCmdstrContext;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -809,6 +840,29 @@ int dm2_v1_is_item_fit_for_equip_receipt(
     int only_body_part,
     int active_hand_fit_result,
     DM2_V1_ItemFitForEquipReceipt *out_receipt);
+int dm2_v1_query_gdat_item_name_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatNameReceipt *out_receipt);
+int dm2_v1_query_cmdstr_name_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatNameReceipt *out_receipt);
+int dm2_v1_query_cmdstr_entry_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int key_index,
+    DM2_V1_CmdstrEntryReceipt *out_receipt);
+int dm2_v1_query_cur_cmdstr_entry_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_CurCmdstrContext *context,
+    int key_index,
+    DM2_V1_CmdstrEntryReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,

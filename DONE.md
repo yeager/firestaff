@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 querydb command-string receipts: mapped
+  `DM2_QUERY_GDAT_ITEM_NAME`, `QUERY_GDAT_ITEM_NAME`,
+  `DM2_QUERY_CMDSTR_NAME`, `QUERY_CMDSTR_NAME`,
+  `DM2_QUERY_CMDSTR_ENTRY`, `QUERY_CMDSTR_ENTRY`, and
+  `DM2_QUERY_CUR_CMDSTR_ENTRY` to real `dtText` GDAT rows through
+  `dm2_v1_asset_loader`. The receipt parses name prefixes, repeated command
+  keys, signed values, absent keys, and caller-owned current cmdstr context.
+
 - 2026-07-16 DM2 blit/text alias receipt bundle: mapped
   `DM2_DRAW_ICON_PICT_BUFF`, `DRAW_ICON_PICT_BUFF`, `DRAW_DEF_PICT`,
   `DRAW_GRAY_OVERLAY`, `DRAW_NAME_STR`, `DRAW_GUIDED_STR`, and

@@ -47,6 +47,11 @@
     skproject-backed narrow receipts or verified text-route aliases. Remaining
     adjacent work is actual decoded-picture blit ownership in live GDAT
     dungeon/HUD consumers.
+  - 2026-07-16 DM2 querydb text update: `DM2_QUERY_GDAT_ITEM_NAME`,
+    `QUERY_GDAT_ITEM_NAME`, `DM2_QUERY_CMDSTR_NAME`, `QUERY_CMDSTR_NAME`,
+    `DM2_QUERY_CMDSTR_ENTRY`, `QUERY_CMDSTR_ENTRY`, and
+    `DM2_QUERY_CUR_CMDSTR_ENTRY` now read real `dtText` rows through the asset
+    loader. Remaining adjacent work is broader live command-string consumers.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer
