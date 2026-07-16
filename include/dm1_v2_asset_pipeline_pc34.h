@@ -200,16 +200,17 @@ const char* dm1_v2_asset_pipeline_source_evidence(void);
 const char* dm1_v2_asset_surface_category_name(DM1_V2_SurfaceCategory cat);
 
 /* ══════════════════════════════════════════════════════════════════════
- * V2.2 Modern Graphics — Fallback Pipeline
+ * V2.2 Modern Graphics — Finished-Pack Pipeline
  *
  * V2.2 is the third presentation mode alongside V2.0 (Filtered) and
- * V2.1 (Upscaled). Modern assets are shipped as a separate optional
- * asset pack. When unavailable, the system falls back in order:
+ * V2.1 (Upscaled). Modern assets are shipped as a separate asset pack.
+ * V2.2 is admitted only when the manifest, every required real material,
+ * and finish_receipt.json match. When unavailable, the system falls back:
  *   MODERN (V2.2) → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1)
  *
- * Asset-not-found guard: if a specific modern asset cannot be opened,
- * the shape system returns DM1_V22_SHAPE_MISSING_PLACEHOLDER (16×16
- * magenta checkerboard) rather than crashing.
+ * Missing modern assets fail closed at the V2.2 boundary. Callers must
+ * use source-backed V2.1/V2.0/V1 fallback routes; V2.2 must not draw
+ * placeholder pixels when real data is available or expected.
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* Shape source enum — determines which art pipeline feeds the renderer.
@@ -236,9 +237,10 @@ const char* m11_v22_get_modern_asset_root(void);
  * id, source_file, width, height fields. */
 int m11_v22_validate_manifest(const char* manifest_path);
 
-/* Check if the modern asset pack is installed and has critical categories.
- * Returns 1 if available (wall_shapes, floor_shapes, creature_shapes
- * all have at least one entry), 0 otherwise. */
+/* Check if a complete, reviewed modern asset pack is installed.
+ * Returns 1 only when manifest classification is FINISHED_REAL and the
+ * finish receipt is promoted. Critical-category presence alone is not
+ * sufficient for V2.2 runtime admission. */
 int m11_v22_modern_assets_available(void);
 
 /* ── V2.2 Runtime State ─────────────────────────────────────────── */
@@ -256,8 +258,9 @@ int m11_v22_get_epx_cache_warm(void);
 
 /* Returns the best available shape source given the presentation mode
  * index (0=V1, 1=V2.0, 2=V2.1, 3=V2.2) and current asset state.
- * Applies the fallback chain automatically.
- * Logs warnings when falling back (V2.2→V2.1, V2.1 cache cold→V2.0). */
+ * Applies the fallback chain automatically. V2.2 returns V2_MODERN only
+ * for a complete reviewed pack; otherwise it falls through to source-
+ * backed V2.1/V2.0/V1 without placeholder pixels. */
 DM1_V22_ShapeSource m11_v22_best_available_shape_source(int presentation_mode_index);
 
 /* Human-readable name for a shape source enum value. */
@@ -265,18 +268,18 @@ const char* m11_v22_shape_source_name(DM1_V22_ShapeSource src);
 
 /* ── Missing Asset Guard ─────────────────────────────────────────── */
 
-/* Returns the 16×16 RGBA missing-asset placeholder surface
- * (magenta checkerboard). Never returns NULL; out_w/out_h are
- * always set to 16 on success. */
+/* Legacy diagnostic placeholder. Runtime V2.2 admission must not use this
+ * as material; use m11_v22_get_shape_path() plus the finished-pack gates. */
 const uint32_t* m11_v22_get_missing_placeholder(int* out_w, int* out_h);
 
 /* Look up a modern asset file path from the manifest.
  * category: e.g. "wall_shapes", "creature_shapes"
  * asset_id: the "id" field from the manifest entry
  * out_path: filled with the full filesystem path on success
- * Returns 1 if found and file exists, 0 otherwise.
- * If manifest is unavailable or asset not found, returns 0 and
- * the caller should use m11_v22_get_missing_placeholder(). */
+ * Returns 1 if found and file exists, 0 otherwise. A 0 result means the
+ * V2.2 route is not drawable and the caller must use a source-backed
+ * lower presentation mode instead of a placeholder.
+ */
 int m11_v22_get_shape_path(const char* category, const char* asset_id,
                             char* out_path, size_t out_path_size);
 

@@ -1,9 +1,9 @@
 /*
- * dm1_v2_modern_assets_pc34.c — V2.2 Modern Graphics Fallback Pipeline
+ * dm1_v2_modern_assets_pc34.c — V2.2 Modern Graphics Finished-Pack Pipeline
  *
  * V2.2 "Modern Graphics" is the third mode alongside V2.0 (Filtered) and
- * V2.1 (Upscaled). When V2.2 assets are unavailable or disabled, the
- * system gracefully falls back to the next-best available mode.
+ * V2.1 (Upscaled). V2.2 is admitted only with a complete reviewed pack.
+ * Otherwise rendering falls back to the source-backed V2.1/V2.0/V1 modes.
  *
  * Fallback chain:
  *   MODERN (V2.2) → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1)
@@ -20,12 +20,13 @@
  * Required categories for a complete install:
  *   wall_shapes, floor_shapes, creature_shapes, ui_chrome, champion_portraits
  *
- * Asset-not-found guard: if a specific modern asset referenced in the
- * manifest cannot be opened, the shape system returns
- * DM1_V22_SHAPE_MISSING_PLACEHOLDER rather than crashing.
+ * Missing modern assets fail closed for V2.2. The legacy placeholder API
+ * remains for diagnostics only and must not be used as runtime material.
  */
 
 #include "dm1_v2_asset_pipeline_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "dm1_v22_finished_pack_receipt_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <ctype.h>
@@ -108,6 +109,31 @@ static int m11_v22_file_exists(const char* path) {
     FILE* fp = fopen(path, "rb");
     if (fp) { fclose(fp); return 1; }
     return 0;
+}
+
+static char* m11_v22_read_file(const char* path, size_t* out_len) {
+    FILE* fp;
+    long size;
+    char* text;
+    if (out_len) *out_len = 0U;
+    if (!path || path[0] == '\0') return NULL;
+    fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return NULL; }
+    size = ftell(fp);
+    if (size <= 0 || size > 1024L * 1024L) { fclose(fp); return NULL; }
+    if (fseek(fp, 0, SEEK_SET) != 0) { fclose(fp); return NULL; }
+    text = (char*)malloc((size_t)size + 1U);
+    if (!text) { fclose(fp); return NULL; }
+    if (fread(text, 1, (size_t)size, fp) != (size_t)size) {
+        free(text);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    text[size] = '\0';
+    if (out_len) *out_len = (size_t)size;
+    return text;
 }
 
 /* Trimming helpers */
@@ -388,6 +414,15 @@ int m11_v22_validate_manifest(const char* manifest_path) {
 int m11_v22_modern_assets_available(void) {
     if (g_v22_manifest_path[0] == '\0') return 0;
     if (!m11_v22_file_exists(g_v22_manifest_path)) return 0;
+    /* Critical-category presence is not enough for DM1 V2.2 runtime.
+     * The modern path may draw only a complete non-placeholder pack
+     * whose finish receipt matches the current manifest. */
+    return dm1_v22_famg_is_finished_real() && dm1_v22_fpr_is_promoted();
+}
+
+static int __attribute__((unused)) m11_v22_modern_assets_manifest_has_critical_categories(void) {
+    if (g_v22_manifest_path[0] == '\0') return 0;
+    if (!m11_v22_file_exists(g_v22_manifest_path)) return 0;
 
     /* Quick check: open the manifest and look for at least the three
      * critical categories (wall_shapes, floor_shapes, creature_shapes)
@@ -525,12 +560,12 @@ int m11_v22_get_epx_cache_warm(void) {
 DM1_V22_ShapeSource m11_v22_best_available_shape_source(int presentation_mode_index) {
     switch (presentation_mode_index) {
         case 3: /* M12_PRESENTATION_V22_MODERN */
-            if (g_v22_modern_assets_installed) {
+            if (g_v22_modern_assets_installed &&
+                m11_v22_modern_assets_available()) {
                 return DM1_V22_SHAPE_SOURCE_V2_MODERN;
             }
-            /* Fall through: no modern assets, fall back to V2.1 */
-            fprintf(stderr, "[V2.2] V2.2 modern assets not available, "
-                            "falling back to V2.1 upscaled\n");
+            fprintf(stderr, "[V2.2] reviewed V2.2 modern pack not available, "
+                            "falling back to source-backed V2.1 upscaled\n");
             /* fall through */
         case 2: /* M12_PRESENTATION_V21_UPSCALED */
             if (g_epx_cache_warm) {
@@ -563,63 +598,49 @@ const uint32_t* m11_v22_get_missing_placeholder(int* out_w, int* out_h) {
 int m11_v22_get_shape_path(const char* category, const char* asset_id,
                             char* out_path, size_t out_path_size) {
     if (!category || !asset_id || !out_path || out_path_size == 0U) return 0;
+    out_path[0] = '\0';
     if (g_v22_manifest_path[0] == '\0') return 0;
 
-    FILE* fp = fopen(g_v22_manifest_path, "rb");
-    if (!fp) return 0;
+    size_t manifest_len = 0U;
+    char* manifest = m11_v22_read_file(g_v22_manifest_path, &manifest_len);
+    if (!manifest) return 0;
 
-    int found_entry = 0;
-    char line[256];
-    int in_target_category = 0;
-    int in_target_entry = 0;
-    char resolved_id[64] = {0};
-    char resolved_file[256] = {0};
+    char cat_pattern[128];
+    snprintf(cat_pattern, sizeof(cat_pattern), "\"%s\"", category);
+    char* cat = strstr(manifest, cat_pattern);
+    if (!cat) { free(manifest); return 0; }
+    char* array = strchr(cat, '[');
+    if (!array) { free(manifest); return 0; }
+    char* array_end = strchr(array, ']');
+    if (!array_end) { free(manifest); return 0; }
 
-    while (m11_v22_read_line(fp, line, sizeof(line))) {
-        /* Category detection */
-        char cat_pattern[64];
-        snprintf(cat_pattern, sizeof(cat_pattern), "\"%s\":", category);
-        if (strncmp(line, cat_pattern, strlen(cat_pattern)) == 0) {
-            in_target_category = 1;
-            found_entry = 0;
-            continue;
-        }
+    char id_pattern[160];
+    snprintf(id_pattern, sizeof(id_pattern), "\"id\":\"%s\"", asset_id);
+    char* entry = strstr(array, id_pattern);
+    if (!entry || entry > array_end) {
+        snprintf(id_pattern, sizeof(id_pattern), "\"id\": \"%s\"", asset_id);
+        entry = strstr(array, id_pattern);
+    }
+    if (!entry || entry > array_end) { free(manifest); return 0; }
 
-        if (!in_target_category) continue;
-
-        /* Entry start */
-        if (strchr(line, '{') != NULL && !in_target_entry) {
-            in_target_entry = 1;
-            resolved_id[0] = '\0';
-            resolved_file[0] = '\0';
-        }
-
-        if (!in_target_entry) continue;
-
-        /* Field extraction */
-        if (strchr(line, '}') != NULL) {
-            /* End of entry */
-            in_target_entry = 0;
-            if (resolved_id[0] != '\0' && strcmp(resolved_id, asset_id) == 0) {
-                found_entry = 1;
-                break;
-            }
-            continue;
-        }
-
-        /* Extract id and source_file fields */
-        char val[256];
-        if (m11_v22_extract_string(line, "id", val, sizeof(val))) {
-            m11_v22_trim(resolved_id, val, sizeof(resolved_id));
-        }
-        if (m11_v22_extract_string(line, "source_file", val, sizeof(val))) {
-            m11_v22_trim(resolved_file, val, sizeof(resolved_file));
-        }
+    char* obj_start = entry;
+    while (obj_start > array && *obj_start != '{') --obj_start;
+    char* obj_end = strchr(entry, '}');
+    if (*obj_start != '{' || !obj_end || obj_end > array_end) {
+        free(manifest);
+        return 0;
     }
 
-    fclose(fp);
-
-    if (!found_entry || resolved_file[0] == '\0') return 0;
+    char saved = obj_end[1];
+    obj_end[1] = '\0';
+    char resolved_file[256] = {0};
+    int has_file = m11_v22_extract_string(obj_start, "source_file",
+                                          resolved_file, sizeof(resolved_file));
+    obj_end[1] = saved;
+    if (!has_file || resolved_file[0] == '\0') {
+        free(manifest);
+        return 0;
+    }
 
     /* Resolve the file relative to the manifest's directory:
      * <modern_dir>/<category>/<source_file> */
@@ -643,7 +664,10 @@ int m11_v22_get_shape_path(const char* category, const char* asset_id,
      * Note: we use the manifest's category path directly */
     FSP_JoinPath(out_path, out_path_size, modern_dir, category);
     FSP_JoinPath(out_path, out_path_size, out_path, resolved_file);
-    return m11_v22_file_exists(out_path) ? 1 : 0;
+    int exists = m11_v22_file_exists(out_path) ? 1 : 0;
+    if (!exists) out_path[0] = '\0';
+    free(manifest);
+    return exists;
 }
 
 /* m11_v22_shape_source_name — human-readable name for a shape source */
