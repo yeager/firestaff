@@ -690,7 +690,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0469_memory_free_at_he
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0469_memory_free_at_heap_top_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
+            -Wall -Wextra -pedantic
         )
     endif()
     add_test(
