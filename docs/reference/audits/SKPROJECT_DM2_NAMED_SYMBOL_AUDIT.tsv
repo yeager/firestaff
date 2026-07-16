@@ -367,7 +367,7 @@ DM2_READ_GRAPHICS_STRUCTURE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1026	include/dm2_v1
 DM2_EXTRACT_GDAT_IMAGE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1132	include/dm2_v1_asset_loader.h:dm2_v1_extract_gdat_image_receipt	IMPLEMENTED_NARROW	DM2 v1 receipt binds raw GDAT image header, bpp, allocation byte formula, direct IMG3/U4 or IMG9 decode hash, and underlay-overlay route without fabricating overlay pixels or CPX cache nodes.
 DM2_LOAD_DYN4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1294		MISSING
 DM2_LOAD_GDAT_INTERFACE_00_02	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1922	src/dm2/dm2_v1_viewport_renderer.c:273	UNCERTAIN
-DM2_LOAD_GDAT_INTERFACE_00_0A	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2008		MISSING
+DM2_LOAD_GDAT_INTERFACE_00_0A	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2008	include/dm2_v1_boot.h:dm2_v1_boot_load_gdat_interface_00_0a_receipt; src/dm2/dm2_v1_boot.c; tests/test_dm2_v1_boot_profile_smoke.c	VERIFIED_SOURCE_MAPPING	DM2 v1 boot consumes INTERFACE_GENERAL dt07/0x0A Rect14 rows from real GDAT, binds the host placement proof, and rejects missing/partial table evidence instead of synthesizing creature placement data.
 DM2_3D93B	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2108	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_3d93b_text_scan	VERIFIED_SOURCE_MAPPING	DM2 v1 c_map/c_record receipt scans source-owned byte maps and DB2 Text records for ext-0x0B/0x0F/0x10 SimpleTextExtUsage behavior, including mode 4 visibility-bit clearing, without GDAT image fallback or incomplete G1 graph promotion.
 init	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	26	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 xlat	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	39		MISSING

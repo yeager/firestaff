@@ -1115,6 +1115,20 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int host_receipt_consumed;
+    uint32_t table_hash;
+    uint32_t row_count;
+    uint32_t stride;
+    uint32_t byte_count;
+    uint32_t placement_hash;
+    uint32_t placement_count;
+    uint32_t rotated_cell_mask;
+    uint32_t max_stretched_size;
+    uint32_t receipt_hash;
+} DM2_V1_LoadGdatInterface000AReceipt;
+
+typedef struct {
+    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -1796,6 +1810,11 @@ int dm2_v1_boot_interface_rect14_table(
 int dm2_v1_boot_interface_rect14_host_receipt(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceRect14HostReceipt *out_receipt);
+
+/* skproject DM2_LOAD_GDAT_INTERFACE_00_0A receipt. */
+int dm2_v1_boot_load_gdat_interface_00_0a_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_LoadGdatInterface000AReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

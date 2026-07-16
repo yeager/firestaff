@@ -1916,3 +1916,54 @@ done:
     *out_receipt = receipt;
     return receipt.workflow_complete;
 }
+
+int nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    const Nexus_V1_Prs3Vdp1ProvenanceReceipt *provenance,
+    const Nexus_V1_Prs3Vdp1ProducerAttestationReceipt *attestation,
+    Nexus_V1_Prs3Vdp1ReviewedUploadReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1ReviewedUploadReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.independent_authentication_required = 1;
+    if (!raw_sidecars || !provenance || !attestation) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_sidecars_bound = raw_sidecars->raw_sidecars_bound != 0;
+    receipt.provenance_complete = provenance->provenance_complete != 0;
+    receipt.producer_attestation_bound =
+        attestation->workflow_complete != 0 &&
+        attestation->attestation_parsed != 0 &&
+        attestation->capture_mode_declared != 0;
+    receipt.producer_binary_bound =
+        provenance->producer_binary_bound != 0 &&
+        attestation->producer_binary_bound != 0;
+    receipt.artifact_hashes_bound = attestation->artifact_hashes_bound != 0;
+    receipt.original_saturn_execution_claimed =
+        attestation->original_saturn_execution_claimed != 0;
+    receipt.independent_authentication_required =
+        attestation->independent_authentication_required != 0;
+    receipt.reviewed_upload_path_bound =
+        receipt.raw_sidecars_bound &&
+        receipt.provenance_complete &&
+        receipt.producer_attestation_bound &&
+        receipt.producer_binary_bound &&
+        receipt.artifact_hashes_bound &&
+        receipt.original_saturn_execution_claimed &&
+        receipt.independent_authentication_required &&
+        raw_sidecars->trace_source_bound &&
+        raw_sidecars->trace_file.source_bound_capture &&
+        !raw_sidecars->capture_producer_authenticated &&
+        !provenance->capture_producer_authenticated &&
+        !attestation->capture_producer_authenticated;
+    receipt.menu_bpk_upload_reviewed = receipt.reviewed_upload_path_bound;
+    receipt.original_saturn_capture_authenticated = 0;
+    receipt.runtime_upload_permitted = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.reviewed_upload_path_bound;
+}

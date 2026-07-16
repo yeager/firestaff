@@ -733,6 +733,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     }
     {
         DM2_V1_InterfaceRect14HostReceipt rect14_host;
+        DM2_V1_LoadGdatInterface000AReceipt rect14_symbol;
         int rect14_ready = dm2_v1_boot_interface_rect14_host_receipt(
             launch.profile, &rect14_host);
         CHECK((rect14_ready == 0 && rect14_host.valid == 0) ||
@@ -744,6 +745,21 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
                    rect14_host.rotated_cell_mask != 0u &&
                    rect14_host.max_stretched_size > 0u),
               "boot exposes optional skproject dt07/0A placements through the host receipt");
+        CHECK((rect14_ready == 0 &&
+               dm2_v1_boot_load_gdat_interface_00_0a_receipt(
+                   launch.profile, &rect14_symbol) == 0) ||
+              (dm2_v1_boot_load_gdat_interface_00_0a_receipt(
+                   launch.profile, &rect14_symbol) == 1 &&
+               rect14_symbol.valid &&
+               rect14_symbol.host_receipt_consumed &&
+               rect14_symbol.table_hash == rect14_host.table_hash &&
+               rect14_symbol.row_count == rect14_host.row_count &&
+               rect14_symbol.stride == 14u &&
+               rect14_symbol.byte_count == rect14_host.row_count * 14u &&
+               rect14_symbol.placement_hash == rect14_host.placement_hash &&
+               rect14_symbol.placement_count == rect14_host.placement_count &&
+               rect14_symbol.receipt_hash != 0u),
+              "DM2_LOAD_GDAT_INTERFACE_00_0A consumes the exact Rect14 host proof");
     }
     CHECK(hud_capture.interface_rect14_ready == 0 ||
               (hud_capture.interface_rect14_hash != 0u &&
