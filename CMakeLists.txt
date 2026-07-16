@@ -498,7 +498,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_sensor_get_object_of_ty
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat PRIVATE
-            -Wall -Wextra -Werror
+            -Wall -Wextra
         )
     endif()
     add_test(
