@@ -97,6 +97,16 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint32_t offset;
+    uint16_t value;
+    uint8_t width_bytes;
+    uint8_t blocked_missing_buffer;
+    uint8_t blocked_out_of_bounds;
+    uint8_t blocked_unsupported_width;
+} DM2_V1_SkprojectCursorAccessReceipt;
+
+typedef struct {
+    int valid;
     int blocked_missing_input;
     int immediate_colors_before;
     int driver_setcolors_requested;
@@ -1756,6 +1766,30 @@ int dm2_v1_skproject_ptr_advance(
     uint32_t capacity,
     uint32_t *out_offset,
     DM2_V1_SkprojectPtrAdvanceReceipt *out_receipt);
+int dm2_v1_skproject_write_byte(
+    uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint8_t value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt);
+int dm2_v1_skproject_write_word(
+    uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint16_t value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt);
+int dm2_v1_skproject_read_byte(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint8_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt);
+int dm2_v1_skproject_read_sbyte(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    int8_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt);
 int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
                                              uint8_t *out_palette);
 int dm2_v1_skproject_palettecolor_from_ui8(uint8_t color,

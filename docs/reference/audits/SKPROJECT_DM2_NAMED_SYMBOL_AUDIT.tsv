@@ -1584,10 +1584,10 @@ SK_STRCAT	SKWIN	SKWIN/SkWinCore.cpp	14467	src/dm2/dm2_v1_skproject_core.c; inclu
 DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds skill panel subpanel, blank panel, skill labels, attribute labels, and ability-value route.
 REFRESH_PLAYER_STAT_DISP	SKWIN	SKWIN/SkWinCore.cpp	14573		MISSING
 PTR_ADVANCE	SKWIN	SKWIN/SkWinCore.cpp	33667	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_ptr_advance; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the COMPRESS_RECTS byte-cursor advance macro as a bounded offset delta receipt.
-WRITE_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33668		MISSING
-WRITE_WORD	SKWIN	SKWIN/SkWinCore.cpp	33669		MISSING
-READ_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33855		MISSING
-READ_SBYTE	SKWIN	SKWIN/SkWinCore.cpp	33856		MISSING
+WRITE_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33668	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_write_byte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the COMPRESS_RECTS byte write macro as a bounded one-byte cursor store.
+WRITE_WORD	SKWIN	SKWIN/SkWinCore.cpp	33669	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_write_word; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the COMPRESS_RECTS word write macro as a bounded little-endian 16-bit cursor store.
+READ_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33855	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_byte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT unsigned byte cursor read with missing-buffer and bounds receipts.
+READ_SBYTE	SKWIN	SKWIN/SkWinCore.cpp	33856	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_sbyte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT signed byte cursor read while preserving int8 sign interpretation.
 READ_WORD	SKWIN	SKWIN/SkWinCore.cpp	33857		MISSING
 MIN	SKWIN	SKWIN/SkWinCore.cpp	54512	src/dm2/dm2_v1_creature.c:51	UNCERTAIN
 QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	39		MISSING

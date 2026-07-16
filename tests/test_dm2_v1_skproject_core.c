@@ -104,9 +104,13 @@ static void test_util_helpers(void)
     DM2_V1_SkprojectPtInRectReceipt pt_receipt;
     DM2_V1_SkprojectOffsetRectReceipt offset_receipt;
     DM2_V1_SkprojectPtrAdvanceReceipt advance_receipt;
+    DM2_V1_SkprojectCursorAccessReceipt cursor_receipt;
     DM2_V1_SkprojectIsNegativeReceipt neg_receipt;
     DM2_V1_SkprojectContainerMapReceipt map_receipt;
     DM2_V1_SkprojectPossessionSlotReceipt pos_receipt;
+    uint8_t cursor_bytes[8] = { 0 };
+    uint8_t read_byte = 0u;
+    int8_t read_sbyte = 0;
     int16_t table[5] = { 1, 2, 3, 4, 5 };
     DM2_V1_SkprojectRect origin = { 10, 20, 100, 80 };
     DM2_V1_SkprojectRect source = { 13, 31, 7, 5 };
@@ -207,6 +211,40 @@ static void test_util_helpers(void)
               12u, 21, 32u, &offset, &advance_receipt) == 0 &&
               advance_receipt.blocked_out_of_bounds,
           "PTR_ADVANCE fails closed past buffer capacity");
+
+    CHECK(dm2_v1_skproject_write_byte(
+              cursor_bytes, sizeof(cursor_bytes), 2u, 0xabu,
+              &cursor_receipt) == 1 &&
+              cursor_receipt.valid && cursor_receipt.width_bytes == 1u &&
+              cursor_bytes[2] == 0xabu,
+          "WRITE_BYTE writes one byte at the source cursor");
+    CHECK(dm2_v1_skproject_write_word(
+              cursor_bytes, sizeof(cursor_bytes), 4u, 0x1234u,
+              &cursor_receipt) == 1 &&
+              cursor_receipt.valid && cursor_receipt.width_bytes == 2u &&
+              cursor_bytes[4] == 0x34u && cursor_bytes[5] == 0x12u,
+          "WRITE_WORD writes little-endian 16-bit data at the source cursor");
+    CHECK(dm2_v1_skproject_read_byte(
+              cursor_bytes, sizeof(cursor_bytes), 2u, &read_byte,
+              &cursor_receipt) == 1 &&
+              cursor_receipt.valid && read_byte == 0xabu,
+          "READ_BYTE reads one unsigned byte from the source cursor");
+    cursor_bytes[6] = 0xf0u;
+    CHECK(dm2_v1_skproject_read_sbyte(
+              cursor_bytes, sizeof(cursor_bytes), 6u, &read_sbyte,
+              &cursor_receipt) == 1 &&
+              cursor_receipt.valid && read_sbyte == -16,
+          "READ_SBYTE preserves signed 8-bit interpretation");
+    CHECK(dm2_v1_skproject_write_word(
+              cursor_bytes, sizeof(cursor_bytes), 7u, 0x5678u,
+              &cursor_receipt) == 0 &&
+              cursor_receipt.blocked_out_of_bounds,
+          "WRITE_WORD fails closed when the word crosses buffer end");
+    CHECK(dm2_v1_skproject_read_byte(
+              0, sizeof(cursor_bytes), 0u, &read_byte,
+              &cursor_receipt) == 0 &&
+              cursor_receipt.blocked_missing_buffer,
+          "READ_BYTE rejects missing cursor storage");
 
     CHECK(dm2_v1_skproject_is_negative(-1, &neg_receipt) == 1 &&
               neg_receipt.valid && neg_receipt.value == -1 &&
@@ -2883,7 +2921,15 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "OFFSET_RECT") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
-                     "PTR_ADVANCE") != 0,
+                     "PTR_ADVANCE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "WRITE_BYTE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "WRITE_WORD") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "READ_BYTE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "READ_SBYTE") != 0,
           "source evidence names rect and cursor helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_GET_ADDRESS_OF_RECORD") != 0 &&

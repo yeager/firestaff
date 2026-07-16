@@ -365,6 +365,140 @@ int dm2_v1_skproject_ptr_advance(
     return 1;
 }
 
+static int dm2_v1_skproject_cursor_write(
+    uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint16_t value,
+    uint8_t width_bytes,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCursorAccessReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.offset = offset;
+    receipt.value = value;
+    receipt.width_bytes = width_bytes;
+    if (!buffer) {
+        receipt.blocked_missing_buffer = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (width_bytes != 1u && width_bytes != 2u) {
+        receipt.blocked_unsupported_width = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (offset > capacity || (uint32_t)width_bytes > capacity - offset) {
+        receipt.blocked_out_of_bounds = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    buffer[offset] = (uint8_t)(value & 0xffu);
+    if (width_bytes == 2u)
+        buffer[offset + 1u] = (uint8_t)((value >> 8) & 0xffu);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+static int dm2_v1_skproject_cursor_read(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint8_t width_bytes,
+    uint16_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCursorAccessReceipt receipt;
+    uint16_t value;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.offset = offset;
+    receipt.width_bytes = width_bytes;
+    if (!buffer || !out_value) {
+        receipt.blocked_missing_buffer = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (width_bytes != 1u && width_bytes != 2u) {
+        receipt.blocked_unsupported_width = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (offset > capacity || (uint32_t)width_bytes > capacity - offset) {
+        receipt.blocked_out_of_bounds = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    value = buffer[offset];
+    if (width_bytes == 2u)
+        value = (uint16_t)(value | ((uint16_t)buffer[offset + 1u] << 8));
+    *out_value = value;
+    receipt.value = value;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_write_byte(
+    uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint8_t value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    return dm2_v1_skproject_cursor_write(
+        buffer, capacity, offset, value, 1u, out_receipt);
+}
+
+int dm2_v1_skproject_write_word(
+    uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint16_t value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    return dm2_v1_skproject_cursor_write(
+        buffer, capacity, offset, value, 2u, out_receipt);
+}
+
+int dm2_v1_skproject_read_byte(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint8_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    uint16_t value = 0u;
+
+    if (!dm2_v1_skproject_cursor_read(
+            buffer, capacity, offset, 1u, &value, out_receipt))
+        return 0;
+    if (out_value) *out_value = (uint8_t)value;
+    return 1;
+}
+
+int dm2_v1_skproject_read_sbyte(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    int8_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    uint16_t value = 0u;
+
+    if (!dm2_v1_skproject_cursor_read(
+            buffer, capacity, offset, 1u, &value, out_receipt))
+        return 0;
+    if (out_value) *out_value = (int8_t)(uint8_t)value;
+    return 1;
+}
+
 int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
                                              uint8_t *out_palette)
 {
@@ -5658,7 +5792,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_rect.cpp DM2_PT_IN_RECT; "
            "SKULLWIN/c_buttons.cpp DM2_OFFSET_RECT; "
            "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR/PT_IN_RECT/"
-           "OFFSET_RECT/PTR_ADVANCE/IS_NEGATIVE/"
+           "OFFSET_RECT/PTR_ADVANCE/WRITE_BYTE/WRITE_WORD/"
+           "READ_BYTE/READ_SBYTE/IS_NEGATIVE/"
            "IS_CONTAINER_MAP/FIND_POUCH_OR_SCABBARD_POSSESSION_POS; "
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"

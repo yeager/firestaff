@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 cursor macro receipt bundle: mapped `WRITE_BYTE`,
+  `WRITE_WORD`, `READ_BYTE`, and `READ_SBYTE` to skproject-backed bounded
+  helpers. The regression covers single-byte writes, little-endian word writes,
+  unsigned byte reads, signed byte reads, and fail-closed cursor bounds.
+
 - 2026-07-16 DM2 rect/cursor receipt bundle: mapped `DM2_OFFSET_RECT`,
   `OFFSET_RECT`, `PT_IN_RECT`, and `PTR_ADVANCE` to skproject-backed bounded
   helpers. The regression covers inclusive rect hit-testing, origin-relative
