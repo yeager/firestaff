@@ -54,9 +54,35 @@ static int find_script(const char* argv0, char* out, size_t out_size) {
 
     if (dirname_of(argv0, exe_dir, sizeof(exe_dir)) &&
         join_path(candidate, sizeof(candidate), exe_dir,
+                  "scripts/firestaff_artpack_studio.py") &&
+        path_exists(candidate)) {
+        snprintf(out, out_size, "%s", candidate);
+        return 1;
+    }
+    if (dirname_of(argv0, exe_dir, sizeof(exe_dir)) &&
+        join_path(candidate, sizeof(candidate), exe_dir,
                   "../scripts/firestaff_artpack_studio.py") &&
         path_exists(candidate)) {
         snprintf(out, out_size, "%s", candidate);
+        return 1;
+    }
+    if (dirname_of(argv0, exe_dir, sizeof(exe_dir)) &&
+        join_path(candidate, sizeof(candidate), exe_dir,
+                  "../Resources/scripts/firestaff_artpack_studio.py") &&
+        path_exists(candidate)) {
+        snprintf(out, out_size, "%s", candidate);
+        return 1;
+    }
+    if (dirname_of(argv0, exe_dir, sizeof(exe_dir)) &&
+        join_path(candidate, sizeof(candidate), exe_dir,
+                  "../share/firestaff/scripts/firestaff_artpack_studio.py") &&
+        path_exists(candidate)) {
+        snprintf(out, out_size, "%s", candidate);
+        return 1;
+    }
+    if (path_exists("/usr/share/firestaff/scripts/firestaff_artpack_studio.py")) {
+        snprintf(out, out_size, "%s",
+                 "/usr/share/firestaff/scripts/firestaff_artpack_studio.py");
         return 1;
     }
     return 0;
