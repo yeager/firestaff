@@ -89,11 +89,15 @@ int dm1_item_aspect_index(int thingType, int subtype) {
     return (int)kObjectInfoAspect[objectInfoIndex];
 }
 
-unsigned int dm1_item_sprite_index(int thingType, int subtype) {
-    int aspectIndex = dm1_item_aspect_index(thingType, subtype);
+unsigned int dm1_object_aspect_graphic_index(int aspectIndex) {
     if (aspectIndex < 0 || aspectIndex >= 85) return 0u;
     return DM1_GRAPHIC_FIRST_OBJECT +
            (unsigned int)kObjectAspectFirstNative[aspectIndex];
+}
+
+unsigned int dm1_item_sprite_index(int thingType, int subtype) {
+    int aspectIndex = dm1_item_aspect_index(thingType, subtype);
+    return dm1_object_aspect_graphic_index(aspectIndex);
 }
 
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex) {

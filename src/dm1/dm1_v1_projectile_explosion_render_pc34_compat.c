@@ -13,6 +13,7 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <string.h>
 
