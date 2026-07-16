@@ -361,10 +361,10 @@ s_bbbbw	SKULLWIN	SKULLWIN/c_gdatfile.cpp	857		MISSING
 DM2_LOAD_ENT1	SKULLWIN	SKULLWIN/c_gdatfile.cpp	884	include/dm2_v1_asset_loader.h:dm2_v1_load_ent1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile ENT1 receipt binds raw data 0, endian tag check, T/I/D/S/P/F/G group map, stride, entry count, and raw0 hash before higher-level GDAT consumers.
 DM2_482b_0684	SKULLWIN	SKULLWIN/c_gdatfile.cpp	932	include/dm2_v1_asset_loader.h:dm2_v1_gdat_sound_entry_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile sound-entry receipt binds a dt02 GDAT row to its raw payload span after the source short or six-byte header and respects the SOUND7 rejection gate.
 R_2D07D	SKULLWIN	SKULLWIN/c_gdatfile.cpp	977		MISSING
-DM2_TRACK_UNDERLAY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	997		MISSING
+DM2_TRACK_UNDERLAY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	997	include/dm2_v1_asset_loader.h:dm2_v1_gdat_track_underlay	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile underlay lookup performs the source binary search over sorted four-byte image->underlay pairs loaded from dtRaw8 0/0/0 and fails closed when absent.
 s_uww	SKULLWIN	SKULLWIN/c_gdatfile.cpp	999		MISSING
-DM2_READ_GRAPHICS_STRUCTURE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1026		MISSING
-DM2_EXTRACT_GDAT_IMAGE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1132		MISSING
+DM2_READ_GRAPHICS_STRUCTURE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1026	include/dm2_v1_asset_loader.h:dm2_v1_read_graphics_structure_receipt	IMPLEMENTED_NARROW	DM2 v1 receipt binds loaded GRAPHICS.DAT version, entry/raw counts, raw0 length, payload end, split-file flags, max raw payload, and optional dtRaw8 underlay table; OS file IO and allocator globals remain host-owned.
+DM2_EXTRACT_GDAT_IMAGE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1132	include/dm2_v1_asset_loader.h:dm2_v1_extract_gdat_image_receipt	IMPLEMENTED_NARROW	DM2 v1 receipt binds raw GDAT image header, bpp, allocation byte formula, direct IMG3/U4 or IMG9 decode hash, and underlay-overlay route without fabricating overlay pixels or CPX cache nodes.
 DM2_LOAD_DYN4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1294		MISSING
 DM2_LOAD_GDAT_INTERFACE_00_02	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1922	src/dm2/dm2_v1_viewport_renderer.c:273	UNCERTAIN
 DM2_LOAD_GDAT_INTERFACE_00_0A	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2008		MISSING

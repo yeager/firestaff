@@ -356,6 +356,47 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GraphicsDataReadReceipt;
 
+typedef struct {
+    uint16_t image_raw_index;
+    int16_t underlay_raw_index;
+} DM2_V1_GdatUnderlayPair;
+
+typedef struct {
+    uint8_t valid;
+    uint8_t versionlo;
+    uint8_t filetype1;
+    uint8_t filetype2;
+    uint8_t has_underlay_table;
+    uint16_t entries;
+    uint16_t raw_data_count;
+    uint16_t underlay_pair_count;
+    uint32_t raw0_length;
+    uint32_t graphics_file_size;
+    uint32_t calculated_payload_end;
+    uint32_t max_raw_payload_length;
+    uint32_t receipt_hash;
+} DM2_V1_GraphicsStructureReceipt;
+
+typedef struct {
+    uint8_t valid;
+    uint8_t uses_underlay;
+    uint8_t decode_img3_underlay;
+    uint8_t decode_img3_overlay;
+    uint8_t decode_img9;
+    uint8_t bpp;
+    uint8_t gfxalloc_done;
+    uint8_t prefer_hi_pool;
+    uint16_t raw_index;
+    uint16_t underlay_raw_index;
+    uint16_t width;
+    uint16_t height;
+    uint32_t raw_length;
+    uint32_t pixel_payload_bytes;
+    uint32_t allocation_bytes;
+    uint32_t decoded_pixel_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GdatImageExtractReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -509,6 +550,22 @@ int dm2_v1_graphics_data_read_receipt(
     uint32_t offset,
     uint32_t length,
     DM2_V1_GraphicsDataReadReceipt *out_receipt);
+int dm2_v1_gdat_track_underlay(
+    const DM2_V1_GdatUnderlayPair *pairs,
+    size_t pair_count,
+    uint16_t image_raw_index,
+    int16_t *out_underlay_raw_index);
+int dm2_v1_read_graphics_structure_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GraphicsStructureReceipt *out_receipt);
+int dm2_v1_extract_gdat_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    int gfxalloc_done,
+    int prefer_hi_pool,
+    const DM2_V1_GdatUnderlayPair *underlays,
+    size_t underlay_count,
+    DM2_V1_GdatImageExtractReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,
