@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 item/container classifier receipt bundle: mapped
+  `GET_ITEM_NAME`, `IS_MISCITEM_CURRENCY`, `IS_CONTAINER_MONEYBOX`,
+  `IS_CONTAINER_CHEST`, `GET_ITEM_ORDER_IN_CONTAINER`, `FMT_NUM`, and their
+  SKULLWIN aliases to skproject-backed receipts. The receipts cover GDAT
+  currency flags, moneybox item-list gating, chest exclusion, champion-bones
+  name side effect, order-text ranges, and four-byte numeric formatting.
+
 - 2026-07-16 DM2 tile/fill receipt bundle: mapped
   `GET_ADDRESS_OF_TILE_RECORD`, `GET_TILE_VALUE`, `FILL_ENTIRE_PICT`, and
   `FILL_RECT_SUMMARY` to skproject-backed bounded receipts. The receipts cover

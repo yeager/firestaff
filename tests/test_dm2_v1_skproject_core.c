@@ -1616,12 +1616,19 @@ static void test_item_value_weight_helpers(void)
     DM2_V1_SkprojectItemValueRecord records[8];
     DM2_V1_SkprojectItemValueWorld world;
     DM2_V1_SkprojectItemValueReceipt receipt;
+    DM2_V1_SkprojectItemClassifyReceipt classify;
+    DM2_V1_SkprojectItemNameReceipt item_name;
+    DM2_V1_SkprojectItemOrderReceipt item_order;
+    DM2_V1_SkprojectFmtNumReceipt fmt_num;
+    uint16_t money_ids[6] = { 4u, 5u, 6u, 7u, 261u, 262u };
 
     memset(records, 0, sizeof(records));
     world.records = records;
     world.record_count = 8u;
 
     records[0].object_id = 0x1400u;
+    records[0].gdat_cls1 = 1u;
+    records[0].gdat_cls2 = 2u;
     records[0].w2 = (uint16_t)(3u << 10);
     records[0].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
     records[0].gdat_word_values[1] = 4u;
@@ -1635,12 +1642,16 @@ static void test_item_value_weight_helpers(void)
     records[1].gdat_word_values[2] = 100u;
 
     records[2].object_id = 0x2402u;
+    records[2].gdat_cls1 = 20u;
+    records[2].gdat_cls2 = 4u;
     records[2].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
     records[2].contained_object_id = 0x1400u;
     records[2].container_type = 0u;
     records[2].gdat_word_values[1] = 10u;
 
     records[3].object_id = 0x2403u;
+    records[3].gdat_cls1 = 20u;
+    records[3].gdat_cls2 = 6u;
     records[3].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
     records[3].contained_object_id = 0x2804u;
     records[3].container_type = 0u;
@@ -1650,6 +1661,7 @@ static void test_item_value_weight_helpers(void)
     records[4].object_id = 0x2804u;
     records[4].w2 = (uint16_t)(2u << 14);
     records[4].next_object_id = 0x2805u;
+    records[4].gdat_word_values[0] = 0x4000u;
     records[4].gdat_word_values[1] = 5u;
     records[4].gdat_word_values[2] = 7u;
 
@@ -1665,6 +1677,9 @@ static void test_item_value_weight_helpers(void)
     records[6].gdat_word_values[1] = 9u;
 
     records[7].object_id = 0x1807u;
+    records[7].gdat_cls1 = 0x15u;
+    records[7].gdat_cls2 = 0u;
+    records[7].champion_bones_owner = 2u;
     records[7].w2 = (uint16_t)(1u << 9);
     records[7].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
     records[7].gdat_word_values[1] = 3u;
@@ -1711,6 +1726,61 @@ static void test_item_value_weight_helpers(void)
               &world, 0x1410u, 1u, &receipt) == 0 &&
               receipt.blocked_missing_record,
           "QUERY_ITEM_VALUE rejects missing source record");
+
+    CHECK(dm2_v1_skproject_is_container_moneybox(
+              &world, 0x2403u, 1, &classify) == 1 &&
+              classify.valid &&
+              classify.is_moneybox &&
+              classify.container_type == 0u,
+          "IS_CONTAINER_MONEYBOX requires container DB, type 0, and GDAT moneybox item list");
+    CHECK(dm2_v1_skproject_is_container_chest(
+              &world, 0x2402u, 0, &classify) == 1 &&
+              classify.valid &&
+              classify.is_chest &&
+              !classify.is_moneybox,
+          "IS_CONTAINER_CHEST accepts type-0 containers that are not moneyboxes");
+    CHECK(dm2_v1_skproject_is_container_chest(
+              &world, 0x2403u, 1, &classify) == 0 &&
+              classify.valid &&
+              classify.is_moneybox &&
+              !classify.is_chest,
+          "IS_CONTAINER_CHEST rejects moneybox containers");
+    CHECK(dm2_v1_skproject_is_miscitem_currency(
+              &world, 0x2804u, &classify) == 1 &&
+              classify.valid &&
+              classify.is_currency &&
+              classify.gdat_flags == 0x4000u,
+          "IS_MISCITEM_CURRENCY checks DB10 and GDAT currency flag 0x4000");
+    CHECK(dm2_v1_skproject_get_item_name(
+              &world, 0x1807u, 0u, 4u, &item_name) == 1 &&
+              item_name.valid &&
+              item_name.gdat_cls1 == 0x15u &&
+              item_name.gdat_cls2 == 0u &&
+              item_name.champion_bones_index == 2u &&
+              item_name.requested_gdat_item_name,
+          "GET_ITEM_NAME records champion-bones owner before querying GDAT item text");
+    CHECK(dm2_v1_skproject_get_item_order_in_container(
+              0x2403u, 6u, "5-7 J5-6", money_ids, 6u, 3u,
+              &item_order) == 4 &&
+              item_order.valid &&
+              item_order.expanded_item_id == 261u &&
+              item_order.returned_money_index == 4,
+          "GET_ITEM_ORDER_IN_CONTAINER parses ranges and J-offset item ids against the money table");
+    CHECK(dm2_v1_skproject_get_item_order_in_container(
+              0x2403u, 6u, "", money_ids, 6u, 0u, &item_order) == -1 &&
+              item_order.blocked_missing_text,
+          "GET_ITEM_ORDER_IN_CONTAINER rejects empty GDAT order text");
+    CHECK(dm2_v1_skproject_fmt_num(47u, 1u, 3u, &fmt_num) == 1 &&
+              fmt_num.valid &&
+              strcmp(fmt_num.buffer, "  47") == 0 &&
+              strcmp(fmt_num.returned_text, " 47") == 0 &&
+              fmt_num.returned_offset == 1u,
+          "FMT_NUM clean path blanks four bytes and returns 4-keta offset");
+    CHECK(dm2_v1_skproject_fmt_num(0u, 0u, 0u, &fmt_num) == 1 &&
+              fmt_num.valid &&
+              strcmp(fmt_num.returned_text, "0") == 0 &&
+              fmt_num.returned_offset == 3u,
+          "FMT_NUM non-clean path returns the first generated digit");
 }
 
 static void test_player_weight_helper(void)
@@ -2483,6 +2553,13 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "COUNT_BY_COIN_TYPES") != 0,
           "source evidence names coin count helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "IS_CONTAINER_MONEYBOX") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "GET_ITEM_ORDER_IN_CONTAINER") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FMT_NUM") != 0,
+          "source evidence names item/container classifier helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "BOOST_ATTRIBUTE") != 0,
           "source evidence names attribute boost helper");

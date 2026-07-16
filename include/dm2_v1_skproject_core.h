@@ -826,9 +826,12 @@ typedef struct {
     uint16_t contained_object_id;
     uint16_t gdat_word_values[0x36];
     uint16_t distinctive_item_type;
+    uint8_t gdat_cls1;
+    uint8_t gdat_cls2;
     uint8_t container_type;
     uint8_t is_moneybox;
     uint8_t is_currency;
+    uint8_t champion_bones_owner;
 } DM2_V1_SkprojectItemValueRecord;
 
 typedef struct {
@@ -877,6 +880,57 @@ typedef struct {
     uint32_t final_weight;
     uint16_t hero_flag_or;
 } DM2_V1_SkprojectPlayerWeightReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_null_object;
+    int blocked_missing_record;
+    uint16_t object_id;
+    uint8_t db_type;
+    uint8_t container_type;
+    uint8_t gdat_cls1;
+    uint8_t gdat_cls2;
+    uint8_t has_moneybox_item_list;
+    uint8_t is_moneybox;
+    uint8_t is_chest;
+    uint8_t is_currency;
+    uint16_t gdat_flags;
+} DM2_V1_SkprojectItemClassifyReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_null_object;
+    int blocked_missing_record;
+    uint16_t object_id;
+    uint8_t gdat_cls1;
+    uint8_t gdat_cls2;
+    uint8_t champion_bones_item_id;
+    uint8_t champion_bones_owner;
+    uint8_t champion_count;
+    uint8_t requested_gdat_item_name;
+    uint16_t champion_bones_index;
+} DM2_V1_SkprojectItemNameReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_text;
+    uint16_t object_id;
+    uint8_t container_cls2;
+    uint16_t requested_order;
+    uint16_t expanded_item_id;
+    uint16_t parsed_slot_count;
+    int16_t returned_money_index;
+} DM2_V1_SkprojectItemOrderReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t value;
+    uint16_t clean;
+    uint16_t keta;
+    uint8_t returned_offset;
+    char buffer[5];
+    char returned_text[5];
+} DM2_V1_SkprojectFmtNumReceipt;
 
 typedef struct {
     int valid;
@@ -1912,6 +1966,39 @@ uint16_t dm2_v1_skproject_add_item_charge(
     int16_t delta,
     DM2_V1_SkprojectItemChargeReceipt *out_receipt);
 uint16_t dm2_v1_skproject_get_max_charge(uint16_t object_id);
+int dm2_v1_skproject_is_container_moneybox(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    int has_moneybox_item_list,
+    DM2_V1_SkprojectItemClassifyReceipt *out_receipt);
+int dm2_v1_skproject_is_container_chest(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    int has_moneybox_item_list,
+    DM2_V1_SkprojectItemClassifyReceipt *out_receipt);
+int dm2_v1_skproject_is_miscitem_currency(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemClassifyReceipt *out_receipt);
+int dm2_v1_skproject_get_item_name(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t champion_bones_item_id,
+    uint8_t champion_count,
+    DM2_V1_SkprojectItemNameReceipt *out_receipt);
+int dm2_v1_skproject_get_item_order_in_container(
+    uint16_t object_id,
+    uint8_t container_cls2,
+    const char *order_text,
+    const uint16_t *money_item_ids,
+    uint16_t money_item_count,
+    uint16_t order,
+    DM2_V1_SkprojectItemOrderReceipt *out_receipt);
+int dm2_v1_skproject_fmt_num(
+    uint16_t value,
+    uint16_t clean,
+    uint16_t keta,
+    DM2_V1_SkprojectFmtNumReceipt *out_receipt);
 int32_t dm2_v1_skproject_query_item_value(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t object_id,
