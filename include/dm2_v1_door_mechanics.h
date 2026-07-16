@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_asset_loader.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

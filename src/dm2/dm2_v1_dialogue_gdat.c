@@ -1,4 +1,5 @@
 #include "dm2_v1_dialogue_gdat.h"
+#include "dm2_v1_weather_gdat.h"
 
 #include <string.h>
 
