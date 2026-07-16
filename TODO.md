@@ -3906,9 +3906,10 @@ activate V2.2. V2.2 selection and cache admission now additionally require
 a hash-matched `finish_receipt.json` whose reviewed slots cover the complete
 finished manifest; boot records the resulting receipt state so missing,
 stale, or partial review evidence has an explicit V2.1 fallback receipt.
-Remaining work is external: a complete, operator-reviewed real-art pack,
-matching receipt, and packaged Mac/app capture. The renderer root must also
-match the reviewed manifest root before V2.2 is admitted.
+2026-07-16 update: `scripts/build_dm1_v22_complete_artpack.py` now installs
+the final required teleporter-field slot, validates all seven runtime-gated
+DM1 V2.2 material slots, and writes a matching local `finish_receipt.json`.
+Remaining work is packaged Mac/app capture of the installed complete pack.
 
 CSB V2.0 now applies its real indexed filter chain to an M11 presentation
 copy. Remaining CSB V2.0 work is the RGBA CRT post-filter handoff and real

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 V2.2 complete artpack builder: added
+  `scripts/build_dm1_v22_complete_artpack.py`, installed the missing
+  `field_teleporter_hero_01.png` into the local DM1 modern pack, upgraded the
+  local manifest to include all seven runtime-gated finished-art slots, and
+  wrote a matching `finish_receipt.json`.
+
 - 2026-07-16 DM2 `EQUIP_ITEM_TO_INVENTORY` receipt: mapped the skproject
   inventory placement helper to `dm2_v1_skproject_equip_item_to_inventory()`.
   The regression covers direction-bit clearing, champion slot writes,
