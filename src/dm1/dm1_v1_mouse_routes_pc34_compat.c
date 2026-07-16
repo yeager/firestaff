@@ -1,4 +1,11 @@
 #include "dm1_v1_mouse_routes_pc34_compat.h"
+#include "champion_status_slotbox_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 
 #include <stddef.h>
 
