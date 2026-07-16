@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 111, CSB 1, shared DM1/CSB 1603, DM2 1626; 3341 total open rows
+  DM1 80, CSB 1, shared DM1/CSB 1589, DM2 1574; 3244 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -306,8 +306,8 @@
     `dm1_v1_event_timer_source_lock` coverage; no synthetic gameplay data was
     added. Broader square-event, champion-action, spell, and real-map
     side-effect bodies remain separate backlog work.
-  Prioritized backlog `F0185`-`F0208`, `F0224`, `F0233`-`F0240`, `F0261`,
-  and `F0265` rows are now disposed.
+  Prioritized backlog `F0185`-`F0208`, `F0224`-`F0229`, `F0231`-`F0240`,
+  `F0261`, `F0264`, and `F0265` rows are now disposed.
   Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token

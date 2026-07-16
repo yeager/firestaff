@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 GROUP/ACTION source-audit bundle: closed ReDMCSB `F0225`,
+  `F0231`, and `F0232` plus their Atari ST ABI aliases against DM1-owned
+  implementations. The bundle verifies Fuse/endgame gates, melee damage and
+  runtime side effects, luck/group-damage writeback, F0190 aftermath handoff,
+  and closed-door/projectile door-destruction gates including RA-door reject.
+  Also fixed the `test_dm1_v1_action_f0407_tail_pc34_compat` Ninja target so
+  it links the real creature-AI and steal-slot sources used by F0231 drop
+  handling. Verification: focused CTests
+  `dm1_v1_endgame_system_source_lock`,
+  `dm1_v1_action_f0407_tail_pc34_compat`,
+  `dm1_v1_ra_door_projectile_reject_pc34_compat`, backlog recount, and
+  `git diff --check`.
+
+- 2026-07-16 DM1 GROUP/MOVE source-audit bundle: closed ReDMCSB `F0226`,
+  `F0227`, `F0228`, `F0229`, and `F0264` plus their Atari ST ABI aliases
+  against existing DM1-owned source implementations. The bundle verifies
+  Manhattan square distance, rotated visibility cone checks, direction
+  selection with source RNG consumption, G0023 ordered-cell attack table
+  selection, and MOVESENS.C levitation rules for C04/C14/C15 without decoded
+  substitutes. Verification: focused CTest
+  `dm1_v1_creature_ai_behavior_source_lock`, focused CTest
+  `dm1_v1_ordered_cells_to_attack_pc34_compat`, backlog recount, and
+  `git diff --check`.
+
 - 2026-07-16 DM2 skproject GDAT ENT1/preload/sound receipts: added
   source-named `c_gdatfile.cpp` receipts for `DM2_LOAD_ENT1`,
   `DM2_LOAD_GDAT_ENTRIES`, `DM2_QUERY_NEXT_GDAT_ENTRY`, `DM2_47eb_00a4`,
