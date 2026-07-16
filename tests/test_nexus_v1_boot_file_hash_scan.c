@@ -530,8 +530,16 @@ int main(void) {
                           host_route.handoff_status == dgn_handoff.status &&
                           host_route.blocks_runtime_dgn == 1 &&
                           host_route.can_present_runtime_dgn == 0 &&
+                          host_route.rasterized_command_count == 0 &&
+                          host_route.written_pixels == 0 &&
                           host_route.fallback_visuals_permitted == 0,
-                      "Nexus real LEV00 host-route keeps an incomplete material route blocked without fallback");
+                      "Nexus real LEV00 host-route keeps an incomplete material route blocked without fallback pixels");
+            check_int(host_route.status ==
+                          NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_HANDOFF &&
+                          strcmp(nexus_viewport_dgn_host_route_status_name(
+                                     host_route.status),
+                                 "blocked-handoff") == 0,
+                      "Nexus real LEV00 host-route blocks before DGN command copy without synthetic route");
         }
         memset(&script_receipt, 0, sizeof(script_receipt));
         check_int(nexus_v1_current_level_script_runtime_receipt(

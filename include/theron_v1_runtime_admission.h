@@ -453,11 +453,17 @@ void theron_v1_runtime_track02_consumer_semantic_init(
 void theron_v1_runtime_track02_render_asset_admission_init(
     Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *out);
 
+void theron_v1_runtime_track02_render_asset_proof_init(
+    Theron_V1RuntimeTrack02RenderAssetProof *out);
+
 void theron_v1_runtime_track02_dungeon_handoff_init(
     Theron_V1RuntimeTrack02DungeonHandoffReceipt *out);
 
 void theron_v1_runtime_track02_host_dungeon_consumer_init(
     Theron_V1RuntimeTrack02HostDungeonConsumerReceipt *out);
+
+void theron_v1_runtime_track02_host_dungeon_consumer_proof_init(
+    Theron_V1RuntimeTrack02HostDungeonConsumerProof *out);
 
 int theron_v1_runtime_admission_attach(
     Theron_V1RuntimeAdmissionReceipt *out,
@@ -511,6 +517,14 @@ int theron_v1_runtime_bind_track02_consumer_semantics(
     const Theron_V1Track02Post3800ConsumerSemanticReceipt *consumer,
     Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out);
 
+int theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
+    const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
+    const Theron_Track02LevelRouteReceipt *level_route,
+    const Theron_Track02ObjectTableRouteReceipt *object_route,
+    const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
+    const Theron_Track02PaletteWindowEvidence *palette_window,
+    Theron_V1RuntimeTrack02RenderAssetProof *out);
+
 int theron_v1_runtime_bind_track02_render_asset_admission(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
     const Theron_V1RuntimeTrack02RenderAssetProof *proof,
@@ -520,6 +534,16 @@ int theron_v1_runtime_bind_track02_dungeon_handoff(
     const Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *admission,
     const Theron_V1RuntimeTrack02DungeonHandoffProof *proof,
     Theron_V1RuntimeTrack02DungeonHandoffReceipt *out);
+
+int theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
+    const Theron_V1RuntimeTrack02DungeonHandoffReceipt *handoff,
+    const char *original_host_route_identity,
+    int level_grid_runtime_consumer_bound,
+    int object_table_runtime_consumer_bound,
+    int bitmap_palette_runtime_consumer_bound,
+    int host_surface_upload_proven,
+    int host_capture_frame_proven,
+    Theron_V1RuntimeTrack02HostDungeonConsumerProof *out);
 
 int theron_v1_runtime_bind_track02_host_dungeon_consumer(
     const Theron_V1RuntimeTrack02DungeonHandoffReceipt *handoff,

@@ -512,6 +512,56 @@ static void test_damage_all_champions(void) {
     PASS();
 }
 
+/* -- Test: F0324 zero attack has no champion side effects ------------ */
+static void test_damage_all_champions_zero_attack(void) {
+    TEST(damage_all_champions_zero_attack);
+    DM1_CombatState s;
+    dm1_combat_init(&s);
+    s.championCount = 2;
+    dm1_combat_init_champion(&s.champions[0]);
+    dm1_combat_init_champion(&s.champions[1]);
+    s.pendingDamage[0] = 3;
+    s.pendingWounds[1] = DM1_WOUND_HEAD;
+
+    CHECK(dm1_damage_all_champions(&s, 0, DM1_WOUND_ALL, DM1_ATTACK_SELF) == 0,
+          "F0324 zero attack returns zero damaged champions");
+    CHECK(s.pendingDamage[0] == 3,
+          "F0324 zero attack leaves existing pending damage untouched");
+    CHECK(s.pendingWounds[1] == DM1_WOUND_HEAD,
+          "F0324 zero attack leaves existing pending wounds untouched");
+
+    PASS();
+}
+
+/* -- Test: F0320 applies wounds before pending-damage branches -------- */
+static void test_pending_damage_applies_wounds_before_damage_guard(void) {
+    TEST(pending_damage_applies_wounds_before_damage_guard);
+    DM1_CombatState s;
+    dm1_combat_init(&s);
+    s.championCount = 2;
+    dm1_combat_init_champion(&s.champions[0]);
+    dm1_combat_init_champion(&s.champions[1]);
+    s.champions[0].currentHealth = 0;
+    s.champions[0].alive = 0;
+    s.champions[1].currentHealth = 25;
+    s.pendingWounds[0] = DM1_WOUND_TORSO;
+    s.pendingWounds[1] = DM1_WOUND_LEGS;
+    s.pendingDamage[1] = 0;
+
+    dm1_apply_pending_damage(&s);
+
+    CHECK((s.champions[0].wounds & DM1_WOUND_TORSO) != 0,
+          "F0320 mounts pending wounds before dead champion skip");
+    CHECK((s.champions[1].wounds & DM1_WOUND_LEGS) != 0,
+          "F0320 mounts pending wounds before zero damage continue");
+    CHECK(s.pendingWounds[0] == 0 && s.pendingWounds[1] == 0,
+          "F0320 clears pending wounds after mounting");
+    CHECK(s.champions[1].currentHealth == 25,
+          "F0320 zero pending damage leaves health unchanged");
+
+    PASS();
+}
+
 /* ── Test: creature attacks champion (melee) ─────────────────────── */
 static void test_creature_melee_attack(void) {
     TEST(creature_melee_attack);
@@ -1075,6 +1125,8 @@ int main(void) {
     test_creature_poison_gate_and_vitality_adjust();
     test_damage_all_creatures();
     test_damage_all_champions();
+    test_damage_all_champions_zero_attack();
+    test_pending_damage_applies_wounds_before_damage_guard();
     test_creature_melee_attack();
     test_champion_melee_action();
     test_non_material_melee_requires_vorpal_or_disrupt();

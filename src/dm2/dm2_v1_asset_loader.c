@@ -1702,6 +1702,293 @@ int dm2_v1_extract_gdat_image_receipt(
     return 1;
 }
 
+int dm2_v1_query_gdat_image_entry_buff_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatImageEntryBuffReceipt *out_receipt)
+{
+    DM2_V1_GdatImageEntryBuffReceipt receipt;
+    const DM2_V1_GdatEntry *entry;
+    const DM2_V1_GdatEntry *selected;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t bpp = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    selected = entry;
+    if (!selected) {
+        /* skproject QUERY_GDAT_IMAGE_ENTRY_BUFF falls back to the real
+         * MISCELLANEOUS/FE/FE GDAT image. This is source-owned data, not a
+         * Firestaff generated visual. Missing default data still fails. */
+        selected = dm2_gdat_find_entry(loader, DM2_GDAT_CATEGORY_MISCELLANEOUS,
+                                       0xfe, DM2_GDAT_ENTRY_TYPE_IMAGE, 0xfe);
+        receipt.used_default_image = 1u;
+    }
+    raw = dm2_gdat_raw_from_entry(loader, selected, &raw_size);
+    if (!selected || !raw || raw_size < DM2_IMG3_HEADER_SIZE ||
+        !dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 6u), &bpp)) {
+        return 0;
+    }
+
+    receipt.width = (uint16_t)(rd16le(raw) & 0x03ffu);
+    receipt.height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
+    if (receipt.width == 0u || receipt.height == 0u ||
+        (bpp != 4u && bpp != 8u)) {
+        return 0;
+    }
+
+    receipt.accepted = 1u;
+    receipt.category = (uint8_t)category;
+    receipt.index = (uint8_t)index;
+    receipt.field = (uint8_t)field;
+    receipt.bits_per_pixel = (uint8_t)bpp;
+    receipt.requested_data_index = entry ? entry->data_index : 0xffffu;
+    receipt.selected_data_index = selected->data_index;
+    receipt.selected_raw_index = (uint16_t)(selected->data_index & 0x7fffu);
+    receipt.raw_length = (uint32_t)raw_size;
+    receipt.raw_hash = dm2_fnv1a_bytes(raw, raw_size);
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        ((uint32_t)(uint8_t)category << 16) |
+            ((uint32_t)(uint8_t)index << 8) | (uint32_t)(uint8_t)field,
+        receipt.selected_data_index,
+        ((uint32_t)receipt.width << 16) | receipt.height,
+        receipt.raw_hash ^ receipt.used_default_image);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_query_gdat_image_metrics_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_width,
+    uint16_t *out_height,
+    DM2_V1_GdatImageEntryBuffReceipt *out_receipt)
+{
+    DM2_V1_GdatImageEntryBuffReceipt receipt;
+
+    if (out_width) *out_width = 0u;
+    if (out_height) *out_height = 0u;
+    if (!out_width || !out_height ||
+        !dm2_v1_query_gdat_image_entry_buff_receipt(loader, category, index,
+                                                    field, &receipt)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_width = receipt.width;
+    *out_height = receipt.height;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_query_pict_bits_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t mode,
+    int existing_bitmap_present,
+    int cached_bitmap_present,
+    int category,
+    int index,
+    int field,
+    DM2_V1_QueryPictBitsReceipt *out_receipt)
+{
+    DM2_V1_GdatImageEntryBuffReceipt image;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->mode = mode;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = (uint8_t)field;
+
+    /* skproject QUERY_PICT_BITS: mode bit 2 forces a GDAT image lookup,
+     * otherwise bit 3 asks the existing bitmap cache, otherwise the current
+     * bitmap pointer is reused. This receipt records only that ownership
+     * route and never creates substitute pixels. */
+    if ((mode & 0x04u) != 0u) {
+        if (!dm2_v1_query_gdat_image_entry_buff_receipt(
+                loader, category, index, field, &image)) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+            return 0;
+        }
+        out_receipt->accepted = 1u;
+        out_receipt->queried_gdat_image = 1u;
+        out_receipt->selected_raw_index = image.selected_raw_index;
+        out_receipt->width = image.width;
+        out_receipt->height = image.height;
+        out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+            mode, image.selected_data_index,
+            ((uint32_t)image.width << 16) | image.height,
+            image.raw_hash);
+        return 1;
+    }
+
+    if ((mode & 0x08u) != 0u) {
+        if (!cached_bitmap_present) return 0;
+        out_receipt->accepted = 1u;
+        out_receipt->used_cached_bitmap = 1u;
+        out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+            mode, 0x43414348u, (uint32_t)category, (uint32_t)field);
+        return 1;
+    }
+
+    if (!existing_bitmap_present) return 0;
+    out_receipt->accepted = 1u;
+    out_receipt->used_existing_bitmap = 1u;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        mode, 0x45584953u, (uint32_t)category, (uint32_t)field);
+    return 1;
+}
+
+int dm2_v1_query_4bpp_pict_buff_and_pal_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    uint16_t width_divisor,
+    DM2_V1_Query4BppPictBuffAndPalReceipt *out_receipt)
+{
+    enum { MAP_CHIP_FIELD = DM2_GDAT_IMG_MAP_CHIP };
+    DM2_V1_GdatEntryQueryReceipt loadable;
+    DM2_V1_GdatImageEntryBuffReceipt image;
+    uint8_t palette16[16];
+    uint32_t palette_hash = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (width_divisor == 0u ||
+        !dm2_v1_query_gdat_entry_if_loadable(
+            loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE,
+            MAP_CHIP_FIELD, &loadable) ||
+        !dm2_v1_query_gdat_image_entry_buff_receipt(
+            loader, category, index, MAP_CHIP_FIELD, &image) ||
+        image.used_default_image ||
+        image.bits_per_pixel != 4u ||
+        !dm2_v1_asset_load_image_local_palette(
+            loader, category, index, MAP_CHIP_FIELD, palette16,
+            &palette_hash)) {
+        return 0;
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = MAP_CHIP_FIELD;
+    memcpy(out_receipt->palette16, palette16, sizeof(out_receipt->palette16));
+    out_receipt->selected_raw_index = image.selected_raw_index;
+    out_receipt->width = image.width;
+    out_receipt->height = image.height;
+    out_receipt->width_units = (uint16_t)(image.width / width_divisor);
+    out_receipt->image_hash = image.raw_hash;
+    out_receipt->palette_hash = palette_hash;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        loadable.receipt_hash, image.raw_hash, palette_hash,
+        ((uint32_t)out_receipt->width_units << 16) | image.height);
+    return 1;
+}
+
+int dm2_v1_query_picst_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_QueryPicstImageReceipt *out_receipt)
+{
+    DM2_V1_GdatImageEntryBuffReceipt image;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_query_gdat_image_entry_buff_receipt(
+            loader, category, index, field, &image)) {
+        return 0;
+    }
+
+    /* skproject QUERY_PICST_IMAGE resolves the source GDAT image, resets
+     * picture x/y to zero, stores mode 4, and copies the bitmap dimensions.
+     * This receipt records those source fields without drawing or allocating
+     * a replacement picture. */
+    out_receipt->accepted = 1u;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = (uint8_t)field;
+    out_receipt->mode = 4u;
+    out_receipt->selected_raw_index = image.selected_raw_index;
+    out_receipt->width = image.width;
+    out_receipt->height = image.height;
+    out_receipt->data_index = image.selected_data_index;
+    out_receipt->image_hash = image.raw_hash;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        image.receipt_hash, 4u,
+        ((uint32_t)image.width << 16) | image.height,
+        image.raw_hash);
+    return 1;
+}
+
+int dm2_v1_query_gdat_summary_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_QueryGdatSummaryImageReceipt *out_receipt)
+{
+    uint16_t data_index = 0u;
+    uint32_t palette_hash = 0u;
+    uint8_t palette16[16];
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = (uint8_t)field;
+
+    /* QUERY_GDAT_SUMMARY_IMAGE initializes a blank picture when cls1 == FF.
+     * It intentionally avoids GDAT lookup in that case. */
+    if ((uint8_t)category == 0xffu) {
+        out_receipt->accepted = 1u;
+        out_receipt->gdat_bypassed_for_ff = 1u;
+        out_receipt->colors = 0xffu;
+        out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+            0xffu, (uint32_t)(uint8_t)index, (uint32_t)(uint8_t)field, 0u);
+        return 1;
+    }
+
+    if (!dm2_v1_query_gdat_entry_data_index(
+            loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE, field,
+            &data_index) ||
+        !dm2_v1_asset_load_image_metadata(
+            loader, category, index, field, &out_receipt->metadata)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    if (dm2_v1_asset_load_image_local_palette(
+            loader, category, index, field, palette16, &palette_hash)) {
+        out_receipt->colors = 16u;
+        memcpy(out_receipt->palette16, palette16,
+               sizeof(out_receipt->palette16));
+        out_receipt->palette_hash = palette_hash;
+    } else {
+        /* skproject records colors=-1 when local palette lookup fails; it
+         * still returns the source image descriptor, without substituting
+         * another palette. */
+        out_receipt->colors = 0xffu;
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->data_index = data_index;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        data_index, out_receipt->metadata.metadata_hash,
+        palette_hash,
+        ((uint32_t)out_receipt->metadata.width << 16) |
+            out_receipt->metadata.height);
+    return 1;
+}
+
 int dm2_v1_gdat_alloc_pict_buff_receipt(
     uint16_t width,
     uint16_t height,

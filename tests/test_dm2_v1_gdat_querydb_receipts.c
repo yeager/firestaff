@@ -20,13 +20,13 @@ static int failed;
 } while (0)
 
 static void fixture_loader(DM2_V1_AssetLoader *loader,
-                           uint8_t data[192],
-                           uint32_t raw_offsets[6],
-                           uint32_t raw_sizes[6],
-                           DM2_V1_GdatEntry entries[7])
+                           uint8_t data[256],
+                           uint32_t raw_offsets[8],
+                           uint32_t raw_sizes[8],
+                           DM2_V1_GdatEntry entries[9])
 {
     memset(loader, 0, sizeof(*loader));
-    memset(data, 0, 192u);
+    memset(data, 0, 256u);
     memcpy(data + 16u, "IMGRAW", 6u);
     memcpy(data + 32u, "TEXT", 4u);
     memcpy(data + 48u, "PAL0123456789ABC", 16u);
@@ -43,18 +43,44 @@ static void fixture_loader(DM2_V1_AssetLoader *loader,
     data[141u] = 0u;
     data[142u] = 3u;
     data[143u] = 0u;
+    data[150u] = 3u;
+    data[151u] = 0u;
+    data[152u] = 2u;
+    data[153u] = 0u;
+    data[154u] = 4u;
+    data[155u] = 0u;
+    data[156u] = 4u;
+    data[157u] = 0u;
+    memcpy(data + 160u, "\x10\x11\x12\x13\x14\x15"
+                         "\x00\x01\x02\x03\x04\x05\x06\x07"
+                         "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f", 22u);
+    data[190u] = 8u;
+    data[191u] = 0u;
+    data[192u] = 4u;
+    data[193u] = 0u;
+    data[194u] = 4u;
+    data[195u] = 0u;
+    data[196u] = 4u;
+    data[197u] = 0u;
+    memcpy(data + 200u, "\x20\x21\x22\x23\x24\x25\x26\x27"
+                         "\x00\x03\x06\x09\x0c\x0f\x12\x15"
+                         "\x18\x1b\x1e\x21\x24\x27\x2a\x2d", 24u);
     raw_offsets[0] = 16u;
     raw_offsets[1] = 32u;
     raw_offsets[2] = 48u;
     raw_offsets[3] = 80u;
     raw_offsets[4] = 96u;
     raw_offsets[5] = 140u;
+    raw_offsets[6] = 150u;
+    raw_offsets[7] = 190u;
     raw_sizes[0] = 6u;
     raw_sizes[1] = 4u;
     raw_sizes[2] = 16u;
     raw_sizes[3] = 10u;
     raw_sizes[4] = 28u;
     raw_sizes[5] = 4u;
+    raw_sizes[6] = 32u;
+    raw_sizes[7] = 34u;
     entries[0].cls1 = DM2_GDAT_CATEGORY_TITLE;
     entries[0].cls2 = 0u;
     entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
@@ -90,30 +116,47 @@ static void fixture_loader(DM2_V1_AssetLoader *loader,
     entries[6].cls3 = DM2_GDAT_ENTRY_TYPE_RAW8;
     entries[6].cls4 = 0u;
     entries[6].data_index = 5u;
+    entries[7].cls1 = DM2_GDAT_CATEGORY_MISCELLANEOUS;
+    entries[7].cls2 = 0xfeu;
+    entries[7].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[7].cls4 = 0xfeu;
+    entries[7].data_index = 6u;
+    entries[8].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    entries[8].cls2 = 2u;
+    entries[8].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[8].cls4 = DM2_GDAT_IMG_MAP_CHIP;
+    entries[8].data_index = 7u;
     loader->data = data;
-    loader->data_size = 192u;
+    loader->data_size = 256u;
     loader->loaded = 1;
     loader->category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader->raw_data_count = 6u;
+    loader->raw_data_count = 8u;
     loader->raw_offsets = raw_offsets;
     loader->raw_sizes = raw_sizes;
     loader->entries = entries;
-    loader->entry_count = 7u;
+    loader->entry_count = 9u;
 }
 
 static void test_fixture_entry_queries(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[192];
-    uint32_t raw_offsets[6];
-    uint32_t raw_sizes[6];
-    DM2_V1_GdatEntry entries[7];
+    uint8_t data[256];
+    uint32_t raw_offsets[8];
+    uint32_t raw_sizes[8];
+    DM2_V1_GdatEntry entries[9];
     DM2_V1_GdatEntryQueryReceipt receipt;
+    DM2_V1_GdatImageEntryBuffReceipt image_receipt;
+    DM2_V1_QueryPictBitsReceipt pict_bits;
+    DM2_V1_Query4BppPictBuffAndPalReceipt pict4;
+    DM2_V1_QueryPicstImageReceipt picst;
+    DM2_V1_QueryGdatSummaryImageReceipt summary;
     const uint8_t *ptr;
     size_t size = 0u;
     uint32_t u32 = 0u;
     uint32_t value = 0u;
     uint16_t u16 = 0u;
+    uint16_t width = 0u;
+    uint16_t height = 0u;
     uint8_t copy[16];
 
     fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
@@ -201,16 +244,103 @@ static void test_fixture_entry_queries(void)
               &receipt) &&
               !receipt.copied_to_destination,
           "DM2_LOAD_GDAT_ENTRY_DATA_TO rejects scalar entries");
+
+    CHECK(dm2_v1_query_gdat_image_entry_buff_receipt(
+              &loader, DM2_GDAT_CATEGORY_TITLE, 1, 0, &image_receipt) &&
+              image_receipt.accepted &&
+              !image_receipt.used_default_image &&
+              image_receipt.selected_raw_index == 4u &&
+              image_receipt.width == 2u &&
+              image_receipt.height == 2u &&
+              image_receipt.bits_per_pixel == 4u &&
+              image_receipt.raw_hash != 0u,
+          "QUERY_GDAT_IMAGE_ENTRY_BUFF admits the exact real dtImage raw payload");
+    CHECK(dm2_v1_query_gdat_image_entry_buff_receipt(
+              &loader, DM2_GDAT_CATEGORY_TITLE, 99, 0, &image_receipt) &&
+              image_receipt.accepted &&
+              image_receipt.used_default_image &&
+              image_receipt.requested_data_index == 0xffffu &&
+              image_receipt.selected_raw_index == 6u &&
+              image_receipt.width == 3u &&
+              image_receipt.height == 2u,
+          "QUERY_GDAT_IMAGE_ENTRY_BUFF falls back only to the real MISC FE/FE image");
+    CHECK(dm2_v1_query_gdat_image_metrics_receipt(
+              &loader, DM2_GDAT_CATEGORY_TITLE, 1, 0,
+              &width, &height, &image_receipt) &&
+              width == 2u && height == 2u &&
+              image_receipt.selected_data_index == 4u,
+          "QUERY_GDAT_IMAGE_METRICS returns source IMG3 dimensions");
+    CHECK(dm2_v1_query_pict_bits_receipt(
+              &loader, 0x04u, 0, 0, DM2_GDAT_CATEGORY_TITLE, 1, 0,
+              &pict_bits) &&
+              pict_bits.accepted &&
+              pict_bits.queried_gdat_image &&
+              pict_bits.selected_raw_index == 4u &&
+              pict_bits.width == 2u &&
+              pict_bits.height == 2u,
+          "QUERY_PICT_BITS mode bit 2 routes through real GDAT image data");
+    CHECK(dm2_v1_query_pict_bits_receipt(
+              &loader, 0x08u, 0, 1, DM2_GDAT_CATEGORY_TITLE, 1, 0,
+              &pict_bits) &&
+              pict_bits.used_cached_bitmap &&
+              !pict_bits.queried_gdat_image,
+          "QUERY_PICT_BITS mode bit 3 requires an existing cached bitmap route");
+    CHECK(!dm2_v1_query_pict_bits_receipt(
+              &loader, 0x00u, 0, 0, DM2_GDAT_CATEGORY_TITLE, 1, 0,
+              &pict_bits),
+          "QUERY_PICT_BITS rejects missing current bitmap without fallback");
+    CHECK(dm2_v1_query_4bpp_pict_buff_and_pal_receipt(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2, 4u, &pict4) &&
+              pict4.accepted &&
+              pict4.field == DM2_GDAT_IMG_MAP_CHIP &&
+              pict4.selected_raw_index == 7u &&
+              pict4.width == 8u &&
+              pict4.height == 4u &&
+              pict4.width_units == 2u &&
+              pict4.palette16[0] == 0x00u &&
+              pict4.palette16[15] == 0x2du &&
+              pict4.palette_hash != 0u,
+          "QUERY_4BPP_PICT_BUFF_AND_PAL admits real map-chip pixels and local palette");
+    CHECK(!dm2_v1_query_4bpp_pict_buff_and_pal_receipt(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 99, 4u, &pict4),
+          "QUERY_4BPP_PICT_BUFF_AND_PAL rejects absent map-chip rows");
+    CHECK(dm2_v1_query_picst_image_receipt(
+              &loader, DM2_GDAT_CATEGORY_TITLE, 1, 0, &picst) &&
+              picst.accepted &&
+              picst.mode == 4u &&
+              picst.selected_raw_index == 4u &&
+              picst.width == 2u &&
+              picst.height == 2u &&
+              picst.image_hash != 0u,
+          "QUERY_PICST_IMAGE binds source image descriptor to real GDAT pixels");
+    CHECK(dm2_v1_query_gdat_summary_image_receipt(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2,
+              DM2_GDAT_IMG_MAP_CHIP, &summary) &&
+              summary.accepted &&
+              !summary.gdat_bypassed_for_ff &&
+              summary.metadata.width == 8u &&
+              summary.metadata.height == 4u &&
+              summary.metadata.bits_per_pixel == 4u &&
+              summary.colors == 16u &&
+              summary.palette16[15] == 0x2du &&
+              summary.palette_hash != 0u,
+          "QUERY_GDAT_SUMMARY_IMAGE binds metadata offsets and local palette");
+    CHECK(dm2_v1_query_gdat_summary_image_receipt(
+              &loader, 0xff, 0, 0, &summary) &&
+              summary.accepted &&
+              summary.gdat_bypassed_for_ff &&
+              summary.colors == 0xffu,
+          "QUERY_GDAT_SUMMARY_IMAGE cls FF bypasses GDAT lookup");
 }
 
 static void test_fixture_gdat_entry_iteration_and_sound(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[192];
+    uint8_t data[256];
     uint8_t sample[4] = {0x00u, 0x7fu, 0x80u, 0xffu};
-    uint32_t raw_offsets[6];
-    uint32_t raw_sizes[6];
-    DM2_V1_GdatEntry entries[7];
+    uint32_t raw_offsets[8];
+    uint32_t raw_sizes[8];
+    DM2_V1_GdatEntry entries[9];
     DM2_V1_GdatLoadEntriesReceipt load_receipt;
     DM2_V1_GdatEntryIterator iterator;
     DM2_V1_GdatEntryQueryReceipt entry_receipt;
@@ -221,11 +351,11 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
 
     CHECK(dm2_v1_load_gdat_entries_receipt(&loader, &load_receipt) &&
               load_receipt.valid &&
-              load_receipt.entry_count == 7u &&
-              load_receipt.loadable_entry_count == 5u &&
+              load_receipt.entry_count == 9u &&
+              load_receipt.loadable_entry_count == 7u &&
               load_receipt.scalar_entry_count == 2u &&
-              load_receipt.payload_bytes == 52u &&
-              load_receipt.allocated_bytes_with_length_words == 62u,
+              load_receipt.payload_bytes == 118u &&
+              load_receipt.allocated_bytes_with_length_words == 132u,
           "LOAD_GDAT_ENTRIES receipt preloads only non-scalar raw payloads");
 
     memset(&iterator, 0, sizeof(iterator));
@@ -283,10 +413,10 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
 static void test_graphics_structure_and_image_extract(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[192];
-    uint32_t raw_offsets[6];
-    uint32_t raw_sizes[6];
-    DM2_V1_GdatEntry entries[7];
+    uint8_t data[256];
+    uint32_t raw_offsets[8];
+    uint32_t raw_sizes[8];
+    DM2_V1_GdatEntry entries[9];
     DM2_V1_GraphicsStructureReceipt structure;
     DM2_V1_GdatImageExtractReceipt image;
     DM2_V1_GdatUnderlayPair underlays[1];
@@ -298,11 +428,11 @@ static void test_graphics_structure_and_image_extract(void)
 
     CHECK(dm2_v1_read_graphics_structure_receipt(&loader, &structure) &&
               structure.valid &&
-              structure.entries == 7u &&
-              structure.raw_data_count == 6u &&
+              structure.entries == 9u &&
+              structure.raw_data_count == 8u &&
               structure.raw0_length == 6u &&
-              structure.calculated_payload_end == 144u &&
-              structure.max_raw_payload_length == 28u &&
+              structure.calculated_payload_end == 224u &&
+              structure.max_raw_payload_length == 34u &&
               structure.has_underlay_table &&
               structure.underlay_pair_count == 1u,
           "DM2_READ_GRAPHICS_STRUCTURE receipt binds loader raw table and underlay table");

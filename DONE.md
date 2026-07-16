@@ -32,6 +32,47 @@
   '^dm2_v1_skproject_core$'`, direct test binary, and `git diff --check`
   passed.
 
+- 2026-07-16 Nexus PRS3 original-provenance no-runtime proof: tightened
+  `test_nexus_v1_bpk_prs3_payload_evidence` so a real MENU.BPK PRS3 decoded
+  output sidecar with matching length/FNV, bound capture source, and asserted
+  original Saturn provenance reaches `source-bound-no-runtime`. The receipt is
+  proof-ready but still forbids opcode grammar promotion, decoder promotion,
+  runtime upload, rendering, and fallback visuals. Verification:
+  `cmake --build build-local-ninja --target
+  test_nexus_v1_bpk_prs3_payload_evidence -j2` and focused CTest over PRS3
+  evidence, startup handoff, startup menu compatibility, DGN material raster,
+  DGN geometry readiness, startup gate, and boot file hash scan passed.
+
+- 2026-07-16 DM1 CHAMPION projectile/action-time F0326-F0331 bundle:
+  closed source-backed ReDMCSB dispositions for
+  `F0326_CHAMPION_ShootProjectile`,
+  `F0327_CHAMPION_IsProjectileSpellCast`,
+  `F0328_CHAMPION_IsObjectThrown`,
+  `F0330_CHAMPION_DisableAction`,
+  `F0331_CHAMPION_ApplyTimeEffects_CPSF`, and aliases `F326_ozzz_`,
+  `F327_kzzz_`, `F328_nzzz_`, `F330_szzz_`, and `F331_auzz_`. Coverage
+  locks the bounded launch-cell/direction/projectile-create inputs,
+  spell-projectile mana/kinetic/step handoff, thrown-object stamina/XP/sound/
+  kinetic/attack/action-disable planning, F0330 C11 action-enable scheduling,
+  and F0331 needs/scent/stat-recovery/dirty-mask clock effects. Projectile
+  queue/render, deeper impact behavior, and full live panel mutation remain
+  route-owned; `F0329` stays open for a clean DM1-owned leader-hand proof.
+  Verification: focused direct executables for combat, throw/shoot, F0407
+  action-tail, F0330 C11 production, champion-needs, champion-panel clock tick,
+  and LIF-01/F0830 all passed; focused CTest over the same seven targets
+  passed 7/7.
+
+- 2026-07-16 Nexus real LEV00 host-route fail-closed receipt: tightened
+  `test_nexus_v1_boot_file_hash_scan` so a hash-resolved real LEV00.DGN
+  package/host route must consume the source package but remain blocked before
+  DGN command copy or pixel writes. The receipt now asserts `blocked-handoff`,
+  runtime DGN blocked, presentation denied, zero rasterized commands, zero
+  written pixels, and no fallback visuals. Verification: `cmake --build
+  build-local-ninja --target test_nexus_v1_boot_file_hash_scan -j2` and the
+  focused Nexus CTest set covering startup handoff, startup menu compatibility,
+  DGN material raster, DGN geometry readiness, startup gate, and boot file hash
+  scan passed.
+
 - 2026-07-16 DM2 skproject other-level/cross-map helper bundle: mapped
   `DM_LOCATE_OTHER_LEVEL` and `DM2_map_3BF83` from `SKULLWIN/c_map.cpp`.
   Coverage locks cursor/resume candidate scanning, world-to-local coordinate
@@ -42,6 +83,38 @@
   test_dm2_v1_skproject_core -j2`, `ctest --test-dir build-local-ninja
   --output-on-failure -R '^dm2_v1_skproject_core$'`, and `git diff --check`
   passed.
+
+- 2026-07-16 DM1 CHAMPION damage/poison/stamina F0320-F0325 bundle:
+  closed source-backed ReDMCSB dispositions for
+  `F0320_CHAMPION_ApplyAndDrawPendingDamageAndWounds`,
+  `F0321_CHAMPION_AddPendingDamageAndWounds_GetDamage`,
+  `F0322_CHAMPION_Poison`,
+  `F0324_CHAMPION_DamageAll_GetDamagedChampionCount`,
+  `F0325_CHAMPION_DecrementStamina`, and aliases `F320_akzz_`,
+  `F321_AA29_`, `F322_lzzz_`, `F324_aezz_`, and `F325_bzzz_`. Coverage locks
+  DM1 pending wound/damage mutation order, combat damage staging, poison
+  immediate damage plus 36-tick continuation, all-party damage fanout, and
+  F0325 stamina clamp/underflow dirty-mask planning. Rendering, C12 hide event
+  refresh, poison panel redraw, candidate/game-won edge cases, and every live
+  projectile/caller variant remain route-owned. Verification: `ninja -C
+  build-local-ninja test_dm1_v1_combat_pc34_compat_integration`, `ninja -C
+  build-local-ninja test_dm1_v1_action_f0407_tail_pc34_compat`,
+  direct runs of both test executables, and `ctest --test-dir
+  build-local-ninja --output-on-failure -R
+  '^(dm1_v1_combat_damage_source_lock|dm1_v1_action_f0407_tail_pc34_compat)$'`
+  passed.
+
+- 2026-07-16 Theron Track 02 host proof producer: moved host dungeon-consumer
+  proof construction into runtime admission code. The producer consumes the
+  verified real Track 02 dungeon handoff, requires an original host-route
+  identity plus level-grid/object-table/bitmap-palette runtime consumers,
+  host surface upload, and host capture-frame proof, and rejects placeholder,
+  synthetic, fallback, pre-drawn, or fallback-enabled routes. Verification:
+  `cmake --build build-local-ninja --target
+  firestaff_theron_v1_runtime_admission_probe -j2`,
+  `./build-local-ninja/firestaff_theron_v1_runtime_admission_probe`,
+  `ctest --test-dir build-local-ninja --output-on-failure -R
+  '^theron_v1_runtime_admission$'`, and scoped `git diff --check` passed.
 
 - 2026-07-16 DM1 CHAMPION scent F0315-F0317 bundle: added source-backed
   champion-needs scent helpers for `F0315_CHAMPION_GetScentOrdinal`,
@@ -21367,6 +21440,18 @@ firestaff_theron_v1_runtime_admission_probe`, `ctest --test-dir
 build-local-ninja -R '^theron_v1_runtime_admission$' --output-on-failure`,
 and focused `git diff --check` passed.
 
+# ✅ 2026-07-16 DM2 skproject picture descriptor receipts
+
+DM2 now maps `DM2_QUERY_PICST_IMAGE` and `DM2_QUERY_GDAT_SUMMARY_IMAGE`
+outside the shared skproject core files. The receipts bind picture descriptors
+to real GDAT image-entry metadata, source dimensions, offsets, and local
+palettes where present. The source `cls1 == 0xff` summary-image bypass is
+preserved as no-GDAT/no-draw state. No synthetic HUD/dungeon visual is created.
+Verification: `cmake --build build-local-ninja --target
+test_dm2_v1_gdat_querydb_receipts --parallel 4`, `ctest --test-dir
+build-local-ninja --output-on-failure -R '^dm2_v1_gdat_querydb_receipts$'`,
+and focused `git diff --check` passed.
+
 # ✅ 2026-07-16 DM1 GROUP F0193 Giggler steal source mapping
 
 DM1 Giggler steal/flee resolution now follows ReDMCSB `GROUP.C`
@@ -21392,6 +21477,20 @@ coverage verifies priority/address ties, wall-cell merge separation,
 door-destruction scope, and caller reschedule repair. Verification:
 `ctest --test-dir build-local-ninja -R '^dm1_v1_event_timer_source_lock$'
 --output-on-failure` passed.
+
+# ✅ 2026-07-16 Theron Track 02 decoded-route render proof producer
+
+Theron runtime admission now constructs `Theron_V1RuntimeTrack02RenderAssetProof`
+from decoded Track 02 route receipts instead of probe-filled proof fields. The
+producer accepts only the same admitted US Track 02 consumer session with
+matching level/object/all-dungeon route hashes, decode-ready non-startup level
+and object-table receipts, a complete startup bitmap atlas, promotable palette
+window evidence, nonzero decoded hashes, and no synthetic/fallback visual
+flags. This is a fail-closed producer contract; real ISO/BIN/CUE capture still
+has to provide the decoded receipts for broader non-startup dungeons.
+Verification: `firestaff_theron_v1_runtime_admission_probe`,
+`ctest -R '^theron_v1_runtime_admission$'`, and focused `git diff --check`
+passed.
 
 # ✅ 2026-07-16 CSB TIMELINE F0240 first-event expiry receipt
 
@@ -21459,3 +21558,51 @@ unavailable for PC34 instead of synthesizing audio state. Verification:
 test_csb_v1_f2262_timer_a_event_pc34_compat -j2`, `ctest --test-dir
 build-local-ninja -R '^csb_v1_f2262_timer_a_event_pc34_compat$'
 --output-on-failure`, and focused `git diff --check` passed.
+
+# ✅ 2026-07-16 CSB ReDMCSB save/header/champion byte-helper cluster
+
+The CSB-owned ReDMCSB save helper cluster is now CMake-registered and mapped
+in the callable audit/disposition tables: F7055-F7058 checksum/obfuscation,
+F7061/F7062 save-header read/write preparation, F7063 opaque 22-part dungeon
+stream checksum, F7064 champion name/title padding, F7065/F7066 portrait slot
+clear/rebind, and F7067/F7068 C31 portrait get/set. These helpers remain
+byte-transaction boundaries only; they do not synthesize CSBWin DSA state,
+runtime timers, champion layouts, or dungeon semantics. Verification:
+the seven focused `redmcsb_f70xx_*_pc34_compat` CTests passed plus focused
+`git diff --check`.
+
+# ✅ 2026-07-16 CSB ReDMCSB F7059/F7060 dungeon-part checksum audit closure
+
+The existing CSB-owned F7059/F7060 dungeon-part checksum helper is now
+CMake-registered and closed in the ReDMCSB callable audit/disposition tables.
+It only accumulates caller-owned, already-read or to-be-written dungeon-part
+bytes with PC34 16-bit wraparound; no file transport, dungeon layout, CSBWin
+extension, DSA, timer, or runtime state is inferred. Verification:
+`test_redmcsb_f7059_dungeon_part_checksum_pc34_compat` builds and its focused
+CTest passes.
+
+# ✅ 2026-07-16 DM2 skproject querydb image-entry receipts
+
+DM2 now maps `DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF` and
+`DM2_QUERY_GDAT_IMAGE_METRICS` outside the shared skproject core files. The new
+asset-loader receipts select only real parsed GDAT `dtImage` rows, use
+skproject's real `MISCELLANEOUS/FE/FE` default-image route when the requested
+image is absent, and fail closed if that source data is missing or malformed.
+No synthetic HUD/dungeon visual is generated or admitted. Verification:
+`cmake --build build-local-ninja --target test_dm2_v1_gdat_querydb_receipts
+--parallel 4`, `ctest --test-dir build-local-ninja --output-on-failure -R
+'^dm2_v1_gdat_querydb_receipts$'`, and focused `git diff --check` passed.
+
+# ✅ 2026-07-16 DM2 skproject querydb pict-bits/map-chip receipts
+
+DM2 now maps `DM2_QUERY_PICT_BITS` and
+`DM2_QUERY_4BPP_PICT_BUFF_AND_PAL` outside the shared skproject core files.
+The new receipts keep skproject's route split: image-descriptor mode bit 2
+requires real GDAT image-entry data, mode bit 3 requires caller-owned cached
+bitmap evidence, current-bitmap mode requires an existing bitmap, and the
+4bpp map-chip path requires a real loadable `dtImage` field `0xF9` plus its
+local 16-colour palette. Missing/non-4bpp/default-image routes fail closed.
+Verification: `cmake --build build-local-ninja --target
+test_dm2_v1_gdat_querydb_receipts --parallel 4`, `ctest --test-dir
+build-local-ninja --output-on-failure -R '^dm2_v1_gdat_querydb_receipts$'`,
+and focused `git diff --check` passed.

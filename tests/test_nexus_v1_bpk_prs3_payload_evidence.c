@@ -582,6 +582,30 @@ static void test_optional_local_menumenu_bpk(void) {
 
                 rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
                     data, size, 1U, captured_output,
+                    plan.expected_output_bytes, captured_hash,
+                    1, 1, &proof);
+                expect(rc == 1 &&
+                           proof.length_matches &&
+                           proof.hash_matches &&
+                           proof.capture_source_bound &&
+                           proof.decoded_output_sidecar_bound &&
+                           proof.original_saturn_provenance_verified &&
+                           proof.decoded_output_proof_ready &&
+                           !proof.opcode_grammar_proven &&
+                           !proof.decoder_promoted &&
+                           !proof.runtime_upload_permitted &&
+                           !proof.fallback_visuals_permitted &&
+                           proof.status ==
+                               NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME,
+                       "local MENU.BPK decoded-output proof admits original Saturn provenance without runtime promotion");
+                expect(strcmp(
+                           nexus_v1_bpk_prs3_decoded_output_proof_status_name(
+                               proof.status),
+                           "source-bound-no-runtime") == 0,
+                       "decoded-output proof ready status still names the no-runtime blocker");
+
+                rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
+                    data, size, 1U, captured_output,
                     plan.expected_output_bytes, captured_hash ^ 1U,
                     1, 0, &proof);
                 expect(rc == 0 &&
