@@ -7,12 +7,17 @@ VERSION="${VERSION:-0.2.9-preview}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 APPIMAGETOOL="${APPIMAGETOOL:-appimagetool}"
 BIN_SRC="$BUILD_DIR/firestaff"
+ARTPACK_STUDIO_BIN_SRC="$BUILD_DIR/firestaff_artpack_studio"
 OUT_DIR="$ROOT/release"
 APPDIR="$OUT_DIR/steamdeck-appimage-stage/AppDir"
 APPIMAGE_PATH="$OUT_DIR/Firestaff-${VERSION}-steamdeck-x86_64.AppImage"
 
 if [[ ! -x "$BIN_SRC" ]]; then
   echo "Missing built binary: $BIN_SRC" >&2
+  exit 1
+fi
+if [[ ! -x "$ARTPACK_STUDIO_BIN_SRC" ]]; then
+  echo "Missing built Artpack Studio launcher: $ARTPACK_STUDIO_BIN_SRC" >&2
   exit 1
 fi
 if ! command -v "$APPIMAGETOOL" >/dev/null 2>&1; then
@@ -34,12 +39,17 @@ rm -rf "$APPDIR"
 mkdir -p \
   "$APPDIR/usr/bin" \
   "$APPDIR/usr/lib/firestaff" \
+  "$APPDIR/usr/share/firestaff/scripts" \
   "$APPDIR/usr/share/applications" \
   "$APPDIR/usr/share/icons/hicolor/256x256/apps" \
   "$APPDIR/usr/share/doc/firestaff"
 
 cp "$BIN_SRC" "$APPDIR/usr/bin/firestaff"
+cp "$ARTPACK_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$APPDIR/usr/bin/firestaff"
+chmod 0755 "$APPDIR/usr/bin/firestaff_artpack_studio"
+cp "$ROOT/scripts/firestaff_artpack_studio.py" \
+  "$APPDIR/usr/share/firestaff/scripts/firestaff_artpack_studio.py"
 cp -L "$SDL3_LIB" "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
 chmod 0755 "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
 cp "$ROOT/assets/branding/firestaff-logo.png" \

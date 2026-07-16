@@ -20217,7 +20217,9 @@ if(BUILD_TESTING)
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
-install(TARGETS firestaff RUNTIME DESTINATION bin)
+install(TARGETS firestaff firestaff_artpack_studio RUNTIME DESTINATION bin)
+install(FILES scripts/firestaff_artpack_studio.py
+        DESTINATION share/firestaff/scripts)
 if(UNIX AND NOT APPLE)
     install(FILES docs/linux/firestaff.1 DESTINATION share/man/man1)
 endif()

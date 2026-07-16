@@ -174,6 +174,15 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "Eşya ansiklopedisi", "Değişiklik günlüğü", "Ekran görüntüsü galerisi",
         "Dil", "Açık", "Kapalı"
     },
+    [FS_LANG_ID] = {
+        "MAIN", "PENGATURAN", "EKSTRA", "KELUAR",
+        "PILIH GAME", "Game baru (orisinal)", "Game baru (skala 10x)",
+        "Game baru (grafik modern)", "Lanjutkan simpanan", "Segera hadir",
+        "Kembali", "Tampilan", "Video", "Audio", "Kontrol", "Aksesibilitas",
+        "Museum lore", "Manual / dokumen", "Bestiari", "Referensi mantra", "Penampil peta",
+        "Ensiklopedia item", "Log perubahan", "Galeri tangkapan layar",
+        "Bahasa", "Nyala", "Mati"
+    },
 };
 
 static const char *g_lang_names[FS_LANG_COUNT] = {
@@ -181,7 +190,7 @@ static const char *g_lang_names[FS_LANG_COUNT] = {
     "Español", "Italiano", "Português", "Nederlands",
     "Polski", "Čeština", "Русский", "日本語",
     "한국어", "简体中文", "Dansk", "Norsk",
-    "Suomi", "Magyar", "Türkçe"
+    "Suomi", "Magyar", "Türkçe", "Bahasa Indonesia"
 };
 
 void fs_l10n_set_language(FS_Language lang) {
@@ -207,6 +216,51 @@ const char *fs_l10n_language_name(FS_Language lang) {
 
 #include <stdlib.h>
 
+FS_Language fs_l10n_language_from_locale(const char *locale) {
+    if (!locale || !locale[0]) return FS_LANG_EN;
+    if ((locale[0] == 's' || locale[0] == 'S') &&
+        (locale[1] == 'v' || locale[1] == 'V')) return FS_LANG_SV;
+    if ((locale[0] == 'd' || locale[0] == 'D') &&
+        (locale[1] == 'e' || locale[1] == 'E')) return FS_LANG_DE;
+    if ((locale[0] == 'f' || locale[0] == 'F') &&
+        (locale[1] == 'r' || locale[1] == 'R')) return FS_LANG_FR;
+    if ((locale[0] == 'e' || locale[0] == 'E') &&
+        (locale[1] == 's' || locale[1] == 'S')) return FS_LANG_ES;
+    if ((locale[0] == 'i' || locale[0] == 'I') &&
+        (locale[1] == 't' || locale[1] == 'T')) return FS_LANG_IT;
+    if ((locale[0] == 'p' || locale[0] == 'P') &&
+        (locale[1] == 't' || locale[1] == 'T')) return FS_LANG_PT;
+    if ((locale[0] == 'n' || locale[0] == 'N') &&
+        (locale[1] == 'l' || locale[1] == 'L')) return FS_LANG_NL;
+    if ((locale[0] == 'p' || locale[0] == 'P') &&
+        (locale[1] == 'l' || locale[1] == 'L')) return FS_LANG_PL;
+    if ((locale[0] == 'c' || locale[0] == 'C') &&
+        (locale[1] == 's' || locale[1] == 'S')) return FS_LANG_CS;
+    if ((locale[0] == 'r' || locale[0] == 'R') &&
+        (locale[1] == 'u' || locale[1] == 'U')) return FS_LANG_RU;
+    if ((locale[0] == 'j' || locale[0] == 'J') &&
+        (locale[1] == 'a' || locale[1] == 'A')) return FS_LANG_JA;
+    if ((locale[0] == 'k' || locale[0] == 'K') &&
+        (locale[1] == 'o' || locale[1] == 'O')) return FS_LANG_KO;
+    if ((locale[0] == 'z' || locale[0] == 'Z') &&
+        (locale[1] == 'h' || locale[1] == 'H')) return FS_LANG_ZH;
+    if ((locale[0] == 'd' || locale[0] == 'D') &&
+        (locale[1] == 'a' || locale[1] == 'A')) return FS_LANG_DA;
+    if (((locale[0] == 'n' || locale[0] == 'N') &&
+         (locale[1] == 'b' || locale[1] == 'B')) ||
+        ((locale[0] == 'n' || locale[0] == 'N') &&
+         (locale[1] == 'o' || locale[1] == 'O'))) return FS_LANG_NO;
+    if ((locale[0] == 'f' || locale[0] == 'F') &&
+        (locale[1] == 'i' || locale[1] == 'I')) return FS_LANG_FI;
+    if ((locale[0] == 'h' || locale[0] == 'H') &&
+        (locale[1] == 'u' || locale[1] == 'U')) return FS_LANG_HU;
+    if ((locale[0] == 't' || locale[0] == 'T') &&
+        (locale[1] == 'r' || locale[1] == 'R')) return FS_LANG_TR;
+    if ((locale[0] == 'i' || locale[0] == 'I') &&
+        (locale[1] == 'd' || locale[1] == 'D')) return FS_LANG_ID;
+    return FS_LANG_EN;
+}
+
 FS_Language fs_l10n_detect_system_language(void) {
     /* Check LANG, LC_ALL, LC_MESSAGES environment variables */
     const char *env_vars[] = {"LC_ALL", "LC_MESSAGES", "LANG", NULL};
@@ -214,14 +268,23 @@ FS_Language fs_l10n_detect_system_language(void) {
     for (i = 0; env_vars[i]; i++) {
         const char *val = getenv(env_vars[i]);
         if (!val || !val[0]) continue;
-        /* Match language prefix: sv, de, fr */
-        if (val[0] == 's' && val[1] == 'v') return FS_LANG_SV;
-        if (val[0] == 'd' && val[1] == 'e') return FS_LANG_DE;
-        if (val[0] == 'f' && val[1] == 'r') return FS_LANG_FR;
-        if (val[0] == 'e' && val[1] == 'n') return FS_LANG_EN;
+        return fs_l10n_language_from_locale(val);
     }
     return FS_LANG_EN; /* default */
 }
 
 /* Map UI language → asset dungeon.dat language.
  * Swedish has no DM1 dungeon.dat, falls back to English. */
+int fs_l10n_to_asset_language(FS_Language ui_lang) {
+    switch (ui_lang) {
+    case FS_LANG_DE: return 1;
+    case FS_LANG_FR: return 2;
+    case FS_LANG_EN:
+    default:
+        return 0;
+    }
+}
+
+void fs_l10n_init_from_system(void) {
+    fs_l10n_set_language(fs_l10n_detect_system_language());
+}

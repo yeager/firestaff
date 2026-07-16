@@ -45,6 +45,11 @@
 #define THERON_TRACK02_4BPP_PALETTE_BYTES \
     (THERON_TRACK02_4BPP_PALETTE_ENTRY_COUNT * 2u)
 
+#define THERON_TRACK01_CDDA_SECTOR_BYTES 2352u
+#define THERON_TRACK01_CDDA_SAMPLE_RATE 44100
+#define THERON_TRACK01_CDDA_CHANNELS 2
+#define THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS 16u
+
 enum {
     THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE = 1u << 0,
     THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE = 1u << 1,
@@ -67,6 +72,57 @@ typedef enum {
     THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT = -2,
     THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE = -3
 } Theron_Track02SignalStatus;
+
+typedef enum {
+    THERON_TRACK01_CDDA_AVAILABLE = 1,
+    THERON_TRACK01_CDDA_UNAVAILABLE = 0,
+    THERON_TRACK01_CDDA_BAD_INPUT = -1,
+    THERON_TRACK01_CDDA_UNVERIFIED = -2
+} Theron_Track01CddaStatus;
+
+typedef struct {
+    Theron_Track01CddaStatus status;
+    Theron_Track02Variant track02_variant;
+    char cue_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char audio_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char track02_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char unavailable_reason[160];
+    unsigned int track_number;
+    unsigned int index_minute;
+    unsigned int index_second;
+    unsigned int index_frame;
+    unsigned int index_lba;
+    size_t audio_start_byte;
+    size_t audio_file_bytes;
+    size_t audio_sector_count;
+    int original_cdda;
+    int playback_handoff_ready;
+} Theron_Track01CddaHandoff;
+
+typedef struct {
+    void *audio_file;
+    void *sdl_stream;
+    size_t audio_start_byte;
+    size_t audio_sector_count;
+    size_t sectors_read;
+    size_t sectors_queued;
+    size_t loop_count;
+    int output_started;
+} Theron_Track01CddaStream;
+
+Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
+    const char *media_path,
+    const char *verified_track02_md5,
+    Theron_Track01CddaHandoff *out_handoff);
+int theron_v1_track01_cdda_stream_start(
+    const Theron_Track01CddaHandoff *handoff,
+    Theron_Track01CddaStream *out_stream);
+int theron_v1_track01_cdda_stream_pump(Theron_Track01CddaStream *stream);
+void theron_v1_track01_cdda_stream_stop(Theron_Track01CddaStream *stream);
+int theron_v1_track01_cdda_lifecycle_update(
+    const Theron_Track01CddaHandoff *handoff,
+    int title_active,
+    Theron_Track01CddaStream *stream);
 
 typedef struct {
     Theron_Track02Variant variant;
