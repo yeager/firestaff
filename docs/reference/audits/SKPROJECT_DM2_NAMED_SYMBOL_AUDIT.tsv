@@ -434,8 +434,8 @@ DM2_FILL_BACKBUFF_RECT	SKULLWIN	SKULLWIN/c_gfx_main.cpp	153		MISSING
 DM2_FILL_SCREEN_RECT	SKULLWIN	SKULLWIN/c_gfx_main.cpp	159		MISSING
 DM2_FILL_FULLSCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	168		MISSING
 DM2_FILL_ENTIRE_PICT	SKULLWIN	SKULLWIN/c_gfx_main.cpp	173		MISSING
-DM2_FILL_HALFTONE_RECTV	SKULLWIN	SKULLWIN/c_gfx_main.cpp	192		MISSING
-DM2_FILL_HALFTONE_RECTI	SKULLWIN	SKULLWIN/c_gfx_main.cpp	204		MISSING
+DM2_FILL_HALFTONE_RECTV	SKULLWIN	SKULLWIN/c_gfx_main.cpp	192	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN halftone rect screen checkerboard fill over caller-owned pixels.
+DM2_FILL_HALFTONE_RECTI	SKULLWIN	SKULLWIN/c_gfx_main.cpp	204	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN rect-index halftone wrapper through expanded rect delegation.
 DM2_FADE_SCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	212		MISSING
 blit_toscreen	SKULLWIN	SKULLWIN/c_gfx_main.cpp	224		MISSING
 _specialblit	SKULLWIN	SKULLWIN/c_gfx_main.cpp	254		MISSING
@@ -961,7 +961,7 @@ DM2_QUERY_SND_ENTRY_INDEX	SKULLWIN	SKULLWIN/c_sound.cpp	664	src/dm2/dm2_v1_sound
 DM2_SKCHR_TO_SCRIPTCHR	SKULLWIN	SKULLWIN/c_str.cpp	7		MISSING
 DM2_LTOA10	SKULLWIN	SKULLWIN/c_str.cpp	15		MISSING
 DM2_FMT_NUM	SKULLWIN	SKULLWIN/c_str.cpp	37		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
-DM2_FILL_STR	SKULLWIN	SKULLWIN/c_str.cpp	66		MISSING
+DM2_FILL_STR	SKULLWIN	SKULLWIN/c_str.cpp	66	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN strided fill-string helper over caller-owned buffers with bounded delta writes.
 DM2_PROCESS_TIMER_0C	SKULLWIN	SKULLWIN/c_tim_proc.cpp	30		MISSING
 DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39		MISSING
 DM2_STEP_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	127		MISSING
@@ -1029,7 +1029,7 @@ driver_unblockmouseinput	SKULLWIN	SKULLWIN/c_tmouse.cpp	528		MISSING
 DM2_HIDE_MOUSE	SKULLWIN	SKULLWIN/c_tmouse.cpp	538		MISSING
 DM2_SHOW_MOUSE	SKULLWIN	SKULLWIN/c_tmouse.cpp	544		MISSING
 DM2_MOUSE_SET_CAPTURE	SKULLWIN	SKULLWIN/c_tmouse.cpp	552		MISSING
-DM2_MOUSE_RELEASE_CAPTURE	SKULLWIN	SKULLWIN/c_tmouse.cpp	559		MISSING
+DM2_MOUSE_RELEASE_CAPTURE	SKULLWIN	SKULLWIN/c_tmouse.cpp	559	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN driver release-capture command receipt.
 DM2_REFRESHMOUSE	SKULLWIN	SKULLWIN/c_tmouse.cpp	565		MISSING
 DM2_CHOOSE_CURSOR3	SKULLWIN	SKULLWIN/c_tmouse.cpp	573		MISSING
 DM2_RELEASE_MOUSE_CAPTURES	SKULLWIN	SKULLWIN/c_tmouse.cpp	579		MISSING
@@ -1455,7 +1455,7 @@ __CHECK_ROOM_FOR_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7682		MISSING
 DRAW_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	7714	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_moneybox; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CONTAINER_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7767	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_SQUAD_POS_INTERFACE	SKWIN	SKWIN/SkWinCore.cpp	7817		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad position panel base icon, alive/selected filtering, palette, aura, and pict buffer routing.
-DRAW_STRONG_TEXT	SKWIN	SKWIN/SkWinCore.cpp	7910		MISSING
+DRAW_STRONG_TEXT	SKWIN	SKWIN/SkWinCore.cpp	7910	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN strong text alias to the existing c_gfx_str plan: optional background fill, two shadow passes, and foreground pass.
 DRAW_NAME_STR	SKWIN	SKWIN/SkWinCore.cpp	7948	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_NAME_AT_CMDSLOT	SKWIN	SKWIN/SkWinCore.cpp	7983		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 SK_STRLEN	SKWIN	SKWIN/SkWinCore.cpp	8006		MISSING
@@ -1509,13 +1509,13 @@ _0b36_0cbe	SKWIN	SKWIN/SkWinCore.cpp	11223		MISSING
 IS_CONTAINER_MAP	SKWIN	SKWIN/SkWinCore.cpp	11269		MISSING
 UPDATE_RIGHT_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11283		MISSING
 _1031_04f5	SKWIN	SKWIN/SkWinCore.cpp	11729		MISSING
-HIGHLIGHT_ARROW_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11745		MISSING
+HIGHLIGHT_ARROW_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11745	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core records the SKWIN arrow-panel redraw route: bright cls4 increment, mouse hide/show, icon redraw, and refresh wait.
 _12b4_0092	SKWIN	SKWIN/SkWinCore.cpp	11770		MISSING
-IBMIO_FILL_HALFTONE_RECT	SKWIN	SKWIN/SkWinCore.cpp	11784		MISSING
-FIRE_FILL_HALFTONE_RECTV	SKWIN	SKWIN/SkWinCore.cpp	11813		MISSING
-FIRE_FILL_HALFTONE_RECTI	SKWIN	SKWIN/SkWinCore.cpp	11824		MISSING
-IBMIO_MOUSE_RELEASE_CAPTURE	SKWIN	SKWIN/SkWinCore.cpp	11834		MISSING
-FIRE_MOUSE_RELEASE_CAPTURE	SKWIN	SKWIN/SkWinCore.cpp	11860		MISSING
+IBMIO_FILL_HALFTONE_RECT	SKWIN	SKWIN/SkWinCore.cpp	11784	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN checkerboard halftone rect fill over real caller-owned pixels.
+FIRE_FILL_HALFTONE_RECTV	SKWIN	SKWIN/SkWinCore.cpp	11813	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the FIRE wrapper delegation to IBMIO halftone rect fill.
+FIRE_FILL_HALFTONE_RECTI	SKWIN	SKWIN/SkWinCore.cpp	11824	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the rect-index wrapper as expanded-rect query plus RECTV delegation.
+IBMIO_MOUSE_RELEASE_CAPTURE	SKWIN	SKWIN/SkWinCore.cpp	11834	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the IBMIO capture release side effect as capture-count decrement plus driver command receipt.
+FIRE_MOUSE_RELEASE_CAPTURE	SKWIN	SKWIN/SkWinCore.cpp	11860	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the FIRE wrapper delegation to IBMIO mouse capture release.
 _1031_050c	SKWIN	SKWIN/SkWinCore.cpp	11871		MISSING
 _1031_0675	SKWIN	SKWIN/SkWinCore.cpp	11893		MISSING
 RETURN_1	SKWIN	SKWIN/SkWinCore.cpp	11916		MISSING
@@ -1577,7 +1577,7 @@ DRAW_ITEM_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13962	src/dm2/dm2_v1_skproject_core.c
 _2e62_03b5	SKWIN	SKWIN/SkWinCore.cpp	14236		MISSING
 DRAW_LOCAL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	14343	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 GET_PLAYER_ABILITY	SKWIN	SKWIN/SkWinCore.cpp	14379		MISSING
-FILL_STR	SKWIN	SKWIN/SkWinCore.cpp	14408		MISSING
+FILL_STR	SKWIN	SKWIN/SkWinCore.cpp	14408	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_STR count/delta byte writes without fabricating output buffers.
 FMT_NUM	SKWIN	SKWIN/SkWinCore.cpp	14418		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
 SK_STRCPY	SKWIN	SKWIN/SkWinCore.cpp	14462		MISSING
 SK_STRCAT	SKWIN	SKWIN/SkWinCore.cpp	14467		MISSING

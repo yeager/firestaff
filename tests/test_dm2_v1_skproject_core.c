@@ -661,7 +661,15 @@ static void test_map_helpers(void)
     DM2_V1_SkprojectGetTileValueReceipt tile_value;
     DM2_V1_SkprojectMap3B001Receipt map3b001;
     DM2_V1_SkprojectFillReceipt fill;
+    DM2_V1_SkprojectFillStrReceipt fill_str;
+    DM2_V1_SkprojectHalftoneRectReceipt half;
+    DM2_V1_SkprojectMouseReleaseCaptureReceipt mouse_release;
+    DM2_V1_SkprojectHighlightArrowPanelReceipt highlight;
+    DM2_V1_SkprojectRect half_rect;
     uint8_t tiles[16];
+    uint8_t fill_buf[12];
+    uint8_t pixels[64];
+    int16_t capture_count = 3;
     uint8_t passage[16] = {
         1u, 0u, 1u, 1u,
         0u, 0u, 1u, 0u,
@@ -949,6 +957,57 @@ static void test_map_helpers(void)
               9u, 3u, 0x44u, 1, 0, &fill) == 0 &&
               fill.blocked_missing_rect,
           "FILL_RECT_SUMMARY skips missing rects like the skproject null guard");
+    memset(fill_buf, 0, sizeof(fill_buf));
+    CHECK(dm2_v1_skproject_fill_str(
+              fill_buf, sizeof(fill_buf), 4u, 0x7eu, 3u, &fill_str) == 1 &&
+              fill_str.valid &&
+              fill_str.written_entries == 4u &&
+              fill_str.last_offset == 9u &&
+              fill_buf[0] == 0x7eu &&
+              fill_buf[3] == 0x7eu &&
+              fill_buf[6] == 0x7eu &&
+              fill_buf[9] == 0x7eu,
+          "FILL_STR writes count entries at source delta offsets");
+    CHECK(dm2_v1_skproject_fill_str(
+              fill_buf, sizeof(fill_buf), 5u, 0x7eu, 3u, &fill_str) == 0 &&
+              fill_str.blocked_missing_buffer,
+          "FILL_STR fails closed when source delta walk exceeds buffer");
+    memset(pixels, 0x55, sizeof(pixels));
+    half_rect = (DM2_V1_SkprojectRect){ 1, 1, 4, 3 };
+    CHECK(dm2_v1_skproject_fill_halftone_rectv(
+              pixels, sizeof(pixels), 8u, &half_rect, &half) == 1 &&
+              half.valid &&
+              half.visited_pixels == 12u &&
+              half.cleared_pixels == 6u &&
+              pixels[1u * 8u + 1u] == 0u &&
+              pixels[1u * 8u + 2u] == 0x55u &&
+              pixels[3u * 8u + 4u] == 0x55u,
+          "IBMIO_FILL_HALFTONE_RECT clears checkerboard pixels over full rect");
+    memset(pixels, 0x55, sizeof(pixels));
+    CHECK(dm2_v1_skproject_fill_halftone_recti(
+              pixels, sizeof(pixels), 8u, 42u, &half_rect, &half) == 1 &&
+              half.valid &&
+              half.used_query_expanded_rect &&
+              half.rectno == 42u,
+          "FIRE_FILL_HALFTONE_RECTI queries expanded rect then delegates to RECTV");
+    CHECK(dm2_v1_skproject_mouse_release_capture(
+              &capture_count, &mouse_release) == 1 &&
+              mouse_release.valid &&
+              mouse_release.previous_capture_count == 3 &&
+              mouse_release.new_capture_count == 2 &&
+              mouse_release.requested_driver_command == 2u,
+          "FIRE_MOUSE_RELEASE_CAPTURE delegates to IBMIO release/capture command");
+    CHECK(dm2_v1_skproject_highlight_arrow_panel(
+              5u, 77u, 1u, &highlight) == 1 &&
+              highlight.valid &&
+              highlight.cls4_input == 5u &&
+              highlight.cls4_drawn == 6u &&
+              highlight.rectno == 77u &&
+              highlight.requested_hide_mouse &&
+              highlight.requested_fill_entire_pict &&
+              highlight.requested_draw_icon_entry &&
+              highlight.requested_wait_refresh,
+          "HIGHLIGHT_ARROW_PANEL records source bright icon redraw sequence");
 
     {
         DM2_V1_SkprojectMapDescriptor maps[4];
@@ -2560,6 +2619,15 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_FMT_NUM") != 0,
           "source evidence names item/container classifier helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "FILL_STR") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "HIGHLIGHT_ARROW_PANEL") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "FIRE_FILL_HALFTONE_RECTI") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_MOUSE_RELEASE_CAPTURE") != 0,
+          "source evidence names text/fill/mouse wrapper helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "BOOST_ATTRIBUTE") != 0,
           "source evidence names attribute boost helper");

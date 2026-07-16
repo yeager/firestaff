@@ -1251,6 +1251,149 @@ int dm2_v1_skproject_fill_rect_summary(
     return 1;
 }
 
+int dm2_v1_skproject_fill_str(
+    uint8_t *buffer,
+    uint16_t buffer_capacity,
+    uint16_t count,
+    uint8_t value,
+    uint16_t delta,
+    DM2_V1_SkprojectFillStrReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFillStrReceipt receipt;
+    uint16_t offset = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.count = count;
+    receipt.delta = delta;
+    receipt.value = value;
+    if (count != 0u &&
+        (!buffer || (uint32_t)(count - 1u) * delta >= buffer_capacity)) {
+        receipt.blocked_missing_buffer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = 0u; i < count; ++i) {
+        buffer[offset] = value;
+        receipt.written_entries++;
+        receipt.last_offset = offset;
+        offset = (uint16_t)(offset + delta);
+    }
+    receipt.buffer_hash = buffer ?
+        dm2_v1_skproject_hash_bytes(buffer, buffer_capacity) : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_fill_halftone_rectv(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
+{
+    DM2_V1_SkprojectHalftoneRectReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.rect = *rect;
+    receipt.stride = stride;
+    if (!pixels || stride == 0u || rect->w <= 0 || rect->h <= 0 ||
+        rect->x < 0 || rect->y < 0 ||
+        (uint32_t)(rect->y + rect->h - 1) * stride +
+                (uint16_t)(rect->x + rect->w - 1) >=
+            pixel_capacity) {
+        receipt.blocked_missing_pixels = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (int16_t y = rect->y; y < (int16_t)(rect->y + rect->h); ++y) {
+        for (int16_t x = rect->x; x < (int16_t)(rect->x + rect->w); ++x) {
+            uint32_t index = (uint32_t)y * stride + (uint16_t)x;
+            receipt.visited_pixels++;
+            if (((x ^ y) & 1) == 0) {
+                pixels[index] = 0u;
+                receipt.cleared_pixels++;
+            }
+        }
+    }
+    receipt.pixel_hash = dm2_v1_skproject_hash_bytes(pixels, pixel_capacity);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_fill_halftone_recti(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt)
+{
+    int ok = dm2_v1_skproject_fill_halftone_rectv(
+        pixels, pixel_capacity, stride, expanded_rect, out_receipt);
+    if (out_receipt) {
+        out_receipt->rectno = rectno;
+        out_receipt->used_query_expanded_rect = 1;
+    }
+    return ok;
+}
+
+int dm2_v1_skproject_mouse_release_capture(
+    int16_t *capture_count,
+    DM2_V1_SkprojectMouseReleaseCaptureReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseReleaseCaptureReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!capture_count) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.previous_capture_count = *capture_count;
+    *capture_count = (int16_t)(*capture_count - 1);
+    receipt.new_capture_count = *capture_count;
+    receipt.requested_driver_command = 2u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_highlight_arrow_panel(
+    uint8_t cls4,
+    uint16_t rectno,
+    uint8_t bright,
+    DM2_V1_SkprojectHighlightArrowPanelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectHighlightArrowPanelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls4_input = cls4;
+    receipt.cls4_drawn = (uint8_t)(bright ? cls4 + 1u : cls4);
+    receipt.rectno = rectno;
+    receipt.bright = bright ? 1u : 0u;
+    receipt.requested_hide_mouse = 1u;
+    receipt.requested_query_rect = 1u;
+    receipt.requested_fill_entire_pict = 1u;
+    receipt.requested_draw_icon_entry = 1u;
+    receipt.requested_show_mouse = 1u;
+    receipt.requested_wait_refresh = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_map_3b001(
     int16_t current_map,
     int16_t value_0270,
@@ -5000,13 +5143,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
            "COUNT_BY_COIN_TYPES/IS_CONTAINER_MONEYBOX/"
            "IS_CONTAINER_CHEST/IS_MISCITEM_CURRENCY/GET_ITEM_NAME/"
-           "GET_ITEM_ORDER_IN_CONTAINER/FMT_NUM and "
+           "GET_ITEM_ORDER_IN_CONTAINER/FMT_NUM/FILL_STR and "
            "SKULLWIN/c_item.cpp DM2_ADD_ITEM_CHARGE/DM2_GET_MAX_CHARGE/"
            "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT/DM2_GET_ITEM_NAME; "
            "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES/"
            "DM2_IS_MISCITEM_CURRENCY/DM2_IS_CONTAINER_MONEYBOX/"
            "DM2_IS_CONTAINER_CHEST/DM2_GET_ITEM_ORDER_IN_CONTAINER; "
-           "SKULLWIN/c_str.cpp DM2_FMT_NUM; "
+           "SKULLWIN/c_str.cpp DM2_FMT_NUM/DM2_FILL_STR; "
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
            "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
@@ -5059,7 +5202,14 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
            "SKWIN/SkWinCore.cpp DRAW_ICON_PICT_BUFF/DRAW_DEF_PICT/"
-           "DRAW_GRAY_OVERLAY/FILL_ENTIRE_PICT/FILL_RECT_SUMMARY; "
+           "DRAW_GRAY_OVERLAY/FILL_ENTIRE_PICT/FILL_RECT_SUMMARY/"
+           "DRAW_STRONG_TEXT/HIGHLIGHT_ARROW_PANEL/"
+           "IBMIO_FILL_HALFTONE_RECT/FIRE_FILL_HALFTONE_RECTV/"
+           "FIRE_FILL_HALFTONE_RECTI/IBMIO_MOUSE_RELEASE_CAPTURE/"
+           "FIRE_MOUSE_RELEASE_CAPTURE; "
+           "SKULLWIN/c_gfx_main.cpp DM2_FILL_HALFTONE_RECTV/"
+           "DM2_FILL_HALFTONE_RECTI; "
+           "SKULLWIN/c_tmouse.cpp DM2_MOUSE_RELEASE_CAPTURE; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
            "DM2_ATTACK_WALL/DM2_ATTACK_DOOR/DM2_move_12b4_0d75/"
            "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "
