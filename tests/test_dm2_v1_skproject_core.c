@@ -1679,7 +1679,13 @@ static void test_item_value_weight_helpers(void)
     DM2_V1_SkprojectItemNameReceipt item_name;
     DM2_V1_SkprojectItemOrderReceipt item_order;
     DM2_V1_SkprojectFmtNumReceipt fmt_num;
+    DM2_V1_SkprojectStrLenReceipt strlen_receipt;
+    DM2_V1_SkprojectStrStrReceipt strstr_receipt;
+    DM2_V1_SkprojectStrCopyCatReceipt copycat;
+    DM2_V1_SkprojectLtoa10Receipt ltoa;
+    DM2_V1_SkprojectScriptChrReceipt script_chr;
     uint16_t money_ids[6] = { 4u, 5u, 6u, 7u, 261u, 262u };
+    char text_buf[32];
 
     memset(records, 0, sizeof(records));
     world.records = records;
@@ -1840,6 +1846,53 @@ static void test_item_value_weight_helpers(void)
               strcmp(fmt_num.returned_text, "0") == 0 &&
               fmt_num.returned_offset == 3u,
           "FMT_NUM non-clean path returns the first generated digit");
+    CHECK(dm2_v1_skproject_sk_strlen(
+              "SKWIN", &strlen_receipt) == 1 &&
+              strlen_receipt.valid &&
+              strlen_receipt.length == 5u,
+          "SK_STRLEN counts bytes up to the null terminator");
+    CHECK(dm2_v1_skproject_sk_strstr(
+              "CM4SK4BZ2", "SK", &strstr_receipt) == 1 &&
+              strstr_receipt.valid &&
+              strstr_receipt.found &&
+              strstr_receipt.match_offset == 3u,
+          "SK_STRSTR returns the first source substring offset");
+    CHECK(dm2_v1_skproject_sk_strstr(
+              "CM4SK4BZ2", "", &strstr_receipt) == 0 &&
+              strstr_receipt.valid &&
+              strstr_receipt.needle_empty_returns_null,
+          "SK_STRSTR returns null for an empty needle like skproject");
+    CHECK(dm2_v1_skproject_sk_strcpy(
+              text_buf, sizeof(text_buf), "DM2", &copycat) == 1 &&
+              copycat.valid &&
+              copycat.copied_length == 3u &&
+              strcmp(text_buf, "DM2") == 0,
+          "SK_STRCPY copies source text into caller buffer");
+    CHECK(dm2_v1_skproject_sk_strcat(
+              text_buf, sizeof(text_buf), "-HUD", &copycat) == 1 &&
+              copycat.valid &&
+              copycat.result_length == 7u &&
+              strcmp(text_buf, "DM2-HUD") == 0,
+          "SK_STRCAT appends source text into caller buffer");
+    CHECK(dm2_v1_skproject_ltoa10(
+              -2048, text_buf, sizeof(text_buf), &ltoa) == 1 &&
+              ltoa.valid &&
+              ltoa.written_length == 5u &&
+              strcmp(text_buf, "-2048") == 0,
+          "SK_LTOA10 formats signed base-10 text through SK_STRCPY");
+    CHECK(dm2_v1_skproject_skchr_to_scriptchr(
+              'C', &script_chr) == 1 &&
+              script_chr.valid &&
+              script_chr.output == 2u,
+          "DM2_SKCHR_TO_SCRIPTCHR maps A-Z to zero-based script chars");
+    CHECK(dm2_v1_skproject_skchr_to_scriptchr(
+              '.', &script_chr) == 1 &&
+              script_chr.output == 0x1bu,
+          "DM2_SKCHR_TO_SCRIPTCHR maps dot to 0x1b");
+    CHECK(dm2_v1_skproject_skchr_to_scriptchr(
+              '?', &script_chr) == 1 &&
+              script_chr.output == 0x1au,
+          "DM2_SKCHR_TO_SCRIPTCHR maps non-letter fallback to 0x1a");
 }
 
 static void test_player_weight_helper(void)
@@ -2628,6 +2681,13 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_MOUSE_RELEASE_CAPTURE") != 0,
           "source evidence names text/fill/mouse wrapper helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "SK_STRLEN") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "SK_STRSTR") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_SKCHR_TO_SCRIPTCHR") != 0,
+          "source evidence names skproject string helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "BOOST_ATTRIBUTE") != 0,
           "source evidence names attribute boost helper");

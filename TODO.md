@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1324; 2861 total open rows
+  shared DM1/CSB 1537, DM2 1317; 2854 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -99,6 +99,10 @@
     `DM2_FILL_HALFTONE_RECTI`, and `DM2_MOUSE_RELEASE_CAPTURE` now have
     skproject-backed receipts. Remaining adjacent work is live menu/HUD
     pixel consumption and broader GDAT dungeon rendering.
+  - 2026-07-16 DM2 string helper update: `DM2_SKCHR_TO_SCRIPTCHR`,
+    `DM2_LTOA10`, `SK_STRLEN`, `SK_STRSTR`, `SK_LTOA10`, `SK_STRCPY`,
+    and `SK_STRCAT` now have skproject-backed receipts. Remaining adjacent
+    work is broader command-string parsing and live consumers.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

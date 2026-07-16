@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 string helper receipt bundle: mapped
+  `DM2_SKCHR_TO_SCRIPTCHR`, `DM2_LTOA10`, `SK_STRLEN`, `SK_STRSTR`,
+  `SK_LTOA10`, `SK_STRCPY`, and `SK_STRCAT` to skproject-backed receipts.
+  The receipts cover script-character conversion, signed base-10 formatting,
+  source substring semantics, and bounded copy/append output.
+
 - 2026-07-16 DM2 text/fill/mouse wrapper receipt bundle: mapped
   `FILL_STR`, `DRAW_STRONG_TEXT`, `HIGHLIGHT_ARROW_PANEL`,
   `IBMIO_FILL_HALFTONE_RECT`, `FIRE_FILL_HALFTONE_RECTV`,
