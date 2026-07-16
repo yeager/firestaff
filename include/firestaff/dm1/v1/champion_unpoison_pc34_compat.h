@@ -15,6 +15,9 @@ typedef struct {
 
 /* ReDMCSB CHAMPION.C F0323_CHAMPION_Unpoison (line 1652).
  * Cancels the accumulated poison payload. */
+void F0323_CHAMPION_Unpoison(
+    DM1_V1_ChampionPoisonStatePc34Compat* poisonState);
+
 void F0323_CHAMPION_Unpoison_Compat(
     DM1_V1_ChampionPoisonStatePc34Compat* poisonState);
 

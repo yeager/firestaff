@@ -14,6 +14,10 @@
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
+  - 2026-07-16 DM1 F0323 update: `F0323_CHAMPION_Unpoison` is now exposed as
+    the source-named callable and the existing compat wrapper delegates to it.
+    Remaining adjacent work is regenerating/updating the ReDMCSB audit row and
+    routing live kill/death call sites through the named boundary where useful.
   - 2026-07-16 DM2 cache/mement free update: `FREE_CACHE_INDEX`,
     `FREE_INDEXED_MEMENT`, `FREE_TEMP_CACHE_INDEX`, and `FREE_PICT6` are now
     closed through skproject-backed bounded receipts. Remaining adjacent work

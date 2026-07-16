@@ -26,6 +26,7 @@ int main(void)
                  "F0323_CHAMPION_Unpoison") != NULL);
 
     F0323_CHAMPION_Unpoison_Compat(NULL);
+    F0323_CHAMPION_Unpoison(NULL);
 
     F0323_CHAMPION_Unpoison_Compat(&boundedState.poison);
     CHECK(boundedState.poison.poisonDose == 0);
@@ -33,6 +34,10 @@ int main(void)
     CHECK(boundedState.after == 0x55667788u);
 
     F0323_CHAMPION_Unpoison_Compat(&boundedState.poison);
+    CHECK(boundedState.poison.poisonDose == 0);
+
+    boundedState.poison.poisonDose = 17u;
+    F0323_CHAMPION_Unpoison(&boundedState.poison);
     CHECK(boundedState.poison.poisonDose == 0);
 
     printf("test_dm1_v1_champion_unpoison_pc34_compat: %d assertions, %d failures\n",
