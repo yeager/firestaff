@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_dungeon.h"
 
 /* Standalone schema gate for externally captured SH-2 PRS3 traces. It does
@@ -508,6 +509,29 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Vdp1ReviewedUploadReceipt;
 
+/* Final fail-closed intake between a source-bound PRS3 output sidecar and a
+ * reviewed MENU.BPK upload path. It records that both evidence lanes describe
+ * an internally reviewed artifact set, but never promotes a decoder, runtime
+ * upload, Saturn rendering, or fallback visuals. */
+typedef struct Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt {
+    int decoded_output_proof_bound;
+    int decoded_output_sidecar_bound;
+    int reviewed_upload_path_bound;
+    int menu_bpk_upload_reviewed;
+    int original_saturn_provenance_verified;
+    int independent_authentication_required;
+    int original_saturn_capture_authenticated;
+    int source_bound_no_runtime;
+    int runtime_upload_permitted;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+    uint32_t entry_index;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint32_t expected_output_bytes;
+    uint64_t output_fnv1a64;
+} Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -809,5 +833,14 @@ int nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
     const Nexus_V1_Prs3Vdp1ProvenanceReceipt *provenance,
     const Nexus_V1_Prs3Vdp1ProducerAttestationReceipt *attestation,
     Nexus_V1_Prs3Vdp1ReviewedUploadReceipt *out_receipt);
+
+/* Join decoded output proof with reviewed upload-path evidence. This is the
+ * no-runtime boundary after producer/output provenance: both sides may be
+ * internally bound, but independent Saturn authentication and a reviewed
+ * decoder remain outside this gate. */
+int nexus_v1_prs3_vdp1_capture_review_output_upload(
+    const Nexus_V1_BpkPrs3DecodedOutputProofReceipt *output_proof,
+    const Nexus_V1_Prs3Vdp1ReviewedUploadReceipt *reviewed_upload,
+    Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt *out_receipt);
 
 #endif

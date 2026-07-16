@@ -41,6 +41,23 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
     unsigned short thing,
     int partyDirection);
 
+/* ReDMCSB CEDT004.C F7017-F7019 source-named wrappers over loaded raw
+ * PC3.4 Thing data.  They do not create decoded-object fallbacks or
+ * substitute missing graphics/resources. */
+int F7017_GetIconIndex(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
+const unsigned char *F7018_GetThingData(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
+int F7019_GetObjectInfoIndex(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
+const char *F7017_F7018_F7019_CEDT004_SourceEvidencePc34(void);
+
 /* ReDMCSB DUNGEON.C F0144: raw GROUP.Type -> G0243 Attributes. */
 int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
     const struct DungeonThings_Compat *things,

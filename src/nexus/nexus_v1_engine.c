@@ -1154,7 +1154,13 @@ int nexus_v1_current_level_dgn_face_material_source_receipt(
     input.canonical_source_verified = 1;
     input.bindings = bindings;
     input.face_count = binding_count;
+    input.structure2_descriptor_count = engine->current_level.structure2_texture_count;
     input.material_selector_count = 256;
+    input.geometry_source_bound = engine->current_level.geometry_info.mesh_ready;
+    input.geometry_material_face_count = binding_count;
+    input.geometry_can_submit_geometry = engine->current_level.geometry_info.mesh_ready;
+    input.geometry_can_submit_textured_raster = 0;
+    input.geometry_fallback_visuals_permitted = 0;
     return nexus_v1_dgn_face_material_validate(&input, out_receipt) ? 0 : -1;
 }
 

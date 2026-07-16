@@ -450,6 +450,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_count
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_attack_f0216_pc34_compat.c")
+    add_executable(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat
+        tests/test_dm1_v1_projectile_impact_attack_f0216_pc34_compat.c
+        src/dm1/dm1_v1_projectile_impact_attack_f0216_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_impact_attack_f0216_pc34_compat
+        COMMAND test_dm1_v1_projectile_impact_attack_f0216_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_unpoison_pc34_compat.c")
     add_executable(test_dm1_v1_champion_unpoison_pc34_compat
         tests/test_dm1_v1_champion_unpoison_pc34_compat.c
@@ -1022,6 +1041,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_charac
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat.c")
+    add_executable(test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat
+        tests/test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat.c
+        src/csb/csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat
+        COMMAND test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_provenance.c")
     add_executable(test_nexus_v1_dgn_face_material_provenance
         tests/test_nexus_v1_dgn_face_material_provenance.c
@@ -1348,7 +1386,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.82 LANGUAGES C)
+project(Firestaff VERSION 3.0.83 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -8995,6 +9033,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_skproject_core
         COMMAND test_dm2_v1_skproject_core
+    )
+
+    add_executable(test_dm2_v1_hud_survey_helpers
+        tests/test_dm2_v1_hud_survey_helpers.c
+        src/dm2/dm2_v1_hud_survey_helpers.c
+        src/dm2/dm2_v1_skproject_core.c
+    )
+    target_include_directories(test_dm2_v1_hud_survey_helpers PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_hud_survey_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_hud_survey_helpers
+        COMMAND test_dm2_v1_hud_survey_helpers
     )
 
     add_executable(test_dm2_v1_skproject_cpx_heap
@@ -32666,7 +32720,8 @@ endforeach()
 # DM2 GDAT weather controls are valid only when all four GRAPHICSSET
 # dtWordValue entries are present; this keeps non-weather ENVIRONMENT rows
 # from becoming a synthetic overlay source.
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_gdat_receipt.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_gdat_receipt.c"
+        AND NOT TARGET test_dm2_v1_weather_gdat_receipt)
     add_executable(test_dm2_v1_weather_gdat_receipt
         tests/test_dm2_v1_weather_gdat_receipt.c
     )
@@ -32681,11 +32736,16 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_gdat_receipt.c"
             -Wall -Wextra -Werror
         )
     endif()
-    add_test(
-        NAME dm2_v1_weather_gdat_receipt
-        COMMAND test_dm2_v1_weather_gdat_receipt
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    )
+    get_property(_firestaff_existing_tests DIRECTORY PROPERTY TESTS)
+    list(FIND _firestaff_existing_tests "dm2_v1_weather_gdat_receipt"
+        _firestaff_weather_gdat_test_index)
+    if(_firestaff_weather_gdat_test_index EQUAL -1)
+        add_test(
+            NAME dm2_v1_weather_gdat_receipt
+            COMMAND test_dm2_v1_weather_gdat_receipt
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        )
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_renderer_material_gate.c")

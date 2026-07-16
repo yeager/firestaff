@@ -18,6 +18,7 @@
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_main_math_f0024_f0026_f0030_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,7 +52,7 @@ static int dm1_min(int a, int b) __attribute__((unused)); static int dm1_min(int
  * Used extensively in damage calculations.
  */
 int dm1_scaled_product(int val, int shift, int factor) {
-    return ((long)val * (long)factor) >> shift;
+    return F0030_MAIN_GetScaledProduct(val, shift, factor);
 }
 
 /* ── Init ─────────────────────────────────────────────────────────── */

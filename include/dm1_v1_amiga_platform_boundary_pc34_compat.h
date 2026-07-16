@@ -1,0 +1,60 @@
+#ifndef FIRESTAFF_DM1_V1_AMIGA_PLATFORM_BOUNDARY_PC34_COMPAT_H
+#define FIRESTAFF_DM1_V1_AMIGA_PLATFORM_BOUNDARY_PC34_COMPAT_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {
+    const char* symbol;
+    const char* source_anchor;
+    const char* platform_partition;
+    int has_portable_pc34_equivalent;
+    const char* rationale;
+} DM1_V1_AmigaPlatformBoundaryPc34;
+
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0513_DIALOG_DrawGameReadyToPlay_Unreferenced_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0535_MEMORY_GetGraphicsDatFileSize_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0551_VIDEO_HatchBox_Unreferenced_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0552_BASE_DisplayError_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0557_SCROLLER_Initialize_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0558_SCROLLER_CancelInitialize_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0559_SCROLLER_Deinitialize_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0562_SCROLLER_Task_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F0563_SCROLLER_UpdateMessageArea_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1111_CPSX_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1133_AddCopperInterrupt_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1134_RemoveCopperInterrupt_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1135_CopperInterrupt_CPSX_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1140_InitializeColorPaletteFullBlack_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1148_CustomExceptCode_CPSX_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1149_Init_CPSX_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1150_Free_CPSX_PlatformBoundaryPc34(void);
+const DM1_V1_AmigaPlatformBoundaryPc34*
+F1157_BackupA5_PlatformBoundaryPc34(void);
+
+int dm1_v1_amiga_platform_boundary_is_portable_pc34(const DM1_V1_AmigaPlatformBoundaryPc34* boundary);
+const char* dm1_v1_amiga_platform_boundary_source_evidence_pc34(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FIRESTAFF_DM1_V1_AMIGA_PLATFORM_BOUNDARY_PC34_COMPAT_H */

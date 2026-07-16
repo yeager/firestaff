@@ -568,6 +568,38 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
     return iconIndex;
 }
 
+int F7017_GetIconIndex(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing)
+{
+    return dm1_v1_dungeon_get_object_icon_index_pc34(things, thing, 0);
+}
+
+const unsigned char *F7018_GetThingData(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing)
+{
+    return dm1_v1_dungeon_get_thing_data_pc34(things, thing);
+}
+
+int F7019_GetObjectInfoIndex(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing)
+{
+    return dm1_v1_dungeon_get_object_info_index_pc34(things, thing);
+}
+
+const char *F7017_F7018_F7019_CEDT004_SourceEvidencePc34(void)
+{
+    return "CEDT004.C:188 F7017_GetIconIndex, CEDT004.C:203 "
+           "F7018_GetThingData, and CEDT004.C:196/212 "
+           "F7019_GetObjectInfoIndex are source-named PC34 wrappers over "
+           "loaded raw Thing data. They delegate to the existing "
+           "DUNGEON.C F0156/F0141 and OBJECT.C F0033 contracts, fail closed "
+           "when raw records are absent, and do not synthesize decoded object "
+           "records, graphics resources, direction state, or input events.";
+}
+
 const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void)
 {
     return "ReDMCSB DUNGEON.C:F0156_DUNGEON_GetThingData:1584-1638; "

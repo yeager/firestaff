@@ -1,5 +1,1003 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1/CSB ReDMCSB CEDT006 HoC render/undo batch:
+  added DM1-owned narrow PC34 callables for `F7034_DrawButton`,
+  `F7035_SetSelectedColorBox`, `F7036_SetSelectedColorIndex`, and
+  `F7037_UpdateUndoBitmap`. The receipts consume only caller-owned
+  source-proven boxes, color indices, text, and selected-portrait bytes.
+  Missing proof, invalid geometry, invalid color indices, or undersized undo
+  buffers fail closed without fabricated champion data, portrait bytes,
+  screen pixels, color-palette state, input events, or fallback UI resources.
+  Verification: direct strict C11 build/run of
+  `test_dm1_v1_f7034_f7035_f7036_f7037_cedt006_hoc_render_undo_pc34_compat`
+  passed, alongside the adjacent CEDT006 selection and editor-input tests plus
+  strict syntax compilation of the CEDT006 module.
+
+- 2026-07-16 Theron Track02 level/object loader route receipt: added a
+  fail-closed receipt after the dungeon object/level table binding. It computes
+  and verifies a loader-route pair hash from the real Track 02 record, selected
+  dungeon index, level/object route hashes, source byte counts/hashes, and
+  original consumer PCs, giving later work one positive loader-route evidence
+  handle without decoding either table. The receipt keeps loader-route review
+  required and keeps field decoder execution, dungeon-route handoff, runtime
+  admission, dungeon draw, synthetic decode, and fallback visuals closed.
+  Verification: strict syntax checks for the touched Theron header/source/test
+  passed; focused direct C11 build/run of `test_theron_v1_track02_loader_intake`
+  with local unused dependency stubs passed.
+
+- 2026-07-16 DM2 skproject c_sound adjacent helper batch: added
+  source-backed receipts for `R_5F7`, `stop_all_sound`, `dtor`, and
+  `sndptr6`. `R_5F7` now proves the source order of `R_8AF` handle-table
+  stopping before scanning the caller-owned `v1dff38` allocation list and
+  reporting the matched node's next pointer without synthetic unlink or audio
+  playback. The stop/destructor/allocation receipts model `stop_sfx`,
+  `stop_music`, `al_uninstall_audio`, and `DM2_SOUND6`'s `sndptr6` allocation
+  size boundary. Verification: focused strict C11 build/run of
+  `test_dm2_v1_sound_source_gate` passed.
+
+- 2026-07-16 Nexus DGN no-draw/mesh blocker route proof: exposed the retained
+  DGN no-draw host boundary and real-DGN mesh-render blocker on the joint
+  DGN/PRS3 route receipt. The route now fails closed if either host fact is
+  lost after package/host consumption, while preserving DGN identity,
+  selector/geometry evidence, no-raster blockers, and PRS3 no-runtime source
+  facts. DGN rendering, pixel promotion, runtime upload, fallback visuals,
+  synthetic visuals, and guessed Saturn decoder promotion remain closed.
+  Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_prs3_capture_trace_schema` passed; focused syntax check and
+  `git diff --check` passed.
+
+- 2026-07-16 Theron Track02 dungeon object/level table binding: added a
+  fail-closed receipt after the dungeon-selection level-record boundary. It
+  binds the selected dungeon index to the real Track 02 level-record route and
+  object-table route only when the same capture trace repeats the route hashes,
+  source byte counts/hashes, and original consumer PCs. The receipt keeps
+  level-record review and object-table layout review required, and keeps field
+  decoder execution, dungeon-route handoff, runtime admission, dungeon draw,
+  synthetic decode, and fallback visuals closed. Verification: strict syntax
+  checks for the touched Theron header/source/test passed; focused direct C11
+  build/run of `test_theron_v1_track02_loader_intake` with local unused
+  dependency stubs passed.
+
+- 2026-07-16 DM2 skproject sound helper batch: added source-backed receipts
+  for `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`,
+  `R_5096A`, `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF`. The helpers model
+  the SKULLWIN `c_sound` MIDI program/reset/armed-stop state, SFX attenuation
+  and bearing table, SFX priority ordering, and the documented zeroed sample
+  table behavior without playing host audio or fabricating sound payloads.
+  Verification: focused strict C11 build/run of
+  `test_dm2_v1_sound_source_gate` passed.
+
+- 2026-07-16 DM2 skproject HUD/item/object alias audit correction: moved 14
+  already implemented aliases out of `MISSING` in
+  `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`, covering `DM2_MONEY_BOX_SURVEY`,
+  `DM2_SHOW_ATTACK_RESULT`, `DM2_REMOVE_POSSESSION`,
+  `DM2_LOAD_PROJECTILE_TO_HAND`, `DM2_RETRIEVE_ITEM_BONUS`,
+  `DM2_PROCESS_ITEM_BONUS`, `DM2_PUT_OBJECT_INTO_CONTAINER`,
+  `DM2_QUERY_PLAYER_SKILL_LV`, `DM2_IS_MISSILE_VALID_TO_LAUNCHER`,
+  `DM2_GET_MISSILE_REF_OF_MINION`, `DM2_IS_ITEM_HAND_ACTIVABLE`, and matching
+  SKWIN aliases where present. Verification: direct strict C99 build/run of
+  `test_dm2_v1_champion_hud_helpers`, `test_dm2_v1_item_missile_helpers`,
+  `test_dm2_v1_object_transfer_helpers`, and `test_dm2_v1_hud_survey_helpers`
+  passed; `tools/verify_symbol_backlog.py`, `tools/symbol_backlog.py --limit 0`,
+  and `git diff --check` passed.
+
+- 2026-07-16 DM2 skproject HUD panel routing audit sync: aligned
+  `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` with the existing verified
+  `dm2_v1_hud_panel_routing` implementation for `QUERY_CMDSTR_TEXT`,
+  `DM2_QUERY_CMDSTR_TEXT`, `TRANSMIT_UI_EVENT`, `DM2_TRANSMIT_UI_EVENT`,
+  `UPDATE_RIGHT_PANEL`, and `DM2_UPDATE_RIGHT_PANEL`. Verification: direct
+  strict C99 build/run of `test_dm2_v1_hud_panel_routing` passed, and
+  `tools/verify_symbol_backlog.py`, `tools/symbol_backlog.py --limit 0`, and
+  `git diff --check` passed.
+
+- 2026-07-16 CSB/ReDMCSB pre-title swoosh sound batch: added CSB-owned
+  source-named receipts for `F0908_InitSound`, `F0909_PlaySwooshSound`, and
+  `F0910_ReleaseSwooshSound`. The gate accepts only the real source-bound
+  9078-byte swoosh sample with period 334, stereo left/right channel binding,
+  source start ordering before TITLE, finish/wait before stop, and release
+  before `TITLE.C F0437` consumes C001. Synthetic sound data, host audio-device
+  emulation, and legacy swoosh wrappers remain closed. Verification: strict C11
+  F0908/F0909/F0910 build/run, source/test syntax checks, and adjacent F0806
+  build/run passed.
+
+- 2026-07-16 CSB/ReDMCSB `SWSH.C F0904`: added a CSB-owned pre-title palette
+  animation receipt between `F0909_PlaySwooshSound` and
+  `F0910_ReleaseSwooshSound`. The gate consumes the verified F0909 play receipt
+  and accepts only a caller-bound source palette stream with the 27 two-word
+  record shape; synthetic palette data, synthetic graphic bytes, and legacy
+  palette wrappers remain closed. Verification: strict C11 F0904 build/run and
+  source/test syntax checks passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB CEDT019 portrait save/load batch:
+  added DM1-owned narrow PC34 callables for
+  `F2122_DecodeAllPortraitsWhileLoading`,
+  `F2123_EncodeAllPortraitsBeforeSaving`, and
+  `F2124_DecodeAllPortraitsAfterSaving`. The gates require exactly four
+  caller-owned, source-proven 32x29 portrait spans and reuse the existing
+  planar/chunky conversion helpers. Missing proof, wrong counts, or malformed
+  buffers fail closed without fabricated champion data, portrait bytes, screen
+  pixels, file IO, input events, or fallback portrait resources. Verification:
+  direct strict C11 build/run of
+  `test_dm1_v1_f2122_f2123_f2124_cedt019_portrait_save_pc34_compat` passed,
+  along with strict syntax compilation of the new CEDT019 module.
+
+- 2026-07-16 Nexus DGN package/host no-raster blocker route proof: exposed the
+  DGN side's retained package/host no-raster facts on the joint DGN/PRS3 route
+  receipt: material pixel promotion blocked, raster input denied, and DGN
+  fallback visuals denied. The route now fails closed if any of those host
+  facts are lost after real-DGN package consumption, while preserving PRS3
+  no-runtime evidence and DGN source identity. DGN rendering, pixel promotion,
+  runtime upload, fallback visuals, synthetic visuals, and guessed Saturn
+  decoder promotion remain closed. Verification: direct strict C99 build/run
+  of `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_prs3_capture_trace_schema` passed; focused syntax check and
+  `git diff --check` passed.
+
+- 2026-07-16 Nexus DGN retained geometry admission/raster blocker proof:
+  strengthened the joint DGN/PRS3 route coverage so retained package/host
+  receipts must keep both geometry admission and textured-raster blocking after
+  geometry source consumption. If either fact is lost, the route stays no-draw
+  even with matching DGN identity, PRS3 no-runtime evidence, and the remaining
+  geometry source facts. DGN rendering, pixel promotion, runtime upload,
+  fallback visuals, synthetic visuals, and guessed Saturn decoder promotion
+  remain closed. Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_prs3_capture_trace_schema` passed; focused syntax check and
+  `git diff --check` passed.
+
+- 2026-07-16 Theron Track02 dungeon-selection level-record boundary: added a
+  fail-closed receipt that consumes the level/object facts handoff plus a
+  same-capture dungeon-selection trace. It binds the selected dungeon route to
+  real Track 02 level/object byte counts, hashes, route hashes, and original
+  consumer PCs, while requiring future level-record review and keeping field
+  decoder execution, runtime admission, dungeon draw, synthetic decode, and
+  fallback visuals blocked. Verification: strict syntax checks for the touched
+  Theron header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 Nexus DGN retained geometry source route proof: carried the
+  material receipt's renderer-neutral geometry source facts into the
+  package/host receipt and the joint DGN/PRS3 route proof. The route now
+  preserves source-bound geometry, geometry admission, and textured-raster
+  blocking, and it fails closed if the retained geometry source route is lost
+  after package/host consumption. DGN rendering, pixel promotion, runtime
+  upload, fallback visuals, synthetic visuals, and guessed Saturn decoder
+  promotion remain closed. Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_prs3_capture_trace_schema` passed; focused syntax check and
+  `git diff --check` passed.
+
+- 2026-07-16 CSB/ReDMCSB entrance-loop handoff batch: added a CSB-owned
+  source-named receipt for `F0806_F0806_ENTRANCE_int`. The gate accepts only
+  real entrance asset/input setup, F0439 redraw ownership, C099 wait-loop and
+  command-queue ownership, optional F0442 credits redraw loops, F0797
+  micro-dungeon proof, and the F0807 door-animation receipt for dungeon or
+  bonus-dungeon entry. Terminal wait/credits states, synthetic input, synthetic
+  graphics bytes, fallback visuals, and legacy entrance wrappers remain closed.
+  Verification: strict C11 F0806 build/run, F0806 source/test syntax checks,
+  and adjacent F0797 build/run passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB CEDT006 HoC champion-selection batch:
+  added DM1-owned narrow PC34 callables for
+  `F7032_DrawChampionNameOnTopOfScreen`,
+  `F7033_DrawPortraitsAndNamesOnTopOfScreen`,
+  `F7038_PrintChampionNameOrTitleForEdition`, and
+  `F7040_SelectChampion`. The receipts use only caller-owned champion
+  summaries and proven portrait-pixel availability; missing records fail
+  closed without fabricated champion data, portrait bytes, screen pixels,
+  input events, or fallback editor resources. Verification: direct strict C11
+  build/run of
+  `test_dm1_v1_f7032_f7033_f7038_f7040_cedt006_hoc_select_pc34_compat`
+  passed, alongside the adjacent F7039/F7041 CEDT006 test and strict syntax
+  compilation of the module.
+
+- 2026-07-16 DM2 skproject GDAT CPX compaction helpers: closed
+  `R_2D8AD`, `R_2D8BA`, and `R_2D802` in the DM2 asset loader. The new
+  receipts model source CPX top-down reservation, copy-from-header
+  relocation, and raw-length based compaction over GDAT CPX blocks, including
+  high-bit free-marker skips and moved active-block offsets. No decoded
+  pixels, menu data, dungeon data, or synthetic graphics are created.
+  Verification: direct strict C99 build/run of
+  `tests/test_dm2_v1_gdat_querydb_receipts.c` with
+  `src/dm2/dm2_v1_asset_loader.c` passed, reporting
+  `113 passed, 0 failed`.
+
+- 2026-07-16 Nexus DGN retained Structure2 descriptor route proof: carried the
+  Structure2 descriptor source-route bit from the material receipt into the
+  package/host receipt and the joint DGN/PRS3 route proof. If a later retained
+  host receipt loses that descriptor-route evidence, the DGN/PRS3 join blocks
+  no-draw even when DGN identities, selector counts, binding completeness, and
+  PRS3 source facts still match. Rendering, pixel promotion, runtime upload,
+  fallback visuals, synthetic visuals, and guessed Saturn decoder promotion
+  remain closed. Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_prs3_capture_trace_schema` passed; focused syntax check and
+  `git diff --check` passed.
+
+- 2026-07-16 Theron Track02 level/object facts handoff: added a positive
+  fail-closed handoff from the dungeon-route admission boundary back to the
+  real level/object field boundary. It carries only Track 02 route hashes,
+  source byte counts/hashes, original consumer PCs, and the reviewed decoder
+  identity, while keeping field decoder execution, dungeon-route handoff,
+  runtime admission, dungeon draw, synthetic decode, and fallback visuals
+  blocked. Verification: strict syntax checks for the touched Theron
+  header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 DM2 skproject GDAT allocator helper batch:
+  added `R_2BAD4` and `R_2D07D` mappings in the DM2 asset loader. `R_2BAD4`
+  preserves the source 16-bit byte-swap helper, and `R_2D07D` scans real
+  parsed GDAT rows for max raw length with type/field filters, without
+  allocating or fabricating buffers. Verification: focused GDAT querydb test,
+  syntax compile, symbol verifier, and diff whitespace checks passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB CEDT006 HoC editor HUD/input batch:
+  added DM1-owned narrow PC34 callables for
+  `F7039_DrawHealthOrStaminaOrMana` and `F7041_ProcessKeyboardInput`.
+  `F7039` records caller-owned status-line draw facts without emitting
+  pixels, and `F7041` edits a caller-owned text buffer from an explicit key
+  sequence without host polling or fabricated events. Verification: direct
+  strict C11 build/run of
+  `test_dm1_v1_f7039_f7041_cedt006_hoc_editor_pc34_compat` passed, along
+  with strict syntax compilation of the new module.
+
+- 2026-07-16 CSB/ReDMCSB entrance micro-dungeon batch: added a CSB-owned
+  source-named receipt for `F0797_STARTEND_DrawEntranceMicroDungeon`. The gate
+  accepts only the ReDMCSB source 5x5 C255 entrance map, wall/corridor layout,
+  south-facing F0128 draw request, and verified F0439 entrance draw receipt;
+  loaded-dungeon substitutes, synthetic viewport pixels, and legacy micro-dungeon
+  wrappers remain closed. Verification: strict C11 F0797 build/run, F0797
+  source/test syntax checks, and adjacent F0439/F0441/F0442 build/run passed.
+
+- 2026-07-16 Theron Track02 dungeon-route admission boundary: added a
+  fail-closed receipt that consumes the reviewed field-decoder boundary and a
+  same-capture dungeon-route boundary trace. It preserves only real Track 02
+  route hashes, record, consumer trace checksum, and reviewed decoder identity,
+  requires future dungeon-route review, and keeps field decoder execution,
+  dungeon-route handoff, runtime admission, dungeon draw, synthetic decode, and
+  fallback visuals blocked. Verification: strict syntax checks for the touched
+  Theron header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 Nexus DGN retained selector-binding route proof: carried the
+  selector-binding completeness bit from the DGN material source receipt into
+  the package/host receipt and the joint DGN/PRS3 route proof. If later
+  package/host handling loses complete Structure3 selector-binding evidence,
+  the DGN/PRS3 join now blocks no-draw even when retained DGN counts and PRS3
+  source evidence still match. Material semantics, pixel promotion, runtime
+  upload, rendering, fallback visuals, synthetic visuals, and guessed Saturn
+  decoder promotion remain closed. Verification: direct strict C99 build/run
+  of `test_nexus_v1_dgn_face_material_provenance` passed.
+
+- 2026-07-16 Theron Track02 reviewed field-decoder boundary: added a
+  fail-closed receipt that binds the real level/object field boundary to a
+  non-placeholder, non-synthetic reviewed decoder identity without executing
+  that decoder. It preserves the same Track 02 route hashes and consumer trace
+  checksum while keeping field decoder execution, exact level/object fields,
+  object layout, dungeon-route handoff, rendering, synthetic decode, and
+  fallback visuals blocked. Verification: strict syntax checks for the touched
+  Theron header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB CEDT004 object runtime batch: added
+  DM1-owned narrow PC34 wrappers for `F7017_GetIconIndex`,
+  `F7018_GetThingData`, and `F7019_GetObjectInfoIndex`. The wrappers reuse
+  the existing loaded raw Thing data, object-info, and icon contracts, and
+  fail closed without decoded-object fallbacks, synthetic graphics resources,
+  direction state, or input events. Verification: direct strict C11 build/run
+  of `test_dm1_v1_f7017_f7018_f7019_cedt004_thing_runtime_pc34_compat`
+  passed, along with syntax compilation of the touched dungeon thing-data
+  module.
+
+- 2026-07-16 Nexus DGN retained static-selector/Structure2 relation flag:
+  carried the static-selector-within-Structure2 relation as an explicit
+  package/host and joint DGN/PRS3 route receipt flag. Later consumers can now
+  audit that the retained static Structure3 selector census still fits the
+  retained Structure2 descriptor identity without recomputing it from raw
+  counts. Missing or false relation evidence keeps the join no-draw; material
+  semantics, pixel promotion, runtime upload, rendering, fallback visuals,
+  synthetic visuals, and guessed Saturn decoder promotion remain closed.
+  Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance` passed.
+
+- 2026-07-16 Theron Track02 level/object field boundary: added a fail-closed
+  receipt that consumes the paired level/object handoff evidence plus a
+  same-capture boundary trace before publishing only route hashes, source byte
+  counts/hashes, consumer PCs, and window checksums. The receipt requires a
+  future reviewed field decoder and keeps level fields, object fields, object
+  layout, dungeon-route handoff, rendering, synthetic decode, and fallback
+  visuals blocked. Verification: strict syntax checks for the touched Theron
+  header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 Nexus DGN static-selector Structure2 route proof: strengthened
+  the DGN package/host route and joint DGN/PRS3 proof so retained static
+  Structure3 material selectors must still fit within the retained Structure2
+  descriptor count. A later mismatch blocks the DGN/PRS3 join while keeping
+  material semantics, pixel promotion, runtime upload, rendering, fallback
+  visuals, synthetic visuals, and guessed Saturn decoder promotion closed.
+  Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance` passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB USIO keyboard input runtime batch: added
+  DM1-owned narrow PC34 callables for `F1690_GetASCIICode`,
+  `F1691_Cconis`, and `F1692_Crawcin`. The batch reads only explicit
+  caller-owned raw-key/key-buffer state, preserves low-byte ASCII/control
+  values, and fails closed without host keyboard polling, blocking host waits,
+  scan-code table synthesis, or fabricated key events. Verification: direct
+  strict C11 build/run of
+  `test_dm1_v1_f1690_f1691_f1692_usio_keyboard_input_pc34_compat`
+  passed, along with strict syntax compilation of the input poll module.
+
+- 2026-07-16 Theron Track02 level/object handoff evidence join: added a
+  receipt that joins nonstartup level record evidence with object-table route
+  evidence only when they share Track 02 capture identity, record, consumer
+  trace checksum, route hashes, source byte windows, and original consumer PCs.
+  It publishes paired real-data handoff evidence while keeping level fields,
+  object fields, object layout, rendering, synthetic decode, and fallback
+  visuals blocked. Verification: strict syntax checks for the touched Theron
+  header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 Nexus DGN selector/geometry material-count route proof:
+  strengthened the DGN package/host route and joint DGN/PRS3 proof so they
+  carry the Structure3 material selector census and matching renderer-neutral
+  geometry material-face count. Static selector count, animated selector count,
+  and geometry material-face count must still match the retained DGN face
+  identity before the join is source-bound. Drift keeps the route no-draw, with
+  rendering, pixel promotion, runtime upload, fallback visuals, synthetic
+  visuals, and guessed Saturn decoder promotion still closed. Verification:
+  direct strict C99 build/run of `test_nexus_v1_dgn_face_material_provenance`
+  passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB mouse accessor runtime batch: added DM1-owned
+  narrow PC34 callables for `F1128_IsLeftMouseButtonDown`,
+  `F2008_IsLeftMouseButtonDown`, `F2009_GetMouseX`, `F2010_GetMouseY`,
+  `F2024_IsLeftMouseButtonDown`, `F2047_GetMouseX`, and `F2048_GetMouseY`.
+  The accessors read only explicit caller-owned mouse status and fail closed
+  without host cursor polling, editor/hint input synthesis, or fallback mouse
+  state. Verification: direct strict C11 build/run of
+  `test_dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat`
+  plus the adjacent USIO mouse/input queue tests passed.
+
+- 2026-07-16 Nexus DGN/PRS3 no-runtime source-bound route facts: extended the
+  joint DGN package/host plus PRS3 output/upload route receipt so it carries
+  the PRS3 decoded-output proof-bound flag and the source-bound-no-runtime
+  flag through the route proof. Missing no-runtime PRS3 source evidence now
+  blocks the DGN/PRS3 join even when DGN identity, PRS3 stream identity,
+  decoded-output sidecar evidence, and reviewed upload facts are present.
+  Rendering, pixel promotion, runtime upload, fallback visuals, synthetic
+  visuals, and guessed Saturn decoder promotion remain closed. Verification:
+  direct strict C99 build/run of `test_nexus_v1_dgn_face_material_provenance`
+  passed.
+
+- 2026-07-16 Theron Track02 object-table route/layout evidence: added a
+  receipt that consumes object/level byte admission plus a same-capture
+  object-table trace before publishing real raw/user-data object-table route
+  evidence. It carries the object route hash, raw sector/user-data coordinates,
+  byte count, source hash, object consumer PC, and post-envelope
+  offset/count/checksum while keeping object layout, exact object fields,
+  rendering, synthetic decode, and fallback visuals blocked. Verification:
+  strict syntax checks for the touched Theron header/source/test passed;
+  focused direct C11 build/run of `test_theron_v1_track02_loader_intake` with
+  local unused dependency stubs passed.
+
+- 2026-07-16 Nexus DGN/PRS3 reviewed-upload route facts: extended the joint
+  DGN package/host plus PRS3 output/upload route receipt so it carries the
+  reviewed PRS3 upload-path facts that made the route source-bound: reviewed
+  upload path, MENU.BPK upload review, original Saturn provenance, and
+  independent-authentication requirement. Missing MENU.BPK upload review now
+  blocks the DGN/PRS3 join even when DGN identity, PRS3 stream identity, and
+  decoded-output sidecar evidence are present. Rendering, pixel promotion,
+  runtime upload, fallback visuals, synthetic visuals, and guessed Saturn
+  decoder promotion remain closed. Verification: direct strict C99 build/run
+  of `test_nexus_v1_dgn_face_material_provenance` passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB USIO mouse input runtime batch: added
+  DM1-owned narrow PC34 callables for `F1684_GetMouseStatus` and
+  `F1694_AddMouseInputToQueue`. Mouse status is copied only from explicit
+  caller-owned facts, and mouse X/Y/button input routes through the existing
+  DM1 command queue tables; no host cursor polling or synthetic mouse data is
+  introduced. Verification: direct strict C11 build/run of
+  `test_dm1_v1_f1684_f1694_usio_mouse_input_pc34_compat`,
+  `test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat`, and
+  `test_dm1_v1_input_command_queue_f0357_pc34_compat` passed.
+
+- 2026-07-16 Theron Track02 nonstartup level record-route evidence: added a
+  receipt that consumes object/level byte admission plus a same-capture
+  nonstartup-level trace before publishing real raw/user-data level-window
+  evidence. It carries the level route hash, nonstartup raw sector/user-data
+  coordinates, byte count, raw hash, dungeon consumer PC, and dungeon-window
+  offset/count/checksum while keeping exact level fields, object-table layout,
+  rendering, synthetic decode, and fallback visuals blocked. Verification:
+  strict syntax checks for the touched Theron header/source/test passed;
+  focused direct C11 build/run of `test_theron_v1_track02_loader_intake` with
+  local unused dependency stubs passed.
+
+- 2026-07-16 Nexus DGN/PRS3 sidecar-bound route proof: tightened the joint DGN
+  package/host plus PRS3 output/upload route gate so PRS3 decoded-output
+  sidecar evidence is required alongside the output fingerprint and reviewed
+  upload path. Missing sidecar binding now blocks the DGN/PRS3 join even when
+  DGN package identity and PRS3 stream identity are otherwise present; DGN
+  rendering, startup menu rendering, PRS3 runtime upload, material pixel
+  promotion, fallback visuals, synthetic visuals, and guessed Saturn decoder
+  promotion remain closed. Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance` passed.
+
+- 2026-07-16 Theron Track02 object/level handoff window preservation: the
+  object/dungeon original-consumer binding and raw nonstartup handoff now carry
+  the capture consumer PCs plus loader, dungeon-window, and object-window
+  coordinates/checksums. Object/level admission checks the handoff copy against
+  the grammar receipt before allowing byte admission, while field decode,
+  object-table layout interpretation, dungeon draw, synthetic promotion, and
+  fallback visuals remain blocked. Verification: strict syntax checks for the
+  touched Theron header/source/test passed; focused direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` with local unused dependency stubs
+  passed.
+
+- 2026-07-16 CSB/ReDMCSB title/HUD/door runtime coupling batch: added
+  CSB-owned source-named receipts for `F0437_STARTEND_DrawTitle`,
+  `F0438_STARTEND_OpenEntranceDoors`,
+  `F0580_ENTRANCE_DrawDoorAnimationStep`, and `F0581_ENTRANCE_BlitDoors`.
+  The acceptance gate requires all title phases, HUD capture, the bounded
+  31-step door-opening route, real startup assets, receipt-only draw/input,
+  no wrapper fallback routes, and no synthetic visuals. Verification: direct
+  strict C11 build/run of
+  `test_csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat`
+  and strict C11 syntax-only checks passed.
+
+- 2026-07-16 CSB/ReDMCSB temporary entrance graphic byte-count batch: added a
+  CSB-owned source-named receipt for
+  `F0440_STARTEND_GetTemporarilyLoadedGraphicByteCount`. The gate accepts only
+  real C004 entrance, C005 credits, C534 door-rattle, or C535 switch
+  GRAPHICS.DAT members through the reviewed F0490 load/decompress route, and
+  rejects synthetic bytes, synthetic file handles, and legacy graphics wrappers.
+  Verification: direct strict C11 build/run of
+  `test_csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat` and
+  strict C11 syntax-only checks passed.
+
+- 2026-07-16 CSB/ReDMCSB title/entrance palette fade batch: added a
+  CSB-owned source-named receipt for `F0436_STARTEND_FadeToPalette`. The gate
+  requires real source-bound 16-entry palettes from the verified title or
+  entrance/credits startup route, source fade-step/VBlank/component-mask facts,
+  and no renderer palette substitute, legacy palette wrapper, or synthetic
+  palette. Verification: direct strict C11 build/run of
+  `test_csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat` and
+  strict C11 syntax-only checks passed.
+
+- 2026-07-16 CSB/ReDMCSB entrance bitplane-init batch: added a CSB-owned
+  source-named receipt for `F0579_ENTRANCE_InitializeBitPlanes`. The gate
+  requires the real ReDMCSB 256x161 composite-door bitmap and 320x200 screen
+  bitplane geometry, consumes the title/HUD/door runtime coupling receipt, and
+  rejects legacy bitplane wrappers plus synthetic visual surfaces. Verification:
+  direct strict C11 build/run of
+  `test_csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat` and
+  strict C11 syntax-only checks passed.
+
+- 2026-07-16 CSB/ReDMCSB entrance animation-step batch: added a CSB-owned
+  source-named receipt for `F0807_ENTRANCE_DrawAnimationStep`. The gate
+  requires a real F0438/F0580 door-step frame, the F0579 bitplane-init receipt,
+  source-locked 31-step bounds, receipt-only draw/input, and no legacy or
+  synthetic visual route before the screen blit is accepted. Verification:
+  direct strict C11 build/run of
+  `test_csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat` and
+  strict C11 syntax-only checks passed.
+
+- 2026-07-16 Nexus DGN/PRS3 package route identity proof: strengthened the
+  joint DGN package/host plus PRS3 output/upload route gate so it carries both
+  sides of the real-data identity. Alongside the MENU.BPK PRS3 entry/stream
+  and output fingerprint, the receipt now preserves the DGN level index,
+  canonical DGN byte count, material-face count, and Structure2 descriptor
+  count. If that DGN identity is missing, the join stays no-draw and still
+  blocks DGN rendering, startup menu rendering, PRS3 runtime upload, material
+  pixel promotion, fallback visuals, synthetic visuals, and guessed Saturn
+  decoder promotion. Verification: direct strict C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance` passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB USIO input queue runtime batch: added
+  DM1-owned narrow PC34 callables for `F1172_QueueMouseAndKeyboardInput`,
+  `F1173_AddUsioDataToInputQueue`, and
+  `F1174_AddPendingUsioDataToInputQueue`. The bridge maps explicit
+  caller-owned USIO keyboard/mouse samples through the existing DM1 command
+  queue tables and keeps pending data until accepted; no host polling or
+  synthetic input data is introduced. Verification: direct strict C11
+  build/run of `test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat`
+  and the existing `test_dm1_v1_input_command_queue_f0357_pc34_compat` passed.
+
+- 2026-07-16 Theron Track02 object/dungeon raw binding handoff: added a
+  narrow original-consumer binding that consumes the verified raw Track 02 data
+  gap plus the capture-produced object/dungeon grammar receipt before raw
+  nonstartup dungeon handoff. The positive path now flows from capture text to
+  facts, grammar, raw/user-data object and level coordinates, and object/level
+  byte admission without requiring hand-built binding facts or broader
+  bitmap/palette semantics. Field decode, object layout interpretation,
+  rendering, synthetic promotion, and fallback visuals stay blocked.
+  Verification: strict syntax checks for the touched Theron header/source/test
+  passed; focused direct C11 build/run of `test_theron_v1_track02_loader_intake`
+  with local unused dependency stubs passed.
+
+- 2026-07-16 Nexus startup/menu animation handoff gate: coupled the
+  package-level startup animation gate to a MENU.BPK handoff receipt boundary.
+  An active `nexus-title` or `nexus-champion-select` animation now remains
+  no-draw unless the real MENU.BPK source is hash-verified, the handoff receipt
+  is valid, stored original surfaces are available, PRS3/Saturn presentation
+  traces are not required, and fallback visuals are absent. Synthetic visuals
+  and guessed Saturn decoders remain rejected. Verification: direct strict C99
+  build/run of `test_nexus_v1_startup_presentation_animation_receipt` passed
+  with the real startup-menu and title-sequence sources.
+
+- 2026-07-16 DM1/CSB ReDMCSB hint string helper batch: added DM1-owned
+  source-named PC34 callables for `F1909_CopyStringUntilCharacter`,
+  `F1984_ConvertCharacterToLowerCase`, and
+  `F2014_ConvertStringToLowerCase`. The helpers cover bounded caller-owned
+  hint text copy and ASCII lowercasing only; no hint-oracle, HTC/file, screen,
+  palette, or input state is synthesized. Verification: direct strict C11
+  build/run of `test_dm1_v1_hint_string_helpers_pc34_compat` passed.
+
+- 2026-07-16 CSB/ReDMCSB STARTEND entrance boundary batch: added CSB-owned
+  source-named bounded receipts for `F0439_STARTEND_DrawEntrance`,
+  `F0441_STARTEND_ProcessEntrance`, and
+  `F0442_STARTEND_ProcessCommand202_EntranceDrawCredits`. The wrappers accept
+  only real-asset host-view/ownership facts for the entrance, credits,
+  receipt-owned draw/input, and retired legacy wrapper routes; missing
+  real-data proof or fallback graphics fails closed. Verification: direct
+  strict C11 build/run of
+  `test_csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat`
+  and strict C11 syntax-only checks passed.
+
+- 2026-07-16 DM2 GDAT asset-loader compile repair: removed a duplicate
+  `dm2_gdat_entry_owns_raw_payload` helper, added missing internal IMG3
+  bpp/metadata/local-palette helpers, and corrected receipt paths to read IMG3
+  bits-per-pixel from word 4 instead of word 6. Verification: syntax-only C99
+  compile of `tests/test_dm2_v1_extended_spells_definition_asset_stub.c` with
+  `src/dm2/dm2_v1_asset_loader.c`, `python3 tools/verify_symbol_backlog.py`,
+  and `git diff --check` passed.
+
+- 2026-07-16 Theron Track02 object/dungeon capture-facts producer: added a
+  narrow runtime-admission producer that turns an authenticated object/dungeon
+  consumer trace into `Theron_V1Track02Post3800ConsumerTraceFacts` only when it
+  carries the same `$0b52` loader coordinates, nonstartup/object raw offsets,
+  nonzero dungeon/object consumer PCs, exact level/object byte-window
+  offsets/counts/checksums, and explicit no-bitmap, no-palette, no-synthetic,
+  no-fallback flags. The resulting grammar admission still blocks field
+  decode, object layout interpretation, rendering, and fallback visuals.
+  Verification: strict syntax checks for the touched Theron header/source/test
+  passed; focused direct C11 build/run of `test_theron_v1_track02_loader_intake`
+  with local unused dependency stubs passed.
+
+- 2026-07-16 Nexus startup/menu package animation gate: added a
+  package-level presentation gate for the existing `nexus-title` and
+  `nexus-champion-select` animation labels. The gate only permits a future
+  draw route when the full startup package receipt, host display caller, real
+  package assets, exact Saturn timing, and exact capture-frame facts are all
+  present; MENU.BPK/PRS3 blockers, fallback visuals, inactive save/runtime
+  states, synthetic visuals, and guessed Saturn decoders remain no-draw.
+  Verification: direct strict C99 build/run of
+  `test_nexus_v1_startup_presentation_animation_receipt` passed with the real
+  startup-menu and title-sequence sources.
+
+- 2026-07-16 DM1/CSB ReDMCSB Amiga Copper/CPSX platform boundary batch:
+  extended the DM1-owned PC34 Amiga platform descriptor to cover
+  `F1111_CPSX`, `F1133_AddCopperInterrupt`,
+  `F1134_RemoveCopperInterrupt`, `F1135_CopperInterrupt_CPSX`,
+  `F1140_InitializeColorPaletteFullBlack`,
+  `F1148_CustomExceptCode_CPSX`, `F1149_Init_CPSX`,
+  `F1150_Free_CPSX`, and `F1157_BackupA5`. These remain explicit
+  no-portability boundaries with source evidence only: no synthetic palette
+  writes, interrupt handlers, copy-protection state, disk behavior, or A5
+  register backup route is introduced. Verification: direct strict C11
+  build/run of `test_dm1_v1_f0513_amiga_dialog_platform_boundary_pc34_compat`
+  passed.
+
+- 2026-07-16 Symbol backlog verifier: added
+  `tools/verify_symbol_backlog.py` to smoke-check the subagent queue tooling:
+  it compiles `tools/symbol_backlog.py`, checks the total open backlog JSON,
+  and validates ReDMCSB plus skproject JSONL queue rows. Verification:
+  `python3 tools/verify_symbol_backlog.py` and focused `git diff --check`
+  passed.
+
+- 2026-07-16 CSB/ReDMCSB startup graphics boundary batch: added CSB-owned
+  source-named bounded receipts for `F0474_MEMORY_LoadGraphic_CPSDF`,
+  `F0477_MEMORY_OpenGraphicsDat_CPSDF`,
+  `F0478_MEMORY_CloseGraphicsDat_CPSDF`,
+  `F0479_MEMORY_ReadGraphicsDatHeader`,
+  `F0488_MEMORY_ExpandGraphicToBitmap`, and
+  `F0490_MEMORY_LoadDecompressAndExpandGraphic`. The wrappers preserve the
+  real-data contract around the existing startup runtime loader and fail
+  closed without synthesizing GRAPHICS.DAT bytes, decompressed payloads,
+  IMAGE2/IMG3 pixels, or file handles. Verification: direct strict C11
+  build/run of
+  `test_csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat`
+  and strict C11 syntax-only checks passed.
+
+- 2026-07-16 Nexus startup presentation animation receipt: the startup
+  presentation receipt now marks the named champion-select presentation
+  animation active, matching the existing `nexus-champion-select` label, while
+  save/runtime states remain inactive and no new visual asset or draw route is
+  introduced. Verification: direct strict C99 build/run of
+  `test_nexus_v1_startup_presentation_animation_receipt` passed with the real
+  startup-menu and title-sequence sources.
+
+- 2026-07-16 DM1/CSB ReDMCSB Amiga memory/scroller platform boundary batch:
+  extended the DM1-owned PC34 Amiga platform descriptor to cover
+  `F0535_MEMORY_GetGraphicsDatFileSize`, `F0557_SCROLLER_Initialize`,
+  `F0558_SCROLLER_CancelInitialize`, `F0559_SCROLLER_Deinitialize`,
+  `F0562_SCROLLER_Task`, and `F0563_SCROLLER_UpdateMessageArea`. These remain
+  explicit no-portability boundaries: no synthetic GRAPHICS.DAT size API,
+  host scroller task, or message-area callback is introduced. Verification:
+  direct strict C11 build/run of
+  `test_dm1_v1_f0513_amiga_dialog_platform_boundary_pc34_compat` passed.
+
+- 2026-07-16 Symbol backlog queue tooling: added `--reference`, `--family`,
+  and `--format jsonl` filters to `tools/symbol_backlog.py` so DM1/CSB/DM2
+  symbol batches can be assigned to subagents without hand-copying mixed
+  queues. Verification: `python3 -m py_compile tools/symbol_backlog.py`,
+  focused JSONL/text CLI smoke checks, and `git diff --check` passed.
+
+- 2026-07-16 Theron Track02 object/level window-evidence hardening: the
+  object/level admission receipt now preserves and checks the same-capture
+  `$0b52` loader coordinates plus dungeon/object grammar windows alongside
+  the raw nonstartup sector/user-data evidence. Loader destination, payload
+  size, dungeon-window checksum, object-window offset, bitmap-route drift,
+  pre-opened dungeon draw, or fallback visuals all fail closed. Verification:
+  strict syntax checks for the touched Theron header/source/test/stub passed;
+  focused direct C11 build/run of `test_theron_v1_track02_loader_intake` with
+  local unused dependency stubs passed; targeted `git diff --check` passed.
+
+- 2026-07-16 Theron Track02 object/level admission gate: added a narrow
+  runtime admission receipt that consumes the raw nonstartup dungeon handoff
+  plus the same-capture object/dungeon grammar receipt before allowing the
+  object-table and nonstartup-level byte sources through. It carries the raw
+  sector/user-data coordinates and consumer PCs forward, while exact field
+  decode, bitmap/palette binding, RGBA output, dungeon draw, synthetic
+  promotion, and fallback visuals remain blocked. Verification: strict syntax
+  checks for the touched Theron header/source/test/stub passed; focused direct
+  C11 build/run of `test_theron_v1_track02_loader_intake` with local unused
+  dependency stubs passed.
+
+- 2026-07-16 CSB/ReDMCSB FIO1 trackdisk boundary batch: added CSB-owned
+  source-named PC34 callables for `F1106_IsTrackdiskDeviceOpened`,
+  `F1107_GetDiskChangeCounter`, `F1109_GetDiskState`, and
+  `F1114_CloseTrackdiskDevice`. The implementation preserves the no-host
+  boundary only: trackdisk is not opened, disk-change counter is `-1`,
+  disk state remains the ReDMCSB default `0` (no disk), and close is a no-op;
+  no disk, file, write-protection, or change-counter data is synthesized.
+  Verification: direct strict C11 build/run of
+  `test_csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat`
+  and strict C11 syntax-only checks passed.
+
+- 2026-07-16 Nexus DGN geometry/material source-path proof: DGN
+  face/material admission now requires renderer-neutral geometry proof from
+  the same Structure3 path: source-bound geometry, matching static/animated
+  material-face count, geometry submission allowed, no textured-raster
+  promotion, and no fallback visuals. The live engine caller now feeds those
+  facts from current-level geometry state and Structure2 descriptor count. The
+  source-path test builds a real `nexus_v1_dgn_mesh` packet with one color
+  face plus static/animated material faces and proves only the material faces
+  enter the no-draw material route. Verification: direct strict C99 builds/runs
+  of `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_dgn_mesh` passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB F0513/F0551/F0552 Amiga platform boundary closure:
+  added a DM1-owned PC34 boundary descriptor for
+  `F0513_DIALOG_DrawGameReadyToPlay_Unreferenced`,
+  `F0551_VIDEO_HatchBox_Unreferenced`, and `F0552_BASE_DisplayError`,
+  recording the Amiga-host dialog/video/error-display routes while keeping any
+  ready-to-play dialog, hatch-fill visual, or generic host error substitute
+  unclaimed. Verification: direct strict
+  C11 build/run of
+  `test_dm1_v1_f0513_amiga_dialog_platform_boundary_pc34_compat` passed.
+
+- 2026-07-16 Theron Track02 raw nonstartup dungeon handoff: runtime admission
+  now has a narrow receipt that consumes the existing original-data gap plus
+  same-capture original-consumer binding and publishes the exact raw-sector
+  and logical user-data coordinates for the first nonstartup level candidate
+  and object-table container. The route remains real-data only: level/object
+  field decode, bitmap/palette binding, RGBA output, dungeon draw, synthetic
+  promotion, and fallback visuals stay blocked. Verification: strict syntax
+  checks for the touched Theron header/source/test/stub passed; focused direct
+  C11 build/run of `test_theron_v1_track02_loader_intake` with local unused
+  dependency stubs passed; targeted `git diff --check` passed.
+
+- 2026-07-16 CSB/ReDMCSB USIO queue/mouse boundary batch: added CSB-owned
+  bounded PC34 callables for `F1164_USIO_15_GetFirstQueuedUsioDataType`,
+  `F1165_USIO_17_WaitUntilKeyboardOrMouseInput`,
+  `F1166_USIO_16_ExtractFirstUsioDataFromQueue`,
+  `F1167_USIO_14_GetMouseStatus`, `F1175_GetFirstQueuedUsioDataIndex`, and
+  `F1176_ExtractFirstUsioDataFromQueue`. The implementation models ReDMCSB's
+  11-slot queue empty/index/extraction contract and keeps host mouse status
+  unavailable unless the caller supplies explicit facts; the test fabricates
+  no disk, keyboard, mouse, or queued input data. Verification: direct strict
+  C11 build/run of
+  `test_csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat`
+  and strict C11 syntax-only checks passed.
+
+- 2026-07-16 Nexus DGN/PRS3 route-proof receipt coupling: tightened the joint
+  DGN material host-route plus PRS3 output/upload gate so DGN now consumes the
+  real `Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt` type from the PRS3
+  schema via a forward-declared pointer instead of a duplicate fact struct.
+  The route proof still blocks DGN rendering, startup menu rendering, PRS3
+  runtime upload, decoder promotion, material pixel promotion, and fallback
+  visuals. Verification: direct strict C99 builds/runs of
+  `test_nexus_v1_dgn_face_material_provenance`,
+  `test_nexus_v1_dgn_face_material_source_path`, and
+  `test_nexus_v1_prs3_capture_trace_schema` passed.
+
+- 2026-07-16 DM1/CSB ReDMCSB F0537/F0544 input platform boundary closure:
+  added a DM1-owned PC34 boundary descriptor for
+  `F0537_INPUT_ReleaseResources` and
+  `F0544_INPUT_ResetPressingEyeOrMouth`. The descriptor records the Amiga
+  source anchors and locks both rows as non-portable PC34 platform boundaries
+  instead of synthesizing a host resource teardown or generic mouse-release
+  shim. Verification: direct strict C11 build/run of
+  `test_dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat` passed.
+
+- 2026-07-16 ReDMCSB F0550 planar fill closure: added focused coverage for
+  `F0550_VIDEO_FillScreenBox` over the existing PC34 4-plane big-endian fill
+  shim, including word boxes, byte boxes, shade mask, and fail-closed bounds.
+
+- 2026-07-16 ReDMCSB F0085 runtime helper closure: added a source-named
+  PC34 `_blockcmp` shim for DEFS.H:6902 with bounded structure-byte comparison
+  semantics and focused tests for equal/prefix/different/null/count cases.
+
+- 2026-07-16 DM1/CSB ReDMCSB F0357 input discard source boundary: added the
+  DM1-owned `F0357_COMMAND_DiscardAllInput` wrapper over the existing PC34
+  input-command queue discard implementation and pinned its source evidence to
+  `COMMAND.C:1304-1377`, the blocked-step caller in `CLIKMENU.C:317-323`, and
+  the wake-up caller in `CHAMPION.C:1382-1414`. The focused direct C11 test
+  proves the ReDMCSB behavior that ordinary queued movement/turn input is
+  flushed while C129 release-champion-icon and C254 stop-pressing-wall reserved
+  commands are compacted and retained, with pending clicks cleared and no
+  synthetic queue data introduced. Verification: direct strict C11 build/run
+  of `test_dm1_v1_input_command_queue_f0357_pc34_compat` passed.
+
+- 2026-07-16 ReDMCSB existing-wrapper closure: verified and dispositioned
+  `F0019_MAIN_DisplayErrorAndStop` and `F0089_strncpy`. F0019 uses the
+  existing PC34 terminal error callback adapter; F0089 now has a missing
+  focused test covering signed-count copy, copied-NUL stop, and no padding.
+  Verification: direct strict C11 build/run of both focused tests passed.
+
+- 2026-07-16 CSB/ReDMCSB USIO/FIO1 platform boundary batch: added CSB-owned
+  source-named callables for `F1168_USIO_18_Empty`,
+  `F1170_USIO_03_Expunge`, `F1171_USIO_19_LockDF0`,
+  `F1305_OpenFTLLibrary`, and `F1307_FIO1_03_Expunge`. These are verified
+  PC34 no-op boundaries over USIO2.C/FIO1MAIN.C empty, expunge, DF0 lock, and
+  FIO1 library routes, without fabricated queue, cursor, disk, or host-library
+  behavior. Verification: direct strict C11 build/run of
+  `test_csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat`,
+  strict C11 syntax-only check for the new CSB source/test, and focused
+  diff-check passed.
+
+- 2026-07-16 Nexus DGN/PRS3 route-proof stream identity: strengthened the
+  joint DGN material host-route plus PRS3 output/upload no-runtime gate so the
+  route proof must preserve a concrete MENU.BPK PRS3 stream identity: entry,
+  stream offset/size, expected output bytes, and output FNV. Missing output
+  fingerprint now blocks the route while keeping DGN rendering, startup menu
+  rendering, PRS3 runtime upload, and fallback visuals closed. Verification:
+  strict direct C99 and C11 builds/runs of
+  `test_nexus_v1_dgn_face_material_provenance` and
+  `test_nexus_v1_dgn_face_material_source_path` passed; strict C99
+  syntax-only checks for the touched Nexus header/source/tests and focused
+  `git diff --check` passed.
+
+- 2026-07-16 CSB/ReDMCSB F1090-F1094 alert template closure: implemented the
+  exact mutable AMIGINIT.C DisplayAlert byte templates for
+  `F1090_GetCSBInternalErrorMessage` and
+  `F1091_GetCSBSystemErrorMessage`, corrected `F1092_GetHexadecimalDigits` to
+  the source lowercase table, and made F1093/F1094 mutate the real templates
+  before the PC34 host-alert boundary. Verification: direct strict C11
+  build/run of `test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat`
+  passed.
+
+- 2026-07-16 Nexus DGN/PRS3 route-proof gate: added a joint DGN material
+  host-route plus PRS3 output/upload no-runtime gate. It binds only
+  source-bound real-DGN package/host consumption with source-bound PRS3
+  output/upload facts, requires explicit startup and DGN route requests, and
+  keeps DGN rendering, startup menu rendering, PRS3 runtime upload, material
+  pixel promotion, and fallback visuals closed. Verification: strict direct
+  C99 and C11 builds/runs of `test_nexus_v1_dgn_face_material_provenance`
+  passed; strict C99 syntax-only checks for the touched Nexus
+  header/source/test passed; focused `git diff --check` passed.
+
+- 2026-07-16 CSB/ReDMCSB USIO empty/pointer boundary batch: added CSB-owned
+  source-named callables for `F1159_Empty`, `F1160_USIO_04_Empty`,
+  `F1161_USIO_05_Empty`, `F1162_USIO_06_HidePointer`, and
+  `F1163_USIO_07_ShowPointer`. The empty vectors and pointer hide/show routes
+  are verified PC34 no-op boundaries with USIOMAIN.C/USIO1.C evidence, without
+  host cursor behavior or synthetic input data. Verification: direct strict
+  C11 build/run of
+  `test_csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat`,
+  strict C11 syntax-only check for the new CSB source/test, and focused
+  diff-check passed.
+
+- 2026-07-16 DM2 projectile impact move receipt disposition: closed
+  `DM2_move_075f_06bd` through the existing skproject-backed
+  `dm2_v1_DM2_move_075f_06bd_projectile_get_impact_attack` helper. The focused
+  test covers item throw-strength/poison/weight input, poison blob, lightning,
+  poison bolt, unsupported cloud zero-attack, bounded random terms, and source
+  evidence. Related dungeon-loader-dependent move helpers remain open because
+  the shared `dm2_v1_dungeon_loader.h` header is mid-transition in this
+  worktree.
+
+- 2026-07-16 Nexus PRS3 output/upload no-runtime gate: added a reviewed
+  output/upload receipt that joins source-bound MENU.BPK PRS3 decoded-output
+  proof with the reviewed VDP1/producer upload path while keeping runtime
+  upload, decoder promotion, Saturn rendering, and fallback visuals closed.
+  The capture-file gate now performs its original MENU.BPK/DM.BIN MD5 checks
+  with a local Nexus verifier instead of relying on an undeclared external
+  symbol. Verification: strict direct C99 and C11 builds/runs of
+  `test_nexus_v1_prs3_capture_trace_schema` passed; strict C99 syntax-only
+  checks for the touched Nexus header/source/test passed; focused
+  `git diff --check` passed.
+
+- 2026-07-16 CSB/ReDMCSB AMIGINIT alert helper batch: added CSB-owned
+  source-named callables for `F1092_GetHexadecimalDigits`,
+  `F1093_DisplayAlertCSBInternalError`, and
+  `F1094_DisplayAlertCSBSystemError`. F1092 exposes the source hexadecimal
+  digit table; F1093/F1094 are verified terminal PC34 no-op boundaries for the
+  Amiga Intuition DisplayAlert/ResetAmiga paths, without host alert/restart or
+  synthetic message-template data. Verification: direct strict C11 build/run
+  of `test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat`, strict C11
+  syntax-only check for the new CSB source/test, and focused diff-check passed.
+
+- 2026-07-16 DM1 F0024/F0026/F0030 main-math callable bundle: added
+  source-named DM1 callables for `F0024_MAIN_GetMinimumValue`,
+  `F0026_MAIN_GetBoundedValue`, and `F0030_MAIN_GetScaledProduct`.
+  `dm1_scaled_product` now delegates to the F0030 boundary, so the existing
+  combat scaled-product path is no longer a locally reassembled helper.
+  `SYMBOL_DISPOSITIONS.tsv` records all three rows with focused source/test
+  evidence. Verification: direct strict C11 main-math test, strict object
+  compile for the new source and touched combat source, and `git diff --check`
+  passed.
+
+- 2026-07-16 DM2 memory/mement helper receipt bundle: mapped `ZERO_MEMORY`
+  and `ValidateMements` to skproject-backed bounded helpers. The regression
+  covers caller-owned byte clearing, null/nonzero fail-closed behavior, active
+  mement table census, bad id/span/overlap rejection, source evidence, and no
+  synthetic cache or image data.
+
+- 2026-07-16 DM2 palette driver disposition: closed skproject
+  `driver_setcolors` through the existing `dm2_v1_skproject_core` palette
+  receipts. The strict C11 regression proves RGB8-to-DMPAL6 conversion,
+  immediate-colors driver flush requests, `SELECT_PALETTE_SET(1)` driver color
+  request routing, and missing-source-palette fail-closed behavior; no
+  synthetic palette route is introduced.
+
+- 2026-07-16 Nexus Structure3 material source-path API cleanup: updated the
+  real DGN Structure3 face/material collector to emit only static/animated
+  material bindings under the current package/host no-draw contract.
+  Color-fill faces are skipped rather than promoted to a synthetic material
+  route, static selectors remain bounded by Structure2 descriptor count, and
+  the missing Structure3 edge helpers are restored as local deterministic
+  helpers. Verification: strict direct C99 and C11 builds/runs of
+  `test_nexus_v1_dgn_face_material_provenance` and
+  `test_nexus_v1_dgn_face_material_source_path` passed; strict C99 syntax-only
+  checks for touched Nexus header/source/tests and focused `git diff --check`
+  passed.
+
+- 2026-07-16 DM2 skproject helper disposition batch: closed 20 open
+  skproject audit rows through existing Firestaff code and focused tests.
+  Added `SYMBOL_DISPOSITIONS.tsv` evidence for FIRE/IBMIO row blits,
+  mouse cursor/queue/pattern helpers, ability/bar/tile predicates,
+  level/CPX/game-state helpers, wall ornate alcove lookup, and
+  `GRAPHICS_DATA_OPEN`. Verification: `python3 -m py_compile
+  tools/symbol_backlog.py`; direct strict C11 builds/runs of
+  `test_dm2_v1_fire_blit_rows`, `test_dm2_v1_mouse_cursor`,
+  `test_dm2_v1_predicate_helpers`, and `test_dm2_v1_system_helpers`;
+  `python3 tools/symbol_backlog.py --limit 0` reported 2497 open rows
+  before the later F0216 closure.
+
+- 2026-07-16 DM2 HUD survey/attack-result receipt bundle: mapped
+  `MONEY_BOX_SURVEY`, `DM2_MONEY_BOX_SURVEY`, `SHOW_ATTACK_RESULT`, and
+  `DM2_SHOW_ATTACK_RESULT` to skproject-backed bounded helpers. The regression
+  covers real coin-table/container-chain consumption, missing-data fail-closed
+  paths without synthetic GDAT, player damage icon/text routing, SKWIN and
+  SKULLWIN alias receipts, and source evidence. Verification: direct strict
+  C11 build/run of `test_dm2_v1_hud_survey_helpers` with
+  `dm2_v1_skproject_core.c`; `MONEY_BOX_SURVEY` and `SHOW_ATTACK_RESULT` audit
+  rows are now closed in `SYMBOL_DISPOSITIONS.tsv`.
+
+- 2026-07-16 DM2 p130 helper disposition batch: closed eight already
+  implemented skproject rows: `IS_MISSILE_VALID_TO_LAUNCHER`,
+  `REMOVE_POSSESSION`, `LOAD_PROJECTILE_TO_HAND`,
+  `PUT_OBJECT_INTO_CONTAINER`, `PROCESS_TIMER_0E`,
+  `PROCEED_GLOBAL_EFFECT_TIMERS`, `SET_TILE_ATTRIBUTE_02`, and
+  `SUMMARIZE_STONE_ROOM`. Verification: direct strict C11 builds/runs of
+  `test_dm2_v1_item_missile_helpers`, `test_dm2_v1_object_transfer_helpers`,
+  `test_dm2_v1_global_effect_timer_helpers`, and
+  `test_dm2_v1_dungeon_room_helpers`; backlog now reports DM2 1259 and total
+  2486 open rows.
+
+- 2026-07-16 DM2 HUD panel routing receipt bundle: closed
+  `QUERY_CMDSTR_TEXT`, `DM2_QUERY_CMDSTR_TEXT`, `TRANSMIT_UI_EVENT`,
+  `DM2_TRANSMIT_UI_EVENT`, `UPDATE_RIGHT_PANEL`, and
+  `DM2_UPDATE_RIGHT_PANEL` with a bounded skproject-backed route. Command-
+  string text is accepted only from real caller-provided dtText bytes,
+  command-text events require that receipt, and right-panel mode changes
+  preserve event provenance without synthetic labels or panel content.
+  Verification: direct strict C11 build/run of
+  `test_dm2_v1_hud_panel_routing`; backlog now reports DM2 1256 and total 2479
+  open rows.
+
+- 2026-07-16 DM2 HUD/item helper disposition batch: closed
+  `IS_ITEM_HAND_ACTIVABLE`, `RETRIEVE_ITEM_BONUS`, `PROCESS_ITEM_BONUS`,
+  `QUERY_PLAYER_SKILL_LV`, and `REFRESH_PLAYER_STAT_DISP` through existing
+  skproject-backed helpers. Verification: direct strict C11 builds/runs of
+  `test_dm2_v1_item_missile_helpers` and `test_dm2_v1_champion_hud_helpers`;
+  backlog now reports DM2 1251 and total 2474 open rows.
+
+- 2026-07-16 DM2 PICT/missile helper disposition batch: closed
+  `GET_MISSILE_REF_OF_MINION`, `QUERY_PICT_BITS`, `QUERY_PICST_IMAGE`, and
+  `QUERY_PICST_IT` through focused skproject-backed helpers. Verification:
+  direct strict C11 builds/runs of `test_dm2_v1_item_missile_helpers` and
+  `test_dm2_v1_pict_picst_helpers`; backlog now reports DM2 1244 and total
+  2467 open rows.
+
+- 2026-07-16 DM1 F0216 projectile impact-attack callable: added the
+  source-named `F0216_PROJECTILE_GetImpactAttack` boundary for ReDMCSB
+  `PROJEXPL.C` impact attack selection. DM1 projectile runtime now calls that
+  helper for champion impact and creature precheck attack selection instead of
+  rebuilding the scalar fallback locally. Verification: direct C11 F0216 test,
+  strict object compile for the new source and touched throw/shoot source, and
+  focused diff-check passed.
+
+- 2026-07-16 DM1 F0039 slot-box icon callable: added source-named
+  `F0039_OBJECT_GetIconIndexInSlotBox` over the existing PC34
+  `G0030_as_Graphic562_SlotBoxes` table, plus a focused direct C11 regression
+  that covers status-hand, inventory, chest, and out-of-bounds slotbox reads.
+  The backing slotbox source now also compiles cleanly under `-Wextra -Werror`.
+  `SYMBOL_DISPOSITIONS.tsv` records F0039 as verified and `F039_aaaL_` as its
+  Atari/PRIM alias. Verification: direct F0039 C11 test, strict object compile
+  for the new source and slotbox source, and focused diff-check passed.
+
+- 2026-07-16 CSB/ReDMCSB F1075-F1078 device-helper boundary bundle: added
+  CSB-owned source-named `F1075_OpenLayersLibrary`,
+  `F1076_CloseLayersLibrary`, `F1077_OpenConsoleDevice`, and
+  `F1078_CloseConsoleDevice` as no-op PC34 host boundaries for the
+  Amiga-only layers.library and console.device routes. Verification: strict
+  direct C11 build/run of
+  `test_csb_v1_f1075_f1076_f1077_f1078_device_helpers_pc34_compat`, strict
+  syntax check, no-index whitespace checks for the new header/source/test
+  files, and focused `git diff --check` for TODO/DONE. The focused CMake target
+  and symbol dispositions are now added for main integration.
+
+- 2026-07-16 CSB/ReDMCSB F1085-F1087 Intuition-vector boundary bundle:
+  added CSB-owned source-named `F1085_IntuitionVectorReplacement`,
+  `F1086_ReplaceIntuitionVectors`, and `F1087_RestoreIntuitionVectors`.
+  F1085 returns the source-defined zero callback; F1086/F1087 are no-op PC34
+  host boundaries for Amiga-only Intuition vector replacement/restore.
+  Verification: strict direct C11 build/run of
+  `test_csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat`,
+  strict syntax check, no-index whitespace checks for the new
+  header/source/test files, and focused `git diff --check` for TODO/DONE and
+  `SYMBOL_DISPOSITIONS.tsv`.
+
+- 2026-07-16 Nexus DGN package/host real-route gate: package host consumption
+  now distinguishes explicit real-DGN source consumption from rejected
+  synthetic material-route requests. The accepted Structure2/Structure3
+  selector/descriptor boundary stays `ready-no-draw`: material pixel
+  promotion, raster input, original Saturn rendering, and fallback visuals
+  remain blocked. Verification: strict direct C99 and C11 builds/runs of
+  `test_nexus_v1_dgn_face_material_provenance` passed; strict C99
+  syntax-only checks for touched Nexus header/source/test and focused
+  `git diff --check` passed. Adjacent
+  `test_nexus_v1_dgn_face_material_source_path` remains blocked by an
+  in-progress Nexus API transition around the removed COLOR selector and
+  unrelated `nexus_v1_dungeon.c` Structure3 edge helper declarations.
+
 - 2026-07-16 Launcher artpack/font path settings: startup settings can now
   choose and persist a `.fsart` V2.2 artpack file and an optional broad Unicode
   TTF/OTF/TTC font path. Native file dialogs are suppressed in headless/dummy
@@ -21860,6 +22858,22 @@ marked narrow. Verification: `cmake --build build-local-ninja --target
 test_dm2_v1_skproject_core -j2` and `ctest --test-dir build-local-ninja
 --output-on-failure -R '^dm2_v1_skproject_core$'` passed.
 
+# ✅ 2026-07-16 Theron Track02 object/dungeon-only consumer grammar gate
+
+Added a narrow post-$3800 object/dungeon consumer grammar gate to
+`theron_v1_track02_loader_intake`. It consumes the same real loader payload
+boundary as the existing semantic gate, but admits only object-table and
+dungeon-record grammar provenance when the same-capture original trace proves
+both consumers and the payload/envelope/post-envelope checksums match. Bitmap,
+palette, RGBA, runtime handoff, fallback visuals, and synthetic promotions are
+explicitly rejected on this route. Also repaired the Theron raw-loader final
+bind against the current startup-media receipt by reading the Soul Room raw
+route spans directly from the receipt fields instead of the removed helper
+type. Verification: direct focused C11 build/run of
+`test_theron_v1_track02_loader_intake` passed, strict syntax-only checks for
+the touched header/source/test and raw-loader source passed, and targeted
+`git diff --check` passed.
+
 # ✅ 2026-07-16 DM1 ReDMCSB TIMELINE/MOVE/GROUP symbol bundle
 
 The next DM1 callable backlog block before CHAMPION is now closed in the
@@ -21958,3 +22972,185 @@ zero/missing/truncated rectangles fail closed, and no synthetic rectangle data
 is generated. Verification: `cmake --build build-local-ninja --target
 test_dm2_v1_skproject_core -j4` and `ctest --test-dir build-local-ninja
 --output-on-failure -R '^dm2_v1_skproject_core$'` passed.
+
+# ✅ 2026-07-16 Theron Track02 object/dungeon consumer byte-window binding
+
+The Track 02 post-`$3800` consumer gates now require concrete same-capture
+object/dungeon evidence before accepting the existing consumer markers. The
+trace facts must carry nonzero dungeon/object consumer PCs plus payload-window
+offsets, byte counts, and checksums that match the already verified initial
+level envelope and post-envelope object-candidate slice from the real `$0b52`
+loader read. The narrow object/dungeon grammar receipt retains those PCs and
+windows while keeping field decode, bitmap, palette, RGBA, runtime handoff,
+synthetic promotion, and fallback visuals closed. Verification: focused C11
+`test_theron_v1_track02_loader_intake` build/run passed, strict syntax-only
+checks for the touched Theron header/source/test passed, and targeted
+`git diff --check` passed.
+
+# ✅ 2026-07-16 Theron Track02 consumer-to-CD-read coordinate binding
+
+The post-`$3800` Track 02 consumer facts now bind object/dungeon evidence back
+to the exact raw loader/CD-read handoff before either the narrow grammar gate
+or the broader consumer semantic gate can open. The facts and receipts retain
+the `$0b52` record's user-data offset `$114`, destination `$3800`, and 2048-byte
+payload size alongside the existing payload, level-envelope, post-envelope,
+consumer-PC, and byte-window checksums. Mutated loader destination, payload
+size, record-local offset, object window, or dungeon window evidence all fail
+closed, with bitmap/palette/RGBA/runtime/fallback visuals still blocked on the
+object/dungeon-only route. Verification: focused C11
+`test_theron_v1_track02_loader_intake` build/run passed, strict syntax-only
+checks for the touched intake header/source/test passed, and targeted
+`git diff --check` passed. At that point the wider
+`theron_v1_runtime_admission.c` syntax check still remained blocked by the
+missing `Theron_Track02NonstartupContainerIndex` API closed below.
+
+# ✅ 2026-07-16 Theron Track02 nonstartup container-index blocker closure
+
+The missing `Theron_Track02NonstartupContainerIndex` API is now defined and
+implemented as an opaque, fail-closed real-data bridge. It is built from the
+existing hash-gated nonstartup sector receipt and indexes only verified,
+contiguous user-data windows from real raw Track 02 data whose receipt already
+marks them opaque and promotion-blocked. The index records descriptor entry,
+raw offset, user-data offset, byte count, and hash evidence for later
+object/dungeon consumer binding, but it does not decode object tables, levels,
+bitmaps, palettes, text, runtime state, or visuals. Runtime-admission syntax
+and object compilation now pass again without admitting fallback visuals.
+Verification: strict syntax-only checks for `theron_v1_track02.h`,
+`theron_v1_runtime_admission.h`, and `theron_v1_runtime_admission.c` passed;
+`src/theron/theron_v1_runtime_admission.c` object build passed; focused C11
+`test_theron_v1_track02_loader_intake` build/run passed; and targeted
+`git diff --check` passed.
+
+# ✅ 2026-07-16 DM2 skproject record-name helper
+
+DM2 now maps skproject `getRecordNameOf` as a bounded ObjectID record-family
+receipt. The helper extracts only the source record-type nibble, returns the
+corresponding DM2 record-family label, and records `SKWIN/SkWinCore.cpp:824`
+provenance. It does not traverse records, query GDAT, draw anything, or
+provide fallback content. Verification: focused C11 build/run passed with
+`cc -std=c99 -Wall -Wextra -Werror -O2 -Iinclude
+tests/test_dm2_v1_record_name_helper.c src/dm2/dm2_v1_record_name_helper.c
+-o /tmp/test_dm2_v1_record_name_helper &&
+/tmp/test_dm2_v1_record_name_helper`.
+
+# ✅ 2026-07-16 DM2 skproject UI-event name helper
+
+DM2 now maps skproject `getUIEventName` as a bounded HUD/UI event-name receipt.
+The helper admits only event codes already source-locked by `ADJUST_UI_EVENT`
+and `HANDLE_UI_EVENT`, including spell/leader/hand adjustment events and the
+title-menu new/resume codes. Unknown codes fail closed without fallback labels.
+Verification: focused C11 build/run passed with `cc -std=c99 -Wall -Wextra
+-Werror -O2 -Iinclude tests/test_dm2_v1_ui_event_name_helper.c
+src/dm2/dm2_v1_ui_event_name_helper.c -o
+/tmp/test_dm2_v1_ui_event_name_helper &&
+/tmp/test_dm2_v1_ui_event_name_helper`.
+
+# ✅ 2026-07-16 DM2 skproject source-name helper batch
+
+DM2 now maps skproject `getSpellTypeName`, `getSkillName`, and
+`getStatBonusName` as bounded source-name receipts. The helper admits only
+existing DM2 constants for spell type, base skill/class, and champion stat
+bonus names, and blocks unknown values without fallback labels. `getXActrName`
+remains open until an exact actuator-name table is available. Verification:
+focused C11 build/run passed with `cc -std=c99 -Wall -Wextra -Werror -O2
+-Iinclude tests/test_dm2_v1_source_name_helpers.c
+src/dm2/dm2_v1_source_name_helpers.c -o
+/tmp/test_dm2_v1_source_name_helpers &&
+/tmp/test_dm2_v1_source_name_helpers`.
+
+# ✅ 2026-07-16 DM2 skproject extended spell-definition loader
+
+DM2 now maps skproject `EXTENDED_LOAD_SPELLS_DEFINITION` as a bounded
+GDAT `SPELL_DEF` load receipt. It consumes exact dtWordValue fields 1-7 and
+optional dtText field `0x18`, preserves sparse custom spell indexes, adapts
+only the original spell-value rows covered by the source count, and fails
+closed for missing required fields or U8-wide source values. No synthetic
+spell records, runtime effects, projectiles, timers, or UI spell actions are
+introduced. Verification: focused C99 build/run passed with `cc -std=c99
+-Wall -Wextra -Werror -O2 -Iinclude
+tests/test_dm2_v1_extended_spells_definition.c
+tests/test_dm2_v1_extended_spells_definition_asset_stub.c
+src/dm2/dm2_v1_extended_spells_definition.c -o
+/tmp/test_dm2_v1_extended_spells_definition &&
+/tmp/test_dm2_v1_extended_spells_definition`.
+
+# ✅ 2026-07-16 DM2 skproject DBSPEC word-value alias
+
+DM2 now closes skproject `DM2_QUERY_GDAT_DBSPEC_WORD_VALUE` from
+`SKULLWIN/c_record.cpp:352` through the existing bounded
+`QUERY_GDAT_DBSPEC_WORD_VALUE` helper. The helper keeps the source
+`OBJECT_NULL` zero path and rejects absent caller-provided GDAT word rows
+without fabricating scalar data; the existing SKWIN symbol disposition covers
+the same-name SKWIN rows. Verification: focused C99 build/run passed with
+`cc -std=c99 -Wall -Wextra -Werror -O2 -Iinclude
+tests/test_dm2_v1_predicate_helpers.c src/dm2/dm2_v1_predicate_helpers.c
+-o /tmp/test_dm2_v1_predicate_helpers &&
+/tmp/test_dm2_v1_predicate_helpers`.
+
+# ✅ 2026-07-16 DM2 skproject original graphics-data open alias
+
+DM2 now closes skproject `ORIGINAL__GRAPHICS_DATA_OPEN` from
+`SKWIN/SkWinCore.cpp:3179` through the existing bounded GRAPHICS.DAT file-open
+receipt. The focused receipt locks first-open primary/secondary handle
+admission, nested open-counter increments, and source sys-error codes
+`0x29`/`0x1f` without opening host files or fabricating graphics data.
+Verification: focused C99 build/run passed with `cc -std=c99 -Wall -Wextra
+-Werror -O2 -Iinclude tests/test_dm2_v1_graphics_data_file_open.c
+src/dm2/dm2_v1_asset_loader.c -o /tmp/test_dm2_v1_graphics_data_file_open &&
+/tmp/test_dm2_v1_graphics_data_file_open`.
+
+# ✅ 2026-07-16 DM2 skproject GDAT IMG3/U4 querydb repair
+
+DM2 now accepts the real IMG3/U4 header variant where signed Y offset `-32`
+stores the 4bpp marker in the next header word. `QUERY_GDAT_IMAGE_ENTRY_BUFF`,
+`QUERY_GDAT_IMAGE_METRICS`, `QUERY_PICT_BITS`, `QUERY_PICST_IMAGE`, and
+`DM2_EXTRACT_GDAT_IMAGE` now share that source-shaped bpp decoding path, so the
+querydb receipt test no longer rejects real U4 image payloads or falls back to
+synthetic pixels. Verification: focused C99 build/run passed for
+`tests/test_dm2_v1_img3_u4_header.c`, and the broader
+`tests/test_dm2_v1_gdat_querydb_receipts.c` build/run now reports
+`105 passed, 0 failed`.
+
+# ✅ 2026-07-16 DM2 skproject direct GDAT query wrappers
+
+DM2 now closes skproject `DIRECT_QUERY_GDAT_ENTRY_DATA_BUFF` and
+`DIRECT_QUERY_GDAT_TEXT` from `SKWIN/SkWinCore2.cpp`. The wrappers expose only
+exact parsed GDAT raw payload bytes: the generic data-buffer route accepts
+typed loadable entries and rejects scalar rows, while the text route is locked
+to `dtText` and does not format or fabricate text. Verification: focused C99
+build/run passed with `cc -std=c99 -Wall -Wextra -Werror -O2 -Iinclude
+tests/test_dm2_v1_direct_gdat_query.c src/dm2/dm2_v1_asset_loader.c -o
+/tmp/test_dm2_v1_direct_gdat_query && /tmp/test_dm2_v1_direct_gdat_query`;
+the broader GDAT querydb receipt test still reports `105 passed, 0 failed`.
+
+# ✅ 2026-07-16 DM2 skproject SkWinCore2 GDAT word helpers
+
+DM2 now closes `QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD`,
+`QUERY_GDAT_POTION_BEHAVIOUR_FROM_RECORD`,
+`QUERY_GDAT_WATER_VALUE_FROM_RECORD`, and `QUERY_GDAT_DOOR_IS_MIRRORED`.
+The first three follow the source `QUERY_GDAT_DBSPEC_WORD_VALUE` aliases for
+fields `0x4d`, `0x05`, and `0x43`; the door helper reads DOORS
+`dtWordValue` field `0x20`, preserving explicit zero mirror flags. Missing
+rows fail closed and no potion, water, door, text, or graphic data is
+fabricated. Verification: focused C99 build/run passed with `cc -std=c99
+-Wall -Wextra -Werror -O2 -Iinclude
+tests/test_dm2_v1_skcore2_gdat_word_helpers.c
+src/dm2/dm2_v1_asset_loader.c -o
+/tmp/test_dm2_v1_skcore2_gdat_word_helpers &&
+/tmp/test_dm2_v1_skcore2_gdat_word_helpers`; the broader GDAT querydb receipt
+test still reports `105 passed, 0 failed`.
+
+# ✅ 2026-07-16 DM2 skproject FIND_LADDER_AROUND dungeon receipt
+
+DM2 now closes `FIND_LADDER_AROUND` from `SKWIN/SkWinCore.cpp:9060`.
+The existing dungeon receipt builds again after a narrow G1/dungeon-loader
+header repair: standalone consumers now see the G1 receipt types, PC G1
+extension record fields, raw map-corpus receipts, and the conservative
+record-list traversal gate. The helper scans only loaded `DUNGEON.DAT`
+square facts for source-ordered stairs-up/stairs-down candidates and keeps
+missing candidates as explicit not-found receipts. Verification: focused
+C99 build/run passed with `cc -std=c99 -Wall -Wextra -Werror -O2 -Iinclude
+tests/test_dm2_v1_find_ladder_around.c src/dm2/dm2_v1_find_ladder_around.c
+src/dm2/dm2_v1_dungeon_loader.c -o /tmp/test_dm2_v1_find_ladder_around &&
+/tmp/test_dm2_v1_find_ladder_around`; the G1 text runtime header smoke also
+passed with `tests/test_dm2_v1_g1_text_message_runtime.c`.

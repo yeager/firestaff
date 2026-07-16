@@ -291,6 +291,29 @@ int DM1_V1_Input_WaitForActivityPc34Compat(const DM1_V1_InputStatePc34 *state)
            state->mouseButtons != 0;
 }
 
+/* ── ReDMCSB USIO2 keyboard accessors (F1690/F1691/F1692) ────────── */
+
+uint16_t F1690_GetASCIICode(uint16_t rawKeyCode)
+{
+    /*
+     * USIO2.C F1690 consumes an already supplied raw key value. PC34 preserves
+     * only explicit low-byte ASCII/control values; scan-code translation stays
+     * with the input event producer.
+     */
+    uint16_t ascii = rawKeyCode & 0x00FFu;
+    return ascii <= 0x007Fu ? ascii : 0;
+}
+
+int F1691_Cconis(const DM1_V1_InputStatePc34 *state)
+{
+    return state ? DM1_V1_Input_KeyAvailablePc34Compat(state) : 0;
+}
+
+uint16_t F1692_Crawcin(DM1_V1_InputStatePc34 *state)
+{
+    return state ? DM1_V1_Input_GetKeyPc34Compat(state) : 0;
+}
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 
 const char *DM1_V1_Input_SourceEvidencePc34Compat(void)
@@ -320,6 +343,21 @@ const char *DM1_V1_Input_SourceEvidencePc34Compat(void)
         "Key globals: G1038/G1039 mouseXY, G0588 buttonMask,\n"
         "  G0597 ignoreMovements, G1046/G1047 alt+amiga emu,\n"
         "  G1048 randomInit, G3174/G3175 FIFO indices";
+}
+
+const char *F1690_GetASCIICode_SourceEvidence(void)
+{
+    return "USIO2.C:287 F1690_GetASCIICode; bounded PC34 extraction of the explicit low-byte ASCII/control value from caller-owned raw key input, with no scan-code table or host polling synthesized.";
+}
+
+const char *F1691_Cconis_SourceEvidence(void)
+{
+    return "USIO2.C:282 F1691_Cconis; PC34 checks only caller-owned key-buffer availability and does not poll host keyboard state.";
+}
+
+const char *F1692_Crawcin_SourceEvidence(void)
+{
+    return "USIO2.C:15 F1692_Crawcin; PC34 extracts one caller-owned buffered key value and returns 0 when empty instead of blocking on or fabricating host input.";
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -403,4 +441,3 @@ const char *DM1_V1_Input_SourceEvidencePc34Compat(void)
  *   IO2.C:10 F2253_KEYREAD
  *   IO2.C:197 F2254_KEYAVAIL
  * ══════════════════════════════════════════════════════════════════════ */
-

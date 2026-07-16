@@ -845,6 +845,77 @@ int nexus_v1_startup_presentation_receipt(int title_active,
                                           int *out_title_frame_max,
                                           int *out_title_ready);
 
+typedef struct {
+    const char *animation;
+    int animation_active;
+    int title_active;
+    int save_select_active;
+    int champion_select_active;
+    int full_start_package_receipt_ready;
+    int host_display_caller_expected;
+    int real_package_assets_bound;
+    int saturn_timing_exact;
+    int saturn_capture_frames_exact;
+    int fallback_visuals_permitted;
+    int menu_bpk_prs3_blocked;
+} Nexus_V1_StartupPresentationAnimationPackageGateInput;
+
+typedef struct {
+    int animation_label_recognized;
+    int active_animation_requested;
+    int title_animation_requested;
+    int champion_animation_requested;
+    int inactive_runtime_or_save;
+    int package_ready;
+    int host_display_caller_expected;
+    int real_package_assets_bound;
+    int saturn_timing_exact;
+    int saturn_capture_frames_exact;
+    int fallback_visuals_permitted;
+    int menu_bpk_prs3_blocked;
+    int package_animation_bound;
+    int animation_draw_permitted;
+    int blocked_no_draw;
+    int fallback_visuals_blocked;
+    int synthetic_visuals_permitted;
+    int guessed_saturn_decoder_permitted;
+} Nexus_V1_StartupPresentationAnimationPackageGateReceipt;
+
+int nexus_v1_startup_presentation_animation_package_gate(
+    const Nexus_V1_StartupPresentationAnimationPackageGateInput *input,
+    Nexus_V1_StartupPresentationAnimationPackageGateReceipt *out_receipt);
+
+typedef struct {
+    const Nexus_V1_StartupPresentationAnimationPackageGateReceipt
+        *package_gate;
+    int menu_bpk_handoff_receipt_valid;
+    int menu_bpk_source_hash_verified;
+    int menu_bpk_can_render_stored_surfaces;
+    int menu_bpk_blocks_real_menu_surface_render;
+    int menu_bpk_prs3_trace_required;
+    int menu_bpk_saturn_presentation_required;
+    int fallback_visuals_permitted;
+} Nexus_V1_StartupMenuAnimationHandoffGateInput;
+
+typedef struct {
+    int package_animation_bound;
+    int menu_bpk_handoff_bound;
+    int menu_bpk_source_hash_verified;
+    int stored_surface_route_bound;
+    int prs3_trace_required;
+    int saturn_presentation_required;
+    int boot_menu_real_data_route_bound;
+    int animation_draw_permitted;
+    int blocked_no_draw;
+    int fallback_visuals_blocked;
+    int synthetic_visuals_permitted;
+    int guessed_saturn_decoder_permitted;
+} Nexus_V1_StartupMenuAnimationHandoffGateReceipt;
+
+int nexus_v1_startup_menu_animation_handoff_gate(
+    const Nexus_V1_StartupMenuAnimationHandoffGateInput *input,
+    Nexus_V1_StartupMenuAnimationHandoffGateReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif

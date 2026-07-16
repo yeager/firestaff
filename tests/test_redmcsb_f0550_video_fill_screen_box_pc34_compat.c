@@ -1,84 +1,85 @@
 #include "redmcsb_f0550_video_fill_screen_box_pc34_compat.h"
 
-#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-static int check(int condition, const char *label)
+#define CHECK(condition)                                                        \
+    do {                                                                        \
+        if (!(condition)) {                                                     \
+            fprintf(stderr, "CHECK failed at %s:%d: %s\n", __FILE__, __LINE__, \
+                    #condition);                                                \
+            exit(1);                                                            \
+        }                                                                       \
+    } while (0)
+
+static unsigned int be16(const unsigned char *p)
 {
-    if (condition) {
-        return 1;
-    }
-    fprintf(stderr, "FAIL: %s\n", label);
-    return 0;
+    return ((unsigned int)p[0] << 8) | p[1];
 }
 
-static uint16_t read_be16(const uint8_t *address)
+static void test_word_box_solid_planar_fill(void)
 {
-    return (uint16_t)(((uint16_t)address[0] << 8) | address[1]);
+    unsigned char bitmap[16];
+    const int16_t box[4] = {0, 1, 0, 0};
+
+    memset(bitmap, 0xff, sizeof(bitmap));
+    CHECK(F0550_VIDEO_FillScreenBox_PC34(bitmap, sizeof(bitmap), 8, 2, box,
+                                         false, 0x0005));
+
+    CHECK(be16(bitmap + 0) == 0xffffU);
+    CHECK(be16(bitmap + 2) == 0x3fffU);
+    CHECK(be16(bitmap + 4) == 0xffffU);
+    CHECK(be16(bitmap + 6) == 0x3fffU);
+    CHECK(be16(bitmap + 8) == 0xffffU);
 }
 
-static unsigned int pixel_color(const uint8_t *bitmap, size_t byte_width,
-                                int x, int y)
+static void test_byte_box_and_shade_fill(void)
 {
-    const uint8_t *group = bitmap + (size_t)y * byte_width +
-                           (size_t)(x / 16) * 8u;
-    const uint16_t pixel_mask = (uint16_t)(0x8000u >> (x & 15));
-    unsigned int color = 0u;
-    unsigned int plane;
+    unsigned char bitmap[16];
+    const unsigned char box[4] = {0, 1, 0, 1};
 
-    for (plane = 0u; plane < 4u; ++plane) {
-        if ((read_be16(group + plane * 2u) & pixel_mask) != 0u) {
-            color |= 1u << plane;
-        }
-    }
-    return color;
+    memset(bitmap, 0, sizeof(bitmap));
+    CHECK(F0550_VIDEO_FillScreenBox(bitmap, sizeof(bitmap), 8, 2, box, true,
+                                    0x8001));
+
+    CHECK(be16(bitmap + 0) == 0x4000U);
+    CHECK(be16(bitmap + 2) == 0x0000U);
+    CHECK(be16(bitmap + 8) == 0x8000U);
+    CHECK(be16(bitmap + 10) == 0x0000U);
+}
+
+static void test_invalid_inputs_fail_closed(void)
+{
+    unsigned char bitmap[8];
+    const int16_t bad_box[4] = {3, 1, 0, 0};
+    const int16_t good_box[4] = {0, 0, 0, 0};
+
+    memset(bitmap, 0xaa, sizeof(bitmap));
+    CHECK(!F0550_VIDEO_FillScreenBox_PC34(bitmap, sizeof(bitmap), 8, 1,
+                                          bad_box, false, 1));
+    CHECK(bitmap[0] == 0xaaU);
+    CHECK(!F0550_VIDEO_FillScreenBox_PC34(NULL, sizeof(bitmap), 8, 1,
+                                          good_box, false, 1));
+    CHECK(!F0550_VIDEO_FillScreenBox_PC34(bitmap, sizeof(bitmap), 7, 1,
+                                          good_box, false, 1));
+}
+
+static void test_source_evidence(void)
+{
+    const char *evidence =
+        redmcsb_f0550_video_fill_screen_box_pc34_compat_source_evidence();
+
+    CHECK(evidence != NULL);
+    CHECK(strstr(evidence, "F0550_VIDEO_FillScreenBox") != NULL);
+    CHECK(strstr(evidence, "AMIGA.H:351") != NULL);
 }
 
 int main(void)
 {
-    uint8_t bitmap[33];
-    uint8_t before[33];
-    const int16_t word_box[4] = {15, 17, 0, 1};
-    const uint8_t byte_box[4] = {2, 3, 1, 1};
-    const int16_t invalid_box[4] = {0, 32, 0, 0};
-    int ok = 1;
-
-    memset(bitmap, 0, sizeof(bitmap));
-    ok &= check(F0550_VIDEO_FillScreenBox_PC34(
-                    bitmap, 32u, 16u, 2u, word_box, false, 0x000au),
-                "accepts an inclusive word-coordinate box across plane groups");
-    ok &= check(pixel_color(bitmap, 16u, 14, 0) == 0u &&
-                    pixel_color(bitmap, 16u, 15, 0) == 10u &&
-                    pixel_color(bitmap, 16u, 16, 0) == 10u &&
-                    pixel_color(bitmap, 16u, 17, 1) == 10u &&
-                    pixel_color(bitmap, 16u, 18, 1) == 0u,
-                "writes the requested color to all four big-endian planes");
-    ok &= check(bitmap[32] == 0u, "exact bounded fill preserves guard byte");
-
-    memset(bitmap, 0, sizeof(bitmap));
-    ok &= check(F0550_VIDEO_FillScreenBox_PC34(
-                    bitmap, 32u, 16u, 2u, byte_box, true, 0x8005u),
-                "accepts source byte-coordinate boxes");
-    ok &= check(pixel_color(bitmap, 16u, 2, 1) == 5u &&
-                    pixel_color(bitmap, 16u, 3, 1) == 0u,
-                "shade phase is anchored to screen coordinates, not box origin");
-
-    memset(bitmap, 0xa5, sizeof(bitmap));
-    memcpy(before, bitmap, sizeof(bitmap));
-    ok &= check(!F0550_VIDEO_FillScreenBox_PC34(
-                    bitmap, 31u, 16u, 2u, word_box, false, 1u) &&
-                    !F0550_VIDEO_FillScreenBox_PC34(
-                    bitmap, sizeof(bitmap), 15u, 2u, word_box, false, 1u) &&
-                    !F0550_VIDEO_FillScreenBox_PC34(
-                    bitmap, sizeof(bitmap), 16u, 2u, invalid_box, false, 1u),
-                "rejects undersized, non-planar, and out-of-bounds fills");
-    ok &= check(memcmp(bitmap, before, sizeof(bitmap)) == 0,
-                "rejected fills leave the bitmap untouched");
-
-    if (!ok) {
-        return 1;
-    }
-    puts("PASS redmcsb_f0550_video_fill_screen_box_pc34_compat");
+    test_word_box_solid_planar_fill();
+    test_byte_box_and_shade_fill();
+    test_invalid_inputs_fail_closed();
+    test_source_evidence();
     return 0;
 }

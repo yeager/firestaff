@@ -10,6 +10,7 @@
 
 /* These are retained here while the weather receipt owns the historic
  * QUERY_TEMP_PICST contract. They are metadata identities only. */
+#ifndef DM2_V1_GDAT_IMAGE_METADATA_DEFINED
 typedef struct {
     uint16_t width;
     uint16_t height;
@@ -18,6 +19,8 @@ typedef struct {
     int16_t query_offset_y;
     uint32_t metadata_hash;
 } DM2_V1_GdatImageMetadata;
+#define DM2_V1_GDAT_IMAGE_METADATA_DEFINED 1
+#endif
 
 #ifndef DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED
 typedef struct {

@@ -66,6 +66,22 @@ static uint64_t nexus_v1_abs_i32(int32_t value)
     return value < 0 ? (uint64_t)-(int64_t)value : (uint64_t)value;
 }
 
+static uint64_t nexus_v1_dgn_structure3_edge_key(uint32_t first,
+                                                 uint32_t second)
+{
+    uint32_t lo = first < second ? first : second;
+    uint32_t hi = first < second ? second : first;
+    return ((uint64_t)lo << 32) | (uint64_t)hi;
+}
+
+static int nexus_v1_dgn_structure3_edge_compare(const void *left,
+                                                const void *right)
+{
+    uint64_t a = *(const uint64_t *)left;
+    uint64_t b = *(const uint64_t *)right;
+    return (a > b) - (a < b);
+}
+
 static int nexus_v1_structure3_face_has_noncollinear_vertices(
     const uint8_t *vertices, const uint16_t indexes[4], int slot_count)
 {
@@ -847,7 +863,6 @@ static int nexus_v1_level_copy_structure3_payload(
             uint16_t vertex_count = rb16(header + 4);
             uint16_t face_count = rb16(header + 6);
             uint32_t vertex_offset = rb32(header + 8);
-            uint32_t face_offset = rb32(header + 16);
             uint32_t normal_offset = rb32(header + 20);
             int vector_index;
             int entry_pairs_unit_length = 1;
@@ -883,12 +898,6 @@ static int nexus_v1_level_copy_structure3_payload(
                  ++vector_index) {
                 const uint8_t *normal = data + byte_offset + normal_offset +
                     vector_index * 12;
-                const uint8_t *face = data + byte_offset + face_offset +
-                    vector_index * 12;
-                uint16_t indexes[4] = {
-                    rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
-                };
-                int32_t vertices[4][3];
                 int32_t normal_vector[3] = {
                     rbs32(normal), rbs32(normal + 4), rbs32(normal + 8)
                 };
@@ -4106,11 +4115,12 @@ int nexus_v1_level_collect_structure3_face_material_bindings(
             uint16_t fill = rb16(face + 10);
             Nexus_V1_DgnFaceMaterialBinding *binding = &out_bindings[output];
 
+            if ((face[8] & 0x40U) == 0U) {
+                continue;
+            }
             binding->face_ordinal = (uint16_t)output;
             binding->material_selector = 0;
-            if ((face[8] & 0x40U) == 0U) {
-                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR;
-            } else if ((fill & 0xff00U) == 0U) {
+            if ((fill & 0xff00U) == 0U) {
                 binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC;
                 binding->material_selector = (uint16_t)(fill & 0xffU);
             } else if ((fill & 0xff00U) == 0x0800U) {
@@ -4122,7 +4132,7 @@ int nexus_v1_level_collect_structure3_face_material_bindings(
             ++output;
         }
     }
-    if (output != level->structure3_faces.face_count || output <= 0) return -1;
+    if (output <= 0 || output > level->structure3_faces.face_count) return -1;
     *out_binding_count = output;
     return 0;
 }

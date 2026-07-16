@@ -1460,6 +1460,8 @@ int main(void) {
         Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance_receipt;
         Nexus_V1_Prs3Vdp1ProducerAttestationReceipt attestation_receipt;
         Nexus_V1_Prs3Vdp1ReviewedUploadReceipt reviewed_upload_receipt;
+        Nexus_V1_BpkPrs3DecodedOutputProofReceipt output_proof;
+        Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt output_upload;
         expect(!nexus_v1_prs3_vdp1_capture_validate_files(
                    "/missing/nexus-v3.trace", "/missing/MENU.BPK",
                    "/missing/DM.BIN", &file_receipt) &&
@@ -1530,6 +1532,68 @@ int main(void) {
                    !reviewed_upload_receipt.decoder_promoted &&
                    !reviewed_upload_receipt.fallback_visuals_permitted,
                "reviewed MENU.BPK upload path rejects missing evidence without a runtime route");
+        memset(&output_proof, 0, sizeof(output_proof));
+        output_proof.status =
+            NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME;
+        output_proof.entry_index = 4U;
+        output_proof.stream_offset = 0x200U;
+        output_proof.stream_size = 0x40U;
+        output_proof.expected_output_bytes = 0x80U;
+        output_proof.observed_output_bytes = 0x80U;
+        output_proof.observed_output_fnv1a64 = 0x12345678U;
+        output_proof.length_matches = 1;
+        output_proof.hash_matches = 1;
+        output_proof.capture_source_bound = 1;
+        output_proof.decoded_output_sidecar_bound = 1;
+        output_proof.original_saturn_provenance_verified = 1;
+        output_proof.decoded_output_proof_ready = 1;
+        memset(&reviewed_upload_receipt, 0, sizeof(reviewed_upload_receipt));
+        reviewed_upload_receipt.reviewed_upload_path_bound = 1;
+        reviewed_upload_receipt.menu_bpk_upload_reviewed = 1;
+        reviewed_upload_receipt.producer_attestation_bound = 1;
+        reviewed_upload_receipt.producer_binary_bound = 1;
+        reviewed_upload_receipt.artifact_hashes_bound = 1;
+        reviewed_upload_receipt.original_saturn_execution_claimed = 1;
+        reviewed_upload_receipt.independent_authentication_required = 1;
+        expect(nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   output_upload.decoded_output_proof_bound &&
+                   output_upload.decoded_output_sidecar_bound &&
+                   output_upload.reviewed_upload_path_bound &&
+                   output_upload.menu_bpk_upload_reviewed &&
+                   output_upload.original_saturn_provenance_verified &&
+                   output_upload.independent_authentication_required &&
+                   !output_upload.original_saturn_capture_authenticated &&
+                   output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.decoder_promoted &&
+                   !output_upload.fallback_visuals_permitted &&
+                   output_upload.entry_index == 4U &&
+                   output_upload.stream_offset == 0x200U &&
+                   output_upload.stream_size == 0x40U &&
+                   output_upload.expected_output_bytes == 0x80U &&
+                   output_upload.output_fnv1a64 == 0x12345678U,
+               "reviewed PRS3 output/upload evidence remains source-bound no-runtime");
+        reviewed_upload_receipt.runtime_upload_permitted = 1;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.reviewed_upload_path_bound &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review rejects a pre-promoted runtime upload route");
+        reviewed_upload_receipt.runtime_upload_permitted = 0;
+        output_proof.fallback_visuals_permitted = 1;
+        expect(!nexus_v1_prs3_vdp1_capture_review_output_upload(
+                   &output_proof, &reviewed_upload_receipt,
+                   &output_upload) &&
+                   !output_upload.decoded_output_proof_bound &&
+                   !output_upload.source_bound_no_runtime &&
+                   !output_upload.runtime_upload_permitted &&
+                   !output_upload.fallback_visuals_permitted,
+               "output/upload review rejects PRS3 proof with fallback visuals");
     }
 
     test_dm_bin_prs3_catalog();

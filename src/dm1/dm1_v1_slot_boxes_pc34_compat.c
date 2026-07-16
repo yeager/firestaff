@@ -238,14 +238,9 @@ dm1_v1_slot_boxes_run_pc34(
     int inventory_x_is_at_least_6 = 1;
     int inventory_y_within_inventory_panel = 1;
     int status_box_hand_x_even_offset = 1;
-    int chest_box_x_pixel_monotonic = 1;
     int chest_box_y_pixel_monotonic = 1;
     int icon_index_lookup_function_correct = 1;
-    int status_box_icon_index_range = 1;
-    int inventory_icon_index_range = 1;
-    int chest_icon_index_range = 1;
     int partition_ordering_correct = 1;
-    int prev_chest_y;
     int n;
 
     if (!out) {
@@ -368,7 +363,6 @@ dm1_v1_slot_boxes_run_pc34(
      * with the struct definition; chest X is intentionally NOT mono-
      * tonic (curved bottom row). The real invariant is Y, above.
      */
-    (void)prev_chest_y;
     out->chestBoxXPixelMonotonic = 1;
 
     /* Phase 9: per-entry cross-check against the source-init data

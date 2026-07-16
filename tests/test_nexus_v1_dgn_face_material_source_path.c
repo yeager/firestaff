@@ -1,4 +1,5 @@
 #include "nexus_v1_dgn_face_material_provenance.h"
+#include "nexus_v1_dgn_mesh.h"
 #include "nexus_v1_dungeon.h"
 
 #include <stdio.h>
@@ -34,6 +35,10 @@ int main(void)
     uint8_t canonical[sizeof(dgn)];
     Nexus_V1_Level level;
     Nexus_V1_DgnFaceMaterialBinding bindings[3];
+    Nexus_V1_DgnMeshFixedVertex vertices[4];
+    Nexus_V1_DgnMeshSourceFace mesh_faces[3];
+    Nexus_V1_DgnMeshInput mesh_input;
+    Nexus_V1_DgnMesh mesh;
     Nexus_V1_DgnFaceMaterialInput input;
     Nexus_V1_DgnFaceMaterialReceipt receipt;
     int binding_count = 0;
@@ -64,13 +69,54 @@ int main(void)
 
     expect(nexus_v1_level_collect_structure3_face_material_bindings(
                &level, dgn, (int)sizeof(dgn), bindings, 3, &binding_count) == 0 &&
-               binding_count == 3 &&
-               bindings[0].selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR &&
-               bindings[1].selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC &&
-               bindings[1].material_selector == 7 &&
-               bindings[2].selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED &&
-               bindings[2].material_selector == 3,
-           "the active Structure3 bytes produce only documented color/static/animated bindings");
+               binding_count == 2 &&
+               bindings[0].selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC &&
+               bindings[0].material_selector == 7 &&
+               bindings[1].selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED &&
+               bindings[1].material_selector == 3,
+           "the active Structure3 bytes produce only documented static/animated material bindings");
+
+    memset(vertices, 0, sizeof(vertices));
+    vertices[1].x = 65536;
+    vertices[2].x = 65536;
+    vertices[2].y = 65536;
+    vertices[3].y = 65536;
+    memset(mesh_faces, 0, sizeof(mesh_faces));
+    mesh_faces[0].vertex_index[0] = 0;
+    mesh_faces[0].vertex_index[1] = 1;
+    mesh_faces[0].vertex_index[2] = 2;
+    mesh_faces[0].vertex_index[3] = 2;
+    mesh_faces[0].flags = 0x00U;
+    mesh_faces[1].vertex_index[0] = 0;
+    mesh_faces[1].vertex_index[1] = 2;
+    mesh_faces[1].vertex_index[2] = 3;
+    mesh_faces[1].vertex_index[3] = 3;
+    mesh_faces[1].flags = 0x40U;
+    mesh_faces[1].fill_selector = 7U;
+    mesh_faces[2].vertex_index[0] = 0;
+    mesh_faces[2].vertex_index[1] = 1;
+    mesh_faces[2].vertex_index[2] = 3;
+    mesh_faces[2].vertex_index[3] = 3;
+    mesh_faces[2].flags = 0x40U;
+    mesh_faces[2].fill_selector = 0x0803U;
+    memset(&mesh_input, 0, sizeof(mesh_input));
+    mesh_input.vertices = vertices;
+    mesh_input.vertex_count = 4;
+    mesh_input.faces = mesh_faces;
+    mesh_input.face_count = 3;
+    mesh_input.canonical_source_verified = 1;
+    mesh_input.topology_receipt_valid = 1;
+    mesh_input.fixed_point_vectors_valid = 1;
+    expect(nexus_v1_dgn_mesh_build(&mesh_input, &mesh) == 1 &&
+               mesh.status == NEXUS_V1_DGN_MESH_READY_GEOMETRY &&
+               mesh.can_submit_geometry &&
+               !mesh.can_submit_textured_raster &&
+               mesh.textured_raster_blocked &&
+               mesh.color_fill_count == 1 &&
+               mesh.static_texture_face_count == 1 &&
+               mesh.animated_texture_face_count == 1 &&
+               !mesh.permits_fallback_visuals,
+           "the matching Structure3 geometry proof stays renderer-neutral");
 
     memset(&input, 0, sizeof(input));
     input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN;
@@ -82,35 +128,45 @@ int main(void)
     input.bindings = bindings;
     input.face_count = binding_count;
     input.material_selector_count = 256;
-    input.material_host_route_bound = 1;
-    input.material_host_route_prs3_blocked = 1;
-    input.material_host_route_pixel_promotion_blocked = 1;
-    input.material_host_route_decoder_promoted = 0;
+    input.structure2_descriptor_count = 8;
+    input.geometry_source_bound = mesh.canonical_source_verified;
+    input.geometry_material_face_count =
+        mesh.static_texture_face_count + mesh.animated_texture_face_count;
+    input.geometry_can_submit_geometry = mesh.can_submit_geometry;
+    input.geometry_can_submit_textured_raster = mesh.can_submit_textured_raster;
+    input.geometry_fallback_visuals_permitted = mesh.permits_fallback_visuals;
     expect(nexus_v1_dgn_face_material_validate(&input, &receipt) == 1 &&
-               receipt.color_selector_count == 1 &&
+               receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_READY &&
+               receipt.face_count == 2 &&
+               receipt.structure2_descriptor_count == 8 &&
                receipt.static_selector_count == 1 &&
                receipt.animated_selector_count == 1 &&
-               receipt.can_submit_raster_input &&
-               !receipt.can_submit_textured_draw &&
-               receipt.textured_draw_blocked &&
-               receipt.static_texture_draw_blocked &&
-               receipt.animated_texture_draw_blocked &&
-               receipt.structure2_material_required &&
-               receipt.structure1g_material_required &&
-               receipt.structure2_pixel_semantics_required &&
-               receipt.structure1g_animation_semantics_required &&
-               receipt.material_host_route_bound &&
-               receipt.material_host_route_prs3_blocked &&
-               receipt.material_host_route_pixel_promotion_blocked &&
-               !receipt.material_host_route_decoder_promoted &&
-               receipt.material_admission_blocked &&
-               receipt.structure3_texture_admission_blocked &&
-               receipt.material_bank_mutation_blocked &&
-               receipt.vdp1_command_required &&
-               !receipt.vdp1_command_proven &&
-               receipt.vdp1_draw_list_blocked &&
+               receipt.geometry_source_bound &&
+               receipt.geometry_material_face_count == 2 &&
+               receipt.geometry_material_face_count_matches &&
+               receipt.geometry_can_submit_geometry &&
+               receipt.geometry_textured_raster_blocked &&
+               receipt.structure3_mesh_materials_bound &&
+               receipt.structure2_descriptor_route_bound &&
+               receipt.selector_bindings_complete &&
+               !receipt.material_semantics_proven &&
+               receipt.package_host_route_bound &&
+               receipt.no_draw_only &&
+               receipt.blocks_real_dgn_mesh_render &&
+               receipt.original_saturn_capture_required &&
+               !receipt.original_saturn_capture_available &&
+               !receipt.can_submit_raster_input &&
                !receipt.permits_fallback_visuals,
            "the real-buffer binding table reaches only the no-fallback source boundary");
+
+    input.geometry_material_face_count = 1;
+    expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
+               receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE &&
+               !receipt.can_submit_raster_input &&
+               !receipt.permits_fallback_visuals,
+           "material admission rejects a geometry proof that omits a material face");
+    input.geometry_material_face_count =
+        mesh.static_texture_face_count + mesh.animated_texture_face_count;
 
     ++dgn[67];
     expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&

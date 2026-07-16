@@ -1,5 +1,5 @@
 #include "dm1_v1_input_command_queue_pc34_compat.h"
-#include "menu_startup_m12.h"
+#include "menu_input_m12.h"
 #include <string.h>
 
 /* Source lock (ReDMCSB WIP20210206, Toolchains/Common/Source):
@@ -320,6 +320,11 @@ void DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(struct Dm1V1InputCommand
     process_pending_click(queue);
 }
 
+void F0357_COMMAND_DiscardAllInput(struct Dm1V1InputCommandQueuePc34Compat* queue)
+{
+    DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);
+}
+
 int DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
     struct Dm1V1InputCommandQueuePc34Compat* queue,
     int command,
@@ -373,6 +378,149 @@ int DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
     command = command_for_mouse(event.x, event.y, event.buttonMask);
     return DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat(
         queue, command, event.x, event.y, event.buttonMask);
+}
+
+int F1173_AddUsioDataToInputQueue(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    const struct Dm1V1UsioDataPc34Compat* usioData)
+{
+    struct Dm1V1InputEventPc34Compat event;
+
+    if (queue == 0 || usioData == 0) {
+        return 0;
+    }
+
+    memset(&event, 0, sizeof(event));
+    if (usioData->usioType == DM1_V1_USIO_DATA_TYPE_KEYBOARD) {
+        event.kind = DM1_V1_INPUT_KIND_KEY;
+        event.keyCode = usioData->rawKeyCode;
+        return DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(queue, event);
+    }
+    if (usioData->usioType == DM1_V1_USIO_DATA_TYPE_MOUSE) {
+        event.kind = DM1_V1_INPUT_KIND_MOUSE;
+        event.x = usioData->mouseX;
+        event.y = usioData->mouseY;
+        event.buttonMask = usioData->mouseButtons;
+        return DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(queue, event);
+    }
+    return 0;
+}
+
+int F1174_AddPendingUsioDataToInputQueue(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    struct Dm1V1UsioDataPc34Compat* pendingUsioData,
+    int* pendingPresent)
+{
+    int accepted;
+
+    if (pendingPresent == 0 || *pendingPresent == 0) {
+        return 0;
+    }
+
+    accepted = F1173_AddUsioDataToInputQueue(queue, pendingUsioData);
+    if (accepted) {
+        *pendingPresent = 0;
+        if (pendingUsioData != 0) {
+            memset(pendingUsioData, 0, sizeof(*pendingUsioData));
+        }
+    }
+    return accepted;
+}
+
+int F1684_GetMouseStatus(
+    struct Dm1V1UsioMouseStatusPc34Compat* outMouseStatus,
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    if (outMouseStatus == 0 || callerOwnedMouseStatus == 0) {
+        return 0;
+    }
+    *outMouseStatus = *callerOwnedMouseStatus;
+    return 1;
+}
+
+int F1694_AddMouseInputToQueue(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    int mouseX,
+    int mouseY,
+    int mouseButtons)
+{
+    struct Dm1V1UsioDataPc34Compat usioData;
+
+    memset(&usioData, 0, sizeof(usioData));
+    usioData.usioType = DM1_V1_USIO_DATA_TYPE_MOUSE;
+    usioData.mouseX = mouseX;
+    usioData.mouseY = mouseY;
+    usioData.mouseButtons = mouseButtons;
+    return F1173_AddUsioDataToInputQueue(queue, &usioData);
+}
+
+static int is_left_mouse_button_down(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return callerOwnedMouseStatus != 0 &&
+           ((callerOwnedMouseStatus->mouseButtons & DM1_V1_BUTTON_LEFT) != 0);
+}
+
+int F1128_IsLeftMouseButtonDown(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return is_left_mouse_button_down(callerOwnedMouseStatus);
+}
+
+int F2008_IsLeftMouseButtonDown(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return is_left_mouse_button_down(callerOwnedMouseStatus);
+}
+
+int F2024_IsLeftMouseButtonDown(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return is_left_mouse_button_down(callerOwnedMouseStatus);
+}
+
+int F2009_GetMouseX(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return callerOwnedMouseStatus != 0 ? callerOwnedMouseStatus->mouseX : 0;
+}
+
+int F2010_GetMouseY(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return callerOwnedMouseStatus != 0 ? callerOwnedMouseStatus->mouseY : 0;
+}
+
+int F2047_GetMouseX(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return F2009_GetMouseX(callerOwnedMouseStatus);
+}
+
+int F2048_GetMouseY(
+    const struct Dm1V1UsioMouseStatusPc34Compat* callerOwnedMouseStatus)
+{
+    return F2010_GetMouseY(callerOwnedMouseStatus);
+}
+
+int F1172_QueueMouseAndKeyboardInput(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    const struct Dm1V1UsioDataPc34Compat* callerOwnedUsioData,
+    unsigned int callerOwnedUsioDataCount)
+{
+    unsigned int i;
+    int accepted = 0;
+
+    if (queue == 0 || callerOwnedUsioData == 0) {
+        return 0;
+    }
+
+    for (i = 0u; i < callerOwnedUsioDataCount; ++i) {
+        if (F1173_AddUsioDataToInputQueue(queue, &callerOwnedUsioData[i])) {
+            accepted++;
+        }
+    }
+    return accepted;
 }
 
 struct Dm1V1InputQueueProcessResultPc34Compat DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
@@ -435,4 +583,49 @@ int DM1_V1_InputCommandQueue_PeekPc34Compat(
 const char* DM1_V1_InputCommandQueue_SourceEvidencePc34Compat(void)
 {
     return "COMMAND.C:6,72-84,106-121,252-260,272-305,579-610,636-685,677-684,729-812,1304-1377,1379-1449,1452-1661,1506-1511,1632-1638,1692-1707,1709-1813,2045-2156,2129-2147,2169-2171,2831-2928; DEFS.H:223-226,3263-3264,3507-3509; IO2.C:27-61; CLIKMENU.C:90-109,115-250; MENUDRAW.C:5-19";
+}
+
+const char* F0357_COMMAND_DiscardAllInput_SourceEvidence(void)
+{
+    return "COMMAND.C:1304-1377 F0357_COMMAND_DiscardAllInput; CLIKMENU.C:317-323 blocked-step caller; CHAMPION.C:1382-1414 wake-up caller";
+}
+
+const char* F1172_QueueMouseAndKeyboardInput_SourceEvidence(void)
+{
+    return "USIO2.C:13 F1172_QueueMouseAndKeyboardInput; USIO2.C:278 and 295 local raw-key/mouse-button sampling; PC34 consumes only caller-owned USIO data and does not poll host input.";
+}
+
+const char* F1173_AddUsioDataToInputQueue_SourceEvidence(void)
+{
+    return "USIO1.C:177 F1173_AddUsioDataToInputQueue; DM1 PC34 maps caller-owned keyboard/mouse USIO data through COMMAND.C key/mouse command tables without synthesizing input.";
+}
+
+const char* F1174_AddPendingUsioDataToInputQueue_SourceEvidence(void)
+{
+    return "USIO2.C:264 F1174_AddPendingUsioDataToInputQueue; G3452/G3453 pending-USIO source state is represented by caller-owned pending data and is cleared only after an accepted enqueue.";
+}
+
+const char* F1684_GetMouseStatus_SourceEvidence(void)
+{
+    return "USIO1.C:80 F1684_GetMouseStatus; output mouse X/Y parameters are populated only from explicit caller-owned mouse status, with no host cursor polling.";
+}
+
+const char* F1694_AddMouseInputToQueue_SourceEvidence(void)
+{
+    return "USIO1.C:164 F1694_AddMouseInputToQueue; P5030/P5031/P5032 mouse X/Y/buttons are mapped through the existing COMMAND.C mouse command tables and queue limits.";
+}
+
+const char* F1128_IsLeftMouseButtonDown_SourceEvidence(void)
+{
+    return "FILLBOX.C:6 F1128_IsLeftMouseButtonDown; PC34 reads only explicit caller-owned mouse button status and does not poll a host cursor.";
+}
+
+const char* F2008_F2024_IsLeftMouseButtonDown_SourceEvidence(void)
+{
+    return "CEDT006.C:1323 F2008_IsLeftMouseButtonDown and HINT001.C:219 F2024_IsLeftMouseButtonDown; both share the caller-owned left-button status contract without synthetic mouse events.";
+}
+
+const char* F2009_F2010_F2047_F2048_MouseCoordinate_SourceEvidence(void)
+{
+    return "CEDT006.C:1324 F2009_GetMouseX/F2010_GetMouseY and FILLBOX.C:837/843 F2047_GetMouseX/F2048_GetMouseY; coordinates are copied only from caller-owned mouse status.";
 }
