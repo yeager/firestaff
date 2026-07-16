@@ -671,7 +671,7 @@ DM2_ADD_ITEM_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	251	include/dm2_v1_skproject_co
 DM2_GET_MAX_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	344	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_max_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item max-charge query: OBJECT_NULL and unsupported DB types return zero, DB5 weapon and DB6 cloth return 15, and DB10 miscellaneous items return 3.
 DM2_QUERY_ITEM_VALUE	SKULLWIN	SKULLWIN/c_item.cpp	360	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_value	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the bounded SKULLWIN c_item item-value flow: caller-supplied source-shaped GDAT word values feed base value, cls4 1/2 charge multipliers, potion money scaling, recursive container contents, and moneybox weight/value aggregation without fabricating records.
 DM2_QUERY_ITEM_WEIGHT	SKULLWIN	SKULLWIN/c_item.cpp	496	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item weight wrapper as QUERY_ITEM_VALUE(object, 1) over the same bounded source-shaped item receipt.
-DM2_GET_ITEM_NAME	SKULLWIN	SKULLWIN/c_item.cpp	502		MISSING
+DM2_GET_ITEM_NAME	SKULLWIN	SKULLWIN/c_item.cpp	502		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_NAME with source-shaped cls1/cls2 and champion-bones owner side effect before GDAT text lookup.
 DM2_IS_MISCITEM_DRINK_WATER	SKULLWIN	SKULLWIN/c_item.cpp	528		MISSING
 DM2_MOVE_ITEM_TO	SKULLWIN	SKULLWIN/c_item.cpp	554		MISSING
 DM2_ACTIVATE_ITEM_TELEPORT	SKULLWIN	SKULLWIN/c_item.cpp	651		MISSING
@@ -779,10 +779,10 @@ DM2_IS_REBIRTH_ALTAR	SKULLWIN	SKULLWIN/c_querydb.cpp	682		MISSING
 DM2_QUERY_DOOR_DAMAGE_RESIST	SKULLWIN	SKULLWIN/c_querydb.cpp	713	include/dm2_v1_asset_loader.h:dm2_v1_query_door_damage_resist_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_CREATURE_WORD_VALUE	SKULLWIN	SKULLWIN/c_querydb.cpp	722	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_WALL_ORNATE_SPRING	SKULLWIN	SKULLWIN/c_querydb.cpp	793		MISSING
-DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803		MISSING
-DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820		MISSING
+DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
+DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 DM2_IS_CONTAINER_MAP	SKULLWIN	SKULLWIN/c_querydb.cpp	845		MISSING
-DM2_IS_CONTAINER_CHEST	SKULLWIN	SKULLWIN/c_querydb.cpp	861		MISSING
+DM2_IS_CONTAINER_CHEST	SKULLWIN	SKULLWIN/c_querydb.cpp	861		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
 DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR	SKULLWIN	SKULLWIN/c_querydb.cpp	880		MISSING
 DM2_IS_MISSILE_VALID_TO_LAUNCHER	SKULLWIN	SKULLWIN/c_querydb.cpp	949		MISSING
 DM2_GET_CREATURE_WEIGHT	SKULLWIN	SKULLWIN/c_querydb.cpp	982		MISSING
@@ -804,7 +804,7 @@ DM2_DIR_FROM_5x5_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1900		MISSING
 DM2_GET_DOOR_STAT_0X10	SKULLWIN	SKULLWIN/c_querydb.cpp	1917	include/dm2_v1_asset_loader.h:dm2_v1_get_door_stat_0x10_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0e through QUERY_GDAT_ENTRY_DATA_INDEX and fails closed when the source row is absent.
 DM2_GET_GLOB_VAR	SKULLWIN	SKULLWIN/c_querydb.cpp	1926		MISSING
 DM2_GET_GRAPHICS_FOR_DOOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1955	include/dm2_v1_asset_loader.h:dm2_v1_get_graphics_for_door_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0d for the SKULLWIN door-type contract and fails closed when the source row is absent.
-DM2_GET_ITEM_ORDER_IN_CONTAINER	SKULLWIN	SKULLWIN/c_querydb.cpp	1964		MISSING
+DM2_GET_ITEM_ORDER_IN_CONTAINER	SKULLWIN	SKULLWIN/c_querydb.cpp	1964		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
 DM2_COUNT_BY_COIN_TYPES	SKULLWIN	SKULLWIN/c_querydb.cpp	2088	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
 DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKULLWIN	SKULLWIN/c_querydb.cpp	2144	src/dm2/dm2_v1_weather_gdat.c:241	UNCERTAIN
 DM2_CALC_PLAYER_WALK_DELAY	SKULLWIN	SKULLWIN/c_querydb.cpp	2175		MISSING
@@ -960,7 +960,7 @@ DM2_SOUND9	SKULLWIN	SKULLWIN/c_sound.cpp	650	src/dm2/dm2_v1_sound.c:418	VERIFIED
 DM2_QUERY_SND_ENTRY_INDEX	SKULLWIN	SKULLWIN/c_sound.cpp	664	src/dm2/dm2_v1_sound.c:402	VERIFIED_SOURCE_MAPPING
 DM2_SKCHR_TO_SCRIPTCHR	SKULLWIN	SKULLWIN/c_str.cpp	7		MISSING
 DM2_LTOA10	SKULLWIN	SKULLWIN/c_str.cpp	15		MISSING
-DM2_FMT_NUM	SKULLWIN	SKULLWIN/c_str.cpp	37		MISSING
+DM2_FMT_NUM	SKULLWIN	SKULLWIN/c_str.cpp	37		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
 DM2_FILL_STR	SKULLWIN	SKULLWIN/c_str.cpp	66		MISSING
 DM2_PROCESS_TIMER_0C	SKULLWIN	SKULLWIN/c_tim_proc.cpp	30		MISSING
 DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39		MISSING
@@ -1318,11 +1318,11 @@ QUERY_CREATURES_ITEM_MASK	SKWIN	SKWIN/SkWinCore.cpp	2057	include/dm2_v1_asset_lo
 ZERO_MEMORY	SKWIN	SKWIN/SkWinCore.cpp	2166		MISSING
 PROCESS_TIMER_0E	SKWIN	SKWIN/SkWinCore.cpp	2173		MISSING
 ADD_ITEM_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	2197	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::ADD_ITEM_CHARGE through the same bounded charge receipt used for the SKULLWIN c_item alias.
-IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	2257		MISSING
+IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	2257		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2275		MISSING
 QUERY_ITEM_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2287	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_value	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::QUERY_ITEM_VALUE with source-shaped records and GDAT word values for base value, charge additions, potion money scaling, recursive container contents, and moneybox aggregation while leaving real loader/HUD consumption closed.
 QUERY_ITEM_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2367	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::QUERY_ITEM_WEIGHT as QUERY_ITEM_VALUE(recordLink, 1).
-IS_CONTAINER_CHEST	SKWIN	SKWIN/SkWinCore.cpp	2374		MISSING
+IS_CONTAINER_CHEST	SKWIN	SKWIN/SkWinCore.cpp	2374		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
 CALC_PLAYER_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2392	include/dm2_v1_skproject_core.h:dm2_v1_skproject_calc_player_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the bounded SkWinCore::CALC_PLAYER_WEIGHT flow: 30 inventory slots are summed through QUERY_ITEM_WEIGHT, the selected player's hand action 0/1 chest overlay adds eight current-container items, and the hero flag 0x1000 receipt is preserved.
 PROCEED_GLOBAL_EFFECT_TIMERS	SKWIN	SKWIN/SkWinCore.cpp	2426		MISSING
 _2066_1f37	SKWIN	SKWIN/SkWinCore.cpp	2512		MISSING
@@ -1563,12 +1563,12 @@ DRAW_GUIDED_STR	SKWIN	SKWIN/SkWinCore.cpp	13258	src/dm2/dm2_v1_skproject_core.c:
 _24a5_0732	SKWIN	SKWIN/SkWinCore.cpp	13331		MISSING
 DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds scroll-object message text, scroll panel subpanel, static art, and centered line draw planning.
 QUERY_GDAT_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13434	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_gdat_item_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
-GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447		MISSING
+GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_NAME with cls1/cls2 lookup and champion-bones owner side effect.
 DRAW_ITEM_ICON	SKWIN	SKWIN/SkWinCore.cpp	13478	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN item icon route; runtime inventory panel remains an additional consumer.
 DRAW_CONTAINER_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13612	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-IS_MISCITEM_CURRENCY	SKWIN	SKWIN/SkWinCore.cpp	13634		MISSING
+IS_MISCITEM_CURRENCY	SKWIN	SKWIN/SkWinCore.cpp	13634		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
 COUNT_BY_COIN_TYPES	SKWIN	SKWIN/SkWinCore.cpp	13651	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
-GET_ITEM_ORDER_IN_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	13681		MISSING
+GET_ITEM_ORDER_IN_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	13681		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
 SK_LTOA10	SKWIN	SKWIN/SkWinCore.cpp	13776		MISSING
 MONEY_BOX_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13814		MISSING
 _2759_0155	SKWIN	SKWIN/SkWinCore.cpp	13854		MISSING
@@ -1578,7 +1578,7 @@ _2e62_03b5	SKWIN	SKWIN/SkWinCore.cpp	14236		MISSING
 DRAW_LOCAL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	14343	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 GET_PLAYER_ABILITY	SKWIN	SKWIN/SkWinCore.cpp	14379		MISSING
 FILL_STR	SKWIN	SKWIN/SkWinCore.cpp	14408		MISSING
-FMT_NUM	SKWIN	SKWIN/SkWinCore.cpp	14418		MISSING
+FMT_NUM	SKWIN	SKWIN/SkWinCore.cpp	14418		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
 SK_STRCPY	SKWIN	SKWIN/SkWinCore.cpp	14462		MISSING
 SK_STRCAT	SKWIN	SKWIN/SkWinCore.cpp	14467		MISSING
 DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds skill panel subpanel, blank panel, skill labels, attribute labels, and ability-value route.
@@ -1725,7 +1725,7 @@ GET_TELEPORTER_DETAIL	SKWIN	SKWIN/xxx.cpp	3235		MISSING
 GET_POINTER_OF_RECORD_LINK_AND_SOMEWHAT	SKWIN	SKWIN/xxx.cpp	3272		MISSING
 WRITE_RECORD_CHECKCODE	SKWIN	SKWIN/xxx.cpp	3303	include/dm2_v1_save_load.h:462	UNCERTAIN
 ADD_INDEX_TO_POSSESSION_INDICES	SKWIN	SKWIN/xxx.cpp	3570		MISSING
-IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/xxx.cpp	3578		MISSING
+IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/xxx.cpp	3578		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 GET_WALL_DECORATION_OF_ACTUATOR	SKWIN	SKWIN/xxx.cpp	3617	src/dm2/dm2_v1_dungeon_loader.c:2516	UNCERTAIN
 QUERY_GDAT_ENTRY_DATA_INDEX	SKWIN	SKWIN/xxx.cpp	3693	src/dm2/dm2_v1_asset_loader.c:837	UNCERTAIN
 QUERY_GDAT_ENTRYPTR	SKWIN	SKWIN/xxx.cpp	3721		MISSING

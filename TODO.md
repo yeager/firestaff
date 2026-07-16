@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1349; 2886 total open rows
+  shared DM1/CSB 1537, DM2 1336; 2873 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -85,6 +85,11 @@
     `GET_TILE_VALUE`, `FILL_ENTIRE_PICT`, and `FILL_RECT_SUMMARY` now have
     skproject-backed bounded receipts. Remaining adjacent work is wiring more
     live dungeon/HUD consumers to these tile and fill routes.
+  - 2026-07-16 DM2 item/container classifier update: `GET_ITEM_NAME`,
+    `IS_MISCITEM_CURRENCY`, `IS_CONTAINER_MONEYBOX`, `IS_CONTAINER_CHEST`,
+    `GET_ITEM_ORDER_IN_CONTAINER`, `FMT_NUM`, and their SKULLWIN aliases now
+    have skproject-backed receipts. Remaining adjacent work is live inventory
+    and moneybox HUD consumption with real GDAT text/order data.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

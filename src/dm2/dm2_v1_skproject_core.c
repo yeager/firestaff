@@ -2830,6 +2830,273 @@ static uint16_t dm2_v1_skproject_gdat_word_value(
     return record->gdat_word_values[cls4];
 }
 
+int dm2_v1_skproject_is_container_moneybox(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    int has_moneybox_item_list,
+    DM2_V1_SkprojectItemClassifyReceipt *out_receipt)
+{
+    DM2_V1_SkprojectItemClassifyReceipt receipt;
+    const DM2_V1_SkprojectItemValueRecord *record;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.db_type = (uint8_t)dm2_v1_skproject_item_db_type(object_id);
+    receipt.has_moneybox_item_list = has_moneybox_item_list ? 1u : 0u;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    record = dm2_v1_skproject_find_item_record(world, object_id);
+    if (!record) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.container_type = record->container_type;
+    receipt.gdat_cls1 = record->gdat_cls1;
+    receipt.gdat_cls2 = record->gdat_cls2;
+    receipt.is_moneybox =
+        receipt.db_type == 9u && record->container_type == 0u &&
+        has_moneybox_item_list ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.is_moneybox ? 1 : 0;
+}
+
+int dm2_v1_skproject_is_container_chest(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    int has_moneybox_item_list,
+    DM2_V1_SkprojectItemClassifyReceipt *out_receipt)
+{
+    DM2_V1_SkprojectItemClassifyReceipt receipt;
+    const DM2_V1_SkprojectItemValueRecord *record;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.db_type = (uint8_t)dm2_v1_skproject_item_db_type(object_id);
+    receipt.has_moneybox_item_list = has_moneybox_item_list ? 1u : 0u;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    record = dm2_v1_skproject_find_item_record(world, object_id);
+    if (!record) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.container_type = record->container_type;
+    receipt.gdat_cls1 = record->gdat_cls1;
+    receipt.gdat_cls2 = record->gdat_cls2;
+    receipt.is_moneybox =
+        receipt.db_type == 9u && record->container_type == 0u &&
+        has_moneybox_item_list ? 1u : 0u;
+    receipt.is_chest =
+        receipt.db_type == 9u && record->container_type == 0u &&
+        !receipt.is_moneybox ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.is_chest ? 1 : 0;
+}
+
+int dm2_v1_skproject_is_miscitem_currency(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemClassifyReceipt *out_receipt)
+{
+    DM2_V1_SkprojectItemClassifyReceipt receipt;
+    const DM2_V1_SkprojectItemValueRecord *record;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.db_type = (uint8_t)dm2_v1_skproject_item_db_type(object_id);
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    record = dm2_v1_skproject_find_item_record(world, object_id);
+    if (!record) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.gdat_flags = dm2_v1_skproject_gdat_word_value(record, 0u);
+    receipt.is_currency =
+        receipt.db_type == 10u && (receipt.gdat_flags & 0x4000u) ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.is_currency ? 1 : 0;
+}
+
+int dm2_v1_skproject_get_item_name(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t champion_bones_item_id,
+    uint8_t champion_count,
+    DM2_V1_SkprojectItemNameReceipt *out_receipt)
+{
+    DM2_V1_SkprojectItemNameReceipt receipt;
+    const DM2_V1_SkprojectItemValueRecord *record;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.champion_bones_item_id = champion_bones_item_id;
+    receipt.champion_count = champion_count;
+    receipt.champion_bones_index = 0xffffu;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    record = dm2_v1_skproject_find_item_record(world, object_id);
+    if (!record) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.gdat_cls1 = record->gdat_cls1;
+    receipt.gdat_cls2 = record->gdat_cls2;
+    if (record->gdat_cls1 == 0x15u &&
+        record->gdat_cls2 == champion_bones_item_id &&
+        record->champion_bones_owner < champion_count) {
+        receipt.champion_bones_owner = record->champion_bones_owner;
+        receipt.champion_bones_index = record->champion_bones_owner;
+    }
+    receipt.requested_gdat_item_name = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_get_item_order_in_container(
+    uint16_t object_id,
+    uint8_t container_cls2,
+    const char *order_text,
+    const uint16_t *money_item_ids,
+    uint16_t money_item_count,
+    uint16_t order,
+    DM2_V1_SkprojectItemOrderReceipt *out_receipt)
+{
+    DM2_V1_SkprojectItemOrderReceipt receipt;
+    uint16_t current_number = 0u;
+    int16_t range_start = -1;
+    int16_t item_offset = -1;
+    uint16_t slot = 0u;
+    const unsigned char *p = (const unsigned char *)order_text;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.container_cls2 = container_cls2;
+    receipt.requested_order = order;
+    receipt.returned_money_index = -1;
+    if (!order_text || !*order_text || !money_item_ids) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+    while (1) {
+        unsigned char ch = *p++;
+
+        if (ch >= '0' && ch <= '9') {
+            current_number = (uint16_t)(current_number * 10u + ch - '0');
+            continue;
+        }
+        if (ch == 'J' && current_number == 0u) {
+            item_offset = 256;
+            continue;
+        }
+        if (ch == '-' && current_number != 0u) {
+            range_start = (int16_t)current_number;
+            current_number = 0u;
+            continue;
+        }
+        if (ch == 'J' && current_number != 0u)
+            --p;
+
+        if (range_start < 0)
+            range_start = (int16_t)current_number;
+        for (int16_t item = range_start; item <= (int16_t)current_number;
+             ++item, ++slot) {
+            uint16_t expanded = (uint16_t)(item + item_offset);
+
+            if (slot == order) {
+                receipt.expanded_item_id = expanded;
+                for (uint16_t i = 0u; i < money_item_count; ++i) {
+                    if (money_item_ids[i] == expanded) {
+                        receipt.returned_money_index = (int16_t)i;
+                        receipt.parsed_slot_count = (uint16_t)(slot + 1u);
+                        receipt.valid = 1;
+                        if (out_receipt) *out_receipt = receipt;
+                        return (int)i;
+                    }
+                }
+                receipt.parsed_slot_count = (uint16_t)(slot + 1u);
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return -1;
+            }
+        }
+        current_number = 0u;
+        range_start = -1;
+        item_offset = -1;
+        if (ch == 0)
+            break;
+    }
+    receipt.parsed_slot_count = slot;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+}
+
+int dm2_v1_skproject_fmt_num(
+    uint16_t value,
+    uint16_t clean,
+    uint16_t keta,
+    DM2_V1_SkprojectFmtNumReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFmtNumReceipt receipt;
+    uint16_t v = value;
+    uint8_t pos = 4u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.value = value;
+    receipt.clean = clean;
+    receipt.keta = keta;
+    if (clean)
+        memset(receipt.buffer, ' ', 4);
+    else
+        memset(receipt.buffer, 0, 4);
+    receipt.buffer[4] = '\0';
+    if (v == 0u) {
+        receipt.buffer[--pos] = '0';
+    } else {
+        while (v != 0u && pos > 0u) {
+            uint16_t next = (uint16_t)(v / 10u);
+            receipt.buffer[--pos] =
+                (char)((uint16_t)(v - next * 10u) + '0');
+            v = next;
+        }
+    }
+    receipt.returned_offset =
+        clean ? (uint8_t)(keta > 4u ? 0u : 4u - keta) : pos;
+    memcpy(receipt.returned_text, &receipt.buffer[receipt.returned_offset],
+           5u - receipt.returned_offset);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 static int32_t dm2_v1_skproject_query_item_value_depth(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t object_id,
@@ -4731,10 +4998,15 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT; "
            "SKWIN/SkWinCore.cpp ADD_ITEM_CHARGE/GET_MAX_CHARGE/"
            "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
-           "COUNT_BY_COIN_TYPES and "
+           "COUNT_BY_COIN_TYPES/IS_CONTAINER_MONEYBOX/"
+           "IS_CONTAINER_CHEST/IS_MISCITEM_CURRENCY/GET_ITEM_NAME/"
+           "GET_ITEM_ORDER_IN_CONTAINER/FMT_NUM and "
            "SKULLWIN/c_item.cpp DM2_ADD_ITEM_CHARGE/DM2_GET_MAX_CHARGE/"
-           "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT; "
-           "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES; "
+           "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT/DM2_GET_ITEM_NAME; "
+           "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES/"
+           "DM2_IS_MISCITEM_CURRENCY/DM2_IS_CONTAINER_MONEYBOX/"
+           "DM2_IS_CONTAINER_CHEST/DM2_GET_ITEM_ORDER_IN_CONTAINER; "
+           "SKULLWIN/c_str.cpp DM2_FMT_NUM; "
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
            "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
