@@ -703,6 +703,29 @@ int dm2_v1_dungeon_c_map_is_tile_passage(const DM2_V1_DungeonData *d,
     return 1;
 }
 
+int dm2_v1_dungeon_c_map_is_tile_solid(const DM2_V1_DungeonData *d,
+                                       int level,
+                                       int x,
+                                       int y)
+{
+    int raw;
+    int tile_type;
+
+    if (!dm2_v1_dungeon_c_map_dimension_ok(d, level) ||
+        x < 0 || x >= d->level_widths[level] ||
+        y < 0 || y >= d->level_heights[level]) {
+        return 1;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw < 0) return 1;
+    if (d->square_bytes == 1) {
+        tile_type = (((uint8_t)raw) >> 5) & 0x07;
+        return tile_type == 0 || tile_type == 7;
+    }
+    tile_type = raw & 0x1f;
+    return tile_type == 0 || tile_type == 4;
+}
+
 int dm2_v1_dungeon_c_map_get_tile_value(const DM2_V1_DungeonData *d,
                                         int level,
                                         int x,
@@ -936,6 +959,33 @@ int dm2_v1_skproject_is_tile_passage(
                                 value.tile_value != 4u);
     receipt.source_symbol = "DM2_IS_TILE_PASSAGE";
     receipt.source_line = 79;
+    *out = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_is_tile_solid(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTileSolidReceipt *out) {
+    DM2_V1_SkprojectTileValueReceipt value;
+    DM2_V1_SkprojectTileSolidReceipt receipt;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out || !dm2_v1_skproject_get_tile_value(d, level, x, y, &value))
+        return 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.raw_tile = value.raw_tile;
+    receipt.tile_value = value.tile_value;
+    receipt.is_solid = dm2_v1_dungeon_c_map_is_tile_solid(d, level, x, y);
+    receipt.source_symbol = "DM2_IS_TILE_SOLID";
+    receipt.source_line = 3871;
     *out = receipt;
     return 1;
 }

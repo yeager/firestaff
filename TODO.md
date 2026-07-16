@@ -32,6 +32,14 @@
     now source-mapped in `dm2_v1_skproject_core`. Remaining adjacent
     `SkWinCore.cpp` cache/mement symbols still require real cache-index and
     mement-table state; do not fake cache hits or image buffers.
+  - 2026-07-16 DM2 c_map real-data update: `GET_TILE_VALUE`,
+    `GET_ADDRESS_OF_TILE_RECORD`, `IS_TILE_PASSAGE`, and SKWIN
+    `IS_TILE_SOLID` now have source-named dungeon-loader receipts verified
+    against canonical PC G1 `DUNGEON.DAT` map bytes and map-root ObjectIDs.
+    Remaining DM2 dungeon/runtime work is `GET_TILE_RECORD_LINK`,
+    `GET_OBJECT_INDEX_FROM_TILE`, `CHANGE_CURRENT_MAP_TO`, complete record
+    chain traversal, DB8/DB10 root ownership, and HUD/runtime material that
+    consumes real GDAT/dungeon state without fallback visuals.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate

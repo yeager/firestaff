@@ -704,9 +704,9 @@ tile_to_ubyte	SKULLWIN	SKULLWIN/c_map.cpp	30		MISSING
 init	SKULLWIN	SKULLWIN/c_map.cpp	35	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_GET_OBJECT_INDEX_FROM_TILE	SKULLWIN	SKULLWIN/c_map.cpp	44	src/dm2/dm2_v1_dungeon_loader.c:859	UNCERTAIN
 DM2_GET_TILE_RECORD_LINK	SKULLWIN	SKULLWIN/c_map.cpp	61	src/dm2/dm2_v1_dungeon_loader.c:809	UNCERTAIN
-DM2_GET_ADDRESS_OF_TILE_RECORD	SKULLWIN	SKULLWIN/c_map.cpp	69	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_address_of_tile_record	PARTIAL
-DM2_IS_TILE_PASSAGE	SKULLWIN	SKULLWIN/c_map.cpp	79	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_is_tile_passage	PARTIAL
-DM2_GET_TILE_VALUE	SKULLWIN	SKULLWIN/c_map.cpp	107	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_tile_value	PARTIAL
+DM2_GET_ADDRESS_OF_TILE_RECORD	SKULLWIN	SKULLWIN/c_map.cpp	69	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
+DM2_IS_TILE_PASSAGE	SKULLWIN	SKULLWIN/c_map.cpp	79	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_is_tile_passage	VERIFIED_SOURCE_MAPPING
+DM2_GET_TILE_VALUE	SKULLWIN	SKULLWIN/c_map.cpp	107	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_tile_value	VERIFIED_SOURCE_MAPPING
 DM2_CHANGE_CURRENT_MAP_TO	SKULLWIN	SKULLWIN/c_map.cpp	328		MISSING
 DM_LOCATE_OTHER_LEVEL	SKULLWIN	SKULLWIN/c_map.cpp	384		MISSING
 DM2_SET_DESTINATION_OF_MINION_MAP	SKULLWIN	SKULLWIN/c_map.cpp	540		MISSING
@@ -1734,9 +1734,9 @@ _0cee_2de0	SKWIN	SKWIN/xxx.cpp	3807		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKWIN	SKWIN/xxx.cpp	3813		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826		MISSING
-GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865		MISSING
-IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871		MISSING
-GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891		MISSING
+GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
+IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_is_tile_solid	VERIFIED_SOURCE_MAPPING
+GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	VERIFIED_SOURCE_MAPPING
 GET_TILE_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	3998	src/dm2/dm2_v1_object_model.c:353	UNCERTAIN
 GET_OBJECT_INDEX_FROM_TILE	SKWIN	SKWIN/xxx.cpp	4008		MISSING
 GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/xxx.cpp	4027	src/dm2/dm2_v1_runtime.c:329	UNCERTAIN
