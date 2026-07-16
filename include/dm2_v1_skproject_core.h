@@ -142,6 +142,67 @@ typedef struct {
     int blocked_unsupported_db_type;
 } DM2_V1_SkprojectItemChargeReceipt;
 
+#define DM2_V1_SKPROJECT_ITEM_VALUE_RECORD_LIMIT 32
+#define DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS 30
+#define DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS 8
+
+typedef struct {
+    uint16_t object_id;
+    uint16_t w2;
+    uint16_t next_object_id;
+    uint16_t contained_object_id;
+    uint16_t gdat_word_values[0x36];
+    uint8_t container_type;
+    uint8_t is_moneybox;
+} DM2_V1_SkprojectItemValueRecord;
+
+typedef struct {
+    const DM2_V1_SkprojectItemValueRecord *records;
+    uint16_t record_count;
+} DM2_V1_SkprojectItemValueWorld;
+
+typedef struct {
+    int valid;
+    int blocked_null_object;
+    int blocked_missing_record;
+    int blocked_recursion_limit;
+    uint16_t object_id;
+    uint8_t cls4;
+    int db_type;
+    int32_t base_value;
+    uint16_t charge;
+    uint16_t charge_multiplier_cls4;
+    int32_t charge_value_added;
+    int32_t potion_value_before_scale;
+    int32_t potion_value_after_scale;
+    int32_t contained_recursive_value;
+    int32_t moneybox_contained_value;
+    int32_t moneybox_rounding_value;
+    int32_t final_value;
+} DM2_V1_SkprojectItemValueReceipt;
+
+typedef struct {
+    uint16_t inventory[DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS];
+    uint16_t current_container_items[DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS];
+    uint16_t selected_hand_items[2];
+    uint8_t selected_hand_action;
+    uint16_t selected_player_plus_one;
+} DM2_V1_SkprojectPlayerWeightRequest;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    int included_open_chest_overlay;
+    int blocked_missing_request;
+    int blocked_player_not_selected;
+    int blocked_selected_hand_action;
+    int blocked_selected_hand_not_chest;
+    uint32_t inventory_weight;
+    uint32_t open_chest_weight;
+    uint32_t final_weight;
+    uint16_t hero_flag_or;
+} DM2_V1_SkprojectPlayerWeightReceipt;
+
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
 int16_t dm2_v1_skproject_between_value(int16_t minv,
@@ -242,6 +303,21 @@ uint16_t dm2_v1_skproject_add_item_charge(
     uint16_t *record_w2,
     int16_t delta,
     DM2_V1_SkprojectItemChargeReceipt *out_receipt);
+uint16_t dm2_v1_skproject_get_max_charge(uint16_t object_id);
+int32_t dm2_v1_skproject_query_item_value(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    uint8_t cls4,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
+int32_t dm2_v1_skproject_query_item_weight(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t object_id,
+    DM2_V1_SkprojectItemValueReceipt *out_receipt);
+int dm2_v1_skproject_calc_player_weight(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t player,
+    const DM2_V1_SkprojectPlayerWeightRequest *request,
+    DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 

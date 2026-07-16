@@ -51,8 +51,8 @@
     `dm2_v1_skproject_core`. The adjacent bounded picture-mement receipt
     slice below covers `RECYCLE_MEMENTI`, `TEST_MEMENT`, and image/pict
     admission/free at receipt level. Remaining cache/mement work is full CPX
-    heap allocation, indexed mement eviction/list ordering, and GDAT decode
-    buffer ownership; do not fabricate image buffers.
+    setup/guarantee/pointer creation, indexed mement eviction/list ordering,
+    and GDAT decode buffer ownership; do not fabricate image buffers.
   - 2026-07-16 DM2 picture-mement update: skproject `TEST_MEMENT`,
     `RECYCLE_MEMENTI`, `ALLOC_NEW_PICT`, `ALLOC_IMAGE_MEMENT`,
     `ALLOC_PICT_MEMENT`, `CALC_PICT_ENT_HASH`, `FREE_IMAGE_MEMENT`, and
@@ -60,9 +60,20 @@
     `dm2_v1_skproject_core`. These receipts preserve skproject's picture
     allocation sizes, picture-entry hash packing, image-vs-cache picture
     routing, and the Y=-32/8bpp image mement admission gate. Remaining
-    adjacent DM2 work is still full CPX heap allocation, indexed mement
-    eviction, GDAT image decode buffers, and renderer/HUD consumption with
-    real data; do not promote these receipts into decoded graphics.
+    adjacent DM2 work is still full CPX setup/guarantee/pointer creation,
+    indexed mement eviction, GDAT image decode buffers, and renderer/HUD
+    consumption with real data; do not promote these receipts into decoded
+    graphics.
+  - 2026-07-16 DM2 CPX lower-heap update: skproject
+    `ALLOC_LOWER_CPXHEAP`, `ALLOC_CPXHEAP_MEM`,
+    `DM2_ALLOC_CPXHEAP_MEM`, `DM2_ALLOC_CPX_LINK_NODE`, and
+    `DM2_ALLOC_CPX_UNLINK_NODE` now have isolated bounded receipts in
+    `dm2_v1_skproject_cpx_heap`. The receipts allocate from the low edge of
+    the first sufficient free span, preserve exact-fit unlink versus split
+    behavior, insert freed spans in ascending offset order, and coalesce
+    adjacent spans. Remaining adjacent work is full CPX setup, guarantee/free
+    scavenging, pointer/index creation, `DM2_ALLOC_CPX1`, and GDAT decode
+    buffer ownership; do not treat these receipts as real decoded images.
   - 2026-07-16 DM2 c_map real-data update: `GET_TILE_VALUE`,
     `GET_ADDRESS_OF_TILE_RECORD`, `IS_TILE_PASSAGE`, and SKWIN
     `IS_TILE_SOLID` now have source-named dungeon-loader receipts verified
@@ -91,15 +102,47 @@
     chains, replaces first tile roots with their next link, compacts
     single-root tile ground-stack entries, decrements later column offsets,
     and resets the cut record's `w0` to `OBJECT_END_MARKER`. Remaining
-    adjacent work is exact CPX/mement free-list ordering and using these
+    adjacent work is indexed mement free-list ordering and using these
     mutations in broader real GDAT/HUD dungeon runtime.
   - 2026-07-16 DM2 item-charge update: skproject `DM2_ADD_ITEM_CHARGE` /
     `ADD_ITEM_CHARGE` now has a source-mapped bounded helper in
     `dm2_v1_skproject_core` for DB5 weapon, DB6 cloth, and DB10 miscellaneous
-    item charge bitfields and clamps. Remaining adjacent item work is
-    `GET_MAX_CHARGE`, `QUERY_ITEM_VALUE`, `QUERY_ITEM_WEIGHT`,
-    `CALC_PLAYER_WEIGHT`, and runtime HUD/item consumption from real GDAT and
-    dungeon records.
+    item charge bitfields and clamps. Remaining adjacent item work is runtime
+    HUD/item consumption from real GDAT and dungeon records.
+  - 2026-07-16 DM2 item max-charge update: skproject `DM2_GET_MAX_CHARGE` /
+    `GET_MAX_CHARGE` now has a source-mapped bounded helper in
+    `dm2_v1_skproject_core` for the same DB5 weapon, DB6 cloth, DB10
+    miscellaneous item, `OBJECT_NULL`, and unsupported-DB outcomes used by
+    the charge/value path. This does not implement HUD/runtime consumption.
+  - 2026-07-16 DM2 item value/weight update: skproject
+    `DM2_QUERY_ITEM_VALUE`, `DM2_QUERY_ITEM_WEIGHT`, `QUERY_ITEM_VALUE`,
+    `QUERY_ITEM_WEIGHT`, and `CALC_PLAYER_WEIGHT` now have bounded
+    source-mapped receipts in `dm2_v1_skproject_core`. The receipts consume
+    caller-supplied source-shaped record/GDAT word values, preserve charge
+    value scaling, potion money scaling, recursive container value, moneybox
+    weight/value aggregation, the item-weight wrapper, and the selected
+    player's open-chest overlay. Remaining adjacent item work is wiring these
+    receipts to real loader-owned GDAT/dungeon records and HUD/runtime
+    consumers; do not fabricate item definitions, container contents, or
+    player inventory state.
+  - 2026-07-16 Theron update: the admitted US raw Track 02 FIFO/session
+    handoff can now consume the bounded all-dungeon route into a startup-level
+    anchor receipt. The receipt carries only the real Hall of Records anchor
+    offsets, dimensions, seed/index, and object/level/all-dungeon route hashes;
+    exact level semantics, object-table admission, non-startup level
+    admission, payload semantics, visual semantics, and fallback visuals remain
+    blocked. Remaining Theron work is a positive real capture/consumer path
+    that proves the level/object consumers themselves rather than promoting
+    this anchor metadata.
+  - 2026-07-16 Theron object-table route-gap update: the runtime startup
+    anchor can now consume a verified Track 02 object-table route receipt as
+    explicit gap evidence. The receipt carries descriptor/object candidate
+    masks, first candidate offsets/user-data/hash/counts, binding status, and
+    the missing-real-object-evidence blocker only when the object route hash
+    matches the admitted startup anchor and object decode/admission/fallback
+    remain closed. Remaining Theron work is still real object-table decode and
+    runtime object consumers from captured Track 02 data; do not treat this as
+    object semantics, runtime objects, or visuals.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -130,8 +173,44 @@
     unlink/next-clear/active-state/event-delete gates. Covered by
     `dm1_v1_group_drop_delete_receipts_pc34_compat`; audit rows are closed as
     `VERIFIED_SOURCE_MAPPING`.
-  Remaining prioritized backlog symbols are `F0185`, `F0190`-`F0193`,
-  `F0208`, and `F0224`. Prefer the next
+  - 2026-07-16 update: stale audit rows for `F0190`-`F0192` are now closed
+    against existing DM1-owned source-lock coverage: single-creature group
+    damage and compaction through `dm1_v1_combat_pc34_compat`/F0738,
+    all-creatures attack-envelope damage through `dm1_damage_all_creatures`,
+    and poison-resistance adjustment through
+    `F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat`. Verification used
+    direct runs plus focused CTest for `dm1_v1_combat_damage_source_lock`,
+    `dm1_v1_grp02_f0738_apply_damage_to_group`, and
+    `dm1_v1_grp02_f0192_poison_resistance_source_lock`.
+  - 2026-07-16 update: `F0193` now has a DM1-owned Giggler steal/flee source
+    mapping through `F0822_DM1_GIGGLER_ResolveStealAttempt_Compat`: it
+    consumes the PC34 `G0025` steal-slot table, applies the source backpack
+    `RANDOM(17)` expansion only after the luck gate, preserves the
+    decrementing percentage/counter loop, and dispatches Giggler melee attacks
+    as steal actions rather than damage. Covered by
+    `dm1_v1_creature_ai_behavior_source_lock` plus the existing
+    `dm1_v1_steal_from_slot_indices_pc34_compat`; the audit row is closed as
+    `VERIFIED_SOURCE_MAPPING`.
+  - 2026-07-16 update: stale audit row `F0185` is now closed against the
+    existing DM1-owned C006 generator mapping: `F0860_RUNTIME_HandleGroupGenerator_Compat`
+    preserves generator suppression, raw C04 initialization, one start-cell
+    RNG draw, descending `GROUP.Count` cell/health writes, while M10 links or
+    defers the group through F0267, F0183 active-state admission, F0180 wander
+    scheduling, and M560 buzz routing. Verification used focused F0185 CTest
+    plus direct `dm1_v1_mummy_viewport_pc34_compat` and
+    `dm1_v1_group_move_removal_pc34_compat` runs; no synthetic group data was
+    added.
+  - 2026-07-16 update: stale audit row `F0208` is now narrowed against the
+    existing DM1-owned event-plan mapping:
+    `F0208_DM1_GROUP_BuildAddEventPlan_Compat` preserves the ReDMCSB
+    requested-time comparison, C38-C41 to C33-C36 promotion for earlier
+    aspect updates, `EVENT.C.Ticks` delta, and caller-owned F0238 insertion
+    boundary. Verification used the focused
+    `dm1_v1_creature_ai_behavior_source_lock` CTest; no synthetic event data
+    was added. The broader M10 initial-attack consumption follow-up remains
+    open below.
+  Remaining prioritized backlog symbol is `F0224`.
+  Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
   audit hits as implementation evidence. Note: `tools/symbol_backlog.py` was
@@ -189,6 +268,13 @@
     promotion gap for title/PRESENTS/opening/HUD pages; remaining evidence is
     still real Mac/app capture with local CSB data and positive DSA/save
     corpus proof.
+  - 2026-07-16 update: the CSB title-to-opening session receipt now requires
+    PRESENTS, CHAOS, and STRIKES BACK host captures to keep distinct
+    host-surface and route hashes, and requires the C004/C002/C003 opening
+    host frame to carry nonzero frame route, raster route, and pixel hashes.
+    Replayed title phases or route-less opening pages cannot satisfy the
+    startup consumption receipts. Remaining CSB evidence is still real
+    Mac/app capture with local CSB data and positive DSA/save corpus proof.
   - 2026-07-16 update: restored CSBWin DSA STKOP_DiscardText now has runtime
     evidence through the saved TIMER bridge: it clears only the existing
     DB2/F0168 one-message receipt, keeps generic text mutation blocked, and
@@ -196,6 +282,22 @@
     real packaged title/HUD/door capture breadth, positive DSA/save corpus
     execution, and any broader message queue behavior not bound to an
     authenticated source text receipt.
+  - 2026-07-16 update: the HUD/door/input package receipt now consumes the
+    routed C017/C040 HUD host raster instead of accepting a bare HUD host
+    hash. It requires the real HUD frame route, raster route, raster pixel
+    hash, two source surfaces, verified HUD binding hash, and exact resident
+    C017/C040 owners before the first live door/input receipt can satisfy the
+    package handoff. Remaining CSB work is unchanged: real Mac/app capture
+    breadth with local CSB data and positive DSA/save corpus proof.
+  - 2026-07-16 update: the CSB DSA save-runtime handoff now has a separate
+    boot-owned receipt after CSBWin import. It consumes the existing
+    save/import receipt and remains invalid for a loader-ready plain
+    `CSBGAME.DAT` unless the real Extended Features DSA corpus, runtime
+    actions, GAMEBLOCK1, loaded party, and CSB import-source facts all pass.
+    This closes the loader-ready-versus-DSA-ready handoff ambiguity without
+    adding a synthetic DSA-positive save. Remaining CSB work is still positive
+    operator-supplied DSA-bearing corpus execution and real Mac/app
+    title/HUD/door capture breadth.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
@@ -314,6 +416,25 @@
     fallback visuals closed. Remaining Theron work is still operator-supplied
     corpus breadth and a reviewed startup/runtime capture consumer that uses
     this opaque session receipt without inventing presentation data.
+  - 2026-07-16 update: the session handoff can now consume a bounded Track 02
+    all-dungeon route receipt and publish only corpus evidence: capture mask,
+    no-fallback role mask, startup-level anchor, blocked object-table anchors,
+    blocked non-startup-level anchors, and route hashes. This remains
+    `runtime-capture-required`: exact level/object semantics, object-table
+    admission, level admission, payload semantics, visual semantics, and
+    fallback visuals all stay closed. Remaining Theron work is a real capture
+    consumer that validates the bounded receipt against operator-supplied media
+    breadth before any object/table/level promotion.
+  - 2026-07-16 update: the runtime startup-level anchor can now consume the
+    detailed Track 02 level-route receipt's non-startup candidate evidence
+    without opening admission. The new receipt requires verified descriptor
+    anchors, matching startup-level anchor/hash evidence, first opaque
+    post-descriptor candidate raw/user-data offsets, byte count, hash, header
+    view, and the existing missing-non-startup-evidence blocker. Non-startup
+    level admission, exact level/object semantics, payload semantics, visual
+    semantics, and fallback visuals remain closed. Remaining Theron work is a
+    positive original runtime consumer/capture that proves what these
+    non-startup bytes are before any route promotion.
 
 - 2026-07-16 Theron Track02 post-envelope loader follow-up: the copied-code
   successor receipt now keeps the second TII source-window offset when mapping

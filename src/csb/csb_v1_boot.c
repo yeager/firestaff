@@ -2328,10 +2328,14 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
                 csb_v1_startup_title_presents_ticks_pc34();
             const int zoom_ticks =
                 csb_v1_startup_title_chaos_zoom_ticks_pc34();
+            const int hold_source_step =
+                (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                    csb_v1_startup_title_presents_ticks_pc34() +
+                    csb_v1_startup_title_chaos_zoom_ticks_pc34());
             out_receipt->title_chaos_zoom_visible =
-                chaos_frame < zoom_ticks ? 1 : 0;
+                out_receipt->title_source_step < hold_source_step ? 1 : 0;
             out_receipt->title_chaos_hold_visible =
-                chaos_frame >= zoom_ticks ? 1 : 0;
+                out_receipt->title_source_step >= hold_source_step ? 1 : 0;
             out_receipt->title_phase_tick =
                 out_receipt->title_chaos_zoom_visible
                     ? chaos_frame
@@ -7044,6 +7048,69 @@ int csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
     out_receipt->valid =
         out_receipt->valid && out_receipt->csbwin_runtime_load_succeeded;
     return out_receipt->csbwin_runtime_load_succeeded;
+}
+
+int csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
+    const CSB_V1_BootRuntimeSaveImportReceipt_PC34 *save_import_receipt,
+    CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->decision_label = "missing_save_import_receipt";
+    out_receipt->source_evidence =
+        "CSBWin SaveGame.cpp:211-260/298-385 Extended Features DSA; "
+        "ReDMCSB LOADSAVE.C F0435 runtime load handoff";
+    if (!save_import_receipt) {
+        return 0;
+    }
+
+    out_receipt->decision_label =
+        save_import_receipt->csbwin_dsa_decision_label
+            ? save_import_receipt->csbwin_dsa_decision_label
+            : "missing_dsa_decision";
+    out_receipt->save_import_receipt_consumed =
+        save_import_receipt->valid ? 1 : 0;
+    out_receipt->runtime_load_consumed =
+        save_import_receipt->csbwin_runtime_load_succeeded ? 1 : 0;
+    out_receipt->dsa_corpus_positive =
+        save_import_receipt->csbwin_dsa_corpus_positive ? 1 : 0;
+    out_receipt->dsa_runtime_handoff_ready =
+        save_import_receipt->csbwin_dsa_runtime_handoff_ready ? 1 : 0;
+    out_receipt->extended_tail_valid =
+        save_import_receipt->csbwin_dsa_extended_tail_valid ? 1 : 0;
+    out_receipt->dsa_section_valid =
+        save_import_receipt->csbwin_dsa_section_valid ? 1 : 0;
+    out_receipt->dsa_has_runtime_actions =
+        save_import_receipt->csbwin_dsa_has_runtime_actions ? 1 : 0;
+    out_receipt->gameblock1_valid =
+        save_import_receipt->csbwin_dsa_gameblock1_valid ? 1 : 0;
+    out_receipt->runtime_party_loaded =
+        save_import_receipt->runtime_party_loaded_after ? 1 : 0;
+    out_receipt->runtime_import_source_after =
+        save_import_receipt->runtime_import_source_after;
+    out_receipt->runtime_champion_count_after =
+        save_import_receipt->runtime_champion_count_after;
+    out_receipt->runtime_current_level_after =
+        save_import_receipt->runtime_current_level_after;
+    out_receipt->runtime_game_time_after =
+        save_import_receipt->runtime_game_time_after;
+
+    out_receipt->valid =
+        out_receipt->save_import_receipt_consumed &&
+        out_receipt->runtime_load_consumed &&
+        out_receipt->dsa_corpus_positive &&
+        out_receipt->dsa_runtime_handoff_ready &&
+        out_receipt->extended_tail_valid &&
+        out_receipt->dsa_section_valid &&
+        out_receipt->dsa_has_runtime_actions &&
+        out_receipt->gameblock1_valid &&
+        out_receipt->runtime_party_loaded &&
+        out_receipt->runtime_import_source_after == CSB_SAVE_IMPORT_SOURCE &&
+        out_receipt->runtime_champion_count_after > 0 &&
+        out_receipt->runtime_champion_count_after <= CSB_V1_MAX_CHAMPIONS;
+    return out_receipt->valid;
 }
 
 int csb_v1_boot_runtime_tick_pc34(

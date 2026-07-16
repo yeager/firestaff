@@ -17,6 +17,34 @@ void theron_v1_runtime_session_handoff_init(
     }
 }
 
+void theron_v1_runtime_bounded_track02_route_init(
+    Theron_V1RuntimeBoundedTrack02RouteReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
+void theron_v1_runtime_startup_level_anchor_init(
+    Theron_V1RuntimeStartupLevelAnchorReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
+void theron_v1_runtime_nonstartup_level_route_evidence_init(
+    Theron_V1RuntimeNonstartupLevelRouteEvidenceReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
+void theron_v1_runtime_object_table_route_evidence_init(
+    Theron_V1RuntimeObjectTableRouteEvidenceReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
 int theron_v1_runtime_admission_attach(
     Theron_V1RuntimeAdmissionReceipt *out,
     const char *trace_identity,
@@ -154,5 +182,442 @@ int theron_v1_runtime_session_handoff_from_admission(
     out->fallback_visuals_allowed = 0;
     out->object_table_admission_allowed = 0;
     out->level_admission_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_session_handoff_bind_bounded_track02_route(
+    const Theron_V1RuntimeSessionHandoffReceipt *session,
+    const Theron_V1StartupAllDungeonRouteReceipt *route,
+    Theron_V1RuntimeBoundedTrack02RouteReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_bounded_track02_route_init(out);
+    if (!session || !route ||
+        !session->valid ||
+        !session->startup_session_handoff_ready ||
+        !session->runtime_capture_required ||
+        !session->game_owned_fifo_payload_admitted ||
+        session->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(session->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        session->source_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+        !session->cdb_read6_verified ||
+        !session->fifo_to_game_ram_verified ||
+        !session->game_ram_consumer_verified ||
+        session->payload_semantics_proven ||
+        session->visual_semantics_proven ||
+        session->fallback_visuals_allowed ||
+        session->object_table_admission_allowed ||
+        session->level_admission_allowed ||
+        !route->valid ||
+        route->real_data_capture_ready ||
+        route->capture_count <= 0 ||
+        route->dungeon_mask == 0u ||
+        route->exact_level_semantics_ready ||
+        route->exact_object_semantics_ready ||
+        !route->object_table_no_fallback_ready ||
+        route->object_table_blocked_anchor_mask == 0u ||
+        route->object_table_blocked_anchor_count <= 0 ||
+        !route->nonstartup_level_no_fallback_ready ||
+        route->nonstartup_level_blocked_anchor_mask == 0u ||
+        route->nonstartup_level_blocked_anchor_count <= 0 ||
+        route->startup_level_anchor_status[0] != THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        !route->startup_level_anchor_user_data_valid[0] ||
+        route->startup_level_anchor_width[0] == 0u ||
+        route->startup_level_anchor_height[0] == 0u ||
+        route->object_table_route_hash == 0u ||
+        route->level_route_hash == 0u ||
+        route->route_hash == 0u) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->session_handoff_consumed = 1;
+    out->runtime_capture_required = 1;
+    out->variant = session->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             session->track02_md5);
+    out->record = session->record;
+    out->source_offset = session->source_offset;
+    out->source_byte = session->source_byte;
+    out->all_dungeon_capture_mask = route->dungeon_mask;
+    out->all_dungeon_capture_count = route->capture_count;
+    out->no_fallback_semantic_role_mask =
+        route->no_fallback_semantic_role_mask;
+    out->object_table_no_fallback_ready =
+        route->object_table_no_fallback_ready;
+    out->object_table_blocked_anchor_mask =
+        route->object_table_blocked_anchor_mask;
+    out->object_table_blocked_anchor_count =
+        route->object_table_blocked_anchor_count;
+    out->nonstartup_level_no_fallback_ready =
+        route->nonstartup_level_no_fallback_ready;
+    out->nonstartup_level_blocked_anchor_mask =
+        route->nonstartup_level_blocked_anchor_mask;
+    out->nonstartup_level_blocked_anchor_count =
+        route->nonstartup_level_blocked_anchor_count;
+    out->startup_level_blocked_anchor_mask =
+        route->startup_level_blocked_anchor_mask;
+    out->startup_level_blocked_anchor_count =
+        route->startup_level_blocked_anchor_count;
+    out->startup_level_anchor_status = route->startup_level_anchor_status[0];
+    out->startup_level_anchor_raw_offset =
+        route->startup_level_anchor_raw_offsets[0];
+    out->startup_level_anchor_user_data_offset =
+        route->startup_level_anchor_user_data_offsets[0];
+    out->startup_level_anchor_user_data_valid =
+        route->startup_level_anchor_user_data_valid[0];
+    out->startup_level_anchor_width = route->startup_level_anchor_width[0];
+    out->startup_level_anchor_height = route->startup_level_anchor_height[0];
+    out->startup_level_anchor_seed = route->startup_level_anchor_seed[0];
+    out->startup_level_anchor_level_index =
+        route->startup_level_anchor_level_index[0];
+    out->object_table_route_hash = route->object_table_route_hash;
+    out->level_route_hash = route->level_route_hash;
+    out->all_dungeon_route_hash = route->route_hash;
+    out->exact_level_semantics_ready = 0;
+    out->exact_object_semantics_ready = 0;
+    out->object_table_admission_allowed = 0;
+    out->level_admission_allowed = 0;
+    out->payload_semantics_proven = 0;
+    out->visual_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_bounded_track02_route_bind_startup_level_anchor(
+    const Theron_V1RuntimeBoundedTrack02RouteReceipt *route,
+    Theron_V1RuntimeStartupLevelAnchorReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_startup_level_anchor_init(out);
+    if (!route ||
+        !route->valid ||
+        !route->session_handoff_consumed ||
+        !route->runtime_capture_required ||
+        route->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(route->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        route->source_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+        route->all_dungeon_capture_count <= 0 ||
+        route->all_dungeon_capture_mask == 0u ||
+        !route->object_table_no_fallback_ready ||
+        route->object_table_blocked_anchor_mask == 0u ||
+        route->object_table_blocked_anchor_count <= 0 ||
+        !route->nonstartup_level_no_fallback_ready ||
+        route->nonstartup_level_blocked_anchor_mask == 0u ||
+        route->nonstartup_level_blocked_anchor_count <= 0 ||
+        route->startup_level_anchor_status !=
+            THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        !route->startup_level_anchor_user_data_valid ||
+        route->startup_level_anchor_width == 0u ||
+        route->startup_level_anchor_height == 0u ||
+        route->startup_level_anchor_raw_offset == 0u ||
+        route->startup_level_anchor_user_data_offset == 0u ||
+        route->level_route_hash == 0u ||
+        route->object_table_route_hash == 0u ||
+        route->all_dungeon_route_hash == 0u ||
+        route->exact_level_semantics_ready ||
+        route->exact_object_semantics_ready ||
+        route->object_table_admission_allowed ||
+        route->level_admission_allowed ||
+        route->payload_semantics_proven ||
+        route->visual_semantics_proven ||
+        route->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->bounded_route_consumed = 1;
+    out->runtime_capture_required = 1;
+    out->variant = route->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             route->track02_md5);
+    out->record = route->record;
+    out->source_offset = route->source_offset;
+    out->source_byte = route->source_byte;
+    out->startup_level_raw_offset = route->startup_level_anchor_raw_offset;
+    out->startup_level_user_data_offset =
+        route->startup_level_anchor_user_data_offset;
+    out->startup_level_user_data_valid =
+        route->startup_level_anchor_user_data_valid;
+    out->startup_level_width = route->startup_level_anchor_width;
+    out->startup_level_height = route->startup_level_anchor_height;
+    out->startup_level_seed = route->startup_level_anchor_seed;
+    out->startup_level_index = route->startup_level_anchor_level_index;
+    out->level_route_hash = route->level_route_hash;
+    out->object_table_route_hash = route->object_table_route_hash;
+    out->all_dungeon_route_hash = route->all_dungeon_route_hash;
+    out->startup_level_anchor_admitted = 1;
+    out->object_table_admission_allowed = 0;
+    out->nonstartup_level_admission_allowed = 0;
+    out->exact_level_semantics_ready = 0;
+    out->exact_object_semantics_ready = 0;
+    out->payload_semantics_proven = 0;
+    out->visual_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_startup_level_anchor_bind_nonstartup_level_route_evidence(
+    const Theron_V1RuntimeStartupLevelAnchorReceipt *startup_anchor,
+    const Theron_Track02LevelRouteReceipt *level_route,
+    Theron_V1RuntimeNonstartupLevelRouteEvidenceReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_nonstartup_level_route_evidence_init(out);
+    if (!startup_anchor || !level_route ||
+        !startup_anchor->valid ||
+        !startup_anchor->bounded_route_consumed ||
+        !startup_anchor->runtime_capture_required ||
+        startup_anchor->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(startup_anchor->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        startup_anchor->source_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+        !startup_anchor->startup_level_anchor_admitted ||
+        !startup_anchor->startup_level_user_data_valid ||
+        startup_anchor->startup_level_raw_offset == 0u ||
+        startup_anchor->startup_level_user_data_offset == 0u ||
+        startup_anchor->startup_level_width == 0u ||
+        startup_anchor->startup_level_height == 0u ||
+        startup_anchor->level_route_hash == 0u ||
+        startup_anchor->object_table_route_hash == 0u ||
+        startup_anchor->all_dungeon_route_hash == 0u ||
+        startup_anchor->object_table_admission_allowed ||
+        startup_anchor->nonstartup_level_admission_allowed ||
+        startup_anchor->exact_level_semantics_ready ||
+        startup_anchor->exact_object_semantics_ready ||
+        startup_anchor->payload_semantics_proven ||
+        startup_anchor->visual_semantics_proven ||
+        startup_anchor->fallback_visuals_allowed ||
+        !level_route->valid ||
+        !level_route->verified_track02 ||
+        level_route->variant != startup_anchor->variant ||
+        level_route->signal_status != THERON_TRACK02_SIGNAL_OK ||
+        !level_route->descriptor_route_ready ||
+        level_route->descriptor_anchor_count == 0u ||
+        level_route->descriptor_anchor_mask == 0u ||
+        !level_route->startup_level_route_ready ||
+        !level_route->startup_user_data_offset_valid ||
+        level_route->startup_raw_offset !=
+            startup_anchor->startup_level_raw_offset ||
+        level_route->startup_user_data_offset !=
+            startup_anchor->startup_level_user_data_offset ||
+        level_route->startup_header_width !=
+            startup_anchor->startup_level_width ||
+        level_route->startup_header_height !=
+            startup_anchor->startup_level_height ||
+        level_route->startup_header_seed !=
+            startup_anchor->startup_level_seed ||
+        level_route->startup_header_level_index !=
+            startup_anchor->startup_level_index ||
+        level_route->nonstartup_level_candidate_count == 0u ||
+        level_route->nonstartup_level_candidate_anchor_mask == 0u ||
+        level_route->nonstartup_level_blocked_anchor_count == 0u ||
+        level_route->nonstartup_level_blocked_anchor_mask == 0u ||
+        level_route->nonstartup_level_candidate_anchor_mask !=
+            level_route->nonstartup_level_blocked_anchor_mask ||
+        !level_route->blocked_for_missing_nonstartup_level_evidence ||
+        level_route->nonstartup_level_decode_ready ||
+        level_route->fallback_visuals_allowed ||
+        level_route->route_hash != startup_anchor->level_route_hash ||
+        level_route->nonstartup_level_candidate_raw_offsets[0] == 0u ||
+        !level_route->nonstartup_level_candidate_user_data_valid[0] ||
+        level_route->nonstartup_level_candidate_user_data_offsets[0] == 0u ||
+        level_route->nonstartup_level_candidate_byte_counts[0] == 0u ||
+        level_route->nonstartup_level_candidate_hash[0] == 0u) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->startup_level_anchor_consumed = 1;
+    out->level_route_receipt_consumed = 1;
+    out->runtime_capture_required = 1;
+    out->variant = startup_anchor->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             startup_anchor->track02_md5);
+    out->record = startup_anchor->record;
+    out->source_offset = startup_anchor->source_offset;
+    out->source_byte = startup_anchor->source_byte;
+    out->descriptor_anchor_mask = level_route->descriptor_anchor_mask;
+    out->descriptor_anchor_count = (int)level_route->descriptor_anchor_count;
+    out->nonstartup_level_candidate_anchor_mask =
+        level_route->nonstartup_level_candidate_anchor_mask;
+    out->nonstartup_level_candidate_count =
+        (int)level_route->nonstartup_level_candidate_count;
+    out->nonstartup_level_blocked_anchor_mask =
+        level_route->nonstartup_level_blocked_anchor_mask;
+    out->nonstartup_level_blocked_anchor_count =
+        (int)level_route->nonstartup_level_blocked_anchor_count;
+    out->first_candidate_raw_offset =
+        level_route->nonstartup_level_candidate_raw_offsets[0];
+    out->first_candidate_user_data_offset =
+        level_route->nonstartup_level_candidate_user_data_offsets[0];
+    out->first_candidate_user_data_valid =
+        level_route->nonstartup_level_candidate_user_data_valid[0];
+    out->first_candidate_byte_count =
+        (uint32_t)level_route->nonstartup_level_candidate_byte_counts[0];
+    out->first_candidate_hash =
+        level_route->nonstartup_level_candidate_hash[0];
+    out->first_candidate_header_width =
+        level_route->nonstartup_level_candidate_header_width[0];
+    out->first_candidate_header_height =
+        level_route->nonstartup_level_candidate_header_height[0];
+    out->first_candidate_header_seed =
+        level_route->nonstartup_level_candidate_header_seed[0];
+    out->first_candidate_header_level_index =
+        level_route->nonstartup_level_candidate_header_level_index[0];
+    out->level_route_hash = startup_anchor->level_route_hash;
+    out->object_table_route_hash = startup_anchor->object_table_route_hash;
+    out->all_dungeon_route_hash = startup_anchor->all_dungeon_route_hash;
+    out->nonstartup_level_decode_ready = 0;
+    out->nonstartup_level_admission_allowed = 0;
+    out->exact_level_semantics_ready = 0;
+    out->exact_object_semantics_ready = 0;
+    out->payload_semantics_proven = 0;
+    out->visual_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_startup_level_anchor_bind_object_table_route_evidence(
+    const Theron_V1RuntimeStartupLevelAnchorReceipt *startup_anchor,
+    const Theron_Track02ObjectTableRouteReceipt *object_route,
+    Theron_V1RuntimeObjectTableRouteEvidenceReceipt *out) {
+
+    size_t anchor;
+    size_t first_anchor = THERON_TRACK02_MAX_BANK_ANCHORS;
+
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_object_table_route_evidence_init(out);
+    if (!startup_anchor || !object_route ||
+        !startup_anchor->valid ||
+        !startup_anchor->bounded_route_consumed ||
+        !startup_anchor->runtime_capture_required ||
+        startup_anchor->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(startup_anchor->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        startup_anchor->source_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+        !startup_anchor->startup_level_anchor_admitted ||
+        !startup_anchor->startup_level_user_data_valid ||
+        startup_anchor->startup_level_raw_offset == 0u ||
+        startup_anchor->startup_level_user_data_offset == 0u ||
+        startup_anchor->startup_level_width == 0u ||
+        startup_anchor->startup_level_height == 0u ||
+        startup_anchor->level_route_hash == 0u ||
+        startup_anchor->object_table_route_hash == 0u ||
+        startup_anchor->all_dungeon_route_hash == 0u ||
+        startup_anchor->object_table_admission_allowed ||
+        startup_anchor->nonstartup_level_admission_allowed ||
+        startup_anchor->exact_level_semantics_ready ||
+        startup_anchor->exact_object_semantics_ready ||
+        startup_anchor->payload_semantics_proven ||
+        startup_anchor->visual_semantics_proven ||
+        startup_anchor->fallback_visuals_allowed ||
+        !object_route->valid ||
+        !object_route->verified_track02 ||
+        object_route->variant != startup_anchor->variant ||
+        object_route->signal_status != THERON_TRACK02_SIGNAL_OK ||
+        !object_route->descriptor_route_ready ||
+        object_route->descriptor_anchor_count == 0u ||
+        object_route->descriptor_anchor_mask == 0u ||
+        object_route->object_table_candidate_count == 0u ||
+        object_route->object_table_candidate_anchor_mask == 0u ||
+        object_route->object_table_blocked_anchor_count == 0u ||
+        object_route->object_table_blocked_anchor_mask == 0u ||
+        object_route->object_table_candidate_anchor_mask !=
+            object_route->object_table_blocked_anchor_mask ||
+        !object_route->blocked_for_missing_real_object_evidence ||
+        object_route->object_table_decode_ready ||
+        object_route->fallback_visuals_allowed ||
+        object_route->route_hash != startup_anchor->object_table_route_hash) {
+        return 0;
+    }
+
+    for (anchor = 0u; anchor < THERON_TRACK02_MAX_BANK_ANCHORS; ++anchor) {
+        unsigned int anchor_bit = 1u << (unsigned int)anchor;
+        if ((object_route->object_table_candidate_anchor_mask &
+             anchor_bit) != 0u) {
+            first_anchor = anchor;
+            break;
+        }
+    }
+    if (first_anchor >= THERON_TRACK02_MAX_BANK_ANCHORS ||
+        object_route->object_table_candidate_raw_offsets[first_anchor] == 0u ||
+        !object_route
+             ->object_table_candidate_user_data_valid[first_anchor] ||
+        object_route
+             ->object_table_candidate_user_data_offsets[first_anchor] == 0u ||
+        object_route->object_table_candidate_byte_counts[first_anchor] == 0u ||
+        object_route->object_table_candidate_hash[first_anchor] == 0u ||
+        !object_route
+             ->object_table_candidate_after_descriptor[first_anchor]) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->startup_level_anchor_consumed = 1;
+    out->object_table_route_receipt_consumed = 1;
+    out->runtime_capture_required = 1;
+    out->variant = startup_anchor->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             startup_anchor->track02_md5);
+    out->record = startup_anchor->record;
+    out->source_offset = startup_anchor->source_offset;
+    out->source_byte = startup_anchor->source_byte;
+    out->descriptor_anchor_mask = object_route->descriptor_anchor_mask;
+    out->descriptor_anchor_count =
+        (int)object_route->descriptor_anchor_count;
+    out->object_table_candidate_anchor_mask =
+        object_route->object_table_candidate_anchor_mask;
+    out->object_table_candidate_count =
+        (int)object_route->object_table_candidate_count;
+    out->object_table_blocked_anchor_mask =
+        object_route->object_table_blocked_anchor_mask;
+    out->object_table_blocked_anchor_count =
+        (int)object_route->object_table_blocked_anchor_count;
+    out->first_candidate_entry_index =
+        object_route->object_table_candidate_entry_index[first_anchor];
+    out->first_candidate_raw_offset =
+        object_route->object_table_candidate_raw_offsets[first_anchor];
+    out->first_candidate_user_data_offset =
+        object_route->object_table_candidate_user_data_offsets[first_anchor];
+    out->first_candidate_user_data_valid =
+        object_route->object_table_candidate_user_data_valid[first_anchor];
+    out->first_candidate_byte_count =
+        (uint32_t)object_route
+            ->object_table_candidate_byte_counts[first_anchor];
+    out->first_candidate_nonzero_byte_count =
+        (uint32_t)object_route
+            ->object_table_candidate_nonzero_byte_counts[first_anchor];
+    out->first_candidate_hash =
+        object_route->object_table_candidate_hash[first_anchor];
+    out->first_candidate_descriptor_delta =
+        (uint32_t)object_route
+            ->object_table_candidate_descriptor_delta[first_anchor];
+    out->first_candidate_after_descriptor =
+        object_route->object_table_candidate_after_descriptor[first_anchor];
+    out->first_candidate_binding_status =
+        object_route->object_table_anchor_binding_status[first_anchor];
+    out->first_candidate_reject_reason =
+        (int)object_route->object_table_reject_reason[first_anchor];
+    out->first_candidate_declared_record_count =
+        (uint32_t)object_route
+            ->object_table_declared_record_count[first_anchor];
+    out->first_candidate_record_count =
+        (uint32_t)object_route->object_table_record_count[first_anchor];
+    out->first_candidate_required_byte_count =
+        (uint32_t)object_route
+            ->object_table_required_byte_count[first_anchor];
+    out->object_table_route_hash = startup_anchor->object_table_route_hash;
+    out->level_route_hash = startup_anchor->level_route_hash;
+    out->all_dungeon_route_hash = startup_anchor->all_dungeon_route_hash;
+    out->object_table_decode_ready = 0;
+    out->object_table_admission_allowed = 0;
+    out->exact_object_semantics_ready = 0;
+    out->payload_semantics_proven = 0;
+    out->visual_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
     return 1;
 }

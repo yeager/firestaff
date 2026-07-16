@@ -293,6 +293,17 @@ static void test_item_charge_helpers(void)
     DM2_V1_SkprojectItemChargeReceipt receipt;
     uint16_t w2;
 
+    CHECK(dm2_v1_skproject_get_max_charge(0x1400u) == 15u,
+          "GET_MAX_CHARGE returns 15 for DB5 weapon");
+    CHECK(dm2_v1_skproject_get_max_charge(0x1800u) == 15u,
+          "GET_MAX_CHARGE returns 15 for DB6 cloth");
+    CHECK(dm2_v1_skproject_get_max_charge(0x2800u) == 3u,
+          "GET_MAX_CHARGE returns 3 for DB10 miscellaneous item");
+    CHECK(dm2_v1_skproject_get_max_charge(0xffffu) == 0u,
+          "GET_MAX_CHARGE returns zero for OBJECT_NULL");
+    CHECK(dm2_v1_skproject_get_max_charge(0x0800u) == 0u,
+          "GET_MAX_CHARGE returns zero for unsupported DB type");
+
     w2 = (uint16_t)(7u << 10);
     CHECK(dm2_v1_skproject_add_item_charge(0x1400u, &w2, 3, &receipt) ==
               10u &&
@@ -334,6 +345,171 @@ static void test_item_charge_helpers(void)
           "ADD_ITEM_CHARGE rejects unsupported DB type without mutation");
 }
 
+static void test_item_value_weight_helpers(void)
+{
+    DM2_V1_SkprojectItemValueRecord records[8];
+    DM2_V1_SkprojectItemValueWorld world;
+    DM2_V1_SkprojectItemValueReceipt receipt;
+
+    memset(records, 0, sizeof(records));
+    world.records = records;
+    world.record_count = 8u;
+
+    records[0].object_id = 0x1400u;
+    records[0].w2 = (uint16_t)(3u << 10);
+    records[0].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[0].gdat_word_values[1] = 4u;
+    records[0].gdat_word_values[2] = 20u;
+    records[0].gdat_word_values[0x34] = 2u;
+    records[0].gdat_word_values[0x35] = 5u;
+
+    records[1].object_id = 0x2001u;
+    records[1].w2 = 128u;
+    records[1].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[1].gdat_word_values[2] = 100u;
+
+    records[2].object_id = 0x2402u;
+    records[2].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[2].contained_object_id = 0x1400u;
+    records[2].container_type = 0u;
+    records[2].gdat_word_values[1] = 10u;
+
+    records[3].object_id = 0x2403u;
+    records[3].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[3].contained_object_id = 0x2804u;
+    records[3].container_type = 0u;
+    records[3].is_moneybox = 1u;
+    records[3].gdat_word_values[1] = 1u;
+
+    records[4].object_id = 0x2804u;
+    records[4].w2 = (uint16_t)(2u << 14);
+    records[4].next_object_id = 0x2805u;
+    records[4].gdat_word_values[1] = 5u;
+    records[4].gdat_word_values[2] = 7u;
+
+    records[5].object_id = 0x2805u;
+    records[5].w2 = 0u;
+    records[5].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[5].gdat_word_values[1] = 6u;
+    records[5].gdat_word_values[2] = 11u;
+
+    records[6].object_id = 0x2406u;
+    records[6].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[6].container_type = 1u;
+    records[6].gdat_word_values[1] = 9u;
+
+    records[7].object_id = 0x1807u;
+    records[7].w2 = (uint16_t)(1u << 9);
+    records[7].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[7].gdat_word_values[1] = 3u;
+    records[7].gdat_word_values[0x34] = 4u;
+
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x1400u, 1u, &receipt) == 10 &&
+              receipt.valid && receipt.base_value == 4 &&
+              receipt.charge == 3u && receipt.charge_value_added == 6,
+          "QUERY_ITEM_VALUE adds cls4=0x34 weight per charge");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x1400u, 2u, &receipt) == 35 &&
+              receipt.valid && receipt.base_value == 20 &&
+              receipt.charge_value_added == 15,
+          "QUERY_ITEM_VALUE adds cls4=0x35 money per charge");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x2001u, 2u, &receipt) == 75 &&
+              receipt.potion_value_before_scale == 100 &&
+              receipt.potion_value_after_scale == 75,
+          "QUERY_ITEM_VALUE scales potion money by low-byte power");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x2402u, 1u, &receipt) == 20 &&
+              receipt.contained_recursive_value == 10,
+          "QUERY_ITEM_VALUE recurses normal container contents");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x2403u, 1u, &receipt) == 6 &&
+              receipt.moneybox_contained_value == 21 &&
+              receipt.moneybox_rounding_value == 5,
+          "QUERY_ITEM_VALUE rounds moneybox weight as (sum+4)/5");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x2403u, 2u, &receipt) == 32 &&
+              receipt.moneybox_contained_value == 32 &&
+              receipt.moneybox_rounding_value == 32,
+          "QUERY_ITEM_VALUE adds moneybox non-weight value directly");
+    CHECK(dm2_v1_skproject_query_item_weight(
+              &world, 0x1807u, &receipt) == 7 &&
+              receipt.charge_multiplier_cls4 == 0x34u,
+          "QUERY_ITEM_WEIGHT delegates to QUERY_ITEM_VALUE cls4=1");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, DM2_V1_SKPROJECT_MEMENT_NONE, 1u, &receipt) == 0 &&
+              receipt.blocked_null_object,
+          "QUERY_ITEM_VALUE rejects OBJECT_NULL");
+    CHECK(dm2_v1_skproject_query_item_value(
+              &world, 0x1410u, 1u, &receipt) == 0 &&
+              receipt.blocked_missing_record,
+          "QUERY_ITEM_VALUE rejects missing source record");
+}
+
+static void test_player_weight_helper(void)
+{
+    DM2_V1_SkprojectItemValueRecord records[4];
+    DM2_V1_SkprojectItemValueWorld world;
+    DM2_V1_SkprojectPlayerWeightRequest request;
+    DM2_V1_SkprojectPlayerWeightReceipt receipt;
+
+    memset(records, 0, sizeof(records));
+    memset(&request, 0xff, sizeof(request));
+    world.records = records;
+    world.record_count = 4u;
+
+    records[0].object_id = 0x1400u;
+    records[0].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[0].gdat_word_values[1] = 4u;
+    records[1].object_id = 0x1801u;
+    records[1].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[1].gdat_word_values[1] = 5u;
+    records[2].object_id = 0x2402u;
+    records[2].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[2].container_type = 0u;
+    records[3].object_id = 0x2803u;
+    records[3].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[3].gdat_word_values[1] = 6u;
+
+    request.inventory[0] = 0x1400u;
+    request.inventory[1] = 0x1801u;
+    for (uint16_t i = 2u; i < DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS; ++i)
+        request.inventory[i] = DM2_V1_SKPROJECT_MEMENT_NONE;
+    request.current_container_items[0] = 0x2803u;
+    for (uint16_t i = 1u; i < DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS; ++i)
+        request.current_container_items[i] = DM2_V1_SKPROJECT_MEMENT_NONE;
+    request.selected_hand_items[0] = 0x2402u;
+    request.selected_hand_items[1] = DM2_V1_SKPROJECT_MEMENT_NONE;
+    request.selected_hand_action = 0u;
+    request.selected_player_plus_one = 1u;
+
+    CHECK(dm2_v1_skproject_calc_player_weight(
+              &world, 0u, &request, &receipt) == 1 &&
+              receipt.valid && receipt.inventory_weight == 9u &&
+              receipt.open_chest_weight == 6u &&
+              receipt.final_weight == 15u &&
+              receipt.included_open_chest_overlay &&
+              receipt.hero_flag_or == 0x1000u,
+          "CALC_PLAYER_WEIGHT sums inventory and selected open chest overlay");
+
+    request.selected_hand_action = 2u;
+    CHECK(dm2_v1_skproject_calc_player_weight(
+              &world, 0u, &request, &receipt) == 1 &&
+              receipt.final_weight == 9u &&
+              receipt.blocked_selected_hand_action &&
+              !receipt.included_open_chest_overlay,
+          "CALC_PLAYER_WEIGHT skips overlay when selected hand action is not 0/1");
+
+    request.selected_hand_action = 0u;
+    request.selected_player_plus_one = 2u;
+    CHECK(dm2_v1_skproject_calc_player_weight(
+              &world, 0u, &request, &receipt) == 1 &&
+              receipt.final_weight == 9u &&
+              receipt.blocked_player_not_selected,
+          "CALC_PLAYER_WEIGHT skips overlay for non-selected player");
+}
+
 int main(void)
 {
     test_between_value();
@@ -342,6 +518,8 @@ int main(void)
     test_cache_hash_helpers();
     test_picture_mement_helpers();
     test_item_charge_helpers();
+    test_item_value_weight_helpers();
+    test_player_weight_helper();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -360,6 +538,15 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ADD_ITEM_CHARGE") != 0,
           "source evidence names item charge helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "GET_MAX_CHARGE") != 0,
+          "source evidence names max charge helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "QUERY_ITEM_VALUE") != 0,
+          "source evidence names item value helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "CALC_PLAYER_WEIGHT") != 0,
+          "source evidence names player weight helper");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
