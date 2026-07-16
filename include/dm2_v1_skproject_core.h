@@ -229,6 +229,63 @@ typedef struct {
     uint8_t blocked_out_of_bounds;
 } DM2_V1_SkprojectTmpmapFlagReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t active_v1e0534;
+    uint16_t arrow_panel;
+    int16_t highlight_param;
+    uint8_t requested_highlight;
+} DM2_V1_SkprojectArrowHighlightReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t requested_drop_record;
+    int16_t source_map;
+    int16_t source_x;
+    int16_t source_y;
+    int16_t locate_delta;
+    int16_t located_map;
+    int16_t located_x;
+    int16_t located_y;
+    int16_t query_rotation;
+    int16_t final_party_dir;
+    uint8_t requested_restore_source_map;
+} DM2_V1_SkprojectOtherLevelReceipt;
+
+#define DM2_V1_SKPROJECT_PARTY_HERO_LIMIT 4u
+
+typedef struct {
+    uint8_t alive;
+    uint16_t strength;
+    uint16_t stamina_adjusted_strength;
+    uint16_t max_stamina;
+    uint16_t cur_stamina;
+} DM2_V1_SkprojectLiftHero;
+
+typedef struct {
+    uint16_t creature_weight;
+    uint16_t event_hero_index;
+    uint16_t hero_count;
+    DM2_V1_SkprojectLiftHero heroes[DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
+    uint16_t rand16_values[DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
+} DM2_V1_SkprojectLiftRequest;
+
+typedef struct {
+    int valid;
+    uint8_t blocked_overweight_creature;
+    uint8_t can_lift;
+    uint16_t checked_heroes;
+    uint16_t stamina_adjustments[DM2_V1_SKPROJECT_PARTY_HERO_LIMIT];
+} DM2_V1_SkprojectLiftReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t ornate_alcove;
+    uint8_t cls2_missing;
+    uint8_t cls2;
+    uint16_t data_index;
+} DM2_V1_SkprojectWallAlcoveReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -731,6 +788,29 @@ int dm2_v1_skproject_tmpmap_or_flag(
     int16_t x,
     int16_t offset,
     DM2_V1_SkprojectTmpmapFlagReceipt *out_receipt);
+int dm2_v1_skproject_move_12b4_0092(
+    uint16_t active_v1e0534,
+    uint16_t arrow_panel,
+    int16_t highlight_param,
+    DM2_V1_SkprojectArrowHighlightReceipt *out_receipt);
+int dm2_v1_skproject_move_12b4_00af(
+    int enter_forward,
+    int16_t source_map,
+    int16_t source_x,
+    int16_t source_y,
+    int16_t located_map,
+    int16_t located_x,
+    int16_t located_y,
+    int16_t query_rotation,
+    DM2_V1_SkprojectOtherLevelReceipt *out_receipt);
+int dm2_v1_skproject_move_12b4_099e(
+    const DM2_V1_SkprojectLiftRequest *request,
+    DM2_V1_SkprojectLiftReceipt *out_receipt);
+int dm2_v1_skproject_wall_ornate_alcove_data_index(
+    int ornate_alcove_from_record,
+    int16_t cls2,
+    uint16_t gdat_data_index,
+    DM2_V1_SkprojectWallAlcoveReceipt *out_receipt);
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);
