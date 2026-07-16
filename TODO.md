@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 25, CSB 1, shared DM1/CSB 1568, DM2 1503; 3097 total open rows
+  DM1 19, CSB 1, shared DM1/CSB 1565, DM2 1499; 3084 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.

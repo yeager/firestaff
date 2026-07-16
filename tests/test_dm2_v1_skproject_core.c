@@ -340,6 +340,66 @@ static void test_move_admission_helpers(void)
           "DM2_12b4_0881 secondary creature with 0x8000 flag returns 6");
 }
 
+static void test_map_helpers(void)
+{
+    DM2_V1_SkprojectMinionDestinationReceipt dest;
+    DM2_V1_SkprojectMapRandomReceipt random;
+    DM2_V1_SkprojectMapTileVectorReceipt tile;
+    DM2_V1_SkprojectMap3B001Receipt map3b001;
+    uint8_t tiles[16];
+
+    for (uint8_t i = 0; i < 16u; ++i)
+        tiles[i] = (uint8_t)(0x80u + i);
+
+    CHECK(dm2_v1_skproject_set_destination_of_minion_map(
+              0xffffu, 4, 17, 9, 12, 32, 32, &dest) == 1 &&
+              dest.valid && dest.in_bounds && dest.previous_map == 4 &&
+              dest.new_record_w6 ==
+                  (uint16_t)((12u << 10) | (9u << 5) | 17u),
+          "DM2_SET_DESTINATION_OF_MINION_MAP packs x/y/map into record word 6");
+    CHECK(dm2_v1_skproject_set_destination_of_minion_map(
+              0x1234u, 4, 32, 9, 12, 32, 32, &dest) == 0 &&
+              dest.valid && !dest.in_bounds &&
+              dest.new_record_w6 == 0x1234u,
+          "DM2_SET_DESTINATION_OF_MINION_MAP rejects out-of-bounds destination");
+
+    CHECK(dm2_v1_skproject_map_0cee_17e7(
+              0x07d3u, 0x0123u, 30u, 0x4567u, &random) ==
+              (int)(((((uint32_t)0x07d3u * 0x7ab9u) / 2u) +
+                     11u * 0x0123u + 0x4567u) >> 2) % 30 &&
+              random.valid && random.result < 30u,
+          "DM2_map_0cee_17e7 preserves source mixed modulo formula");
+    CHECK(dm2_v1_skproject_map_0cee_17e7(
+              1u, 2u, 0u, 3u, &random) == 0 &&
+              !random.valid,
+          "DM2_map_0cee_17e7 rejects zero modulo range");
+
+    CHECK(dm2_v1_skproject_map_0cee_04e5(
+              tiles, 4, 4, 0, 1, 1, 1, 2, &tile) == 0x86 &&
+              tile.valid && tile.tile_x == 2 && tile.tile_y == 1 &&
+              tile.tile_value == 0x86u,
+          "DM2_map_0cee_04e5 applies CALC_VECTOR_W_DIR before tile lookup");
+    CHECK(dm2_v1_skproject_map_0cee_04e5(
+              tiles, 4, 4, 3, 3, 0, 0, 0, &tile) == 0 &&
+              tile.blocked_out_of_bounds,
+          "DM2_map_0cee_04e5 fails closed outside the caller tile map");
+    CHECK(dm2_v1_skproject_map_0cee_04e5(
+              0, 4, 4, 0, 0, 0, 0, 0, &tile) == 0 &&
+              tile.blocked_missing_tiles,
+          "DM2_map_0cee_04e5 rejects missing tile storage");
+
+    CHECK(dm2_v1_skproject_map_3b001(
+              7, 11, 12, &map3b001) == 1 &&
+              map3b001.valid && map3b001.new_v1e0270 == 11 &&
+              map3b001.new_v1e0272 == 12 &&
+              map3b001.requested_change_to_previous_map,
+          "DM2_map_3B001 stores v1e0270/v1e0272 and requests map restore");
+    CHECK(dm2_v1_skproject_map_3b001(
+              -1, 1, 2, &map3b001) == 1 &&
+              !map3b001.requested_change_to_previous_map,
+          "DM2_map_3B001 preserves no-op restore when previous map is -1");
+}
+
 static void test_calc_vector_w_dir(void)
 {
     DM2_V1_SkprojectVectorWDirReceipt receipt;
@@ -1103,6 +1163,7 @@ int main(void)
     test_util_helpers();
     test_palette_helpers();
     test_move_admission_helpers();
+    test_map_helpers();
     test_calc_vector_w_dir();
     test_cache_hash_helpers();
     test_picture_mement_helpers();
@@ -1161,6 +1222,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_12b4_0881") != 0,
           "source evidence names c_move admission helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_SET_DESTINATION_OF_MINION_MAP") != 0,
+          "source evidence names c_map helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
