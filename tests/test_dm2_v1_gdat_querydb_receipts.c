@@ -610,6 +610,123 @@ static void test_fixture_pict_allocation_receipts(void)
           "DM2_FREE_PICT_ENTRY rejects mismatched bitmap headers");
 }
 
+static void test_querydb_word_and_ornate_receipts(void)
+{
+    DM2_V1_AssetLoader loader;
+    uint8_t data[16];
+    uint32_t raw_offsets[1];
+    uint32_t raw_sizes[1];
+    DM2_V1_GdatEntry entries[10];
+    DM2_V1_QueryOrnateAnimFrameReceipt frame;
+    DM2_V1_GetOrnateAnimLenReceipt len;
+    DM2_V1_GdatWordQueryReceipt word;
+    DM2_V1_DoorStrengthReceipt strength;
+    uint8_t cache3[3] = {0x21u, 0xffu, 0x44u};
+
+    memset(&loader, 0, sizeof(loader));
+    memset(data, 0, sizeof(data));
+    memcpy(data, "2A4", 4u);
+    raw_offsets[0] = 0u;
+    raw_sizes[0] = 4u;
+
+    memset(entries, 0, sizeof(entries));
+    entries[0] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WALL_GFX, 7u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x0du, 0u, 0u, 0x8003u};
+    entries[1] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_FLOOR_GFX, 8u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x0du, 0u, 0u, 0u};
+    entries[2] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 2u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x0fu, 0u, 0u, 0x002au};
+    entries[3] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 2u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x11u, 0u, 0u, 0x0033u};
+    entries[4] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 3u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x10u, 0u, 0u, 0x0000u};
+    entries[5] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 4u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x10u, 0u, 0u, 0x0009u};
+    entries[6] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_CREATURES, 5u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x01u, 0u, 0u, 0x0044u};
+    entries[7] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_CREATURES, 5u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x05u, 0u, 0u, 0x0055u};
+    entries[8] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_MISCELLANEOUS, 6u,
+        DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0x03u, 0u, 0u, 0x0066u};
+    entries[9] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 5u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x11u, 0u, 0u, 0x0000u};
+
+    loader.data = data;
+    loader.data_size = sizeof(data);
+    loader.loaded = 1;
+    loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
+    loader.raw_data_count = 1u;
+    loader.raw_offsets = raw_offsets;
+    loader.raw_sizes = raw_sizes;
+    loader.entries = entries;
+    loader.entry_count = 10u;
+
+    CHECK(dm2_v1_query_ornate_anim_frame_receipt(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
+              frame.accepted && frame.used_word_value &&
+              frame.length == 3u && frame.frame_base == 1u &&
+              frame.frame == 3u,
+          "DM2_QUERY_ORNATE_ANIM_FRAME uses source dtWordValue high-bit frame base");
+    CHECK(dm2_v1_query_ornate_anim_frame_receipt(
+              &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 8, 2u, 1u, &frame) &&
+              frame.accepted && frame.used_text_sequence &&
+              frame.length == 3u && frame.frame == 2u,
+          "DM2_QUERY_ORNATE_ANIM_FRAME uses source dtText base36 sequence");
+    CHECK(dm2_v1_get_ornate_anim_len_receipt(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 0, &len) &&
+              len.accepted && len.used_word_value && len.length == 3u,
+          "DM2_GET_ORNATE_ANIM_LEN masks the source word high bit");
+    CHECK(dm2_v1_get_ornate_anim_len_receipt(
+              &loader, DM2_GDAT_CATEGORY_FLOOR_GFX, 8, 0, &len) &&
+              len.accepted && len.used_text_sequence && len.length == 3u,
+          "DM2_GET_ORNATE_ANIM_LEN counts source dtText frames");
+    CHECK(dm2_v1_get_ornate_anim_len_receipt(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 99, 1, &len) &&
+              len.accepted && len.decoration_absent && len.length == 1u,
+          "DM2_GET_ORNATE_ANIM_LEN preserves decoration-absent length one");
+
+    CHECK(dm2_v1_query_door_damage_resist_receipt(&loader, 2, &word) &&
+              word.accepted && word.category == DM2_GDAT_CATEGORY_DOORS &&
+              word.field == 0x0fu && word.value == 0x002au,
+          "DM2_QUERY_DOOR_DAMAGE_RESIST binds DOORS dtWordValue field 0x0f");
+    CHECK(dm2_v1_query_door_strength_receipt(&loader, 2, &strength) &&
+              strength.accepted && strength.used_explicit_strength &&
+              strength.strength == 0x0033u,
+          "DM2_QUERY_DOOR_STRENGTH uses explicit DOORS field 0x11");
+    CHECK(dm2_v1_query_door_strength_receipt(&loader, 3, &strength) &&
+              strength.accepted && strength.used_resistance_fallback &&
+              strength.strength == 6u,
+          "DM2_QUERY_DOOR_STRENGTH maps zero field 0x10 fallback to six");
+    CHECK(dm2_v1_query_door_strength_receipt(&loader, 4, &strength) &&
+              strength.accepted && strength.used_resistance_fallback &&
+              strength.strength == 1u,
+          "DM2_QUERY_DOOR_STRENGTH maps nonzero field 0x10 fallback to one");
+    CHECK(!dm2_v1_query_door_strength_receipt(&loader, 5, &strength),
+          "DM2_QUERY_DOOR_STRENGTH rejects zero explicit strength without source fallback");
+    CHECK(dm2_v1_query_gdat_creature_word_value_receipt(
+              &loader, 5, 1, NULL, 0u, &word) &&
+              word.accepted && !word.used_cache_byte && word.value == 0x0044u,
+          "DM2_QUERY_GDAT_CREATURE_WORD_VALUE reads source creature word field");
+    CHECK(dm2_v1_query_gdat_creature_word_value_receipt(
+              &loader, 5, 5, cache3, sizeof(cache3), &word) &&
+              word.accepted && word.used_cache_byte && word.value == 0x0044u,
+          "DM2_QUERY_GDAT_CREATURE_WORD_VALUE admits populated source cache slot");
+    CHECK(dm2_v1_query_gdat_food_value_from_record_receipt(
+              &loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, 6, &word) &&
+              word.accepted && word.field == 0x03u && word.value == 0x0066u,
+          "DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD binds DB spec word field 0x03");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 {
     FILE *f;
@@ -770,6 +887,7 @@ int main(void)
     test_graphics_structure_and_image_extract();
     test_graphics_data_file_lifecycle();
     test_fixture_pict_allocation_receipts();
+    test_querydb_word_and_ornate_receipts();
     test_real_graphics_census();
     printf("Results: %d passed, %d failed\n", passed, failed);
     return failed == 0 ? 0 : 1;

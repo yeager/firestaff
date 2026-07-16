@@ -1989,6 +1989,260 @@ int dm2_v1_query_gdat_summary_image_receipt(
     return 1;
 }
 
+static int dm2_base36_frame(uint8_t byte, uint16_t *out_frame)
+{
+    if (!out_frame) return 0;
+    if (byte >= '0' && byte <= '9') {
+        *out_frame = (uint16_t)(byte - '0');
+        return 1;
+    }
+    if (byte >= 'A' && byte <= 'Z') {
+        *out_frame = (uint16_t)(byte - 'A' + 10u);
+        return 1;
+    }
+    return 0;
+}
+
+int dm2_v1_query_ornate_anim_frame_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    uint32_t tick,
+    uint32_t delta,
+    DM2_V1_QueryOrnateAnimFrameReceipt *out_receipt)
+{
+    enum { ANIMATION_FIELD = 0x0d };
+    uint16_t word = 0u;
+    uint16_t length = 0u;
+    uint16_t frame_base = 0u;
+    const uint8_t *sequence;
+    size_t sequence_size = 0u;
+    size_t sequence_length = 0u;
+    uint16_t frame = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || category < 0 || index < 0 || index > 0xff) return 0;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+
+    if (dm2_v1_asset_load_word_value(loader, category, index,
+                                     ANIMATION_FIELD, &word)) {
+        length = (uint16_t)(word & 0x7fffu);
+        if (length == 0u) return 0;
+        frame_base = (word & 0x8000u) ? 1u : 0u;
+        frame = (uint16_t)(((tick + delta) % length) + frame_base);
+        out_receipt->used_word_value = 1u;
+    } else {
+        sequence = dm2_v1_asset_load_text_sized(loader, category, index,
+                                                ANIMATION_FIELD,
+                                                &sequence_size);
+        if (!sequence || sequence_size == 0u) return 0;
+        while (sequence_length < sequence_size && sequence[sequence_length]) {
+            if (!dm2_base36_frame(sequence[sequence_length], &frame)) return 0;
+            ++sequence_length;
+        }
+        if (sequence_length == 0u || sequence_length == sequence_size)
+            return 0;
+        if (!dm2_base36_frame(
+                sequence[(tick + delta) % sequence_length], &frame)) {
+            return 0;
+        }
+        length = (uint16_t)sequence_length;
+        out_receipt->used_text_sequence = 1u;
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->length = length;
+    out_receipt->frame_base = frame_base;
+    out_receipt->frame = frame;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        (uint32_t)category, (uint32_t)index,
+        ((uint32_t)length << 16) | frame, tick + delta);
+    return 1;
+}
+
+int dm2_v1_get_ornate_anim_len_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int decoration_absent,
+    DM2_V1_GetOrnateAnimLenReceipt *out_receipt)
+{
+    enum { ANIMATION_FIELD = 0x0d };
+    uint16_t word = 0u;
+    const uint8_t *sequence;
+    size_t sequence_size = 0u;
+    size_t sequence_length = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (category < 0 || index < 0 || index > 0xff) return 0;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+
+    if (decoration_absent) {
+        out_receipt->accepted = 1u;
+        out_receipt->decoration_absent = 1u;
+        out_receipt->length = 1u;
+        out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+            0x4f414c45u, (uint32_t)category, (uint32_t)index, 1u);
+        return 1;
+    }
+
+    if (dm2_v1_asset_load_word_value(loader, category, index,
+                                     ANIMATION_FIELD, &word)) {
+        out_receipt->length = (uint16_t)(word & 0x7fffu);
+        if (out_receipt->length == 0u) return 0;
+        out_receipt->used_word_value = 1u;
+    } else {
+        sequence = dm2_v1_asset_load_text_sized(loader, category, index,
+                                                ANIMATION_FIELD,
+                                                &sequence_size);
+        if (!sequence || sequence_size == 0u) return 0;
+        while (sequence_length < sequence_size && sequence[sequence_length]) {
+            uint16_t ignored = 0u;
+            if (!dm2_base36_frame(sequence[sequence_length], &ignored))
+                return 0;
+            ++sequence_length;
+        }
+        if (sequence_length == 0u || sequence_length == sequence_size)
+            return 0;
+        out_receipt->length = (uint16_t)sequence_length;
+        out_receipt->used_text_sequence = 1u;
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        0x4f414c45u, (uint32_t)category, (uint32_t)index,
+        out_receipt->length);
+    return 1;
+}
+
+static int dm2_gdat_word_receipt(
+    int category,
+    int index,
+    int field,
+    uint16_t value,
+    uint8_t used_cache_byte,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (category < 0 || index < 0 || field < 0 ||
+        category > 0xff || index > 0xff || field > 0xff) {
+        return 0;
+    }
+    out_receipt->accepted = 1u;
+    out_receipt->used_cache_byte = used_cache_byte;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = (uint8_t)field;
+    out_receipt->value = value;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        (uint32_t)category, (uint32_t)index,
+        ((uint32_t)(uint8_t)field << 16) | value, used_cache_byte);
+    return 1;
+}
+
+int dm2_v1_query_door_damage_resist_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    uint16_t value = 0u;
+    if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                      door_index, 0x0f, &value)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_gdat_word_receipt(DM2_GDAT_CATEGORY_DOORS, door_index, 0x0f,
+                                 value, 0u, out_receipt);
+}
+
+int dm2_v1_query_gdat_creature_word_value_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int creature_index,
+    int field,
+    const uint8_t *cache3,
+    size_t cache_count,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    int cache_slot = -1;
+    uint16_t value = 0u;
+
+    if (field == 0) cache_slot = 1;
+    else if (field == 1) cache_slot = 0;
+    else if (field == 5) cache_slot = 2;
+    if (cache3 && cache_slot >= 0 && cache_count > (size_t)cache_slot &&
+        cache3[cache_slot] != 0xffu) {
+        return dm2_gdat_word_receipt(DM2_GDAT_CATEGORY_CREATURES,
+                                     creature_index, field, cache3[cache_slot],
+                                     1u, out_receipt);
+    }
+    if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_CREATURES,
+                                      creature_index, field, &value)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_gdat_word_receipt(DM2_GDAT_CATEGORY_CREATURES,
+                                 creature_index, field, value, 0u,
+                                 out_receipt);
+}
+
+int dm2_v1_query_gdat_food_value_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    uint16_t value = 0u;
+    if (!dm2_v1_asset_load_word_value(loader, category, index, 0x03,
+                                      &value)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_gdat_word_receipt(category, index, 0x03, value, 0u,
+                                 out_receipt);
+}
+
+int dm2_v1_query_door_strength_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_DoorStrengthReceipt *out_receipt)
+{
+    uint16_t explicit_strength = 0u;
+    uint16_t resistance = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (door_index < 0 || door_index > 0xff) return 0;
+    out_receipt->door_index = (uint8_t)door_index;
+
+    if (dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                     door_index, 0x11, &explicit_strength) &&
+        explicit_strength != 0u) {
+        out_receipt->accepted = 1u;
+        out_receipt->used_explicit_strength = 1u;
+        out_receipt->strength = explicit_strength;
+    } else if (dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                            door_index, 0x10, &resistance)) {
+        out_receipt->accepted = 1u;
+        out_receipt->used_resistance_fallback = 1u;
+        out_receipt->resistance_field_value = resistance;
+        out_receipt->strength = resistance == 0u ? 6u : 1u;
+    } else {
+        return 0;
+    }
+
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        0x44535452u, (uint32_t)door_index,
+        ((uint32_t)out_receipt->strength << 16) |
+            out_receipt->resistance_field_value,
+        out_receipt->used_explicit_strength);
+    return 1;
+}
+
 int dm2_v1_gdat_alloc_pict_buff_receipt(
     uint16_t width,
     uint16_t height,

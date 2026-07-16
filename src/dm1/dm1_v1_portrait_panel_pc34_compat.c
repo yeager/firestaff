@@ -23,7 +23,7 @@ void DM1_V1_PortraitPanel_SetChampionCountPc34Compat(DM1_V1_PortraitPanelStatePc
 bool DM1_V1_PortraitPanel_LoadPortraitPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port, const uint8_t* planar_data,
                            uint16_t data_size) {
     if (!port || !planar_data) return false;
-    uint16_t expected = (DM1_PORTRAIT_W / 8) * DM1_PORTRAIT_H * DM1_PORTRAIT_BITPLANES;
+    uint16_t expected = DM1_PORTRAIT_PLANAR_BYTES;
     if (data_size < expected) return false;
 
     memcpy(port->planar_data, planar_data, expected);
@@ -33,15 +33,20 @@ bool DM1_V1_PortraitPanel_LoadPortraitPc34Compat(DM1_V1_PortraitPanelPortraitPc3
     return true;
 }
 
-/* Convert Amiga planar bitplanes to chunky 8-bit indexed pixels
- * F0515: iterate through 4 bitplanes, extract pixel values */
-void DM1_V1_PortraitPanel_ConvertPlanarToChunkyPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port) {
-    if (!port || !port->loaded) return;
-
+bool DM1_V1_PortraitPanel_ConvertPlanarBufferToChunkyPc34Compat(
+    const uint8_t* planar_data, uint16_t planar_size,
+    uint8_t* chunky_data, uint16_t chunky_size) {
     uint16_t plane_size = (DM1_PORTRAIT_W / 8) * DM1_PORTRAIT_H;
     const uint8_t* planes[DM1_PORTRAIT_BITPLANES];
+
+    if (!planar_data || !chunky_data) return false;
+    if (planar_size < DM1_PORTRAIT_PLANAR_BYTES ||
+        chunky_size < DM1_PORTRAIT_CHUNKY_BYTES) {
+        return false;
+    }
+
     for (int p = 0; p < DM1_PORTRAIT_BITPLANES; p++) {
-        planes[p] = port->planar_data + (p * plane_size);
+        planes[p] = planar_data + (p * plane_size);
     }
 
     for (int y = 0; y < DM1_PORTRAIT_H; y++) {
@@ -52,9 +57,45 @@ void DM1_V1_PortraitPanel_ConvertPlanarToChunkyPc34Compat(DM1_V1_PortraitPanelPo
             for (int p = 0; p < DM1_PORTRAIT_BITPLANES; p++) {
                 pixel |= (uint8_t)(((planes[p][byte_idx] >> bit) & 1) << p);
             }
-            port->chunky_data[y * DM1_PORTRAIT_W + x] = pixel;
+            chunky_data[y * DM1_PORTRAIT_W + x] = pixel;
         }
     }
+    return true;
+}
+
+bool DM1_V1_PortraitPanel_ConvertChunkyBufferToPlanarPc34Compat(
+    const uint8_t* chunky_data, uint16_t chunky_size,
+    uint8_t* planar_data, uint16_t planar_size) {
+    uint16_t plane_size = (DM1_PORTRAIT_W / 8) * DM1_PORTRAIT_H;
+
+    if (!chunky_data || !planar_data) return false;
+    if (chunky_size < DM1_PORTRAIT_CHUNKY_BYTES ||
+        planar_size < DM1_PORTRAIT_PLANAR_BYTES) {
+        return false;
+    }
+
+    memset(planar_data, 0, DM1_PORTRAIT_PLANAR_BYTES);
+    for (int y = 0; y < DM1_PORTRAIT_H; y++) {
+        for (int x = 0; x < DM1_PORTRAIT_W; x++) {
+            int byte_idx = y * (DM1_PORTRAIT_W / 8) + (x / 8);
+            int bit = 7 - (x % 8);
+            uint8_t pixel = (uint8_t)(chunky_data[y * DM1_PORTRAIT_W + x] & 0x0F);
+            for (int p = 0; p < DM1_PORTRAIT_BITPLANES; p++) {
+                planar_data[p * plane_size + byte_idx] |=
+                    (uint8_t)(((pixel >> p) & 1u) << bit);
+            }
+        }
+    }
+    return true;
+}
+
+/* Convert planar bitplanes to chunky 8-bit indexed pixels.
+ * F0515/F2105: iterate through 4 bitplanes, extract pixel values. */
+void DM1_V1_PortraitPanel_ConvertPlanarToChunkyPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port) {
+    if (!port || !port->loaded) return;
+    (void)DM1_V1_PortraitPanel_ConvertPlanarBufferToChunkyPc34Compat(
+        port->planar_data, DM1_PORTRAIT_PLANAR_BYTES,
+        port->chunky_data, DM1_PORTRAIT_CHUNKY_BYTES);
 }
 
 void DM1_V1_PortraitPanel_UpdateBarsPc34Compat(DM1_V1_PortraitPanelChampionPc34* panel,
@@ -132,4 +173,3 @@ void DM1_V1_PortraitPanel_LayoutPc34Compat(DM1_V1_PortraitPanelStatePc34* state,
  *   PORTRAIT.C:192 F7251_C
  *   PORTRAIT.C:212 F7252_C
  * ══════════════════════════════════════════════════════════════════════ */
-
