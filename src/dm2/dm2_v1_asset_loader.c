@@ -1545,6 +1545,163 @@ int dm2_v1_graphics_data_read_receipt(
     return 1;
 }
 
+int dm2_v1_gdat_track_underlay(
+    const DM2_V1_GdatUnderlayPair *pairs,
+    size_t pair_count,
+    uint16_t image_raw_index,
+    int16_t *out_underlay_raw_index)
+{
+    size_t low = 0u;
+    size_t high = pair_count;
+
+    if (out_underlay_raw_index) *out_underlay_raw_index = -1;
+    if (!pairs || !out_underlay_raw_index || pair_count == 0u) return 0;
+
+    /* skproject c_gdatfile.cpp::DM2_TRACK_UNDERLAY performs a binary search
+     * over sorted four-byte image->underlay pairs loaded from dtRaw8 0/0/0. */
+    while (low < high) {
+        size_t mid = low + ((high - low) >> 1);
+        if (image_raw_index < pairs[mid].image_raw_index) {
+            high = mid;
+        } else if (image_raw_index > pairs[mid].image_raw_index) {
+            low = mid + 1u;
+        } else {
+            *out_underlay_raw_index = pairs[mid].underlay_raw_index;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_read_graphics_structure_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GraphicsStructureReceipt *out_receipt)
+{
+    DM2_V1_GraphicsStructureReceipt receipt;
+    uint32_t max_end = 0u;
+    uint32_t max_raw = 0u;
+    uint32_t underlay_len = 0u;
+    uint16_t i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!loader || !loader->loaded || !loader->raw_offsets ||
+        !loader->raw_sizes || loader->raw_data_count == 0u) {
+        return 0;
+    }
+
+    for (i = 0; i < loader->raw_data_count; ++i) {
+        uint32_t end = loader->raw_offsets[i] + loader->raw_sizes[i];
+        if (end > max_end) max_end = end;
+        if (loader->raw_sizes[i] > max_raw) max_raw = loader->raw_sizes[i];
+    }
+
+    receipt.valid = 1u;
+    receipt.versionlo = (uint8_t)loader->gdat_version;
+    receipt.entries = loader->entry_count;
+    receipt.raw_data_count = loader->raw_data_count;
+    receipt.raw0_length = loader->raw_sizes[0];
+    receipt.graphics_file_size = (uint32_t)loader->data_size;
+    receipt.calculated_payload_end = max_end;
+    receipt.max_raw_payload_length = max_raw;
+    receipt.filetype1 = loader->data_size < max_end ? 1u : 0u;
+    receipt.filetype2 = receipt.filetype1;
+    if (dm2_v1_query_gdat_entry_data_length(
+            loader, 0, 0, DM2_GDAT_ENTRY_TYPE_RAW8, 0, &underlay_len) &&
+        underlay_len >= 4u && (underlay_len % 4u) == 0u) {
+        receipt.has_underlay_table = 1u;
+        receipt.underlay_pair_count = (uint16_t)(underlay_len / 4u);
+    }
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        receipt.raw0_length, receipt.graphics_file_size,
+        receipt.calculated_payload_end, receipt.max_raw_payload_length);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_extract_gdat_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    int gfxalloc_done,
+    int prefer_hi_pool,
+    const DM2_V1_GdatUnderlayPair *underlays,
+    size_t underlay_count,
+    DM2_V1_GdatImageExtractReceipt *out_receipt)
+{
+    DM2_V1_GdatImageExtractReceipt receipt;
+    const uint8_t *raw;
+    uint8_t *pixels = NULL;
+    size_t raw_size = 0u;
+    uint16_t cy;
+    uint16_t w4;
+    uint16_t bpp = 0u;
+    uint32_t row_bytes;
+    int16_t underlay_raw = -1;
+    DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    raw = dm2_v1_load_gdat_raw_data(loader, raw_index, &raw_size);
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
+
+    cy = rd16le(raw + 2);
+    w4 = rd16le(raw + 6);
+    receipt.width = (uint16_t)(rd16le(raw) & 0x03ffu);
+    receipt.height = (uint16_t)(cy & 0x03ffu);
+    if (receipt.width == 0u || receipt.height == 0u ||
+        !dm2_img3_bits_per_pixel(cy, w4, &bpp)) {
+        return 0;
+    }
+
+    receipt.valid = 1u;
+    receipt.raw_index = raw_index;
+    receipt.raw_length = (uint32_t)raw_size;
+    receipt.bpp = (uint8_t)bpp;
+    receipt.gfxalloc_done = gfxalloc_done ? 1u : 0u;
+    receipt.prefer_hi_pool = prefer_hi_pool ? 1u : 0u;
+    receipt.underlay_raw_index = 0xffffu;
+    if (dm2_v1_gdat_track_underlay(underlays, underlay_count, raw_index,
+                                   &underlay_raw)) {
+        receipt.uses_underlay = 1u;
+        receipt.decode_img3_overlay = 1u;
+        receipt.underlay_raw_index = (uint16_t)underlay_raw;
+    } else if (bpp == 8u) {
+        receipt.decode_img9 = 1u;
+        pixels = dm2_decode_img9_c8(raw, raw_size, receipt.width,
+                                    receipt.height, &fmt);
+    } else {
+        receipt.decode_img3_underlay = 1u;
+        if (dm2_img3_signed_offset(cy) == -32) {
+            pixels = dm2_decode_uncompressed_image(raw, raw_size,
+                                                   receipt.width,
+                                                   receipt.height,
+                                                   bpp, &fmt);
+        } else {
+            pixels = dm2_decode_img3_c4(raw, raw_size, receipt.width,
+                                        receipt.height, &fmt);
+        }
+    }
+
+    row_bytes = bpp == 4u ? (uint32_t)(((receipt.width + 1u) & 0xfffeu) >> 1)
+                          : (uint32_t)receipt.width;
+    receipt.pixel_payload_bytes = row_bytes * (uint32_t)receipt.height;
+    if (!gfxalloc_done && bpp == 4u) receipt.pixel_payload_bytes += 16u;
+    receipt.allocation_bytes = receipt.pixel_payload_bytes +
+        (gfxalloc_done ? 0x16u : 0x0eu);
+    if (pixels) {
+        receipt.decoded_pixel_hash = dm2_fnv1a_bytes(
+            pixels, (size_t)receipt.width * (size_t)receipt.height);
+        free(pixels);
+    }
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        raw_index, receipt.raw_length, receipt.pixel_payload_bytes,
+        receipt.decoded_pixel_hash ^ receipt.underlay_raw_index);
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_gdat_alloc_pict_buff_receipt(
     uint16_t width,
     uint16_t height,

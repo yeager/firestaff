@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 44, CSB 1, shared DM1/CSB 1583, DM2 1527; 3155 total open rows
+  DM1 35, CSB 1, shared DM1/CSB 1575, DM2 1524; 3135 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -34,6 +34,16 @@
     and `F0287` remains covered by the PC34 bar pixel-band model. Remaining
     adjacent work is live original/Mac pixel capture, not alternate fonts or
     host-scaled HUD text.
+  - 2026-07-16 DM1 CHAMPION slot/portrait update: `F0293`, `F0295`-`F0302`,
+    their Atari ST ABI aliases where present, and the remaining `F292_arzz_`
+    alias are now closed through source-backed narrow dispositions over the
+    existing DM1 champion-panel state redraw, changed-object-icon refresh,
+    leader-hand/slot transfer, inventory/chest owner-change, and slot-box
+    dispatcher receipts. Honest boundaries remain: `F0293` is a contract loop
+    around F0292 rather than a fresh bitmap renderer, `F0299` covers only the
+    Rabbit's Foot C30 chest exclusion plus modifier-apply cadence in the
+    modeled owner-change route, and the broader all-item modifier matrix plus
+    original pixel parity remain open.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
@@ -64,16 +74,22 @@
     rows and undersized destinations. Remaining adjacent work is decoded image
     ownership, higher-level renderer/HUD consumption, and CPX/cache lifecycle;
     do not turn scalar entries or missing payloads into synthetic buffers.
+  - 2026-07-16 DM2 update: skproject `DM2_TRACK_UNDERLAY`,
+    `DM2_READ_GRAPHICS_STRUCTURE`, and the bounded `DM2_EXTRACT_GDAT_IMAGE`
+    route are now closed at the loader/image receipt boundary. Firestaff binds
+    real parsed GDAT raw tables, optional dtRaw8 underlay pairs, direct IMG3/U4
+    or IMG9 decode hashes, and source allocation-byte formulas. Remaining
+    adjacent work is overlay pixel composition, CPX cache-node lifecycle,
+    preserved-GFX list ownership, and renderer/HUD consumption.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`
     `DM2_ALLOC_PICT_BUFF`, `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and
     `DM2_FREE_PICT_ENTRY` now have bounded source-named bitmap allocation/free
     receipts over row-byte, header-byte, pool, CPX raw-index, and
     preserved-GFX free-route accounting. Remaining adjacent work is real
     `GRAPHICS_DATA_OPEN`/`READ`/`CLOSE` file-handle lifecycle,
-    `LOAD_GDAT_ENTRY_DATA_TO`, GDAT image extraction/decode ownership, and
-    renderer/HUD consumption of real decoded data; these receipts still do
-    not allocate CPX nodes, decoded
-    images, or fallback visuals.
+    GDAT overlay composition/decode ownership and renderer/HUD consumption of
+    real decoded data; these receipts still do not allocate CPX nodes,
+    preserved image nodes, or fallback visuals.
   - 2026-07-16 DM2 update: skproject `BETWEEN_VALUE`,
     `DM2_BETWEEN_VALUE`, `ALLOC_TEMP_RECT`, and `ALLOC_TEMP_ORIGIN_RECT` are
     now source-mapped in `dm2_v1_skproject_core`. Remaining adjacent

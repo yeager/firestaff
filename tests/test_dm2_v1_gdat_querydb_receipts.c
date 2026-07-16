@@ -20,25 +20,41 @@ static int failed;
 } while (0)
 
 static void fixture_loader(DM2_V1_AssetLoader *loader,
-                           uint8_t data[128],
-                           uint32_t raw_offsets[4],
-                           uint32_t raw_sizes[4],
-                           DM2_V1_GdatEntry entries[5])
+                           uint8_t data[192],
+                           uint32_t raw_offsets[6],
+                           uint32_t raw_sizes[6],
+                           DM2_V1_GdatEntry entries[7])
 {
     memset(loader, 0, sizeof(*loader));
-    memset(data, 0, 128u);
+    memset(data, 0, 192u);
     memcpy(data + 16u, "IMGRAW", 6u);
     memcpy(data + 32u, "TEXT", 4u);
     memcpy(data + 48u, "PAL0123456789ABC", 16u);
     memcpy(data + 80u, "\x11\x22\x33\x44\x55\x66\x77\x88\x99\xaa", 10u);
+    data[96u] = 2u;
+    data[98u] = 2u;
+    data[99u] = 0x80u;
+    data[102u] = 4u;
+    data[106u] = 0x12u;
+    data[107u] = 0x34u;
+    memcpy(data + 108u, "\x00\x01\x02\x03\x04\x05\x06\x07"
+                         "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f", 16u);
+    data[140u] = 4u;
+    data[141u] = 0u;
+    data[142u] = 3u;
+    data[143u] = 0u;
     raw_offsets[0] = 16u;
     raw_offsets[1] = 32u;
     raw_offsets[2] = 48u;
     raw_offsets[3] = 80u;
+    raw_offsets[4] = 96u;
+    raw_offsets[5] = 140u;
     raw_sizes[0] = 6u;
     raw_sizes[1] = 4u;
     raw_sizes[2] = 16u;
     raw_sizes[3] = 10u;
+    raw_sizes[4] = 28u;
+    raw_sizes[5] = 4u;
     entries[0].cls1 = DM2_GDAT_CATEGORY_TITLE;
     entries[0].cls2 = 0u;
     entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
@@ -64,24 +80,34 @@ static void fixture_loader(DM2_V1_AssetLoader *loader,
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_SOUND;
     entries[4].cls4 = 2u;
     entries[4].data_index = 3u;
+    entries[5].cls1 = DM2_GDAT_CATEGORY_TITLE;
+    entries[5].cls2 = 1u;
+    entries[5].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[5].cls4 = 0u;
+    entries[5].data_index = 4u;
+    entries[6].cls1 = 0u;
+    entries[6].cls2 = 0u;
+    entries[6].cls3 = DM2_GDAT_ENTRY_TYPE_RAW8;
+    entries[6].cls4 = 0u;
+    entries[6].data_index = 5u;
     loader->data = data;
-    loader->data_size = 128u;
+    loader->data_size = 192u;
     loader->loaded = 1;
     loader->category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader->raw_data_count = 4u;
+    loader->raw_data_count = 6u;
     loader->raw_offsets = raw_offsets;
     loader->raw_sizes = raw_sizes;
     loader->entries = entries;
-    loader->entry_count = 5u;
+    loader->entry_count = 7u;
 }
 
 static void test_fixture_entry_queries(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[128];
-    uint32_t raw_offsets[4];
-    uint32_t raw_sizes[4];
-    DM2_V1_GdatEntry entries[5];
+    uint8_t data[192];
+    uint32_t raw_offsets[6];
+    uint32_t raw_sizes[6];
+    DM2_V1_GdatEntry entries[7];
     DM2_V1_GdatEntryQueryReceipt receipt;
     const uint8_t *ptr;
     size_t size = 0u;
@@ -180,11 +206,11 @@ static void test_fixture_entry_queries(void)
 static void test_fixture_gdat_entry_iteration_and_sound(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[128];
+    uint8_t data[192];
     uint8_t sample[4] = {0x00u, 0x7fu, 0x80u, 0xffu};
-    uint32_t raw_offsets[4];
-    uint32_t raw_sizes[4];
-    DM2_V1_GdatEntry entries[5];
+    uint32_t raw_offsets[6];
+    uint32_t raw_sizes[6];
+    DM2_V1_GdatEntry entries[7];
     DM2_V1_GdatLoadEntriesReceipt load_receipt;
     DM2_V1_GdatEntryIterator iterator;
     DM2_V1_GdatEntryQueryReceipt entry_receipt;
@@ -195,11 +221,11 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
 
     CHECK(dm2_v1_load_gdat_entries_receipt(&loader, &load_receipt) &&
               load_receipt.valid &&
-              load_receipt.entry_count == 5u &&
-              load_receipt.loadable_entry_count == 3u &&
+              load_receipt.entry_count == 7u &&
+              load_receipt.loadable_entry_count == 5u &&
               load_receipt.scalar_entry_count == 2u &&
-              load_receipt.payload_bytes == 20u &&
-              load_receipt.allocated_bytes_with_length_words == 26u,
+              load_receipt.payload_bytes == 52u &&
+              load_receipt.allocated_bytes_with_length_words == 62u,
           "LOAD_GDAT_ENTRIES receipt preloads only non-scalar raw payloads");
 
     memset(&iterator, 0, sizeof(iterator));
@@ -252,6 +278,62 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
               &loader, DM2_GDAT_CATEGORY_MUSICS, 1, 2,
               7, 0, &sound_receipt),
           "DM2_482b_0684 does not admit payloads rejected by SOUND7");
+}
+
+static void test_graphics_structure_and_image_extract(void)
+{
+    DM2_V1_AssetLoader loader;
+    uint8_t data[192];
+    uint32_t raw_offsets[6];
+    uint32_t raw_sizes[6];
+    DM2_V1_GdatEntry entries[7];
+    DM2_V1_GraphicsStructureReceipt structure;
+    DM2_V1_GdatImageExtractReceipt image;
+    DM2_V1_GdatUnderlayPair underlays[1];
+    int16_t underlay = -1;
+
+    fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
+    underlays[0].image_raw_index = 4u;
+    underlays[0].underlay_raw_index = 3;
+
+    CHECK(dm2_v1_read_graphics_structure_receipt(&loader, &structure) &&
+              structure.valid &&
+              structure.entries == 7u &&
+              structure.raw_data_count == 6u &&
+              structure.raw0_length == 6u &&
+              structure.calculated_payload_end == 144u &&
+              structure.max_raw_payload_length == 28u &&
+              structure.has_underlay_table &&
+              structure.underlay_pair_count == 1u,
+          "DM2_READ_GRAPHICS_STRUCTURE receipt binds loader raw table and underlay table");
+    CHECK(dm2_v1_gdat_track_underlay(underlays, 1u, 4u, &underlay) &&
+              underlay == 3,
+          "DM2_TRACK_UNDERLAY binary-searches the loaded image underlay table");
+    CHECK(!dm2_v1_gdat_track_underlay(underlays, 1u, 2u, &underlay) &&
+              underlay == -1,
+          "DM2_TRACK_UNDERLAY rejects absent raw indexes without substitute");
+    CHECK(dm2_v1_extract_gdat_image_receipt(
+              &loader, 4u, 0, 1, NULL, 0u, &image) &&
+              image.valid &&
+              image.decode_img3_underlay &&
+              !image.uses_underlay &&
+              image.width == 2u &&
+              image.height == 2u &&
+              image.bpp == 4u &&
+              image.pixel_payload_bytes == 18u &&
+              image.allocation_bytes == 32u &&
+              image.decoded_pixel_hash != 0u,
+          "DM2_EXTRACT_GDAT_IMAGE decodes direct IMG3/U4 raw payload bytes");
+    CHECK(dm2_v1_extract_gdat_image_receipt(
+              &loader, 4u, 1, 0, underlays, 1u, &image) &&
+              image.valid &&
+              image.uses_underlay &&
+              image.decode_img3_overlay &&
+              image.underlay_raw_index == 3u &&
+              image.pixel_payload_bytes == 2u &&
+              image.allocation_bytes == 0x18u &&
+              image.decoded_pixel_hash == 0u,
+          "DM2_EXTRACT_GDAT_IMAGE records underlay overlay route without fabricated pixels");
 }
 
 static void test_graphics_data_file_lifecycle(void)
@@ -555,6 +637,7 @@ int main(void)
     printf("DM2 V1 GDAT querydb receipts\n");
     test_fixture_entry_queries();
     test_fixture_gdat_entry_iteration_and_sound();
+    test_graphics_structure_and_image_extract();
     test_graphics_data_file_lifecycle();
     test_fixture_pict_allocation_receipts();
     test_real_graphics_census();

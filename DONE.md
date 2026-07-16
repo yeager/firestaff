@@ -1,5 +1,22 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 CHAMPION slot/hand redraw audit bundle: closed the
+  source-backed ReDMCSB dispositions for `F0292` alias, `F0293`, `F0295`,
+  `F0296`, `F0297`, `F0298`, `F0299`, `F0300`, `F0301`, `F0302`, and their
+  listed Atari ST aliases where bounded Firestaff routes already exist.
+  Verification: focused CTests for all-states redraw, hand-slot refresh,
+  action-hand priority, second-leader hand priority, and chest/action-hand
+  owner-change.
+
+- 2026-07-16 DM2 skproject GDAT image-structure bundle: added source-backed
+  receipts for `DM2_TRACK_UNDERLAY`, `DM2_READ_GRAPHICS_STRUCTURE`, and the
+  bounded `DM2_EXTRACT_GDAT_IMAGE` route. Firestaff now binds real parsed
+  GDAT raw tables, optional underlay pairs, direct IMG3/U4 or IMG9 decode
+  hashes, and source allocation byte formulas without fabricating overlay
+  pixels or CPX cache nodes. Verification: focused Ninja target
+  `test_dm2_v1_gdat_querydb_receipts`, focused CTest
+  `dm2_v1_gdat_querydb_receipts`.
+
 - 2026-07-16 DM2 skproject GDAT entry value/copy bundle: added
   source-mapped receipts for `DM2_QUERY_GDAT_ENTRY_VALUE` and
   `DM2_LOAD_GDAT_ENTRY_DATA_TO`. Firestaff now reads T/I/D/S/P/F/G values
