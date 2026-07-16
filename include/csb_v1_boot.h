@@ -1105,7 +1105,6 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
-    int special_palette;
     int title_phase_tick;
     int title_phase_tick_count;
     const CSB_V1_StartupRuntimeSurface_PC34 *title_surface;
@@ -1117,6 +1116,35 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int opening_step;
     int uses_verified_hud_bindings;
 } CSB_V1_StartupRuntimeAssetFrame_PC34;
+
+typedef struct {
+    int valid;
+    int c001_complete;
+    int terminal_f0807_complete;
+    int hud_session_ready;
+    int c017_ready;
+    int c040_ready;
+    int no_legacy_wrapper;
+    int no_fallback_route;
+    uint32_t source_tick;
+    uint32_t session_generation;
+} CSB_V1_StartupCompleteTimelineReceipt_PC34;
+
+typedef struct {
+    int valid;
+    int c040_cleared_once;
+    int post_c101_presented;
+    int live_c017_only_panel_base;
+    int palette_neutral;
+    int no_legacy_wrapper;
+    int no_cast_or_combat;
+    int c017_source_asset_id;
+    int c017_width;
+    int c017_height;
+    int c017_special_palette;
+    uint32_t source_tick;
+    uint32_t session_generation;
+} CSB_V1_TerminalUiStateReceipt_PC34;
 
 /* An owned indexed startup frame composed from verified GRAPHICS.DAT
  * surfaces. ReDMCSB TITLE.C F0437 and ENTRANCE.C F0438/F0807 perform this
