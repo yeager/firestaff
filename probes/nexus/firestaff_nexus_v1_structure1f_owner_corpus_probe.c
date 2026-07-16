@@ -32,6 +32,19 @@ static uint8_t *read_file(const char *path, int *out_size)
     return data;
 }
 
+static int canonical_file_matches_md5(const char *path, const char *md5)
+{
+    uint8_t *bytes;
+    int size;
+    int matches;
+
+    bytes = read_file(path, &size);
+    if (!bytes) return 0;
+    matches = nexus_v1_dgn_bytes_match_canonical_md5(bytes, size, md5);
+    free(bytes);
+    return matches;
+}
+
 static uint64_t fnv_byte(uint64_t hash, uint8_t value)
 {
     return (hash ^ value) * UINT64_C(1099511628211);
@@ -74,7 +87,7 @@ int main(int argc, char **argv)
         snprintf(name, sizeof(name), "LEV%02d.DGN", level);
         md5 = nexus_v1_known_file_md5(name);
         if (snprintf(path, sizeof(path), "%s/%s", argv[1], name) >=
-                (int)sizeof(path) || !md5 || !asset_file_matches_md5(path, md5) ||
+                (int)sizeof(path) || !md5 || !canonical_file_matches_md5(path, md5) ||
             !(bytes = read_file(path, &size))) goto failed;
         memset(&data, 0, sizeof(data));
         if (nexus_v1_level_load(&data, bytes, size, level) != 0 ||

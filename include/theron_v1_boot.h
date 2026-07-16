@@ -650,6 +650,15 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     const char *status;
 } Theron_V1_BootStartupGraphicsRouteReceipt;
 
+/* Bounded proof that a startup graphics request is backed by verified raw
+ * Track 02 media. A verified CD-read alone does not establish the palette
+ * descriptor relation required to render those pixels. */
+typedef struct Theron_V1_BootStartupRawMediaGraphicsReceipt {
+    int valid;
+    int raw_media_verified;
+    int palette_descriptor_relation_verified;
+} Theron_V1_BootStartupRawMediaGraphicsReceipt;
+
 typedef struct Theron_V1_BootStartupFullStartReceipt {
     int host_consumes_view_model;
     int view_model_valid;
@@ -1220,6 +1229,45 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_StartupGraphicExecutor *executor,
     Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
+static inline int theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
+    const Theron_StartupMediaStateReceipt *media_receipt,
+    int raw_media_verified,
+    int palette_descriptor_relation_verified,
+    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = (Theron_V1_BootStartupRawMediaGraphicsReceipt){0};
+    if (!media_receipt || !media_receipt->startup_media_ready ||
+        !raw_media_verified) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->raw_media_verified = 1;
+    out_receipt->palette_descriptor_relation_verified =
+        palette_descriptor_relation_verified ? 1 : 0;
+    return 1;
+}
+static inline int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_V1_BootStartupRawMediaGraphicsReceipt *raw_media_receipt,
+    const Theron_StartupGraphicExecutor *executor,
+    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt)
+{
+    if (!raw_media_receipt || !raw_media_receipt->valid ||
+        !raw_media_receipt->raw_media_verified ||
+        !raw_media_receipt->palette_descriptor_relation_verified) {
+        if (out_receipt) {
+            theron_v1_boot_startup_graphics_route_receipt_init(out_receipt);
+            out_receipt->graphics_blocked = 1;
+            out_receipt->no_fallback_startup_graphics_proof = 1;
+            out_receipt->fallback_visuals_allowed = 0;
+            out_receipt->status = "TRACK02 PALETTE DESCRIPTOR UNPROVEN";
+        }
+        return 0;
+    }
+    return theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
+        view_model, executor, out_receipt);
+}
 int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
     const Theron_V1_BootRuntimeStartupSnapshot *snapshot,
     const Theron_StartupMediaStateReceipt *startup_media_receipt,

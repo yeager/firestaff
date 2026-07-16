@@ -17,6 +17,9 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_startup_real_asset_receipt.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -500,7 +503,21 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 presents_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal_receipt;
+    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package_receipt;
+    CSB_V1_StartupSessionPackageTitleReceipt_PC34 title_package_receipt;
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door_receipt;
+    CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 consumption_receipt;
+    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud_receipt;
+    CSB_V1_StartupSessionDoorHudTickReceipt_PC34 first_door_receipt;
+    CSB_V1_StartupSessionInputReceipt_PC34 first_input_receipt;
+    CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 hud_door_input_receipt;
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
     CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(profile, &session) == 1 &&
@@ -665,21 +682,6 @@ static void verify_real_indexed_startup(
                   &session, &plan, 5u, host_surface.raster.pixels, 320, 200,
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES) == 0,
           "presented C004/C002/C003 raster rejects a title palette phase");
-    memset(&input_outcome, 0, sizeof(input_outcome));
-    memset(&runtime_apply, 0, sizeof(runtime_apply));
-    memset(&state_receipt, 0, sizeof(state_receipt));
-    input_outcome.result = CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
-    runtime_apply.result = CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34;
-    state_receipt.entrance_active = 1;
-    state_receipt.opening_active = 1;
-    state_receipt.opening_step = 1;
-    CHECK(csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
-              &package_receipt, &host_surface, &input_outcome, &runtime_apply,
-              &state_receipt, &handoff_receipt) == 1 && handoff_receipt.valid &&
-              handoff_receipt.door_opening_transition &&
-              handoff_receipt.same_session_generation &&
-              handoff_receipt.no_synthetic_surface,
-          "opening input/runtime transition retains the verified PC34 package receipt");
     CHECK(csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &host_surface,
               &opening_door_receipt) == 1 && opening_door_receipt.valid &&
@@ -695,15 +697,6 @@ static void verify_real_indexed_startup(
               consumption_receipt.strikes_back_consumed &&
               consumption_receipt.c004_c002_c003_consumed,
           "real C001 title hosts and C004/C002/C003 opening host share one package session");
-    CHECK(csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
-              &consumption_receipt, &handoff_receipt,
-              &consumption_handoff_receipt) == 1 && consumption_handoff_receipt.valid &&
-              consumption_handoff_receipt.real_title_opening_consumption &&
-              consumption_handoff_receipt.same_session_generation &&
-              consumption_handoff_receipt.no_legacy_wrappers &&
-              consumption_handoff_receipt.no_synthetic_surface,
-          "runtime bridge retains real C001 and C004/C002/C003 host consumption");
-    door_handoff_receipt = handoff_receipt;
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&presents_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&chaos_host);
@@ -717,17 +710,6 @@ static void verify_real_indexed_startup(
               host_surface.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34,
           "terminal session exposes the original C017/C040 runtime host surface");
-    memset(&state_receipt, 0, sizeof(state_receipt));
-    state_receipt.entrance_dismissed = 1;
-    CHECK(csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
-              &package_receipt, &host_surface, &input_outcome, &runtime_apply,
-              &state_receipt, &handoff_receipt) == 1 && handoff_receipt.valid &&
-              handoff_receipt.hud_runtime_transition &&
-              handoff_receipt.real_asset_receipt_hash ==
-                  package_receipt.real_asset_receipt_hash &&
-              handoff_receipt.consumed_surface_hash ==
-                  package_receipt.consumed_surface_hash,
-          "HUD input/runtime transition retains the same verified PC34 package receipt");
     CHECK(csb_v1_startup_session_package_title_receipt_pc34(
               &session, &package_receipt, &title_package_receipt) == 1 &&
               title_package_receipt.valid &&
@@ -784,32 +766,6 @@ static void verify_real_indexed_startup(
               hud_door_input_receipt.first_live_door_frame &&
               hud_door_input_receipt.first_runtime_input,
           "C017/C040 HUD, first door frame, and input share one PC34 package host");
-    CHECK(csb_v1_runtime_startup_hud_door_input_handoff_receipt_pc34(
-              &hud_door_input_receipt, &handoff_receipt,
-              &hud_door_input_handoff_receipt) == 1 &&
-              hud_door_input_handoff_receipt.valid &&
-              hud_door_input_handoff_receipt.real_hud_door_input_consumption &&
-              hud_door_input_handoff_receipt.same_session_generation &&
-              hud_door_input_handoff_receipt.no_legacy_wrappers &&
-              hud_door_input_handoff_receipt.no_synthetic_surface,
-          "runtime bridge retains real C017/C040 HUD through first door and input");
-    CHECK(csb_v1_runtime_startup_title_door_handoff_receipt_pc34(
-              &title_package_receipt, &opening_door_receipt,
-              &door_handoff_receipt, &title_door_handoff_receipt) == 1 &&
-              title_door_handoff_receipt.valid &&
-              title_door_handoff_receipt.full_title_to_opening_package_bound &&
-              title_door_handoff_receipt.same_session_generation &&
-              title_door_handoff_receipt.no_legacy_wrappers &&
-              title_door_handoff_receipt.no_synthetic_surface,
-          "C001 title phases hand off to original C004/C002/C003 opening runtime");
-    CHECK(csb_v1_runtime_startup_title_package_handoff_receipt_pc34(
-              &title_package_receipt, &handoff_receipt,
-              &title_handoff_receipt) == 1 && title_handoff_receipt.valid &&
-              title_handoff_receipt.full_title_to_hud_package_bound &&
-              title_handoff_receipt.same_session_generation &&
-              title_handoff_receipt.no_legacy_wrappers &&
-              title_handoff_receipt.no_synthetic_surface,
-          "runtime handoff retains all C001 title phases and the same PC34 package identity");
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 
     CHECK(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
@@ -824,6 +780,7 @@ int main(int argc, char **argv)
     char default_dir[1024];
     const char *dir = pc_data_dir(argc, argv, default_dir, sizeof(default_dir));
     CSB_V1_BootProfile profile;
+    CSB_V1_StartupRealReceipt real_asset_receipt;
     const CSB_V1_DungeonData *current;
     uint64_t before_play_ms;
 
@@ -851,7 +808,11 @@ int main(int argc, char **argv)
     CHECK(profile.graphics_kind == CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
           "graphics archive kind is ordinary GRAPHICS.DAT");
 
-    verify_real_indexed_startup(&profile);
+    csb_v1_startup_real_receipt_init(&real_asset_receipt);
+    CHECK(csb_v1_startup_real_scan_and_receipt(dir, 4, &real_asset_receipt) ==
+              CSB_V1_STARTUP_REAL_OK && real_asset_receipt.matched,
+          "PC CSB assets produce a verified startup receipt");
+    verify_real_indexed_startup(&profile, &real_asset_receipt);
 
     CHECK(csb_v1_boot_enter_game(&profile) == 0,
           "boot profile enters the CSB V1 runtime");

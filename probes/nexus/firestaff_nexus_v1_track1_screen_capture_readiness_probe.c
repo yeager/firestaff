@@ -161,7 +161,8 @@ static int write_manifest(const char *path,
                           int dgn_blocks_runtime,
                           int font_glyph_index,
                           int font_writes,
-                          uint64_t viewport_hash)
+                          uint64_t viewport_hash,
+                          const Nexus_V1_DgnStaticMaterialSourceReceipt *static_materials)
 {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
@@ -305,6 +306,9 @@ static void probe_real_data(const char *data_dir,
     uint64_t font_hash = 0;
     uint64_t viewport_hash = 0;
     const char *source_name = "none";
+    Nexus_V1_DgnViewportRenderReceipt dgn_render;
+    Nexus_V1_DgnViewportHostRouteReceipt dgn_host_route;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_materials;
 
     printf("\n[Real Track 1 runtime handoff]\n");
     memset(&engine, 0, sizeof(engine));
@@ -327,6 +331,9 @@ static void probe_real_data(const char *data_dir,
     CHECK(engine.level_loaded == 1 && engine.current_level.width == 64 &&
           engine.current_level.height == 64,
           "level 0 is resident as a 64x64 Nexus level");
+    CHECK(nexus_v1_dgn_static_material_source_receipt(&engine,
+                                                       &static_materials) == 0,
+          "static MNS material source receipt is available");
 
     font = nexus_v1_read_file(&engine, "FONT256.S2D", &font_size);
     CHECK(font != NULL && font_size > 0,

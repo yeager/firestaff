@@ -47,6 +47,19 @@ static uint8_t *read_file(const char *path, int *out_size)
     return data;
 }
 
+static int canonical_file_matches_md5(const char *path, const char *md5)
+{
+    uint8_t *bytes;
+    int size;
+    int matches;
+
+    bytes = read_file(path, &size);
+    if (!bytes) return 0;
+    matches = nexus_v1_dgn_bytes_match_canonical_md5(bytes, size, md5);
+    free(bytes);
+    return matches;
+}
+
 int main(int argc, char **argv)
 {
     Nexus_V1_Level level_data;
@@ -81,7 +94,7 @@ int main(int argc, char **argv)
         md5 = nexus_v1_known_file_md5(name);
         if (snprintf(lev_path, sizeof(lev_path), "%s/%s", argv[1], name) >=
                 (int)sizeof(lev_path) || !md5 ||
-            !asset_file_matches_md5(lev_path, md5) ||
+            !canonical_file_matches_md5(lev_path, md5) ||
             !(data = read_file(lev_path, &data_size))) {
             fprintf(stderr, "canonical LEV%02d bytes unavailable\n", level);
             return 1;

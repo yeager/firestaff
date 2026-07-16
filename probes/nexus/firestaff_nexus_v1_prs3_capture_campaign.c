@@ -2,8 +2,10 @@
  * This is a capture-planning tool only: it neither decodes nor renders PRS3. */
 #include "asset_find_by_hash.h"
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_engine.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +37,22 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     fclose(file);
     *out_size = (size_t)file_size;
     return data;
+}
+
+static int canonical_file_matches_md5(const char *path, const char *md5)
+{
+    uint8_t *bytes;
+    size_t size;
+    int matches;
+
+    bytes = read_file(path, &size);
+    if (!bytes || size > (size_t)INT_MAX) {
+        free(bytes);
+        return 0;
+    }
+    matches = nexus_v1_dgn_bytes_match_canonical_md5(bytes, (int)size, md5);
+    free(bytes);
+    return matches;
 }
 
 static uint64_t fnv1a64(const uint8_t *data, size_t size)
@@ -75,14 +93,14 @@ int main(int argc, char **argv)
      * hash discovery for renamed extracted media. */
     if (snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", argv[1]) >=
             (int)sizeof(menu_path) ||
-        !asset_file_matches_md5(menu_path, RETAIL_MENU_BPK_MD5)) {
+        !canonical_file_matches_md5(menu_path, RETAIL_MENU_BPK_MD5)) {
         menu_path[0] = '\0';
         (void)asset_find_by_md5(argv[1], RETAIL_MENU_BPK_MD5, menu_path,
                                 sizeof(menu_path), 4);
     }
     if (snprintf(dm_path, sizeof(dm_path), "%s/DM.BIN", argv[1]) >=
             (int)sizeof(dm_path) ||
-        !asset_file_matches_md5(dm_path, RETAIL_DM_BIN_MD5)) {
+        !canonical_file_matches_md5(dm_path, RETAIL_DM_BIN_MD5)) {
         dm_path[0] = '\0';
         (void)asset_find_by_md5(argv[1], RETAIL_DM_BIN_MD5, dm_path,
                                 sizeof(dm_path), 4);
