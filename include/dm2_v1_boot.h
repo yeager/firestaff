@@ -312,6 +312,7 @@ typedef struct {
     int runtime_render_asset_projectile_count;
     int runtime_render_fallback_projectile_count;
     int runtime_render_no_core_fallbacks;
+    int runtime_render_blocked_material_draw_count;
     /* Atomic source-required frame identity consumed by M11. */
     int runtime_m11_frame_receipt_consumed;
     /* Raw SKSave layout identity consumed by this runtime frame, if that

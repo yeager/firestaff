@@ -4,6 +4,7 @@
 #include "dm2_v2_phase_gate.h"
 #include "dm2_v2_hud_widget_assets.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +54,21 @@ void dm2_v2_hud_runtime_shutdown(void);
 
 /* ── Configuration ─────────────────────────────────────────────── */
 void dm2_v2_hud_runtime_set_gate_config(const DM2_V2_PhaseGateConfig *config);
+
+typedef int (*DM2_V2_HudGdatFetch)(void *user,
+    int key,
+    const uint8_t **out_pixels,
+    int *out_width,
+    int *out_height,
+    int *out_stride);
+typedef int (*DM2_V2_HudGdatPaletteFetch)(void *user,
+    int key,
+    uint8_t out_palette16[16],
+    uint32_t *out_palette_hash);
+void dm2_v2_hud_runtime_set_gdat_source(DM2_V2_HudGdatFetch fetch,
+    DM2_V2_HudGdatPaletteFetch palette_fetch,
+    void *user,
+    int mounted);
 
 /* ── State setters (V1 → V2 HUD bridge) ────────────────────────── */
 void dm2_v2_hud_runtime_set_party_gold(int gold_pieces);
