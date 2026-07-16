@@ -97,6 +97,11 @@
     tile-type, delayed timer, and immediate open routes. Remaining adjacent
     movement work is `DM2_PERFORM_MOVE`, `DM2_ATTACK_WALL`, and live mutation
     wiring.
+  - 2026-07-16 DM2 update: skproject wall attack row `DM2_ATTACK_WALL`
+    is now closed through a source-backed receipt for side scan, ornate alcove
+    missile relocation, actuator class 0x22, and actuator class 0x23 teleport
+    routes. Remaining adjacent movement work is `DM2_PERFORM_MOVE` and live
+    record/timer/actuator mutation wiring.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,

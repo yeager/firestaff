@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject wall attack helper: mapped `DM2_ATTACK_WALL`
+  from `SKULLWIN/c_move.cpp`. Coverage locks matching wall-side scan,
+  ornate-alcove RANDDIR missile relocation, class-0x22 actuator
+  invoke/consume gates, and class-0x23 wildcard/matching projectile teleport
+  relocation without claiming live record cutting/deletion or actuator
+  execution. Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_skproject_core -j2`, `ctest --test-dir build-local-ninja
+  --output-on-failure -R '^dm2_v1_skproject_core$'`, direct test binary, and
+  `git diff --check` passed.
+
 - 2026-07-16 DM2 skproject door attack helper: mapped `DM2_ATTACK_DOOR`
   from `SKULLWIN/c_move.cpp`. Coverage locks byte3 bit0 and byte2 bit7
   admission gates, attack-power threshold, door tile-type requirement, delayed
