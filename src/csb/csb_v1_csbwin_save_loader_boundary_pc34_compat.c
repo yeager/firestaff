@@ -811,6 +811,164 @@ int csb_v1_csbwin_save_loader_boundary_classify_file(
     return rc;
 }
 
+static int read_entire_bounded_file(const char *path,
+                                    size_t max_size,
+                                    uint8_t **out_bytes,
+                                    size_t *out_size)
+{
+    FILE *fp;
+    long file_size_long;
+    size_t file_size;
+    uint8_t *bytes;
+    size_t got;
+
+    if (!path || !out_bytes || !out_size) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    *out_bytes = NULL;
+    *out_size = 0u;
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    if (max_size == 0u) {
+        max_size = (size_t)CSB_V1_CSBWIN_SAVE_FILE_DEFAULT_MAX_BYTES;
+    }
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    file_size_long = ftell(fp);
+    if (file_size_long < 0) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    file_size = (size_t)file_size_long;
+    if (file_size > max_size) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_TRUNCATED;
+    }
+    if (fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    bytes = (uint8_t *)malloc(file_size > 0u ? file_size : 1u);
+    if (!bytes) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    got = fread(bytes, 1u, file_size, fp);
+    fclose(fp);
+    if (got != file_size) {
+        free(bytes);
+        return CSB_SAVE_IMPORT_ERR_TRUNCATED;
+    }
+    *out_bytes = bytes;
+    *out_size = file_size;
+    return 0;
+}
+
+int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+    const char *path_hint,
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinDSASaveCorpusReceipt *out)
+{
+    size_t gameblock_offset;
+    int rc;
+
+    if (!out) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    memset(out, 0, sizeof(*out));
+    out->valid = 1;
+    out->file_kind = csb_v1_csbwin_save_loader_boundary_file_kind(path_hint);
+    out->filename_candidate =
+        (out->file_kind != CSB_V1_CSBWIN_SAVE_FILE_NONE) ? 1 : 0;
+    out->file_kind_label =
+        csb_v1_csbwin_save_loader_boundary_file_kind_name(out->file_kind);
+
+    if (!bytes || size == 0u) {
+        out->extended_result = CSB_V1_CSBWIN_EXTENDED_ERR_ARGUMENT;
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+        return 0;
+    }
+    if (!out->filename_candidate) {
+        out->extended_result = CSB_V1_CSBWIN_EXTENDED_ABSENT;
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+        return 0;
+    }
+
+    rc = csb_v1_csbwin_512_inspect_extended_tail(bytes, size, &out->tail,
+                                                  &out->dsa, &out->features);
+    out->extended_result = rc;
+    out->extended_tail_valid = (rc == CSB_V1_CSBWIN_EXTENDED_OK &&
+                                out->tail.valid) ? 1 : 0;
+    out->dsa_section_valid = (out->dsa.valid && out->dsa.dsa_count > 0u) ? 1 : 0;
+    out->dsa_has_runtime_actions =
+        (out->dsa_section_valid && out->dsa.action_count > 0u &&
+         out->dsa.program_word_count > 0u) ? 1 : 0;
+    if (!out->extended_tail_valid || !out->dsa_has_runtime_actions) {
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+        return 0;
+    }
+
+    gameblock_offset = out->tail.next_payload_offset;
+    out->gameblock1_offset = gameblock_offset;
+    if (gameblock_offset > size ||
+        size - gameblock_offset < CSB_V1_CSBWIN_BLOCK1_BYTES) {
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+        return 0;
+    }
+    out->gameblock1_result = csb_v1_csbwin_512_xor_pad_classify(
+        bytes + gameblock_offset, size - gameblock_offset, &out->gameblock1);
+    out->gameblock1_valid =
+        (out->gameblock1_result == CSB_V1_CSBWIN_512_OK &&
+         (out->gameblock1.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB ||
+          out->gameblock1.verdict == CSB_V1_CSBWIN_512_VERDICT_DM)) ? 1 : 0;
+
+    out->corpus_positive = out->gameblock1_valid ? 1 : 0;
+    out->runtime_handoff_ready = out->corpus_positive;
+    out->decision_label =
+        csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+    return out->corpus_positive;
+}
+
+int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+    const char *path,
+    size_t max_size,
+    CSB_V1_CSBWinDSASaveCorpusReceipt *out)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int rc;
+
+    if (!path || !out) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    rc = read_entire_bounded_file(path, max_size, &bytes, &size);
+    if (rc != 0) {
+        memset(out, 0, sizeof(*out));
+        out->valid = 1;
+        out->file_kind = csb_v1_csbwin_save_loader_boundary_file_kind(path);
+        out->filename_candidate =
+            (out->file_kind != CSB_V1_CSBWIN_SAVE_FILE_NONE) ? 1 : 0;
+        out->file_kind_label =
+            csb_v1_csbwin_save_loader_boundary_file_kind_name(out->file_kind);
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+        return rc;
+    }
+    rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+        path, bytes, size, out);
+    free(bytes);
+    return rc;
+}
+
 const char *csb_v1_csbwin_save_loader_boundary_shape_name(
     CSB_V1_CSBWinSaveShape shape)
 {
@@ -892,6 +1050,36 @@ const char *csb_v1_csbwin_save_loader_boundary_decision_name(
     }
 }
 
+const char *csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(
+    const CSB_V1_CSBWinDSASaveCorpusReceipt *receipt)
+{
+    if (!receipt || !receipt->valid) {
+        return "reject_null_dsa_corpus_receipt";
+    }
+    if (!receipt->filename_candidate) {
+        return "reject_dsa_corpus_non_csbwin_filename";
+    }
+    if (receipt->extended_result == CSB_V1_CSBWIN_EXTENDED_ABSENT) {
+        return "reject_dsa_corpus_no_extended_features";
+    }
+    if (!receipt->extended_tail_valid) {
+        return "reject_dsa_corpus_extended_tail_invalid";
+    }
+    if (!receipt->dsa_section_valid) {
+        return "reject_dsa_corpus_no_dsa_section";
+    }
+    if (!receipt->dsa_has_runtime_actions) {
+        return "reject_dsa_corpus_no_runtime_actions";
+    }
+    if (!receipt->gameblock1_valid) {
+        return "reject_dsa_corpus_missing_valid_gameblock1";
+    }
+    if (receipt->corpus_positive && receipt->runtime_handoff_ready) {
+        return "accept_dsa_save_runtime_corpus";
+    }
+    return "reject_dsa_corpus_unready";
+}
+
 size_t csb_v1_csbwin_save_loader_boundary_accept_count(void)
 {
     size_t total = 0u;
@@ -927,6 +1115,7 @@ const char *csb_v1_csbwin_save_loader_boundary_source_evidence(void)
         "ReDMCSB DEFS.H:1289 (CSBGAME.DAT magic literal)\n"
         "CSBWin SaveGame.cpp:927/1711/2111 (save file I/O + 512-byte XOR header)\n"
         "CSBWin SaveGame.cpp:1768-1855 (GAMEBLOCK2/ITEM16/characters/timers load order)\n"
+        "CSBWin SaveGame.cpp:211-260/298-385 (Extended Features DSA + tail corpus gate)\n"
         "CSBWin CSBCode.cpp:9061-9069 (UnscrambleStream checksum gate)\n"
         "CSBWin CSBCode.cpp:421-422 (csbgame.dat / csbgame.bak literals)\n"
         "CSBWin CSBCode.cpp:9813 (SaveGameFilename pointer)\n"

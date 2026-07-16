@@ -81,6 +81,26 @@ static void test_write_le32(uint8_t *b, size_t off, uint32_t v)
     b[off + 3u] = (uint8_t)((v >> 24) & 0xFFu);
 }
 
+static uint32_t extended_form_checksum(const uint8_t *bytes, size_t size)
+{
+    uint32_t result = 0u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + bytes[i];
+    }
+    return result;
+}
+
+static uint32_t extended_dsa_checksum(const uint8_t *bytes, size_t size)
+{
+    uint32_t result = 0xffffu;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        result = result * 0xbb40e62du + 11u + bytes[i];
+    }
+    return result;
+}
+
 static void test_scramble_block(uint8_t *buf, uint16_t initial_hash,
                                 uint16_t numword)
 {
@@ -123,6 +143,102 @@ static void build_valid_csbwin_512_header(uint8_t *buf)
     }
     test_write_le16(buf, 254u, d5);
     test_scramble_block(buf + 256u, 0u, 128u);
+}
+
+static size_t build_extended_features_fixture(uint8_t *bytes,
+                                              size_t capacity,
+                                              uint16_t dsa_count)
+{
+    uint8_t *header = bytes;
+    uint8_t *type_map;
+    uint8_t *index_map;
+    const uint32_t map_length = 4u;
+    size_t total = 512u + (size_t)map_length * 3u;
+    size_t i;
+
+    if (!bytes || capacity < total) return 0u;
+    memset(bytes, 0, total);
+    memcpy(header, " Extended Features ", 19u);
+    test_write_le32(header, 20u, map_length);
+    header[36u] = (uint8_t)'Z';
+    header[37u] = 0x01u; /* LevelDSAInfoPresent */
+    test_write_le16(header, 38u, dsa_count);
+    test_write_le32(header, 40u, 0x12345678u);
+    test_write_le32(header, 44u, 5u);
+    test_write_le32(header, 48u, 99u);
+    test_write_le32(header, 52u, 0x10203040u);
+    test_write_le32(header, 56u, 0x50607080u);
+    test_write_le32(header, 60u, 0x81234567u);
+    test_write_le32(header, 64u, 0xA5u);
+    test_write_le32(header, 68u, 3u);
+    test_write_le32(header, 72u, 0xfffffffdu);
+    test_write_le32(header, 76u, 0x10203040u);
+    test_write_le32(header, 80u, 0x80000000u);
+    test_write_le32(header, 84u, 0x7fffffffu);
+    test_write_le32(header, 88u, 0xa1b2c3d4u);
+    test_write_le32(header, 92u, 0xe5f60718u);
+    for (i = 0u; i < 8u; ++i) header[96u + i] = (uint8_t)(0x90u + i);
+    type_map = bytes + 512u;
+    index_map = type_map + map_length;
+    for (i = 0u; i < map_length; ++i) {
+        type_map[i] = (uint8_t)(0x20u + i);
+        index_map[i * 2u] = (uint8_t)(0x40u + i);
+        index_map[i * 2u + 1u] = (uint8_t)(0x60u + i);
+    }
+    test_write_le32(header, 24u, extended_form_checksum(type_map, map_length));
+    test_write_le32(header, 28u,
+                    extended_form_checksum(index_map, map_length * 2u));
+    test_write_le32(header, 32u, 0u);
+    test_write_le32(header, 32u, extended_form_checksum(header, 512u));
+    return total;
+}
+
+static size_t append_extended_dsa_fixture(uint8_t *bytes, size_t offset,
+                                          size_t capacity)
+{
+    size_t start = offset;
+    size_t i;
+
+    if (!bytes || capacity - offset < 128u) return 0u;
+    test_write_le32(bytes, offset, 7u); offset += 4u;
+    for (i = 0u; i < 80u; ++i) bytes[offset + i] = (uint8_t)('A' + (i % 3u));
+    offset += 80u;
+    test_write_le16(bytes, offset, 3u); offset += 2u;
+    bytes[offset++] = 1u;
+    bytes[offset++] = 9u;
+    test_write_le32(bytes, offset, 2u); offset += 4u;
+    test_write_le32(bytes, offset, 0u); offset += 4u;
+    test_write_le32(bytes, offset, 1u); offset += 4u;
+    test_write_le32(bytes, offset, 1u); offset += 4u;
+    test_write_le32(bytes, offset, 1u); offset += 4u;
+    test_write_le32(bytes, offset, 3u); offset += 4u;
+    test_write_le32(bytes, offset, 2u); offset += 4u;
+    test_write_le16(bytes, offset, 0x1234u); offset += 2u;
+    test_write_le16(bytes, offset, 0xabcdu); offset += 2u;
+    test_write_le32(bytes, offset, extended_dsa_checksum(bytes + start,
+                                                         offset - start));
+    return offset + 4u;
+}
+
+static size_t build_dsa_corpus_fixture(uint8_t *bytes, size_t capacity)
+{
+    size_t size;
+
+    size = build_extended_features_fixture(bytes, capacity, 1u);
+    if (size == 0u) return 0u;
+    size = append_extended_dsa_fixture(bytes, size, capacity);
+    if (size == 0u || capacity - size < 5u + 9u +
+            CSB_V1_CSBWIN_BLOCK1_BYTES) {
+        return 0u;
+    }
+    memset(bytes + size, 'I', 5u);
+    size += 5u;
+    bytes[size++] = 3u; bytes[size++] = 2u; bytes[size++] = 7u;
+    bytes[size++] = 63u; bytes[size++] = 31u; bytes[size++] = 9u;
+    bytes[size++] = 255u; bytes[size++] = 255u; bytes[size++] = 255u;
+    build_valid_csbwin_512_header(bytes + size);
+    size += CSB_V1_CSBWIN_BLOCK1_BYTES;
+    return size;
 }
 
 static int write_test_file(const char *path, const uint8_t *bytes, size_t size)
@@ -467,10 +583,115 @@ int main(void)
               "classify NULL out returns ERR_NULL");
     }
 
+    /* ── Strict DSA/save-runtime corpus gate ── */
+    {
+        CSB_V1_CSBWinDSASaveCorpusReceipt receipt;
+        uint8_t scratch[2048];
+        size_t s;
+        int rc;
+
+        s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
+        CHECK(s > 0u, "DSA corpus fixture built");
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, &receipt);
+        CHECK(rc == 1, "DSA corpus receipt returns positive admission");
+        CHECK(receipt.valid && receipt.corpus_positive &&
+                  receipt.runtime_handoff_ready,
+              "DSA corpus receipt marks runtime handoff ready");
+        CHECK(receipt.extended_tail_valid && receipt.dsa_section_valid &&
+                  receipt.dsa_has_runtime_actions,
+              "DSA corpus receipt requires authenticated DSA actions");
+        CHECK(receipt.features.dsa_count == 1u &&
+                  receipt.dsa.action_count == 1u &&
+                  receipt.dsa.program_word_count == 2u,
+              "DSA corpus receipt preserves DSA aggregate counts");
+        CHECK(receipt.tail.level_index_present == 1 &&
+                  receipt.tail.level_index_entry_count == 2u &&
+                  receipt.tail.level_dsa_index[3][2] == 7u,
+              "DSA corpus receipt preserves level-index proof");
+        CHECK(receipt.gameblock1_valid &&
+                  receipt.gameblock1.verdict ==
+                      CSB_V1_CSBWIN_512_VERDICT_CSB,
+              "DSA corpus receipt requires following GAMEBLOCK1 header");
+        CHECK(strcmp(receipt.decision_label,
+                     "accept_dsa_save_runtime_corpus") == 0,
+              "DSA corpus positive decision label");
+
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/not_a_save.bin", scratch, s, &receipt);
+        CHECK(rc == 0 && !receipt.corpus_positive &&
+                  !receipt.runtime_handoff_ready,
+              "DSA corpus rejects non-CSBWin filenames");
+        CHECK(strcmp(receipt.decision_label,
+                     "reject_dsa_corpus_non_csbwin_filename") == 0,
+              "DSA corpus non-filename decision label");
+
+        s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, &receipt);
+        CHECK(rc == 1 && receipt.tail.game_info_offset > 0u,
+              "DSA corpus positive receipt exposes tail offsets for negatives");
+        scratch[receipt.tail.game_info_offset + 5u + 1u] = 32u;
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, &receipt);
+        CHECK(rc == 0 && !receipt.corpus_positive &&
+                  !receipt.extended_tail_valid,
+              "DSA corpus rejects tampered level-index slot");
+        CHECK(strcmp(receipt.decision_label,
+                     "reject_dsa_corpus_extended_tail_invalid") == 0,
+              "DSA corpus tampered level-index decision label");
+
+        s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, &receipt);
+        CHECK(rc == 1 && receipt.dsa.next_payload_offset >= 4u,
+              "DSA corpus positive receipt exposes DSA checksum offset");
+        scratch[receipt.dsa.next_payload_offset - 4u] ^= 0x01u;
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, &receipt);
+        CHECK(rc == 0 && !receipt.corpus_positive &&
+                  !receipt.extended_tail_valid,
+              "DSA corpus rejects bad DSA checksum");
+
+        s = build_extended_features_fixture(scratch, sizeof(scratch), 0u);
+        scratch[37u] = 0u;
+        test_write_le32(scratch, 32u, 0u);
+        test_write_le32(scratch, 32u, extended_form_checksum(scratch, 512u));
+        memset(scratch + s, 'Q', 5u);
+        s += 5u;
+        build_valid_csbwin_512_header(scratch + s);
+        s += CSB_V1_CSBWIN_BLOCK1_BYTES;
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, &receipt);
+        CHECK(rc == 0 && !receipt.corpus_positive &&
+                  !receipt.dsa_section_valid,
+              "DSA corpus rejects Extended Features without DSA");
+        CHECK(strcmp(receipt.decision_label,
+                     "reject_dsa_corpus_no_dsa_section") == 0,
+              "DSA corpus no-DSA decision label");
+
+        s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch,
+            s - CSB_V1_CSBWIN_BLOCK1_BYTES, &receipt);
+        CHECK(rc == 0 && !receipt.corpus_positive &&
+                  !receipt.gameblock1_valid,
+              "DSA corpus rejects missing following GAMEBLOCK1");
+        CHECK(strcmp(receipt.decision_label,
+                     "reject_dsa_corpus_missing_valid_gameblock1") == 0,
+              "DSA corpus missing-GAMEBLOCK1 decision label");
+
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
+            "/tmp/csbgame.dat", scratch, s, NULL);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_NULL,
+              "DSA corpus NULL out returns ERR_NULL");
+    }
+
     /* ── File-backed discovery wrapper ── */
     {
         CSB_V1_CSBWinSaveDiscoveryResult disc;
-        uint8_t scratch[1024];
+        CSB_V1_CSBWinDSASaveCorpusReceipt dsa_receipt;
+        uint8_t scratch[2048];
         char dir[256];
         char path[256];
         size_t s;
@@ -519,6 +740,24 @@ int main(void)
         CHECK(strcmp(disc.decision_label,
                      "reject_csbwin_512_header_valid_import_pending") == 0,
               "classify_file valid 512-byte header decision label");
+        (void)remove(path);
+
+        s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
+        snprintf(path, sizeof(path), "%s/csbgame.bak", dir);
+        CHECK(write_test_file(path, scratch, s),
+              "DSA corpus file fixture write succeeds");
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+            path, 0u, &dsa_receipt);
+        CHECK(rc == 1 && dsa_receipt.corpus_positive &&
+                  dsa_receipt.runtime_handoff_ready,
+              "DSA corpus file wrapper admits positive corpus");
+        CHECK(strcmp(dsa_receipt.decision_label,
+                     "accept_dsa_save_runtime_corpus") == 0,
+              "DSA corpus file wrapper decision label");
+        rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+            path, s - 1u, &dsa_receipt);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_TRUNCATED,
+              "DSA corpus file wrapper over max_size returns TRUNCATED");
         (void)remove(path);
 
         rc = csb_v1_csbwin_save_loader_boundary_classify_file(

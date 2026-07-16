@@ -237,6 +237,74 @@ int theron_v1_track02_loader_intake_semantic_gate(
     return 1;
 }
 
+int theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
+    const Theron_V1Track02LoaderSemanticGateReceipt *loader_gate,
+    const Theron_V1Track02Post3800ConsumerTraceFacts *facts,
+    Theron_V1Track02Post3800ConsumerSemanticReceipt *out_receipt) {
+    Theron_V1Track02Post3800ConsumerSemanticReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader_gate || !facts || !out_receipt || !loader_gate->valid ||
+        !loader_gate->no_fallback ||
+        !loader_gate->real_payload_available ||
+        !loader_gate->level_envelope_available ||
+        !loader_gate->post_envelope_available ||
+        loader_gate->dungeon_record_semantics_proven ||
+        loader_gate->object_table_semantics_proven ||
+        loader_gate->bitmap_route_bound ||
+        loader_gate->palette_binding_verified ||
+        loader_gate->rgba_output_allowed ||
+        loader_gate->fallback_visuals_allowed ||
+        !facts->authenticated_original_trace ||
+        !facts->post_3800_execution_observed ||
+        !facts->same_capture_as_loader_payload ||
+        (facts->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         facts->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
+        facts->track02_variant != loader_gate->track02_variant ||
+        facts->record != loader_gate->record ||
+        facts->payload_checksum == 0u ||
+        facts->level_envelope_checksum == 0u ||
+        facts->post_envelope_checksum == 0u ||
+        facts->payload_checksum != loader_gate->payload_checksum ||
+        facts->level_envelope_checksum !=
+            loader_gate->level_envelope_checksum ||
+        facts->post_envelope_checksum !=
+            loader_gate->post_envelope_checksum ||
+        facts->consumer_trace_checksum == 0u ||
+        !facts->dungeon_record_consumer_observed ||
+        !facts->object_table_consumer_observed ||
+        !facts->bitmap_consumer_observed ||
+        !facts->palette_consumer_observed ||
+        facts->synthetic_dungeon_promoted ||
+        facts->synthetic_object_table_promoted ||
+        facts->synthetic_bitmap_promoted ||
+        facts->synthetic_palette_promoted ||
+        facts->fallback_visuals_observed ||
+        facts->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.no_fallback = 1;
+    receipt.original_consumer_trace_bound = 1;
+    receipt.track02_variant = facts->track02_variant;
+    receipt.record = facts->record;
+    receipt.payload_checksum = facts->payload_checksum;
+    receipt.level_envelope_checksum = facts->level_envelope_checksum;
+    receipt.post_envelope_checksum = facts->post_envelope_checksum;
+    receipt.consumer_trace_checksum = facts->consumer_trace_checksum;
+    receipt.dungeon_record_semantics_proven = 1;
+    receipt.object_table_semantics_proven = 1;
+    receipt.bitmap_route_bound = 1;
+    receipt.palette_binding_verified = 1;
+    receipt.rgba_output_allowed = 1;
+    receipt.fallback_visuals_allowed = 0;
+    receipt.status =
+        "post_3800_original_consumer_semantics_bound_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_track02_loader_intake_handoff_iso_level_object_record(
     const Theron_V1Track02IsoLevelObjectReadFacts *facts,
     const uint8_t *payload,

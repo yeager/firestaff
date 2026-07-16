@@ -38,9 +38,21 @@
     `QUERY_MEMENTI_FROM`, `ADD_CACHE_HASH`,
     `QUERY_MEMENT_BUFF_FROM_CACHE_INDEX`, `GET_TEMP_CACHE_HASH`, and
     `ALLOC_TEMP_CACHE_INDEX` subset are now source-mapped in
-    `dm2_v1_skproject_core`. Remaining adjacent cache/mement work is
-    `RECYCLE_MEMENTI`, `TEST_MEMENT`, free/recycle eviction lifecycle, and
-    image/pict mement allocation/free; do not fabricate image buffers.
+    `dm2_v1_skproject_core`. The adjacent bounded picture-mement receipt
+    slice below covers `RECYCLE_MEMENTI`, `TEST_MEMENT`, and image/pict
+    admission/free at receipt level. Remaining cache/mement work is full CPX
+    heap allocation, indexed mement eviction/list ordering, and GDAT decode
+    buffer ownership; do not fabricate image buffers.
+  - 2026-07-16 DM2 picture-mement update: skproject `TEST_MEMENT`,
+    `RECYCLE_MEMENTI`, `ALLOC_NEW_PICT`, `ALLOC_IMAGE_MEMENT`,
+    `ALLOC_PICT_MEMENT`, `CALC_PICT_ENT_HASH`, `FREE_IMAGE_MEMENT`, and
+    `FREE_PICT_MEMENT` now have source-named bounded receipts in
+    `dm2_v1_skproject_core`. These receipts preserve skproject's picture
+    allocation sizes, picture-entry hash packing, image-vs-cache picture
+    routing, and the Y=-32/8bpp image mement admission gate. Remaining
+    adjacent DM2 work is still full CPX heap allocation, indexed mement
+    eviction, GDAT image decode buffers, and renderer/HUD consumption with
+    real data; do not promote these receipts into decoded graphics.
   - 2026-07-16 DM2 c_map real-data update: `GET_TILE_VALUE`,
     `GET_ADDRESS_OF_TILE_RECORD`, `IS_TILE_PASSAGE`, and SKWIN
     `IS_TILE_SOLID` now have source-named dungeon-loader receipts verified
@@ -62,9 +74,16 @@
   resolution, square lookup, relative square lookup, and relative square type;
   `F0179`, `F0180`, `F0183`, `F0184`, `F0222`, and `F0223` are now closed
   with focused raw C04 active-state/source-square-type tests. The audit rows
-  are closed as `VERIFIED_SOURCE_MAPPING`. Remaining
-  prioritized backlog symbols are `F0139`, `F0173`, `F0174`,
-  `F0185`-`F0193`, `F0208`, and `F0224`. Prefer the next
+  are closed as `VERIFIED_SOURCE_MAPPING`.
+  - 2026-07-16 update: `F0173` and `F0174` now have DM1-owned current-map
+    receipts in `dm1_v1_dungeon_data_pc34_compat`: F0173 updates only the
+    loaded current-map index/dimensions, while F0174 composes that path and
+    updates party map metadata without changing party x/y/direction. Invalid
+    map indices reject before either current or party state mutates. Covered
+    by `dm1_v1_f0173_f0174_current_map_pc34_compat`; audit rows are closed as
+    `VERIFIED_SOURCE_MAPPING`.
+  Remaining prioritized backlog symbols are `F0139`, `F0185`-`F0193`,
+  `F0208`, and `F0224`. Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
   audit hits as implementation evidence. Note: `tools/symbol_backlog.py` was
@@ -92,6 +111,15 @@
     three source parts were accepted. Remaining CSB work is still real
     packaged title/HUD/door capture breadth and positive DSA/save-runtime
     corpus proof, not inferred save-tail or DSA construction.
+  - 2026-07-16 update: the CSBWin DSA/save-runtime corpus gate is now
+    explicit. A staged CSBWin save can be marked DSA runtime-handoff ready
+    only when the filename is recognised, the Extended Features DSA section
+    authenticates with real actions/program words, the game-info/level-index
+    tail verifies, and the next bytes are a valid GAMEBLOCK1 header. This is
+    a gate for future operator-supplied corpus bytes; it does not vendor or
+    fabricate a positive real save. Remaining CSB work is still real
+    packaged title/HUD/door capture breadth and real local DSA-bearing corpus
+    execution through the gate.
   - 2026-07-16 update: `PANEL.C F0347_INVENTORY_DrawPanel` now has a
     CSB-owned HUD-panel receipt over the existing real C017/C040 startup
     panel blit. It proves only source-owned C017 plus optional C040 hashes
@@ -156,6 +184,14 @@
     real PRS3 opcode/output proof, Saturn presentation capture, runtime DGN
     material decode semantics, Track 02 SFX/script blockers, and broad
     startup/menu/DGN host-route completion.
+  - 2026-07-16 update: MENU.BPK PRS3 now has a bounded opcode-prefix witness
+    over validated PRS3 frames. It records the control byte, literal/backref
+    command counts, first backref operands, consumed control/operand bytes,
+    bit order, and stop reason without allocating decoded output or changing
+    runtime route admission. Remaining PRS3 work is still original Saturn
+    opcode semantics, exact decoded output proof, palette/output ordering,
+    and a reviewed host upload route; renderer and DGN material handoffs
+    remain blocked with no fallback visuals.
 
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
@@ -1015,6 +1051,14 @@
   source material. Remaining: operator-stage a real ISO capture through that
   gate and independently prove object/bitmap semantics; no raw-BIN trace,
   sector conversion, or synthetic dungeon may authorize them.
+  2026-07-16 update: raw-BIN loader semantics now have a post-`$3800`
+  original-consumer gate that can promote dungeon-record, object-table,
+  bitmap, palette, and source RGBA availability only when a same-capture
+  original trace matches the existing loader checksums and records every
+  consumer. Synthetic dungeon/object/bitmap/palette promotion and all
+  fallback visuals keep the route closed. Remaining Theron work is staging a
+  real parser/corpus for that consumer trace and wiring runtime consumers to
+  this receipt rather than to opaque loader bytes.
 
 - 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
   receipt inspection is deliberately separate from the live Soul Room
@@ -1578,6 +1622,12 @@
     duplicate slots, and malformed receipts remain unexportable. The opt-in
     real-package probe remains the required positive evidence for a requeued
     original save; no package, timer, dungeon, or DSA fixture was added.
+  - 2026-07-16 follow-up: the CSBWin DSA/save-runtime corpus receipt now
+    requires recognised CSBWin save filenames plus a verified Extended
+    Features DSA section, game-info/level-index tail, and following GAMEBLOCK1
+    header before declaring runtime handoff ready. This narrows the admission
+    gate for a future authentic DSA-bearing corpus; it still does not provide
+    the missing real save/dungeon pair.
   - 2026-07-14 follow-up: the opt-in Extended Features/DSA handoff now
     snapshots the supplied original `Dungeon.dat` and `csbgame*.dat` before
     production resume, then revalidates both complete-file size/FNV receipts

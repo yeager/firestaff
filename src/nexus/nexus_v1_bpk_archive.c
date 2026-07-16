@@ -1612,6 +1612,177 @@ int nexus_v1_bpk_archive_prs3_framed_decode_evidence(
     return 0;
 }
 
+static int prs3_opcode_prefix_walk(
+    const uint8_t *data,
+    size_t size,
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order,
+    uint32_t command_limit,
+    Nexus_V1_BpkPrs3OpcodePrefixEvidence *row) {
+    size_t cursor = 0U;
+    uint8_t control = 0U;
+    unsigned int bits_left = 0U;
+
+    if (!row) return 0;
+    if (!data || size == 0U) {
+        row->status = NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_STREAM_END;
+        return 1;
+    }
+
+    while (row->commands_observed < command_limit) {
+        int flag;
+        int loaded_control = (bits_left == 0U);
+        if (loaded_control) {
+            if (cursor >= size) {
+                row->status = NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_STREAM_END;
+                row->body_bytes_consumed = (uint32_t)cursor;
+                return 1;
+            }
+            control = data[cursor++];
+            ++row->control_bytes_consumed;
+            if (row->commands_observed == 0U) {
+                row->first_control_byte = control;
+            }
+            bits_left = 8U;
+        }
+
+        if (bit_order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST) {
+            flag = control & 1U;
+            control >>= 1U;
+        } else {
+            flag = (control >> 7U) & 1U;
+            control <<= 1U;
+        }
+        --bits_left;
+        ++row->commands_observed;
+
+        if (flag) {
+            if (cursor >= size) {
+                row->status =
+                    NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_TRUNCATED_OPERAND;
+                row->body_bytes_consumed = (uint32_t)cursor;
+                return 1;
+            }
+            ++cursor;
+            ++row->literal_commands;
+            ++row->operand_bytes_consumed;
+        } else {
+            uint8_t byte0;
+            uint8_t byte1;
+            uint32_t raw_offset;
+            uint32_t length;
+            if (cursor + 2U > size) {
+                row->status =
+                    NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_TRUNCATED_OPERAND;
+                row->body_bytes_consumed = (uint32_t)cursor;
+                return 1;
+            }
+            byte0 = data[cursor];
+            byte1 = data[cursor + 1U];
+            cursor += 2U;
+            ++row->backref_commands;
+            row->operand_bytes_consumed += 2U;
+            if (!row->first_backref_observed) {
+                raw_offset = (uint32_t)byte0 |
+                             ((((uint32_t)byte1) & 0xf0U) << 4);
+                length = 3U + (((uint32_t)byte1) & 0x0fU);
+                row->first_backref_raw_offset = raw_offset;
+                row->first_backref_length = length;
+                row->first_backref_observed = 1;
+            }
+        }
+    }
+
+    row->status = NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_COMMAND_LIMIT;
+    row->body_bytes_consumed = (uint32_t)cursor;
+    return 1;
+}
+
+int nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order,
+    uint32_t command_limit,
+    Nexus_V1_BpkPrs3OpcodePrefixEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3OpcodePrefixSummary *out_summary) {
+    uint32_t count;
+    uint32_t used = 0U;
+
+    if (!out_summary) return -1;
+    memset(out_summary, 0, sizeof(*out_summary));
+    out_summary->capacity = entry_capacity;
+    out_summary->bit_order = bit_order;
+    if (bit_order != NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_LSB_FIRST &&
+        bit_order != NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST) {
+        return -1;
+    }
+    if (command_limit == 0U) return -1;
+    if (read_header(data, data_size, &count) != 0) return -1;
+    out_summary->archive_entries = count;
+
+    for (uint32_t i = 0U; i < count; ++i) {
+        Nexus_V1_BpkPrs3StreamPlan plan;
+        Nexus_V1_BpkPrs3OpcodePrefixEvidence row;
+        uint64_t framed_body;
+        int rc = nexus_v1_bpk_archive_prs3_stream_plan(data, data_size, i,
+                                                        &plan);
+        if (rc == NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3 ||
+            rc == NEXUS_V1_BPK_PRS3_STREAM_ERR_UNSUPPORTED_MODE) {
+            continue;
+        }
+        if (rc != NEXUS_V1_BPK_PRS3_STREAM_OK) continue;
+
+        memset(&row, 0, sizeof(row));
+        row.entry_index = i;
+        row.mode = plan.mode;
+        row.expected_output_bytes = plan.expected_output_bytes;
+        row.body_offset = plan.body_offset;
+        row.body_size = plan.body_size;
+        row.first_control_offset = plan.body_offset;
+        row.requested_command_limit = command_limit;
+        ++out_summary->prs3_surfaces;
+
+        framed_body = (uint64_t)plan.stream_size + 4U;
+        if (plan.header_first_u32 < framed_body ||
+            plan.header_first_u32 > framed_body + 3U) {
+            row.status = NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_UNVALIDATED_FRAME;
+            ++out_summary->unvalidated_frames;
+        } else {
+            ++out_summary->frame_validated;
+            if (!prs3_opcode_prefix_walk(data + plan.body_offset,
+                                         plan.body_size,
+                                         bit_order,
+                                         command_limit,
+                                         &row)) {
+                return -1;
+            }
+            ++out_summary->witnessed;
+            out_summary->total_commands_observed += row.commands_observed;
+            out_summary->total_literal_commands += row.literal_commands;
+            out_summary->total_backref_commands += row.backref_commands;
+            if (row.status ==
+                NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_COMMAND_LIMIT) {
+                ++out_summary->command_limit_reached;
+            } else if (row.status ==
+                       NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_STREAM_END) {
+                ++out_summary->stream_end;
+            } else if (row.status ==
+                       NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_TRUNCATED_OPERAND) {
+                ++out_summary->truncated_operands;
+            }
+        }
+
+        if (out_entries && used < entry_capacity) {
+            out_entries[used] = row;
+        } else if (out_entries) {
+            out_summary->truncated = 1;
+        }
+        ++used;
+    }
+    out_summary->used = used;
+    return 0;
+}
+
 const char *nexus_v1_bpk_prs3_candidate_bit_order_name(
     Nexus_V1_BpkPrs3CandidateBitOrder bit_order) {
     switch (bit_order) {
@@ -1650,6 +1821,22 @@ const char *nexus_v1_bpk_prs3_framed_eval_status_name(
         return "complete-trailing";
     case NEXUS_V1_BPK_PRS3_FRAMED_EVAL_COMPLETE_EXACT:
         return "complete-exact";
+    default:
+        return "unknown";
+    }
+}
+
+const char *nexus_v1_bpk_prs3_opcode_prefix_status_name(
+    Nexus_V1_BpkPrs3OpcodePrefixStatus status) {
+    switch (status) {
+    case NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_UNVALIDATED_FRAME:
+        return "unvalidated-frame";
+    case NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_COMMAND_LIMIT:
+        return "command-limit";
+    case NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_STREAM_END:
+        return "stream-end";
+    case NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_TRUNCATED_OPERAND:
+        return "truncated-operand";
     default:
         return "unknown";
     }

@@ -645,6 +645,58 @@ typedef struct {
     int decoder_promoted; /* Always zero: exact trial results are evidence. */
 } Nexus_V1_BpkPrs3FramedEvalSummary;
 
+/* Bounded opcode-prefix witness for the same trial command grammar used by
+ * the diagnostic PRS3 evaluators. It records only which stream bytes an
+ * opcode reader would consume under an explicit control-bit order. It never
+ * allocates an output surface, never validates pixels, and cannot change a
+ * runtime route. */
+typedef enum {
+    NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_UNVALIDATED_FRAME = 0,
+    NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_COMMAND_LIMIT = 1,
+    NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_STREAM_END = 2,
+    NEXUS_V1_BPK_PRS3_OPCODE_PREFIX_TRUNCATED_OPERAND = 3
+} Nexus_V1_BpkPrs3OpcodePrefixStatus;
+
+typedef struct {
+    uint32_t entry_index;
+    uint8_t mode;
+    uint32_t expected_output_bytes;
+    uint32_t body_offset;
+    uint32_t body_size;
+    uint32_t first_control_offset;
+    uint8_t first_control_byte;
+    uint32_t requested_command_limit;
+    uint32_t commands_observed;
+    uint32_t literal_commands;
+    uint32_t backref_commands;
+    uint32_t control_bytes_consumed;
+    uint32_t operand_bytes_consumed;
+    uint32_t body_bytes_consumed;
+    uint32_t first_backref_raw_offset;
+    uint32_t first_backref_length;
+    int first_backref_observed;
+    Nexus_V1_BpkPrs3OpcodePrefixStatus status;
+} Nexus_V1_BpkPrs3OpcodePrefixEvidence;
+
+typedef struct {
+    uint32_t archive_entries;
+    uint32_t prs3_surfaces;
+    uint32_t frame_validated;
+    uint32_t witnessed;
+    uint32_t unvalidated_frames;
+    uint32_t command_limit_reached;
+    uint32_t stream_end;
+    uint32_t truncated_operands;
+    uint32_t total_commands_observed;
+    uint32_t total_literal_commands;
+    uint32_t total_backref_commands;
+    uint32_t capacity;
+    uint32_t used;
+    int truncated;
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order;
+    int decoder_promoted; /* Always zero: opcode witness is not decode. */
+} Nexus_V1_BpkPrs3OpcodePrefixSummary;
+
 typedef enum {
     NEXUS_V1_BPK_DECODE_ROUTE_INVALID = 0,
     NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED = 1,
@@ -806,6 +858,18 @@ int nexus_v1_bpk_archive_prs3_framed_decode_evidence(
     uint32_t entry_capacity,
     Nexus_V1_BpkPrs3FramedEvalSummary *out_summary);
 
+/* Walk at most command_limit trial opcodes from each validated PRS3 frame and
+ * report the consumed control/operand bytes. This is diagnostic-only opcode
+ * proof; it never materializes output bytes. */
+int nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkPrs3CandidateBitOrder bit_order,
+    uint32_t command_limit,
+    Nexus_V1_BpkPrs3OpcodePrefixEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3OpcodePrefixSummary *out_summary);
+
 const char *nexus_v1_bpk_prs3_candidate_bit_order_name(
     Nexus_V1_BpkPrs3CandidateBitOrder bit_order);
 
@@ -814,6 +878,9 @@ const char *nexus_v1_bpk_prs3_candidate_status_name(
 
 const char *nexus_v1_bpk_prs3_framed_eval_status_name(
     Nexus_V1_BpkPrs3FramedEvalStatus status);
+
+const char *nexus_v1_bpk_prs3_opcode_prefix_status_name(
+    Nexus_V1_BpkPrs3OpcodePrefixStatus status);
 
 int nexus_v1_bpk_archive_runtime_decode_receipt(
     const uint8_t *data,

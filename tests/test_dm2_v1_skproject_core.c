@@ -157,12 +157,144 @@ static void test_cache_hash_helpers(void)
           "ALLOC_TEMP_CACHE_INDEX fails closed when cache table is full");
 }
 
+static void test_picture_mement_helpers(void)
+{
+    DM2_V1_SkprojectCacheState state;
+    DM2_V1_SkprojectNewPictReceipt new_pict;
+    DM2_V1_SkprojectExtendedPictureRef ext;
+    DM2_V1_SkprojectImageMementRequest image;
+    DM2_V1_SkprojectPictureRef pict;
+    DM2_V1_SkprojectImageMementReceipt image_receipt;
+    DM2_V1_SkprojectPictMementReceipt pict_receipt;
+    DM2_V1_SkprojectFreeImageMementReceipt free_receipt;
+    DM2_V1_SkprojectRecycleMementReceipt recycle_receipt;
+    uint16_t pinned_entry = DM2_V1_SKPROJECT_MEMENT_NONE;
+
+    dm2_v1_skproject_cache_state_init(&state, 4, 8, 4);
+    CHECK(dm2_v1_skproject_test_mement(-20, -20) == 1,
+          "TEST_MEMENT accepts matching stored length");
+    CHECK(dm2_v1_skproject_test_mement(-20, -24) == 0,
+          "TEST_MEMENT rejects mismatched stored length");
+    CHECK(dm2_v1_skproject_alloc_new_pict(
+              7u, 13u, 5u, 4u, &new_pict) == 1 &&
+              new_pict.payload_bytes == 35u &&
+              new_pict.header_width == 13u &&
+              new_pict.header_height == 5u &&
+              new_pict.header_bpp == 4u,
+          "ALLOC_NEW_PICT stores headers and 4bpp rounded row bytes");
+    CHECK(dm2_v1_skproject_alloc_new_pict(
+              8u, 13u, 5u, 8u, &new_pict) == 1 &&
+              new_pict.payload_bytes == 65u,
+          "ALLOC_NEW_PICT keeps 8bpp row bytes unrounded");
+
+    ext.w6 = 0x3fffu;
+    ext.w52 = 0x00ffu;
+    ext.w54 = 0x003fu;
+    CHECK(dm2_v1_skproject_calc_pict_ent_hash(&ext) ==
+              (((uint32_t)0x1fffu << 12) | ((uint32_t)0x7fu << 5) | 0x1fu),
+          "CALC_PICT_ENT_HASH masks and packs w6/w52/w54");
+
+    memset(&image, 0, sizeof(image));
+    image.cls1 = 1u;
+    image.cls2 = 2u;
+    image.cls4 = 3u;
+    image.data_index = 5u;
+    image.fallback_data_index = 9u;
+    image.y_offset = -32;
+    image.bits_pixel = 8u;
+    image.existing_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+    CHECK(dm2_v1_skproject_alloc_image_mement(
+              &state, &image, &pinned_entry, &image_receipt) == 1 &&
+              image_receipt.status ==
+                  DM2_V1_SKPROJECT_IMAGE_MEMENT_PINNED_ENTRY &&
+              pinned_entry == 5u,
+          "ALLOC_IMAGE_MEMENT pins 8bpp Y=-32 real image entry");
+    image.y_offset = -31;
+    pinned_entry = DM2_V1_SKPROJECT_MEMENT_NONE;
+    CHECK(dm2_v1_skproject_alloc_image_mement(
+              &state, &image, &pinned_entry, &image_receipt) == 1 &&
+              image_receipt.status ==
+                  DM2_V1_SKPROJECT_IMAGE_MEMENT_REJECT_Y_OFFSET &&
+              pinned_entry == DM2_V1_SKPROJECT_MEMENT_NONE,
+          "ALLOC_IMAGE_MEMENT rejects non-source Y offset");
+    image.y_offset = -32;
+    image.bits_pixel = 4u;
+    CHECK(dm2_v1_skproject_alloc_image_mement(
+              &state, &image, &pinned_entry, &image_receipt) == 1 &&
+              image_receipt.status ==
+                  DM2_V1_SKPROJECT_IMAGE_MEMENT_REJECT_BPP,
+          "ALLOC_IMAGE_MEMENT rejects non-8bpp image mement");
+    image.bits_pixel = 8u;
+    image.data_absent = 1;
+    image.fallback_absent = 0;
+    CHECK(dm2_v1_skproject_alloc_image_mement(
+              &state, &image, &pinned_entry, &image_receipt) == 1 &&
+              image_receipt.status ==
+                  DM2_V1_SKPROJECT_IMAGE_MEMENT_PINNED_ENTRY &&
+              image_receipt.selected_data_index == 9u,
+          "ALLOC_IMAGE_MEMENT falls back to default when primary is absent");
+    image.data_index = DM2_V1_SKPROJECT_MEMENT_NONE;
+    CHECK(dm2_v1_skproject_alloc_image_mement(
+              &state, &image, &pinned_entry, &image_receipt) == 1 &&
+              image_receipt.status == DM2_V1_SKPROJECT_IMAGE_MEMENT_NO_ENTRY,
+          "ALLOC_IMAGE_MEMENT does not fabricate fallback for missing primary");
+    image.data_index = 5u;
+    image.data_absent = 0;
+    image.fallback_absent = 1;
+    image.existing_mementi = 2u;
+    CHECK(dm2_v1_skproject_alloc_image_mement(
+              &state, &image, &pinned_entry, &image_receipt) == 1 &&
+              image_receipt.status ==
+                  DM2_V1_SKPROJECT_IMAGE_MEMENT_TOUCHED_EXISTING &&
+              image_receipt.touched_mementi == 2u,
+          "ALLOC_IMAGE_MEMENT touches existing mement instead of pinning");
+
+    CHECK(dm2_v1_skproject_recycle_mementi(
+              &state, 2u, DM2_V1_SKPROJECT_MEMENT_NONE, 0u,
+              &recycle_receipt) == 1 &&
+              recycle_receipt.valid &&
+              recycle_receipt.recycled_to_free_list,
+          "RECYCLE_MEMENTI records free-list recycle for w4=0xffff");
+
+    image.existing_mementi = 1u;
+    state.raw_to_mement[5] = 1u;
+    pinned_entry = 5u;
+    CHECK(dm2_v1_skproject_free_image_mement(
+              &state, &image, &pinned_entry, &free_receipt) == 1 &&
+              free_receipt.cleared_pinned_entry &&
+              free_receipt.recycled_existing &&
+              state.raw_to_mement[5] == DM2_V1_SKPROJECT_MEMENT_NONE,
+          "FREE_IMAGE_MEMENT clears pinned entry and recycles existing mement");
+
+    memset(&pict, 0, sizeof(pict));
+    pict.w4 = 0x0004u;
+    image.existing_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+    pinned_entry = DM2_V1_SKPROJECT_MEMENT_NONE;
+    CHECK(dm2_v1_skproject_alloc_pict_mement(
+              &state, &pict, &image, &pinned_entry, &pict_receipt) == 1 &&
+              pict_receipt.route == DM2_V1_SKPROJECT_PICT_MEMENT_IMAGE,
+          "ALLOC_PICT_MEMENT routes image-backed pictures to image mement");
+    pict.w4 = 0x0008u;
+    pict.w12 = 2u;
+    CHECK(dm2_v1_skproject_alloc_pict_mement(
+              &state, &pict, &image, &pinned_entry, &pict_receipt) == 1 &&
+              pict_receipt.route == DM2_V1_SKPROJECT_PICT_MEMENT_CACHE &&
+              pict_receipt.cache_index == 2u && state.cache_count == 0u,
+          "ALLOC_PICT_MEMENT routes cache-backed pictures by w12 index");
+    state.cache_to_mement[2] = 2u;
+    CHECK(dm2_v1_skproject_free_pict_mement(
+              &state, &pict, &image, &pinned_entry, &free_receipt) == 1 &&
+              state.cache_to_mement[2] == DM2_V1_SKPROJECT_MEMENT_NONE,
+          "FREE_PICT_MEMENT frees cache-backed pictures by w12 index");
+}
+
 int main(void)
 {
     test_between_value();
     test_temp_rect_ring();
     test_random_helpers();
     test_cache_hash_helpers();
+    test_picture_mement_helpers();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -175,6 +307,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ADD_CACHE_HASH") != 0,
           "source evidence names cache hash helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "ALLOC_IMAGE_MEMENT") != 0,
+          "source evidence names picture mement helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

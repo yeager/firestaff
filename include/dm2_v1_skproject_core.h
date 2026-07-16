@@ -46,6 +46,88 @@ typedef struct {
     uint16_t temp_hash_counter;
 } DM2_V1_SkprojectCacheState;
 
+typedef struct {
+    uint16_t index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t bpp;
+    uint32_t payload_bytes;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint16_t header_bpp;
+} DM2_V1_SkprojectNewPictReceipt;
+
+typedef struct {
+    uint16_t w4;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls4;
+    uint16_t w12;
+} DM2_V1_SkprojectPictureRef;
+
+typedef struct {
+    uint16_t w6;
+    uint16_t w52;
+    uint16_t w54;
+} DM2_V1_SkprojectExtendedPictureRef;
+
+typedef struct {
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls4;
+    uint16_t data_index;
+    uint16_t fallback_data_index;
+    int data_absent;
+    int fallback_absent;
+    int16_t y_offset;
+    uint8_t bits_pixel;
+    uint16_t existing_mementi;
+} DM2_V1_SkprojectImageMementRequest;
+
+typedef enum {
+    DM2_V1_SKPROJECT_IMAGE_MEMENT_NO_ENTRY = 0,
+    DM2_V1_SKPROJECT_IMAGE_MEMENT_ABSENT = 1,
+    DM2_V1_SKPROJECT_IMAGE_MEMENT_REJECT_Y_OFFSET = 2,
+    DM2_V1_SKPROJECT_IMAGE_MEMENT_REJECT_BPP = 3,
+    DM2_V1_SKPROJECT_IMAGE_MEMENT_PINNED_ENTRY = 4,
+    DM2_V1_SKPROJECT_IMAGE_MEMENT_TOUCHED_EXISTING = 5
+} DM2_V1_SkprojectImageMementStatus;
+
+typedef struct {
+    DM2_V1_SkprojectImageMementStatus status;
+    uint16_t selected_data_index;
+    uint16_t touched_mementi;
+    uint16_t pinned_entry_index;
+} DM2_V1_SkprojectImageMementReceipt;
+
+typedef struct {
+    int valid;
+    int recycled_to_free_list;
+    uint16_t mementi;
+    uint16_t previous_w4;
+    uint16_t yy;
+} DM2_V1_SkprojectRecycleMementReceipt;
+
+typedef struct {
+    int valid;
+    int cleared_pinned_entry;
+    int recycled_existing;
+    uint16_t selected_data_index;
+    uint16_t recycled_mementi;
+} DM2_V1_SkprojectFreeImageMementReceipt;
+
+typedef enum {
+    DM2_V1_SKPROJECT_PICT_MEMENT_NONE = 0,
+    DM2_V1_SKPROJECT_PICT_MEMENT_IMAGE = 1,
+    DM2_V1_SKPROJECT_PICT_MEMENT_CACHE = 2
+} DM2_V1_SkprojectPictMementRoute;
+
+typedef struct {
+    DM2_V1_SkprojectPictMementRoute route;
+    DM2_V1_SkprojectImageMementReceipt image;
+    uint16_t cache_index;
+} DM2_V1_SkprojectPictMementReceipt;
+
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
 int16_t dm2_v1_skproject_between_value(int16_t minv,
@@ -104,6 +186,43 @@ uint32_t dm2_v1_skproject_get_temp_cache_hash(
     const DM2_V1_SkprojectCacheState *state);
 uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     DM2_V1_SkprojectCacheState *state);
+int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len);
+int dm2_v1_skproject_recycle_mementi(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t mementi,
+    uint16_t previous_w4,
+    uint16_t yy,
+    DM2_V1_SkprojectRecycleMementReceipt *out_receipt);
+int dm2_v1_skproject_alloc_new_pict(
+    uint16_t index,
+    uint16_t width,
+    uint16_t height,
+    uint16_t bpp,
+    DM2_V1_SkprojectNewPictReceipt *out_receipt);
+uint32_t dm2_v1_skproject_calc_pict_ent_hash(
+    const DM2_V1_SkprojectExtendedPictureRef *ref);
+int dm2_v1_skproject_alloc_image_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectImageMementRequest *request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectImageMementReceipt *out_receipt);
+int dm2_v1_skproject_alloc_pict_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectPictureRef *ref,
+    const DM2_V1_SkprojectImageMementRequest *image_request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectPictMementReceipt *out_receipt);
+int dm2_v1_skproject_free_image_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectImageMementRequest *request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectFreeImageMementReceipt *out_receipt);
+int dm2_v1_skproject_free_pict_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectPictureRef *ref,
+    const DM2_V1_SkprojectImageMementRequest *image_request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectFreeImageMementReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 

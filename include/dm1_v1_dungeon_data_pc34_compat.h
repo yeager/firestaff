@@ -59,6 +59,28 @@ typedef struct {
     uint8_t  facing;             /* G0308_i_PartyDirection (0=N,1=E,2=S,3=W) */
 } DM1_V1_DungeonDataPartyPosPc34;
 
+typedef struct {
+    int accepted;
+    int16_t requestedMapIndex;
+    int16_t previousCurrentMapIndex;
+    int16_t currentMapIndex;
+    int16_t currentMapWidth;
+    int16_t currentMapHeight;
+    const char *sourceEvidence;
+} DM1_V1_DungeonDataF0173SetCurrentMapReceiptPc34;
+
+typedef struct {
+    int accepted;
+    int16_t requestedMapIndex;
+    int16_t previousCurrentMapIndex;
+    int16_t previousPartyMapIndex;
+    int16_t currentMapIndex;
+    int16_t partyMapIndex;
+    int16_t currentMapWidth;
+    int16_t currentMapHeight;
+    const char *sourceEvidence;
+} DM1_V1_DungeonDataF0174SetCurrentAndPartyMapReceiptPc34;
+
 /* ── Champion slot (minimal — full state lives in champion modules) ─ */
 #define DM1_V1_DUNGEON_DATA_MAX_CHAMPIONS_PC34   4
 
@@ -138,6 +160,16 @@ void DM1_V1_DungeonData_ShutdownPc34Compat(DM1_V1_DungeonDataPc34 *dd);
  * Returns true if the map index is valid.
  */
 bool DM1_V1_DungeonData_SetCurrentMapPc34Compat(DM1_V1_DungeonDataPc34 *dd, int16_t mapIndex);
+
+int DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat(
+    DM1_V1_DungeonDataPc34 *dd,
+    int16_t mapIndex,
+    DM1_V1_DungeonDataF0173SetCurrentMapReceiptPc34 *outReceipt);
+
+int DM1_V1_DungeonData_F0174SetCurrentMapAndPartyMapPc34Compat(
+    DM1_V1_DungeonDataPc34 *dd,
+    int16_t mapIndex,
+    DM1_V1_DungeonDataF0174SetCurrentAndPartyMapReceiptPc34 *outReceipt);
 
 /*
  * Get tile at (level, x, y).  Returns NULL if out of bounds.

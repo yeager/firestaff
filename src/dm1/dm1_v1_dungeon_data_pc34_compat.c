@@ -68,14 +68,70 @@ void DM1_V1_DungeonData_ShutdownPc34Compat(DM1_V1_DungeonDataPc34 *dd)
 
 bool DM1_V1_DungeonData_SetCurrentMapPc34Compat(DM1_V1_DungeonDataPc34 *dd, int16_t mapIndex)
 {
-    if (!dd || !dd->loaded) return false;
-    if (mapIndex < 0 || mapIndex >= (int16_t)dd->dungeon.header.level_count)
-        return false;
+    return DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat(dd, mapIndex, NULL) != 0;
+}
+
+int DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat(
+    DM1_V1_DungeonDataPc34 *dd,
+    int16_t mapIndex,
+    DM1_V1_DungeonDataF0173SetCurrentMapReceiptPc34 *outReceipt)
+{
+    DM1_V1_DungeonDataF0173SetCurrentMapReceiptPc34 receipt;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requestedMapIndex = mapIndex;
+    receipt.previousCurrentMapIndex = dd ? dd->currentMapIndex : -1;
+    receipt.currentMapIndex = dd ? dd->currentMapIndex : -1;
+    receipt.sourceEvidence =
+        "ReDMCSB DUNGEON.C:F0173_DUNGEON_SetCurrentMap:2724-2740";
+
+    if (!dd || !dd->loaded ||
+        mapIndex < 0 || mapIndex >= (int16_t)dd->dungeon.header.level_count) {
+        if (outReceipt) *outReceipt = receipt;
+        return 0;
+    }
 
     dd->currentMapIndex  = mapIndex;
     dd->currentMapWidth  = dd->dungeon.header.levels[mapIndex].width;
     dd->currentMapHeight = dd->dungeon.header.levels[mapIndex].height;
-    return true;
+
+    receipt.accepted = 1;
+    receipt.currentMapIndex = dd->currentMapIndex;
+    receipt.currentMapWidth = dd->currentMapWidth;
+    receipt.currentMapHeight = dd->currentMapHeight;
+    if (outReceipt) *outReceipt = receipt;
+    return 1;
+}
+
+int DM1_V1_DungeonData_F0174SetCurrentMapAndPartyMapPc34Compat(
+    DM1_V1_DungeonDataPc34 *dd,
+    int16_t mapIndex,
+    DM1_V1_DungeonDataF0174SetCurrentAndPartyMapReceiptPc34 *outReceipt)
+{
+    DM1_V1_DungeonDataF0173SetCurrentMapReceiptPc34 f0173;
+    DM1_V1_DungeonDataF0174SetCurrentAndPartyMapReceiptPc34 receipt;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requestedMapIndex = mapIndex;
+    receipt.previousCurrentMapIndex = dd ? dd->currentMapIndex : -1;
+    receipt.previousPartyMapIndex = dd ? dd->party.mapIndex : -1;
+    receipt.currentMapIndex = dd ? dd->currentMapIndex : -1;
+    receipt.partyMapIndex = dd ? dd->party.mapIndex : -1;
+    receipt.sourceEvidence =
+        "ReDMCSB DUNGEON.C:F0174_DUNGEON_SetCurrentMapAndPartyMap:2742-2762";
+
+    if (!DM1_V1_DungeonData_F0173SetCurrentMapPc34Compat(dd, mapIndex, &f0173)) {
+        if (outReceipt) *outReceipt = receipt;
+        return 0;
+    }
+
+    dd->party.mapIndex = mapIndex;
+
+    receipt.accepted = 1;
+    receipt.currentMapIndex = dd->currentMapIndex;
+    receipt.partyMapIndex = dd->party.mapIndex;
+    receipt.currentMapWidth = dd->currentMapWidth;
+    receipt.currentMapHeight = dd->currentMapHeight;
+    if (outReceipt) *outReceipt = receipt;
+    return 1;
 }
 
 const DM1_V1_DungeonTilePc34 *DM1_V1_DungeonData_GetTilePc34Compat(const DM1_V1_DungeonDataPc34 *dd,
@@ -162,7 +218,7 @@ const char *DM1_V1_DungeonData_SourceEvidencePc34Compat(void)
 {
     return
         "DM1 V1 Central Dungeon Data Store\n"
-        "Aggregates: DUNGEON.C (G0271,G0273,G0274,G0283,G0285,G0286), "
+        "Aggregates: DUNGEON.C (F0173/F0174,G0271,G0273,G0274,G0283,G0285,G0286), "
         "TIMELINE.C (G0370-G0373), "
         "GAMELOOP.C (G0310,G0303), CHAMPION.C (G0410,G0411)\n"
         "Source: ReDMCSB WIP20210206 Toolchains/Common/Source/\n";

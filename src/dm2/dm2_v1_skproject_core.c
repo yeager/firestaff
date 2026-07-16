@@ -1,5 +1,6 @@
 #include "dm2_v1_skproject_core.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #define DM2_V1_SKPROJECT_RANDOM_MAGIC 0xbb40e62du
@@ -311,6 +312,234 @@ uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     return cache_index;
 }
 
+int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len)
+{
+    int32_t probe_offset;
+
+    probe_offset = abs((int)-dw0) - 4;
+    if (probe_offset < 0 || probe_offset >= 65536)
+        return 0;
+    return dw0 == stored_len;
+}
+
+int dm2_v1_skproject_recycle_mementi(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t mementi,
+    uint16_t previous_w4,
+    uint16_t yy,
+    DM2_V1_SkprojectRecycleMementReceipt *out_receipt)
+{
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt || mementi >= state->mement_count)
+        return 0;
+    out_receipt->valid = 1;
+    out_receipt->mementi = mementi;
+    out_receipt->previous_w4 = previous_w4;
+    out_receipt->yy = yy;
+    out_receipt->recycled_to_free_list =
+        previous_w4 == DM2_V1_SKPROJECT_MEMENT_NONE;
+    if (out_receipt->recycled_to_free_list) {
+        for (uint16_t i = 0; i < state->cache_capacity; ++i) {
+            if (state->cache_to_mement[i] == mementi)
+                state->cache_to_mement[i] = DM2_V1_SKPROJECT_MEMENT_NONE;
+        }
+        for (uint16_t i = 0; i < state->raw_count; ++i) {
+            if (state->raw_to_mement[i] == mementi)
+                state->raw_to_mement[i] = DM2_V1_SKPROJECT_MEMENT_NONE;
+        }
+    }
+    return 1;
+}
+
+int dm2_v1_skproject_alloc_new_pict(
+    uint16_t index,
+    uint16_t width,
+    uint16_t height,
+    uint16_t bpp,
+    DM2_V1_SkprojectNewPictReceipt *out_receipt)
+{
+    uint32_t row_bytes;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || height == 0u)
+        return 0;
+    row_bytes = bpp == 4u ? (uint32_t)(((width + 1u) & 0xfffeu) >> 1) :
+                            (uint32_t)width;
+    out_receipt->index = index;
+    out_receipt->width = width;
+    out_receipt->height = height;
+    out_receipt->bpp = bpp;
+    out_receipt->payload_bytes = row_bytes * (uint32_t)height;
+    out_receipt->header_width = width;
+    out_receipt->header_height = height;
+    out_receipt->header_bpp = bpp;
+    return 1;
+}
+
+uint32_t dm2_v1_skproject_calc_pict_ent_hash(
+    const DM2_V1_SkprojectExtendedPictureRef *ref)
+{
+    if (!ref) return 0u;
+    return ((uint32_t)(ref->w6 & 0x1fffu) << 12) |
+           ((uint32_t)(ref->w52 & 0x007fu) << 5) |
+           (uint32_t)(ref->w54 & 0x001fu);
+}
+
+static uint16_t dm2_v1_skproject_select_image_mement_entry(
+    const DM2_V1_SkprojectImageMementRequest *request,
+    int *absent)
+{
+    if (absent) *absent = 1;
+    if (!request) return DM2_V1_SKPROJECT_MEMENT_NONE;
+    if (request->data_index != DM2_V1_SKPROJECT_MEMENT_NONE &&
+        !request->data_absent) {
+        if (absent) *absent = 0;
+        return request->data_index;
+    }
+    if (request->data_index == DM2_V1_SKPROJECT_MEMENT_NONE)
+        return DM2_V1_SKPROJECT_MEMENT_NONE;
+    if (request->fallback_data_index != DM2_V1_SKPROJECT_MEMENT_NONE &&
+        !request->fallback_absent) {
+        if (absent) *absent = 0;
+        return request->fallback_data_index;
+    }
+    if (request->data_index != DM2_V1_SKPROJECT_MEMENT_NONE)
+        return request->data_index;
+    return request->fallback_data_index;
+}
+
+int dm2_v1_skproject_alloc_image_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectImageMementRequest *request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectImageMementReceipt *out_receipt)
+{
+    int absent = 1;
+    uint16_t selected;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !request || !out_receipt || !pinned_entry)
+        return 0;
+    out_receipt->selected_data_index = DM2_V1_SKPROJECT_MEMENT_NONE;
+    out_receipt->touched_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+    out_receipt->pinned_entry_index = DM2_V1_SKPROJECT_MEMENT_NONE;
+
+    selected = dm2_v1_skproject_select_image_mement_entry(request, &absent);
+    out_receipt->selected_data_index = selected;
+    if (selected == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        out_receipt->status = DM2_V1_SKPROJECT_IMAGE_MEMENT_NO_ENTRY;
+        return 1;
+    }
+    if (request->existing_mementi != DM2_V1_SKPROJECT_MEMENT_NONE) {
+        out_receipt->status = DM2_V1_SKPROJECT_IMAGE_MEMENT_TOUCHED_EXISTING;
+        out_receipt->touched_mementi = request->existing_mementi;
+        return request->existing_mementi < state->mement_count;
+    }
+    if (absent) {
+        out_receipt->status = DM2_V1_SKPROJECT_IMAGE_MEMENT_ABSENT;
+        return 1;
+    }
+    if (request->y_offset != -32) {
+        out_receipt->status = DM2_V1_SKPROJECT_IMAGE_MEMENT_REJECT_Y_OFFSET;
+        return 1;
+    }
+    if (request->bits_pixel != 8u) {
+        out_receipt->status = DM2_V1_SKPROJECT_IMAGE_MEMENT_REJECT_BPP;
+        return 1;
+    }
+    *pinned_entry = selected;
+    out_receipt->status = DM2_V1_SKPROJECT_IMAGE_MEMENT_PINNED_ENTRY;
+    out_receipt->pinned_entry_index = selected;
+    return 1;
+}
+
+int dm2_v1_skproject_alloc_pict_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectPictureRef *ref,
+    const DM2_V1_SkprojectImageMementRequest *image_request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectPictMementReceipt *out_receipt)
+{
+    uint16_t cache_index;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !ref || !out_receipt)
+        return 0;
+    if ((ref->w4 & 0x0004u) != 0u) {
+        out_receipt->route = DM2_V1_SKPROJECT_PICT_MEMENT_IMAGE;
+        return dm2_v1_skproject_alloc_image_mement(
+            state, image_request, pinned_entry, &out_receipt->image);
+    }
+    if ((ref->w4 & 0x0008u) != 0u) {
+        out_receipt->route = DM2_V1_SKPROJECT_PICT_MEMENT_CACHE;
+        cache_index = ref->w12;
+        if (cache_index >= state->cache_capacity)
+            return 0;
+        out_receipt->cache_index = cache_index;
+        return 1;
+    }
+    out_receipt->route = DM2_V1_SKPROJECT_PICT_MEMENT_NONE;
+    return 1;
+}
+
+int dm2_v1_skproject_free_image_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectImageMementRequest *request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectFreeImageMementReceipt *out_receipt)
+{
+    int absent = 1;
+    uint16_t selected;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !request || !pinned_entry || !out_receipt)
+        return 0;
+    out_receipt->selected_data_index = DM2_V1_SKPROJECT_MEMENT_NONE;
+    out_receipt->recycled_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+    selected = dm2_v1_skproject_select_image_mement_entry(request, &absent);
+    out_receipt->selected_data_index = selected;
+    if (selected == DM2_V1_SKPROJECT_MEMENT_NONE)
+        return 1;
+    if (*pinned_entry == selected) {
+        *pinned_entry = DM2_V1_SKPROJECT_MEMENT_NONE;
+        out_receipt->cleared_pinned_entry = 1;
+    }
+    if (request->existing_mementi != DM2_V1_SKPROJECT_MEMENT_NONE &&
+        request->existing_mementi < state->mement_count) {
+        DM2_V1_SkprojectRecycleMementReceipt recycle;
+
+        dm2_v1_skproject_recycle_mementi(
+            state, request->existing_mementi, DM2_V1_SKPROJECT_MEMENT_NONE,
+            0u, &recycle);
+        out_receipt->recycled_existing = recycle.valid;
+        out_receipt->recycled_mementi = request->existing_mementi;
+    }
+    return 1;
+}
+
+int dm2_v1_skproject_free_pict_mement(
+    DM2_V1_SkprojectCacheState *state,
+    const DM2_V1_SkprojectPictureRef *ref,
+    const DM2_V1_SkprojectImageMementRequest *image_request,
+    uint16_t *pinned_entry,
+    DM2_V1_SkprojectFreeImageMementReceipt *out_receipt)
+{
+    uint16_t cache_index;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !ref || !out_receipt)
+        return 0;
+    if ((ref->w4 & 0x0004u) != 0u)
+        return dm2_v1_skproject_free_image_mement(
+            state, image_request, pinned_entry, out_receipt);
+    if ((ref->w4 & 0x0008u) != 0u && ref->w12 < state->cache_capacity) {
+        cache_index = ref->w12;
+        state->cache_to_mement[cache_index] =
+            DM2_V1_SKPROJECT_MEMENT_NONE;
+    }
+    return 1;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -321,5 +550,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"
            "QUERY_MEMENT_BUFF_FROM_CACHE_INDEX/GET_TEMP_CACHE_HASH/"
-           "ALLOC_TEMP_CACHE_INDEX";
+           "ALLOC_TEMP_CACHE_INDEX/RECYCLE_MEMENTI/TEST_MEMENT/"
+           "ALLOC_NEW_PICT/ALLOC_IMAGE_MEMENT/ALLOC_PICT_MEMENT/"
+           "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT";
 }
