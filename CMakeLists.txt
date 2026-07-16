@@ -7821,6 +7821,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_v2_manifests.py --self-test
         )
         add_test(
+            NAME firestaff_artpack_studio_self_test
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/firestaff_artpack_studio.py --self-test
+        )
+        add_test(
             NAME csb_v1_parity_surface_matrix
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_parity_surface_matrix.py
         )

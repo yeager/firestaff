@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 V2.2 artpack studio: added `scripts/firestaff_artpack_studio.py`,
+  a cross-platform Tk/Pillow GUI for DM1, CSB, DM2, Theron, and Nexus V2.2
+  artpack creation. It opens/creates `modern_asset_manifest.json`, displays
+  V1/reference and V2.2 target images side by side, supports pixel/color edits,
+  imports target PNGs into category/asset slots, validates required slots,
+  writes `finish_receipt.json`, and can run an operator-provided AI generation
+  command hook. Added docs and a CTest self-test.
+
 - 2026-07-16 DM1 V2.2 runtime admission hardening: `m11_v22_modern_assets_available()`
   now requires both FINISHED_REAL material classification and promoted
   `finish_receipt.json` before V2.2 can resolve to modern rendering. The
