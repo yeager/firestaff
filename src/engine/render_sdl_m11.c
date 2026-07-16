@@ -101,6 +101,7 @@ typedef struct {
     int v2_motion_blur_enabled;
     int v2_motion_blur_strength;    /* 0..100 percent of previous frame */
     int v2_movement_active;
+    int v2_presentation_active;
 
     /* DM1 V2 Phase 5 smooth movement camera offset (pixels in 320x200 logical space).
      * These are the presentation-layer interpolation deltas produced by
@@ -120,6 +121,9 @@ typedef struct {
 } M11_RenderState;
 
 static M11_RenderState g_state = {0};
+static unsigned char *g_epx_present_buffer = NULL;
+static int g_epx_present_w = 0;
+static int g_epx_present_h = 0;
 
 static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
                                                        int *out_level)
@@ -154,6 +158,12 @@ static void m11_free_present_buffer(void) {
     }
     g_state.previousFrameW = 0;
     g_state.previousFrameH = 0;
+    if (g_epx_present_buffer) {
+        free(g_epx_present_buffer);
+        g_epx_present_buffer = NULL;
+    }
+    g_epx_present_w = 0;
+    g_epx_present_h = 0;
 }
 
 /* Ensure previousFrameBuffer matches the requested size.  On size
@@ -757,6 +767,48 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     /* Movement flag is one-shot per present so the gameplay code does
      * not need to clear it after every tick. */
     g_state.v2_movement_active = 0;
+}
+
+static int m11_epx_expand_indexed(const unsigned char *src, int w, int h) {
+    size_t bytes;
+    unsigned char *buffer;
+    int x;
+    int y;
+
+    if (!src || w <= 0 || h <= 0) {
+        return 0;
+    }
+    bytes = (size_t)w * 2u * (size_t)h * 2u;
+    if (g_epx_present_w != w * 2 || g_epx_present_h != h * 2) {
+        buffer = (unsigned char*)realloc(g_epx_present_buffer, bytes);
+        if (!buffer) {
+            return 0;
+        }
+        g_epx_present_buffer = buffer;
+        g_epx_present_w = w * 2;
+        g_epx_present_h = h * 2;
+    }
+
+    for (y = 0; y < h; ++y) {
+        for (x = 0; x < w; ++x) {
+            const unsigned char p = src[(size_t)y * (size_t)w + (size_t)x];
+            const unsigned char a = (y > 0) ? src[(size_t)(y - 1) * (size_t)w + (size_t)x] : p;
+            const unsigned char b = (x + 1 < w) ? src[(size_t)y * (size_t)w + (size_t)(x + 1)] : p;
+            const unsigned char c = (x > 0) ? src[(size_t)y * (size_t)w + (size_t)(x - 1)] : p;
+            const unsigned char d = (y + 1 < h) ? src[(size_t)(y + 1) * (size_t)w + (size_t)x] : p;
+            const size_t dst = ((size_t)y * 2u * (size_t)g_epx_present_w) + (size_t)x * 2u;
+
+            if (c == a && c != d && a != b) g_epx_present_buffer[dst] = a;
+            else g_epx_present_buffer[dst] = p;
+            if (a == b && a != c && b != d) g_epx_present_buffer[dst + 1u] = b;
+            else g_epx_present_buffer[dst + 1u] = p;
+            if (d == c && d != b && c != a) g_epx_present_buffer[dst + (size_t)g_epx_present_w] = c;
+            else g_epx_present_buffer[dst + (size_t)g_epx_present_w] = p;
+            if (b == d && b != a && d != c) g_epx_present_buffer[dst + (size_t)g_epx_present_w + 1u] = d;
+            else g_epx_present_buffer[dst + (size_t)g_epx_present_w + 1u] = p;
+        }
+    }
+    return 1;
 }
 
 /* Special TITLE/ENTRANCE palettes are source-owned RGB rows rather than a
@@ -2705,4 +2757,8 @@ void M11_Render_SetMovementActive(int active) {
 
 int M11_Render_GetMovementActive(void) {
     return g_state.v2_movement_active;
+}
+
+void M11_Render_SetV2PresentationActive(int active) {
+    g_state.v2_presentation_active = active ? 1 : 0;
 }
