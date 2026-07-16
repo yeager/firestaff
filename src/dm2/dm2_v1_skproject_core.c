@@ -499,6 +499,320 @@ int dm2_v1_skproject_read_sbyte(
     return 1;
 }
 
+int dm2_v1_skproject_read_word(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint16_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt)
+{
+    return dm2_v1_skproject_cursor_read(
+        buffer, capacity, offset, 2u, out_value, out_receipt);
+}
+
+uint8_t dm2_v1_skproject_compressed_rect_row_size(uint8_t mask)
+{
+    uint8_t size = 8u;
+
+    if (mask & 0x04u) {
+        size = 6u;
+    } else {
+        if (mask & 0x02u) size = 6u;
+        if (mask & 0x01u) size = (uint8_t)(size - 2u);
+    }
+    if (mask & 0x18u) size = (uint8_t)(size - 2u);
+    return size;
+}
+
+static uint32_t dm2_v1_skproject_rect_hash_step(uint32_t hash,
+                                                uint32_t value)
+{
+    hash ^= (uint8_t)(value & 0xffu); hash *= 16777619u;
+    hash ^= (uint8_t)((value >> 8) & 0xffu); hash *= 16777619u;
+    hash ^= (uint8_t)((value >> 16) & 0xffu); hash *= 16777619u;
+    hash ^= (uint8_t)((value >> 24) & 0xffu); hash *= 16777619u;
+    return hash;
+}
+
+static void dm2_v1_skproject_rect_write_le16(uint8_t *payload,
+                                             uint32_t offset,
+                                             int16_t value)
+{
+    payload[offset] = (uint8_t)((uint16_t)value & 0xffu);
+    payload[offset + 1u] = (uint8_t)(((uint16_t)value >> 8) & 0xffu);
+}
+
+static int16_t dm2_v1_skproject_rect_read_le16(const uint8_t *payload,
+                                               uint32_t offset)
+{
+    return (int16_t)((uint16_t)payload[offset] |
+                     ((uint16_t)payload[offset + 1u] << 8));
+}
+
+int dm2_v1_skproject_compress_rects(
+    const int16_t *data_words,
+    uint32_t word_count,
+    DM2_V1_SkprojectRectTable *out_table,
+    DM2_V1_SkprojectCompressRectsReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCompressRectsReceipt receipt;
+    uint32_t group_header;
+    uint32_t data_index;
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data_words) receipt.blocked_missing_input = 1;
+    if (!out_table) receipt.blocked_missing_output = 1;
+    if (!data_words || !out_table) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memset(out_table, 0, sizeof(*out_table));
+    if (word_count < 2u || (uint16_t)data_words[0] != 0xfc0du) {
+        receipt.blocked_bad_magic = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.group_count = (uint16_t)data_words[1];
+    if (receipt.group_count > DM2_V1_SKPROJECT_RECT_TABLE_MAX_NODES ||
+        2u + (uint32_t)receipt.group_count * 2u > word_count) {
+        receipt.blocked_group_overflow = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    group_header = 2u;
+    data_index = 2u + (uint32_t)receipt.group_count * 2u;
+
+    for (uint16_t group = 0u; group < receipt.group_count; ++group) {
+        uint16_t min_rect = (uint16_t)data_words[group_header++];
+        uint16_t max_rect = (uint16_t)data_words[group_header++];
+        uint32_t rows;
+        uint32_t group_data_start;
+        uint8_t mask = 0x1fu;
+        int16_t common_x;
+        int16_t common_y;
+        uint8_t row_size;
+        uint32_t payload_start;
+        uint32_t payload_needed;
+        DM2_V1_SkprojectRectNode *node;
+
+        if (max_rect < min_rect) {
+            receipt.blocked_malformed_range = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        rows = (uint32_t)max_rect - (uint32_t)min_rect + 1u;
+        if (rows == 0u || data_index > word_count ||
+            rows > (word_count - data_index) / 4u) {
+            receipt.blocked_malformed_words = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+
+        group_data_start = data_index;
+        common_x = data_words[data_index];
+        common_y = data_words[data_index + 1u];
+        for (uint32_t row = 0u; row < rows; ++row) {
+            int16_t x = data_words[data_index++];
+            int16_t y = data_words[data_index++];
+            int16_t w = data_words[data_index++];
+            int16_t h = data_words[data_index++];
+
+            if (x != common_x) mask &= (uint8_t)~0x02u;
+            if (y != common_y) mask &= (uint8_t)~0x01u;
+            if (x > 0xff) mask &= (uint8_t)~0x04u;
+            if (w < 0 || w > 0xff || h < 0 || h > 0xff)
+                mask &= (uint8_t)~0x10u;
+            if (w < -128 || w > 127 || h < -128 || h > 127)
+                mask &= (uint8_t)~0x08u;
+        }
+        if (mask & 0x03u) mask &= (uint8_t)~0x04u;
+        row_size = dm2_v1_skproject_compressed_rect_row_size(mask);
+        payload_needed = (uint32_t)row_size * rows + ((mask & 0x01u) ? 2u : 0u);
+        if (payload_needed >
+            DM2_V1_SKPROJECT_RECT_TABLE_PAYLOAD_CAPACITY - out_table->payload_used) {
+            receipt.blocked_payload_overflow = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+
+        node = &out_table->nodes[out_table->node_count];
+        node->next_index = (uint16_t)(group + 1u < receipt.group_count ?
+                                      group + 1u : 0xffffu);
+        node->min_rect = min_rect;
+        node->max_rect = max_rect;
+        node->mask = mask;
+        node->common_x = (uint8_t)common_x;
+        node->payload_offset = out_table->payload_used;
+        node->payload_size = payload_needed;
+        payload_start = node->payload_offset;
+        if (mask & 0x01u) {
+            dm2_v1_skproject_rect_write_le16(out_table->payload,
+                                             out_table->payload_used,
+                                             common_y);
+            out_table->payload_used += 2u;
+        }
+
+        data_index = group_data_start;
+        for (uint32_t row = 0u; row < rows; ++row) {
+            int16_t x = data_words[data_index++];
+            int16_t y = data_words[data_index++];
+            int16_t w = data_words[data_index++];
+            int16_t h = data_words[data_index++];
+
+            if (mask & 0x04u) {
+                out_table->payload[out_table->payload_used++] = (uint8_t)x;
+                out_table->payload[out_table->payload_used++] = (uint8_t)y;
+            } else {
+                if (!(mask & 0x02u)) {
+                    dm2_v1_skproject_rect_write_le16(out_table->payload,
+                                                     out_table->payload_used, x);
+                    out_table->payload_used += 2u;
+                }
+                if (!(mask & 0x01u)) {
+                    dm2_v1_skproject_rect_write_le16(out_table->payload,
+                                                     out_table->payload_used, y);
+                    out_table->payload_used += 2u;
+                }
+            }
+            if (mask & 0x18u) {
+                out_table->payload[out_table->payload_used++] = (uint8_t)w;
+                out_table->payload[out_table->payload_used++] = (uint8_t)h;
+            } else {
+                dm2_v1_skproject_rect_write_le16(out_table->payload,
+                                                 out_table->payload_used, w);
+                out_table->payload_used += 2u;
+                dm2_v1_skproject_rect_write_le16(out_table->payload,
+                                                 out_table->payload_used, h);
+                out_table->payload_used += 2u;
+            }
+        }
+        if (out_table->payload_used - payload_start != payload_needed) {
+            receipt.blocked_payload_overflow = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        ++out_table->node_count;
+        hash = dm2_v1_skproject_rect_hash_step(hash, min_rect);
+        hash = dm2_v1_skproject_rect_hash_step(hash, max_rect);
+        hash = dm2_v1_skproject_rect_hash_step(hash, mask);
+        hash = dm2_v1_skproject_rect_hash_step(hash, payload_needed);
+    }
+
+    receipt.node_count = out_table->node_count;
+    receipt.consumed_words = data_index;
+    receipt.payload_used = out_table->payload_used;
+    hash = dm2_v1_skproject_rect_hash_step(hash, receipt.node_count);
+    hash = dm2_v1_skproject_rect_hash_step(hash, receipt.payload_used);
+    receipt.table_hash = hash ? hash : 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_query_rect(
+    const DM2_V1_SkprojectRectTable *table,
+    uint16_t rectno,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectQueryRectReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQueryRectReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rectno = rectno;
+    if (rectno == 0u) {
+        receipt.blocked_zero_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!table || !out_rect) {
+        receipt.blocked_missing_table = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = 0u; i < table->node_count; ++i) {
+        const DM2_V1_SkprojectRectNode *node = &table->nodes[i];
+        uint16_t local;
+        uint8_t row_size;
+        uint32_t offset;
+        uint32_t row_offset;
+        uint32_t payload_limit;
+        DM2_V1_SkprojectRect rect;
+
+        if (rectno < node->min_rect || rectno > node->max_rect)
+            continue;
+        local = (uint16_t)(rectno - node->min_rect);
+        row_size = dm2_v1_skproject_compressed_rect_row_size(node->mask);
+        offset = node->payload_offset;
+        payload_limit = node->payload_offset + node->payload_size;
+        if (node->mask & 0x01u) offset += 2u;
+        offset += (uint32_t)local * row_size;
+        row_offset = offset;
+        if (offset > payload_limit || row_size > payload_limit - offset ||
+            payload_limit > table->payload_used ||
+            payload_limit > DM2_V1_SKPROJECT_RECT_TABLE_PAYLOAD_CAPACITY) {
+            receipt.blocked_payload_bounds = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+
+        memset(&rect, 0, sizeof(rect));
+        if (node->mask & 0x02u) rect.x = node->common_x;
+        if (node->mask & 0x01u)
+            rect.y = dm2_v1_skproject_rect_read_le16(
+                table->payload, node->payload_offset);
+
+        if (node->mask & 0x04u) {
+            rect.x = table->payload[offset++];
+            rect.y = table->payload[offset++];
+        } else {
+            if (!(node->mask & 0x02u)) {
+                rect.x = dm2_v1_skproject_rect_read_le16(table->payload, offset);
+                offset += 2u;
+            }
+            if (!(node->mask & 0x01u)) {
+                rect.y = dm2_v1_skproject_rect_read_le16(table->payload, offset);
+                offset += 2u;
+            }
+        }
+        if (node->mask & 0x08u) {
+            rect.w = (int8_t)table->payload[offset++];
+            rect.h = (int8_t)table->payload[offset++];
+        } else if (node->mask & 0x10u) {
+            rect.w = table->payload[offset++];
+            rect.h = table->payload[offset++];
+        } else {
+            rect.w = dm2_v1_skproject_rect_read_le16(table->payload, offset);
+            offset += 2u;
+            rect.h = dm2_v1_skproject_rect_read_le16(table->payload, offset);
+        }
+
+        *out_rect = rect;
+        receipt.node_index = i;
+        receipt.local_index = local;
+        receipt.mask = node->mask;
+        receipt.row_size = row_size;
+        receipt.row_offset = row_offset;
+        receipt.rect = rect;
+        receipt.table_hash =
+            dm2_v1_skproject_rect_hash_step(2166136261u, table->node_count);
+        receipt.table_hash =
+            dm2_v1_skproject_rect_hash_step(receipt.table_hash,
+                                            table->payload_used);
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.blocked_not_found = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
 int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
                                              uint8_t *out_palette)
 {
@@ -5962,7 +6276,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_buttons.cpp DM2_OFFSET_RECT; "
            "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR/PT_IN_RECT/"
            "OFFSET_RECT/PTR_ADVANCE/WRITE_BYTE/WRITE_WORD/"
-           "READ_BYTE/READ_SBYTE/IS_NEGATIVE/"
+           "READ_BYTE/READ_SBYTE/READ_WORD/COMPRESS_RECTS/QUERY_RECT/"
+           "IS_NEGATIVE/"
            "IS_CONTAINER_MAP/FIND_POUCH_OR_SCABBARD_POSSESSION_POS; "
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"
