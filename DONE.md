@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 blit/text alias receipt bundle: mapped
+  `DM2_DRAW_ICON_PICT_BUFF`, `DRAW_ICON_PICT_BUFF`, `DRAW_DEF_PICT`,
+  `DRAW_GRAY_OVERLAY`, `DRAW_NAME_STR`, `DRAW_GUIDED_STR`, and
+  `DRAW_LOCAL_TEXT` to skproject-backed narrow receipts or verified
+  text-route aliases. The new receipts cover offset-rect 8bpp icon blits,
+  extended-picture rect selection, gray overlay cache/dirty-rect handoff, and
+  SKWIN aliases for existing name/guided/local text routing.
+
 - 2026-07-16 DM2 champion/HUD panel receipt bundle: mapped
   `DM2_DRAW_CUR_MAX_HMS`, `DRAW_CUR_MAX_HMS`,
   `DM2_DRAW_PLAYER_3STAT_TEXT`, `DM2_DRAW_PLAYER_3STAT_PANE`,

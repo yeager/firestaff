@@ -218,6 +218,59 @@ typedef struct {
     uint32_t source_cursor_hash;
 } DM2_V1_SkprojectBlitSpecialEffectsReceipt;
 
+typedef struct {
+    int valid;
+    int blocked_missing_rect;
+    uint16_t rect_x;
+    uint16_t rect_y;
+    uint16_t rect_w;
+    uint16_t rect_h;
+    int16_t src_x;
+    int16_t src_y;
+    int16_t color_key;
+    int16_t flip_mirror;
+    uint16_t source_width;
+    uint16_t source_height;
+    uint16_t dest_stride;
+    uint8_t bpp;
+    uint8_t requested_offset_rect;
+    uint8_t requested_fire_blit_picture;
+    uint8_t requested_dirty_rect;
+    uint8_t requested_local_palette;
+} DM2_V1_SkprojectDrawIconPictBuffReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_picture;
+    int blocked_invalid_dimensions;
+    int blocked_missing_blit_rect;
+    uint16_t rect_no;
+    uint16_t width;
+    uint16_t height;
+    int16_t src_x;
+    int16_t src_y;
+    int16_t dst_x;
+    int16_t dst_y;
+    int16_t color_key;
+    uint8_t rect_no_used_direct_xy;
+    uint8_t rect_no_forced_blit_flag;
+    uint8_t requested_query_pict_bits;
+    uint8_t requested_query_blit_rect;
+    uint8_t requested_blit;
+} DM2_V1_SkprojectDrawDefPictReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_rect;
+    uint16_t cache_index;
+    uint16_t dest_stride;
+    uint16_t overlay_pattern;
+    uint8_t requested_cache_buffer;
+    uint8_t requested_offset_rect;
+    uint8_t requested_gray_blit;
+    uint8_t requested_dirty_rect;
+} DM2_V1_SkprojectDrawGrayOverlayReceipt;
+
 #define DM2_V1_SKPROJECT_MAP_RECORD_END 0xfffeu
 
 typedef struct {
@@ -1141,6 +1194,39 @@ int dm2_v1_skproject_sub_blit_specialeffects_receipt(
     int16_t alpha_mask,
     const uint8_t *overlay_mask,
     DM2_V1_SkprojectBlitSpecialEffectsReceipt *out_receipt);
+int dm2_v1_skproject_draw_icon_pict_buff(
+    int has_rect,
+    uint16_t rect_x,
+    uint16_t rect_y,
+    uint16_t rect_w,
+    uint16_t rect_h,
+    int16_t src_x,
+    int16_t src_y,
+    int16_t color_key,
+    int16_t flip_mirror,
+    uint16_t source_width,
+    uint16_t source_height,
+    uint16_t dest_stride,
+    const uint8_t *local_palette,
+    DM2_V1_SkprojectDrawIconPictBuffReceipt *out_receipt);
+int dm2_v1_skproject_draw_def_pict(
+    const DM2_V1_SkprojectExtendedPictureRef *picture,
+    uint16_t rect_no,
+    uint16_t width,
+    uint16_t height,
+    int16_t src_x,
+    int16_t src_y,
+    int16_t dst_x,
+    int16_t dst_y,
+    int16_t color_key,
+    int blit_rect_exists,
+    DM2_V1_SkprojectDrawDefPictReceipt *out_receipt);
+int dm2_v1_skproject_draw_gray_overlay(
+    int has_rect,
+    uint16_t cache_index,
+    uint16_t dest_stride,
+    uint16_t overlay_pattern,
+    DM2_V1_SkprojectDrawGrayOverlayReceipt *out_receipt);
 int dm2_v1_skproject_move_side_offset(
     uint16_t record_word_e,
     int16_t direction_delta,

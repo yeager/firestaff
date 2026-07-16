@@ -41,6 +41,12 @@
     `DRAW_EYE_MOUTH_COLORED_RECTANGLE` now have narrow skproject-backed
     receipts. Remaining adjacent work is live panel pixel consumption from
     decoded GDAT and broader runtime HUD wiring.
+  - 2026-07-16 DM2 blit/text alias update: `DM2_DRAW_ICON_PICT_BUFF`,
+    `DRAW_ICON_PICT_BUFF`, `DRAW_DEF_PICT`, `DRAW_GRAY_OVERLAY`,
+    `DRAW_NAME_STR`, `DRAW_GUIDED_STR`, and `DRAW_LOCAL_TEXT` now have
+    skproject-backed narrow receipts or verified text-route aliases. Remaining
+    adjacent work is actual decoded-picture blit ownership in live GDAT
+    dungeon/HUD consumers.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer
