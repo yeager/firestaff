@@ -191,6 +191,20 @@ typedef struct {
     uint32_t metadata_hash;
 } DM2_V1_GdatImageMetadata;
 
+typedef struct {
+    uint8_t present;
+    uint8_t loadable_raw;
+    uint8_t category;
+    uint8_t index;
+    uint8_t type;
+    uint8_t field;
+    uint16_t data_index;
+    uint16_t raw_index;
+    uint32_t raw_file_pos;
+    uint32_t raw_length;
+    uint32_t receipt_hash;
+} DM2_V1_GdatEntryQueryReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -236,6 +250,57 @@ const uint8_t *dm2_v1_asset_load_text_sized(
     int index,
     int field,
     size_t *out_size);
+
+/* skproject c_gdatfile.cpp/c_querydb.cpp raw GDAT entry queries. These are
+ * bounded receipts over the parsed ENT1/raw table only; scalar dtWordValue and
+ * dtImageOffset entries expose their data index but are not loadable buffers. */
+int dm2_v1_query_gdat_raw_data_file_pos(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    uint32_t *out_file_pos);
+int dm2_v1_query_gdat_raw_data_length(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    uint32_t *out_length);
+const uint8_t *dm2_v1_load_gdat_raw_data(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    size_t *out_size);
+int dm2_v1_query_gdat_entry(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_entry_data_index(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    uint16_t *out_data_index);
+const uint8_t *dm2_v1_query_gdat_entry_data_ptr(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    size_t *out_size);
+int dm2_v1_query_gdat_entry_data_length(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    uint32_t *out_length);
+int dm2_v1_query_gdat_entry_if_loadable(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt);
 
 /* Read a skproject dtWordValue field by exact category/index/field.
  * Returns 1 on success and 0 when the typed entry is absent. */

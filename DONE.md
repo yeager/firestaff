@@ -6,6 +6,21 @@
   presented-frame hashes and non-real CSB pixels fail closed without synthetic
   fallback.
 
+- 2026-07-16 DM2 skproject GDAT querydb receipts: `dm2_v1_asset_loader`
+  now exposes bounded source-named wrappers for
+  `QUERY_GDAT_RAW_DATA_FILE_POS`, `QUERY_GDAT_RAW_DATA_LENGTH`,
+  `LOAD_GDAT_RAW_DATA`, `QUERY_GDAT_ENTRYPTR`,
+  `QUERY_GDAT_ENTRY_DATA_INDEX`, `QUERY_GDAT_ENTRY_DATA_PTR`,
+  `QUERY_GDAT_ENTRY_DATA_LENGTH`, `QUERY_GDAT_ENTRY_DATA_BUFF`, and
+  `QUERY_GDAT_ENTRY_IF_LOADABLE`, while retaining the existing
+  `QUERY_GDAT_PICT_OFFSET` and `QUERY_GDAT_IMAGE_LOCALPAL` mappings. Scalar
+  `dtWordValue`/`dtImageOffset` entries expose only their ENT1 data index and
+  never become synthetic raw buffers. Verification: direct focused compile/run
+  of `tests/test_dm2_v1_gdat_querydb_receipts.c` with
+  `src/dm2/dm2_v1_asset_loader.c`, 14/14 passed including optional real
+  local DM2 `GRAPHICS.DAT` census. CMake generation remains blocked by
+  pre-existing missing non-DM2/shared/probe sources.
+
 - 2026-07-16 DM2 c_map accessors: `dm2_v1_dungeon_loader` now exposes
   source-bounded skproject `GET_TILE_VALUE`, `GET_ADDRESS_OF_TILE_RECORD`, and
   `IS_TILE_PASSAGE` helpers over the parsed byte-map, column-index, and

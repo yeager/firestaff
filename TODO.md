@@ -13,6 +13,16 @@
     is intentionally empty except for its schema until each disposition has
     real source evidence. Keep rows in TODO until either Firestaff code maps
     them or a reviewed disposition row excludes them from the open queue.
+  - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
+    `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
+    receipts over the parsed ENT1/raw tables for raw-data file position,
+    raw-data length, raw-data loading, entry pointer/data-index/data-pointer/
+    data-length/data-buffer/loadable checks, plus existing image offset and
+    local-palette queries. Remaining DM2 querydb/gdatfile work is allocation,
+    graphics file I/O lifecycle, preserved-GFX cache behavior, image decode
+    buffer ownership, text/name formatting, and higher-level gameplay queries;
+    these receipts must not be used to fabricate images or promote missing
+    scalar entries into buffers.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
