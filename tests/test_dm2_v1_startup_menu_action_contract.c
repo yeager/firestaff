@@ -68,6 +68,7 @@ int main(void)
     DM2_V1_BootStartupRenderOwnershipReceipt boot_render_ownership_receipt;
     DM2_V1_BootStartupRealVisualCaptureReceipt boot_real_visual_capture;
     DM2_V1_BootStartupLaunch boot_launch;
+    DM2_V1_BootProfile boot_launch_profile;
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
     const char *real_data_dir;
@@ -378,6 +379,18 @@ int main(void)
               launch_receipt.runtime_handoff.runtime_action_ready == 0 &&
               launch_receipt.runtime_handoff.first_hud_frame_ready == 0,
           "launch receipt owns the source title/menu boundary, save scan, inspect, log, and runtime handoff without a session");
+    memset(&boot_launch, 0, sizeof(boot_launch));
+    dm2_v1_boot_profile_init(&boot_launch_profile);
+    boot_launch.profile = &boot_launch_profile;
+    check(dm2_v1_boot_startup_launch_from_launch(&boot_launch,
+                                                 &launch_receipt) &&
+              launch_receipt.host_receipt.mode_update.set_startup_menu_active &&
+              launch_receipt.host_receipt.mode_update.startup_menu_active == 1 &&
+              launch_receipt.runtime_handoff.valid &&
+              launch_receipt.runtime_handoff.startup_menu_active == 1 &&
+              launch_receipt.runtime_handoff.runtime_action_ready == 0 &&
+              launch_receipt.runtime_handoff.first_hud_frame_ready == 0,
+          "boot launch wrapper keeps skproject SHOW_MENU_SCREEN active before GAME_LOAD");
     check(!dm2_v1_startup_launch_from_host_facts_with_receipt(
               NULL,
               &launch_receipt) &&

@@ -32,8 +32,7 @@ static int csb_v1_startup_playback_session_owned_pc34(
 {
     return session && session->valid && session->real_asset_matched &&
         session->title_assets_ready && session->entrance_assets_ready &&
-        session->hud_assets_bound && session->surfaces.valid &&
-        session->surfaces.title_regions_ready &&
+        session->surfaces.valid && session->surfaces.title_regions_ready &&
         session->surfaces.opening_frame_ready;
 }
 
