@@ -196,6 +196,34 @@ typedef struct {
 } DM2_V1_GdatImageMetadata;
 
 typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t mode;
+    uint16_t selected_raw_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t data_index;
+    uint32_t image_hash;
+    uint32_t receipt_hash;
+} DM2_V1_QueryPicstImageReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t gdat_bypassed_for_ff;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t colors;
+    uint8_t palette16[16];
+    DM2_V1_GdatImageMetadata metadata;
+    uint16_t data_index;
+    uint32_t palette_hash;
+    uint32_t receipt_hash;
+} DM2_V1_QueryGdatSummaryImageReceipt;
+
+typedef struct {
     uint8_t present;
     uint8_t loadable_raw;
     uint8_t copied_to_destination;
@@ -397,6 +425,53 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatImageExtractReceipt;
 
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_default_image;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t bits_per_pixel;
+    uint16_t requested_data_index;
+    uint16_t selected_data_index;
+    uint16_t selected_raw_index;
+    uint16_t width;
+    uint16_t height;
+    uint32_t raw_length;
+    uint32_t raw_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GdatImageEntryBuffReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_existing_bitmap;
+    uint8_t used_cached_bitmap;
+    uint8_t queried_gdat_image;
+    uint8_t mode;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t selected_raw_index;
+    uint16_t width;
+    uint16_t height;
+    uint32_t receipt_hash;
+} DM2_V1_QueryPictBitsReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t palette16[16];
+    uint16_t selected_raw_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t width_units;
+    uint32_t image_hash;
+    uint32_t palette_hash;
+    uint32_t receipt_hash;
+} DM2_V1_Query4BppPictBuffAndPalReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -566,6 +641,47 @@ int dm2_v1_extract_gdat_image_receipt(
     const DM2_V1_GdatUnderlayPair *underlays,
     size_t underlay_count,
     DM2_V1_GdatImageExtractReceipt *out_receipt);
+int dm2_v1_query_gdat_image_entry_buff_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatImageEntryBuffReceipt *out_receipt);
+int dm2_v1_query_gdat_image_metrics_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint16_t *out_width,
+    uint16_t *out_height,
+    DM2_V1_GdatImageEntryBuffReceipt *out_receipt);
+int dm2_v1_query_pict_bits_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t mode,
+    int existing_bitmap_present,
+    int cached_bitmap_present,
+    int category,
+    int index,
+    int field,
+    DM2_V1_QueryPictBitsReceipt *out_receipt);
+int dm2_v1_query_4bpp_pict_buff_and_pal_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    uint16_t width_divisor,
+    DM2_V1_Query4BppPictBuffAndPalReceipt *out_receipt);
+int dm2_v1_query_picst_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_QueryPicstImageReceipt *out_receipt);
+int dm2_v1_query_gdat_summary_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_QueryGdatSummaryImageReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,

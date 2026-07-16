@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 16, shared DM1/CSB 1562, DM2 1489; 3067 total open rows
+  DM1 6, shared DM1/CSB 1538, DM2 1483; 3027 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -58,6 +58,26 @@
     delete/shift/window adjustment, and existing-scent strength updates.
     Live Footprints/Thieves Eye/group smell consumers and movement scent
     append remain route-owned.
+  - 2026-07-16 DM1 CHAMPION damage/poison/stamina update: `F0320`,
+    `F0321`, `F0322`, `F0324`, `F0325`, and aliases `F320_akzz_`,
+    `F321_AA29_`, `F322_lzzz_`, `F324_aezz_`, and `F325_bzzz_` are now
+    closed through DM1 combat/action-tail receipts. Narrow boundaries remain:
+    F0320 covers pending wound/damage mutation but not the damage-number
+    bitmap or C12 hide-event renderer, F0321 covers the tested combat damage
+    pipeline rather than every live projectile/caller variant, F0322 keeps
+    panel redraw/poison UI route-owned, and F0325 models the stamina mutation
+    plus pending-damage magnitude while callers own the actual enqueue/redraw
+    side effects.
+  - 2026-07-16 DM1 CHAMPION projectile/action-time update: `F0326`,
+    `F0327`, `F0328`, `F0330`, `F0331`, and aliases `F326_ozzz_`,
+    `F327_kzzz_`, `F328_nzzz_`, `F330_szzz_`, and `F331_auzz_` are now
+    closed through source-backed DM1 throw/shoot, action-tail, scheduler,
+    champion-needs, and clock-tick receipts. Narrow boundaries remain:
+    projectile queue/render and deeper impact behavior stay route-owned,
+    F0327 covers the tested spell-launch handoff rather than every live
+    projectile insertion route, and `F0329` remains open because the strongest
+    leader-hand throw proof is currently M11/engine-owned rather than a clean
+    DM1-only owner for this pass.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
@@ -347,6 +367,33 @@
     already-open draw state, synthetic host/level/object/bitmap promotion, hash
     drift, or fallback visuals. Remaining Theron work is the real capture/
     decoder producer that supplies those proofs from original Track 02 bytes.
+  - 2026-07-16 Theron host proof producer update: the host dungeon-consumer
+    proof is now produced by runtime admission code from the already verified
+    Track 02 dungeon handoff, not hand-assembled by the probe. The producer
+    requires a non-placeholder, non-synthetic, non-fallback original host-route
+    identity plus level-grid, object-table, bitmap/palette, host-upload, and
+    host-capture proof flags, then copies only the matching real route,
+    checksum, and decoded asset hashes from the admitted handoff. Remaining
+    blocker: real Track 02 decoder/capture code must still supply those proof
+    flags and decoded hashes from original ISO/BIN/CUE bytes across non-startup
+    dungeons.
+  - 2026-07-16 Theron decoded-route render proof producer update: runtime
+    admission can now build the render-asset proof from decoded Track 02 route
+    receipts instead of probe-injected hashes. The producer requires matching
+    consumer/level/object route hashes, non-startup level decode-ready,
+    object-table decode-ready, a complete startup bitmap atlas, promotable
+    palette-window evidence, nonzero decoded hashes, and no synthetic or
+    fallback visual flags. Remaining blocker: the real ISO/BIN/CUE decoder and
+    capture path must still fill those decoded receipts from original media for
+    broader non-startup dungeons.
+  - 2026-07-16 Theron staged-media blocker confirmation: the local staged
+    US/JP raw Track 02 corpus under `/Volumes/Extern-disk/FirestaffUserData`
+    verifies startup level and startup bitmap evidence, and the graphics probe
+    finds repeated HuC6260-shaped 4bpp palette windows. It still does not
+    provide a source-locked palette binding or a promoted non-startup
+    level/object-table route: descriptor handoff reports real-data
+    `no-claim`, and palette windows remain `promotion_allowed=0`. Keep runtime
+    admission closed until loader/capture evidence binds those offsets.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -634,6 +681,13 @@
     Saturn PRS3 opcode/output proof with reviewed producer provenance,
     Saturn VDP1/material/palette capture, and the reviewed DGN/menu host
     upload route before any visual handoff can open.
+  - 2026-07-16 update: the PRS3 decoded-output gate now has focused coverage
+    for the positive original-Saturn provenance case. A matching real MENU.BPK
+    stream sidecar with capture source and original provenance can become
+    `source-bound-no-runtime`, but opcode grammar, decoder promotion, runtime
+    upload, rendering, and fallback visuals remain false. Remaining Nexus work
+    is the real producer that supplies authenticated Saturn output/VDP1/palette
+    sidecars, plus reviewed DGN/menu upload before visual handoff.
   - 2026-07-16 update: the DGN package/host consumer now requires the
     validated real-DGN face/material receipt plus an explicit host-route
     request, package-consumed bit, level index, canonical DGN size, face count,
@@ -643,6 +697,13 @@
     false. Remaining Nexus work is the reviewed menu upload consumer, original
     Saturn PRS3/output producer provenance, Saturn VDP1/material/palette
     capture, and broad startup/menu/DGN route completion.
+  - 2026-07-16 update: the real LEV00 package/host-route hash test now asserts
+    fail-closed DGN readiness at the host boundary: the package is consumed,
+    runtime DGN remains blocked, presentation is denied, rasterized command
+    count and written pixels stay zero, fallback visuals stay false, and the
+    stable host-route status is `blocked-handoff`. Remaining Nexus work is
+    still original Saturn DGN capture/admission, reviewed DGN/material upload,
+    PRS3 output provenance, and the menu/title/save route capture producer.
   - 2026-07-16 update: the current startup/champion/menu focused WIP is green
     with fail-closed real-DGN behavior. `m11_nexus_startup_runtime_handoff` and
     `nexus_v1_startup_menu_pc34_compat` now require
@@ -2233,6 +2294,16 @@
     pointer get/set path for both source champion formats. Other champion info
     indices remain unimplemented rather than inferring a champion, CSBWin,
     DSA, timer, or save-record layout.
+  - 2026-07-16 CSB audit update: F7055-F7058 and F7061-F7068 are now
+    CMake-registered, CTest-verified, and closed in the ReDMCSB callable
+    audit/disposition tables through the CSB-owned save/header/dungeon-stream
+    and champion portrait/text helpers. Remaining work in this save area is
+    still positive real CSBWin DSA/runtime corpus breadth and broader
+    title/HUD/door capture, not these byte-transaction helpers.
+  - 2026-07-16 CSB audit update: F7059/F7060 are now CMake-registered,
+    CTest-verified, and closed in the audit/disposition tables as the
+    source-owned dungeon-part byte checksum boundary. Remaining work here is
+    still broader real CSBWin DSA/runtime corpus coverage, not this checksum.
   - 2026-07-14 update: `CEDTINCR.C` F7088 now transfers the exact PC34
     `PORTRAITS_INCLUDED` to `PORTRAITS_EXCLUDED` route: four source portrait
     spans of 464 bytes are copied and then rebound through F7066. Other
@@ -9150,6 +9221,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   2 and 3. Remaining dungeon/HUD material work must bind only further
   source-proven GDAT category/field queries to runtime consumers; unknown
   IMG3 selector bytes remain no-draw.
+  - 2026-07-16 done: `DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF` and
+    `DM2_QUERY_GDAT_IMAGE_METRICS` now have source-backed receipts over real
+    parsed GDAT dtImage rows, including the skproject real `MISCELLANEOUS/FE/FE`
+    default-image route when the requested image is absent. No generated image
+    or synthetic HUD/dungeon visual is admitted. Remaining DM2 GDAT/HUD work is
+    binding more DRAW_* consumers to these receipts and broader real-data
+    runtime capture.
+  - 2026-07-16 done: `DM2_QUERY_PICT_BITS` and
+    `DM2_QUERY_4BPP_PICT_BUFF_AND_PAL` now preserve the skproject real-data
+    admission routes for image descriptors and map-chip field `0xF9` plus local
+    palette. Cached/current-bitmap paths require caller-owned evidence, and
+    absent/non-4bpp/default-image routes fail closed. Remaining work is wiring
+    more DRAW_* HUD/dungeon consumers to these receipts.
+  - 2026-07-16 done: `DM2_QUERY_PICST_IMAGE` and
+    `DM2_QUERY_GDAT_SUMMARY_IMAGE` now bind picture descriptors to real GDAT
+    image-entry metadata and local palettes. The source `cls1 == 0xff` summary
+    bypass is preserved as no-GDAT/no-draw state. Remaining work is DRAW_*
+    consumer wiring and broader live HUD/dungeon capture.
 
 - [ ] Nexus Structure3 face rendering capture: bind an original Saturn trace
   from face rows to transform, winding/culling, normal use, fill-selector

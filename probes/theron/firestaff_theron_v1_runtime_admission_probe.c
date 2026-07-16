@@ -244,8 +244,12 @@ int main(void)
     Theron_V1StartupAllDungeonRouteReceipt mutated_route;
     Theron_Track02LevelRouteReceipt level_route;
     Theron_Track02LevelRouteReceipt mutated_level_route;
+    Theron_Track02LevelRouteReceipt promoted_level_route;
     Theron_Track02ObjectTableRouteReceipt object_route;
     Theron_Track02ObjectTableRouteReceipt mutated_object_route;
+    Theron_Track02ObjectTableRouteReceipt promoted_object_route;
+    Theron_Track02StartupBitmapAtlas promoted_bitmap_atlas;
+    Theron_Track02PaletteWindowEvidence promoted_palette_window;
     Theron_V1CaptureConfig config = {
         1, "raw", "card", "raw_track_required_ready", 1, 1
     };
@@ -626,32 +630,125 @@ int main(void)
         render_admission.fallback_visuals_allowed) {
         return 1;
     }
-    memset(&render_proof, 0, sizeof(render_proof));
-    render_proof.valid = 1;
-    render_proof.same_capture_as_consumer_semantics = 1;
-    render_proof.variant = THERON_TRACK02_VARIANT_US_BIN;
-    strcpy(render_proof.track02_md5, THERON_TRACK02_MD5_US_BIN);
-    render_proof.record = payload.raw_track02_record;
-    render_proof.level_route_hash = route.level_route_hash;
-    render_proof.object_table_route_hash = route.object_table_route_hash;
-    render_proof.all_dungeon_route_hash = route.route_hash;
-    render_proof.payload_checksum = post3800_consumer.payload_checksum;
-    render_proof.level_envelope_checksum =
-        post3800_consumer.level_envelope_checksum;
-    render_proof.post_envelope_checksum =
-        post3800_consumer.post_envelope_checksum;
-    render_proof.consumer_trace_checksum =
-        post3800_consumer.consumer_trace_checksum;
-    render_proof.decoded_level_hash = 0x1e7e1001u;
-    render_proof.decoded_object_table_hash = 0x0b7ec700u;
-    render_proof.decoded_bitmap_hash = 0xb17b00a1u;
-    render_proof.decoded_palette_hash = 0x0fa1e77eu;
-    render_proof.level_consumer_proven = 1;
-    render_proof.object_table_consumer_proven = 1;
-    render_proof.bitmap_consumer_proven = 1;
-    render_proof.palette_consumer_proven = 1;
-    render_proof.decoded_bitmap_pixels_proven = 1;
-    render_proof.decoded_palette_words_proven = 1;
+    theron_v1_runtime_track02_render_asset_proof_init(&render_proof);
+    if (render_proof.valid ||
+        render_proof.level_consumer_proven ||
+        render_proof.fallback_visuals_allowed) {
+        return 1;
+    }
+    promoted_level_route = level_route;
+    promoted_level_route.nonstartup_level_decode_ready = 1;
+    promoted_level_route.blocked_for_missing_nonstartup_level_evidence = 0;
+    promoted_level_route.nonstartup_level_candidate_hash[0] = 0x5a77c001u;
+    promoted_object_route = object_route;
+    promoted_object_route.object_table_decode_ready = 1;
+    promoted_object_route.blocked_for_missing_real_object_evidence = 0;
+    promoted_object_route.object_table_level_consensus_mask = 0x01u;
+    promoted_object_route.object_table_level_consensus_record_hashes[0] =
+        0x0b7ec700u;
+    promoted_object_route.object_table_level_consensus_position_hashes[0] =
+        0x00c0ffeeu;
+    memset(&promoted_bitmap_atlas, 0, sizeof(promoted_bitmap_atlas));
+    promoted_bitmap_atlas.variant = THERON_TRACK02_VARIANT_US_BIN;
+    promoted_bitmap_atlas.route_count =
+        THERON_TRACK02_STARTUP_BITMAP_ATLAS_ROUTE_MAX;
+    promoted_bitmap_atlas.route_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    promoted_bitmap_atlas.total_tile_count = 8u;
+    promoted_bitmap_atlas.total_nonzero_pixel_count = 128u;
+    promoted_bitmap_atlas.checksum = 0xb17b00a1u;
+    memset(&promoted_palette_window, 0, sizeof(promoted_palette_window));
+    promoted_palette_window.variant = THERON_TRACK02_VARIANT_US_BIN;
+    promoted_palette_window.payload_checksum = 0x0fa1e77eu;
+    promoted_palette_window.format_valid = 1;
+    promoted_palette_window.semantic_binding_verified = 1;
+    promoted_palette_window.promotion_allowed = 1;
+    promoted_palette_window.palette.valid = 1;
+    promoted_palette_window.palette.nonblack_entry_count = 15u;
+    promoted_palette_window.palette.checksum = 0x7100fa1eu;
+    if (!theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
+            &consumer_semantics,
+            &promoted_level_route,
+            &promoted_object_route,
+            &promoted_bitmap_atlas,
+            &promoted_palette_window,
+            &render_proof)) {
+        return 1;
+    }
+    if (!render_proof.valid ||
+        !render_proof.same_capture_as_consumer_semantics ||
+        render_proof.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(render_proof.track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        render_proof.record != payload.raw_track02_record ||
+        render_proof.level_route_hash != route.level_route_hash ||
+        render_proof.object_table_route_hash !=
+            route.object_table_route_hash ||
+        render_proof.all_dungeon_route_hash != route.route_hash ||
+        render_proof.payload_checksum !=
+            post3800_consumer.payload_checksum ||
+        render_proof.level_envelope_checksum !=
+            post3800_consumer.level_envelope_checksum ||
+        render_proof.post_envelope_checksum !=
+            post3800_consumer.post_envelope_checksum ||
+        render_proof.consumer_trace_checksum !=
+            post3800_consumer.consumer_trace_checksum ||
+        render_proof.decoded_level_hash == 0u ||
+        render_proof.decoded_object_table_hash == 0u ||
+        render_proof.decoded_bitmap_hash != promoted_bitmap_atlas.checksum ||
+        render_proof.decoded_palette_hash == 0u ||
+        !render_proof.level_consumer_proven ||
+        !render_proof.object_table_consumer_proven ||
+        !render_proof.bitmap_consumer_proven ||
+        !render_proof.palette_consumer_proven ||
+        !render_proof.decoded_bitmap_pixels_proven ||
+        !render_proof.decoded_palette_words_proven ||
+        render_proof.synthetic_level_promoted ||
+        render_proof.synthetic_object_table_promoted ||
+        render_proof.synthetic_bitmap_promoted ||
+        render_proof.synthetic_palette_promoted ||
+        render_proof.fallback_visuals_observed ||
+        render_proof.fallback_visuals_allowed) {
+        return 1;
+    }
+    if (theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
+            &consumer_semantics,
+            &level_route,
+            &promoted_object_route,
+            &promoted_bitmap_atlas,
+            &promoted_palette_window,
+            &mutated_render_proof) ||
+        mutated_render_proof.valid) {
+        return 1;
+    }
+    promoted_palette_window.promotion_allowed = 0;
+    if (theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
+            &consumer_semantics,
+            &promoted_level_route,
+            &promoted_object_route,
+            &promoted_bitmap_atlas,
+            &promoted_palette_window,
+            &mutated_render_proof) ||
+        mutated_render_proof.valid) {
+        return 1;
+    }
+    promoted_palette_window.promotion_allowed = 1;
+    promoted_bitmap_atlas.route_mask &=
+        ~THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    if (theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
+            &consumer_semantics,
+            &promoted_level_route,
+            &promoted_object_route,
+            &promoted_bitmap_atlas,
+            &promoted_palette_window,
+            &mutated_render_proof) ||
+        mutated_render_proof.valid) {
+        return 1;
+    }
+    promoted_bitmap_atlas.route_mask |=
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
     if (!theron_v1_runtime_bind_track02_render_asset_admission(
             &consumer_semantics, &render_proof, &render_admission)) {
         return 1;
@@ -779,38 +876,52 @@ int main(void)
         host_consumer.fallback_visuals_allowed) {
         return 1;
     }
-    memset(&host_consumer_proof, 0, sizeof(host_consumer_proof));
-    host_consumer_proof.valid = 1;
-    host_consumer_proof.same_capture_as_dungeon_handoff = 1;
-    host_consumer_proof.variant = THERON_TRACK02_VARIANT_US_BIN;
-    strcpy(host_consumer_proof.track02_md5, THERON_TRACK02_MD5_US_BIN);
-    host_consumer_proof.record = payload.raw_track02_record;
-    host_consumer_proof.level_route_hash = route.level_route_hash;
-    host_consumer_proof.object_table_route_hash =
-        route.object_table_route_hash;
-    host_consumer_proof.all_dungeon_route_hash = route.route_hash;
-    host_consumer_proof.payload_checksum =
-        post3800_consumer.payload_checksum;
-    host_consumer_proof.level_envelope_checksum =
-        post3800_consumer.level_envelope_checksum;
-    host_consumer_proof.post_envelope_checksum =
-        post3800_consumer.post_envelope_checksum;
-    host_consumer_proof.consumer_trace_checksum =
-        post3800_consumer.consumer_trace_checksum;
-    host_consumer_proof.decoded_level_hash =
-        render_proof.decoded_level_hash;
-    host_consumer_proof.decoded_object_table_hash =
-        render_proof.decoded_object_table_hash;
-    host_consumer_proof.decoded_bitmap_hash =
-        render_proof.decoded_bitmap_hash;
-    host_consumer_proof.decoded_palette_hash =
-        render_proof.decoded_palette_hash;
-    host_consumer_proof.original_host_route_bound = 1;
-    host_consumer_proof.level_grid_runtime_consumer_bound = 1;
-    host_consumer_proof.object_table_runtime_consumer_bound = 1;
-    host_consumer_proof.bitmap_palette_runtime_consumer_bound = 1;
-    host_consumer_proof.host_surface_upload_proven = 1;
-    host_consumer_proof.host_capture_frame_proven = 1;
+    theron_v1_runtime_track02_host_dungeon_consumer_proof_init(
+        &host_consumer_proof);
+    if (host_consumer_proof.valid ||
+        host_consumer_proof.original_host_route_bound ||
+        host_consumer_proof.fallback_visuals_allowed) {
+        return 1;
+    }
+    if (!theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
+            &dungeon_handoff,
+            "theron-v1-original-host-route-track02-dungeon",
+            1, 1, 1, 1, 1,
+            &host_consumer_proof)) {
+        return 1;
+    }
+    if (!host_consumer_proof.valid ||
+        !host_consumer_proof.same_capture_as_dungeon_handoff ||
+        host_consumer_proof.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(host_consumer_proof.track02_md5,
+               THERON_TRACK02_MD5_US_BIN) != 0 ||
+        host_consumer_proof.record != payload.raw_track02_record ||
+        host_consumer_proof.level_route_hash != route.level_route_hash ||
+        host_consumer_proof.object_table_route_hash !=
+            route.object_table_route_hash ||
+        host_consumer_proof.all_dungeon_route_hash != route.route_hash ||
+        host_consumer_proof.decoded_level_hash !=
+            render_proof.decoded_level_hash ||
+        host_consumer_proof.decoded_object_table_hash !=
+            render_proof.decoded_object_table_hash ||
+        host_consumer_proof.decoded_bitmap_hash !=
+            render_proof.decoded_bitmap_hash ||
+        host_consumer_proof.decoded_palette_hash !=
+            render_proof.decoded_palette_hash ||
+        !host_consumer_proof.original_host_route_bound ||
+        !host_consumer_proof.level_grid_runtime_consumer_bound ||
+        !host_consumer_proof.object_table_runtime_consumer_bound ||
+        !host_consumer_proof.bitmap_palette_runtime_consumer_bound ||
+        !host_consumer_proof.host_surface_upload_proven ||
+        !host_consumer_proof.host_capture_frame_proven ||
+        host_consumer_proof.synthetic_host_frame_promoted ||
+        host_consumer_proof.synthetic_level_grid_promoted ||
+        host_consumer_proof.synthetic_object_table_promoted ||
+        host_consumer_proof.synthetic_bitmap_palette_promoted ||
+        host_consumer_proof.fallback_visuals_observed ||
+        host_consumer_proof.fallback_visuals_allowed) {
+        return 1;
+    }
     if (!theron_v1_runtime_bind_track02_host_dungeon_consumer(
             &dungeon_handoff, &host_consumer_proof, &host_consumer)) {
         return 1;
@@ -848,6 +959,30 @@ int main(void)
         !host_consumer.host_capture_frame_required ||
         !host_consumer.dungeon_draw_allowed ||
         host_consumer.fallback_visuals_allowed) {
+        return 1;
+    }
+    if (theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
+            &dungeon_handoff,
+            "synthetic-host-route",
+            1, 1, 1, 1, 1,
+            &mutated_host_consumer_proof) ||
+        mutated_host_consumer_proof.valid) {
+        return 1;
+    }
+    if (theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
+            &dungeon_handoff,
+            "theron-v1-fallback-route",
+            1, 1, 1, 1, 1,
+            &mutated_host_consumer_proof) ||
+        mutated_host_consumer_proof.valid) {
+        return 1;
+    }
+    if (theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
+            &dungeon_handoff,
+            "theron-v1-original-host-route-track02-dungeon",
+            1, 1, 1, 1, 0,
+            &mutated_host_consumer_proof) ||
+        mutated_host_consumer_proof.valid) {
         return 1;
     }
     mutated_host_consumer_proof = host_consumer_proof;

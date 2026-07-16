@@ -755,7 +755,7 @@ DM2_IS_CLS1_CRITICAL_FOR_LOAD	SKULLWIN	SKULLWIN/c_querydb.cpp	29		MISSING
 DM2_QUERY_GDAT_DYN_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	36		MISSING
 DM2_QUERY_GDAT_ENTRYPTR	SKULLWIN	SKULLWIN/c_querydb.cpp	69	include/dm2_v1_asset_loader.h:269	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRY_DATA_INDEX	SKULLWIN	SKULLWIN/c_querydb.cpp	104	include/dm2_v1_asset_loader.h:276	VERIFIED_SOURCE_MAPPING
-DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	118		MISSING
+DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	118	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_image_entry_buff_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt selects the exact dtImage row and, only when absent, the real skproject MISCELLANEOUS/FE/FE default image; malformed/missing default data fails closed and no Firestaff visual is generated.
 DM2_QUERY_GDAT_ENTRY_DATA_PTR	SKULLWIN	SKULLWIN/c_querydb.cpp	139	include/dm2_v1_asset_loader.h:283	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRY_DATA_LENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	152	include/dm2_v1_asset_loader.h:290	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRY_DATA_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	157	include/dm2_v1_asset_loader.h:283	VERIFIED_SOURCE_MAPPING
@@ -767,11 +767,11 @@ DM2_QUERY_CMDSTR_TEXT	SKULLWIN	SKULLWIN/c_querydb.cpp	274	include/dm2_v1_weather
 DM2_QUERY_CMDSTR_NAME	SKULLWIN	SKULLWIN/c_querydb.cpp	320		MISSING
 DM2_QUERY_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	344		MISSING
 DM2_QUERY_CUR_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	364		MISSING
-DM2_QUERY_PICT_BITS	SKULLWIN	SKULLWIN/c_querydb.cpp	373		MISSING
-DM2_QUERY_GDAT_IMAGE_METRICS	SKULLWIN	SKULLWIN/c_querydb.cpp	406		MISSING
+DM2_QUERY_PICT_BITS	SKULLWIN	SKULLWIN/c_querydb.cpp	373	include/dm2_v1_asset_loader.h:dm2_v1_query_pict_bits_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt preserves the source route choice: mode bit 2 requires real GDAT image-entry data, mode bit 3 requires a caller-owned cached bitmap, and current-bitmap mode requires an existing bitmap; no substitute pixels are generated.
+DM2_QUERY_GDAT_IMAGE_METRICS	SKULLWIN	SKULLWIN/c_querydb.cpp	406	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_image_metrics_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt returns source IMG3 width/height from the selected real dtImage/default-image payload without decoding or fabricating pixels.
 DM2_QUERY_ORNATE_ANIM_FRAME	SKULLWIN	SKULLWIN/c_querydb.cpp	449		MISSING
-DM2_QUERY_PICST_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	548		MISSING
-DM2_QUERY_4BPP_PICT_BUFF_AND_PAL	SKULLWIN	SKULLWIN/c_querydb.cpp	561		MISSING
+DM2_QUERY_PICST_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	548	include/dm2_v1_asset_loader.h:dm2_v1_query_picst_image_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt binds the picture descriptor to the selected real GDAT image-entry route, resets x/y, records mode 4 and source dimensions, and never allocates substitute pixels.
+DM2_QUERY_4BPP_PICT_BUFF_AND_PAL	SKULLWIN	SKULLWIN/c_querydb.cpp	561	include/dm2_v1_asset_loader.h:dm2_v1_query_4bpp_pict_buff_and_pal_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt requires loadable real dtImage field 0xF9 plus its local 16-colour palette and returns the source width/divisor result; absent, non-4bpp, or default-image routes fail closed.
 DM2_QUERY_PLAYER_SKILL_LV	SKULLWIN	SKULLWIN/c_querydb.cpp	583		MISSING
 DM2_IS_WALL_ORNATE_ALCOVE	SKULLWIN	SKULLWIN/c_querydb.cpp	635		MISSING
 DM2_IS_TILE_BLOCKED	SKULLWIN	SKULLWIN/c_querydb.cpp	646		MISSING
@@ -797,7 +797,7 @@ DM2_FIND_HAND_WITH_EMPTY_FLASK	SKULLWIN	SKULLWIN/c_querydb.cpp	1509		MISSING
 DM2_FIND_DISTINCTIVE_ITEM_ON_TILE	SKULLWIN	SKULLWIN/c_querydb.cpp	1540		MISSING
 DM2_FIND_TILE_ACTUATOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1576		MISSING
 DM2_FIND_LADDAR_AROUND	SKULLWIN	SKULLWIN/c_querydb.cpp	1645		MISSING
-DM2_QUERY_GDAT_SUMMARY_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	1781		MISSING
+DM2_QUERY_GDAT_SUMMARY_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	1781	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_summary_image_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt initializes the source image descriptor, binds dtImage data index, source offsets and local palette when present, and preserves the cls1 FF no-GDAT bypass without synthetic imagery.
 DM2_GET_PLAYER_AT_POSITION	SKULLWIN	SKULLWIN/c_querydb.cpp	1828		MISSING
 DM2_FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1858		MISSING
 DM2_DIR_FROM_5x5_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1900		MISSING

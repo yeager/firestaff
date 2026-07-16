@@ -32774,6 +32774,138 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8152_vidrv_fill_box_p
              COMMAND test_redmcsb_f8152_vidrv_fill_box_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7055_saveutil_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7055_saveutil_pc34_compat.c")
+    add_executable(test_redmcsb_f7055_saveutil_pc34_compat
+        tests/test_redmcsb_f7055_saveutil_pc34_compat.c
+        src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7055_saveutil_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7055_saveutil_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7055_saveutil_pc34_compat
+             COMMAND test_redmcsb_f7055_saveutil_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7059_dungeon_part_checksum_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7059_dungeon_part_checksum_pc34_compat.c")
+    add_executable(test_redmcsb_f7059_dungeon_part_checksum_pc34_compat
+        tests/test_redmcsb_f7059_dungeon_part_checksum_pc34_compat.c
+        src/csb/redmcsb_f7059_dungeon_part_checksum_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7059_dungeon_part_checksum_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7059_dungeon_part_checksum_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7059_dungeon_part_checksum_pc34_compat
+             COMMAND test_redmcsb_f7059_dungeon_part_checksum_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7061_save_header_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7061_save_header_pc34_compat.c")
+    add_executable(test_redmcsb_f7061_save_header_pc34_compat
+        tests/test_redmcsb_f7061_save_header_pc34_compat.c
+        src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+        src/csb/redmcsb_f7061_save_header_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7061_save_header_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7061_save_header_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7061_save_header_pc34_compat
+             COMMAND test_redmcsb_f7061_save_header_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7062_save_header_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7062_save_header_pc34_compat.c")
+    add_executable(test_redmcsb_f7062_save_header_pc34_compat
+        tests/test_redmcsb_f7062_save_header_pc34_compat.c
+        src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+        src/csb/redmcsb_f7061_save_header_pc34_compat.c
+        src/csb/redmcsb_f7062_save_header_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7062_save_header_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7062_save_header_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7062_save_header_pc34_compat
+             COMMAND test_redmcsb_f7062_save_header_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7063_dungeon_stream_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7063_dungeon_stream_pc34_compat.c")
+    add_executable(test_redmcsb_f7063_dungeon_stream_pc34_compat
+        tests/test_redmcsb_f7063_dungeon_stream_pc34_compat.c
+        src/csb/redmcsb_f7063_dungeon_stream_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7063_dungeon_stream_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7063_dungeon_stream_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7063_dungeon_stream_pc34_compat
+             COMMAND test_redmcsb_f7063_dungeon_stream_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7064_champion_text_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7064_champion_text_pc34_compat.c")
+    add_executable(test_redmcsb_f7064_champion_text_pc34_compat
+        tests/test_redmcsb_f7064_champion_text_pc34_compat.c
+        src/csb/redmcsb_f7064_champion_text_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7064_champion_text_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7064_champion_text_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7064_champion_text_pc34_compat
+             COMMAND test_redmcsb_f7064_champion_text_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7065_portrait_slots_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7065_portrait_slots_pc34_compat.c")
+    add_executable(test_redmcsb_f7065_portrait_slots_pc34_compat
+        tests/test_redmcsb_f7065_portrait_slots_pc34_compat.c
+        src/csb/redmcsb_f7065_portrait_slots_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7065_portrait_slots_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7065_portrait_slots_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7065_portrait_slots_pc34_compat
+             COMMAND test_redmcsb_f7065_portrait_slots_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7067_portrait_info_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7067_portrait_info_pc34_compat.c")
+    add_executable(test_redmcsb_f7067_portrait_info_pc34_compat
+        tests/test_redmcsb_f7067_portrait_info_pc34_compat.c
+        src/csb/redmcsb_f7065_portrait_slots_pc34_compat.c
+        src/csb/redmcsb_f7067_portrait_info_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7067_portrait_info_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7067_portrait_info_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7067_portrait_info_pc34_compat
+             COMMAND test_redmcsb_f7067_portrait_info_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0435_save_tail_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f0435_save_tail_pc34_compat.c")
     add_executable(test_redmcsb_f0435_save_tail_pc34_compat
