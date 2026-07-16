@@ -818,6 +818,104 @@ static void test_adjust_ui_event(void)
           "ADJUST_UI_EVENT leaves unrelated UI events untouched");
 }
 
+static void test_gfx_str_helpers(void)
+{
+    uint8_t font_plane[DM2_V1_SKPROJECT_FONT_PLANE_BYTES];
+    DM2_V1_SkprojectFontReceipt font_receipt;
+    DM2_V1_SkprojectTextMetricsReceipt metrics;
+    DM2_V1_SkprojectTextDrawReceipt draw;
+    DM2_V1_SkprojectFormatTextReceipt fmt;
+    DM2_V1_SkprojectHintLineReceipt hint;
+    char text[64];
+    char line[32];
+    uint8_t encrypted[6];
+
+    memset(font_plane, 0, sizeof(font_plane));
+    for (uint8_t row = 0; row < 6u; ++row)
+        font_plane[(uint16_t)row * 128u + 'A'] = 0x18u;
+    CHECK(dm2_v1_skproject_query_font(
+              font_plane, 'A', 0x0eu, 0x01u, &font_receipt) == 1 &&
+              font_receipt.valid && font_receipt.written_pixels == 18u &&
+              font_receipt.pixels[0] == 0xeeu &&
+              font_receipt.pixels[1] == 0x11u,
+          "c_gfx_str QUERY_FONT expands six source rows into 18 packed pixels");
+    CHECK(dm2_v1_skproject_query_font(
+              0, 'A', 0x0eu, 0x01u, &font_receipt) == 0 &&
+              font_receipt.blocked_missing_font_plane,
+          "c_gfx_str QUERY_FONT rejects missing font plane");
+
+    CHECK(dm2_v1_skproject_query_str_metrics(
+              "DM2", &metrics) == 1 &&
+              metrics.valid && metrics.text_len == 3u &&
+              metrics.width == 17 && metrics.height == 5,
+          "c_gfx_str QUERY_STR_METRICS uses -gfxstrw2 plus glyph stride");
+    CHECK(dm2_v1_skproject_query_str_metrics(
+              "", &metrics) == 0 && !metrics.valid,
+          "c_gfx_str QUERY_STR_METRICS rejects zero-width strings");
+
+    CHECK(dm2_v1_skproject_plan_draw_string(
+              DM2_V1_SKPROJECT_TEXT_ROUTE_STRING, 320, 10, 20,
+              3u, 0x4004u, "AB", &draw) == 1 &&
+              draw.valid && draw.dest_is_screen &&
+              draw.uses_alpha_mask && draw.draw_y == 15 &&
+              draw.first_char_x == 10 && draw.last_char_x == 16 &&
+              draw.char_count == 2u,
+          "c_gfx_str DRAW_STRING plan preserves baseline and alpha-mask flag");
+    CHECK(dm2_v1_skproject_plan_draw_string(
+              DM2_V1_SKPROJECT_TEXT_ROUTE_STRONG, 112, 30, 40,
+              2u, 4u, "AB", &draw) == 1 &&
+              draw.strong_shadow_passes == 2 &&
+              draw.fill_background &&
+              draw.fill_x == 29 && draw.fill_y == 35 &&
+              draw.fill_w == 13 && draw.fill_h == 7,
+          "c_gfx_str DRAW_STRONG_TEXT plan includes source background fill rect");
+    CHECK(dm2_v1_skproject_plan_draw_string(
+              DM2_V1_SKPROJECT_TEXT_ROUTE_BUTTON, 80, 4, 12,
+              1u, 2u, "OK", &draw) == 1 &&
+              draw.adjusts_button_rect,
+          "c_gfx_str DRAW_BUTTON_STR plan marks button rect adjustment");
+    CHECK(dm2_v1_skproject_plan_draw_string(
+              DM2_V1_SKPROJECT_TEXT_ROUTE_NAME, 80, 4, 12,
+              1u, 2u, "NAME", &draw) == 1 &&
+              draw.adjusts_button_rect && draw.strong_shadow_passes == 2,
+          "c_gfx_str DRAW_NAME_STR combines button placement with strong text");
+    CHECK(dm2_v1_skproject_plan_draw_string(
+              DM2_V1_SKPROJECT_TEXT_ROUTE_BACKBUFF, 128, 64, 50,
+              1u, 2u, "ABCD", &draw) == 1 &&
+              draw.centered_by_metrics && draw.draw_x == 62,
+          "c_gfx_str DRAW_TEXT_TO_BACKBUFF plan centers by measured text height");
+
+    CHECK(dm2_v1_skproject_format_skstr_literal(
+              "SAVE GAME", text, sizeof(text), &fmt) == 1 &&
+              fmt.valid && strcmp(text, "SAVE GAME") == 0 &&
+              fmt.consumed_bytes == 9u && fmt.written_bytes == 9u,
+          "c_gfx_str FORMAT_SKSTR literal path copies source text");
+    CHECK(dm2_v1_skproject_format_skstr_literal(
+              "VALUE .Z001", text, sizeof(text), &fmt) == 0 &&
+              fmt.blocked_unimplemented_substitution &&
+              strcmp(text, "VALUE ") == 0,
+          "c_gfx_str FORMAT_SKSTR substitution path fails closed");
+
+    for (uint16_t i = 0; i < 5u; ++i)
+        encrypted[i] = (uint8_t)(~((uint8_t)"HELLO"[i] + (uint8_t)i));
+    encrypted[5] = 0u;
+    CHECK(dm2_v1_skproject_decode_gdat_text_literal(
+              encrypted, 5u, 1, text, sizeof(text), &fmt) == 1 &&
+              strcmp(text, "HELLO") == 0,
+          "c_gfx_str QUERY_GDAT_TEXT decrypts bit-0x08 literal bytes");
+
+    CHECK(dm2_v1_skproject_split_hint_line(
+              "ALPHA BETA GAMMA", 0u, 60, line, sizeof(line), &hint) == 1 &&
+              hint.valid && hint.split_at_space &&
+              strcmp(line, "ALPHA BETA") == 0 && hint.next_offset == 11u,
+          "c_gfx_str DM2_gfxstr_3929_04e2 wraps at the last fitting space");
+    CHECK(dm2_v1_skproject_split_hint_line(
+              "ONE\nTWO", 0u, 60, line, sizeof(line), &hint) == 1 &&
+              hint.stopped_at_newline && strcmp(line, "ONE") == 0 &&
+              hint.next_offset == 4u,
+          "c_gfx_str DISPLAY_HINT_TEXT line splitter consumes explicit newline");
+}
+
 int main(void)
 {
     test_between_value();
@@ -833,6 +931,7 @@ int main(void)
     test_count_by_coin_types();
     test_boost_attribute();
     test_adjust_ui_event();
+    test_gfx_str_helpers();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -875,6 +974,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ADJUST_UI_EVENT") != 0,
           "source evidence names UI event adjustment helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_QUERY_FONT") != 0,
+          "source evidence names c_gfx_str helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

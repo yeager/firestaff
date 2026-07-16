@@ -316,6 +316,92 @@ typedef struct {
     int blocked_leader_hand_cooldown;
 } DM2_V1_SkprojectAdjustUiEventReceipt;
 
+#define DM2_V1_SKPROJECT_FONT_PLANE_BYTES (6u * 128u)
+#define DM2_V1_SKPROJECT_FONT_PIXELS 24u
+#define DM2_V1_SKPROJECT_TEXT_LIMIT 127u
+
+typedef struct {
+    uint8_t glyph;
+    uint8_t foreground;
+    uint8_t background;
+    uint8_t pixels[DM2_V1_SKPROJECT_FONT_PIXELS];
+    uint8_t written_pixels;
+    int valid;
+    int blocked_missing_font_plane;
+} DM2_V1_SkprojectFontReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_text;
+    uint16_t text_len;
+    int16_t width;
+    int16_t height;
+} DM2_V1_SkprojectTextMetricsReceipt;
+
+typedef enum {
+    DM2_V1_SKPROJECT_TEXT_ROUTE_STRING = 0,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_STRONG = 1,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_BUTTON = 2,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_NAME = 3,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_VP = 4,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_VP_RC = 5,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_LOCAL = 6,
+    DM2_V1_SKPROJECT_TEXT_ROUTE_BACKBUFF = 7
+} DM2_V1_SkprojectTextRoute;
+
+typedef struct {
+    DM2_V1_SkprojectTextRoute route;
+    int valid;
+    int blocked_missing_text;
+    int blocked_empty_text;
+    int strong_shadow_passes;
+    int fill_background;
+    int uses_alpha_mask;
+    int adjusts_button_rect;
+    int centered_by_metrics;
+    int dest_is_screen;
+    int16_t dest_width;
+    int16_t input_x;
+    int16_t input_baseline_y;
+    int16_t draw_x;
+    int16_t draw_y;
+    int16_t fill_x;
+    int16_t fill_y;
+    int16_t fill_w;
+    int16_t fill_h;
+    int16_t char_w;
+    int16_t char_h;
+    int16_t text_w;
+    int16_t text_h;
+    int16_t first_char_x;
+    int16_t last_char_x;
+    uint16_t char_count;
+    uint16_t foreground;
+    uint16_t background;
+} DM2_V1_SkprojectTextDrawReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_text;
+    int blocked_missing_output;
+    int blocked_unimplemented_substitution;
+    uint16_t consumed_bytes;
+    uint16_t written_bytes;
+} DM2_V1_SkprojectFormatTextReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_text;
+    int blocked_missing_output;
+    uint16_t start_offset;
+    uint16_t next_offset;
+    int16_t consumed_width;
+    uint16_t copied_bytes;
+    int split_at_space;
+    int stopped_at_newline;
+    int stopped_at_nul;
+} DM2_V1_SkprojectHintLineReceipt;
+
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
 int16_t dm2_v1_skproject_between_value(int16_t minv,
@@ -479,6 +565,43 @@ int dm2_v1_skproject_adjust_ui_event(
     const DM2_V1_SkprojectUiChampionState *champions,
     uint16_t champion_count,
     DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
+int dm2_v1_skproject_query_font(
+    const uint8_t *font_plane,
+    uint8_t glyph,
+    uint8_t foreground,
+    uint8_t background,
+    DM2_V1_SkprojectFontReceipt *out_receipt);
+int dm2_v1_skproject_query_str_metrics(
+    const char *text,
+    DM2_V1_SkprojectTextMetricsReceipt *out_receipt);
+int dm2_v1_skproject_plan_draw_string(
+    DM2_V1_SkprojectTextRoute route,
+    int16_t dest_width,
+    int16_t x,
+    int16_t baseline_y,
+    uint16_t foreground,
+    uint16_t background,
+    const char *text,
+    DM2_V1_SkprojectTextDrawReceipt *out_receipt);
+int dm2_v1_skproject_format_skstr_literal(
+    const char *source,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectFormatTextReceipt *out_receipt);
+int dm2_v1_skproject_decode_gdat_text_literal(
+    const uint8_t *source,
+    uint16_t source_len,
+    int encrypted,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectFormatTextReceipt *out_receipt);
+int dm2_v1_skproject_split_hint_line(
+    const char *source,
+    uint16_t start_offset,
+    int16_t max_width,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectHintLineReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 

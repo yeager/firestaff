@@ -1228,6 +1228,298 @@ int dm2_v1_skproject_adjust_ui_event(
     return adjusted ? 1 : 0;
 }
 
+int dm2_v1_skproject_query_font(
+    const uint8_t *font_plane,
+    uint8_t glyph,
+    uint8_t foreground,
+    uint8_t background,
+    DM2_V1_SkprojectFontReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFontReceipt receipt;
+    uint8_t written = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.glyph = glyph;
+    receipt.foreground = foreground;
+    receipt.background = background;
+    for (uint8_t i = 0; i < DM2_V1_SKPROJECT_FONT_PIXELS; ++i)
+        receipt.pixels[i] = background;
+    if (!font_plane) {
+        receipt.blocked_missing_font_plane = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint8_t row = 0; row < 6u; ++row) {
+        uint8_t bits = font_plane[(uint16_t)row * 128u + glyph];
+
+        for (uint8_t pair = 0; pair < 3u; ++pair) {
+            uint8_t high = (bits & 0x10u) ? foreground : background;
+            uint8_t low = (bits & 0x08u) ? foreground : background;
+
+            receipt.pixels[written++] = (uint8_t)((high << 4) | low);
+            bits = (uint8_t)(bits << 2);
+        }
+    }
+    receipt.written_pixels = written;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+static uint16_t dm2_v1_skproject_text_len(const char *text,
+                                          uint16_t max_len)
+{
+    uint16_t len = 0u;
+
+    if (!text) return 0u;
+    while (len < max_len && text[len] != '\0')
+        ++len;
+    return len;
+}
+
+int dm2_v1_skproject_query_str_metrics(
+    const char *text,
+    DM2_V1_SkprojectTextMetricsReceipt *out_receipt)
+{
+    DM2_V1_SkprojectTextMetricsReceipt receipt;
+    uint16_t len;
+    int16_t width;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!text) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    len = dm2_v1_skproject_text_len(text, DM2_V1_SKPROJECT_TEXT_LIMIT);
+    receipt.text_len = len;
+    width = (int16_t)(-1 + (int16_t)len * 6);
+    if (width <= 0) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.width = width;
+    receipt.height = 5;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_plan_draw_string(
+    DM2_V1_SkprojectTextRoute route,
+    int16_t dest_width,
+    int16_t x,
+    int16_t baseline_y,
+    uint16_t foreground,
+    uint16_t background,
+    const char *text,
+    DM2_V1_SkprojectTextDrawReceipt *out_receipt)
+{
+    DM2_V1_SkprojectTextDrawReceipt receipt;
+    DM2_V1_SkprojectTextMetricsReceipt metrics;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.route = route;
+    receipt.dest_width = dest_width;
+    receipt.input_x = x;
+    receipt.input_baseline_y = baseline_y;
+    receipt.foreground = foreground;
+    receipt.background = background;
+    receipt.char_w = 6;
+    receipt.char_h = 6;
+
+    if (!text) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_query_str_metrics(text, &metrics)) {
+        receipt.blocked_empty_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.text_w = metrics.width;
+    receipt.text_h = metrics.height;
+    receipt.char_count = metrics.text_len;
+    receipt.draw_x = x;
+    receipt.draw_y = (int16_t)(baseline_y + 1 - 6);
+    receipt.first_char_x = x;
+    receipt.last_char_x = (int16_t)(x + (int16_t)(metrics.text_len - 1u) * 6);
+    receipt.uses_alpha_mask = (background & 0x4000u) ? 1 : 0;
+
+    switch (route) {
+    case DM2_V1_SKPROJECT_TEXT_ROUTE_STRONG:
+    case DM2_V1_SKPROJECT_TEXT_ROUTE_NAME:
+    case DM2_V1_SKPROJECT_TEXT_ROUTE_LOCAL:
+    case DM2_V1_SKPROJECT_TEXT_ROUTE_BACKBUFF:
+        receipt.strong_shadow_passes = 2;
+        receipt.fill_background = (background & 0x4000u) ? 0 : 1;
+        receipt.fill_x = (int16_t)(x - 1);
+        receipt.fill_y = (int16_t)(baseline_y - metrics.height);
+        receipt.fill_w = (int16_t)(metrics.width + 2);
+        receipt.fill_h = (int16_t)(metrics.height + 2);
+        break;
+    default:
+        break;
+    }
+    if (route == DM2_V1_SKPROJECT_TEXT_ROUTE_BUTTON ||
+        route == DM2_V1_SKPROJECT_TEXT_ROUTE_NAME)
+        receipt.adjusts_button_rect = 1;
+    if (route == DM2_V1_SKPROJECT_TEXT_ROUTE_BACKBUFF) {
+        receipt.centered_by_metrics = 1;
+        receipt.draw_x = (int16_t)(x - metrics.height / 2);
+    }
+    if (dest_width == 320)
+        receipt.dest_is_screen = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_format_skstr_literal(
+    const char *source,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectFormatTextReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFormatTextReceipt receipt;
+    uint16_t read = 0u;
+    uint16_t written = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!source) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dest || dest_capacity == 0u) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    while (source[read] != '\0') {
+        if ((source[read] == '.' && source[read + 1u] == 'Z') ||
+            (uint8_t)source[read] == 1u) {
+            receipt.blocked_unimplemented_substitution = 1;
+            break;
+        }
+        if (written + 1u >= dest_capacity)
+            break;
+        dest[written++] = source[read++];
+    }
+    dest[written] = '\0';
+    receipt.consumed_bytes = read;
+    receipt.written_bytes = written;
+    receipt.valid = receipt.blocked_unimplemented_substitution ? 0 : 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int dm2_v1_skproject_decode_gdat_text_literal(
+    const uint8_t *source,
+    uint16_t source_len,
+    int encrypted,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectFormatTextReceipt *out_receipt)
+{
+    char temp[DM2_V1_SKPROJECT_TEXT_LIMIT + 1u];
+    uint16_t len;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!source) {
+        if (out_receipt) out_receipt->blocked_missing_text = 1;
+        return 0;
+    }
+    len = source_len;
+    if (len > DM2_V1_SKPROJECT_TEXT_LIMIT)
+        len = DM2_V1_SKPROJECT_TEXT_LIMIT;
+    for (uint16_t i = 0; i < len; ++i) {
+        uint8_t value = source[i];
+
+        if (encrypted)
+            value = (uint8_t)(~value - (uint8_t)i);
+        temp[i] = (char)value;
+    }
+    temp[len] = '\0';
+    return dm2_v1_skproject_format_skstr_literal(
+        temp, dest, dest_capacity, out_receipt);
+}
+
+int dm2_v1_skproject_split_hint_line(
+    const char *source,
+    uint16_t start_offset,
+    int16_t max_width,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectHintLineReceipt *out_receipt)
+{
+    DM2_V1_SkprojectHintLineReceipt receipt;
+    uint16_t in = start_offset;
+    uint16_t out = 0u;
+    uint16_t last_space_in = DM2_V1_SKPROJECT_TEXT_LIMIT + 1u;
+    uint16_t last_space_out = 0u;
+    int16_t width = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.start_offset = start_offset;
+    if (!source) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dest || dest_capacity == 0u) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    while (source[in] != '\0' && source[in] != '\n' &&
+           out + 1u < dest_capacity) {
+        int16_t next_width = (int16_t)(width + 6);
+
+        if (source[in] == ' ') {
+            last_space_in = in;
+            last_space_out = out;
+            receipt.consumed_width = width;
+        }
+        if (next_width > max_width) {
+            if (last_space_in <= in) {
+                dest[last_space_out] = '\0';
+                receipt.copied_bytes = last_space_out;
+                receipt.next_offset = (uint16_t)(last_space_in + 1u);
+                receipt.split_at_space = 1;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+            break;
+        }
+        dest[out++] = source[in++];
+        width = next_width;
+    }
+    dest[out] = '\0';
+    receipt.copied_bytes = out;
+    receipt.next_offset = in;
+    receipt.consumed_width = width;
+    receipt.stopped_at_newline = source[in] == '\n';
+    receipt.stopped_at_nul = source[in] == '\0';
+    if (receipt.stopped_at_newline)
+        receipt.next_offset = (uint16_t)(in + 1u);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -1253,5 +1545,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT; "
            "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES; "
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
-           "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT";
+           "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
+           "SKULLWIN/c_gfx_str.cpp c_stringdata::init/"
+           "DM2_QUERY_FONT/DM2_QUERY_STR_METRICS/DM2_DRAW_STRING/"
+           "DM2_DRAW_STRONG_TEXT/DM2_DRAW_BUTTON_STR/DM2_DRAW_NAME_STR/"
+           "DM2_DRAW_VP_STR/DM2_DRAW_GUIDED_STR/DM2_PRINT_SYSERR_TEXT/"
+           "DM2_DRAW_VP_RC_STR/DM2_DRAW_LOCAL_TEXT/DM2_FORMAT_SKSTR/"
+           "DM2_QUERY_GDAT_TEXT/DM2_DRAW_TEXT_TO_BACKBUFF/"
+           "DM2_gfxstr_3929_04e2/DM2_gfxstr_24a5_0732/"
+           "DM2_DISPLAY_HINT_TEXT/DM2_SCROLLBOX_MESSAGE";
 }

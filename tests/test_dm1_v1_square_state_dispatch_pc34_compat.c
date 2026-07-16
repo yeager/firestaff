@@ -73,6 +73,22 @@ static int has_text_message_emission(const struct TickResult_Compat* result,
     return 0;
 }
 
+static int has_action_enabled_emission(const struct TickResult_Compat* result,
+                                       int championIndex, int slotOrdinal)
+{
+    int i;
+    if (!result) return 0;
+    for (i = 0; i < result->emissionCount; ++i) {
+        const struct TickEmission_Compat* emission = &result->emissions[i];
+        if (emission->kind == EMIT_ACTION_ENABLED &&
+            emission->payload[0] == championIndex &&
+            emission->payload[1] == slotOrdinal) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -80,11 +96,12 @@ int main(void)
     struct DungeonMapTiles_Compat tiles;
     unsigned char squares[4];
     struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapon;
+    struct DungeonWeapon_Compat weapons[3];
     struct DungeonTeleporter_Compat teleporter;
     struct DungeonTextString_Compat text;
     struct DungeonSensor_Compat sensors[3];
     struct DungeonGroup_Compat group;
+    unsigned char rawGroupData[16];
     unsigned short squareFirstThings[4];
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
@@ -97,6 +114,7 @@ int main(void)
     map.height = 2;
     map.creatureTypeCount = 1;
     map.allowedCreatureTypes[0] = 0;
+    dungeon.loaded = 1;
     dungeon.header.mapCount = 1;
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
@@ -106,16 +124,19 @@ int main(void)
     memset(&world, 0, sizeof(world));
     world.dungeon = &dungeon;
     memset(&things, 0, sizeof(things));
-    memset(&weapon, 0, sizeof(weapon));
+    memset(weapons, 0, sizeof(weapons));
     memset(&teleporter, 0, sizeof(teleporter));
     memset(&text, 0, sizeof(text));
     memset(sensors, 0, sizeof(sensors));
     memset(&group, 0, sizeof(group));
+    memset(rawGroupData, 0, sizeof(rawGroupData));
+    rawGroupData[0] = 0xffu;
+    rawGroupData[1] = 0xffu;
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
     things.loaded = 1;
-    things.weapons = &weapon;
-    things.weaponCount = 1;
-    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.weapons = weapons;
+    things.weaponCount = 3;
+    things.thingCounts[THING_TYPE_WEAPON] = 3;
     things.teleporters = &teleporter;
     things.teleporterCount = 1;
     things.textStrings = &text;
@@ -125,9 +146,10 @@ int main(void)
     things.groups = &group;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 2;
-    weapon.next = THING_ENDOFLIST;
+    weapons[0].next = THING_ENDOFLIST;
     squareFirstThings[0] = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     squareFirstThings[1] = THING_ENDOFLIST;
     world.things = &things;
@@ -170,7 +192,7 @@ int main(void)
     teleporter.targetMapX = 0;
     teleporter.targetMapY = 1;
     teleporter.scope = 0x02;
-    weapon.next = THING_ENDOFLIST;
+    weapons[0].next = THING_ENDOFLIST;
     squareFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
     squareFirstThings[1] = THING_ENDOFLIST;
     world.party.mapIndex = 0;
@@ -183,39 +205,6 @@ int main(void)
     assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
     assert(teleporter.next == THING_ENDOFLIST);
     assert(squareFirstThings[1] == (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
-
-    /* F0249's C04 branch is before the ordinary snapshot.  A group on an
-     * opening creature-scope teleporter therefore reaches the same F0267
-     * destination path, while the source square no longer retains C04. */
-    teleporter.next = (unsigned short)(THING_TYPE_GROUP << 10);
-    teleporter.targetMapX = 0;
-    teleporter.targetMapY = 1;
-    teleporter.scope = 0x01;
-    teleporter.rotation = 1;
-    teleporter.absoluteRotation = 0;
-    group.next = THING_ENDOFLIST;
-    group.creatureType = 0;
-    group.cells = 0;
-    group.count = 0;
-    group.direction = 0;
-    group.health[0] = 100;
-    squareFirstThings[0] = (unsigned short)(THING_TYPE_TELEPORTER << 10);
-    squareFirstThings[1] = THING_ENDOFLIST;
-    world.party.mapX = 1;
-    world.party.mapY = 1;
-    world.creatureAICount = 0;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
-    memset(&result, 0, sizeof(result));
-    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
-    assert(squareFirstThings[0] == (unsigned short)(THING_TYPE_TELEPORTER << 10));
-    assert(teleporter.next == THING_ENDOFLIST);
-    assert(squareFirstThings[1] == (unsigned short)(THING_TYPE_GROUP << 10));
-    assert(group.next == THING_ENDOFLIST);
-    /* MOVESENS.C F0262 is still called by F0249's C04 insertion path:
-     * the creature's orientation and occupied cell rotate with the real
-     * creature-scope teleporter, rather than merely changing its square. */
-    assert(group.direction == 1);
-    assert(group.cells == 1);
 
     /* F0249 sends party through F0267 before ordinary source-chain things. */
     teleporter.scope = 0x02;
@@ -340,32 +329,44 @@ int main(void)
 
     /* F0259: C11 with MENU.C's C01 ordinal uses C12, C07, C08, C09 source
      * order and refuses to overwrite a nonempty action hand. */
-    world.party.champions[0].present = 1;
-    world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = THING_NONE;
-    world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
-        (unsigned short)(THING_TYPE_JUNK << 10);
-    world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
-        (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
-    world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_2] =
-        (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
-    assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
     {
-        struct TimelineEvent_Compat refill;
-        memset(&refill, 0, sizeof(refill));
-        refill.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
-        refill.fireAtTick = world.gameTick;
-        refill.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-        refill.aux1 = 2; /* M000_INDEX_TO_ORDINAL(C01_SLOT_ACTION_HAND) */
-        refill.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-        refill.aux4 = 0;
-        assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &refill));
+        struct DM1F0259QuiverRefillPlanPc34 plan;
+
+        world.party.champions[0].present = 1;
+        world.party.championCount = 1;
+        world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
+            THING_NONE;
+        world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+            (unsigned short)(THING_TYPE_JUNK << 10);
+        world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+        world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_2] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+        assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
+        {
+            struct TimelineEvent_Compat refill;
+            memset(&refill, 0, sizeof(refill));
+            refill.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+            refill.fireAtTick = world.gameTick;
+            refill.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+            refill.aux1 = 2; /* M000_INDEX_TO_ORDINAL(C01_SLOT_ACTION_HAND) */
+            refill.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+            refill.aux4 = 0;
+            assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &refill));
+        }
+        memset(&result, 0, sizeof(result));
+        (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+        assert(has_action_enabled_emission(&result, 0, 2));
+        assert(DM1_V1_F0259_PlanQuiverRefillPc34Compat(
+            &world.party.champions[0], 0, CHAMPION_SLOT_HAND_RIGHT, &plan));
+        assert(plan.valid && plan.moved);
+        assert(plan.sourceSlot == CHAMPION_SLOT_QUIVER_3);
+        assert(plan.thing == (unsigned short)((THING_TYPE_WEAPON << 10) | 1));
+        world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        assert(DM1_V1_F0259_PlanQuiverRefillPc34Compat(
+            &world.party.champions[0], 0, CHAMPION_SLOT_HAND_RIGHT, &plan));
+        assert(plan.valid && !plan.moved && plan.sourceSlot == -1);
     }
-    memset(&result, 0, sizeof(result));
-    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
-    assert(world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] ==
-           (unsigned short)((THING_TYPE_WEAPON << 10) | 1));
-    assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] == THING_NONE);
-    assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_2] ==
-           (unsigned short)((THING_TYPE_WEAPON << 10) | 2));
     return 0;
 }

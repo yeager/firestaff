@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 80, CSB 1, shared DM1/CSB 1589, DM2 1574; 3244 total open rows
+  DM1 69, CSB 1, shared DM1/CSB 1589, DM2 1532; 3191 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -163,6 +163,15 @@
     Remaining adjacent work is wiring utility consumers into real movement,
     map, HUD, and GDAT paths without fabricating pathfinding, collision,
     bitmask semantics, table storage, or runtime input.
+  - 2026-07-16 DM2 c_gfx_str update: skproject `DM2_QUERY_FONT` and
+    `DM2_QUERY_STR_METRICS` are now source-mapped in
+    `dm2_v1_skproject_core`. The same bundle adds bounded draw-plan receipts
+    for `DM2_DRAW_STRING`, `DM2_DRAW_STRONG_TEXT`, button/name/viewport/local/
+    backbuffer text routes, literal-only `DM2_FORMAT_SKSTR` and
+    `DM2_QUERY_GDAT_TEXT` encrypted-text decode, plus hint-line wrapping.
+    Remaining adjacent work is live pixel blitting, palette/blitter ownership,
+    dynamic `.Z`/0x01 substitutions, scrollbox screen mutation, and wiring
+    these receipts to real runtime HUD/menu consumers without fallback visuals.
   - 2026-07-16 Theron update: the admitted US raw Track 02 FIFO/session
     handoff can now consume the bounded all-dungeon route into a startup-level
     anchor receipt. The receipt carries only the real Hall of Records anchor
@@ -308,6 +317,16 @@
     side-effect bodies remain separate backlog work.
   Prioritized backlog `F0185`-`F0208`, `F0224`-`F0229`, `F0231`-`F0240`,
   `F0261`, `F0264`, and `F0265` rows are now disposed.
+  2026-07-16 adjacent DM1 square-event TIMELINE update: `F0241`, `F0242`,
+  `F0244`-`F0248`, `F0250`, `F0251`, and `F0259` are now disposed against
+  existing M10 source-backed runtime owners. Focused coverage proves
+  C10-to-C01 door animation, loaded fakewall/corridor/wall square events,
+  C006 generator materialization plus C65 re-enable, projectile-launcher
+  selection, teleporter/pit open-bit transitions, C11 action-enable receipt,
+  and F0259 C12/C07/C08/C09 quiver-source planning. `F0249` is only
+  `IMPLEMENTED_NARROW` for party/ordinary occupant replay and C14/C15 timeline
+  relocation; C04 group insertion/rotation remains separate F0249/F0252/F0267
+  work.
   Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
