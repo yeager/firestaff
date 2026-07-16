@@ -85,11 +85,10 @@ int DM1_ChampionPanel_BuildPc34BarFillModel(
     if (current < maximum) {
         outModel->blankHeight = outModel->height;
         if (current != 0) {
-            filledHeight = (int)(((long)outModel->height * (long)current) /
-                                 (long)maximum);
-            if (filledHeight < 1) {
-                filledHeight = 1;
-            }
+            /* ReDMCSB CHAMDRAW.C F0287: 10.10 fixed-point quotient rounds
+             * non-integral partial bars upward. */
+            filledHeight = DM1_ChampionPanel_BarGraphHeight(
+                current, maximum, statIndex == 2);
             outModel->blankHeight -= filledHeight;
         }
         outModel->emitsBlank = outModel->blankHeight > 0;
