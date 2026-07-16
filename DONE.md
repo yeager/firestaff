@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 c_map accessors: `dm2_v1_dungeon_loader` now exposes
+  source-bounded skproject `GET_TILE_VALUE`, `GET_ADDRESS_OF_TILE_RECORD`, and
+  `IS_TILE_PASSAGE` helpers over the parsed byte-map, column-index, and
+  ground-stack tables. The route resolves only selected tile root addresses;
+  it does not walk `GenericRecord::w0` or promote GDAT/HUD/save data.
+
 - ✅ 2026-07-16 Nexus ITEM.IBS/DGN command VDP1 blocker receipt:
   carried the missing original-VDP1-command provenance blocker through
   `Nexus_V1_DgnCommandPacked4BppMaterial` and its receipt. Structure1Fa

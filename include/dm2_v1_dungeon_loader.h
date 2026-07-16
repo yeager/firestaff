@@ -808,6 +808,46 @@ typedef struct {
 } DM2_V1_G1FirstMapRuntimeReceipt;
 
 typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t raw_tile;
+    uint8_t tile_value;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectTileValueReceipt;
+
+typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t raw_tile;
+    uint8_t tile_value;
+    int is_passage;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectTilePassageReceipt;
+
+typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t raw_tile;
+    uint16_t object_id;
+    int type;
+    int index;
+    int record_size;
+    int direct_or_proven_extension_address;
+    int blocked_missing_record;
+    int blocked_no_tile_record_link;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectTileRecordAddressReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -865,8 +905,35 @@ typedef struct {
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out, const uint8_t *dat, int size);
 int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
+int dm2_v1_dungeon_c_map_get_tile_value(const DM2_V1_DungeonData *d, int level, int x, int y);
+int dm2_v1_dungeon_c_map_is_tile_passage(const DM2_V1_DungeonData *d, int level, int x, int y);
+const uint8_t *dm2_v1_dungeon_c_map_get_address_of_tile_record(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    uint16_t *out_object_id,
+    int *out_record_offset);
 int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d, int level, int x, int y, uint16_t raw);
 int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d, int level, int x, int y);
+int dm2_v1_skproject_get_tile_value(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTileValueReceipt *out);
+int dm2_v1_skproject_is_tile_passage(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTilePassageReceipt *out);
+int dm2_v1_skproject_get_address_of_tile_record(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTileRecordAddressReceipt *out);
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
 int dm2_v1_dungeon_find_thing_of_type(
     const DM2_V1_DungeonData *d,
