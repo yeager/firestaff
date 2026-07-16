@@ -2598,6 +2598,77 @@ int dm2_v1_skproject_adjust_ui_event(
     return adjusted ? 1 : 0;
 }
 
+int dm2_v1_skproject_draw_charsheet_option_icon(
+    uint8_t cls4,
+    uint16_t rect_no,
+    uint16_t option_mask,
+    uint16_t active_mask,
+    DM2_V1_SkprojectCharsheetOptionIconReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCharsheetOptionIconReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls4_input = cls4;
+    receipt.rect_no = rect_no;
+    receipt.option_mask = option_mask;
+    receipt.active_mask = active_mask;
+    receipt.cls4_drawn = cls4;
+    if ((option_mask & active_mask) != 0u) {
+        receipt.cls4_drawn = (uint8_t)(receipt.cls4_drawn + 1u);
+        receipt.incremented_for_active_option = 1u;
+    }
+    receipt.gdat_category = 7u;
+    receipt.gdat_cls2 = 0u;
+    receipt.alpha = -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_cmd_slot(
+    uint16_t slot,
+    uint8_t ww,
+    uint8_t magical_map_flags,
+    uint8_t held_container_type,
+    const DM2_V1_SkprojectCommandSlotItem *item,
+    DM2_V1_SkprojectDrawCmdSlotReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawCmdSlotReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.slot = slot;
+    receipt.ww = ww;
+    receipt.magical_map_flags = magical_map_flags;
+    if (!item) {
+        receipt.blocked_missing_item = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (magical_map_flags != 0u) {
+        receipt.used_container_icon = 1u;
+        receipt.icon_category = 20u;
+        receipt.icon_index = held_container_type;
+        receipt.icon_entry =
+            (uint8_t)(2u * (uint8_t)(item->entry - 8u) + 0x41u + ww);
+        receipt.icon_button_id = (uint16_t)(slot + 0x6eu);
+    } else {
+        receipt.used_interface_icon = 1u;
+        receipt.icon_category = 1u;
+        receipt.icon_index = 4u;
+        receipt.icon_entry = (uint8_t)(ww + 0x15u);
+        receipt.icon_button_id = (uint16_t)(slot + 0x3fu);
+        receipt.name_button_id = (uint16_t)(slot + 0x42u);
+        receipt.requested_name_string = 1u;
+        receipt.foreground_color = 15u;
+        receipt.background_color = 0x4000u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_query_font(
     const uint8_t *font_plane,
     uint8_t glyph,
@@ -3081,6 +3152,9 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES; "
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
+           "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
+           "DM2_DRAW_CMD_SLOT and SKWIN/SkWinCore.cpp "
+           "DRAW_CHARSHEET_OPTION_ICON/DRAW_CMD_SLOT; "
            "SKULLWIN/c_gdatfile.cpp DM2_dballoc_3e74_24b8/"
            "DM2_dballoc_3e74_2162/DM2_LOAD_DYN4; "
            "SKULLWIN/c_gfx_str.cpp c_stringdata::init/"

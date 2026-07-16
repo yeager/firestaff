@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 command-slot/character-sheet GUI receipts: mapped
+  `DM2_DRAW_CMD_SLOT`, `DRAW_CMD_SLOT`, `DM2_DRAW_CHARSHEET_OPTION_ICON`,
+  and `DRAW_CHARSHEET_OPTION_ICON` to skproject-backed draw receipts for
+  command slot icon/name routing and character-sheet active-option icon
+  selection. The receipts bind real GDAT categories/entries and button IDs
+  without fabricating rendered pixels.
+
 - 2026-07-16 DM2 special-effects blit receipt: mapped
   `DM2_sub_blit_specialeffects` to a skproject-backed render receipt for
   palette update, alpha/plain blit selection, source-run splitting, odd-width
