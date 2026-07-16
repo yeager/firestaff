@@ -205,6 +205,41 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatEntryQueryReceipt;
 
+typedef enum {
+    DM2_V1_GDAT_PICT_POOL_FREE = 0,
+    DM2_V1_GDAT_PICT_POOL_LOBIG = 1,
+    DM2_V1_GDAT_PICT_POOL_HIBIG = 2,
+    DM2_V1_GDAT_PICT_POOL_CPXHEAP = 3,
+} DM2_V1_GdatPictPool;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t is_cpx_heap;
+    uint8_t bpp;
+    uint8_t pool;
+    uint16_t raw_index;
+    uint16_t width;
+    uint16_t height;
+    uint16_t row_bytes;
+    uint32_t payload_bytes;
+    uint32_t header_bytes;
+    uint32_t allocation_bytes;
+    uint32_t free_bytes;
+    uint32_t receipt_hash;
+} DM2_V1_GdatPictAllocationReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_bigpool_struct_before;
+    uint8_t freed_pool;
+    uint8_t removed_from_preserved_list;
+    uint16_t width;
+    uint16_t height;
+    uint16_t row_bytes;
+    uint32_t free_bytes;
+    uint32_t receipt_hash;
+} DM2_V1_GdatPictFreeReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -301,6 +336,31 @@ int dm2_v1_query_gdat_entry_if_loadable(
     int type,
     int field,
     DM2_V1_GdatEntryQueryReceipt *out_receipt);
+
+/* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
+ * only source byte accounting and route ownership; no decoded pixels,
+ * CPX heap nodes, or preserved-GFX list nodes are fabricated. */
+int dm2_v1_gdat_alloc_pict_buff_receipt(
+    uint16_t width,
+    uint16_t height,
+    uint8_t bpp,
+    DM2_V1_GdatPictPool pool,
+    DM2_V1_GdatPictAllocationReceipt *out_receipt);
+int dm2_v1_gdat_alloc_new_bmp_receipt(
+    uint16_t raw_index,
+    uint16_t width,
+    uint16_t height,
+    uint8_t bpp,
+    DM2_V1_GdatPictAllocationReceipt *out_receipt);
+int dm2_v1_gdat_free_pict_buff_receipt(
+    const DM2_V1_GdatPictAllocationReceipt *allocation,
+    DM2_V1_GdatPictFreeReceipt *out_receipt);
+int dm2_v1_gdat_free_pict_entry_receipt(
+    const DM2_V1_GdatPictAllocationReceipt *allocation,
+    int header_matches,
+    int has_bigpool_struct_tail,
+    int preserved_list_member,
+    DM2_V1_GdatPictFreeReceipt *out_receipt);
 
 /* Read a skproject dtWordValue field by exact category/index/field.
  * Returns 1 on success and 0 when the typed entry is absent. */

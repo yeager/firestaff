@@ -47,6 +47,30 @@ int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
     unsigned short thing,
     unsigned short *outAttributes);
 
+typedef struct DM1_V1_F0139_CreatureAllowedOnMapReceipt_PC34 {
+    int valid;
+    unsigned short groupThing;
+    int groupIndex;
+    int mapIndex;
+    int creatureType;
+    int allowedCreatureTypeCount;
+    int matchedIndex;
+    int sourceLineStart;
+    int sourceLineEnd;
+    const char *sourceSymbol;
+} DM1_V1_F0139_CreatureAllowedOnMapReceipt_PC34;
+
+/* ReDMCSB DUNGEON.C F0139: raw C04 GROUP.Type -> target map's
+ * CurrentMapAllowedCreatureTypes list.  Missing raw C04 data, non-group
+ * Things, invalid maps, and absent allowed-type rows reject without consulting
+ * decoded creature mirrors. */
+int dm1_v1_dungeon_is_creature_allowed_on_map_f0139_pc34(
+    const struct DungeonThings_Compat *things,
+    const struct DungeonDatState_Compat *dungeon,
+    unsigned short groupThing,
+    int mapIndex,
+    DM1_V1_F0139_CreatureAllowedOnMapReceipt_PC34 *outReceipt);
+
 /* ReDMCSB DUNGEON.C F0145-F0148.  On the party map, C04 Cells and
  * Directions live in the matching ACTIVE_GROUP record; elsewhere they live
  * in the loaded raw C04 record.  Missing raw C04 data or a missing active

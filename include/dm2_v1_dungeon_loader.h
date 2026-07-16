@@ -898,6 +898,36 @@ typedef struct {
 } DM2_V1_SkprojectChangeCurrentMapReceipt;
 
 typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t appended_object_id;
+    uint16_t appended_previous_next;
+    uint16_t parent_previous_link;
+    uint16_t parent_new_link;
+    uint16_t tail_object_id;
+    int appended_type;
+    int appended_index;
+    int appended_record_size;
+    int parent_link_route;
+    int existing_tile_chain_route;
+    int empty_tile_insert_route;
+    int object_index;
+    int object_index_offset;
+    int shifted_ground_stack_words;
+    int incremented_column_offsets;
+    int blocked_null_or_end_append;
+    int blocked_missing_appended_record;
+    int blocked_invalid_parent;
+    int blocked_invalid_tile;
+    int blocked_unbounded_graph;
+    int blocked_no_ground_stack_space;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectAppendRecordReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -1017,6 +1047,14 @@ int dm2_v1_skproject_change_current_map_to(
     int player_map,
     int player_dir,
     DM2_V1_SkprojectChangeCurrentMapReceipt *out);
+int dm2_v1_skproject_append_record_to(
+    DM2_V1_DungeonData *d,
+    uint16_t record_to_append,
+    uint16_t *parent_link,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectAppendRecordReceipt *out);
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
 int dm2_v1_dungeon_walk_square_things(
     const DM2_V1_DungeonData *d,

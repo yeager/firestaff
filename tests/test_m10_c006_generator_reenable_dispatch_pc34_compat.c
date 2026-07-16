@@ -53,7 +53,9 @@ static int build_world(struct GameWorld_Compat* world) {
     things->groupCount = 1;
     things->thingCounts[THING_TYPE_GROUP] = 1;
     things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*things->groups));
-    if (!things->squareFirstThings || !things->sensors || !things->groups) goto fail;
+    things->rawThingData[THING_TYPE_GROUP] = (unsigned char*)calloc(1, 16);
+    if (!things->squareFirstThings || !things->sensors || !things->groups ||
+        !things->rawThingData[THING_TYPE_GROUP]) goto fail;
 
     things->squareFirstThings[0] = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
     things->squareFirstThings[1] = THING_ENDOFLIST;
@@ -66,6 +68,9 @@ static int build_world(struct GameWorld_Compat* world) {
     things->sensors[2].sensorData = 9;
     things->sensors[2].next = THING_ENDOFLIST;
     things->groups[0].next = THING_NONE;
+    things->rawThingData[THING_TYPE_GROUP][0] = 0xffu;
+    things->rawThingData[THING_TYPE_GROUP][1] = 0xffu;
+    things->rawThingData[THING_TYPE_GROUP][4] = 0u;
 
     world->dungeon = dungeon;
     world->things = things;
@@ -84,6 +89,7 @@ fail:
         free(things->squareFirstThings);
         free(things->sensors);
         free(things->groups);
+        free(things->rawThingData[THING_TYPE_GROUP]);
     }
     free(dungeon);
     free(things);
@@ -96,6 +102,71 @@ static int expect(int cond, const char* label) {
         return 0;
     }
     return 1;
+}
+
+static void test_sync_group_raw_c04_type(
+    struct DungeonThings_Compat* things,
+    int groupIndex,
+    int creatureType)
+{
+    unsigned char* raw;
+
+    if (!things || !things->rawThingData[THING_TYPE_GROUP] ||
+        groupIndex < 0 || groupIndex >= things->thingCounts[THING_TYPE_GROUP]) {
+        return;
+    }
+    raw = things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+    raw[4] = (unsigned char)(creatureType & 0xff);
+}
+
+static void test_sync_group_raw_c04_next(
+    struct DungeonThings_Compat* things,
+    int groupIndex,
+    unsigned short next)
+{
+    unsigned char* raw;
+
+    if (!things || !things->rawThingData[THING_TYPE_GROUP] ||
+        groupIndex < 0 || groupIndex >= things->thingCounts[THING_TYPE_GROUP]) {
+        return;
+    }
+    raw = things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+    raw[0] = (unsigned char)(next & 0xffu);
+    raw[1] = (unsigned char)((next >> 8) & 0xffu);
+}
+
+static void test_sync_group_raw_c04_record(
+    struct DungeonThings_Compat* things,
+    int groupIndex)
+{
+    struct DungeonGroup_Compat* group;
+    unsigned char* raw;
+    unsigned short bitfield;
+    int i;
+
+    if (!things || !things->groups || !things->rawThingData[THING_TYPE_GROUP] ||
+        groupIndex < 0 || groupIndex >= things->groupCount ||
+        groupIndex >= things->thingCounts[THING_TYPE_GROUP]) {
+        return;
+    }
+    group = &things->groups[groupIndex];
+    raw = things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+    raw[0] = (unsigned char)(group->next & 0xffu);
+    raw[1] = (unsigned char)((group->next >> 8) & 0xffu);
+    raw[2] = (unsigned char)(group->slot & 0xffu);
+    raw[3] = (unsigned char)((group->slot >> 8) & 0xffu);
+    raw[4] = group->creatureType;
+    raw[5] = group->cells;
+    for (i = 0; i < 4; ++i) {
+        raw[6 + i * 2] = (unsigned char)(group->health[i] & 0xffu);
+        raw[7 + i * 2] = (unsigned char)((group->health[i] >> 8) & 0xffu);
+    }
+    bitfield = (unsigned short)(((unsigned short)(group->behavior & 0x0fu)) |
+        ((unsigned short)(group->count & 0x03u) << 5) |
+        ((unsigned short)(group->direction & 0x03u) << 8) |
+        ((unsigned short)(group->doNotDiscard & 0x01u) << 10));
+    raw[14] = (unsigned char)(bitfield & 0xffu);
+    raw[15] = (unsigned char)((bitfield >> 8) & 0xffu);
 }
 
 static unsigned short test_next_thing(
@@ -178,6 +249,7 @@ static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
     world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
     world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
     world.things->groups[0].health[0] = 100;
+    test_sync_group_raw_c04_record(world.things, 0);
     world.things->squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
 
     world.creatureAICount = 1;
@@ -260,6 +332,8 @@ static int test_f0207_c38_creature_projectile_has_runtime_receipt(void) {
         world.party.champions[0].cell = 0;
         world.things->groups[0].next = THING_ENDOFLIST;
         world.things->groups[0].creatureType = 23; /* Lord Chaos */
+        test_sync_group_raw_c04_type(world.things, 0, 23);
+        test_sync_group_raw_c04_next(world.things, 0, THING_ENDOFLIST);
         world.things->groups[0].count = 0;
         world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
         world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
@@ -807,6 +881,8 @@ static int test_event60_group_pit_fall_death_drops_carried_slot(void) {
     world.things->groups[0].next = THING_ENDOFLIST;
     world.things->groups[0].slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     world.things->groups[0].creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+    test_sync_group_raw_c04_type(world.things, 0, DM1_CREATURE_TYPE_RED_DRAGON);
+    test_sync_group_raw_c04_next(world.things, 0, THING_ENDOFLIST);
     world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
     world.things->groups[0].health[0] = 1;
     world.things->groups[0].count = 0;
@@ -868,6 +944,8 @@ static int test_event60_group_pit_fall_partial_death_drops_fixed_possessions(voi
     world.things->groups[0].next = THING_ENDOFLIST;
     world.things->groups[0].slot = THING_ENDOFLIST;
     world.things->groups[0].creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+    test_sync_group_raw_c04_type(world.things, 0, DM1_CREATURE_TYPE_RED_DRAGON);
+    test_sync_group_raw_c04_next(world.things, 0, THING_ENDOFLIST);
     world.things->groups[0].cells = (unsigned char)((1u << 2) | 0u);
     world.things->groups[0].health[0] = 180;
     world.things->groups[0].health[1] = 1;
@@ -926,8 +1004,12 @@ static int test_c006_reuses_first_unused_group_slot(void) {
 
     free(world.things->groups);
     world.things->groups = NULL;
+    free(world.things->rawThingData[THING_TYPE_GROUP]);
+    world.things->rawThingData[THING_TYPE_GROUP] = NULL;
     pool = (struct DungeonGroup_Compat*)calloc(2, sizeof(*pool));
-    if (!pool) {
+    world.things->rawThingData[THING_TYPE_GROUP] = (unsigned char*)calloc(2, 16);
+    if (!pool || !world.things->rawThingData[THING_TYPE_GROUP]) {
+        free(pool);
         F0883_WORLD_Free_Compat(&world);
         fprintf(stderr, "FAIL: allocate two-slot group pool\n");
         return 1;
@@ -939,6 +1021,9 @@ static int test_c006_reuses_first_unused_group_slot(void) {
     world.things->groups[0].slot = THING_ENDOFLIST;
     world.things->groups[0].creatureType = 9;
     world.things->groups[1].next = THING_NONE;
+    test_sync_group_raw_c04_type(world.things, 0, 9);
+    test_sync_group_raw_c04_next(world.things, 0, THING_ENDOFLIST);
+    test_sync_group_raw_c04_next(world.things, 1, THING_NONE);
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -980,6 +1065,8 @@ static int test_c006_no_unused_group_slot_does_not_append(void) {
     world.things->groups[0].next = THING_ENDOFLIST;
     world.things->groups[0].slot = THING_ENDOFLIST;
     world.things->groups[0].creatureType = 12;
+    test_sync_group_raw_c04_type(world.things, 0, 12);
+    test_sync_group_raw_c04_next(world.things, 0, THING_ENDOFLIST);
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -1373,6 +1460,8 @@ static int test_event60_group_not_allowed_drops_carried_slot_without_retry(void)
     world.things->groups[0].next = THING_ENDOFLIST;
     world.things->groups[0].slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
     world.things->groups[0].creatureType = 0;
+    test_sync_group_raw_c04_type(world.things, 0, 0);
+    test_sync_group_raw_c04_next(world.things, 0, THING_ENDOFLIST);
     world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
     world.things->groups[0].health[0] = 180;
     world.things->groups[0].count = 0;

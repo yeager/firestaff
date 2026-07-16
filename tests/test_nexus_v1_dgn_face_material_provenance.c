@@ -48,12 +48,15 @@ int main(void)
                receipt.structure3_mesh_materials_bound &&
                receipt.structure2_descriptor_route_bound &&
                receipt.selector_bindings_complete &&
+               !receipt.material_semantics_proven &&
                receipt.package_host_route_bound &&
                receipt.no_draw_only &&
                receipt.blocks_real_dgn_mesh_render &&
-               receipt.can_submit_raster_input &&
+               receipt.original_saturn_capture_required &&
+               !receipt.original_saturn_capture_available &&
+               !receipt.can_submit_raster_input &&
                !receipt.permits_fallback_visuals,
-           "canonical retail DGN bindings reach the package/host no-draw boundary");
+           "canonical retail DGN material bindings stop at the package/host no-draw boundary");
 
     {
         uint8_t reopened_dgn[sizeof(retail_dgn)];
@@ -104,6 +107,15 @@ int main(void)
                !receipt.permits_fallback_visuals,
            "static Structure3 selectors must resolve into Structure2 descriptors");
     input.structure2_descriptor_count = 4;
+    expect(nexus_v1_dgn_face_material_validate(&input, &receipt) == 1 &&
+               receipt.package_host_route_bound &&
+               receipt.structure2_descriptor_route_bound &&
+               receipt.selector_bindings_complete &&
+               !receipt.material_semantics_proven &&
+               receipt.blocks_real_dgn_mesh_render &&
+               !receipt.can_submit_raster_input &&
+               !receipt.permits_fallback_visuals,
+           "Structure2/Structure3 binding proof is not drawable material semantics");
     bindings[1].material_selector = 4;
     expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
                receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING &&

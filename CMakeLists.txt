@@ -54,6 +54,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0145_f0148_group_overl
              COMMAND test_dm1_v1_f0145_f0148_group_overlay_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c")
+    add_executable(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat
+        tests/test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat.c
+        src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
+        src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
+        src/shared/dungeon_decompressor_ftl.c)
+    target_include_directories(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME dm1_v1_f0139_creature_allowed_on_map_pc34_compat
+             COMMAND test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0173_f0174_current_map_pc34_compat.c")
     add_executable(test_dm1_v1_f0173_f0174_current_map_pc34_compat
         tests/test_dm1_v1_f0173_f0174_current_map_pc34_compat.c
@@ -27376,6 +27394,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_raw_loader_trace_initial_level_handoff
         COMMAND firestaff_theron_v1_raw_loader_trace_initial_level_handoff_probe
+    )
+
+    add_executable(firestaff_theron_v1_game_payload_trace_corpus_probe
+        probes/theron/firestaff_theron_v1_game_payload_trace_corpus_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_game_payload_trace_corpus_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_game_payload_trace_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_game_payload_trace_corpus_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_game_payload_trace_corpus_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_game_payload_trace_corpus
+        COMMAND firestaff_theron_v1_game_payload_trace_corpus_probe
     )
 
     add_executable(firestaff_theron_v1_capture_preflight_chain_probe

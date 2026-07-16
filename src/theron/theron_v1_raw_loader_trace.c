@@ -555,6 +555,40 @@ int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_import_game_owned_fifo_payload_file(
+    const char *path, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5, Theron_V1RawLoaderTraceGamePayloadReceipt *out)
+{
+    FILE *file;
+    long size;
+    char *capture;
+    int result;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!path || !track02_data || !track02_md5 || !out ||
+        !(file = fopen(path, "rb"))) {
+        return 0;
+    }
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        (size_t)size > THERON_V1_RAW_LOADER_TRACE_MAX_BYTES ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(capture = (char *)malloc((size_t)size + 1u))) {
+        fclose(file);
+        return 0;
+    }
+    if (fread(capture, 1u, (size_t)size, file) != (size_t)size) {
+        fclose(file);
+        free(capture);
+        return 0;
+    }
+    fclose(file);
+    capture[size] = '\0';
+    result = theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
+        capture, track02_data, track02_size, track02_md5, out);
+    free(capture);
+    return result;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payload,
     const uint8_t *track02_data, size_t track02_size,

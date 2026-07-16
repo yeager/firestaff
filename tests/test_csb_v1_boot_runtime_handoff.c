@@ -1028,9 +1028,17 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
                   CSB_V1_CSBWIN_SHAPE_CSBGAME_V20 &&
               save_import_receipt.csbwin_file_kind ==
                   CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT &&
+              !save_import_receipt.csbwin_dsa_corpus_positive &&
+              !save_import_receipt.csbwin_dsa_runtime_handoff_ready &&
+              !save_import_receipt.csbwin_dsa_extended_tail_valid &&
+              !save_import_receipt.csbwin_dsa_section_valid &&
+              !save_import_receipt.csbwin_dsa_has_runtime_actions &&
+              !save_import_receipt.csbwin_dsa_gameblock1_valid &&
+              strcmp(save_import_receipt.csbwin_dsa_decision_label,
+                     "reject_dsa_corpus_no_extended_features") == 0 &&
               strstr(save_import_receipt.source_evidence,
                      "LOADSAVE.C F0433/F0435") != NULL,
-          "boot save/import receipt owns runtime save, resume, DM1 import, and CSBWin CSBGAME gates");
+          "boot save/import receipt owns runtime save, resume, DM1 import, CSBWin CSBGAME, and fail-closed DSA corpus gates");
     CHECK(csb_v1_boot_runtime_load_original_save_receipt_pc34(
               &p, save_path, &original_save_receipt) == 1 &&
               original_save_receipt.valid &&

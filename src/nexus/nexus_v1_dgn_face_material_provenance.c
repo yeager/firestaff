@@ -72,8 +72,11 @@ int nexus_v1_dgn_face_material_validate(
     out_receipt->structure3_mesh_materials_bound = 1;
     out_receipt->structure2_descriptor_route_bound = 1;
     out_receipt->selector_bindings_complete = 1;
+    out_receipt->material_semantics_proven = 0;
     out_receipt->package_host_route_bound = 1;
-    out_receipt->can_submit_raster_input = 1;
+    out_receipt->original_saturn_capture_required = 1;
+    out_receipt->original_saturn_capture_available = 0;
+    out_receipt->can_submit_raster_input = 0;
     return 1;
 }
 

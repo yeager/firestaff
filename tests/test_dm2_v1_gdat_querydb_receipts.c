@@ -133,6 +133,62 @@ static void test_fixture_entry_queries(void)
           "scalar GDAT entries are not exposed as synthetic buffers");
 }
 
+static void test_fixture_pict_allocation_receipts(void)
+{
+    DM2_V1_GdatPictAllocationReceipt alloc;
+    DM2_V1_GdatPictFreeReceipt free_receipt;
+
+    CHECK(dm2_v1_gdat_alloc_pict_buff_receipt(
+              13u, 5u, 4u, DM2_V1_GDAT_PICT_POOL_LOBIG, &alloc) &&
+              alloc.accepted && !alloc.is_cpx_heap &&
+              alloc.row_bytes == 7u && alloc.payload_bytes == 35u &&
+              alloc.header_bytes == 6u &&
+              alloc.allocation_bytes == 41u &&
+              alloc.free_bytes == 41u && alloc.receipt_hash != 0u,
+          "DM2_ALLOC_PICT_BUFF uses 4bpp even-width row bytes plus six-byte header");
+    CHECK(dm2_v1_gdat_free_pict_buff_receipt(&alloc, &free_receipt) &&
+              free_receipt.accepted &&
+              free_receipt.freed_pool == DM2_V1_GDAT_PICT_POOL_LOBIG &&
+              free_receipt.row_bytes == 7u &&
+              free_receipt.free_bytes == 41u,
+          "DM2_FREE_PICT_BUFF frees the recomputed low-bigpool byte count");
+
+    CHECK(dm2_v1_gdat_alloc_pict_buff_receipt(
+              13u, 5u, 8u, DM2_V1_GDAT_PICT_POOL_FREE, &alloc) &&
+              alloc.row_bytes == 13u && alloc.payload_bytes == 65u &&
+              alloc.allocation_bytes == 71u,
+          "DM2_ALLOC_PICT_BUFF keeps 8bpp row bytes unrounded");
+    CHECK(!dm2_v1_gdat_alloc_pict_buff_receipt(
+              13u, 5u, 3u, DM2_V1_GDAT_PICT_POOL_LOBIG, &alloc),
+          "bitmap allocation receipt rejects unsupported resolutions");
+
+    CHECK(dm2_v1_gdat_alloc_new_bmp_receipt(42u, 13u, 5u, 4u, &alloc) &&
+              alloc.accepted && alloc.is_cpx_heap &&
+              alloc.pool == DM2_V1_GDAT_PICT_POOL_CPXHEAP &&
+              alloc.raw_index == 42u &&
+              alloc.row_bytes == 7u &&
+              alloc.payload_bytes == 35u &&
+              alloc.allocation_bytes == 35u &&
+              alloc.free_bytes == 65u,
+          "DM2_ALLOC_NEW_BMP allocates CPX payload bytes and preserves GDAT raw index");
+    CHECK(dm2_v1_gdat_free_pict_entry_receipt(
+              &alloc, 1, 1, 0, &free_receipt) &&
+              free_receipt.accepted &&
+              free_receipt.used_bigpool_struct_before &&
+              free_receipt.freed_pool == DM2_V1_GDAT_PICT_POOL_CPXHEAP &&
+              free_receipt.free_bytes == 65u,
+          "DM2_FREE_PICT_ENTRY admits matching CPX bitmap header and struct-before route");
+    CHECK(dm2_v1_gdat_free_pict_entry_receipt(
+              &alloc, 1, 0, 1, &free_receipt) &&
+              free_receipt.accepted &&
+              free_receipt.removed_from_preserved_list &&
+              free_receipt.freed_pool == DM2_V1_GDAT_PICT_POOL_LOBIG,
+          "DM2_FREE_PICT_ENTRY records preserved-list unlink before pool free");
+    CHECK(!dm2_v1_gdat_free_pict_entry_receipt(
+              &alloc, 0, 1, 0, &free_receipt),
+          "DM2_FREE_PICT_ENTRY rejects mismatched bitmap headers");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 {
     FILE *f;
@@ -254,6 +310,7 @@ int main(void)
 {
     printf("DM2 V1 GDAT querydb receipts\n");
     test_fixture_entry_queries();
+    test_fixture_pict_allocation_receipts();
     test_real_graphics_census();
     printf("Results: %d passed, %d failed\n", passed, failed);
     return failed == 0 ? 0 : 1;
