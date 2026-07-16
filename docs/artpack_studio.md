@@ -94,10 +94,11 @@ shape used by Firestaff's ReDMCSB-compatible `F0479` path:
 - width/height table
 - per-record byte offsets
 
-Records that can be decoded by the IMG3 expander are shown as original
-graphics. Records that cannot be decoded are still listed with dimensions,
-offsets, hashes, and a decode warning; the studio does not invent replacement
-pixels for them.
+Records that can be decoded by the DM1/CSB IMG3 expander or the DM2 GDAT
+preview decoder are shown as original graphics. DM2 preview currently supports
+skproject-style IMG3 C4 plus uncompressed U4/U8 records. Unsupported records,
+including IMG9 C8, are still listed with dimensions, offsets, hashes, and a
+decode warning; the studio does not invent replacement pixels for them.
 
 The status line reports imported asset count, warning count, and byte size. The
 **Warnings** button shows file-level and per-record warnings.

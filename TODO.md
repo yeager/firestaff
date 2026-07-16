@@ -1,10 +1,11 @@
 # Firestaff TODO - Open Work
 
 - 2026-07-16 Artpack Studio follow-up: DM2 `GRAPHICS.DAT` import now lists the
-  real GDAT raw/ENT1 inventory, but full skproject-backed GDAT pixel preview is
-  still warning-only for unsupported payloads. Do not replace those warnings
-  with generated/synthetic pixels; close this only when the studio consumes the
-  same proven DM2 image decode path as runtime.
+  real GDAT raw/ENT1 inventory and previews skproject-style IMG3 C4/U4/U8
+  records. Full skproject-backed GDAT pixel preview is still warning-only for
+  unsupported payloads, especially IMG9 C8. Do not replace those warnings with
+  generated/synthetic pixels; close this only when the studio consumes the same
+  proven DM2 image decode breadth as runtime.
 
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
