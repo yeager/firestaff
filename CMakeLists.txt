@@ -8923,6 +8923,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_skproject_core
     )
 
+    add_executable(test_dm2_v1_skproject_cpx_heap
+        tests/test_dm2_v1_skproject_cpx_heap.c
+        src/dm2/dm2_v1_skproject_cpx_heap.c
+    )
+    target_include_directories(test_dm2_v1_skproject_cpx_heap PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_skproject_cpx_heap
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_skproject_cpx_heap
+        COMMAND test_dm2_v1_skproject_cpx_heap
+    )
+
     add_executable(test_dm2_v1_gdat_graphicsset_real_data
         tests/test_dm2_v1_gdat_graphicsset_real_data.c
     )
@@ -20123,6 +20139,7 @@ endif()
     add_executable(test_dm1_v1_creature_ai_behavior_pc34_compat
         tests/test_dm1_v1_creature_ai_behavior_pc34_compat.c
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE firestaff_m10)

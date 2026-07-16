@@ -142,6 +142,7 @@ static void make_opening_host(
     host->host_surface_hash = 0xd004u;
     host->frame.session_generation = session->generation;
     host->frame.source_tick = session->source_tick;
+    host->frame.frame_route_hash = 0xd104u;
     host->frame.opening_step = 1;
     host->frame.entrance_surface =
         &session->surfaces.surfaces[
@@ -156,6 +157,42 @@ static void make_opening_host(
     host->raster.entrance_composited = 1;
     host->raster.door_composited = 1;
     host->raster.source_surface_count = 3;
+    host->raster.pixel_hash = 0xd204u;
+    host->raster.route_hash = 0xd304u;
+}
+
+static void make_hud_host(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host)
+{
+    memset(host, 0, sizeof(*host));
+    host->valid = host->real_asset_matched = 1;
+    host->no_legacy_wrappers = host->no_synthetic_surface = 1;
+    host->host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34;
+    host->runtime_hud_decision = 1;
+    host->uses_c017_inventory = 1;
+    host->uses_c040_resurrect = 1;
+    host->special_palette = -1;
+    host->title_special_palette = -1;
+    host->host_surface_hash = 0xe004u;
+    host->frame.session_generation = session->generation;
+    host->frame.source_tick = live_hud->source_tick;
+    host->frame.frame_route_hash = 0xe104u;
+    host->frame.hud_inventory_surface =
+        &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    host->frame.hud_resurrect_surface =
+        &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    host->frame.hud_inventory_pixel_hash = 0xe204u;
+    host->frame.hud_resurrect_pixel_hash = 0xe304u;
+    host->frame.hud_binding_hash = 0xe404u;
+    host->frame.uses_verified_hud_bindings = 1;
+    host->raster.valid = host->raster.real_asset_matched = 1;
+    host->raster.source_surface_count = 2;
+    host->raster.pixel_hash = 0xe504u;
+    host->raster.route_hash = 0xe604u;
 }
 
 static void set_opening_playback(CSB_V1_StartupRuntimeAssetSession_PC34 *session)
@@ -189,9 +226,11 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
     CSB_V1_StartupRuntimeSurface_PC34 swapped_surface;
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 title_opening;
     CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door;
+    CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 hud_door_input;
     unsigned int tick;
     unsigned int generation;
 
@@ -400,6 +439,27 @@ int main(void)
               &strikes_host, &opening_host, &title_opening),
           "duplicated title pixels cannot satisfy PRESENTS/CHAOS/STRIKES consumption");
     strikes_host.raster.pixel_hash = 0xc003u ^ 0x71000000u;
+    strikes_host.host_surface_hash = presents_host.host_surface_hash;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "duplicated title host-surface hash cannot satisfy PRESENTS/CHAOS/STRIKES consumption");
+    strikes_host.host_surface_hash = 0xc003u;
+    strikes_host.raster.route_hash = presents_host.raster.route_hash;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "duplicated title route hash cannot satisfy PRESENTS/CHAOS/STRIKES consumption");
+    strikes_host.raster.route_hash = 0xc003u ^ 0x72000000u;
+    opening_host.raster.route_hash = 0u;
+    check(!csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door),
+          "opening door receipt rejects a host frame without a real route hash");
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "title/opening consumption rejects an opening frame without a real route hash");
+    opening_host.raster.route_hash = 0xd304u;
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 1;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
@@ -537,12 +597,56 @@ int main(void)
                session.source_tick, session.generation, &input),
           "stale post-C040 input generation cannot enter movement");
     --session.generation;
+    check(csb_v1_startup_session_first_input_receipt_pc34(
+              &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
+              session.source_tick, session.generation, &input) && input.valid,
+          "restored first post-C040 input receipt feeds the HUD/door package route");
     check(csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
               &session, &live_hud, 0u, 1u, session.source_tick,
               session.generation, &door_tick) && door_tick.valid &&
               door_tick.first_live_door_tick && door_tick.previous_door_step == 0u &&
               door_tick.door_step == 1u,
           "first post-C040 HUD tick starts the runtime door at monotonic step one");
+    make_hud_host(&session, &live_hud, &hud_host);
+    check(csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+              &session, &package_receipt, &hud_host, &live_hud, &door_tick,
+              &input, &hud_door_input) &&
+              hud_door_input.valid &&
+              hud_door_input.c017_hud_consumed &&
+              hud_door_input.c040_hud_consumed &&
+              hud_door_input.first_live_door_frame &&
+              hud_door_input.first_runtime_input &&
+              hud_door_input.hud_host_surface_hash ==
+                  hud_host.host_surface_hash,
+          "HUD/door/input package receipt consumes only a routed C017/C040 host raster");
+    hud_host.raster.route_hash = 0u;
+    check(!csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+              &session, &package_receipt, &hud_host, &live_hud, &door_tick,
+              &input, &hud_door_input),
+          "HUD/door/input package receipt rejects missing HUD raster route hash");
+    hud_host.raster.route_hash = 0xe604u;
+    hud_host.raster.source_surface_count = 1;
+    check(!csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+              &session, &package_receipt, &hud_host, &live_hud, &door_tick,
+              &input, &hud_door_input),
+          "HUD/door/input package receipt rejects a one-surface HUD wrapper");
+    hud_host.raster.source_surface_count = 2;
+    hud_host.frame.hud_resurrect_surface =
+        &session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    check(!csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+              &session, &package_receipt, &hud_host, &live_hud, &door_tick,
+              &input, &hud_door_input),
+          "HUD/door/input package receipt rejects swapped C040 ownership");
+    hud_host.frame.hud_resurrect_surface =
+        &session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    hud_host.frame.frame_route_hash = 0u;
+    check(!csb_v1_startup_session_hud_door_input_package_receipt_pc34(
+              &session, &package_receipt, &hud_host, &live_hud, &door_tick,
+              &input, &hud_door_input),
+          "HUD/door/input package receipt rejects missing HUD frame route hash");
+    hud_host.frame.frame_route_hash = 0xe104u;
     ++session.source_tick;
     check(csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
               &session, &live_hud, 1u, 2u, session.source_tick,

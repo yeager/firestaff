@@ -1732,6 +1732,9 @@ int main(void) {
                  "event60 retry schedules source C37 wander after insertion");
 
     F0883_WORLD_Free_Compat(&world);
+    if (getenv("FIRESTAFF_FOCUS_F0185") != NULL) {
+        return ok ? 0 : 1;
+    }
     if (!ok) return 1;
     if (test_f0209_active_group_aspect_persists_between_c38_c33() != 0) return 1;
     if (test_f0207_c38_creature_projectile_has_runtime_receipt() != 0) return 1;

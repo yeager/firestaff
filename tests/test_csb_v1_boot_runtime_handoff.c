@@ -866,6 +866,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     size_t csbwin_save_size = 0u;
     FILE *csbwin_save_file = NULL;
     CSB_V1_BootRuntimeSaveImportReceipt_PC34 save_import_receipt;
+    CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 dsa_handoff_receipt;
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
@@ -1073,6 +1074,22 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               save_import_receipt.runtime_game_time_after ==
                   p.runtime.game_time,
           "boot CSBWin import path runs the runtime loader and publishes imported party state");
+    CHECK(csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
+              &save_import_receipt,
+              &dsa_handoff_receipt) == 0 &&
+              !dsa_handoff_receipt.valid &&
+              dsa_handoff_receipt.save_import_receipt_consumed &&
+              dsa_handoff_receipt.runtime_load_consumed &&
+              !dsa_handoff_receipt.dsa_corpus_positive &&
+              !dsa_handoff_receipt.dsa_runtime_handoff_ready &&
+              dsa_handoff_receipt.runtime_party_loaded &&
+              dsa_handoff_receipt.runtime_import_source_after ==
+                  CSB_SAVE_IMPORT_SOURCE &&
+              strcmp(dsa_handoff_receipt.decision_label,
+                     "reject_dsa_corpus_no_extended_features") == 0 &&
+              strstr(dsa_handoff_receipt.source_evidence,
+                     "Extended Features DSA") != NULL,
+          "loader-ready CSBGAME import cannot masquerade as a DSA save-runtime handoff");
 
     /* Cleanup: the boot profile owns the handoff runtime and must clear the
      * global current-dungeon context that mirrors ReDMCSB's current map globals.
@@ -4898,8 +4915,15 @@ static void test_startup_full_runtime_receipt_requires_complete_real_session(voi
 
 int main(void)
 {
+    const char *focus_dsa_save_handoff =
+        getenv("FIRESTAFF_FOCUS_CSB_DSA_SAVE_HANDOFF");
+
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
+    if (focus_dsa_save_handoff && focus_dsa_save_handoff[0] != '\0') {
+        printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
+        return failed ? 1 : 0;
+    }
     test_enter_game_loads_m564_object_names_from_graphics_dat();
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();

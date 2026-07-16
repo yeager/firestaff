@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "firestaff/dm1/v1/steal_from_slot_indices_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 /* Direction deltas — PC DM convention (source: DEFS.H G0233/G0234) */
@@ -358,22 +359,12 @@ static int resolve_quarter_square_melee_cell_adjustment(
     return 1;
 }
 
-static const int g_gigglerStealSlotsPc34[8] = {
-    DM1_SLOT_ACTION_HAND,
-    DM1_SLOT_READY_HAND,
-    DM1_SLOT_READY_HAND,
-    DM1_SLOT_READY_HAND,
-    DM1_SLOT_READY_HAND,
-    DM1_SLOT_READY_HAND,
-    DM1_SLOT_READY_HAND,
-    DM1_SLOT_READY_HAND
-};
-
 /* =========================================================================
  *  F0822: Giggler steal/flee attack resolution
  *
  *  Source: GROUP.C F0193_GROUP_StealFromChampion lines 1013-1080.
- *  PC/I34 slot order: DATA.C G0025 lines 900-908.
+ *  PC/I34 slot order: DATA.C G0025, consumed via the source-locked
+ *  dm1_v1_steal_from_slot_indices_pc34 helper.
  * ========================================================================= */
 
 int F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
@@ -402,9 +393,16 @@ int F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
     while (percentage > 0) {
         int slot;
         if (luckyAttemptMask & (1 << attempt)) break;
-        slot = g_gigglerStealSlotsPc34[counter & 7];
+        slot = (int)dm1_v1_steal_from_slot_indices_pc34(counter & 7);
+        if (dm1_v1_steal_from_slot_indices_is_backpack_pc34(
+                (unsigned int)slot)) {
+            slot += F0732_COMBAT_RngRandom_Compat(
+                rng,
+                (int)dm1_v1_steal_from_slot_indices_backpack_random_range_pc34());
+        }
         out->attemptedSlotCount++;
-        if ((occupiedSlotMask & (1u << slot)) != 0u) {
+        if (slot >= 0 && slot < 32 &&
+            (occupiedSlotMask & (1u << slot)) != 0u) {
             occupiedSlotMask &= ~(1u << slot);
             out->objectStolen = 1;
             out->stolenSlotMask |= (1u << slot);

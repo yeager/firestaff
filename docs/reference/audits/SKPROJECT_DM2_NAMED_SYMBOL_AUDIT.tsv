@@ -235,8 +235,8 @@ DM2_1B7D5	SKULLWIN	SKULLWIN/c_creature.cpp	2916		MISSING
 DM2_PROCEED_CCM	SKULLWIN	SKULLWIN/c_creature.cpp	2930	src/dm2/dm2_v1_creature.c:388	UNCERTAIN
 DM2_GET_CREATURE_ANIMATION_FRAME	SKULLWIN	SKULLWIN/c_creature.cpp	3217		MISSING
 DM2_4FCC	SKULLWIN	SKULLWIN/c_creature.cpp	3299		MISSING
-DM2_ALLOC_CPX_LINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	26		MISSING
-DM2_ALLOC_CPX_UNLINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	65		MISSING
+DM2_ALLOC_CPX_LINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	26	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_free_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt inserts freed lower-heap spans into the source ordered free list without allocating decoded buffers.
+DM2_ALLOC_CPX_UNLINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	65	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt unlinks exact-fit free nodes and releases coalesced nodes while preserving ordered free-list receipts.
 DM2_ALLOC_CPX1	SKULLWIN	SKULLWIN/c_dballoc.cpp	87		MISSING
 ulptable	SKULLWIN	SKULLWIN/c_dballoc.cpp	121		MISSING
 init	SKULLWIN	SKULLWIN/c_dballoc.cpp	125	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
@@ -268,7 +268,7 @@ DM2_GUARANTEE_FREE_CPXHEAP_SIZE	SKULLWIN	SKULLWIN/c_dballoc.cpp	916		MISSING
 DM2_INIT_GFX_TABLE	SKULLWIN	SKULLWIN/c_dballoc.cpp	927		MISSING
 DM2_ALLOC_CPXHEAP_CREATE_POINTER	SKULLWIN	SKULLWIN/c_dballoc.cpp	965		MISSING
 DM2_ALLOC_CPXHEAP_CREATE_INDEX	SKULLWIN	SKULLWIN/c_dballoc.cpp	994		MISSING
-DM2_ALLOC_CPXHEAP_MEM	SKULLWIN	SKULLWIN/c_dballoc.cpp	1009		MISSING
+DM2_ALLOC_CPXHEAP_MEM	SKULLWIN	SKULLWIN/c_dballoc.cpp	1009	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt allocates from the low edge of the first sufficient ordered free span and records exact-fit versus split behavior.
 DM2_ALLOCATION9	SKULLWIN	SKULLWIN/c_dballoc.cpp	1023		MISSING
 DM2_ALLOCATION10	SKULLWIN	SKULLWIN/c_dballoc.cpp	1032		MISSING
 DM2_ALLOCATION11	SKULLWIN	SKULLWIN/c_dballoc.cpp	1055		MISSING
@@ -668,9 +668,9 @@ DM2_EVENT_LOOP	SKULLWIN	SKULLWIN/c_input.cpp	908		MISSING
 DM2_RETRIEVE_ITEM_BONUS	SKULLWIN	SKULLWIN/c_item.cpp	22		MISSING
 DM2_PROCESS_ITEM_BONUS	SKULLWIN	SKULLWIN/c_item.cpp	59		MISSING
 DM2_ADD_ITEM_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	251	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item charge mutation exactly: ObjectID db type 5 writes w2 bits 10..13 with max 15, type 6 writes bits 9..12 with max 15, type 10 writes bits 14..15 with max 3, OBJECT_NULL and unsupported DB types do not mutate.
-DM2_GET_MAX_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	344		MISSING
-DM2_QUERY_ITEM_VALUE	SKULLWIN	SKULLWIN/c_item.cpp	360		MISSING
-DM2_QUERY_ITEM_WEIGHT	SKULLWIN	SKULLWIN/c_item.cpp	496		MISSING
+DM2_GET_MAX_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	344	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_max_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item max-charge query: OBJECT_NULL and unsupported DB types return zero, DB5 weapon and DB6 cloth return 15, and DB10 miscellaneous items return 3.
+DM2_QUERY_ITEM_VALUE	SKULLWIN	SKULLWIN/c_item.cpp	360	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_value	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the bounded SKULLWIN c_item item-value flow: caller-supplied source-shaped GDAT word values feed base value, cls4 1/2 charge multipliers, potion money scaling, recursive container contents, and moneybox weight/value aggregation without fabricating records.
+DM2_QUERY_ITEM_WEIGHT	SKULLWIN	SKULLWIN/c_item.cpp	496	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item weight wrapper as QUERY_ITEM_VALUE(object, 1) over the same bounded source-shaped item receipt.
 DM2_GET_ITEM_NAME	SKULLWIN	SKULLWIN/c_item.cpp	502		MISSING
 DM2_IS_MISCITEM_DRINK_WATER	SKULLWIN	SKULLWIN/c_item.cpp	528		MISSING
 DM2_MOVE_ITEM_TO	SKULLWIN	SKULLWIN/c_item.cpp	554		MISSING
@@ -1320,10 +1320,10 @@ PROCESS_TIMER_0E	SKWIN	SKWIN/SkWinCore.cpp	2173		MISSING
 ADD_ITEM_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	2197	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::ADD_ITEM_CHARGE through the same bounded charge receipt used for the SKULLWIN c_item alias.
 IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	2257		MISSING
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2275		MISSING
-QUERY_ITEM_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2287	src/dm2/dm2_v1_asset_loader.c:839	UNCERTAIN
-QUERY_ITEM_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2367		MISSING
+QUERY_ITEM_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2287	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_value	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::QUERY_ITEM_VALUE with source-shaped records and GDAT word values for base value, charge additions, potion money scaling, recursive container contents, and moneybox aggregation while leaving real loader/HUD consumption closed.
+QUERY_ITEM_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2367	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::QUERY_ITEM_WEIGHT as QUERY_ITEM_VALUE(recordLink, 1).
 IS_CONTAINER_CHEST	SKWIN	SKWIN/SkWinCore.cpp	2374		MISSING
-CALC_PLAYER_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2392		MISSING
+CALC_PLAYER_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2392	include/dm2_v1_skproject_core.h:dm2_v1_skproject_calc_player_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the bounded SkWinCore::CALC_PLAYER_WEIGHT flow: 30 inventory slots are summed through QUERY_ITEM_WEIGHT, the selected player's hand action 0/1 chest overlay adds eight current-container items, and the hero flag 0x1000 receipt is preserved.
 PROCEED_GLOBAL_EFFECT_TIMERS	SKWIN	SKWIN/SkWinCore.cpp	2426		MISSING
 _2066_1f37	SKWIN	SKWIN/SkWinCore.cpp	2512		MISSING
 APPEND_RECORD_TO	SKWIN	SKWIN/SkWinCore.cpp	2544	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader maps SkWinCore::APPEND_RECORD_TO through source-shaped ObjectID mutation over bounded dungeon data, including parent-link, existing tile-chain, and empty-tile insertion routes.
@@ -1385,8 +1385,8 @@ _3e74_583a	SKWIN	SKWIN/SkWinCore.cpp	4226		MISSING
 FIND_FREE_MEMENTI	SKWIN	SKWIN/SkWinCore.cpp	4241		MISSING
 GUARANTEE_FREE_CPXHEAP_SIZE	SKWIN	SKWIN/SkWinCore.cpp	4273		MISSING
 _3e74_2b30	SKWIN	SKWIN/SkWinCore.cpp	4301		MISSING
-ALLOC_LOWER_CPXHEAP	SKWIN	SKWIN/SkWinCore.cpp	4379		MISSING
-ALLOC_CPXHEAP_MEM	SKWIN	SKWIN/SkWinCore.cpp	4484		MISSING
+ALLOC_LOWER_CPXHEAP	SKWIN	SKWIN/SkWinCore.cpp	4379	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt allocates lower heap memory from the lowest address of the selected free span and preserves ordered residual blocks.
+ALLOC_CPXHEAP_MEM	SKWIN	SKWIN/SkWinCore.cpp	4484	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt covers the lower-heap memory allocation/free-list ordering subset without pointer creation or image-buffer ownership.
 _3e74_585a	SKWIN	SKWIN/SkWinCore.cpp	4514		MISSING
 FILL_ENTIRE_PICT	SKWIN	SKWIN/SkWinCore.cpp	4531		MISSING
 FIRE_HIDE_MOUSE_CURSOR	SKWIN	SKWIN/SkWinCore.cpp	4547		MISSING
@@ -1442,7 +1442,7 @@ DRAW_ICON_PICT_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	6901	src/dm2/dm2_v1_inventory_pan
 SHOW_ATTACK_RESULT	SKWIN	SKWIN/SkWinCore.cpp	6929		MISSING
 PUT_OBJECT_INTO_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7064		MISSING
 DISPLAY_RIGHT_PANEL_SQUAD_HANDS	SKWIN	SKWIN/SkWinCore.cpp	7090	src/dm2/dm2_v1_boot.c:3889	UNCERTAIN
-GET_MAX_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	7119		MISSING
+GET_MAX_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	7119	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_max_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::GET_MAX_CHARGE through the same bounded DB-type max-charge helper used for the SKULLWIN c_item alias.
 _2405_014a	SKWIN	SKWIN/SkWinCore.cpp	7143		MISSING
 TRANSLATE_PALETTE	SKWIN	SKWIN/SkWinCore.cpp	7244		MISSING
 DRAW_ITEM_ON_WOOD_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7262		MISSING

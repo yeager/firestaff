@@ -1261,6 +1261,29 @@ typedef struct CSB_V1_BootRuntimeSaveImportReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_BootRuntimeSaveImportReceipt_PC34;
 
+/* CSBWin DSA runtime handoff is narrower than the CSBGAME loader path:
+ * a staged file may be loader-ready while still not proving Extended Features
+ * DSA state.  Runtime consumers must ask for this receipt before treating a
+ * save import as DSA-bearing runtime evidence. */
+typedef struct CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 {
+    int valid;
+    int save_import_receipt_consumed;
+    int runtime_load_consumed;
+    int dsa_corpus_positive;
+    int dsa_runtime_handoff_ready;
+    int extended_tail_valid;
+    int dsa_section_valid;
+    int dsa_has_runtime_actions;
+    int gameblock1_valid;
+    int runtime_party_loaded;
+    int runtime_import_source_after;
+    int runtime_champion_count_after;
+    int runtime_current_level_after;
+    uint32_t runtime_game_time_after;
+    const char *decision_label;
+    const char *source_evidence;
+} CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34;
+
 /* ReDMCSB LOADSAVE.C F0435 owns the native CSB save load.  Keep this
  * separate from CSBWin/roster fallbacks so a package capture can only claim
  * an original-save runtime handoff after the native header and live runtime
@@ -1705,6 +1728,9 @@ int csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
     CSB_V1_BootProfile *profile,
     const char *csbwin_save_path,
     CSB_V1_BootRuntimeSaveImportReceipt_PC34 *out_receipt);
+int csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
+    const CSB_V1_BootRuntimeSaveImportReceipt_PC34 *save_import_receipt,
+    CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_tick_pc34(
     CSB_V1_BootProfile *profile,
     uint32_t *out_game_time);

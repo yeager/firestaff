@@ -13,6 +13,14 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
+enum {
+    TEST_DM1_SLOT_POUCH_2 = 6,
+    TEST_DM1_SLOT_NECK = 10,
+    TEST_DM1_SLOT_POUCH_1 = 11,
+    TEST_DM1_SLOT_QUIVER_LINE1_1 = 12,
+    TEST_DM1_SLOT_BACKPACK_LINE1_1 = 13
+};
+
 static int g_pass = 0;
 static int g_fail = 0;
 
@@ -1187,13 +1195,17 @@ static void test_flee_direction(void) {
 
 
 /* =========================================================
- *  Test 17: Giggler steal uses PC34 hand-slot table and may flee
+ *  Test 17: Giggler steal uses PC34 G0025 slot table and may flee
  * ========================================================= */
 static void test_giggler_steal_resolver(void) {
     struct RngState_Compat rng = make_rng(1);
     struct DM1GigglerStealResult_Compat steal;
-    uint32_t occupied = (1u << DM1_SLOT_READY_HAND) |
-                        (1u << DM1_SLOT_ACTION_HAND);
+    uint32_t occupied =
+        (1u << TEST_DM1_SLOT_POUCH_2) |
+        (1u << TEST_DM1_SLOT_NECK) |
+        (1u << TEST_DM1_SLOT_POUCH_1) |
+        (1u << (TEST_DM1_SLOT_BACKPACK_LINE1_1 + 12)) |
+        (1u << (TEST_DM1_SLOT_BACKPACK_LINE1_1 + 15));
 
     int ok = F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
         0, occupied, 0, &rng, &steal);
@@ -1201,20 +1213,44 @@ static void test_giggler_steal_resolver(void) {
     EXPECT_EQ(ok, 1, "giggler_resolve: returns 1");
     EXPECT_EQ(steal.initialCounter, 6,
               "giggler_resolve: seed chooses PC34 counter 6");
-    EXPECT_EQ(steal.stealSlotIndex, DM1_SLOT_READY_HAND,
-              "giggler_resolve: first stolen slot is ready hand");
+    EXPECT_EQ(steal.stealSlotIndex, TEST_DM1_SLOT_POUCH_2,
+              "giggler_resolve: first stolen slot follows G0025 counter 6");
     EXPECT_EQ((int)steal.stolenSlotMask,
-              (int)((1u << DM1_SLOT_READY_HAND) |
-                    (1u << DM1_SLOT_ACTION_HAND)),
-              "giggler_resolve: continuing loop can steal both hands");
-    EXPECT_EQ(steal.stolenCount, 2,
-              "giggler_resolve: two occupied slots stolen");
+              (int)occupied,
+              "giggler_resolve: loop steals G0025 and expanded backpack slots");
+    EXPECT_EQ(steal.stolenCount, 5,
+              "giggler_resolve: five source-table attempts hit occupied slots");
     EXPECT_EQ(steal.shouldFlee, 1,
               "giggler_resolve: stolen object can trigger flee");
-    EXPECT_EQ(steal.fleeDelayTicks, 63,
+    EXPECT_EQ(steal.fleeDelayTicks, 79,
               "giggler_resolve: flee delay is random(64)+20");
     EXPECT_EQ(steal.newBehavior, DM1_BEHAVIOR_FLEE,
               "giggler_resolve: behavior switches to FLEE");
+}
+
+static void test_giggler_steal_luck_stops_before_backpack_random(void) {
+    struct RngState_Compat rng = make_rng(1);
+    struct RngState_Compat expected = make_rng(1);
+    struct DM1GigglerStealResult_Compat steal;
+    uint32_t occupied =
+        (1u << TEST_DM1_SLOT_POUCH_2) |
+        (1u << (TEST_DM1_SLOT_BACKPACK_LINE1_1 + 12));
+
+    int ok = F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+        0, occupied, (1 << 1), &rng, &steal);
+
+    (void)F0732_COMBAT_RngRandom_Compat(&expected, 8);
+    (void)F0732_COMBAT_RngRandom_Compat(&expected, 8);
+    (void)F0732_COMBAT_RngRandom_Compat(&expected, 2);
+    (void)F0732_COMBAT_RngRandom_Compat(&expected, 64);
+
+    EXPECT_EQ(ok, 1, "giggler_luck: returns 1");
+    EXPECT_EQ(steal.stealSlotIndex, TEST_DM1_SLOT_POUCH_2,
+              "giggler_luck: first source-table slot can be stolen");
+    EXPECT_EQ(steal.stolenCount, 1,
+              "giggler_luck: luck check stops before backpack random slot");
+    EXPECT_EQ((int)rng.seed, (int)expected.seed,
+              "giggler_luck: no RANDOM(17) consumed after lucky stop");
 }
 
 /* =========================================================
@@ -1232,7 +1268,11 @@ static void test_giggler_attack_dispatch_steals(void) {
     ctx.distanceToVisibleParty = 1;
     ctx.targetChampionDexterity = 0;
     ctx.targetChampionOccupiedSlotMask =
-        (1u << DM1_SLOT_READY_HAND) | (1u << DM1_SLOT_ACTION_HAND);
+        (1u << TEST_DM1_SLOT_POUCH_2) |
+        (1u << TEST_DM1_SLOT_NECK) |
+        (1u << TEST_DM1_SLOT_POUCH_1) |
+        (1u << (TEST_DM1_SLOT_BACKPACK_LINE1_1 + 15)) |
+        (1u << (TEST_DM1_SLOT_BACKPACK_LINE1_1 + 5));
     ag.cells = 1; /* front cell for east-facing melee; this test isolates steal */
 
     int ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
@@ -1241,11 +1281,11 @@ static void test_giggler_attack_dispatch_steals(void) {
               "giggler_dispatch: action is STEAL");
     EXPECT_EQ(result.newBehavior, DM1_BEHAVIOR_FLEE,
               "giggler_dispatch: steal can switch to FLEE");
-    EXPECT_EQ(result.stealSlotIndex, DM1_SLOT_READY_HAND,
+    EXPECT_EQ(result.stealSlotIndex, TEST_DM1_SLOT_POUCH_2,
               "giggler_dispatch: reports first stolen slot");
-    EXPECT_EQ(result.stolenCount, 2,
+    EXPECT_EQ(result.stolenCount, 5,
               "giggler_dispatch: reports stolen slot count");
-    EXPECT_EQ(ag.delayFleeingFromTarget, 31,
+    EXPECT_EQ(ag.delayFleeingFromTarget, 54,
               "giggler_dispatch: writes active-group flee delay");
 }
 
@@ -1974,6 +2014,7 @@ int main(void) {
     test_danger_reaction_moves_attack_group_to_approach();
     test_flee_direction();
     test_giggler_steal_resolver();
+    test_giggler_steal_luck_stops_before_backpack_random();
     test_giggler_attack_dispatch_steals();
     test_quarter_square_melee_cell_adjusts_before_attack();
     test_attack_any_back_row_bypasses_cell_adjust();

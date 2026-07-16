@@ -1,5 +1,159 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Theron runtime object-table route-gap evidence receipt: added
+  `Theron_V1RuntimeObjectTableRouteEvidenceReceipt` and
+  `theron_v1_runtime_startup_level_anchor_bind_object_table_route_evidence()`
+  so the admitted US raw Track 02 FIFO/session/startup-anchor chain can
+  consume the verified object-table route receipt as blocked evidence. The
+  gate requires a matching object-table route hash, descriptor/candidate/
+  blocked anchor evidence, first candidate offsets/user-data/hash/counts,
+  the missing-real-object-evidence blocker, and rejects object decode,
+  object-table admission, exact object semantics, payload/visual semantics,
+  and fallback visuals. Verification: focused Ninja target, direct run of
+  `firestaff_theron_v1_runtime_admission_probe`, focused CTest
+  `theron_v1_runtime_admission`, and focused `git diff --check`.
+
+- 2026-07-16 DM2 skproject item value/weight receipts: added bounded
+  `dm2_v1_skproject_query_item_value()`,
+  `dm2_v1_skproject_query_item_weight()`, and
+  `dm2_v1_skproject_calc_player_weight()` receipts for the skproject
+  `DM2_QUERY_ITEM_VALUE` / `QUERY_ITEM_VALUE`, `DM2_QUERY_ITEM_WEIGHT` /
+  `QUERY_ITEM_WEIGHT`, and `CALC_PLAYER_WEIGHT` slices. The helpers preserve
+  source control flow for GDAT word values, charge multipliers, potion money
+  scaling, recursive containers, moneybox aggregation, the weight wrapper, and
+  selected-player open-chest overlay while requiring caller-supplied
+  source-shaped records. They do not load real GDAT/dungeon records or drive
+  HUD/runtime item state. Verification: strict direct C99 build/run of
+  `test_dm2_v1_skproject_core`, focused Ninja target
+  `test_dm2_v1_skproject_core`, and focused CTest `dm2_v1_skproject_core`.
+
+- 2026-07-16 DM1 GROUP F0208 audit repair: narrowed the stale
+  `UNCERTAIN_NUMBERED_EVIDENCE` row for the existing source-shaped
+  `F0208_DM1_GROUP_BuildAddEventPlan_Compat` event-plan helper. The verified
+  mapping follows ReDMCSB `GROUP.C:1820-1834`: earlier requested aspect-update
+  times demote C38-C41 to C33-C36, preserve the later behavior delay in
+  `EVENT.C.Ticks`, update `Map_Time`, and keep F0238 timeline insertion
+  caller-owned. Verification: focused CTest
+  `dm1_v1_creature_ai_behavior_source_lock`; no synthetic event data was
+  added. Broader M10 initial-attack consumption remains open.
+
+- 2026-07-16 CSB DSA save-runtime handoff receipt: added
+  `CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34` and
+  `csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34()` so CSBWin save import
+  consumers must distinguish a loader-ready `CSBGAME.DAT` runtime load from a
+  real Extended Features DSA runtime handoff. The receipt consumes only the
+  existing boot save/import receipt, preserves the DSA corpus decision label
+  and runtime load facts, and stays invalid unless the DSA corpus, extended
+  tail, DSA section, runtime actions, GAMEBLOCK1, CSB import source, and
+  loaded party facts all pass. No synthetic DSA-positive save or wrapper data
+  was added. Verification: focused Ninja target
+  `test_csb_v1_boot_runtime_handoff`, focused run
+  `FIRESTAFF_FOCUS_CSB_DSA_SAVE_HANDOFF=1 ./build-local-ninja/test_csb_v1_boot_runtime_handoff`
+  (39/39), and `git diff --check`.
+
+- 2026-07-16 DM1 GROUP F0185 audit repair: closed the stale
+  `UNCERTAIN_NUMBERED_EVIDENCE` row for the existing source-locked C006 group
+  generator path. The verified mapping covers `F0860_RUNTIME_HandleGroupGenerator_Compat`
+  and M10 materialization through raw C04 allocation/init, one start-cell RNG
+  draw, descending group cell/health writes, F0267 placement/deferred retry,
+  F0183 active-state admission, F0180 wander scheduling, and M560 buzz
+  routing. This records existing behavior only and adds no synthetic group
+  data. Verification: focused CTest
+  `FIRESTAFF_FOCUS_F0185=1 m10_c006_generator_reenable_dispatch_pc34_compat`,
+  direct `test_dm1_v1_mummy_viewport_pc34_compat`, direct
+  `test_dm1_v1_group_move_removal_pc34_compat`, and `git diff --check`.
+
+- 2026-07-16 Theron runtime non-startup level evidence receipt: added
+  `Theron_V1RuntimeNonstartupLevelRouteEvidenceReceipt` and
+  `theron_v1_runtime_startup_level_anchor_bind_nonstartup_level_route_evidence()`
+  so the admitted US raw Track 02 FIFO/session/startup-anchor chain can
+  consume the detailed Track 02 level-route receipt's non-startup candidate
+  evidence. The gate requires verified Track 02 descriptor anchors, a matching
+  startup-level anchor and route hash, opaque post-descriptor candidate
+  offsets/user-data/hash/header evidence, and the existing missing-evidence
+  blocker. It keeps non-startup level admission, exact level/object semantics,
+  payload semantics, visual semantics, and fallback visuals closed.
+  Verification: focused Ninja target and direct run of
+  `firestaff_theron_v1_runtime_admission_probe`, focused CTest
+  `theron_v1_runtime_admission`, and focused `git diff --check`.
+
+- 2026-07-16 DM2 skproject item max-charge receipt: added
+  `dm2_v1_skproject_get_max_charge()` for the bounded
+  `DM2_GET_MAX_CHARGE` / `GET_MAX_CHARGE` slice. The helper preserves the
+  skproject DB-type outcomes used by the item charge/value path: DB5 weapon
+  and DB6 cloth max at 15, DB10 miscellaneous items max at 3, and
+  `OBJECT_NULL` or unsupported DB types return zero. This does not implement
+  recursive item value/weight, GDAT DBSPEC lookup, container moneybox logic,
+  potion value scaling, player weight aggregation, or HUD/runtime
+  consumption. Verification: strict direct C99 build/run of
+  `test_dm2_v1_skproject_core`, focused CTest `dm2_v1_skproject_core`, and
+  `git diff --check`.
+
+- 2026-07-16 Theron runtime startup-level anchor receipt: added
+  `Theron_V1RuntimeStartupLevelAnchorReceipt` and
+  `theron_v1_runtime_bounded_track02_route_bind_startup_level_anchor()` so the
+  admitted US raw Track 02 FIFO/session handoff can carry the bounded
+  all-dungeon route's real Hall of Records anchor metadata forward without
+  promoting object or level semantics. The receipt requires source-bound
+  startup anchor offsets, dimensions, seed/index, object/level/all-dungeon
+  route hashes, no-fallback object/non-startup blockers, and keeps object-table
+  admission, non-startup level admission, exact level semantics, exact object
+  semantics, payload semantics, visual semantics, and fallback visuals closed.
+  Verification: focused Ninja target and direct run of
+  `firestaff_theron_v1_runtime_admission_probe`, focused CTest
+  `theron_v1_runtime_admission`, and `git diff --check`.
+
+- 2026-07-16 CSB startup HUD/door host-raster handoff: tightened
+  `csb_v1_startup_session_hud_door_input_package_receipt_pc34` so the first
+  live HUD/door/input package handoff consumes a routed C017/C040 HUD host
+  raster, not just a nonzero HUD host-surface hash. The receipt now requires
+  nonzero HUD frame route, raster route, raster pixel hash, verified HUD
+  binding hash, the exact resident C017/C040 owners, and the two-surface HUD
+  raster count before it can carry the package into the first door tick and
+  command input. No synthetic HUD, door, save, DSA, or host pixels were added.
+  Verification: focused standalone CTest
+  `csb_v1_startup_session_contract_pc34_compat`, top-level focused CTests
+  `csb_v1_startup_terminal_handoff_real_data_pc34_compat`,
+  `csb_v1_startup_receipt_coherence_pc34_compat`,
+  `csb_v1_startup_entrance_pointer_pc34_compat`, and
+  `csb_v1_startup_raster_present_pc34_compat`, plus `git diff --check`.
+
+- 2026-07-16 CSB startup title/opening host-capture stability: tightened the
+  CSB v1 title-to-opening session receipt so PRESENTS, CHAOS, and STRIKES
+  BACK must carry distinct host-surface and route hashes, and so the
+  C004/C002/C003 opening host frame must carry nonzero frame route, raster
+  route, and pixel hashes before it can satisfy either the opening-door
+  receipt or the broader title/opening consumption receipt. The gate still
+  consumes only existing real startup-session host receipts and does not
+  create synthetic title, door, HUD, or save data. Verification: direct
+  strict C11 build/run of `test_csb_v1_startup_session_contract_pc34_compat`,
+  focused startup CTest `csb_v1_startup_terminal_handoff_real_data_pc34_compat`,
+  `csb_v1_startup_receipt_coherence_pc34_compat`,
+  `csb_v1_startup_entrance_pointer_pc34_compat`, and
+  `csb_v1_startup_raster_present_pc34_compat`, plus `git diff --check`.
+
+- 2026-07-16 DM2 skproject CPX lower-heap receipt: added isolated
+  `dm2_v1_skproject_cpx_heap` helpers for the bounded
+  `ALLOC_LOWER_CPXHEAP` / `ALLOC_CPXHEAP_MEM` and c_dballoc link/unlink
+  ordering slice. The receipt allocates from the low edge of the first
+  sufficient free span, distinguishes exact-fit unlink from split residuals,
+  reinserts freed spans by ascending heap offset, and coalesces adjacent
+  blocks without creating CPX pointers, decoded image buffers, or fallback
+  graphics. Verification: strict direct C99 build/run of
+  `test_dm2_v1_skproject_cpx_heap` and `git diff --check`.
+
+- 2026-07-16 DM1 GROUP F0190-F0192 audit repair: closed stale
+  `UNCERTAIN_NUMBERED_EVIDENCE` rows for the existing source-locked
+  single-creature group damage/compaction, all-creatures group damage, and
+  poison-resistance-adjusted attack helpers. This did not add data or broaden
+  runtime behavior; it records the verified DM1-owned coverage already present
+  in `dm1_v1_combat_pc34_compat`, F0738 group damage, and
+  `F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat`. Verification:
+  focused Ninja targets, direct runs, and focused CTest for
+  `dm1_v1_combat_damage_source_lock`,
+  `dm1_v1_grp02_f0738_apply_damage_to_group`, and
+  `dm1_v1_grp02_f0192_poison_resistance_source_lock`.
+
 - 2026-07-16 Nexus DGN package/host no-draw consumer gate: added
   `nexus_v1_dgn_package_host_consumer_gate()` as the bounded real-data
   consumer after the DGN face/material provenance receipt. It admits only a
@@ -20738,3 +20892,30 @@ attack/non-attack latch and flip rules, horizontal/vertical offset draws, and
 `AnimationTicks` cadence without consulting decoded substitutes or hidden
 globals. Verification: `ctest --test-dir build-local-ninja -R
 '^dm1_v1_group_active_state_pc34_compat$' --output-on-failure` passed.
+
+# ✅ 2026-07-16 Theron bounded Track 02 route after session handoff
+
+The Theron runtime-admission surface now has a post-session-handoff bounded
+Track 02 route receipt. It consumes the admitted US raw Track 02 FIFO
+session handoff plus a route receipt carrying corpus evidence, then preserves
+the capture mask, no-fallback semantic role mask, startup-level anchor,
+blocked object-table anchors, blocked non-startup-level anchors, and route
+hashes. It remains runtime-capture-required and refuses exact object/level
+semantic promotion, object-table admission, level admission, payload
+semantics, visual semantics, and fallback visuals. Verification:
+`cmake --build build-local-ninja --target
+firestaff_theron_v1_runtime_admission_probe`, `ctest --test-dir
+build-local-ninja -R '^theron_v1_runtime_admission$' --output-on-failure`,
+and focused `git diff --check` passed.
+
+# ✅ 2026-07-16 DM1 GROUP F0193 Giggler steal source mapping
+
+DM1 Giggler steal/flee resolution now follows ReDMCSB `GROUP.C`
+`F0193_GROUP_StealFromChampion` for PC34: the F0822 resolver consumes the
+source `G0025` steal-slot table, expands backpack-base hits with
+`RANDOM(17)` only after the luck gate, preserves the five-step
+percentage/counter loop, and reports Giggler melee as a steal action instead
+of creature damage. The existing source-locked steal-slot table remains the
+single table authority. Verification: `ctest --test-dir build-local-ninja -R
+'^(dm1_v1_creature_ai_behavior_source_lock|dm1_v1_steal_from_slot_indices_pc34_compat)$'
+--output-on-failure` passed.

@@ -160,6 +160,8 @@ static int csb_v1_startup_session_opening_host_raster_matches_pc34(
 {
     if (!host || !host->raster.valid || !host->raster.real_asset_matched ||
         !host->raster.entrance_composited || !host->raster.door_composited ||
+        host->frame.frame_route_hash == 0u ||
+        host->raster.route_hash == 0u || host->raster.pixel_hash == 0u ||
         host->frame.opening_step < 1 ||
         host->frame.opening_step > CSB_V1_CONTRACT_DOOR_STEP_COUNT_PC34) {
         return 0;
@@ -168,6 +170,17 @@ static int csb_v1_startup_session_opening_host_raster_matches_pc34(
      * frames, so late source-owned pages contain C004 plus C003 only. */
     return host->raster.source_surface_count == 2 ||
         host->raster.source_surface_count == 3;
+}
+
+static int csb_v1_startup_session_hud_host_raster_matches_pc34(
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host)
+{
+    if (!host || !host->raster.valid || !host->raster.real_asset_matched ||
+        host->frame.frame_route_hash == 0u ||
+        host->raster.route_hash == 0u || host->raster.pixel_hash == 0u) {
+        return 0;
+    }
+    return host->raster.source_surface_count == 2;
 }
 
 static int csb_v1_startup_session_opening_playback_active_pc34(
@@ -527,6 +540,12 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         strikes_host->raster.source_surface_count != 1 ||
         presents_host->host_surface_hash == 0u || chaos_host->host_surface_hash == 0u ||
         strikes_host->host_surface_hash == 0u || opening_host->host_surface_hash == 0u ||
+        presents_host->host_surface_hash == chaos_host->host_surface_hash ||
+        presents_host->host_surface_hash == strikes_host->host_surface_hash ||
+        chaos_host->host_surface_hash == strikes_host->host_surface_hash ||
+        presents_host->raster.route_hash == chaos_host->raster.route_hash ||
+        presents_host->raster.route_hash == strikes_host->raster.route_hash ||
+        chaos_host->raster.route_hash == strikes_host->raster.route_hash ||
         presents_host->raster.pixel_hash == chaos_host->raster.pixel_hash ||
         presents_host->raster.pixel_hash == strikes_host->raster.pixel_hash ||
         chaos_host->raster.pixel_hash == strikes_host->raster.pixel_hash)
@@ -581,7 +600,19 @@ int csb_v1_startup_session_hud_door_input_package_receipt_pc34(
         !hud_host->runtime_hud_decision || !hud_host->uses_c017_inventory ||
         !hud_host->uses_c040_resurrect ||
         hud_host->frame.session_generation != session->generation ||
-        hud_host->host_surface_hash == 0u || !live_hud_receipt->valid ||
+        hud_host->host_surface_hash == 0u ||
+        hud_host->frame.hud_inventory_surface !=
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34] ||
+        hud_host->frame.hud_resurrect_surface !=
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34] ||
+        hud_host->frame.hud_inventory_pixel_hash == 0u ||
+        hud_host->frame.hud_resurrect_pixel_hash == 0u ||
+        hud_host->frame.hud_binding_hash == 0u ||
+        !hud_host->frame.uses_verified_hud_bindings ||
+        !csb_v1_startup_session_hud_host_raster_matches_pc34(hud_host) ||
+        !live_hud_receipt->valid ||
         !live_hud_receipt->c040_cleared_once ||
         !live_hud_receipt->c017_live_base_only ||
         live_hud_receipt->c017_source_asset_id != 17 ||
