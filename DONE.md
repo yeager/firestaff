@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 F0323 callable alias: exposed source-named
+  `F0323_CHAMPION_Unpoison` alongside the existing compat wrapper and
+  strengthened the registered regression so ReDMCSB symbol inventory can bind
+  to the real callable name instead of wrapper-only evidence.
+
 - 2026-07-16 Artpack Studio DM2 GDAT preview: added skproject-style preview
   decoding for DM2 GDAT IMG3 C4 plus uncompressed U4/U8 records. Local
   `~/.firestaff/data/dm2/GRAPHICS.DAT` now imports 11,854 ENT1 rows and shows
