@@ -68,6 +68,12 @@
     three source parts were accepted. Remaining CSB work is still real
     packaged title/HUD/door capture breadth and positive DSA/save-runtime
     corpus proof, not inferred save-tail or DSA construction.
+  - 2026-07-16 update: `PANEL.C F0347_INVENTORY_DrawPanel` now has a
+    CSB-owned HUD-panel receipt over the existing real C017/C040 startup
+    panel blit. It proves only source-owned C017 plus optional C040 hashes
+    and does not create pixels, panel state, save data, DSA state, or host HUD
+    fallback. Remaining CSB work is unchanged: real packaged title/HUD/door
+    capture breadth and positive DSA/save-runtime corpus proof.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
