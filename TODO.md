@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1312; 2849 total open rows
+  shared DM1/CSB 1537, DM2 1311; 2848 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -12,6 +12,11 @@
     skproject-backed allocation/filter receipts. Remaining adjacent DM2 work
     is full GDAT HUD/dungeon rendering and real save corpus, not synthetic
     menu/dungeon substitutes.
+  - 2026-07-16 DM2 mementi update: `FIND_FREE_MEMENTI` now has a
+    skproject-backed cache-state receipt for next-free selection, fallback
+    recycle, allocation count, and referenced-slot skipping. Remaining
+    adjacent work is still full CPX/image-buffer ownership, not synthetic
+    texture allocation.
   - 2026-07-16 DM2 movement update: `DM2_move_12b4_0d75`,
     `DM2_move_075f_0af9`, and `DM2_move_2fcf_0b8b` now have narrow
     skproject-backed handoff receipts. Remaining adjacent movement work is

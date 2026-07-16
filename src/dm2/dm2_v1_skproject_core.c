@@ -2448,6 +2448,9 @@ void dm2_v1_skproject_cache_state_init(
     state->cache_capacity = cache_capacity;
     state->raw_count = raw_count;
     state->mement_count = mement_count;
+    state->next_free_mementi = mement_count != 0u ? 0u :
+        DM2_V1_SKPROJECT_MEMENT_NONE;
+    state->mement_allocation_count = 0u;
     for (uint16_t i = 0; i < DM2_V1_SKPROJECT_CACHE_LIMIT; ++i)
         state->cache_to_mement[i] = DM2_V1_SKPROJECT_MEMENT_NONE;
     for (uint16_t i = 0; i < DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT; ++i)
@@ -2662,6 +2665,82 @@ int dm2_v1_skproject_recycle_mementi(
         }
     }
     return 1;
+}
+
+static int dm2_v1_skproject_mementi_is_referenced(
+    const DM2_V1_SkprojectCacheState *state,
+    uint16_t mementi)
+{
+    if (!state || mementi >= state->mement_count)
+        return 0;
+    for (uint16_t i = 0; i < state->cache_capacity; ++i) {
+        if (state->cache_to_mement[i] == mementi)
+            return 1;
+    }
+    for (uint16_t i = 0; i < state->raw_count; ++i) {
+        if (state->raw_to_mement[i] == mementi)
+            return 1;
+    }
+    return 0;
+}
+
+uint16_t dm2_v1_skproject_find_free_mementi(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t fallback_mementi,
+    DM2_V1_SkprojectFindFreeMementiReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFindFreeMementiReceipt receipt;
+    uint16_t result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt || state->mement_count == 0u)
+        return DM2_V1_SKPROJECT_MEMENT_NONE;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.previous_next_free_mementi = state->next_free_mementi;
+    receipt.fallback_mementi = fallback_mementi;
+
+    if (state->next_free_mementi == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        DM2_V1_SkprojectRecycleMementReceipt recycle;
+        if (!dm2_v1_skproject_recycle_mementi(
+                state, fallback_mementi, DM2_V1_SKPROJECT_MEMENT_NONE,
+                0u, &recycle)) {
+            *out_receipt = receipt;
+            return DM2_V1_SKPROJECT_MEMENT_NONE;
+        }
+        state->next_free_mementi = fallback_mementi;
+        receipt.recycled_fallback = 1;
+    }
+
+    if (state->next_free_mementi >= state->mement_count) {
+        *out_receipt = receipt;
+        return DM2_V1_SKPROJECT_MEMENT_NONE;
+    }
+
+    result = state->next_free_mementi;
+    state->mement_allocation_count++;
+    receipt.returned_mementi = result;
+    receipt.allocation_count = state->mement_allocation_count;
+
+    if (state->mement_allocation_count >= state->mement_count) {
+        state->next_free_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+        receipt.exhausted_after_allocation = 1;
+    } else {
+        uint16_t probe = (uint16_t)(result + 1u);
+        while (probe < state->mement_count &&
+               dm2_v1_skproject_mementi_is_referenced(state, probe)) {
+            ++probe;
+        }
+        state->next_free_mementi =
+            probe < state->mement_count ? probe :
+            DM2_V1_SKPROJECT_MEMENT_NONE;
+        receipt.exhausted_after_allocation =
+            state->next_free_mementi == DM2_V1_SKPROJECT_MEMENT_NONE;
+    }
+    receipt.next_free_mementi = state->next_free_mementi;
+    *out_receipt = receipt;
+    return result;
 }
 
 int dm2_v1_skproject_alloc_new_pict(

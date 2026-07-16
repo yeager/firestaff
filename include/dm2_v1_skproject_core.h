@@ -761,6 +761,8 @@ typedef struct {
     uint16_t raw_count;
     uint16_t mement_count;
     uint16_t temp_hash_counter;
+    uint16_t next_free_mementi;
+    uint16_t mement_allocation_count;
 } DM2_V1_SkprojectCacheState;
 
 typedef struct {
@@ -824,6 +826,17 @@ typedef struct {
     uint16_t previous_w4;
     uint16_t yy;
 } DM2_V1_SkprojectRecycleMementReceipt;
+
+typedef struct {
+    int valid;
+    int recycled_fallback;
+    int exhausted_after_allocation;
+    uint16_t returned_mementi;
+    uint16_t previous_next_free_mementi;
+    uint16_t next_free_mementi;
+    uint16_t fallback_mementi;
+    uint16_t allocation_count;
+} DM2_V1_SkprojectFindFreeMementiReceipt;
 
 typedef struct {
     int valid;
@@ -2043,6 +2056,10 @@ int dm2_v1_skproject_recycle_mementi(
     uint16_t previous_w4,
     uint16_t yy,
     DM2_V1_SkprojectRecycleMementReceipt *out_receipt);
+uint16_t dm2_v1_skproject_find_free_mementi(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t fallback_mementi,
+    DM2_V1_SkprojectFindFreeMementiReceipt *out_receipt);
 int dm2_v1_skproject_alloc_new_pict(
     uint16_t index,
     uint16_t width,

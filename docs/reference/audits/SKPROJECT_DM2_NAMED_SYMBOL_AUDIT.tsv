@@ -1382,7 +1382,7 @@ QUERY_MEMENTI_FROM	SKWIN	SKWIN/SkWinCore.cpp	4166	include/dm2_v1_skproject_core.
 ADD_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4190	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_cache_hash	VERIFIED_SOURCE_MAPPING
 QUERY_MEMENT_BUFF_FROM_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4219	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_mement_buff_from_cache_index	VERIFIED_SOURCE_MAPPING
 _3e74_583a	SKWIN	SKWIN/SkWinCore.cpp	4226		MISSING
-FIND_FREE_MEMENTI	SKWIN	SKWIN/SkWinCore.cpp	4241		MISSING
+FIND_FREE_MEMENTI	SKWIN	SKWIN/SkWinCore.cpp	4241	include/dm2_v1_skproject_core.h:dm2_v1_skproject_find_free_mementi; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject cache-state receipt follows FIND_FREE_MEMENTI's next-free selection, fallback FREE_INDEXED_MEMENT route, allocation counter, and scan past referenced mement slots without inventing image-buffer ownership.
 GUARANTEE_FREE_CPXHEAP_SIZE	SKWIN	SKWIN/SkWinCore.cpp	4273		MISSING
 _3e74_2b30	SKWIN	SKWIN/SkWinCore.cpp	4301		MISSING
 ALLOC_LOWER_CPXHEAP	SKWIN	SKWIN/SkWinCore.cpp	4379	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt allocates lower heap memory from the lowest address of the selected free span and preserves ordered residual blocks.

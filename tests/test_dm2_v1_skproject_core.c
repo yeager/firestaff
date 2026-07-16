@@ -1424,6 +1424,7 @@ static void test_calc_vector_w_dir(void)
 static void test_cache_hash_helpers(void)
 {
     DM2_V1_SkprojectCacheState state;
+    DM2_V1_SkprojectFindFreeMementiReceipt free_receipt;
     uint16_t ici = 0xffffu;
     uint16_t cache_index = 0xffffu;
     uint8_t *buff;
@@ -1480,6 +1481,31 @@ static void test_cache_hash_helpers(void)
     CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) ==
               DM2_V1_SKPROJECT_MEMENT_NONE,
           "ALLOC_TEMP_CACHE_INDEX fails closed when cache table is full");
+
+    dm2_v1_skproject_cache_state_init(&state, 4, 4, 4);
+    state.cache_to_mement[1] = 1u;
+    state.raw_to_mement[2] = 2u;
+    CHECK(dm2_v1_skproject_find_free_mementi(
+              &state, 0u, &free_receipt) == 0u &&
+              free_receipt.valid &&
+              free_receipt.returned_mementi == 0u &&
+              free_receipt.next_free_mementi == 3u &&
+              free_receipt.allocation_count == 1u,
+          "FIND_FREE_MEMENTI returns current free index and skips referenced mements");
+    CHECK(dm2_v1_skproject_find_free_mementi(
+              &state, 0u, &free_receipt) == 3u &&
+              free_receipt.valid &&
+              free_receipt.exhausted_after_allocation &&
+              free_receipt.next_free_mementi == DM2_V1_SKPROJECT_MEMENT_NONE,
+          "FIND_FREE_MEMENTI marks the free list exhausted after the last slot");
+
+    state.cache_to_mement[0] = 0u;
+    CHECK(dm2_v1_skproject_find_free_mementi(
+              &state, 0u, &free_receipt) == 0u &&
+              free_receipt.valid &&
+              free_receipt.recycled_fallback &&
+              state.cache_to_mement[0] == DM2_V1_SKPROJECT_MEMENT_NONE,
+          "FIND_FREE_MEMENTI recycles the fallback mement when next-free is none");
 }
 
 static void test_picture_mement_helpers(void)
