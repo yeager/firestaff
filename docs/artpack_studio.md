@@ -29,14 +29,47 @@ python3 -m pip install Pillow
 ## Features
 
 - Open or create a V2.2 artpack directory.
+- Scan a V1/reference asset directory and list every discovered image asset.
+- Show V1/reference assets and V2.2 target assets side by side.
 - Load a V1/reference image.
 - Load or import a V2.2 target image.
 - View reference and target side by side.
 - Edit target pixels with pencil, color picker, flood fill, zoom, and grid.
 - Import the edited target into the selected manifest category and asset id.
+- Import and export shareable `.fsart` artpack archives.
 - Validate required slots for the selected game.
 - Write `finish_receipt.json` for completed packs.
 - Generate an AI prompt or run an external AI generation command.
+
+## `.fsart` Format
+
+`.fsart` is the portable Firestaff artpack container. It is a ZIP archive with
+the `.fsart` extension. The archive root contains `modern_asset_manifest.json`
+and one subdirectory per manifest category, for example:
+
+```text
+modern_asset_manifest.json
+finish_receipt.json
+wall_shapes/wall_d3_carved_hero_01.png
+champion_portraits/champion_warrior_hero_01.png
+title_frames/title_0001.png
+```
+
+The studio rejects unsafe archive paths and verifies that the archive game
+matches the selected game before saving the imported manifest.
+
+## Reference Assets
+
+The V1 root defaults to:
+
+```sh
+$HOME/.firestaff/data/<game>
+```
+
+The studio recursively scans common image formats under that directory. Category
+names are taken from matching path components when possible and inferred from
+filenames otherwise. Rows marked `OK` have a matching V2.2 target in the open
+pack; rows marked `--` still need a V2.2 replacement.
 
 ## AI Generation Hook
 
@@ -70,6 +103,7 @@ The self-test is registered in CTest:
 
 ```sh
 python3 scripts/firestaff_artpack_studio.py --self-test
+python3 scripts/firestaff_artpack_studio.py --screenshot /tmp/firestaff-artpack-studio.png
 ctest --test-dir build-local-ninja -R firestaff_artpack_studio_self_test --output-on-failure
 ```
 
