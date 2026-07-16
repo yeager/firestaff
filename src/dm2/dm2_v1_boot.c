@@ -9277,10 +9277,10 @@ void dm2_v1_boot_startup_launch_cleanup(
     memset(launch, 0, sizeof(*launch));
 }
 
-static int dm2_v1_boot_hud_core_asset_address(int field,
-                                              int *out_category,
-                                              int *out_index,
-                                              int *out_field)
+int dm2_v1_boot_hud_core_asset_address(int field,
+                                       int *out_category,
+                                       int *out_index,
+                                       int *out_field)
 {
     if (!out_category || !out_index || !out_field ||
         field < 0 || field > DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {

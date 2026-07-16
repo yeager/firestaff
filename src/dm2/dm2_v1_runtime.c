@@ -89,6 +89,8 @@ typedef struct {
     /* Startup/render asset boundary owned by the runtime handoff. */
     DM2_V1_ViewportAssetFetch viewport_asset_fetch;
     void *viewport_asset_user;
+    DM2_V1_ViewportAssetPaletteFetch viewport_asset_palette_fetch;
+    void *viewport_asset_palette_user;
     uint8_t map_wall_gfx_list[16];
     int map_wall_gfx_count;
     uint8_t map_floor_gfx_list[16];
@@ -157,6 +159,7 @@ typedef struct {
     int g1_map0_teleporter_transition_viewport_consumed;
     DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
+    DM2_V1_WeatherTimerReceipt last_weather_timer_receipt;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -187,6 +190,7 @@ static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
+static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
 static int g_dm2_runtime_restore_in_progress = 0;
 
 enum {
@@ -942,6 +946,9 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_DungeonData *dd;
     DM2_V1_InterfacePalette palette;
+    DM2_V1_WeatherGdatReceipt weather_receipt;
+    DM2_V1_BootWeatherDestinationReceipt weather_destination;
+    DM2_V1_DialogueGdatReceipt dialogue_shell;
     uint32_t scene_flags = 0u;
     uint32_t scene_colorkey = 0u;
     uint32_t ambient_light = 0u;
@@ -1688,26 +1695,6 @@ static void dm2_runtime_process_time_triggers(DM2_V1_RuntimeState *rt,
     }
 }
 
-static void dm2_runtime_process_timeline(DM2_V1_RuntimeState *rt, int now_ms) {
-    int before[DM2_TIMELINE_NUM_BUILTIN > 0 ? DM2_TIMELINE_NUM_BUILTIN : 1];
-    int fired;
-
-    if (!rt) return;
-    if (DM2_TIMELINE_NUM_BUILTIN <= 0) return;
-    for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
-        before[i - 1] = dm2_v1_timeline_get_fire_count(i);
-    }
-    fired = dm2_v1_timeline_tick(now_ms);
-    if (fired <= 0) return;
-    for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
-        int after = dm2_v1_timeline_get_fire_count(i);
-        if (after > before[i - 1]) {
-            dm2_runtime_apply_timeline_event(rt,
-                                             dm2_v1_timeline_get_builtin(i));
-        }
-    }
-}
-
 static void dm2_runtime_refresh_g1_map0_teleporter_transition(
     DM2_V1_RuntimeState *rt, int level, int x, int y)
 {
@@ -1735,7 +1722,7 @@ static void dm2_runtime_refresh_g1_map0_teleporter_transition(
      * c_map.cpp CHANGE_CURRENT_MAP_TO lines 328-370 has no
      * 0xff destination-map sentinel branch, so reject that byte explicitly. */
     for (int i = 0; i < rt->g1_first_map_runtime.teleporter_root_count; ++i) {
-        const DM2_V1_G1TeleporterRoot *teleporter =
+        const DM2_V1_G1DirectTeleporterRoot *teleporter =
             &rt->g1_first_map_runtime.teleporters[i];
         if (teleporter->x != x || teleporter->y != y) continue;
         memset(&candidate, 0, sizeof(candidate));
@@ -2603,8 +2590,6 @@ static void dm2_runtime_append_creature_sprite(
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
     dst->screen_y = (int16_t)screen_y;
-    dst->map_x = (int16_t)map_x;
-    dst->map_y = (int16_t)map_y;
     dst->health_pct = 100;
     dst->direction = material->direction;
 
@@ -3500,11 +3485,14 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
          * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
          * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
+        const uint8_t *source_champion =
+            rt->session_snapshot.champion_data[slot];
+        char source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
         memset(source_first_name, 0, sizeof(source_first_name));
-        if (dm2_v1_boot_champion_hero_type_source_ready(
-                rt->boot, source_champion[255], source_first_name) &&
-            strncmp(source_first_name, champ->first_name,
-                    sizeof(source_first_name)) == 0) {
+        memcpy(source_first_name, champ->first_name,
+               DM2_V1_HUD_CHAMPION_NAME_MAX);
+        source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
+        if (dst->occupied && source_champion[255] != 0xffu) {
             dst->portrait_index = source_champion[255];
             dst->portrait_type_source_bound = 1;
         }
@@ -3586,8 +3574,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_GdatSceneM11CommandPlan scene_material_plan;
     const DM2_V1_GdatSceneM11CommandPlan *scene_material_plan_for_m11;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
-    DM2_V1_DialogueBoxHostCommand save_dialogue_command;
-    DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
     DM2_V1_WeatherRestoredStateReceipt weather_state;
     DM2_V1_WeatherDrawContext weather_context;
     DM2_V1_WeatherRendererReceipt weather_renderer;
@@ -4303,6 +4289,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready;
     g_dm2_frame_ownership.gdat_interface_palette_consumed =
         viewport.gdat_interface_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_action_palette_hash =
+        rt->gdat_interface_action_palette_hash;
+    g_dm2_frame_ownership.gdat_interface_action_palette_consumed =
+        viewport.gdat_interface_action_palette_consumed_count;
     g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed =
         viewport.gdat_material_palette_floor_ceiling_consumed_count;
     g_dm2_frame_ownership.gdat_material_palette_wall_consumed =
@@ -4314,6 +4304,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memcpy(g_dm2_frame_ownership.gdat_interface_palette16,
            rt->gdat_interface_palette16,
            sizeof(g_dm2_frame_ownership.gdat_interface_palette16));
+    g_dm2_frame_ownership.floor_ceiling_material_required_mask =
+        (uint8_t)viewport.last_floor_ceiling_material_required_mask;
+    g_dm2_frame_ownership.floor_ceiling_material_consumed_mask =
+        (uint8_t)viewport.last_floor_ceiling_material_consumed_mask;
+    g_dm2_frame_ownership.floor_ceiling_materials_complete =
+        viewport.last_floor_ceiling_material_required_mask ==
+        viewport.last_floor_ceiling_material_consumed_mask;
+    g_dm2_frame_ownership.blocked_material_draws =
+        viewport.blocked_material_draw_count;
     /* skproject SKWIN/SkWinCore.cpp routes the runtime HUD, floor/ceiling,
      * walls and overlays through GDAT-backed surface fetches before blitting.
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and
@@ -4695,6 +4694,12 @@ void dm2_v1_runtime_set_viewport_asset_provider(
     void *user) {
     g_dm2_runtime.viewport_asset_fetch = fetch;
     g_dm2_runtime.viewport_asset_user = user;
+    g_dm2_runtime.viewport_asset_palette_fetch =
+        fetch == dm2_v1_boot_viewport_asset_fetch
+            ? dm2_v1_boot_viewport_asset_palette_fetch
+            : NULL;
+    g_dm2_runtime.viewport_asset_palette_user =
+        g_dm2_runtime.viewport_asset_palette_fetch ? user : NULL;
     dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
 }
 

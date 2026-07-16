@@ -15,4 +15,12 @@ bool F0473_MEMORY_SortValues_PC34(
     size_t value_count,
     size_t value_capacity);
 
+static inline bool F0473_MEMORY_SortValues(
+    uint16_t *values,
+    size_t value_count,
+    size_t value_capacity)
+{
+    return F0473_MEMORY_SortValues_PC34(values, value_count, value_capacity);
+}
+
 #endif
