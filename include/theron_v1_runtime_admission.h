@@ -622,6 +622,15 @@ int theron_v1_runtime_bind_track02_original_consumer_trace(
     size_t object_table_raw_offset,
     Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt *out);
 
+int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
+    const char *capture_trace,
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    uint32_t record,
+    uint32_t payload_checksum,
+    uint32_t level_envelope_checksum,
+    uint32_t post_envelope_checksum,
+    Theron_V1Track02Post3800ConsumerTraceFacts *out);
+
 int theron_v1_runtime_bind_track02_render_asset_admission(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
     const Theron_V1RuntimeTrack02RenderAssetProof *proof,

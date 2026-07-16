@@ -266,6 +266,98 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
     return 1;
 }
 
+static int parse_env_u32(const char *name, uint32_t *out)
+{
+    const char *text = getenv(name);
+    char *end = NULL;
+    unsigned long value;
+
+    if (out) {
+        *out = 0u;
+    }
+    if (!name || !out || !text || !text[0]) {
+        return 0;
+    }
+    value = strtoul(text, &end, 0);
+    if (!end || *end != '\0' || value > 0xfffffffful) {
+        return 0;
+    }
+    *out = (uint32_t)value;
+    return 1;
+}
+
+static int probe_optional_original_consumer_trace_corpus(
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap)
+{
+    const char *path = getenv("FIRESTAFF_THERON_ORIGINAL_CONSUMER_TRACE");
+    uint8_t *trace_data = NULL;
+    size_t trace_size = 0u;
+    char *trace_text = NULL;
+    uint32_t record;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    Theron_V1Track02Post3800ConsumerTraceFacts facts;
+    int ok;
+
+    if (!path || !path[0]) {
+        return 1;
+    }
+    if (!gap || !gap->valid ||
+        !parse_env_u32("FIRESTAFF_THERON_ORIGINAL_CONSUMER_RECORD", &record) ||
+        !parse_env_u32(
+            "FIRESTAFF_THERON_ORIGINAL_CONSUMER_PAYLOAD_CHECKSUM",
+            &payload_checksum) ||
+        !parse_env_u32(
+            "FIRESTAFF_THERON_ORIGINAL_CONSUMER_LEVEL_ENVELOPE_CHECKSUM",
+            &level_envelope_checksum) ||
+        !parse_env_u32(
+            "FIRESTAFF_THERON_ORIGINAL_CONSUMER_POST_ENVELOPE_CHECKSUM",
+            &post_envelope_checksum) ||
+        !read_file(path, &trace_data, &trace_size)) {
+        return 0;
+    }
+    trace_text = (char *)malloc(trace_size + 1u);
+    if (!trace_text) {
+        free(trace_data);
+        return 0;
+    }
+    memcpy(trace_text, trace_data, trace_size);
+    trace_text[trace_size] = '\0';
+    ok = theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
+        trace_text,
+        gap,
+        record,
+        payload_checksum,
+        level_envelope_checksum,
+        post_envelope_checksum,
+        &facts);
+    if (ok) {
+        ok = facts.authenticated_original_trace &&
+             facts.post_3800_execution_observed &&
+             facts.same_capture_as_loader_payload &&
+             facts.track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+             facts.record == record &&
+             facts.payload_checksum == payload_checksum &&
+             facts.level_envelope_checksum == level_envelope_checksum &&
+             facts.post_envelope_checksum == post_envelope_checksum &&
+             facts.consumer_trace_checksum != 0u &&
+             facts.dungeon_record_consumer_observed &&
+             facts.object_table_consumer_observed &&
+             facts.bitmap_consumer_observed &&
+             facts.palette_consumer_observed &&
+             !facts.synthetic_dungeon_promoted &&
+             !facts.synthetic_object_table_promoted &&
+             !facts.synthetic_bitmap_promoted &&
+             !facts.synthetic_palette_promoted &&
+             !facts.fallback_visuals_observed &&
+             !facts.fallback_visuals_allowed;
+    }
+    free(trace_text);
+    free(trace_data);
+    return ok;
+}
+
 static int probe_real_track02_capture_producer(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *base_consumer)
 {
@@ -278,6 +370,7 @@ static int probe_real_track02_capture_producer(
     Theron_V1RuntimeTrack02RenderAssetProof proof;
     Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt gap;
     Theron_V1Track02Post3800ConsumerSemanticReceipt original_consumer;
+    Theron_V1Track02Post3800ConsumerTraceFacts trace_facts;
     Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt binding;
     int ok = 1;
 
@@ -365,6 +458,51 @@ static int probe_real_track02_capture_producer(
         gap.object_table_decode_ready ||
         gap.render_asset_admission_allowed ||
         gap.fallback_visuals_allowed) {
+        ok = 0;
+    }
+    if (theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
+            NULL,
+            &gap,
+            1156u,
+            0x101u,
+            0x202u,
+            0x303u,
+            &trace_facts) ||
+        trace_facts.authenticated_original_trace ||
+        trace_facts.consumer_trace_checksum != 0u) {
+        ok = 0;
+    }
+    if (theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
+            "theron_track02_original_consumer_trace\n"
+            "authenticated_original_trace=1\n"
+            "post_3800_execution_observed=1\n"
+            "same_capture_as_loader_payload=1\n"
+            "track02_variant=us_bin\n"
+            "record=1156\n"
+            "payload_checksum=0x00000101\n"
+            "level_envelope_checksum=0x00000202\n"
+            "post_envelope_checksum=0x00000303\n"
+            "palette_consumer_observed=1\n"
+            "dungeon_record_consumer_observed=1\n"
+            "object_table_consumer_observed=1\n"
+            "bitmap_consumer_observed=1\n"
+            "synthetic_dungeon_promoted=0\n"
+            "synthetic_object_table_promoted=0\n"
+            "synthetic_bitmap_promoted=0\n"
+            "synthetic_palette_promoted=0\n"
+            "fallback_visuals_observed=0\n"
+            "fallback_visuals_allowed=0\n",
+            &gap,
+            1156u,
+            0x101u,
+            0x202u,
+            0x303u,
+            &trace_facts) ||
+        trace_facts.authenticated_original_trace ||
+        trace_facts.consumer_trace_checksum != 0u) {
+        ok = 0;
+    }
+    if (!probe_optional_original_consumer_trace_corpus(&gap)) {
         ok = 0;
     }
     memset(&original_consumer, 0, sizeof(original_consumer));

@@ -1552,6 +1552,68 @@ static void test_gfx_str_helpers(void)
           "c_gfx_str DISPLAY_HINT_TEXT line splitter consumes explicit newline");
 }
 
+static void test_gdat_allocation_helpers(void)
+{
+    const DM2_V1_SkprojectGdatDescriptor entries[] = {
+        { 1u, 0u, 2u, 2u, 4u, 20u },
+        { 1u, 0u, 2u, 3u, 4u, 30u },
+        { 1u, 0u, 2u, 0x0bu, 5u, 40u },
+        { 1u, 0u, 2u, 3u, 0x8006u, 50u },
+        { 2u, 0u, 7u, 1u, 8u, 9u }
+    };
+    const DM2_V1_SkprojectGdatDescriptor scripts[] = {
+        { 1u, 0u, 2u, 0u, 0u, 0u },
+        { 1u, 0u, 2u, 0u, 0x8000u, 0u }
+    };
+    uint8_t marks[16] = { 0 };
+    DM2_V1_SkprojectGdatSoundAllocationReceipt sound;
+    DM2_V1_SkprojectGdatZoneReceipt zone;
+    DM2_V1_SkprojectLoadDyn4Receipt dyn4;
+
+    CHECK(dm2_v1_skproject_gdat_sound_allocation_scan(
+              entries, 5u, &sound) == 1 &&
+              sound.valid &&
+              sound.inspected_entries == 4u &&
+              sound.unique_raw_indexes == 3u &&
+              sound.largest_raw_length == 50u &&
+              sound.receipt_hash != 0u,
+          "DM2_dballoc_3e74_24b8 counts unique type-2 raw sound indexes");
+    CHECK(dm2_v1_skproject_gdat_sound_allocation_scan(
+              0, 1u, &sound) == 0 &&
+              sound.blocked_missing_entries,
+          "DM2_dballoc_3e74_24b8 rejects missing GDAT descriptor corpus");
+
+    CHECK(dm2_v1_skproject_gdat_accepts_current_zone(
+              4u, 2u, 0x00u, 0x30u, &zone) == 1 &&
+              zone.valid && zone.accepted_zero_gate,
+          "DM2_dballoc_3e74_2162 accepts zero upper-nibble zone gate");
+    CHECK(dm2_v1_skproject_gdat_accepts_current_zone(
+              4u, 2u, 0x30u, 0x30u, &zone) == 1 &&
+              zone.valid && zone.accepted_current_zone,
+          "DM2_dballoc_3e74_2162 accepts current zone nibble");
+    CHECK(dm2_v1_skproject_gdat_accepts_current_zone(
+              4u, 2u, 0x40u, 0x30u, &zone) == 0 &&
+              zone.rejected_other_zone,
+          "DM2_dballoc_3e74_2162 rejects other zone nibble");
+
+    CHECK(dm2_v1_skproject_load_dyn4_receipt(
+              scripts, 2u, entries, 5u, marks, 16u, 0, &dyn4) == 1 &&
+              dyn4.valid &&
+              dyn4.visited_entries == 4u &&
+              dyn4.sound_gate_skips == 1u &&
+              dyn4.incremented_entries == 1u &&
+              dyn4.decremented_entries == 1u &&
+              dyn4.skipped_b_or_c_entries == 2u &&
+              dyn4.skipped_highbit_entries == 2u &&
+              marks[4] == 0u &&
+              dyn4.mark_hash != 0u,
+          "DM2_LOAD_DYN4 applies skproject mark-table increment/decrement gates");
+    CHECK(dm2_v1_skproject_load_dyn4_receipt(
+              scripts, 1u, entries, 5u, marks, 4u, 1, &dyn4) == 0 &&
+              dyn4.blocked_mark_capacity,
+          "DM2_LOAD_DYN4 rejects raw indexes outside mark capacity");
+}
+
 int main(void)
 {
     test_between_value();
@@ -1571,6 +1633,7 @@ int main(void)
     test_boost_attribute();
     test_adjust_ui_event();
     test_gfx_str_helpers();
+    test_gdat_allocation_helpers();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -1634,6 +1697,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_map_3BF83") != 0,
           "source evidence names cross-map record mover");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_LOAD_DYN4") != 0,
+          "source evidence names GDAT DYN4 helper");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

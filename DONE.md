@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 GDAT allocation/DYN4 bundle: mapped
+  `DM2_dballoc_3e74_24b8`, `DM2_dballoc_3e74_2162`, and `DM2_LOAD_DYN4`
+  to skproject-backed receipts for type-2 GDAT raw-index allocation,
+  zone-nibble admission, and DYN4 mark-table increment/decrement gates. No
+  synthetic GDAT rows or fallback dungeon graphics were introduced.
+
+- 2026-07-16 Theron original trace-text facts producer: added a fail-closed
+  parser for authenticated original Track 02 post-$3800 consumer traces. It
+  requires exact palette, non-startup level and object-table offsets, matching
+  payload/envelope checksums, observed dungeon/object/bitmap/palette consumers,
+  and explicit no-synthetic/no-fallback markers before producing consumer
+  facts.
+
 - 2026-07-16 Nexus Structure3 reviewed material-upload gate: added a
   no-draw receipt that binds Structure3 raw capture, original Saturn
   attestation, package/host route and producer workflow attestation. It still

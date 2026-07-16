@@ -901,6 +901,49 @@ static uint32_t theron_v1_runtime_mix_hash(uint32_t hash, uint32_t value) {
     return hash;
 }
 
+static uint32_t theron_v1_runtime_trace_text_checksum(const char *text) {
+    uint32_t hash = 2166136261u;
+    const unsigned char *p = (const unsigned char *)text;
+
+    while (p && *p) {
+        hash ^= (uint32_t)(*p++);
+        hash *= 16777619u;
+    }
+    return hash ? hash : 2166136261u;
+}
+
+static int theron_v1_runtime_trace_has(const char *trace, const char *token) {
+    return trace && token && strstr(trace, token) != NULL;
+}
+
+static int theron_v1_runtime_trace_has_u32(
+    const char *trace,
+    const char *name,
+    uint32_t value) {
+    char token[80];
+
+    snprintf(token, sizeof(token), "%s=%u", name, value);
+    if (theron_v1_runtime_trace_has(trace, token)) {
+        return 1;
+    }
+    snprintf(token, sizeof(token), "%s=0x%08x", name, value);
+    return theron_v1_runtime_trace_has(trace, token);
+}
+
+static int theron_v1_runtime_trace_has_size(
+    const char *trace,
+    const char *name,
+    size_t value) {
+    char token[96];
+
+    snprintf(token, sizeof(token), "%s=%zu", name, value);
+    if (theron_v1_runtime_trace_has(trace, token)) {
+        return 1;
+    }
+    snprintf(token, sizeof(token), "%s=0x%zx", name, value);
+    return theron_v1_runtime_trace_has(trace, token);
+}
+
 int theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
     const Theron_Track02LevelRouteReceipt *level_route,
@@ -1292,6 +1335,105 @@ int theron_v1_runtime_bind_track02_original_consumer_trace(
     out->bitmap_consumer_bound = 1;
     out->runtime_consumer_binding_ready = 1;
     out->render_asset_admission_allowed = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
+    const char *capture_trace,
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    uint32_t record,
+    uint32_t payload_checksum,
+    uint32_t level_envelope_checksum,
+    uint32_t post_envelope_checksum,
+    Theron_V1Track02Post3800ConsumerTraceFacts *out) {
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    if (!capture_trace || !gap ||
+        !gap->valid ||
+        !gap->verified_track02_capture_consumed ||
+        !gap->fail_closed ||
+        gap->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap->palette_raw_offset == 0u ||
+        gap->first_nonstartup_raw_offset == 0u ||
+        gap->first_container_raw_offset == 0u ||
+        payload_checksum == 0u ||
+        level_envelope_checksum == 0u ||
+        post_envelope_checksum == 0u ||
+        gap->render_asset_admission_allowed ||
+        gap->fallback_visuals_allowed ||
+        theron_v1_runtime_trace_has(capture_trace, "synthetic") ||
+        theron_v1_runtime_trace_has(capture_trace, "fallback") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_original_consumer_trace") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "authenticated_original_trace=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "post_3800_execution_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_loader_payload=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(capture_trace, "record", record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "payload_checksum", payload_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_envelope_checksum",
+            level_envelope_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "post_envelope_checksum", post_envelope_checksum) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "palette_raw_offset", gap->palette_raw_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_raw_offset",
+            gap->first_nonstartup_raw_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_raw_offset",
+            gap->first_container_raw_offset) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "palette_consumer_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_record_consumer_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_consumer_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "bitmap_consumer_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_dungeon_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_object_table_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_bitmap_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_palette_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_observed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    out->authenticated_original_trace = 1;
+    out->post_3800_execution_observed = 1;
+    out->same_capture_as_loader_payload = 1;
+    out->track02_variant = gap->variant;
+    out->record = record;
+    out->payload_checksum = payload_checksum;
+    out->level_envelope_checksum = level_envelope_checksum;
+    out->post_envelope_checksum = post_envelope_checksum;
+    out->consumer_trace_checksum =
+        theron_v1_runtime_trace_text_checksum(capture_trace);
+    out->dungeon_record_consumer_observed = 1;
+    out->object_table_consumer_observed = 1;
+    out->bitmap_consumer_observed = 1;
+    out->palette_consumer_observed = 1;
+    out->synthetic_dungeon_promoted = 0;
+    out->synthetic_object_table_promoted = 0;
+    out->synthetic_bitmap_promoted = 0;
+    out->synthetic_palette_promoted = 0;
+    out->fallback_visuals_observed = 0;
     out->fallback_visuals_allowed = 0;
     return 1;
 }

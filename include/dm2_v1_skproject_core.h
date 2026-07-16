@@ -240,6 +240,55 @@ typedef struct {
 } DM2_V1_SkprojectMapDescriptor;
 
 typedef struct {
+    uint16_t category;
+    uint16_t cls2;
+    uint16_t type;
+    uint16_t cls4;
+    uint16_t raw_index;
+    uint32_t raw_length;
+} DM2_V1_SkprojectGdatDescriptor;
+
+typedef struct {
+    int valid;
+    uint16_t inspected_entries;
+    uint16_t unique_raw_indexes;
+    uint32_t largest_raw_length;
+    uint8_t sound_category_available;
+    uint8_t sound_unique_count;
+    uint8_t blocked_missing_entries;
+    uint8_t blocked_missing_output;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectGdatSoundAllocationReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t raw_index;
+    uint16_t entry_type_2;
+    uint16_t entry_type_5;
+    uint8_t upper_nibble;
+    uint8_t current_zone;
+    uint8_t accepted_zero_gate;
+    uint8_t accepted_current_zone;
+    uint8_t rejected_other_zone;
+} DM2_V1_SkprojectGdatZoneReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t script_count;
+    uint16_t visited_entries;
+    uint16_t incremented_entries;
+    uint16_t decremented_entries;
+    uint16_t skipped_b_or_c_entries;
+    uint16_t skipped_highbit_entries;
+    uint16_t sound_gate_skips;
+    uint8_t sound_table_active;
+    uint8_t blocked_missing_scripts;
+    uint8_t blocked_missing_marks;
+    uint8_t blocked_mark_capacity;
+    uint32_t mark_hash;
+} DM2_V1_SkprojectLoadDyn4Receipt;
+
+typedef struct {
     int valid;
     int found;
     uint8_t blocked_missing_descriptors;
@@ -1131,6 +1180,25 @@ int dm2_v1_skproject_split_hint_line(
     char *dest,
     uint16_t dest_capacity,
     DM2_V1_SkprojectHintLineReceipt *out_receipt);
+int dm2_v1_skproject_gdat_sound_allocation_scan(
+    const DM2_V1_SkprojectGdatDescriptor *entries,
+    uint16_t entry_count,
+    DM2_V1_SkprojectGdatSoundAllocationReceipt *out_receipt);
+int dm2_v1_skproject_gdat_accepts_current_zone(
+    uint16_t raw_index,
+    uint16_t entry_type_2,
+    uint16_t entry_type_5,
+    uint8_t current_zone,
+    DM2_V1_SkprojectGdatZoneReceipt *out_receipt);
+int dm2_v1_skproject_load_dyn4_receipt(
+    const DM2_V1_SkprojectGdatDescriptor *scripts,
+    uint16_t script_count,
+    const DM2_V1_SkprojectGdatDescriptor *entries,
+    uint16_t entry_count,
+    uint8_t *marks,
+    uint16_t mark_capacity,
+    int sound_table_active,
+    DM2_V1_SkprojectLoadDyn4Receipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
