@@ -166,6 +166,77 @@ int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
     return 1;
 }
 
+int theron_v1_track02_loader_intake_semantic_gate(
+    const Theron_V1Track02LoaderPayloadReceipt *payload,
+    const Theron_V1Track02LoaderLevelEnvelopeReceipt *level_envelope,
+    const Theron_V1Track02LoaderPostEnvelopeReceipt *post_envelope,
+    Theron_V1Track02LoaderSemanticGateReceipt *out_receipt) {
+    Theron_V1Track02LoaderSemanticGateReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!payload || !level_envelope || !post_envelope || !out_receipt ||
+        !payload->handed_off || !payload->no_fallback ||
+        !level_envelope->handed_off || !level_envelope->no_fallback ||
+        !post_envelope->handed_off || !post_envelope->no_fallback ||
+        (payload->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         payload->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
+        level_envelope->track02_variant != payload->track02_variant ||
+        post_envelope->track02_variant != payload->track02_variant ||
+        payload->record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
+        level_envelope->record != payload->record ||
+        post_envelope->record != payload->record ||
+        payload->payload_bytes != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        payload->payload_checksum == 0u ||
+        level_envelope->record_user_data_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        level_envelope->envelope_bytes !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        level_envelope->envelope_checksum == 0u ||
+        post_envelope->record_user_data_offset !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        post_envelope->byte_count !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        post_envelope->checksum == 0u ||
+        theron_v1_track02_loader_intake_fnv1a32(
+            payload->payload, payload->payload_bytes) !=
+            payload->payload_checksum ||
+        theron_v1_track02_loader_intake_fnv1a32(
+            level_envelope->envelope, level_envelope->envelope_bytes) !=
+            level_envelope->envelope_checksum ||
+        theron_v1_track02_loader_intake_fnv1a32(
+            post_envelope->bytes, post_envelope->byte_count) !=
+            post_envelope->checksum ||
+        memcmp(payload->payload + level_envelope->record_user_data_offset,
+               level_envelope->envelope,
+               level_envelope->envelope_bytes) != 0 ||
+        memcmp(payload->payload + post_envelope->record_user_data_offset,
+               post_envelope->bytes,
+               post_envelope->byte_count) != 0) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.no_fallback = 1;
+    receipt.real_payload_available = 1;
+    receipt.level_envelope_available = 1;
+    receipt.post_envelope_available = 1;
+    receipt.track02_variant = payload->track02_variant;
+    receipt.record = payload->record;
+    receipt.payload_checksum = payload->payload_checksum;
+    receipt.level_envelope_checksum = level_envelope->envelope_checksum;
+    receipt.post_envelope_checksum = post_envelope->checksum;
+    receipt.dungeon_record_semantics_proven = 0;
+    receipt.object_table_semantics_proven = 0;
+    receipt.bitmap_route_bound = 0;
+    receipt.palette_binding_verified = 0;
+    receipt.rgba_output_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    receipt.status =
+        "real_loader_bytes_available_semantic_routes_blocked_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_track02_loader_intake_handoff_iso_level_object_record(
     const Theron_V1Track02IsoLevelObjectReadFacts *facts,
     const uint8_t *payload,

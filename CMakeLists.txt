@@ -23293,6 +23293,28 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier4;nexus;startup;save_load"
     )
 
+    add_executable(test_nexus_v1_menu_bpk_renderer_handoff_gate
+        tests/test_nexus_v1_menu_bpk_renderer_handoff_gate.c
+    )
+    target_link_libraries(test_nexus_v1_menu_bpk_renderer_handoff_gate PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_menu_bpk_renderer_handoff_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_menu_bpk_renderer_handoff_gate PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_menu_bpk_renderer_handoff_gate
+        COMMAND test_nexus_v1_menu_bpk_renderer_handoff_gate
+    )
+    set_tests_properties(nexus_v1_menu_bpk_renderer_handoff_gate PROPERTIES
+        LABELS "tier4;nexus;startup;menu"
+    )
+
     add_executable(test_nexus_v1_structure2_no_draw_receipt
         tests/test_nexus_v1_structure2_no_draw_receipt.c
     )

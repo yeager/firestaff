@@ -42,9 +42,9 @@ definitions and their executable behavior.
 
 | Status | Count |
 | --- | ---: |
-| IMPLEMENTED | 0 |
-| UNCERTAIN | 142 |
-| MISSING | 1540 |
+| VERIFIED_SOURCE_MAPPING | 56 |
+| UNCERTAIN | 135 |
+| MISSING | 1491 |
 | NONAPPLICABLE | 69 |
 | **Total** | **1751** |
 
@@ -58,7 +58,7 @@ Machine-check the ledger:
 
 ```sh
 awk -F '\t' 'NR > 1 { count[$6]++; rows++ }
-  END { print rows, count["IMPLEMENTED"], count["UNCERTAIN"],
+  END { print rows, count["VERIFIED_SOURCE_MAPPING"], count["UNCERTAIN"],
               count["MISSING"], count["NONAPPLICABLE"] }' \
   docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv
 ```

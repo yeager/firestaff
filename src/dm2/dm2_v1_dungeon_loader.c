@@ -1042,6 +1042,152 @@ int dm2_v1_skproject_get_address_of_tile_record(
     return 1;
 }
 
+int dm2_v1_skproject_get_object_index_from_tile(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectObjectIndexReceipt *out) {
+    DM2_V1_SkprojectObjectIndexReceipt receipt;
+    int raw;
+    int column_index = 0;
+    int column_offset;
+    int square_offset;
+    int object_index;
+    int preceding_root_count = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.object_index = -1;
+    receipt.source_symbol = "DM2_GET_OBJECT_INDEX_FROM_TILE";
+    receipt.source_line = 44;
+
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (!d || !d->raw_data || raw < 0 || level < 0 ||
+        level >= d->level_count || x < 0 ||
+        x >= d->level_widths[level] || y < 0 ||
+        y >= d->level_heights[level]) {
+        *out = receipt;
+        return 0;
+    }
+    receipt.raw_tile = (uint16_t)raw;
+    if (d->square_bytes != 1 || (raw & 0x10) == 0 ||
+        d->column_index_base < 0 || d->square_first_thing_base < 0) {
+        receipt.blocked_no_tile_record_link = 1;
+        *out = receipt;
+        return 0;
+    }
+
+    for (int i = 0; i < level; ++i)
+        column_index += d->level_widths[i];
+    column_offset = d->column_index_base + (column_index + x) * 2;
+    square_offset = d->raw_map_data_base + d->level_offsets[level] +
+                    x * d->level_heights[level];
+    if (column_offset < 0 || column_offset + 1 >= d->raw_size ||
+        square_offset < 0 || square_offset + y >= d->raw_size) {
+        *out = receipt;
+        return 0;
+    }
+
+    object_index = (int)RD16(d->raw_data + column_offset);
+    for (int row = 0; row < y; ++row) {
+        if ((d->raw_data[square_offset + row] & 0x10u) != 0u) {
+            ++object_index;
+            ++preceding_root_count;
+        }
+    }
+    if (object_index < 0 || object_index >= d->square_first_thing_count) {
+        *out = receipt;
+        return 0;
+    }
+    if (d->square_first_thing_base + object_index * 2 + 1 >= d->raw_size) {
+        *out = receipt;
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.object_index = object_index;
+    receipt.column_base_index = (int)RD16(d->raw_data + column_offset);
+    receipt.column_index_offset = column_offset;
+    receipt.object_index_offset = d->square_first_thing_base + object_index * 2;
+    receipt.object_id = RD16(d->raw_data + receipt.object_index_offset);
+    receipt.preceding_root_count = preceding_root_count;
+    *out = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_change_current_map_to(
+    const DM2_V1_DungeonData *d,
+    int previous_map,
+    int new_map,
+    int player_x,
+    int player_y,
+    int player_map,
+    int player_dir,
+    DM2_V1_SkprojectChangeCurrentMapReceipt *out) {
+    DM2_V1_SkprojectChangeCurrentMapReceipt receipt;
+    int column_index = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requested_map = new_map;
+    receipt.previous_map = previous_map;
+    receipt.current_map = previous_map;
+    receipt.player_x = player_x;
+    receipt.player_y = player_y;
+    receipt.player_map = player_map;
+    receipt.player_dir = player_dir;
+    receipt.source_symbol = "CHANGE_CURRENT_MAP_TO";
+    receipt.source_line = 2774;
+
+    if (!d || !d->raw_data) {
+        *out = receipt;
+        return 0;
+    }
+    if (new_map == previous_map) {
+        receipt.valid = 1;
+        receipt.unchanged = 1;
+        *out = receipt;
+        return 1;
+    }
+    if (new_map < 0) {
+        receipt.blocked_negative_map = 1;
+        *out = receipt;
+        return 0;
+    }
+    if (new_map >= d->level_count) {
+        receipt.blocked_map_range = 1;
+        *out = receipt;
+        return 0;
+    }
+
+    for (int i = 0; i < new_map; ++i)
+        column_index += d->level_widths[i];
+    receipt.current_map = new_map;
+    receipt.width = d->level_widths[new_map];
+    receipt.height = d->level_heights[new_map];
+    receipt.raw_tile_map_offset =
+        d->raw_map_data_base + d->level_offsets[new_map];
+    receipt.column_index_offset =
+        d->column_index_base >= 0 ? d->column_index_base + column_index * 2 : -1;
+    if (receipt.width <= 0 || receipt.height <= 0 ||
+        receipt.raw_tile_map_offset < 0 ||
+        receipt.raw_tile_map_offset >= d->raw_size ||
+        receipt.column_index_offset < 0 ||
+        receipt.column_index_offset + 1 >= d->raw_size) {
+        *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    *out = receipt;
+    return 1;
+}
+
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,
@@ -1695,6 +1841,7 @@ int dm2_v1_dungeon_materialize_g1_partial_map_boot(
                     blocked->object_id = root;
                     blocked->type = type;
                     blocked->index = index;
+                    ++candidate.blocked_root_count_by_type[type];
                     ++candidate.blocked_root_count_by_map[level];
                 }
                 ++stack;

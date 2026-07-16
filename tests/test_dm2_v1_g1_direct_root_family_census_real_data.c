@@ -61,9 +61,12 @@ int main(int argc, char **argv)
         receipt.direct_root_count_by_type[12] != 0 ||
         receipt.direct_root_count_by_type[13] != 0 ||
         receipt.direct_root_count_by_type[14] != 0 ||
-        receipt.direct_root_count_by_type[15] != 0) {
+        receipt.direct_root_count_by_type[15] != 0 ||
+        receipt.blocked_root_count != 5 ||
+        receipt.blocked_root_count_by_type[8] != 1 ||
+        receipt.blocked_root_count_by_type[10] != 4) {
         dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: direct G1 root-family census changed\n", stderr);
+        fputs("FAIL: direct/blocked G1 root-family census changed\n", stderr);
         return 1;
     }
     dm2_v1_dungeon_free(&dungeon);

@@ -630,6 +630,7 @@ typedef struct {
     /* Byte-faithful continuation of the same authenticated sector. It remains
      * opaque until an original loader consumer proves object semantics. */
     Theron_V1Track02LoaderPostEnvelopeReceipt loader_post_envelope;
+    Theron_V1Track02LoaderSemanticGateReceipt loader_semantic_gate;
     Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
     /* Observational only until a game-owned consumer proves level semantics. */
     Theron_Track02InitialLevelLoaderRoute initial_level_route;

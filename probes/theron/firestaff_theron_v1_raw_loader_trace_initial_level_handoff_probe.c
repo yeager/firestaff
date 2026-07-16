@@ -142,6 +142,7 @@ int main(void)
     size_t raw_size;
     Theron_V1RawLoaderTraceCoalescedLaterReceipt coalesced;
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt handoff;
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt scratch_handoff;
     Theron_V1_BootProfile profile;
     Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
     Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
@@ -541,14 +542,41 @@ int main(void)
         handoff.loader_post_envelope.byte_count != 0x380u ||
         handoff.loader_post_envelope.checksum !=
             handoff.initial_level_boundary.following_user_data_hash ||
+        !handoff.loader_semantic_gate.valid ||
+        !handoff.loader_semantic_gate.no_fallback ||
+        !handoff.loader_semantic_gate.real_payload_available ||
+        !handoff.loader_semantic_gate.level_envelope_available ||
+        !handoff.loader_semantic_gate.post_envelope_available ||
+        handoff.loader_semantic_gate.track02_variant != handoff.variant ||
+        handoff.loader_semantic_gate.record != handoff.observed_track02_record ||
+        handoff.loader_semantic_gate.payload_checksum !=
+            handoff.complete_payload_checksum ||
+        handoff.loader_semantic_gate.level_envelope_checksum !=
+            handoff.loader_level_envelope.envelope_checksum ||
+        handoff.loader_semantic_gate.post_envelope_checksum !=
+            handoff.loader_post_envelope.checksum ||
+        handoff.loader_semantic_gate.dungeon_record_semantics_proven ||
+        handoff.loader_semantic_gate.object_table_semantics_proven ||
+        handoff.loader_semantic_gate.bitmap_route_bound ||
+        handoff.loader_semantic_gate.palette_binding_verified ||
+        handoff.loader_semantic_gate.rgba_output_allowed ||
+        handoff.loader_semantic_gate.fallback_visuals_allowed ||
         handoff.object_tail_semantics_proven || handoff.fallback_visuals_allowed) {
         free(raw);
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
         return 1;
     }
+    scratch_handoff = handoff;
+    scratch_handoff.loader_semantic_gate.object_table_semantics_proven = 1;
+    if (theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
+            &scratch_handoff)) {
+        free(raw);
+        printf("FAIL: object-table semantic promotion bypassed the handoff gate\n");
+        return 1;
+    }
     ++coalesced.descriptor_word0;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
-            &coalesced, raw, raw_size, md5, &handoff)) {
+            &coalesced, raw, raw_size, md5, &scratch_handoff)) {
         free(raw);
         printf("FAIL: altered descriptor row reached the loader handoff\n");
         return 1;
