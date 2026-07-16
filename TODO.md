@@ -22,6 +22,12 @@
     clearing, champion inventory placement, current-container overlay routing,
     and the `PROCESS_ITEM_BONUS` handoff boundary. Remaining adjacent work is
     real bonus semantics and broader live inventory interaction.
+  - 2026-07-16 DM2 scalar/container possession update: `IS_NEGATIVE`,
+    `IS_CONTAINER_MAP`, `DM2_IS_CONTAINER_MAP`,
+    `FIND_POUCH_OR_SCABBARD_POSSESSION_POS`, and
+    `DM2_FIND_POUCH_OR_SCABBARD_POSSESSION_POS` now have skproject-backed
+    bounded receipts. Remaining adjacent work is full live item-action and
+    container-map HUD consumption from real GDAT/record data.
   - 2026-07-16 DM2 movement update: `DM2_move_12b4_0d75`,
     `DM2_move_075f_0af9`, and `DM2_move_2fcf_0b8b` now have narrow
     skproject-backed handoff receipts. Remaining adjacent movement work is

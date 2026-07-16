@@ -101,7 +101,11 @@ static void test_util_helpers(void)
     DM2_V1_SkprojectRandomData randdat;
     DM2_V1_SkprojectVectorDirReceipt dir_receipt;
     DM2_V1_SkprojectFillI16TableReceipt fill_receipt;
+    DM2_V1_SkprojectIsNegativeReceipt neg_receipt;
+    DM2_V1_SkprojectContainerMapReceipt map_receipt;
+    DM2_V1_SkprojectPossessionSlotReceipt pos_receipt;
     int16_t table[5] = { 1, 2, 3, 4, 5 };
+    uint16_t inventory[30];
 
     CHECK(dm2_v1_skproject_abs(-12) == 12 &&
               dm2_v1_skproject_abs(7) == 7,
@@ -159,6 +163,60 @@ static void test_util_helpers(void)
           "DM2_ATIMESB_RSHIFTC multiplies unsigned 16-bit inputs before shift");
     CHECK(dm2_v1_skproject_atimesb_rshiftc(-2, 4, 2) == 8191,
           "DM2_ATIMESB_RSHIFTC preserves unsignedlong conversion of signed words");
+
+    CHECK(dm2_v1_skproject_is_negative(-1, &neg_receipt) == 1 &&
+              neg_receipt.valid && neg_receipt.value == -1 &&
+              neg_receipt.result == 1u,
+          "IS_NEGATIVE returns one for signed negative words");
+    CHECK(dm2_v1_skproject_is_negative(0, &neg_receipt) == 0 &&
+              neg_receipt.valid && neg_receipt.result == 0u,
+          "IS_NEGATIVE returns zero for zero/non-negative words");
+
+    CHECK(dm2_v1_skproject_is_container_map((uint16_t)((9u << 10) | 4u),
+                                            1u, &map_receipt) == 1 &&
+              map_receipt.valid && map_receipt.db_type == 9u &&
+              map_receipt.container_type == 1u,
+          "IS_CONTAINER_MAP accepts dbContainer object with ContainerType 1");
+    CHECK(dm2_v1_skproject_is_container_map((uint16_t)((9u << 10) | 4u),
+                                            2u, &map_receipt) == 0 &&
+              map_receipt.valid && map_receipt.db_type == 9u,
+          "IS_CONTAINER_MAP rejects other container types");
+    CHECK(dm2_v1_skproject_is_container_map((uint16_t)((8u << 10) | 4u),
+                                            1u, &map_receipt) == 0 &&
+              map_receipt.blocked_non_container_db,
+          "IS_CONTAINER_MAP rejects non-container DB type");
+
+    for (int i = 0; i < 30; ++i)
+        inventory[i] = DM2_V1_SKPROJECT_OBJECT_NULL;
+    inventory[12] = 0x2244u;
+    CHECK(dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+              inventory, 1u, &pos_receipt) == 12 &&
+              pos_receipt.valid && pos_receipt.checked_scabbard1 &&
+              pos_receipt.selected_object == 0x2244u,
+          "FIND_POUCH_OR_SCABBARD_POSSESSION_POS prefers scabbard slot 12");
+    inventory[12] = DM2_V1_SKPROJECT_OBJECT_NULL;
+    inventory[8] = 0x2345u;
+    CHECK(dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+              inventory, 1u, &pos_receipt) == 8 &&
+              pos_receipt.valid && pos_receipt.checked_scabbard_tail,
+          "FIND_POUCH_OR_SCABBARD_POSSESSION_POS scans scabbard slots 7..9");
+    for (int i = 0; i < 30; ++i)
+        inventory[i] = DM2_V1_SKPROJECT_OBJECT_NULL;
+    inventory[6] = 0x3456u;
+    CHECK(dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+              inventory, 0u, &pos_receipt) == 6 &&
+              pos_receipt.valid && pos_receipt.checked_pouch1 &&
+              pos_receipt.checked_pouch2,
+          "FIND_POUCH_OR_SCABBARD_POSSESSION_POS checks pouch 11 then pouch 6");
+    inventory[11] = 0x4567u;
+    CHECK(dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+              inventory, 0u, &pos_receipt) == 11 &&
+              pos_receipt.selected_object == 0x4567u,
+          "FIND_POUCH_OR_SCABBARD_POSSESSION_POS prefers pouch slot 11");
+    CHECK(dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+              0, 0u, &pos_receipt) == -1 &&
+              pos_receipt.blocked_missing_inventory,
+          "FIND_POUCH_OR_SCABBARD_POSSESSION_POS rejects missing inventory");
 }
 
 static void test_palette_helpers(void)
@@ -2769,6 +2827,13 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_SET_DESTINATION_OF_MINION_MAP") != 0,
           "source evidence names c_map helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "IS_NEGATIVE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "IS_CONTAINER_MAP") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "FIND_POUCH_OR_SCABBARD_POSSESSION_POS") != 0,
+          "source evidence names scalar/container possession helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_GET_ADDRESS_OF_RECORD") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),

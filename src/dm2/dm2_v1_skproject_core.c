@@ -2431,6 +2431,111 @@ int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
     return (int32_t)(product >> shift);
 }
 
+int dm2_v1_skproject_is_negative(
+    int16_t value,
+    DM2_V1_SkprojectIsNegativeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIsNegativeReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.value = value;
+    receipt.result = value < 0 ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+}
+
+int dm2_v1_skproject_is_container_map(
+    uint16_t record_link,
+    uint8_t container_type,
+    DM2_V1_SkprojectContainerMapReceipt *out_receipt)
+{
+    DM2_V1_SkprojectContainerMapReceipt receipt;
+    uint8_t db_type;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_link = record_link;
+    receipt.container_type = container_type;
+    if (record_link == DM2_V1_SKPROJECT_OBJECT_NULL) {
+        receipt.blocked_object_null = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    db_type = (uint8_t)((record_link >> 10) & 0x0fu);
+    receipt.db_type = db_type;
+    if (db_type != 9u) {
+        receipt.blocked_non_container_db = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.result = container_type == 1u ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+}
+
+int16_t dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+    const uint16_t inventory[30],
+    uint8_t requested_kind,
+    DM2_V1_SkprojectPossessionSlotReceipt *out_receipt)
+{
+    enum {
+        k_pouch_2 = 6,
+        k_scabbard_2 = 7,
+        k_scabbard_4 = 9,
+        k_pouch_1 = 11,
+        k_scabbard_1 = 12
+    };
+    DM2_V1_SkprojectPossessionSlotReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requested_kind = requested_kind;
+    receipt.selected_slot = -1;
+    if (!inventory) {
+        receipt.blocked_missing_inventory = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    if (requested_kind == 1u) {
+        receipt.checked_scabbard1 = 1u;
+        if (inventory[k_scabbard_1] != DM2_V1_SKPROJECT_OBJECT_NULL) {
+            receipt.selected_slot = k_scabbard_1;
+            receipt.selected_object = inventory[k_scabbard_1];
+        } else {
+            for (int16_t slot = k_scabbard_2; slot <= k_scabbard_4; ++slot) {
+                receipt.checked_scabbard_tail = 1u;
+                if (inventory[slot] != DM2_V1_SKPROJECT_OBJECT_NULL) {
+                    receipt.selected_slot = slot;
+                    receipt.selected_object = inventory[slot];
+                    break;
+                }
+            }
+        }
+    } else if (requested_kind == 0u) {
+        receipt.checked_pouch1 = 1u;
+        if (inventory[k_pouch_1] != DM2_V1_SKPROJECT_OBJECT_NULL) {
+            receipt.selected_slot = k_pouch_1;
+            receipt.selected_object = inventory[k_pouch_1];
+        } else {
+            receipt.checked_pouch2 = 1u;
+            if (inventory[k_pouch_2] != DM2_V1_SKPROJECT_OBJECT_NULL) {
+                receipt.selected_slot = k_pouch_2;
+                receipt.selected_object = inventory[k_pouch_2];
+            }
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.selected_slot;
+}
+
 void dm2_v1_skproject_cache_state_init(
     DM2_V1_SkprojectCacheState *state,
     uint16_t cache_capacity,
@@ -5464,7 +5569,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_CALC_VECTOR_DIR/DM2_CALC_VECTOR_W_DIR/"
            "DM2_COMPUTE_POWER_4_WITHIN/DM2_FILL_I16TABLE/"
            "DM2_ATIMESB_RSHIFTC and "
-           "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR; "
+           "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR/IS_NEGATIVE/"
+           "IS_CONTAINER_MAP/FIND_POUCH_OR_SCABBARD_POSSESSION_POS; "
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"
            "QUERY_MEMENT_BUFF_FROM_CACHE_INDEX/GET_TEMP_CACHE_HASH/"

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 scalar/container possession receipt bundle: mapped
+  `IS_NEGATIVE`, `IS_CONTAINER_MAP`, `DM2_IS_CONTAINER_MAP`,
+  `FIND_POUCH_OR_SCABBARD_POSSESSION_POS`, and
+  `DM2_FIND_POUCH_OR_SCABBARD_POSSESSION_POS` to skproject-backed bounded
+  helpers. The regressions cover signed negative results, ObjectID DB9
+  ContainerType==1 map containers, scabbard slot priority 12 then 7..9, and
+  pouch slot priority 11 then 6.
+
 - 2026-07-16 DM1 V2.2 complete artpack builder: added
   `scripts/build_dm1_v22_complete_artpack.py`, installed the missing
   `field_teleporter_hero_01.png` into the local DM1 modern pack, upgraded the

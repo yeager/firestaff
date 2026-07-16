@@ -1065,6 +1065,34 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int16_t value;
+    uint8_t result;
+} DM2_V1_SkprojectIsNegativeReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t record_link;
+    uint8_t db_type;
+    uint8_t container_type;
+    uint8_t result;
+    int blocked_object_null;
+    int blocked_non_container_db;
+} DM2_V1_SkprojectContainerMapReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_inventory;
+    uint8_t requested_kind;
+    int16_t selected_slot;
+    uint16_t selected_object;
+    uint8_t checked_pouch1;
+    uint8_t checked_pouch2;
+    uint8_t checked_scabbard1;
+    uint8_t checked_scabbard_tail;
+} DM2_V1_SkprojectPossessionSlotReceipt;
+
+typedef struct {
+    int valid;
     int blocked_missing_attribute;
     uint8_t attribute_index;
     uint8_t previous_current;
@@ -2036,6 +2064,17 @@ int dm2_v1_skproject_move_12b4_0d75(
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);
+int dm2_v1_skproject_is_negative(
+    int16_t value,
+    DM2_V1_SkprojectIsNegativeReceipt *out_receipt);
+int dm2_v1_skproject_is_container_map(
+    uint16_t record_link,
+    uint8_t container_type,
+    DM2_V1_SkprojectContainerMapReceipt *out_receipt);
+int16_t dm2_v1_skproject_find_pouch_or_scabbard_possession_pos(
+    const uint16_t inventory[30],
+    uint8_t requested_kind,
+    DM2_V1_SkprojectPossessionSlotReceipt *out_receipt);
 
 void dm2_v1_skproject_cache_state_init(
     DM2_V1_SkprojectCacheState *state,
