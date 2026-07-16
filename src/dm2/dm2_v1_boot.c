@@ -40,6 +40,10 @@
 
 static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
                                                         uint32_t value);
+static int dm2_v1_boot_viewport_asset_address(int gdat_index,
+                                              int *out_category,
+                                              int *out_index,
+                                              int *out_field);
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -5427,6 +5431,54 @@ int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
         DM2_GDAT_INTERFACE_PALETTE_FIELD, out_palette);
 }
 
+static int dm2_v1_boot_parse_interface_action_table(
+    const uint8_t *raw,
+    size_t raw_size,
+    DM2_V1_InterfaceActionTable *out_table)
+{
+    size_t cursor = 0u;
+    uint32_t hash = 0x49374154u; /* I7AT */
+    uint32_t group_count = 0u;
+    uint32_t entry_count = 0u;
+
+    if (!out_table) return 0;
+    memset(out_table, 0, sizeof(*out_table));
+    if (!raw || raw_size == 0u || raw_size > UINT32_MAX) return 0;
+
+    while (cursor < raw_size &&
+           group_count < DM2_V1_INTERFACE_ACTION_GROUP_MAX) {
+        uint8_t length = raw[cursor++];
+        uint32_t i;
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, length);
+        if (length == 0u) break;
+        if (cursor + ((size_t)length * 2u) > raw_size) {
+            memset(out_table, 0, sizeof(*out_table));
+            return 0;
+        }
+        out_table->groups[group_count].length = length;
+        out_table->groups[group_count].primary_offset = (uint32_t)cursor;
+        out_table->groups[group_count].secondary_offset =
+            (uint32_t)(cursor + (size_t)length);
+        for (i = 0u; i < (uint32_t)length * 2u; ++i) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(
+                hash, raw[cursor + i]);
+        }
+        cursor += (size_t)length * 2u;
+        entry_count += length;
+        ++group_count;
+    }
+
+    out_table->valid = group_count > 0u && entry_count > 0u;
+    out_table->raw = raw;
+    out_table->raw_size = (uint32_t)raw_size;
+    out_table->hash = hash;
+    out_table->group_count = group_count;
+    out_table->entry_count = entry_count;
+    out_table->tail_offset = (uint32_t)cursor;
+    out_table->tail_size = (uint32_t)(raw_size - cursor);
+    return out_table->valid;
+}
+
 int dm2_v1_boot_interface_action_table(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceActionTable *out_table)
@@ -9694,6 +9746,32 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     if (out_h) *out_h = *cache_h;
     if (out_stride) *out_stride = *cache_w;
     (void)fmt;
+    return 0;
+}
+
+int dm2_v1_boot_viewport_asset_palette_fetch(void *user,
+                                             int gdat_index,
+                                             uint8_t out_palette16[16],
+                                             uint32_t *out_hash)
+{
+    DM2_V1_BootProfile *profile = (DM2_V1_BootProfile *)user;
+    DM2_V1_BootGraphicsDat *gfx;
+    int category;
+    int index;
+    int field;
+
+    if (out_palette16) memset(out_palette16, 0, 16u);
+    if (out_hash) *out_hash = 0u;
+    if (!profile || !profile->graphics_dat || !out_palette16 ||
+        !dm2_v1_boot_viewport_asset_address(
+            gdat_index, &category, &index, &field)) {
+        return -1;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!dm2_v1_asset_load_image_local_palette(
+            &gfx->loader, category, index, field, out_palette16, out_hash)) {
+        return -1;
+    }
     return 0;
 }
 

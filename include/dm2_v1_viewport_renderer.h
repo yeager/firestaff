@@ -138,6 +138,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT  0x200u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER       0x400u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_TELEPORTER    0x800u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_SCENE_CONTROL 0x1000u
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT 4
@@ -181,7 +182,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE (-0xE00000)
 #define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_GRAPHICSSET_BASE (-0xF00000)
 #define DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET 0x01
-#define DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE (-0xF00000)
+#define DM2_V1_GDAT_SCENE_FLAG_OUTDOOR 0x20u
 #define DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP (-0x1100000)
 #define DM2_V1_VIEWPORT_GFX_FLOOR_GFX_MAP_CHIP_BASE (-0x1200000)
 #define DM2_V1_VIEWPORT_GFX_WALL_GFX_MAP_CHIP_BASE (-0x1300000)
@@ -322,21 +323,6 @@ typedef struct {
 } DM2_V1_BootViewportSurfaceView;
 
 typedef struct {
-    int committed;
-    int incomplete_world;
-    int object_count;
-    int blocked_record_reads;
-} DM2_V1_G1FirstMapRuntimeReceipt;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int source_map;
-    int generic_record_reads;
-    int blocked_record_reads;
-} DM2_V1_G1TeleporterTransitionReceipt;
-
-typedef struct {
     int valid;
     int viewport_owned;
     uint32_t map_load_token;
@@ -344,61 +330,6 @@ typedef struct {
     uint8_t floor_ornate_source_index;
     int animated_frame_route;
 } DM2_V1_FloorGfxViewportOwnershipReceipt;
-
-typedef struct {
-    int x;
-    int y;
-    uint32_t object_id;
-    uint8_t wall_gfx_index;
-    int front_image_ready;
-    uint32_t front_image_width;
-    uint32_t front_image_height;
-    uint32_t local_palette_hash;
-} DM2_V1_G1WallGfxMaterial;
-
-typedef DM2_V1_G1WallGfxMaterial DM2_V1_G1TextWallGfxMaterial;
-typedef DM2_V1_G1WallGfxMaterial DM2_V1_G1ActuatorWallGfxMaterial;
-
-#define DM2_V1_G1_WALL_GFX_MATERIAL_MAX 16
-
-typedef struct {
-    int valid;
-    int map;
-    int material_count;
-    DM2_V1_G1TextWallGfxMaterial
-        materials[DM2_V1_G1_WALL_GFX_MATERIAL_MAX];
-} DM2_V1_G1TextWallGfxRuntimeReceipt;
-
-typedef struct {
-    int valid;
-    int map;
-    int material_count;
-    DM2_V1_G1ActuatorWallGfxMaterial
-        materials[DM2_V1_G1_WALL_GFX_MATERIAL_MAX];
-} DM2_V1_G1ActuatorWallGfxRuntimeReceipt;
-
-typedef struct {
-    uint8_t creature_type;
-    int decoded_width;
-    int decoded_height;
-    uint32_t local_palette_hash;
-} DM2_V1_G1CreatureMapChipMaterial;
-
-#define DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX 32
-
-typedef struct {
-    int valid;
-    int material_count;
-    DM2_V1_G1CreatureMapChipMaterial
-        materials[DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX];
-} DM2_V1_G1CreatureMapChipRuntimeReceipt;
-
-typedef struct {
-    int valid;
-    DM2_V1_ViewportRect portrait[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
-    DM2_V1_ViewportRect name[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
-    DM2_V1_ViewportRect status[DM2_V1_HUD_CHAMPION_SLOT_COUNT][3];
-} DM2_V1_InterfaceHudLayout;
 
 #define DM2_V1_WALL_PANEL_RENDER_MAX DM2_SQ_COUNT
 
@@ -837,7 +768,65 @@ typedef struct {
     int source_materials_required;
     uint32_t map_load_token;
     uint32_t scene_control_hash;
+    uint32_t scene_light_hash;
+    uint16_t scene_ambient_light;
+    uint32_t c_light_receipt_hash;
+    uint32_t c_light_source_state_hash;
+    uint8_t c_light_level;
+    int weather_graphicsset_bound;
+    uint8_t weather_graphicsset;
+    uint32_t weather_source_receipt_hash;
+    uint32_t weather_destination_receipt_hash;
+    uint32_t presentation_state_hash;
+    uint32_t floor_material_hash;
+    uint32_t ceiling_material_hash;
+    uint32_t wall_material_plan_hash;
+    int wall_material_plan_command_count;
+    int door_material_plan_required;
+    uint32_t door_material_plan_hash;
+    int door_material_plan_command_count;
+    int door_material_plan_consumed;
+    int hud_material_plan_required;
+    uint32_t hud_material_plan_hash;
+    uint32_t hud_scene_control_hash;
+    int hud_material_plan_command_count;
+    int hud_material_plan_consumed;
+    int creature_material_plan_required;
+    uint32_t creature_material_plan_hash;
+    int creature_material_plan_command_count;
+    int creature_material_plan_consumed;
+    int projectile_material_plan_required;
+    uint32_t projectile_material_plan_hash;
+    int projectile_material_plan_command_count;
+    int projectile_material_plan_consumed;
+    int item_material_plan_required;
+    uint32_t item_material_plan_hash;
+    uint32_t item_scene_control_hash;
+    int item_material_plan_command_count;
+    int item_material_plan_consumed;
+    int teleporter_material_plan_required;
+    uint32_t teleporter_material_plan_hash;
+    int teleporter_material_plan_consumed;
+    int floor_gfx_map_chip_material_plan_required;
+    uint32_t floor_gfx_map_chip_material_plan_hash;
+    int floor_gfx_map_chip_material_plan_consumed;
+    int wall_gfx_map_chip_material_plan_required;
+    uint32_t wall_gfx_map_chip_material_plan_hash;
+    int wall_gfx_map_chip_material_plan_consumed;
+    int door_map_chip_material_plan_required;
+    uint32_t door_map_chip_material_plan_hash;
+    int door_map_chip_material_plan_consumed;
+    int weather_material_plan_required;
+    uint32_t weather_material_plan_hash;
+    int weather_material_plan_command_count;
+    int weather_material_plan_consumed;
     uint32_t palette_hash;
+    uint32_t interface_action_palette_hash;
+    int interface_action_palette_consumed;
+    uint8_t floor_ceiling_material_required_mask;
+    uint8_t floor_ceiling_material_consumed_mask;
+    int floor_ceiling_materials_complete;
+    int gdat_wall_material_plan_consumed;
     DM2_V1_ViewportFrameCompositionReceipt composition;
 } DM2_V1_ViewportM11FrameReceipt;
 
@@ -935,22 +924,6 @@ typedef struct {
     int screen_x;
     int screen_y;
 } DM2_V1_ViewportSpritePlacement;
-
-typedef struct {
-    uint8_t field;
-    const uint8_t *pixels;
-    const uint8_t *palette16;
-    uint32_t palette_hash;
-    uint32_t width;
-    uint32_t height;
-} DM2_V1_GdatSceneM11Command;
-
-typedef struct {
-    int valid;
-    uint8_t graphicsset;
-    uint32_t command_hash;
-    DM2_V1_GdatSceneM11Command commands[2];
-} DM2_V1_GdatSceneM11CommandPlan;
 
 typedef struct {
     int valid;
@@ -1442,6 +1415,9 @@ typedef struct {
     uint16_t gdat_misty_map;
     uint16_t gdat_thunder_position;
     uint16_t gdat_ambient_darkness;
+    uint8_t gdat_scene_light_floor;
+    uint8_t gdat_scene_light_search_depth;
+    int gdat_scene_light_recompute_enabled;
     /* SKProject DRAW_DUNGEON_GRAPHIC offsets only the 700/701 planes while
      * glbIsPlayerMoving is live. This is a boolean rather than a host-provided
      * displacement: the two source offsets are fixed. */
@@ -1533,6 +1509,12 @@ typedef struct {
         last_dungeon_floor_presentation_command;
     DM2_V1_ViewportDungeonMaterialCommand
         last_dungeon_wall_presentation_command;
+    uint16_t last_floor_ceiling_material_required_mask;
+    uint16_t last_floor_ceiling_material_consumed_mask;
+    uint16_t last_door_material_required_mask;
+    uint16_t last_door_material_consumed_mask;
+    uint16_t last_outdoor_scene_material_required_mask;
+    uint16_t last_outdoor_scene_material_consumed_mask;
     uint16_t last_dungeon_wall_material_required_mask;
     uint16_t last_dungeon_wall_material_consumed_mask;
     DM2_V1_ViewportSceneControlCommand last_scene_control_presentation_command;
@@ -1756,10 +1738,6 @@ void dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
     DM2_V1_ViewportState *s,
     const DM2_V1_DialogueOpenPanelHostCommand *command,
     int active);
-void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
-    DM2_V1_ViewportState *s,
-    uint32_t source_map_load_token,
-    uint32_t source_scene_control_hash);
 /* ReDMCSB/skproject SKWIN/SkWinCore.cpp RECALC_LIGHT_LEVEL 5093: AMBIANT_LIGHT
  * belongs to the active GRAPHICSSET control before its bounded level floor.
  * This binds source ownership only; it does not calculate or draw light. */

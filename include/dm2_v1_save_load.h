@@ -230,6 +230,10 @@ typedef struct {
         entries[DM2_SK_CORPUS_RECEIPT_MAX];
 } DM2_OriginalSaveStateCorpusReceipt;
 
+bool dm2_v1_original_save_state_corpus_probe(
+    const char *save_base,
+    DM2_OriginalSaveStateCorpusReceipt *out_receipt);
+
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 

@@ -64,6 +64,7 @@ typedef struct {
     uint32_t weather_seed;
     uint32_t state_hash;
 } DM2_V1_WeatherRestoredStateReceipt;
+#define DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED 1
 
 /* skproject/SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER boundary.  It is a
  * scheduling receipt only: indoor frames and non-182 tick positions must not
@@ -111,16 +112,6 @@ typedef struct {
     int ticks_remaining;
     int light_radius;   /* shrinks when torch low */
 } DM2_V1_TorchState;
-
-typedef struct {
-    int valid;
-    uint8_t weather;
-    uint8_t intensity;
-    uint16_t time_of_day;
-    uint32_t weather_seed;
-    uint32_t state_hash;
-} DM2_V1_WeatherRestoredStateReceipt;
-#define DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED 1
 
 typedef struct {
     int valid;
