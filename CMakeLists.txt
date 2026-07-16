@@ -20955,6 +20955,8 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
     add_executable(test_dm1_v1_action_f0407_tail_pc34_compat
         tests/test_dm1_v1_action_f0407_tail_pc34_compat.c
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+        src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
         src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
         src/dm1/dm1_v1_champion_needs_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
