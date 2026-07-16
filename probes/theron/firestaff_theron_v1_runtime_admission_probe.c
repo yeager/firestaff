@@ -225,6 +225,9 @@ int main(void)
     Theron_V1RuntimeStartupLevelAnchorReceipt startup_anchor;
     Theron_V1RuntimeNonstartupLevelRouteEvidenceReceipt nonstartup_evidence;
     Theron_V1RuntimeObjectTableRouteEvidenceReceipt object_evidence;
+    Theron_V1RuntimeTrack02CaptureConsumerGapReceipt consumer_gap;
+    Theron_V1Track02Post3800ConsumerSemanticReceipt post3800_consumer;
+    Theron_V1RuntimeTrack02ConsumerSemanticReceipt consumer_semantics;
     Theron_V1TraceSourceProvenanceReceipt provenance;
     Theron_V1RawLoaderTraceGamePayloadReceipt payload;
     Theron_V1RawLoaderTraceGamePayloadReceipt mutated;
@@ -477,6 +480,164 @@ int main(void)
         object_evidence.fallback_visuals_allowed) {
         return 1;
     }
+    theron_v1_runtime_track02_capture_consumer_gap_init(&consumer_gap);
+    if (consumer_gap.valid ||
+        consumer_gap.capture_consumer_route_ready ||
+        consumer_gap.fallback_visuals_allowed) {
+        return 1;
+    }
+    if (!theron_v1_runtime_bind_track02_capture_consumer_gap(
+            &startup_anchor, &nonstartup_evidence, &object_evidence,
+            &consumer_gap)) {
+        return 1;
+    }
+    if (!consumer_gap.valid ||
+        !consumer_gap.startup_level_anchor_consumed ||
+        !consumer_gap.nonstartup_level_evidence_consumed ||
+        !consumer_gap.object_table_evidence_consumed ||
+        !consumer_gap.runtime_capture_required ||
+        consumer_gap.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(consumer_gap.track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        consumer_gap.record != payload.raw_track02_record ||
+        consumer_gap.source_offset != payload.source_offset ||
+        consumer_gap.source_byte != payload.source_byte ||
+        consumer_gap.level_route_hash != route.level_route_hash ||
+        consumer_gap.object_table_route_hash != route.object_table_route_hash ||
+        consumer_gap.all_dungeon_route_hash != route.route_hash ||
+        consumer_gap.nonstartup_level_candidate_anchor_mask != 0x07u ||
+        consumer_gap.nonstartup_level_candidate_count != 3 ||
+        consumer_gap.first_nonstartup_level_candidate_hash != 0x5a77c001u ||
+        consumer_gap.object_table_candidate_anchor_mask != 0x07u ||
+        consumer_gap.object_table_candidate_count != 3 ||
+        consumer_gap.first_object_table_candidate_hash != 0x5a77c001u ||
+        consumer_gap.capture_consumer_route_ready ||
+        consumer_gap.object_table_decode_ready ||
+        consumer_gap.nonstartup_level_decode_ready ||
+        consumer_gap.object_table_admission_allowed ||
+        consumer_gap.nonstartup_level_admission_allowed ||
+        consumer_gap.exact_level_semantics_ready ||
+        consumer_gap.exact_object_semantics_ready ||
+        consumer_gap.payload_semantics_proven ||
+        consumer_gap.visual_semantics_proven ||
+        consumer_gap.fallback_visuals_allowed) {
+        return 1;
+    }
+    object_evidence.object_table_route_hash ^= 0x04u;
+    if (theron_v1_runtime_bind_track02_capture_consumer_gap(
+            &startup_anchor, &nonstartup_evidence, &object_evidence,
+            &consumer_gap) || consumer_gap.valid) {
+        return 1;
+    }
+    object_evidence.object_table_route_hash ^= 0x04u;
+    nonstartup_evidence.nonstartup_level_admission_allowed = 1;
+    if (theron_v1_runtime_bind_track02_capture_consumer_gap(
+            &startup_anchor, &nonstartup_evidence, &object_evidence,
+            &consumer_gap) || consumer_gap.valid) {
+        return 1;
+    }
+    nonstartup_evidence.nonstartup_level_admission_allowed = 0;
+    object_evidence.object_table_admission_allowed = 1;
+    if (theron_v1_runtime_bind_track02_capture_consumer_gap(
+            &startup_anchor, &nonstartup_evidence, &object_evidence,
+            &consumer_gap) || consumer_gap.valid) {
+        return 1;
+    }
+    object_evidence.object_table_admission_allowed = 0;
+    startup_anchor.exact_level_semantics_ready = 1;
+    if (theron_v1_runtime_bind_track02_capture_consumer_gap(
+            &startup_anchor, &nonstartup_evidence, &object_evidence,
+            &consumer_gap) || consumer_gap.valid) {
+        return 1;
+    }
+    startup_anchor.exact_level_semantics_ready = 0;
+    if (!theron_v1_runtime_bind_track02_capture_consumer_gap(
+            &startup_anchor, &nonstartup_evidence, &object_evidence,
+            &consumer_gap)) {
+        return 1;
+    }
+    theron_v1_runtime_track02_consumer_semantic_init(&consumer_semantics);
+    if (consumer_semantics.valid ||
+        consumer_semantics.capture_consumer_route_ready ||
+        consumer_semantics.fallback_visuals_allowed) {
+        return 1;
+    }
+    memset(&post3800_consumer, 0, sizeof(post3800_consumer));
+    post3800_consumer.valid = 1;
+    post3800_consumer.no_fallback = 1;
+    post3800_consumer.original_consumer_trace_bound = 1;
+    post3800_consumer.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    post3800_consumer.record = payload.raw_track02_record;
+    post3800_consumer.payload_checksum = 0x6010cafeu;
+    post3800_consumer.level_envelope_checksum = 0x5e1e0001u;
+    post3800_consumer.post_envelope_checksum = 0x0b1ec7e0u;
+    post3800_consumer.consumer_trace_checksum = 0x3800e009u;
+    post3800_consumer.dungeon_record_semantics_proven = 1;
+    post3800_consumer.object_table_semantics_proven = 1;
+    post3800_consumer.bitmap_route_bound = 1;
+    post3800_consumer.palette_binding_verified = 1;
+    post3800_consumer.rgba_output_allowed = 1;
+    if (!theron_v1_runtime_bind_track02_consumer_semantics(
+            &consumer_gap, &post3800_consumer, &consumer_semantics)) {
+        return 1;
+    }
+    if (!consumer_semantics.valid ||
+        !consumer_semantics.capture_consumer_gap_consumed ||
+        !consumer_semantics.original_consumer_trace_bound ||
+        !consumer_semantics.runtime_capture_required ||
+        consumer_semantics.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(consumer_semantics.track02_md5,
+               THERON_TRACK02_MD5_US_BIN) != 0 ||
+        consumer_semantics.record != payload.raw_track02_record ||
+        consumer_semantics.source_offset != payload.source_offset ||
+        consumer_semantics.source_byte != payload.source_byte ||
+        consumer_semantics.level_route_hash != route.level_route_hash ||
+        consumer_semantics.object_table_route_hash !=
+            route.object_table_route_hash ||
+        consumer_semantics.all_dungeon_route_hash != route.route_hash ||
+        consumer_semantics.payload_checksum !=
+            post3800_consumer.payload_checksum ||
+        consumer_semantics.level_envelope_checksum !=
+            post3800_consumer.level_envelope_checksum ||
+        consumer_semantics.post_envelope_checksum !=
+            post3800_consumer.post_envelope_checksum ||
+        consumer_semantics.consumer_trace_checksum !=
+            post3800_consumer.consumer_trace_checksum ||
+        !consumer_semantics.capture_consumer_route_ready ||
+        !consumer_semantics.exact_level_semantics_ready ||
+        !consumer_semantics.exact_object_semantics_ready ||
+        !consumer_semantics.payload_semantics_proven ||
+        !consumer_semantics.visual_semantics_proven ||
+        consumer_semantics.fallback_visuals_allowed) {
+        return 1;
+    }
+    post3800_consumer.record ^= 1u;
+    if (theron_v1_runtime_bind_track02_consumer_semantics(
+            &consumer_gap, &post3800_consumer, &consumer_semantics) ||
+        consumer_semantics.valid) {
+        return 1;
+    }
+    post3800_consumer.record ^= 1u;
+    post3800_consumer.fallback_visuals_allowed = 1;
+    if (theron_v1_runtime_bind_track02_consumer_semantics(
+            &consumer_gap, &post3800_consumer, &consumer_semantics) ||
+        consumer_semantics.valid) {
+        return 1;
+    }
+    post3800_consumer.fallback_visuals_allowed = 0;
+    consumer_gap.capture_consumer_route_ready = 1;
+    if (theron_v1_runtime_bind_track02_consumer_semantics(
+            &consumer_gap, &post3800_consumer, &consumer_semantics) ||
+        consumer_semantics.valid) {
+        return 1;
+    }
+    consumer_gap.capture_consumer_route_ready = 0;
+    post3800_consumer.track02_variant = THERON_TRACK02_VARIANT_JP_BIN;
+    if (theron_v1_runtime_bind_track02_consumer_semantics(
+            &consumer_gap, &post3800_consumer, &consumer_semantics) ||
+        consumer_semantics.valid) {
+        return 1;
+    }
+    post3800_consumer.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     mutated_object_route = object_route;
     mutated_object_route.route_hash ^= 0x80u;
     if (theron_v1_runtime_startup_level_anchor_bind_object_table_route_evidence(

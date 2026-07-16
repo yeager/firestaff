@@ -195,6 +195,63 @@ typedef struct {
     int fallback_visuals_allowed;
 } Theron_V1RuntimeObjectTableRouteEvidenceReceipt;
 
+typedef struct {
+    int valid;
+    int startup_level_anchor_consumed;
+    int nonstartup_level_evidence_consumed;
+    int object_table_evidence_consumed;
+    int runtime_capture_required;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    unsigned int source_offset;
+    uint8_t source_byte;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t all_dungeon_route_hash;
+    unsigned int nonstartup_level_candidate_anchor_mask;
+    int nonstartup_level_candidate_count;
+    uint32_t first_nonstartup_level_candidate_hash;
+    unsigned int object_table_candidate_anchor_mask;
+    int object_table_candidate_count;
+    uint32_t first_object_table_candidate_hash;
+    int capture_consumer_route_ready;
+    int object_table_decode_ready;
+    int nonstartup_level_decode_ready;
+    int object_table_admission_allowed;
+    int nonstartup_level_admission_allowed;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
+    int payload_semantics_proven;
+    int visual_semantics_proven;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02CaptureConsumerGapReceipt;
+
+typedef struct {
+    int valid;
+    int capture_consumer_gap_consumed;
+    int original_consumer_trace_bound;
+    int runtime_capture_required;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    unsigned int source_offset;
+    uint8_t source_byte;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t all_dungeon_route_hash;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    int capture_consumer_route_ready;
+    int exact_level_semantics_ready;
+    int exact_object_semantics_ready;
+    int payload_semantics_proven;
+    int visual_semantics_proven;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02ConsumerSemanticReceipt;
+
 void theron_v1_runtime_admission_init(
     Theron_V1RuntimeAdmissionReceipt *out);
 
@@ -212,6 +269,12 @@ void theron_v1_runtime_nonstartup_level_route_evidence_init(
 
 void theron_v1_runtime_object_table_route_evidence_init(
     Theron_V1RuntimeObjectTableRouteEvidenceReceipt *out);
+
+void theron_v1_runtime_track02_capture_consumer_gap_init(
+    Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *out);
+
+void theron_v1_runtime_track02_consumer_semantic_init(
+    Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out);
 
 int theron_v1_runtime_admission_attach(
     Theron_V1RuntimeAdmissionReceipt *out,
@@ -253,5 +316,16 @@ int theron_v1_runtime_startup_level_anchor_bind_object_table_route_evidence(
     const Theron_V1RuntimeStartupLevelAnchorReceipt *startup_anchor,
     const Theron_Track02ObjectTableRouteReceipt *object_route,
     Theron_V1RuntimeObjectTableRouteEvidenceReceipt *out);
+
+int theron_v1_runtime_bind_track02_capture_consumer_gap(
+    const Theron_V1RuntimeStartupLevelAnchorReceipt *startup_anchor,
+    const Theron_V1RuntimeNonstartupLevelRouteEvidenceReceipt *level_evidence,
+    const Theron_V1RuntimeObjectTableRouteEvidenceReceipt *object_evidence,
+    Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *out);
+
+int theron_v1_runtime_bind_track02_consumer_semantics(
+    const Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *gap,
+    const Theron_V1Track02Post3800ConsumerSemanticReceipt *consumer,
+    Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out);
 
 #endif

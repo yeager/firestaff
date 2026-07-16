@@ -125,6 +125,24 @@
     receipts to real loader-owned GDAT/dungeon records and HUD/runtime
     consumers; do not fabricate item definitions, container contents, or
     player inventory state.
+  - 2026-07-16 DM2 movement-vector update: skproject
+    `DM2_CALC_VECTOR_W_DIR` / `CALC_VECTOR_W_DIR` now has a bounded
+    source-mapped helper in `dm2_v1_skproject_core`. The receipt preserves
+    the additive caller-owned accumulator behavior, signed forward/side
+    operands, source X/Y delta tables, and direction wrap. Remaining adjacent
+    movement work is wiring this into real `c_move`/map collision/runtime
+    consumption with loaded dungeon state; do not treat this as movement
+    timing, collision, input dispatch, or map mutation.
+  - 2026-07-16 DM2 coin-count update: skproject
+    `DM2_COUNT_BY_COIN_TYPES` / `COUNT_BY_COIN_TYPES` now has a bounded
+    source-mapped helper in `dm2_v1_skproject_core`. The receipt preserves the
+    ten-counter zeroing, moneybox contained-record chain walk, miscellaneous
+    currency filter, distinctive item-type table match, and charge+1
+    accumulation over caller-supplied source-shaped records. Remaining
+    adjacent item/container work is wiring this to real loader-owned GDAT
+    DBSPEC currency flags, distinctive item types, and moneybox/container
+    chains; do not fabricate item definitions, GDAT flags, or container
+    contents.
   - 2026-07-16 Theron update: the admitted US raw Track 02 FIFO/session
     handoff can now consume the bounded all-dungeon route into a startup-level
     anchor receipt. The receipt carries only the real Hall of Records anchor
@@ -143,6 +161,25 @@
     remain closed. Remaining Theron work is still real object-table decode and
     runtime object consumers from captured Track 02 data; do not treat this as
     object semantics, runtime objects, or visuals.
+  - 2026-07-16 Theron capture-consumer route-gap update: the runtime
+    admission surface now has a combined Track 02 capture-consumer gap receipt
+    that consumes the startup anchor, non-startup level evidence, and
+    object-table evidence only when all three agree on the admitted US raw
+    Track 02 session and route hashes. It records candidate masks/counts and
+    first opaque candidate hashes while keeping capture-consumer readiness,
+    object-table decode/admission, non-startup level decode/admission, exact
+    level/object semantics, payload/visual semantics, and fallback visuals
+    closed. Remaining Theron work is still a positive original runtime
+    capture/consumer that proves these bytes before any route promotion.
+  - 2026-07-16 Theron consumer-semantic bridge update: the runtime admission
+    surface now has a fail-closed bridge from the combined capture-consumer
+    gap receipt to an already proven original post-$3800 consumer semantic
+    receipt. The bridge refuses pre-opened gap receipts, non-US Track 02
+    variants, mismatched records, missing consumer trace checksums, missing
+    dungeon/object/bitmap/palette consumer proof, and any fallback visuals.
+    Remaining Theron work is still the real original capture that produces the
+    post-$3800 consumer semantic receipt for the admitted runtime session; no
+    synthetic consumer route or fallback visual path is admitted.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -209,7 +246,16 @@
     `dm1_v1_creature_ai_behavior_source_lock` CTest; no synthetic event data
     was added. The broader M10 initial-attack consumption follow-up remains
     open below.
-  Remaining prioritized backlog symbol is `F0224`.
+  - 2026-07-16 update: stale audit row `F0224` is now closed against the
+    DM1-owned endgame fluxcage action plan.
+    `DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat` preserves
+    ReDMCSB's wall/stairs no-op, unused C15 explosion Thing gate, C050
+    fluxcage creation, C24 remove-event fields, adjacent Lord Chaos scan
+    order, and C29 danger reaction condition. Verification used the focused
+    `dm1_v1_endgame_system_source_lock` CTest; no synthetic dungeon/save/art
+    data was added. Broader real-map Lord Chaos escape capture, M11
+    action-stamina cleanup, and pixel evidence remain separate.
+  Prioritized backlog `F0185`-`F0208` and `F0224` rows are now disposed.
   Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
@@ -822,11 +868,12 @@
 
 - 2026-07-15 DM1 F0223 follow-up: raw target-square allow classification is
   complete and source-locked by `test_dm1_v1_endgame_system_pc34_compat`;
-  F0224 still needs real Lord Chaos escape-route capture.
+  F0224's source action plan is now closed; broader real Lord Chaos
+  escape-route capture remains separate.
 
-- 2026-07-15 DM1 F0222 follow-up: F0224/FUSE still needs broader real-map
-  route capture; the F0222 raw C04 lookup itself is now source-locked by
-  `test_dm1_v1_endgame_system_pc34_compat`.
+- 2026-07-15 DM1 F0222 follow-up: FUSE still needs broader real-map route
+  capture; the F0222 raw C04 lookup and F0224 source action plan are now
+  source-locked by `test_dm1_v1_endgame_system_pc34_compat`.
 
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
   retain bounded bytes plus FNV provenance. Runtime now admits CSBWin's full

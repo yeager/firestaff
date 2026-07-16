@@ -275,6 +275,153 @@ static void test_f0222_raw_lord_chaos_thing(void)
     ASSERT_EQ(allowed, 0, "F0223 rejects stairs");
 }
 
+static void test_f0224_fluxcage_plan_source_event_fields(void)
+{
+    DM1EndgameF0224FluxcageActionInput input;
+    DM1EndgameF0224FluxcageActionPlan plan;
+    memset(&input, 0, sizeof(input));
+    printf("  F0224 fluxcage action plan fields...\n");
+    input.mapIndex = 2;
+    input.mapX = 5;
+    input.mapY = 6;
+    input.squareType = DUNGEON_ELEMENT_CORRIDOR;
+    input.gameTime = 1234;
+    input.hasUnusedExplosionThing = 1;
+    input.explosionThing = make_test_thing(THING_TYPE_EXPLOSION, 17);
+    input.lordChaosAdjacent[DM1_ENDGAME_F0224_ADJACENT_NORTH] = 1;
+    input.fluxcagesAroundAdjacentLordChaos
+        [DM1_ENDGAME_F0224_ADJACENT_NORTH]
+        [DM1_ENDGAME_F0224_ADJACENT_WEST] = 1;
+    input.fluxcagesAroundAdjacentLordChaos
+        [DM1_ENDGAME_F0224_ADJACENT_NORTH]
+        [DM1_ENDGAME_F0224_ADJACENT_EAST] = 1;
+
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 plan builds");
+    ASSERT_EQ(plan.valid, 1, "F0224 plan valid");
+    ASSERT_EQ(plan.createdFluxcage, 1, "F0224 creates fluxcage");
+    ASSERT_EQ(plan.linkedExplosionThing, 1, "F0224 links C15 explosion Thing");
+    ASSERT_EQ(plan.explosionThing, input.explosionThing,
+              "F0224 preserves allocated explosion Thing");
+    ASSERT_EQ(plan.explosionType, DM1_EXPLOSION_FLUXCAGE_TYPE,
+              "F0224 writes C050 fluxcage type");
+    ASSERT_EQ(plan.removeEventType, DM1_EVENT_REMOVE_FLUXCAGE,
+              "F0224 schedules C24 remove-fluxcage event");
+    ASSERT_EQ(plan.removeEventPriority, 0, "F0224 C24 priority is zero");
+    ASSERT_EQ((int)plan.removeEventGameTime, 1334,
+              "F0224 C24 time is GameTime + 100");
+    ASSERT_EQ(plan.removeEventMapIndex, 2, "F0224 C24 map is current map");
+    ASSERT_EQ(plan.removeEventMapX, 5, "F0224 C24 stores target x");
+    ASSERT_EQ(plan.removeEventMapY, 6, "F0224 C24 stores target y");
+    ASSERT_EQ(plan.removeEventSlotThing, input.explosionThing,
+              "F0224 C24 C.Slot stores the raw C15 Thing");
+    ASSERT_EQ(plan.checkedLordChaosAdjacentIndex,
+              DM1_ENDGAME_F0224_ADJACENT_NORTH,
+              "F0224 checks north Lord Chaos first");
+    ASSERT_EQ(plan.lordChaosMapX, 5, "F0224 north Lord Chaos x");
+    ASSERT_EQ(plan.lordChaosMapY, 5, "F0224 north Lord Chaos y");
+    ASSERT_EQ(plan.otherFluxcageCount, 2,
+              "F0224 counts two other fluxcage squares");
+    ASSERT_EQ(plan.scheduledDangerReaction, 1,
+              "F0224 schedules danger reaction at count two");
+    ASSERT_EQ(plan.reactionEventType, DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+              "F0224 danger reaction is C29");
+}
+
+static void test_f0224_fluxcage_plan_noop_gates(void)
+{
+    DM1EndgameF0224FluxcageActionInput input;
+    DM1EndgameF0224FluxcageActionPlan plan;
+    memset(&input, 0, sizeof(input));
+    printf("  F0224 fluxcage action no-op gates...\n");
+    input.mapX = 1;
+    input.mapY = 2;
+    input.squareType = DUNGEON_ELEMENT_WALL;
+    input.hasUnusedExplosionThing = 1;
+    input.explosionThing = make_test_thing(THING_TYPE_EXPLOSION, 3);
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 wall plan builds");
+    ASSERT_EQ(plan.blockedWallOrStairs, 1, "F0224 wall target returns early");
+    ASSERT_EQ(plan.createdFluxcage, 0, "F0224 wall target creates no cage");
+    ASSERT_EQ(plan.removeEventType, 0, "F0224 wall target schedules no C24");
+
+    input.squareType = DUNGEON_ELEMENT_STAIRS;
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 stairs plan builds");
+    ASSERT_EQ(plan.blockedWallOrStairs, 1, "F0224 stairs target returns early");
+    ASSERT_EQ(plan.createdFluxcage, 0, "F0224 stairs target creates no cage");
+
+    input.squareType = DUNGEON_ELEMENT_CORRIDOR;
+    input.hasUnusedExplosionThing = 0;
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 no-slot plan builds");
+    ASSERT_EQ(plan.blockedNoUnusedExplosionThing, 1,
+              "F0224 no unused C15 Thing returns early");
+    ASSERT_EQ(plan.createdFluxcage, 0, "F0224 no-slot creates no cage");
+
+    input.hasUnusedExplosionThing = 1;
+    input.explosionThing = make_test_thing(THING_TYPE_GROUP, 0);
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 wrong-thing plan builds");
+    ASSERT_EQ(plan.blockedNoUnusedExplosionThing, 1,
+              "F0224 requires an unused C15 explosion Thing");
+}
+
+static void test_f0224_fluxcage_plan_adjacent_order(void)
+{
+    DM1EndgameF0224FluxcageActionInput input;
+    DM1EndgameF0224FluxcageActionPlan plan;
+    memset(&input, 0, sizeof(input));
+    printf("  F0224 fluxcage adjacent Lord Chaos order...\n");
+    input.mapX = 10;
+    input.mapY = 10;
+    input.squareType = DUNGEON_ELEMENT_CORRIDOR;
+    input.hasUnusedExplosionThing = 1;
+    input.explosionThing = make_test_thing(THING_TYPE_EXPLOSION, 9);
+    input.lordChaosAdjacent[DM1_ENDGAME_F0224_ADJACENT_WEST] = 1;
+    input.lordChaosAdjacent[DM1_ENDGAME_F0224_ADJACENT_EAST] = 1;
+    input.fluxcagesAroundAdjacentLordChaos
+        [DM1_ENDGAME_F0224_ADJACENT_WEST]
+        [DM1_ENDGAME_F0224_ADJACENT_NORTH] = 1;
+    input.fluxcagesAroundAdjacentLordChaos
+        [DM1_ENDGAME_F0224_ADJACENT_WEST]
+        [DM1_ENDGAME_F0224_ADJACENT_SOUTH] = 1;
+    input.fluxcagesAroundAdjacentLordChaos
+        [DM1_ENDGAME_F0224_ADJACENT_EAST]
+        [DM1_ENDGAME_F0224_ADJACENT_NORTH] = 1;
+
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 adjacent-order plan builds");
+    ASSERT_EQ(plan.checkedLordChaosAdjacentIndex,
+              DM1_ENDGAME_F0224_ADJACENT_WEST,
+              "F0224 checks west before east");
+    ASSERT_EQ(plan.lordChaosMapX, 9, "F0224 west Lord Chaos x");
+    ASSERT_EQ(plan.lordChaosMapY, 10, "F0224 west Lord Chaos y");
+    ASSERT_EQ(plan.otherFluxcageCount, 2,
+              "F0224 uses first adjacent Lord Chaos fluxcage count");
+    ASSERT_EQ(plan.scheduledDangerReaction, 1,
+              "F0224 first adjacent Lord Chaos schedules C29");
+
+    memset(input.lordChaosAdjacent, 0, sizeof(input.lordChaosAdjacent));
+    memset(input.fluxcagesAroundAdjacentLordChaos, 0,
+           sizeof(input.fluxcagesAroundAdjacentLordChaos));
+    input.lordChaosAdjacent[DM1_ENDGAME_F0224_ADJACENT_EAST] = 1;
+    input.fluxcagesAroundAdjacentLordChaos
+        [DM1_ENDGAME_F0224_ADJACENT_EAST]
+        [DM1_ENDGAME_F0224_ADJACENT_NORTH] = 1;
+    ASSERT_EQ(DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+                  &input, &plan), 1, "F0224 east-only plan builds");
+    ASSERT_EQ(plan.checkedLordChaosAdjacentIndex,
+              DM1_ENDGAME_F0224_ADJACENT_EAST,
+              "F0224 reaches east after north/west miss");
+    ASSERT_EQ(plan.lordChaosMapX, 11, "F0224 east Lord Chaos x");
+    ASSERT_EQ(plan.lordChaosMapY, 10, "F0224 east Lord Chaos y");
+    ASSERT_EQ(plan.otherFluxcageCount, 1,
+              "F0224 records non-triggering fluxcage count");
+    ASSERT_EQ(plan.scheduledDangerReaction, 0,
+              "F0224 count other than two schedules no C29");
+}
+
 /* ── Test: Fuse action — Lord Chaos not present ──────────────────── */
 static void test_fuse_action_no_lord_chaos(void)
 {
@@ -472,6 +619,9 @@ int main(void)
     test_fluxcage_count();
     test_lord_chaos_identification();
     test_f0222_raw_lord_chaos_thing();
+    test_f0224_fluxcage_plan_source_event_fields();
+    test_f0224_fluxcage_plan_noop_gates();
+    test_f0224_fluxcage_plan_adjacent_order();
     test_fuse_action_no_lord_chaos();
     test_fuse_action_chaos_escapes();
     test_fuse_action_chaos_trapped();

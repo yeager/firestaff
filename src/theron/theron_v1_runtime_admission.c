@@ -45,6 +45,20 @@ void theron_v1_runtime_object_table_route_evidence_init(
     }
 }
 
+void theron_v1_runtime_track02_capture_consumer_gap_init(
+    Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
+void theron_v1_runtime_track02_consumer_semantic_init(
+    Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
 int theron_v1_runtime_admission_attach(
     Theron_V1RuntimeAdmissionReceipt *out,
     const char *trace_identity,
@@ -618,6 +632,199 @@ int theron_v1_runtime_startup_level_anchor_bind_object_table_route_evidence(
     out->exact_object_semantics_ready = 0;
     out->payload_semantics_proven = 0;
     out->visual_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_capture_consumer_gap(
+    const Theron_V1RuntimeStartupLevelAnchorReceipt *startup_anchor,
+    const Theron_V1RuntimeNonstartupLevelRouteEvidenceReceipt *level_evidence,
+    const Theron_V1RuntimeObjectTableRouteEvidenceReceipt *object_evidence,
+    Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_capture_consumer_gap_init(out);
+    if (!startup_anchor || !level_evidence || !object_evidence ||
+        !startup_anchor->valid ||
+        !startup_anchor->bounded_route_consumed ||
+        !startup_anchor->runtime_capture_required ||
+        startup_anchor->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(startup_anchor->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        startup_anchor->source_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+        !startup_anchor->startup_level_anchor_admitted ||
+        startup_anchor->startup_level_raw_offset == 0u ||
+        startup_anchor->startup_level_user_data_offset == 0u ||
+        !startup_anchor->startup_level_user_data_valid ||
+        startup_anchor->level_route_hash == 0u ||
+        startup_anchor->object_table_route_hash == 0u ||
+        startup_anchor->all_dungeon_route_hash == 0u ||
+        startup_anchor->object_table_admission_allowed ||
+        startup_anchor->nonstartup_level_admission_allowed ||
+        startup_anchor->exact_level_semantics_ready ||
+        startup_anchor->exact_object_semantics_ready ||
+        startup_anchor->payload_semantics_proven ||
+        startup_anchor->visual_semantics_proven ||
+        startup_anchor->fallback_visuals_allowed ||
+        !level_evidence->valid ||
+        !level_evidence->startup_level_anchor_consumed ||
+        !level_evidence->level_route_receipt_consumed ||
+        !level_evidence->runtime_capture_required ||
+        level_evidence->variant != startup_anchor->variant ||
+        strcmp(level_evidence->track02_md5, startup_anchor->track02_md5) != 0 ||
+        level_evidence->record != startup_anchor->record ||
+        level_evidence->source_offset != startup_anchor->source_offset ||
+        level_evidence->source_byte != startup_anchor->source_byte ||
+        level_evidence->level_route_hash != startup_anchor->level_route_hash ||
+        level_evidence->object_table_route_hash !=
+            startup_anchor->object_table_route_hash ||
+        level_evidence->all_dungeon_route_hash !=
+            startup_anchor->all_dungeon_route_hash ||
+        level_evidence->nonstartup_level_candidate_anchor_mask == 0u ||
+        level_evidence->nonstartup_level_candidate_count <= 0 ||
+        level_evidence->first_candidate_hash == 0u ||
+        level_evidence->nonstartup_level_decode_ready ||
+        level_evidence->nonstartup_level_admission_allowed ||
+        level_evidence->exact_level_semantics_ready ||
+        level_evidence->exact_object_semantics_ready ||
+        level_evidence->payload_semantics_proven ||
+        level_evidence->visual_semantics_proven ||
+        level_evidence->fallback_visuals_allowed ||
+        !object_evidence->valid ||
+        !object_evidence->startup_level_anchor_consumed ||
+        !object_evidence->object_table_route_receipt_consumed ||
+        !object_evidence->runtime_capture_required ||
+        object_evidence->variant != startup_anchor->variant ||
+        strcmp(object_evidence->track02_md5, startup_anchor->track02_md5) != 0 ||
+        object_evidence->record != startup_anchor->record ||
+        object_evidence->source_offset != startup_anchor->source_offset ||
+        object_evidence->source_byte != startup_anchor->source_byte ||
+        object_evidence->level_route_hash != startup_anchor->level_route_hash ||
+        object_evidence->object_table_route_hash !=
+            startup_anchor->object_table_route_hash ||
+        object_evidence->all_dungeon_route_hash !=
+            startup_anchor->all_dungeon_route_hash ||
+        object_evidence->object_table_candidate_anchor_mask == 0u ||
+        object_evidence->object_table_candidate_count <= 0 ||
+        object_evidence->first_candidate_hash == 0u ||
+        object_evidence->object_table_decode_ready ||
+        object_evidence->object_table_admission_allowed ||
+        object_evidence->exact_object_semantics_ready ||
+        object_evidence->payload_semantics_proven ||
+        object_evidence->visual_semantics_proven ||
+        object_evidence->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->startup_level_anchor_consumed = 1;
+    out->nonstartup_level_evidence_consumed = 1;
+    out->object_table_evidence_consumed = 1;
+    out->runtime_capture_required = 1;
+    out->variant = startup_anchor->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             startup_anchor->track02_md5);
+    out->record = startup_anchor->record;
+    out->source_offset = startup_anchor->source_offset;
+    out->source_byte = startup_anchor->source_byte;
+    out->level_route_hash = startup_anchor->level_route_hash;
+    out->object_table_route_hash = startup_anchor->object_table_route_hash;
+    out->all_dungeon_route_hash = startup_anchor->all_dungeon_route_hash;
+    out->nonstartup_level_candidate_anchor_mask =
+        level_evidence->nonstartup_level_candidate_anchor_mask;
+    out->nonstartup_level_candidate_count =
+        level_evidence->nonstartup_level_candidate_count;
+    out->first_nonstartup_level_candidate_hash =
+        level_evidence->first_candidate_hash;
+    out->object_table_candidate_anchor_mask =
+        object_evidence->object_table_candidate_anchor_mask;
+    out->object_table_candidate_count =
+        object_evidence->object_table_candidate_count;
+    out->first_object_table_candidate_hash =
+        object_evidence->first_candidate_hash;
+    out->capture_consumer_route_ready = 0;
+    out->object_table_decode_ready = 0;
+    out->nonstartup_level_decode_ready = 0;
+    out->object_table_admission_allowed = 0;
+    out->nonstartup_level_admission_allowed = 0;
+    out->exact_level_semantics_ready = 0;
+    out->exact_object_semantics_ready = 0;
+    out->payload_semantics_proven = 0;
+    out->visual_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_consumer_semantics(
+    const Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *gap,
+    const Theron_V1Track02Post3800ConsumerSemanticReceipt *consumer,
+    Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_consumer_semantic_init(out);
+    if (!gap || !consumer ||
+        !gap->valid ||
+        !gap->startup_level_anchor_consumed ||
+        !gap->nonstartup_level_evidence_consumed ||
+        !gap->object_table_evidence_consumed ||
+        !gap->runtime_capture_required ||
+        gap->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap->source_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+        gap->level_route_hash == 0u ||
+        gap->object_table_route_hash == 0u ||
+        gap->all_dungeon_route_hash == 0u ||
+        gap->capture_consumer_route_ready ||
+        gap->object_table_decode_ready ||
+        gap->nonstartup_level_decode_ready ||
+        gap->object_table_admission_allowed ||
+        gap->nonstartup_level_admission_allowed ||
+        gap->exact_level_semantics_ready ||
+        gap->exact_object_semantics_ready ||
+        gap->payload_semantics_proven ||
+        gap->visual_semantics_proven ||
+        gap->fallback_visuals_allowed ||
+        !consumer->valid ||
+        !consumer->no_fallback ||
+        !consumer->original_consumer_trace_bound ||
+        consumer->track02_variant != gap->variant ||
+        consumer->record != gap->record ||
+        consumer->payload_checksum == 0u ||
+        consumer->level_envelope_checksum == 0u ||
+        consumer->post_envelope_checksum == 0u ||
+        consumer->consumer_trace_checksum == 0u ||
+        !consumer->dungeon_record_semantics_proven ||
+        !consumer->object_table_semantics_proven ||
+        !consumer->bitmap_route_bound ||
+        !consumer->palette_binding_verified ||
+        !consumer->rgba_output_allowed ||
+        consumer->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->capture_consumer_gap_consumed = 1;
+    out->original_consumer_trace_bound = 1;
+    out->runtime_capture_required = 1;
+    out->variant = gap->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             gap->track02_md5);
+    out->record = gap->record;
+    out->source_offset = gap->source_offset;
+    out->source_byte = gap->source_byte;
+    out->level_route_hash = gap->level_route_hash;
+    out->object_table_route_hash = gap->object_table_route_hash;
+    out->all_dungeon_route_hash = gap->all_dungeon_route_hash;
+    out->payload_checksum = consumer->payload_checksum;
+    out->level_envelope_checksum = consumer->level_envelope_checksum;
+    out->post_envelope_checksum = consumer->post_envelope_checksum;
+    out->consumer_trace_checksum = consumer->consumer_trace_checksum;
+    out->capture_consumer_route_ready = 1;
+    out->exact_level_semantics_ready = 1;
+    out->exact_object_semantics_ready = 1;
+    out->payload_semantics_proven = 1;
+    out->visual_semantics_proven = 1;
     out->fallback_visuals_allowed = 0;
     return 1;
 }

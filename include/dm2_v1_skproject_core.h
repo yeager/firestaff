@@ -27,6 +27,22 @@ typedef struct {
     uint32_t random;
 } DM2_V1_SkprojectRandomData;
 
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    uint8_t dir;
+    int16_t input_xx;
+    int16_t input_yy;
+    int16_t initial_x;
+    int16_t initial_y;
+    int16_t forward_dx;
+    int16_t forward_dy;
+    int16_t side_dx;
+    int16_t side_dy;
+    int16_t final_x;
+    int16_t final_y;
+} DM2_V1_SkprojectVectorWDirReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -145,6 +161,7 @@ typedef struct {
 #define DM2_V1_SKPROJECT_ITEM_VALUE_RECORD_LIMIT 32
 #define DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS 30
 #define DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS 8
+#define DM2_V1_SKPROJECT_MONEY_ITEM_MAX 10
 
 typedef struct {
     uint16_t object_id;
@@ -152,8 +169,10 @@ typedef struct {
     uint16_t next_object_id;
     uint16_t contained_object_id;
     uint16_t gdat_word_values[0x36];
+    uint16_t distinctive_item_type;
     uint8_t container_type;
     uint8_t is_moneybox;
+    uint8_t is_currency;
 } DM2_V1_SkprojectItemValueRecord;
 
 typedef struct {
@@ -203,6 +222,19 @@ typedef struct {
     uint16_t hero_flag_or;
 } DM2_V1_SkprojectPlayerWeightReceipt;
 
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    int blocked_missing_record;
+    int blocked_recursion_limit;
+    uint16_t moneybox_object_id;
+    uint16_t visited_records;
+    uint16_t currency_records;
+    uint16_t matched_currency_records;
+    uint16_t money_item_count;
+    int16_t counts[DM2_V1_SKPROJECT_MONEY_ITEM_MAX];
+} DM2_V1_SkprojectCountByCoinTypesReceipt;
+
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
 int16_t dm2_v1_skproject_between_value(int16_t minv,
@@ -233,6 +265,13 @@ uint16_t dm2_v1_skproject_rand16(DM2_V1_SkprojectRandomData *randdat,
                                  uint16_t max_value);
 int dm2_v1_skproject_randbit(DM2_V1_SkprojectRandomData *randdat);
 uint8_t dm2_v1_skproject_randdir(DM2_V1_SkprojectRandomData *randdat);
+int dm2_v1_skproject_calc_vector_w_dir(
+    int16_t dir,
+    int16_t xx,
+    int16_t yy,
+    int16_t *x,
+    int16_t *y,
+    DM2_V1_SkprojectVectorWDirReceipt *out_receipt);
 
 void dm2_v1_skproject_cache_state_init(
     DM2_V1_SkprojectCacheState *state,
@@ -318,6 +357,13 @@ int dm2_v1_skproject_calc_player_weight(
     uint16_t player,
     const DM2_V1_SkprojectPlayerWeightRequest *request,
     DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
+int dm2_v1_skproject_count_by_coin_types(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t moneybox_object_id,
+    const uint16_t *money_item_ids,
+    uint16_t money_item_count,
+    int16_t *out_counts,
+    DM2_V1_SkprojectCountByCoinTypesReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
