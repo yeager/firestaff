@@ -16,6 +16,51 @@ static int pack_direction_for_group_pc34(int direction, int creature_count)
     return packed;
 }
 
+int F0180_DM1_GROUP_StartWandering_Compat(
+    int group_index,
+    int creature_type,
+    int map_index,
+    int map_x,
+    int map_y,
+    uint32_t game_time,
+    struct TimelineEvent_Compat *out_event,
+    DM1_V1_F0180_StartWanderingReceipt_PC34 *out_receipt)
+{
+    struct TimelineEvent_Compat event;
+
+    if (out_event) memset(out_event, 0, sizeof(*out_event));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_event || !out_receipt || group_index < 0 ||
+        creature_type < 0 || map_index < 0 || map_x < 0 || map_y < 0) {
+        return 0;
+    }
+
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_TICK;
+    event.fireAtTick = game_time + 1u;
+    event.mapIndex = map_index;
+    event.mapX = map_x;
+    event.mapY = map_y;
+    event.aux0 = group_index;
+    event.aux1 = creature_type;
+    event.aux2 = DM1_BEHAVIOR_WANDER;
+    *out_event = event;
+
+    out_receipt->valid = 1;
+    out_receipt->group_index = group_index;
+    out_receipt->creature_type = creature_type;
+    out_receipt->map_index = map_index;
+    out_receipt->map_x = map_x;
+    out_receipt->map_y = map_y;
+    out_receipt->fire_at_tick = event.fireAtTick;
+    out_receipt->event_kind = event.kind;
+    out_receipt->event_type = event.aux2;
+    out_receipt->source_line_start = 311;
+    out_receipt->source_line_end = 340;
+    out_receipt->source_symbol = "F0180_GROUP_StartWandering";
+    return 1;
+}
+
 int F0183_DM1_GROUP_AddActiveGroup_Compat(
     struct DM1ActiveGroup_Compat *active_groups,
     int active_group_capacity,

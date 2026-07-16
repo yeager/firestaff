@@ -44,11 +44,11 @@
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
   resolution, square lookup, relative square lookup, and relative square type;
-  `F0183`, `F0184`, `F0222`, and `F0223` are now closed with focused raw C04
-  active-state/source-square-type tests. The audit rows are closed as
+  `F0180`, `F0183`, `F0184`, `F0222`, and `F0223` are now closed with focused
+  raw C04 active-state/source-square-type tests. The audit rows are closed as
   `VERIFIED_SOURCE_MAPPING`. Remaining
   prioritized backlog symbols are `F0139`, `F0173`, `F0174`,
-  `F0179`-`F0180`, `F0185`-`F0193`, `F0208`, and `F0224`. Prefer the next
+  `F0179`, `F0185`-`F0193`, `F0208`, and `F0224`. Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
   audit hits as implementation evidence. Note: `tools/symbol_backlog.py` was

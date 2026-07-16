@@ -17,6 +17,8 @@ int main(void)
 {
     struct DM1ActiveGroup_Compat active_groups[2];
     struct DungeonGroup_Compat groups[2];
+    struct TimelineEvent_Compat wander_event;
+    DM1_V1_F0180_StartWanderingReceipt_PC34 wander_receipt;
     DM1_V1_F0183_AddActiveGroupReceipt_PC34 add_receipt;
     DM1_V1_F0184_RemoveActiveGroupReceipt_PC34 remove_receipt;
     int active_count = 0;
@@ -31,6 +33,28 @@ int main(void)
     groups[1].count = 0u;
     groups[1].direction = 3u;
     groups[1].behavior = DM1_BEHAVIOR_USELESS3;
+
+    check(F0180_DM1_GROUP_StartWandering_Compat(
+              5, 12, 2, 7, 8, 100u, &wander_event,
+              &wander_receipt) == 1,
+          "F0180 builds a wander timeline event");
+    check(wander_event.kind == TIMELINE_EVENT_CREATURE_TICK &&
+              wander_event.fireAtTick == 101u &&
+              wander_event.mapIndex == 2 &&
+              wander_event.mapX == 7 &&
+              wander_event.mapY == 8 &&
+              wander_event.aux0 == 5 &&
+              wander_event.aux1 == 12 &&
+              wander_event.aux2 == DM1_BEHAVIOR_WANDER,
+          "F0180 schedules C37 wander at game time plus one");
+    check(wander_receipt.valid && wander_receipt.source_symbol &&
+              strcmp(wander_receipt.source_symbol,
+                     "F0180_GROUP_StartWandering") == 0,
+          "F0180 receipt is source named");
+    check(F0180_DM1_GROUP_StartWandering_Compat(
+              -1, 12, 2, 7, 8, 100u, &wander_event,
+              &wander_receipt) == 0,
+          "F0180 rejects invalid group references");
 
     check(F0183_DM1_GROUP_AddActiveGroup_Compat(
               active_groups, 2, &active_count, &groups[0], 0,

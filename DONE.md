@@ -1,12 +1,13 @@
 # Firestaff DONE - Completed Work
 
-- 2026-07-16 DM1 GROUP.C F0183/F0184 active-state wrappers: added explicit
-  source-named active-group add/remove helpers over decoded original C04
-  records. F0183 copies C04 cells, packs the group direction per creature,
-  stores the source square and low game-time byte, and fails closed at the
-  active-group capacity. F0184 writes cells/direction back to C04, resets C4+
-  behavior to wander, and retires only a valid active slot. Verification:
-  strict direct C11 build/run and Ninja target
+- 2026-07-16 DM1 GROUP.C F0180/F0183/F0184 active-state wrappers: added
+  explicit source-named start-wandering and active-group add/remove helpers
+  over decoded original C04 records. F0180 builds the C37 wander event at
+  game time + 1. F0183 copies C04 cells, packs the group direction per
+  creature, stores the source square and low game-time byte, and fails closed
+  at the active-group capacity. F0184 writes cells/direction back to C04,
+  resets C4+ behavior to wander, and retires only a valid active slot.
+  Verification: strict direct C11 build/run and Ninja target
   `test_dm1_v1_group_active_state_pc34_compat`.
 
 - 2026-07-16 DM2 c_map real-data tile access receipts: closed the
