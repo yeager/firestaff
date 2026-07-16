@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.82  (2026-07-16)",
+    "  - Packages current main after the V2.2 Artpack Studio and DM2 skproject xrect codec work landed after v3.0.81.",
+    "  - DM2 now source-maps DM2_COMPRESS_RECTS, DM2_QUERY_RECT and READ_WORD with bounded skproject-backed tests.",
+    "",
     "V3.0.71  (2026-07-10)",
     "  - Packages current main after DM1 ReDMCSB complete-support, DM2 GDAT complete-support, Nexus DGN/material and Theron Track 02 receipt gates.",
     "  - Release metadata is synchronized to v3.0.71.",
@@ -528,5 +532,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.77";
+    return "3.0.82";
 }

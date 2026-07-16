@@ -1,6 +1,25 @@
 
 # Unreleased
 
+# Firestaff v3.0.82
+
+Firestaff v3.0.82 packages current source-owned runtime work from `main`.
+
+## Highlights since v3.0.81
+
+- **V2.2 artpacks**: added the cross-platform Artpack Studio for importing,
+  editing, validating and AI-assisted generation of v2.2 artpacks.
+- **DM2**: mapped skproject `DM2_COMPRESS_RECTS`, `DM2_QUERY_RECT` and
+  `READ_WORD` through bounded source-backed codec receipts.
+- **Runtime safety**: synthetic rectangle/art data remains rejected when real
+  source data is required.
+
+## Verification
+
+- Focused Artpack Studio self-test and DM2 skproject core tests passed locally
+  before release dispatch.
+- GitHub Actions packages platform artifacts from the `v3.0.82` tag.
+
 # Firestaff v3.0.81
 
 Firestaff v3.0.81 packages current source-owned runtime work from `main`.
