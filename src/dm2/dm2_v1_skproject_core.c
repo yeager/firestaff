@@ -1079,6 +1079,64 @@ int dm2_v1_skproject_move_12b4_00af(
     return 1;
 }
 
+int dm2_v1_skproject_attack_door(
+    uint8_t tile_type,
+    uint8_t record_byte2,
+    uint8_t record_byte3,
+    uint16_t attack_power,
+    uint16_t required_power,
+    int use_byte2_gate,
+    int rebirth_altar,
+    uint16_t timer_delay,
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectAttackDoorReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAttackDoorReceipt receipt;
+    uint8_t gate_byte = use_byte2_gate ? record_byte2 : record_byte3;
+    uint8_t gate_mask = use_byte2_gate ? 0x80u : 0x01u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.tile_type_before = tile_type;
+    receipt.tile_type_after = tile_type;
+    receipt.attack_power = attack_power;
+    receipt.required_power = required_power;
+    receipt.rebirth_altar = rebirth_altar ? 1u : 0u;
+    receipt.test_byte_offset = use_byte2_gate ? 2u : 3u;
+    receipt.tested_flag_mask = gate_mask;
+    receipt.timer_ticks = timer_delay;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.valid = 1;
+
+    if ((gate_byte & gate_mask) == 0u) {
+        receipt.blocked_door_closed_flag = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (attack_power < required_power) {
+        receipt.blocked_attack_power = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (tile_type != 4u) {
+        receipt.blocked_tile_type = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.admitted = 1u;
+    if (timer_delay != 0u) {
+        receipt.queued_timer = 1u;
+    } else {
+        receipt.changed_tile_type = 1u;
+        receipt.tile_type_after = 5u;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_move_12b4_099e(
     const DM2_V1_SkprojectLiftRequest *request,
     DM2_V1_SkprojectLiftReceipt *out_receipt)
@@ -2459,7 +2517,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_gfx_pal.cpp color_to_palettecolor/"
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
-           "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881; "
+           "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
+           "DM2_ATTACK_DOOR; "
            "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
            "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001/"
            "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83";

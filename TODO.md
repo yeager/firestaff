@@ -92,6 +92,11 @@
     and `DM2_0cee_317f` are now closed through source-backed narrow receipts.
     Remaining adjacent work includes `DM2_PERFORM_MOVE`, `DM2_ATTACK_WALL`,
     `DM2_ATTACK_DOOR`, and broader live movement mutation.
+  - 2026-07-16 DM2 update: skproject door attack row `DM2_ATTACK_DOOR`
+    is now closed through a source-backed receipt for byte gate, strength,
+    tile-type, delayed timer, and immediate open routes. Remaining adjacent
+    movement work is `DM2_PERFORM_MOVE`, `DM2_ATTACK_WALL`, and live mutation
+    wiring.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,

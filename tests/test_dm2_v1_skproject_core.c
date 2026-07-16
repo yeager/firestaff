@@ -611,6 +611,50 @@ static void test_map_helpers(void)
                   other_level.final_party_dir == 3,
               "DM2_move_12b4_00af reverses locate delta for forward transition and masks rotation");
 
+        {
+            DM2_V1_SkprojectAttackDoorReceipt door;
+
+            CHECK(dm2_v1_skproject_attack_door(
+                      4u, 0u, 0u, 10u, 5u, 0, 0, 0u, 6, 7,
+                      &door) == 0 &&
+                      door.valid && door.blocked_door_closed_flag &&
+                      door.test_byte_offset == 3u &&
+                      door.tested_flag_mask == 1u,
+                  "DM2_ATTACK_DOOR rejects byte3 bit0 gate when normal door flag is clear");
+            CHECK(dm2_v1_skproject_attack_door(
+                      4u, 0u, 1u, 4u, 5u, 0, 0, 0u, 6, 7,
+                      &door) == 0 &&
+                      door.blocked_attack_power &&
+                      door.attack_power == 4u &&
+                      door.required_power == 5u,
+                  "DM2_ATTACK_DOOR rejects attacks below GET_DOOR_STAT_0X10 threshold");
+            CHECK(dm2_v1_skproject_attack_door(
+                      3u, 0u, 1u, 10u, 5u, 0, 0, 0u, 6, 7,
+                      &door) == 0 &&
+                      door.blocked_tile_type &&
+                      door.tile_type_before == 3u &&
+                      door.tile_type_after == 3u,
+                  "DM2_ATTACK_DOOR rejects non-door tile types before mutation");
+            CHECK(dm2_v1_skproject_attack_door(
+                      4u, 0x80u, 0u, 10u, 5u, 1, 1, 3u, 6, 7,
+                      &door) == 1 &&
+                      door.admitted && door.queued_timer &&
+                      !door.changed_tile_type &&
+                      door.rebirth_altar &&
+                      door.test_byte_offset == 2u &&
+                      door.tested_flag_mask == 0x80u &&
+                      door.timer_ticks == 3u,
+                  "DM2_ATTACK_DOOR queues timer route for byte2-gated delayed destruction");
+            CHECK(dm2_v1_skproject_attack_door(
+                      4u, 0u, 1u, 10u, 5u, 0, 0, 0u, 6, 7,
+                      &door) == 1 &&
+                      door.admitted && door.changed_tile_type &&
+                      !door.queued_timer &&
+                      door.tile_type_after == 5u &&
+                      door.x == 6 && door.y == 7,
+                  "DM2_ATTACK_DOOR opens tile type 4 to 5 when no timer delay is requested");
+        }
+
         memset(&lift, 0, sizeof(lift));
         lift.creature_weight = 40u;
         lift.event_hero_index = 1u;
@@ -1479,6 +1523,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_12b4_0881") != 0,
           "source evidence names c_move admission helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_ATTACK_DOOR") != 0,
+          "source evidence names c_move door attack helper");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_SET_DESTINATION_OF_MINION_MAP") != 0,
           "source evidence names c_map helpers");

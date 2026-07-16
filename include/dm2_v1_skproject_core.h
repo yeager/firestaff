@@ -299,6 +299,26 @@ typedef struct {
     uint8_t requested_restore_source_map;
 } DM2_V1_SkprojectOtherLevelReceipt;
 
+typedef struct {
+    int valid;
+    uint8_t admitted;
+    uint8_t blocked_door_closed_flag;
+    uint8_t blocked_attack_power;
+    uint8_t blocked_tile_type;
+    uint8_t queued_timer;
+    uint8_t changed_tile_type;
+    uint8_t rebirth_altar;
+    uint8_t test_byte_offset;
+    uint8_t tested_flag_mask;
+    uint8_t tile_type_before;
+    uint8_t tile_type_after;
+    uint16_t attack_power;
+    uint16_t required_power;
+    uint16_t timer_ticks;
+    int16_t x;
+    int16_t y;
+} DM2_V1_SkprojectAttackDoorReceipt;
+
 #define DM2_V1_SKPROJECT_PARTY_HERO_LIMIT 4u
 
 typedef struct {
@@ -873,6 +893,18 @@ int dm2_v1_skproject_move_12b4_00af(
     int16_t located_y,
     int16_t query_rotation,
     DM2_V1_SkprojectOtherLevelReceipt *out_receipt);
+int dm2_v1_skproject_attack_door(
+    uint8_t tile_type,
+    uint8_t record_byte2,
+    uint8_t record_byte3,
+    uint16_t attack_power,
+    uint16_t required_power,
+    int use_byte2_gate,
+    int rebirth_altar,
+    uint16_t timer_delay,
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectAttackDoorReceipt *out_receipt);
 int dm2_v1_skproject_move_12b4_099e(
     const DM2_V1_SkprojectLiftRequest *request,
     DM2_V1_SkprojectLiftReceipt *out_receipt);
