@@ -8,6 +8,12 @@
   regression proves that an `installed=1` flag without a reviewed receipt still
   falls back to V2.1.
 
+- 2026-07-16 DM1 V2.2 in-place render proof repair: the in-place render probe
+  now stages a local FINISHED_REAL manifest plus matching `finish_receipt.json`
+  before loading `v22_inplace_cache.bin`, so the render proof exercises the same
+  reviewed-pack admission gate as runtime instead of bypassing it with a
+  synthetic cache-only setup.
+
 - 2026-07-16 DM2 cache/mement free receipt bundle: mapped
   `FREE_CACHE_INDEX`, `FREE_INDEXED_MEMENT`, `FREE_TEMP_CACHE_INDEX`, and
   `FREE_PICT6` to skproject-backed bounded helpers. The regression covers
