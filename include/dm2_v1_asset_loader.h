@@ -302,6 +302,58 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatSoundEntryReceipt;
 
+typedef struct {
+    int32_t file_open_counter;
+    int16_t file_handle;
+    int16_t xfile_handle;
+    uint32_t primary_file_size;
+    uint8_t filetype1;
+    uint8_t filetype2;
+} DM2_V1_GraphicsDataFileState;
+
+typedef struct {
+    uint8_t valid;
+    uint8_t opened_primary;
+    uint8_t opened_secondary;
+    uint8_t blocked_primary_open;
+    uint8_t blocked_secondary_open;
+    uint8_t syserr_code;
+    int32_t counter_before;
+    int32_t counter_after;
+    int16_t primary_handle;
+    int16_t secondary_handle;
+    uint32_t receipt_hash;
+} DM2_V1_GraphicsDataOpenReceipt;
+
+typedef struct {
+    uint8_t valid;
+    uint8_t closed_primary;
+    uint8_t closed_secondary;
+    uint8_t blocked_underflow;
+    int32_t counter_before;
+    int32_t counter_after;
+    int16_t primary_handle;
+    int16_t secondary_handle;
+    uint32_t receipt_hash;
+} DM2_V1_GraphicsDataCloseReceipt;
+
+typedef struct {
+    uint8_t valid;
+    uint8_t uses_primary;
+    uint8_t uses_secondary;
+    uint8_t crosses_secondary_split;
+    uint8_t blocked_missing_state;
+    int16_t primary_handle;
+    int16_t secondary_handle;
+    uint32_t request_offset;
+    uint32_t request_length;
+    uint32_t primary_offset;
+    uint32_t primary_length;
+    uint32_t secondary_offset;
+    uint32_t secondary_length;
+    uint32_t receipt_hash;
+} DM2_V1_GraphicsDataReadReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -422,6 +474,25 @@ int dm2_v1_gdat_sound_entry_receipt(
     int sound7_result,
     int extended_header,
     DM2_V1_GdatSoundEntryReceipt *out_receipt);
+
+/* skproject c_gdatfile.cpp GRAPHICS_DATA_OPEN/READ/CLOSE receipts.
+ * These expose file-counter, handle, and split-read routing only; callers own
+ * real file IO and buffers. */
+int dm2_v1_graphics_data_open_receipt(
+    DM2_V1_GraphicsDataFileState *state,
+    int primary_open_ok,
+    int16_t primary_handle,
+    int secondary_open_ok,
+    int16_t secondary_handle,
+    DM2_V1_GraphicsDataOpenReceipt *out_receipt);
+int dm2_v1_graphics_data_close_receipt(
+    DM2_V1_GraphicsDataFileState *state,
+    DM2_V1_GraphicsDataCloseReceipt *out_receipt);
+int dm2_v1_graphics_data_read_receipt(
+    const DM2_V1_GraphicsDataFileState *state,
+    uint32_t offset,
+    uint32_t length,
+    DM2_V1_GraphicsDataReadReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,

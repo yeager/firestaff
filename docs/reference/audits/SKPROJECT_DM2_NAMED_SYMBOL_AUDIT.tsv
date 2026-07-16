@@ -340,9 +340,9 @@ DM2_QUERY_NEXT_GDAT_ENTRY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	31	include/dm2_v1_ass
 DM2_dballoc_3e74_24b8	SKULLWIN	SKULLWIN/c_gdatfile.cpp	273		MISSING
 DM2_dballoc_3e74_2162	SKULLWIN	SKULLWIN/c_gdatfile.cpp	336		MISSING
 init	SKULLWIN	SKULLWIN/c_gdatfile.cpp	349	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-DM2_GRAPHICS_DATA_OPEN	SKULLWIN	SKULLWIN/c_gdatfile.cpp	368		MISSING
-DM2_GRAPHICS_DATA_CLOSE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	384		MISSING
-DM2_GRAPHICS_DATA_READ	SKULLWIN	SKULLWIN/c_gdatfile.cpp	399		MISSING
+DM2_GRAPHICS_DATA_OPEN	SKULLWIN	SKULLWIN/c_gdatfile.cpp	368	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+DM2_GRAPHICS_DATA_CLOSE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	384	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+DM2_GRAPHICS_DATA_READ	SKULLWIN	SKULLWIN/c_gdatfile.cpp	399	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
 DM2_QUERY_GDAT_RAW_DATA_FILE_POS	SKULLWIN	SKULLWIN/c_gdatfile.cpp	454	include/dm2_v1_asset_loader.h:257	VERIFIED_SOURCE_MAPPING
 DM2_LOAD_GDAT_RAW_DATA	SKULLWIN	SKULLWIN/c_gdatfile.cpp	470	include/dm2_v1_asset_loader.h:265	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRY_VALUE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	515		MISSING

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject GRAPHICS_DATA file lifecycle bundle: added
+  bounded receipts for `DM2_GRAPHICS_DATA_OPEN`, `DM2_GRAPHICS_DATA_CLOSE`,
+  and `DM2_GRAPHICS_DATA_READ`, preserving open-counter nesting, primary/
+  secondary handle routing, source sys-error codes, and split reads across
+  `gdat.filesize`. Real file IO and buffers remain caller-owned.
+  Verification: focused Ninja target `test_dm2_v1_gdat_querydb_receipts`,
+  focused CTest `dm2_v1_gdat_querydb_receipts`.
+
 - 2026-07-16 DM2 skproject c_gfx_str bundle: added bounded source-shaped
   helpers for `DM2_QUERY_FONT`, `DM2_QUERY_STR_METRICS`, draw-plan receipts
   for the `DM2_DRAW_*` text family, literal-only `DM2_FORMAT_SKSTR`,
@@ -21144,3 +21152,19 @@ event execution and DSA/save-corpus breadth remain separate. Verification:
 `cmake --build build-local-ninja --target test_csb_v1_boot_runtime_handoff
 -j2`, `ctest --test-dir build-local-ninja -R '^csb_v1_boot_runtime_handoff$'
 --output-on-failure`, and `git diff --check` passed.
+
+# ✅ 2026-07-16 DM1 ReDMCSB TIMELINE/MOVE/GROUP symbol bundle
+
+The next DM1 callable backlog block before CHAMPION is now closed in the
+ReDMCSB full audit and disposition table: `F0230`, `F0252`-`F0258`,
+`F0260`, `F0262`, `F0263`, `F0266`, both `F0267` rows, and `F0514`. These
+rows map to existing DM1 source-backed code/tests for F0230 creature melee,
+C60/C61 group movement, C11 action/quiver handoff, C12 damage-hide redraw,
+C13 Vi Altar rebirth, C53 watchdog receipts, C70 light decay, teleporter
+rotation, moving-group projectile prechecks, movement-result routes, and
+creature movement sound lookup. Narrow rows explicitly stay bounded:
+copy-protection side effects, full action-panel redraw breadth, standalone
+F0258 UI querying, full status-box pixel parity, and unimplemented F0266/F0267
+route breadth are not claimed. Verification: focused Ninja/CTest,
+`git diff --check`, and `python3 tools/symbol_backlog.py --game DM1 --limit
+40`.
