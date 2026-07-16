@@ -156,6 +156,18 @@ static void test_weather_ticks_only_change_outdoor_weather_at_boundary(void)
           "outdoor mode advances weather seed at tick 182");
     CHECK(dm2_v1_runtime_get_weather() == expected_weather_after_182,
           "outdoor mode weather at tick 182 is seeded result");
+    {
+        DM2_V1_WeatherTimerReceipt receipt;
+        CHECK(dm2_v1_runtime_last_weather_timer_receipt(&receipt) == 1 &&
+              receipt.valid && receipt.outdoor && receipt.due &&
+              receipt.source_set_timer_weather &&
+              receipt.source_weather_3df7_0037 &&
+              receipt.tick_count == 182u &&
+              receipt.seed_before == seed &&
+              receipt.seed_after == expected_seed_after_182 &&
+              receipt.weather_after == (uint8_t)expected_weather_after_182,
+              "runtime receipt owns the due weather transition");
+    }
 }
 
 int main(void)

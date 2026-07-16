@@ -84,6 +84,8 @@
  *       and never reads or mutates real GRAPHICS.DAT bytes.
  */
 
+#include "dm1_v1_spell_casting_pc34_compat.h"
+
 #include <stdint.h>
 
 #ifdef __cplusplus

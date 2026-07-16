@@ -50,8 +50,6 @@
 extern "C" {
 #endif
 
-struct CSB_V1_StartupRuntimeAssetSession_PC34;
-
 /* ── Result codes ─────────────────────────────────────────────────── */
 
 typedef enum {
@@ -87,7 +85,7 @@ typedef enum {
  * file sizes, variant id, archive kind, and a magic salt so
  * the hash is never 0 for a matched receipt.
  */
-typedef struct CSB_V1_StartupRealReceipt {
+typedef struct {
     /* Resolved on-disk paths. Empty when no match. */
     char graphics_path[CSB_V1_STARTUP_REAL_PATH_CAP];
     char dungeon_path[CSB_V1_STARTUP_REAL_PATH_CAP];
@@ -225,16 +223,6 @@ int csb_v1_startup_real_scan_and_receipt(const char *data_dir,
  */
 int csb_v1_startup_real_receipt_recompute_hash(
     CSB_V1_StartupRealReceipt *receipt);
-
-/* Build a fail-closed receipt for the real PC34 C001/C017/C040 handoff.
- * `session` must be the opaque startup session opened by
- * csb_v1_boot_startup_runtime_asset_session_open_pc34() and advanced through
- * the title, entrance, and HUD owners.  The forward declaration keeps this
- * metadata header independent of the boot implementation. */
-int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
-    const CSB_V1_StartupRealReceipt *real_asset_receipt,
-    const struct CSB_V1_StartupRuntimeAssetSession_PC34 *session,
-    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *out_receipt);
 
 /*
  * Return a stable, NUL-terminated string for a result code.

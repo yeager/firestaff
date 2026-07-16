@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/G0485_pc34_compat.h"
+#include "firestaff/dm1/v1/G0486_pc34_compat.h"
 
 #include <string.h>
 
@@ -47,6 +48,81 @@ dm1_v1_graphic560_symbol_base_mana_cost_get_pc34(int entry_index)
         return kOutOfRange;
     }
     return (int)s_g0485[entry_index];
+}
+
+int
+dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(
+    int symbol_step,
+    int symbol_index,
+    char power_symbol,
+    DM1_V1_G0485SymbolManaCostPc34 *out)
+{
+    DM1_V1_G0485SymbolManaCostPc34 receipt;
+    int base_index;
+    int power_index;
+    int multiplier;
+    int cost;
+
+    if (!out) {
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.symbolStep = symbol_step;
+    receipt.symbolIndex = symbol_index;
+    receipt.powerSymbol = (int)(unsigned char)power_symbol;
+    receipt.powerSymbolIndex = -1;
+    receipt.sourceAnchorF0399 =
+        "ReDMCSB SYMBOL.C F0399_MENUS_AddChampionSymbol: L1222/L1223 mana cost";
+    receipt.sourceAnchorG0485 =
+        "ReDMCSB MENU.C:16,44 G0485_aauc_Graphic560_SymbolBaseManaCost[4][6]";
+    receipt.sourceAnchorG0486 =
+        "ReDMCSB MENU.C:17,49 G0486_auc_Graphic560_SymbolManaCostMultiplier[6]";
+
+    if (symbol_step < 0 ||
+        symbol_step >= DM1_V1_G0485_PC34_SYMBOL_STEP_COUNT ||
+        symbol_index < 0 ||
+        symbol_index >= DM1_V1_G0485_PC34_SYMBOLS_PER_STEP) {
+        *out = receipt;
+        return 0;
+    }
+
+    base_index = (symbol_step * DM1_V1_G0485_PC34_SYMBOLS_PER_STEP) +
+                 symbol_index;
+    cost = dm1_v1_graphic560_symbol_base_mana_cost_get_pc34(base_index);
+    if (cost < 0) {
+        *out = receipt;
+        return 0;
+    }
+
+    receipt.baseTableIndex = base_index;
+    receipt.baseManaCost = cost;
+
+    if (symbol_step > 0) {
+        power_index = (int)(unsigned char)power_symbol - 96;
+        receipt.requiresPowerMultiplier = 1;
+        receipt.powerSymbolIndex = power_index;
+        if (power_index < 0 ||
+            power_index >= DM1_V1_G0485_PC34_SYMBOLS_PER_STEP) {
+            *out = receipt;
+            return 0;
+        }
+
+        multiplier =
+            dm1_v1_graphic560_symbol_mana_cost_multiplier_get_pc34(
+                power_index);
+        if (multiplier < 0) {
+            *out = receipt;
+            return 0;
+        }
+        receipt.multiplier = multiplier;
+        cost = (cost * multiplier) >> 3;
+    }
+
+    receipt.manaCost = cost;
+    receipt.accepted = 1;
+    *out = receipt;
+    return 1;
 }
 
 int

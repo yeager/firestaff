@@ -54,15 +54,6 @@ static const Nexus_DMDFTextureSurface *viewport_plan_surface(
     return &bank->surfaces[command->material_id];
 }
 
-static uint8_t *viewport_plan_palette_map(
-    Nexus_Viewport *vp, const Nexus_V1_DgnRenderCommand *command)
-{
-    return (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
-            command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
-        ? vp->floor_material_palette_map[command->material_id]
-        : vp->wall_material_palette_map[command->material_id];
-}
-
 static int viewport_find_palette_index(const uint32_t palette[256],
                                        const uint8_t occupied[256],
                                        uint32_t rgba)
@@ -85,15 +76,10 @@ static int viewport_sync_dgn_material_palette(
     if (vp->material_palette_valid && vp->material_engine == engine &&
         vp->material_generation == plan->generation) return 1;
     memcpy(palette, vp->base_palette, sizeof(palette));
-    memset(vp->floor_material_palette_map, 0xff,
-           sizeof(vp->floor_material_palette_map));
-    memset(vp->wall_material_palette_map, 0xff,
-           sizeof(vp->wall_material_palette_map));
     for (i = 0; i < 16; ++i) occupied[i] = 1;
     for (i = 0; i < plan->receipt.command_count; ++i) {
         const Nexus_DMDFTextureSurface *surface =
             viewport_plan_surface(engine, &plan->commands[i]);
-        uint8_t *texel_map = viewport_plan_palette_map(vp, &plan->commands[i]);
         int color_index;
         for (color_index = 0; color_index < 256; ++color_index) {
             uint32_t rgba = surface->palette[color_index];
@@ -110,7 +96,6 @@ static int viewport_sync_dgn_material_palette(
                 palette[mapped_index] = rgba;
                 occupied[mapped_index] = 1;
             }
-            texel_map[color_index] = (uint8_t)mapped_index;
         }
     }
     nexus_fb_set_palette(&vp->fb, palette);
@@ -555,9 +540,9 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         for (i = 0; i < plan->receipt.command_count; ++i) {
             const Nexus_V1_DgnRenderCommand *command = &plan->commands[i];
             const Nexus_DMDFTextureSurface *surface;
-            uint8_t *texel_map;
+            uint8_t texel_map[256];
             surface = viewport_plan_surface(engine, command);
-            texel_map = viewport_plan_palette_map(vp, command);
+            viewport_surface_palette_map(vp, surface, texel_map);
             if (surface && surface->valid) {
                 vp->last_dgn_render_receipt.material_surface_count++;
                 if (surface->from_bpk) {

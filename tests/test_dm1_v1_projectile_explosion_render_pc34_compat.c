@@ -11,7 +11,6 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
-#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,18 +100,6 @@ static void test_projectile_graphic_indices(void) {
     ASSERT_EQ(dm1_v1_projectile_graphic_index(14, 0), -1, "gfx[14]");
 }
 
-/* C100 must retain its own M613 lightning material.  C101 and ordinary
- * explosions are intentionally covered by separate routes. */
-static void test_c100_rebirth_lightning_material(void) {
-    printf("  C100 rebirth lightning material...\n");
-    ASSERT_EQ(dm1_v1_c100_rebirth_lightning_graphic_index_pc34(),
-              DM1_GFX_FIRST_PROJECTILE + 10,
-              "C100 uses C03 following native bitmap");
-    ASSERT_NE(dm1_v1_c100_rebirth_lightning_graphic_index_pc34(),
-              DM1_GFX_FIRST_EXPLOSION_PATTERN,
-              "C100 never borrows M636 pattern material");
-}
-
 
 /* ── Test: Projectile bitmap deltas match aspect type rules ──────── */
 
@@ -146,6 +133,25 @@ static void test_projectile_bitmap_deltas(void) {
 
 static void test_projectile_subtype_mapping(void) {
     printf("  projectile subtype mapping...\n");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_FIREBALL),
+              DM1_PROJ_ASPECT_FIREBALL, "F0142 fireball->10");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_SLIME),
+              DM1_PROJ_ASPECT_SLIME, "F0142 slime->12");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_LIGHTNING_BOLT),
+              DM1_PROJ_ASPECT_LIGHTNING_BOLT, "F0142 lightning->3");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_POISON_BOLT),
+              DM1_PROJ_ASPECT_POISON, "F0142 poison_bolt->13");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_POISON_CLOUD),
+              DM1_PROJ_ASPECT_POISON, "F0142 poison_cloud->13");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_HARM_NON_MATERIAL),
+              DM1_PROJ_ASPECT_DEFAULT, "F0142 harm->11");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_OPEN_DOOR),
+              DM1_PROJ_ASPECT_DEFAULT, "F0142 open-door->11");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_KINETIC_ARROW),
+              0, "F0142 kinetic->0");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(-1),
+              0, "F0142 invalid->0");
+
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_FIREBALL),
               DM1_PROJ_ASPECT_FIREBALL, "fireball->10");
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_SLIME),
@@ -160,6 +166,9 @@ static void test_projectile_subtype_mapping(void) {
               DM1_PROJ_ASPECT_DEFAULT, "harm->11");
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_KINETIC_ARROW),
               0, "kinetic->0");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_FIREBALL),
+              F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_FIREBALL),
+              "compat helper aliases F0142");
 
     ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_FIREBALL),
               DM1_GFX_FIRST_PROJECTILE + 28, "fireball subtype gfx");
@@ -344,17 +353,35 @@ static void test_projectile_scale(void) {
               "front >= back scale D2");
 }
 
-static void test_projectile_d4_is_source_nodraw(void) {
-    printf("  projectile D4 source no-draw...\n");
-    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                    DM1_VIEW_SQUARE_D4L) == NULL,
-                "D4L has no ReDMCSB G2028/C2900 projectile material row");
-    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                    DM1_VIEW_SQUARE_D4C) == NULL,
-                "D4C has no ReDMCSB G2028/C2900 projectile material row");
-    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                    DM1_VIEW_SQUARE_D4R) == NULL,
-                "D4R has no ReDMCSB G2028/C2900 projectile material row");
+static void test_projectile_d4_far_box(void) {
+    int lx = 0, ly = 0, lw = 0, lh = 0;
+    int cx = 0, cy = 0, cw = 0, ch = 0;
+    int rx = 0, ry = 0, rw = 0, rh = 0;
+    printf("  projectile D4 far boxes...\n");
+
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(-2, &lx, &ly, &lw, &lh), 0,
+              "D4 rejects outside left lane");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(2, &rx, &ry, &rw, &rh), 0,
+              "D4 rejects outside right lane");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(-1, &lx, &ly, &lw, &lh), 1,
+              "D4 left box exists");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(0, &cx, &cy, &cw, &ch), 1,
+              "D4 center box exists");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(1, &rx, &ry, &rw, &rh), 1,
+              "D4 right box exists");
+    ASSERT_EQ(lx, 78, "D4 left x");
+    ASSERT_EQ(cx, 108, "D4 center x");
+    ASSERT_EQ(rx, 138, "D4 right x");
+    ASSERT_EQ(ly, 42, "D4 left y");
+    ASSERT_EQ(cy, 42, "D4 center y");
+    ASSERT_EQ(ry, 42, "D4 right y");
+    ASSERT_EQ(lw, 10, "D4 width");
+    ASSERT_EQ(cw, 10, "D4 center width");
+    ASSERT_EQ(rw, 10, "D4 right width");
+    ASSERT_EQ(lh, 8, "D4 height");
+    ASSERT_EQ(ch, 8, "D4 center height");
+    ASSERT_EQ(rh, 8, "D4 right height");
+    ASSERT_TRUE(lx < cx && cx < rx, "D4 boxes stay left-center-right");
 }
 
 static void test_projectile_renderable_and_effect_particle(void) {
@@ -962,16 +989,6 @@ static void test_explosion_pattern_graphic(void) {
     /* Smoke uses poison graphics: 489 + 2*3 + 0 = 495 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_SMOKE, 0), 495,
               "smoke small (=poison)");
-    /* ReDMCSB DUNVIEW.C F0115:5955,6038-6074: D0C rebirth step 2 enters
-     * the fire M636 pattern route, rather than a C3007/F0114 substitute. */
-    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
-                  DM1_EXPLOSION_TYPE_REBIRTH_STEP2, 0), 489,
-              "D0C rebirth step2 uses fire M636 pattern");
-    /* C100 is not an M636 pattern. Its C3000/lightning route has a separate
-     * scale gate, so a direct pattern query must remain fail-closed. */
-    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
-                  DM1_EXPLOSION_TYPE_REBIRTH_STEP1, 96), -1,
-              "rebirth step1 never falls through to an M636 pattern");
     /* Fluxcage returns -1 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FLUXCAGE, 100), -1,
               "fluxcage->-1");
@@ -1642,13 +1659,12 @@ int main(void) {
 
     test_projectile_aspect_table();
     test_projectile_graphic_indices();
-    test_c100_rebirth_lightning_material();
     test_projectile_bitmap_deltas();
     test_projectile_subtype_mapping();
     test_f0142_signed_projectile_aspect_contract();
     test_thrown_object_material_resolution();
     test_projectile_scale();
-    test_projectile_d4_is_source_nodraw();
+    test_projectile_d4_far_box();
     test_projectile_renderable_and_effect_particle();
     test_f0115_thing_layer_receipt();
     test_f0115_runtime_summary();

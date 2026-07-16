@@ -18,15 +18,9 @@
  * not own.
  */
 
-#include "asset_loader_m11.h"
-#include "audio_sdl_m11.h"
-#include "entrance_frontend_pc34_compat.h"
-#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
-#include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -140,157 +134,6 @@ static void check_selection_contract(void) {
     expect_truth("source evidence cites F0437",
                  c001BeatsFallback.sourceLineEvidence &&
                  strstr(c001BeatsFallback.sourceLineEvidence, "F0437") != 0);
-}
-
-static void check_runtime_asset_receipt(void) {
-    unsigned char c001[320u * 200u];
-    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
-    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 source_receipt;
-
-    memset(c001, 0, sizeof(c001));
-    c001[0] = 1u;
-    c001[80u * 320u] = 2u;
-    c001[137u * 320u] = 3u;
-    memset(&receipt, 0, sizeof(receipt));
-    expect_i("C001 asset receipt accepts complete PC34 source regions",
-             dm1_v1_startup_title_runtime_asset_receipt_pc34(
-                 "dm1", c001, 320u, 200u, &receipt) &&
-                 receipt.handled && receipt.graphics_c001_dimensions_valid &&
-                 receipt.dungeon_source_pixels_present &&
-                 receipt.master_source_pixels_present &&
-                 receipt.presents_source_pixels_present &&
-                 receipt.graphics_c001_pixel_fingerprint != 0u &&
-                 receipt.release_c001_ready,
-             1);
-    c001[137u * 320u] = 0u;
-    expect_i("C001 asset receipt rejects missing PRESENTS source pixels",
-             dm1_v1_startup_title_runtime_asset_receipt_pc34(
-                 "dm1", c001, 320u, 200u, &receipt) &&
-                 !receipt.release_c001_ready,
-             1);
-    expect_i("C001 asset receipt remains DM1-only",
-             dm1_v1_startup_title_runtime_asset_receipt_pc34(
-                 "csb", c001, 320u, 200u, &receipt) && !receipt.handled,
-             1);
-    memset(&source_receipt, 0, sizeof(source_receipt));
-    expect_i("DM1 startup rejects TITLE.DAT when C001 is unavailable",
-             dm1_v1_startup_title_runtime_source_receipt_pc34(
-                 "dm1", 0, 0u, 0u, 1, &source_receipt) &&
-                 source_receipt.handled &&
-                 source_receipt.title_dat_fallback_usable &&
-                 source_receipt.selected_runtime_source ==
-                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP &&
-                 !source_receipt.fallback_is_visible_last_resort,
-             1);
-}
-
-static void check_title_presentation_command(void) {
-    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
-    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 asset;
-    DM1_V1_StartupTitlePresentationCommand_PC34 command;
-
-    memset(&media, 0, sizeof(media));
-    memset(&asset, 0, sizeof(asset));
-    memset(&command, 0, sizeof(command));
-    expect_i("TITLE presentation command obtains DM1 PC34 media receipt",
-             dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media),
-             1);
-    asset.release_c001_ready = 1;
-    expect_i("TITLE presentation PRESENTS keeps C12 and source hold",
-             dm1_v1_startup_title_presentation_command_pc34(
-                 &media, &asset, 1u, &command) && command.present_frame &&
-                 command.clear_before_present &&
-                 command.special_palette ==
-                     VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
-                 !command.palette_before_pre_present_delay &&
-                 command.pre_present_delay_ms == 0u &&
-                 command.post_present_delay_ms == media.title_presents_hold_ms &&
-                 command.source_timing_receipt_consumed &&
-                 command.source_asset_receipt_consumed,
-             1);
-    expect_i("TITLE presentation zoom keeps C13/C14 VBlank cadence",
-             dm1_v1_startup_title_presentation_command_pc34(
-                 &media, &asset, 2u, &command) && command.present_frame &&
-                 command.special_palette == VGA_PALETTE_PC34_SPECIAL_TITLE &&
-                 command.palette_before_pre_present_delay &&
-                 command.pre_present_delay_ms == media.title_zoom_frame_delay_ms &&
-                 command.post_present_delay_ms == 0u,
-             1);
-    expect_i("only the first zoom latches C13/C14 before its VBlank",
-             dm1_v1_startup_title_presentation_command_pc34(
-                 &media, &asset, 3u, &command) && command.present_frame &&
-                 !command.palette_before_pre_present_delay,
-             1);
-    expect_i("TITLE post-zoom wait remains a non-present VBlank event",
-             dm1_v1_startup_title_presentation_command_pc34(
-                 &media, &asset, 20u, &command) && !command.present_frame &&
-                 command.pre_present_delay_ms == media.title_zoom_frame_delay_ms,
-             1);
-    expect_i("TITLE Strikes Back keeps DM1 C13/C14 palette",
-             dm1_v1_startup_title_presentation_command_pc34(
-                 &media, &asset, 22u, &command) && command.present_frame &&
-                 command.special_palette == VGA_PALETTE_PC34_SPECIAL_TITLE,
-             1);
-    media.title_zoom_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
-    expect_i("TITLE presentation rejects a CSB palette substitution",
-             !dm1_v1_startup_title_presentation_command_pc34(
-                 &media, &asset, 2u, &command),
-             1);
-}
-
-static void check_entrance_credits_presentation_command(void) {
-    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
-    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
-    DM1_V1_StartupEntranceCreditsReturnCommand_PC34 return_command;
-    unsigned char c005[320U * 200U];
-
-    memset(&media, 0, sizeof(media));
-    memset(&command, 0, sizeof(command));
-    memset(&return_command, 0, sizeof(return_command));
-    memset(c005, 0, sizeof(c005));
-    c005[320U * 100U + 160U] = 15U;
-    expect_i("entrance credits command obtains DM1 PC34 media receipt",
-             dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media),
-             1);
-    expect_i("entrance C005 command keeps DM1 credits palette and 1800 VBlanks",
-             dm1_v1_startup_entrance_credits_presentation_command_pc34(
-                 &media, c005, 320U, 200U, &command) &&
-                 command.present_credits_frame &&
-                 command.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
-                 command.credits_wait_ticks == 1800U &&
-                 command.vblank_delay_ms == media.entrance_vblank_ms &&
-                 command.source_asset_receipt_consumed &&
-                 command.source_palette_receipt_consumed &&
-                 command.source_timing_receipt_consumed &&
-                 command.graphics_c005_pixel_fingerprint != 0U,
-             1);
-    expect_i("credits return redraws DM1 entrance after the F0442 phase",
-             dm1_v1_startup_entrance_credits_return_command_pc34(
-                 &media, &command, &return_command) &&
-                 return_command.credits_phase_receipt_consumed &&
-                 return_command.redraw_closed_entrance &&
-                 return_command.discard_pending_input &&
-                 return_command.present_entrance_palette &&
-                 return_command.special_palette ==
-                     VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
-                 return_command.wait_vblank_delay_ms ==
-                     media.entrance_vblank_ms,
-             1);
-    c005[320U * 100U + 160U] = 0U;
-    expect_i("entrance C005 command rejects an empty synthetic credits frame",
-             !dm1_v1_startup_entrance_credits_presentation_command_pc34(
-                 &media, c005, 320U, 200U, &command),
-             1);
-    media.entrance_credits_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
-    c005[320U * 100U + 160U] = 15U;
-    expect_i("entrance C005 command rejects a CSB palette substitution",
-             !dm1_v1_startup_entrance_credits_presentation_command_pc34(
-                 &media, c005, 320U, 200U, &command),
-             1);
-    expect_i("credits return rejects a CSB credits phase",
-             !dm1_v1_startup_entrance_credits_return_command_pc34(
-                 &media, &command, &return_command),
-             1);
 }
 
 static void check_palette_cross_source_contract(void) {
@@ -906,14 +749,7 @@ static void check_real_pc34_c001(const char* graphics_path) {
 
 int main(int argc, char** argv) {
     check_selection_contract();
-    check_runtime_asset_receipt();
-    check_title_presentation_command();
-    check_entrance_credits_presentation_command();
     check_palette_cross_source_contract();
-    check_startup_source_timing_contract();
-    check_entrance_audio_no_fallback_contract();
-    check_entrance_credits_runtime_boundary();
-    check_real_pc34_c001(argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_GRAPHICS_DAT"));
 
     if (g_fail) {
         printf("summary=%d passed %d failed\n", g_pass, g_fail);

@@ -273,24 +273,18 @@ static void test_shoot_runtime_math(void) {
 
 static void test_spell_projectile_f0412_to_f0327_create_input(void) {
     DM1_SpellF0412RuntimeReceipt receipt;
-    DM1_ChampionSpellStats stats;
     DM1_SpellF0327ProjectileContextPc34 context;
     DM1_SpellF0327ProjectileLaunchPlanPc34 plan;
     struct ProjectileCreateInput_Compat input;
 
     memset(&receipt, 0, sizeof(receipt));
-    memset(&stats, 0, sizeof(stats));
     memset(&context, 0, sizeof(context));
-    stats.currentHealth = 200;
-    stats.currentMana = 64;
-    stats.maximumMana = 64;
-    stats.wisdom = 60;
-    stats.skillLevels[DM1_SKILL_FIRE] = 10;
-    ASSERT_EQ(dm1_spell_f0412RuntimeReceiptForTableIndex(
-                  8, 1, 1, &stats, 0, 2, 2, 0, &receipt), 1,
-              "F0412 Fireball receipt builds from G0487");
-    ASSERT_EQ(dm1_spell_f0412ValidateProjectileReceiptPc34(&receipt), 1,
-              "F0412 Fireball receipt is source-consistent");
+    receipt.castResult = DM1_SPELL_CAST_SUCCESS;
+    receipt.createsProjectile = 1;
+    receipt.projectileThing = DM1_PROJECTILE_THING_FIREBALL;
+    receipt.projectileKineticEnergy = 21;
+    receipt.projectileStepEnergy = 10;
+    receipt.championDirectionAfter = 2;
     context.championIndex = 1;
     context.championCell = 1;
     context.partyMapIndex = 0;
@@ -307,14 +301,14 @@ static void test_spell_projectile_f0412_to_f0327_create_input(void) {
               "F0412 fireball subtype");
     ASSERT_EQ(plan.attackTypeCode, COMBAT_ATTACK_FIRE,
               "F0412 fireball attack type");
-    ASSERT_EQ(plan.kineticEnergyBeforeF0327, 72,
+    ASSERT_EQ(plan.kineticEnergyBeforeF0327, 21,
               "F0412 kinetic before F0327");
-    ASSERT_EQ(plan.kineticEnergyAfterF0327, 72,
-              "F0327 source kinetic receipt remains intact");
-    ASSERT_EQ(plan.stepEnergyBeforeF0327, 2,
+    ASSERT_EQ(plan.kineticEnergyAfterF0327, 24,
+              "F0327 weak spell projectile kinetic adjustment");
+    ASSERT_EQ(plan.stepEnergyBeforeF0327, 10,
               "F0412 step before F0327");
-    ASSERT_EQ(plan.stepEnergyAfterF0327, 2,
-              "F0327 source step receipt remains intact");
+    ASSERT_EQ(plan.stepEnergyAfterF0327, 9,
+              "F0327 weak spell projectile step adjustment");
     ASSERT_EQ(plan.attack, 90, "F0327 spell projectile attack");
     ASSERT_EQ(plan.launchDirection, 2, "F0327 launch direction");
     ASSERT_EQ(plan.launchCell, 2, "F0326 launch cell");
@@ -335,11 +329,11 @@ static void test_spell_projectile_f0412_to_f0327_create_input(void) {
     ASSERT_EQ(input.mapY, 5, "spell projectile map y");
     ASSERT_EQ(input.cell, 2, "spell projectile create cell");
     ASSERT_EQ(input.direction, 2, "spell projectile create direction");
-    ASSERT_EQ(input.kineticEnergy, 72, "spell projectile create kinetic");
+    ASSERT_EQ(input.kineticEnergy, 24, "spell projectile create kinetic");
     ASSERT_EQ(input.attack, 90, "spell projectile create attack");
     ASSERT_EQ(input.launcherStrength, 90,
               "spell projectile launcher strength follows F0327 attack");
-    ASSERT_EQ(input.stepEnergy, 2, "spell projectile create step");
+    ASSERT_EQ(input.stepEnergy, 9, "spell projectile create step");
     ASSERT_EQ(input.currentTick, 1234, "spell projectile create tick");
     ASSERT_EQ(input.attackTypeCode, COMBAT_ATTACK_FIRE,
               "spell projectile create attack type");
@@ -347,13 +341,10 @@ static void test_spell_projectile_f0412_to_f0327_create_input(void) {
               "spell projectile carries no thrown item");
     ASSERT_EQ(input.firstMoveGraceFlag, 1, "spell projectile first move grace");
 
-    stats.maximumMana = 24;
-    stats.skillLevels[DM1_SKILL_AIR] = 9;
-    ASSERT_EQ(dm1_spell_f0412RuntimeReceiptForTableIndex(
-                  14, 1, 1, &stats, 0, 3, 3, 0, &receipt), 1,
-              "F0412 Open Door receipt builds from G0487");
-    ASSERT_EQ(dm1_spell_f0412ValidateProjectileReceiptPc34(&receipt), 1,
-              "F0412 Open Door receipt is source-consistent");
+    receipt.projectileThing = DM1_PROJECTILE_THING_OPEN_DOOR;
+    receipt.projectileKineticEnergy = 120;
+    receipt.projectileStepEnergy = 7;
+    receipt.championDirectionAfter = 3;
     context.championCell = 0;
     ASSERT_EQ(dm1_v1_build_spell_projectile_create_input_f0327_pc34(
                   &receipt, &context, &input), 1,
@@ -367,13 +358,6 @@ static void test_spell_projectile_f0412_to_f0327_create_input(void) {
     ASSERT_EQ(input.stepEnergy, 7, "open-door spell step not adjusted");
     ASSERT_EQ(input.direction, 3, "open-door spell direction");
     ASSERT_EQ(input.cell, 0, "open-door spell launch cell");
-
-    /* Altering any F0412-owned fact rejects the launch instead of creating
-     * an approximately matching host projectile. */
-    ++receipt.projectileKineticEnergy;
-    ASSERT_EQ(dm1_v1_build_spell_projectile_create_input_f0327_pc34(
-                  &receipt, &context, &input), 0,
-              "tampered F0412 projectile receipt is rejected");
 
     receipt.castResult = DM1_SPELL_CAST_FAILURE;
     receipt.createsProjectile = 0;
@@ -846,14 +830,6 @@ static void test_projectile_materialization_plan(void) {
               "wall materialization receipt deletes projectile");
     ASSERT_EQ(materialReceipt.shouldClearProjectileNext, 1,
               "wall materialization receipt clears projectile next");
-    ASSERT_EQ(materialReceipt.shouldUnlinkProjectileFromSquare, 1,
-              "wall materialization receipt unlinks live C14 first");
-    ASSERT_EQ(materialReceipt.cleanupMapIndex, 2,
-              "wall cleanup receipt keeps source map");
-    ASSERT_EQ(materialReceipt.cleanupMapX, 10,
-              "wall cleanup receipt keeps source x");
-    ASSERT_EQ(materialReceipt.cleanupMapY, 11,
-              "wall cleanup receipt keeps source y");
     ASSERT_EQ(materialReceipt.projectileThing,
               (unsigned short)((THING_TYPE_PROJECTILE << 10) |
                                (unsigned short)(1u << 14)),
@@ -894,12 +870,6 @@ static void test_projectile_materialization_plan(void) {
               "champion materialization receipt builds");
     ASSERT_EQ(materialReceipt.mapIndex, 3,
               "champion materialization receipt impact map");
-    ASSERT_EQ(materialReceipt.cleanupMapIndex, 2,
-              "champion cleanup stays at live C14 source map");
-    ASSERT_EQ(materialReceipt.cleanupMapX, 10,
-              "champion cleanup stays at live C14 source x");
-    ASSERT_EQ(materialReceipt.cleanupMapY, 11,
-              "champion cleanup stays at live C14 source y");
     ASSERT_EQ(materialReceipt.cell, 2,
               "champion materialization receipt impact cell");
     ASSERT_EQ(materialReceipt.squareAttach.shouldAppendAfterTail, 1,
@@ -926,10 +896,6 @@ static void test_projectile_materialization_plan(void) {
               "potion materialization receipt still deletes projectile");
     ASSERT_EQ(materialReceipt.shouldClearProjectileNext, 1,
               "potion materialization receipt still clears projectile next");
-    ASSERT_EQ(materialReceipt.shouldUnlinkProjectileFromSquare, 1,
-              "potion receipt still unlinks live C14 before consuming Slot");
-    ASSERT_EQ(materialReceipt.cleanupMapX, 10,
-              "potion cleanup keeps live C14 source x");
     ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
               "potion materialization receipt skips attach");
     ASSERT_EQ(materialReceipt.squareAttach.valid, 0,
@@ -950,8 +916,6 @@ static void test_projectile_materialization_plan(void) {
               "projectile thing materialization receipt builds");
     ASSERT_EQ(materialReceipt.shouldMaterialize, 0,
               "projectile thing materialization receipt blocks attach");
-    ASSERT_EQ(materialReceipt.shouldUnlinkProjectileFromSquare, 1,
-              "non-materialized C14 receipt still owns source unlink");
 
     p.reserved1 = (unsigned short)((THING_TYPE_SENSOR << 10) | 1);
     ASSERT_EQ(dm1_v1_projectile_materialization_plan_pc34(

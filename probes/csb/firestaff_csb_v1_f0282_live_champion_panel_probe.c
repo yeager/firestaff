@@ -49,43 +49,6 @@ static int g_failures;
     }                                                                      \
 } while (0)
 
-static int csb_f0282_champion_panel_gate_active(
-    const M11_GameViewState *state,
-    int *out_front_mirror_ordinal,
-    int *out_candidate_ordinal,
-    int *out_candidate_party_index)
-{
-    int front_ordinal;
-
-    if (out_front_mirror_ordinal) *out_front_mirror_ordinal = -1;
-    if (out_candidate_ordinal) *out_candidate_ordinal = -1;
-    if (out_candidate_party_index) *out_candidate_party_index = -1;
-    if (!state || (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
-                   strcmp(state->sourceId, "csb") != 0)) {
-        return 0;
-    }
-
-    front_ordinal = M11_GameView_GetFrontMirrorOrdinal(state);
-    if (out_front_mirror_ordinal) *out_front_mirror_ordinal = front_ordinal;
-    if (out_candidate_ordinal) *out_candidate_ordinal =
-        state->candidateMirrorOrdinal;
-    if (out_candidate_party_index) *out_candidate_party_index =
-        state->candidateMirrorPartyIndex;
-
-    /* ReDMCSB REVIVE.C F0280:260-277 publishes the candidate for C040;
-     * PANEL.C F0346:1619-1635 draws it; REVIVE.C F0282:744-806 consumes
-     * C160/C161/C162. This probe-only receipt must therefore require the
-     * live front mirror and the appended candidate to agree exactly. */
-    return state->candidateMirrorPanelActive &&
-           state->inventoryPanelActive &&
-           front_ordinal >= 0 &&
-           front_ordinal == state->candidateMirrorOrdinal &&
-           state->candidateMirrorPartyIndex >= 0 &&
-           state->candidateMirrorPartyIndex < state->world.party.championCount &&
-           state->candidateMirrorPartyIndex < CHAMPION_MAX_PARTY &&
-           state->world.party.champions[state->candidateMirrorPartyIndex].present;
-}
-
 static const char *data_dir_arg(int argc, char **argv,
                                 char *buf, size_t buf_size)
 {
@@ -331,7 +294,7 @@ static void test_gate_null_and_non_csb(void)
     int candidate = 99;
     int partyIndex = 99;
 
-    CHECK(csb_f0282_champion_panel_gate_active(
+    CHECK(M11_GameView_CsbF0282ChampionPanelGateActive(
               NULL, &front, &candidate, &partyIndex) == 0,
           "NULL CSB F0282 gate is inactive");
     CHECK(front == -1 && candidate == -1 && partyIndex == -1,
@@ -340,7 +303,7 @@ static void test_gate_null_and_non_csb(void)
     M11_GameView_Init(&state);
     state.active = 1;
     snprintf(state.sourceId, sizeof(state.sourceId), "dm1");
-    CHECK(csb_f0282_champion_panel_gate_active(
+    CHECK(M11_GameView_CsbF0282ChampionPanelGateActive(
               &state, &front, &candidate, &partyIndex) == 0,
           "non-CSB source cannot open the CSB F0282 gate");
     M11_GameView_Shutdown(&state);
@@ -408,7 +371,7 @@ int main(int argc, char **argv)
 
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
     CHECK(frontOrdinal == 0, "front champion-mirror sensor reports ordinal 0");
-    CHECK(csb_f0282_champion_panel_gate_active(
+    CHECK(M11_GameView_CsbF0282ChampionPanelGateActive(
               &state, &frontOrdinal, &candidateOrdinal,
               &candidatePartyIndex) == 0,
           "CSB F0282 gate is closed before selecting the mirror");
@@ -427,7 +390,7 @@ int main(int argc, char **argv)
           state.world.party.championCount == 1 &&
           state.world.party.champions[0].present == 1,
           "C040 panel-live state appends imported champion candidate");
-    CHECK(csb_f0282_champion_panel_gate_active(
+    CHECK(M11_GameView_CsbF0282ChampionPanelGateActive(
               &state, &frontOrdinal, &candidateOrdinal,
               &candidatePartyIndex) == 1,
           "CSB F0282 gate is active only while C040 panel is live");
@@ -464,7 +427,7 @@ int main(int argc, char **argv)
           "confirm disables the champion-mirror sensor");
     CHECK(M11_GameView_GetFrontMirrorOrdinal(&state) == -1,
           "disabled mirror sensor no longer reports a front ordinal");
-    CHECK(csb_f0282_champion_panel_gate_active(
+    CHECK(M11_GameView_CsbF0282ChampionPanelGateActive(
               &state, &frontOrdinal, &candidateOrdinal,
               &candidatePartyIndex) == 0,
           "CSB F0282 gate closes after confirmed C160 route");

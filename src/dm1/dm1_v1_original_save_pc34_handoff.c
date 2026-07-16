@@ -108,21 +108,29 @@ static int dm1_original_save_file_opens_for_read(const char *path)
  * corpus. CSBWin's 512-byte GAMEBLOCK1 also cannot pass this gate by header
  * shape alone: the classifier has already required F0435/F7057's five
  * length-prefixed, keyed, checksummed parts before this provenance check. */
-static int dm1_original_save_corpus_external_pc34_bytes(
-    const uint8_t *bytes,
-    size_t size,
+static int dm1_original_save_corpus_external_pc34_file(
+    const char *path,
     int *out_firestaff_manifest)
 {
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
     int manifest_result;
+    int result;
 
     if (out_firestaff_manifest) {
         *out_firestaff_manifest = 0;
     }
-    if (!bytes || size == 0u || size > (size_t)((int)0x7fffffff)) {
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return 0;
+    }
+    if (size > (size_t)((int)0x7fffffff)) {
+        free(bytes);
         return 0;
     }
     manifest_result = F0799_SAVEGAME_PC34PeekManifest_Compat(
         bytes, (int)size, NULL, NULL, NULL);
+    free(bytes);
     if (manifest_result == SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT) {
         return 1;
     }
@@ -133,56 +141,14 @@ static int dm1_original_save_corpus_external_pc34_bytes(
     return 0;
 }
 
-static int dm1_original_save_snapshot_matches_classification(
-    const DM1OriginalSaveClassifyResult *discovered,
-    const uint8_t *bytes,
-    size_t size,
-    DM1OriginalSaveClassifyResult *out_snapshot)
+static uint32_t dm1_original_save_corpus_fingerprint_mix(uint32_t hash,
+                                                          uint32_t value)
 {
-    DM1OriginalSaveClassifyResult snapshot;
-
-    if (!discovered || !bytes || size == 0u || !out_snapshot ||
-        !dm1_v1_original_save_classify_bytes(bytes, size, &snapshot)) {
-        return 0;
-    }
-    *out_snapshot = snapshot;
-    return snapshot.shape == discovered->shape &&
-           snapshot.readiness == discovered->readiness &&
-           snapshot.size_bytes == discovered->size_bytes &&
-           snapshot.header_key == discovered->header_key &&
-           snapshot.format_id == discovered->format_id &&
-           snapshot.game_id == discovered->game_id &&
-           snapshot.platform == discovered->platform &&
-           snapshot.dungeon_id == discovered->dungeon_id &&
-           snapshot.header_checksum_ok == discovered->header_checksum_ok &&
-           snapshot.prefix_checksum32 == discovered->prefix_checksum32 &&
-           snapshot.pc34_loader_part_envelope_candidate ==
-               discovered->pc34_loader_part_envelope_candidate &&
-           snapshot.save_part_loader_envelope_end_offset ==
-               discovered->save_part_loader_envelope_end_offset &&
-           snapshot.save_part_loader_trailing_byte_count ==
-               discovered->save_part_loader_trailing_byte_count;
-}
-
-static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
-                                             size_t byte_count)
-{
-    uint32_t hash = 2166136261u;
-    size_t i;
-
-    if (!bytes || byte_count == 0u) return 0u;
-    for (i = 0u; i < byte_count; ++i) {
-        hash ^= bytes[i];
+    unsigned int shift;
+    for (shift = 0u; shift < 32u; shift += 8u) {
+        hash ^= (value >> shift) & 0xffu;
         hash *= 16777619u;
     }
-    return hash ? hash : 1u;
-}
-
-static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
-                                                    uint32_t value)
-{
-    hash ^= value;
-    hash *= 16777619u;
     return hash;
 }
 
@@ -440,6 +406,8 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
 #define DM1_PC34_CHAMPION_DIRECTION_OFFSET 28u
 #define DM1_PC34_CHAMPION_ATTRIBUTES_OFFSET 48u
 #define DM1_PC34_CHAMPION_WOUNDS_OFFSET 50u
+#define DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET 42u
+#define DM1_PC34_CHAMPION_ACTION_INDEX_OFFSET 32u
 #define DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET 52u
 #define DM1_PC34_CHAMPION_MAXIMUM_HEALTH_OFFSET 54u
 #define DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET 56u
@@ -782,6 +750,8 @@ static void import_original_pc34_champion(const uint8_t *src,
     memcpy(champ->title, src + DM1_PC34_CHAMPION_TITLE_OFFSET,
            CHAMPION_TITLE_LENGTH);
     champ->direction = src[DM1_PC34_CHAMPION_DIRECTION_OFFSET];
+    champ->actionIndex = src[DM1_PC34_CHAMPION_ACTION_INDEX_OFFSET];
+    champ->poisonDose = src[DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET];
     champ->wounds = read_u16_le(src + DM1_PC34_CHAMPION_WOUNDS_OFFSET);
     champ->hp.current =
         (uint16_t)read_i16_le(src + DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET);
@@ -825,6 +795,38 @@ static void import_original_pc34_champion(const uint8_t *src,
     champ->load = read_u16_le(src + DM1_PC34_CHAMPION_LOAD_OFFSET);
 }
 
+static int validate_original_pc34_champion_block(const uint8_t *src)
+{
+    static const size_t current_offsets[3] = {
+        DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET,
+        DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET,
+        DM1_PC34_CHAMPION_CURRENT_MANA_OFFSET
+    };
+    static const size_t maximum_offsets[3] = {
+        DM1_PC34_CHAMPION_MAXIMUM_HEALTH_OFFSET,
+        DM1_PC34_CHAMPION_MAXIMUM_STAMINA_OFFSET,
+        DM1_PC34_CHAMPION_MAXIMUM_MANA_OFFSET
+    };
+    int i;
+
+    if (!src || src[DM1_PC34_CHAMPION_DIRECTION_OFFSET] > 3u) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
+    /* ReDMCSB DEFS.H stores Current/MaximumHealth, Stamina and Mana as
+     * int16_t. LOADSAVE.C F0435 copies those fixed CHAMPION records, so
+     * reject impossible signed values before Firestaff's uint16_t state can
+     * turn a negative source value into a huge live vital. */
+    for (i = 0; i < 3; ++i) {
+        int current = (int)read_i16_le(src + current_offsets[i]);
+        int maximum = (int)read_i16_le(src + maximum_offsets[i]);
+
+        if (current < 0 || maximum < 0 || current > maximum) {
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+    }
+    return SAVEGAME_PC34_OK;
+}
+
 static int import_original_pc34_party_part(const uint8_t *part,
                                            size_t part_size,
                                            struct SaveGame_Compat *out_state,
@@ -839,6 +841,39 @@ static int import_original_pc34_party_part(const uint8_t *part,
     if (part_size != DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
+    if (out_report) {
+        /* ReDMCSB DEFS.H PARTY_INFO: MagicalLightAmount is the first
+         * int16, followed by Event73Count_ThievesEye/Event79Count_Footprints;
+         * ShieldDefense is the following signed int16 at byte 4;
+         * FireShieldDefense is the next signed int16 at byte 6;
+         * SpellShieldDefense is the following signed int16 at byte 8;
+         * Event71Count_Invisibility follows 24 two-byte SCENTs and 24 scent
+         * strengths at byte 86. LOADSAVE.C F0435
+         * copies this fixed block before it resumes TIMELINE.C, so retain
+         * the persisted active-state byte instead of inferring it from a
+         * pending C73 timeout. */
+        out_report->imported_event73_count_thieves_eye =
+            part[DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+                 DM1_PC34_ORIGINAL_PARTY_INFO_EVENT73_COUNT_OFFSET];
+        out_report->imported_magical_light_amount = read_i16_le(
+            part + DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+            DM1_PC34_ORIGINAL_PARTY_INFO_MAGICAL_LIGHT_AMOUNT_OFFSET);
+        out_report->imported_event79_count_footprints =
+            part[DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+                 DM1_PC34_ORIGINAL_PARTY_INFO_EVENT79_COUNT_OFFSET];
+        out_report->imported_event71_count_invisibility =
+            part[DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+                 DM1_PC34_ORIGINAL_PARTY_INFO_EVENT71_COUNT_OFFSET];
+        out_report->imported_party_shield_defense = read_i16_le(
+            part + DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+            DM1_PC34_ORIGINAL_PARTY_INFO_SHIELD_DEFENSE_OFFSET);
+        out_report->imported_party_fire_shield_defense = read_i16_le(
+            part + DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+            DM1_PC34_ORIGINAL_PARTY_INFO_FIRE_SHIELD_DEFENSE_OFFSET);
+        out_report->imported_party_spell_shield_defense = read_i16_le(
+            part + DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY +
+            DM1_PC34_ORIGINAL_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET);
+    }
     if (!out_state->party) {
         return SAVEGAME_PC34_OK;
     }
@@ -851,6 +886,13 @@ static int import_original_pc34_party_part(const uint8_t *part,
         slot_count = CHAMPION_MAX_PARTY;
     }
     for (i = 0; i < slot_count; ++i) {
+        int result = validate_original_pc34_champion_block(
+            part + (size_t)i * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT);
+        if (result != SAVEGAME_PC34_OK) {
+            return result;
+        }
+    }
+    for (i = 0; i < slot_count; ++i) {
         import_original_pc34_champion(
             part + (size_t)i * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT,
             i,
@@ -858,19 +900,7 @@ static int import_original_pc34_party_part(const uint8_t *part,
     }
     for (; i < CHAMPION_MAX_PARTY; ++i) {
         F0600_CHAMPION_InitEmpty_Compat(&out_state->party->champions[i]);
-        memcpy(out_state->party->pc34InactiveChampionRecords[i],
-               part + (size_t)i * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT,
-               DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT);
-        out_state->party->pc34InactiveChampionRecordValid[i] = 1u;
     }
-    /* ReDMCSB LOADSAVE.C F0435:2766-2777 copies the complete C2 payload,
-     * including PARTY_INFO. DEFS.H's 128-byte structure starts with light
-     * and shield state, not the GLOBAL_DATA party coordinates; retain it
-     * opaquely until every source field has a proved runtime owner. */
-    memcpy(out_state->party->pc34PartyInfoBytes,
-           part + (DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT * CHAMPION_MAX_PARTY),
-           PARTY_PC34_SAVE_INFO_BYTE_COUNT);
-    out_state->party->pc34PartyInfoBytesValid = 1u;
     if (out_report) {
         out_report->imported_champion_block_count = CHAMPION_MAX_PARTY;
         out_report->imported_champion_slot_count = slot_count;
@@ -1153,6 +1183,19 @@ static int validate_original_pc34_timeline_heap(
 static int timeline_kind_from_original_pc34_event_type(int type)
 {
     switch (type) {
+    case DM1_EVENT_DOOR_ANIMATION:
+        return TIMELINE_EVENT_DOOR_ANIMATE;
+    case DM1_EVENT_DOOR_DESTRUCTION:
+        return TIMELINE_EVENT_DOOR_DESTRUCTION;
+    case DM1_EVENT_MOVE_PROJECTILE:
+    case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
+        return TIMELINE_EVENT_PROJECTILE_MOVE;
+    case DM1_EVENT_EXPLOSION:
+        return TIMELINE_EVENT_EXPLOSION_ADVANCE;
+    case DM1_EVENT_LIGHT:
+        return TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
+    case DM1_EVENT_ENABLE_CHAMPION_ACTION:
+        return TIMELINE_EVENT_MOVE_TIMER;
     case DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE:
     case DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE:
     case DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT:
@@ -1167,31 +1210,12 @@ static int timeline_kind_from_original_pc34_event_type(int type)
     case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_2:
     case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3:
         return TIMELINE_EVENT_CREATURE_REACTION;
-    case DM1_EVENT_DOOR_ANIMATION:
-        return TIMELINE_EVENT_DOOR_ANIMATE;
-    case DM1_EVENT_DOOR_DESTRUCTION:
-        return TIMELINE_EVENT_DOOR_DESTRUCTION;
-    case DM1_EVENT_ENABLE_CHAMPION_ACTION:
-        return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
-    case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
-        return TIMELINE_EVENT_STATUS_TIMEOUT;
-    case DM1_EVENT_VI_ALTAR_REBIRTH:
-        return TIMELINE_EVENT_VI_ALTAR_REBIRTH;
-    case DM1_EVENT_MOVE_PROJECTILE:
-    case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
-        return TIMELINE_EVENT_PROJECTILE_MOVE;
-    case DM1_EVENT_EXPLOSION:
-        return TIMELINE_EVENT_EXPLOSION_ADVANCE;
-    case DM1_EVENT_LIGHT:
-        return TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
     case DM1_EVENT_ENABLE_GROUP_GENERATOR:
         return TIMELINE_EVENT_GROUP_GENERATOR;
     case DM1_EVENT_REMOVE_FLUXCAGE:
         return TIMELINE_EVENT_REMOVE_FLUXCAGE;
     case DM1_EVENT_PLAY_SOUND:
         return TIMELINE_EVENT_PLAY_SOUND;
-    case DM1_EVENT_CPSE:
-        return TIMELINE_EVENT_CPSE_CHECK;
     case DM1_EVENT_WATCHDOG:
         return TIMELINE_EVENT_WATCHDOG;
     case DM1_EVENT_MOVE_GROUP_SILENT:
@@ -1219,177 +1243,33 @@ static int timeline_kind_from_original_pc34_event_type(int type)
     }
 }
 
-static int original_pc34_event_type_is_group_reaction(int type)
+static int validate_original_pc34_timeline_references(
+    const DM1OriginalSavePC34HandoffReport *report)
 {
-    return type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
-           type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
-}
+    unsigned char seen[DM1_EVENT_MAX_COUNT];
+    int i;
 
-static uint16_t original_pc34_next_thing(
-    const struct DungeonThings_Compat *things,
-    uint16_t thing)
-{
-    int type;
-    int index;
-    const unsigned char *raw;
-    int byte_count;
+    if (!report || report->original_event_count < 0 ||
+        report->original_event_count > DM1_EVENT_MAX_COUNT ||
+        report->original_event_count > report->decoded_event_count ||
+        report->original_event_count > report->decoded_timeline_index_count) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    memset(seen, 0, sizeof(seen));
+    for (i = 0; i < report->original_event_count; ++i) {
+        uint16_t source_index = report->timeline_indices[i];
 
-    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
-        return THING_ENDOFLIST;
-    }
-    type = (int)THING_GET_TYPE(thing);
-    index = (int)THING_GET_INDEX(thing);
-    if (type < 0 || type >= 16 || index < 0 ||
-        index >= things->thingCounts[type]) {
-        return THING_ENDOFLIST;
-    }
-    raw = things->rawThingData[type];
-    byte_count = s_thingDataByteCount[type];
-    if (!raw || byte_count < 2) {
-        return THING_ENDOFLIST;
-    }
-    return read_u16_le(raw + (size_t)index * (size_t)byte_count);
-}
-
-static int original_pc34_group_on_square(
-    const struct GameWorld_Compat *world,
-    int map_index,
-    int map_x,
-    int map_y,
-    int *out_group_index)
-{
-    uint16_t thing;
-    int safety = 0;
-
-    if (out_group_index) *out_group_index = -1;
-    if (!world || !world->dungeon || !world->things ||
-        !world->things->loaded || !world->things->groups) {
-        return 0;
-    }
-    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        world->dungeon, world->things, map_index, map_x, map_y);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
-        int type = (int)THING_GET_TYPE(thing);
-        int index = (int)THING_GET_INDEX(thing);
-        if (type == THING_TYPE_GROUP && index >= 0 &&
-            index < world->things->groupCount) {
-            if (out_group_index) *out_group_index = index;
-            return 1;
+        /* ReDMCSB LOADSAVE.C F0435 reads the persisted heap of EVENT array
+         * indexes before TIMELINE.C resumes it. Each live heap entry names
+         * one EVENT slot, so a duplicate would schedule one source event
+         * twice even though each index is individually in range. */
+        if (source_index >= (uint16_t)report->decoded_event_count ||
+            seen[source_index]) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
         }
-        thing = original_pc34_next_thing(world->things, thing);
+        seen[source_index] = 1u;
     }
-    return 0;
-}
-
-static int original_pc34_explosion_on_square(
-    const struct GameWorld_Compat *world,
-    int map_index,
-    int map_x,
-    int map_y,
-    uint16_t expected_thing,
-    int *out_explosion_index)
-{
-    uint16_t thing;
-    int safety = 0;
-
-    if (out_explosion_index) *out_explosion_index = -1;
-    if (!world || !world->dungeon || !world->things ||
-        !world->things->loaded || !world->things->explosions ||
-        THING_GET_TYPE(expected_thing) != THING_TYPE_EXPLOSION) {
-        return 0;
-    }
-    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        world->dungeon, world->things, map_index, map_x, map_y);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
-        if (thing == expected_thing) {
-            int index = (int)THING_GET_INDEX(thing);
-            if (index < 0 || index >= world->things->explosionCount) {
-                return 0;
-            }
-            if (out_explosion_index) *out_explosion_index = index;
-            return 1;
-        }
-        thing = original_pc34_next_thing(world->things, thing);
-    }
-    return 0;
-}
-
-/* ReDMCSB LOADSAVE.C F0435 restores the complete C3/C4 pair before
- * TIMELINE.C consumes C24/C25. Validate every C15 Slot relation up front so
- * one later bad union cannot allocate a preceding explosion in the candidate
- * runtime stage. C24's fluxcage constraints remain distinct from C25. */
-static int original_pc34_explosion_event_slot_is_valid(
-    const struct DM1_Event_V1 *src,
-    const struct GameWorld_Compat *world,
-    int require_fluxcage,
-    int *out_explosion_index)
-{
-    uint16_t source_thing;
-    int map_index;
-    int source_index;
-
-    if (out_explosion_index) *out_explosion_index = -1;
-    if (!src || !world || !world->dungeon || !world->things ||
-        (src->type != DM1_EVENT_EXPLOSION &&
-         src->type != DM1_EVENT_REMOVE_FLUXCAGE) ||
-        (require_fluxcage &&
-         (src->type != DM1_EVENT_REMOVE_FLUXCAGE || src->priority != 0u))) {
-        return 0;
-    }
-    map_index = (int)((src->map_time >> 24) & 0xffu);
-    source_thing = read_u16_le(&src->c_cell);
-    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
-        src->b_mapX >= world->dungeon->maps[map_index].width ||
-        src->b_mapY >= world->dungeon->maps[map_index].height ||
-        (require_fluxcage && THING_GET_CELL(source_thing) != 0) ||
-        !original_pc34_explosion_on_square(world, map_index,
-                                           src->b_mapX, src->b_mapY,
-                                           source_thing, &source_index) ||
-        (require_fluxcage &&
-         world->things->explosions[source_index].type !=
-             C050_EXPLOSION_FLUXCAGE)) {
-        return 0;
-    }
-    if (out_explosion_index) *out_explosion_index = source_index;
-    return 1;
-}
-
-/* ReDMCSB TIMELINE.C F0255:1677-1695 traverses the square chain only for
- * C13 step 1. The preceding step 2 may be saved before that lookup, while
- * step 1 unlinks the bones before it schedules step 0. Keep the source
- * JUNK/ChargeCount ownership check for the sole dereferencing branch; a
- * resumed terminal step must not require the already-unlinked bones. */
-static int original_pc34_vi_altar_bones_on_square(
-    const struct GameWorld_Compat *world,
-    int map_index,
-    int map_x,
-    int map_y,
-    int cell,
-    int champion_index)
-{
-    uint16_t thing;
-    int safety = 0;
-
-    if (!world || !world->dungeon || !world->things ||
-        !world->things->loaded || !world->things->junks ||
-        champion_index < 0 || champion_index >= CHAMPION_MAX_PARTY ||
-        cell < 0 || cell > 3) {
-        return 0;
-    }
-    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        world->dungeon, world->things, map_index, map_x, map_y);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
-        int index = (int)THING_GET_INDEX(thing);
-        if (THING_GET_TYPE(thing) == THING_TYPE_JUNK &&
-            (int)THING_GET_CELL(thing) == cell && index >= 0 &&
-            index < world->things->junkCount &&
-            world->things->junks[index].type == DM1_JUNK_TYPE_BONES &&
-            world->things->junks[index].chargeCount == champion_index) {
-            return 1;
-        }
-        thing = original_pc34_next_thing(world->things, thing);
-    }
-    return 0;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
 static int original_pc34_event_type_is_status_timeout(int type)
@@ -2042,13 +1922,12 @@ static int materialize_original_pc34_generator_reenable_event(
 
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
-    struct GameWorld_Compat *world,
     struct TimelineQueue_Compat *timeline)
 {
     int i;
     uint16_t source_indices[DM1_EVENT_MAX_COUNT];
 
-    if (!report || !world || !timeline) {
+    if (!report || !timeline) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
     if (report->original_event_count < 0 ||
@@ -2056,6 +1935,10 @@ static int materialize_original_pc34_timeline(
         report->original_event_count > TIMELINE_QUEUE_CAPACITY ||
         report->original_event_count > report->decoded_event_count ||
         report->original_event_count > report->decoded_timeline_index_count) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    if (validate_original_pc34_timeline_references(report) !=
+        DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
@@ -2430,57 +2313,78 @@ static int materialize_original_pc34_timeline(
         ev.aux0 = src->type;
         ev.aux4 = src->priority;
         if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
-            /* ReDMCSB DEFS.H EVENT.B.SlotOrdinal overlays only B's first
-             * byte. CHAMPION.C F0330 creates ordinal zero; MENU.C F0407
-             * changes that pending C11 to M000_INDEX_TO_ORDINAL(C01), i.e.
-             * two, after a successful throw. No other C11 SlotOrdinal
-             * producer exists in the PC34 source, so reject every other
-             * value rather than mapping raw save bytes into host inventory. */
-            if (src->priority >= CHAMPION_MAX_PARTY ||
-                (src->b_mapX != 0u && src->b_mapX != 2u)) {
-                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            /* ReDMCSB CHAMPION.C F0330 stores C11's champion in Priority
+             * and B.SlotOrdinal = 0. Preserve the private M10 marker while
+             * keeping the F0259 quiver branch disabled. */
+            ev.mapX = 0;
+            ev.mapY = 0;
+            ev.cell = 0;
+            ev.aux0 = src->priority;
+            ev.aux1 = 0;
+            ev.aux4 = DM1_F0259_MOVE_TIMER_AUX4_PC34;
+        } else if (src->type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+                   src->type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            /* ReDMCSB PROJEXPL.C F0231 queues C31 by square. The saved
+             * EVENT has no Firestaff group index, so M10 resolves the live
+             * group from B.Location when dispatch resumes. */
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.cell = 0;
+            ev.aux0 = -1;
+            ev.aux1 = -1;
+            ev.aux2 = src->type;
+        } else if (src->type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS ||
+                   src->type == DM1_EVENT_MOVE_PROJECTILE) {
+            uint16_t thing = read_u16_le(&src->b_mapX);
+            uint16_t projectile_data = read_u16_le(&src->c_cell);
+            /* ReDMCSB PROJEXPL.C F0212:82-91 stores a C14 projectile
+             * THING in B.Slot, and F0219:682-717 uses both its index and
+             * M011_CELL. The source C.Projectile map position is not B. */
+            ev.mapX = (int)(projectile_data & 0x001fu);
+            ev.mapY = (int)((projectile_data >> 5) & 0x001fu);
+            ev.cell = (int)(thing >> 14);
+            ev.aux0 =
+                (((thing >> DM1_PC34_THING_TYPE_SHIFT) &
+                  DM1_PC34_THING_TYPE_MASK) == THING_TYPE_PROJECTILE)
+                    ? (int)(thing & DM1_PC34_THING_INDEX_MASK)
+                    : -1;
+            ev.aux1 = 0;
+            if (src->type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS) {
+                /* C48 must survive one reload as an impact-suppressed first
+                 * move. aux4 is the type marker; retain the source priority
+                 * separately because EVENT.A.A.Priority is still persisted. */
+                ev.aux3 = src->priority;
+                ev.aux4 = DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS;
             }
-            /* B's second byte and C are outside C11's semantic union arm.
-             * Retain them for F0433 round-trip, never as live coordinates. */
-            ev.aux1 = src->b_mapX;
-            ev.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-            ev.mapX = src->b_mapY;
-            ev.mapY = src->c_cell;
-            ev.cell = src->c_effect;
-        }
-        if (src->type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
-            /* ReDMCSB CHAMPION.C F0320 writes only Map_Time, Type and
-             * Priority for C12. TIMELINE.C F0254 consumes only Priority.
-             * B/C are an uninitialised union arm in the source event and
-             * must never be reinterpreted as Location/Cell/Effect. */
-            if (src->priority >= CHAMPION_MAX_PARTY ||
-                !world->party.champions[src->priority].present) {
-                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-            }
-        } else if (src->type == DM1_EVENT_VI_ALTAR_REBIRTH) {
-            DM1OriginalSavePC34ViAltarRebirthEventPlan plan;
-
-            if (!dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
-                    src, (int)source_index, &plan) || !world->dungeon ||
-                plan.map_index >= (int)world->dungeon->header.mapCount ||
-                plan.map_x >= (int)world->dungeon->maps[plan.map_index].width ||
-                plan.map_y >= (int)world->dungeon->maps[plan.map_index].height ||
-                !world->party.champions[plan.champion_index].present ||
-                (plan.step == 1 &&
-                 !original_pc34_vi_altar_bones_on_square(
-                     world, plan.map_index, plan.map_x, plan.map_y,
-                     plan.cell, plan.champion_index))) {
-                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-            }
-            ev.mapX = plan.map_x;
-            ev.mapY = plan.map_y;
-            ev.cell = plan.cell;
-            ev.aux1 = plan.step;
-        } else if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
-            /* C11 was materialized through its B.SlotOrdinal arm above. */
+        } else if (src->type == DM1_EVENT_EXPLOSION) {
+            uint16_t thing = read_u16_le(&src->c_cell);
+            /* ReDMCSB PROJEXPL.C F0220 lines 803-806 follows C25's
+             * EVENT.C.Slot explosion THING. M10 dispatches that instance
+             * through aux0, not through the raw C25 type value. */
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.cell = 0;
+            ev.aux0 =
+                (((thing >> DM1_PC34_THING_TYPE_SHIFT) &
+                  DM1_PC34_THING_TYPE_MASK) == THING_TYPE_EXPLOSION)
+                    ? (int)(thing & DM1_PC34_THING_INDEX_MASK)
+                    : -1;
+            ev.aux1 = 0;
         } else if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;
+            ev.aux2 = src->c_effect;
+        } else if (src->type == DM1_EVENT_REMOVE_FLUXCAGE) {
+            uint16_t thing = read_u16_le(&src->c_cell);
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.cell = EXPLOSION_CELL_CENTERED;
+            ev.aux0 =
+                (((thing >> DM1_PC34_THING_TYPE_SHIFT) &
+                  DM1_PC34_THING_TYPE_MASK) == THING_TYPE_EXPLOSION)
+                    ? (int)(thing & DM1_PC34_THING_INDEX_MASK)
+                    : (int)thing;
+            ev.aux1 = C050_EXPLOSION_FLUXCAGE;
         } else {
             ev.mapX = src->b_mapX;
             ev.mapY = src->b_mapY;
@@ -2491,6 +2395,59 @@ static int materialize_original_pc34_timeline(
             return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
         }
     }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+static int materialize_original_pc34_party_status(
+    const DM1OriginalSavePC34HandoffReport *report,
+    struct GameWorld_Compat *world)
+{
+    int thieves_eye_count;
+    int footprints_count;
+    int invisibility_count;
+    int party_shield_defense;
+    int party_fire_shield_defense;
+    int party_spell_shield_defense;
+    int magical_light_amount;
+
+    if (!report || !world) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    thieves_eye_count = report->imported_event73_count_thieves_eye;
+    footprints_count = report->imported_event79_count_footprints;
+    invisibility_count = report->imported_event71_count_invisibility;
+    party_shield_defense = report->imported_party_shield_defense;
+    party_fire_shield_defense = report->imported_party_fire_shield_defense;
+    party_spell_shield_defense = report->imported_party_spell_shield_defense;
+    magical_light_amount = report->imported_magical_light_amount;
+    if (thieves_eye_count < 0 || thieves_eye_count > 0xff ||
+        footprints_count < 0 || footprints_count > 0xff ||
+        invisibility_count < 0 || invisibility_count > 0xff) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 restores G0407_s_Party before EVENTS and
+     * TIMELINE. DUNVIEW.C F0111/F0127 consumes Event73Count_ThievesEye
+     * directly for the wall/door material, while TIMELINE.C decrements C71,
+     * C73, and C79 at expiry. Keep Firestaff's two runtime mirrors equal at
+     * the transactional handoff boundary; do not synthesize active state from
+     * an event that may already be due. */
+    world->magic.event71CountInvisibility = invisibility_count;
+    world->lifecycle.status.invisibilityCount = (uint16_t)invisibility_count;
+    world->magic.partyShieldDefense = party_shield_defense;
+    world->lifecycle.status.partyShieldDefense =
+        (int16_t)party_shield_defense;
+    world->magic.fireShieldDefense = party_fire_shield_defense;
+    world->lifecycle.status.partyFireShieldDefense =
+        (int16_t)party_fire_shield_defense;
+    world->magic.spellShieldDefense = party_spell_shield_defense;
+    world->lifecycle.status.partySpellShieldDefense =
+        (int16_t)party_spell_shield_defense;
+    world->magic.magicalLightAmount = magical_light_amount;
+    world->magic.event73CountThievesEye = thieves_eye_count;
+    world->lifecycle.status.thievesEyeCount = (uint16_t)thieves_eye_count;
+    world->magic.event79CountFootprints = footprints_count;
+    world->lifecycle.status.footprintsCount = (uint16_t)footprints_count;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
@@ -2516,11 +2473,7 @@ static int import_original_pc34_external_portraits(
     if (count < 0) count = 0;
     if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        if (out_state && out_state->party) {
-            /* ReDMCSB F0435 reads all four fixed portrait payloads into
-             * M516_CHAMPIONS, not only PartyChampionCount live members.
-             * Keep inactive-slot bytes as save-owned evidence so F0433 can
-             * write the same block again; they do not make a champion live. */
+        if (out_state && out_state->party && slot < count) {
             memcpy(out_state->party->champions[slot].portraitBitmap,
                    bytes + cursor,
                    CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
@@ -2530,12 +2483,6 @@ static int import_original_pc34_external_portraits(
     }
     if (out_report) {
         out_report->external_portrait_byte_count = (uint32_t)portrait_bytes;
-        out_report->external_portrait_byte_offset = (uint32_t)cursor -
-            (uint32_t)portrait_bytes;
-        out_report->external_portrait_fingerprint =
-            dm1_original_save_hash_bytes(
-                bytes + out_report->external_portrait_byte_offset,
-                portrait_bytes);
         out_report->external_portrait_payload_count = CHAMPION_MAX_PARTY;
         out_report->external_portrait_imported_count = count;
     }
@@ -2693,8 +2640,7 @@ static int decode_original_pc34_dungeon_tail(
     if (map_count <= 0 || map_count > DUNGEON_MAX_MAPS) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
-    map_descriptors_offset = DUNGEON_HEADER_SIZE;
-    off = map_descriptors_offset;
+    off = DUNGEON_HEADER_SIZE;
     if (off + (size_t)map_count * DUNGEON_MAP_DESC_SIZE + 2u > tail_size) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
@@ -2705,7 +2651,6 @@ static int decode_original_pc34_dungeon_tail(
         column_count += width;
     }
     off += (size_t)map_count * DUNGEON_MAP_DESC_SIZE;
-    columns_offset = off;
     if (off + (size_t)column_count * 2u + 2u > tail_size) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
@@ -2744,18 +2689,6 @@ static int decode_original_pc34_dungeon_tail(
         off += (size_t)thing_data_bytes;
         raw_map_offset = off;
         if (off + (size_t)raw_map_bytes + 2u != tail_size) {
-            return SAVEGAME_PC34_ERROR_BAD_SIZE;
-        }
-        if (validate_original_pc34_dungeon_tail_map_spans(
-                tail, map_count, map_descriptors_offset, off,
-                (size_t)raw_map_bytes) != SAVEGAME_PC34_OK) {
-            return SAVEGAME_PC34_ERROR_BAD_SIZE;
-        }
-        if (validate_original_pc34_dungeon_tail_columns(
-                tail, map_count, map_descriptors_offset, columns_offset, off,
-                (size_t)raw_map_bytes, square_first_thing_count,
-                &out_report->dungeon_tail_column_terminal_sft_count) !=
-            SAVEGAME_PC34_OK) {
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
         off += (size_t)raw_map_bytes;
@@ -2814,19 +2747,18 @@ static int decode_original_pc34_dungeon_tail(
         }
         out_report->dungeon_tail_present = 1;
         out_report->dungeon_tail_byte_count = (uint32_t)tail_size;
-        out_report->dungeon_tail_fingerprint =
-            original_pc34_tail_fingerprint(tail, tail_size);
         out_report->dungeon_tail_expected_checksum = expected_checksum;
         out_report->dungeon_tail_actual_checksum = actual_checksum;
         out_report->dungeon_tail_checksum_ok =
             (expected_checksum == actual_checksum);
         out_report->dungeon_tail_map_count = map_count;
         out_report->dungeon_tail_column_count = column_count;
-        out_report->dungeon_tail_column_table_valid = 1;
         out_report->dungeon_tail_square_first_thing_count =
             square_first_thing_count;
         out_report->dungeon_tail_text_data_word_count =
             text_data_word_count;
+        out_report->dungeon_tail_text_string_count = (int)read_u16_le(
+            tail + 12u + (size_t)THING_TYPE_TEXTSTRING * 2u);
         out_report->dungeon_tail_thing_data_byte_count =
             (uint32_t)thing_data_bytes;
         out_report->dungeon_tail_raw_map_data_byte_count =
@@ -2921,25 +2853,109 @@ static int materialize_original_pc34_dungeon_tail(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
-/* ReDMCSB LOADSAVE.C F0435 lines 2729-2745 restores PartyMapIndex/X/Y
- * from GLOBAL_DATA before F0434 materializes the saved dungeon at 2826.
- * A checksum-authenticated pose still cannot enter M10 unless it names a
- * square in that newly materialized tail. */
-static int original_pc34_party_pose_is_in_materialized_dungeon(
+static int validate_original_pc34_party_inventory_references(
     const struct GameWorld_Compat *world)
 {
-    const struct DungeonMapDesc_Compat *map;
+    int champion_index;
 
-    if (!world || !world->dungeon || !world->dungeon->maps ||
-        world->party.mapIndex < 0 ||
-        world->party.mapIndex >= (int)world->dungeon->header.mapCount) {
-        return 0;
+    if (!world || !world->ownsDungeon || !world->things) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
     }
-    map = &world->dungeon->maps[world->party.mapIndex];
-    return world->party.mapX >= 0 &&
-           world->party.mapX < (int)map->width &&
-           world->party.mapY >= 0 &&
-           world->party.mapY < (int)map->height;
+    for (champion_index = 0;
+         champion_index < world->party.championCount;
+         ++champion_index) {
+        const struct ChampionState_Compat *champion =
+            &world->party.champions[champion_index];
+        int slot;
+
+        for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+            unsigned short thing = champion->inventory[slot];
+            unsigned int type;
+            unsigned int index;
+            unsigned short next;
+
+            if (thing == THING_NONE) {
+                continue;
+            }
+            type = THING_GET_TYPE(thing);
+            index = THING_GET_INDEX(thing);
+            /* ReDMCSB LOADSAVE.C F0435 restores PARTY before the dungeon
+             * tail. Once F0434 has supplied ThingData, a champion slot may
+             * name only a live carryable Thing in a declared type table.
+             * A zero-count type remains owned by the compatible start
+             * runtime, as F0435 tails can be intentionally partial. */
+            if (thing == THING_ENDOFLIST || type < THING_TYPE_WEAPON ||
+                type > THING_TYPE_JUNK) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            if (world->things->thingCounts[type] == 0) {
+                continue;
+            }
+            if (index >= (unsigned int)world->things->thingCounts[type] ||
+                !world->things->rawThingData[type]) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            switch (type) {
+            case THING_TYPE_WEAPON:
+                next = world->things->weapons[index].next;
+                break;
+            case THING_TYPE_ARMOUR:
+                next = world->things->armours[index].next;
+                break;
+            case THING_TYPE_SCROLL:
+                next = world->things->scrolls[index].next;
+                break;
+            case THING_TYPE_POTION:
+                next = world->things->potions[index].next;
+                break;
+            case THING_TYPE_CONTAINER:
+                next = world->things->containers[index].next;
+                break;
+            case THING_TYPE_JUNK:
+                next = world->things->junks[index].next;
+                break;
+            default:
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            if (next == THING_NONE) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+        }
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+static int validate_original_pc34_party_pose_against_dungeon_tail(
+    const struct GameWorld_Compat *world)
+{
+    const struct DungeonDatState_Compat *dungeon;
+    const struct DungeonMapDesc_Compat *map;
+    int map_index;
+
+    if (!world || !world->ownsDungeon) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+    }
+    dungeon = world->dungeon;
+    if (!dungeon || !dungeon->maps || dungeon->header.mapCount == 0u) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 restores GLOBAL_DATA before F0434 reads the
+     * saved dungeon.  F0434 then makes PartyMapIndex select G0277_ps_DungeonMaps
+     * and the party coordinates select a square in that map.  Keep the same
+     * dependency inside the candidate world: a checksum-valid save must not
+     * publish a pose that cannot address its own restored dungeon tail. */
+    map_index = world->party.mapIndex;
+    if (map_index < 0 || map_index >= (int)dungeon->header.mapCount) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    map = &dungeon->maps[map_index];
+    if (world->party.mapX < 0 || world->party.mapY < 0 ||
+        world->party.mapX >= (int)map->width ||
+        world->party.mapY >= (int)map->height) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
 static int import_original_pc34_global_data(
@@ -2957,6 +2973,9 @@ static int import_original_pc34_global_data(
     size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
     uint32_t game_id;
     uint16_t actual_checksum = 0u;
+    int party_champion_count;
+    int active_champion_index;
+    int current_active_group_count;
     int maximum_active_group_count = 0;
     int event_maximum_count = 0;
     int i;
@@ -3001,14 +3020,35 @@ static int import_original_pc34_global_data(
     if (part_size < SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
+    party_champion_count = (int)read_u16_le(part + 10u);
+    active_champion_index = (int)read_i16_le(part + 20u);
+    /* ReDMCSB LOADSAVE.C F0435 restores GLOBAL_DATA before copying the
+     * fixed four CHAMPION records. Do not clamp a malformed count: PARTY
+     * consumers use the count and leader index as array bounds. */
+    if (party_champion_count < 0 ||
+        party_champion_count > CHAMPION_MAX_PARTY ||
+        active_champion_index < -1 ||
+        (party_champion_count == 0 && active_champion_index > 0) ||
+        (party_champion_count > 0 &&
+         active_champion_index >= party_champion_count)) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
     maximum_active_group_count = (int)read_u16_le(
         part + DM1_PC34_GLOBAL_MAXIMUM_ACTIVE_GROUP_COUNT_OFFSET);
+    current_active_group_count = (int)read_u16_le(
+        part + DM1_PC34_GLOBAL_CURRENT_ACTIVE_GROUP_COUNT_OFFSET);
+    /* ReDMCSB LOADSAVE.C F0435 reads exactly MaximumActiveGroupCount
+     * ACTIVE_GROUP records. A larger current count would make the saved
+     * live-set claim entries outside that checksum-validated part. */
+    if (current_active_group_count > maximum_active_group_count) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
     event_maximum_count = (int)read_u16_le(
         part + DM1_PC34_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET);
     if (out_report) {
         out_report->original_game_time = read_u32_le(part + 0u);
-        out_report->original_current_active_group_count = (int)read_u16_le(
-            part + DM1_PC34_GLOBAL_CURRENT_ACTIVE_GROUP_COUNT_OFFSET);
+        out_report->original_current_active_group_count =
+            current_active_group_count;
         out_report->original_maximum_active_group_count =
             maximum_active_group_count;
         out_report->original_event_count = (int)read_u16_le(
@@ -3018,12 +3058,12 @@ static int import_original_pc34_global_data(
         out_report->original_event_maximum_count = event_maximum_count;
     }
     if (out_state->party) {
-        out_state->party->championCount = (int)read_u16_le(part + 10u);
+        out_state->party->championCount = party_champion_count;
         out_state->party->mapX = (int)read_i16_le(part + 12u);
         out_state->party->mapY = (int)read_i16_le(part + 14u);
         out_state->party->direction = (int)read_i16_le(part + 16u);
         out_state->party->mapIndex = (int)read_i16_le(part + 18u);
-        out_state->party->activeChampionIndex = (int)read_i16_le(part + 20u);
+        out_state->party->activeChampionIndex = active_champion_index;
     }
 
     for (i = 1; i < SAVEGAME_PC34_PART_COUNT; ++i) {
@@ -3048,11 +3088,6 @@ static int import_original_pc34_global_data(
             }
         }
         if (i == SAVEGAME_PC34_PART_PARTY) {
-            if (out_report) {
-                out_report->pc34_party_part_byte_offset =
-                    (uint32_t)(cursor - part_size);
-                out_report->pc34_party_part_key = part_keys[i];
-            }
             rc = import_original_pc34_party_part(part, part_size, out_state,
                                                  out_report);
             if (rc != SAVEGAME_PC34_OK) {
@@ -3267,7 +3302,7 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
     write_original_pc34_fixture_event(
         events + 2u * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
         DM1_MAP_TIME_MAKE(1, 123490u),
-        DM1_EVENT_ENABLE_CHAMPION_ACTION, 2, 0, 0, 0, 0);
+        DM1_EVENT_LIGHT, 2, 0, 0, 0, 9);
     write_u16_le(timeline + 0u, 1u);
     write_u16_le(timeline + 2u, 2u);
     write_u16_le(timeline + 4u, 0u);
@@ -3502,8 +3537,36 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
         import_count = GAMEWORLD_CREATURE_AI_CAPACITY;
     }
 
+    /* Once an F0435 tail supplied GROUP records, every live ACTIVE_GROUP
+     * must name a used type-4 Thing in that same bounded table. Validate the
+     * full source set before touching the public runtime array. */
+    if (world->things && world->things->groupCount > 0) {
+        for (i = 0; i < import_count; ++i) {
+            const DM1OriginalSavePC34ActiveGroupRecord *src =
+                &report->active_groups[i];
+            unsigned int thing = (unsigned int)(uint16_t)src->group_thing_index;
+            int thing_type = (int)((thing >> DM1_PC34_THING_TYPE_SHIFT) &
+                                   DM1_PC34_THING_TYPE_MASK);
+            int thing_index = (int)(thing & DM1_PC34_THING_INDEX_MASK);
+
+            if (thing_type != DM1_PC34_THING_TYPE_GROUP ||
+                !world->things->groups || thing_index < 0 ||
+                thing_index >= world->things->groupCount ||
+                world->things->groups[thing_index].next == THING_NONE) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+        }
+    }
+
     memset(world->creatureAI, 0, sizeof(world->creatureAI));
+    memset(world->pc34ActiveGroupDirections, 0,
+           sizeof(world->pc34ActiveGroupDirections));
+    memset(world->pc34ActiveGroupHomeMapX, 0,
+           sizeof(world->pc34ActiveGroupHomeMapX));
+    memset(world->pc34ActiveGroupHomeMapY, 0,
+           sizeof(world->pc34ActiveGroupHomeMapY));
     world->creatureAICount = import_count;
+    world->pc34ActiveGroupSourceCount = import_count;
     report->active_group_runtime_imported_count = import_count;
     report->active_group_runtime_truncated_count =
         report->original_current_active_group_count - import_count;
@@ -3532,7 +3595,6 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
             world->things->groups) {
             resolved_group = &world->things->groups[thing_index];
         }
-
         dst->stateKind = AI_STATE_WANDER;
         dst->creatureType = resolved_group ? resolved_group->creatureType : -1;
         dst->groupMapIndex = world->partyMapIndex;
@@ -3552,6 +3614,9 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
         dst->rngCallCount = 0;
         dst->reserved0 = resolved_group ? thing_index : src->group_thing_index;
         memcpy(dst->aspect, src->aspect, sizeof(dst->aspect));
+        world->pc34ActiveGroupDirections[i] = (uint8_t)src->directions;
+        world->pc34ActiveGroupHomeMapX[i] = (uint8_t)src->home_map_x;
+        world->pc34ActiveGroupHomeMapY[i] = (uint8_t)src->home_map_y;
         if (resolved_group) {
             report->active_group_runtime_resolved_count++;
         } else {
@@ -3583,6 +3648,10 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
         report->original_event_count > report->decoded_timeline_index_count ||
         report->original_first_unused_event_index < 0 ||
         report->original_first_unused_event_index > DM1_EVENT_MAX_COUNT) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    if (validate_original_pc34_timeline_references(report) !=
+        DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
@@ -3722,16 +3791,24 @@ static int load_world_from_bytes_uncommitted(
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }
-    if (world->ownsDungeon &&
-        !original_pc34_party_pose_is_in_materialized_dungeon(world)) {
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    result = validate_original_pc34_party_pose_against_dungeon_tail(world);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+    result = validate_original_pc34_party_inventory_references(world);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
     }
     result = dm1_v1_original_save_pc34_handoff_apply_active_groups(
         report, world);
     if (result < 0) {
         return result;
     }
-    result = materialize_original_pc34_timeline(report, world, &world->timeline);
+    result = materialize_original_pc34_timeline(report, &world->timeline);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+    result = materialize_original_pc34_party_status(report, world);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }
@@ -3838,15 +3915,14 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
         load_path = backup_path;
         resumed_from_backup = 1;
     }
-    /* ReDMCSB LOADSAVE.C F0435 restores EVENTS/TIMELINE before exposing
-     * the resumed game, but a tail-less PC34 save still owns its original
-     * start DUNGEON.DAT backing.  Bind that backing before materializing
-     * source event unions: C29-C41 resolve B.Location through the real SFT
-     * chain and C48/C49 resolve their C14 records. */
-    if (start_world) {
-        candidate_world.dungeon = start_world->dungeon;
-        candidate_world.things = start_world->things;
-        candidate_world.ownsDungeon = 0;
+    /* M11 reaches this boundary only after its original-save classifier has
+     * selected the F0435 route. Keep the final file admission here as well:
+     * a Firestaff F0433 export is useful for verification, but is not an
+     * external original-save corpus member and must not become a launcher
+     * resume source. There is deliberately no native-save/synthetic retry
+     * from this route. Apply the same rule to a recovered .bak source. */
+    if (!dm1_original_save_corpus_external_pc34_file(load_path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
     result = dm1_v1_original_save_pc34_handoff_load_world_from_file(
         load_path, &candidate_world, event_queue ? &candidate_queue : NULL,
@@ -3860,6 +3936,11 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
      * A PC34 stream without that optional tail is therefore resumed against
      * the already materialized DM1 start dungeon, never a host-made HoC
      * substitute. */
+    if (!candidate_world.dungeon && start_world) {
+        candidate_world.dungeon = start_world->dungeon;
+        candidate_world.things = start_world->things;
+        candidate_world.ownsDungeon = 0;
+    }
     if (!candidate_world.dungeon || !candidate_world.things) {
         F0883_WORLD_Free_Compat(&candidate_world);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
@@ -4046,7 +4127,6 @@ void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         state->candidate_party_index < 0 ||
         state->candidate_party_index >= world->party.championCount ||
         state->candidate_party_index >= CHAMPION_MAX_PARTY ||
-        state->candidate_party_index != world->party.championCount - 1 ||
         !world->party.champions[state->candidate_party_index].present) {
         state->candidate_mirror_ordinal = -1;
         state->candidate_party_index = -1;
@@ -4059,9 +4139,7 @@ void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         state->inventory_panel_active = 0;
         return;
     }
-    /* ReDMCSB REVIVE.C F0280 appends the candidate and F0282:744 reads
-     * PartyChampionCount - 1. A sidecar cannot reopen C040 over an older
-     * live party slot, even if that slot happens to contain a champion. */
+    /* F0280 has already appended the candidate when C040 opens. */
     state->candidate_panel_active = 1;
     state->inventory_panel_active = 1;
 }
@@ -4757,31 +4835,6 @@ static void fill_roundtrip_core_report(
     const struct DM1_EventQueue_V1 *reloaded_queue,
     DM1OriginalSavePC34RoundtripReport *out_report)
 {
-    int source_c13_indices[DM1_EVENT_MAX_COUNT];
-    int export_c13_indices[DM1_EVENT_MAX_COUNT];
-    int export_c13_used[DM1_EVENT_MAX_COUNT];
-    uint8_t source_c13_rows[DM1_EVENT_MAX_COUNT]
-                           [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
-    uint8_t export_c13_rows[DM1_EVENT_MAX_COUNT]
-                           [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
-    uint8_t source_c25_rows[DM1_EVENT_MAX_COUNT][4];
-    uint8_t export_c25_rows[DM1_EVENT_MAX_COUNT][4];
-    uint8_t source_c24_rows[DM1_EVENT_MAX_COUNT][4];
-    uint8_t export_c24_rows[DM1_EVENT_MAX_COUNT][4];
-    uint16_t source_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
-    uint16_t export_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
-    uint8_t source_c13_timeline_bytes[DM1_EVENT_MAX_COUNT * sizeof(uint16_t)];
-    uint8_t export_c13_timeline_bytes[DM1_EVENT_MAX_COUNT * sizeof(uint16_t)];
-    int source_c13_count = 0;
-    int export_c13_count = 0;
-    int source_c25_count = 0;
-    int export_c25_count = 0;
-    int source_c24_count = 0;
-    int export_c24_count = 0;
-    int source_c13_timeline_count = 0;
-    int export_c13_timeline_count = 0;
-    int i;
-
     if (!out_report) {
         return;
     }
@@ -4797,6 +4850,12 @@ static void fill_roundtrip_core_report(
         out_report->source_event_count = source_report->original_event_count;
         out_report->source_active_group_count =
             source_report->original_current_active_group_count;
+        out_report->source_dungeon_tail_present =
+            source_report->dungeon_tail_present;
+        out_report->source_dungeon_tail_byte_count =
+            source_report->dungeon_tail_byte_count;
+        out_report->source_dungeon_tail_checksum =
+            source_report->dungeon_tail_actual_checksum;
     }
     if (export_report) {
         out_report->exported_champion_count =
@@ -4809,6 +4868,12 @@ static void fill_roundtrip_core_report(
         out_report->exported_event_count = export_report->original_event_count;
         out_report->exported_active_group_count =
             export_report->original_current_active_group_count;
+        out_report->exported_dungeon_tail_present =
+            export_report->dungeon_tail_present;
+        out_report->exported_dungeon_tail_byte_count =
+            export_report->dungeon_tail_byte_count;
+        out_report->exported_dungeon_tail_checksum =
+            export_report->dungeon_tail_actual_checksum;
     }
     if (reloaded_world) {
         out_report->reloaded_champion_count =
@@ -4824,305 +4889,32 @@ static void fill_roundtrip_core_report(
     if (reloaded_queue) {
         out_report->reloaded_event_count = reloaded_queue->eventCount;
     }
-    if (source_report && export_report) {
-        out_report->source_external_portrait_byte_count =
-            source_report->external_portrait_byte_count;
-        out_report->source_external_portrait_fingerprint =
-            source_report->external_portrait_fingerprint;
-        out_report->exported_external_portrait_byte_count =
-            export_report->external_portrait_byte_count;
-        out_report->exported_external_portrait_fingerprint =
-            export_report->external_portrait_fingerprint;
-        out_report->external_portrait_byte_receipt_available =
-            source_report->external_portrait_byte_count ==
-                SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
-            export_report->external_portrait_byte_count ==
-                SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
-            source_report->external_portrait_fingerprint != 0u &&
-            export_report->external_portrait_fingerprint != 0u;
+
+    /* ReDMCSB LOADSAVE.C F0433:1641-1682 serializes the live dungeon
+     * immediately after the five save parts, and F0435 restores it before
+     * exposing runtime state. Do not certify an original-save round trip
+     * solely from PARTY/EVENT facts when the dungeon tail was dropped. */
+    if (export_report) {
+        out_report->reloaded_dungeon_tail_present =
+            export_report->dungeon_tail_present;
+        out_report->reloaded_dungeon_tail_byte_count =
+            export_report->dungeon_tail_byte_count;
+        out_report->reloaded_dungeon_tail_checksum =
+            export_report->dungeon_tail_actual_checksum;
     }
-
-    /* ReDMCSB LOADSAVE.C F0433:1586-1589 writes the complete EVENT and
-     * TIMELINE arrays; F0435:2781-2799 restores those exact arrays before
-     * F0651 rebuilds its runtime ordering. C13's Location/Cell/Effect and
-     * Priority are all source-owned (CLIKVIEW.C F0374, TIMELINE.C F0255),
-     * so compare the full ten-byte logical record rather than accepting a
-     * semantic-only event-plan match. Event storage can be reordered by the
-     * timeline heap, hence the deliberately order-independent matching. */
-    if (!source_report || !export_report ||
-        source_report->event_decode_truncated_count != 0 ||
-        export_report->event_decode_truncated_count != 0) {
-        out_report->c13_byte_receipt_available = 0;
-    } else {
-        out_report->c13_byte_receipt_available = 1;
-        for (i = 0; i < source_report->decoded_event_count; ++i) {
-            if (source_report->events[i].type == DM1_EVENT_VI_ALTAR_REBIRTH) {
-                source_c13_indices[source_c13_count++] = i;
-            }
-        }
-        for (i = 0; i < export_report->decoded_event_count; ++i) {
-            if (export_report->events[i].type == DM1_EVENT_VI_ALTAR_REBIRTH) {
-                export_c13_indices[export_c13_count++] = i;
-            }
-        }
-        out_report->source_c13_event_count = source_c13_count;
-        out_report->exported_c13_event_count = export_c13_count;
-        for (i = 0; i < source_c13_count; ++i) {
-            dm1_original_save_c13_event_receipt_bytes(
-                &source_report->events[source_c13_indices[i]],
-                source_c13_rows[i]);
-        }
-        for (i = 0; i < export_c13_count; ++i) {
-            dm1_original_save_c13_event_receipt_bytes(
-                &export_report->events[export_c13_indices[i]],
-                export_c13_rows[i]);
-        }
-        dm1_original_save_sort_c13_receipt_rows(source_c13_rows,
-                                                  source_c13_count);
-        dm1_original_save_sort_c13_receipt_rows(export_c13_rows,
-                                                  export_c13_count);
-        out_report->source_c13_event_byte_count =
-            (uint32_t)source_c13_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
-        out_report->exported_c13_event_byte_count =
-            (uint32_t)export_c13_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
-        out_report->source_c13_event_fingerprint =
-            dm1_original_save_hash_bytes(&source_c13_rows[0][0],
-                out_report->source_c13_event_byte_count);
-        out_report->exported_c13_event_fingerprint =
-            dm1_original_save_hash_bytes(&export_c13_rows[0][0],
-                out_report->exported_c13_event_byte_count);
-        memset(export_c13_used, 0, sizeof(export_c13_used));
-        for (i = 0; i < source_c13_count; ++i) {
-            const struct DM1_Event_V1 *source_event =
-                &source_report->events[source_c13_indices[i]];
-            int export_index;
-            int found = 0;
-
-            for (export_index = 0; export_index < export_c13_count;
-                 ++export_index) {
-                const struct DM1_Event_V1 *export_event;
-
-                if (export_c13_used[export_index]) {
-                    continue;
-                }
-                export_event = &export_report->events[
-                    export_c13_indices[export_index]];
-                if (source_event->map_time == export_event->map_time &&
-                    source_event->type == export_event->type &&
-                    source_event->priority == export_event->priority &&
-                    source_event->b_mapX == export_event->b_mapX &&
-                    source_event->b_mapY == export_event->b_mapY &&
-                    source_event->c_cell == export_event->c_cell &&
-                    source_event->c_effect == export_event->c_effect) {
-                    export_c13_used[export_index] = 1;
-                    ++out_report->c13_byte_preserved_count;
-                    found = 1;
-                    break;
-                }
-            }
-            if (!found) {
-                ++out_report->c13_byte_mismatch_count;
-            }
-        }
-        /* Extra F0433 C13 records are equally a byte-preservation failure. */
-        if (export_c13_count > source_c13_count) {
-            out_report->c13_byte_mismatch_count +=
-                export_c13_count - source_c13_count;
-        }
-        out_report->c13_byte_preservation_ok =
-            out_report->c13_byte_mismatch_count == 0 &&
-            source_c13_count == export_c13_count;
-
-        /* F0433 stores the C4 timeline as raw 16-bit indexes into the
-         * companion EVENT array, and F0435 restores that array before the
-         * F0651 heap rebuild. A C13 record may be byte-identical while its
-         * source timeline reference changes, so retain a second receipt for
-         * those two-byte values. Do not normalize sparse/original indexes
-         * into Firestaff's compact queue and call that a preserved save. */
-        if (source_report->original_event_count < 0 ||
-            source_report->original_event_count >
-                source_report->decoded_timeline_index_count ||
-            export_report->original_event_count < 0 ||
-            export_report->original_event_count >
-                export_report->decoded_timeline_index_count) {
-            out_report->c13_timeline_byte_receipt_available = 0;
-        } else {
-            out_report->c13_timeline_byte_receipt_available = 1;
-            for (i = 0; i < source_report->original_event_count; ++i) {
-                uint16_t event_index = source_report->timeline_indices[i];
-                if (event_index >= (uint16_t)source_report->decoded_event_count) {
-                    out_report->c13_timeline_byte_receipt_available = 0;
-                    break;
-                }
-                if (source_report->events[event_index].type ==
-                    DM1_EVENT_VI_ALTAR_REBIRTH) {
-                    source_c13_timeline_refs[source_c13_timeline_count++] =
-                        event_index;
-                }
-            }
-            for (i = 0; out_report->c13_timeline_byte_receipt_available &&
-                        i < export_report->original_event_count; ++i) {
-                uint16_t event_index = export_report->timeline_indices[i];
-                if (event_index >= (uint16_t)export_report->decoded_event_count) {
-                    out_report->c13_timeline_byte_receipt_available = 0;
-                    break;
-                }
-                if (export_report->events[event_index].type ==
-                    DM1_EVENT_VI_ALTAR_REBIRTH) {
-                    export_c13_timeline_refs[export_c13_timeline_count++] =
-                        event_index;
-                }
-            }
-            out_report->source_c13_timeline_reference_count =
-                source_c13_timeline_count;
-            out_report->exported_c13_timeline_reference_count =
-                export_c13_timeline_count;
-            out_report->source_c13_timeline_reference_byte_count =
-                (uint32_t)source_c13_timeline_count * sizeof(uint16_t);
-            out_report->exported_c13_timeline_reference_byte_count =
-                (uint32_t)export_c13_timeline_count * sizeof(uint16_t);
-            for (i = 0; i < source_c13_timeline_count; ++i) {
-                write_u16_le(source_c13_timeline_bytes +
-                    (size_t)i * sizeof(uint16_t), source_c13_timeline_refs[i]);
-            }
-            for (i = 0; i < export_c13_timeline_count; ++i) {
-                write_u16_le(export_c13_timeline_bytes +
-                    (size_t)i * sizeof(uint16_t), export_c13_timeline_refs[i]);
-            }
-            out_report->source_c13_timeline_reference_fingerprint =
-                dm1_original_save_hash_bytes(source_c13_timeline_bytes,
-                    out_report->source_c13_timeline_reference_byte_count);
-            out_report->exported_c13_timeline_reference_fingerprint =
-                dm1_original_save_hash_bytes(export_c13_timeline_bytes,
-                    out_report->exported_c13_timeline_reference_byte_count);
-            if (out_report->c13_timeline_byte_receipt_available) {
-                int compare_count = source_c13_timeline_count <
-                    export_c13_timeline_count ? source_c13_timeline_count :
-                    export_c13_timeline_count;
-                for (i = 0; i < compare_count; ++i) {
-                    if (source_c13_timeline_refs[i] ==
-                        export_c13_timeline_refs[i]) {
-                        ++out_report->c13_timeline_byte_preserved_count;
-                    } else {
-                        ++out_report->c13_timeline_byte_mismatch_count;
-                    }
-                }
-                if (source_c13_timeline_count != export_c13_timeline_count) {
-                    int difference = source_c13_timeline_count -
-                        export_c13_timeline_count;
-                    out_report->c13_timeline_byte_mismatch_count +=
-                        difference < 0 ? -difference : difference;
-                }
-                out_report->c13_timeline_byte_preservation_ok =
-                    out_report->c13_timeline_byte_mismatch_count == 0 &&
-                    source_c13_timeline_count == export_c13_timeline_count;
-            }
-        }
-    }
-
-    /* ReDMCSB PROJEXPL.C F0213 writes C25's B.Location/C.Slot union, while
-     * LOADSAVE.C F0433/F0435 persists the full EVENT part. Record those four
-     * owned bytes canonically: F0651 may relocate EVENT storage, but it may
-     * not alter a C25's original location or C15 slot. */
-    if (!source_report || !export_report ||
-        source_report->event_decode_truncated_count != 0 ||
-        export_report->event_decode_truncated_count != 0) {
-        out_report->c25_union_slot_byte_receipt_available = 0;
-    } else {
-        out_report->c25_union_slot_byte_receipt_available = 1;
-        for (i = 0; i < source_report->decoded_event_count; ++i) {
-            if (source_report->events[i].type == DM1_EVENT_EXPLOSION) {
-                dm1_original_save_explosion_union_slot_receipt_bytes(
-                    &source_report->events[i], source_c25_rows[source_c25_count++]);
-            }
-        }
-        for (i = 0; i < export_report->decoded_event_count; ++i) {
-            if (export_report->events[i].type == DM1_EVENT_EXPLOSION) {
-                dm1_original_save_explosion_union_slot_receipt_bytes(
-                    &export_report->events[i], export_c25_rows[export_c25_count++]);
-            }
-        }
-        dm1_original_save_sort_explosion_union_receipt_rows(source_c25_rows,
-                                                              source_c25_count);
-        dm1_original_save_sort_explosion_union_receipt_rows(export_c25_rows,
-                                                              export_c25_count);
-        out_report->source_c25_event_count = source_c25_count;
-        out_report->exported_c25_event_count = export_c25_count;
-        out_report->source_c25_union_slot_byte_count =
-            (uint32_t)source_c25_count * 4u;
-        out_report->exported_c25_union_slot_byte_count =
-            (uint32_t)export_c25_count * 4u;
-        out_report->source_c25_union_slot_fingerprint =
-            dm1_original_save_hash_bytes(&source_c25_rows[0][0],
-                out_report->source_c25_union_slot_byte_count);
-        out_report->exported_c25_union_slot_fingerprint =
-            dm1_original_save_hash_bytes(&export_c25_rows[0][0],
-                out_report->exported_c25_union_slot_byte_count);
-        out_report->c25_union_slot_byte_preserved_count =
-            source_c25_count == export_c25_count &&
-            out_report->source_c25_union_slot_fingerprint ==
-                out_report->exported_c25_union_slot_fingerprint
-                ? source_c25_count : 0;
-        out_report->c25_union_slot_byte_mismatch_count =
-            out_report->c25_union_slot_byte_preserved_count == source_c25_count
-                ? 0 : (source_c25_count > export_c25_count
-                    ? source_c25_count : export_c25_count);
-        out_report->c25_union_slot_byte_preservation_ok =
-            out_report->c25_union_slot_byte_mismatch_count == 0 &&
-            source_c25_count == export_c25_count;
-    }
-
-    /* ReDMCSB PROJEXPL.C F0224 creates a C24 remove-fluxcage EVENT with
-     * B.Location/C.Slot. LOADSAVE.C F0433/F0435 persists that raw EVENT;
-     * retain only its source-owned four-byte union, canonically ordered after
-     * F0651 may rearrange EVENT storage. */
-    if (!source_report || !export_report ||
-        source_report->event_decode_truncated_count != 0 ||
-        export_report->event_decode_truncated_count != 0) {
-        out_report->c24_union_slot_byte_receipt_available = 0;
-    } else {
-        out_report->c24_union_slot_byte_receipt_available = 1;
-        for (i = 0; i < source_report->decoded_event_count; ++i) {
-            if (source_report->events[i].type == DM1_EVENT_REMOVE_FLUXCAGE) {
-                dm1_original_save_explosion_union_slot_receipt_bytes(
-                    &source_report->events[i], source_c24_rows[source_c24_count++]);
-            }
-        }
-        for (i = 0; i < export_report->decoded_event_count; ++i) {
-            if (export_report->events[i].type == DM1_EVENT_REMOVE_FLUXCAGE) {
-                dm1_original_save_explosion_union_slot_receipt_bytes(
-                    &export_report->events[i], export_c24_rows[export_c24_count++]);
-            }
-        }
-        dm1_original_save_sort_explosion_union_receipt_rows(source_c24_rows,
-                                                              source_c24_count);
-        dm1_original_save_sort_explosion_union_receipt_rows(export_c24_rows,
-                                                              export_c24_count);
-        out_report->source_c24_event_count = source_c24_count;
-        out_report->exported_c24_event_count = export_c24_count;
-        out_report->source_c24_union_slot_byte_count =
-            (uint32_t)source_c24_count * 4u;
-        out_report->exported_c24_union_slot_byte_count =
-            (uint32_t)export_c24_count * 4u;
-        out_report->source_c24_union_slot_fingerprint =
-            dm1_original_save_hash_bytes(&source_c24_rows[0][0],
-                out_report->source_c24_union_slot_byte_count);
-        out_report->exported_c24_union_slot_fingerprint =
-            dm1_original_save_hash_bytes(&export_c24_rows[0][0],
-                out_report->exported_c24_union_slot_byte_count);
-        out_report->c24_union_slot_byte_preserved_count =
-            source_c24_count == export_c24_count &&
-            out_report->source_c24_union_slot_fingerprint ==
-                out_report->exported_c24_union_slot_fingerprint
-                ? source_c24_count : 0;
-        out_report->c24_union_slot_byte_mismatch_count =
-            out_report->c24_union_slot_byte_preserved_count == source_c24_count
-                ? 0 : (source_c24_count > export_c24_count
-                    ? source_c24_count : export_c24_count);
-        out_report->c24_union_slot_byte_preservation_ok =
-            out_report->c24_union_slot_byte_mismatch_count == 0 &&
-            source_c24_count == export_c24_count;
-    }
+    out_report->dungeon_tail_matches =
+        out_report->source_dungeon_tail_present ==
+            out_report->exported_dungeon_tail_present &&
+        out_report->source_dungeon_tail_present ==
+            out_report->reloaded_dungeon_tail_present &&
+        out_report->source_dungeon_tail_byte_count ==
+            out_report->exported_dungeon_tail_byte_count &&
+        out_report->source_dungeon_tail_byte_count ==
+            out_report->reloaded_dungeon_tail_byte_count &&
+        out_report->source_dungeon_tail_checksum ==
+            out_report->exported_dungeon_tail_checksum &&
+        out_report->source_dungeon_tail_checksum ==
+            out_report->reloaded_dungeon_tail_checksum;
 
     out_report->core_state_matches =
         out_report->source_champion_count ==
@@ -5144,7 +4936,8 @@ static void fill_roundtrip_core_report(
         out_report->source_active_group_count ==
             out_report->exported_active_group_count &&
         out_report->source_active_group_count ==
-            out_report->reloaded_active_group_count;
+            out_report->reloaded_active_group_count &&
+        out_report->dungeon_tail_matches;
 }
 
 int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
@@ -5189,81 +4982,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
     fill_roundtrip_core_report(&import_report, &export_report,
                                &reloaded_world, &reloaded_queue,
                                out_report);
-    if (out_report && out_report->external_portrait_byte_receipt_available) {
-        out_report->external_portrait_byte_preservation_ok =
-            dm1_original_save_external_portraits_match(
-                bytes, size, &import_report, out_bytes, *out_size,
-                &export_report);
-    }
-    if (out_report && !dm1_original_save_inactive_champion_records_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->inactive_champion_record_byte_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_m516_champion_records_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->m516_champion_record_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_c13_champion_records_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->c13_champion_record_byte_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_party_info_bytes_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->party_info_byte_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_c3_event_bytes_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->c3_event_layout_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_c4_timeline_bytes_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->c4_timeline_layout_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_header_part_shape_match(
-            &import_report, &export_report, out_report)) {
-        out_report->header_part_shape_receipt_available = 0;
-    }
-    if (out_report && !dm1_original_save_dungeon_tail_bytes_match(
-            bytes, size, &import_report, out_bytes, *out_size,
-            &export_report, out_report)) {
-        out_report->dungeon_tail_byte_receipt_available = 0;
-    }
     F0883_WORLD_Free_Compat(&reloaded_world);
-    if (out_report &&
-        (!out_report->core_state_matches ||
-         !out_report->external_portrait_byte_receipt_available ||
-         !out_report->external_portrait_byte_preservation_ok ||
-         !out_report->inactive_champion_record_byte_receipt_available ||
-         !out_report->inactive_champion_record_byte_preservation_ok ||
-         !out_report->party_info_byte_receipt_available ||
-         !out_report->party_info_byte_preservation_ok ||
-         !out_report->header_part_shape_receipt_available ||
-         !out_report->dungeon_tail_byte_receipt_available ||
-         !out_report->dungeon_tail_byte_preservation_ok ||
-         (!out_report->c13_byte_receipt_available &&
-          import_report.original_event_count > 0) ||
-         ((out_report->source_c13_event_count > 0 ||
-           out_report->exported_c13_event_count > 0) &&
-          (!out_report->c13_byte_receipt_available ||
-           !out_report->c13_byte_preservation_ok ||
-           !out_report->c13_timeline_byte_receipt_available ||
-           !out_report->c13_timeline_byte_preservation_ok ||
-           !out_report->c13_champion_record_byte_receipt_available ||
-           !out_report->c13_champion_record_byte_preservation_ok)) ||
-         ((out_report->source_c24_event_count > 0 ||
-           out_report->exported_c24_event_count > 0) &&
-          (!out_report->c24_union_slot_byte_receipt_available ||
-           !out_report->c24_union_slot_byte_preservation_ok)) ||
-         ((out_report->source_c25_event_count > 0 ||
-           out_report->exported_c25_event_count > 0) &&
-          (!out_report->c25_union_slot_byte_receipt_available ||
-           !out_report->c25_union_slot_byte_preservation_ok)))) {
+    if (out_report && !out_report->core_state_matches) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
@@ -5285,16 +5005,18 @@ int dm1_v1_original_save_pc34_roundtrip_world_file(
     if (!path || !out_bytes || !out_size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
+    if (!dm1_original_save_file_opens_for_read(path)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    /* Product-facing file round trips accept only external PC34 envelopes.
+     * F0433 verification output carries Firestaff's manifest and must never
+     * re-enter the original-save corpus/product import route as evidence. */
+    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+    }
     result = read_original_pc34_file_bytes(path, &bytes, &size);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
-    }
-    /* Product-facing file round trips accept only external PC34 envelopes.
-     * Verify the same bytes that reach F0435; do not reopen a mutable user
-     * file between provenance and import. */
-    if (!dm1_original_save_corpus_external_pc34_bytes(bytes, size, NULL)) {
-        free(bytes);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
 
     /* ReDMCSB LOADSAVE.C F0435 reads original PC34 bytes from disk before
@@ -5323,13 +5045,15 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     if (!path || !out_bytes || !out_size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
+    if (!dm1_original_save_file_opens_for_read(path)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+    }
     result = read_original_pc34_file_bytes(path, &bytes, &size);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
-    }
-    if (!dm1_original_save_corpus_external_pc34_bytes(bytes, size, NULL)) {
-        free(bytes);
-        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }
 
     result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
@@ -5352,73 +5076,17 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     }
     memset(&report, 0, sizeof(report));
     report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+    report.provenance_fingerprint = 2166136261u;
     memset(&corpus, 0, sizeof(corpus));
     if (!dm1_v1_original_save_classify_corpus_root(root, &corpus)) {
-        report.discovery_root_error = 1;
         *out_report = report;
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
 
     report.scan_succeeded = 1;
     report.scanned_file_count = corpus.scanned_file_count;
-    report.discovery_file_count = corpus.present_count;
-    report.discovery_pc34_header_count = corpus.original_dm1_pc34_count;
-    report.discovery_loader_envelope_count =
-        corpus.pc34_loader_part_envelope_count;
-    report.discovery_rejected_count = corpus.rejected_count;
-    report.discovery_truncated_count = corpus.truncated_count;
-    for (i = 0; i < corpus.present_count &&
-                i < (int)DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP; ++i) {
-        DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
-            &report.discovery_receipts[report.discovery_receipt_count++];
-        const DM1OriginalSaveClassifyResult *classified = &corpus.results[i];
-
-        discovery->source_byte_count = classified->size_bytes > UINT32_MAX
-            ? UINT32_MAX : (uint32_t)classified->size_bytes;
-        discovery->header_prefix_fingerprint = classified->prefix_checksum32;
-        discovery->shape = (int)classified->shape;
-        discovery->readiness = (int)classified->readiness;
-        discovery->save_format_id = classified->format_id;
-        discovery->save_platform = classified->platform;
-        discovery->save_dungeon_id = classified->dungeon_id;
-        discovery->save_game_id = classified->game_id;
-        discovery->pc34_version_platform_identity_ok =
-            classified->header_checksum_ok &&
-            classified->format_id == 5u &&
-            classified->platform == 9u &&
-            classified->dungeon_id == 10u;
-        if (classified->header_checksum_ok) {
-            if (discovery->pc34_version_platform_identity_ok) {
-                ++report.discovery_pc34_version_platform_identity_count;
-            } else {
-                ++report.discovery_pc34_version_platform_rejected_count;
-            }
-        }
-        discovery->pc34_importer_candidate =
-            classified->pc34_importer_candidate;
-        discovery->pc34_loader_part_envelope_candidate =
-            classified->pc34_loader_part_envelope_candidate;
-        discovery->f7057_envelope_end_offset =
-            classified->save_part_loader_envelope_end_offset;
-        discovery->f7057_trailing_byte_count =
-            classified->save_part_loader_trailing_byte_count;
-        discovery->roundtrip_eligible =
-            classified->pc34_loader_part_envelope_candidate &&
-            discovery->pc34_version_platform_identity_ok;
-        discovery->result = discovery->roundtrip_eligible
-            ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE
-            : DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
-        snprintf(discovery->reason, sizeof(discovery->reason), "%s",
-                 classified->reason);
-        snprintf(discovery->path, sizeof(discovery->path), "%s",
-                 corpus.paths[i]);
-    }
-    /* The classifier intentionally keeps arbitrary files out of the PC34
-     * importer. Preserve that decision in the corpus receipt instead of
-     * silently losing evidence of a truncated/non-PC34 neighbour. */
-    report.rejected_count = corpus.scanned_file_count -
-        corpus.pc34_loader_part_envelope_count;
-    report.roundtrip_hash = 2166136261u;
+    report.rejected_count = corpus.rejected_count;
+    report.truncated_count = corpus.truncated_count;
     exported_bytes = (uint8_t *)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
     if (!exported_bytes) {
         *out_report = report;
@@ -5432,99 +5100,39 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     for (i = 0; i < corpus.present_count &&
                 i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
         DM1OriginalSavePC34RoundtripReport roundtrip;
-        DM1OriginalSavePC34CorpusReceipt *receipt;
-        uint8_t *source_bytes = NULL;
-        size_t source_size = 0u;
         size_t exported_size = 0u;
         int result;
         int firestaff_manifest = 0;
-        DM1OriginalSaveClassifyResult snapshot;
-        DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
-            i < report.discovery_receipt_count
-                ? &report.discovery_receipts[i] : NULL;
 
         if (!corpus.results[i].pc34_loader_part_envelope_candidate) {
             continue;
         }
-        if (report.receipt_count >=
-            DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP) {
-            report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-            break;
-        }
-        receipt = &report.receipts[report.receipt_count++];
-        memset(receipt, 0, sizeof(*receipt));
-        receipt->classified_loader_envelope = 1;
-        receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-        receipt->source_handoff_result =
-            DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-        receipt->source_importer_result = SAVEGAME_PC34_ERROR_INTERNAL;
-        receipt->game_id = corpus.results[i].game_id;
-        snprintf(receipt->path, sizeof(receipt->path), "%s", corpus.paths[i]);
-        result = read_original_pc34_file_bytes(
-            corpus.paths[i], &source_bytes, &source_size);
-        if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
-            source_size == 0u || source_size > UINT32_MAX) {
-            free(source_bytes);
-            if (discovery) {
-                discovery->result = result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK
-                    ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE : result;
-            }
-            if (report.first_failure_result ==
-                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-                report.first_failure_result =
-                    result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK
-                        ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE : result;
-            }
-            continue;
-        }
-        /* The recursive discovery scan is advisory. Bind its receipt to the
-         * exact byte snapshot before passing any part to F0435, otherwise a
-         * replacement save could inherit an earlier path/header receipt. */
-        if (!dm1_original_save_snapshot_matches_classification(
-                &corpus.results[i], source_bytes, source_size, &snapshot)) {
-            free(source_bytes);
-            receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-            if (discovery) {
-                discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-                snprintf(discovery->reason, sizeof(discovery->reason), "%s",
-                         "save changed after corpus discovery");
-            }
-            if (report.first_failure_result ==
-                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-                report.first_failure_result =
-                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-            }
-            continue;
-        }
-        receipt->source_byte_count = (uint32_t)source_size;
-        receipt->source_hash = dm1_original_save_hash_bytes(
-            source_bytes, source_size);
-        receipt->source_f7057_envelope_end_offset =
-            snapshot.save_part_loader_envelope_end_offset;
-        receipt->source_f7057_trailing_byte_count =
-            snapshot.save_part_loader_trailing_byte_count;
-        if (receipt->source_hash == 0u) {
-            free(source_bytes);
-            if (discovery) {
-                discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-            }
-            if (report.first_failure_result ==
-                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-                report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-            }
-            continue;
-        }
-        if (!dm1_original_save_corpus_external_pc34_bytes(
-                source_bytes, source_size, &firestaff_manifest)) {
-            free(source_bytes);
-            receipt->firestaff_manifest = firestaff_manifest;
-            if (discovery) {
-                discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
-                snprintf(discovery->reason, sizeof(discovery->reason), "%s",
-                         firestaff_manifest
-                             ? "Firestaff manifest-bearing export excluded"
-                             : "not an external original PC34 save");
-            }
+        /* ReDMCSB LOADSAVE.C F0435 chooses a PC34 save from the decoded
+         * header and its five part envelopes. Keep a path-independent record
+         * of precisely those classifier facts, so moving the corpus cannot
+         * change its provenance receipt. */
+        report.provenance_fingerprint =
+            dm1_original_save_corpus_fingerprint_mix(
+                report.provenance_fingerprint,
+                corpus.results[i].game_id);
+        report.provenance_fingerprint =
+            dm1_original_save_corpus_fingerprint_mix(
+                report.provenance_fingerprint,
+                (uint32_t)corpus.results[i].size_bytes);
+        report.provenance_fingerprint =
+            dm1_original_save_corpus_fingerprint_mix(
+                report.provenance_fingerprint,
+                (uint32_t)(corpus.results[i].size_bytes >> 32));
+        report.provenance_fingerprint =
+            dm1_original_save_corpus_fingerprint_mix(
+                report.provenance_fingerprint,
+                corpus.results[i].prefix_checksum32);
+        report.provenance_fingerprint =
+            dm1_original_save_corpus_fingerprint_mix(
+                report.provenance_fingerprint,
+                corpus.results[i].save_part_loader_envelope_payload_bytes);
+        if (!dm1_original_save_corpus_external_pc34_file(
+                corpus.paths[i], &firestaff_manifest)) {
             if (firestaff_manifest) {
                 ++report.firestaff_manifest_rejected_count;
             } else {
@@ -5536,10 +5144,6 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
                     DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             continue;
-        }
-        receipt->external_original = 1;
-        if (discovery) {
-            discovery->external_original = 1;
         }
         ++report.pc34_candidate_count;
         if (!report.first_pc34_path[0]) {
@@ -5571,265 +5175,17 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         }
         memset(&roundtrip, 0, sizeof(roundtrip));
         ++report.roundtrip_attempted_count;
-        receipt->roundtrip_attempted = 1;
-        result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
-            source_bytes, source_size,
-            snapshot.game_id,
+        result = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
+            corpus.paths[i],
+            corpus.results[i].game_id,
             exported_bytes,
             SAVEGAME_PC34_MAX_FILE_SIZE,
             &exported_size,
             &roundtrip);
-        free(source_bytes);
-        /* ReDMCSB LOADSAVE.C F0435 reads C2, C3, and C4 as independent
-         * authenticated parts. A corpus candidate must not pass merely
-         * because no C13/C24/C25 subtype gives it an additional receipt:
-         * raw C3 EVENT and C4 TIMELINE identity remain mandatory evidence. */
-        if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-            (!roundtrip.c3_event_layout_receipt_available ||
-             !roundtrip.c3_event_byte_preservation_ok ||
-             !roundtrip.c4_timeline_layout_receipt_available ||
-             !roundtrip.c4_timeline_byte_preservation_ok)) {
-            result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-        }
-        receipt->roundtrip_result = result;
-        if (discovery) {
-            discovery->result = result;
-        }
-        receipt->core_state_matches = roundtrip.core_state_matches;
-        receipt->source_c13_event_count = roundtrip.source_c13_event_count;
-        receipt->exported_c13_event_count = roundtrip.exported_c13_event_count;
-        receipt->c13_byte_preserved_count =
-            roundtrip.c13_byte_preserved_count;
-        receipt->c13_byte_mismatch_count =
-            roundtrip.c13_byte_mismatch_count;
-        receipt->c13_byte_preservation_ok =
-            roundtrip.c13_byte_preservation_ok;
-        receipt->source_c13_event_byte_count =
-            roundtrip.source_c13_event_byte_count;
-        receipt->source_c13_event_fingerprint =
-            roundtrip.source_c13_event_fingerprint;
-        receipt->exported_c13_event_byte_count =
-            roundtrip.exported_c13_event_byte_count;
-        receipt->exported_c13_event_fingerprint =
-            roundtrip.exported_c13_event_fingerprint;
-        receipt->header_part_shape_receipt_available =
-            roundtrip.header_part_shape_receipt_available;
-        receipt->source_header_format_id = roundtrip.source_header_format_id;
-        receipt->exported_header_format_id =
-            roundtrip.exported_header_format_id;
-        receipt->source_header_platform = roundtrip.source_header_platform;
-        receipt->exported_header_platform = roundtrip.exported_header_platform;
-        receipt->source_header_dungeon_id =
-            roundtrip.source_header_dungeon_id;
-        receipt->exported_header_dungeon_id =
-            roundtrip.exported_header_dungeon_id;
-        receipt->source_header_game_id = roundtrip.source_header_game_id;
-        receipt->exported_header_game_id = roundtrip.exported_header_game_id;
-        receipt->header_identity_preservation_ok =
-            roundtrip.header_identity_preservation_ok;
-        for (int part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
-            receipt->source_part_byte_counts[part] =
-                roundtrip.source_part_byte_counts[part];
-            receipt->exported_part_byte_counts[part] =
-                roundtrip.exported_part_byte_counts[part];
-        }
-        receipt->part_byte_count_preservation_ok =
-            roundtrip.part_byte_count_preservation_ok;
-        receipt->source_c13_timeline_reference_count =
-            roundtrip.source_c13_timeline_reference_count;
-        receipt->exported_c13_timeline_reference_count =
-            roundtrip.exported_c13_timeline_reference_count;
-        receipt->c13_timeline_byte_preserved_count =
-            roundtrip.c13_timeline_byte_preserved_count;
-        receipt->c13_timeline_byte_mismatch_count =
-            roundtrip.c13_timeline_byte_mismatch_count;
-        receipt->c13_timeline_byte_preservation_ok =
-            roundtrip.c13_timeline_byte_preservation_ok;
-        receipt->source_c13_timeline_reference_byte_count =
-            roundtrip.source_c13_timeline_reference_byte_count;
-        receipt->source_c13_timeline_reference_fingerprint =
-            roundtrip.source_c13_timeline_reference_fingerprint;
-        receipt->exported_c13_timeline_reference_byte_count =
-            roundtrip.exported_c13_timeline_reference_byte_count;
-        receipt->exported_c13_timeline_reference_fingerprint =
-            roundtrip.exported_c13_timeline_reference_fingerprint;
-        receipt->c25_union_slot_byte_receipt_available =
-            roundtrip.c25_union_slot_byte_receipt_available;
-        receipt->source_c25_event_count = roundtrip.source_c25_event_count;
-        receipt->exported_c25_event_count = roundtrip.exported_c25_event_count;
-        receipt->c25_union_slot_byte_preserved_count =
-            roundtrip.c25_union_slot_byte_preserved_count;
-        receipt->c25_union_slot_byte_mismatch_count =
-            roundtrip.c25_union_slot_byte_mismatch_count;
-        receipt->c25_union_slot_byte_preservation_ok =
-            roundtrip.c25_union_slot_byte_preservation_ok;
-        receipt->source_c25_union_slot_byte_count =
-            roundtrip.source_c25_union_slot_byte_count;
-        receipt->source_c25_union_slot_fingerprint =
-            roundtrip.source_c25_union_slot_fingerprint;
-        receipt->exported_c25_union_slot_byte_count =
-            roundtrip.exported_c25_union_slot_byte_count;
-        receipt->exported_c25_union_slot_fingerprint =
-            roundtrip.exported_c25_union_slot_fingerprint;
-        receipt->c24_union_slot_byte_receipt_available =
-            roundtrip.c24_union_slot_byte_receipt_available;
-        receipt->source_c24_event_count = roundtrip.source_c24_event_count;
-        receipt->exported_c24_event_count = roundtrip.exported_c24_event_count;
-        receipt->c24_union_slot_byte_preserved_count =
-            roundtrip.c24_union_slot_byte_preserved_count;
-        receipt->c24_union_slot_byte_mismatch_count =
-            roundtrip.c24_union_slot_byte_mismatch_count;
-        receipt->c24_union_slot_byte_preservation_ok =
-            roundtrip.c24_union_slot_byte_preservation_ok;
-        receipt->source_c24_union_slot_byte_count =
-            roundtrip.source_c24_union_slot_byte_count;
-        receipt->source_c24_union_slot_fingerprint =
-            roundtrip.source_c24_union_slot_fingerprint;
-        receipt->exported_c24_union_slot_byte_count =
-            roundtrip.exported_c24_union_slot_byte_count;
-        receipt->exported_c24_union_slot_fingerprint =
-            roundtrip.exported_c24_union_slot_fingerprint;
-        receipt->c3_event_layout_receipt_available =
-            roundtrip.c3_event_layout_receipt_available;
-        receipt->source_c3_event_record_count =
-            roundtrip.source_c3_event_record_count;
-        receipt->source_c3_event_byte_count =
-            roundtrip.source_c3_event_byte_count;
-        receipt->source_c3_event_fingerprint =
-            roundtrip.source_c3_event_fingerprint;
-        receipt->exported_c3_event_record_count =
-            roundtrip.exported_c3_event_record_count;
-        receipt->exported_c3_event_byte_count =
-            roundtrip.exported_c3_event_byte_count;
-        receipt->exported_c3_event_fingerprint =
-            roundtrip.exported_c3_event_fingerprint;
-        receipt->c3_event_byte_preservation_ok =
-            roundtrip.c3_event_byte_preservation_ok;
-        receipt->c4_timeline_layout_receipt_available =
-            roundtrip.c4_timeline_layout_receipt_available;
-        receipt->source_c4_timeline_index_count =
-            roundtrip.source_c4_timeline_index_count;
-        receipt->source_c4_timeline_byte_count =
-            roundtrip.source_c4_timeline_byte_count;
-        receipt->source_c4_timeline_fingerprint =
-            roundtrip.source_c4_timeline_fingerprint;
-        receipt->exported_c4_timeline_index_count =
-            roundtrip.exported_c4_timeline_index_count;
-        receipt->exported_c4_timeline_byte_count =
-            roundtrip.exported_c4_timeline_byte_count;
-        receipt->exported_c4_timeline_fingerprint =
-            roundtrip.exported_c4_timeline_fingerprint;
-        receipt->c4_timeline_byte_preservation_ok =
-            roundtrip.c4_timeline_byte_preservation_ok;
-        receipt->source_c13_champion_record_reference_count =
-            roundtrip.source_c13_champion_record_reference_count;
-        receipt->c13_champion_record_byte_receipt_available =
-            roundtrip.c13_champion_record_byte_receipt_available;
-        receipt->c13_champion_record_byte_preserved_count =
-            roundtrip.c13_champion_record_byte_preserved_count;
-        receipt->c13_champion_record_byte_mismatch_count =
-            roundtrip.c13_champion_record_byte_mismatch_count;
-        receipt->c13_champion_record_byte_preservation_ok =
-            roundtrip.c13_champion_record_byte_preservation_ok;
-        receipt->source_party_info_byte_count =
-            roundtrip.source_party_info_byte_count;
-        receipt->source_party_info_fingerprint =
-            roundtrip.source_party_info_fingerprint;
-        receipt->exported_party_info_byte_count =
-            roundtrip.exported_party_info_byte_count;
-        receipt->exported_party_info_fingerprint =
-            roundtrip.exported_party_info_fingerprint;
-        receipt->party_info_byte_preservation_ok =
-            roundtrip.party_info_byte_preservation_ok;
-        receipt->external_portrait_byte_receipt_available =
-            roundtrip.external_portrait_byte_receipt_available;
-        receipt->source_external_portrait_byte_count =
-            roundtrip.source_external_portrait_byte_count;
-        receipt->source_external_portrait_fingerprint =
-            roundtrip.source_external_portrait_fingerprint;
-        receipt->exported_external_portrait_byte_count =
-            roundtrip.exported_external_portrait_byte_count;
-        receipt->exported_external_portrait_fingerprint =
-            roundtrip.exported_external_portrait_fingerprint;
-        receipt->external_portrait_byte_preservation_ok =
-            roundtrip.external_portrait_byte_preservation_ok;
-        receipt->inactive_champion_record_byte_receipt_available =
-            roundtrip.inactive_champion_record_byte_receipt_available;
-        receipt->inactive_champion_record_count =
-            roundtrip.inactive_champion_record_count;
-        receipt->inactive_champion_record_byte_preserved_count =
-            roundtrip.inactive_champion_record_byte_preserved_count;
-        receipt->inactive_champion_record_byte_preservation_ok =
-            roundtrip.inactive_champion_record_byte_preservation_ok;
-        receipt->m516_champion_record_receipt_available =
-            roundtrip.m516_champion_record_receipt_available;
-        receipt->source_m516_champion_record_count =
-            roundtrip.source_m516_champion_record_count;
-        receipt->source_m516_champion_record_byte_count =
-            roundtrip.source_m516_champion_record_byte_count;
-        receipt->source_m516_champion_record_fingerprint =
-            roundtrip.source_m516_champion_record_fingerprint;
-        receipt->exported_m516_champion_record_count =
-            roundtrip.exported_m516_champion_record_count;
-        receipt->exported_m516_champion_record_byte_count =
-            roundtrip.exported_m516_champion_record_byte_count;
-        receipt->exported_m516_champion_record_fingerprint =
-            roundtrip.exported_m516_champion_record_fingerprint;
-        receipt->m516_champion_record_byte_preservation_ok =
-            roundtrip.m516_champion_record_byte_preservation_ok;
-        receipt->dungeon_tail_byte_receipt_available =
-            roundtrip.dungeon_tail_byte_receipt_available;
-        receipt->source_dungeon_tail_byte_count =
-            roundtrip.source_dungeon_tail_byte_count;
-        receipt->source_dungeon_tail_fingerprint =
-            roundtrip.source_dungeon_tail_fingerprint;
-        receipt->exported_dungeon_tail_byte_count =
-            roundtrip.exported_dungeon_tail_byte_count;
-        receipt->exported_dungeon_tail_fingerprint =
-            roundtrip.exported_dungeon_tail_fingerprint;
-        receipt->dungeon_tail_byte_preservation_ok =
-            roundtrip.dungeon_tail_byte_preservation_ok;
-        if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-            !dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
-                receipt)) {
-            result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-        }
-        receipt->roundtrip_result = result;
-        if (discovery) {
-            discovery->result = result;
-        }
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
-            receipt->exported_byte_count = (uint32_t)exported_size;
-            receipt->exported_hash = dm1_original_save_hash_bytes(
-                exported_bytes, exported_size);
-            if (receipt->exported_hash == 0u) {
-                receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
-                receipt->core_state_matches = 0;
-                ++report.roundtrip_failed_count;
-                if (report.first_failure_result ==
-                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-                    report.first_failure_result = receipt->roundtrip_result;
-                }
-                continue;
-            }
-            /* ReDMCSB LOADSAVE.C F0433 writes a whole save only after F0435
-             * has accepted its authenticated parts. Keep failed corpus rows
-             * diagnostic-only: C13/C24/C25 details become committed evidence
-             * only with the complete import/export/reload transaction. */
-            receipt->roundtrip_receipts_committed = 1;
             ++report.roundtrip_succeeded_count;
             ++report.core_state_match_count;
-            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
-                report.roundtrip_hash, receipt->game_id);
-            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
-                report.roundtrip_hash, receipt->source_hash);
-            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
-                report.roundtrip_hash, receipt->source_byte_count);
-            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
-                report.roundtrip_hash, receipt->exported_hash);
-            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
-                report.roundtrip_hash, receipt->exported_byte_count);
             if (!report.first_roundtrip_path[0]) {
                 snprintf(report.first_roundtrip_path,
                          sizeof(report.first_roundtrip_path), "%s",
@@ -5840,8 +5196,6 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
-            receipt->roundtrip_result = result;
-            receipt->core_state_matches = 0;
             if (report.first_failure_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 report.first_failure_result = result;

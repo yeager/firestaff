@@ -1,0 +1,7 @@
+#ifndef FIRESTAFF_REDMCSB_F1087_RESTORE_INTUITION_VECTORS_PC34_COMPAT_H
+#define FIRESTAFF_REDMCSB_F1087_RESTORE_INTUITION_VECTORS_PC34_COMPAT_H
+
+void redmcsb_f1087_restore_intuition_vectors_pc34_compat(void);
+const char *redmcsb_f1087_restore_intuition_vectors_source_evidence_pc34(void);
+
+#endif

@@ -213,18 +213,6 @@ typedef enum {
     DM1_WALL_SET_COUNT           /* 15 entries */
 } DM1_WallSetIndex;
 
-/* Final PC34 wall material consumed by the host after DUNVIEW.C F0096 has
- * materialized the current map's wall set. Geometry comes from the selected
- * F0116..F0124 wall zone; M11 may only blit this exact graphic or no-draw. */
-typedef struct DM1_ViewportWallHostMaterialReceiptPc34 {
-    int valid;
-    int graphic_index;
-    int transparent_color;
-    bool flip_horizontally;
-    int expected_width;
-    int expected_height;
-} DM1_ViewportWallHostMaterialReceiptPc34;
-
 /* Door frame indices — from DUNVIEW.C G2110-G2122 (I34E) */
 typedef enum {
     DM1_DOOR_FRAME_TOP_D1R = 0,
@@ -712,46 +700,6 @@ typedef struct {
     const char *occlusion_source_lines;
 } DM1_ViewportWallDrawSpec;
 
-/* Host-facing material handoff for all D3 side-wall cases.
- * ReDMCSB DUNVIEW.C F0676/F0677 and F0116/F0117 select the source wall,
- * C702/C703/C705/C706 zone, C10 transparency, and parity flip before
- * returning or entering F0115. */
-typedef struct {
-    bool handled;
-    bool draw_wall;
-    bool falls_through_to_f0115;
-    bool flip_horizontally;
-    DM1_WallSetIndex selected_wall;
-    int pc34_zone;
-    int dst_x;
-    int dst_y;
-    int width;
-    int height;
-    int transparent_color;
-    const char *redmcsb_function;
-    const char *source_lines;
-} DM1_ViewportD3SideWallHostHandoffPc34;
-
-/* Final F0115/F0128 side-wall decision consumed by M11.  This owns the
- * source-ordered D3/D2/D1 lane clipping and F0096 material selection; M11
- * may only fetch the named PC34 bitmap and blit it, or leave the cleared
- * viewport untouched.  D4 deliberately has no receipt: F0128 reaches
- * F0115's depth>3 exit before any wall panel is selected. */
-typedef struct {
-    bool handled;
-    bool draw_wall;
-    bool falls_through_to_f0115;
-    DM1_ViewSquareIndex square;
-    int pc34_zone;
-    int dst_x;
-    int dst_y;
-    int width;
-    int height;
-    DM1_ViewportWallHostMaterialReceiptPc34 material;
-    const char *redmcsb_function;
-    const char *source_lines;
-} DM1_ViewportSideWallHostReceiptPc34;
-
 /* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
  * They are outside the original M597-M611 dense enum, so use stable negative
  * identifiers for metadata/probe reporting only. */
@@ -823,14 +771,6 @@ typedef enum {
     DM1_VIEW_DOOR_BUTTON_D1C = 3, /* C3_VIEW_DOOR_BUTTON_D1C */
     DM1_VIEW_DOOR_BUTTON_COUNT = 4
 } DM1_ViewDoorButtonIndex;
-
-typedef struct {
-    bool valid;
-    DM1_ViewDoorButtonIndex view_index;
-    const DM1_WallFrame *frame;
-    const uint8_t *palette_remap;
-    int transparent_color;
-} DM1_ViewportCenterDoorButtonHostPlanPc34;
 
 typedef struct {
     DM1_WallFrame frame;       /* G0208-style coordinate set plus src offset */
@@ -1259,34 +1199,8 @@ const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_side_wall_draw_spec_for_rel(int rel_forward,
                                                                                 int rel_side);
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
-int dm1_viewport_3d_wall_host_material_receipt_pc34(
-    int map_wall_set,
-    int wallset0_graphic_index,
-    int transparent_color,
-    bool flip_horizontally,
-    int expected_width,
-    int expected_height,
-    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt);
 bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
-int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
-    DM1_ViewSquareIndex square,
-    bool parity_flip,
-    bool wall_like,
-    bool front_alcove,
-    DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff);
-int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
-    DM1_ViewSquareIndex square,
-    int map_wall_set,
-    bool parity_flip,
-    bool wall_like,
-    bool front_alcove,
-    int max_visible_forward,
-    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
-    DM1_ViewportSideWallHostReceiptPc34 *out_receipt);
-int dm1_viewport_3d_center_door_button_host_plan_pc34(
-    int depth_index,
-    DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan);
 
 /*
  * Wire wall-frame bitmaps into the V1 viewport drawing pipeline.
@@ -1335,22 +1249,6 @@ int dm1_viewport_3d_explosion_centered_zone(const DM1_ViewportExplosionOcclusion
 int dm1_viewport_3d_explosion_two_cell_zone(const DM1_ViewportExplosionOcclusionSpec *spec, unsigned char front_cell);
 int dm1_viewport_3d_explosion_rebirth_step1_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
 int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOcclusionSpec *spec);
-/* C100 is distinct from C101: PC34 F0115 selects C3000 through L2476
- * (G2028), then COORD.C layout-696 supplies the bitmap-centre coordinates.
- * This exposes only the proven C100 destination geometry.  Source:
- * DUNVIEW.C:4806-4812,5948,5965,5998-6000; COORD.C:1061-1081. */
-int dm1_viewport_3d_c100_rebirth_lightning_geometry(
-    const DM1_ViewportExplosionOcclusionSpec *spec,
-    int *out_zone_index,
-    int *out_center_x,
-    int *out_center_y);
-/* PC34 G2037 contains exactly seven source scale bytes.  C100 may consume
- * only rows 0..6; rows 7..11 have C3000 coordinates but no proven G2037
- * value and are rejected rather than reading adjacent globals.  Source:
- * DUNVIEW.C:1924-1927,4806-4812,5948,5984; FTL.idc:21032-21034. */
-int dm1_viewport_3d_c100_rebirth_lightning_scale(
-    const DM1_ViewportExplosionOcclusionSpec *spec,
-    int *out_scale);
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec(size_t index);
 const DM1_ViewportDoorFrontOcclusionSpec *dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_ViewSquareIndex square);

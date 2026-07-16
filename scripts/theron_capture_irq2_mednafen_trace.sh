@@ -12,22 +12,23 @@ syscard=$3
 trace=$4
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 mednafen=${MEDNAFEN:-/opt/homebrew/bin/mednafen}
-video_driver=${FIRESTAFF_MEDNAFEN_VIDEO_DRIVER:-softfb}
 
 if [ ! -x "$mednafen" ]; then
     printf 'FAIL: Mednafen executable is unavailable: %s\n' "$mednafen" >&2
     exit 1
 fi
 
-case "$video_driver" in
-    default|opengl|softfb) ;;
-    *) printf 'FAIL: unsupported Mednafen video driver: %s\n' "$video_driver" >&2; exit 1 ;;
-esac
-
 track_md5=$(md5 -q "$track02")
 syscard_md5=$(md5 -q "$syscard")
 case "$track_md5" in
-    b7afb338ad31be1025b53f9aff12d73a|f23601102138f87c33025877767ebf76) ;;
+    b7afb338ad31be1025b53f9aff12d73a)
+        trace_variant=jp_bin
+        trace_record=0x4df
+        ;;
+    f23601102138f87c33025877767ebf76)
+        trace_variant=us_bin
+        trace_record=0x4e0
+        ;;
     *) printf 'FAIL: Track 02 MD5 is not an authenticated JP/US raw BIN\n' >&2; exit 1 ;;
 esac
 if [ "$syscard_md5" != ff1a674273fe3540ccef576376407d1d ]; then
@@ -36,11 +37,13 @@ if [ "$syscard_md5" != ff1a674273fe3540ccef576376407d1d ]; then
 fi
 if [ ! -s "$trace" ]; then
     printf 'TRACE REQUIRED: launch Mednafen debugger and export ordered key=value registers to %s\n' "$trace" >&2
-    printf 'Required: source, variant, stage3_track02_record, cd_read_return_pc, irq2_entry_pc, cd_state_pc, cd_state_branch_pc, f5_after_cd_read, f5_at_irq2_entry, cd_status_1802, cd_status_1803, f2_before_merge, f2_at_branch\n' >&2
+    printf 'The instrumented capture writes strict theron_irq2_capture_v2 headers plus ordered raw snapshots of PC, $1800..$1803, $f5, and $f2. It does not choose an IRQ2 branch.\n' >&2
     printf 'Stock Mednafen trace logs (debugger key l) include CPU registers only, not RAM $f5, $f2, $1802, or $1803.\n' >&2
     printf 'Use scripts/build_mednafen_theron_irq2_trace.sh, then set MEDNAFEN to its output and rerun.\n' >&2
     printf 'The harness therefore rejects stock trace logs and does not invent register values.\n' >&2
-    exec env FIRESTAFF_THERON_IRQ2_TRACE="$trace" "$mednafen" -video.driver "$video_driver" -sound 0 \
+    exec env FIRESTAFF_THERON_IRQ2_TRACE="$trace" \
+        FIRESTAFF_THERON_IRQ2_VARIANT="$trace_variant" \
+        FIRESTAFF_THERON_IRQ2_RECORD="$trace_record" "$mednafen" -sound 0 \
         -debugger.autostepmode 0 -pce.arcadecard 0 -pce.cdbios "$syscard" "$cue"
 fi
 
@@ -54,7 +57,6 @@ cc -std=c11 -Wall -Wextra -Werror -I"$repo/include" -I"$repo/src" \
   "$repo/src/theron/theron_v1_stage3_mode1_header.c" \
   "$repo/src/theron/theron_v1_system_card_irq2_cd_state_gate.c" \
   "$repo/src/theron/theron_v1_irq2_live_trace_gate.c" \
-  "$repo/src/theron/theron_v1_trace_v3_schema.c" \
   "$repo/probes/theron/firestaff_theron_v1_mednafen_irq2_trace_harness.c" \
   -o "$out"
 "$out" "$track02" "$track_md5" "$syscard" "$trace"

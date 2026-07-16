@@ -70,6 +70,7 @@ int csb_v1_boot_startup_playback_complete_swoosh_pc34(
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34;
     session->playback.title_stage = CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
     session->playback.title_frame = 0;
+    session->playback.title_phase_mask = 0;
     session->playback.swoosh_active = 0;
     if (out_audio_action) {
         *out_audio_action = CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34;
@@ -145,19 +146,5 @@ int csb_v1_boot_startup_playback_enter_hud_pc34(
     /* ENTRANCE.C F0806 owns the closed-door menu until entering the dungeon;
      * the same verified HUD bindings then become the runtime owner. */
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34;
-    return 1;
-}
-
-int csb_v1_boot_startup_playback_complete_entrance_pc34(
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session)
-{
-    if (!csb_v1_startup_playback_session_owned_pc34(session) ||
-        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
-        !session->playback.entrance_music_active) {
-        return 0;
-    }
-    /* ReDMCSB ENTRANCE.C F0806:857-889 / CSBWin CSBCode.cpp:9515-9535:
-     * only the completed door action returns control to the game/HUD. */
-    session->playback.entrance_complete = 1;
     return 1;
 }

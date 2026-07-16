@@ -196,12 +196,8 @@ typedef struct {
     int handled;
     int shouldDeleteProjectile;
     int shouldClearProjectileNext;
-    int shouldUnlinkProjectileFromSquare;
     int shouldConsumePotion;
     int shouldMaterialize;
-    int cleanupMapIndex;
-    int cleanupMapX;
-    int cleanupMapY;
     int mapIndex;
     int mapX;
     int mapY;

@@ -294,55 +294,6 @@ int DM1_V1_Entrance_BuildFullStartRenderReceiptPc34Compat(
     return 1;
 }
 
-int DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
-    const DM1_V1_EntranceFullStartRenderReceiptPc34 *receipt)
-{
-    if (!receipt || !receipt->valid) return 0;
-    if (receipt->mapIndex != DM1_V1_ENTRANCE_MAP_INDEX_PC34) return 0;
-    if (receipt->width != DM1_V1_ENTRANCE_MICRO_DUNGEON_WIDTH_PC34 ||
-        receipt->height != DM1_V1_ENTRANCE_MICRO_DUNGEON_HEIGHT_PC34) {
-        return 0;
-    }
-    if (receipt->partyX != 2 ||
-        receipt->partyY != 0 ||
-        receipt->partyDirection != DM1_V1_ENTRANCE_DIRECTION_SOUTH_PC34) {
-        return 0;
-    }
-    if (!receipt->drawFloorAndCeilingRequested) return 0;
-    if (receipt->corridorCount != 6) return 0;
-    if (receipt->doorFrameIndex < 0 ||
-        receipt->doorFrameIndex >= receipt->doorFrameCount ||
-        receipt->doorFrameCount < 10) {
-        return 0;
-    }
-    if (receipt->entranceScreenGraphicIndex !=
-        DM1_V1_ENTRANCE_SCREEN_GRAPHIC_PC34) {
-        return 0;
-    }
-    if (receipt->doorAnimationGraphicIndex !=
-        DM1_V1_ENTRANCE_DOOR_ANIMATION_GRAPHIC_PC34) {
-        return 0;
-    }
-    if (!receipt->realAssetCaptureProof ||
-        !receipt->requiresGraphicsDat ||
-        !receipt->noHostRenderInference) {
-        return 0;
-    }
-    if (!receipt->captureProofReason) return 0;
-
-    /* ReDMCSB ENTRANCE.C F0797 C255 entrance micro-dungeon:
-     * row y=2 and square index 7 are corridors; all other cells are walls.
-     * Host renderers consume this receipt as proof instead of rebuilding the
-     * micro-dungeon shape from local M11 assumptions. */
-    for (int i = 0; i < DM1_V1_ENTRANCE_MICRO_DUNGEON_SIZE_PC34; ++i) {
-        int expected = ((i >= 10 && i <= 14) || i == 7)
-                           ? DM1_V1_ENTRANCE_ELEMENT_CORRIDOR_PC34
-                           : DM1_V1_ENTRANCE_ELEMENT_WALL_PC34;
-        if (receipt->squares[i] != expected) return 0;
-    }
-    return 1;
-}
-
 static void DM1_V1_Entrance_AppendOverlayCommandPc34(
     DM1_V1_EntranceMenuRouteReceiptPc34 *receipt,
     DM1_V1_EntranceOverlayKindPc34 kind,

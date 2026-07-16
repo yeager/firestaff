@@ -74,6 +74,104 @@ int dm2_v1_weather_next_state(DM2_V1_WeatherState *state) {
     return state->weather;
 }
 
+static void dm2_v1_weather_mix_timer_receipt(
+    DM2_V1_WeatherTimerReceipt *receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!receipt) return;
+#define DM2_WEATHER_TIMER_HASH(v) \
+    do { \
+        hash ^= (uint32_t)(v); \
+        hash *= 16777619u; \
+    } while (0)
+    DM2_WEATHER_TIMER_HASH(receipt->source_set_timer_weather);
+    DM2_WEATHER_TIMER_HASH(receipt->source_weather_3df7_0037);
+    DM2_WEATHER_TIMER_HASH(receipt->outdoor);
+    DM2_WEATHER_TIMER_HASH(receipt->due);
+    DM2_WEATHER_TIMER_HASH(receipt->tick_count);
+    DM2_WEATHER_TIMER_HASH(receipt->interval_ticks);
+    DM2_WEATHER_TIMER_HASH(receipt->weather_before);
+    DM2_WEATHER_TIMER_HASH(receipt->weather_after);
+    DM2_WEATHER_TIMER_HASH(receipt->intensity_after);
+    DM2_WEATHER_TIMER_HASH(receipt->seed_before);
+    DM2_WEATHER_TIMER_HASH(receipt->seed_after);
+#undef DM2_WEATHER_TIMER_HASH
+    receipt->transaction_hash = hash == 0u ? 1u : hash;
+    receipt->valid = 1;
+}
+
+int dm2_v1_weather_3df7_0037(DM2_V1_WeatherState *state,
+                              DM2_V1_WeatherTimerReceipt *out_receipt)
+{
+    DM2_V1_WeatherTimerReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || state->weather < DM2_WEATHER_CLEAR ||
+        state->weather >= DM2_WEATHER_COUNT) {
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_weather_3df7_0037 = 1;
+    receipt.due = 1;
+    receipt.interval_ticks = DM2_WEATHER_TIMER_INTERVAL_TICKS;
+    receipt.weather_before = (uint8_t)state->weather;
+    receipt.seed_before = state->weather_seed;
+
+    (void)dm2_v1_weather_next_state(state);
+
+    receipt.weather_after = (uint8_t)state->weather;
+    receipt.intensity_after = (uint8_t)state->weather_intensity;
+    receipt.seed_after = state->weather_seed;
+    dm2_v1_weather_mix_timer_receipt(&receipt);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_weather_set_timer_weather(DM2_V1_WeatherState *state,
+                                      int outdoor,
+                                      uint32_t tick_count,
+                                      DM2_V1_WeatherTimerReceipt *out_receipt)
+{
+    DM2_V1_WeatherTimerReceipt receipt;
+    int due;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || state->weather < DM2_WEATHER_CLEAR ||
+        state->weather >= DM2_WEATHER_COUNT) {
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_set_timer_weather = 1;
+    receipt.outdoor = outdoor ? 1 : 0;
+    receipt.tick_count = tick_count;
+    receipt.interval_ticks = DM2_WEATHER_TIMER_INTERVAL_TICKS;
+    receipt.weather_before = (uint8_t)state->weather;
+    receipt.weather_after = (uint8_t)state->weather;
+    receipt.intensity_after = (uint8_t)state->weather_intensity;
+    receipt.seed_before = state->weather_seed;
+    receipt.seed_after = state->weather_seed;
+
+    due = receipt.outdoor &&
+        tick_count != 0u &&
+        tick_count % DM2_WEATHER_TIMER_INTERVAL_TICKS == 0u;
+    receipt.due = due ? 1 : 0;
+    if (due) {
+        DM2_V1_WeatherTimerReceipt transition;
+        if (!dm2_v1_weather_3df7_0037(state, &transition)) return 0;
+        receipt.source_weather_3df7_0037 =
+            transition.source_weather_3df7_0037;
+        receipt.weather_after = transition.weather_after;
+        receipt.intensity_after = transition.intensity_after;
+        receipt.seed_after = transition.seed_after;
+    }
+    dm2_v1_weather_mix_timer_receipt(&receipt);
+    if (out_receipt) *out_receipt = receipt;
+    return due ? 1 : 0;
+}
+
 void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes) {
     if (!state) return;
     if (minutes < 0) return;
@@ -236,6 +334,8 @@ const char *dm2_v1_weather_source_evidence(void) {
     return
         "DM2 V1 Weather and Time-of-Day — Phase 6 source-lock\n"
         "ReDMCSB: SKULL.ASM (sha256 a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099)\n"
+        "Source: skproject/SKULLWIN/c_weather.cpp DM2_SET_TIMER_WEATHER\n"
+        "Source: skproject/SKULLWIN/c_weather.cpp DM2_weather_3df7_0037\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp (PROCESS_TIMER_0C, CONTINUE_TICK_GENERATOR)\n"
         "Source: skproject/SKULLWIN/c_timer.cpp (timer system state)\n"
         "Source: docs/dm2_time.md (time-of-day 0-1439 min, per-champion torch)\n"

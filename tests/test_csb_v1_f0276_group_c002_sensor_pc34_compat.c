@@ -1,4 +1,5 @@
 #include "csb_v1_runtime_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 
@@ -52,7 +53,7 @@ int main(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    unsigned char raw[132];
+    unsigned char raw[112];
     unsigned short group_thing = (unsigned short)(4u << 10);
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -68,7 +69,7 @@ int main(void)
     dungeon.thing_data_bases[3] = 72;
     dungeon.thing_type_counts[3] = 1;
     dungeon.thing_data_bases[4] = 80;
-    dungeon.thing_type_counts[4] = 2;
+    dungeon.thing_type_counts[4] = 1;
     raw[square_offset(0, 0)] |= 0x10u;
     raw[square_offset(1, 0)] |= 0x10u;
     raw[square_offset(2, 0)] = (unsigned char)(6u << 5);
@@ -77,7 +78,7 @@ int main(void)
     put_le16(raw, 66, group_thing);
     put_le16(raw, 68, (unsigned short)(3u << 10));
     put_le16(raw, 72, 0xfffeu);
-    put_le16(raw, 74, DM1_SENSOR_FLOOR_CREATURE);
+    put_le16(raw, 74, DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE);
     put_le16(raw, 76, (unsigned short)(DM1_EFFECT_SET << 3));
     put_le16(raw, 78, (unsigned short)(2u << 6));
     put_le16(raw, 80, 0xfffeu);
@@ -92,13 +93,13 @@ int main(void)
           "C04 group move dispatches through F0267");
     CHECK(get_le16(raw, 66) == 0xfffeu &&
               get_le16(raw, 68) == group_thing,
-          "F0267 relinks the C04 group onto the C007 square");
+          "F0267 relinks the C04 group onto the C002 square");
     CHECK(profile.timeline_queue.eventCount == 1 &&
               profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
               profile.timeline_queue.events[0].b_mapX == 2 &&
               profile.timeline_queue.events[0].b_mapY == 0 &&
               profile.timeline_queue.events[0].c_effect == DM1_EFFECT_SET,
-          "C007 group addition publishes the ReDMCSB F0268 fakewall event");
+          "C002 group addition publishes the ReDMCSB F0268 fakewall event");
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;

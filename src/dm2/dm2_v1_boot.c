@@ -28,13 +28,11 @@
 #include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
-#include "dm2_v1_dialogue_gdat.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
-#include "dm2_v1_sound.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
@@ -57,12 +55,7 @@ static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 #define DM2_GDAT_TITLE_MENU_SCREEN_FIELD 4
-/* skproject/SKWIN/SkWinCore.cpp LOAD_LOCALLEVEL_DYN (2676:07E9-084E)
- * preserves MapGraphicsStyle as U8, then uses that exact byte in the
- * GRAPHICSSET and ENVIRONMENT MARK_DYN_LOAD selectors.  The cache must cover
- * that source address domain; a local 16-style limit would reject a valid
- * custom or later-corpus map before its GDAT image can be verified. */
-#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 0x100
+#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 16
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -835,7 +828,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     profile->dungeon_size = 0U;
     profile->assets_verified = 0;
     profile->use_dm2_filenames = 0;
-    dm2_v1_sound_bind_verified_music_assets(NULL, 0);
 
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
@@ -940,8 +932,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
 
     /* Determine if we found both required files */
     if (profile->graphics_path[0] && profile->dungeon_path[0]) {
-        dm2_v1_sound_bind_verified_music_assets(profile->asset_root,
-                                                profile->assets_verified);
         return 0;  /* success */
     }
     return -1;  /* missing assets */
@@ -3954,23 +3944,20 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     }
 
     out_receipt->real_gdat_capture_breadth_ready =
-        /* fe7299 SHOW_MENU_SCREEN keeps one original TITLE surface while
-         * startup HUD is suppressed.  The probe intentionally samples that
-         * static surface once; requiring invented frames 2/7 would turn an
-         * original-data route into a synthetic-animation requirement. */
-        out_receipt->sampled_title_timing_capture_count >= 1 &&
-        out_receipt->sampled_title_pixel_capture_count >= 1 &&
+        out_receipt->sampled_title_timing_capture_count >= 3 &&
+        out_receipt->sampled_title_pixel_capture_count >= 3 &&
         out_receipt->sampled_title_unique_pixel_hash_count >= 1 &&
         out_receipt->sampled_title_pixel_hash != 0u &&
         (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
-        /* Menu navigation is input state over a static original screen.  The
-         * sole captured selection must therefore be an original GDAT
-         * composite with no generated rows, not three fabricated variants. */
-        out_receipt->sampled_menu_selection_capture_count >= 1 &&
-        out_receipt->sampled_menu_composite_capture_count >= 1 &&
-        out_receipt->sampled_menu_unique_composite_hash_count >= 1 &&
+        (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
+        (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
+        out_receipt->sampled_menu_selection_capture_count >= 3 &&
+        out_receipt->sampled_menu_composite_capture_count >= 3 &&
+        (out_receipt->menu_raw_screen_route_ready
+             ? out_receipt->sampled_menu_unique_composite_hash_count >= 1
+             : out_receipt->sampled_menu_unique_composite_hash_count >= 3) &&
         out_receipt->sampled_menu_composite_hash != 0u &&
-        (out_receipt->sampled_menu_selection_mask & 0x1) == 0x1 &&
+        (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7 &&
         out_receipt->sampled_runtime_hud_handoff_capture_ready;
     return out_receipt->real_gdat_capture_breadth_ready;
 }
@@ -4138,60 +4125,6 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
                                                    out_hash,
                                                    out_byte_count) &&
            *out_hash != 0u && *out_byte_count > 0u;
-}
-
-int dm2_v1_boot_champion_hero_type_source_ready(
-    DM2_V1_BootProfile *profile,
-    uint8_t hero_type,
-    char out_first_name[8])
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *name;
-    const uint8_t *hero_data;
-    size_t name_size = 0u;
-    size_t hero_data_size = 0u;
-    uint8_t *pixels = NULL;
-    int width = 0;
-    int height = 0;
-    int stride = 0;
-    size_t copied = 0u;
-
-    if (out_first_name) out_first_name[0] = '\0';
-    if (!profile || !profile->graphics_dat || !out_first_name) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-
-    /* skproject/SKWIN/SkWinCore.cpp REVIVE_PLAYER (20573-20627) stores the
-     * mirror's actuator HeroType, reads CHAMPIONS/type dtText/0x18 and
-     * dt08/0, then DRAW_CHAMPION_PICTURE (12866-12880) draws dtImage/0.
-     * Keep all three source records present before M11 admits the portrait. */
-    name = dm2_v1_asset_load_text_sized(&gfx->loader,
-                                        DM2_GDAT_CATEGORY_CHAMPIONS,
-                                        hero_type, 0x18, &name_size);
-    hero_data = dm2_v1_asset_load_typed_sized(&gfx->loader,
-                                               DM2_GDAT_CATEGORY_CHAMPIONS,
-                                               hero_type,
-                                               DM2_GDAT_ENTRY_TYPE_RAW8,
-                                               0x00, &hero_data_size);
-    if (!name || name_size == 0u || !hero_data || hero_data_size == 0u) {
-        return 0;
-    }
-    while (copied < 7u && copied < name_size && name[copied] != 0u &&
-           name[copied] != ' ') {
-        out_first_name[copied] = (char)name[copied];
-        ++copied;
-    }
-    if (copied == 0u) return 0;
-    out_first_name[copied] = '\0';
-    if (dm2_v1_boot_gdat_image_asset_fetch(
-            profile, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type, 0x00,
-            &pixels, &width, &height, &stride) != 0 || !pixels ||
-        width <= 0 || height <= 0 || stride < width) {
-        dm2_v1_boot_gdat_image_asset_free(pixels);
-        out_first_name[0] = '\0';
-        return 0;
-    }
-    dm2_v1_boot_gdat_image_asset_free(pixels);
-    return 1;
 }
 
 static int dm2_v1_boot_runtime_raw_gdat_hash_add(
@@ -4541,13 +4474,10 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
 
-    /* skproject/SKWIN/SkWinCore.cpp queries GRAPHICSSET dtWordValue fields
-     * through the current map graphics-set id (`glbMapGraphicsSet`).  The
-     * startup seed may not match every data variant, so probe the requested
-     * index first and then fall forward to the first real graphics-set that
-     * carries the same render-control fields. */
-    for (int attempt = 0; attempt < 257; ++attempt) {
-        int candidate = attempt == 0 ? graphicsset_index : attempt - 1;
+    /* SKWIN queries the active map graphics-set directly.  A control word
+     * from another set is not a valid render handoff for this map. */
+    for (int attempt = 0; attempt < 1; ++attempt) {
+        int candidate = graphicsset_index;
         uint32_t hash = 0x32475756u;
         uint32_t mask = 0u;
         uint32_t count = 0u;
@@ -4563,9 +4493,6 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
         uint32_t ambient_darkness = 0u;
         int ready;
 
-        if (attempt > 0 && candidate == graphicsset_index) {
-            continue;
-        }
         for (uint32_t i = 0u;
              i < (uint32_t)(sizeof(k_fields) / sizeof(k_fields[0])); ++i) {
             uint16_t value = 0u;
@@ -5311,57 +5238,6 @@ static int dm2_v1_boot_runtime_interface_rect14_placement_receipt(
     return placement_count >= 4u && rotated_mask != 0u && hash != 0u;
 }
 
-static int dm2_v1_boot_parse_interface_action_table(
-    const uint8_t *raw,
-    size_t raw_size,
-    DM2_V1_InterfaceActionTable *out_table)
-{
-    size_t cursor;
-    uint32_t hash = 0x32494132u;
-    uint32_t group_count;
-    uint32_t entry_count = 0u;
-
-    if (!out_table) return 0;
-    memset(out_table, 0, sizeof(*out_table));
-    if (!raw || raw_size < 2u || raw_size > UINT32_MAX) return 0;
-    group_count = raw[0];
-    if (group_count == 0u || group_count > DM2_V1_INTERFACE_ACTION_GROUP_MAX ||
-        raw_size < 1u + (size_t)group_count) {
-        return 0;
-    }
-    cursor = 1u + (size_t)group_count;
-    for (uint32_t i = 0; i < group_count; ++i) {
-        out_table->groups[i].length = raw[1u + i];
-        entry_count += raw[1u + i];
-    }
-    if (entry_count > (raw_size - cursor) / 2u) return 0;
-    for (uint32_t i = 0; i < group_count; ++i) {
-        out_table->groups[i].primary_offset = (uint32_t)cursor;
-        cursor += out_table->groups[i].length;
-    }
-    for (uint32_t i = 0; i < group_count; ++i) {
-        out_table->groups[i].secondary_offset = (uint32_t)cursor;
-        cursor += out_table->groups[i].length;
-    }
-    for (size_t i = 0; i < raw_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
-    }
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)cursor);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, (uint32_t)(raw_size - cursor));
-    out_table->valid = 1;
-    out_table->raw = raw;
-    out_table->raw_size = (uint32_t)raw_size;
-    out_table->hash = hash;
-    out_table->group_count = group_count;
-    out_table->entry_count = entry_count;
-    out_table->tail_offset = (uint32_t)cursor;
-    out_table->tail_size = (uint32_t)(raw_size - cursor);
-    return 1;
-}
-
 static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,
@@ -5373,7 +5249,10 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootGraphicsDat *gfx;
     const uint8_t *raw;
     size_t raw_size = 0;
-    DM2_V1_InterfaceActionTable table;
+    uint32_t hash = 0x32494132u;
+    uint32_t group_count;
+    uint32_t entry_count = 0u;
+    size_t min_payload;
 
     if (out_hash) *out_hash = 0u;
     if (out_byte_count) *out_byte_count = 0u;
@@ -5393,16 +5272,40 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
         DM2_GDAT_ENTRY_TYPE_RAW7,
         DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
         &raw_size);
-    if (!dm2_v1_boot_parse_interface_action_table(raw, raw_size, &table)) {
+    if (!raw || raw_size < 2 || raw_size > UINT32_MAX) {
         return 0;
     }
 
-    *out_hash = table.hash;
-    *out_byte_count = table.raw_size;
-    *out_group_count = table.group_count;
-    *out_entry_count = table.entry_count;
-    *out_tail_byte_count = table.tail_size;
-    return table.entry_count > 0u;
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 reads the
+     * first byte as group count, copies one length byte per group into
+     * _4976_4bde[].b0, then binds two variable-length blocks (pv1/pv5)
+     * before the trailing _4976_4be2 command table. */
+    group_count = raw[0];
+    if (group_count == 0u || raw_size < 1u + (size_t)group_count) {
+        return 0;
+    }
+    for (uint32_t i = 0; i < group_count; ++i) {
+        entry_count += raw[1u + i];
+    }
+    min_payload = 1u + (size_t)group_count + ((size_t)entry_count * 2u);
+    if (raw_size < min_payload) {
+        return 0;
+    }
+    for (size_t i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash,
+        (uint32_t)(raw_size - min_payload));
+
+    *out_hash = hash;
+    *out_byte_count = (uint32_t)raw_size;
+    *out_group_count = group_count;
+    *out_entry_count = entry_count;
+    *out_tail_byte_count = (uint32_t)(raw_size - min_payload);
+    return entry_count > 0u;
 }
 
 static int dm2_v1_boot_runtime_interface_font_table_receipt(
@@ -7852,10 +7755,6 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
-        out_receipt->runtime_render_blocked_material_draw_count =
-            frame_ownership.blocked_material_draws;
-        out_receipt->runtime_render_blocked_material_mask =
-            frame_ownership.blocked_material_mask;
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
@@ -7866,9 +7765,7 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_render_fallback_item_count == 0 &&
             out_receipt->runtime_render_fallback_creature_possession_item_count == 0 &&
             out_receipt->runtime_render_fallback_carried_item_count == 0 &&
-            out_receipt->runtime_render_fallback_projectile_count == 0 &&
-            out_receipt->runtime_render_blocked_material_draw_count == 0 &&
-            out_receipt->runtime_render_blocked_material_mask == 0u;
+            out_receipt->runtime_render_fallback_projectile_count == 0;
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
             out_receipt->runtime_render_no_core_fallbacks;
@@ -8965,7 +8862,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.dungeon_map_chip_floor_decoded_hash != 0u &&
         (!out_receipt->runtime_hud.graphicsset_word_values_ready ||
          (out_receipt->runtime_hud.graphicsset_word_values_hash != 0u &&
-          out_receipt->runtime_hud.graphicsset_word_values_query_count >= 4u)) &&
+          out_receipt->runtime_hud.graphicsset_word_values_query_count >= 2u &&
+          (out_receipt->runtime_hud.graphicsset_word_values_present_mask &
+           DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK) ==
+              DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK)) &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_ready &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_hash != 0u &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_query_count > 0u &&
@@ -9325,10 +9225,10 @@ void dm2_v1_boot_startup_launch_cleanup(
     memset(launch, 0, sizeof(*launch));
 }
 
-int dm2_v1_boot_hud_core_asset_address(int field,
-                                       int *out_category,
-                                       int *out_index,
-                                       int *out_field)
+static int dm2_v1_boot_hud_core_asset_address(int field,
+                                              int *out_category,
+                                              int *out_index,
+                                              int *out_field)
 {
     if (!out_category || !out_index || !out_field ||
         field < 0 || field > DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
@@ -9944,35 +9844,6 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
         return 0;
     }
     return *out_field >= 0;
-}
-
-int dm2_v1_boot_viewport_asset_palette_fetch(
-    void *user,
-    int gdat_index,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash)
-{
-    DM2_V1_BootProfile *profile = (DM2_V1_BootProfile *)user;
-    DM2_V1_BootGraphicsDat *gfx;
-    int category;
-    int index;
-    int field;
-
-    if (out_hash) *out_hash = 0u;
-    if (out_palette16) memset(out_palette16, 0, 16u);
-    if (!profile || !profile->graphics_dat || !out_palette16 ||
-        !dm2_v1_boot_viewport_asset_address(gdat_index, &category, &index,
-                                             &field)) {
-        return -1;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    /* skproject/SKWIN/SkWinCore.cpp QUERY_DUNGEON_MAP_CHIP_PICT (29EE:0BCC)
-     * pairs the selected dtImage with QUERY_GDAT_IMAGE_LOCALPAL before every
-     * DRAW_CHIP_OF_MAGIC_MAP call.  No interface/global-palette substitution
-     * is valid for source-owned viewport pixels. */
-    return dm2_v1_asset_load_image_local_palette(
-               &gfx->loader, category, index, field, out_palette16,
-               out_hash) ? 0 : -1;
 }
 
 int dm2_v1_boot_viewport_asset_evidence(

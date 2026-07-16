@@ -147,7 +147,6 @@ index 347482c4..61d4758e 100644
 +{
 + if(!TheronIrq2Trace || MDFN_strazicmp(CurGame->shortname, "pce"))
 +  return;
-+const uint32 logical_pc = PC & 0xffff;
 +
 + /* Once the System Card return is observed, retain the raw control edge from
 +  * its return target to the next observed CPU PC. This does not classify the
@@ -166,454 +165,29 @@ index 347482c4..61d4758e 100644
 +
 + if(TheronIrq2TraceReturnTransferPending)
 + {
-+  if(logical_pc < 0xcc00 || logical_pc >= 0xcd00)
-+  {
-+   TheronIrq2TraceReturnTransferSeen[TheronIrq2TraceReturnTransferSourcePC & 0xff] = true;
-+   TheronIrq2Trace->print_format("return_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceReturnTransferSourcePC, TheronIrq2TraceReturnTransferPhysicalPC, TheronIrq2TraceReturnTransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceReturnTransferPending = false;
++  TheronIrq2TraceSnapshotCount++;
++  TheronIrq2TraceEventSequence++;
++  TheronIrq2Trace->print_format("snapshot seq=%u logical_pc=%04x physical_pc=%08x cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x f5=%02x f2=%02x\n",
++                                TheronIrq2TraceEventSequence, logical_pc, PC,
++                                controller[0], controller[1], controller[2], controller[3], f5, f2);
 + }
++ if(system_card_pc)
++  TheronIrq2TraceSystemCardSeen[logical_pc - 0xe000] = true;
++ controller_initialized = true;
++ previous_controller[0] = controller[0];
++ previous_controller[1] = controller[1];
++ previous_controller[2] = controller[2];
++ previous_controller[3] = controller[3];
++}
 +
-+ if(TheronIrq2TraceE870TransferPending)
-+ {
-+  if(logical_pc < 0xe870 || logical_pc >= 0xe900)
-+  {
-+   TheronIrq2TraceE870TransferSeen[TheronIrq2TraceE870TransferSourcePC & 0xff] = true;
-+   TheronIrq2Trace->print_format("e870_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceE870TransferSourcePC, TheronIrq2TraceE870TransferPhysicalPC, TheronIrq2TraceE870TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceE870TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceE490TransferPending)
-+ {
-+  if(logical_pc < 0xe490 || logical_pc > 0xe520)
-+  {
-+   TheronIrq2TraceE490TransferSeen[TheronIrq2TraceE490TransferSourcePC - 0xe490] = true;
-+   TheronIrq2Trace->print_format("bios_e490_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceE490TransferSourcePC, TheronIrq2TraceE490TransferPhysicalPC, TheronIrq2TraceE490TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceE490TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceE8A5TransferPending)
-+ {
-+  if(logical_pc < 0xe8a5 || logical_pc > 0xe8e2)
-+  {
-+   TheronIrq2TraceE8A5TransferSeen[TheronIrq2TraceE8A5TransferSourcePC - 0xe8a5] = true;
-+   TheronIrq2Trace->print_format("e8a5_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceE8A5TransferSourcePC, TheronIrq2TraceE8A5TransferPhysicalPC, TheronIrq2TraceE8A5TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceE8A5TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceCBC0TransferPending)
-+ {
-+  if(logical_pc < 0xcbc0 || logical_pc >= 0xcc00)
-+  {
-+   TheronIrq2TraceCBC0TransferSeen[TheronIrq2TraceCBC0TransferSourcePC - 0xcbc0] = true;
-+   TheronIrq2Trace->print_format("cbc0_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceCBC0TransferSourcePC, TheronIrq2TraceCBC0TransferPhysicalPC, TheronIrq2TraceCBC0TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceCBC0TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceE3A0TransferPending)
-+ {
-+  if(logical_pc < 0xe3a0 || logical_pc >= 0xe400)
-+  {
-+   TheronIrq2TraceE3A0TransferSeen[TheronIrq2TraceE3A0TransferSourcePC - 0xe3a0] = true;
-+   TheronIrq2Trace->print_format("e3a0_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceE3A0TransferSourcePC, TheronIrq2TraceE3A0TransferPhysicalPC, TheronIrq2TraceE3A0TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceE3A0TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceCC9ETransferPending)
-+ {
-+  if(logical_pc < 0xcc9e || logical_pc > 0xccff)
-+  {
-+   TheronIrq2TraceCC9ETransferSeen[TheronIrq2TraceCC9ETransferSourcePC - 0xcc9e] = true;
-+   TheronIrq2Trace->print_format("cc9e_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceCC9ETransferSourcePC, TheronIrq2TraceCC9ETransferPhysicalPC, TheronIrq2TraceCC9ETransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceCC9ETransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceCB20TransferPending)
-+ {
-+  if(logical_pc < 0xcb20 || logical_pc >= 0xcb60)
-+  {
-+   TheronIrq2TraceCB20TransferSeen[TheronIrq2TraceCB20TransferSourcePC - 0xcb20] = true;
-+   TheronIrq2Trace->print_format("cb20_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceCB20TransferSourcePC, TheronIrq2TraceCB20TransferPhysicalPC, TheronIrq2TraceCB20TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceCB20TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceE100TransferPending)
-+ {
-+  if(logical_pc < 0xe100 || logical_pc >= 0xe200)
-+  {
-+   TheronIrq2TraceE100TransferSeen[TheronIrq2TraceE100TransferSourcePC - 0xe100] = true;
-+   TheronIrq2Trace->print_format("e100_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceE100TransferSourcePC, TheronIrq2TraceE100TransferPhysicalPC, TheronIrq2TraceE100TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceE100TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceC860TransferPending)
-+ {
-+  if(logical_pc < 0xc860 || logical_pc >= 0xca00)
-+  {
-+   TheronIrq2TraceC860TransferSeen[TheronIrq2TraceC860TransferSourcePC - 0xc860] = true;
-+   TheronIrq2Trace->print_format("c860_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
-+                                 TheronIrq2TraceC860TransferSourcePC, TheronIrq2TraceC860TransferPhysicalPC, TheronIrq2TraceC860TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceC860TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TraceFE90TransferPending)
-+ {
-+  if(logical_pc < 0xfe90 || logical_pc >= 0xff00)
-+  {
-+   TheronIrq2TraceFE90TransferSeen[TheronIrq2TraceFE90TransferSourcePC - 0xfe90] = true;
-+   TheronIrq2Trace->print_format("fe90_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\\n",
-+                                 TheronIrq2TraceFE90TransferSourcePC, TheronIrq2TraceFE90TransferPhysicalPC, TheronIrq2TraceFE90TransferInstruction, logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TraceFE90TransferPending = false;
-+ }
-+
-+ if(TheronIrq2TracePostE98ATransferPending)
-+ {
-+  if(logical_pc != TheronIrq2TracePostE98ATransferSourcePC)
-+  {
-+   TheronIrq2TracePostE98ATransferSeen = true;
-+   TheronIrq2Trace->print_format("post_e98a_controller_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\\n",
-+                                 TheronIrq2TracePostE98ATransferSourcePC,
-+                                 TheronIrq2TracePostE98ATransferPhysicalPC,
-+                                 TheronIrq2TracePostE98ATransferInstruction,
-+                                 logical_pc, PC);
-+   FlushTheronIrq2Trace();
-+  }
-+  TheronIrq2TracePostE98ATransferPending = false;
-+ }
-+
-+ /* The debugger callback runs for every HuC6280 instruction.  Do not
-+  * inspect memory or write a generic per-PC transcript outside the bounded
-+  * System Card / loader windows: that instrumentation itself can otherwise
-+  * distort CD timing.  Pending transfer receipts above remain handled before
-+  * this filter, so a branch out of a watched window is still captured. */
-+ const bool TheronIrq2TraceWatchedPC =
-+     (logical_pc >= 0xc800 && logical_pc < 0xce00) ||
-+     (logical_pc >= 0xe000 && logical_pc < 0xeb00) ||
-+     (logical_pc >= 0xfe00) ||
-+     (logical_pc >= 0x4000 && logical_pc < 0x4100);
-+ if(!TheronIrq2TraceWatchedPC)
++void Debugger_GTR_TheronIrq2PCECDWrite(uint32 timestamp, uint32 pc, uint32 phys_addr, uint8 data)
++{
++ if(!TheronIrq2Trace || MDFN_strazicmp(CurGame->shortname, "pce"))
 +  return;
-+/* Record bounded raw store instructions that can alter the controller state
-+ * before the latch. This has no command, payload, or state-machine meaning. */
-+if(TheronIrq2TraceRawControllerStateStoreCount < 16)
-+{
-+ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+ if(opcode == 0x8d || opcode == 0x9c || opcode == 0xee || opcode == 0xce)
-+ {
-+  const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
-+                         ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
-+  if(address == 0x2241)
-+  {
-+   const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
-+   const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
-+   TheronIrq2Trace->print_format("system_card_controller_state_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x state_before=%02x\\n",
-+                                 logical_pc, PC, opcode, accumulator,
-+                                 CurGame->Debugger->MemPeek(0x2241, 1, true, true) & 0xff);
-+   TheronIrq2TraceRawControllerStateStoreCount++;
-+   FlushTheronIrq2Trace();
-+  }
-+ }
-+}
-+/* Retain only direct pre-instruction CD register store facts. Indirect and
-+ * block-transfer paths remain unclassified, and these rows do not form a
-+ * transaction receipt by themselves. */
-+if(TheronIrq2TraceRawCDRegisterStoreCount < 16)
-+{
-+ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+ if(opcode == 0x8c || opcode == 0x8d || opcode == 0x8e || opcode == 0x9c || opcode == 0xee || opcode == 0xce)
-+ {
-+  const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
-+                         ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
-+  if(address >= 0x1800 && address <= 0x1804)
-+  {
-+   const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
-+   const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
-+   TheronIrq2Trace->print_format("system_card_cd_register_store pc=%04x physical_pc=%08x opcode=%02x address=%04x accumulator=%02x value_before=%02x\\n",
-+                                 logical_pc, PC, opcode, address, accumulator,
-+                                 CurGame->Debugger->MemPeek(address, 1, true, true) & 0xff);
-+   TheronIrq2TraceRawCDRegisterStoreCount++;
-+   FlushTheronIrq2Trace();
-+  }
-+ }
-+}
-+/* Retain direct stores to the exact result byte read by the C860 wait loop.
-+ * The row is raw instruction evidence only; it assigns no completion reason. */
-+if(TheronIrq2TraceRawControllerResultStoreCount < 16)
-+{
-+ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+ if(opcode == 0x8c || opcode == 0x8d || opcode == 0x8e || opcode == 0x9c || opcode == 0xee || opcode == 0xce)
-+ {
-+  const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
-+                         ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
-+  if(address == 0x222d)
-+  {
-+   const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
-+   const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
-+   TheronIrq2Trace->print_format("system_card_controller_result_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x value_before=%02x\\n",
-+                                 logical_pc, PC, opcode, accumulator,
-+                                 CurGame->Debugger->MemPeek(0x222d, 1, true, true) & 0xff);
-+   TheronIrq2TraceRawControllerResultStoreCount++;
-+   FlushTheronIrq2Trace();
-+  }
-+ }
-+}
-+/* Retain only direct writes to the System Card state polled by C897. The
-+ * later sample is diagnostic evidence and cannot invent a CD request. */
-+if(TheronIrq2TracePostLatchCDRegistersActive &&
-+   TheronIrq2TraceControllerStateWriteCount < 8 &&
-+   (CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff) == 0x8d)
-+{
-+ const uint32 address = (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) |
-+                        ((CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) << 8);
-+ if(address == 0x2241)
-+ {
-+  const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
-+  const uint32 accumulator = regs->GetRegister(regs->Regs[1].id, NULL, 0) & 0xff;
-+  TheronIrq2Trace->print_format("system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x\\n",
-+                                logical_pc, PC, accumulator);
-+  TheronIrq2TraceControllerStateWriteCount++;
-+  FlushTheronIrq2Trace();
-+ }
-+}
-+if(TheronIrq2TracePostLatchCDRegistersActive &&
-+   TheronIrq2TracePostCapCallbackCount >= 0x100000u &&
-+   !TheronIrq2TraceControllerStateWaitSampleSeen)
-+{
-+ const uint32 state_2241 = CurGame->Debugger->MemPeek(0x2241, 1, true, true) & 0xff;
-+ TheronIrq2Trace->print_format("system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x\\n",
-+                               (unsigned long long)TheronIrq2TracePostCapCallbackCount,
-+                               state_2241, TheronIrq2TraceControllerStateWriteCount,
-+                               CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff);
-+ TheronIrq2TraceControllerStateWaitSampleSeen = true;
-+ FlushTheronIrq2Trace();
-+}
-+ if(TheronIrq2TracePostCapCallbackCount && TheronIrq2TracePostCapPageSamples < 32 && !TheronIrq2TracePostCapPageSeen[logical_pc >> 8])
-+ {
-+  TheronIrq2TracePostCapPageSeen[logical_pc >> 8] = true;
-+  TheronIrq2TracePostCapPageSamples++;
-+  TheronIrq2Trace->print_format("post_cap_page_pc=%04x physical_pc=%08x\n", logical_pc, PC);
-+  FlushTheronIrq2Trace();
-+ }
-+ if(logical_pc >= 0xcc00 && logical_pc < 0xcd00 && !TheronIrq2TraceReturnWindowSeen[logical_pc & 0xff])
-+ {
-+  uint32 disassembly_pc = logical_pc;
-+  char disassembly[256];
-+
-+  TheronIrq2TraceReturnWindowSeen[logical_pc & 0xff] = true;
-+  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
-+  TheronIrq2Trace->print_format("return_window_pc=%04x physical_pc=%08x instruction=%s\n", logical_pc, PC, disassembly);
-+  FlushTheronIrq2Trace();
-+ }
-+ if(logical_pc >= 0xcc00 && logical_pc < 0xcd00 && !TheronIrq2TraceReturnTransferPending && !TheronIrq2TraceReturnTransferSeen[logical_pc & 0xff])
-+ {
-+  const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+  if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
-+  {
-+   uint32 disassembly_pc = logical_pc;
-+
-+   TheronIrq2TraceReturnTransferPending = true;
-+   TheronIrq2TraceReturnTransferSourcePC = logical_pc;
-+   TheronIrq2TraceReturnTransferPhysicalPC = PC;
-+   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceReturnTransferInstruction);
-+  }
-+ }
-+
-+ if(logical_pc >= 0xe870 && logical_pc < 0xe900 && !TheronIrq2TraceE870WindowSeen[logical_pc & 0xff])
-+ {
-+  uint32 disassembly_pc = logical_pc;
-+  char disassembly[256];
-+
-+  TheronIrq2TraceE870WindowSeen[logical_pc & 0xff] = true;
-+  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
-+  TheronIrq2Trace->print_format("e870_window_pc=%04x physical_pc=%08x instruction=%s\n", logical_pc, PC, disassembly);
-+  FlushTheronIrq2Trace();
-+ }
-+ if(logical_pc >= 0xe870 && logical_pc < 0xe900 && !TheronIrq2TraceE870TransferPending && !TheronIrq2TraceE870TransferSeen[logical_pc & 0xff])
-+ {
-+  const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+  if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
-+  {
-+   uint32 disassembly_pc = logical_pc;
-+
-+   TheronIrq2TraceE870TransferPending = true;
-+   TheronIrq2TraceE870TransferSourcePC = logical_pc;
-+   TheronIrq2TraceE870TransferPhysicalPC = PC;
-+   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceE870TransferInstruction);
-+  }
-+ }
-+
-+ if(logical_pc >= 0xcc9e && logical_pc <= 0xccff && !TheronIrq2TraceCC9EWindowSeen[logical_pc - 0xcc9e])
-+ {
-+  uint32 disassembly_pc = logical_pc;
-+  char disassembly[256];
-+  const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
-+  const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
-+  const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
-+  const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
-+  const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
-+  const uint32 ram_00ec = CurGame->Debugger->MemPeek(0x00ec, 1, true, true) & 0xff;
-+  const uint32 ram_00ed = CurGame->Debugger->MemPeek(0x00ed, 1, true, true) & 0xff;
-+  const uint32 ram_00ee = CurGame->Debugger->MemPeek(0x00ee, 1, true, true) & 0xff;
-+  const uint32 ram_00f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
-+  const uint32 ram_00f6 = CurGame->Debugger->MemPeek(0x00f6, 1, true, true) & 0xff;
-+  const uint32 ram_00f7 = CurGame->Debugger->MemPeek(0x00f7, 1, true, true) & 0xff;
-+  const uint32 ram_221f = CurGame->Debugger->MemPeek(0x221f, 1, true, true) & 0xff;
-+  const uint32 ram_2220 = CurGame->Debugger->MemPeek(0x2220, 1, true, true) & 0xff;
-+  const uint32 ram_2221 = CurGame->Debugger->MemPeek(0x2221, 1, true, true) & 0xff;
-+
-+  TheronIrq2TraceCC9EWindowSeen[logical_pc - 0xcc9e] = true;
-+  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
-+  TheronIrq2Trace->print_format("cc9e_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x ram_00ec=%02x ram_00ed=%02x ram_00ee=%02x ram_00f5=%02x ram_00f6=%02x ram_00f7=%02x ram_221f=%02x ram_2220=%02x ram_2221=%02x\n",
-+                                logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804, ram_00ec, ram_00ed, ram_00ee, ram_00f5, ram_00f6, ram_00f7, ram_221f, ram_2220, ram_2221);
-+  FlushTheronIrq2Trace();
-+ }
-+ if(logical_pc >= 0xcc9e && logical_pc <= 0xccff && !TheronIrq2TraceCC9ETransferPending && !TheronIrq2TraceCC9ETransferSeen[logical_pc - 0xcc9e])
-+ {
-+  const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+  if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
-+  {
-+   uint32 disassembly_pc = logical_pc;
-+
-+   TheronIrq2TraceCC9ETransferPending = true;
-+   TheronIrq2TraceCC9ETransferSourcePC = logical_pc;
-+   TheronIrq2TraceCC9ETransferPhysicalPC = PC;
-+   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceCC9ETransferInstruction);
-+  }
-+ }
-+
-+ if(logical_pc >= 0xcb20 && logical_pc < 0xcb60 && !TheronIrq2TraceCB20WindowSeen[logical_pc - 0xcb20])
-+ {
-+  uint32 disassembly_pc = logical_pc;
-+  char disassembly[256];
-+  const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
-+  const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
-+  const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
-+  const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
-+  const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
-+  const uint32 ram_00e7 = CurGame->Debugger->MemPeek(0x00e7, 1, true, true) & 0xff;
-+  const uint32 ram_00ec = CurGame->Debugger->MemPeek(0x00ec, 1, true, true) & 0xff;
-+  const uint32 ram_00ed = CurGame->Debugger->MemPeek(0x00ed, 1, true, true) & 0xff;
-+  const uint32 ram_00ee = CurGame->Debugger->MemPeek(0x00ee, 1, true, true) & 0xff;
-+  const uint32 ram_00f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
-+  const uint32 ram_00f6 = CurGame->Debugger->MemPeek(0x00f6, 1, true, true) & 0xff;
-+  const uint32 ram_00f7 = CurGame->Debugger->MemPeek(0x00f7, 1, true, true) & 0xff;
-+
-+  TheronIrq2TraceCB20WindowSeen[logical_pc - 0xcb20] = true;
-+  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
-+  TheronIrq2Trace->print_format("cb20_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x ram_00e7=%02x ram_00ec=%02x ram_00ed=%02x ram_00ee=%02x ram_00f5=%02x ram_00f6=%02x ram_00f7=%02x\n",
-+                                logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804, ram_00e7, ram_00ec, ram_00ed, ram_00ee, ram_00f5, ram_00f6, ram_00f7);
-+  FlushTheronIrq2Trace();
-+ }
-+ if(logical_pc >= 0xcb20 && logical_pc < 0xcb60 && !TheronIrq2TraceCB20TransferPending && !TheronIrq2TraceCB20TransferSeen[logical_pc - 0xcb20])
-+ {
-+  const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+  if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
-+  {
-+   uint32 disassembly_pc = logical_pc;
-+
-+   TheronIrq2TraceCB20TransferPending = true;
-+   TheronIrq2TraceCB20TransferSourcePC = logical_pc;
-+   TheronIrq2TraceCB20TransferPhysicalPC = PC;
-+   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceCB20TransferInstruction);
-+  }
-+ }
-+
-+ if(logical_pc >= 0xe100 && logical_pc < 0xe200 && !TheronIrq2TraceE100WindowSeen[logical_pc - 0xe100])
-+ {
-+  uint32 disassembly_pc = logical_pc;
-+  char disassembly[256];
-+  const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
-+  const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
-+  const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
-+  const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
-+  const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
-+  const uint32 ram_00e7 = CurGame->Debugger->MemPeek(0x00e7, 1, true, true) & 0xff;
-+  const uint32 ram_00f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
-+  const uint32 ram_00f6 = CurGame->Debugger->MemPeek(0x00f6, 1, true, true) & 0xff;
-+  const uint32 ram_00f7 = CurGame->Debugger->MemPeek(0x00f7, 1, true, true) & 0xff;
-+
-+  TheronIrq2TraceE100WindowSeen[logical_pc - 0xe100] = true;
-+  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
-+  TheronIrq2Trace->print_format("e100_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x ram_00e7=%02x ram_00f5=%02x ram_00f6=%02x ram_00f7=%02x\n",
-+                                logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804, ram_00e7, ram_00f5, ram_00f6, ram_00f7);
-+  FlushTheronIrq2Trace();
-+ }
-+ if(logical_pc >= 0xe100 && logical_pc < 0xe200 && !TheronIrq2TraceE100TransferPending && !TheronIrq2TraceE100TransferSeen[logical_pc - 0xe100])
-+ {
-+  const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+  if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
-+  {
-+   uint32 disassembly_pc = logical_pc;
-+
-+   TheronIrq2TraceE100TransferPending = true;
-+   TheronIrq2TraceE100TransferSourcePC = logical_pc;
-+   TheronIrq2TraceE100TransferPhysicalPC = PC;
-+   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceE100TransferInstruction);
-+  }
-+ }
-+
-+if(logical_pc >= 0xc860 && logical_pc < 0xca00 && !TheronIrq2TraceC860WindowSeen[logical_pc - 0xc860])
-+{
-+ uint32 disassembly_pc = logical_pc;
-+ char disassembly[256];
-+ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
-+ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
-+ const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
-+ const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
-+ const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
-+ const uint32 ram_00e7 = CurGame->Debugger->MemPeek(0x00e7, 1, true, true) & 0xff;
-+ const uint32 ram_00f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
-+ const uint32 ram_00f6 = CurGame->Debugger->MemPeek(0x00f6, 1, true, true) & 0xff;
-+ const uint32 ram_00f7 = CurGame->Debugger->MemPeek(0x00f7, 1, true, true) & 0xff;
-+
-+ TheronIrq2TraceC860WindowSeen[logical_pc - 0xc860] = true;
-+ CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
-+ TheronIrq2Trace->print_format("c860_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x ram_00e7=%02x ram_00f5=%02x ram_00f6=%02x ram_00f7=%02x\n",
-+                               logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804, ram_00e7, ram_00f5, ram_00f6, ram_00f7);
-+ FlushTheronIrq2Trace();
-+}
-+if(logical_pc >= 0xc860 && logical_pc < 0xca00 && !TheronIrq2TraceC860TransferPending && !TheronIrq2TraceC860TransferSeen[logical_pc - 0xc860])
-+{
-+ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
-+ if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
-+ {
-+  uint32 disassembly_pc = logical_pc;
-+
-+  TheronIrq2TraceC860TransferPending = true;
-+  TheronIrq2TraceC860TransferSourcePC = logical_pc;
-+  TheronIrq2TraceC860TransferPhysicalPC = PC;
-+  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceC860TransferInstruction);
-+ }
++ TheronIrq2TraceEventSequence++;
++ TheronIrq2Trace->print_format("io_write seq=%u timestamp=%u logical_pc=%04x physical_addr=%08x port=%x data=%02x\n",
++                               TheronIrq2TraceEventSequence, timestamp, pc & 0xffff,
++                               phys_addr, phys_addr & 0xf, data);
 +}
 +
 +/* Begin recording only after the proven caller reaches C897. The hook reports
@@ -1278,17 +852,15 @@ index 347482c4..61d4758e 100644
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
 - bool CPUCBNeeded = BPInUse || TraceLog || InSteppingMode || (NeedStep == 2);
 + bool CPUCBNeeded = BPInUse || TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2);
--
-+
+ 
 - CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || IsActive);
 - CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || InSteppingMode || (NeedStep == 2));
 + CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || TheronIrq2Trace || IsActive);
 + CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2));
  }
--
-+
+ 
  static void UpdatePCBreakpoints(void)
-@@ -1367,4 +2022,6 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,6 +1423,8 @@
   //
   if(TraceLog)
    DoTraceLog(PC);
@@ -1356,8 +928,11 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TraceLaterE009CallerPC = 0;
 +	  TheronIrq2TraceLaterE009Record = 0;
 +	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
++	  TheronIrq2Trace->print_format("trace_format=theron_irq2_capture_v2\n");
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
-+	  FlushTheronIrq2Trace();
++	  TheronIrq2Trace->print_format("variant=%s\n", getenv("FIRESTAFF_THERON_IRQ2_VARIANT") ? getenv("FIRESTAFF_THERON_IRQ2_VARIANT") : "unknown");
++	  TheronIrq2Trace->print_format("stage3_track02_record=%s\n", getenv("FIRESTAFF_THERON_IRQ2_RECORD") ? getenv("FIRESTAFF_THERON_IRQ2_RECORD") : "unknown");
++	  UpdateCoreHooks();
 +	 }
 -
 +

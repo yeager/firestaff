@@ -17,6 +17,8 @@ static uint32_t dm2_weather_hash_bytes(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static uint32_t dm2_weather_hash_step(uint32_t hash, uint32_t value);
+
 static int dm2_weather_command_is_source_owned(uint8_t command)
 {
     return command >= DM2_V1_WEATHER_CLOUD_LIGHT_CMD &&
@@ -26,6 +28,102 @@ static int dm2_weather_command_is_source_owned(uint8_t command)
 static int dm2_weather_text_has_nul(const uint8_t *text, size_t size)
 {
     return text && memchr(text, '\0', size) != NULL;
+}
+
+const uint8_t *dm2_v1_asset_load_text_sized(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    size_t *out_size)
+{
+    /* skproject QUERY_GDAT_TEXT is a typed GDAT text/raw query.  Keep this
+     * exact so weather command strings cannot borrow an image, word value, or
+     * unrelated raw payload that happens to share category/index/field. */
+    return dm2_v1_asset_load_typed_sized(loader, category, index,
+                                         DM2_GDAT_ENTRY_TYPE_TEXT, field,
+                                         out_size);
+}
+
+int dm2_v1_asset_load_image_metadata(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    DM2_V1_GdatImageMetadata *out_metadata)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t cx;
+    uint16_t cy;
+    uint16_t bpp;
+    uint16_t category_offset = 0u;
+    uint16_t image_offset = 0u;
+    int offset_y;
+    uint32_t hash = 2166136261u;
+
+    if (!out_metadata) return 0;
+    memset(out_metadata, 0, sizeof(*out_metadata));
+    raw = dm2_v1_asset_load_typed_sized(loader, category, index,
+                                         DM2_GDAT_ENTRY_TYPE_IMAGE, field,
+                                         &raw_size);
+    if (!raw || raw_size < 10u) return 0;
+    cx = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+    cy = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+    bpp = (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
+    offset_y = (int)((int16_t)cy >> 10);
+    out_metadata->width = (uint16_t)(cx & 0x03ffu);
+    out_metadata->height = (uint16_t)(cy & 0x03ffu);
+    if (out_metadata->width == 0u || out_metadata->height == 0u) {
+        memset(out_metadata, 0, sizeof(*out_metadata));
+        return 0;
+    }
+    if (offset_y == -32 && (bpp == 4u || bpp == 8u)) {
+        out_metadata->bits_per_pixel = (uint8_t)bpp;
+    } else if (offset_y == 31) {
+        out_metadata->bits_per_pixel = 8u;
+    } else {
+        out_metadata->bits_per_pixel = 4u;
+    }
+    (void)dm2_v1_asset_load_image_offset(loader, category, index, 0xfe,
+                                         &category_offset);
+    (void)dm2_v1_asset_load_image_offset(loader, category, index, field,
+                                         &image_offset);
+    out_metadata->query_offset_x =
+        (int16_t)((int8_t)(category_offset >> 8) +
+                  (int8_t)(image_offset >> 8));
+    out_metadata->query_offset_y =
+        (int16_t)((int8_t)category_offset + (int8_t)image_offset);
+    hash = dm2_weather_hash_step(hash, out_metadata->width);
+    hash = dm2_weather_hash_step(hash, out_metadata->height);
+    hash = dm2_weather_hash_step(hash, out_metadata->bits_per_pixel);
+    hash = dm2_weather_hash_step(hash, (uint16_t)category_offset);
+    hash = dm2_weather_hash_step(hash, (uint16_t)image_offset);
+    out_metadata->metadata_hash = hash;
+    return hash != 0u;
+}
+
+int dm2_v1_asset_load_image_local_palette(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    uint8_t out_palette16[16], uint32_t *out_hash)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t cy;
+    int offset_y;
+    uint32_t hash = 2166136261u;
+
+    if (out_hash) *out_hash = 0u;
+    if (!out_palette16) return 0;
+    memset(out_palette16, 0, 16u);
+    raw = dm2_v1_asset_load_typed_sized(loader, category, index,
+                                         DM2_GDAT_ENTRY_TYPE_IMAGE, field,
+                                         &raw_size);
+    if (!raw || raw_size < 26u) return 0;
+    cy = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+    offset_y = (int)((int16_t)cy >> 10);
+    if (offset_y == 31) return 0;
+    memcpy(out_palette16, raw + raw_size - 16u, 16u);
+    for (int i = 0; i < 16; ++i) {
+        hash = dm2_weather_hash_step(hash, out_palette16[i]);
+    }
+    if (hash == 0u) return 0;
+    if (out_hash) *out_hash = hash;
+    return 1;
 }
 
 static int dm2_weather_has_environment_image(const DM2_V1_AssetLoader *loader,
@@ -51,6 +149,117 @@ static int dm2_weather_has_environment_image(const DM2_V1_AssetLoader *loader,
         }
     }
     return 0;
+}
+
+static const DM2_V1_GdatEntry *dm2_weather_find_environment_entry(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset, uint8_t field,
+    int want_image)
+{
+    size_t i;
+
+    if (!loader || !loader->loaded || !loader->entries) return NULL;
+    for (i = 0u; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if (entry->cls1 == DM2_GDAT_CATEGORY_ENVIRONMENT &&
+            entry->cls2 == graphicsset && entry->cls4 == field &&
+            ((want_image && entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE) ||
+             (!want_image && entry->cls3 == DM2_GDAT_ENTRY_TYPE_TEXT))) {
+            return entry;
+        }
+    }
+    return NULL;
+}
+
+static int dm2_weather_environment_material_receipt(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset, uint8_t field,
+    DM2_V1_EnvironmentWeatherMaterialReceipt *out)
+{
+    const DM2_V1_GdatEntry *text_entry;
+    const DM2_V1_GdatEntry *image_entry;
+    const uint8_t *text;
+    const uint8_t *image;
+    size_t text_size;
+    size_t image_size;
+    int found_cd;
+    int found_fw;
+    int32_t cd;
+    int32_t fw;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    text_entry = dm2_weather_find_environment_entry(loader, graphicsset,
+                                                     field, 0);
+    image_entry = dm2_weather_find_environment_entry(loader, graphicsset,
+                                                      field, 1);
+    if (!text_entry || !image_entry || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || text_entry->data_index >= loader->raw_data_count ||
+        image_entry->data_index >= loader->raw_data_count) {
+        return 0;
+    }
+    text_size = loader->raw_sizes[text_entry->data_index];
+    image_size = loader->raw_sizes[image_entry->data_index];
+    text = loader->data + loader->raw_offsets[text_entry->data_index];
+    image = loader->data + loader->raw_offsets[image_entry->data_index];
+    if (!text || !image || text_size == 0u || image_size == 0u ||
+        loader->raw_offsets[text_entry->data_index] > loader->data_size ||
+        text_size > loader->data_size - loader->raw_offsets[text_entry->data_index] ||
+        loader->raw_offsets[image_entry->data_index] > loader->data_size ||
+        image_size > loader->data_size - loader->raw_offsets[image_entry->data_index] ||
+        !dm2_v1_weather_cmdstr_query(text, text_size, "CD", &found_cd, &cd) ||
+        !dm2_v1_weather_cmdstr_query(text, text_size, "FW", &found_fw, &fw) ||
+        !found_cd || !found_fw || fw < 0 || fw > UINT8_MAX) {
+        return 0;
+    }
+    out->environment_field = field;
+    out->command_cd = cd;
+    out->command_fw = (uint8_t)fw;
+    out->text_hash = dm2_weather_hash_bytes(text, text_size);
+    out->image_hash = dm2_weather_hash_bytes(image, image_size);
+    out->image_byte_count = (uint32_t)image_size;
+    return out->text_hash != 0u && out->image_hash != 0u;
+}
+
+int dm2_v1_weather_gdat_environment_receipt(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    uint32_t map_load_token, int outdoor_scene, int weather_enabled,
+    uint8_t cloud_field, uint8_t wet_ground_field, int draw_clouds,
+    int draw_wet_ground, DM2_V1_EnvironmentWeatherReceipt *out)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!loader || !loader->loaded || map_load_token == 0u) return 0;
+    out->valid = 1;
+    out->graphicsset = graphicsset;
+    out->map_load_token = map_load_token;
+    if (!outdoor_scene || !weather_enabled) {
+        out->receipt_hash = hash;
+        return 1;
+    }
+    if (draw_clouds && !dm2_weather_environment_material_receipt(
+            loader, graphicsset, cloud_field, &out->materials[out->material_count])) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (draw_clouds) ++out->material_count;
+    if (draw_wet_ground && !dm2_weather_environment_material_receipt(
+            loader, graphicsset, wet_ground_field,
+            &out->materials[out->material_count])) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (draw_wet_ground) ++out->material_count;
+    hash = dm2_weather_hash_step(hash, map_load_token);
+    hash = dm2_weather_hash_step(hash, graphicsset);
+    hash = dm2_weather_hash_step(hash, out->material_count);
+    for (unsigned int i = 0u; i < out->material_count; ++i) {
+        hash = dm2_weather_hash_step(hash, out->materials[i].environment_field);
+        hash = dm2_weather_hash_step(hash, out->materials[i].text_hash);
+        hash = dm2_weather_hash_step(hash, out->materials[i].image_hash);
+    }
+    out->receipt_hash = hash;
+    return 1;
 }
 
 int dm2_v1_weather_cmdstr_query(const uint8_t *text, size_t text_size,
@@ -739,6 +948,76 @@ int dm2_v1_weather_gdat_renderer_receipt(
     out->renderer_hash = dm2_weather_hash_step(renderer_hash, distant_hash);
     out->valid = out->renderer_hash != 0u;
     return out->valid;
+}
+
+int dm2_v1_weather_runtime_admission_receipt(
+    const DM2_V1_GraphicsDataOpenReceipt *graphics_open,
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    DM2_V1_WeatherRuntimeAdmissionReceipt *out)
+{
+    uint32_t text_hash = 2166136261u;
+    uint32_t hash = 2166136261u;
+    unsigned int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!graphics_open || !graphics_open->valid ||
+        graphics_open->admission_hash == 0u ||
+        !weather || !weather->valid || weather->receipt_hash == 0u ||
+        weather->command_mask == 0u) {
+        return 0;
+    }
+
+    for (i = 0u; i < sizeof(weather->commands) / sizeof(weather->commands[0]);
+         ++i) {
+        const DM2_V1_WeatherCommandReceipt *command = &weather->commands[i];
+
+        if (!dm2_weather_command_is_source_owned(command->command) ||
+            command->byte_count == 0u || command->raw_hash == 0u ||
+            (weather->command_mask &
+             DM2_V1_WEATHER_COMMAND_MASK(command->command)) == 0u) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        text_hash = dm2_weather_hash_step(text_hash, command->command);
+        text_hash = dm2_weather_hash_step(text_hash, command->raw_hash);
+        text_hash = dm2_weather_hash_step(text_hash, command->byte_count);
+    }
+
+    out->valid = 1;
+    out->graphicsset = weather->graphicsset;
+    out->graphics_data_open_hash = graphics_open->admission_hash;
+    out->weather_receipt_hash = weather->receipt_hash;
+    out->command_mask = weather->command_mask;
+    out->material_mask = weather->material_mask;
+    out->command_text_hash = text_hash;
+    out->source_text_ready = 1;
+    out->material_ready = weather->material_mask != 0u;
+    out->palette_required = out->material_ready;
+    out->no_fallback_blit = 1;
+    if (renderer) {
+        if (!renderer->valid || renderer->renderer_hash == 0u ||
+            renderer->command_count == 0u || !out->material_ready) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->renderer_ready = 1;
+        out->renderer_hash = renderer->renderer_hash;
+        out->blit_authorized = 1;
+    }
+    hash = dm2_weather_hash_step(hash, out->graphics_data_open_hash);
+    hash = dm2_weather_hash_step(hash, out->weather_receipt_hash);
+    hash = dm2_weather_hash_step(hash, out->command_text_hash);
+    hash = dm2_weather_hash_step(hash, out->material_mask);
+    hash = dm2_weather_hash_step(hash, out->renderer_hash);
+    hash = dm2_weather_hash_step(hash, (uint32_t)out->blit_authorized);
+    out->admission_hash = hash;
+    if (out->admission_hash == 0u) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return 1;
 }
 
 int dm2_v1_weather_distant_environment_receipt(

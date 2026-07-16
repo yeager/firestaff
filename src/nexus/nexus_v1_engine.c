@@ -116,6 +116,116 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {NULL, NULL}
 };
 
+/* The catalog identifies canonical LEV entries by MD5.  Hash the bytes that
+ * nexus_v1_read_file() just materialized, rather than re-opening a path after
+ * the DGN parser has consumed it: a path-level scan alone leaves a TOCTOU
+ * gap between source discovery and Structure3 binding. */
+typedef struct {
+    uint32_t state[4];
+} Nexus_V1_Md5;
+
+#define NEXUS_V1_MD5_F(x,y,z) (((x) & (y)) | (~(x) & (z)))
+#define NEXUS_V1_MD5_G(x,y,z) (((x) & (z)) | ((y) & ~(z)))
+#define NEXUS_V1_MD5_H(x,y,z) ((x) ^ (y) ^ (z))
+#define NEXUS_V1_MD5_I(x,y,z) ((y) ^ ((x) | ~(z)))
+#define NEXUS_V1_MD5_ROTATE(x,n) (((x) << (n)) | ((x) >> (32U - (n))))
+#define NEXUS_V1_MD5_STEP(f,a,b,c,d,x,s,k) do { \
+    (a) += f((b), (c), (d)) + (x) + (uint32_t)(k); \
+    (a) = NEXUS_V1_MD5_ROTATE((a), (s)); \
+    (a) += (b); \
+} while (0)
+
+static void nexus_v1_md5_block(Nexus_V1_Md5 *md5, const uint8_t block[64])
+{
+    uint32_t x[16];
+    uint32_t a = md5->state[0], b = md5->state[1];
+    uint32_t c = md5->state[2], d = md5->state[3];
+    int i;
+    for (i = 0; i < 16; ++i) {
+        x[i] = (uint32_t)block[i * 4] |
+            ((uint32_t)block[i * 4 + 1] << 8) |
+            ((uint32_t)block[i * 4 + 2] << 16) |
+            ((uint32_t)block[i * 4 + 3] << 24);
+    }
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,a,b,c,d,x[0],7,0xd76aa478); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,d,a,b,c,x[1],12,0xe8c7b756); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,c,d,a,b,x[2],17,0x242070db); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,b,c,d,a,x[3],22,0xc1bdceee);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,a,b,c,d,x[4],7,0xf57c0faf); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,d,a,b,c,x[5],12,0x4787c62a); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,c,d,a,b,x[6],17,0xa8304613); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,b,c,d,a,x[7],22,0xfd469501);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,a,b,c,d,x[8],7,0x698098d8); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,d,a,b,c,x[9],12,0x8b44f7af); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,c,d,a,b,x[10],17,0xffff5bb1); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,b,c,d,a,x[11],22,0x895cd7be);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,a,b,c,d,x[12],7,0x6b901122); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,d,a,b,c,x[13],12,0xfd987193); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,c,d,a,b,x[14],17,0xa679438e); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_F,b,c,d,a,x[15],22,0x49b40821);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,a,b,c,d,x[1],5,0xf61e2562); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,d,a,b,c,x[6],9,0xc040b340); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,c,d,a,b,x[11],14,0x265e5a51); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,b,c,d,a,x[0],20,0xe9b6c7aa);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,a,b,c,d,x[5],5,0xd62f105d); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,d,a,b,c,x[10],9,0x02441453); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,c,d,a,b,x[15],14,0xd8a1e681); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,b,c,d,a,x[4],20,0xe7d3fbc8);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,a,b,c,d,x[9],5,0x21e1cde6); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,d,a,b,c,x[14],9,0xc33707d6); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,c,d,a,b,x[3],14,0xf4d50d87); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,b,c,d,a,x[8],20,0x455a14ed);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,a,b,c,d,x[13],5,0xa9e3e905); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,d,a,b,c,x[2],9,0xfcefa3f8); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,c,d,a,b,x[7],14,0x676f02d9); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_G,b,c,d,a,x[12],20,0x8d2a4c8a);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,a,b,c,d,x[5],4,0xfffa3942); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,d,a,b,c,x[8],11,0x8771f681); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,c,d,a,b,x[11],16,0x6d9d6122); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,b,c,d,a,x[14],23,0xfde5380c);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,a,b,c,d,x[1],4,0xa4beea44); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,d,a,b,c,x[4],11,0x4bdecfa9); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,c,d,a,b,x[7],16,0xf6bb4b60); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,b,c,d,a,x[10],23,0xbebfbc70);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,a,b,c,d,x[13],4,0x289b7ec6); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,d,a,b,c,x[0],11,0xeaa127fa); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,c,d,a,b,x[3],16,0xd4ef3085); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,b,c,d,a,x[6],23,0x04881d05);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,a,b,c,d,x[9],4,0xd9d4d039); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,d,a,b,c,x[12],11,0xe6db99e5); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,c,d,a,b,x[15],16,0x1fa27cf8); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_H,b,c,d,a,x[2],23,0xc4ac5665);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,a,b,c,d,x[0],6,0xf4292244); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,d,a,b,c,x[7],10,0x432aff97); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,c,d,a,b,x[14],15,0xab9423a7); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,b,c,d,a,x[5],21,0xfc93a039);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,a,b,c,d,x[12],6,0x655b59c3); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,d,a,b,c,x[3],10,0x8f0ccc92); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,c,d,a,b,x[10],15,0xffeff47d); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,b,c,d,a,x[1],21,0x85845dd1);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,a,b,c,d,x[8],6,0x6fa87e4f); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,d,a,b,c,x[15],10,0xfe2ce6e0); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,c,d,a,b,x[6],15,0xa3014314); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,b,c,d,a,x[13],21,0x4e0811a1);
+    NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,a,b,c,d,x[4],6,0xf7537e82); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,d,a,b,c,x[11],10,0xbd3af235); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,c,d,a,b,x[2],15,0x2ad7d2bb); NEXUS_V1_MD5_STEP(NEXUS_V1_MD5_I,b,c,d,a,x[9],21,0xeb86d391);
+    md5->state[0] += a; md5->state[1] += b;
+    md5->state[2] += c; md5->state[3] += d;
+}
+
+int nexus_v1_dgn_bytes_match_canonical_md5(
+    const uint8_t *data, int size, const char *expected)
+{
+    Nexus_V1_Md5 md5;
+    uint8_t tail[128];
+    uint64_t bits;
+    size_t offset = 0U;
+    size_t tail_size;
+    char actual[33];
+    static const char hex[] = "0123456789abcdef";
+    int i;
+
+    if (!data || size < 0 || !expected || strlen(expected) != 32U) return 0;
+    md5.state[0] = 0x67452301U; md5.state[1] = 0xefcdab89U;
+    md5.state[2] = 0x98badcfeU; md5.state[3] = 0x10325476U;
+    bits = (uint64_t)(unsigned int)size * 8U;
+    while (offset + 64U <= (size_t)size) {
+        nexus_v1_md5_block(&md5, data + offset);
+        offset += 64U;
+    }
+    tail_size = (size_t)size - offset;
+    memset(tail, 0, sizeof(tail));
+    if (tail_size) memcpy(tail, data + offset, tail_size);
+    tail[tail_size++] = 0x80U;
+    if (tail_size > 56U) {
+        nexus_v1_md5_block(&md5, tail);
+        memset(tail, 0, 64U);
+    }
+    for (i = 0; i < 8; ++i) tail[56 + i] = (uint8_t)(bits >> (i * 8));
+    nexus_v1_md5_block(&md5, tail);
+    for (i = 0; i < 16; ++i) {
+        uint8_t byte = (uint8_t)(md5.state[i / 4] >> ((i % 4) * 8));
+        actual[i * 2] = hex[byte >> 4];
+        actual[i * 2 + 1] = hex[byte & 15U];
+    }
+    actual[32] = '\0';
+    return strcasecmp(actual, expected) == 0;
+}
+
+void nexus_v1_dgn_renderer_handoff_require_canonical_source(
+    Nexus_V1_DgnRendererHandoffReceipt *receipt,
+    int canonical_source_verified)
+{
+    if (!receipt) return;
+    receipt->canonical_source_verified = canonical_source_verified ? 1 : 0;
+    if (receipt->canonical_source_verified) return;
+    receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE;
+    receipt->can_render_dgn_mesh = 0;
+    receipt->blocks_real_dgn_mesh_render = 1;
+    receipt->fallback_visuals_permitted = 0;
+}
+
+#undef NEXUS_V1_MD5_STEP
+#undef NEXUS_V1_MD5_ROTATE
+#undef NEXUS_V1_MD5_I
+#undef NEXUS_V1_MD5_H
+#undef NEXUS_V1_MD5_G
+#undef NEXUS_V1_MD5_F
+
 static int nexus_v1_decode_structure2_animation_materials(
     Nexus_V1_Engine *engine, const uint8_t *data, int size) {
     /* Retail LEV Structure2 establishes descriptor[20] ... FFFF + opaque
@@ -316,6 +426,11 @@ static int nexus_v1_structure2_source_receipt(
             }
         }
     }
+    /* The source scan establishes media location, while the caller's MD5
+     * establishes identity for the exact buffer consumed by Structure3.
+     * Both are required before any existing source binder may use it. */
+    out_receipt->canonical_hash_verified =
+        out_receipt->canonical_hash_verified && loaded_bytes_canonical;
     out_receipt->materialization_bound =
         out_receipt->canonical_hash_verified &&
         out_receipt->structure2_payload_envelope_valid;
@@ -589,6 +704,7 @@ int nexus_v1_inspect_dgn_material_corpus(
         char name[16];
         uint8_t *data;
         int size = 0;
+        int loaded_bytes_canonical;
         int x;
         int y;
         Nexus_V1_Level level;
@@ -596,7 +712,13 @@ int nexus_v1_inspect_dgn_material_corpus(
         snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
         data = nexus_v1_read_file(engine, name, &size);
         if (!data) continue;
+        loaded_bytes_canonical = nexus_v1_dgn_bytes_match_canonical_md5(
+            data, size, nexus_known_boot_file_md5(name));
         ++receipt.readable_level_count;
+        if (!loaded_bytes_canonical) {
+            free(data);
+            continue;
+        }
         memset(&level, 0, sizeof(level));
         if (nexus_v1_level_load(&level, data, size, level_index) != 0) {
             free(data);
@@ -995,6 +1117,47 @@ void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine) {
     plan->receipt.plan_ready = 0;
 }
 
+int nexus_v1_current_level_dgn_face_material_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnFaceMaterialReceipt *out_receipt)
+{
+    Nexus_V1_DgnFaceMaterialBinding bindings[NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES];
+    Nexus_V1_DgnFaceMaterialInput input;
+    int binding_count = 0;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_INPUT;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_bytes ||
+        engine->current_level_dgn_size <= 0 ||
+        !engine->current_level_dgn_bytes_canonical ||
+        !engine->current_level_dgn_canonical_md5[0] ||
+        !nexus_v1_dgn_bytes_match_canonical_md5(
+            engine->current_level_dgn_bytes, engine->current_level_dgn_size,
+            engine->current_level_dgn_canonical_md5)) {
+        out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE;
+        return 0;
+    }
+    if (nexus_v1_level_collect_structure3_face_material_bindings(
+            &engine->current_level, engine->current_level_dgn_bytes,
+            engine->current_level_dgn_size, bindings,
+            NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES, &binding_count) != 0) {
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN;
+    input.dgn_bytes = engine->current_level_dgn_bytes;
+    input.dgn_size = engine->current_level_dgn_size;
+    /* The MD5 above authenticated this exact retained launch buffer. */
+    input.canonical_dgn_bytes = engine->current_level_dgn_bytes;
+    input.canonical_dgn_size = engine->current_level_dgn_size;
+    input.canonical_source_verified = 1;
+    input.bindings = bindings;
+    input.face_count = binding_count;
+    input.material_selector_count = 256;
+    return nexus_v1_dgn_face_material_validate(&input, out_receipt) ? 0 : -1;
+}
+
 void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
                                     int level, int party_x, int party_y,
                                     int party_dir) {
@@ -1018,6 +1181,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     int static_mns_route_bound;
     int bpk_material_route_bound;
     int structure2_source_bound;
+    int item_ibs_authorized_count;
     int i;
 
     if (!engine || !engine->level_loaded ||
@@ -1034,6 +1198,9 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
 
     memset(plan->commands, 0, sizeof(plan->commands));
     memset(&plan->receipt, 0, sizeof(plan->receipt));
+    memset(&plan->structure3_face_material_source, 0,
+           sizeof(plan->structure3_face_material_source));
+    plan->structure3_face_material_source_consumed = 0;
     memset(plan->structure2_floor_command_sources, 0,
            sizeof(plan->structure2_floor_command_sources));
     memset(&plan->structure2_floor_command_source_receipt, 0,
@@ -1067,6 +1234,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     memset(&plan->structure1a_structure3_topology_candidate_receipt, 0,
            sizeof(plan->structure1a_structure3_topology_candidate_receipt));
     plan->structure1a_structure3_topology_candidates_consumed = 0;
+    item_ibs_authorized_count = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -1120,6 +1288,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         engine->dgn_static_material_sources.canonical_pair_bound;
     plan->receipt.structure1b_selector_binding_proven =
         engine->dgn_static_material_sources.structure1b_selector_binding_proven;
+    plan->receipt.structure2_vdp1_palette_binding_proven = 0;
+    plan->receipt.item_ibs_vdp1_command_proven = 0;
     plan->receipt.bpk_material_route_bound = bpk_material_route_bound;
     /* Every visible DGN command still originates in the active LEV bytes,
      * including the static MNS material route.  Do not let a valid texture
@@ -1156,6 +1326,17 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             &plan->receipt) != 0) {
         return NULL;
     }
+    /* Rebuild the documented face-selector table from the exact LEV buffer
+     * authenticated by the launcher. A parser receipt or a file name alone
+     * cannot enter this source boundary, and this receipt grants no draw. */
+    if (nexus_v1_current_level_dgn_face_material_source_receipt(
+            engine, &plan->structure3_face_material_source) != 0 ||
+        !plan->structure3_face_material_source.can_submit_raster_input) {
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
+    plan->structure3_face_material_source_consumed = 1;
     /* Consume the real DGN command plan once, before its no-draw Structure2
      * gate returns control to the host. The resulting records are raw
      * package provenance only: neither this engine cache nor the viewport
@@ -1220,7 +1401,25 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         return NULL;
     }
     plan->structure1a_structure3_topology_candidates_consumed =
+        /* The owner-cell candidate cannot make an unverified Structure3
+         * material join look like source evidence. Consume the parser's
+         * bounded face-material receipt alongside the topology envelope, but
+         * retain the existing no-draw status: neither receipt identifies a
+         * model ordinal, face transform, texel layout, nor raster operation. */
         plan->structure1a_structure3_topology_candidate_receipt.complete &&
+        plan->receipt.structure3_face_materials.face_receipt_valid &&
+        plan->receipt.structure3_face_materials.valid &&
+        plan->receipt.structure3_face_materials.face_count ==
+            plan->receipt.structure3_faces.face_count &&
+        plan->receipt.structure3_face_materials.textured_face_count ==
+            plan->receipt.structure3_faces.textured_face_count &&
+        plan->receipt.structure3_face_materials.static_texture_selector_count ==
+            plan->receipt.structure3_face_materials.static_texture_bound_count &&
+        plan->receipt.structure3_face_materials.animated_texture_selector_count ==
+            plan->receipt.structure3_face_materials.animated_texture_bound_count &&
+        plan->receipt.structure3_face_materials.unsupported_textured_fill_count ==
+            0 &&
+        plan->receipt.structure3_face_materials.selector_bindings_complete &&
         !plan->structure1a_structure3_topology_candidate_receipt
              .fallback_visuals_permitted;
     if (plan->structure1a_structure3_topology_candidates_consumed) {
@@ -1329,6 +1528,17 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
      * permission bit. */
     plan->receipt.structure2_source_materialization_bound =
         structure2_source_bound;
+    plan->receipt.structure2_vdp1_palette_binding_proven = 0;
+    for (i = 0; i < plan->structure1f_item_floor_material_receipt
+             .command_material_count; ++i) {
+        if (plan->structure1f_item_floor_materials[i].draw_authorized) {
+            ++item_ibs_authorized_count;
+        }
+    }
+    plan->receipt.item_ibs_vdp1_command_proven =
+        item_ibs_authorized_count ==
+            plan->structure1f_item_floor_material_receipt.command_material_count &&
+        item_ibs_authorized_count > 0;
     /* Static MNS takes precedence only after the selector is independently
      * proven. Otherwise the BPK route must carry every command itself. */
     plan->receipt.uses_static_mns_material_route = static_mns_route_bound;
@@ -3203,6 +3413,8 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     uint8_t *script_data;
     uint8_t *sal_data;
     uint8_t *map_data;
+    const char *canonical_md5;
+    int loaded_bytes_canonical;
     Nexus_V1_DungeonStartReceipt dungeon_start;
 
     if (!engine || level < 0 || level > 15) return -1;
@@ -3211,6 +3423,17 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     data = nexus_v1_read_file(engine, name, &size);
     if (!data) {
         printf("Nexus: failed to load %s\n", name);
+        return -1;
+    }
+
+    canonical_md5 = nexus_known_boot_file_md5(name);
+    loaded_bytes_canonical = nexus_v1_dgn_bytes_match_canonical_md5(
+        data, size, canonical_md5);
+    if (!loaded_bytes_canonical) {
+        /* This is intentionally before nexus_v1_level_load(): that call
+         * performs the Structure3 face/material identifier joins. */
+        printf("Nexus: canonical byte hash mismatch for %s\n", name);
+        free(data);
         return -1;
     }
 
@@ -9272,8 +9495,13 @@ int nexus_v1_current_level_dgn_renderer_handoff_receipt(
         out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_MISSING;
         return 0;
     }
-    return nexus_v1_level_dgn_renderer_handoff_receipt(&engine->current_level,
-                                                       out_receipt);
+    if (nexus_v1_level_dgn_renderer_handoff_receipt(&engine->current_level,
+                                                    out_receipt) != 0) {
+        return -1;
+    }
+    nexus_v1_dgn_renderer_handoff_require_canonical_source(
+        out_receipt, engine->current_level_dgn_bytes_canonical);
+    return 0;
 }
 
 int nexus_v1_current_level_script_runtime_receipt(

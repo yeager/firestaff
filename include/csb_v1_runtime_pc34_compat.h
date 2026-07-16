@@ -53,7 +53,6 @@
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_csbwin_graphics_signature_gate.h"
 #include "csb_v1_chaos_magic_pc34_compat.h"
-#include "csb_v1_monster_pc34_compat.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -375,43 +374,6 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
-    /* CSBWin data.cpp SKIN_CACHE caches EDT_Skins columns. Remember the
-     * save-tail receipt that populated Firestaff's cache so a resumed or
-     * replaced verified EXPOOL tail cannot reuse stale HUD skin bytes. */
-    int                     csbwin_skin_cache_tail_receipt_valid;
-    int                     csbwin_skin_cache_tail_valid;
-    size_t                  csbwin_skin_cache_tail_size;
-    uint32_t                csbwin_skin_cache_tail_fnv1a;
-    /* CSBWin SaveGame.cpp reads contiguous 16-word EDT_Database /
-     * EDBT_GlobalVariables EXPOOL records before DSAINDEX::ReadTracing.
-     * This is the save-owned source bank supplied to authenticated DSA
-     * GLOBALFETCH/GLOBALSTORE actions; it is re-derived from the preserved
-     * EXPOOL tail rather than serialized as Firestaff-owned state. */
-    int                     csbwin_global_variables_valid;
-    uint16_t                csbwin_global_variable_count;
-    uint32_t                csbwin_global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
-    /* CSBWin SaveGame.cpp restores all 24 EDT_Palette records atomically.
-     * This byte-exact RGB lookup table remains unavailable to the renderer
-     * until every source record and the appended-tail receipt verify. */
-    int                     csbwin_overlay_palette_valid;
-    uint32_t                csbwin_overlay_palette_tail_fnv1a;
-    uint8_t                 csbwin_overlay_palette[
-        CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
-    /* CSBWin SaveGame.cpp reads EDBT_DisableSaves from EXPOOL. It is a
-     * source save-policy gate, not a Firestaff preference. */
-    int                     csbwin_saves_disabled;
-    /* CSBWin SaveGame.cpp:1978-2034 restores these DB11/EXPOOL policy
-     * records after the palette. They are source save state, never inferred
-     * from Firestaff configuration or asset filenames. */
-    uint32_t                csbwin_delete_duplicate_timers;
-    uint32_t                csbwin_debugging_data;
-    uint32_t                csbwin_csbgraphics_signature_data;
-    uint32_t                csbwin_graphics_signature_data;
-    uint32_t                csbwin_version_data;
-    /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores this EXPOOL-owned
-     * eight-word bitmap after the save body. It is source trace state only:
-     * no Firestaff diagnostic mode or DSA execution is enabled from it. */
-    CSB_V1_CSBWinDSATracingReport csbwin_dsa_tracing;
     /* CSBWin SaveGame.cpp ReadExtendedFeatures()/ReadDSAs()/ReadGameInfo()
      * owns this separately from the regular GAMEBLOCK sections. Imported DSA
      * programs remain opaque source words; no compatibility opcode runner
@@ -1303,18 +1265,6 @@ int csb_v1_runtime_custom_background_skin_grid(
     int *out_loaded_level,
     int *out_default_skin);
 
-/* Persist one CSBWin DSA SETSKIN change through the complete,
- * FNV-authenticated appended EXPOOL tail. This mirrors CSBWin data.cpp
- * SKIN_CACHE::SetSkin and EXPOOL::Read/Write: it may remove an all-zero
- * column or consume a source-owned exact-size DB11 free node for a changed
- * column. It never calls EXPOOL::enlarge or invents a new DB11 block. */
-int csb_v1_runtime_set_csbwin_saved_skin(
-    CSB_V1_RuntimeProfile *profile,
-    int level,
-    int x,
-    int y,
-    uint8_t skin_num);
-
 /* Queue one source-locked timeline event for the CSB V1 runtime.
  * The underlying event heap is the shared V1 ReDMCSB TIMELINE.C model used
  * by DM1/CSB.  csb_v1_runtime_tick_v1() processes expired events at the
@@ -1648,13 +1598,6 @@ typedef struct {
 
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
-struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34;
-struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
-struct CSB_V1_StartupSessionPackageTitleReceipt_PC34;
-struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34;
-struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34;
-struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34;
-
 typedef enum {
     CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34 = 0,
     CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34 = 1,
@@ -1676,77 +1619,6 @@ typedef struct {
     int sync_profile_state;
     int sync_leader_hand;
 } CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34;
-/* ReDMCSB TITLE.C F0437 retains C001 through the complete title, while
- * ENTRANCE.C F0806 owns C002-C005 until it exits its input loop.  Keep the
- * real package and surface identities coupled to that input/runtime boundary;
- * this receipt contains no replacement pixels or callback route. */
-typedef struct {
-    int valid;
-    int real_package_matched;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    int input_runtime_transition_ready;
-    int door_opening_transition;
-    int hud_runtime_transition;
-    uint32_t session_generation;
-    uint32_t host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int full_title_to_hud_package_bound;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int full_title_to_opening_package_bound;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int real_title_opening_consumption;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t opening_host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int real_hud_door_input_consumption;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t hud_host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34;
 typedef struct {
     int level_loaded;
     int current_level;
@@ -1815,32 +1687,6 @@ int csb_v1_runtime_apply_startup_sequence_plan_pc34(
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
     const char *resume_path,
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
-    const struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
-    const struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
-    const CSB_V1_StartupEntranceInputOutcome_PC34 *input_outcome,
-    const CSB_V1_StartupRuntimeApplyReceipt_PC34 *runtime_apply,
-    const CSB_V1_StartupCommandStateReceipt_PC34 *state,
-    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_title_package_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionPackageTitleReceipt_PC34 *title_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_title_door_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionPackageTitleReceipt_PC34 *title_receipt,
-    const struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34 *opening_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34
-        *consumption_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_hud_door_input_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34
-        *package_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34 *out_receipt);
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,

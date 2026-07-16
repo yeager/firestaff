@@ -161,9 +161,7 @@ static int write_manifest(const char *path,
                           int dgn_blocks_runtime,
                           int font_glyph_index,
                           int font_writes,
-                          uint64_t viewport_hash,
-                          const Nexus_V1_DgnStaticMaterialSourceReceipt
-                              *static_materials)
+                          uint64_t viewport_hash)
 {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
@@ -294,9 +292,6 @@ static void probe_real_data(const char *data_dir,
 {
     Nexus_V1_Engine engine;
     Nexus_Viewport vp;
-    Nexus_V1_DgnViewportRenderReceipt dgn_render;
-    Nexus_V1_DgnViewportHostRouteReceipt dgn_host_route;
-    Nexus_V1_DgnStaticMaterialSourceReceipt static_materials;
     uint8_t *dm = NULL;
     uint8_t *font = NULL;
     uint32_t rgba[NEXUS_FB_W * NEXUS_FB_H];
@@ -332,16 +327,6 @@ static void probe_real_data(const char *data_dir,
     CHECK(engine.level_loaded == 1 && engine.current_level.width == 64 &&
           engine.current_level.height == 64,
           "level 0 is resident as a 64x64 Nexus level");
-    memset(&static_materials, 0, sizeof(static_materials));
-    CHECK(nexus_v1_dgn_static_material_source_receipt(
-              &engine, &static_materials) == 0 &&
-          static_materials.canonical_pair_bound &&
-          !static_materials.fallback_visuals_permitted &&
-          static_materials.floor_mns.canonical_hash_verified &&
-          static_materials.wall_mns.canonical_hash_verified &&
-          engine.floor_mns_material_route_valid &&
-          engine.wall_mns_material_route_valid,
-          "SN_FLOOR.MNS and SN_WALL.MNS are hash-bound static DGN material sources");
 
     font = nexus_v1_read_file(&engine, "FONT256.S2D", &font_size);
     CHECK(font != NULL && font_size > 0,

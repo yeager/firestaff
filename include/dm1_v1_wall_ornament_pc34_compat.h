@@ -87,15 +87,6 @@ typedef struct DM1_WallOrnamentRenderPlanPc34 {
     int isAlcove;
 } DM1_WallOrnamentRenderPlanPc34;
 
-/* ReDMCSB DUNVIEW.C F0107 host boundary. The M10 receipt retains the
- * source-selected ornament material and geometry; M11 may only load/blit it. */
-typedef struct DM1_WallOrnamentHostMaterialReceiptPc34 {
-    int valid;
-    int globalOrnamentIndex;
-    int viewWallIndex;
-    DM1_WallOrnamentRenderPlanPc34 plan;
-} DM1_WallOrnamentHostMaterialReceiptPc34;
-
 typedef struct DM1_FrontMirrorRenderPlanPc34 {
     DM1_WallOrnamentRenderPlanPc34 ornament;
     int portraitGraphicIndex;
@@ -129,12 +120,6 @@ int dm1_v1_wall_ornament_coord_set_index_pc34(int globalIndex);
 int dm1_v1_wall_ornament_zone_pc34(int coordSet,
                                    int viewWallIndex,
                                    DM1_WallOrnamentZoneBlitPc34* outBlit);
-int dm1_v1_wall_ornament_zone_xywh_pc34(int coordSet,
-                                        int viewWallIndex,
-                                        int* outX,
-                                        int* outY,
-                                        int* outW,
-                                        int* outH);
 int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex);
 int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex);
 int dm1_v1_wall_ornament_view_spec_count_pc34(void);
@@ -146,20 +131,9 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     int viewWallIndex,
     int maxHeight,
     DM1_WallOrnamentRenderPlanPc34* outPlan);
-
-int dm1_v1_wall_ornament_host_material_receipt_pc34(
-    int globalOrnamentIndex,
-    int viewWallIndex,
-    int maxHeight,
-    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt);
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan);
-int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
-    int* outX,
-    int* outY,
-    int* outW,
-    int* outH);
 
 #ifdef __cplusplus
 }

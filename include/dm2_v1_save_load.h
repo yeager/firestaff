@@ -291,34 +291,6 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
  * byte totals without mutating live runtime state. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
-bool dm2_v1_distant_environment_timer_corpus_probe(
-    const char *save_base,
-    DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt);
-/* Enumerate only header-verified original envelope/raw candidates as raw
- * timer-format evidence. No unknown byte range is decoded or imported. */
-bool dm2_v1_original_timer_format_corpus_probe(
-    const char *save_base,
-    DM2_OriginalTimerFormatCorpusReceipt *out_receipt);
-/* Revalidate and parse each original envelope/raw candidate into only the
- * source-owned state fields the current importer already decodes.  The
- * receipt is diagnostic evidence and cannot alter live runtime state. */
-bool dm2_v1_original_save_state_corpus_probe(
-    const char *save_base,
-    DM2_OriginalSaveStateCorpusReceipt *out_receipt);
-bool dm2_v1_sksave_corpus_load_first_importable(
-    const char *save_base,
-    uint8_t *out_payload,
-    size_t out_capacity,
-    size_t *out_payload_size,
-    DM2_SKSaveCorpusReceipt *out_receipt);
-/* Read one previously scanned candidate only when its complete SKSave file
- * still matches the recorded hash and its parsed payload receipt. This reads
- * data but never applies it to runtime state. */
-bool dm2_v1_sksave_corpus_load_receipted_candidate(
-    const DM2_SKSaveCandidateReceipt *candidate_receipt,
-    uint8_t *out_payload,
-    size_t out_capacity,
-    size_t *out_payload_size);
 
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);

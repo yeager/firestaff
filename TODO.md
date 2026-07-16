@@ -2728,6 +2728,11 @@
   mouse sampling, or music semantics on a modern SDL host. Independent
   source/corpus: platform executable or trace capture for the target media;
   CSBWin `Mouse.cpp`, `Sound.cpp`, and `SoundMixer.cpp` for CSBWin-only paths.
+  - 2026-07-14 update: ReDMCSB `AMIGINIT.C` F1081-F1084 are now recorded as
+    four explicit PC34 host boundaries. The Amiga `NIL:` DOS handles and the
+    C03 chip-memory `AMISTRUCT` allocation/free pair do not open files or
+    allocate host memory; a target-media trace would still be required to
+    claim platform-service behavior beyond this unavailable boundary.
 
 - REDMCSB-CSB-GAP-008 — **Original known bugs are behavioral choices, not
   automatic Firestaff fixes.** ReDMCSB annotates surviving behavior such as
@@ -2784,6 +2789,14 @@
 
 ## Skproject Audit (DM2)
 
+- SKPROJECT-DM2-STARTUP-001 — `SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN`
+  (`TITLE/0 dt07/4`): Firestaff now treats the menu as one static GDAT draw
+  command owned by DM2 startup presentation; `TITLE/0 dt07/1` is retained as
+  title/credit query receipt evidence, not a second host menu draw or
+  synthetic overlay. Verification so far: strict direct C11 syntax checks for
+  the touched DM2 presentation source and focused startup tests, plus
+  `git diff --check`; executable CTest remains blocked by the local missing
+  source/header build drift.
 - SKPROJECT-GAP-001 — `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
   `DM2_UPDATE_WEATHER` identify scheduling but not a serialised timer-record
   layout or save offset. Risk: Firestaff could bind a random SKSave region as
@@ -3380,7 +3393,6 @@ effects remain blocked without a restored HUD owner.
   fallback timer. In particular, a delayed SWING C11 must remain locked until
   the authentic receipt reaches F0253. C11 receipts must retain their
   original ordinal and be rejected once their live owner is consumed.
-
 - 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
   layout, raw zero-separated byte/block spans, payload composition, and
   Structure1A owner/model and transform selectors plus Structure1F raw face,
@@ -5747,6 +5759,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     next change here requires a hash-verified asset extraction or original
     CSBWin save, then a positive real-data probe before any promotion.
   - CSB-009 — ReDMCSB `MENU.C`, `CLIKMENU.C`, `CHAMDRAW.C`, `CHEST.C`, and `REVIVE.C` define the full Utility Disk and in-game champion/inventory interaction surface. Firestaff `src/csb/csb_v1_utility_flow_pc34.c`, `src/csb/csb_v1_runtime_champion_inventory_handoff_pc34_compat.c`, and M11 cover the bounded import, preview, slot, chest, and action routes, but not the complete original Utility Disk content, confirmations, and real-save interaction corpus.
+    - 2026-07-15 update: ReDMCSB `PRIM1.C F0925_CheckUtilityDiskInDrive`
+      now has a bounded CSB PC34 adapter for the utility-disk sector-7
+      signature gate. It preserves the source order, calls the host
+      media-change/read callbacks, compares only the two C strings at offsets
+      0 and 128, and refreshes the remembered signature only on a nonzero
+      first-loop flag. Malformed or unterminated host sector strings reject
+      before state refresh. The remaining CSB-009 work is still the Utility
+      Disk UI/content/confirmation corpus and live interaction routes, not a
+      synthetic floppy or loader loop.
   - CSB-010 — ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0438/F0806` now have source-locked, hash-verified local-CSB raster regressions. M11 owns one verified `CSB_V1_StartupRuntimeAssetSession_PC34` for C001-C005/C017/C040, advances skipped TITLE ticks through the same session before entrance, releases its first live HUD only after the source door-finish receipt, and blocks live viewport/HUD dispatch without that terminal C017/C040 session. C040 now preserves PANEL.C's transparent index 6 rather than inheriting C017's opaque contract. The first live C017 consumer additionally requires byte identity between M11's decoded asset slot and the terminal session surface, rejecting divergent material before it can draw; an opened live CSB inventory now consumes that terminal C017 bitmap at the original viewport geometry rather than a generic panel route, and candidate ownership composes the same terminal C040 over it at C101 with C06 transparency. C040 clear then requires the exact source tick/generation that presented it before restoring neutral live HUD, rejecting a stale session before pixels are written; the first post-clear CSB movement command preflights the same session before the source command bridge may mutate runtime. M11 now records the actual successfully presented 320x200 indexed CSB frame only when that terminal session is valid, retaining its FNV receipt and macOS app/window facts in the CSB boot receipt; no generated frame, title substitute, or HUD wrapper can satisfy this collection step. The remaining work is a real local-CSB Mac/app presented-frame capture routed through the existing release/app receipt. This is a packaged-runtime proof gap; title, entrance, HUD, door, import, and resume code paths must not be reopened to address it.
     - 2026-07-15 HUD text ownership update: CSBWin `Timer.cpp::ProcessTT_OPENROOM` now admits its one source-defined party-square DB2 path. It records only a newly visible, sole `DUNGEON.DAT` TextString through ReDMCSB `DUNGEON.C F0168`; M11 clears C015 with `TEXT.C F0049` then draws that receipt with the loaded original font. Generic `messageLog`, cached host mirrors, wrapping, and missing/malformed source data remain no-draw. Remaining work is the wider authenticated QuePrintLines queue, multi-line/scroll ownership, and real CSB capture.
     - 2026-07-15 movement-arrow ownership update: CSB now consumes the verified C013 panel unchanged. M11's hatch/cyan keyboard feedback has no ReDMCSB/CSBWin framebuffer proof and is suppressed for CSB. A genuine source-owned pressed-arrow state is required before any CSB overlay may alter C013.
@@ -6339,6 +6360,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: DM1 visible wall-inscription raw glyph selection now lives in the DM1/ReDMCSB inscription contract; M11 supplies current text facts and next-thing traversal only. Remaining cleanup is broader runtime/API ownership and real Mac capture.
   - 2026-07-11 update: DM1 current-map door panel graphic selection now lives in the DM1/ReDMCSB center-door API; M11 no longer owns mapIndex/mapCount/doorSet validation for panel graphic selection. Remaining cleanup is broader runtime/API ownership and real Mac capture.
 - 🔧 2026-07-10 Theron real-asset promotion follow-up: boot/full-start/runtime receipt propagation is verified in DONE.md. Remaining work is real Mac/app screenshot promotion and wider non-startup Track02 object-table/dungeon-record decoding when new real-media evidence exists.
+  - 2026-07-14 loader-runtime boundary update: the authenticated raw JP/US
+    Track 02 startup grid can now be delivered atomically to a caller-owned
+    runtime consumer only after the full BIN is rehashed and its literal
+    envelope/grid receipt is rebuilt. A rejecting consumer produces no route,
+    so verified media cannot reopen a generated level/object/visual fallback.
+    This proves original-byte delivery, not cell, object, tile, palette, or
+    non-startup dungeon-record semantics. Remaining work is binding the
+    consumer to a positively traced original dungeon decoder and wider
+    object-table/level evidence.
   - 2026-07-11 update: Track02 bitmap route receipts now preserve the actual last MODE1 user-data tile offset from the atlas route instead of assuming linear 4bpp tile spacing across raw-sector gaps. Remaining blocker is still real object-table/non-startup dungeon-record semantics and Mac/app capture.
   - 2026-07-11 update: Track02 object-table and level-route receipts now carry per-anchor descriptor/object binding status plus startup level raw/user-data/header evidence, so no-fallback blockers are inspectable per verified Track02 anchor instead of only as aggregate masks. Remaining blocker is still binding true non-startup object-table and dungeon-record semantics from real media, plus Mac/app capture.
   - 2026-07-11 update: descriptor entry 6 remains a bounded opaque
@@ -7122,6 +7152,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0403 SPELLSHIELD/FIRESHIELD mana, defense, event, and charge-success planning. Remaining runtime coding work is fright/action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0401 fright-action planning for WAR CRY, BLOW HORN, CALM, BRANDISH, and CONFUSE. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0407/F0327 projectile-spell planning for FIREBALL, DISPELL, LIGHTNING, SPIT, and INVOKE. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+  - 2026-07-15 update: the adjacent ReDMCSB spell-HUD draw symbol gap for F0396/F0397/F0398 is closed by the champion-panel spell-area overlay contract and strict C11 regression. This does not close F0407 action-family work, F0394 caster routing, rune input mutation, cast-result semantics, or original-pixel parity.
   - 2026-07-08 update: M11 SHOOT now consumes the DM1 ranged-shoot resolver for ammo gate, launch cell/direction, kinetic energy, attack, and step energy. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 CLIMB DOWN action plan for no-pit, group-over-pit, move-attempt, move-success, and BUG0_79 disabled-tail cancellation. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns grouped F0407 FLIP and direction/target plans for FLUXCAGE, FUSE, and THROW. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
@@ -8512,6 +8543,64 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - DM2-001 — `skproject/SKULLWIN/c_gdatfile.cpp` GDAT query/load path and `c_loadlevel.cpp` level materialisation: the hash-verified DOS EN/FR shared dungeon member is discovered and materialized through the normal scanner, and its typed GDAT ENT1 payload graph validates. PC G1 parsing bounds the real pre-map extension and exposes the proven `c_map.cpp` route: its 256-byte post-descriptor G1 block precedes the 480-word column-prefix table, which reaches the bounded 2360-word ground-stack table. The source-ordered `c_record.cpp` pool transform and DB3/DB4 continuation addresses are proven, but `GenericRecord::w0` traversal remains blocked. Map 0 reads only direct DB1 teleporter fields fixed by `DME.h::Teleporter`; DB8/DB10 roots remain explicitly classification-only until a corpus proves their link traversal. Next is source-plus-corpus proof for the next record family; no fallback layout or chain walk is permitted.
 - DM2-002 — `skproject/SKULLWIN/c_dballoc.cpp`, `c_record.cpp`, `c_map.cpp`, and `c_moverec.cpp` database-record ownership: `src/dm2/dm2_v1_world_model.c`, `dm2_v1_world_state.c`, and `dm2_v1_runtime.c` retain reduced Firestaff records, including a stub save-state layout. Replace the parallel model with validated original record pools, links, maps, and relocation semantics.
+  - 2026-07-16 update: `DM2_ARRANGE_DUNGEON` now has a DM2-owned
+    source-named receipt over the already proven dungeon-loader arrangement.
+    It admits only real `DUNGEON.DAT` map descriptors, square layout,
+    per-map dimensions, map offsets, `MapGraphicsStyle`, ground-stack/text
+    table addresses, and record-graph completion state. The local PC G1 data
+    remains explicitly incomplete when the full c_record graph is not proven;
+    no record links, objects, or runtime semantics are fabricated. Remaining
+    work is the complete `c_record` ownership/relocation contract and runtime
+    handoff after the graph is source-proven.
+  - 2026-07-16 update: `DM2_PERFORM_MOVE` now has a source-named
+    movement-admission plan consumed by `dm2_v1_runtime_move`. It records
+    normalized direction, source/target cell, target tile facts, door state,
+    cooldown blocking, dungeon impassable square classes, open-door admission,
+    and outdoor no-dungeon-tile admission without changing the existing
+    trigger/plate/actuator post-step path. Remaining `c_move.cpp` work is
+    still broad: chained object/group/projectile movement, ladders, missiles,
+    cross-map relocation, source timing/audio, and full record ownership.
+  - 2026-07-16 update: `FIND_LADDER_AROUND` now has a DM2-owned
+    source-named dungeon receipt over loaded `DUNGEON.DAT` square facts. It
+    scans the origin and surrounding eight cells in a bounded source-order,
+    accepts only real stairs-up/stairs-down tile candidates, records the
+    target cell, raw tile, square type, vertical direction, distance, and
+    search hash, and returns an explicit not-found receipt instead of
+    fabricating ladder/hole semantics. Remaining work is full vertical
+    transport, hole/ladder object semantics, chained movement effects, timing,
+    and runtime handoff into the broader `c_move.cpp` path.
+  - 2026-07-16 update: `DM2_move_075f_06bd` now has a DM2-owned
+    source-named projectile impact attack receipt matching skproject's
+    `_075f_06bd` / `PROJECTILE_GET_IMPACT_ATTACK` boundary. It consumes
+    missile energy, cloud effect IDs, GDAT throw strength word `0x09`,
+    poisonous word `0x0D`, item weight, and injected RNG terms without
+    synthetic gameplay data. Remaining projectile work is full missile impact
+    integration through object/group/champion runtime effects, timing, audio,
+    and record ownership.
+  - 2026-07-16 update: `DM2_move_075f_1bc2` now has a DM2-owned
+    source-named target-cell receipt for the `c_move.cpp:2861` boundary. It
+    normalizes the move direction, reads source and target square facts from
+    loaded `DUNGEON.DAT`, records raw tile, square type, first thing link,
+    door-state field, outdoor flag, vertical stair direction, passability, and
+    a stable movement hash. It is deliberately non-mutating and does not
+    fabricate chained object/group movement, sensors, teleports, or cross-map
+    relocation before the original record ownership path is proven.
+  - 2026-07-16 update: `DM2_move_2c1d_028c` now has a DM2-owned
+    source-named commit receipt for the `c_move.cpp:2914` boundary. It
+    consumes the already bounded `DM2_move_075f_1bc2` target-cell receipt,
+    preserves facing, advances only for accepted targets, keeps the source pose
+    when blocked, records stair vertical intent, and marks target thing links
+    or stairs as post-step chain work. It still does not mutate runtime state
+    or synthesize sensors, teleports, record traversal, timing, or cross-map
+    relocation.
+  - 2026-07-16 update: `DM2_move_2fcf_0434` now has a DM2-owned
+    source-named teleporter transition gate for the `c_move.cpp:2152`
+    boundary. It consumes either loaded `DUNGEON.DAT` square facts or explicit
+    square facts, requires DB1 `Teleporter`, source byte-square type 5 with
+    bit `0x08` enabled, a complete record graph, party scope bit `0x02`, and
+    a bounded destination before admission. It records all block reasons and
+    remains non-mutating: no `GenericRecord::w0`, DB3/DB4/DB8/DB10 traversal,
+    timing, sound, or map switch is fabricated.
 - DM2-003 — `skproject/SKULLWIN/c_timer.cpp`, `c_tim_proc.cpp`, `c_events.cpp`, and `c_eventqueue.cpp` timer order: `src/dm2/dm2_v1_timeline.c`, `dm2_v1_runtime.c`, `src/memory/`, and `src/engine/m11_game_view.c` do not execute the original timer-type matrix and still contain an M11 creature-tick simulation. Route every DM2 timer through a DM2-owned source-order dispatcher and remove host-side behavioural substitution.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
@@ -8816,6 +8905,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `DRAW_WALL_ORNATE` receives its exact selected image field from the caller;
     neither route selects a replacement image or paints a fallback. Remaining
     work is to consume these receipts in source-order runtime draw placement.
+  - 2026-07-16 update: `GET_WALL_ORNATE_ALCOVE_TYPE` now has a DM2-owned
+    source-named receipt over `WALL_GFX` `dtWordValue 0x0A`, bounded to the
+    real skproject alcove range before `DRAW_WALL_ORNATE` material admission.
+    The wall-ornament material receipt consumes that named alcove result plus
+    the selected original image field, decoded pixels, local palette, position,
+    flip, colorkey, and item-displacement evidence. Real DM2 `GRAPHICS.DAT`
+    verifies existing alcove records and at least one complete selected-field
+    material chain. Remaining work is runtime placement/source-order draw
+    consumption and the broader blit/stretch/palette coupling.
   - 2026-07-13 update: source-selected inventory item addresses now produce a
     no-draw HUD material receipt only when the exact item-category `dtImage`,
     decoded four-bit pixels, and `QUERY_GDAT_IMAGE_LOCALPAL` payload agree.
@@ -9254,6 +9352,37 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source byte, decompressor, palette, VCE word, VDC transfer, level, or object
   family. Next evidence must tie that exact destination span to a hash-verified
   source sector and follow its bytes through one original VCE/VDC operation.
+- 2026-07-16 update: the Track02 loader-intake chain now has a
+  post-predecode-to-dungeon-level gate that preserves object/dungeon
+  read-window topology only when it can also consume the source-locked initial
+  level handoff for the same JP/US Track02 media. Missing raw media produces
+  an explicit no-fallback blocker, and the positive branch remains conditional
+  on `FIRESTAFF_THERON_TRACK02_RAW`. Remaining work is still real original
+  loader/CD-read evidence that assigns a verified object-table or
+  dungeon-record grammar before runtime/render admission.
+- 2026-07-16 update: a grammar-admission barrier now consumes that
+  dungeon-level topology receipt and preserves the original CD-read record,
+  byte-window, hash, and topology evidence while explicitly requiring a future
+  original object-table/dungeon-record grammar witness. It admits no grammar,
+  decoder, runtime, rendering, fallback visual, or synthetic byte path.
+  Remaining work is a real HuC6280/System Card trace that follows one of these
+  exact windows into the original object or dungeon parser.
+- 2026-07-16 update: the grammar boundary now also binds back to the
+  read-table/layout-binding receipt, so a positive real-media path must
+  preserve the exact original CD-read records, MODE1 user-data offsets,
+  destinations, byte windows, copied-byte hashes, and topology hash before it
+  can reach the grammar-witness-required blocker. Remaining work is still the
+  original parser trace itself; this gate deliberately admits no object-table
+  fields, dungeon-record grammar, runtime handoff, rendering, fallback visuals,
+  or synthetic bytes.
+- 2026-07-16 update: a parser-witness gate now admits object-table and
+  dungeon-record grammar provenance only when supplied original trace facts
+  prove that the original loader/parser consumed those exact preserved
+  CD-read windows. Even that positive receipt keeps object fields, dungeon
+  record fields, decoder semantics, runtime handoff, rendering, fallback
+  visuals, and synthetic bytes blocked. Remaining work is to source such
+  witness facts from a real HuC6280/System Card trace instead of a caller
+  supplied receipt.
 - 🔧 Phase 5 - Mechanics parity hardening: 50-assertion mechanics probe covers movement, click routes, doors, pits, teleporters, altar, combat, drops, and sounds; remaining work is real-asset gameplay traces and broader cross-route runtime evidence.
 - 🔧 Startup presentation hardening: stage/Soul Room render rows, enriched startup layout labels, and Track 02 descriptor-role receipt summaries are now test-visible; remaining work is real Track 02 startup art/audio decoding and pixel evidence instead of fallback text presentation.
 - 🔧 2026-07-08 follow-up: Theron boot owns runtime tick/turn/move wrappers for M11 idle and in-dungeon input. Remaining boot cleanup is to move the next render/session adapter calls out of M11 and into Theron-owned facades.

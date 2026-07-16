@@ -1,7 +1,6 @@
 
 #ifndef FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #define FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
-#include "dm2_v1_asset_loader.h"
 #include <stdint.h>
 
 /* DM2: The Legend of Skullkeep (1993)
@@ -52,10 +51,9 @@ typedef enum {
  * The candidate span is anchored immediately after the already-proven
  * column-index, ground-stack, and text tables.  It is intentionally not a
  * address map. The loader promotes this exact source-ordered span only after
- * every map-rooted c_record chain validates. Unreachable pool slots are not
- * links. The later G1 extension is never included in candidate_pool_bases;
- * the receipt separately reports the narrowly proven DB3/DB4 continuation
- * and leaves every other extension byte untyped.
+ * every declared direct c_record link and map-rooted chain validates. The
+ * later G1 extension remains untyped and is never included in
+ * candidate_pool_bases.
  */
 typedef struct {
     int available;
@@ -68,19 +66,6 @@ typedef struct {
     int root_end_markers;
     int root_shape_valid;
     int root_shape_invalid;
-    int map_root_count;
-    int map_root_end_markers;
-    int map_root_null_markers;
-    int map_root_shape_valid;
-    int map_root_shape_invalid;
-    int map_root_extension_shape_valid;
-    int map_root_unresolved_after_extension;
-    int map_root_direct_by_type[16];
-    int map_root_extension_by_type[16];
-    int map_root_unresolved_by_type[16];
-    int map_root_count_by_map[DM2_V1_MAX_LEVELS];
-    int map_root_extension_by_map[DM2_V1_MAX_LEVELS];
-    int map_root_unresolved_by_map[DM2_V1_MAX_LEVELS];
     int candidate_record_count;
     int candidate_first_link_end_markers;
     int candidate_first_link_shape_valid;
@@ -88,152 +73,6 @@ typedef struct {
     int tail_pool_base;
     int tail_pool_base_rejected;
 } DM2_V1_G1RecordPoolEvidence;
-
-/*
- * Raw-only PC G1 corpus receipt for the two c_map.cpp tables whose semantic
- * ownership skproject leaves open: ddat.v1e03f4 (per-column ground-stack
- * offsets) and dm2_v1e038c/dunGroundStacks (ObjectID words).  It records
- * only already validated byte ranges and FNV-1a identities.  In particular,
- * it does not decode a tile, select a record, or promote a map root.
- */
-typedef struct {
-    int available;
-    int g1_layout_absent;
-    int raw_only;
-    int column_index_semantics_unresolved;
-    int ground_stack_semantics_unresolved;
-    int column_index_base;
-    int column_index_word_count;
-    uint32_t column_index_byte_count;
-    uint32_t column_index_hash;
-    int ground_stack_base;
-    int ground_stack_word_count;
-    uint32_t ground_stack_byte_count;
-    uint32_t ground_stack_hash;
-    int map_data_base;
-    uint32_t map_data_byte_count;
-    uint32_t map_data_hash;
-} DM2_V1_G1GroundStackMapCorpusReceipt;
-
-/*
- * Raw provenance for each verified PC G1 Map_definitions row and the bounded
- * byte span it selects in the trailing map-data block.  SKULLWIN/c_map.cpp
- * does not prove the tile, terrain, object, or flag grammar of those bytes,
- * so this receipt deliberately carries no decoded map semantics.
- */
-typedef struct {
-    int map;
-    int descriptor_base;
-    int map_data_offset;
-    int width;
-    int height;
-    uint32_t descriptor_hash;
-    uint32_t map_byte_count;
-    uint32_t map_hash;
-} DM2_V1_G1MapRawSpan;
-
-typedef struct {
-    int available;
-    int g1_layout_absent;
-    int raw_only;
-    int tile_semantics_unresolved;
-    int map_count;
-    int map_data_base;
-    uint32_t map_data_byte_count;
-    uint32_t map_data_hash;
-    DM2_V1_G1MapRawSpan maps[DM2_V1_MAX_LEVELS];
-} DM2_V1_G1MapCorpusReceipt;
-
-#define DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS 5
-
-/*
- * A map boot may materialize the source-proven G1 root address classes while
- * retaining an explicit incomplete state.  It is not a record graph: no w0
- * link is followed and blocked roots have no substitute address.
- */
-typedef struct {
-    int map;
-    int x;
-    int y;
-    uint16_t object_id;
-    int type;
-    int index;
-} DM2_V1_G1BlockedRoot;
-
-#define DM2_V1_G1_FIRST_MAP_MAX_ROOTS 70
-
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int type;
-    int index;
-} DM2_V1_G1VerifiedRoot;
-
-/* Source-scoped DB1 teleporter payload. This is not a GenericRecord view:
- * skproject/SKWIN/DME.h Teleporter lines 367-382 fixes this six-byte layout.
- * The next-link word is intentionally absent because partial G1 boot does not
- * authorize GenericRecord::w0 traversal. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t destination_x;
-    uint8_t destination_y;
-    uint8_t destination_map;
-    uint8_t scope;
-    uint8_t sound;
-    uint8_t rotation;
-    uint8_t rotation_type;
-} DM2_V1_G1TeleporterRoot;
-
-/* Source-scoped DB2 text payload. skproject/SKWIN/DME.h Text fixes the
- * four-byte layout: w2 carries visibility, mode, and the text-table index.
- * The GenericRecord::w0 link and text-table bytes remain intentionally
- * outside this partial-G1 receipt. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t direction;
-    uint8_t visible;
-    uint8_t mode;
-    uint16_t text_index;
-} DM2_V1_G1TextRoot;
-
-#define DM2_V1_G1_MAP5_MAX_TEXT_ROOTS 16
-
-/* Map 5 is the first canonical G1 map with direct DB2 roots. This is a
- * read-only field receipt, not a text decoder or record graph. */
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int text_root_count;
-    int text_record_reads;
-    int generic_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1TextRoot texts[DM2_V1_G1_MAP5_MAX_TEXT_ROOTS];
-} DM2_V1_G1Map5TextRuntimeReceipt;
-
-/* Source-decoded subset of skproject QUERY_MESSAGE_TEXT.  The PC G1
- * dungeon owns only TextMode==0 strings in dunTextData; mode-one messages
- * may refer to GDAT's MESSAGE bank and deliberately stay outside this
- * receipt.  Phrase-bank control codes 29/30 are rejected until their source
- * tables are independently decoded, rather than replaced with guessed text. */
-#define DM2_V1_G1_TEXT_MESSAGE_MAX 16
-#define DM2_V1_G1_TEXT_MESSAGE_CHARS 192
-
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    uint16_t text_index;
-    uint16_t source_word_count;
-    char text[DM2_V1_G1_TEXT_MESSAGE_CHARS];
-} DM2_V1_G1TextMessage;
 
 typedef struct {
     int valid;
@@ -543,270 +382,29 @@ typedef struct {
     DM2_V1_G1BlockedRoot blocked_roots[DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS];
 } DM2_V1_G1PartialMapBootReceipt;
 
-/*
- * Runtime-map admission for one PC G1 Map_definitions entry.  This is the
- * c_map.cpp boundary before c_record.cpp reads GenericRecord::w0: it proves
- * the selected raw map span, the source-order pool address gate, and every
- * map-owned root's address class.  It intentionally carries no record bytes,
- * object payloads, or next-link semantics.
- */
 typedef struct {
+    int valid;
     int committed;
-    int incomplete_world;
-    int map;
-    int width;
-    int height;
-    int map_data_base;
-    int map_data_offset;
-    uint32_t map_data_byte_count;
-    uint32_t map_data_hash;
-    int root_count;
-    int direct_root_count;
-    int db3_root_count;
-    int db4_root_count;
-    int blocked_root_count;
-    int generic_record_reads;
-    int blocked_record_reads;
-} DM2_V1_G1RuntimeMapValidationReceipt;
-
-/* Address-only receipt for one direct, runtime-admitted G1 root. It exposes
- * c_record.cpp's verified DB offset transform but never reads a payload word,
- * GenericRecord::w0, a possession, or a G1 extension record. */
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int level;
-    int x;
-    int y;
-    uint16_t object_id;
-    uint8_t type;
-    uint16_t index;
-    int record_offset;
-    int record_size;
-} DM2_V1_G1DirectRootRecordAddressReceipt;
-
-#define DM2_V1_G1_DIRECT_CHAIN_MAX 32
-
-/* A bounded, local c_record chain. Nodes are address receipts only; the sole
- * word read from each record is GenericRecord::w0 to select the next node. */
-typedef struct {
-    uint16_t object_id;
-    uint8_t type;
-    uint16_t index;
-    int record_offset;
-    int record_size;
-} DM2_V1_G1DirectChainNode;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int level;
-    int x;
-    int y;
-    int node_count;
-    int link_word_reads;
-    DM2_V1_G1DirectChainNode nodes[DM2_V1_G1_DIRECT_CHAIN_MAX];
-} DM2_V1_G1DirectRootChainReceipt;
-
-/* skproject SKWIN/DME.h::tileTypeIndex fixes the terrain class encoded in a
- * G1 byte square.  Other terrain classes remain outside this scene handoff. */
-typedef enum {
-    DM2_V1_G1_SCENE_TILE_NONE = 0,
-    DM2_V1_G1_SCENE_TILE_WALL,
-    DM2_V1_G1_SCENE_TILE_FLOOR,
-    DM2_V1_G1_SCENE_TILE_DOOR
-} DM2_V1_G1SceneTileClass;
-
-/* skproject SKWIN/DME.h::dbIndex identifies only these two record-root
- * classes as scene-bearing here.  All other already-proven DB roots remain
- * generic; no record payload is inspected to refine them. */
-typedef enum {
-    DM2_V1_G1_SCENE_ROOT_GENERIC = 0,
-    DM2_V1_G1_SCENE_ROOT_DOOR,
-    DM2_V1_G1_SCENE_ROOT_CREATURE
-} DM2_V1_G1SceneRootClass;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int level;
-    int x;
-    int y;
-    uint8_t raw_tile;
-    DM2_V1_G1SceneTileClass tile_class;
-    DM2_V1_G1SceneRootClass root_class;
-    DM2_V1_G1DirectRootChainReceipt chain;
-} DM2_V1_G1DungeonSceneClassificationReceipt;
-
-#define DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS 32
-
-/* Read-only direct DB0 payload from skproject SKWIN/DME.h::Door.  `w0` is
- * intentionally absent: it is GenericRecord::next and remains unavailable
- * until the complete G1 graph is independently proven. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t direction;
-    uint8_t button;
-    uint8_t door_type;
-    uint8_t button_state;
-    uint8_t opening_dir;
-    uint8_t ornate_index;
-    uint8_t destroyable_by_fireball;
-    uint8_t bashable_by_chopping;
-} DM2_V1_G1DirectDoorRoot;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int door_root_count;
-    int door_record_reads;
-    int generic_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1DirectDoorRoot doors[DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS];
-} DM2_V1_G1RuntimeMapDoorReceipt;
-
-#define DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS 64
-
-/* Read-only direct DB3 payload from skproject SKWIN/DME.h::Actuator. The
- * GenericRecord::w0 link is deliberately excluded from this receipt. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t direction;
-    uint8_t actuator_type;
-    uint16_t actuator_data;
-    uint8_t graphic_number;
-    uint8_t disabled;
-    uint8_t delay;
-    uint8_t sound_effect;
-    uint8_t revert_effect;
-    uint8_t action_type;
-    uint8_t once_only;
-    uint8_t active_status;
-    uint8_t target_direction;
-    uint8_t target_x;
-    uint8_t target_y;
-} DM2_V1_G1DirectActuatorRoot;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int actuator_root_count;
-    int actuator_record_reads;
-    int generic_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1DirectActuatorRoot
-        actuators[DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS];
-} DM2_V1_G1RuntimeMapActuatorReceipt;
-
-#define DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS 32
-
-/* Read-only direct DB4 payload from skproject SKWIN/DME.h::Creature. The
- * w0 next link and w2 possession ObjectID are deliberately excluded. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t direction;
-    uint8_t creature_type;
-    uint16_t hit_points_1;
-} DM2_V1_G1DirectCreatureRoot;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int creature_root_count;
-    int creature_record_reads;
-    int generic_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1DirectCreatureRoot
-        creatures[DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS];
-} DM2_V1_G1RuntimeMapCreatureReceipt;
-
-#define DM2_V1_G1_RUNTIME_MAP_MAX_WEAPON_ROOTS 32
-
-/* Read-only direct DB5 payload from skproject SKWIN/DME.h::Weapon. The w0
- * next link is deliberately excluded from this receipt. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t direction;
-    uint8_t item_type;
-    uint8_t important;
-    uint8_t charges;
-} DM2_V1_G1DirectWeaponRoot;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int weapon_root_count;
-    int weapon_record_reads;
-    int generic_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1DirectWeaponRoot
-        weapons[DM2_V1_G1_RUNTIME_MAP_MAX_WEAPON_ROOTS];
-} DM2_V1_G1RuntimeMapWeaponReceipt;
-
-#define DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS 32
-
-/* Read-only direct DB9 payload from skproject SKWIN/DME.h::Container. The
- * w0 next link and w2 contained-object ObjectID are deliberately excluded. */
-typedef struct {
-    int x;
-    int y;
-    uint16_t object_id;
-    int index;
-    uint8_t direction;
-    uint8_t opened;
-    uint8_t container_type;
-} DM2_V1_G1DirectContainerRoot;
-
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int container_root_count;
-    int container_record_reads;
-    int generic_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1DirectContainerRoot
-        containers[DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS];
-} DM2_V1_G1RuntimeMapContainerReceipt;
-
-/* First-map runtime handoff for the transactional PC G1 boot. This carries
- * source-proven root-address classes only; it deliberately contains no
- * decoded c_record payload or inferred object. */
-typedef struct {
-    int committed;
-    int incomplete_world;
-    int map;
-    int width;
-    int height;
-    int root_count;
-    int direct_root_count;
-    int db3_root_count;
-    int db4_root_count;
-    int verified_root_count;
-    int blocked_root_count;
-    int object_count;
-    int teleporter_root_count;
-    int teleporter_record_reads;
-    int blocked_record_reads;
-    DM2_V1_G1VerifiedRoot roots[DM2_V1_G1_FIRST_MAP_MAX_ROOTS];
-    DM2_V1_G1TeleporterRoot teleporters[DM2_V1_G1_FIRST_MAP_MAX_ROOTS];
-} DM2_V1_G1FirstMapRuntimeReceipt;
+    int incomplete;
+    int map_count;
+    int outdoor_map_count;
+    int indoor_map_count;
+    int square_bytes;
+    int raw_map_data_base;
+    int column_index_base;
+    int ground_stack_base;
+    int ground_stack_count;
+    int text_data_base;
+    int text_word_count;
+    int candidate_pool_base;
+    int candidate_pool_end;
+    int g1_extension_base;
+    int g1_extension_size;
+    int record_graph_complete;
+    uint32_t map_dimension_hash;
+    uint32_t map_graphics_style_hash;
+    uint32_t arrangement_hash;
+} DM2_V1_ArrangeDungeonReceipt;
 
 typedef struct {
     int valid;
@@ -1013,13 +611,9 @@ typedef struct {
     int g1_extension_size;
     int thing_data_bases[16];
     int thing_type_counts[16];
-    int g1_extension_record_bases[16];
-    int g1_extension_record_counts[16];
     /* Set only when the source layout has materialized every map-to-record
      * ownership table.  A byte-square map alone is not a playable graph. */
     int record_graph_complete;
-    /* Canonical PC G1 may commit a map-only boot while preserving its five
-     * blocked roots and disabled record traversal. */
     DM2_V1_G1PartialMapBootReceipt partial_map_boot;
     uint8_t *raw_data;
     int raw_size;
@@ -1156,15 +750,6 @@ int dm2_v1_dungeon_find_text_wall_gfx(
     int max_steps,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field);
-int dm2_v1_dungeon_find_text_wall_gfx_owner(
-    const DM2_V1_DungeonData *d,
-    uint16_t first_thing,
-    int view_dir,
-    int side_index,
-    int max_steps,
-    int *out_wall_gfx_index,
-    int *out_wall_gfx_field,
-    uint16_t *out_object_id);
 int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     const DM2_V1_DungeonData *d,
     uint16_t first_thing,
@@ -1182,17 +767,6 @@ int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     int wall_gfx_count,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field);
-int dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
-    const DM2_V1_DungeonData *d,
-    uint16_t first_thing,
-    int view_dir,
-    int side_index,
-    int max_steps,
-    const uint8_t *wall_gfx_list,
-    int wall_gfx_count,
-    int *out_wall_gfx_index,
-    int *out_wall_gfx_field,
-    uint16_t *out_object_id);
 int dm2_v1_dungeon_get_map_wall_gfx_list(
     const DM2_V1_DungeonData *d,
     int level,
@@ -1235,12 +809,14 @@ int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
  * PC G1 files whose direct graph is incomplete return 0 instead of being
  * promoted as a partial world. */
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
-/* Validate only the source-owned c_record pool address transform:
- * text end + sum(glbItemSizePerDB[type] * nRecords[type]).  This is the
- * G1 map-boot gate. It deliberately does not assign GenericRecord::w0 link
- * semantics; callers that need to walk a chain must use the stricter graph
- * validator above. */
 int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d);
+/* Source-named DM2_ARRANGE_DUNGEON receipt.  This does not invent records or
+ * complete the PC G1 graph; it only admits the arranged map/dungeon layout
+ * already proven by dm2_v1_dungeon_load. */
+int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
+    const uint8_t *dat,
+    int size,
+    DM2_V1_ArrangeDungeonReceipt *out);
 /* Collect non-mutating PC G1 c_record provenance for the source-ordered pool
  * span. Record lookup/traversal is available only when record_graph_complete
  * is set by the independent bounded graph validator. */
@@ -1521,4 +1097,5 @@ int dm2_v1_g1_container_map_chip_matches_decoded_instance(
     uint32_t decoded_pixel_hash);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
+const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void);
 #endif

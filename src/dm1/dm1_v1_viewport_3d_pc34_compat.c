@@ -12,52 +12,10 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include <string.h>
-
-int dm1_viewport_3d_wall_host_material_receipt_pc34(
-    int map_wall_set,
-    int wallset0_graphic_index,
-    int transparent_color,
-    bool flip_horizontally,
-    int expected_width,
-    int expected_height,
-    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt)
-{
-    DM1_ViewportWallHostMaterialReceiptPc34 receipt;
-    int graphic_index;
-
-    if (!out_receipt) {
-        return 0;
-    }
-    memset(&receipt, 0, sizeof(receipt));
-    /* ReDMCSB DUNVIEW.C F0096:2225-2464 materializes only C093..C107
-     * before F0100/F0101/F0104/F0105 consume a wall panel. A host-scaled
-     * substitute is not an original PC34 material decision. */
-    if (wallset0_graphic_index < 93 || wallset0_graphic_index > 107 ||
-        expected_width <= 0 || expected_height <= 0 ||
-        (transparent_color != -1 && transparent_color != 10)) {
-        *out_receipt = receipt;
-        return 0;
-    }
-    graphic_index = dm1_v1_graphic_materialized_wallset_index_pc34(
-        map_wall_set, wallset0_graphic_index);
-    if (graphic_index < 0) {
-        *out_receipt = receipt;
-        return 0;
-    }
-    receipt.valid = 1;
-    receipt.graphic_index = graphic_index;
-    receipt.transparent_color = transparent_color;
-    receipt.flip_horizontally = flip_horizontally;
-    receipt.expected_width = expected_width;
-    receipt.expected_height = expected_height;
-    *out_receipt = receipt;
-    return 1;
-}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Transparency color — ReDMCSB DEFS.H C10_COLOR_FLESH
@@ -570,7 +528,7 @@ int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
                                             int rel_side)
 {
     /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
-     * D0C = 0, D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
+     * D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
      * D3L2/D3R2 = 14/15. DUNVIEW.C F0115 uses this square id with
      * G2028_ac_ViewSquareIndexTo for object/projectile source rows. */
     static const signed char k_view_square[3][3] = {
@@ -578,10 +536,6 @@ int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
         { 7,  6,  8 },
         {12, 11, 13 }
     };
-    /* F0127 calls F0115 for the party square with M609_VIEW_SQUARE_D0C.
-     * G2028[0] selects the final C2500/C2900 row (11); D0 side squares
-     * use their dedicated routines and do not enter this thing pass. */
-    if (rel_forward == 0 && rel_side == 0) return 0;
     if (rel_forward < 1 || rel_forward > 3) return -1;
     if (rel_side == -2 && rel_forward == 3) return 14;
     if (rel_side == 2 && rel_forward == 3) return 15;
@@ -2794,59 +2748,6 @@ int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOccl
 {
     if (!spec || spec->d0c_pattern_zone || spec->rebirth_row < 0) return -1;
     return 3007 + spec->rebirth_row;
-}
-
-int dm1_viewport_3d_c100_rebirth_lightning_geometry(
-    const DM1_ViewportExplosionOcclusionSpec *spec,
-    int *out_zone_index,
-    int *out_center_x,
-    int *out_center_y)
-{
-    /* ReDMCSB DUNVIEW.C F0115:4806-4812 sets L2476 from G2028.  The C100
-     * branches at :5948/:5999 use L2476, while G2034 belongs to ordinary
-     * explosion placement.  COORD.C G3025 layout-696 records C3000..C3011
-     * below are record-type 0: each pair is the real bitmap centre inside the
-     * 224x136 viewport.  Do not reuse these coordinates for C101. */
-    static const short k_c3000_c100_centres[12][2] = {
-        {112, 53}, { 24, 53}, {194, 53}, {112, 59}, { 15, 59},
-        {208, 59}, {112, 70}, {112, 57}, { 24, 57}, {194, 57},
-        {112, 63}, { 12, 63}
-    };
-    int row;
-
-    if (!spec) return 0;
-    row = spec->rebirth_row;
-    if (row < 0 || row >= (int)(sizeof(k_c3000_c100_centres) /
-                                sizeof(k_c3000_c100_centres[0]))) {
-        return 0;
-    }
-    if (out_zone_index) *out_zone_index = 3000 + row;
-    if (out_center_x) *out_center_x = (int)k_c3000_c100_centres[row][0];
-    if (out_center_y) *out_center_y = (int)k_c3000_c100_centres[row][1];
-    return 1;
-}
-
-int dm1_viewport_3d_c100_rebirth_lightning_scale(
-    const DM1_ViewportExplosionOcclusionSpec *spec,
-    int *out_scale)
-{
-    /* ReDMCSB DUNVIEW.C:5984 indexes G2037 by the same L2476/G2028 row used
-     * for C100's C3000 zone.  G2037 is physically seven bytes long: the
-     * original I34E symbol map places G0230 immediately after byte six.
-     * Never reinterpret those following mutable globals as a scale. */
-    static const unsigned char k_g2037_c100_scales[7] = {
-        15, 15, 15, 20, 20, 20, 32
-    };
-    int row;
-
-    if (!spec) return 0;
-    row = spec->rebirth_row;
-    if (row < 0 || row >= (int)(sizeof(k_g2037_c100_scales) /
-                                sizeof(k_g2037_c100_scales[0]))) {
-        return 0;
-    }
-    if (out_scale) *out_scale = (int)k_g2037_c100_scales[row];
-    return 1;
 }
 
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)

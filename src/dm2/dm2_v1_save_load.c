@@ -18,10 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
-#if !defined(_WIN32)
-#include <dirent.h>
-#include <sys/stat.h>
-#endif
 
 /* docs/dm2_save_format.md § Game state block identifies skload_table_60 as
  * a fixed 56-byte SUPPRESS block. Keep this wire-layout view byte-exact so
@@ -216,85 +212,6 @@ typedef enum {
     DM2_SK_CORPUS_INVALID = 1,
     DM2_SK_CORPUS_VALID = 2,
 } DM2_SKCorpusProbeStatus;
-
-#define DM2_SK_CORPUS_RECURSE_DEPTH 4
-#define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64
-
-static int dm2_ascii_tolower(int c)
-{
-    return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
-}
-
-static int dm2_ascii_strcasecmp(const char *a, const char *b)
-{
-    while (*a && *b) {
-        int ca = dm2_ascii_tolower((unsigned char)*a);
-        int cb = dm2_ascii_tolower((unsigned char)*b);
-        if (ca != cb) return ca - cb;
-        ++a;
-        ++b;
-    }
-    return dm2_ascii_tolower((unsigned char)*a) -
-           dm2_ascii_tolower((unsigned char)*b);
-}
-
-static int dm2_sksave_basename_is_slot_ci(const char *name, int *out_slot)
-{
-    int tens;
-    int ones;
-    if (out_slot) *out_slot = -1;
-    if (!name) return 0;
-    if (dm2_ascii_tolower((unsigned char)name[0]) != 's' ||
-        dm2_ascii_tolower((unsigned char)name[1]) != 'k' ||
-        dm2_ascii_tolower((unsigned char)name[2]) != 's' ||
-        dm2_ascii_tolower((unsigned char)name[3]) != 'a' ||
-        dm2_ascii_tolower((unsigned char)name[4]) != 'v' ||
-        dm2_ascii_tolower((unsigned char)name[5]) != 'e') {
-        return 0;
-    }
-    if (name[6] < '0' || name[6] > '9' ||
-        name[7] < '0' || name[7] > '9' ||
-        name[8] != '.' ||
-        dm2_ascii_tolower((unsigned char)name[9]) != 'd' ||
-        dm2_ascii_tolower((unsigned char)name[10]) != 'a' ||
-        dm2_ascii_tolower((unsigned char)name[11]) != 't' ||
-        name[12] != '\0') {
-        return 0;
-    }
-    tens = name[6] - '0';
-    ones = name[7] - '0';
-    if (out_slot) *out_slot = tens * 10 + ones;
-    return 1;
-}
-
-static int dm2_sksave_basename_is_candidate_ci(const char *name)
-{
-    int slot = -1;
-    if (!name || !name[0]) return 0;
-    if (dm2_ascii_strcasecmp(name, "SKSave.dat") == 0 ||
-        dm2_ascii_strcasecmp(name, "SKSave.bak") == 0) {
-        return 1;
-    }
-    return dm2_sksave_basename_is_slot_ci(name, &slot) &&
-           slot >= 0 && slot < DM2_SLOT_MAX;
-}
-
-static int dm2_sksave_basename_is_canonical_direct(const char *name)
-{
-    int slot = -1;
-    char canonical[16];
-    if (!name) return 0;
-    if (strcmp(name, "SKSave.dat") == 0 ||
-        strcmp(name, "SKSave.bak") == 0) {
-        return 1;
-    }
-    if (!dm2_sksave_basename_is_slot_ci(name, &slot) ||
-        slot < 0 || slot >= DM2_SLOT_MAX) {
-        return 0;
-    }
-    snprintf(canonical, sizeof(canonical), "SKSave%02d.dat", slot);
-    return strcmp(name, canonical) == 0;
-}
 
 static DM2_SKCorpusProbeStatus dm2_sksave_probe_path(const char *path,
                                                       size_t *out_payload_size)
@@ -953,10 +870,6 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 
     if (!save_base || !out_receipt) return false;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    out_receipt->recursive_scan_depth_limit =
-        (uint16_t)DM2_SK_CORPUS_RECURSE_DEPTH;
-    out_receipt->recursive_scan_candidate_cap =
-        (uint16_t)DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP;
 
     /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
      * preference so real corpus scans tell the runtime which file would win.
@@ -1541,12 +1454,6 @@ void dm2_suppress_champion_mask(uint8_t mask[261])
         mask[base + 2] = 0xFF;
         mask[base + 3] = 0xFF;
     }
-
-    /* skproject/SKWIN/DME.h::Champion::heroType is byte 255 of the exact
-     * 261-byte saved record. DRAW_CHAMPION_PICTURE uses it as CHAMPIONS
-     * GDAT index, so an original save import must retain this byte even
-     * while the rest of the late record layout is still being catalogued. */
-    mask[255] = 0xFF;
 }
 
 int dm2_suppress_encode_champion(const DM2_ChampionRecord *c,

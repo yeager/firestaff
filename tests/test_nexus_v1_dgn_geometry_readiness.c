@@ -619,9 +619,9 @@ static void test_variable_grid_and_mesh_ready(void) {
           "level carries bounded Structure1 geometry span");
     CHECK(nexus_v1_level_get_collision_ref(&level, 3, 2) == 5,
           "level keeps Structure1B collision refs for renderer route");
-    CHECK(level.geometry_size ==
-          ((int)sizeof(dgn) - level.geometry_offset),
-          "legacy level.geometry_size remains full file tail");
+    CHECK(level.geometry_size == geometry_bytes &&
+          level.geometry_size == level.geometry_info.geometry_size,
+          "level geometry span excludes trailing Structure2/3 container blocks");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
           "DGN renderer handoff receipt builds for mesh-ready level");
     CHECK(handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH,
@@ -1065,6 +1065,17 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_vectors.normal_unit_length_count ==
                   handoff.structure3_faces.normal_count &&
               handoff.structure3_vectors.normal_non_unit_length_count == 0 &&
+              handoff.structure3_vectors.normal_face_plane_pair_count ==
+                  handoff.structure3_faces.triangle_count * 2 +
+                      handoff.structure3_faces.quad_count * 4 &&
+              handoff.structure3_vectors.normal_face_plane_within_tolerance_count ==
+                  handoff.structure3_vectors.normal_face_plane_pair_count &&
+              handoff.structure3_vectors.normal_face_plane_outside_tolerance_count == 0 &&
+              handoff.structure3_vectors.positive_winding_triangle_count +
+                  handoff.structure3_vectors.negative_winding_triangle_count +
+                  handoff.structure3_vectors.zero_winding_triangle_count ==
+                  handoff.structure3_faces.triangle_count +
+                      handoff.structure3_faces.quad_count * 2 &&
               !handoff.structure3_vectors.transform_or_draw_semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
@@ -1078,7 +1089,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_model_references.structure1f_bound_entry_count ==
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
-              "real Structure3 face topology and fill lanes remain bounded no-draw provenance");
+              "retail Structure3 face-plane normals and winding remain bounded no-draw provenance");
         structure3_static_face_selector_total +=
             handoff.structure3_face_materials.static_texture_selector_count;
         structure3_animated_face_selector_total +=
@@ -3377,7 +3388,13 @@ static void test_structure3_entry_header_boundaries(void) {
           vectors.vertex_vector_count == 5 && vectors.nonzero_vertex_vector_count == 5 &&
           vectors.normal_vector_count == 4 && vectors.normal_unit_length_count == 4 &&
           vectors.normal_non_unit_length_count == 0 &&
+          vectors.normal_face_plane_pair_count == 6 &&
+          vectors.normal_face_plane_within_tolerance_count == 6 &&
+          vectors.normal_face_plane_outside_tolerance_count == 0 &&
+          vectors.degenerate_face_triangle_count == 3 &&
+          vectors.zero_winding_triangle_count == 3 &&
           vectors.maximum_normal_length_error == 0 &&
+          vectors.maximum_normal_face_plane_error == 0 &&
           !vectors.transform_or_draw_semantics_proven,
           "Structure3 signed 16.16 vectors remain bounded without a transform or draw claim");
     CHECK(nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) == 0 &&
@@ -4200,6 +4217,52 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.maximum_face_vertex_adjacency_pair_incidence == 2 &&
           !faces.draw_semantics_proven,
           "repeated Structure3 index pairs remain bounded no-draw incidence");
+}
+
+static void test_structure3_extreme_vector_arithmetic(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 24];
+    uint8_t *payload = dgn + NEXUS_DGN_BLOCK_SIZE * 20;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnStructure3VectorReceipt vectors;
+    Nexus_V1_DgnStructure3FaceReceipt faces;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
+          "extreme Structure3 vector fixture builds");
+    wb16(dgn + 0x1c, 20U);
+    wb16(dgn + 0x1e, 4U);
+    wb32(payload, 1U);
+    wb32(payload + 4, 8U);
+    wb32(payload + 8, 0x100U);
+    wb16(payload + 12, 3U);
+    wb16(payload + 14, 1U);
+    wb32(payload + 16, 48U);
+    wb32(payload + 24, 84U);
+    wb32(payload + 28, 96U);
+
+    /* The face lies in the Y/Z plane. Its signed 16.16 coordinates make
+     * the raw cross product exceed int64 while retaining an exact +X normal. */
+    wb32(payload + 48 + 4, 0x80000000U);
+    wb32(payload + 48 + 8, 0x80000000U);
+    wb32(payload + 60 + 4, 0x7fffffffU);
+    wb32(payload + 60 + 8, 0x80000000U);
+    wb32(payload + 72 + 4, 0x80000000U);
+    wb32(payload + 72 + 8, 0x7fffffffU);
+    wb16(payload + 84, 0U);
+    wb16(payload + 86, 1U);
+    wb16(payload + 88, 2U);
+    wb16(payload + 90, 2U);
+    wb32(payload + 96, 65536U);
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
+          nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
+          faces.valid && faces.triangle_count == 1 &&
+          vectors.valid && vectors.normal_face_plane_pair_count == 2 &&
+          vectors.normal_face_plane_within_tolerance_count == 2 &&
+          vectors.positive_winding_triangle_count == 1 &&
+          vectors.maximum_normal_face_plane_error == 0 &&
+          !vectors.transform_or_draw_semantics_proven,
+          "extreme Structure3 vectors keep exact no-draw geometry validation without signed overflow");
 }
 
 static void test_visible_structure1f_semantics_block_render_plan(void) {
@@ -6163,6 +6226,7 @@ int main(void) {
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
     test_structure3_entry_header_boundaries();
+    test_structure3_extreme_vector_arithmetic();
     test_visible_structure1f_semantics_block_render_plan();
     test_direct_structure1f_mesh_command_provenance();
     test_structure1g_semantics_and_bounds();

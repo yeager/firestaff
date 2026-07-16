@@ -101,6 +101,7 @@ typedef struct {
 #define DM2_TIMER_ORNATE_ANIM    2  /* wall ornament animation */
 #define DM2_TIMER_TICK_GENERATOR 3  /* primary game event ticker */
 #define DM2_TIMER_CREATURE_DEATH 4  /* KILL_ON_TIMER_POSITION (b_1a 0x0F) */
+#define DM2_WEATHER_TIMER_INTERVAL_TICKS 182u
 
 /* ── Per-champion torch state ──────────────────────────────────────────
  * Source: skproject/SKULLWIN/c_tim_proc.cpp: PROCESS_TIMER_0C */
@@ -111,6 +112,32 @@ typedef struct {
     int light_radius;   /* shrinks when torch low */
 } DM2_V1_TorchState;
 
+typedef struct {
+    int valid;
+    uint8_t weather;
+    uint8_t intensity;
+    uint16_t time_of_day;
+    uint32_t weather_seed;
+    uint32_t state_hash;
+} DM2_V1_WeatherRestoredStateReceipt;
+#define DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED 1
+
+typedef struct {
+    int valid;
+    int source_set_timer_weather;
+    int source_weather_3df7_0037;
+    int outdoor;
+    int due;
+    uint32_t tick_count;
+    uint32_t interval_ticks;
+    uint8_t weather_before;
+    uint8_t weather_after;
+    uint8_t intensity_after;
+    uint32_t seed_before;
+    uint32_t seed_after;
+    uint32_t transaction_hash;
+} DM2_V1_WeatherTimerReceipt;
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 void dm2_v1_weather_init(DM2_V1_WeatherState *state);
@@ -119,8 +146,16 @@ void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes);
 void dm2_v1_weather_set_seed(DM2_V1_WeatherState *state, uint32_t seed);
 uint32_t dm2_v1_weather_advance_seed(uint32_t seed);
 int dm2_v1_weather_next_state(DM2_V1_WeatherState *state);
+int dm2_v1_weather_3df7_0037(DM2_V1_WeatherState *state,
+                              DM2_V1_WeatherTimerReceipt *out_receipt);
+int dm2_v1_weather_set_timer_weather(DM2_V1_WeatherState *state,
+                                      int outdoor,
+                                      uint32_t tick_count,
+                                      DM2_V1_WeatherTimerReceipt *out_receipt);
 int  dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state);
 int  dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state);
+const char *dm2_v1_weather_name(int weather);
+const char *dm2_v1_weather_source_evidence(void);
 int dm2_v1_weather_restored_state_receipt(
     const DM2_V1_WeatherState *state,
     DM2_V1_WeatherRestoredStateReceipt *out);

@@ -21,22 +21,6 @@ int theron_v1_startup_runtime_load_initial_level(
     Theron_DungeonID dungeon_id,
     char *receipt,
     size_t receipt_cap);
-
-/* Binds the authenticated Track 02 startup-media receipt to a candidate
- * runtime world at the Soul Room forcefield boundary. The stage-two loader
- * proof is required alongside all four raw bitmap routes, and the selected
- * bank is the original forcefield route. This intentionally does not load a
- * level, place a party, or decode objects: those need their own original
- * media evidence. */
-int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
-    Theron_V1_World *world,
-    const uint8_t *hucard_rom,
-    size_t hucard_rom_size,
-    const char *md5_hex,
-    Theron_DungeonID dungeon_id,
-    Theron_StartupMediaStateReceipt *out_media_receipt,
-    Theron_RuntimeLevelBankSelection *out_level_bank);
-
 typedef struct {
     const uint8_t *hucard_rom;
     size_t hucard_rom_size;

@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "nexus_v1_dgn_face_material_provenance.h"
 
 /* DM Nexus dungeon level format (.DGN files).
  * Source-lock: DMWeb "Dungeon Master Nexus DGN files", fetched 2026-05-28.
@@ -44,6 +45,8 @@
 #define NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32 0xd3f42b1fU
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
+#define NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX \
+    NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
 
 /* These are real Structure1 header offsets observed across LEV00..LEV15.
@@ -853,10 +856,77 @@ typedef struct {
     int material_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceMaterialReceipt;
 
+typedef struct {
+    char canonical_name[16];
+    char canonical_md5[33];
+    int exact_source_entry_observed;
+    int hash_discovery_attempted;
+    int canonical_hash_verified;
+} Nexus_V1_LevelAuxSourceReceipt;
+
+typedef struct {
+    int level_index;
+    char canonical_name[16];
+    char canonical_md5[33];
+    int exact_source_entry_observed;
+    int hash_discovery_attempted;
+    int canonical_hash_verified;
+    int structure2_payload_envelope_valid;
+    int materialization_bound;
+    int payload_decoder_permitted;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure2SourceReceipt;
+
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt floor_mns;
+    Nexus_V1_LevelAuxSourceReceipt wall_mns;
+    int canonical_pair_bound;
+    int structure1b_selector_binding_proven;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStaticMaterialSourceReceipt;
+
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int parsed_bank_valid;
+    int source_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_ItemIbsRuntimeSourceReceipt;
+
+typedef struct {
+    int level_index;
+    Nexus_V1_LevelAuxSourceReceipt slev;
+    Nexus_V1_LevelAuxSourceReceipt sal;
+    Nexus_V1_LevelAuxSourceReceipt map;
+    Nexus_V1_LevelAuxSourceReceipt sound_driver;
+    int canonical_pair_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelAuxRuntimeReceipt;
+
+/* Structure3b's documented, entry-local vertex indexes also permit a raw
+ * edge-incidence measurement. Endpoints are canonicalized only to count
+ * repeated index pairs within one entry; this does not establish adjacency,
+ * manifoldness requirements, winding, collision, clipping, or draw order. */
+typedef struct {
+    int face_receipt_valid;
+    int entry_count;
+    int edge_count;
+    int unique_edge_count;
+    int single_use_edge_count;
+    int shared_edge_count;
+    int nonmanifold_edge_count;
+    int degenerate_edge_count;
+    int maximum_edge_use_count;
+    int topology_measurement_complete;
+    int valid;
+    int topology_semantics_proven;
+} Nexus_V1_DgnStructure3EdgeReceipt;
+
 /* DMWeb documents Structure3a and Structure3c as signed 16.16 X/Y/Z
- * vectors. This validates their fixed-point framing and the documented
- * unit-normal invariant with rounding tolerance only; it does not expose a
- * mesh, choose transforms, decode UVs, or authorize clipping or drawing. */
+ * vectors. This validates their fixed-point framing, the documented
+ * unit-normal invariant, and face-plane/normal coherence with an analytic
+ * component-quantization bound. Winding signs are measured rather than
+ * assigned a front-face meaning. This does not expose a mesh, choose
+ * transforms, decode UVs, or authorize clipping or drawing. */
 typedef struct {
     int face_receipt_valid;
     int vertex_count;
@@ -867,6 +937,14 @@ typedef struct {
     int normal_unit_length_count;
     int normal_non_unit_length_count;
     uint64_t maximum_normal_length_error;
+    int normal_face_plane_pair_count; /* one normal-to-edge check per pair */
+    int normal_face_plane_within_tolerance_count;
+    int normal_face_plane_outside_tolerance_count;
+    int degenerate_face_triangle_count;
+    int positive_winding_triangle_count;
+    int negative_winding_triangle_count;
+    int zero_winding_triangle_count;
+    uint64_t maximum_normal_face_plane_error;
     int fixed_point_vectors_valid;
     int valid;
     int transform_or_draw_semantics_proven;
@@ -1405,6 +1483,7 @@ typedef struct {
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3EdgeReceipt structure3_edges;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceEdgeReceipt structure3_face_edges;
@@ -1450,11 +1529,15 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS = 12,
     /* Hash-bound SN_FLOOR/SN_WALL bytes are present, but no Saturn
      * executable/capture has proved how Structure1B selects their entries. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR = 13
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR = 13,
+    /* The engine must retain the canonical identity of the exact LEV bytes
+     * that supplied Structure3 face/material provenance. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE = 14
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
     Nexus_V1_DgnRendererHandoffStatus status;
+    int canonical_source_verified;
     int dmweb_container;
     int mesh_ready;
     int can_render_dgn_mesh;
@@ -1497,6 +1580,7 @@ typedef struct {
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3EdgeReceipt structure3_edges;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceEdgeReceipt structure3_face_edges;
@@ -2081,6 +2165,8 @@ typedef struct {
      * plan chooses one complete source route and never mixes their surfaces. */
     int static_mns_source_pair_bound;
     int structure1b_selector_binding_proven;
+    int structure2_vdp1_palette_binding_proven;
+    int item_ibs_vdp1_command_proven;
     int bpk_material_route_bound;
     int uses_static_mns_material_route;
     int uses_bpk_material_route;
@@ -2345,6 +2431,16 @@ int nexus_v1_level_structure3_face_receipt(
 int nexus_v1_level_structure3_face_material_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceMaterialReceipt *out_receipt);
+/* Copies only parser-validated Structure3b fill selectors from the exact
+ * active LEV buffer. This is an identity/provenance bridge, not a texture or
+ * palette decoder. */
+int nexus_v1_level_collect_structure3_face_material_bindings(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    Nexus_V1_DgnFaceMaterialBinding *out_bindings, int max_bindings,
+    int *out_binding_count);
+int nexus_v1_level_structure3_edge_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3EdgeReceipt *out_receipt);
 int nexus_v1_level_structure3_vector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3VectorReceipt *out_receipt);

@@ -99,22 +99,6 @@ typedef struct {
     int      experienceGain; /* G0497_auc_Graphic560_ActionExperienceGain[action] */
 } DM1_ActionXpRoute;
 
-/* Original HUD effect ownership for the shield actions. This is deliberately
- * separate from the action-menu text/action-set table: an action may be
- * valid without owning a persistent C038/C039 panel graphic. */
-typedef struct {
-    int valid;
-    int actionIndex;
-    int graphicIndex;
-} DM1_ActionStatusGraphicRoutePc34;
-
-/* ReDMCSB MENU.C F0407 applies the spell/fire shield statuses; PANEL.C
- * redraws only C039/C038 respectively. Returns 0 for every action that has
- * no source-owned persistent HUD graphic. */
-int dm1_v1_action_status_graphic_route_f0407_pc34(
-    int actionIndex,
-    DM1_ActionStatusGraphicRoutePc34* out);
-
 typedef struct {
     int actionIndex;
     int championIndex;
@@ -176,10 +160,6 @@ typedef struct {
     int preservesExistingActionDisable;
     int shouldRefillReadyHandNow;
 } DM1_ActionF0407CompletionPlanPc34;
-
-/* ReDMCSB DEFS.H C01_SLOT_ACTION_HAND is zero-based slot index 1, while
- * EVENT.B.SlotOrdinal is one-based. MENU.C F0407 writes this after F0328. */
-#define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL 2
 
 typedef struct {
     int currentStamina;

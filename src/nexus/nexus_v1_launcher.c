@@ -541,7 +541,8 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
     out_receipt->fallback_visuals_permitted = 0;
     out_receipt->saturn_asset_handoff_ready =
         out_receipt->title_asset_handoff_ready &&
-        out_receipt->audio_asset_handoff_ready;
+        out_receipt->audio_asset_handoff_ready &&
+        out_receipt->real_menu_asset_handoff_ready;
     out_receipt->real_asset_route_ready =
         out_receipt->main_menu_route_ready &&
         !out_receipt->fallback_visuals_permitted;
@@ -742,6 +743,10 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
                NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES) {
         receipt->real_menu_surface_blocker = "menu-bpk-no-surfaces";
         receipt->startup_menu_asset_route = "blocked-menu-bpk-no-surfaces";
+    } else if (receipt->menu_bpk_upload_route ==
+               NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY) {
+        receipt->real_menu_surface_blocker = "menu-bpk-capacity";
+        receipt->startup_menu_asset_route = "blocked-menu-bpk-capacity";
     } else if (receipt->real_menu_surface_route_ready) {
         receipt->real_menu_surface_blocker = "none";
         receipt->startup_menu_asset_route = "ready-real-menu-surfaces";
@@ -1938,6 +1943,55 @@ const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
     }
 }
 
+const char *nexus_v1_launcher_dgn_visual_blocker_from_render_plan(
+    const Nexus_V1_DgnRenderPlanReceipt *render_plan)
+{
+    if (!render_plan) {
+        return "missing-dgn-runtime";
+    }
+    if (render_plan->status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE) {
+        return render_plan->structure2_source_materialization_bound &&
+                   !render_plan->structure2_vdp1_palette_binding_proven
+            ? "blocked-structure2-vdp1-palette"
+            : "blocked-structure2-source";
+    }
+    if (render_plan->status ==
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+        (render_plan->structure1f_plan_item_entry_count > 0 ||
+         render_plan->structure1f_plan_item_floor_command_count > 0 ||
+         render_plan->structure1f_plan_item_floor_command_entry_count > 0) &&
+        !render_plan->item_ibs_vdp1_command_proven) {
+        return "blocked-item-ibs-vdp1-provenance";
+    }
+    if (render_plan->status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR) {
+        return "blocked-structure1b-selector";
+    }
+    if (render_plan->status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS) {
+        return "blocked-structure3-face-semantics";
+    }
+    if (render_plan->status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS) {
+        return "blocked-structure1f-semantics";
+    }
+    if (render_plan->status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE) {
+        return "blocked-structure2-envelope";
+    }
+    if (render_plan->status ==
+        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE) {
+        return "blocked-canonical-dgn-source";
+    }
+    if (render_plan->status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH ||
+        render_plan->blocks_real_dgn_mesh_render ||
+        !render_plan->plan_ready) {
+        return "blocked-dgn-material";
+    }
+    return "ready-dgn-visual-route";
+}
+
 const char *nexus_v1_launcher_startup_route_proof_route_name(
     Nexus_V1_StartupRouteProofRoute route)
 {
@@ -2473,6 +2527,15 @@ static int nexus_v1_launcher_dgn_viewport_host_route_receipt(
            receipt.status == NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
 }
 
+static int nexus_v1_launcher_title_route_asset_ready(
+    Nexus_V1_StartupTitleRoute route,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets);
+
+static void nexus_v1_launcher_fill_title_asset_blocked_route(
+    const Nexus_V1_StartupTitleRouteReceipt *source,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt);
+
 /* M11 receives the dungeon only through the launcher handoff. Keep the
  * source-validated Structure1F/1G receipt intact at that boundary; this is a
  * data gate, not a Structure2 pixel decoder or animation executor. */
@@ -2482,15 +2545,34 @@ int nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
     Nexus_V1_StartupTitleRouteReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupTitleRouteReceipt route;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
         return 0;
     }
-    return nexus_v1_startup_title_route_receipt_from_host_facts_input(
+    if (!nexus_v1_startup_title_route_receipt_from_host_facts_input(
         &facts,
         menu_input,
-        out_receipt);
+        &route)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_startup_assets_from_runtime_state(state, &assets)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_title_route_asset_ready(route.route, &assets)) {
+        nexus_v1_launcher_fill_title_asset_blocked_route(&route,
+                                                         &assets,
+                                                         out_receipt);
+        return 1;
+    }
+    if (out_receipt) {
+        *out_receipt = route;
+    }
+    return 1;
 }
 
 int nexus_v1_launcher_startup_title_route_receipt_from_snapshot(
@@ -2512,14 +2594,33 @@ int nexus_v1_launcher_startup_title_pointer_route_receipt_from_runtime_state(
     Nexus_V1_StartupTitleRouteReceipt *out_receipt)
 {
     Nexus_V1_StartupHostFacts facts;
+    Nexus_V1_StartupTitleRouteReceipt route;
+    Nexus_V1_LauncherStartupAssetsReceipt assets;
     if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
             state,
             &facts)) {
         return 0;
     }
-    return nexus_v1_startup_title_route_receipt_from_host_facts_pointer(
+    if (!nexus_v1_startup_title_route_receipt_from_host_facts_pointer(
         &facts,
-        out_receipt);
+        &route)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_startup_assets_from_runtime_state(state, &assets)) {
+        nexus_v1_startup_title_route_receipt_clear(out_receipt);
+        return 0;
+    }
+    if (!nexus_v1_launcher_title_route_asset_ready(route.route, &assets)) {
+        nexus_v1_launcher_fill_title_asset_blocked_route(&route,
+                                                         &assets,
+                                                         out_receipt);
+        return 1;
+    }
+    if (out_receipt) {
+        *out_receipt = route;
+    }
+    return 1;
 }
 
 int nexus_v1_launcher_startup_title_pointer_route_receipt_from_snapshot(
@@ -2549,9 +2650,40 @@ static int nexus_v1_launcher_title_route_asset_ready(
     case NEXUS_V1_STARTUP_TITLE_ROUTE_HOLD:
     case NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER:
         return 1;
+    case NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED:
     case NEXUS_V1_STARTUP_TITLE_ROUTE_INVALID:
     default:
         return 0;
+    }
+}
+
+static void nexus_v1_launcher_fill_title_asset_blocked_route(
+    const Nexus_V1_StartupTitleRouteReceipt *source,
+    const Nexus_V1_LauncherStartupAssetsReceipt *assets,
+    Nexus_V1_StartupTitleRouteReceipt *out_receipt)
+{
+    Nexus_V1_StartupTitleRouteReceipt receipt;
+
+    nexus_v1_startup_title_route_receipt_clear(&receipt);
+    if (source) {
+        receipt = *source;
+    }
+    receipt.route = NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED;
+    receipt.handled = 1;
+    receipt.execution_kind = NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE;
+    receipt.host_input_result = NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    receipt.set_title_active = 0;
+    receipt.set_title_frame = 0;
+    receipt.set_save_select_active = 0;
+    receipt.set_save_selected_row = 0;
+    receipt.set_champion_select_active = 0;
+    receipt.set_champion_cursor = 0;
+    receipt.status_scope = "ASSETS";
+    receipt.status = assets && assets->startup_menu_asset_route
+        ? assets->startup_menu_asset_route
+        : "blocked-startup-assets";
+    if (out_receipt) {
+        *out_receipt = receipt;
     }
 }
 
@@ -2900,6 +3032,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     render_plan = state->engine->dgn_material_plan.receipt;
     out_receipt->structure2_source_materialization_bound =
         render_plan.structure2_source_materialization_bound;
+    out_receipt->structure2_vdp1_palette_binding_proven =
+        render_plan.structure2_vdp1_palette_binding_proven;
+    out_receipt->item_ibs_vdp1_command_proven =
+        render_plan.item_ibs_vdp1_command_proven;
     (void)nexus_v1_launcher_dgn_viewport_host_route_receipt(
         state->engine,
         &viewport_host_route);
@@ -2934,13 +3070,8 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                       (Nexus_V1_DgnViewportHostRouteStatus)
                           out_receipt->dgn_viewport_host_route_status)
             : !material_plan
-            ? render_plan.status ==
-                  NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE
-            ? "blocked-structure2-source"
-            : render_plan.status ==
-                  NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR
-            ? "blocked-structure1b-selector"
-            : "blocked-dgn-material"
+            ? nexus_v1_launcher_dgn_visual_blocker_from_render_plan(
+                  &render_plan)
             : out_receipt->dgn_route
             ? out_receipt->dgn_route
             : "blocked-dgn-render";
@@ -3292,6 +3423,10 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->render_plan.material_semantics_complete;
     out_receipt->structure2_source_materialization_bound =
         handoff->structure2_source_materialization_bound ? 1 : 0;
+    out_receipt->structure2_vdp1_palette_binding_proven =
+        handoff->structure2_vdp1_palette_binding_proven ? 1 : 0;
+    out_receipt->item_ibs_vdp1_command_proven =
+        handoff->item_ibs_vdp1_command_proven ? 1 : 0;
     out_receipt->dgn_static_material_source_consumed =
         handoff->dgn_static_material_source_consumed ? 1 : 0;
     out_receipt->dgn_viewport_render_ready =

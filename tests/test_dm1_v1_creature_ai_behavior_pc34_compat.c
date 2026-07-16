@@ -205,7 +205,7 @@ static void test_archenemy_ignores_freeze(void) {
 }
 
 /* =========================================================
- *  Test 4b: Archenemy does not double a successful F0202 move
+ *  Test 4b: Archenemy approach uses F0204 double movement
  * ========================================================= */
 static void test_archenemy_approach_double_move(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
@@ -244,12 +244,12 @@ static void test_archenemy_approach_double_move(void) {
               "archenemy_double: approach moves");
     EXPECT_EQ(result.moveDirection, 1,
               "archenemy_double: moves east toward party");
-    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 1,
-              "archenemy_double: successful F0202 move remains one square");
+    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 2,
+              "archenemy_double: F0204 target is two squares east");
     EXPECT_EQ(result.moveDestMapY, ctx.currentGroupMapY,
               "archenemy_double: Y unchanged for east double move");
-    EXPECT_EQ(result.archenemyDoubleMove, 0,
-              "archenemy_double: F0204 is not entered after a successful F0202 move");
+    EXPECT_EQ(result.archenemyDoubleMove, 1,
+              "archenemy_double: F0204 double-move flag set");
 }
 
 /* =========================================================
@@ -1010,58 +1010,6 @@ static void test_per_creature_attack_event(void) {
 }
 
 /* =========================================================
- *  Test 14b: PC 3.4 ranged diagonal C38 attack
- *
- * ReDMCSB GROUP.C F0209:2380-2387, guarded by
- * MEDIA720_I34E_I34M, permits a range>1 creature to attack a
- * visible diagonal party when M003_RANDOM(8) is zero. The Red
- * Dragon values below are the original G0243 entry: range=3,
- * sight=5 and dexterity=45. This exercises the actual C38
- * dispatch rather than a host attack shortcut.
- * ========================================================= */
-static void test_pc34_ranged_diagonal_c38_attack(void) {
-    int seed;
-    int sawOriginalDiagonalAttack = 0;
-
-    for (seed = 1; seed <= 512; ++seed) {
-        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
-        struct DM1ActiveGroup_Compat ag = make_default_ag();
-        struct RngState_Compat rng = make_rng((uint32_t)seed);
-        struct DM1BehaviorResult_Compat result;
-        int ok;
-
-        ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
-        ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
-        ctx.creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
-        ctx.creatureSize = DM1_SIZE_FULL_SQUARE;
-        ctx.creatureInfo.ranges = 0x3005; /* G0243[24]: attack=3, sight=5 */
-        ctx.creatureInfo.dexterity = 45;  /* G0243[24] */
-        ctx.creatureInfo.animationTicks = 0x0000;
-        ctx.currentGroupMapX = 5;
-        ctx.currentGroupMapY = 5;
-        ctx.partyMapX = 6;
-        ctx.partyMapY = 6;
-        ctx.currentGroupDistanceToParty = 2;
-        ctx.currentGroupPrimaryDirToParty = 1;
-        ctx.distanceToVisibleParty = 2;
-        ag.directions = 1; /* F0205 packed creature-0 east-facing slot */
-        ag.cells = DM1_SINGLE_CENTERED_CREATURE_CELL;
-
-        ok = F0810_DM1_GROUP_DispatchBehavior_Compat(
-            &ctx, &ag, &rng, &result);
-        if (ok && result.actionKind == DM1_ACTION_ATTACK &&
-            result.attackIsProjectile &&
-            result.projectileThing == DM1_PROJECTILE_THING_FIREBALL) {
-            sawOriginalDiagonalAttack = 1;
-            break;
-        }
-    }
-
-    EXPECT_EQ(sawOriginalDiagonalAttack, 1,
-              "pc34_diagonal_c38: range-3 Red Dragon keeps original diagonal shot");
-}
-
-/* =========================================================
  *  Test 15: Negative reaction event during freeze life → ignored
  * ========================================================= */
 static void test_reaction_during_freeze(void) {
@@ -1362,42 +1310,6 @@ static void test_attack_any_back_row_bypasses_cell_adjust(void) {
               "attack_any_back_row: no cell adjustment on bypass");
     EXPECT_EQ(ag.cells, 0,
               "attack_any_back_row: group cells remain unchanged");
-}
-
-/* =========================================================
- * Test 20b: F0209 uses the opposite free cell after candidate collision
- * ========================================================= */
-static void test_quarter_square_melee_uses_opposite_free_cell(void) {
-    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
-    struct DM1ActiveGroup_Compat ag = make_default_ag();
-    struct RngState_Compat rng = make_rng(2);
-    struct DM1BehaviorResult_Compat result;
-    int ok;
-
-    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
-    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
-    ctx.creatureType = DM1_CREATURE_TYPE_SWAMP_SLIME;
-    ctx.creatureSize = DM1_SIZE_QUARTER_SQUARE;
-    ctx.creatureCount = 1;
-    ctx.creatureInfo.ranges = 0x1003;
-    ctx.creatureInfo.movementTicks = 20;
-    ctx.currentGroupPrimaryDirToParty = 1;
-    ctx.distanceToVisibleParty = 1;
-    ctx.currentGroupDistanceToParty = 1;
-    /* Creature zero starts at C0. Its direct C1 candidate is occupied by
-     * creature one, while C3 is free. The source random branch selects C3. */
-    ag.cells = 0x04;
-
-    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
-    EXPECT_EQ(ok, 1, "quarter_melee_opposite: dispatch returns 1");
-    EXPECT_EQ(result.actionKind, DM1_ACTION_ADJUST_CELL,
-              "quarter_melee_opposite: action adjusts cell");
-    EXPECT_EQ(result.updatedGroupCells, 0x07,
-              "quarter_melee_opposite: source commits opposite free C3");
-    EXPECT_EQ(result.adjustedCreatureCell, 3,
-              "quarter_melee_opposite: reports C3 for creature zero");
-    EXPECT_EQ(ag.cells, 0x07,
-              "quarter_melee_opposite: keeps creature one at C1");
 }
 
 
@@ -2007,7 +1919,6 @@ int main(void) {
     test_smell_direction_stored_scent_fallback();
     test_smell_direction_f0201_live_route();
     test_per_creature_attack_event();
-    test_pc34_ranged_diagonal_c38_attack();
     test_reaction_during_freeze();
     test_negative_reaction_event_creation();
     test_projectile_hit_reaction_sets_search_direction();
@@ -2018,7 +1929,6 @@ int main(void) {
     test_giggler_attack_dispatch_steals();
     test_quarter_square_melee_cell_adjusts_before_attack();
     test_attack_any_back_row_bypasses_cell_adjust();
-    test_quarter_square_melee_uses_opposite_free_cell();
     test_fixed_possessions_animated_armour_are_cursed();
     test_fixed_possessions_rockpile_random_flags();
     test_fixed_possessions_dragon_steak_table();

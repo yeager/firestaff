@@ -334,66 +334,56 @@ static void test_immediate_typed_entries_do_not_alias_raw_payloads(void)
 
 static void test_img3_local_palette_fixture(void)
 {
-    uint8_t raw[2 * (10 + 2 + 16)];
-    uint32_t offsets[2] = { 0u, 28u };
-    uint32_t sizes[2] = { 28u, 28u };
+    uint8_t raw_payload[4] = { 0xdeu, 0xadu, 0xbeu, 0xefu };
+    uint32_t offsets[1] = { 0u };
+    uint32_t sizes[1] = { sizeof(raw_payload) };
     DM2_V1_GdatEntry entries[2];
     DM2_V1_AssetLoader loader;
-    uint8_t palette16[16];
-    uint32_t hash = 0u;
+    const uint8_t *raw;
+    size_t raw_size;
+    uint16_t value;
 
-    memset(raw, 0, sizeof(raw));
-    /* IMG3: 2x1, four-bit image.  The final 16 bytes are exactly what
-     * skproject QUERY_GDAT_IMAGE_LOCALPAL returns to map-chip drawing. */
-    raw[0] = 2u;
-    raw[4] = 4u;
-    raw[10] = 0x12u;
-    for (int i = 0; i < 16; ++i) raw[12 + i] = (uint8_t)(0xe0u + i);
     memset(&loader, 0, sizeof(loader));
     memset(entries, 0, sizeof(entries));
-    loader.data = raw;
-    loader.data_size = sizeof(raw);
+    loader.data = raw_payload;
+    loader.data_size = sizeof(raw_payload);
     loader.loaded = 1;
-    loader.raw_data_count = 2;
+    loader.raw_data_count = 1;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
     loader.entries = entries;
     loader.entry_count = 2;
-    entries[0].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
-    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entries[0].cls4 = 0x22u;
-    entries[0].data_index = 0u;
 
-    CHECK(dm2_v1_asset_load_image_local_palette(
-              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
-              palette16, &hash) == 1,
-          "IMG3 local palette comes from the final sixteen raw bytes");
-    CHECK(palette16[0] == 0xe0u && palette16[15] == 0xefu && hash != 0u,
-          "IMG3 local palette has a deterministic nonzero receipt hash");
-    /* skproject IMG3::Getpf() selects C8 via OffsetY() == 31; w4 is not a
-     * general bit-depth field for compressed records. */
-    raw[2] = 1u;
-    raw[3] = 0x7cu;
-    CHECK(dm2_v1_asset_load_image_local_palette(
-              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
-              palette16, &hash) == 0,
-          "C8 IMG3 image cannot claim a source local palette");
+    entries[0].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
+    entries[0].cls2 = 7;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[0].cls4 = 1;
+    entries[0].data_index = 0x1234u;
+    entries[1].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    entries[1].cls2 = 2;
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
+    entries[1].cls4 = 0x22;
+    entries[1].data_index = 0x0042u;
 
-    /* QUERY_GDAT_IMAGE_LOCALPAL falls back to MISCELLANEOUS/FE/FE. */
-    raw[28] = 2u;
-    raw[32] = 4u;
-    raw[38] = 0x12u;
-    for (int i = 0; i < 16; ++i) raw[40 + i] = (uint8_t)(0xa0u + i);
-    entries[1].cls1 = DM2_GDAT_CATEGORY_MISCELLANEOUS;
-    entries[1].cls2 = 0xfeu;
-    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entries[1].cls4 = 0xfeu;
-    entries[1].data_index = 1u;
-    CHECK(dm2_v1_asset_load_image_local_palette(
-              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
-              palette16, &hash) == 1 && palette16[0] == 0xa0u &&
-              palette16[15] == 0xafu && hash != 0u,
-          "C8 image consumes skproject's real GDAT default palette");
+    raw_size = 99u;
+    raw = dm2_v1_asset_load_sized(
+        &loader, DM2_GDAT_CATEGORY_WEAPONS, 7, 1, &raw_size);
+    CHECK(raw == NULL && raw_size == 0u,
+          "dtWordValue immediate entry does not alias a raw payload slot");
+    CHECK(dm2_v1_asset_load_word_value(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 7, 1, &value) == 1 &&
+              value == 0x1234u,
+          "dtWordValue remains available through exact typed lookup");
+
+    raw_size = 99u;
+    raw = dm2_v1_asset_load_sized(
+        &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2, 0x22, &raw_size);
+    CHECK(raw == NULL && raw_size == 0u,
+          "dtImageOffset immediate entry does not alias a raw payload slot");
+    CHECK(dm2_v1_asset_load_image_offset(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2, 0x22, &value) == 1 &&
+              value == 0x0042u,
+          "dtImageOffset remains available through exact typed lookup");
 }
 
 static void test_door_light_palette_darkness(void)

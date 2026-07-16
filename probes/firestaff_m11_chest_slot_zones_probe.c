@@ -44,7 +44,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "m11_game_view.h"
 
 /* image_backend_pc34_compat.c references these globals (from test files) */
@@ -87,7 +86,7 @@ int main(void) {
            "CHAMPION.C:662-712 F0302 chest slot routing; "
            "CHEST.C:30-76 F0333 open chest panel");
 
-    count = dm1_v1_inventory_chest_slot_box_zone_count_pc34();
+    count = M11_GameView_GetV1ChestSlotBoxZoneCount();
     rec("zoneCount", count == 8,
         "COMMAND.C:215-227: G0456[9] has 8 chest slots + sentinel");
 
@@ -95,12 +94,12 @@ int main(void) {
         int zoneId, x, y, w, h;
         char msg[128];
 
-        zoneId = dm1_v1_inventory_chest_slot_box_zone_id_pc34(i);
+        zoneId = M11_GameView_GetV1ChestSlotBoxZoneId(i);
         snprintf(msg, sizeof(msg), "chest[%d] zoneId=C537+%d", i, i);
         rec(msg, zoneId == kExpId[i],
             "COMMAND.C:215-227 zone index C537+i");
 
-        if (!dm1_v1_inventory_chest_slot_box_zone_xywh_pc34(i, &x, &y, &w, &h)) {
+        if (!M11_GameView_GetV1ChestSlotBoxZone(i, &x, &y, &w, &h)) {
             snprintf(msg, sizeof(msg), "chest[%d] zoneExists", i);
             rec(msg, 0, "M11_GameView_GetV1ChestSlotBoxZone returned false");
             continue;

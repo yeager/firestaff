@@ -22,8 +22,6 @@
 
 #include <stdint.h>
 
-#include "dm2_v1_asset_loader.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -272,14 +270,6 @@ int dm2_door_advance_close(int current_state);
  * Source: ReDMCSB TIMELINE.C:750   (DESTROYED is sticky)
  */
 int dm2_door_apply_toggle_step(int current_state, int direction);
-
-/* Source-only DOORS material gate for DRAW_DOOR. A missing colour key,
- * metadata, local palette, or decodable selected image fails closed. */
-int dm2_v1_door_gdat_material_receipt(
-    const DM2_V1_AssetLoader *loader,
-    uint8_t door_gfx_index,
-    uint8_t image_field,
-    DM2_V1_DoorGdatMaterialReceipt *out_receipt);
 
 /*
  * dm2_door_get_type_from_thing_record — get door type (0-3) from thing record.

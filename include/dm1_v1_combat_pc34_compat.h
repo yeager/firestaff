@@ -89,9 +89,7 @@ enum {
 
 /* -- Melee non-material gates (MENU.C / PROJEXPL.C) ------------------ */
 enum {
-    DM1_ICON_WEAPON_DIAMOND_EDGE = 39,
     DM1_ICON_WEAPON_VORPAL_BLADE = 40,
-    DM1_ICON_WEAPON_HARDCLEAVE_EXECUTIONER = 43,
     DM1_MELEE_FLAG_HIT_NON_MATERIAL = 0x0001
 };
 
@@ -314,8 +312,6 @@ int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* gr
                                  int creatureIdx, int targetChampIdx);
 int dm1_get_melee_target(const DM1_CreatureGroup* group, int championCell,
                          int partyDirection, int groupDirection);
-int dm1_melee_action_defense_f0231_pc34(int rolledDefense,
-                                        int actionHandIcon);
 int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
                             DM1_CreatureGroup* group, int creatureIdx);
 int dm1_poison_adjusted_attack(int poisonResistance, int poisonAttack);

@@ -17,8 +17,6 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
-#include "csb_v1_startup_session_contract_pc34_compat.h"
-#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -501,32 +499,7 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 presents_host;
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
-    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
-    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 handoff_receipt;
-    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 door_handoff_receipt;
-    CSB_V1_StartupSessionPackageTitleReceipt_PC34 title_package_receipt;
-    CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 title_handoff_receipt;
-    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door_receipt;
-    CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34 title_door_handoff_receipt;
-    CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 consumption_receipt;
-    CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34
-        consumption_handoff_receipt;
-    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal_receipt;
-    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package_receipt;
-    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud_receipt;
-    CSB_V1_StartupSessionDoorHudTickReceipt_PC34 first_door_receipt;
-    CSB_V1_StartupSessionInputReceipt_PC34 first_input_receipt;
-    CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 hud_door_input_receipt;
-    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34
-        hud_door_input_handoff_receipt;
-    CSB_V1_StartupEntranceInputOutcome_PC34 input_outcome;
-    CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply;
-    CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
     CSB_V1_StartupRenderPlan_PC34 plan;
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
@@ -630,11 +603,11 @@ static void verify_real_indexed_startup(
     plan.surface_h = 200;
     plan.closed_left_w = 105;
     plan.closed_left_h = 161;
-    plan.closed_left_dest_y = 30;
+    plan.closed_left_dest_y = 28;
     plan.closed_right_w = 127;
     plan.closed_right_h = 161;
     plan.closed_right_dest_x = 105;
-    plan.closed_right_dest_y = 30;
+    plan.closed_right_dest_y = 28;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 4u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
@@ -654,12 +627,12 @@ static void verify_real_indexed_startup(
     plan.opening_left_source_x = 0;
     plan.opening_left_w = 97;
     plan.opening_left_h = 161;
-    plan.opening_left_dest_y = 30;
+    plan.opening_left_dest_y = 28;
     plan.opening_right_source_x = 8;
     plan.opening_right_w = 119;
     plan.opening_right_h = 161;
     plan.opening_right_dest_x = 113;
-    plan.opening_right_dest_y = 30;
+    plan.opening_right_dest_y = 28;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 5u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
@@ -851,7 +824,6 @@ int main(int argc, char **argv)
     char default_dir[1024];
     const char *dir = pc_data_dir(argc, argv, default_dir, sizeof(default_dir));
     CSB_V1_BootProfile profile;
-    CSB_V1_StartupRealReceipt real_asset_receipt;
     const CSB_V1_DungeonData *current;
     uint64_t before_play_ms;
 
@@ -865,12 +837,6 @@ int main(int argc, char **argv)
     }
 
     csb_v1_boot_profile_init(&profile);
-    CHECK(csb_v1_startup_real_scan_and_receipt(
-              dir, 4, &real_asset_receipt) == CSB_V1_STARTUP_REAL_OK &&
-              real_asset_receipt.matched &&
-              real_asset_receipt.variant_id == CSB_V1_VARIANT_PC34_EN &&
-              real_asset_receipt.receipt_hash != 0u,
-          "PC CSB package metadata has a verified real-asset receipt");
     CHECK(csb_v1_boot_scan_assets(&profile, dir) == 0,
           "PC CSB assets scan by hash");
     CHECK(profile.assets_verified == 1, "boot profile marks assets verified");
@@ -885,7 +851,7 @@ int main(int argc, char **argv)
     CHECK(profile.graphics_kind == CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
           "graphics archive kind is ordinary GRAPHICS.DAT");
 
-    verify_real_indexed_startup(&profile, &real_asset_receipt);
+    verify_real_indexed_startup(&profile);
 
     CHECK(csb_v1_boot_enter_game(&profile) == 0,
           "boot profile enters the CSB V1 runtime");

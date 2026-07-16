@@ -117,10 +117,7 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
-/* CSBWin SaveGame.cpp writes EDT_Palette as 24 complete 256-byte DB11
- * EXPOOL blocks (6144 bytes). Keep room for that source bundle plus the
- * adjacent DSA/database records. */
-#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 8192u
+#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 4096u
 #define CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES 256u
 #define CSB_V1_CSBWIN_DSA_TRACING_WORDS 8u
 /* CSBWin CSB.h: EDT_Database=5, EDBT_DSAtraces=7. */
@@ -129,6 +126,10 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_EXTENDED_DATA_MAP_BYTES 4096u
 #define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_COUNT 256u
 #define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES 65536u
+/* Keep authenticated DSA payloads within the CSB runtime importer's
+ * aggregate bytecode allocation ceiling. This is an admission bound, not an
+ * opcode-semantic claim. */
+#define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS 32768u
 
 /* The two documented scramble keys. CSBWin/Chaos.cpp:2357 tries
  * CSB_KEY first, then DM_KEY on UnscrambleBlock1 returning 0.
@@ -343,9 +344,6 @@ typedef struct {
 typedef struct {
     int valid;
     int truncated;
-    /* Index in CSBWin's serialized TIMER array. ProcessTimers passes this
-     * unchanged to TT_ParameterMessage's EXPOOL lookup. */
-    uint16_t source_index;
     uint32_t time;
     uint8_t function;
     uint8_t ubyte5;
@@ -685,8 +683,9 @@ int csb_v1_csbwin_512_inspect_extended_data_map(
  * exact boundary for the separately-gated game-info/level-index tail.
  *
  * Simple-encrypted preambles remain unsupported. All DSA records, including
- * duplicate IDs/states, invalid counts, truncated programs, and a bad final
- * checksum are rejected before the output report becomes valid. */
+ * duplicate IDs/states, invalid counts, aggregate bytecode exceeding
+ * CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS, truncated programs, and a
+ * bad final checksum are rejected before the output report becomes valid. */
 int csb_v1_csbwin_512_inspect_extended_dsa_section(
     const uint8_t *bytes,
     size_t size,

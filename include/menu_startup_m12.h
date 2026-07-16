@@ -10,6 +10,7 @@
 #include "config_m12.h"
 #include "changelog_m12.h"
 #include "save_browser_m12.h"
+#include "artpack_admission_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,7 +67,9 @@ typedef enum {
     M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT = 34,
     M12_STARTUP_SETTINGS_ROW_SESSION_TIMER = 36,
     M12_STARTUP_SETTINGS_ROW_EXPORT = 48,
-    M12_STARTUP_SETTINGS_ROW_IMPORT = 49
+    M12_STARTUP_SETTINGS_ROW_IMPORT = 49,
+    M12_STARTUP_SETTINGS_ROW_UNICODE_FONT = 52,
+    M12_STARTUP_SETTINGS_ROW_ARTPACK = 53
 } M12_StartupSettingsRow;
 
 typedef struct {
@@ -115,6 +118,7 @@ typedef struct {
     int ambientEnabled;
     int ambientVolume;
     int uiScale;
+    char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY];
     int streamerMode;
     int retroAchievementsEnabled;
     int retroAchievementsHardcore;
@@ -172,6 +176,7 @@ typedef struct {
     char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
+    char artpackPath[M12_CONFIG_DATA_DIR_CAPACITY];
 } M12_MenuSettingsState;
 
 typedef enum {
@@ -579,6 +584,12 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
                                               int index);
+const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount);
+const char* M12_StartupMenu_GetUnicodeFontPath(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetArtpackPath(const M12_StartupMenuState* state);
+int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,
+                                      const char* path,
+                                      M12_ArtpackAdmissionReceipt* outReceipt);
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state);
 int M12_StartupMenu_GetPresentationMode(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState* state);
@@ -640,30 +651,24 @@ void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 
 /* ── Language cycle accessors ───────────────────────────────────────
  * M12_StartupMenu_GetLanguageCount() returns the number of locales
- * the user can cycle through in the launcher (currently 20).  The
+ * the user can cycle through in the launcher (currently 19).  The
  * same index range feeds the M12 settings row, the credits panel
- * overlay, and the in-game M11 l10n switch.
+ * overlay, and the in-game M11 l10n switch (see
+ * m12_fs_language_from_menu_index for the >5 fallback to EN).
  *
  * GetLanguageCode(index) returns the short locale code that maps to
  * po/startup-menu.<code>.po on disk (e.g. "EN", "SV", "FR", "DE",
  * "JA", "ZH", "CS", "DA", "ES", "FI", "HU", "IT", "KO", "NL", "NO",
- * "PL", "PT", "RU", "TR", "ID").  GetLanguageName(index) returns the
+ * "PL", "PT", "RU", "TR").  GetLanguageName(index) returns the
  * human-readable display name for the same slot.
  *
  * Exposed so layout/l10n probes and the screen-reader manifest can
- * drive the 20-language cycle from the production source of truth
+ * drive the 19-language cycle from the production source of truth
  * (g_languages[] / g_languageNames[]) without hardcoding a magic
  * number that drifts the moment a locale is added or removed. */
 int M12_StartupMenu_GetLanguageCount(void);
 const char* M12_StartupMenu_GetLanguageCode(int index);
 const char* M12_StartupMenu_GetLanguageName(int index);
-const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount);
-const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
-                                             int row);
-const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
-                                             int row);
-const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
-                                      const char* msgid);
 
 /* ── Museum of Lore content accessors ───────────────────────────────
  * The category table itself is private to menu_startup_m12.c (it is

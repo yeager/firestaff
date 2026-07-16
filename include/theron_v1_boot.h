@@ -5,11 +5,8 @@
 #include <stddef.h>
 #include "asset_status_m12.h"
 #include "theron_v1_startup_media.h"
-#include "theron_v1_capture_manifest.h"
-#include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_startup_flow.h"
-#include "theron_v1_irq2_live_trace_gate.h"
 #include "theron/theron_v1_asset_loader.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -170,25 +167,6 @@ typedef struct {
         track02_initial_level_handoff;
 } Theron_V1_BootProfile;
 
-/* Explicit runtime-evidence intake for an instrumented Mednafen capture. The
- * caller owns every path; missing or invalid files leave this receipt empty. */
-typedef struct Theron_V1_BootTrack02RuntimeTraceIntakeReceipt {
-    int valid;
-    /* Set only after the exact trace file consumed by this intake has been
-     * rehashed against the caller's explicit provenance receipt. */
-    int trace_file_hash_verified;
-    int trace_file_consumed;
-    char trace_md5[33];
-    /* The System Card hash is retained only after the same explicit-file
-     * rehash that authenticated this intake. */
-    int system_card_file_hash_verified;
-    char system_card_md5[33];
-    /* A real trace can prove the pre-Track02 controller wait without
-     * authorizing runtime entry. */
-    Theron_V1SystemCardControllerWaitReceipt controller_wait;
-    Theron_V1Irq2FullMediaTraceReceipt runtime_handoff;
-} Theron_V1_BootTrack02RuntimeTraceIntakeReceipt;
-
 /* ── Boot API ──────────────────────────────────────────────────────── */
 
 /* Initialize a boot profile with Theron V1 defaults.
@@ -301,11 +279,7 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_StartupStateReceipt initial_state_receipt;
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
-    /* Original Track 01 CD-DA handoff.  This remains available even when
-     * Track 02 startup graphics have no bound route. */
-    Theron_Track01CddaHandoff track01_cdda_handoff;
     Theron_StartupHostReceipt launch_host_receipt;
-    Theron_V1Irq2PreflightLauncherReceipt irq2_preflight_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
 
@@ -353,7 +327,6 @@ typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_StartupStateReceipt initial_state_receipt;
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
-    Theron_Track01CddaHandoff track01_cdda_handoff;
     Theron_StartupHostReceipt launch_host_receipt;
     char boot_asset_md5[33];
     char title[64];
@@ -662,23 +635,6 @@ typedef struct Theron_V1_BootStartupGraphicsRouteReceipt {
     const char *status;
 } Theron_V1_BootStartupGraphicsRouteReceipt;
 
-/* Read-only handoff from the explicit raw Track 02/CD_READ probe chain.  The
- * startup host compares it with its already materialized media receipt; it
- * never reopens or re-decodes Track 02 to make this decision. */
-typedef struct Theron_V1_BootStartupRawMediaGraphicsReceipt {
-    int valid;
-    int raw_track02_verified;
-    int cd_read_receipt_verified;
-    int bitmap_route_receipt_verified;
-    int palette_descriptor_relation_verified;
-    int no_fallback_visuals;
-    int track02_variant;
-    char track02_md5[33];
-    unsigned int bitmap_route_mask;
-    uint32_t bitmap_atlas_checksum;
-    const char *status;
-} Theron_V1_BootStartupRawMediaGraphicsReceipt;
-
 typedef struct Theron_V1_BootStartupFullStartReceipt {
     int host_consumes_view_model;
     int view_model_valid;
@@ -975,12 +931,6 @@ int theron_v1_boot_prepare_startup_profile(
     Theron_V1StartupSaveResume *out_save_resume,
     int *out_save_resume_ready,
     Theron_V1BootStartupPrepareResult *out_result);
-/* Revalidates a scanner-issued strict CUE receipt against the mounted
- * payload. This is the IPL/stage-two provenance gate and never writes a
- * cache payload. */
-int theron_v1_boot_validate_track02_loader_receipt(
-    const Theron_Track02StartupLoaderReceipt *receipt,
-    const char *verified_md5);
 const char *theron_v1_boot_startup_prepare_result_name(
     Theron_V1BootStartupPrepareResult result);
 int theron_v1_boot_startup_launch_alloc(
@@ -989,11 +939,6 @@ int theron_v1_boot_startup_launch_alloc(
     const char *verified_md5,
     const char *save_path,
     Theron_V1_BootStartupLaunch *out_launch);
-/* Explicit capture-only gate for the existing launch/profile handoff. It
- * propagates the redacted diagnostic and refuses runtime detachment. */
-int theron_v1_boot_startup_launch_apply_irq2_preflight_receipt(
-    Theron_V1_BootStartupLaunch *launch,
-    const char *redacted_receipt);
 int theron_v1_boot_startup_launch_detach_runtime(
     Theron_V1_BootStartupLaunch *launch,
     Theron_V1_BootStartupRuntimeReceipt *out_receipt);
@@ -1255,22 +1200,6 @@ void theron_v1_boot_startup_graphics_route_receipt_init(
     Theron_V1_BootStartupGraphicsRouteReceipt *receipt);
 int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
-    const Theron_StartupGraphicExecutor *executor,
-    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
-void theron_v1_boot_startup_raw_media_graphics_receipt_init(
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *receipt);
-int theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    int cd_read_receipt_verified,
-    int palette_descriptor_relation_verified,
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt);
-int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    const Theron_V1RawLoaderTraceReceipt *trace_receipt,
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt);
-int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
-    const Theron_V1_BootStartupViewModel *view_model,
-    const Theron_V1_BootStartupRawMediaGraphicsReceipt *raw_media_receipt,
     const Theron_StartupGraphicExecutor *executor,
     Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt);
 int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(

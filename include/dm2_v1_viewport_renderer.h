@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_VIEWPORT_RENDERER_H
 #define FIRESTAFF_DM2_V1_VIEWPORT_RENDERER_H
 #include <stdint.h>
+#include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
@@ -166,6 +167,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_MASK 0xFF
 #define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD 0x00
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE (-0x81000)
+#define DM2_V1_VIEWPORT_GFX_HUD_HAND_ACTION_BASE (-0x82000)
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR 0x02
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP 0x0a
 #define DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL 0x07
@@ -175,7 +177,9 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE (-0xD00000)
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING 0x01
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR   0x00
+#define DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE (-0xD10000)
 #define DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE (-0xE00000)
+#define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_GRAPHICSSET_BASE (-0xF00000)
 #define DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET 0x01
 #define DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE (-0xF00000)
 #define DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP (-0x1100000)
@@ -245,6 +249,13 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
                                              int frame_index);
 int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index);
 int dm2_v1_viewport_hud_core_graphic_index(int field);
+int dm2_v1_viewport_hud_hand_action_graphic_index(int possession_index,
+                                                   int left_or_right);
+int dm2_v1_viewport_hud_hand_action_graphic_address(
+    int gdat_index,
+    int *out_possession_index,
+    int *out_left_or_right,
+    int *out_entry);
 int dm2_v1_viewport_hud_action_icon_graphic_index(int icon_index);
 int dm2_v1_viewport_scene_material_graphic_index(int graphicsset_index,
                                                   int material_field);
@@ -302,6 +313,93 @@ typedef struct {
     int h;
 } DM2_V1_ViewportRect;
 
+typedef struct {
+    const uint8_t *pixels;
+    int width;
+    int height;
+    int stride;
+    DM2_ImageFormat format;
+} DM2_V1_BootViewportSurfaceView;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int object_count;
+    int blocked_record_reads;
+} DM2_V1_G1FirstMapRuntimeReceipt;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int source_map;
+    int generic_record_reads;
+    int blocked_record_reads;
+} DM2_V1_G1TeleporterTransitionReceipt;
+
+typedef struct {
+    int valid;
+    int viewport_owned;
+    uint32_t map_load_token;
+    uint8_t gdat_category;
+    uint8_t floor_ornate_source_index;
+    int animated_frame_route;
+} DM2_V1_FloorGfxViewportOwnershipReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint32_t object_id;
+    uint8_t wall_gfx_index;
+    int front_image_ready;
+    uint32_t front_image_width;
+    uint32_t front_image_height;
+    uint32_t local_palette_hash;
+} DM2_V1_G1WallGfxMaterial;
+
+typedef DM2_V1_G1WallGfxMaterial DM2_V1_G1TextWallGfxMaterial;
+typedef DM2_V1_G1WallGfxMaterial DM2_V1_G1ActuatorWallGfxMaterial;
+
+#define DM2_V1_G1_WALL_GFX_MATERIAL_MAX 16
+
+typedef struct {
+    int valid;
+    int map;
+    int material_count;
+    DM2_V1_G1TextWallGfxMaterial
+        materials[DM2_V1_G1_WALL_GFX_MATERIAL_MAX];
+} DM2_V1_G1TextWallGfxRuntimeReceipt;
+
+typedef struct {
+    int valid;
+    int map;
+    int material_count;
+    DM2_V1_G1ActuatorWallGfxMaterial
+        materials[DM2_V1_G1_WALL_GFX_MATERIAL_MAX];
+} DM2_V1_G1ActuatorWallGfxRuntimeReceipt;
+
+typedef struct {
+    uint8_t creature_type;
+    int decoded_width;
+    int decoded_height;
+    uint32_t local_palette_hash;
+} DM2_V1_G1CreatureMapChipMaterial;
+
+#define DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX 32
+
+typedef struct {
+    int valid;
+    int material_count;
+    DM2_V1_G1CreatureMapChipMaterial
+        materials[DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX];
+} DM2_V1_G1CreatureMapChipRuntimeReceipt;
+
+typedef struct {
+    int valid;
+    DM2_V1_ViewportRect portrait[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
+    DM2_V1_ViewportRect name[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
+    DM2_V1_ViewportRect status[DM2_V1_HUD_CHAMPION_SLOT_COUNT][3];
+} DM2_V1_InterfaceHudLayout;
+
 #define DM2_V1_WALL_PANEL_RENDER_MAX DM2_SQ_COUNT
 
 typedef struct {
@@ -322,6 +420,70 @@ typedef struct {
     int party_direction;
     uint16_t selected_square_mask;
 } DM2_V1_WallPanelRenderPlan;
+
+/* skproject SkWinCore map-load scene state. It is a typed source record, not
+ * a decoded material bundle: category/set/field addresses and control words
+ * are the only data permitted to cross into a viewport plan. */
+typedef struct {
+    int valid;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint8_t graphicsset;
+    uint16_t scene_colorkey;
+    uint16_t scene_flags;
+    uint16_t ambient_light;
+    uint16_t highest_light_level;
+    uint16_t ambient_darkness;
+    uint8_t material_category;
+    uint8_t floor_field;
+    uint8_t ceiling_field;
+    uint8_t door_frame_front_d1_field;
+    uint8_t door_frame_d1c_field;
+    uint8_t door_frame_d2c_field;
+} DM2_V1_GraphicsSetStaticSceneReceipt;
+
+/* Typed scene-material ownership that may reach the dungeon plan before any
+ * image decode. It deliberately has no bitmap, GDAT field, or blit rect. */
+typedef struct {
+    int valid;
+    int static_scene_control_owned;
+    int static_light_control_owned;
+    int static_ambient_light_control_owned;
+    int static_ambient_darkness_control_owned;
+    int static_scene_flags_control_owned;
+    int static_scene_colorkey_control_owned;
+    int static_scene_floor_material_owned;
+    int static_scene_ceiling_material_owned;
+    int static_scene_door_frame_material_owned;
+    int static_scene_door_frame_d1c_material_owned;
+    int static_scene_door_frame_d2c_material_owned;
+    uint32_t map_load_token;
+    uint8_t gdat_category;
+    uint8_t floor_ornate_source_index;
+    int animated_frame_route;
+    uint32_t scene_control_hash;
+    uint16_t scene_colorkey;
+    uint16_t scene_flags;
+    int outdoor_scene;
+    uint8_t scene_floor_material_category;
+    uint8_t scene_floor_material_graphicsset;
+    uint8_t scene_floor_material_field;
+    uint8_t scene_ceiling_material_category;
+    uint8_t scene_ceiling_material_graphicsset;
+    uint8_t scene_ceiling_material_field;
+    uint8_t scene_door_frame_material_category;
+    uint8_t scene_door_frame_material_graphicsset;
+    uint8_t scene_door_frame_material_field;
+    uint8_t scene_door_frame_d1c_material_category;
+    uint8_t scene_door_frame_d1c_material_graphicsset;
+    uint8_t scene_door_frame_d1c_material_field;
+    uint8_t scene_door_frame_d2c_material_category;
+    uint8_t scene_door_frame_d2c_material_graphicsset;
+    uint8_t scene_door_frame_d2c_material_field;
+    uint16_t ambient_light;
+    uint16_t highest_light_level;
+    uint16_t ambient_darkness;
+} DM2_V1_ViewportFloorGfxRenderPlanReceipt;
 
 #define DM2_V1_DOOR_RENDER_MAX DM2_SQ_COUNT
 
@@ -381,6 +543,304 @@ typedef struct {
     int transparent_color;
 } DM2_V1_DoorAssetBlit;
 
+/* Source-material gate observed by the production door-frame path. The
+ * decoded-format bit is set only after the viewport provider has returned a
+ * bitmap; dm2_v1_boot_viewport_asset_fetch admits only proven U4 formats. */
+typedef struct {
+    int valid;
+    int original_material_required;
+    int active_graphicsset_frame;
+    int decoded_format_gate_ready;
+    int scene_record_ready;
+    int palette_ready;
+    int colorkey_ready;
+    int accepted;
+    int gdat_index;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint16_t scene_colorkey;
+} DM2_V1_OriginalMaterialGateReceipt;
+
+/* A decoded original door frame may publish this borrowed payload view only
+ * after the material gate has accepted it. It never owns or creates pixels. */
+typedef struct {
+    int valid;
+    uint8_t gdat_category;
+    uint8_t graphicsset;
+    uint8_t field;
+    int gdat_index;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    uint16_t scene_colorkey;
+    const uint8_t *decoded_pixels;
+    const uint8_t *palette16;
+    int width;
+    int height;
+    int stride;
+    DM2_ImageFormat format;
+} DM2_V1_OriginalDoorSurfaceRequest;
+
+/* Renderer binding for a source-owned U4 door frame. The rects describe the
+ * existing payload view and destination only; this contract never rasterizes
+ * or allocates a replacement surface. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalDoorSurfaceRequest request;
+    DM2_V1_DoorAssetBlit blit;
+    int palette_stride;
+    uint8_t colorkey_palette_index;
+} DM2_V1_OriginalDoorSurfaceBinding;
+
+/* skproject DRAW_DOOR_TILE/DRAW_DOOR_FRAMES selects one center cell before
+ * it draws a moving panel and its GRAPHICSSET frame. This is the renderer's
+ * borrowed request for that specific opening state; it never decodes or
+ * rasterizes another surface. */
+typedef struct {
+    int valid;
+    int view_square;
+    int skproject_cell;
+    uint8_t door_state;
+    uint8_t door_open_pct;
+    uint8_t door_opening_dir;
+    DM2_V1_ViewportRect opening_visible_rect;
+    DM2_V1_ViewportRect frame_rect;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+    DM2_V1_OriginalDoorSurfaceBinding material;
+} DM2_V1_OriginalDoorOpeningFrameRequest;
+
+/* Final viewport presentation boundary for a source-owned door frame. It
+ * borrows the verified U4 payload and palette view; it never owns pixels or
+ * provides an alternate bitmap when the source route is incomplete. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalDoorOpeningFrameRequest opening_frame;
+    const uint8_t *u4_pixels;
+    const uint8_t *palette16;
+    int palette_stride;
+    uint8_t scene_colorkey;
+    uint8_t colorkey_palette_index;
+    DM2_ImageFormat format;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_ViewportDoorPresentationCommand;
+
+/* skproject DM2_LOAD_GDAT_INTERFACE_00_02 selects this INTERFACE_GENERAL
+ * material before HUD drawing. The request borrows a proven GDAT payload and
+ * its active palette; it cannot manufacture a chrome surface. */
+typedef struct {
+    int valid;
+    int gdat_index;
+    uint8_t gdat_category;
+    uint8_t gdat_subcategory;
+    uint8_t gdat_entry;
+    uint8_t field;
+    const uint8_t *indexed_pixels;
+    const uint8_t *palette16;
+    uint32_t palette_hash;
+    int palette_entry_count;
+    int width;
+    int height;
+    int stride;
+    int transparent_color;
+    uint8_t colorkey_palette_index;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_ViewportHudMaterialRequest;
+
+/* skproject SkWinCore::DRAW_DUNGEON_GRAPHIC selects the active
+ * GRAPHICSSET/FLOOR entry before the indoor floor pass. This command borrows
+ * the verified indexed payload and palette binding; it cannot synthesize a
+ * floor surface when the map-owned material is absent. */
+typedef struct {
+    int valid;
+    uint8_t gdat_category;
+    uint8_t graphicsset;
+    uint8_t field;
+    int gdat_index;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    const uint8_t *indexed_pixels;
+    const uint8_t *palette16;
+    int palette_stride;
+    int width;
+    int height;
+    int stride;
+    int transparent_color;
+    uint8_t colorkey_palette_index;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_ViewportDungeonMaterialCommand;
+
+/* skproject CHECK_RECOMPUTE_LIGHT reads GRAPHICSSET/AMBIANT_DARKNESS after
+ * dungeon geometry and before interface presentation. It is a typed control
+ * handoff only: no Firestaff darkness overlay may stand in for this route. */
+typedef struct {
+    int valid;
+    uint8_t gdat_category;
+    uint8_t graphicsset;
+    uint8_t field;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    uint16_t scene_colorkey;
+    uint8_t colorkey_palette_index;
+    uint16_t ambient_darkness;
+    uint8_t light_floor;
+    uint8_t walk_path_depth;
+    int light_check_enabled;
+} DM2_V1_ViewportSceneControlCommand;
+
+/* skproject QUERY_DUNGEON_MAP_CHIP_PICT/DRAW_CHIP_OF_MAGIC_MAP consumes a
+ * creature map-chip after scene control and before the interface. This is a
+ * borrowed decoded-payload command, never a generated creature surface. */
+typedef struct {
+    int valid;
+    uint8_t gdat_category;
+    uint8_t creature_type;
+    uint8_t field;
+    int gdat_index;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    const uint8_t *indexed_pixels;
+    const uint8_t *palette16;
+    int palette_stride;
+    int width;
+    int height;
+    int stride;
+    int transparent_color;
+    uint8_t colorkey_palette_index;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_ViewportCreatureMaterialCommand;
+
+/* skproject DRAW_ITEM/DRAW_CHIP_OF_MAGIC_MAP consumes floor-object map chips
+ * after creature sprites and before the interface. This borrows the verified
+ * indexed payload; it never invents an item surface when GDAT is unavailable. */
+typedef struct {
+    int valid;
+    uint8_t gdat_category;
+    uint8_t item_type;
+    uint8_t field;
+    int gdat_index;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    const uint8_t *indexed_pixels;
+    const uint8_t *palette16;
+    int palette_stride;
+    int width;
+    int height;
+    int stride;
+    int transparent_color;
+    uint8_t colorkey_palette_index;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_ViewportItemMaterialCommand;
+
+/* Stage-11 presentation command for the verified INTERFACE_GENERAL top bar.
+ * It retains source indexed bytes, palette and colorkey as borrowed views. */
+typedef struct {
+    int valid;
+    DM2_V1_ViewportHudMaterialRequest material;
+    const uint8_t *indexed_pixels;
+    const uint8_t *palette16;
+    int transparent_color;
+    DM2_V1_ViewportRect source_rect;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_ViewportHudPresentationCommand;
+
+/* skproject DRAW_HAND_ACTION_ICONS: entry=(possession<<1)+side+2 and
+ * rectno=(possession==1 ? 0x46 : 0x4a)+((partypos+4-partydir)&3). */
+typedef struct {
+    int valid;
+    uint8_t player_index;
+    uint8_t possession_index;
+    uint8_t left_or_right;
+    uint8_t player_position;
+    uint8_t party_direction;
+    uint8_t gdat_category;
+    uint8_t gdat_subcategory;
+    uint8_t gdat_entry;
+    uint8_t rectno;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    DM2_V1_ViewportRect destination_rect;
+} DM2_V1_HudHandActionSource;
+
+/* Bounded indoor frame composition around one source-owned door command.
+ * skproject binds GRAPHICSSET light and dtPalette16 before DRAW_DOOR_FRAMES;
+ * this receipt records that order without inventing a HUD or dungeon image. */
+typedef struct {
+    int valid;
+    int indoor_viewport;
+    int scene_record_owned;
+    int scene_light_owned;
+    int palette_owned;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    uint8_t light_floor;
+    uint8_t light_search_depth;
+    int door_presentation_stage;
+    int dungeon_ceiling_presentation_stage;
+    int dungeon_floor_presentation_stage;
+    int dungeon_wall_presentation_stage;
+    int scene_control_presentation_stage;
+    int creature_presentation_stage;
+    int item_presentation_stage;
+    int hud_presentation_stage;
+    int door_command_consumed;
+    int dungeon_ceiling_command_consumed;
+    int dungeon_floor_command_consumed;
+    int dungeon_wall_command_consumed;
+    uint16_t dungeon_wall_material_required_mask;
+    uint16_t dungeon_wall_material_consumed_mask;
+    int scene_control_command_consumed;
+    int creature_command_consumed;
+    int item_command_consumed;
+    int hud_top_bar_material_consumed;
+    int hud_top_bar_command_consumed;
+    int hud_status_panel_material_consumed;
+    int hud_status_panel_command_consumed;
+    int hud_top_bar_order;
+    int hud_status_panel_order;
+    int hud_hand_action_order;
+    DM2_V1_ViewportDoorPresentationCommand door_command;
+    DM2_V1_ViewportDungeonMaterialCommand dungeon_ceiling_command;
+    DM2_V1_ViewportDungeonMaterialCommand dungeon_floor_command;
+    DM2_V1_ViewportDungeonMaterialCommand dungeon_wall_command;
+    DM2_V1_ViewportSceneControlCommand scene_control_command;
+    DM2_V1_ViewportCreatureMaterialCommand creature_command;
+    DM2_V1_ViewportItemMaterialCommand item_command;
+    DM2_V1_ViewportHudMaterialRequest hud_top_bar_request;
+    DM2_V1_ViewportHudPresentationCommand hud_top_bar_command;
+    DM2_V1_ViewportHudMaterialRequest hud_status_panel_request;
+    DM2_V1_ViewportHudPresentationCommand hud_status_panel_command;
+    int hud_hand_action_command_consumed;
+    DM2_V1_ViewportHudMaterialRequest hud_hand_action_request;
+    DM2_V1_ViewportHudPresentationCommand hud_hand_action_command;
+} DM2_V1_ViewportFrameCompositionReceipt;
+
+/* M11 consumes one atomic DM2 decision after it has presented the viewport.
+ * skproject sequences DRAW_DUNGEON_GRAPHIC, DRAW_DOOR_FRAMES,
+ * DRAW_CHIP_OF_MAGIC_MAP and the INTERFACE_GENERAL HUD through one frame;
+ * this receipt prevents the host from re-deriving any individual GDAT gate.
+ * It owns metadata only and borrows no framebuffer or synthetic surface. */
+typedef struct {
+    int valid;
+    int m11_consume_frame;
+    int source_materials_required;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+    DM2_V1_ViewportFrameCompositionReceipt composition;
+} DM2_V1_ViewportM11FrameReceipt;
+
 typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
@@ -402,6 +862,7 @@ typedef struct {
     int stat_bar_color_source_bound;
     uint8_t portrait_index;
     int portrait_type_source_bound;
+    int state_source_bound;
     uint8_t portrait_fill_color;
     char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
     DM2_V1_ViewportRect leader_mark_rect;
@@ -420,6 +881,7 @@ typedef struct {
     int leader;
     uint8_t portrait_index;
     int portrait_type_source_bound;
+    int state_source_bound;
     uint8_t hp_pct;
     uint8_t stamina_pct;
     uint8_t mana_pct;
@@ -473,6 +935,22 @@ typedef struct {
     int screen_x;
     int screen_y;
 } DM2_V1_ViewportSpritePlacement;
+
+typedef struct {
+    uint8_t field;
+    const uint8_t *pixels;
+    const uint8_t *palette16;
+    uint32_t palette_hash;
+    uint32_t width;
+    uint32_t height;
+} DM2_V1_GdatSceneM11Command;
+
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t command_hash;
+    DM2_V1_GdatSceneM11Command commands[2];
+} DM2_V1_GdatSceneM11CommandPlan;
 
 typedef struct {
     int valid;
@@ -597,9 +1075,9 @@ typedef struct {
     int frame_index;
     int material_frame_index;
     int direction;
-    int depth;
     int map_x;
     int map_y;
+    int depth;
     int center_x;
     int center_y;
     int gdat_index;
@@ -812,9 +1290,10 @@ typedef int (*DM2_V1_ViewportAssetFetch)(
     int *out_w,
     int *out_h,
     int *out_stride);
-
-/* The original GDAT IMG3 image owns a local 16-entry palette.  This is a
- * separate query because the pixel cache is shared by viewport resources. */
+typedef int (*DM2_V1_ViewportDoorSurfaceViewFetch)(
+    void *user,
+    int gdat_index,
+    DM2_V1_BootViewportSurfaceView *out_view);
 typedef int (*DM2_V1_ViewportAssetPaletteFetch)(
     void *user,
     int gdat_index,
@@ -849,6 +1328,7 @@ typedef struct {
     int projectile_count;
     DM2_V1_HudPartyState hud_party;
     int hud_party_valid;
+    DM2_V1_HudHandActionSource hud_hand_action_source;
 
     /* Weather */
     int weather;               /* 0=clear, 1=rain, 2=fog, 3=storm */
@@ -869,9 +1349,11 @@ typedef struct {
     void *asset_user;
     DM2_V1_ViewportAssetPaletteFetch asset_palette_fetch;
     void *asset_palette_user;
-    uint8_t active_asset_palette16[16];
-    uint32_t active_asset_palette_hash;
     int active_asset_palette_ready;
+    uint32_t active_asset_palette_hash;
+    uint8_t active_asset_palette16[16];
+    DM2_V1_ViewportDoorSurfaceViewFetch door_surface_view_fetch;
+    void *door_surface_view_user;
     /* A boot-owned, hash-verified GDAT provider must never be replaced by
      * aggregate paint.  skproject SKWIN/SkWinCore.cpp (DRAW_MAP_CHIP) resolves
      * GRAPHICSSET/WALL_GFX imagery before its blit; a failed decode is a
@@ -885,20 +1367,50 @@ typedef struct {
     int asset_outdoor_ground_drawn_count;
     int asset_wall_drawn_count;
     int fallback_wall_drawn_count;
-    /* One bit per visible DM2_SQ_* wall panel.  A source-required indoor
-     * frame may be presented only after every planned GRAPHICSSET material
-     * has a decoded image and its own verified local palette. */
-    uint16_t last_dungeon_wall_material_required_mask;
-    uint16_t last_dungeon_wall_material_consumed_mask;
-    /* Bit 0=floor, bit 1=ceiling. Source-required scenes render neither
-     * plane until both GRAPHICSSET images and local palettes are verified. */
-    uint8_t last_floor_ceiling_material_required_mask;
-    uint8_t last_floor_ceiling_material_consumed_mask;
-    /* skproject T600 uses the same GRAPHICSSET planes for outdoor sky and
-     * ground. Keep their source transaction separate from the indoor view. */
-    uint8_t last_outdoor_scene_material_required_mask;
-    uint8_t last_outdoor_scene_material_consumed_mask;
     int gdat_scene_control_ready;
+    uint32_t gdat_scene_map_load_token;
+    DM2_V1_GraphicsSetStaticSceneReceipt gdat_static_scene_record;
+    uint32_t gdat_static_light_map_load_token;
+    uint32_t gdat_static_light_scene_control_hash;
+    int gdat_static_light_control_owned;
+    uint32_t gdat_static_ambient_light_map_load_token;
+    uint32_t gdat_static_ambient_light_scene_control_hash;
+    int gdat_static_ambient_light_control_owned;
+    uint32_t gdat_static_ambient_darkness_map_load_token;
+    uint32_t gdat_static_ambient_darkness_scene_control_hash;
+    int gdat_static_ambient_darkness_control_owned;
+    uint32_t gdat_static_scene_flags_map_load_token;
+    uint32_t gdat_static_scene_flags_scene_control_hash;
+    int gdat_static_scene_flags_control_owned;
+    uint32_t gdat_static_scene_colorkey_map_load_token;
+    uint32_t gdat_static_scene_colorkey_scene_control_hash;
+    int gdat_static_scene_colorkey_control_owned;
+    uint32_t gdat_static_scene_floor_material_map_load_token;
+    uint32_t gdat_static_scene_floor_material_scene_control_hash;
+    int gdat_static_scene_floor_material_owned;
+    uint32_t gdat_static_scene_ceiling_material_map_load_token;
+    uint32_t gdat_static_scene_ceiling_material_scene_control_hash;
+    int gdat_static_scene_ceiling_material_owned;
+    uint32_t gdat_static_scene_wall_material_map_load_token;
+    uint32_t gdat_static_scene_wall_material_scene_control_hash;
+    int gdat_static_scene_wall_material_owned;
+    /* One bit per DM2_SQ_* panel whose GRAPHICSSET wall field has been
+     * source-bound for the active map generation.  This is deliberately a
+     * viewport-square mask rather than a compacted field number: skproject
+     * addresses field `viewportCell + 0x22`, and D3C has no wall payload. */
+    uint16_t gdat_static_scene_wall_material_mask;
+    uint8_t gdat_static_scene_wall_material_view_square;
+    uint8_t gdat_static_scene_wall_material_field;
+    uint32_t gdat_static_scene_door_frame_material_map_load_token;
+    uint32_t gdat_static_scene_door_frame_material_scene_control_hash;
+    int gdat_static_scene_door_frame_material_owned;
+    uint32_t gdat_static_scene_door_frame_d1c_material_map_load_token;
+    uint32_t gdat_static_scene_door_frame_d1c_material_scene_control_hash;
+    int gdat_static_scene_door_frame_d1c_material_owned;
+    uint32_t gdat_static_scene_door_frame_d2c_material_map_load_token;
+    uint32_t gdat_static_scene_door_frame_d2c_material_scene_control_hash;
+    int gdat_static_scene_door_frame_d2c_material_owned;
+    DM2_V1_FloorGfxViewportOwnershipReceipt floor_gfx_viewport_ownership;
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;
     /* `c_light.cpp::DM2_RECALC_LIGHT_LEVEL` is a separate runtime result
@@ -919,7 +1431,6 @@ typedef struct {
     int asset_weather_drawn_count;
     int asset_teleporter_drawn_count;
     int gdat_sprite_palette_consumed_count;
-    int gdat_local_palette_consumed_count;
     uint32_t gdat_scene_control_hash;
     uint16_t gdat_scene_colorkey;
     uint16_t gdat_scene_flags;
@@ -964,23 +1475,20 @@ typedef struct {
     int gdat_interface_text_palette_ready;
     uint32_t gdat_interface_text_palette_hash;
     uint8_t gdat_interface_text_palette16[16];
-    int gdat_interface_action_palette_consumed_count;
     const uint8_t *gdat_interface_font_rows;
     uint32_t gdat_interface_font_hash;
+    int gdat_interface_action_palette_consumed_count;
     int gdat_interface_font_consumed_count;
     const DM2_V1_InterfaceHudLayout *gdat_interface_hud_layout;
     const uint8_t *gdat_interface_rect14_rows;
     uint32_t gdat_interface_rect14_row_count;
     uint32_t gdat_interface_rect14_hash;
     int gdat_interface_rect14_consumed_count;
+    int gdat_local_palette_consumed_count;
     int asset_door_panel_drawn_count;
     int asset_door_overlay_drawn_count;
     int asset_door_frame_drawn_count;
     int asset_door_button_drawn_count;
-    /* skproject DM2_DRAW_DOOR resolves every visible component before the
-     * first door blit. Bits are panel, ornate, destroyed mask, frame, button. */
-    uint8_t last_door_material_required_mask;
-    uint8_t last_door_material_consumed_mask;
     int fallback_door_drawn_count;
     int last_door_panel_asset_blit_valid;
     int last_door_panel_asset_src_w;
@@ -1002,6 +1510,37 @@ typedef struct {
     int last_door_frame_asset_src_h;
     int last_door_frame_asset_src_stride;
     DM2_V1_DoorAssetBlit last_door_frame_asset_blit;
+    DM2_V1_OriginalMaterialGateReceipt last_original_material_gate;
+    DM2_V1_OriginalDoorSurfaceRequest last_original_door_surface_request;
+    DM2_V1_OriginalDoorSurfaceBinding last_original_door_surface_binding;
+    DM2_V1_OriginalDoorOpeningFrameRequest
+        last_original_door_opening_frame_request;
+    DM2_V1_ViewportDoorPresentationCommand
+        last_original_door_presentation_command;
+    DM2_V1_ViewportHudMaterialRequest last_hud_top_bar_material_request;
+    DM2_V1_ViewportHudPresentationCommand
+        last_hud_top_bar_presentation_command;
+    DM2_V1_ViewportHudMaterialRequest
+        last_hud_status_panel_material_request;
+    DM2_V1_ViewportHudPresentationCommand
+        last_hud_status_panel_presentation_command;
+    DM2_V1_ViewportHudMaterialRequest last_hud_hand_action_material_request;
+    DM2_V1_ViewportHudPresentationCommand
+        last_hud_hand_action_presentation_command;
+    DM2_V1_ViewportDungeonMaterialCommand
+        last_dungeon_ceiling_presentation_command;
+    DM2_V1_ViewportDungeonMaterialCommand
+        last_dungeon_floor_presentation_command;
+    DM2_V1_ViewportDungeonMaterialCommand
+        last_dungeon_wall_presentation_command;
+    uint16_t last_dungeon_wall_material_required_mask;
+    uint16_t last_dungeon_wall_material_consumed_mask;
+    DM2_V1_ViewportSceneControlCommand last_scene_control_presentation_command;
+    DM2_V1_ViewportCreatureMaterialCommand
+        last_creature_presentation_command;
+    DM2_V1_ViewportItemMaterialCommand last_item_presentation_command;
+    DM2_V1_ViewportFrameCompositionReceipt last_frame_composition;
+    DM2_V1_ViewportM11FrameReceipt last_m11_frame_receipt;
     int last_door_button_asset_blit_valid;
     int last_door_button_asset_src_w;
     int last_door_button_asset_src_h;
@@ -1150,6 +1689,9 @@ void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s, int weather, int rain_
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
 void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
                                    const DM2_V1_HudPartyState *party);
+void dm2_v1_viewport_set_hud_hand_action_source(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_HudHandActionSource *source);
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                          DM2_V1_ViewportAssetFetch fetch,
                                          void *user);
@@ -1159,6 +1701,10 @@ void dm2_v1_viewport_set_gdat_door_overlay_material_plan(
 void dm2_v1_viewport_set_asset_palette_provider(
     DM2_V1_ViewportState *s,
     DM2_V1_ViewportAssetPaletteFetch fetch,
+    void *user);
+void dm2_v1_viewport_set_door_surface_view_provider(
+    DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDoorSurfaceViewFetch fetch,
     void *user);
 void dm2_v1_viewport_set_source_materials_required(
     DM2_V1_ViewportState *s, int required);
@@ -1212,8 +1758,96 @@ void dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
     int active);
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
-    uint8_t graphicsset_index,
-    const DM2_V1_WeatherRendererReceipt *receipt);
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* ReDMCSB/skproject SKWIN/SkWinCore.cpp RECALC_LIGHT_LEVEL 5093: AMBIANT_LIGHT
+ * belongs to the active GRAPHICSSET control before its bounded level floor.
+ * This binds source ownership only; it does not calculate or draw light. */
+int dm2_v1_viewport_bind_static_scene_ambient_light_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp CHECK_RECOMPUTE_LIGHT 30416-30439 uses the
+ * active GRAPHICSSET AMBIANT_DARKNESS word as map-local light-check control.
+ * The viewport retains ownership only, never a darkness overlay. */
+int dm2_v1_viewport_bind_static_scene_ambient_darkness_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp IS_MAP_INSIDE 56859 reads SCENE_FLAGS bit
+ * 0x20 from the active GRAPHICSSET. The receipt publishes only that source
+ * scene classification, never an outdoor image or palette route. */
+int dm2_v1_viewport_bind_static_scene_flags_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp map load 45029 assigns SCENE_COLORKEY before
+ * later dungeon-graphic calls. This binds the source word only; it must not
+ * create a new colorkey blit, image decode, or visual fallback. */
+int dm2_v1_viewport_bind_static_scene_colorkey_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp map load 45041 and dungeon draw 48022 use
+ * GRAPHICSSET/FLOOR. This publishes its typed address only, never pixels. */
+int dm2_v1_viewport_bind_static_scene_floor_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject DRAW_WALL (0x32CB:4F3B) selects GRAPHICSSET field
+ * viewportCell+0x22 with the active map set. Bind one verified visible panel
+ * so the real source route can enter the indoor composition without a wall
+ * fallback. */
+int dm2_v1_viewport_bind_static_scene_wall_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash,
+    int view_square);
+/* Bind every real GRAPHICSSET wall field which the viewport can render.
+ * skproject DRAW_WALL performs the same per-cell lookup before blitting; a
+ * partial field set must not authorize a source-required wall frame. */
+int dm2_v1_viewport_bind_static_scene_all_wall_materials(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp map load 45046 and dungeon draw 48011 use
+ * GRAPHICSSET/CEIL. This publishes its typed address only, never pixels. */
+int dm2_v1_viewport_bind_static_scene_ceiling_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp 47762 directly addresses GRAPHICSSET's
+ * front D1 door frame. This publishes the typed address only, never pixels. */
+int dm2_v1_viewport_bind_static_scene_door_frame_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES 46311-46334 resolves the
+ * D1 side-frame route. This publishes field 0x07 only, never pixels. */
+int dm2_v1_viewport_bind_static_scene_door_frame_d1c_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES 46311-46334 resolves the
+ * D2 side-frame route. This publishes field 0x09 only, never pixels. */
+int dm2_v1_viewport_bind_static_scene_door_frame_d2c_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+int dm2_v1_viewport_set_floor_gfx_viewport_ownership(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_FloorGfxViewportOwnershipReceipt *ownership);
+int dm2_v1_viewport_floor_gfx_render_plan_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportFloorGfxRenderPlanReceipt *out_receipt);
+/* skproject/SKWIN/SkWinCore.cpp RECALC_LIGHT_LEVEL and
+ * CHECK_RECOMPUTE_LIGHT: derive only the bounded control plan, never a
+ * procedural brightness/palette substitute. */
+void dm2_v1_viewport_scene_light_control(uint16_t highest_light_level,
+                                         uint16_t ambient_darkness,
+                                         uint8_t *out_light_floor,
+                                         uint8_t *out_search_depth,
+                                         int *out_recompute_enabled);
 /* skproject SkWinCore::INIT loads dtPalIRGB/dtPalette16 before HUD drawing.
  * The viewport accepts only the already validated logical-index table owned by
  * the DM2 boot profile; HUD colours remain logical until this bind occurs. */
@@ -1222,6 +1856,13 @@ void dm2_v1_viewport_set_gdat_interface_palette(
     int ready,
     uint32_t hash,
     const uint8_t palette16[16]);
+void dm2_v1_viewport_set_gdat_scene_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatSceneM11CommandPlan *plan);
+void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+    DM2_V1_ViewportState *s,
+    uint8_t graphicsset_index,
+    const DM2_V1_WeatherRendererReceipt *receipt);
 void dm2_v1_viewport_set_gdat_interface_text_palette(
     DM2_V1_ViewportState *s,
     int ready,
@@ -1243,8 +1884,15 @@ void dm2_v1_viewport_set_g1_container_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1ContainerMapChipRuntimeReceipt *receipt);
 void dm2_v1_viewport_set_g1_scene_creature_material(
-    DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
-    int creature_type, int gdat_index, int width, int height, int stride,
+    DM2_V1_ViewportState *s,
+    int ready,
+    int map_x,
+    int map_y,
+    int creature_type,
+    int gdat_index,
+    int width,
+    int height,
+    int stride,
     uint32_t palette_hash);
 /* M10 binds the already decoded G1/GDAT handoff directly.  This path owns no
  * pixels; their boot provider must outlive the current viewport frame. */
@@ -1272,6 +1920,12 @@ void dm2_v1_viewport_set_g1_wall_gfx_materials(
 void dm2_v1_viewport_set_gdat_interface_hud_layout(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceHudLayout *layout);
+/* skproject draws the live name/status overlay only after the original
+ * INTERFACE_GENERAL geometry, palette, font and champion state are owned.
+ * Callers leave the overlay untouched when this proof is incomplete. */
+int dm2_v1_viewport_hud_dynamic_overlay_ready(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_HudChampionSlotRender *champion);
 void dm2_v1_viewport_set_gdat_interface_rect14(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
@@ -1295,6 +1949,62 @@ int dm2_v1_viewport_door_frame_asset_blit(
     int src_h,
     int src_stride,
     DM2_V1_DoorAssetBlit *out_blit);
+int dm2_v1_viewport_last_original_material_gate_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalMaterialGateReceipt *out_receipt);
+int dm2_v1_viewport_last_original_door_surface_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalDoorSurfaceRequest *out_request);
+int dm2_v1_viewport_last_original_door_surface_binding(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalDoorSurfaceBinding *out_binding);
+int dm2_v1_viewport_last_original_door_opening_frame_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalDoorOpeningFrameRequest *out_request);
+int dm2_v1_viewport_last_original_door_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDoorPresentationCommand *out_command);
+int dm2_v1_viewport_last_hud_top_bar_material_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudMaterialRequest *out_request);
+int dm2_v1_viewport_last_hud_top_bar_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command);
+int dm2_v1_viewport_last_hud_status_panel_material_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudMaterialRequest *out_request);
+int dm2_v1_viewport_last_hud_status_panel_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command);
+int dm2_v1_viewport_last_hud_hand_action_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command);
+int dm2_v1_viewport_last_dungeon_floor_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDungeonMaterialCommand *out_command);
+int dm2_v1_viewport_last_dungeon_ceiling_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDungeonMaterialCommand *out_command);
+int dm2_v1_viewport_last_dungeon_wall_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDungeonMaterialCommand *out_command);
+int dm2_v1_viewport_last_scene_control_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportSceneControlCommand *out_command);
+int dm2_v1_viewport_last_creature_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportCreatureMaterialCommand *out_command);
+int dm2_v1_viewport_last_item_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportItemMaterialCommand *out_command);
+int dm2_v1_viewport_last_frame_composition_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportFrameCompositionReceipt *out_receipt);
+/* M11-facing atomic source-required frame decision. It is absent unless all
+ * requested dungeon and HUD passes share the active scene/palette ownership. */
+int dm2_v1_viewport_last_m11_frame_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportM11FrameReceipt *out_receipt);
 int dm2_v1_viewport_door_button_asset_blit(
     const DM2_V1_DoorRender *render,
     int src_w,

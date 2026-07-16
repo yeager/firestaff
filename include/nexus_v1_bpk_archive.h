@@ -208,9 +208,9 @@ typedef enum {
 } Nexus_V1_BpkSurfaceExtractStatus;
 
 /* Decode a single renderable BPK entry to its declared unpacked surface.
- * Only stored entries are supported. PRS3 framing/candidate evaluators are
- * diagnostic evidence, never a pixel decoder, until an original Saturn
- * opcode and termination contract has been independently established. */
+ * Stored entries are supported. The PRS3 branch exists only for synthetic
+ * regression fixtures; real MENU.BPK routing remains blocked until an
+ * independently evidenced opcode format is available. */
 typedef enum {
     NEXUS_V1_BPK_DECODE_OK = 0,
     NEXUS_V1_BPK_DECODE_ERR_NULL = -1,
@@ -462,6 +462,12 @@ typedef struct {
      * byte_class_count[3] = bytes in [0xC0..0xFF].
      * Sum of byte_class_count[*] == sample_size_used. */
     uint32_t byte_class_count[4];
+    int runtime_decode_status;
+    int runtime_decode_blocked;
+    int evidence_only;
+    int renderer_handoff_blocked;
+    uint32_t decoded_pixels_emitted;
+    int fallback_visuals_permitted;
 } Nexus_V1_BpkPrs3PayloadEvidence;
 
 typedef struct {
@@ -486,6 +492,9 @@ typedef struct {
     double   max_compression_ratio;  /* max of compression_ratio across used rows */
     int truncated;                /* 1 if any PRS3 entry was skipped
                                      because capacity was hit */
+    int decoder_promoted;         /* Always zero: evidence never authorizes runtime. */
+    int renderer_handoff_blocked; /* True when any PRS3 evidence row exists. */
+    uint32_t decoded_pixels_emitted;
 } Nexus_V1_BpkPrs3PayloadEvidenceSummary;
 
 typedef enum {
@@ -515,6 +524,12 @@ typedef struct {
     int header_underflow;
     int bounded_header_candidate; /* header_minus_payload <= 16 */
     int decode_blocked;           /* true until opcode decoder exists */
+    int evidence_only;
+    int renderer_handoff_blocked;
+    int upload_blocked;
+    int decoder_promoted;
+    uint32_t decoded_pixels_emitted;
+    int fallback_visuals_permitted;
 } Nexus_V1_BpkPrs3StreamPlan;
 
 /* Bounded diagnostic evaluation of LSB-first and MSB-first traversals of one
@@ -550,6 +565,12 @@ typedef struct {
     uint32_t expected_output_bytes;
     uint32_t body_size;
     uint32_t body_bytes_consumed;
+    int runtime_decode_status;
+    int runtime_decode_blocked;
+    int evidence_only;
+    int renderer_handoff_blocked;
+    uint32_t decoded_pixels_emitted;
+    int fallback_visuals_permitted;
     Nexus_V1_BpkPrs3CandidateStatus status;
 } Nexus_V1_BpkPrs3CandidateEvidence;
 
@@ -567,6 +588,8 @@ typedef struct {
     int truncated;
     Nexus_V1_BpkPrs3CandidateBitOrder bit_order;
     int decoder_promoted; /* Always zero: evidence never authorizes runtime. */
+    int renderer_handoff_blocked;
+    uint32_t decoded_pixels_emitted;
 } Nexus_V1_BpkPrs3CandidateEvidenceSummary;
 
 /* PRS3 post-header framing evidence. The first four bytes after the
@@ -625,6 +648,12 @@ typedef struct {
     uint32_t body_bytes_consumed;
     uint32_t literal_commands;
     uint32_t backref_commands;
+    int runtime_decode_status;
+    int runtime_decode_blocked;
+    int evidence_only;
+    int renderer_handoff_blocked;
+    uint32_t decoded_pixels_emitted;
+    int fallback_visuals_permitted;
     Nexus_V1_BpkPrs3FramedEvalStatus status;
 } Nexus_V1_BpkPrs3FramedEvalEvidence;
 
@@ -643,6 +672,8 @@ typedef struct {
     int truncated;
     Nexus_V1_BpkPrs3CandidateBitOrder bit_order;
     int decoder_promoted; /* Always zero: exact trial results are evidence. */
+    int renderer_handoff_blocked;
+    uint32_t decoded_pixels_emitted;
 } Nexus_V1_BpkPrs3FramedEvalSummary;
 
 /* Bounded opcode-prefix witness for the same trial command grammar used by
@@ -759,6 +790,11 @@ typedef struct {
     uint32_t first_blocked_header_minus_payload;
     int first_blocked_decode_status;
     int requires_prs3_decoder;
+    int prs3_evidence_only;
+    int prs3_decoder_promoted;
+    uint32_t prs3_decoded_pixels_emitted;
+    int renderer_handoff_blocked;
+    int fallback_visuals_permitted;
     int decode_blocked;
     Nexus_V1_BpkRuntimeDecodeRoute route;
 } Nexus_V1_BpkRuntimeDecodeReceipt;
@@ -771,7 +807,8 @@ typedef enum {
     NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 = 2,
     NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED = 3,
     NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES = 4,
-    NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED = 5
+    NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED = 5,
+    NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY = 6
 } Nexus_V1_BpkRuntimeUploadRoute;
 
 typedef struct {
@@ -792,6 +829,11 @@ typedef struct {
     uint32_t header_first_u32;
     uint32_t header_minus_payload;
     int decode_blocked;
+    int evidence_only;
+    int renderer_handoff_blocked;
+    int upload_blocked;
+    uint32_t decoded_pixels_emitted;
+    int fallback_visuals_permitted;
     int upload_ready;
 } Nexus_V1_BpkRuntimeUploadRow;
 
@@ -799,11 +841,8 @@ typedef struct {
     Nexus_V1_BpkRuntimeUploadRoute route;
     uint32_t archive_entries;
     uint32_t surface_entries;
-    /* MENU.BPK has one mode-10 directory trailer at entry zero. Preserve
-     * that proven archive topology for launcher/package diagnostics; it is
-     * not a render surface and never authorizes PRS3 fallback. */
-    uint32_t directory_trailer_entries;
     int directory_trailer_found;
+    uint32_t directory_trailer_entries;
     int directory_trailer_at_entry_zero;
     int directory_trailer_valid;
     uint32_t ready_uploads;
@@ -814,6 +853,10 @@ typedef struct {
     int truncated;
     uint64_t expected_upload_bytes;
     uint64_t extractable_upload_bytes;
+    int prs3_evidence_only;
+    int prs3_decoder_promoted;
+    uint32_t prs3_decoded_pixels_emitted;
+    int prs3_upload_blocked;
     int blocks_real_menu_surface_render;
     int fallback_visuals_permitted;
     int palette_trailer_observed;

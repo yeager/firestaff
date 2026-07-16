@@ -21,9 +21,7 @@ enum {
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    /* ReDMCSB DATA.C MEDIA351 PC layout: C002/C003 occupy rows 30-190.
-     * The y=28 variant belongs to the later F20J/PC-Engine layout. */
-    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 30,
+    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 28,
     CSB_V1_GRAPHIC_TITLE_PC34 = 1,
     CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34 = 2,
     CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34 = 3,
@@ -1011,7 +1009,7 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     }
     /* ReDMCSB ENTRANCE.C F0806 lines 721-778 loads C002/C003 door
      * bitmaps before F0439/F0441 presents C004 at the entrance wait loop.
-     * DATA.C's PC layout places the closed left and right doors at y=30. */
+     * DATA.C places the closed left and right doors at screen y=28. */
     plan->closed_left_source_x = 0;
     plan->closed_left_source_y = 0;
     plan->closed_left_asset_id = CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34;
@@ -1049,7 +1047,7 @@ static void csb_v1_startup_set_opening_door_rects_pc34(
         return;
     }
     /* ReDMCSB ENTRANCE.C F0438/F0807 lines 142-304 run 31 source
-     * animation steps, with moving C002/C003 strips copied at screen y=30. */
+     * animation steps, with moving C002/C003 strips copied at screen y=28. */
     if (plan->opening_step < 1 || plan->opening_step >= 32) {
         return;
     }
@@ -1086,7 +1084,7 @@ static void csb_v1_startup_set_opening_composite_pc34(
         return;
     }
     /* ReDMCSB ENTRANCE.C F0438 lines 172-239 composites C004 with the live
-     * dungeon viewport and moving C002/C003 door strips at screen y=30.
+     * dungeon viewport and moving C002/C003 door strips at screen y=28.
      * M11 supplies pixels, but CSB owns the source asset ids and destination
      * rectangle contract. */
     plan->opening_composite_valid = 1;
@@ -1103,9 +1101,7 @@ static void csb_v1_startup_set_opening_composite_pc34(
     plan->opening_composite_right_box_w = plan->opening_right_w;
     plan->opening_composite_right_box_h = plan->opening_right_h;
     plan->opening_composite_left_source_x = plan->opening_left_source_x;
-    plan->opening_composite_left_source_y = plan->opening_left_source_y;
     plan->opening_composite_right_source_x = plan->opening_right_source_x;
-    plan->opening_composite_right_source_y = plan->opening_right_source_y;
 }
 
 static void csb_v1_startup_set_title_rect_pc34(
@@ -1126,10 +1122,9 @@ static void csb_v1_startup_set_title_rect_pc34(
      * region: a real-asset session either presents that region or fails
      * closed at the host-surface boundary. */
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
-        /* ReDMCSB TITLE.C F0437:113-132 draws C424 on the CSB dark-blue
-         * base, then promotes index 15 to white. This is not DM1 C12. */
+        /* ReDMCSB TITLE.C F0437: C12_PRESENTS is installed for C424. */
         plan->title_special_palette =
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS;
+            VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 137;
@@ -1172,9 +1167,8 @@ static void csb_v1_startup_set_title_rect_pc34(
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
-        /* ReDMCSB TITLE.C F0437:233-249 draws C426 with black transparent
-         * pixels, then changes palette slots 10 and 12 for STRIKES BACK. */
-        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES;
+        /* ReDMCSB TITLE.C F0437: C13_DUNGEON + C14_MASTER for C426. */
+        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 80;
@@ -2045,13 +2039,6 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
     csb_v1_startup_rebuild_render_commands_pc34(&plan);
     *out_plan = plan;
     return 1;
-}
-
-int csb_v1_startup_source_render_plan_from_state_pc34(
-    const CSB_V1_StartupRenderState_PC34 *state,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    return csb_v1_startup_build_render_plan_from_state_pc34(state, out_plan);
 }
 
 int csb_v1_startup_init_command_state_pc34(

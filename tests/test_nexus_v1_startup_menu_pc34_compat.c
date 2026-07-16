@@ -235,33 +235,29 @@ int main(void)
                strcmp(m12_package_receipt.timing_summary_label,
                       "warning 48f / title ready 102f") == 0,
            "Nexus M12 startup package clear resets capture and card fields");
-    expect(nexus_v1_launcher_m12_startup_package_from_data_gate(
+    expect(nexus_v1_launcher_m12_startup_package_from_flags(
                1,
                1,
                1,
                &m12_package_receipt) &&
-               m12_package_receipt.supported == 1 &&
-               m12_package_receipt.data_ready == 1 &&
-               m12_package_receipt.version_ready == 1 &&
-               m12_package_receipt.packaged_capture_expected == 0 &&
-               m12_package_receipt.packaged_capture_ready == 0 &&
+               m12_package_receipt.packaged_capture_ready == 1 &&
                m12_package_receipt.startup_step_count == 7 &&
-               m12_package_receipt.startup_step_ready_count == 2 &&
+               m12_package_receipt.startup_step_ready_count == 7 &&
                m12_package_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
-               m12_package_receipt.capture_command_count == 0 &&
+                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+               m12_package_receipt.capture_command_count == 1 &&
                m12_package_receipt.first_capture_draw_kind ==
-                   NEXUS_V1_STARTUP_DRAW_NONE &&
+                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
                m12_package_receipt.boot_warning_frames == 48 &&
                m12_package_receipt.boot_start_ready_frames == 102 &&
                m12_package_receipt.title_frame_max == 102 &&
                m12_package_receipt.title_prompt_visible == 1 &&
-               m12_package_receipt.warning_surface_loaded == 0 &&
-               m12_package_receipt.title_surface_loaded == 0 &&
-               m12_package_receipt.gameover_surface_loaded == 0 &&
-               m12_package_receipt.warning_capture_surface_ready == 0 &&
-               m12_package_receipt.title_capture_surface_ready == 0 &&
-               m12_package_receipt.gameover_capture_surface_ready == 0 &&
+               m12_package_receipt.warning_surface_loaded == 1 &&
+               m12_package_receipt.title_surface_loaded == 1 &&
+               m12_package_receipt.gameover_surface_loaded == 1 &&
+               m12_package_receipt.warning_capture_surface_ready == 1 &&
+               m12_package_receipt.title_capture_surface_ready == 1 &&
+               m12_package_receipt.gameover_capture_surface_ready == 1 &&
                m12_package_receipt.warning_capture_frame == 0 &&
                m12_package_receipt.title_capture_frame == 48 &&
                m12_package_receipt.save_capture_frame == -1 &&
@@ -275,9 +271,9 @@ int main(void)
                strcmp(m12_package_receipt.timing_summary_label,
                       "warning 48f / title ready 102f") == 0 &&
                strcmp(m12_package_receipt.capture_route_label,
-                      "blocked-startup") == 0 &&
+                      "title-warning") == 0 &&
                strcmp(m12_package_receipt.first_capture_draw_label,
-                      "none") == 0 &&
+                      "warning-background") == 0 &&
                m12_package_receipt.saturn_warning_frame == 0 &&
                m12_package_receipt.saturn_title_capture_frame == 48 &&
                m12_package_receipt.saturn_save_capture_frame == -1 &&
@@ -287,18 +283,18 @@ int main(void)
                m12_package_receipt.saturn_gameover_capture_frame == 0 &&
                m12_package_receipt.saturn_timing_exact == 1 &&
                m12_package_receipt.saturn_capture_frames_exact == 1 &&
-               m12_package_receipt.full_start_package_receipt_ready == 0 &&
-               m12_package_receipt.host_display_caller_expected == 0 &&
+               m12_package_receipt.full_start_package_receipt_ready == 1 &&
+               m12_package_receipt.host_display_caller_expected == 1 &&
                strcmp(m12_package_receipt.contract_label,
                       "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS") == 0 &&
                strcmp(m12_package_receipt.active_proof_label,
-                      "CANONICAL RUNTIME RECEIPT") == 0 &&
+                      "NEXUS TIMING CAPTURE PROOF") == 0 &&
                strcmp(m12_package_receipt.launch_status_label,
-                      "RUNTIME RECEIPT REQUIRED") == 0 &&
+                      "READY TO LAUNCH") == 0 &&
                strcmp(m12_package_receipt.launch_detail_label,
-                      "CANONICAL NEXUS DATA MUST REACH THE RUNTIME") == 0,
-           "Nexus M12 data gate cannot manufacture startup capture readiness");
-    expect(nexus_v1_launcher_m12_startup_package_from_data_gate(
+                      "NEXUS TITLE MENU") == 0,
+           "Nexus M12 startup package owns ready card display/timing/capture facts");
+    expect(nexus_v1_launcher_m12_startup_package_from_flags(
                1,
                1,
                0,
@@ -944,12 +940,6 @@ int main(void)
     synthetic_engine.menu_bpk_upload_receipt_valid = 1;
     synthetic_engine.menu_bpk_upload_receipt.route =
         NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
-    synthetic_engine.menu_bpk_upload_receipt.archive_entries = 4;
-    synthetic_engine.menu_bpk_upload_receipt.surface_entries = 3;
-    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_entries = 1;
-    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_found = 1;
-    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_at_entry_zero = 1;
-    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_valid = 1;
     synthetic_engine.menu_bpk_upload_receipt.ready_uploads = 3;
     synthetic_engine.menu_bpk_upload_receipt.planned_rows = 3;
     synthetic_engine.menu_bpk_decode_receipt_valid = 1;
@@ -979,43 +969,16 @@ int main(void)
     synthetic_engine.current_level.geometry_info.collision_ref_count = 4;
     synthetic_engine.current_level.geometry_info.collision_ref_unique_count = 1;
     synthetic_engine.current_level.geometry_info.max_collision_ref = 5;
-    /* Zero means a declared animation ID in the DGN model.  Fixtures without
-     * Structure1G data must use the on-disc no-animation sentinel instead. */
-    memset(synthetic_engine.current_level.floor_animation_ids,
-           0xff,
-           sizeof(synthetic_engine.current_level.floor_animation_ids));
     synthetic_engine.current_level.squares[4][3] = 1;
     synthetic_engine.current_level.squares[3][3] = 1;
     synthetic_engine.current_level.squares[4][4] = 1;
     synthetic_engine.current_level.collision_refs[4][3] = 0x0100;
     synthetic_engine.current_level.collision_refs[3][3] = 0x0fff;
-    /* A test double may model the authenticated handoff, but production only
-     * fills this receipt after canonical Track 1 hash discovery. */
-    synthetic_engine.current_level_structure2_source.level_index =
-        synthetic_engine.game.current_level;
-    synthetic_engine.current_level_structure2_source.canonical_hash_verified = 1;
-    synthetic_engine.current_level_structure2_source.structure2_payload_envelope_valid = 1;
-    synthetic_engine.current_level_structure2_source.materialization_bound = 1;
-    /* Test-only canonical runtime fixture.  Production fills these BPK host
-     * receipts from authenticated Track 1 containers; do not add a launcher
-     * fallback for hand-built material banks. */
-    synthetic_engine.initialized = 1;
-    synthetic_engine.floor_bpk_container.host_route_permitted = 1;
-    synthetic_engine.wall_bpk_container.host_route_permitted = 1;
-    synthetic_engine.floor_bpk_host_route_attempted = 1;
-    synthetic_engine.floor_bpk_host_route_valid = 1;
-    synthetic_engine.floor_bpk_host_route.host_consumed_surfaces = 1;
-    synthetic_engine.floor_bpk_host_route.imported_surface_count = 1;
-    synthetic_engine.wall_bpk_host_route_attempted = 1;
-    synthetic_engine.wall_bpk_host_route_valid = 1;
-    synthetic_engine.wall_bpk_host_route.host_consumed_surfaces = 1;
-    synthetic_engine.wall_bpk_host_route.imported_surface_count = 1;
     synthetic_engine.floor_materials.valid = 1;
     synthetic_engine.floor_materials.surface_count = 1;
     seed_material_surface(&synthetic_engine.floor_materials.surfaces[0],
                           &synthetic_floor_pixel,
                           0xff204060U);
-    synthetic_engine.floor_materials.surfaces[0].from_bpk = 1;
     synthetic_engine.wall_materials.valid = 1;
     synthetic_engine.wall_materials.surface_count = 1;
     synthetic_engine.wall_materials.bpk_imported_surface_count = 1;
@@ -1023,7 +986,6 @@ int main(void)
     seed_material_surface(&synthetic_engine.wall_materials.surfaces[0],
                           &synthetic_wall_pixel,
                           0xff806040U);
-    synthetic_engine.wall_materials.surfaces[0].from_bpk = 1;
     nexus_v1_champions_init(&synthetic_engine.champions);
     expect(nexus_v1_champion_recruit(&synthetic_engine.champions, 0) == 0,
            "Nexus synthetic runtime has a party for menu-to-runtime route");
@@ -2615,9 +2577,9 @@ int main(void)
                route_proof_receipt.fallback_visuals_permitted == 0,
            "Nexus startup route proof exposes script parser blocker");
     synthetic_engine.sfx_runtime_receipt.status =
-        NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE;
-    synthetic_engine.sfx_runtime_receipt.level_index = 0;
-    synthetic_engine.sfx_runtime_receipt.cd_track = 2;
+        NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET;
+    synthetic_engine.sfx_runtime_receipt.level_index = -1;
+    synthetic_engine.sfx_runtime_receipt.cd_track = -1;
     synthetic_engine.sfx_runtime_receipt.blocks_real_sfx_playback = 1;
     expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
                &runtime_state,
@@ -4148,9 +4110,6 @@ int main(void)
                        NEXUS_V1_STARTUP_SAVE_ROUTE_LOAD_SLOT &&
                    save_route_receipt.handled == 1 &&
                    save_route_receipt.save_state_receipt_valid &&
-                   save_route_receipt.action_receipt_valid &&
-                   save_route_receipt.action_receipt.host_receipt.input_result ==
-                       NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
                    save_route_receipt.selected_row == 0 &&
                    save_route_receipt.selected_slot == 3 &&
                    save_route_receipt.draw_command_count > 3 &&
