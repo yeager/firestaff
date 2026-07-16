@@ -4849,6 +4849,33 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           !level.structure2_texture_table_valid &&
           !level.structure1g_entries[0].first_structure2_image_valid,
           "noncanonical Structure2 descriptor IDs cannot fabricate an animated-material route");
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES, 10U);
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES + 2, 0x1234U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          !level.structure2_texture_table_valid &&
+          !level.structure2_payload.valid &&
+          !level.structure1g_entries[0].first_structure2_image_valid,
+          "unobserved Structure2 encoding classes cannot become material anchors");
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES + 2, 0x0008U);
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES + 6, 0U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          !level.structure2_texture_table_valid &&
+          !level.structure2_payload.valid &&
+          !level.structure1g_entries[0].first_structure2_image_valid,
+          "zero-width Structure2 descriptors cannot become material anchors");
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES + 6, 16U);
+    wb16(dgn + NEXUS_DGN_BLOCK_SIZE * 20 +
+             10 * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES + 8, 0U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          !level.structure2_texture_table_valid &&
+          !level.structure2_payload.valid &&
+          !level.structure1g_entries[0].first_structure2_image_valid,
+          "zero-height Structure2 descriptors cannot become material anchors");
 }
 
 static void test_dgn_view_render_plan_from_structure1b(void) {
@@ -5367,6 +5394,45 @@ static void test_structure1f_item_ibs_material_binding(void) {
           !materials[0].original_vdp1_capture_verified &&
           !materials[0].texel_order_proven && !materials[0].draw_authorized,
           "command material keeps exact authenticated 4bpp bytes no-draw until VDP1 proof binds");
+    bindings[1].palette_index = 1U;
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          !material_receipt.complete &&
+          material_receipt.source_cell_match_count == 1 &&
+          material_receipt.blocked_invalid_binding_count == 1 &&
+          material_receipt.command_material_count == 0 &&
+          !material_receipt.fallback_visuals_permitted,
+          "descriptor-0008 rejects a forged regular palette lane");
+    bindings[1].palette_index = 0xffU;
+    bindings[1].image_index = 7U;
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          !material_receipt.complete &&
+          material_receipt.source_cell_match_count == 1 &&
+          material_receipt.blocked_invalid_binding_count == 1 &&
+          material_receipt.command_material_count == 0 &&
+          !material_receipt.fallback_visuals_permitted,
+          "descriptor-0008 rejects a forged regular image lane");
+    bindings[1].image_index = 0xffU;
+    bindings[1].packed_4bpp_texels = bank.regular_image_texels[7];
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          !material_receipt.complete &&
+          material_receipt.source_cell_match_count == 1 &&
+          material_receipt.blocked_invalid_binding_count == 1 &&
+          material_receipt.command_material_count == 0 &&
+          !material_receipt.fallback_visuals_permitted,
+          "descriptor-0008 rejects a forged regular packed-texel lane");
+    bindings[1].packed_4bpp_texels = NULL;
+    commands[1].kind = NEXUS_V1_DGN_RENDER_COMMAND_CEILING;
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          !material_receipt.complete &&
+          material_receipt.blocked_invalid_command_count == 1 &&
+          material_receipt.command_material_count == 0 &&
+          !material_receipt.fallback_visuals_permitted,
+          "descriptor-0008 cannot consume a non-floor DGN command");
+    commands[1].kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
     bindings[1].source_x = 4;
     CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
               bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&

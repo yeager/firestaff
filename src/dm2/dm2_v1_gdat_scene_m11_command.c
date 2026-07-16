@@ -2,12 +2,10 @@
 
 #include <string.h>
 
-int dm2_v1_asset_load_image_local_palette(
-    const DM2_V1_AssetLoader *loader, int category, int index, int field,
-    uint8_t out_palette16[16], uint32_t *out_hash);
-
 #define DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH 224u
 #define DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT 136u
+#define DM2_V1_GDAT_SCENE_IMG3_HEADER_SIZE 10u
+#define DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE 16u
 
 static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 {
@@ -23,6 +21,39 @@ static uint16_t read_le16(const uint8_t *bytes)
 static int16_t read_le16s(const uint8_t *bytes)
 {
     return (int16_t)read_le16(bytes);
+}
+
+static int dm2_v1_gdat_scene_image_local_palette(
+    const DM2_V1_AssetLoader *loader, int graphicsset, int field,
+    uint8_t out_palette16[16], uint32_t *out_hash)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    size_t palette_offset;
+
+    if (out_hash) *out_hash = 0u;
+    if (!out_palette16) return 0;
+    memset(out_palette16, 0, DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE);
+    raw = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_ENTRY_TYPE_IMAGE, field, &raw_size);
+    if (!raw ||
+        raw_size < DM2_V1_GDAT_SCENE_IMG3_HEADER_SIZE +
+            DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE) {
+        return 0;
+    }
+    /* QUERY_TEMP_PICST binds the image-local palette carried by the source
+     * record.  The canonical G1 dungeon planes include both IMG3 and IMG9
+     * encodings, so retain the record's trailing 16-byte palette instead of
+     * deriving one from format-specific pixel payload heuristics. */
+    palette_offset = raw_size - DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE;
+    memcpy(out_palette16, raw + palette_offset,
+           DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE);
+    if (out_hash) {
+        *out_hash = hash_bytes(2166136261u, out_palette16,
+                               DM2_V1_GDAT_SCENE_LOCAL_PALETTE_SIZE);
+    }
+    return !out_hash || *out_hash != 0u;
 }
 
 uint32_t dm2_v1_gdat_scene_m11_command_pixel_hash(
@@ -313,9 +344,10 @@ int dm2_v1_gdat_scene_light_m11_receipt(
     return 1;
 }
 
-int dm2_v1_c_light_m11_receipt_build(
+static int dm2_v1_c_light_m11_receipt_build_bound(
     const DM2_V1_GdatSceneLightM11Receipt *scene,
     const DM2_V1_CLightSourceState *source,
+    uint32_t map_descriptor_hash,
     DM2_V1_CLightM11Receipt *out_receipt)
 {
     DM2_V1_CLightM11Receipt candidate;
@@ -344,6 +376,7 @@ int dm2_v1_c_light_m11_receipt_build(
     candidate.light_level = (uint8_t)level;
     candidate.dynamic_map = source->dynamic_map;
     candidate.scene_control_hash = scene->scene_control_hash;
+    candidate.map_descriptor_hash = map_descriptor_hash;
     candidate.source_state_hash = source->source_state_hash;
     hash = hash_bytes(hash, &candidate.graphicsset,
                       sizeof(candidate.graphicsset));
@@ -353,6 +386,8 @@ int dm2_v1_c_light_m11_receipt_build(
                       sizeof(candidate.dynamic_map));
     hash = hash_bytes(hash, (const uint8_t *)&candidate.scene_control_hash,
                       sizeof(candidate.scene_control_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.map_descriptor_hash,
+                      sizeof(candidate.map_descriptor_hash));
     hash = hash_bytes(hash, (const uint8_t *)&candidate.source_state_hash,
                       sizeof(candidate.source_state_hash));
     if (hash == 0u) return 0;
@@ -360,6 +395,15 @@ int dm2_v1_c_light_m11_receipt_build(
     candidate.valid = 1;
     *out_receipt = candidate;
     return 1;
+}
+
+int dm2_v1_c_light_m11_receipt_build(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightSourceState *source,
+    DM2_V1_CLightM11Receipt *out_receipt)
+{
+    return dm2_v1_c_light_m11_receipt_build_bound(
+        scene, source, 0u, out_receipt);
 }
 
 int dm2_v1_c_light_m11_receipt_build_for_map(
@@ -375,7 +419,8 @@ int dm2_v1_c_light_m11_receipt_build_for_map(
         source->dynamic_map != map->dynamic_light) {
         return 0;
     }
-    return dm2_v1_c_light_m11_receipt_build(scene, source, out_receipt);
+    return dm2_v1_c_light_m11_receipt_build_bound(
+        scene, source, map->descriptor_hash, out_receipt);
 }
 
 int dm2_v1_c_light_m11_palette_darkness(
@@ -468,9 +513,9 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
             &height, &command->format);
         if (!raw || raw_size == 0u || !command->pixels || width <= 0 || height <= 0 ||
             command->format == DM2_IMG_FMT_UNKNOWN ||
-            !dm2_v1_asset_load_image_local_palette(loader,
-                DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, fields[i],
-                command->palette16, &command->palette_hash) || !command->palette_hash) {
+            !dm2_v1_gdat_scene_image_local_palette(loader, graphicsset,
+                fields[i], command->palette16, &command->palette_hash) ||
+            !command->palette_hash) {
             dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0;
         }
         command->width = (uint16_t)width; command->height = (uint16_t)height;

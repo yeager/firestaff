@@ -3550,6 +3550,8 @@ int theron_v1_raw_loader_trace_final_bind(
         trace->variant != (Theron_Track02Variant)media->track02_variant ||
         !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(media) ||
         !media->startup_bitmap_raw_route_mask ||
+        !media->startup_bitmap_raw_atlas_tile_count ||
+        !media->startup_bitmap_atlas_nonzero_pixel_count ||
         !media->startup_bitmap_atlas_checksum) {
         return 0;
     }
@@ -3557,6 +3559,7 @@ int theron_v1_raw_loader_trace_final_bind(
         !(media->startup_bitmap_raw_route_mask &
           THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) ||
         media->startup_bitmap_soul_room_atlas_tile_count == 0u ||
+        media->startup_bitmap_soul_room_nonzero_pixel_count == 0u ||
         media->startup_bitmap_soul_room_checksum == 0u ||
         media->startup_bitmap_soul_room_first_raw_offset >
             media->startup_bitmap_soul_room_last_raw_offset ||

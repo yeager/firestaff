@@ -225,6 +225,28 @@ static int action_is_first_for_column(const CSB_V1_ChaosMagicState *state,
     return 1;
 }
 
+static int action_ordinal_in_state(const CSB_V1_ChaosMagicState *state,
+                                   int action_index)
+{
+    const CSB_V1_DSAImportedAction *action;
+    int i;
+    int ordinal = 0;
+
+    if (!state || action_index < 0 ||
+        action_index >= state->imported_action_count) {
+        return -1;
+    }
+    action = &state->imported_actions[action_index];
+    for (i = 0; i < action_index; ++i) {
+        const CSB_V1_DSAImportedAction *prior = &state->imported_actions[i];
+        if (prior->dsa_id == action->dsa_id &&
+            prior->state_index == action->state_index) {
+            ++ordinal;
+        }
+    }
+    return ordinal;
+}
+
 /* Walk decoded source Thing chains.  A binding is useful only when the
  * original package contains a type-47 actuator whose saved selector reaches
  * one of the actions admitted from this exact save. */
@@ -351,8 +373,7 @@ static int remaining_saved_timer_queue_matches_runtime(
         profile->csbwin_timer_queue_summary_count !=
             profile->csbwin_timer_summary_count ||
         profile->timeline_queue.eventCount < 0 ||
-        profile->timeline_queue.eventCount >
-            (int)profile->csbwin_timer_queue_summary_count) {
+        profile->timeline_queue.eventCount > DM1_EVENT_MAX_COUNT) {
         return 0;
     }
     for (event_ordinal = 0;
@@ -366,6 +387,9 @@ static int remaining_saved_timer_queue_matches_runtime(
 
         if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
         queue_slot = profile->csbwin_timeline_event_queue_slot[event_index];
+        if (queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE) {
+            continue;
+        }
         if (queue_slot >= profile->csbwin_timer_queue_summary_count ||
             seen[queue_slot]) {
             return 0;
@@ -436,6 +460,8 @@ int main(int argc, char **argv)
     const char *save_path = path_arg_or_env(
         argc, argv, 2, "FIRESTAFF_CSBWIN_SAVE");
     CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 chain_receipt;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 execution_receipt;
     CSB_V1_DungeonData *dungeon;
     const CSB_V1_ChaosMagicState *state;
     const CSB_V1_DSAImportedAction **actions_before_tick = NULL;
@@ -445,6 +471,17 @@ int main(int argc, char **argv)
     SourceFileReceipt save_receipt;
     int mapped_entries = 0;
     int mapped_actions = 0;
+    int verified_core_actions = 0;
+    int verified_transfer_actions = 0;
+    int verified_runtime_owner_actions = 0;
+    int verified_conditional_actions = 0;
+    int verified_arithmetic_actions = 0;
+    int verified_variable_actions = 0;
+    int verified_timer_actions = 0;
+    int verified_message_actions = 0;
+    int verified_teleporter_copy_actions = 0;
+    int verified_actuator_copy_actions = 0;
+    int verified_dungeon_mutation_actions = 0;
     int source_binding_found;
     int i;
     int level;
@@ -492,6 +529,13 @@ int main(int argc, char **argv)
           "each saved CSBWin timer-queue slot retains its exact live timeline receipt");
     CHECK(state->imported_actions != NULL && state->imported_action_count > 0,
           "resume retains authenticated source DSA actions");
+    CHECK(csb_v1_runtime_csbwin_dsa_runtime_chain_receipt_pc34(
+              &profile, &chain_receipt) &&
+              chain_receipt.valid &&
+              chain_receipt.dsa_catalog_valid &&
+              chain_receipt.level_index_valid &&
+              chain_receipt.timer_queue_event_chain_valid,
+          "resume exposes one production DSA catalog/index/timer chain receipt");
 
     if (profile.csbwin_extended_features_valid &&
         profile.csbwin_extended_level_index_present &&
@@ -499,6 +543,8 @@ int main(int argc, char **argv)
         for (i = 0; i < state->imported_action_count; ++i) {
             const CSB_V1_DSAImportedAction *action = &state->imported_actions[i];
             const CSB_V1_DSAImportedAction *resolved = NULL;
+            CSB_V1_CSBWinDSACoreProgramReceipt core_receipt;
+            int action_ordinal = action_ordinal_in_state(state, i);
 
             if (action->program_word_count > 0) {
                 CHECK(action->program_words != NULL,
@@ -512,7 +558,61 @@ int main(int argc, char **argv)
                 CHECK(resolved == action,
                       "source action column resolves to its runtime-owned pointer");
             }
+            if (action_ordinal >= 0 &&
+                csb_v1_csbwin_dsa_verify_authenticated_core_program(
+                    state, action->dsa_id, action->state_index,
+                    action_ordinal, &core_receipt) ==
+                    CSB_V1_CSBWIN_DSA_CORE_OK && core_receipt.valid) {
+                if (core_receipt.stack_core) ++verified_core_actions;
+                if (core_receipt.transfer_only) ++verified_transfer_actions;
+                if (core_receipt.requires_runtime_owner) {
+                    ++verified_runtime_owner_actions;
+                }
+                if (core_receipt.conditional_core) {
+                    ++verified_conditional_actions;
+                }
+                if (core_receipt.arithmetic_core) {
+                    ++verified_arithmetic_actions;
+                }
+                if (core_receipt.variable_core) {
+                    ++verified_variable_actions;
+                }
+                if (core_receipt.timer_core) {
+                    ++verified_timer_actions;
+                }
+                if (core_receipt.message_core) {
+                    ++verified_message_actions;
+                }
+                if (action->program_word_count > 0 &&
+                    ((action->program_words[0] & 0x3fu) ==
+                         CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER ||
+                     (action->program_words[0] & 0x3fu) ==
+                         CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32)) {
+                    ++verified_teleporter_copy_actions;
+                }
+                if (action->program_word_count > 0 &&
+                    (action->program_words[0] & 0x3fu) ==
+                        CSB_V1_CSBWIN_DSACMD_AMPERSAND &&
+                    ((action->program_words[0] >> 6) & 0x7fu) == 76u) {
+                    ++verified_actuator_copy_actions;
+                }
+                if (core_receipt.dungeon_mutation_core) {
+                    ++verified_dungeon_mutation_actions;
+                }
+            }
         }
+        CHECK(verified_core_actions + verified_transfer_actions > 0,
+              "real DSA corpus contains at least one verified executable core action");
+        printf("CSBWIN_DSA_CORE_ACTIONS=%d transfer=%d runtime_owner=%d "
+               "conditional=%d arithmetic=%d variable=%d timer=%d message=%d "
+               "copy_teleporter=%d actuator_copy=%d dungeon_mutation=%d\n",
+               verified_core_actions, verified_transfer_actions,
+               verified_runtime_owner_actions, verified_conditional_actions,
+               verified_arithmetic_actions, verified_variable_actions,
+               verified_timer_actions, verified_message_actions,
+               verified_teleporter_copy_actions,
+               verified_actuator_copy_actions,
+               verified_dungeon_mutation_actions);
 
         for (level = 0; level < 64; ++level) {
             for (selector = 0; selector < 32; ++selector) {
@@ -577,9 +677,84 @@ int main(int argc, char **argv)
                       csb_v1_dungeon_get_current() == dungeon &&
                       remaining_saved_timer_queue_matches_runtime(&profile),
                   "post-tick live queue retains only exact package TIMER slots");
+            CHECK(csb_v1_runtime_csbwin_dsa_runtime_chain_receipt_pc34(
+                      &profile, &chain_receipt) &&
+                      chain_receipt.valid &&
+                      chain_receipt.dsa_catalog_valid &&
+                      chain_receipt.level_index_valid &&
+                      chain_receipt.timer_queue_event_chain_valid,
+                  "runtime tick keeps the production DSA runtime-chain receipt valid");
             if (profile.csbwin_last_saved_timer_dsa_valid) {
                 CHECK(saved_timer_dsa_execution_is_authenticated(&profile),
                       "live tick executed an exact saved TimerQueue DSA action");
+                CHECK(chain_receipt.saved_timer_dsa_execution_valid,
+                      "production receipt names the executed saved TimerQueue DSA action");
+                CHECK(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                          &profile, &execution_receipt) &&
+                          execution_receipt.valid &&
+                          execution_receipt.rollback_guarded &&
+                          execution_receipt.command_count > 0u &&
+                          (execution_receipt.stack_core ||
+                           execution_receipt.transfer_only) &&
+                          (!execution_receipt.timer_core ||
+                           execution_receipt.requires_runtime_owner) &&
+                          (!execution_receipt.message_core ||
+                           execution_receipt.timer_core) &&
+                          (execution_receipt.timer_scheduled_count == 0u ||
+                           execution_receipt.last_scheduled_event_type != 0u) &&
+                          (!execution_receipt.dungeon_mutation_core ||
+                           execution_receipt.requires_runtime_owner) &&
+                          (execution_receipt.transfer_count == 0u ||
+                           (execution_receipt.transfer_return_count > 0u &&
+                            execution_receipt.transfer_frame_push_count ==
+                                execution_receipt.transfer_frame_pop_count &&
+                            execution_receipt.maximum_subroutine_depth >=
+                                execution_receipt.transfer_frame_push_count &&
+                            execution_receipt.transfer_returned_by_missing_program)) &&
+                          execution_receipt.dsa_id ==
+                              profile.csbwin_last_saved_timer_dsa_id &&
+                          execution_receipt.state_index ==
+                              profile.csbwin_last_saved_timer_dsa_state_index &&
+                          execution_receipt.column ==
+                              profile.csbwin_last_saved_timer_dsa_column &&
+                          execution_receipt.action_ordinal ==
+                              profile.csbwin_last_saved_timer_dsa_action_ordinal,
+                      "production execution receipt publishes the committed authenticated DSA core");
+                if (execution_receipt.transfer_count > 0u) {
+                    printf("CSBWIN_DSA_TRANSFER_CHAIN=transfers=%u returns=%u "
+                           "push=%u pop=%u max_depth=%u final_state=%d\n",
+                           execution_receipt.transfer_count,
+                           execution_receipt.transfer_return_count,
+                           execution_receipt.transfer_frame_push_count,
+                           execution_receipt.transfer_frame_pop_count,
+                           execution_receipt.maximum_subroutine_depth,
+                           execution_receipt.transfer_final_state);
+                }
+                if (execution_receipt.timer_scheduled_count > 0u) {
+                    printf("CSBWIN_DSA_MESSAGE_TIMER=scheduled=%u event=%u "
+                           "target=0x%08lx\n",
+                           execution_receipt.timer_scheduled_count,
+                           execution_receipt.last_scheduled_event_type,
+                           (unsigned long)
+                               execution_receipt.last_scheduled_target_location);
+                }
+                if (execution_receipt.teleporter_copy_count > 0u) {
+                    printf("CSBWIN_DSA_COPY_TELEPORTER=copies=%u src=0x%08lx "
+                           "dst=0x%08lx\n",
+                           execution_receipt.teleporter_copy_count,
+                           (unsigned long)execution_receipt
+                               .last_teleporter_copy_source_location,
+                           (unsigned long)execution_receipt
+                               .last_teleporter_copy_destination_location);
+                }
+                if (execution_receipt.actuator_copy_count > 0u) {
+                    printf("CSBWIN_DSA_COPY_ACTUATOR=copies=%u src=0x%04x "
+                           "dst=0x%04x\n",
+                           execution_receipt.actuator_copy_count,
+                           execution_receipt.last_actuator_copy_source_thing,
+                           execution_receipt
+                               .last_actuator_copy_destination_thing);
+                }
                 puts("CSBWIN_DSA_TIMER_ACTION=verified");
             } else {
                 puts("CSBWIN_DSA_TIMER_ACTION=unavailable");

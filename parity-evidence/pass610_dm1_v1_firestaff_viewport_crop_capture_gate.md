@@ -1,6 +1,6 @@
 # Pass610 - DM1 V1 Firestaff viewport crop capture gate
 
-Status: PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED
+Status: FAIL_PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE
 
 This gate locks the Firestaff-side 224x136 viewport crop artifacts needed before any later same-viewport original/Firestaff comparison can be promoted.
 
@@ -10,13 +10,12 @@ Source evidence:
 - DRAWVIEW.C:842-857 ok=True - F0097 presents G0296 through C007_ZONE_VIEWPORT, so the crop is the compare boundary.
 
 Runtime crops:
-- 01_start_south_1_3 map=0 x=1 y=3 dir=2 crop=01_start_south_1_3_viewport_224x136.ppm sha256=78d456343429aa09a96cd649e85d89c0b394bf6bd50f1f46aa681165ccc936aa
-- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
-- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
-- 04_forward_south_1_4 map=0 x=1 y=4 dir=2 crop=04_forward_south_1_4_viewport_224x136.ppm sha256=497e8745b44d1dbd423ae9174a4fd924678e2eac9b5ffe770a708099954d606a
 
 Non-claims:
 - no original PC34 frame was captured
 - no original-vs-Firestaff pixel parity is promoted
 - the crop hashes are Firestaff capture-readiness evidence only
 - no TODO.md update
+
+Problems:
+- missing built executable firestaff_m11_wall_collision_capture_probe; candidates=[PosixPath('/Users/bosse/Documents/Firestaff/build/ninja-dm2/firestaff_m11_wall_collision_capture_probe'), PosixPath('/Users/bosse/Documents/Firestaff/build/firestaff_m11_wall_collision_capture_probe'), PosixPath('/Users/bosse/Documents/Firestaff/build-pass610/firestaff_m11_wall_collision_capture_probe'), PosixPath('/Users/bosse/Documents/Firestaff/build-wall-collision-capture/firestaff_m11_wall_collision_capture_probe')]

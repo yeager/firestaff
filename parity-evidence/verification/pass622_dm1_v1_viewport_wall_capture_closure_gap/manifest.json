@@ -8,35 +8,23 @@
     "no V2/CSB/DM2 scope",
     "no DANNESBURK use"
   ],
-  "ok": true,
+  "ok": false,
   "pass608SameViewportBlocker": {
-    "decision": "No promotable same-viewport original/Firestaff manifest exists yet. Firestaff has exact fixture state and viewport hashes, and original PC34 assets/tools are present, but the latest N2 original diagnostic still lacks the command-state-redraw-present transcript required to bind an original frame to any Firestaff map/X/Y/direction row.",
-    "duplicateOriginalCropGroups": {
-      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
-        3,
-        4,
-        5,
-        6
-      ]
-    },
-    "duplicateOriginalRawGroups": {
-      "17bd7e87815750b45e742964ffe93e0312d9bbdc45dd8e7358be0a069a6db1b8": [
-        3,
-        4
-      ]
-    },
-    "exists": true,
+    "decision": null,
+    "duplicateOriginalCropGroups": {},
+    "duplicateOriginalRawGroups": {},
+    "exists": false,
     "expectedStatus": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
-    "firestaffStateCount": 6,
-    "firestaffViewportHashCount": 6,
-    "freshOriginalClassificationCount": 6,
-    "hasExpectedTranscriptBlocker": true,
+    "firestaffStateCount": 0,
+    "firestaffViewportHashCount": 0,
+    "freshOriginalClassificationCount": 0,
+    "hasExpectedTranscriptBlocker": false,
     "manifest": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
-    "ok": true,
+    "ok": false,
     "runtimeTranscriptOk": false,
     "runtimeTranscriptProvided": false,
-    "runtimeTranscriptStatus": "not_provided",
-    "status": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE"
+    "runtimeTranscriptStatus": null,
+    "status": null
   },
   "pass609Contract": {
     "currentAttemptNonPromotable": true,
@@ -44,11 +32,18 @@
     "report": "parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md",
     "reportExists": true,
     "sourceLockRowCount": 5,
-    "statusLocked": true,
+    "statusLocked": false,
     "tool": "tools/verify_pass609_dm1_v1_same_viewport_capture_contract.py",
     "toolExists": true
   },
-  "problems": [],
+  "problems": [
+    "pass608 same-viewport blocker manifest is absent or failed",
+    "pass608 blocker status drifted",
+    "Firestaff same-viewport fixture evidence regressed",
+    "fresh original diagnostic no longer records duplicate crop blockers",
+    "pass608 no longer names the missing command/state/redraw transcript blocker",
+    "pass609 same-viewport capture contract is missing or drifted"
+  ],
   "promotionRequires": [
     "one original runtime transcript row with F0380 dequeue/count delta for the sampled route label",
     "matching F0365/F0366 state mutation or source-visible blocked/no-op proof for that row",
@@ -92,5 +87,5 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED"
+  "status": "FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP"
 }

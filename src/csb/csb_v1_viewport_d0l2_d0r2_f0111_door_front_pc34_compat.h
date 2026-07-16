@@ -80,6 +80,23 @@ typedef struct {
     int front_transparent;
 } CSB_V1_D0L2D0R2F0111DoorFrontTracePc34;
 
+typedef struct {
+    int valid;
+    int renderable_from_real_asset;
+    int side;
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int front_bitmap_id;
+    int door_ornament_view;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int transparent_color;
+    unsigned int rear_cell_order;
+    unsigned int front_cell_order;
+    const char *redmcsb_f0111_anchor;
+} CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34;
+
 size_t csb_v1_viewport_d0l2_d0r2_f0111_door_front_spec_count_pc34(void);
 
 const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *
@@ -107,6 +124,17 @@ int csb_v1_viewport_d0l2_d0r2_f0111_door_front_compose_pixel_pc34(
 
 int csb_v1_viewport_d0l2_d0r2_f0111_door_front_is_draw_mutating_pc34(
     const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *spec);
+
+int csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+    const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *spec,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int front_bitmap_id,
+    int door_ornament_view,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d0l2_d0r2_f0111_door_front_source_evidence_pc34(void);
 

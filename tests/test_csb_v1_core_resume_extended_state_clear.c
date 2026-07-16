@@ -51,6 +51,13 @@ int main(void)
     profile.csbwin_extended_hint_key[0] = 0x5au;
     profile.csbwin_extended_level_index_present = 1;
     profile.csbwin_extended_level_dsa_index[2][3] = 77u;
+    profile.csbwin_last_saved_timer_dsa_valid = 1;
+    profile.csbwin_last_saved_timer_dsa_queue_slot = 3u;
+    profile.csbwin_last_saved_timer_dsa_timer_index = 4u;
+    profile.csbwin_last_saved_timer_dsa_id = 7u;
+    profile.csbwin_last_saved_timer_dsa_state_index = 9u;
+    profile.csbwin_last_saved_timer_dsa_column = 2u;
+    profile.csbwin_last_saved_timer_dsa_action_ordinal = 5;
     profile.csbwin_extended_game_info = malloc(4u);
     check(profile.csbwin_extended_game_info != NULL,
           "test owns prior extended game-info allocation");
@@ -86,6 +93,15 @@ int main(void)
               profile.csbwin_extended_game_info_fnv1a == 0u &&
               profile.csbwin_extended_level_index_present == 0 &&
               profile.csbwin_extended_level_dsa_index[2][3] == 0xffffu &&
+              profile.csbwin_last_saved_timer_dsa_valid == 0 &&
+              profile.csbwin_last_saved_timer_dsa_queue_slot ==
+                  CSB_V1_CSBWIN_TIMER_QUEUE_NONE &&
+              profile.csbwin_last_saved_timer_dsa_timer_index ==
+                  CSB_V1_CSBWIN_TIMER_QUEUE_NONE &&
+              profile.csbwin_last_saved_timer_dsa_id == 0xffu &&
+              profile.csbwin_last_saved_timer_dsa_state_index == 0u &&
+              profile.csbwin_last_saved_timer_dsa_column == 0u &&
+              profile.csbwin_last_saved_timer_dsa_action_ordinal == -1 &&
               profile.csbwin_extended_dsa_state.imported_action_count == 0,
           "core-only resume clears stale Extended Features and DSA ownership");
 

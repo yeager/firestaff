@@ -79,6 +79,7 @@ typedef struct {
     void* progressUserData;
     const int* cancelFlag;
     int honorRequestedDataDir;
+    int looseFilesOnly;
 } M12_AssetStatusScanOptions;
 
 typedef struct {
@@ -114,6 +115,11 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
 void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
                               const char* requestedDataDir,
                               const char* gameId);
+void M12_AssetStatus_ScanGameWithOptions(
+    M12_AssetStatus* status,
+    const char* requestedDataDir,
+    const char* gameId,
+    const M12_AssetStatusScanOptions* options);
 const M12_AssetScanProgress* M12_AssetStatus_GetScanProgress(
     const M12_AssetStatus* status);
 void M12_AssetStatus_RequestCancel(M12_AssetStatus* status);

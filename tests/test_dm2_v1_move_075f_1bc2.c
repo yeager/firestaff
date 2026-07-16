@@ -5,6 +5,7 @@
  */
 
 #include "dm2_v1_move_075f_1bc2.h"
+#include "dm2_v1_perform_move.h"
 #include "dm2_v1_world_model.h"
 
 #include <stdint.h>
@@ -185,6 +186,8 @@ static void test_real_dungeon_receipts(void)
     int evaluated = 0;
     int accepted = 0;
     int blocked = 0;
+    int perform_accepted = 0;
+    int perform_blocked = 0;
     int bounded = 1;
 
     if (!load_dungeon(&data, &size, path, sizeof(path))) {
@@ -194,14 +197,17 @@ static void test_real_dungeon_receipts(void)
 
     CHECK(dm2_v1_dungeon_load(&dungeon, data, (int)size) == 0,
           "real DM2 DUNGEON.DAT loads for move target scan");
-    for (int level = 0; level < dungeon.level_count && evaluated < 128; ++level) {
-        for (int y = 0; y < dungeon.level_heights[level] && evaluated < 128; ++y) {
-            for (int x = 0; x < dungeon.level_widths[level] && evaluated < 128; ++x) {
-                for (int dir = 0; dir < 4 && evaluated < 128; ++dir) {
+    for (int level = 0; level < dungeon.level_count && evaluated < 4096; ++level) {
+        for (int y = 0; y < dungeon.level_heights[level] && evaluated < 4096; ++y) {
+            for (int x = 0; x < dungeon.level_widths[level] && evaluated < 4096; ++x) {
+                for (int dir = 0; dir < 4 && evaluated < 4096; ++dir) {
                     DM2_V1_Move075f1bc2Receipt receipt;
                     if (dm2_v1_DM2_move_075f_1bc2_target_receipt(
                             &dungeon, level, x, y, dir, dir, &receipt) &&
                         receipt.source_raw_valid && receipt.target_raw_valid) {
+                        DM2_V1_PerformMoveRequest request;
+                        DM2_V1_PerformMoveReceipt performed;
+
                         ++evaluated;
                         if (receipt.accepted) ++accepted;
                         if (receipt.blocked) ++blocked;
@@ -209,6 +215,38 @@ static void test_real_dungeon_receipts(void)
                             receipt.target_square_type >= DM2_SQUARE_COUNT ||
                             receipt.movement_hash == 0u) {
                             bounded = 0;
+                        }
+                        memset(&request, 0, sizeof(request));
+                        request.runtime_ready = 1;
+                        request.can_move = 1;
+                        request.outdoor = receipt.target_is_outdoor;
+                        request.current_level = receipt.level;
+                        request.from_x = receipt.from_x;
+                        request.from_y = receipt.from_y;
+                        request.from_dir = receipt.from_dir;
+                        request.direction = receipt.move_dir;
+                        request.target_raw_valid = receipt.target_raw_valid;
+                        request.target_raw = receipt.target_raw;
+                        request.target_square_type = receipt.target_square_type;
+                        request.target_is_door = receipt.target_is_door;
+                        request.target_door_state = receipt.target_door_state;
+                        if (dm2_v1_DM2_PERFORM_MOVE_plan(
+                                &request, &performed) &&
+                            performed.valid &&
+                            performed.to_x == receipt.to_x &&
+                            performed.to_y == receipt.to_y &&
+                            performed.target_raw == receipt.target_raw &&
+                            performed.target_square_type ==
+                                receipt.target_square_type &&
+                            performed.movement_hash != 0u) {
+                            if (receipt.accepted && performed.accepted) {
+                                ++perform_accepted;
+                            }
+                            if (receipt.blocked &&
+                                !receipt.target_is_outdoor &&
+                                performed.blocked) {
+                                ++perform_blocked;
+                            }
                         }
                     }
                 }
@@ -219,6 +257,10 @@ static void test_real_dungeon_receipts(void)
     CHECK(bounded, "real move target receipts are bounded");
     CHECK(accepted > 0, "real DM2 DUNGEON.DAT exposes accepted move targets");
     CHECK(blocked > 0, "real DM2 DUNGEON.DAT exposes blocked move targets");
+    CHECK(perform_accepted > 0,
+          "real accepted move targets feed PERFORM_MOVE without fallback");
+    CHECK(perform_blocked > 0,
+          "real blocked move targets feed PERFORM_MOVE without fallback");
     dm2_v1_dungeon_free(&dungeon);
     free(data);
 }

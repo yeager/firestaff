@@ -43,11 +43,14 @@
       "text": "/* Draw creatures */"
     }
   ],
-  "errors": [],
+  "errors": [
+    "missing Firestaff file assets-v2/items/wave1/specs/starter-icons.md",
+    "missing Firestaff file assets-v2/items/wave1/specs/starter-icons.md"
+  ],
   "evidenceImpact": {
     "completionMatrixGap": "test_dm1_v2_item_render_pc34 and item starter manifest existed but were not wired into CTest/source-lock ownership; dm1_v2_item_render_pc34 was still classified as an orphan V2 module.",
     "verifiedCompletionPercent": null
   },
   "scope": "dm1_v2_item_render_pc34 Phase-5 item render source-lock and CTest wiring",
-  "status": "passed"
+  "status": "failed"
 }

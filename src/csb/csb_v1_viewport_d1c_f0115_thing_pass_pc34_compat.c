@@ -8,13 +8,18 @@ enum {
     CSB_ORDER_DOORPASS1_STRIPPED = 0x0021,
     CSB_ORDER_DOORPASS2_STRIPPED = 0x0034,
     CSB_C10_COLOR_FLESH = 10,
+    CSB_NATIVE_OBJECT_GRAPHIC_MIN = 498,
+    CSB_NATIVE_OBJECT_GRAPHIC_MAX = 583,
     CSB_PRESENT = 1,
     CSB_ABSENT = 0
 };
 
 static const char s_source_evidence[] =
-    "CSB V1 D1C F0115 thing-pass contract-only source-lock gate; no "
-    "GRAPHICS.DAT, no DUNGEON.DAT, no real-asset pixels. ReDMCSB "
+    "CSB V1 D1C F0115 thing-pass source-lock gate; the base route stays "
+    "contract-only with no DUNGEON.DAT load and no decoded real-asset pixels, "
+    "while the fail-closed real-asset receipt can bind the D1C pass to native "
+    "object GRAPHICS.DAT entries 498..583 only when the caller supplies real "
+    "DMCSB1 source bytes. ReDMCSB "
     "DUNVIEW.C F0124:7873-7911 makes the D1C door-front BACK pass call "
     "to F0115 before the door frame/door with M606_VIEW_SQUARE_D1C and "
     "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, then lines "
@@ -193,6 +198,59 @@ int csb_v1_viewport_d1c_f0115_decode_order_pc34(
     }
 
     *out_decoded = decoded;
+    return 1;
+}
+
+int csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_D1CF0115ThingPassPc34 *pass,
+    int source_graphics_dat_bound,
+    int native_object_family_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34){0};
+    }
+    if (!pass || !out_receipt || !source_graphics_dat_bound ||
+        !native_object_family_bound || !no_synthetic_pixels ||
+        !no_fallback_visuals ||
+        source_graphics_item_index < CSB_NATIVE_OBJECT_GRAPHIC_MIN ||
+        source_graphics_item_index > CSB_NATIVE_OBJECT_GRAPHIC_MAX ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        pass->d1c_view_square != CSB_D1C_VIEW_SQUARE ||
+        pass->cell_count != 2 || !pass->object_pass_first ||
+        !pass->item_row_guard || !pass->c10_transparency) {
+        return 0;
+    }
+
+    receipt = (CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_PRESENT;
+    receipt.door_pass = pass->door_pass;
+    receipt.d1c_view_square = pass->d1c_view_square;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.native_object_family_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.native_object_graphic_min = CSB_NATIVE_OBJECT_GRAPHIC_MIN;
+    receipt.native_object_graphic_max = CSB_NATIVE_OBJECT_GRAPHIC_MAX;
+    receipt.order_word = pass->order_word;
+    receipt.order_after_marker = pass->order_after_marker;
+    receipt.expected_door_pass = pass->expected_door_pass;
+    receipt.c10_transparency = pass->c10_transparency;
+    receipt.redmcsb_call_anchor = pass->redmcsb_call_anchor;
+    receipt.redmcsb_order_anchor = pass->redmcsb_order_anchor;
+    *out_receipt = receipt;
     return 1;
 }
 

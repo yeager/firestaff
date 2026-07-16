@@ -6,6 +6,9 @@
 
 #include "dm1_v1_resurrection_pc34_compat.h"
 
+#include <stddef.h>
+#include <string.h>
+
 /* -------- Small math helpers (same pattern as other phases) --------- */
 
 static int16_t max_i16(int16_t a, int16_t b) {
@@ -304,6 +307,77 @@ CandidatePanelResult_Compat F0867_RESURRECTION_ProcessCandidatePanelCommand_Comp
     return out;
 }
 
+HocMirrorCandidateSelectionReceipt_Compat
+F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+    const ChampionPortraitClickInput_Compat* click,
+    int originalChampionRecordAvailable,
+    int c026PortraitAtlasAvailable,
+    int candidatePanelAlreadyActive)
+{
+    HocMirrorCandidateSelectionReceipt_Compat out;
+    CandidateChampionAddResult_Compat routed;
+
+    memset(&out, 0, sizeof(out));
+    if (!click || candidatePanelAlreadyActive ||
+        !originalChampionRecordAvailable || !c026PortraitAtlasAvailable) {
+        return out;
+    }
+
+    routed = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(click);
+    if (!routed.triggersCandidateAdd) {
+        return out;
+    }
+
+    out.valid = 1;
+    out.triggersCandidateAdd = 1;
+    out.mirrorOrdinal = routed.championPortraitIndex;
+    out.candidateChampionIndex = routed.candidateChampionIndex;
+    out.candidateChampionOrdinal = routed.candidateChampionOrdinal;
+    out.partyChampionCountBefore = click->partyChampionCount;
+    out.partyChampionCountAfter = routed.nextPartyChampionCount;
+    out.setLeaderToFirstChampion = routed.setLeaderToFirstChampion;
+    out.requiresOriginalChampionRecord = 1;
+    out.requiresC026PortraitAtlas = 1;
+    out.opensCandidatePanel = 1;
+    return out;
+}
+
+HocMirrorCandidateFinalizeReceipt_Compat
+F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+    CandidatePanelState_Compat state,
+    int16_t command,
+    int renameAccepted)
+{
+    HocMirrorCandidateFinalizeReceipt_Compat out;
+    CandidatePanelResult_Compat panel;
+
+    memset(&out, 0, sizeof(out));
+    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+        state, command);
+    if (!panel.valid) {
+        return out;
+    }
+    if (command == DM1_COMMAND_REINCARNATE && !renameAccepted) {
+        out.renameRequiredBeforeFinalize = 1;
+        out.candidateChampionIndex = panel.candidateChampionIndex;
+        out.nextPartyChampionCount = panel.nextPartyChampionCount;
+        out.nextCandidateChampionOrdinal = state.candidateChampionOrdinal;
+        return out;
+    }
+
+    out.valid = 1;
+    out.cancelled = panel.cancelled;
+    out.resurrected = panel.resurrected;
+    out.reincarnated = panel.reincarnated;
+    out.renameRequiredBeforeFinalize = 0;
+    out.candidateChampionIndex = panel.candidateChampionIndex;
+    out.nextPartyChampionCount = panel.nextPartyChampionCount;
+    out.nextCandidateChampionOrdinal = panel.nextCandidateChampionOrdinal;
+    out.disablesMirrorSensor = panel.disablesMirrorSensor;
+    out.requiresFirstMirrorSensorOwner = panel.disablesMirrorSensor;
+    return out;
+}
+
 /* ================================================================
  *  F0868: Vi altar full-cycle transition
  *  Source chain:
@@ -418,6 +492,87 @@ DecodedChampionValueResult_Compat F0869_RESURRECTION_DecodeChampionValue_Compat(
     return out;
 }
 
+static int copy_materialized_text_pc34(
+    const char *source,
+    size_t sourceLength,
+    char *destination,
+    size_t destinationCapacity)
+{
+    if (!source || !destination || sourceLength == 0 ||
+        sourceLength + 1u > destinationCapacity) {
+        return 0;
+    }
+    memcpy(destination, source, sourceLength);
+    destination[sourceLength] = '\0';
+    return 1;
+}
+
+int dm1_v1_resurrection_materialize_candidate_text_stats_pc34(
+    const char *encodedName,
+    size_t encodedNameLength,
+    const char *encodedTitle,
+    size_t encodedTitleLength,
+    const char *encodedHealth,
+    const char *encodedStamina,
+    const char *encodedMana,
+    const char *encodedStatistics,
+    size_t encodedStatisticsLength,
+    int sourceBytesProven,
+    char *outName,
+    size_t outNameCapacity,
+    char *outTitle,
+    size_t outTitleCapacity,
+    uint16_t outVitals[3],
+    uint16_t outStatistics[7])
+{
+    DecodedChampionValueResult_Compat decodedHealth;
+    DecodedChampionValueResult_Compat decodedStamina;
+    DecodedChampionValueResult_Compat decodedMana;
+    uint16_t decodedStatistics[7];
+    size_t statisticIndex;
+
+    if (!sourceBytesProven || !encodedHealth || !encodedStamina ||
+        !encodedMana || !encodedStatistics || !outVitals || !outStatistics ||
+        encodedStatisticsLength != 14u) {
+        return 0;
+    }
+
+    decodedHealth = F0869_RESURRECTION_DecodeChampionValue_Compat(
+        encodedHealth, 4);
+    decodedStamina = F0869_RESURRECTION_DecodeChampionValue_Compat(
+        encodedStamina, 4);
+    decodedMana = F0869_RESURRECTION_DecodeChampionValue_Compat(
+        encodedMana, 4);
+    if (!decodedHealth.valid || !decodedStamina.valid || !decodedMana.valid) {
+        return 0;
+    }
+
+    for (statisticIndex = 0; statisticIndex < 7u; ++statisticIndex) {
+        DecodedChampionValueResult_Compat decoded =
+            F0869_RESURRECTION_DecodeChampionValue_Compat(
+                encodedStatistics + statisticIndex * 2u, 2);
+        if (!decoded.valid) {
+            return 0;
+        }
+        decodedStatistics[statisticIndex] = decoded.value;
+    }
+
+    if (!copy_materialized_text_pc34(encodedName, encodedNameLength,
+                                     outName, outNameCapacity) ||
+        !copy_materialized_text_pc34(encodedTitle, encodedTitleLength,
+                                     outTitle, outTitleCapacity)) {
+        return 0;
+    }
+
+    outVitals[0] = decodedHealth.value;
+    outVitals[1] = decodedStamina.value;
+    outVitals[2] = decodedMana.value;
+    for (statisticIndex = 0; statisticIndex < 7u; ++statisticIndex) {
+        outStatistics[statisticIndex] = decodedStatistics[statisticIndex];
+    }
+    return 1;
+}
+
 ResetDataToStartGamePlan_Compat F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(
     const ResetDataToStartGameInput_Compat* in)
 {
@@ -482,6 +637,8 @@ ResetDataToStartGamePlan_Compat F0870_RESURRECTION_ResetDataToStartGamePlan_Comp
 const char* dm1_v1_resurrection_GetEvidence(void) {
     return "REVIVE.C:F0280-F0283 resurrection altar processing, "
            "REVIVE.C:F0279:11-45 A..P nibble decode for mirror health/stamina/mana/stat values, "
+           "REVIVE.C:F0280 text/stat materialization consumes caller-owned "
+           "source-proven candidate text and A..P encoded vital/stat fields, "
            "C080->CLIKVIEW.C:F0377->F0372->MOVESENS.C:F0275 C127->F0280 candidate path; "
            "bones->champion, reincarnation stat halving (MEDIA265_S20E). "
            "CHAMPRST.C:F0278 reset-to-start-game leader-hand, champion dirty-attribute clear, "

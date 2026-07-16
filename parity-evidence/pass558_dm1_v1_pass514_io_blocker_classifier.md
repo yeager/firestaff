@@ -17,7 +17,7 @@ pass514/pass556/pass557 evidence chain incomplete
 
 ## Evidence chain
 
-- pass514 status: BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380
+- pass514 status: BLOCKED_PASS514_UNIFIED_RUNTIME_TRANSCRIPT_INCOMPLETE
 - pass550 status: None
 - pass556 status: None
 - pass557 status: None

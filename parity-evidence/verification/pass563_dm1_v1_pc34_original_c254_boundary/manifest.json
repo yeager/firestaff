@@ -1,7 +1,7 @@
 {
   "branch": "main",
   "decision": "Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.",
-  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
+  "head": "c857febe309b9a28531a7fe1eaa3e6a69069f439",
   "nonClaims": [
     "no new original runtime capture",
     "no pixel parity promotion",
@@ -44,24 +44,24 @@
   "originalRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
   "passChain": {
     "pass514": {
-      "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+      "blocker": "unified original PC/I34E transcript incomplete; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
       "decision": null,
       "path": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
       "present": true,
       "proofPredicates": {
         "captureAttemptedThisRun": false,
         "dispatchReached": false,
-        "f0361QueueCountPathAlreadyProven": true,
+        "f0361QueueCountPathAlreadyProven": false,
         "f0380QueuePositiveBeforePop": false,
-        "f0380ReachedInN2DebuggerPath": true,
+        "f0380ReachedInN2DebuggerPath": false,
         "keyboardProducerEntryHit": false,
         "prerequisitesOk": true,
         "queueCountWriteObserved": false,
-        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
-        "routeInputAfterArmingSucceeded": true,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": false,
+        "routeInputAfterArmingSucceeded": false,
         "sourceAuditOk": true
       },
-      "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380"
+      "status": "BLOCKED_PASS514_UNIFIED_RUNTIME_TRANSCRIPT_INCOMPLETE"
     },
     "pass558": {
       "blocker": null,
@@ -69,11 +69,11 @@
       "path": "parity-evidence/verification/pass558_dm1_v1_pass514_io_blocker_classifier/manifest.json",
       "present": true,
       "proofPredicates": {
-        "pass514F0380Reached": true,
-        "pass514InputDeliveredButEmptyF0380": true,
+        "pass514F0380Reached": false,
+        "pass514InputDeliveredButEmptyF0380": false,
         "pass514ManifestPresent": true,
         "pass514QueueCountWriteMissing": true,
-        "pass514RouteInputAfterArmingSucceeded": true,
+        "pass514RouteInputAfterArmingSucceeded": false,
         "pass556F0380ReachedAfterRouteInput": false,
         "pass556IoDriverSlotsResolved": false,
         "pass556ManifestPresent": false,
@@ -133,14 +133,14 @@
   },
   "proofPredicates": {
     "originalPc34PayloadOk": true,
-    "pass514EmptyF0380BlockerPresent": true,
+    "pass514EmptyF0380BlockerPresent": false,
     "pass558IoBoundaryClassified": false,
     "pass560C254RuntimeMissing": true,
     "pass562ProbeContractNamesSlots": true,
     "pass562SelectedC254SlotDecode": true,
     "sourceAuditOk": true
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/Documents/Firestaff",
   "schema": "pass563_dm1_v1_pc34_original_c254_boundary.v1",
   "sourceAudit": [
     {
@@ -278,5 +278,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE",
-  "timestampUtc": "2026-06-25T21:16:35.835291+00:00"
+  "timestampUtc": "2026-07-16T19:11:57.744674+00:00"
 }

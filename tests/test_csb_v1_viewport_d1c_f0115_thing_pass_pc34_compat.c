@@ -1,6 +1,7 @@
 #include "firestaff/csb/v1/viewport/d1c_f0115_thing_pass_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static const char *A_F0124 =
@@ -52,6 +53,92 @@ static int expect_contains(const char *label, const char *haystack,
     return expect_int(label,
                       haystack && needle && strstr(haystack, needle) != 0,
                       1, anchor);
+}
+
+static unsigned read_be16(const unsigned char *p)
+{
+    return ((unsigned)p[0] << 8) | (unsigned)p[1];
+}
+
+static uint32_t fnv1a32(const unsigned char *data, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int read_real_graphics_item_hash(const char *path,
+                                        unsigned item_index,
+                                        size_t *out_size,
+                                        uint32_t *out_hash)
+{
+    FILE *fp;
+    unsigned char header[4];
+    unsigned char *table = NULL;
+    unsigned char *payload = NULL;
+    unsigned count;
+    size_t table_bytes;
+    size_t data_offset;
+    size_t payload_offset;
+    size_t payload_size;
+    unsigned i;
+    int ok = 0;
+
+    if (!path || !out_size || !out_hash) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(header, 1u, sizeof(header), fp) != sizeof(header)) {
+        fclose(fp);
+        return 0;
+    }
+    if (read_be16(header) != 0x8001u) {
+        fclose(fp);
+        return 0;
+    }
+    count = read_be16(header + 2u);
+    if (count == 0u || item_index >= count || count > 2048u) {
+        fclose(fp);
+        return 0;
+    }
+
+    table_bytes = (size_t)count * 4u;
+    table = (unsigned char *)malloc(table_bytes);
+    if (!table || fread(table, 1u, table_bytes, fp) != table_bytes) {
+        free(table);
+        fclose(fp);
+        return 0;
+    }
+
+    data_offset = 4u + table_bytes;
+    payload_offset = data_offset;
+    for (i = 0; i < item_index; ++i) {
+        payload_offset += read_be16(table + (size_t)i * 2u);
+    }
+    payload_size = read_be16(table + (size_t)item_index * 2u);
+    if (payload_size == 0u ||
+        read_be16(table + (size_t)count * 2u + (size_t)item_index * 2u) == 0u ||
+        fseek(fp, (long)payload_offset, SEEK_SET) != 0) {
+        free(table);
+        fclose(fp);
+        return 0;
+    }
+
+    payload = (unsigned char *)malloc(payload_size);
+    if (payload &&
+        fread(payload, 1u, payload_size, fp) == payload_size) {
+        *out_size = payload_size;
+        *out_hash = fnv1a32(payload, payload_size);
+        ok = *out_hash != 0u;
+    }
+    free(payload);
+    free(table);
+    fclose(fp);
+    return ok;
 }
 
 static int test_contract(void)
@@ -326,9 +413,11 @@ static int test_evidence_strings(void)
         csb_v1_viewport_d1c_f0115_thing_pass_source_evidence_pc34();
 
     ok &= expect_contains("evidence.contract_only", e, "contract-only", A_F0124);
-    ok &= expect_contains("evidence.no_graphics", e, "no GRAPHICS.DAT", A_F0124);
+    ok &= expect_contains("evidence.real_graphics", e, "real-asset receipt",
+                          A_F0124);
+    ok &= expect_contains("evidence.object_family", e, "498..583", A_F0115_OBJECT);
     ok &= expect_contains("evidence.no_dungeon", e, "no DUNGEON.DAT", A_F0124);
-    ok &= expect_contains("evidence.no_pixels", e, "no real-asset pixels",
+    ok &= expect_contains("evidence.no_pixels", e, "no decoded real-asset pixels",
                           A_F0124);
     ok &= expect_contains("evidence.f0124.back", e, "7873-7911", A_F0124);
     ok &= expect_contains("evidence.f0124.front", e, "7910-7937", A_F0124);
@@ -357,6 +446,96 @@ static int test_evidence_strings(void)
     return ok;
 }
 
+static int test_real_graphics_dat_object_receipts(void)
+{
+    int ok = 1;
+    const char *path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    const int graphic_indices[2] = { 498, 583 };
+
+    if (!path || !path[0]) {
+        path = "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
+    }
+
+    for (size_t i = 0; i < csb_v1_viewport_d1c_f0115_thing_pass_count_pc34(); ++i) {
+        const CSB_V1_D1CF0115ThingPassPc34 *p =
+            csb_v1_viewport_d1c_f0115_thing_pass_at_pc34(i);
+        CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34 receipt;
+        size_t payload_size = 0u;
+        uint32_t payload_hash = 0u;
+        char label[96];
+        int graphic_index = graphic_indices[i];
+
+        snprintf(label, sizeof(label), "real.pass%zu.hash.read", i);
+        ok &= expect_int(label,
+                         read_real_graphics_item_hash(path,
+                             (unsigned)graphic_index,
+                             &payload_size, &payload_hash),
+                         1, "DMCSB1 real GRAPHICS.DAT native object item");
+        snprintf(label, sizeof(label), "real.pass%zu.payload.nonzero", i);
+        ok &= expect_int(label, payload_size > 0u, 1,
+                         "DMCSB1 real GRAPHICS.DAT native object item");
+        snprintf(label, sizeof(label), "real.pass%zu.hash.nonzero", i);
+        ok &= expect_int(label, payload_hash != 0u, 1,
+                         "DMCSB1 real GRAPHICS.DAT native object item");
+
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.ok", i);
+        ok &= expect_int(label,
+            csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+                p, 1, 1, 1, 1, graphic_index, payload_size, payload_hash,
+                &receipt),
+            1, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.valid", i);
+        ok &= expect_int(label, receipt.valid, 1, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.graphic", i);
+        ok &= expect_int(label, receipt.source_graphics_item_index,
+                         graphic_index, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.hash", i);
+        ok &= expect_int(label, receipt.source_payload_hash == payload_hash, 1,
+                         A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.min", i);
+        ok &= expect_int(label, receipt.native_object_graphic_min, 498,
+                         A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.max", i);
+        ok &= expect_int(label, receipt.native_object_graphic_max, 583,
+                         A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.no_synth", i);
+        ok &= expect_int(label, receipt.no_synthetic_pixels, 1, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.receipt.no_fallback", i);
+        ok &= expect_int(label, receipt.no_fallback_visuals, 1, A_F0115_OBJECT);
+
+        snprintf(label, sizeof(label), "real.pass%zu.reject.no_source", i);
+        ok &= expect_int(label,
+            csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+                p, 0, 1, 1, 1, graphic_index, payload_size, payload_hash,
+                &receipt),
+            0, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.reject.outside_family", i);
+        ok &= expect_int(label,
+            csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+                p, 1, 1, 1, 1, 584, payload_size, payload_hash, &receipt),
+            0, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.reject.synthetic", i);
+        ok &= expect_int(label,
+            csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+                p, 1, 1, 0, 1, graphic_index, payload_size, payload_hash,
+                &receipt),
+            0, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.reject.fallback", i);
+        ok &= expect_int(label,
+            csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+                p, 1, 1, 1, 0, graphic_index, payload_size, payload_hash,
+                &receipt),
+            0, A_F0115_OBJECT);
+        snprintf(label, sizeof(label), "real.pass%zu.reject.zero_hash", i);
+        ok &= expect_int(label,
+            csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
+                p, 1, 1, 1, 1, graphic_index, payload_size, 0u, &receipt),
+            0, A_F0115_OBJECT);
+    }
+
+    return ok;
+}
+
 int main(void)
 {
     int ok = 1;
@@ -370,9 +549,10 @@ int main(void)
     ok &= test_pass_specs();
     ok &= test_f0115_draw_contract();
     ok &= test_decode_orders();
+    ok &= test_real_graphics_dat_object_receipts();
     ok &= test_evidence_strings();
 
-    ok &= expect_int("assertion_count_at_least_80", g_assertions >= 80, 1,
+    ok &= expect_int("assertion_count_at_least_110", g_assertions >= 110, 1,
                      A_F0115_ORDER);
     printf("assertionCount=%d\n", g_assertions);
     if (ok) {

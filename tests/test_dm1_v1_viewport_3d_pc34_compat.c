@@ -4258,9 +4258,14 @@ static void test_primary_side_wall_max_forward_contract(void)
 static void test_d2_side_wall_backing_crop_contract(void)
 {
     const int visible[3] = {1, 1, 1};
+    const int side_blocked_at_d1[3] = {0, 1, 1};
     DM1_ViewportLaneVisibilityReceiptPc34 visibility =
         dm1_viewport_3d_lane_visibility_from_cells_pc34(
             visible, visible, visible, visible, visible);
+    DM1_ViewportLaneVisibilityReceiptPc34 blocked_visibility =
+        dm1_viewport_3d_lane_visibility_from_cells_pc34(
+            visible, visible, visible, side_blocked_at_d1,
+            side_blocked_at_d1);
     DM1_ViewportSideWallHostReceiptPc34 receipt;
     const DM1_ViewSquareIndex squares[2] = {
         DM1_VIEW_SQUARE_D2L, DM1_VIEW_SQUARE_D2R
@@ -4283,6 +4288,80 @@ static void test_d2_side_wall_backing_crop_contract(void)
                   receipt.material.expected_width, 78);
         check_int("F0119.F0120.d2_side_backing_height",
                   receipt.material.expected_height, 74);
+    }
+    /* Same-lane D1 occupancy is an occlusion rule for later floor/content
+     * passes, not for the F0128 side-wall material pass. ReDMCSB draws the
+     * D2 side wall first and lets the nearer D1 panel overpaint it. */
+    for (i = 0; i < sizeof(squares) / sizeof(squares[0]); ++i) {
+        memset(&receipt, 0, sizeof(receipt));
+        check_int("F0119.F0120.d2_side_receipt_with_d1_side_block",
+                  dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+                      squares[i], 0, false, true, false, 3,
+                      &blocked_visibility, &receipt), 1);
+        check_int("F0119.F0120.d2_side_draw_with_d1_side_block",
+                  receipt.draw_wall ? 1 : 0, 1);
+        check_int("F0119.F0120.d2_side_zone_with_d1_side_block",
+                  receipt.pc34_zone,
+                  squares[i] == DM1_VIEW_SQUARE_D2L ?
+                      DM1_PC34_ZONE_WALL_D2L : DM1_PC34_ZONE_WALL_D2R);
+    }
+}
+
+static void test_f0128_d0_d3_wall_material_renderplan_order(void)
+{
+    static const struct {
+        size_t draw_index;
+        DM1_ViewSquareIndex square;
+        uint16_t zone;
+        int rel_forward;
+        int rel_side;
+        int center_wall;
+    } expected[] = {
+        { 3,  DM1_VIEW_SQUARE_D3L2, DM1_PC34_ZONE_WALL_D3L2, 3, -2, 0 },
+        { 4,  DM1_VIEW_SQUARE_D3R2, DM1_PC34_ZONE_WALL_D3R2, 3,  2, 0 },
+        { 5,  DM1_VIEW_SQUARE_D3L,  DM1_PC34_ZONE_WALL_D3L,  3, -1, 0 },
+        { 6,  DM1_VIEW_SQUARE_D3R,  DM1_PC34_ZONE_WALL_D3R,  3,  1, 0 },
+        { 7,  DM1_VIEW_SQUARE_D3C,  DM1_PC34_ZONE_WALL_D3C,  3,  0, 1 },
+        { 8,  DM1_VIEW_SQUARE_D2L2, DM1_PC34_ZONE_WALL_D2L2, 2, -2, 0 },
+        { 9,  DM1_VIEW_SQUARE_D2R2, DM1_PC34_ZONE_WALL_D2R2, 2,  2, 0 },
+        { 10, DM1_VIEW_SQUARE_D2L,  DM1_PC34_ZONE_WALL_D2L,  2, -1, 0 },
+        { 11, DM1_VIEW_SQUARE_D2R,  DM1_PC34_ZONE_WALL_D2R,  2,  1, 0 },
+        { 12, DM1_VIEW_SQUARE_D2C,  DM1_PC34_ZONE_WALL_D2C,  2,  0, 1 },
+        { 13, DM1_VIEW_SQUARE_D1L,  DM1_PC34_ZONE_WALL_D1L,  1, -1, 0 },
+        { 14, DM1_VIEW_SQUARE_D1R,  DM1_PC34_ZONE_WALL_D1R,  1,  1, 0 },
+        { 15, DM1_VIEW_SQUARE_D1C,  DM1_PC34_ZONE_WALL_D1C,  1,  0, 1 },
+        { 16, DM1_VIEW_SQUARE_D0L,  DM1_PC34_ZONE_WALL_D0L,  0, -1, 0 },
+        { 17, DM1_VIEW_SQUARE_D0R,  DM1_PC34_ZONE_WALL_D0R,  0,  1, 0 },
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        const DM1_ViewportDrawStep *step =
+            dm1_viewport_3d_get_draw_order_step(expected[i].draw_index);
+        const DM1_ViewportWallDrawSpec *spec;
+        char id[128];
+
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.step", i);
+        check_nonnull(id, step);
+        if (!step) {
+            continue;
+        }
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.draw_square", i);
+        check_int(id, (int)step->square, (int)expected[i].square);
+        spec = dm1_viewport_3d_get_wall_draw_spec_for_square(step->square);
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.spec", i);
+        check_nonnull(id, spec);
+        if (!spec) {
+            continue;
+        }
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.zone", i);
+        check_int(id, spec->pc34_zone, expected[i].zone);
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.rel_forward", i);
+        check_int(id, spec->runtime_rel_forward, expected[i].rel_forward);
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.rel_side", i);
+        check_int(id, spec->runtime_rel_side, expected[i].rel_side);
+        snprintf(id, sizeof(id), "F0128.wall_renderplan.%zu.center", i);
+        check_int(id, spec->center_wall ? 1 : 0, expected[i].center_wall);
     }
 }
 
@@ -4622,6 +4701,7 @@ int main(void)
     test_f0115_object_zone_contract();
     test_primary_side_wall_max_forward_contract();
     test_d2_side_wall_backing_crop_contract();
+    test_f0128_d0_d3_wall_material_renderplan_order();
     test_f0128_parity_predicate_contract();
     test_center_lane_blocking_contract();
     test_side_lane_clear_contract();

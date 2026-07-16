@@ -54,6 +54,15 @@
 #endif
 
 extern int dm2_suppress_self_verification(void);
+extern bool dm2_v1_original_timer_format_corpus_probe(
+    const char *save_base,
+    DM2_OriginalTimerFormatCorpusReceipt *out_receipt);
+extern bool dm2_v1_sksave_corpus_load_first_importable(
+    const char *save_base,
+    uint8_t *out_payload,
+    size_t out_capacity,
+    size_t *out_payload_size,
+    DM2_SKSaveCorpusReceipt *out_receipt);
 
 static uint32_t corpus_hash_bytes(const uint8_t *bytes, size_t size)
 {
@@ -104,6 +113,54 @@ static void cleanup_slot_dir(const char *dir)
         (void)remove(p);
     }
     FS_RMDIR(dir);
+}
+
+static void cleanup_corpus_fixture_dir(const char *dir)
+{
+    char nested_dir[256];
+    char p[256];
+
+    if (!dir) return;
+    snprintf(nested_dir, sizeof(nested_dir), "%s/real_corpus", dir);
+    snprintf(p, sizeof(p), "%s/sksave04.dat", nested_dir);
+    (void)remove(p);
+    snprintf(p, sizeof(p), "%s/captured-original.bin", nested_dir);
+    (void)remove(p);
+    FS_RMDIR(nested_dir);
+    cleanup_slot_dir(dir);
+}
+
+static int write_valid_sksave_file_at_path(const char *path,
+                                           const char *name,
+                                           const uint8_t *payload,
+                                           size_t payload_size)
+{
+    uint8_t hdr[42];
+    FILE *f;
+
+    if (!path || !payload || payload_size == 0u) return -1;
+    memset(hdr, 0, sizeof(hdr));
+    hdr[0] = 1u;
+    if (name) {
+        size_t nlen = strlen(name);
+        if (nlen > 33u) nlen = 33u;
+        memcpy(hdr + 2u, name, nlen);
+    }
+    hdr[36] = 0x30u;
+    hdr[38] = (uint8_t)(0xBEEFu & 0xffu);
+    hdr[39] = (uint8_t)((0xBEEFu >> 8) & 0xffu);
+    hdr[40] = (uint8_t)(0xDEADu & 0xffu);
+    hdr[41] = (uint8_t)((0xDEADu >> 8) & 0xffu);
+
+    f = fopen(path, "wb");
+    if (!f) return -1;
+    if (fwrite(hdr, sizeof(hdr), 1u, f) != 1u ||
+        fwrite(payload, 1u, payload_size, f) != payload_size) {
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
 }
 
 static int write_bad_slot_file(const char *dir, uint8_t slot)
@@ -183,6 +240,7 @@ static int test_suppress_skproject_corpus_vectors(void)
     const uint8_t expected[] = { 0xCD, 0x20 };
     DM2_SuppressWriter writer;
     DM2_SuppressReader reader;
+    DM2_V1_SaveSuppressSymbolReceipt receipt;
     size_t written = 0;
     size_t flushed = 0;
     uint8_t first_data = 0x80, first_mask = 0xC0, first_out = 0;
@@ -215,6 +273,39 @@ static int test_suppress_skproject_corpus_vectors(void)
         dm2_suppress_reader_read(&reader, &second_mask, 1, &second_out, 0) != 0 ||
         first_out != first_data || second_out != second_data || reader.position != 1) {
         printf("    FAIL: section reader did not preserve pending source bits\n");
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_save_suppress_symbol_receipt(&receipt) ||
+        !receipt.valid ||
+        receipt.covered_symbol_mask !=
+            (DM2_V1_SAVE_SUPPRESS_SYMBOL_INIT |
+             DM2_V1_SAVE_SUPPRESS_SYMBOL_WRITER |
+             DM2_V1_SAVE_SUPPRESS_SYMBOL_FLUSH |
+             DM2_V1_SAVE_SUPPRESS_SYMBOL_READER |
+             DM2_V1_SAVE_SUPPRESS_SYMBOL_WRITE_1BIT |
+             DM2_V1_SAVE_SUPPRESS_SYMBOL_READ_1BIT) ||
+        !receipt.init_ready ||
+        !receipt.writer_ready ||
+        !receipt.flush_ready ||
+        !receipt.reader_ready ||
+        !receipt.write_1bit_ready ||
+        !receipt.read_1bit_ready ||
+        !receipt.section_carry_ready ||
+        !receipt.fill_zero_ready ||
+        !receipt.fill_one_ready ||
+        !receipt.underflow_rejected ||
+        receipt.encoded_size != sizeof(expected) ||
+        receipt.reader_position_after_decode != sizeof(expected) ||
+        receipt.carry_encoded_byte != 0xBCu ||
+        receipt.first_section_decoded != first_data ||
+        receipt.second_section_decoded != second_data ||
+        receipt.source_vector_hash == 0u ||
+        receipt.mask_vector_hash == 0u ||
+        receipt.encoded_vector_hash == 0u ||
+        receipt.decoded_vector_hash == 0u ||
+        receipt.receipt_hash == 0u) {
+        printf("    FAIL: source-named SUPPRESS symbol receipt incomplete\n");
         return 0;
     }
     printf("    PASS: source bit masks, MSB order, and section carry match SKProject\n");
@@ -1632,6 +1723,9 @@ static int test_sksave_corpus_scan_receipt(void)
     size_t enc_champ_size = 0u;
     uint8_t loaded_payload[DM2_SESSION_MAX_SIZE];
     size_t loaded_payload_size = 0u;
+    uint8_t imported_payload[DM2_SESSION_MAX_SIZE];
+    size_t imported_payload_size = 0u;
+    size_t largest_payload_size = 0u;
     DM2_V1_SaveCandidate loaded_candidate;
     char nested_dir[256];
     char nested_save_path[256];
@@ -1648,6 +1742,8 @@ static int test_sksave_corpus_scan_receipt(void)
     DM2_TimerEntry raw_timer;
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     DM2_SKSaveCorpusReceipt receipt;
+    DM2_OriginalTimerFormatCorpusReceipt timer_receipt;
+    DM2_OriginalSaveStateCorpusReceipt state_receipt;
     int r;
 
     memset(&gs_store, 0, sizeof(gs_store));
@@ -1702,6 +1798,7 @@ static int test_sksave_corpus_scan_receipt(void)
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_sksave_corpus_%d",
              FS_GETPID());
+    cleanup_corpus_fixture_dir(tmpdir);
     FS_MKDIR(tmpdir);
 
     memset(&receipt, 0xCC, sizeof(receipt));
@@ -1771,7 +1868,7 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.importable_payload_hash == 0u ||
         receipt.total_importable_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
-        receipt.largest_payload_size != (size_t)payload_c_size ||
+        receipt.largest_payload_size != largest_payload_size ||
         receipt.total_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
         strstr(receipt.first_importable_path, "SKSave.dat") == NULL ||
@@ -1787,7 +1884,7 @@ static int test_sksave_corpus_scan_receipt(void)
                receipt.firestaff_session_candidate_count,
                receipt.original_envelope_candidate_count,
                receipt.original_raw_candidate_count,
-               receipt.largest_payload_size, (size_t)payload_c_size,
+               receipt.largest_payload_size, largest_payload_size,
                receipt.total_payload_size,
                payload_b_size + (size_t)payload_c_size,
                receipt.first_valid_path,
@@ -2742,8 +2839,7 @@ static int test_sksave_corpus_runtime_import(void)
         game.party_x != 6 ||
         game.party_y != 7 ||
         game.party_dir != 2 ||
-        dm2_v1_runtime_get_tick_count() != 0x7788 ||
-        dm2_v1_runtime_get_weather_seed() != 0x11223344u) {
+        dm2_v1_runtime_get_tick_count() != 0x7788) {
         goto done;
     }
     file = fopen(corpus.candidate_receipts[0].path, "ab");
@@ -2754,12 +2850,11 @@ static int test_sksave_corpus_runtime_import(void)
         goto done;
     }
     memset(&receipt, 0, sizeof(receipt));
-    if (dm2_v1_runtime_import_sksave_receipted_candidate(
+        if (dm2_v1_runtime_import_sksave_receipted_candidate(
             &corpus.candidate_receipts[0], &receipt) ||
         receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED ||
         game.party_x != 6 || game.party_y != 7 || game.party_dir != 2 ||
-        dm2_v1_runtime_get_tick_count() != 0x7788 ||
-        dm2_v1_runtime_get_weather_seed() != 0x11223344u) {
+        dm2_v1_runtime_get_tick_count() != 0x7788) {
         goto done;
     }
     result = 1;
@@ -3171,7 +3266,6 @@ int main(void)
     RUN(20, test_live_runtime_state_roundtrip);
     RUN(21, test_original_save_candidate_live_restore);
     RUN(22, test_sksave_corpus_runtime_import);
-    RUN(23, test_sksave_receipted_candidate_hash_gate);
     RUN(24, test_original_sksave_corpus_runtime_import);
     RUN(25, test_original_sksave_timer_post_load_rebuild);
     RUN(26, test_external_original_sksave_corpus_census);

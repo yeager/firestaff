@@ -174,6 +174,8 @@ typedef struct {
     uint8_t bits_per_pixel;
     int16_t query_offset_x;
     int16_t query_offset_y;
+    int graphicsset_offset_present;
+    int image_offset_present;
     uint32_t metadata_hash;
 } DM2_V1_GdatImageMetadata;
 #define DM2_V1_GDAT_IMAGE_METADATA_DEFINED 1

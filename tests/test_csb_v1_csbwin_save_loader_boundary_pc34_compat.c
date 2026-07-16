@@ -203,12 +203,12 @@ static size_t append_extended_dsa_fixture(uint8_t *bytes, size_t offset,
     test_write_le32(bytes, offset, 7u); offset += 4u;
     for (i = 0u; i < 80u; ++i) bytes[offset + i] = (uint8_t)('A' + (i % 3u));
     offset += 80u;
-    test_write_le16(bytes, offset, 3u); offset += 2u;
-    bytes[offset++] = 1u;
-    bytes[offset++] = 9u;
-    test_write_le32(bytes, offset, 2u); offset += 4u;
-    test_write_le32(bytes, offset, 0u); offset += 4u;
-    test_write_le32(bytes, offset, 1u); offset += 4u;
+    test_write_le32(bytes, offset, 3u); offset += 4u; /* m_state */
+    test_write_le32(bytes, offset, 1u); offset += 4u; /* m_localState */
+    test_write_le32(bytes, offset, 9u); offset += 4u; /* m_groupID */
+    test_write_le32(bytes, offset, 4u); offset += 4u; /* state slots */
+    test_write_le32(bytes, offset, 0u); offset += 4u; /* first displayed state */
+    test_write_le32(bytes, offset, 1u); offset += 4u; /* non-empty states */
     test_write_le32(bytes, offset, 1u); offset += 4u;
     test_write_le32(bytes, offset, 1u); offset += 4u;
     test_write_le32(bytes, offset, 3u); offset += 4u;

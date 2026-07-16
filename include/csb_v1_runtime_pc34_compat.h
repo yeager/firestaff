@@ -95,6 +95,55 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int transfer_only;
+    int stack_core;
+    int requires_runtime_owner;
+    int conditional_core;
+    int arithmetic_core;
+    int variable_core;
+    int timer_core;
+    int message_core;
+    int dungeon_mutation_core;
+    int rollback_guarded;
+    int parameter_count;
+    uint16_t command_count;
+    uint16_t words_consumed;
+    uint16_t stack_depth;
+    uint16_t transfer_count;
+    uint16_t transfer_return_count;
+    uint16_t transfer_frame_push_count;
+    uint16_t transfer_frame_pop_count;
+    uint8_t maximum_subroutine_depth;
+    int next_state;
+    int forced_state;
+    int transfer_final_state;
+    int transfer_returned_by_missing_program;
+    uint16_t timer_scheduled_count;
+    uint8_t last_scheduled_event_type;
+    uint32_t last_scheduled_target_location;
+    uint16_t teleporter_copy_count;
+    uint32_t last_teleporter_copy_source_location;
+    uint32_t last_teleporter_copy_destination_location;
+    uint16_t actuator_copy_count;
+    uint16_t last_actuator_copy_source_thing;
+    uint16_t last_actuator_copy_destination_thing;
+    uint8_t dsa_id;
+    uint32_t state_index;
+    uint32_t column;
+    int action_ordinal;
+    int globals_changed;
+    int saves_disabled_changed;
+    int random_state_changed;
+    int text_message_changed;
+    int party_talents_changed;
+    int party_skill_experience_changed;
+    int expool_changed;
+    int dsa_state_changed;
+    int dungeon_changed;
+} CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34;
+
+typedef struct {
+    int valid;
     int expired;
     int event_count;
     int first_event_index;
@@ -412,6 +461,8 @@ typedef struct {
     uint32_t                csbwin_overlay_palette_tail_fnv1a;
     uint8_t                 csbwin_overlay_palette[CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
     int                     csbwin_saves_disabled;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34
+                            csbwin_last_dsa_execution_receipt;
     uint32_t                csbwin_delete_duplicate_timers;
     uint32_t                csbwin_debugging_data;
     uint32_t                csbwin_csbgraphics_signature_data;
@@ -803,6 +854,34 @@ typedef struct {
     uint32_t input_column;
     int action_ordinal;
 } CSB_V1_RuntimeCSBWinDSATimer6Resolution;
+
+/* Complete runtime receipt for a CSBWin Extended-DSA resume package.  This
+ * does not select an action or construct a save; it proves that the live
+ * profile still owns the authenticated DSA catalog, level index, materialized
+ * TimerQueue events, and, when a saved timer has fired, the exact source
+ * action executed by that timer. */
+typedef struct {
+    int valid;
+    int dsa_catalog_valid;
+    int level_index_valid;
+    int timer_queue_event_chain_valid;
+    int saved_timer_dsa_execution_valid;
+    uint16_t live_timer_event_count;
+    int imported_action_count;
+    uint8_t last_dsa_id;
+    uint32_t last_state_index;
+    uint32_t last_input_column;
+    int last_action_ordinal;
+    uint16_t last_queue_slot;
+    uint16_t last_timer_index;
+} CSB_V1_CSBWinDSARuntimeChainReceipt_PC34;
+
+int csb_v1_runtime_csbwin_dsa_runtime_chain_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 *out_receipt);
+int csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 *out_receipt);
 
 int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     const CSB_V1_RuntimeProfile *profile,

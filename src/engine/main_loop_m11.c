@@ -263,6 +263,34 @@ static void m11_map_presented_game_point_to_source(const M11_GameViewState* game
                                                            y);
 }
 
+static int m11_map_window_pointer_to_game_source(
+    const M11_GameViewState* gameView,
+    int windowX,
+    int windowY,
+    int* outX,
+    int* outY)
+{
+    int framebufferX;
+    int framebufferY;
+
+    if (!gameView || !outX || !outY ||
+        !M11_Render_MapWindowToFramebuffer(windowX, windowY,
+                                           &framebufferX, &framebufferY)) {
+        return 0;
+    }
+    if (!M11_MapPresentedGamePointToSourceForPresentation(
+            gameView->presentationMode,
+            gameView->presentationWidth,
+            gameView->presentationHeight,
+            &framebufferX,
+            &framebufferY)) {
+        return 0;
+    }
+    *outX = framebufferX;
+    *outY = framebufferY;
+    return 1;
+}
+
 static int m11_dm1_v20_presentation_active(const M11_GameViewState* gameView) {
     return gameView &&
         gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
@@ -799,6 +827,8 @@ typedef enum {
     M11_ENTRANCE_COMMAND_CREDITS = ENTRANCE_COMPAT_COMMAND_PATH_CREDITS
 } M11_EntranceCommand;
 
+static int g_m11_intro_delay_fast_forward = 0;
+
 static unsigned int m11_v20_startup_remaining_delay_ms(
     unsigned int source_delay_ms,
     Uint64 presentation_started_ms)
@@ -946,6 +976,7 @@ static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
 }
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
+static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
 static M12_MenuInput m11_next_script_input(const char** cursor);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
@@ -1148,7 +1179,7 @@ static int m11_play_redmcsb_entrance_transition(
             unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
                 command.delay_ms, presentationStartedMs);
             if (delayMs > 0U) {
-                SDL_Delay(delayMs);
+                (void)m11_delay_ms_with_intro_event_pump(delayMs);
             }
         }
         if (M11_Render_PumpEvents()) break;
@@ -1222,6 +1253,9 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
         drained += 1;
     }
     (void)drained;
+    if (g_m11_intro_delay_fast_forward) {
+        return M11_ENTRANCE_COMMAND_ENTER;
+    }
     started = SDL_GetTicks();
 
     for (;;) {
@@ -1360,6 +1394,9 @@ static void m11_swsh_unpack_4bpp_to_indexed(const unsigned char* packed,
 
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
     Uint64 start;
+    if (g_m11_intro_delay_fast_forward) {
+        return M11_Render_PumpEvents();
+    }
     if (delayMs == 0U) {
         return M11_Render_PumpEvents();
     }
@@ -1628,6 +1665,10 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                 &dm1Media, &titleAssetReceipt, sourceStep, &command)) {
             break;
         }
+        if (!V1_TitleFrontend_GetStepPalette(step.kind, &stepPalette) ||
+            stepPalette != command.special_palette) {
+            break;
+        }
         {
             DM1_V2_StartupTitleFilterHandoffReceiptPc34 filterReceipt;
             const int paletteValid = command.special_palette >= 0;
@@ -1648,12 +1689,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * cleared indexed surface to make the hardware-equivalent palette
          * latch visible before waiting. */
         if (command.palette_before_pre_present_delay &&
-            titlePalette != command.special_palette) {
+            titlePalette != stepPalette) {
             presentationStartedMs = SDL_GetTicks();
             if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                             M11_FB_WIDTH,
                                                             M11_FB_HEIGHT,
-                                                            command.special_palette) != M11_RENDER_OK) {
+                                                            stepPalette) != M11_RENDER_OK) {
                 break;
             }
         }
@@ -1880,6 +1921,7 @@ typedef struct M11_DM1StartupHandoffContext {
     M11_GameViewState* gameView;
     uint32_t* idleAccumulatorMs;
     const char* dataDir;
+    int bootProbe;
     DM1_V1_StartupHandoffPreludePlan_PC34 activePreludePlan;
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 activePostLaunchPlan;
     int activePreludePlanValid;
@@ -2136,7 +2178,8 @@ static int m11_dm1_selected_launch_mark_failed(void* user) {
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
-                                     const char* dataDir) {
+                                     const char* dataDir,
+                                     int bootProbe) {
     M11_DM1StartupHandoffContext dm1HandoffContext;
     DM1_V1_StartupHandoffCallbacks_PC34 dm1HandoffCallbacks;
     DM1_V1_StartupHostCallbacks_PC34 dm1HostCallbacks;
@@ -2162,6 +2205,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     dm1HandoffContext.gameView = gameView;
     dm1HandoffContext.dataDir = dataDir;
     dm1HandoffContext.idleAccumulatorMs = idleAccumulatorMs;
+    dm1HandoffContext.bootProbe = bootProbe ? 1 : 0;
     dm1HandoffCallbacks.user = &dm1HandoffContext;
     dm1HandoffCallbacks.begin_prelude_plan =
         m11_dm1_handoff_begin_prelude_plan;
@@ -2206,13 +2250,17 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         return 0;
     }
     if (dm1RouteReceipt.use_dm1_transaction) {
+        int oldFastForward = g_m11_intro_delay_fast_forward;
+        g_m11_intro_delay_fast_forward = bootProbe ? 1 : oldFastForward;
         if (!dm1_v1_startup_execute_selected_launch_transaction_pc34(
                 launchEntry->gameId,
                 &dm1SelectedLaunchCallbacks,
                 &dm1SelectedLaunchResult)) {
+            g_m11_intro_delay_fast_forward = oldFastForward;
             m11_set_launch_failed_message(menuState);
             return 0;
         }
+        g_m11_intro_delay_fast_forward = oldFastForward;
         if (dm1SelectedLaunchResult.runtime_handoff_receipt.handled) {
             return (dm1SelectedLaunchResult.runtime_handoff_receipt
                         .runtime_first_frame_ready ||
@@ -2271,7 +2319,11 @@ static int m11_restart_current_launch(M11_GameViewState* gameView,
     M11_GameView_Shutdown(gameView);
     M11_GameView_Init(gameView);
     menuState->launchRequested = 1;
-    return m11_open_requested_launch(gameView, menuState, idleAccumulatorMs, dataDir);
+    return m11_open_requested_launch(gameView,
+                                     menuState,
+                                     idleAccumulatorMs,
+                                     dataDir,
+                                     0);
 }
 
 int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
@@ -4493,6 +4545,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M12_StartupMenuInitOptions menuInitOptions;
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
+        menuInitOptions.looseFilesOnlyAssetScan = o->bootProbe ? 1 : 0;
         M12_StartupMenu_InitWithOptions(&menuState,
                                         o->dataDir,
                                         o->gameId,
@@ -4628,7 +4681,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
          * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
          * ENTRANCE.C F0441). */
-        if (!m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
+        if (!m11_open_requested_launch(&gameView,
+                                       &menuState,
+                                       &idleAccumulatorMs,
+                                       o->dataDir,
+                                       o->bootProbe)) {
             fprintf(stderr, "firestaff: direct launch failed for --game %s\n", o->gameId);
             runRc = 3;
             goto cleanup;
@@ -4665,7 +4722,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         "firestaff: boot-probe could not read runtime receipt for --game %s\n",
                         o->gameId ? o->gameId : "");
                 runRc = 4;
-                goto cleanup;
+                goto boot_probe_terminal_exit;
             }
             if ((selectedFacts.expected_game_id = o->gameId,
                  selectedFacts.actual_source_id = receipt.sourceId,
@@ -4924,7 +4981,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     runRc = 4;
                 }
             }
-            goto cleanup;
+            goto boot_probe_terminal_exit;
         }
         if (exitAfterLaunch) {
             goto cleanup;
@@ -5019,7 +5076,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (menuState.shouldExit) {
                 break;
             }
-            if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
+            if (m11_open_requested_launch(&gameView,
+                                          &menuState,
+                                          &idleAccumulatorMs,
+                                          o->dataDir,
+                                          0)) {
                 launchedEver = 1;
                 if (gameView.active) {
                     gameFrameNeedsPresent = 1;
@@ -5172,7 +5233,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     if (menuState.shouldExit) {
                         break;
                     }
-                    if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
+                    if (m11_open_requested_launch(&gameView,
+                                                  &menuState,
+                                                  &idleAccumulatorMs,
+                                                  o->dataDir,
+                                                  0)) {
                         launchedEver = 1;
                         if (gameView.active) {
                             gameFrameNeedsPresent = 1;
@@ -5251,5 +5316,15 @@ cleanup:
         free(modernRgba);
     }
     M11_Render_Shutdown();
+    return runRc;
+
+boot_probe_terminal_exit:
+    /* Process-terminal probe path: the printed boot receipt is the contract.
+     * Do not enter live runtime/menu teardown here; DM1 has already reached
+     * runtime and some shutdown paths are intentionally game-loop-owned. */
+    free(launcherFramebuffer);
+    if (modernRgba) {
+        free(modernRgba);
+    }
     return runRc;
 }

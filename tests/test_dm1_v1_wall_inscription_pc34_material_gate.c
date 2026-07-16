@@ -177,6 +177,67 @@ static int verify_fail_closed_clears_stale_receipt(void)
     return 1;
 }
 
+static int verify_selected_wall_does_not_scan_neighbor_text(void)
+{
+    struct DungeonThings_Compat things;
+    unsigned char rawTextString[8];
+    unsigned short textData[1];
+    DM1_V1_WallInscriptionPresentationReceiptPc34 selected;
+    DM1_V1_WallInscriptionPresentationReceiptPc34 world;
+    DM1_V1_ViewportInscriptionReceiptPc34 front;
+    unsigned short text0 =
+        (unsigned short)((THING_TYPE_TEXTSTRING << 10) | 0);
+    unsigned short text1 =
+        (unsigned short)((THING_TYPE_TEXTSTRING << 10) | 1);
+
+    memset(&things, 0, sizeof(things));
+    memset(rawTextString, 0, sizeof(rawTextString));
+    textData[0] = (unsigned short)((0 << 10) | (31 << 5) | 31);
+
+    rawTextString[0] = (unsigned char)(text1 & 0xffu);
+    rawTextString[1] = (unsigned char)(text1 >> 8);
+    rawTextString[2] = 0;
+    rawTextString[3] = 0;
+    rawTextString[4] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawTextString[5] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawTextString[6] = 1;
+    rawTextString[7] = 0;
+
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_TEXTSTRING] = rawTextString;
+    things.thingCounts[THING_TYPE_TEXTSTRING] = 2;
+    things.textData = textData;
+    things.textDataWordCount = 1;
+
+    memset(&selected, 0x5a, sizeof(selected));
+    if (dm1_v1_wall_inscription_presentation_from_selected_wall_pc34(
+            &things, 0, &selected) ||
+        selected.valid) {
+        fprintf(stderr,
+                "F0172 selected hidden TextString scanned neighbor inscription\n");
+        return 0;
+    }
+    memset(&front, 0x5a, sizeof(front));
+    if (!dm1_v1_viewport_inscription_receipt_from_selected_wall_pc34(
+            &things, 0, DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34,
+            0, &front) ||
+        !front.valid || !front.clearPreviousMaterial ||
+        front.drawFrontMaterial || front.frontMaterial.valid) {
+        fprintf(stderr,
+                "F0107 selected front receipt did not fail closed on hidden text\n");
+        return 0;
+    }
+    memset(&world, 0, sizeof(world));
+    if (!dm1_v1_wall_inscription_presentation_from_world_pc34(
+            &things, 0, text0, &world) ||
+        !world.valid || world.textStringIndex != 1 || world.lineCount != 1) {
+        fprintf(stderr,
+                "F0168 world scan no longer finds a real neighbor TextString\n");
+        return 0;
+    }
+    return 1;
+}
+
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -197,6 +258,9 @@ int main(void)
     int result = 1;
 
     if (!verify_fail_closed_clears_stale_receipt()) {
+        return 1;
+    }
+    if (!verify_selected_wall_does_not_scan_neighbor_text()) {
         return 1;
     }
 
@@ -263,6 +327,14 @@ int main(void)
             !frontReceipt.valid || !frontReceipt.clearPreviousMaterial ||
             !frontReceipt.drawFrontMaterial ||
             memcmp(&frontReceipt.frontMaterial, &receipt, sizeof(receipt)) != 0 ||
+            !dm1_v1_viewport_inscription_receipt_from_selected_wall_pc34(
+                &things, textIndex,
+                DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34,
+                0, &frontReceipt) ||
+            !frontReceipt.valid || !frontReceipt.clearPreviousMaterial ||
+            !frontReceipt.drawFrontMaterial ||
+            memcmp(&frontReceipt.frontMaterial, &selectedReceipt,
+                   sizeof(selectedReceipt)) != 0 ||
             !dm1_v1_viewport_inscription_receipt_from_world_pc34(
                 &things, textIndex, firstThing,
                 DM1_V1_INSCRIPTION_PROJECTION_SIDE_OR_DEPTH_PC34,

@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
 Status: `FAIL`
-Generated: `2026-07-04T18:17:50.545170+00:00`
+Generated: `2026-07-16T19:11:49.742940+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -19,14 +19,16 @@ Generated: `2026-07-04T18:17:50.545170+00:00`
   - gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop.
 - `PASS` `pass381_movement_viewport_walls_source_lock` rc=`0`: command queue -> movement/turn state -> viewport wall redraw and presentation source chain
 - `FAIL` `pass423_input_command_movement_pipeline_source_lock` rc=`1`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
-  -   File "/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py", line 128, in main
-  -     tests = [run(cmd) for cmd in TEST_COMMANDS]
-  -              ~~~^^^^^
-  -   File "/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py", line 115, in run
-  -     raise AssertionError(f"command failed {' '.join(cmd)}:\n{proc.stdout[-4000:]}")
-  - AssertionError: command failed cmake --build /Users/bosse/Documents/Firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2:
-  - gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop.
-- `PASS` `pass402_movement_cooldown_order` rc=`0` status `ok`: cooldown ageing before F0380 and no same-tick post-decrement
+  -     firestaff = [verify_firestaff(entry) for entry in FIRESTAFF_EVIDENCE]
+  -                  ~~~~~~~~~~~~~~~~^^^^^^^
+  -   File "/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py", line 108, in verify_firestaff
+  -     require_needles(entry["file"], path.read_text(encoding="utf-8"), entry["needles"])
+  -     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  -   File "/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py", line 83, in require_needles
+  -     raise AssertionError(f"{label} missing {needle!r}")
+  - AssertionError: src/dm1/dm1_v1_movement_command_core_pc34_compat.c missing 'outResult->groupReactionPartyAdjacentRequested = 1;'
+- `FAIL` `pass402_movement_cooldown_order` rc=`1`: cooldown ageing before F0380 and no same-tick post-decrement
+  - missing end of M11_GameView_CastSpell: static void m11_apply_survival_drain
 - `FAIL` `pass406_movement_legality_completion_gate` rc=`1`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
   - FAIL pass406_dm1_v1_movement_legality_completion_gate: [Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_core_pc34_compat'
 - `FAIL` `pass406_game_loop_redraw_cadence` rc=`1`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
@@ -35,15 +37,21 @@ Generated: `2026-07-04T18:17:50.545170+00:00`
 - `FAIL` `pass405_projectile_explosion_layer_occlusion` rc=`1` status `FAIL_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION`: projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards
   - status=FAIL_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION reason=center effect cue: missing 'cell->summary.projectiles > 0'
 - `PASS` `viewport_square_collision_source_lock` rc=`0`: visible viewport cells are map-backed and agree with movement collision square state
-- `PASS` `viewport_field_zone_aspect_clip_gate` rc=`0`: field/teleporter zone/aspect clipping behind nearer blockers
+- `FAIL` `viewport_field_zone_aspect_clip_gate` rc=`1`: field/teleporter zone/aspect clipping behind nearer blockers
+  - FAIL: Firestaff fields: missing kFields table
 - `FAIL` `viewport_palette_source_lock_gate` rc=`1`: single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming
   - V1 viewport palette source-lock gate failed: Firestaff dungeon palette computation: missing 'static const int kLightPowerToAmount[16] = {'
-- `PASS` `pass434_original_viewport_crop_readiness_gate` rc=`0` status `PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`: original viewport crop/source readiness is available
+- `FAIL` `pass434_original_viewport_crop_readiness_gate` rc=`1` status `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`: original viewport crop/source readiness is available
+  - {
+  -   "status": "FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
+  -   "manifest": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
+  -   "report": "parity-evidence/pass434_dm1_v1_original_viewport_crop_readiness_gate.md"
+  - }
 
 ## Expected blockers
 - `CONFIRMED` `pass435_semantic_original_route_readiness_gate` expected `BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY` observed `BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY`: remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven
-  -   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  -   "blockers": [
+  -     "runtime does not prove G0321 stop-wait write",
+  -     "runtime does not prove later F0128 viewport draw after stop-wait",
   -     "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence",
   -     "latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven"
   -   ],

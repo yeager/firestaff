@@ -1,8 +1,8 @@
 # Theron V1 runtime screenshot promotion checklist
 
-Status: `REVIEW_CHECKLIST_NO_ROW_PROMOTED`
+Status: `CONTRACT_DRIFT_FAIL`
 
-Decision: **REVIEW_CHECKLIST_NO_ROW_PROMOTED**
+Decision: **CONTRACT_DRIFT_FAIL**
 
 This is a bounded, machine-checkable companion to the runtime
 screenshot promotion gate. It surfaces the explicit per-row
@@ -36,22 +36,19 @@ contract are satisfied for at least one row.
 
 | Case | Classification | Machine | Reviewer | Items |
 |---|---|---|---|---|
-| canonical_pcengine_root | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=FAIL, tqr_level_load_marker=PASS, semantic_track02_evidence=FAIL, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
-| jp_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=FAIL, tqr_level_load_marker=PASS, semantic_track02_evidence=FAIL, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
-| us_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=FAIL, tqr_level_load_marker=PASS, semantic_track02_evidence=FAIL, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
 
 ## Aggregate
 
-- Decision: **REVIEW_CHECKLIST_NO_ROW_PROMOTED**
+- Decision: **CONTRACT_DRIFT_FAIL**
 - Machine-eligible rows (awaiting reviewer): **0**
 - Reviewer-promoted rows: **0**
-- Ineligible rows: **3**
+- Ineligible rows: **0**
 - Skipped rows (no data on this host): **0**
-- Unique-source-sha256 findings: **1**
-- Contract-drift findings: **0**
+- Unique-source-sha256 findings: **0**
+- Contract-drift findings: **1**
 - Reviewer sign-off file present: **False**
 
-- Reviewer sign-off path: `/Users/bosse/.firestaff/data/theron/promotion_review_state.json`
+- Reviewer sign-off path: `/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json`
 
 ## Public Screenshot Boundary
 

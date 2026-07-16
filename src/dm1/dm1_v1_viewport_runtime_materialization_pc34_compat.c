@@ -129,6 +129,8 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 decision.liveProjectileSubtype = projectile->projectileSubtype;
                 decision.liveProjectileCell = projectile->cell;
                 decision.liveProjectileDirection = projectile->direction;
+                decision.liveProjectileAssociatedThing =
+                    (unsigned short)projectile->reserved1;
             }
         }
     }

@@ -96,14 +96,15 @@
         "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 160, in <module>",
         "    raise SystemExit(main())",
         "                     ~~~~^^",
-        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 128, in main",
-        "    tests = [run(cmd) for cmd in TEST_COMMANDS]",
-        "             ~~~^^^^^",
-        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 115, in run",
-        "    raise AssertionError(f\"command failed {' '.join(cmd)}:\\n{proc.stdout[-4000:]}\")",
-        "AssertionError: command failed cmake --build /Users/bosse/Documents/Firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2:",
-        "gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop.",
-        ""
+        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 127, in main",
+        "    firestaff = [verify_firestaff(entry) for entry in FIRESTAFF_EVIDENCE]",
+        "                 ~~~~~~~~~~~~~~~~^^^^^^^",
+        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 108, in verify_firestaff",
+        "    require_needles(entry[\"file\"], path.read_text(encoding=\"utf-8\"), entry[\"needles\"])",
+        "    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 83, in require_needles",
+        "    raise AssertionError(f\"{label} missing {needle!r}\")",
+        "AssertionError: src/dm1/dm1_v1_movement_command_core_pc34_compat.c missing 'outResult->groupReactionPartyAdjacentRequested = 1;'"
       ],
       "passed": false,
       "returncode": 1,
@@ -118,30 +119,11 @@
       "expectedStatus": null,
       "id": "pass402_movement_cooldown_order",
       "outputTail": [
-        "    \"CLIKMENU.C:F0366 cooldown assignment\": [",
-        "      330,",
-        "      346",
-        "    ],",
-        "    \"COMMAND.C:F0380 movement-disabled gates\": [",
-        "      2095,",
-        "      2100",
-        "    ],",
-        "    \"GAMELOOP.C:disabled tick decrement before F0380\": [",
-        "      150,",
-        "      155,",
-        "      215",
-        "    ],",
-        "    \"MOVESENS.C:F0267 party movement side effects\": [",
-        "      752,",
-        "      775",
-        "    ]",
-        "  },",
-        "  \"status\": \"ok\"",
-        "}"
+        "missing end of M11_GameView_CastSpell: static void m11_apply_survival_drain"
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "ok"
+      "passed": false,
+      "returncode": 1,
+      "status": null
     },
     {
       "cmd": [
@@ -260,23 +242,10 @@
       "expectedStatus": null,
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
-        "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c:17552",
-        "- Firestaff source viewport draw order: /Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c:30835",
-        "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
-        "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
-        "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
-        "- ReDMCSB DUNVIEW.C:6289 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[C14_VIEW_SQUARE_D3L2]], C702_ZONE_WALL_D3L2);",
-        "- ReDMCSB DUNVIEW.C:6831 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M600_VIEW_SQUARE_D3C]], C704_ZONE_WALL_D3C);",
-        "- ReDMCSB DUNVIEW.C:7554 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M607_VIEW_SQUARE_D1L]], C713_ZONE_WALL_D1L);",
-        "- ReDMCSB DUNVIEW.C:8159 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);",
-        "- ReDMCSB F0113 field clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4382",
-        "- ReDMCSB F0791 source-zone bitmap clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:3394",
-        "- ReDMCSB F0635 layout-zone clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C:2052",
-        "- ReDMCSB DEFS wall zones: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
+        "FAIL: Firestaff fields: missing kFields table"
       ],
-      "passed": true,
-      "returncode": 0,
+      "passed": false,
+      "returncode": 1,
       "status": null
     },
     {
@@ -304,14 +273,14 @@
       "id": "pass434_original_viewport_crop_readiness_gate",
       "outputTail": [
         "{",
-        "  \"status\": \"PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS\",",
+        "  \"status\": \"FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS\",",
         "  \"manifest\": \"parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json\",",
         "  \"report\": \"parity-evidence/pass434_dm1_v1_original_viewport_crop_readiness_gate.md\"",
         "}"
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
+      "passed": false,
+      "returncode": 1,
+      "status": "FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
     }
   ],
   "decision": "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
@@ -328,6 +297,11 @@
         "{",
         "  \"status\": \"BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY\",",
         "  \"blockers\": [",
+        "    \"pass434 crop/source readiness is not green\",",
+        "    \"runtime does not prove F0380 command queue hit/pop-load\",",
+        "    \"runtime still does not prove F0365/F0366 command dispatch\",",
+        "    \"runtime does not prove G0321 stop-wait write\",",
+        "    \"runtime does not prove later F0128 viewport draw after stop-wait\",",
         "    \"pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence\",",
         "    \"latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven\"",
         "  ],",
@@ -418,5 +392,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-07-04T18:17:50.545170+00:00"
+  "timestampUtc": "2026-07-16T19:11:49.742940+00:00"
 }

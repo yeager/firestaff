@@ -1566,6 +1566,68 @@ int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+    const DM1_MeleeF0231AftermathApplyPlanPc34* aftermathApplyPlan,
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* out) {
+    const DM1_MeleeF0190MutationDispatchPlanPc34* dispatch;
+    const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan;
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34 stateApply;
+    int attack;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->groupIndex = -1;
+    out->mapIndex = -1;
+    out->mapX = -1;
+    out->mapY = -1;
+    memset(&stateApply, 0, sizeof(stateApply));
+    if (!aftermathApplyPlan || !aftermathApplyPlan->valid) return 0;
+
+    dispatch = &aftermathApplyPlan->mutationDispatchPlan;
+    if (!aftermathApplyPlan->shouldApplyMutationDispatch ||
+        !dispatch->valid ||
+        !dispatch->shouldApplyKilledAllSideEffects ||
+        dispatch->shouldApplyKilledSomeState ||
+        !aftermathApplyPlan->shouldCreateDeathSmoke) {
+        return 1;
+    }
+
+    statePlan = &dispatch->killedAllStatePlan;
+    if (!dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
+            statePlan, &stateApply) ||
+        !stateApply.valid ||
+        !stateApply.shouldUnlinkGroupFromSquare ||
+        !stateApply.shouldRemoveActiveGroupState) {
+        return 1;
+    }
+
+    attack = aftermathApplyPlan->smokeCreateInput.attack;
+    if (aftermathApplyPlan->smokeCreateInput.explosionType !=
+            C040_EXPLOSION_SMOKE ||
+        (attack != 110 && attack != 190 && attack != 255)) {
+        return 1;
+    }
+
+    out->valid = 1;
+    out->shouldPresentSourceSmoke = 1;
+    out->requiresKilledAllMutationFirst = 1;
+    out->shouldCommitKilledAllWorldMutation = 1;
+    out->shouldSuppressReactionEvent = 1;
+    out->shouldSuppressGroupLosMoveAfterDeath = 1;
+    out->groupIndex = stateApply.groupIndex;
+    out->mapIndex = stateApply.mapIndex;
+    out->mapX = stateApply.mapX;
+    out->mapY = stateApply.mapY;
+    out->killedAllStateApplyPlan = stateApply;
+    out->sourceSmokeCreateInput = aftermathApplyPlan->smokeCreateInput;
+
+    /* ReDMCSB: GROUP.C F0190 lines 824-829 completes F0189 group deletion
+     * before lines 907-917 append the C040 death smoke.  The killed-all
+     * branch also suppresses F0231's follow-up C31 reaction, so no later
+     * F0209/LoS group movement may be materialized for that group. */
+    return 1;
+}
+
 int dm1_v1_melee_delete_group_receipt_f0189_pc34(
     const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
     DM1_MeleeF0189DeleteGroupReceiptPc34* out) {

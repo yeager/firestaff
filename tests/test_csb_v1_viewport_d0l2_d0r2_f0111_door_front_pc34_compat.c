@@ -1,6 +1,7 @@
 #include "csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_assertions;
@@ -32,6 +33,92 @@ static void check_contains(const char *id, const char *haystack,
     } else {
         printf("PASS %s contains=%s anchor=%s\n", id, needle, anchor);
     }
+}
+
+static unsigned read_be16(const unsigned char *p)
+{
+    return ((unsigned)p[0] << 8) | (unsigned)p[1];
+}
+
+static uint32_t fnv1a32(const unsigned char *data, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int read_real_graphics_item_hash(const char *path,
+                                        unsigned item_index,
+                                        size_t *out_size,
+                                        uint32_t *out_hash)
+{
+    FILE *fp;
+    unsigned char header[4];
+    unsigned char *table = NULL;
+    unsigned char *payload = NULL;
+    unsigned count;
+    size_t table_bytes;
+    size_t data_offset;
+    size_t payload_offset;
+    size_t payload_size;
+    unsigned i;
+    int ok = 0;
+
+    if (!path || !out_size || !out_hash) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(header, 1u, sizeof(header), fp) != sizeof(header)) {
+        fclose(fp);
+        return 0;
+    }
+    if (read_be16(header) != 0x8001u) {
+        fclose(fp);
+        return 0;
+    }
+    count = read_be16(header + 2u);
+    if (count == 0u || item_index >= count || count > 2048u) {
+        fclose(fp);
+        return 0;
+    }
+
+    table_bytes = (size_t)count * 4u;
+    table = (unsigned char *)malloc(table_bytes);
+    if (!table || fread(table, 1u, table_bytes, fp) != table_bytes) {
+        free(table);
+        fclose(fp);
+        return 0;
+    }
+
+    data_offset = 4u + table_bytes;
+    payload_offset = data_offset;
+    for (i = 0; i < item_index; ++i) {
+        payload_offset += read_be16(table + (size_t)i * 2u);
+    }
+    payload_size = read_be16(table + (size_t)item_index * 2u);
+    if (payload_size == 0u ||
+        read_be16(table + (size_t)count * 2u + (size_t)item_index * 2u) == 0u ||
+        fseek(fp, (long)payload_offset, SEEK_SET) != 0) {
+        free(table);
+        fclose(fp);
+        return 0;
+    }
+
+    payload = (unsigned char *)malloc(payload_size);
+    if (payload &&
+        fread(payload, 1u, payload_size, fp) == payload_size) {
+        *out_size = payload_size;
+        *out_hash = fnv1a32(payload, payload_size);
+        ok = *out_hash != 0u;
+    }
+    free(payload);
+    free(table);
+    fclose(fp);
+    return ok;
 }
 
 static void check_spec_one(
@@ -265,6 +352,89 @@ static void test_composition_and_mutation_guards(void)
              -1, "invalid input guard");
 }
 
+static void test_real_asset_receipt_gate(void)
+{
+    const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *left =
+        csb_v1_viewport_d0l2_d0r2_f0111_door_front_spec_for_side_pc34(1);
+    CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34 receipt;
+
+    CHECK_EQ("real_asset.manual.ok",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 1, 1, 1, 693, 0, 185u, 0x1234abcdu, &receipt),
+             1, "real GRAPHICS.DAT-bound F0111 door-front receipt");
+    CHECK_EQ("real_asset.valid", receipt.valid, 1,
+             "real receipt is the only renderable path");
+    CHECK_EQ("real_asset.renderable", receipt.renderable_from_real_asset, 1,
+             "no synthetic fallback promotion");
+    CHECK_EQ("real_asset.no_synthetic", receipt.no_synthetic_pixels, 1,
+             "no generated door pixels");
+    CHECK_EQ("real_asset.no_fallback", receipt.no_fallback_visuals, 1,
+             "fallback visuals remain closed");
+    CHECK_EQ("real_asset.bitmap_id", receipt.front_bitmap_id, 693,
+             "ReDMCSB DUNVIEW.C:6457/6599 G0693 front bitmap");
+    CHECK_EQ("real_asset.ornament", receipt.door_ornament_view, 0,
+             "ReDMCSB DEFS.H:2789 C0_VIEW_DOOR_ORNAMENT_D3LCR");
+    CHECK_EQ("real_asset.rear_order", (int)receipt.rear_cell_order, 0x0218,
+             "ReDMCSB DUNVIEW.C:6444 rear F0115 pass");
+    CHECK_EQ("real_asset.front_order", (int)receipt.front_cell_order, 0x0349,
+             "ReDMCSB DUNVIEW.C:6459 front F0115 pass");
+
+    CHECK_EQ("real_asset.null_spec",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 NULL, 1, 1, 1, 693, 0, 185u, 1u, &receipt),
+             0, "fail closed without source-locked route");
+    CHECK_EQ("real_asset.no_graphics_dat",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 0, 1, 1, 693, 0, 185u, 1u, &receipt),
+             0, "fail closed without real GRAPHICS.DAT binding");
+    CHECK_EQ("real_asset.synthetic_pixels",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 1, 0, 1, 693, 0, 185u, 1u, &receipt),
+             0, "fail closed on synthetic pixels");
+    CHECK_EQ("real_asset.fallback",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 1, 1, 0, 693, 0, 185u, 1u, &receipt),
+             0, "fail closed on fallback visuals");
+    CHECK_EQ("real_asset.wrong_bitmap",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 1, 1, 1, 692, 0, 185u, 1u, &receipt),
+             0, "fail closed on wrong bitmap id");
+    CHECK_EQ("real_asset.zero_hash",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 1, 1, 1, 693, 0, 185u, 0u, &receipt),
+             0, "fail closed on missing payload hash");
+}
+
+static void test_real_graphics_dat_item_693_receipt(void)
+{
+    const char *path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *left =
+        csb_v1_viewport_d0l2_d0r2_f0111_door_front_spec_for_side_pc34(1);
+    CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34 receipt;
+    size_t payload_size = 0u;
+    uint32_t payload_hash = 0u;
+
+    if (!path || path[0] == '\0') {
+        path = "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
+    }
+    if (!read_real_graphics_item_hash(path, 693u, &payload_size, &payload_hash)) {
+        printf("SKIP real GRAPHICS.DAT item 693 path=%s\n", path);
+        return;
+    }
+
+    CHECK_EQ("real_graphics.item693.size_positive", payload_size > 0u, 1,
+             "DMCSB1 real GRAPHICS.DAT item table");
+    CHECK_EQ("real_graphics.item693.hash_nonzero", payload_hash != 0u, 1,
+             "real payload hash, no decoded-pixel claim");
+    CHECK_EQ("real_graphics.item693.receipt",
+             csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+                 left, 1, 1, 1, 693, 0, payload_size, payload_hash, &receipt),
+             1, "real GRAPHICS.DAT item 693 binds F0111 D0L2/D0R2 door front");
+    CHECK_EQ("real_graphics.item693.receipt_hash",
+             receipt.source_payload_hash == payload_hash, 1,
+             "receipt preserves measured GRAPHICS.DAT payload hash");
+}
+
 static void test_source_evidence(void)
 {
     const char *e =
@@ -307,6 +477,8 @@ int main(void)
     test_specs();
     test_cell_order_decode();
     test_composition_and_mutation_guards();
+    test_real_asset_receipt_gate();
+    test_real_graphics_dat_item_693_receipt();
     test_source_evidence();
 
     printf("assertions=%d\n", g_assertions);

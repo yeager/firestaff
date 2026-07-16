@@ -1,6 +1,6 @@
 # Pass207 — DM1 V1 original movement/viewport blocker gate
 
-Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
+Status: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`
 
 Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.
 
@@ -33,19 +33,19 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 
 ## Current N2 original-runner attempt
 
-- pass206 manifest: `/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
-- pass206 status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`
+- pass206 manifest: `/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
+- pass206 status: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`
 - attempt status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
-- attempt dir: `/home/trv2/work/firestaff/verification-screens/pass112-n2-stable-hud-route`
+- attempt dir: `/Users/bosse/Documents/Firestaff/verification-screens/pass112-n2-stable-hud-route`
 - capture count / dimensions: `6` / `{'320x200': 6}`
 - viewport crop PPM count: `0`
 - class counts: `{'dungeon_gameplay': 2, 'wall_closeup': 4}`
 - duplicate SHA counts >1: `{'ee7741746ea9b30739238e9f0780f57982bd0abe07bf60cea24e9cf92018e89c': 4}`
-- missing tools: `[]`
+- missing tools: `['xvfb-run', 'convert']`
 - canonical files ok: `{'DATA/DUNGEON.DAT': True, 'DATA/GRAPHICS.DAT': True, 'DM.EXE': True}`
 
 ## Blocker decision
 
-The old movement/viewport route blocker is retired as an active blocker by pass304/pass308 batch capture coverage. The remaining active blocker is state-oracle proof for binding original runtime party tuple/F0128 to those route labels; no pixel parity is claimed.
+The gate is blocked before semantic promotion because a source/prerequisite artifact is missing or drifted.
 
 Non-claims: no <private-host> use, no push, no new capture route, no original-vs-Firestaff pixel parity claim.

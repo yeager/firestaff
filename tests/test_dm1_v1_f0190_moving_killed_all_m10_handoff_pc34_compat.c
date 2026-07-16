@@ -2,6 +2,7 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <assert.h>
 #include <stdio.h>

@@ -228,6 +228,49 @@ int csb_v1_viewport_d0l2_d0r2_f0111_door_front_is_draw_mutating_pc34(
     return !(spec->f0163_not_called_by_draw && spec->f0164_not_called_by_draw);
 }
 
+int csb_v1_viewport_d0l2_d0r2_f0111_door_front_real_asset_receipt_pc34(
+    const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *spec,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int front_bitmap_id,
+    int door_ornament_view,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt = (CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34){0};
+    }
+    if (!spec || !out_receipt || !source_graphics_dat_bound ||
+        !no_synthetic_pixels || !no_fallback_visuals ||
+        front_bitmap_id != spec->f0111_front_bitmap_id ||
+        door_ornament_view != spec->f0111_door_ornament_view ||
+        source_byte_count == 0u || source_payload_hash == 0u) {
+        return 0;
+    }
+
+    receipt = (CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.renderable_from_real_asset = CSB_PRESENT;
+    receipt.side = spec->side;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.front_bitmap_id = front_bitmap_id;
+    receipt.door_ornament_view = door_ornament_view;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.transparent_color = spec->transparent_color;
+    receipt.rear_cell_order = spec->f0115_rear_cell_order;
+    receipt.front_cell_order = spec->f0115_front_cell_order;
+    receipt.redmcsb_f0111_anchor = spec->redmcsb_f0111_anchor;
+    *out_receipt = receipt;
+    return 1;
+}
+
 const char *csb_v1_viewport_d0l2_d0r2_f0111_door_front_source_evidence_pc34(void)
 {
     return s_source_evidence;

@@ -5,6 +5,7 @@
  */
 
 #include "dm2_v1_perform_move.h"
+#include "dm2_v1_world_model.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +31,7 @@ static DM2_V1_PerformMoveRequest base_request(void)
     request.direction = 1;
     request.target_raw_valid = 1;
     request.target_raw = 0x20;
-    request.target_square_type = 1;
+    request.target_square_type = DM2_SQUARE_FLOOR;
     return request;
 }
 
@@ -69,26 +70,40 @@ int main(void)
           "PERFORM_MOVE blocks missing dungeon target tiles");
 
     request = base_request();
-    request.target_square_type = 0;
+    request.target_square_type = DM2_SQUARE_WALL;
     CHECK(dm2_v1_DM2_PERFORM_MOVE_plan(&request, &receipt) == 1 &&
               receipt.blocked &&
               receipt.block_reason == DM2_V1_PERFORM_MOVE_BLOCK_WALL,
           "PERFORM_MOVE blocks wall squares");
 
     request = base_request();
-    request.target_square_type = 5;
+    request.target_square_type = DM2_SQUARE_SECRET_DOOR;
+    CHECK(dm2_v1_DM2_PERFORM_MOVE_plan(&request, &receipt) == 1 &&
+              receipt.blocked &&
+              receipt.block_reason == DM2_V1_PERFORM_MOVE_BLOCK_WALL,
+          "PERFORM_MOVE blocks secret-door wall-family squares");
+
+    request = base_request();
+    request.target_square_type = DM2_SQUARE_FAKE_WALL;
+    CHECK(dm2_v1_DM2_PERFORM_MOVE_plan(&request, &receipt) == 1 &&
+              receipt.blocked &&
+              receipt.block_reason == DM2_V1_PERFORM_MOVE_BLOCK_WALL,
+          "PERFORM_MOVE blocks fake-wall wall-family squares");
+
+    request = base_request();
+    request.target_square_type = DM2_SQUARE_PIT;
     CHECK(dm2_v1_DM2_PERFORM_MOVE_plan(&request, &receipt) == 1 &&
               receipt.block_reason == DM2_V1_PERFORM_MOVE_BLOCK_PIT,
           "PERFORM_MOVE blocks pit squares");
 
     request = base_request();
-    request.target_square_type = 11;
+    request.target_square_type = DM2_SQUARE_LAVA;
     CHECK(dm2_v1_DM2_PERFORM_MOVE_plan(&request, &receipt) == 1 &&
               receipt.block_reason == DM2_V1_PERFORM_MOVE_BLOCK_LAVA,
           "PERFORM_MOVE blocks lava squares");
 
     request = base_request();
-    request.target_square_type = 13;
+    request.target_square_type = DM2_SQUARE_INACCESSIBLE;
     CHECK(dm2_v1_DM2_PERFORM_MOVE_plan(&request, &receipt) == 1 &&
               receipt.block_reason == DM2_V1_PERFORM_MOVE_BLOCK_INACCESSIBLE,
           "PERFORM_MOVE blocks inaccessible squares");

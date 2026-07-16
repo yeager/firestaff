@@ -406,6 +406,14 @@ void csb_v1_boot_startup_runtime_raster_release_pc34(
     memset(raster, 0, sizeof(*raster));
 }
 
+void csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt)
+{
+    if (!receipt) return;
+    csb_v1_boot_startup_runtime_raster_release_pc34(&receipt->raster);
+    memset(receipt, 0, sizeof(*receipt));
+}
+
 int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
@@ -965,6 +973,8 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     hash = csb_v1_startup_frame_hash_step_pc34(hash,
                                                  receipt.raster.route_hash);
     hash = csb_v1_startup_frame_hash_step_pc34(hash,
+                                                 receipt.raster.pixel_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
                                                  (uint32_t)receipt.host_surface);
     hash = csb_v1_startup_frame_hash_step_pc34(
         hash, receipt.frame.hud_binding_hash);
@@ -983,6 +993,7 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     receipt.valid = receipt.real_asset_matched && receipt.no_legacy_wrappers &&
         receipt.no_synthetic_surface && receipt.host_surface !=
             CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 &&
+        receipt.raster.pixel_hash != 0u &&
         receipt.host_surface_hash != 0u;
     if (!receipt.valid) {
         csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(

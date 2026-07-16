@@ -29,6 +29,7 @@
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
+#include "dm1_v1_endgame_presentation_pc34_compat.h"
 #include "dialog_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
@@ -1473,6 +1474,10 @@ int M11_GameView_GetEndgameFuseReplayCurrentEvent(const M11_GameViewState* state
                                                   int* outType,
                                                   int* outAttack,
                                                   int* outCreatureType);
+
+int M11_GameView_BuildEndgameFinalPresentationReceipt(
+    const M11_GameViewState* state,
+    DM1_V1_EndgameFinalPresentationReceiptPc34* outReceipt);
 
 /* Return 1 if a dialog overlay is currently displayed. */
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);

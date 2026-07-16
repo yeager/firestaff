@@ -17,9 +17,9 @@ DM2_1031_06a5	SKULLWIN	SKULLWIN/c_1031.cpp	408		MISSING
 DM2_1031_06b3	SKULLWIN	SKULLWIN/c_1031.cpp	414		MISSING
 DM2_1031_0781	SKULLWIN	SKULLWIN/c_1031.cpp	472		MISSING
 DM2_1031_07d6	SKULLWIN	SKULLWIN/c_1031.cpp	497		MISSING
-DM2_1031_0a88	SKULLWIN	SKULLWIN/c_1031.cpp	655		MISSING
-DM2_1031_0c58	SKULLWIN	SKULLWIN/c_1031.cpp	747		MISSING
-DM2_1031_10c8	SKULLWIN	SKULLWIN/c_1031.cpp	814		MISSING
+DM2_1031_0a88	SKULLWIN	SKULLWIN/c_1031.cpp	655	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0a88_action_hit; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the SKULLWIN/SKWIN UI action hit loop: disabled actions are skipped, masks gate hits, _1031_01d5 resolves real rects, and the UI event latch records event/delta/rect coordinates.
+DM2_1031_0c58	SKULLWIN	SKULLWIN/c_1031.cpp	747	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0c58_select_event; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the SKULLWIN/SKWIN event-code selector over source-terminated action lists, including rect-origin latching and the no-match reset to rect 0xffff without synthetic events.
+DM2_1031_10c8	SKULLWIN	SKULLWIN/c_1031.cpp	814	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_10c8_center_button; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the SKULLWIN/SKWIN button group centering helper: NODATA groups copy the real mouse rect, request clickrect allocation, and calculate a centered output rect.
 DM2_CLICK_MAGICAL_MAP_AT	SKULLWIN	SKULLWIN/c_1031.cpp	834		MISSING
 DM2_1BAAD	SKULLWIN	SKULLWIN/c_1c9a.cpp	23		MISSING
 DM2_1BC29	SKULLWIN	SKULLWIN/c_1c9a.cpp	152		MISSING
@@ -491,7 +491,7 @@ DM2_DRAW_CRYOCELL_LEVER	SKULLWIN	SKULLWIN/c_gui_draw.cpp	414	src/dm2/dm2_v1_skpr
 DM2_DRAW_CHARSHEET_OPTION_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	441	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_charsheet_option_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_MONEY_BOX_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	458	src/dm2/dm2_v1_hud_survey_helpers.c; include/dm2_v1_hud_survey_helpers.h; tests/test_dm2_v1_hud_survey_helpers.c	IMPLEMENTED_NARROW	DM2 v1 HUD survey helper exposes the SKULLWIN alias over the same source coin-order/count/item tables and real container record-chain survey as SKWIN MONEY_BOX_SURVEY, failing closed without synthetic GDAT/container art.
 DM2_DRAW_MONEYBOX	SKULLWIN	SKULLWIN/c_gui_draw.cpp	512	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_moneybox; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_guidraw_0b36_0c52	SKULLWIN	SKULLWIN/c_gui_draw.cpp	617		MISSING
+DM2_guidraw_0b36_0c52	SKULLWIN	SKULLWIN/c_gui_draw.cpp	617	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_0c52_init_button_group; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the source button-group backing picture allocation over caller-owned expanded rects and cache indexes, seeding real dirty-rect state without synthetic UI art.
 DM2_DRAW_PLAYER_3STAT_PANE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	642	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_29ee_00a3	SKULLWIN	SKULLWIN/c_gui_draw.cpp	683		MISSING
 DM2_DRAW_CMD_SLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	693	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -507,7 +507,7 @@ DM2_DRAW_ITEM_STATS_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1232	src/dm2/dm2_v1_skp
 DM2_guidraw_2405_014a	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1307		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_ITEM_IN_HAND	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1516		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CONTAINER_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1540	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_guidraw_2405_011f	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1626		MISSING
+DM2_guidraw_2405_011f	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1626	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_011f_query_inflated_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the c_gui_draw wrapper as _2405_00ec blit-rect query plus source inflate margin over caller-owned UI rect state.
 DM2_guidraw_2405_00ec	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1638		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_ITEM_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1656		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CONTAINER_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1795	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -538,7 +538,7 @@ DM2_SET_GRAPHICS_FLIP_FROM_POSITION	SKULLWIN	SKULLWIN/c_gui_vp.cpp	79		MISSING
 DM2_guivp_098d_0cd7	SKULLWIN	SKULLWIN/c_gui_vp.cpp	150		MISSING
 DM2_DRAW_PIT_ROOF	SKULLWIN	SKULLWIN/c_gui_vp.cpp	158		MISSING
 DM2_DRAW_PIT_TILE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	234		MISSING
-DM2_ENVIRONMENT_DRAW_DISTANT_ELEMENT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	296		MISSING
+DM2_ENVIRONMENT_DRAW_DISTANT_ELEMENT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	296	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_gdat_draw_plan_from_distant_environment; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather GDAT runtime chain binds c_gui_vp ENVIRONMENT_DRAW_DISTANT_ELEMENT through source DistantEnvironment/draw-plan receipts; real GDAT command text remains no-draw when the matching material renderer is unavailable.
 DM2_DRAW_STAIRS_FRONT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	468		MISSING
 DM2_DRAW_STAIRS_SIDE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	532		MISSING
 DM2_TRIM_BLIT_RECT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	570		MISSING
@@ -557,7 +557,7 @@ DM2_guivp_32cb_54ce	SKULLWIN	SKULLWIN/c_gui_vp.cpp	1621		MISSING
 DM2_guivp_32cb_5a8f	SKULLWIN	SKULLWIN/c_gui_vp.cpp	1705		MISSING
 DM2_guivp_32cb_5c67	SKULLWIN	SKULLWIN/c_gui_vp.cpp	1850		MISSING
 DM2_DRAW_DEFAULT_DOOR_BUTTON	SKULLWIN	SKULLWIN/c_gui_vp.cpp	1904		MISSING
-DM2_DRAW_RAIN	SKULLWIN	SKULLWIN/c_gui_vp.cpp	1994		MISSING
+DM2_DRAW_RAIN	SKULLWIN	SKULLWIN/c_gui_vp.cpp	1994	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_query_rainfall_param_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather runtime chain records DRAW_RAIN admission only through QUERY_RAINFALL_PARAM's source image-field and turn-delta receipt; it does not synthesize rain pixels or authorize a blit without real GDAT material.
 DM2_DRAW_ITEM	SKULLWIN	SKULLWIN/c_gui_vp.cpp	2078		MISSING
 DM2_DRAW_DOOR_FRAMES	SKULLWIN	SKULLWIN/c_gui_vp.cpp	2333		MISSING
 DM2_SUMMARIZE_STONE_ROOM	SKULLWIN	SKULLWIN/c_gui_vp.cpp	2497		MISSING
@@ -577,8 +577,8 @@ DM2_guivp_32cb_3f0d	SKULLWIN	SKULLWIN/c_gui_vp.cpp	5430		MISSING
 DM2_guivp_32cb_0f82	SKULLWIN	SKULLWIN/c_gui_vp.cpp	5537		MISSING
 DM2_guivp_32cb_15b8	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6043		MISSING
 DM2_DRAW_WALL_TILE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6703		MISSING
-DM2_ENVIRONMENT_SET_DISTANT_ELEMENT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6746		MISSING
-DM2_ENVIRONMENT_DISPLAY_ELEMENTS	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6815		MISSING
+DM2_ENVIRONMENT_SET_DISTANT_ELEMENT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6746	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_distant_environment_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather GDAT receipts retain the source ten-byte DistantEnvironment command slot initialized by ENVIRONMENT_SET_DISTANT_ELEMENT and reject mismatched command/FW/material ownership.
+DM2_ENVIRONMENT_DISPLAY_ELEMENTS	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6815	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_scene_weather_light_runtime_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 scene/weather/light runtime chain joins real G1 MapGraphicsStyle, GRAPHICSSET scene-light, c_light, weather GDAT command text, GRAPHICS_DATA_OPEN admission, and optional DistantEnvironment renderer without fallback weather display.
 DM2_DRAW_DUNGEON_TILES	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6932		MISSING
 DM2_CHANCE_TABLE_OPERATION	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7177		MISSING
 DM2_DISPLAY_VIEWPORT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7325		MISSING
@@ -643,7 +643,7 @@ DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION	SKULLWIN	SKULLWIN/c_hero.cpp	4141		MISSING
 init_global_images	SKULLWIN	SKULLWIN/c_image.cpp	18		MISSING
 init	SKULLWIN	SKULLWIN/c_image.cpp	27	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_0b36_068f	SKULLWIN	SKULLWIN/c_image.cpp	65		MISSING
-DM2_image_0b36_11c0	SKULLWIN	SKULLWIN/c_image.cpp	70		MISSING
+DM2_image_0b36_11c0	SKULLWIN	SKULLWIN/c_image.cpp	70	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_11c0_draw_cached_picture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the cached-picture draw wrapper through caller-owned cache bits, blit rects, offset rect math, DRAW_DEF_PICT receipt flags, and button-group dirty rect updates.
 DM2_QUERY_PICST_IT	SKULLWIN	SKULLWIN/c_image.cpp	98		MISSING
 DM2_DRAW_PICST	SKULLWIN	SKULLWIN/c_image.cpp	229		MISSING
 DM2_QUERY_MULTILAYERS_PIC	SKULLWIN	SKULLWIN/c_image.cpp	346		MISSING
@@ -686,7 +686,7 @@ putkey	SKULLWIN	SKULLWIN/c_keybd.cpp	99		MISSING
 DM2_HAS_KEY	SKULLWIN	SKULLWIN/c_keybd.cpp	114		MISSING
 DM2_GETKEY_TRANSLATED	SKULLWIN	SKULLWIN/c_keybd.cpp	123		MISSING
 DM2_keybd_476d_05b6	SKULLWIN	SKULLWIN/c_keybd.cpp	178		MISSING
-DM2_RECALC_LIGHT_LEVEL	SKULLWIN	SKULLWIN/c_light.cpp	16		MISSING
+DM2_RECALC_LIGHT_LEVEL	SKULLWIN	SKULLWIN/c_light.cpp	16	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_c_light_m11_receipt_build_for_map; tests/test_dm2_v1_c_light_receipt.c	VERIFIED_SOURCE_MAPPING	DM2 c_light receipt maps skproject c_light.cpp DM2_RECALC_LIGHT_LEVEL terminal inputs into a bounded runtime receipt: fixed maps start at source level one, dynamic maps consume authenticated live base light, darkness is subtracted and clamped to 0..5, and the map-bound path hashes the real Map_definitions descriptor identity from DUNGEON.DAT without synthetic light fallback.
 DM2_ADD_BACKGROUND_LIGHT_FROM_TILE	SKULLWIN	SKULLWIN/c_light.cpp	202		MISSING
 DM2_CHECK_RECOMPUTE_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	490		MISSING
 DM2_PROCEED_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	596		MISSING
@@ -710,12 +710,12 @@ DM2_GET_TILE_VALUE	SKULLWIN	SKULLWIN/c_map.cpp	107	src/dm2/dm2_v1_dungeon_loader
 DM2_CHANGE_CURRENT_MAP_TO	SKULLWIN	SKULLWIN/c_map.cpp	328	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
 DM_LOCATE_OTHER_LEVEL	SKULLWIN	SKULLWIN/c_map.cpp	384	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_locate_other_level; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_SET_DESTINATION_OF_MINION_MAP	SKULLWIN	SKULLWIN/c_map.cpp	540	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_set_destination_of_minion_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_map_0cee_1815	SKULLWIN	SKULLWIN/c_map.cpp	583	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_1815; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_map_0cee_185a	SKULLWIN	SKULLWIN/c_map.cpp	615	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_185a; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DM2_map_0cee_1815	SKULLWIN	SKULLWIN/c_map.cpp	583	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_1815; src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_wall_decoration_chain; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core binds the random wall-decoration candidate route to map dimensions, current-map index, dungeon seed, gate values, and the real v1e02cc-style candidate table without synthetic wall art.
+DM2_map_0cee_185a	SKULLWIN	SKULLWIN/c_map.cpp	615	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_185a; src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_wall_decoration_chain; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the four-slot wall-decoration chain, rotation/row selector sequence, WallGraphicsRandomDecorations limit, and out-of-map ornate-alcove sanitize step over caller-owned map/GDAT state.
 DM2_map_2066_1f37	SKULLWIN	SKULLWIN/c_map.cpp	712	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_2066_1f37; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_map_2066_1ec9	SKULLWIN	SKULLWIN/c_map.cpp	760	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_2066_1ec9; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 SKW_2066_1ea3	SKULLWIN	SKULLWIN/c_map.cpp	806	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_tmpmap_or_flag; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_ARRANGE_DUNGEON	SKULLWIN	SKULLWIN/c_map.cpp	823		MISSING
+DM2_ARRANGE_DUNGEON	SKULLWIN	SKULLWIN/c_map.cpp	823	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_DM2_ARRANGE_DUNGEON_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps ARRANGE_DUNGEON to the real dm2_v1_dungeon_load-proven map descriptors, byte/word square layout, map graphics styles, ground-stack/text table addresses, and explicit partial-record-graph state without fabricating c_record semantics.
 DM2_map_0cee_04e5	SKULLWIN	SKULLWIN/c_map.cpp	1255	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_04e5; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_map_0cee_17e7	SKULLWIN	SKULLWIN/c_map.cpp	1271	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_17e7; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_map_3B001	SKULLWIN	SKULLWIN/c_map.cpp	1291	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_3b001; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -730,7 +730,7 @@ init_midi	SKULLWIN	SKULLWIN/c_midi.cpp	61		MISSING
 DM2_12b4_0953	SKULLWIN	SKULLWIN/c_move.cpp	32	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_side_offset; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_12b4_0881	SKULLWIN	SKULLWIN/c_move.cpp	64	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_admission; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_12b4_023f	SKULLWIN	SKULLWIN/c_move.cpp	117	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_023f; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_PERFORM_MOVE	SKULLWIN	SKULLWIN/c_move.cpp	197		MISSING
+DM2_PERFORM_MOVE	SKULLWIN	SKULLWIN/c_move.cpp	197	src/dm2/dm2_v1_perform_move.c:dm2_v1_DM2_PERFORM_MOVE_plan	VERIFIED_SOURCE_MAPPING	DM2 v1 perform-move receipt maps skproject movement admission over source N/E/S/W direction normalization, target-square facts, cooldown/not-ready blocks, wall/secret/fake-wall family, pits, lava, inaccessible squares, door state, and outdoor bypass without invoking viewport rendering.
 DM2_move_12b4_0d75	SKULLWIN	SKULLWIN/c_move.cpp	614	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_0d75; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_12b4_099e	SKULLWIN	SKULLWIN/c_move.cpp	805	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_099e; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_12b4_0092	SKULLWIN	SKULLWIN/c_move.cpp	912	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_0092; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -741,9 +741,9 @@ DM2_ATTACK_WALL	SKULLWIN	SKULLWIN/c_move.cpp	1053	src/dm2/dm2_v1_skproject_core.
 DM2_move_075f_0af9	SKULLWIN	SKULLWIN/c_move.cpp	1307	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_075f_0af9; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_075f_06bd	SKULLWIN	SKULLWIN/c_move.cpp	1972		MISSING
 DM2_ATTACK_DOOR	SKULLWIN	SKULLWIN/c_move.cpp	2097	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_attack_door; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_move_2fcf_0434	SKULLWIN	SKULLWIN/c_move.cpp	2152		MISSING
-DM2_move_075f_1bc2	SKULLWIN	SKULLWIN/c_move.cpp	2861		MISSING
-DM2_move_2c1d_028c	SKULLWIN	SKULLWIN/c_move.cpp	2914		MISSING
+DM2_move_2fcf_0434	SKULLWIN	SKULLWIN/c_move.cpp	2152	src/dm2/dm2_v1_move_2fcf_0434.c:dm2_v1_DM2_move_2fcf_0434_teleporter_gate; tests/test_dm2_v1_move_2fcf_0434.c	VERIFIED_SOURCE_MAPPING	DM2 v1 move_2fcf_0434 teleporter gate maps skproject c_move.cpp source tile and DB1 Teleporter prerequisites into a bounded receipt; real DUNGEON.DAT enabled teleporter candidates are admitted only to the incomplete-record-graph block path, with no w0 traversal, synthetic teleport, sound, or map mutation.
+DM2_move_075f_1bc2	SKULLWIN	SKULLWIN/c_move.cpp	2861	src/dm2/dm2_v1_move_075f_1bc2.c:dm2_v1_DM2_move_075f_1bc2_target_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 move_075f_1bc2 receipt maps loaded DUNGEON.DAT source tiles to bounded target movement facts, including raw tile, square type, first thing link, door state, passability, and vertical stair direction; real DUNGEON.DAT target receipts now feed PERFORM_MOVE without fallback.
+DM2_move_2c1d_028c	SKULLWIN	SKULLWIN/c_move.cpp	2914	src/dm2/dm2_v1_move_2c1d_028c.c:dm2_v1_DM2_move_2c1d_028c_commit_receipt; tests/test_dm2_v1_move_2c1d_028c.c	VERIFIED_SOURCE_MAPPING	DM2 v1 move_2c1d_028c commit receipt consumes the source-backed move_075f_1bc2 target receipt, preserving facing, advancing only accepted moves, keeping blocked pose unchanged, and proving committed and blocked cases against real DUNGEON.DAT without runtime mutation or synthetic chained effects.
 DM2_TRY_PUSH_OBJECT_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	25		MISSING
 DM2_2fcf_0234	SKULLWIN	SKULLWIN/c_moverec.cpp	144		MISSING
 DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION	SKULLWIN	SKULLWIN/c_moverec.cpp	312		MISSING
@@ -806,7 +806,7 @@ DM2_GET_GLOB_VAR	SKULLWIN	SKULLWIN/c_querydb.cpp	1926		MISSING
 DM2_GET_GRAPHICS_FOR_DOOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1955	include/dm2_v1_asset_loader.h:dm2_v1_get_graphics_for_door_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0d for the SKULLWIN door-type contract and fails closed when the source row is absent.
 DM2_GET_ITEM_ORDER_IN_CONTAINER	SKULLWIN	SKULLWIN/c_querydb.cpp	1964		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
 DM2_COUNT_BY_COIN_TYPES	SKULLWIN	SKULLWIN/c_querydb.cpp	2088	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
-DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKULLWIN	SKULLWIN/c_querydb.cpp	2144	src/dm2/dm2_v1_weather_gdat.c:241	UNCERTAIN
+DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKULLWIN	SKULLWIN/c_querydb.cpp	2144	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_gdat_overlay_plan; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather overlay plans preserve the source CD/FW command text fields, cloud-then-rain slot order, zero offsets, 0x40 scale initialization, decoded material identity, and fail-closed no-draw behavior for missing material.
 DM2_CALC_PLAYER_WALK_DELAY	SKULLWIN	SKULLWIN/c_querydb.cpp	2175		MISSING
 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	2237		MISSING
 DM2_QUERY_TEMP_PICST	SKULLWIN	SKULLWIN/c_querydb.cpp	2381	src/dm2/dm2_v1_viewport_renderer.c:5116	UNCERTAIN
@@ -823,7 +823,7 @@ DM2_query_4E26	SKULLWIN	SKULLWIN/c_querydb.cpp	2936		MISSING
 DM2_query_1c9a_02c3	SKULLWIN	SKULLWIN/c_querydb.cpp	2976		MISSING
 DM2_query_4DA3	SKULLWIN	SKULLWIN/c_querydb.cpp	2990		MISSING
 DM2_QUERY_CREATURE_5x5_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	3012		MISSING
-DM2_QUERY_RAINFALL_PARAM	SKULLWIN	SKULLWIN/c_querydb.cpp	3034		MISSING
+DM2_QUERY_RAINFALL_PARAM	SKULLWIN	SKULLWIN/c_querydb.cpp	3034	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_query_rainfall_param_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather GDAT implements the source rainfall parameter formula: turn delta `(v1e1483-v1e12c8)&3`, base field 0x6d/0x71 by direction, and intensity threshold turn offset, with no generated rain bitmap.
 DM2_query_0cee_0897	SKULLWIN	SKULLWIN/c_querydb.cpp	3061		MISSING
 DM2_GET_TELEPORTER_DETAIL	SKULLWIN	SKULLWIN/c_querydb.cpp	3111		MISSING
 DM2_IS_CREATURE_MOVABLE_THERE	SKULLWIN	SKULLWIN/c_querydb.cpp	3173		MISSING
@@ -896,8 +896,8 @@ DM2_READ_DUNGEON_STRUCTURE	SKULLWIN	SKULLWIN/c_savegame.cpp	229		MISSING
 u_mbuf	SKULLWIN	SKULLWIN/c_savegame.cpp	231		MISSING
 DM2_LOAD_NEW_DUNGEON	SKULLWIN	SKULLWIN/c_savegame.cpp	615		MISSING
 DM2_SKLOAD_READ	SKULLWIN	SKULLWIN/c_savegame.cpp	637		MISSING
-DM2_SUPPRESS_READER	SKULLWIN	SKULLWIN/c_savegame.cpp	653		MISSING
-DM2_READ_1BIT	SKULLWIN	SKULLWIN/c_savegame.cpp	733		MISSING
+DM2_SUPPRESS_READER	SKULLWIN	SKULLWIN/c_savegame.cpp	653	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the source SUPPRESS reader to the shared stateful bitstream receipt, preserving MSB-first READ_1BIT consumption, section carry, fill policy, and underflow rejection.
+DM2_READ_1BIT	SKULLWIN	SKULLWIN/c_savegame.cpp	733	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps READ_1BIT to the same source SUPPRESS reader receipt, including cross-section pending-bit state and fail-closed stream underflow.
 DM2_SELECT_LOAD_GAME	SKULLWIN	SKULLWIN/c_savegame.cpp	742	include/dm2_v1_runtime.h:526	UNCERTAIN
 DM2_ADD_INDEX_TO_POSSESSION_INDICES	SKULLWIN	SKULLWIN/c_savegame.cpp	788		MISSING
 DM2_READ_RECORD_CHECKCODE	SKULLWIN	SKULLWIN/c_savegame.cpp	806		MISSING
@@ -905,13 +905,13 @@ DM2_2066_197c	SKULLWIN	SKULLWIN/c_savegame.cpp	974		MISSING
 DM2_2066_062b	SKULLWIN	SKULLWIN/c_savegame.cpp	1000		MISSING
 DM2_PROCEED_GLOBAL_EFFECT_TIMERS	SKULLWIN	SKULLWIN/c_savegame.cpp	1038		MISSING
 DM2_READ_SKSAVE_DUNGEON	SKULLWIN	SKULLWIN/c_savegame.cpp	1105		MISSING
-DM2_SUPPRESS_INIT	SKULLWIN	SKULLWIN/c_savegame.cpp	1342		MISSING
+DM2_SUPPRESS_INIT	SKULLWIN	SKULLWIN/c_savegame.cpp	1342	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps SUPPRESS_INIT to zeroed reader/writer pending-byte state before any save-section bit IO.
 DM2_3a15_020f	SKULLWIN	SKULLWIN/c_savegame.cpp	1348		MISSING
 DM2_GAME_LOAD	SKULLWIN	SKULLWIN/c_savegame.cpp	1412	include/dm2_v1_runtime.h:527	UNCERTAIN
 DM2_SKSAVE_WRITE	SKULLWIN	SKULLWIN/c_savegame.cpp	1584		MISSING
-DM2_SUPPRESS_WRITER	SKULLWIN	SKULLWIN/c_savegame.cpp	1593	include/dm2_v1_save_load.h:27	UNCERTAIN
-DM2_WRITE_1BIT	SKULLWIN	SKULLWIN/c_savegame.cpp	1655		MISSING
-DM2_SUPPRESS_FLUSH	SKULLWIN	SKULLWIN/c_savegame.cpp	1661		MISSING
+DM2_SUPPRESS_WRITER	SKULLWIN	SKULLWIN/c_savegame.cpp	1593	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps SUPPRESS_WRITER to the stateful MSB-first source-bit writer, preserving pending bits across adjacent save sections.
+DM2_WRITE_1BIT	SKULLWIN	SKULLWIN/c_savegame.cpp	1655	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps WRITE_1BIT to the writer receipt that emits selected source bits MSB-first and retains partial output bytes until flush.
+DM2_SUPPRESS_FLUSH	SKULLWIN	SKULLWIN/c_savegame.cpp	1661	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps SUPPRESS_FLUSH to the writer flush receipt that pads and clears the final pending byte without inventing save data.
 DM2_WRITE_POSSESSION_INDICES	SKULLWIN	SKULLWIN/c_savegame.cpp	1681		MISSING
 DM2_COMPACT_TIMERLIST	SKULLWIN	SKULLWIN/c_savegame.cpp	1712		MISSING
 DM2_WRITE_RECORD_CHECKCODE	SKULLWIN	SKULLWIN/c_savegame.cpp	1736		MISSING
@@ -1035,7 +1035,7 @@ DM2_CHOOSE_CURSOR3	SKULLWIN	SKULLWIN/c_tmouse.cpp	573		MISSING
 DM2_RELEASE_MOUSE_CAPTURES	SKULLWIN	SKULLWIN/c_tmouse.cpp	579		MISSING
 DM2_GET_MOUSE_ENTRY_DATA	SKULLWIN	SKULLWIN/c_tmouse.cpp	591		MISSING
 DM2_SET_TIMER_WEATHER	SKULLWIN	SKULLWIN/c_weather.cpp	22	src/dm2/dm2_v1_weather.c	VERIFIED_SOURCE_MAPPING
-DM2_UPDATE_WEATHER	SKULLWIN	SKULLWIN/c_weather.cpp	33	include/dm2_v1_weather_gdat.h:10	UNCERTAIN
+DM2_UPDATE_WEATHER	SKULLWIN	SKULLWIN/c_weather.cpp	33	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_scene_weather_light_runtime_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather runtime chain source-maps UPDATE_WEATHER's G1/GRAPHICSSET weather boundary: real MapGraphicsStyle weather command text and GRAPHICS_DATA_OPEN admission are joined to scene light/c_light, while absent local weather image material remains a blocked no-fallback renderer.
 DM2_weather_3df7_0037	SKULLWIN	SKULLWIN/c_weather.cpp	509	src/dm2/dm2_v1_weather.c	VERIFIED_SOURCE_MAPPING
 init	SKULLWIN	SKULLWIN/c_xrect.cpp	9	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_PT_IN_EXPANDED_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	21		MISSING
@@ -1281,37 +1281,37 @@ ANIM_GET_FILE_SIZE	SKWIN	SKWIN/SkWinCore.cpp	924	src/dm2/dm2_v1_anim_bootstrap.c
 ANIM_farmalloc	SKWIN	SKWIN/SkWinCore.cpp	934	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_READ_HUGE_FILE	SKWIN	SKWIN/SkWinCore.cpp	939	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_FILE_CLOSE	SKWIN	SKWIN/SkWinCore.cpp	970	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
-_069a_03fc	SKWIN	SKWIN/SkWinCore.cpp	979		MISSING
+_069a_03fc	SKWIN	SKWIN/SkWinCore.cpp	979	SKWIN/SkWinCore.cpp:979	NONAPPLICABLE	skproject source is `return Unr(), 0; // anim`; no executable DM2 runtime exists to port, so Firestaff leaves this as explicit non-applicability rather than inventing ANIM behavior.
 ANIM_STRCPY	SKWIN	SKWIN/SkWinCore.cpp	984	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
-_0759_0126	SKWIN	SKWIN/SkWinCore.cpp	990		MISSING
-_0759_06c2	SKWIN	SKWIN/SkWinCore.cpp	1001		MISSING
-_0759_06db	SKWIN	SKWIN/SkWinCore.cpp	1013		MISSING
-_0759_072c	SKWIN	SKWIN/SkWinCore.cpp	1027		MISSING
-_0759_071b	SKWIN	SKWIN/SkWinCore.cpp	1035		MISSING
-_01b0_1ed2	SKWIN	SKWIN/SkWinCore.cpp	1043		MISSING
+_0759_0126	SKWIN	SKWIN/SkWinCore.cpp	990	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_0126_capture_int_ff; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core captures the source interrupt-FF vector into caller-owned ANIM runtime state; no host interrupt hook is installed.
+_0759_06c2	SKWIN	SKWIN/SkWinCore.cpp	1001	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_06c2_timer_tick; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core models the source timer callback by subtracting the installed reload tick value from the ANIM countdown.
+_0759_06db	SKWIN	SKWIN/SkWinCore.cpp	1013	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_06db_install_timer; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core captures the interrupt-FE vector, records it as active, and installs a bounded timer callback receipt without touching host interrupt tables.
+_0759_072c	SKWIN	SKWIN/SkWinCore.cpp	1027	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_072c_poll_ibmio; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core preserves the IBMIO poll shape: optional display callback then event-count availability, with no synthetic event injection.
+_0759_071b	SKWIN	SKWIN/SkWinCore.cpp	1035	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_071b_wait_ibmio_event; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core consumes one source-owned IBMIO event queue word and fails closed on empty queues instead of host-blocking.
+_01b0_1ed2	SKWIN	SKWIN/SkWinCore.cpp	1043	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_01b0_1ed2_sound_available; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source sound-card availability gate to caller-owned sound_card_type state.
 ANIM_farfree	SKWIN	SKWIN/SkWinCore.cpp	1054	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_farcoreleft	SKWIN	SKWIN/SkWinCore.cpp	1060	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
-_0759_07f2	SKWIN	SKWIN/SkWinCore.cpp	1071		MISSING
-_0759_0855	SKWIN	SKWIN/SkWinCore.cpp	1074		MISSING
-_0759_0869	SKWIN	SKWIN/SkWinCore.cpp	1077		MISSING
-_0759_06b5	SKWIN	SKWIN/SkWinCore.cpp	1082		MISSING
-_0759_065f	SKWIN	SKWIN/SkWinCore.cpp	1092		MISSING
-_0759_0792	SKWIN	SKWIN/SkWinCore.cpp	1103		MISSING
-_0759_0739	SKWIN	SKWIN/SkWinCore.cpp	1106		MISSING
+_0759_07f2	SKWIN	SKWIN/SkWinCore.cpp	1071	SKWIN/SkWinCore.cpp:1071	NONAPPLICABLE	skproject source is `return Unr(), 0; // anim`; no verified runtime body exists, so Firestaff does not fabricate a decoder or file path.
+_0759_0855	SKWIN	SKWIN/SkWinCore.cpp	1074	src/dm2/dm2_v1_anim_bootstrap.c:dm2_v1_anim_0759_0855_reset_stream; include/dm2_v1_anim_bootstrap.h; tests/test_dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING	DM2 v1 ANIM bootstrap maps the skproject streamed-animation cleanup call as a caller-owned stream-arena reset receipt; it is used by the _0759_08e7 stream-mode plan and does not fabricate decoder state.
+_0759_0869	SKWIN	SKWIN/SkWinCore.cpp	1077	src/dm2/dm2_v1_anim_bootstrap.c:dm2_v1_anim_0759_0869_resolve_stream_ptr; include/dm2_v1_anim_bootstrap.h; tests/test_dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING	DM2 v1 ANIM bootstrap maps the skproject streamed-animation offset resolver over caller-owned huge-file arena storage, failing closed for inactive streams or out-of-bounds offsets.
+_0759_06b5	SKWIN	SKWIN/SkWinCore.cpp	1082	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_06b5_clear_screen; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core records the _00eb_0bc4 LFSR screen-line clear order, including 65535 visited states and the final zero line, without drawing fallback pixels.
+_0759_065f	SKWIN	SKWIN/SkWinCore.cpp	1092	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_065f_fill_screen_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core binds the source `_089c_00d0` screen rect fill to runtime state and records the zero-fill pixel count without synthetic artwork.
+_0759_0792	SKWIN	SKWIN/SkWinCore.cpp	1103	SKWIN/SkWinCore.cpp:1103	NONAPPLICABLE	skproject source is `Unr(); // anim`; no executable body exists to port.
+_0759_0739	SKWIN	SKWIN/SkWinCore.cpp	1106	SKWIN/SkWinCore.cpp:1106	NONAPPLICABLE	skproject source is `Unr(); // anim`; no verified runtime behavior is claimed.
 ANIM_DECODE_IMG1	SKWIN	SKWIN/SkWinCore.cpp	1110	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
-_0759_06a1	SKWIN	SKWIN/SkWinCore.cpp	1254		MISSING
-_00eb_04bc	SKWIN	SKWIN/SkWinCore.cpp	1265		MISSING
-_0759_0688	SKWIN	SKWIN/SkWinCore.cpp	1297		MISSING
+_0759_06a1	SKWIN	SKWIN/SkWinCore.cpp	1254	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_06a1_select_palette_set; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core records the IBMIO_SELECT_PALETTE_SET wrapper over caller-owned palette state, preserving selected set, immediate driver-colour request, and fail-closed set bounds without drawing fallback.
+_00eb_04bc	SKWIN	SKWIN/SkWinCore.cpp	1265	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_00eb_04bc_palette_set; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the _00eb_04bc IBMIO palette-set update: sixteen RGB888 source rows are shifted to 6-bit driver RGB, set zero also refreshes the base palette copy, and real INTERFACE_GENERAL GDAT dtPalIRGB/dtPalette16 bytes feed the receipt without synthetic colours.
+_0759_0688	SKWIN	SKWIN/SkWinCore.cpp	1297	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_0688_palette_set; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core preserves the _0759_0688 wrapper to _00eb_04bc over the same bounded IBMIO palette-set receipt and real GDAT palette test path.
 ANIM_TOUPPER	SKWIN	SKWIN/SkWinCore.cpp	1308	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_FILL_SEQ_4BPP	SKWIN	SKWIN/SkWinCore.cpp	1323	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_SETPIXEL_SEQ_4BPP	SKWIN	SKWIN/SkWinCore.cpp	1370	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_BLIT_TO_MEMORY_ROW_4TO4BPP	SKWIN	SKWIN/SkWinCore.cpp	1399	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
-IBMIO_LOAD_4TO8BPP_PAL	SKWIN	SKWIN/SkWinCore.cpp	1412		MISSING
-IBMIO_BLIT_ROW_4TO8BPP	SKWIN	SKWIN/SkWinCore.cpp	1427		MISSING
-_00eb_070c	SKWIN	SKWIN/SkWinCore.cpp	1499		MISSING
-_0759_0310	SKWIN	SKWIN/SkWinCore.cpp	1514		MISSING
-_0759_02c6	SKWIN	SKWIN/SkWinCore.cpp	1524		MISSING
-_0759_08e7	SKWIN	SKWIN/SkWinCore.cpp	1565		MISSING
+IBMIO_LOAD_4TO8BPP_PAL	SKWIN	SKWIN/SkWinCore.cpp	1412	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_00eb_070c_blit_4to8; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core retains the exact 16-byte logical palette table consumed before 4bpp-to-8bpp expansion; real GDAT dtPalette16 drives the positive receipt.
+IBMIO_BLIT_ROW_4TO8BPP	SKWIN	SKWIN/SkWinCore.cpp	1427	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_00eb_070c_blit_4to8; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core expands packed 4bpp source nibbles through the authenticated 16-byte palette into bounded 8bpp row storage, rejecting missing palette/buffer and out-of-range rows.
+_00eb_070c	SKWIN	SKWIN/SkWinCore.cpp	1499	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_00eb_070c_blit_4to8; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps _00eb_070c as the palette-load plus IBMIO_BLIT_ROW_4TO8BPP transaction over bounded 4bpp source and 8bpp destination buffers; real GDAT dtPalette16 is used in the focused test.
+_0759_0310	SKWIN	SKWIN/SkWinCore.cpp	1514	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_0310_blit_4to8_self; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core preserves the animation wrapper that passes the same source and destination pixel offset into the _00eb_070c 4-to-8 row expansion receipt.
+_0759_02c6	SKWIN	SKWIN/SkWinCore.cpp	1524	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0759_02c6_copy_4bpp_sequence; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core copies packed 4bpp animation sequence pixels inside caller-owned animation storage with source/destination bounds checks and no generated image data.
+_0759_08e7	SKWIN	SKWIN/SkWinCore.cpp	1565	src/dm2/dm2_v1_anim_bootstrap.c:dm2_v1_anim_0759_08e7_plan_main; include/dm2_v1_anim_bootstrap.h; tests/test_dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING	DM2 v1 ANIM bootstrap maps the source ANIM main setup as a bounded runtime plan: parses +A flags, drains IBMIO events, allocates screen/sound buffers, chooses heap versus streamed input from farcoreleft/capacity, resolves stream offsets through _0759_0869, and resets stream state through _0759_0855 without synthetic animation frames.
 ANIM_BOOTSTRAP_SWOOSH	SKWIN	SKWIN/SkWinCore.cpp	2034	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_BOOTSTRAP_TITLE	SKWIN	SKWIN/SkWinCore.cpp	2045	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 QUERY_CREATURES_ITEM_MASK	SKWIN	SKWIN/SkWinCore.cpp	2057	include/dm2_v1_asset_loader.h:dm2_v1_query_creatures_item_mask_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 SKWIN alias follows the SKULLWIN querydb item-mask receipt over the same real CREATURES dtText source grammar.
@@ -1390,22 +1390,22 @@ ALLOC_CPXHEAP_MEM	SKWIN	SKWIN/SkWinCore.cpp	4484	include/dm2_v1_skproject_cpx_he
 _3e74_585a	SKWIN	SKWIN/SkWinCore.cpp	4514		MISSING
 FILL_ENTIRE_PICT	SKWIN	SKWIN/SkWinCore.cpp	4531		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_ENTIRE_PICT width alignment and FIRE_FILL_RECT_ANY planning without manufacturing pixel data.
 FIRE_HIDE_MOUSE_CURSOR	SKWIN	SKWIN/SkWinCore.cpp	4547		MISSING
-_01b0_0adb	SKWIN	SKWIN/SkWinCore.cpp	4557		MISSING
+_01b0_0adb	SKWIN	SKWIN/SkWinCore.cpp	4557	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_01b0_0adb_hide_mouse; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core models the IBMIO mouse-hide runtime state: first hide locks the mouse event and redraws the cursor, nested hides only increment depth, and no host cursor API is invoked.
 IBMIO_SET_CURSOR_PATTERN	SKWIN	SKWIN/SkWinCore.cpp	4595		MISSING
-_01b0_0c70	SKWIN	SKWIN/SkWinCore.cpp	4681		MISSING
-_01b0_0ca4	SKWIN	SKWIN/SkWinCore.cpp	4708		MISSING
+_01b0_0c70	SKWIN	SKWIN/SkWinCore.cpp	4681	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_01b0_0c70_set_cursor_shape; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core models the cursor-shape update and visible-cursor redraw ordering around _01b0_073d/_01b0_05ae without calling host cursor rendering.
+_01b0_0ca4	SKWIN	SKWIN/SkWinCore.cpp	4708	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_01b0_0ca4_set_cursor_bounds; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core copies the four cursor-bound words, records the mode word, and marks the bounds dirty like the source mouse-event protected state update.
 _443c_040e	SKWIN	SKWIN/SkWinCore.cpp	4732		MISSING
 ALLOC_NEW_PICT	SKWIN	SKWIN/SkWinCore.cpp	4748	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_new_pict	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core computes source payload bytes for 4bpp rounded rows and 8bpp rows, and records the width/height/bpp header fields that skproject writes before the returned picture buffer.
 GET_TEMP_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4771	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_temp_cache_hash	VERIFIED_SOURCE_MAPPING
 ALLOC_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4786	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_temp_cache_index	VERIFIED_SOURCE_MAPPING
-_0b36_0d67	SKWIN	SKWIN/SkWinCore.cpp	4797		MISSING
-_0b36_0c52	SKWIN	SKWIN/SkWinCore.cpp	4894		MISSING
+_0b36_0d67	SKWIN	SKWIN/SkWinCore.cpp	4797	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_0d67_adjust_dirty_rects; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core preserves the source dirty-rect ownership rules: reuse covering rects, replace contained rects, compact full lists, clip to the button-group bounds, and fail closed for absent state.
+_0b36_0c52	SKWIN	SKWIN/SkWinCore.cpp	4894	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_0c52_init_button_group; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps QUERY_EXPANDED_RECT, ALLOC_TEMP_CACHE_INDEX, ALLOC_NEW_PICT, and optional initial dirty-rect seeding over caller-owned rect/cache state.
 OFFSET_RECT	SKWIN	SKWIN/SkWinCore.cpp	4916	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_offset_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN OFFSET_RECT with the same origin-relative x/y and unchanged cx/cy semantics as the sk3f6c route.
 FILL_RECT_SUMMARY	SKWIN	SKWIN/SkWinCore.cpp	4932		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_RECT_SUMMARY null-rect guard, offset rect, fill, and dirty-rect planning.
 _29ee_00a3	SKWIN	SKWIN/SkWinCore.cpp	4955		MISSING
 IS_MISSILE_VALID_TO_LAUNCHER	SKWIN	SKWIN/SkWinCore.cpp	4973	src/dm2/dm2_v1_item_missile_helpers.c; include/dm2_v1_item_missile_helpers.h; tests/test_dm2_v1_item_missile_helpers.c	IMPLEMENTED_NARROW	DM2 v1 item/missile helper models bounded launcher/missile class checks over caller-owned item facts; absent launcher/missile data rejects.
 BETWEEN_VALUE	SKWIN	SKWIN/SkWinCore.cpp	4995	include/dm2_v1_skproject_core.h:30	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper clamps newv to min/max exactly like SKWINSPX v4 SkWinCore::BETWEEN_VALUE and is covered by focused core helper test.
-RECALC_LIGHT_LEVEL	SKWIN	SKWIN/SkWinCore.cpp	5013		MISSING
+RECALC_LIGHT_LEVEL	SKWIN	SKWIN/SkWinCore.cpp	5013	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_c_light_m11_receipt_build_for_map; tests/test_dm2_v1_c_light_receipt.c	VERIFIED_SOURCE_MAPPING	SKWIN RECALC_LIGHT_LEVEL is covered by the DM2 c_light receipt and real DUNGEON.DAT map-descriptor scan; source-bound receipts require the fixed/dynamic branch to match Map_definitions::Difficulty, retain the descriptor hash in the receipt hash, and publish only the authenticated glbLightLevel result for downstream palette/dungeon metadata consumers.
 IS_ITEM_FIT_FOR_EQUIP	SKWIN	SKWIN/SkWinCore.cpp	5143	include/dm2_v1_asset_loader.h:dm2_v1_is_item_fit_for_equip_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 SKWIN alias follows the SKULLWIN equip-fit receipt over real dtWordValue equipment flags and caller-owned active-hand evidence.
 RETRIEVE_ITEM_BONUS	SKWIN	SKWIN/SkWinCore.cpp	5204	src/dm2/dm2_v1_item_missile_helpers.c; include/dm2_v1_item_missile_helpers.h; tests/test_dm2_v1_item_missile_helpers.c	IMPLEMENTED_NARROW	DM2 v1 item helper models bounded item-bonus retrieval over caller-owned base/runtime deltas with saturation; missing item facts fail closed.
 BOOST_ATTRIBUTE	SKWIN	SKWIN/SkWinCore.cpp	5249	include/dm2_v1_skproject_core.h:dm2_v1_skproject_boost_attribute	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves the source attribute boost decay loop, current-minus-maximum delta test, and 10..220 clamp over caller-supplied champion attributes.
@@ -1420,9 +1420,9 @@ QUERY_GDAT_PICT_OFFSET	SKWIN	SKWIN/SkWinCore.cpp	5740	src/dm2/dm2_v1_asset_loade
 QUERY_GDAT_SUMMARY_IMAGE	SKWIN	SKWIN/SkWinCore.cpp	5805	include/dm2_v1_weather_gdat.h:160	UNCERTAIN
 DRAW_DEF_PICT	SKWIN	SKWIN/SkWinCore.cpp	5877	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_def_pict; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 QUERY_PICT_BITS	SKWIN	SKWIN/SkWinCore.cpp	6006		MISSING
-_0b36_11c0	SKWIN	SKWIN/SkWinCore.cpp	6030		MISSING
+_0b36_11c0	SKWIN	SKWIN/SkWinCore.cpp	6030	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_11c0_draw_cached_picture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps QUERY_MEMENT_BUFF_FROM_CACHE_INDEX, QUERY_PICT_BITS, QUERY_BLIT_RECT, OFFSET_RECT, DRAW_DEF_PICT, and _0b36_0d67 dirty-rect handoff without fabricating picture data.
 CALC_STRETCHED_SIZE	SKWIN	SKWIN/SkWinCore.cpp	6074	src/dm2/dm2_v1_viewport_renderer.c:153	UNCERTAIN
-_0b36_00c3	SKWIN	SKWIN/SkWinCore.cpp	6084		MISSING
+_0b36_00c3	SKWIN	SKWIN/SkWinCore.cpp	6084	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_00c3_cache_picture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core binds cache-index mement payload headers into picture metadata, preserving w4=8, w12 cache ownership, dimensions, and word22 while rejecting missing payloads.
 QUERY_PICST_IMAGE	SKWIN	SKWIN/SkWinCore.cpp	6113		MISSING
 ALLOC_IMAGE_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	6141	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_image_mement	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core selects real/fallback GDAT image entries, touches existing mements, and pins only source-shaped 8bpp images with Y offset -32; it rejects missing or mismatched image data without fabricating buffers.
 ALLOC_PICT_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	6189	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_pict_mement	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core routes Picture w4 bit 0x0004 through image mement allocation and w4 bit 0x0008 through the existing Picture.w12 cache-index mement route, matching the source branch split without synthesizing a new cache hash.
@@ -1443,7 +1443,7 @@ SHOW_ATTACK_RESULT	SKWIN	SKWIN/SkWinCore.cpp	6929	src/dm2/dm2_v1_hud_survey_help
 PUT_OBJECT_INTO_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7064	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded append-to-container chain planning over caller-owned links; duplicate or malformed chain data fails closed.
 DISPLAY_RIGHT_PANEL_SQUAD_HANDS	SKWIN	SKWIN/SkWinCore.cpp	7090	src/dm2/dm2_v1_boot.c:3889	UNCERTAIN
 GET_MAX_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	7119	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_max_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::GET_MAX_CHARGE through the same bounded DB-type max-charge helper used for the SKULLWIN c_item alias.
-_2405_014a	SKWIN	SKWIN/SkWinCore.cpp	7143		MISSING
+_2405_014a	SKWIN	SKWIN/SkWinCore.cpp	7143	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_014a_item_entry; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps DBSPEC word-6 item icon entry selection over real caller-owned item state: equip/selected-hand gates, game tick plus DBIndex, direction, charge bucket, and tick-modulo variants.
 TRANSLATE_PALETTE	SKWIN	SKWIN/SkWinCore.cpp	7244	include/dm2_v1_gdat_scene_m11_command.h:dm2_v1_gdat_scene_m11_translate_palette	VERIFIED_SOURCE_MAPPING	DM2 v1 M11 scene command helper consumes the exact 256-byte dt07 lookup table and rewrites caller-owned palette entries by direct index lookup, rejecting partial translation tables without fallback palettes.
 DRAW_ITEM_ON_WOOD_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7262	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_on_wood_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 FIRE_BLIT_TO_MEMORY_ROW_4TO8BPP	SKWIN	SKWIN/SkWinCore.cpp	7368		MISSING
@@ -1470,16 +1470,16 @@ FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKWIN	SKWIN/SkWinCore.cpp	8337	include/dm2
 QUERY_PLAYER_SKILL_LV	SKWIN	SKWIN/SkWinCore.cpp	8381	src/dm2/dm2_v1_champion_hud_helpers.c; include/dm2_v1_champion_hud_helpers.h; tests/test_dm2_v1_champion_hud_helpers.c	IMPLEMENTED_NARROW	DM2 v1 champion/HUD helper models source-shaped skill-level query over bounded base/temporary skill inputs and thresholds; missing player state fails closed.
 IS_ITEM_HAND_ACTIVABLE	SKWIN	SKWIN/SkWinCore.cpp	8423	src/dm2/dm2_v1_item_missile_helpers.c; include/dm2_v1_item_missile_helpers.h; tests/test_dm2_v1_item_missile_helpers.c	IMPLEMENTED_NARROW	DM2 v1 item/missile helper models bounded DBSPEC hand-activation mask checks over caller-owned item facts; null object or clear mask rejects without synthetic action availability.
 FIRE_QUEUE_MOUSE_EVENT	SKWIN	SKWIN/SkWinCore.cpp	8547		MISSING
-_1031_0b7e	SKWIN	SKWIN/SkWinCore.cpp	8607		MISSING
-_1031_098e	SKWIN	SKWIN/SkWinCore.cpp	8623		MISSING
-_1031_023b	SKWIN	SKWIN/SkWinCore.cpp	8705		MISSING
+_1031_0b7e	SKWIN	SKWIN/SkWinCore.cpp	8607	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0b7e_flush_pending_mouse; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the pending mouse-event flush to the caller-owned UI event queue, clearing the pending flag without resetting selected UI state or fabricating host input.
+_1031_098e	SKWIN	SKWIN/SkWinCore.cpp	8623	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_098e_reset_events; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source UI event reset: filters queued mouse buttons 0x40/0x60/0x04, clears selected UI rect/event state, and queues pending mouse events without host input fallback.
+_1031_023b	SKWIN	SKWIN/SkWinCore.cpp	8705	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_023b_child_list; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the sk1891.w2 child-list cursor into the source _4976_169c byte stream with bounds-checked receipt coverage.
 _443c_087c	SKWIN	SKWIN/SkWinCore.cpp	8714		MISSING
 _443c_0889	SKWIN	SKWIN/SkWinCore.cpp	8725		MISSING
 _443c_00a9	SKWIN	SKWIN/SkWinCore.cpp	8736		MISSING
 _443c_06b4	SKWIN	SKWIN/SkWinCore.cpp	8761		MISSING
 _443c_07d5	SKWIN	SKWIN/SkWinCore.cpp	8821		MISSING
-_1031_0541	SKWIN	SKWIN/SkWinCore.cpp	8860		MISSING
-_1031_0667	SKWIN	SKWIN/SkWinCore.cpp	8936		MISSING
+_1031_0541	SKWIN	SKWIN/SkWinCore.cpp	8860	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0541_select_tree; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps UI tree selection through _1031_027e, leaf b6 active/marked transitions, and clickrect refresh receipts.
+_1031_0667	SKWIN	SKWIN/SkWinCore.cpp	8936	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0667_restore_active_tree; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the saved-tree restore wrapper back through _1031_0541 selection and the same leaf/clickrect transition receipt.
 QUERY_CMDSTR_NAME	SKWIN	SKWIN/SkWinCore.cpp	8945	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real command-string name prefix extraction.
 DRAW_CMD_SLOT	SKWIN	SKWIN/SkWinCore.cpp	8973	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _29ee_0b2b	SKWIN	SKWIN/SkWinCore.cpp	9003		MISSING
@@ -1489,9 +1489,9 @@ _19f0_124b	SKWIN	SKWIN/SkWinCore.cpp	9131		MISSING
 _29ee_18eb	SKWIN	SKWIN/SkWinCore.cpp	9203		MISSING
 CALC_VECTOR_W_DIR	SKWIN	SKWIN/SkWinCore.cpp	9220	include/dm2_v1_skproject_core.h:252	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves glbXAxisDelta/glbYAxisDelta additive vector rotation and is covered by focused core helper test.
 GET_WALL_ORNATE_ALCOVE_TYPE	SKWIN	SKWIN/SkWinCore.cpp	9243		MISSING
-_0cee_17e7	SKWIN	SKWIN/SkWinCore.cpp	9262		MISSING
-_0cee_1815	SKWIN	SKWIN/SkWinCore.cpp	9273		MISSING
-_0cee_185a	SKWIN	SKWIN/SkWinCore.cpp	9298		MISSING
+_0cee_17e7	SKWIN	SKWIN/SkWinCore.cpp	9262	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_17e7; src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_wall_decoration_chain; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core preserves the source hash formula `((((aa * 31417) >> 1) + (bb * 11) + dunHeader->w0) >> 2) % cc` and uses it from the wall-decoration chain with the real dungeon seed.
+_0cee_1815	SKWIN	SKWIN/SkWinCore.cpp	9273	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_1815; src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_wall_decoration_chain; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the source random wall-decoration gate over current map index, map width/height, dungeon seed, selector, candidate limit, and v1e02cc-style candidate table; closed gates return the source 0xff default.
+_0cee_185a	SKWIN	SKWIN/SkWinCore.cpp	9298	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_185a; src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_map_0cee_wall_decoration_chain; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the four ExtendedTileInfo w6 decoration slots, rotation/row selector sequence, WallGraphicsRandomDecorations bound, and GET_WALL_ORNATE_ALCOVE_TYPE sanitize for out-of-map coordinates without touching viewport rendering.
 _0cee_1a46	SKWIN	SKWIN/SkWinCore.cpp	9333	src/dm2/dm2_v1_dungeon_loader.c:2754	UNCERTAIN
 QUERY_ORNATE_ANIM_FRAME	SKWIN	SKWIN/SkWinCore.cpp	9616	include/dm2_v1_asset_loader.h:dm2_v1_query_ornate_anim_frame_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SUMMARIZE_STONE_ROOM	SKWIN	SKWIN/SkWinCore.cpp	9680		MISSING
@@ -1508,7 +1508,7 @@ FREE_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	11210	src/dm2/dm2_v1_skproject_c
 _0b36_0cbe	SKWIN	SKWIN/SkWinCore.cpp	11223		MISSING
 IS_CONTAINER_MAP	SKWIN	SKWIN/SkWinCore.cpp	11269	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus ContainerType==1 predicate mirrors SkWinCore.cpp:11269.
 UPDATE_RIGHT_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11283	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing models bounded right-panel mode selection from transmitted UI events; redraw requests preserve event provenance without synthetic panel content.
-_1031_04f5	SKWIN	SKWIN/SkWinCore.cpp	11729		MISSING
+_1031_04f5	SKWIN	SKWIN/SkWinCore.cpp	11729	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_04f5_clear_pending_redraw; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the pending capture redraw gate to a caller-owned redraw receipt, clearing the source flag and requesting the _29ee_000f hook.
 HIGHLIGHT_ARROW_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11745	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core records the SKWIN arrow-panel redraw route: bright cls4 increment, mouse hide/show, icon redraw, and refresh wait.
 _12b4_0092	SKWIN	SKWIN/SkWinCore.cpp	11770		MISSING
 IBMIO_FILL_HALFTONE_RECT	SKWIN	SKWIN/SkWinCore.cpp	11784	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN checkerboard halftone rect fill over real caller-owned pixels.
@@ -1516,31 +1516,31 @@ FIRE_FILL_HALFTONE_RECTV	SKWIN	SKWIN/SkWinCore.cpp	11813	src/dm2/dm2_v1_skprojec
 FIRE_FILL_HALFTONE_RECTI	SKWIN	SKWIN/SkWinCore.cpp	11824	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the rect-index wrapper as expanded-rect query plus RECTV delegation.
 IBMIO_MOUSE_RELEASE_CAPTURE	SKWIN	SKWIN/SkWinCore.cpp	11834	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the IBMIO capture release side effect as capture-count decrement plus driver command receipt.
 FIRE_MOUSE_RELEASE_CAPTURE	SKWIN	SKWIN/SkWinCore.cpp	11860	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the FIRE wrapper delegation to IBMIO mouse capture release.
-_1031_050c	SKWIN	SKWIN/SkWinCore.cpp	11871		MISSING
-_1031_0675	SKWIN	SKWIN/SkWinCore.cpp	11893		MISSING
-RETURN_1	SKWIN	SKWIN/SkWinCore.cpp	11916		MISSING
-IS_GAME_ENDED	SKWIN	SKWIN/SkWinCore.cpp	11926		MISSING
-_1031_0023	SKWIN	SKWIN/SkWinCore.cpp	11935		MISSING
-_1031_003e	SKWIN	SKWIN/SkWinCore.cpp	11944		MISSING
-_1031_007b	SKWIN	SKWIN/SkWinCore.cpp	11957		MISSING
-_1031_009e	SKWIN	SKWIN/SkWinCore.cpp	11966		MISSING
-_1031_00c5	SKWIN	SKWIN/SkWinCore.cpp	11975		MISSING
-_1031_00f3	SKWIN	SKWIN/SkWinCore.cpp	11984		MISSING
-_1031_012d	SKWIN	SKWIN/SkWinCore.cpp	12004		MISSING
-_1031_014f	SKWIN	SKWIN/SkWinCore.cpp	12013		MISSING
-_1031_0184	SKWIN	SKWIN/SkWinCore.cpp	12022		MISSING
-_1031_01ba	SKWIN	SKWIN/SkWinCore.cpp	12042		MISSING
-_1031_027e	SKWIN	SKWIN/SkWinCore.cpp	12051		MISSING
+_1031_050c	SKWIN	SKWIN/SkWinCore.cpp	11871	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_050c_release_item_capture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the item-stat/right-panel capture release path, clearing capture flags and recording mouse release/show requests.
+_1031_0675	SKWIN	SKWIN/SkWinCore.cpp	11893	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0675_reset_and_select_tree; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source UI tree switch preamble: saves the current tree, clears transient UI state, releases capture, and delegates to _1031_0541 selection.
+RETURN_1	SKWIN	SKWIN/SkWinCore.cpp	11916	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_return_1; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the _4976_0cba[0] UI predicate slot to the source unconditional RETURN_1 receipt over a sk1891-shaped node ref.
+IS_GAME_ENDED	SKWIN	SKWIN/SkWinCore.cpp	11926	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_game_ended; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the _4976_0cba[1] UI predicate slot to the source ref->b1 versus glbGameHasEnded comparison.
+_1031_0023	SKWIN	SKWIN/SkWinCore.cpp	11935	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0023; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the UI predicate to ref->b1 versus _4976_4bd2 selected-panel state with dispatcher receipt coverage.
+_1031_003e	SKWIN	SKWIN/SkWinCore.cpp	11944	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_003e; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core preserves the glbChampionInventory/current-inventory and mirror-slot predicate over caller-owned UI runtime state.
+_1031_007b	SKWIN	SKWIN/SkWinCore.cpp	11957	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_007b; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the glbChampionSquad[ref->b1].curHP()!=0 predicate and fails closed for refs outside the four champion slots.
+_1031_009e	SKWIN	SKWIN/SkWinCore.cpp	11966	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_009e; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps GET_PLAYER_AT_POSITION((ref->b1+glbPlayerDir)&3) against caller-owned party-position state.
+_1031_00c5	SKWIN	SKWIN/SkWinCore.cpp	11975	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_00c5; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source zero/nonzero ref->b1 gate against _4976_5dbc state.
+_1031_00f3	SKWIN	SKWIN/SkWinCore.cpp	11984	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_00f3; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the glbChampionIndex==0 gate, high ref->b1 admission, and rotated GET_PLAYER_AT_POSITION fallback.
+_1031_012d	SKWIN	SKWIN/SkWinCore.cpp	12004	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_012d; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the active glbChampionIndex and _4976_53a4 selected spell-panel predicate.
+_1031_014f	SKWIN	SKWIN/SkWinCore.cpp	12013	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_014f; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the active champion rune-count bit predicate into the extended _4976_0cba dispatcher state.
+_1031_0184	SKWIN	SKWIN/SkWinCore.cpp	12022	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0184; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the active champion magical-map predicate: map flag selects _4976_53a4, otherwise fixed ref five.
+_1031_01ba	SKWIN	SKWIN/SkWinCore.cpp	12042	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_01ba; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the right-panel type predicate over caller-owned UI runtime state.
+_1031_027e	SKWIN	SKWIN/SkWinCore.cpp	12051	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_027e_traverse; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source child traversal over _1031_023b and _4976_0cba, recursively descending branch nodes and setting leaf metadata b6 bit 0x40.
 PT_IN_RECT	SKWIN	SKWIN/SkWinCore.cpp	12082	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_pt_in_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps inclusive x..x+w-1 and y..y+h-1 point-in-rect bounds with a missing-rect fail-closed receipt.
-_1031_01d5	SKWIN	SKWIN/SkWinCore.cpp	12096		MISSING
-_1031_0a88	SKWIN	SKWIN/SkWinCore.cpp	12132		MISSING
-_1031_024c	SKWIN	SKWIN/SkWinCore.cpp	12181		MISSING
-_1031_030a	SKWIN	SKWIN/SkWinCore.cpp	12192		MISSING
-_1031_0c58	SKWIN	SKWIN/SkWinCore.cpp	12236		MISSING
-_1031_03f2	SKWIN	SKWIN/SkWinCore.cpp	12291		MISSING
+_1031_01d5	SKWIN	SKWIN/SkWinCore.cpp	12096	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_01d5_resolve_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps QUERY_EXPANDED_RECT plus 0x8000/0x4000 QUERY_TOPLEFT_OF_RECT offsets with bounded rect-table receipts.
+_1031_0a88	SKWIN	SKWIN/SkWinCore.cpp	12132	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0a88_action_hit; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source UI action hit loop: disabled actions are skipped, action masks gate hits, _1031_01d5 resolves rects, PT_IN_RECT gates the click, and event/delta/rect state is latched.
+_1031_024c	SKWIN	SKWIN/SkWinCore.cpp	12181	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_024c_action_list; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the sk16ed.w2 action-list lookup and returns a NULL-equivalent receipt for 0xffff links.
+_1031_030a	SKWIN	SKWIN/SkWinCore.cpp	12192	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_030a_hit_test; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the recursive UI hit-test over _1031_023b, _4976_0cba predicates, _1031_01d5 rects, and action-list masks.
+_1031_0c58	SKWIN	SKWIN/SkWinCore.cpp	12236	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0c58_select_event; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source event-code selector over UI action lists, including _1031_01d5 rect-origin latching, event delta calculation from the first list entry, and the no-match reset path.
+_1031_03f2	SKWIN	SKWIN/SkWinCore.cpp	12291	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_03f2_find_action; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the recursive action-code search through admitted UI nodes and source-terminated action lists.
 ADJUST_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12355	include/dm2_v1_skproject_core.h:dm2_v1_skproject_adjust_ui_event	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves hand-action remapping and spell/leader triangle selection over caller-supplied player-position, cooldown, and activable-hand state; it does not synthesize UI events or champion state.
 TRANSMIT_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12442	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing models source-named UI event routing; command-text events must consume a real command-string receipt and cannot fabricate text payloads.
-_1031_10c8	SKWIN	SKWIN/SkWinCore.cpp	12618		MISSING
+_1031_10c8	SKWIN	SKWIN/SkWinCore.cpp	12618	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_10c8_center_button; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the button-group centering helper: NODATA groups copy the source mouse rect, request clickrect allocation, and calculate the centered child rect without drawing fallback UI.
 _0b36_129a	SKWIN	SKWIN/SkWinCore.cpp	12636		MISSING
 DRAW_PICST	SKWIN	SKWIN/SkWinCore.cpp	12667	include/dm2_v1_boot.h:1751	UNCERTAIN
 DRAW_STATIC_PIC	SKWIN	SKWIN/SkWinCore.cpp	12793	src/dm2/dm2_v1_inventory_panel.c:728	UNCERTAIN
@@ -1551,8 +1551,8 @@ DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_view
 DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-_2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041		MISSING
-_2405_011f	SKWIN	SKWIN/SkWinCore.cpp	13062		MISSING
+_2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_00ec_query_blit_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source QUERY_BLIT_RECT wrapper using caller-owned blit rects and _4976_0106/_0108-equivalent draw offsets; missing rect rows fail closed.
+_2405_011f	SKWIN	SKWIN/SkWinCore.cpp	13062	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_011f_query_inflated_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source wrapper as _2405_00ec plus INFLATE_RECT using the _4976_0112-equivalent margin over caller-owned UI rect state.
 DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWIN	SKWIN/SkWinCore.cpp	13076	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CRYOCELL_LEVER	SKWIN	SKWIN/SkWinCore.cpp	13096	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_POWER_STAT_BAR	SKWIN	SKWIN/SkWinCore.cpp	13118		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds power stat bar rect scaling, warning colour selection, background fill, value fill, and tail fill.
@@ -1686,7 +1686,7 @@ fileClose	SKWIN	SKWIN/fileset.cpp	62		MISSING
 fileRead	SKWIN	SKWIN/fileset.cpp	72		MISSING
 fileOpen	SKWIN	SKWIN/fileset.cpp	79		MISSING
 fileTell	SKWIN	SKWIN/fileset.cpp	92		MISSING
-READ_1BIT	SKWIN	SKWIN/xxx.cpp	184		MISSING
+READ_1BIT	SKWIN	SKWIN/xxx.cpp	184	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the xxx.cpp READ_1BIT alias to the same source SUPPRESS reader receipt used for SKULLWIN c_savegame.
 _47e1_0089	SKWIN	SKWIN/xxx.cpp	195		MISSING
 APPEND_RECORD_TO	SKWIN	SKWIN/xxx.cpp	202	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader maps the xxx.cpp APPEND_RECORD_TO alias to the same bounded source mutation receipt used for SkWinCore and SKULLWIN c_record.
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	533		MISSING
@@ -1718,8 +1718,8 @@ int2str	SKWIN	SKWIN/xxx.cpp	2934		MISSING
 FILE_RENAME	SKWIN	SKWIN/xxx.cpp	2939		MISSING
 FILE_CLOSE	SKWIN	SKWIN/xxx.cpp	2944		MISSING
 FILE_READ	SKWIN	SKWIN/xxx.cpp	2949		MISSING
-SUPPRESS_READER	SKWIN	SKWIN/xxx.cpp	2954	include/dm2_v1_save_load.h:23	UNCERTAIN
-SUPPRESS_FLUSH	SKWIN	SKWIN/xxx.cpp	3168	src/dm2/dm2_v1_save_load.c:12	UNCERTAIN
+SUPPRESS_READER	SKWIN	SKWIN/xxx.cpp	2954	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the xxx.cpp SUPPRESS_READER alias to the same stateful source reader receipt used for SKULLWIN c_savegame.
+SUPPRESS_FLUSH	SKWIN	SKWIN/xxx.cpp	3168	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the xxx.cpp SUPPRESS_FLUSH alias to the same pending-byte flush receipt used for SKULLWIN c_savegame.
 WRITE_POSSESSION_INDICES	SKWIN	SKWIN/xxx.cpp	3197		MISSING
 GET_TELEPORTER_DETAIL	SKWIN	SKWIN/xxx.cpp	3235		MISSING
 GET_POINTER_OF_RECORD_LINK_AND_SOMEWHAT	SKWIN	SKWIN/xxx.cpp	3272		MISSING
@@ -1742,8 +1742,8 @@ GET_OBJECT_INDEX_FROM_TILE	SKWIN	SKWIN/xxx.cpp	4008	src/dm2/dm2_v1_dungeon_loade
 GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/xxx.cpp	4027	src/dm2/dm2_v1_runtime.c:329	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.
 GET_NEXT_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	4033	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 CHANGE_CURRENT_MAP_TO	SKWIN	SKWIN/xxx.cpp	4039	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
-WRITE_1BIT	SKWIN	SKWIN/xxx.cpp	4079		MISSING
-SUPPRESS_WRITER	SKWIN	SKWIN/xxx.cpp	4088	include/dm2_v1_save_load.h:23	UNCERTAIN
+WRITE_1BIT	SKWIN	SKWIN/xxx.cpp	4079	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the xxx.cpp WRITE_1BIT alias to the same source SUPPRESS writer receipt used for SKULLWIN c_savegame.
+SUPPRESS_WRITER	SKWIN	SKWIN/xxx.cpp	4088	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the xxx.cpp SUPPRESS_WRITER alias to the same stateful source writer receipt used for SKULLWIN c_savegame.
 FILE_WRITE	SKWIN	SKWIN/xxx.cpp	4167		MISSING
 SKSAVE_WRITE	SKWIN	SKWIN/xxx.cpp	4175		MISSING
 _2066_036e	SKWIN	SKWIN/xxx.cpp	4184		MISSING

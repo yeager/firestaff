@@ -28,6 +28,34 @@ int dm1_v1_wall_inscription_presentation_from_world_pc34(
     return 1;
 }
 
+int dm1_v1_wall_inscription_presentation_from_selected_wall_pc34(
+    const struct DungeonThings_Compat* things,
+    int selectedTextIndex,
+    DM1_V1_WallInscriptionPresentationReceiptPc34* outReceipt)
+{
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+    DM1_V1_WallInscriptionPresentationReceiptPc34 receipt;
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    memset(&receipt, 0, sizeof(receipt));
+    /* F0172 has already selected the current wall TextString.  F0107 uses
+     * that exact record for both readable M648 and side/depth unreadable
+     * height; it must not scan another square-list member if the selected
+     * record is hidden or malformed. */
+    if (!dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            things, selectedTextIndex, &material) ||
+        material.lineCount <= 0) {
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.textStringIndex = material.textStringIndex;
+    receipt.lineCount = material.lineCount;
+    *outReceipt = receipt;
+    return 1;
+}
+
 int dm1_v1_viewport_inscription_receipt_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
@@ -56,6 +84,34 @@ int dm1_v1_viewport_inscription_receipt_from_world_pc34(
     }
     if (dm1_v1_inscription_host_material_from_world_pc34(
             things, preferredTextIndex, firstThing, &receipt.frontMaterial)) {
+        receipt.drawFrontMaterial = 1;
+    }
+    *outReceipt = receipt;
+    return 1;
+}
+
+int dm1_v1_viewport_inscription_receipt_from_selected_wall_pc34(
+    const struct DungeonThings_Compat* things,
+    int selectedTextIndex,
+    DM1_V1_ViewportInscriptionProjectionPc34 projection,
+    int championMirror,
+    DM1_V1_ViewportInscriptionReceiptPc34* outReceipt)
+{
+    DM1_V1_ViewportInscriptionReceiptPc34 receipt;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.clearPreviousMaterial = 1;
+    if (projection != DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34 ||
+        championMirror || !things) {
+        *outReceipt = receipt;
+        return 1;
+    }
+    if (dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            things, selectedTextIndex, &receipt.frontMaterial)) {
         receipt.drawFrontMaterial = 1;
     }
     *outReceipt = receipt;

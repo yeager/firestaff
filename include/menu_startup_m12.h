@@ -529,6 +529,7 @@ typedef struct M12_StartupMenuState {
 
 typedef struct M12_StartupMenuInitOptions {
     int skipScreenshotGalleryScan;
+    int looseFilesOnlyAssetScan;
 } M12_StartupMenuInitOptions;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);

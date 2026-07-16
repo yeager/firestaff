@@ -932,6 +932,101 @@ static uint32_t theron_v1_runtime_track02_loader_route_pair_hash(
     return hash ? hash : 2166136261u;
 }
 
+static uint32_t theron_v1_runtime_track02_object_placement_state_hash(
+    const Theron_Track02ObjectTable *objects,
+    uint32_t selected_level_index) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!objects || !objects->shape_ok || objects->record_count == 0u ||
+        selected_level_index >= THERON_TRACK02_DUNGEON_COUNT) {
+        return 0u;
+    }
+    hash = theron_v1_runtime_mix_hash(hash, objects->checksum);
+    hash = theron_v1_runtime_mix_hash(hash, (uint32_t)objects->record_count);
+    hash = theron_v1_runtime_mix_hash(hash, selected_level_index);
+    for (i = 0u; i < objects->record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *record = &objects->records[i];
+        if (record->level_index != selected_level_index) {
+            continue;
+        }
+        hash = theron_v1_runtime_mix_hash(hash, (uint32_t)i);
+        hash = theron_v1_runtime_mix_hash(hash, record->object_id);
+        hash = theron_v1_runtime_mix_hash(hash, record->kind);
+        hash = theron_v1_runtime_mix_hash(hash, record->x);
+        hash = theron_v1_runtime_mix_hash(hash, record->y);
+        hash = theron_v1_runtime_mix_hash(hash, record->level_index);
+        hash = theron_v1_runtime_mix_hash(hash, record->flags);
+        hash = theron_v1_runtime_mix_hash(hash, record->argument);
+    }
+    return hash ? hash : 2166136261u;
+}
+
+static int theron_v1_runtime_track02_object_kind_supported(uint8_t kind) {
+    return (kind >= THERON_OBJTYPE_CHEST &&
+            kind <= THERON_OBJTYPE_TRIGGER) ||
+           kind == THERON_OBJTYPE_QUEST_ITEM;
+}
+
+static uint32_t theron_v1_runtime_track02_object_runtime_state_hash(
+    const Theron_Track02ObjectTable *objects,
+    uint32_t selected_level_index,
+    unsigned int *out_low_kind_mask,
+    int *out_quest_item_seen) {
+    uint32_t hash = 2166136261u;
+    unsigned int low_kind_mask = 0u;
+    int quest_item_seen = 0;
+    size_t i;
+
+    if (out_low_kind_mask) {
+        *out_low_kind_mask = 0u;
+    }
+    if (out_quest_item_seen) {
+        *out_quest_item_seen = 0;
+    }
+    if (!objects || !objects->shape_ok ||
+        selected_level_index >= THERON_TRACK02_DUNGEON_COUNT) {
+        return 0u;
+    }
+    for (i = 0u; i < objects->record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *record = &objects->records[i];
+        uint8_t runtime_state;
+        uint32_t runtime_flags;
+        uint32_t runtime_quantity;
+
+        if (record->level_index != selected_level_index) {
+            continue;
+        }
+        if (!theron_v1_runtime_track02_object_kind_supported(record->kind)) {
+            return 0u;
+        }
+        if (record->kind == THERON_OBJTYPE_QUEST_ITEM) {
+            quest_item_seen = 1;
+        } else {
+            low_kind_mask |= 1u << record->kind;
+        }
+        runtime_state = (uint8_t)(record->flags & 0x03u);
+        runtime_flags = record->flags;
+        runtime_quantity = record->argument ? record->argument : 1u;
+        hash = theron_v1_runtime_mix_hash(hash, (uint32_t)i);
+        hash = theron_v1_runtime_mix_hash(hash, record->object_id);
+        hash = theron_v1_runtime_mix_hash(hash, record->kind);
+        hash = theron_v1_runtime_mix_hash(hash, runtime_state);
+        hash = theron_v1_runtime_mix_hash(hash, record->x);
+        hash = theron_v1_runtime_mix_hash(hash, record->y);
+        hash = theron_v1_runtime_mix_hash(hash, record->level_index);
+        hash = theron_v1_runtime_mix_hash(hash, runtime_flags);
+        hash = theron_v1_runtime_mix_hash(hash, runtime_quantity);
+    }
+    if (out_low_kind_mask) {
+        *out_low_kind_mask = low_kind_mask;
+    }
+    if (out_quest_item_seen) {
+        *out_quest_item_seen = quest_item_seen;
+    }
+    return hash ? hash : 2166136261u;
+}
+
 static uint32_t theron_v1_runtime_trace_text_checksum(const char *text) {
     uint32_t hash = 2166136261u;
     const unsigned char *p = (const unsigned char *)text;
@@ -3206,6 +3301,1845 @@ int theron_v1_runtime_bind_track02_level_object_loader_route(
     receipt.dungeon_route_handoff_allowed = 0;
     receipt.dungeon_runtime_admission_allowed = 0;
     receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_object_placement_state(
+    const Theron_V1RuntimeTrack02LevelObjectLoaderRouteReceipt *loader,
+    const Theron_Track02ObjectTable *objects,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02ObjectPlacementStateReceipt *out) {
+    Theron_V1RuntimeTrack02ObjectPlacementStateReceipt receipt = {0};
+    const Theron_Track02ObjectTableRecord *first = NULL;
+    uint32_t selected_level_index = 0u;
+    uint32_t placement_hash;
+    size_t i;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!loader || !objects || !capture_trace || !out ||
+        !loader->valid ||
+        !loader->dungeon_object_level_table_binding_consumed ||
+        !loader->same_capture_as_table_binding ||
+        loader->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(loader->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        loader->record == 0u ||
+        loader->consumer_trace_checksum == 0u ||
+        loader->selected_dungeon_index == 0u ||
+        loader->selected_dungeon_index > THERON_TRACK02_DUNGEON_COUNT ||
+        loader->level_route_hash == 0u ||
+        loader->object_table_route_hash == 0u ||
+        loader->loader_route_pair_hash == 0u ||
+        loader->object_table_user_data_byte_count == 0u ||
+        loader->object_table_user_data_hash == 0u ||
+        !loader->loader_route_record_bound ||
+        !loader->loader_route_source_windows_bound ||
+        !loader->level_object_table_pair_bound ||
+        !loader->loader_route_review_required ||
+        loader->field_decoder_execution_allowed ||
+        loader->dungeon_route_handoff_allowed ||
+        loader->dungeon_runtime_admission_allowed ||
+        loader->dungeon_draw_allowed ||
+        loader->fallback_visuals_allowed ||
+        !objects->shape_ok ||
+        objects->record_count == 0u ||
+        objects->record_count > THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS ||
+        objects->checksum == 0u ||
+        objects->byte_count == 0u ||
+        objects->byte_count > loader->object_table_user_data_byte_count) {
+        return 0;
+    }
+
+    if (!theron_v1_runtime_trace_read_u32(
+            capture_trace, "selected_level_index", &selected_level_index)) {
+        return 0;
+    }
+    if (selected_level_index >= THERON_TRACK02_DUNGEON_COUNT ||
+        objects->level_record_counts[selected_level_index] == 0u ||
+        (objects->level_mask & (1u << selected_level_index)) == 0u ||
+        objects->level_record_hashes[selected_level_index] == 0u ||
+        objects->level_position_hashes[selected_level_index] == 0u) {
+        return 0;
+    }
+    placement_hash =
+        theron_v1_runtime_track02_object_placement_state_hash(
+            objects, selected_level_index);
+    if (placement_hash == 0u) {
+        return 0;
+    }
+    for (i = 0u; i < objects->record_count; ++i) {
+        if (objects->records[i].level_index == selected_level_index) {
+            first = &objects->records[i];
+            break;
+        }
+    }
+    if (!first) {
+        return 0;
+    }
+
+    if (!theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_object_placement_state") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_loader_route=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", loader->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            loader->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_dungeon_index",
+            loader->selected_dungeon_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_level_index", selected_level_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", loader->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            loader->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_route_pair_hash",
+            loader->loader_route_pair_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_byte_count",
+            loader->object_table_user_data_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_user_data_hash",
+            loader->object_table_user_data_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_record_count", objects->record_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_checksum", objects->checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_level_mask", objects->level_mask) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "selected_level_record_count",
+            objects->level_record_counts[selected_level_index]) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_level_record_hash",
+            objects->level_record_hashes[selected_level_index]) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_level_position_hash",
+            objects->level_position_hashes[selected_level_index]) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_placement_state_hash", placement_hash) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_placement_bytes_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_state_low_bits_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_kind_semantics_review_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "world_object_publish_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.level_object_loader_route_consumed = 1;
+    receipt.object_table_shape_consumed = 1;
+    receipt.same_capture_as_loader_route = 1;
+    receipt.variant = loader->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             loader->track02_md5);
+    receipt.record = loader->record;
+    receipt.consumer_trace_checksum = loader->consumer_trace_checksum;
+    receipt.selected_dungeon_index = loader->selected_dungeon_index;
+    receipt.selected_level_index = selected_level_index;
+    receipt.level_route_hash = loader->level_route_hash;
+    receipt.object_table_route_hash = loader->object_table_route_hash;
+    receipt.loader_route_pair_hash = loader->loader_route_pair_hash;
+    receipt.object_table_user_data_byte_count =
+        loader->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash = loader->object_table_user_data_hash;
+    receipt.object_record_count = objects->record_count;
+    receipt.object_table_checksum = objects->checksum;
+    receipt.object_level_mask = objects->level_mask;
+    receipt.selected_level_record_count =
+        objects->level_record_counts[selected_level_index];
+    receipt.selected_level_record_hash =
+        objects->level_record_hashes[selected_level_index];
+    receipt.selected_level_position_hash =
+        objects->level_position_hashes[selected_level_index];
+    receipt.object_placement_state_hash = placement_hash;
+    receipt.first_object_id = first->object_id;
+    receipt.first_object_kind = first->kind;
+    receipt.first_object_x = first->x;
+    receipt.first_object_y = first->y;
+    receipt.first_object_level_index = first->level_index;
+    receipt.first_object_state_low_bits = (uint8_t)(first->flags & 0x03u);
+    receipt.first_object_flags = first->flags;
+    receipt.first_object_argument = first->argument;
+    receipt.object_placement_bytes_bound = 1;
+    receipt.object_state_low_bits_bound = 1;
+    receipt.object_kind_semantics_review_required = 1;
+    receipt.world_object_publish_allowed = 0;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_object_gameplay_semantics(
+    const Theron_V1RuntimeTrack02ObjectPlacementStateReceipt *placement,
+    const Theron_Track02ObjectTable *objects,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt *out) {
+    Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt receipt = {0};
+    const Theron_Track02ObjectTableRecord *first = NULL;
+    uint32_t runtime_state_hash;
+    unsigned int low_kind_mask = 0u;
+    int quest_item_seen = 0;
+    size_t i;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!placement || !objects || !capture_trace || !out ||
+        !placement->valid ||
+        !placement->level_object_loader_route_consumed ||
+        !placement->object_table_shape_consumed ||
+        !placement->same_capture_as_loader_route ||
+        placement->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(placement->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        placement->record == 0u ||
+        placement->consumer_trace_checksum == 0u ||
+        placement->selected_dungeon_index == 0u ||
+        placement->selected_dungeon_index > THERON_TRACK02_DUNGEON_COUNT ||
+        placement->selected_level_index >= THERON_TRACK02_DUNGEON_COUNT ||
+        placement->object_table_route_hash == 0u ||
+        placement->loader_route_pair_hash == 0u ||
+        placement->object_placement_state_hash == 0u ||
+        placement->selected_level_record_count == 0u ||
+        placement->selected_level_record_hash == 0u ||
+        placement->selected_level_position_hash == 0u ||
+        !placement->object_placement_bytes_bound ||
+        !placement->object_state_low_bits_bound ||
+        !placement->object_kind_semantics_review_required ||
+        placement->world_object_publish_allowed ||
+        placement->dungeon_runtime_admission_allowed ||
+        placement->dungeon_draw_allowed ||
+        placement->fallback_visuals_allowed ||
+        !objects->shape_ok ||
+        objects->record_count == 0u ||
+        objects->record_count != placement->object_record_count ||
+        objects->checksum != placement->object_table_checksum ||
+        objects->level_mask != placement->object_level_mask ||
+        objects->level_record_counts[placement->selected_level_index] !=
+            placement->selected_level_record_count ||
+        objects->level_record_hashes[placement->selected_level_index] !=
+            placement->selected_level_record_hash ||
+        objects->level_position_hashes[placement->selected_level_index] !=
+            placement->selected_level_position_hash) {
+        return 0;
+    }
+
+    runtime_state_hash =
+        theron_v1_runtime_track02_object_runtime_state_hash(
+            objects, placement->selected_level_index, &low_kind_mask,
+            &quest_item_seen);
+    if (runtime_state_hash == 0u) {
+        return 0;
+    }
+    for (i = 0u; i < objects->record_count; ++i) {
+        if (objects->records[i].level_index == placement->selected_level_index) {
+            first = &objects->records[i];
+            break;
+        }
+    }
+    if (!first ||
+        !theron_v1_runtime_track02_object_kind_supported(first->kind)) {
+        return 0;
+    }
+
+    if (!theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_object_gameplay_semantics") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_placement_state=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", placement->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            placement->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_dungeon_index",
+            placement->selected_dungeon_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_level_index",
+            placement->selected_level_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            placement->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_route_pair_hash",
+            placement->loader_route_pair_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_placement_state_hash",
+            placement->object_placement_state_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "selected_level_record_count",
+            placement->selected_level_record_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_level_record_hash",
+            placement->selected_level_record_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_level_position_hash",
+            placement->selected_level_position_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "runtime_kind_low_mask", low_kind_mask) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "runtime_kind_quest_item_seen",
+            (uint32_t)quest_item_seen) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_runtime_state_hash",
+            runtime_state_hash) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_kind_semantics_proven=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "flags_low_bits_state_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "argument_quantity_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_flags_preserved=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "all_selected_records_runtime_mappable=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "world_object_publish_allowed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.object_placement_state_consumed = 1;
+    receipt.object_table_shape_consumed = 1;
+    receipt.same_capture_as_placement_state = 1;
+    receipt.variant = placement->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             placement->track02_md5);
+    receipt.record = placement->record;
+    receipt.consumer_trace_checksum = placement->consumer_trace_checksum;
+    receipt.selected_dungeon_index = placement->selected_dungeon_index;
+    receipt.selected_level_index = placement->selected_level_index;
+    receipt.object_table_route_hash = placement->object_table_route_hash;
+    receipt.loader_route_pair_hash = placement->loader_route_pair_hash;
+    receipt.object_placement_state_hash =
+        placement->object_placement_state_hash;
+    receipt.selected_level_record_count =
+        placement->selected_level_record_count;
+    receipt.selected_level_record_hash = placement->selected_level_record_hash;
+    receipt.selected_level_position_hash =
+        placement->selected_level_position_hash;
+    receipt.runtime_kind_low_mask = low_kind_mask;
+    receipt.runtime_kind_quest_item_seen = quest_item_seen;
+    receipt.object_runtime_state_hash = runtime_state_hash;
+    receipt.first_runtime_type = first->kind;
+    receipt.first_runtime_state = (uint8_t)(first->flags & 0x03u);
+    receipt.first_runtime_flags = first->flags;
+    receipt.first_runtime_quantity = first->argument ? first->argument : 1;
+    receipt.object_kind_semantics_proven = 1;
+    receipt.flags_low_bits_state_bound = 1;
+    receipt.argument_quantity_bound = 1;
+    receipt.object_flags_preserved = 1;
+    receipt.all_selected_records_runtime_mappable = 1;
+    receipt.world_object_publish_allowed = 1;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_publish_track02_object_gameplay_state(
+    Theron_V1_World *world,
+    Theron_DungeonID dungeon_id,
+    const Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt *semantics,
+    const Theron_Track02ObjectTable *objects,
+    Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt *out) {
+    Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt receipt = {0};
+    int dungeon_slot;
+    int selected_level;
+    int write_index = 0;
+    int removed = 0;
+    int placed = 0;
+    int original_count;
+    size_t i;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!world || !semantics || !objects || !out ||
+        !semantics->valid ||
+        !semantics->object_placement_state_consumed ||
+        !semantics->object_table_shape_consumed ||
+        !semantics->same_capture_as_placement_state ||
+        semantics->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(semantics->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        semantics->selected_dungeon_index == 0u ||
+        semantics->selected_dungeon_index > THERON_DUNGEON_COUNT ||
+        semantics->selected_dungeon_index != (uint32_t)dungeon_id ||
+        semantics->selected_level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        semantics->selected_level_record_count == 0u ||
+        !semantics->object_kind_semantics_proven ||
+        !semantics->flags_low_bits_state_bound ||
+        !semantics->argument_quantity_bound ||
+        !semantics->object_flags_preserved ||
+        !semantics->all_selected_records_runtime_mappable ||
+        !semantics->world_object_publish_allowed ||
+        semantics->dungeon_runtime_admission_allowed ||
+        semantics->dungeon_draw_allowed ||
+        semantics->fallback_visuals_allowed ||
+        !objects->shape_ok ||
+        objects->record_count == 0u ||
+        objects->level_record_counts[semantics->selected_level_index] !=
+            semantics->selected_level_record_count ||
+        objects->level_record_hashes[semantics->selected_level_index] !=
+            semantics->selected_level_record_hash ||
+        objects->level_position_hashes[semantics->selected_level_index] !=
+            semantics->selected_level_position_hash ||
+        world->object_count < 0 ||
+        world->object_count > THERON_MAX_OBJECTS) {
+        return 0;
+    }
+
+    dungeon_slot = (int)dungeon_id - 1;
+    selected_level = (int)semantics->selected_level_index;
+    if (!world->level_loaded[dungeon_slot][selected_level] ||
+        world->levels[dungeon_slot][selected_level].width <= 0 ||
+        world->levels[dungeon_slot][selected_level].height <= 0) {
+        return 0;
+    }
+
+    receipt.before_world_hash = theron_v1_world_hash(world);
+    receipt.before_object_count = world->object_count;
+    original_count = world->object_count;
+    for (int read_index = 0; read_index < original_count; ++read_index) {
+        Theron_V1_Object object = world->objects[read_index];
+        if (object.dungeon_id == (int)dungeon_id &&
+            object.level == selected_level) {
+            ++removed;
+            continue;
+        }
+        world->objects[write_index++] = object;
+    }
+    world->object_count = write_index;
+
+    for (i = 0u; i < objects->record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *record = &objects->records[i];
+        Theron_V1_Object object;
+
+        if (record->level_index != semantics->selected_level_index) {
+            continue;
+        }
+        if (!theron_v1_runtime_track02_object_kind_supported(record->kind) ||
+            record->x >=
+                (uint8_t)world->levels[dungeon_slot][selected_level].width ||
+            record->y >=
+                (uint8_t)world->levels[dungeon_slot][selected_level].height) {
+            return 0;
+        }
+        memset(&object, 0, sizeof(object));
+        object.type = record->kind;
+        object.state = record->flags & 0x03u;
+        object.x = record->x;
+        object.y = record->y;
+        object.level = selected_level;
+        object.dungeon_id = dungeon_id;
+        object.quantity = record->argument ? record->argument : 1;
+        object.flags = record->flags;
+        if (theron_v1_object_place(world, &object) != 0) {
+            return 0;
+        }
+        ++placed;
+    }
+    if (placed != (int)semantics->selected_level_record_count) {
+        return 0;
+    }
+
+    world->current_dungeon = dungeon_id;
+    world->current_level = selected_level;
+    world->levels[dungeon_slot][selected_level].thing_count = placed;
+    theron_v1_world_runtime_media_invalidate_cache(world);
+
+    receipt.valid = 1;
+    receipt.object_gameplay_semantics_consumed = 1;
+    receipt.object_table_shape_consumed = 1;
+    receipt.world_mutated = 1;
+    receipt.variant = semantics->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             semantics->track02_md5);
+    receipt.record = semantics->record;
+    receipt.selected_dungeon_index = semantics->selected_dungeon_index;
+    receipt.selected_level_index = semantics->selected_level_index;
+    receipt.selected_level_record_count =
+        semantics->selected_level_record_count;
+    receipt.removed_selected_level_object_count = removed;
+    receipt.placed_object_count = placed;
+    receipt.after_object_count = world->object_count;
+    receipt.level_loaded_required = 1;
+    receipt.level_loaded = 1;
+    receipt.current_level_after = world->current_level;
+    receipt.thing_count_after =
+        world->levels[dungeon_slot][selected_level].thing_count;
+    receipt.after_world_hash = theron_v1_world_hash(world);
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_level_transition_handoff(
+    const Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt *source,
+    const Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt *target,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt *out) {
+    Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt receipt = {0};
+    uint32_t target_level_byte_count = 0u;
+    uint32_t target_level_raw_hash = 0u;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!source || !target || !capture_trace || !out ||
+        !source->valid ||
+        !source->object_gameplay_semantics_consumed ||
+        !source->object_table_shape_consumed ||
+        !source->world_mutated ||
+        source->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(source->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        source->record == 0u ||
+        source->selected_dungeon_index == 0u ||
+        source->selected_dungeon_index > THERON_DUNGEON_COUNT ||
+        source->selected_level_record_count == 0u ||
+        !source->level_loaded ||
+        source->dungeon_runtime_admission_allowed ||
+        source->dungeon_draw_allowed ||
+        source->fallback_visuals_allowed ||
+        !target->valid ||
+        !target->object_placement_state_consumed ||
+        !target->object_table_shape_consumed ||
+        !target->same_capture_as_placement_state ||
+        target->variant != source->variant ||
+        strcmp(target->track02_md5, source->track02_md5) != 0 ||
+        target->record != source->record ||
+        target->consumer_trace_checksum == 0u ||
+        target->selected_dungeon_index != source->selected_dungeon_index ||
+        target->selected_level_index == source->selected_level_index ||
+        target->selected_level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        target->object_table_route_hash == 0u ||
+        target->loader_route_pair_hash == 0u ||
+        target->object_runtime_state_hash == 0u ||
+        target->selected_level_record_count == 0u ||
+        target->selected_level_record_hash == 0u ||
+        !target->object_kind_semantics_proven ||
+        !target->world_object_publish_allowed ||
+        target->dungeon_runtime_admission_allowed ||
+        target->dungeon_draw_allowed ||
+        target->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_level_transition_handoff") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_target_loader_route=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", target->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            target->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_dungeon_index",
+            target->selected_dungeon_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "source_level_index",
+            source->selected_level_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "target_level_index",
+            target->selected_level_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "target_object_table_route_hash",
+            target->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "target_loader_route_pair_hash",
+            target->loader_route_pair_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "target_object_runtime_state_hash",
+            target->object_runtime_state_hash) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "target_level_byte_count",
+            &target_level_byte_count) ||
+        target_level_byte_count == 0u ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "target_level_raw_hash",
+            &target_level_raw_hash) ||
+        target_level_raw_hash == 0u ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "target_object_record_count",
+            target->selected_level_record_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "target_object_level_record_hash",
+            target->selected_level_record_hash) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "loader_level_selector_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "transition_source_level_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "transition_target_level_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "party_placement_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_pool_state_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_runtime_load_allowed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.source_object_world_handoff_consumed = 1;
+    receipt.target_object_gameplay_semantics_consumed = 1;
+    receipt.same_capture_as_target_loader_route = 1;
+    receipt.variant = target->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             target->track02_md5);
+    receipt.record = target->record;
+    receipt.consumer_trace_checksum = target->consumer_trace_checksum;
+    receipt.selected_dungeon_index = target->selected_dungeon_index;
+    receipt.source_level_index = source->selected_level_index;
+    receipt.target_level_index = target->selected_level_index;
+    receipt.target_object_table_route_hash = target->object_table_route_hash;
+    receipt.target_loader_route_pair_hash = target->loader_route_pair_hash;
+    receipt.target_object_runtime_state_hash =
+        target->object_runtime_state_hash;
+    receipt.target_level_byte_count = target_level_byte_count;
+    receipt.target_level_raw_hash = target_level_raw_hash;
+    receipt.target_object_record_count = target->selected_level_record_count;
+    receipt.target_object_level_record_hash =
+        target->selected_level_record_hash;
+    receipt.loader_level_selector_bound = 1;
+    receipt.transition_source_level_bound = 1;
+    receipt.transition_target_level_bound = 1;
+    receipt.party_placement_bound = 1;
+    receipt.object_pool_state_bound = 1;
+    receipt.level_runtime_load_allowed = 1;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_publish_track02_level_transition(
+    Theron_V1_World *world,
+    const Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt *handoff,
+    const Theron_V1_Level *target_level,
+    const Theron_Track02ObjectTable *target_objects,
+    const Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt
+        *target_semantics,
+    Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *out) {
+    Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt receipt = {0};
+    Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt object_handoff;
+    int dungeon_slot;
+    int target_level_index;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!world || !handoff || !target_level || !target_objects ||
+        !target_semantics || !out ||
+        !handoff->valid ||
+        !handoff->source_object_world_handoff_consumed ||
+        !handoff->target_object_gameplay_semantics_consumed ||
+        !handoff->same_capture_as_target_loader_route ||
+        handoff->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(handoff->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        handoff->record == 0u ||
+        handoff->selected_dungeon_index == 0u ||
+        handoff->selected_dungeon_index > THERON_DUNGEON_COUNT ||
+        handoff->source_level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        handoff->target_level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        handoff->source_level_index == handoff->target_level_index ||
+        !handoff->loader_level_selector_bound ||
+        !handoff->transition_source_level_bound ||
+        !handoff->transition_target_level_bound ||
+        !handoff->party_placement_bound ||
+        !handoff->object_pool_state_bound ||
+        !handoff->level_runtime_load_allowed ||
+        handoff->dungeon_runtime_admission_allowed ||
+        handoff->dungeon_draw_allowed ||
+        handoff->fallback_visuals_allowed ||
+        !target_semantics->valid ||
+        target_semantics->selected_dungeon_index !=
+            handoff->selected_dungeon_index ||
+        target_semantics->selected_level_index != handoff->target_level_index ||
+        target_semantics->selected_level_record_count !=
+            handoff->target_object_record_count ||
+        target_semantics->selected_level_record_hash !=
+            handoff->target_object_level_record_hash ||
+        !target_semantics->world_object_publish_allowed ||
+        target_semantics->dungeon_runtime_admission_allowed ||
+        target_semantics->dungeon_draw_allowed ||
+        target_semantics->fallback_visuals_allowed ||
+        !world->transition_pending ||
+        world->transition_type != THERON_TRANSITION_STAIRS ||
+        world->current_dungeon != (int)handoff->selected_dungeon_index ||
+        world->current_level != (int)handoff->source_level_index ||
+        world->transition_target_level != (int)handoff->target_level_index ||
+        target_level->width <= 0 ||
+        target_level->height <= 0 ||
+        target_level->start_x < 0 ||
+        target_level->start_y < 0 ||
+        target_level->start_x >= target_level->width ||
+        target_level->start_y >= target_level->height) {
+        return 0;
+    }
+
+    dungeon_slot = (int)handoff->selected_dungeon_index - 1;
+    target_level_index = (int)handoff->target_level_index;
+    receipt.before_world_hash = theron_v1_world_hash(world);
+    receipt.transition_pending_before = world->transition_pending;
+
+    world->levels[dungeon_slot][target_level_index] = *target_level;
+    world->level_loaded[dungeon_slot][target_level_index] = 1;
+    if (!theron_v1_runtime_publish_track02_object_gameplay_state(
+            world,
+            (Theron_DungeonID)handoff->selected_dungeon_index,
+            target_semantics,
+            target_objects,
+            &object_handoff) ||
+        !object_handoff.valid ||
+        !object_handoff.world_mutated ||
+        object_handoff.dungeon_runtime_admission_allowed ||
+        object_handoff.dungeon_draw_allowed ||
+        object_handoff.fallback_visuals_allowed) {
+        return 0;
+    }
+
+    theron_v1_party_place(world, target_level->start_x, target_level->start_y,
+                          target_level->start_dir);
+    world->transition_pending = 0;
+    world->transition_type = 0;
+    world->transition_target_level = 0;
+    theron_v1_world_runtime_media_invalidate_cache(world);
+
+    receipt.valid = 1;
+    receipt.level_transition_handoff_consumed = 1;
+    receipt.target_object_world_handoff_consumed = 1;
+    receipt.world_mutated = 1;
+    receipt.variant = handoff->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             handoff->track02_md5);
+    receipt.record = handoff->record;
+    receipt.selected_dungeon_index = handoff->selected_dungeon_index;
+    receipt.source_level_index = handoff->source_level_index;
+    receipt.target_level_index = handoff->target_level_index;
+    receipt.transition_pending_after = world->transition_pending;
+    receipt.level_loaded = world->level_loaded[dungeon_slot][target_level_index];
+    receipt.current_level_after = world->current_level;
+    receipt.party_x = world->party.leader_x;
+    receipt.party_y = world->party.leader_y;
+    receipt.party_dir = world->party.leader_dir;
+    receipt.target_object_count = object_handoff.placed_object_count;
+    receipt.target_thing_count =
+        world->levels[dungeon_slot][target_level_index].thing_count;
+    receipt.after_world_hash = theron_v1_world_hash(world);
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+static uint32_t theron_v1_runtime_track02_bitmap_palette_source_hash(
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *runtime,
+    size_t palette_raw_offset,
+    size_t palette_user_data_offset,
+    uint32_t palette_payload_checksum,
+    uint32_t palette_decoded_checksum,
+    uint32_t bitmap_route_mask,
+    uint32_t bitmap_atlas_checksum,
+    uint32_t bitmap_atlas_route_count,
+    uint32_t bitmap_atlas_nonzero_pixel_count) {
+    uint32_t hash = 2166136261u;
+
+    hash = theron_v1_runtime_mix_hash(hash, runtime->record);
+    hash = theron_v1_runtime_mix_hash(hash, runtime->selected_dungeon_index);
+    hash = theron_v1_runtime_mix_hash(hash, runtime->source_level_index);
+    hash = theron_v1_runtime_mix_hash(hash, runtime->target_level_index);
+    hash = theron_v1_runtime_mix_hash(hash, (uint32_t)palette_raw_offset);
+    hash = theron_v1_runtime_mix_hash(hash, (uint32_t)palette_user_data_offset);
+    hash = theron_v1_runtime_mix_hash(hash, palette_payload_checksum);
+    hash = theron_v1_runtime_mix_hash(hash, palette_decoded_checksum);
+    hash = theron_v1_runtime_mix_hash(hash, bitmap_route_mask);
+    hash = theron_v1_runtime_mix_hash(hash, bitmap_atlas_checksum);
+    hash = theron_v1_runtime_mix_hash(hash, bitmap_atlas_route_count);
+    hash = theron_v1_runtime_mix_hash(hash, bitmap_atlas_nonzero_pixel_count);
+    return hash ? hash : 2166136261u;
+}
+
+int theron_v1_runtime_bind_track02_bitmap_palette_source(
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *runtime,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02BitmapPaletteSourceReceipt *out) {
+    Theron_V1RuntimeTrack02BitmapPaletteSourceReceipt receipt = {0};
+    size_t palette_raw_offset;
+    size_t palette_user_data_offset;
+    uint32_t palette_payload_checksum;
+    uint32_t palette_decoded_checksum;
+    uint32_t bitmap_route_mask;
+    uint32_t bitmap_atlas_checksum;
+    uint32_t bitmap_atlas_route_count;
+    uint32_t bitmap_atlas_nonzero_pixel_count;
+    uint32_t bitmap_palette_source_hash;
+    uint32_t expected_hash;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!runtime || !capture_trace || !out ||
+        !runtime->valid ||
+        !runtime->level_transition_handoff_consumed ||
+        !runtime->target_object_world_handoff_consumed ||
+        !runtime->world_mutated ||
+        runtime->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(runtime->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        runtime->record == 0u ||
+        runtime->selected_dungeon_index == 0u ||
+        runtime->source_level_index == runtime->target_level_index ||
+        runtime->level_loaded != 1 ||
+        runtime->transition_pending_before != 1 ||
+        runtime->transition_pending_after != 0 ||
+        runtime->dungeon_runtime_admission_allowed ||
+        runtime->dungeon_draw_allowed ||
+        runtime->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_bitmap_palette_source") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_level_transition=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", runtime->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_dungeon_index",
+            runtime->selected_dungeon_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "source_level_index",
+            runtime->source_level_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "target_level_index",
+            runtime->target_level_index) ||
+        !theron_v1_runtime_trace_read_size(
+            capture_trace, "palette_raw_offset", &palette_raw_offset) ||
+        !theron_v1_runtime_trace_read_size(
+            capture_trace, "palette_user_data_offset",
+            &palette_user_data_offset) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "palette_payload_checksum",
+            &palette_payload_checksum) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "palette_decoded_checksum",
+            &palette_decoded_checksum) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "bitmap_route_mask", &bitmap_route_mask) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "bitmap_atlas_checksum", &bitmap_atlas_checksum) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "bitmap_atlas_route_count",
+            &bitmap_atlas_route_count) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "bitmap_atlas_nonzero_pixel_count",
+            &bitmap_atlas_nonzero_pixel_count) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "bitmap_palette_source_hash",
+            &bitmap_palette_source_hash) ||
+        palette_raw_offset == 0u ||
+        palette_user_data_offset == 0u ||
+        palette_payload_checksum == 0u ||
+        palette_decoded_checksum == 0u ||
+        bitmap_route_mask == 0u ||
+        bitmap_atlas_checksum == 0u ||
+        bitmap_atlas_route_count == 0u ||
+        bitmap_atlas_nonzero_pixel_count == 0u ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "palette_window_source_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "bitmap_route_source_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "palette_decode_verified=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "bitmap_decode_verified=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "pixel_output_verified=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "m11_render_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    expected_hash =
+        theron_v1_runtime_track02_bitmap_palette_source_hash(
+            runtime, palette_raw_offset, palette_user_data_offset,
+            palette_payload_checksum, palette_decoded_checksum,
+            bitmap_route_mask, bitmap_atlas_checksum, bitmap_atlas_route_count,
+            bitmap_atlas_nonzero_pixel_count);
+    if (bitmap_palette_source_hash != expected_hash) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.level_transition_runtime_consumed = 1;
+    receipt.same_capture_as_level_transition = 1;
+    receipt.variant = runtime->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             runtime->track02_md5);
+    receipt.record = runtime->record;
+    receipt.selected_dungeon_index = runtime->selected_dungeon_index;
+    receipt.source_level_index = runtime->source_level_index;
+    receipt.target_level_index = runtime->target_level_index;
+    receipt.palette_raw_offset = palette_raw_offset;
+    receipt.palette_user_data_offset = palette_user_data_offset;
+    receipt.palette_payload_checksum = palette_payload_checksum;
+    receipt.palette_decoded_checksum = palette_decoded_checksum;
+    receipt.bitmap_route_mask = bitmap_route_mask;
+    receipt.bitmap_atlas_checksum = bitmap_atlas_checksum;
+    receipt.bitmap_atlas_route_count = bitmap_atlas_route_count;
+    receipt.bitmap_atlas_nonzero_pixel_count =
+        bitmap_atlas_nonzero_pixel_count;
+    receipt.bitmap_palette_source_hash = bitmap_palette_source_hash;
+    receipt.palette_window_source_bound = 1;
+    receipt.bitmap_route_source_bound = 1;
+    receipt.palette_decode_verified = 0;
+    receipt.bitmap_decode_verified = 0;
+    receipt.pixel_output_verified = 0;
+    receipt.m11_render_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_decode_track02_bitmap_palette_vector(
+    const Theron_V1RuntimeTrack02BitmapPaletteSourceReceipt *source,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt *out) {
+    Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt receipt = {0};
+    Theron_Track02PaletteWindowEvidence palette_window;
+    Theron_Track02StartupBitmapCatalog bitmap_catalog;
+    Theron_Track02StartupBitmapAtlas bitmap_atlas;
+    const Theron_Track02StartupBitmapAtlasRoute *first_route;
+    const Theron_Track02StartupBitmapAtlasRoute *stage_route = NULL;
+    uint32_t row_hash = 2166136261u;
+    size_t i;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!source || !track02_data || track02_size == 0u ||
+        !track02_md5 || !out ||
+        !source->valid ||
+        !source->level_transition_runtime_consumed ||
+        !source->same_capture_as_level_transition ||
+        source->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(source->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        strcmp(track02_md5, source->track02_md5) != 0 ||
+        source->record == 0u ||
+        source->selected_dungeon_index == 0u ||
+        source->source_level_index == source->target_level_index ||
+        source->palette_raw_offset == 0u ||
+        source->palette_user_data_offset == 0u ||
+        source->palette_payload_checksum == 0u ||
+        source->palette_decoded_checksum == 0u ||
+        source->bitmap_route_mask == 0u ||
+        source->bitmap_atlas_checksum == 0u ||
+        source->bitmap_atlas_route_count == 0u ||
+        source->bitmap_atlas_nonzero_pixel_count == 0u ||
+        !source->palette_window_source_bound ||
+        !source->bitmap_route_source_bound ||
+        source->palette_decode_verified ||
+        source->bitmap_decode_verified ||
+        source->pixel_output_verified ||
+        source->m11_render_allowed ||
+        source->dungeon_draw_allowed ||
+        source->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    memset(&palette_window, 0, sizeof(palette_window));
+    if (theron_v1_track02_inspect_4bpp_palette_window(
+            track02_data,
+            track02_size,
+            track02_md5,
+            source->palette_raw_offset,
+            &palette_window) != THERON_TRACK02_SIGNAL_OK ||
+        palette_window.variant != source->variant ||
+        palette_window.raw_offset != source->palette_raw_offset ||
+        palette_window.user_data_offset != source->palette_user_data_offset ||
+        palette_window.payload_checksum != source->palette_payload_checksum ||
+        palette_window.palette.checksum != source->palette_decoded_checksum ||
+        !palette_window.format_valid ||
+        !palette_window.palette.valid ||
+        palette_window.palette.nonblack_entry_count == 0u ||
+        palette_window.semantic_binding_verified ||
+        palette_window.promotion_allowed) {
+        return 0;
+    }
+
+    memset(&bitmap_catalog, 0, sizeof(bitmap_catalog));
+    memset(&bitmap_atlas, 0, sizeof(bitmap_atlas));
+    if (theron_v1_track02_catalog_startup_bitmap_samples(
+            track02_data, track02_size, track02_md5, &bitmap_catalog) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        theron_v1_track02_build_startup_bitmap_atlas_wide(
+            &bitmap_catalog, &bitmap_atlas) != THERON_TRACK02_SIGNAL_OK ||
+        bitmap_atlas.variant != source->variant ||
+        bitmap_atlas.route_mask != source->bitmap_route_mask ||
+        bitmap_atlas.checksum != source->bitmap_atlas_checksum ||
+        bitmap_atlas.route_count != source->bitmap_atlas_route_count ||
+        bitmap_atlas.total_nonzero_pixel_count !=
+            source->bitmap_atlas_nonzero_pixel_count ||
+        bitmap_atlas.route_count == 0u ||
+        bitmap_atlas.total_tile_count == 0u) {
+        return 0;
+    }
+
+    first_route = &bitmap_atlas.routes[0];
+    for (i = 0u; i < bitmap_atlas.route_count; ++i) {
+        if (bitmap_atlas.routes[i].route_bit ==
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE) {
+            stage_route = &bitmap_atlas.routes[i];
+            break;
+        }
+    }
+    if (first_route->route_bit == 0u ||
+        first_route->width == 0u ||
+        first_route->height == 0u ||
+        first_route->tile_count == 0u ||
+        first_route->nonzero_pixel_count == 0u ||
+        !stage_route ||
+        stage_route->width == 0u ||
+        stage_route->height == 0u ||
+        stage_route->tile_count == 0u ||
+        stage_route->nonzero_pixel_count == 0u ||
+        stage_route->checksum == 0u ||
+        stage_route->first_raw_offset == 0u ||
+        stage_route->first_user_data_offset == 0u) {
+        return 0;
+    }
+
+    for (i = 0u; i < sizeof(receipt.first_pixel_indices); ++i) {
+        receipt.first_pixel_indices[i] = first_route->pixels[i];
+        row_hash = theron_v1_runtime_mix_hash(row_hash, first_route->pixels[i]);
+    }
+    if (row_hash == 0u) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.bitmap_palette_source_consumed = 1;
+    receipt.real_track02_bytes_consumed = 1;
+    receipt.variant = source->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             source->track02_md5);
+    receipt.record = source->record;
+    receipt.selected_dungeon_index = source->selected_dungeon_index;
+    receipt.source_level_index = source->source_level_index;
+    receipt.target_level_index = source->target_level_index;
+    receipt.palette_raw_offset = palette_window.raw_offset;
+    receipt.palette_user_data_offset = palette_window.user_data_offset;
+    receipt.palette_payload_checksum = palette_window.payload_checksum;
+    receipt.palette_decoded_checksum = palette_window.palette.checksum;
+    receipt.palette_nonblack_entry_count =
+        palette_window.palette.nonblack_entry_count;
+    receipt.first_palette_word = palette_window.palette.entries[0].raw_word;
+    receipt.first_palette_red = palette_window.palette.entries[0].red;
+    receipt.first_palette_green = palette_window.palette.entries[0].green;
+    receipt.first_palette_blue = palette_window.palette.entries[0].blue;
+    receipt.bitmap_route_mask = bitmap_atlas.route_mask;
+    receipt.bitmap_atlas_checksum = bitmap_atlas.checksum;
+    receipt.bitmap_atlas_route_count = bitmap_atlas.route_count;
+    receipt.bitmap_atlas_tile_count = bitmap_atlas.total_tile_count;
+    receipt.bitmap_atlas_nonzero_pixel_count =
+        bitmap_atlas.total_nonzero_pixel_count;
+    receipt.first_bitmap_route_bit = first_route->route_bit;
+    receipt.first_bitmap_route_width = first_route->width;
+    receipt.first_bitmap_route_height = first_route->height;
+    receipt.first_bitmap_route_tile_count = first_route->tile_count;
+    receipt.first_bitmap_route_nonzero_pixel_count =
+        first_route->nonzero_pixel_count;
+    receipt.first_bitmap_route_checksum = first_route->checksum;
+    receipt.first_bitmap_raw_offset = first_route->first_raw_offset;
+    receipt.first_bitmap_user_data_offset = first_route->first_user_data_offset;
+    receipt.stage_bitmap_route_bit = stage_route->route_bit;
+    receipt.stage_bitmap_route_width = stage_route->width;
+    receipt.stage_bitmap_route_height = stage_route->height;
+    receipt.stage_bitmap_route_tile_count = stage_route->tile_count;
+    receipt.stage_bitmap_route_nonzero_pixel_count =
+        stage_route->nonzero_pixel_count;
+    receipt.stage_bitmap_route_checksum = stage_route->checksum;
+    receipt.stage_bitmap_raw_offset = stage_route->first_raw_offset;
+    receipt.stage_bitmap_user_data_offset = stage_route->first_user_data_offset;
+    receipt.first_pixel_row_hash = row_hash;
+    receipt.palette_decode_verified = 1;
+    receipt.bitmap_decode_verified = 1;
+    receipt.pixel_output_verified = 1;
+    receipt.m11_runtime_consumption_allowed = 0;
+    receipt.m11_render_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_m11_soul_room_consumption(
+    const Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt *decode,
+    Theron_V1_World *world,
+    int host_surface_width,
+    int host_surface_height,
+    int placement_x,
+    int placement_y,
+    int scale_x,
+    int scale_y,
+    Theron_V1RuntimeTrack02M11SoulRoomConsumptionReceipt *out) {
+    Theron_V1RuntimeTrack02M11SoulRoomConsumptionReceipt receipt = {0};
+    const Theron_RuntimeMediaSurface *surface;
+    uint32_t placement_hash = 2166136261u;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!decode || !world || !out ||
+        !decode->valid ||
+        !decode->bitmap_palette_source_consumed ||
+        !decode->real_track02_bytes_consumed ||
+        decode->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(decode->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        decode->selected_dungeon_index == 0u ||
+        decode->source_level_index != 0u ||
+        decode->first_bitmap_route_bit !=
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM ||
+        decode->first_bitmap_route_width == 0u ||
+        decode->first_bitmap_route_height == 0u ||
+        decode->first_bitmap_route_tile_count == 0u ||
+        decode->first_bitmap_route_nonzero_pixel_count == 0u ||
+        decode->first_bitmap_route_checksum == 0u ||
+        decode->first_bitmap_raw_offset == 0u ||
+        decode->first_bitmap_user_data_offset == 0u ||
+        decode->palette_decoded_checksum == 0u ||
+        decode->palette_nonblack_entry_count == 0u ||
+        !decode->palette_decode_verified ||
+        !decode->bitmap_decode_verified ||
+        !decode->pixel_output_verified ||
+        decode->m11_runtime_consumption_allowed ||
+        decode->m11_render_allowed ||
+        decode->dungeon_draw_allowed ||
+        decode->fallback_visuals_allowed ||
+        !world->runtime_media.restored ||
+        host_surface_width <= 0 ||
+        host_surface_height <= 0 ||
+        placement_x < 0 ||
+        placement_y < 0 ||
+        scale_x != 1 ||
+        scale_y != 1) {
+        return 0;
+    }
+
+    surface = &world->runtime_media.soul_room;
+    if (!surface->ready ||
+        !surface->raw_source_verified ||
+        strcmp(surface->track02_md5, decode->track02_md5) != 0 ||
+        surface->route_bit != decode->first_bitmap_route_bit ||
+        surface->width != decode->first_bitmap_route_width ||
+        surface->height != decode->first_bitmap_route_height ||
+        surface->tile_count != decode->first_bitmap_route_tile_count ||
+        surface->nonzero_pixel_count !=
+            decode->first_bitmap_route_nonzero_pixel_count ||
+        surface->checksum != decode->first_bitmap_route_checksum ||
+        surface->first_raw_offset != decode->first_bitmap_raw_offset ||
+        surface->first_user_data_offset !=
+            decode->first_bitmap_user_data_offset ||
+        placement_x + (int)surface->width > host_surface_width ||
+        placement_y + (int)surface->height > host_surface_height ||
+        !theron_v1_world_runtime_media_select_level_bank(
+            world,
+            THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
+            (Theron_DungeonID)decode->selected_dungeon_index,
+            0)) {
+        return 0;
+    }
+    if (!world->runtime_media.level_bank.ready ||
+        !world->runtime_media.level_bank.real_media_gate ||
+        world->runtime_media.level_bank.kind !=
+            THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL ||
+        world->runtime_media.level_bank.level_index != 0 ||
+        world->runtime_media.level_bank.route_bit != surface->route_bit ||
+        world->runtime_media.level_bank.surface_checksum !=
+            surface->checksum ||
+        world->runtime_media.level_bank.first_raw_offset !=
+            surface->first_raw_offset ||
+        world->runtime_media.level_bank.first_user_data_offset !=
+            surface->first_user_data_offset) {
+        return 0;
+    }
+
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)host_surface_width);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)host_surface_height);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)placement_x);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)placement_y);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)surface->width);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)surface->height);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, surface->checksum);
+    if (placement_hash == 0u) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.decode_vector_consumed = 1;
+    receipt.world_runtime_media_consumed = 1;
+    receipt.soul_room_level0_selected = 1;
+    receipt.exact_indexed_atlas_consumed = 1;
+    receipt.huc6260_palette_consumed = 1;
+    receipt.variant = decode->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             decode->track02_md5);
+    receipt.record = decode->record;
+    receipt.selected_dungeon_index = decode->selected_dungeon_index;
+    receipt.level_index = 0u;
+    receipt.route_bit = surface->route_bit;
+    receipt.source_width = surface->width;
+    receipt.source_height = surface->height;
+    receipt.source_tile_count = surface->tile_count;
+    receipt.source_nonzero_pixel_count = surface->nonzero_pixel_count;
+    receipt.source_checksum = surface->checksum;
+    receipt.palette_decoded_checksum = decode->palette_decoded_checksum;
+    receipt.palette_nonblack_entry_count =
+        decode->palette_nonblack_entry_count;
+    receipt.first_raw_offset = surface->first_raw_offset;
+    receipt.last_raw_offset = surface->last_raw_offset;
+    receipt.first_user_data_offset = surface->first_user_data_offset;
+    receipt.host_surface_width = host_surface_width;
+    receipt.host_surface_height = host_surface_height;
+    receipt.placement_x = placement_x;
+    receipt.placement_y = placement_y;
+    receipt.scale_x = scale_x;
+    receipt.scale_y = scale_y;
+    receipt.clip_x = placement_x;
+    receipt.clip_y = placement_y;
+    receipt.clip_w = surface->width;
+    receipt.clip_h = surface->height;
+    receipt.placement_hash = placement_hash;
+    receipt.clip_verified = 1;
+    receipt.scale_verified = 1;
+    receipt.host_presentation_allowed = 1;
+    receipt.m11_runtime_consumption_allowed = 1;
+    receipt.m11_render_allowed = 1;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_m11_level_consumption(
+    const Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt *decode,
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *transition,
+    Theron_V1_World *world,
+    int host_surface_width,
+    int host_surface_height,
+    int placement_x,
+    int placement_y,
+    int scale_x,
+    int scale_y,
+    Theron_V1RuntimeTrack02M11LevelConsumptionReceipt *out) {
+    Theron_V1RuntimeTrack02M11LevelConsumptionReceipt receipt = {0};
+    const Theron_RuntimeMediaSurface *surface;
+    uint32_t expected_route_bit;
+    size_t expected_width;
+    size_t expected_height;
+    size_t expected_tile_count;
+    size_t expected_nonzero_pixel_count;
+    uint32_t expected_checksum;
+    size_t expected_raw_offset;
+    size_t expected_user_data_offset;
+    uint32_t placement_hash = 2166136261u;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!decode || !transition || !world || !out ||
+        !decode->valid ||
+        !decode->bitmap_palette_source_consumed ||
+        !decode->real_track02_bytes_consumed ||
+        decode->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(decode->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        !decode->palette_decode_verified ||
+        !decode->bitmap_decode_verified ||
+        !decode->pixel_output_verified ||
+        decode->m11_runtime_consumption_allowed ||
+        decode->m11_render_allowed ||
+        decode->dungeon_draw_allowed ||
+        decode->fallback_visuals_allowed ||
+        !transition->valid ||
+        !transition->level_transition_handoff_consumed ||
+        !transition->target_object_world_handoff_consumed ||
+        !transition->world_mutated ||
+        transition->variant != decode->variant ||
+        strcmp(transition->track02_md5, decode->track02_md5) != 0 ||
+        transition->record != decode->record ||
+        transition->selected_dungeon_index !=
+            decode->selected_dungeon_index ||
+        transition->source_level_index != decode->source_level_index ||
+        transition->target_level_index != decode->target_level_index ||
+        transition->target_level_index == transition->source_level_index ||
+        transition->target_level_index == 0u ||
+        !transition->level_loaded ||
+        transition->dungeon_runtime_admission_allowed ||
+        transition->dungeon_draw_allowed ||
+        transition->fallback_visuals_allowed ||
+        !world->runtime_media.restored ||
+        host_surface_width <= 0 ||
+        host_surface_height <= 0 ||
+        placement_x < 0 ||
+        placement_y < 0 ||
+        scale_x != 1 ||
+        scale_y != 1) {
+        return 0;
+    }
+
+    expected_route_bit = THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+    expected_width = decode->stage_bitmap_route_width;
+    expected_height = decode->stage_bitmap_route_height;
+    expected_tile_count = decode->stage_bitmap_route_tile_count;
+    expected_nonzero_pixel_count =
+        decode->stage_bitmap_route_nonzero_pixel_count;
+    expected_checksum = decode->stage_bitmap_route_checksum;
+    expected_raw_offset = decode->stage_bitmap_raw_offset;
+    expected_user_data_offset = decode->stage_bitmap_user_data_offset;
+    if (decode->stage_bitmap_route_bit != expected_route_bit ||
+        expected_width == 0u ||
+        expected_height == 0u ||
+        expected_tile_count == 0u ||
+        expected_nonzero_pixel_count == 0u ||
+        expected_checksum == 0u ||
+        expected_raw_offset == 0u ||
+        expected_user_data_offset == 0u) {
+        return 0;
+    }
+
+    surface = theron_v1_world_runtime_media_for_level(
+        world, (int)transition->target_level_index, 0);
+    if (!surface ||
+        !surface->ready ||
+        !surface->raw_source_verified ||
+        strcmp(surface->track02_md5, decode->track02_md5) != 0 ||
+        surface->route_bit != expected_route_bit ||
+        surface->width != expected_width ||
+        surface->height != expected_height ||
+        surface->tile_count != expected_tile_count ||
+        surface->nonzero_pixel_count != expected_nonzero_pixel_count ||
+        surface->checksum != expected_checksum ||
+        surface->first_raw_offset != expected_raw_offset ||
+        surface->first_user_data_offset != expected_user_data_offset ||
+        placement_x + (int)surface->width > host_surface_width ||
+        placement_y + (int)surface->height > host_surface_height ||
+        !theron_v1_world_runtime_media_select_level_bank(
+            world,
+            THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
+            (Theron_DungeonID)transition->selected_dungeon_index,
+            (int)transition->target_level_index)) {
+        return 0;
+    }
+    if (!world->runtime_media.level_bank.ready ||
+        !world->runtime_media.level_bank.real_media_gate ||
+        world->runtime_media.level_bank.kind !=
+            THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL ||
+        world->runtime_media.level_bank.level_index !=
+            (int)transition->target_level_index ||
+        world->runtime_media.level_bank.route_bit != surface->route_bit ||
+        world->runtime_media.level_bank.surface_checksum !=
+            surface->checksum ||
+        world->runtime_media.level_bank.first_raw_offset !=
+            surface->first_raw_offset ||
+        world->runtime_media.level_bank.first_user_data_offset !=
+            surface->first_user_data_offset) {
+        return 0;
+    }
+
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)transition->target_level_index);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)host_surface_width);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)host_surface_height);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)placement_x);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)placement_y);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)surface->width);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, (uint32_t)surface->height);
+    placement_hash = theron_v1_runtime_mix_hash(
+        placement_hash, surface->checksum);
+    if (placement_hash == 0u) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.decode_vector_consumed = 1;
+    receipt.level_transition_runtime_consumed = 1;
+    receipt.world_runtime_media_consumed = 1;
+    receipt.target_level_selected = 1;
+    receipt.exact_indexed_atlas_consumed = 1;
+    receipt.huc6260_palette_consumed = 1;
+    receipt.variant = decode->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             decode->track02_md5);
+    receipt.record = decode->record;
+    receipt.selected_dungeon_index = decode->selected_dungeon_index;
+    receipt.source_level_index = decode->source_level_index;
+    receipt.target_level_index = decode->target_level_index;
+    receipt.route_bit = surface->route_bit;
+    receipt.source_width = surface->width;
+    receipt.source_height = surface->height;
+    receipt.source_tile_count = surface->tile_count;
+    receipt.source_nonzero_pixel_count = surface->nonzero_pixel_count;
+    receipt.source_checksum = surface->checksum;
+    receipt.palette_decoded_checksum = decode->palette_decoded_checksum;
+    receipt.palette_nonblack_entry_count =
+        decode->palette_nonblack_entry_count;
+    receipt.first_raw_offset = surface->first_raw_offset;
+    receipt.last_raw_offset = surface->last_raw_offset;
+    receipt.first_user_data_offset = surface->first_user_data_offset;
+    receipt.host_surface_width = host_surface_width;
+    receipt.host_surface_height = host_surface_height;
+    receipt.placement_x = placement_x;
+    receipt.placement_y = placement_y;
+    receipt.scale_x = scale_x;
+    receipt.scale_y = scale_y;
+    receipt.clip_x = placement_x;
+    receipt.clip_y = placement_y;
+    receipt.clip_w = surface->width;
+    receipt.clip_h = surface->height;
+    receipt.placement_hash = placement_hash;
+    receipt.clip_verified = 1;
+    receipt.scale_verified = 1;
+    receipt.host_presentation_allowed = 1;
+    receipt.m11_runtime_consumption_allowed = 1;
+    receipt.m11_render_allowed = 1;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_m11_dungeon_draw_route(
+    const Theron_V1RuntimeTrack02M11LevelConsumptionReceipt *level,
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *transition,
+    const Theron_V1_World *world,
+    Theron_V1RuntimeTrack02M11DungeonDrawRouteReceipt *out) {
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    Theron_V1RuntimeTrack02M11DungeonDrawRouteReceipt receipt = {0};
+    const Theron_V1_Level *loaded;
+    uint32_t geometry_hash = 2166136261u;
+    uint32_t object_hash = 2166136261u;
+    uint32_t route_hash = 2166136261u;
+    int dungeon_slot;
+    int target_level;
+    int sample_coords[5][2];
+    size_t object_count = 0u;
+    size_t i;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!level || !transition || !world || !out ||
+        !level->valid ||
+        !level->decode_vector_consumed ||
+        !level->level_transition_runtime_consumed ||
+        !level->world_runtime_media_consumed ||
+        !level->target_level_selected ||
+        !level->exact_indexed_atlas_consumed ||
+        !level->huc6260_palette_consumed ||
+        level->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(level->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        level->record == 0u ||
+        level->selected_dungeon_index == 0u ||
+        level->target_level_index == 0u ||
+        level->route_bit != THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE ||
+        level->source_width == 0u ||
+        level->source_height == 0u ||
+        level->source_checksum == 0u ||
+        level->palette_decoded_checksum == 0u ||
+        !level->host_presentation_allowed ||
+        !level->m11_runtime_consumption_allowed ||
+        !level->m11_render_allowed ||
+        level->dungeon_draw_allowed ||
+        level->fallback_visuals_allowed ||
+        !transition->valid ||
+        !transition->level_transition_handoff_consumed ||
+        !transition->target_object_world_handoff_consumed ||
+        !transition->world_mutated ||
+        transition->variant != level->variant ||
+        strcmp(transition->track02_md5, level->track02_md5) != 0 ||
+        transition->record != level->record ||
+        transition->selected_dungeon_index != level->selected_dungeon_index ||
+        transition->target_level_index != level->target_level_index ||
+        transition->target_level_index == transition->source_level_index ||
+        !transition->level_loaded ||
+        transition->target_object_count == 0 ||
+        transition->target_thing_count != transition->target_object_count ||
+        transition->dungeon_runtime_admission_allowed ||
+        transition->dungeon_draw_allowed ||
+        transition->fallback_visuals_allowed ||
+        !world->runtime_media.restored ||
+        !world->runtime_media.level_bank.ready ||
+        !world->runtime_media.level_bank.real_media_gate ||
+        world->runtime_media.level_bank.level_index !=
+            (int)level->target_level_index ||
+        world->runtime_media.level_bank.route_bit != level->route_bit ||
+        world->runtime_media.level_bank.surface_checksum !=
+            level->source_checksum ||
+        world->current_dungeon != (int)level->selected_dungeon_index ||
+        world->current_level != (int)level->target_level_index ||
+        world->party.leader_x != transition->party_x ||
+        world->party.leader_y != transition->party_y ||
+        world->party.leader_dir != transition->party_dir ||
+        world->party.leader_dir < 0 ||
+        world->party.leader_dir > 3) {
+        return 0;
+    }
+
+    dungeon_slot = (int)level->selected_dungeon_index - 1;
+    target_level = (int)level->target_level_index;
+    if (dungeon_slot < 0 || dungeon_slot >= (int)THERON_DUNGEON_COUNT ||
+        target_level < 0 || target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[dungeon_slot][target_level]) {
+        return 0;
+    }
+    loaded = &world->levels[dungeon_slot][target_level];
+    if (loaded->width <= 0 || loaded->height <= 0 ||
+        loaded->width > THERON_MAX_MAP_SIZE ||
+        loaded->height > THERON_MAX_MAP_SIZE ||
+        world->party.leader_x < 0 ||
+        world->party.leader_y < 0 ||
+        world->party.leader_x >= loaded->width ||
+        world->party.leader_y >= loaded->height ||
+        loaded->squares[world->party.leader_y][world->party.leader_x] ==
+            THERON_SQUARE_WALL ||
+        loaded->squares[world->party.leader_y][world->party.leader_x] ==
+            THERON_SQUARE_SECRET) {
+        return 0;
+    }
+
+    sample_coords[0][0] = world->party.leader_x;
+    sample_coords[0][1] = world->party.leader_y;
+    sample_coords[1][0] = world->party.leader_x + dx[world->party.leader_dir];
+    sample_coords[1][1] = world->party.leader_y + dy[world->party.leader_dir];
+    sample_coords[2][0] = world->party.leader_x +
+        dx[(world->party.leader_dir + 3) & 3];
+    sample_coords[2][1] = world->party.leader_y +
+        dy[(world->party.leader_dir + 3) & 3];
+    sample_coords[3][0] = world->party.leader_x +
+        dx[(world->party.leader_dir + 1) & 3];
+    sample_coords[3][1] = world->party.leader_y +
+        dy[(world->party.leader_dir + 1) & 3];
+    sample_coords[4][0] = world->party.leader_x +
+        2 * dx[world->party.leader_dir];
+    sample_coords[4][1] = world->party.leader_y +
+        2 * dy[world->party.leader_dir];
+
+    for (i = 0u; i < 5u; ++i) {
+        int x = sample_coords[i][0];
+        int y = sample_coords[i][1];
+        int square = THERON_SQUARE_WALL;
+        if (x >= 0 && y >= 0 && x < loaded->width && y < loaded->height) {
+            square = loaded->squares[y][x];
+        }
+        geometry_hash = theron_v1_runtime_mix_hash(
+            geometry_hash, (uint32_t)i);
+        geometry_hash = theron_v1_runtime_mix_hash(
+            geometry_hash, (uint32_t)(x & 0xffff));
+        geometry_hash = theron_v1_runtime_mix_hash(
+            geometry_hash, (uint32_t)(y & 0xffff));
+        geometry_hash = theron_v1_runtime_mix_hash(
+            geometry_hash, (uint32_t)(square & 0xff));
+        ++receipt.sampled_cell_count;
+        if (square == THERON_SQUARE_WALL ||
+            square == THERON_SQUARE_SECRET) {
+            ++receipt.sampled_wall_count;
+        } else if (square == THERON_SQUARE_FLOOR) {
+            ++receipt.sampled_floor_count;
+        } else {
+            ++receipt.sampled_special_count;
+        }
+    }
+    if (geometry_hash == 0u || receipt.sampled_floor_count == 0u) {
+        return 0;
+    }
+
+    for (int oi = 0; oi < world->object_count; ++oi) {
+        const Theron_V1_Object *object = &world->objects[oi];
+        if (object->dungeon_id != (int)level->selected_dungeon_index ||
+            object->level != target_level) {
+            continue;
+        }
+        if (object->x < 0 || object->y < 0 ||
+            object->x >= loaded->width || object->y >= loaded->height) {
+            return 0;
+        }
+        object_hash = theron_v1_runtime_mix_hash(
+            object_hash, (uint32_t)object->type);
+        object_hash = theron_v1_runtime_mix_hash(
+            object_hash, (uint32_t)object->x);
+        object_hash = theron_v1_runtime_mix_hash(
+            object_hash, (uint32_t)object->y);
+        object_hash = theron_v1_runtime_mix_hash(
+            object_hash, (uint32_t)object->state);
+        object_hash = theron_v1_runtime_mix_hash(
+            object_hash, object->flags);
+        ++object_count;
+    }
+    if (object_count != (size_t)transition->target_object_count ||
+        object_hash == 0u) {
+        return 0;
+    }
+
+    route_hash = theron_v1_runtime_mix_hash(
+        route_hash, level->source_checksum);
+    route_hash = theron_v1_runtime_mix_hash(
+        route_hash, level->palette_decoded_checksum);
+    route_hash = theron_v1_runtime_mix_hash(route_hash, geometry_hash);
+    route_hash = theron_v1_runtime_mix_hash(route_hash, object_hash);
+    route_hash = theron_v1_runtime_mix_hash(
+        route_hash, (uint32_t)level->clip_x);
+    route_hash = theron_v1_runtime_mix_hash(
+        route_hash, (uint32_t)level->clip_y);
+    route_hash = theron_v1_runtime_mix_hash(
+        route_hash, (uint32_t)level->clip_w);
+    route_hash = theron_v1_runtime_mix_hash(
+        route_hash, (uint32_t)level->clip_h);
+    if (route_hash == 0u) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.m11_level_consumption_consumed = 1;
+    receipt.level_transition_runtime_consumed = 1;
+    receipt.world_runtime_geometry_consumed = 1;
+    receipt.object_placement_consumed = 1;
+    receipt.viewport_composition_route_bound = 1;
+    receipt.variant = level->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             level->track02_md5);
+    receipt.record = level->record;
+    receipt.selected_dungeon_index = level->selected_dungeon_index;
+    receipt.target_level_index = level->target_level_index;
+    receipt.route_bit = level->route_bit;
+    receipt.media_width = level->source_width;
+    receipt.media_height = level->source_height;
+    receipt.media_checksum = level->source_checksum;
+    receipt.palette_decoded_checksum = level->palette_decoded_checksum;
+    receipt.level_width = loaded->width;
+    receipt.level_height = loaded->height;
+    receipt.party_x = world->party.leader_x;
+    receipt.party_y = world->party.leader_y;
+    receipt.party_dir = world->party.leader_dir;
+    receipt.current_square =
+        loaded->squares[world->party.leader_y][world->party.leader_x];
+    if (sample_coords[1][0] >= 0 && sample_coords[1][1] >= 0 &&
+        sample_coords[1][0] < loaded->width &&
+        sample_coords[1][1] < loaded->height) {
+        receipt.forward_square =
+            loaded->squares[sample_coords[1][1]][sample_coords[1][0]];
+    } else {
+        receipt.forward_square = THERON_SQUARE_WALL;
+    }
+    receipt.sampled_object_count = object_count;
+    receipt.level_geometry_hash = geometry_hash;
+    receipt.object_placement_hash = object_hash;
+    receipt.viewport_route_hash = route_hash;
+    receipt.host_surface_width = level->host_surface_width;
+    receipt.host_surface_height = level->host_surface_height;
+    receipt.clip_x = level->clip_x;
+    receipt.clip_y = level->clip_y;
+    receipt.clip_w = level->clip_w;
+    receipt.clip_h = level->clip_h;
+    receipt.m11_host_presentation_allowed = 1;
+    receipt.dungeon_draw_route_allowed = 1;
+    receipt.dungeon_pixel_blit_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_level1_draw_blocker(
+    const Theron_V1RuntimeTrack02M11LevelConsumptionReceipt *level,
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *transition,
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    const Theron_V1_World *world,
+    const Theron_V1RuntimeTrack02M11DungeonDrawRouteReceipt *draw_route,
+    Theron_V1RuntimeTrack02Level1DrawBlockerReceipt *out) {
+    Theron_V1RuntimeTrack02Level1DrawBlockerReceipt receipt = {0};
+    int dungeon_slot;
+    int level_slot;
+    int object_count = 0;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!level || !transition || !gap || !world || !draw_route || !out ||
+        !level->valid ||
+        !level->decode_vector_consumed ||
+        !level->level_transition_runtime_consumed ||
+        !level->world_runtime_media_consumed ||
+        !level->target_level_selected ||
+        !level->exact_indexed_atlas_consumed ||
+        !level->huc6260_palette_consumed ||
+        level->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(level->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        level->record == 0u ||
+        level->selected_dungeon_index == 0u ||
+        level->target_level_index != 1u ||
+        level->route_bit != THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE ||
+        level->source_checksum == 0u ||
+        level->palette_decoded_checksum == 0u ||
+        !level->host_presentation_allowed ||
+        !level->m11_runtime_consumption_allowed ||
+        !level->m11_render_allowed ||
+        level->dungeon_draw_allowed ||
+        level->fallback_visuals_allowed ||
+        !transition->valid ||
+        !transition->level_transition_handoff_consumed ||
+        !transition->target_object_world_handoff_consumed ||
+        transition->variant != level->variant ||
+        strcmp(transition->track02_md5, level->track02_md5) != 0 ||
+        transition->record != level->record ||
+        transition->selected_dungeon_index != level->selected_dungeon_index ||
+        transition->target_level_index != level->target_level_index ||
+        transition->target_level_index == transition->source_level_index ||
+        transition->dungeon_runtime_admission_allowed ||
+        transition->dungeon_draw_allowed ||
+        transition->fallback_visuals_allowed ||
+        !gap->valid ||
+        !gap->verified_track02_capture_consumed ||
+        !gap->fail_closed ||
+        gap->variant != level->variant ||
+        strcmp(gap->track02_md5, level->track02_md5) != 0 ||
+        gap->level_route_hash == 0u ||
+        gap->object_table_route_hash == 0u ||
+        gap->nonstartup_window_count == 0u ||
+        gap->first_nonstartup_raw_offset == 0u ||
+        gap->first_nonstartup_user_data_offset == 0u ||
+        gap->first_nonstartup_byte_count == 0u ||
+        gap->first_nonstartup_raw_hash == 0u ||
+        gap->first_container_raw_offset == 0u ||
+        gap->first_container_user_data_offset == 0u ||
+        gap->first_container_user_data_byte_count == 0u ||
+        gap->first_container_user_data_hash == 0u ||
+        gap->nonstartup_level_decode_ready ||
+        gap->object_table_decode_ready ||
+        gap->render_asset_admission_allowed ||
+        gap->fallback_visuals_allowed ||
+        draw_route->valid ||
+        draw_route->dungeon_draw_route_allowed ||
+        draw_route->dungeon_pixel_blit_allowed ||
+        draw_route->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    dungeon_slot = (int)level->selected_dungeon_index - 1;
+    level_slot = (int)level->target_level_index;
+    if (dungeon_slot < 0 || dungeon_slot >= (int)THERON_DUNGEON_COUNT ||
+        level_slot < 0 || level_slot >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return 0;
+    }
+    for (int i = 0; i < world->object_count; ++i) {
+        const Theron_V1_Object *object = &world->objects[i];
+        if (object->dungeon_id == (int)level->selected_dungeon_index &&
+            object->level == level_slot) {
+            ++object_count;
+        }
+    }
+
+    receipt.level1_world_geometry_loaded =
+        world->level_loaded[dungeon_slot][level_slot] ? 1 : 0;
+    receipt.level1_object_placement_loaded =
+        (transition->target_object_count > 0 &&
+         transition->target_thing_count == transition->target_object_count &&
+         object_count == transition->target_object_count) ? 1 : 0;
+    if (receipt.level1_world_geometry_loaded &&
+        receipt.level1_object_placement_loaded) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.m11_level_consumption_consumed = 1;
+    receipt.level_transition_runtime_consumed = 1;
+    receipt.original_data_binding_gap_consumed = 1;
+    receipt.world_runtime_state_inspected = 1;
+    receipt.variant = level->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             level->track02_md5);
+    receipt.record = level->record;
+    receipt.selected_dungeon_index = level->selected_dungeon_index;
+    receipt.target_level_index = level->target_level_index;
+    receipt.route_bit = level->route_bit;
+    receipt.media_checksum = level->source_checksum;
+    receipt.palette_decoded_checksum = level->palette_decoded_checksum;
+    receipt.nonstartup_window_count = gap->nonstartup_window_count;
+    receipt.first_nonstartup_raw_offset = gap->first_nonstartup_raw_offset;
+    receipt.first_nonstartup_user_data_offset =
+        gap->first_nonstartup_user_data_offset;
+    receipt.first_nonstartup_byte_count = gap->first_nonstartup_byte_count;
+    receipt.first_nonstartup_raw_hash = gap->first_nonstartup_raw_hash;
+    receipt.object_table_raw_offset = gap->first_container_raw_offset;
+    receipt.object_table_user_data_offset =
+        gap->first_container_user_data_offset;
+    receipt.object_table_byte_count =
+        gap->first_container_user_data_byte_count;
+    receipt.object_table_raw_hash = gap->first_container_user_data_hash;
+    receipt.transition_level_loaded = transition->level_loaded;
+    receipt.transition_target_object_count = transition->target_object_count;
+    receipt.transition_target_thing_count = transition->target_thing_count;
+    receipt.world_object_count = object_count;
+    receipt.real_track02_level1_media_bound = 1;
+    receipt.nonstartup_geometry_source_blocked = 1;
+    receipt.object_placement_source_blocked = 1;
+    receipt.loadertrace_geometry_window_missing = 1;
+    receipt.loadertrace_object_window_missing = 1;
+    receipt.dungeon_draw_route_allowed = 0;
+    receipt.dungeon_pixel_blit_allowed = 0;
     receipt.fallback_visuals_allowed = 0;
     *out = receipt;
     return 1;

@@ -1875,7 +1875,8 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
                                    size_t rootCount,
                                    int* dataDirResolvedToMatchedRoot,
-                                   int userExplicitDataDir) {
+                                   int userExplicitDataDir,
+                                   int looseFilesOnly) {
     size_t i;
     size_t rootIndex;
     int matchedAny = 0;
@@ -1936,12 +1937,22 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
             g_m12ScanMetrics.versionHashLookups++;
 #endif
-            (void)asset_find_all_by_md5_list(roots[rootIndex],
-                                             md5List,
-                                             rootMatchedPaths[rootIndex],
-                                             rootMatched[rootIndex],
-                                             (int)md5Count,
-                                             32);
+            if (looseFilesOnly) {
+                (void)asset_find_all_files_by_md5_list(
+                    roots[rootIndex],
+                    md5List,
+                    rootMatchedPaths[rootIndex],
+                    rootMatched[rootIndex],
+                    (int)md5Count,
+                    32);
+            } else {
+                (void)asset_find_all_by_md5_list(roots[rootIndex],
+                                                 md5List,
+                                                 rootMatchedPaths[rootIndex],
+                                                 rootMatched[rootIndex],
+                                                 (int)md5Count,
+                                                 32);
+            }
         }
     }
     matchedAny = 0;
@@ -2066,7 +2077,8 @@ static int m12_required_hash_matches_any_root(const char roots[M12_SEARCH_ROOT_C
                                               size_t rootCount,
                                               const char* md5,
                                               char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
-                                              char matchedHash[M12_ASSET_MD5_CAPACITY]) {
+                                              char matchedHash[M12_ASSET_MD5_CAPACITY],
+                                              int looseFilesOnly) {
     size_t rootIndex;
     char path[ASSET_PATH_MAX];
     if (!md5 || md5[0] == '\0') {
@@ -2076,7 +2088,28 @@ static int m12_required_hash_matches_any_root(const char roots[M12_SEARCH_ROOT_C
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
         g_m12ScanMetrics.requiredHashLookups++;
 #endif
-        if (asset_find_by_md5(roots[rootIndex], md5, path, (int)sizeof(path), 32)) {
+        if (looseFilesOnly) {
+            const char* md5List[2];
+            char paths[1][ASSET_PATH_MAX];
+            int matched[1];
+            md5List[0] = md5;
+            md5List[1] = NULL;
+            memset(paths, 0, sizeof(paths));
+            memset(matched, 0, sizeof(matched));
+            if (asset_find_all_files_by_md5_list(roots[rootIndex],
+                                                 md5List,
+                                                 paths,
+                                                 matched,
+                                                 1,
+                                                 32) > 0 &&
+                matched[0]) {
+                m12_copy_string(matchedPath,
+                                M12_ASSET_DATA_DIR_CAPACITY,
+                                paths[0]);
+                m12_copy_string(matchedHash, M12_ASSET_MD5_CAPACITY, md5);
+                return 1;
+            }
+        } else if (asset_find_by_md5(roots[rootIndex], md5, path, (int)sizeof(path), 32)) {
             m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
             m12_copy_string(matchedHash, M12_ASSET_MD5_CAPACITY, md5);
             return 1;
@@ -2125,7 +2158,8 @@ static int m12_required_hash_matches_fast_candidates(
 static int m12_fill_required_files(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-                                   size_t rootCount) {
+                                   size_t rootCount,
+                                   int looseFilesOnly) {
     const char* gameId;
     size_t i;
     size_t count = 0U;
@@ -2189,7 +2223,8 @@ static int m12_fill_required_files(M12_AssetStatus* status,
                                                       rootCount,
                                                       m12_effective_required_md5(spec),
                                                       fileStatus->matchedPath,
-                                                      fileStatus->matchedHash)) {
+                                                      fileStatus->matchedHash,
+                                                      looseFilesOnly)) {
             fileStatus->matched = 1;
         }
         if (fileStatus->required && !fileStatus->matched) {
@@ -2911,10 +2946,16 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                               legacyFallbackSnapshot);
             return 0;
         }
-        m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot, userExplicitDataDir);
+        m12_fill_game_versions(status,
+                               i,
+                               roots,
+                               rootCount,
+                               &dataDirResolvedToMatchedRoot,
+                               userExplicitDataDir,
+                               0);
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
-        int reqMatch = m12_fill_required_files(status, i, roots, rootCount);
+        int reqMatch = m12_fill_required_files(status, i, roots, rootCount, 0);
         if (!m12_scan_progress_update(&progressCtx,
                                       "matching required files",
                                       g_games[i].gameId,
@@ -2968,6 +3009,14 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
 void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
                               const char* requestedDataDir,
                               const char* gameId) {
+    M12_AssetStatus_ScanGameWithOptions(status, requestedDataDir, gameId, NULL);
+}
+
+void M12_AssetStatus_ScanGameWithOptions(
+    M12_AssetStatus* status,
+    const char* requestedDataDir,
+    const char* gameId,
+    const M12_AssetStatusScanOptions* options) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     char containerParent[M12_ASSET_DATA_DIR_CAPACITY];
     const char* effectiveRequestedDataDir = requestedDataDir;
@@ -3035,8 +3084,13 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
                            roots,
                            rootCount,
                            &dataDirResolvedToMatchedRoot,
-                           (requestedDataDir && requestedDataDir[0] != '\0'));
-    reqMatch = m12_fill_required_files(status, gameIndex, roots, rootCount);
+                           (requestedDataDir && requestedDataDir[0] != '\0'),
+                           options && options->looseFilesOnly);
+    reqMatch = m12_fill_required_files(status,
+                                       gameIndex,
+                                       roots,
+                                       rootCount,
+                                       options && options->looseFilesOnly);
     m12_apply_required_game_availability(status, gameIndex, reqMatch);
     if (reqMatch) {
         status->originalFileCandidateFound = 1;

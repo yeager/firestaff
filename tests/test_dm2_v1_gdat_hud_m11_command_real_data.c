@@ -3,7 +3,6 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
-#include "dm2_v1_save_load.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,17 +66,11 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_BootProfile boot;
     DM2_V1_GdatHudM11CommandPlan plan;
-    DM2_V1_InterfaceRect portrait_destinations[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
-    uint32_t portrait_table_hash = 0u;
+    DM2_V1_BootStartupMenuHudGdatReceipt menu_hud_gdat;
     DM2_V1_HudPartyState party;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     int failures = 0;
-    uint8_t champion_mask[261];
-    uint8_t encoded_champion[261];
-    uint8_t decoded_champion[261];
-    uint8_t source_champion[261];
-    int encoded_champion_size;
     int expected_kind[DM2_V1_GDAT_HUD_M11_COMMAND_MAX] = {
         DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP,
@@ -87,11 +80,7 @@ int main(void)
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-        DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
-        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
-        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
-        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT,
-        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT
+        DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
     };
 
     if (root && root[0]) {
@@ -113,13 +102,8 @@ int main(void)
     memset(&loader, 0, sizeof(loader));
     dm2_v1_boot_profile_init(&boot);
     memset(&plan, 0, sizeof(plan));
+    memset(&menu_hud_gdat, 0, sizeof(menu_hud_gdat));
     memset(&party, 0, sizeof(party));
-    party.champion_count = 3;
-    for (int i = 0; i < party.champion_count; ++i) {
-        party.champions[i].occupied = 1;
-        party.champions[i].portrait_type_source_bound = 1;
-        party.champions[i].portrait_index = (uint8_t)(i == 0 ? 3 : i - 1);
-    }
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
         fputs("FAIL: canonical DM2 GRAPHICS.DAT was not admitted\n", stderr);
         free(graphics);
@@ -133,17 +117,7 @@ int main(void)
         free(graphics);
         return 1;
     }
-    memset(portrait_destinations, 0, sizeof(portrait_destinations));
-    if (!dm2_v1_boot_interface_hud_portrait_destinations(
-            &boot, portrait_destinations, &portrait_table_hash) ||
-        portrait_table_hash == 0u) {
-        fputs("FAIL: canonical HUD rectangle table was not decoded\n", stderr);
-        dm2_v1_boot_cleanup(&boot);
-        dm2_v1_asset_loader_free(&loader);
-        free(graphics);
-        return 1;
-    }
-    if (!dm2_v1_boot_gdat_hud_m11_command_plan(&boot, &party, &plan)) {
+    if (!dm2_v1_boot_gdat_hud_static_m11_command_plan(&boot, &plan)) {
         fputs("FAIL: canonical HUD command layout was not source-bound\n", stderr);
         dm2_v1_gdat_hud_m11_command_plan_free(&plan);
         dm2_v1_boot_cleanup(&boot);
@@ -151,28 +125,33 @@ int main(void)
         free(graphics);
         return 1;
     }
-    for (int i = 0; i < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++i) {
-        char first_name[8];
-        if (!dm2_v1_boot_champion_hero_type_source_ready(
-                &boot, (uint8_t)i, first_name) || first_name[0] == '\0') {
-            ++failures;
-        }
-    }
-    memset(source_champion, 0, sizeof(source_champion));
-    source_champion[255] = 3u;
-    dm2_suppress_champion_mask(champion_mask);
-    encoded_champion_size = dm2_suppress_encode(
-        source_champion, champion_mask, sizeof(source_champion),
-        encoded_champion, sizeof(encoded_champion));
-    memset(decoded_champion, 0, sizeof(decoded_champion));
-    if (encoded_champion_size <= 0 || champion_mask[255] != 0xffu ||
-        dm2_suppress_decode(encoded_champion, (size_t)encoded_champion_size,
-                            champion_mask, sizeof(decoded_champion),
-                            decoded_champion, 0u) < 0 ||
-        decoded_champion[255] != source_champion[255]) {
+    if (!dm2_v1_boot_startup_menu_hud_gdat_receipt(&boot, &menu_hud_gdat) ||
+        !menu_hud_gdat.valid ||
+        !menu_hud_gdat.title_image_ready ||
+        !menu_hud_gdat.menu_image_ready ||
+        menu_hud_gdat.title_width != 320 ||
+        menu_hud_gdat.title_height != 200 ||
+        menu_hud_gdat.menu_width != 320 ||
+        menu_hud_gdat.menu_height != 200 ||
+        menu_hud_gdat.title_raw_hash == 0u ||
+        menu_hud_gdat.title_pixel_hash == 0u ||
+        menu_hud_gdat.menu_raw_hash == 0u ||
+        menu_hud_gdat.menu_pixel_hash == 0u ||
+        !menu_hud_gdat.pointer_layout_ready ||
+        !menu_hud_gdat.new_game_click_ready ||
+        !menu_hud_gdat.resume_click_surface_ready ||
+        menu_hud_gdat.pointer_table_hash == 0u ||
+        !menu_hud_gdat.interface_palette_ready ||
+        menu_hud_gdat.interface_palette_hash == 0u ||
+        !menu_hud_gdat.hud_static_plan_ready ||
+        menu_hud_gdat.hud_static_command_count != 9 ||
+        menu_hud_gdat.hud_static_plan_hash == 0u ||
+        !menu_hud_gdat.hud_palette_ready ||
+        menu_hud_gdat.receipt_hash == 0u) {
+        fputs("FAIL: startup menu/HUD GDAT receipt was incomplete\n", stderr);
         ++failures;
     }
-    if (!plan.valid || plan.command_count != 12 ||
+    if (!plan.valid || plan.command_count != 9 ||
         plan.command_hash == 0u) {
         ++failures;
     }
@@ -181,23 +160,12 @@ int main(void)
         if (command->kind != expected_kind[i] ||
             (i < 9 && (command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
                        command->gdat_index < 2 || command->gdat_index > 6)) ||
-            (i >= 9 && (command->gdat_category != DM2_GDAT_CATEGORY_CHAMPIONS ||
-                        command->gdat_index != (i == 9 ? 3 : i - 10) ||
-                        command->gdat_field != 0)) ||
             command->width <= 0 || command->height <= 0 || !command->pixels ||
             command->format == DM2_IMG_FMT_UNKNOWN || command->raw_hash == 0u ||
             command->decoded_hash == 0u || command->decoded_hash !=
                 dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
             command->raw_byte_count == 0u || command->palette_hash == 0u ||
             command->destination.w <= 0 || command->destination.h <= 0) {
-            ++failures;
-        }
-        if (i >= 9 && (command->destination_rect_id != (uint16_t)(164 + i) ||
-                       command->destination_table_hash != portrait_table_hash ||
-                       command->destination.x != portrait_destinations[i - 9].x / 2 ||
-                       command->destination.y != portrait_destinations[i - 9].y / 2 ||
-                       command->destination.w != portrait_destinations[i - 9].w / 2 ||
-                       command->destination.h != portrait_destinations[i - 9].h / 2)) {
             ++failures;
         }
         printf("command=%d type=%d source=%d/%d/%d %dx%d dst=%d,%d %dx%d\n",
@@ -219,9 +187,9 @@ int main(void)
     /* HUD names still use the separately source-gated dt07 font route. The
      * image-family proof below excludes that known no-draw lookup. */
     if (viewport.asset_hud_core_drawn_count != 9 ||
-        viewport.asset_hud_portrait_drawn_count != 3 ||
+        viewport.asset_hud_portrait_drawn_count != 0 ||
         viewport.gdat_hud_material_plan_consumed_count !=
-            12 ||
+            9 ||
         viewport.fallback_hud_core_drawn_count != 0 ||
         viewport.fallback_hud_portrait_drawn_count != 0) {
         fputs("FAIL: HUD plan did not render directly from canonical GDAT material\n",
@@ -250,40 +218,13 @@ int main(void)
         dm2_v1_render_ui_chrome(&viewport);
         plan.commands[0].palette16[0] = saved_palette_byte;
         if (viewport.asset_hud_core_drawn_count >= 9 ||
-            viewport.gdat_hud_material_plan_consumed_count >= 12 ||
+            viewport.gdat_hud_material_plan_consumed_count >= 9 ||
             (viewport.blocked_material_mask &
                 DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE) == 0u ||
             viewport.fallback_hud_core_drawn_count != 0 ||
             viewport.fallback_hud_portrait_drawn_count != 0 ||
             unexpected_fetches != 0) {
             fputs("FAIL: altered HUD palette reached the viewport or fallback path\n",
-                  stderr);
-            ++failures;
-        }
-    }
-    {
-        uint32_t saved_table_hash = plan.commands[9].destination_table_hash;
-
-        plan.commands[9].destination_table_hash ^= 0x00000001u;
-        memset(framebuffer, 0, sizeof(framebuffer));
-        unexpected_fetches = 0;
-        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-        dm2_v1_viewport_set_hud_party(&viewport, &party);
-        dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
-        dm2_v1_viewport_set_asset_palette_provider(
-            &viewport, unexpected_palette_fetch, NULL);
-        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-        dm2_v1_viewport_set_gdat_hud_material_plan(&viewport, &plan);
-        dm2_v1_render_ui_chrome(&viewport);
-        plan.commands[9].destination_table_hash = saved_table_hash;
-        if (viewport.asset_hud_portrait_drawn_count != 0 ||
-            viewport.gdat_hud_material_plan_consumed_count != 0 ||
-            (viewport.blocked_material_mask &
-                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT) == 0u ||
-            viewport.fallback_hud_core_drawn_count != 0 ||
-            viewport.fallback_hud_portrait_drawn_count != 0 ||
-            unexpected_fetches != 0) {
-            fputs("FAIL: altered HUD portrait rectangle receipt reached the viewport or fallback path\n",
                   stderr);
             ++failures;
         }

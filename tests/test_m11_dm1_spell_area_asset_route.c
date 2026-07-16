@@ -69,6 +69,17 @@ int main(void)
     ok &= require_text(source, "M11_Font_IsLoaded(g_activeOriginalFont)");
     ok &= require_text(source,
                        "dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34");
+    ok &= require_text(source,
+                       "dm1_v1_live_action_effect_hud_presentation_pc34");
+    ok &= require_text(source,
+                       "DM1_V1_ACTION_HUD_LAYOUT_CREATURE_DAMAGE_PC34");
+    ok &= require_text(source,
+                       "Missing M653 or missing C014 is");
+    ok &= require_text(source,
+                       "m11_apply_dm1_spell_failure_feedback_f0412");
+    ok &= require_text(source,
+                       "dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34");
+    ok &= require_text(source, "receipt.clearsSymbolsOnCastClick");
     ok &= require_text(source, "m11_panel_asset_source_loaded");
     ok &= require_text(source, "!receipt.drawable");
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_WIDTH_PC34");

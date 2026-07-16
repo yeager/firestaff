@@ -3,14 +3,7 @@
   "status": "BLOCKED_ROUTE_CAPTURE_SYNC",
   "superseded_by_later_batch_capture": {
     "superseded": false,
-    "reason": "later route-label capture coverage incomplete",
-    "pass304Status": "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
-    "pass304RouteLabelCoverage": false,
-    "pass308Status": "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
-    "pass308Coverage": {
-      "requiredLabelCoverage": true,
-      "requiredPromotionRowsGameplayOrWallCloseup": true
-    }
+    "reason": "pass304/pass308 manifests missing"
   },
   "attempt_dir": "verification-screens/pass210-n2-original-movement-route-fresh",
   "source_seam": [
@@ -203,9 +196,7 @@
     },
     {
       "path": "parity-evidence/verification/pass211_dm1_v1_original_movement_fresh_blocker/manifest.json",
-      "exists": true,
-      "size_bytes": 22138,
-      "sha256": "3bd031ac005f2272ad04f6f2c4f0d19667c5394dcd4df9aa26e14c0ffa31c0a1"
+      "exists": false
     },
     {
       "path": "parity-evidence/verification/pass211_dm1_v1_original_movement_fresh_blocker/README.md",

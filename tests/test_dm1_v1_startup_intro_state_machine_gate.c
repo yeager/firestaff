@@ -2,6 +2,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "vga_palette_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -977,6 +978,24 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  selected_boot_receipt.source_matches == 1 &&
                  selected_boot_receipt.selected_entry_receipt_valid == 1,
              1);
+    selected_boot_facts.active = 0;
+    expect_i("DM1 selected boot-probe accepts completed runtime handoff",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt) &&
+                 selected_boot_receipt.valid == 1 &&
+                 selected_boot_receipt.active == 0 &&
+                 selected_boot_receipt.started_from_launcher == 1,
+             1);
+    selected_boot_facts.started_from_launcher = 0;
+    expect_i("DM1 selected boot-probe rejects missing launcher handoff",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt) &&
+                 selected_boot_receipt.valid == 0,
+             1);
+    selected_boot_facts.active = 1;
+    selected_boot_facts.started_from_launcher = 1;
     selected_boot_facts.intro_bypassed = 1;
     expect_i("DM1 selected boot-probe receipt rejects bypassed intro",
              dm1_v1_startup_selected_boot_probe_receipt_pc34(

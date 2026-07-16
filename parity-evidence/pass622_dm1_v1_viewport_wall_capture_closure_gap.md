@@ -1,6 +1,6 @@
 # Pass622 - DM1 V1 viewport wall capture-closure gap
 
-Status: BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED
+Status: FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP
 
 Decision: The next viewport/wall closure gap after pass609 is still capture-backed, not renderer-backed: Firestaff has deterministic same-viewport fixture rows, but the original side has no source-bound command/state/redraw/present transcript and the latest crops are duplicate/non-promotable.
 
@@ -11,15 +11,15 @@ Primary source locks:
 - DRAWVIEW.C:709-858 f0097_presents_g0296_viewport ok=True - original captures are promotable only at or after the source viewport-present boundary
 
 Pass608 same-viewport blocker:
-- status: BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
+- status: None
 - runtimeTranscriptProvided: False
 - runtimeTranscriptOk: False
-- firestaffStateCount: 6
-- firestaffViewportHashCount: 6
-- duplicateOriginalCropGroups: 1
+- firestaffStateCount: 0
+- firestaffViewportHashCount: 0
+- duplicateOriginalCropGroups: 0
 
 Pass609 contract:
-- statusLocked: True
+- statusLocked: False
 - currentAttemptNonPromotable: True
 - sourceLockRowCount: 5
 
@@ -39,5 +39,13 @@ Non-claims:
 - no renderer behavior change
 - no V2/CSB/DM2 scope
 - no DANNESBURK use
+
+Problems:
+- pass608 same-viewport blocker manifest is absent or failed
+- pass608 blocker status drifted
+- Firestaff same-viewport fixture evidence regressed
+- fresh original diagnostic no longer records duplicate crop blockers
+- pass608 no longer names the missing command/state/redraw transcript blocker
+- pass609 same-viewport capture contract is missing or drifted
 
 Manifest: parity-evidence/verification/pass622_dm1_v1_viewport_wall_capture_closure_gap/manifest.json

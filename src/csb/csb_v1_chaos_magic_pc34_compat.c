@@ -445,8 +445,9 @@ csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
     /* CSBWin DSA.cpp:5053-5293 Execute. The transfer subset keeps Execute's
      * file-order Program(state,column) selection, JUMP frame transfer, and
      * GOSUB nested-frame return behavior without promoting any world/filter
-     * command. A GOSUB return frame intentionally discards its child result:
-     * EX_GOSUB ignores Execute's return value before its caller returns. */
+     * command. RETURN is not a bytecode: Execute returns when the selected
+     * state/column has no Program, and EX_GOSUB ignores that child return
+     * value before its caller continues. */
     for (;;) {
         const CSB_V1_DSAImportedAction *action =
             csb_v1_chaos_find_imported_action_column(state, dsa_id,
@@ -456,12 +457,15 @@ csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
 
         if (!action) {
             int returned_state = final_state == -1 ? (int)current_state : final_state;
+            ++candidate.return_count;
+            candidate.returned_by_missing_program = 1;
             if (return_depth == 0) {
                 candidate.final_state = returned_state;
                 *out_receipt = candidate;
                 return CSB_V1_CSBWIN_DSA_EXECUTE_OK;
             }
             --return_depth;
+            ++candidate.frame_pop_count;
             final_state = return_frames[return_depth].final_state;
             current_depth = return_frames[return_depth].subroutine_depth;
             /* A complete GOSUB action has no remaining caller words. */
@@ -521,6 +525,7 @@ csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
             return_frames[return_depth].final_state = final_state;
             return_frames[return_depth].subroutine_depth = current_depth;
             ++return_depth;
+            ++candidate.frame_push_count;
             ++candidate.transfer_count;
             candidate.words_consumed = (uint16_t)(candidate.words_consumed +
                                                    dispatch.words_consumed);
@@ -540,6 +545,435 @@ csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
 static int csb_v1_csbwin_dsa_sign_extend(uint16_t value, int bits) {
     uint16_t sign = (uint16_t)(1u << (bits - 1));
     return (int)((value ^ sign) - sign);
+}
+
+static int csb_v1_csbwin_dsa_location_level(uint32_t location)
+{
+    return (int)((location >> 10) & 0x3fu);
+}
+
+static int csb_v1_csbwin_dsa_location_x(uint32_t location)
+{
+    return (int)((location >> 5) & 0x1fu);
+}
+
+static int csb_v1_csbwin_dsa_location_y(uint32_t location)
+{
+    return (int)(location & 0x1fu);
+}
+
+static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
+                                                    int *requires_runtime_owner)
+{
+    if (requires_runtime_owner) *requires_runtime_owner = 0;
+    switch (subcode) {
+    case 1u: case 2u: case 3u: case 4u: case 5u: case 6u: case 7u:
+    case 11u: case 12u: case 13u: case 14u: case 15u: case 16u: case 17u:
+    case 18u: case 19u: case 20u: case 21u: case 22u: case 24u: case 25u:
+    case 26u: case 27u: case 28u: case 29u: case 30u: case 31u: case 32u:
+    case 37u: case 38u: case 39u: case 40u: case 41u: case 48u: case 50u:
+    case 59u: case 67u: case 70u: case 97u: case 108u: case 129u:
+    case 133u: case 136u: case 139u:
+        return 1;
+    case 8u: case 9u: case 33u: case 34u: case 36u: case 44u: case 45u:
+    case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
+    case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
+    case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
+    case 77u: case 92u: case 100u: case 101u: case 102u: case 106u:
+    case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
+    case 115u: case 116u: case 117u: case 118u: case 124u: case 125u:
+    case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
+    case 138u:
+        if (requires_runtime_owner) *requires_runtime_owner = 1;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static CSB_V1_CSBWinDSACoreVerifyResult
+csb_v1_csbwin_dsa_verify_message_words(
+    const CSB_V1_DSAImportedAction *action, uint16_t command,
+    uint8_t opcode, int *cursor, CSB_V1_CSBWinDSACoreProgramReceipt *receipt)
+{
+    int next_state;
+    uint8_t delay_kind;
+    uint8_t target_kind;
+    int extra_words = 0;
+
+    if (!action || !cursor || !receipt) {
+        return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+    }
+    if (opcode != CSB_V1_CSBWIN_DSACMD_MESSAGE &&
+        opcode != CSB_V1_CSBWIN_DSACMD_MESSAGE32 &&
+        opcode != CSB_V1_CSBWIN_DSACMD_DESSAGE32) {
+        return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+    }
+    next_state = csb_v1_csbwin_dsa_sign_extend(
+        (uint16_t)((command >> 12) & 0x0fu), 4);
+    delay_kind = (uint8_t)((command >> 8) & 0x03u);
+    target_kind = (uint8_t)((command >> 10) & 0x03u);
+    if (next_state == -8) ++extra_words;
+    if (delay_kind == 3u) ++extra_words;
+    if (target_kind == 2u) {
+        extra_words +=
+            (opcode == CSB_V1_CSBWIN_DSACMD_MESSAGE) ? 1 : 2;
+    }
+    if (extra_words > action->program_word_count - *cursor) {
+        return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+    }
+    *cursor += extra_words;
+    receipt->timer_core = 1;
+    receipt->message_core = 1;
+    receipt->requires_runtime_owner = 1;
+    return CSB_V1_CSBWIN_DSA_CORE_OK;
+}
+
+static CSB_V1_CSBWinDSACoreVerifyResult
+csb_v1_csbwin_dsa_verify_copyteleporter_words(
+    const CSB_V1_DSAImportedAction *action, uint16_t command,
+    uint8_t opcode, int *cursor, CSB_V1_CSBWinDSACoreProgramReceipt *receipt)
+{
+    int next_state;
+    uint8_t source_kind;
+    uint8_t destination_kind;
+    int extra_words = 0;
+
+    if (!action || !cursor || !receipt) {
+        return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+    }
+    if (opcode != CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER &&
+        opcode != CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32) {
+        return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+    }
+    source_kind = (uint8_t)((command >> 6) & 0x03u);
+    destination_kind = (uint8_t)((command >> 8) & 0x03u);
+    next_state = csb_v1_csbwin_dsa_sign_extend(
+        (uint16_t)((command >> 10) & 0x3fu), 6);
+    if (next_state == -32) ++extra_words;
+    if (source_kind == 2u) {
+        extra_words +=
+            opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER ? 1 : 2;
+    }
+    if (destination_kind == 2u) {
+        extra_words +=
+            opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER ? 1 : 2;
+    }
+    if (extra_words > action->program_word_count - *cursor) {
+        return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+    }
+    *cursor += extra_words;
+    receipt->requires_runtime_owner = 1;
+    receipt->dungeon_mutation_core = 1;
+    return CSB_V1_CSBWIN_DSA_CORE_OK;
+}
+
+static int csb_v1_csbwin_dsa_subcode_is_arithmetic(uint16_t subcode)
+{
+    switch (subcode) {
+    case 1u: case 2u: case 3u: case 4u: case 5u: case 6u: case 7u:
+    case 11u: case 12u: case 13u: case 14u: case 15u: case 16u: case 17u:
+    case 18u: case 19u: case 20u: case 21u: case 22u: case 24u: case 25u:
+    case 27u: case 28u: case 29u: case 30u: case 31u: case 32u: case 37u:
+    case 50u: case 67u: case 70u: case 108u:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int csb_v1_csbwin_dsa_subcode_is_timer_family(uint16_t subcode)
+{
+    switch (subcode) {
+    case 110u: /* STKOP_CausePoison may schedule TT_75 through runtime. */
+    case 138u: /* STKOP_ModifyMessage remaps the current ProcessTimers call. */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(uint16_t subcode)
+{
+    switch (subcode) {
+    case 33u:  /* STKOP_FalsePit */
+    case 34u:  /* STKOP_GeneratorDelayStore */
+    case 45u:  /* STKOP_StoreExCellFlg */
+    case 52u:  /* STKOP_SetCurse */
+    case 54u:  /* STKOP_SetCharges */
+    case 56u:  /* STKOP_SetBroken */
+    case 58u:  /* STKOP_CellStore */
+    case 63u:  /* STKOP_MonsterStore */
+    case 66u:  /* STKOP_CharStore */
+    case 75u:  /* STKOP_SetPoisoned */
+    case 76u:  /* STKOP_Copy */
+    case 102u: /* STKOP_MissileInfoStore */
+    case 110u: /* STKOP_CausePoison */
+    case 113u: /* STKOP_ExperiencePlus */
+    case 118u: /* STKOP_SwapCharacter */
+    case 125u: /* STKOP_SetSubType */
+    case 132u: /* STKOP_SetSkin */
+    case 135u: /* STKOP_TalentsStore */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+CSB_V1_CSBWinDSACoreVerifyResult
+csb_v1_csbwin_dsa_verify_authenticated_core_program(
+    const CSB_V1_ChaosMagicState *state, int dsa_id, uint32_t state_index,
+    int action_ordinal, CSB_V1_CSBWinDSACoreProgramReceipt *out_receipt)
+{
+    const CSB_V1_DSAImportedAction *action;
+    CSB_V1_CSBWinDSACoreProgramReceipt receipt;
+    int cursor = 0;
+    int saw_stack_command = 0;
+
+    if (!out_receipt) return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.unsupported_opcode = 0xffu;
+    *out_receipt = receipt;
+    if (!state || dsa_id < 0 || dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
+        action_ordinal < 0) {
+        return CSB_V1_CSBWIN_DSA_CORE_NOT_AUTHENTICATED;
+    }
+    action = csb_v1_chaos_find_imported_action(
+        state, dsa_id, state_index, action_ordinal);
+    if (!action || !action->program_words || action->program_word_count < 1) {
+        return CSB_V1_CSBWIN_DSA_CORE_NOT_AUTHENTICATED;
+    }
+
+    while (cursor < action->program_word_count) {
+        uint16_t command = action->program_words[cursor++];
+        uint8_t opcode = (uint8_t)(command & 0x3fu);
+        ++receipt.command_count;
+        if (opcode == CSB_V1_CSBWIN_DSACMD_JUMP ||
+            opcode == CSB_V1_CSBWIN_DSACMD_GOSUB) {
+            uint16_t words_consumed = 0u;
+
+            if (receipt.command_count != 1u) {
+                receipt.unsupported_opcode = opcode;
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+            }
+            if (opcode == CSB_V1_CSBWIN_DSACMD_JUMP) {
+                CSB_V1_CSBWinDSAJumpDispatch dispatch;
+                CSB_V1_CSBWinDSAJumpResult rc =
+                    csb_v1_csbwin_dsa_resolve_authenticated_jump_dispatch(
+                        state, dsa_id, state_index, action->column,
+                        &dispatch);
+                if (rc == CSB_V1_CSBWIN_DSA_JUMP_MALFORMED) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                if (rc != CSB_V1_CSBWIN_DSA_JUMP_OK) {
+                    receipt.unsupported_opcode = opcode;
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+                }
+                words_consumed = dispatch.words_consumed;
+            } else {
+                CSB_V1_CSBWinDSAGosubDispatch dispatch;
+                CSB_V1_CSBWinDSAGosubResult rc =
+                    csb_v1_csbwin_dsa_resolve_authenticated_gosub_dispatch(
+                        state, dsa_id, state_index, action->column,
+                        &dispatch);
+                if (rc == CSB_V1_CSBWIN_DSA_GOSUB_MALFORMED) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                if (rc != CSB_V1_CSBWIN_DSA_GOSUB_OK) {
+                    receipt.unsupported_opcode = opcode;
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+                }
+                words_consumed = dispatch.words_consumed;
+            }
+            if (words_consumed != (uint16_t)action->program_word_count) {
+                receipt.unsupported_opcode = opcode;
+                receipt.words_consumed = words_consumed;
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+            }
+            receipt.transfer_only = 1;
+            receipt.words_consumed = words_consumed;
+            receipt.valid = 1;
+            *out_receipt = receipt;
+            return CSB_V1_CSBWIN_DSA_CORE_OK;
+        }
+        saw_stack_command = 1;
+        if (opcode == CSB_V1_CSBWIN_DSACMD_MESSAGE ||
+            opcode == CSB_V1_CSBWIN_DSACMD_MESSAGE32 ||
+            opcode == CSB_V1_CSBWIN_DSACMD_DESSAGE32) {
+            CSB_V1_CSBWinDSACoreVerifyResult message_rc =
+                csb_v1_csbwin_dsa_verify_message_words(
+                    action, command, opcode, &cursor, &receipt);
+            if (message_rc != CSB_V1_CSBWIN_DSA_CORE_OK) {
+                *out_receipt = receipt;
+                return message_rc;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32) {
+            CSB_V1_CSBWinDSACoreVerifyResult copy_rc =
+                csb_v1_csbwin_dsa_verify_copyteleporter_words(
+                    action, command, opcode, &cursor, &receipt);
+            if (copy_rc != CSB_V1_CSBWIN_DSA_CORE_OK) {
+                *out_receipt = receipt;
+                return copy_rc;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_LOAD) {
+            uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
+            int next_state =
+                csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 11), 5);
+            if (next_state == -16) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+            if (selector == CSB_V1_CSBWIN_DSA_LOAD_ABS32) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL;
+            }
+            if (selector == CSB_V1_CSBWIN_DSA_LOAD_INTEGER ||
+                selector == CSB_V1_CSBWIN_DSA_LOAD_ABS) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            } else if (selector == CSB_V1_CSBWIN_DSA_LOAD_INTEGER32) {
+                if (cursor + 1 >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                cursor += 2;
+            } else if (selector != CSB_V1_CSBWIN_DSA_LOAD_DOLLAR &&
+                       selector > 25u) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_NOOP ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_EQUAL) {
+            int next_state =
+                csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 6), 10);
+            if (opcode == CSB_V1_CSBWIN_DSACMD_EQUAL) {
+                receipt.conditional_core = 1;
+            }
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_QUESTION) {
+            int next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)((command >> 6) & 0x0fu), 4);
+            uint8_t if_command = (uint8_t)((command >> 11) & 0x03u);
+            uint8_t else_command = (uint8_t)((command >> 14) & 0x03u);
+            uint8_t if_column = (uint8_t)((command >> 10) & 0x01u);
+            uint8_t else_column = (uint8_t)((command >> 13) & 0x01u);
+            int extension_count;
+            receipt.conditional_core = 1;
+            if (next_state == -2) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+            extension_count = (if_command != 0u) + if_column +
+                (else_command != 0u) + else_column;
+            if (extension_count > action->program_word_count - cursor) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+            }
+            cursor += extension_count;
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
+            uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
+            int next_state =
+                csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 11), 5);
+            if (selector > 25u) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL;
+            }
+            if (next_state == -16) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_VARIABLEFETCH ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_VARIABLESTORE ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_GLOBALFETCH ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_GLOBALSTORE) {
+            uint8_t index = (uint8_t)((command >> 6) & 0x7fu);
+            int relative_state =
+                csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 13), 3);
+            if (index >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL;
+            }
+            receipt.variable_core = 1;
+            if (relative_state == -4) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND2) {
+            uint16_t subcode = (uint16_t)((command >> 6) & 0x7fu);
+            int next_state =
+                csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 13), 3);
+            int requires_runtime_owner = 0;
+            if (next_state == -4) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+            if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND2) {
+                subcode = (uint16_t)(subcode + 128u);
+            }
+            if (!csb_v1_csbwin_dsa_core_subcode_supported(
+                    subcode, &requires_runtime_owner)) {
+                receipt.unsupported_opcode = opcode;
+                receipt.unsupported_subcode = subcode;
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+            }
+            if (requires_runtime_owner) receipt.requires_runtime_owner = 1;
+            if (csb_v1_csbwin_dsa_subcode_is_arithmetic(subcode)) {
+                receipt.arithmetic_core = 1;
+            }
+            if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
+                receipt.timer_core = 1;
+            }
+            if (csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(subcode)) {
+                receipt.dungeon_mutation_core = 1;
+            }
+        } else {
+            receipt.unsupported_opcode = opcode;
+            *out_receipt = receipt;
+            return CSB_V1_CSBWIN_DSA_CORE_UNSUPPORTED;
+        }
+    }
+    if (!saw_stack_command) {
+        *out_receipt = receipt;
+        return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+    }
+    receipt.stack_core = 1;
+    receipt.words_consumed = (uint16_t)cursor;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return CSB_V1_CSBWIN_DSA_CORE_OK;
 }
 
 CSB_V1_CSBWinDSALoadResult csb_v1_csbwin_dsa_execute_load_action(
@@ -813,6 +1247,7 @@ typedef struct {
 
 typedef struct {
     uint16_t thing;
+    uint16_t source_thing;
     uint8_t payload[6];
 } CSB_V1_CSBWinDSAPendingActuatorCopy;
 typedef struct {
@@ -877,6 +1312,40 @@ static int csb_v1_csbwin_dsa_pending_actuator_copy_lookup(
         }
     }
     return 0;
+}
+
+static int csb_v1_csbwin_dsa_decode_target_operand(
+    const CSB_V1_DSAImportedAction *action, int *cursor, uint8_t target_kind,
+    int thirty_two, const uint32_t *parameters, int parameter_count,
+    uint32_t *stack, int *depth, uint32_t *out_location)
+{
+    uint32_t low;
+
+    if (!action || !cursor || !parameters || !stack || !depth ||
+        !out_location) {
+        return 0;
+    }
+    switch (target_kind) {
+    case 0u:
+        *out_location = parameter_count > 0 ? parameters[0] : 0u;
+        return 1;
+    case 1u:
+        *out_location = parameter_count > 1 ? parameters[1] : 0u;
+        return 1;
+    case 2u:
+        if (*cursor >= action->program_word_count) return 0;
+        low = action->program_words[(*cursor)++];
+        if (thirty_two) {
+            if (*cursor >= action->program_word_count) return 0;
+            low |= (uint32_t)action->program_words[(*cursor)++] << 16;
+        }
+        *out_location = low;
+        return 1;
+    case 3u:
+        return csb_v1_csbwin_dsa_stack_pop(stack, depth, out_location);
+    default:
+        return 0;
+    }
 }
 
 static CSB_V1_CSBWinDSAStackResult
@@ -2461,6 +2930,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         pending_actuator_copies[*pending_actuator_copy_count].thing =
             (uint16_t)v;
+        pending_actuator_copies[*pending_actuator_copy_count].source_thing =
+            (uint16_t)w;
         memcpy(pending_actuator_copies[*pending_actuator_copy_count].payload,
                actuator_payload, sizeof(actuator_payload));
         ++*pending_actuator_copy_count;
@@ -2686,7 +3157,129 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         int next_state;
         CSB_V1_CSBWinDSAStackResult rc;
         ++candidate.command_count;
-        if (opcode == CSB_V1_CSBWIN_DSACMD_LOAD) {
+        if (opcode == CSB_V1_CSBWIN_DSACMD_MESSAGE ||
+            opcode == CSB_V1_CSBWIN_DSACMD_MESSAGE32 ||
+            opcode == CSB_V1_CSBWIN_DSACMD_DESSAGE32) {
+            uint8_t message_type = (uint8_t)((command >> 6) & 0x03u);
+            uint8_t delay_kind = (uint8_t)((command >> 8) & 0x03u);
+            uint8_t target_kind = (uint8_t)((command >> 10) & 0x03u);
+            uint32_t delay = 0u;
+            uint32_t target_location = 0u;
+            uint32_t target_low;
+            uint8_t event_type = 0u;
+            uint32_t action_type;
+            int scheduled;
+
+            /* CSBWin DSA.cpp:635-725 / Data.h DSAmessageCmd. MESSAGE and
+             * MESSAGE32 schedule QueueDSASwitchAction with MorD='M';
+             * DESSAGE32 uses the same word grammar but forces TT_DESSAGE. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)((command >> 12) & 0x0fu), 4);
+            if (next_state == -8) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                next_state = (int)action->program_words[cursor++];
+            }
+            if (delay_kind == 1u) {
+                delay = context->parameter_count > 0 ? parameters[0] : 0u;
+            } else if (delay_kind == 2u) {
+                delay = context->parameter_count > 1 ? parameters[1] : 0u;
+            } else if (delay_kind == 3u) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                delay = action->program_words[cursor++];
+            }
+            if (target_kind == 0u) {
+                target_location =
+                    context->parameter_count > 0 ? parameters[0] : 0u;
+            } else if (target_kind == 1u) {
+                target_location =
+                    context->parameter_count > 1 ? parameters[1] : 0u;
+            } else if (target_kind == 2u) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                target_low = action->program_words[cursor++];
+                if (opcode == CSB_V1_CSBWIN_DSACMD_MESSAGE32 ||
+                    opcode == CSB_V1_CSBWIN_DSACMD_DESSAGE32) {
+                    if (cursor >= action->program_word_count) {
+                        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                    }
+                    target_low |= (uint32_t)action->program_words[cursor++] << 16;
+                }
+                target_location = target_low;
+            } else {
+                if (!csb_v1_csbwin_dsa_stack_pop(stack, &depth,
+                                                 &target_location)) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+            }
+            if (message_type == 0u) {
+                /* MSG_NULL consumes the same operands but exits before
+                 * QueueDSASwitchAction in the source. */
+            } else {
+                if (!context->queue_switch_action) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                action_type = message_type - 1u;
+                scheduled = context->queue_switch_action(
+                    context->dungeon_user, delay, action_type, target_location,
+                    opcode == CSB_V1_CSBWIN_DSACMD_DESSAGE32 ? 'D' : 'M',
+                    &event_type);
+                if (scheduled < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                if (scheduled > 0) {
+                    ++candidate.timer_scheduled_count;
+                    candidate.last_scheduled_event_type = event_type;
+                    candidate.last_scheduled_target_location = target_location;
+                }
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER ||
+                   opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32) {
+            uint8_t source_kind = (uint8_t)((command >> 6) & 0x03u);
+            uint8_t destination_kind = (uint8_t)((command >> 8) & 0x03u);
+            uint32_t source_location = 0u;
+            uint32_t destination_location = 0u;
+            int thirty_two =
+                opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32;
+            int copied;
+
+            /* CSBWin DSA.cpp:731-763 / Data.h DSAcopyTeleporterCmd. The
+             * source copies the first DB1 teleporter and its CELLFLAG from
+             * source square to an existing destination teleporter square. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)((command >> 10) & 0x3fu), 6);
+            if (next_state == -32) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                next_state = (int)action->program_words[cursor++];
+            }
+            if (!csb_v1_csbwin_dsa_decode_target_operand(
+                    action, &cursor, source_kind, thirty_two, parameters,
+                    context->parameter_count, stack, &depth,
+                    &source_location) ||
+                !csb_v1_csbwin_dsa_decode_target_operand(
+                    action, &cursor, destination_kind, thirty_two, parameters,
+                    context->parameter_count, stack, &depth,
+                    &destination_location)) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
+            if (!context->copy_teleporter) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            copied = context->copy_teleporter(
+                context->dungeon_user, source_location, destination_location);
+            if (copied < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (copied > 0) {
+                ++candidate.teleporter_copy_count;
+                candidate.last_teleporter_copy_source_location =
+                    source_location;
+                candidate.last_teleporter_copy_destination_location =
+                    destination_location;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_LOAD) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             next_state = csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 11), 5);
             if (next_state == -16) {
@@ -2747,16 +3340,19 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             uint8_t if_column = (uint8_t)((command >> 10) & 0x01u);
             uint8_t else_column = (uint8_t)((command >> 13) & 0x01u);
             uint8_t selected_command;
-            int extension_count;
+            uint32_t if_state = 0u;
+            uint32_t else_state = 0u;
+            uint32_t if_target_column = 0u;
+            uint32_t else_target_column = 0u;
+            uint32_t selected_state;
+            uint32_t selected_column;
 
             /* CSBWin DSA.cpp:850-978 / Data.h DSAquestionCmd. QUESTION
              * pops its condition, consumes every declared branch operand in
-             * source order, and then either performs no transfer or asks
-             * Execute for a JUMP/GOSUB. The latter needs a whole authenticated
-             * action-chain owner, so it remains closed here rather than
-             * dispatching an invented continuation. */
+             * source order, and then either performs no transfer or enters the
+             * selected authenticated JUMP/GOSUB action chain. */
             next_state = csb_v1_csbwin_dsa_sign_extend(
-                (uint16_t)(command >> 6), 4);
+                (uint16_t)((command >> 6) & 0x0fu), 4);
             if (next_state == -2) {
                 if (cursor >= action->program_word_count) {
                     return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
@@ -2768,15 +3364,57 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
             }
             condition = condition_word != 0u;
-            extension_count = (if_command != 0u) + if_column +
-                (else_command != 0u) + else_column;
-            if (extension_count > action->program_word_count - cursor) {
-                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            if (if_command != 0u) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                if_state = action->program_words[cursor++];
             }
-            cursor += extension_count;
+            if (if_column) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                if_target_column = action->program_words[cursor++];
+            }
+            if (else_command != 0u) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                else_state = action->program_words[cursor++];
+            }
+            if (else_column) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                else_target_column = action->program_words[cursor++];
+            }
             selected_command = condition ? if_command : else_command;
             if (selected_command == 1u || selected_command == 2u) {
-                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                const CSB_V1_DSAImportedAction *transfer_action;
+                uint8_t required_opcode =
+                    selected_command == 1u ? CSB_V1_CSBWIN_DSACMD_JUMP :
+                                             CSB_V1_CSBWIN_DSACMD_GOSUB;
+
+                selected_state = condition ? if_state : else_state;
+                selected_column = condition ? if_target_column :
+                                              else_target_column;
+                transfer_action = csb_v1_chaos_find_imported_action_column(
+                    state, dsa_id, selected_state, selected_column);
+                if (!transfer_action || !transfer_action->program_words ||
+                    transfer_action->program_word_count < 1 ||
+                    (transfer_action->program_words[0] & 0x3fu) !=
+                        required_opcode) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                if (csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+                        state, dsa_id, selected_state, selected_column, 0,
+                        &candidate.transfer) !=
+                        CSB_V1_CSBWIN_DSA_EXECUTE_OK ||
+                    candidate.transfer.final_state < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                candidate.transfer_executed = 1;
+                next_state = candidate.transfer.final_state - (int)state_index;
             }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
@@ -2993,6 +3631,11 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_actuator_copies[i].payload) <= 0) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.actuator_copy_count;
+        candidate.last_actuator_copy_source_thing =
+            pending_actuator_copies[i].source_thing;
+        candidate.last_actuator_copy_destination_thing =
+            pending_actuator_copies[i].thing;
     }
     for (i = 0; i < pending_sound_request_count; ++i) {
         if (!context->play_sound || !context->play_sound(
@@ -3057,6 +3700,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *runner = user;
     CSB_V1_CSBWinDSAStackContext context;
     CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core_receipt;
     CSB_V1_CSBWinDSAExecuteReceipt transfer;
     const CSB_V1_DSAImportedAction *expected;
     uint32_t parameter_words[26];
@@ -3081,8 +3725,15 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     if (expected != action) return 0;
 
     opcode = (uint16_t)(action->program_words[0] & 0x3fu);
+    if (csb_v1_csbwin_dsa_verify_authenticated_core_program(
+            runner->programs, runner->dsa_id, runner->state_index,
+            runner->action_ordinal, &core_receipt) !=
+            CSB_V1_CSBWIN_DSA_CORE_OK || !core_receipt.valid) {
+        return 0;
+    }
     if (opcode == CSB_V1_CSBWIN_DSACMD_JUMP ||
         opcode == CSB_V1_CSBWIN_DSACMD_GOSUB) {
+        if (!core_receipt.transfer_only) return 0;
         /* CSBWin DSA.cpp Execute() owns this transfer as a whole, including
          * nested GOSUB frame handling. It has no parameter/world side effect
          * in the bounded subset, so retain the caller surface exactly while
@@ -3099,6 +3750,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
         ++runner->transfer_execution_count;
         return 1;
     }
+    if (!core_receipt.stack_core) return 0;
 
     for (i = 0; i < parameter_count; ++i) {
         parameter_words[i] = (uint32_t)parameters[i];
@@ -3166,6 +3818,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_cell_info = runner->get_cell_info;
     context.resolve_cell_store = runner->resolve_cell_store;
     context.set_cell_info = runner->set_cell_info;
+    context.copy_teleporter = runner->copy_teleporter;
     context.get_object_property = runner->get_object_property;
     context.set_object_property = runner->set_object_property;
     context.normalize_object_property = runner->normalize_object_property;
@@ -3194,6 +3847,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;
     context.describe = runner->describe;
+    context.queue_switch_action = runner->queue_switch_action;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
@@ -3223,6 +3877,11 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     runner->saves_disabled = context.saves_disabled;
     runner->last_execution = execution;
     ++runner->execution_count;
+    if (execution.transfer_executed) {
+        runner->last_transfer = execution.transfer;
+        runner->state_index = (uint32_t)execution.transfer.final_state;
+        ++runner->transfer_execution_count;
+    }
     return 1;
 }
 

@@ -1,6 +1,8 @@
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_asset_loader.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int failed;
@@ -13,6 +15,80 @@ static int failed;
         printf("PASS: %s\n", msg); \
     } \
 } while (0)
+
+static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
+{
+    FILE *f;
+    long size;
+    uint8_t *data;
+
+    if (out_data) *out_data = NULL;
+    if (out_size) *out_size = 0u;
+    if (!path || !out_data || !out_size) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return 0;
+    }
+    size = ftell(f);
+    if (size <= 0) {
+        fclose(f);
+        return 0;
+    }
+    rewind(f);
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data) {
+        fclose(f);
+        return 0;
+    }
+    if (fread(data, 1u, (size_t)size, f) != (size_t)size) {
+        free(data);
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    *out_data = data;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int candidate_path(char *out, size_t out_size, const char *suffix)
+{
+    const char *data = getenv("FIRESTAFF_DATA");
+    const char *home = getenv("HOME");
+
+    if (!out || out_size == 0u || !suffix) return 0;
+    if (data && data[0]) {
+        snprintf(out, out_size, "%s/%s", data, suffix);
+        return 1;
+    }
+    if (home && home[0]) {
+        snprintf(out, out_size, "%s/.firestaff/data/%s", home, suffix);
+        return 1;
+    }
+    return 0;
+}
+
+static int load_graphics(uint8_t **out_data, size_t *out_size,
+                         char *path, size_t path_size)
+{
+    static const char *suffixes[] = {
+        "dm2/GRAPHICS.DAT",
+        "dm2/graphics.dat",
+        "dm2/DM2GRAPHICS.DAT",
+        "dm2/DM2GRA.DAT"
+    };
+    size_t i;
+
+    for (i = 0u; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+        if (candidate_path(path, path_size, suffixes[i]) &&
+            read_file(path, out_data, out_size)) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static void test_between_value(void)
 {
@@ -94,6 +170,751 @@ static void test_random_helpers(void)
           "c_random sequence advances through every helper");
     CHECK(dm2_v1_skproject_rand16(&randdat, 0u) == 0u,
           "DM2_RAND16 zero range returns zero");
+}
+
+static void test_ibmio_anim_mouse_runtime_family(void)
+{
+    DM2_V1_SkprojectIbmioPaletteState palette_state;
+    DM2_V1_SkprojectIbmioPaletteReceipt palette_receipt;
+    DM2_V1_SkprojectPaletteSetReceipt select_receipt;
+    DM2_V1_SkprojectIbmioBlit4To8Receipt blit_receipt;
+    DM2_V1_SkprojectAnimCopy4BppReceipt copy_receipt;
+    DM2_V1_SkprojectMouseState mouse_state;
+    DM2_V1_SkprojectMouseHideReceipt hide_receipt;
+    DM2_V1_SkprojectMouseShapeReceipt shape_receipt;
+    DM2_V1_SkprojectMouseBoundsReceipt bounds_receipt;
+    DM2_V1_SkprojectAnimRuntimeState anim_state;
+    DM2_V1_SkprojectAnimVectorReceipt vector_receipt;
+    DM2_V1_SkprojectAnimTimerInstallReceipt timer_install;
+    DM2_V1_SkprojectAnimTimerTickReceipt timer_tick;
+    DM2_V1_SkprojectIbmioPollReceipt poll_receipt;
+    DM2_V1_SkprojectIbmioWaitEventReceipt wait_receipt;
+    DM2_V1_SkprojectScreenRectFillReceipt rect_fill;
+    DM2_V1_SkprojectScreenClearReceipt screen_clear;
+    DM2_V1_SkprojectSoundAvailableReceipt sound_receipt;
+    uint8_t rgb[16][3];
+    uint8_t pal16[16];
+    uint8_t src4[8] = { 0x01u, 0x23u, 0x45u, 0x67u,
+                        0x89u, 0xabu, 0xcdu, 0xefu };
+    uint8_t dst8[16];
+    uint8_t copy4[8] = { 0x01u, 0x23u, 0x45u, 0x67u,
+                         0x89u, 0xabu, 0xcdu, 0xefu };
+    uint16_t bounds[4] = { 10u, 20u, 30u, 40u };
+
+    for (uint8_t i = 0u; i < 16u; ++i) {
+        rgb[i][0] = (uint8_t)(i * 4u);
+        rgb[i][1] = (uint8_t)(255u - i * 4u);
+        rgb[i][2] = (uint8_t)(i * 8u);
+        pal16[i] = (uint8_t)(15u - i);
+    }
+    memset(dst8, 0, sizeof(dst8));
+    dm2_v1_skproject_ibmio_palette_state_init(&palette_state);
+    palette_state.update_palette = 1u;
+    CHECK(dm2_v1_skproject_00eb_04bc_palette_set(
+              &palette_state, rgb, 0u, &palette_receipt) &&
+              palette_receipt.valid &&
+              palette_receipt.base_palette_updated &&
+              palette_receipt.driver_update_requested &&
+              palette_state.rgb6[0][0] == 0u &&
+              palette_state.rgb6[15][1] == (uint8_t)((255u - 60u) >> 2) &&
+              palette_state.base_rgb6[15][2] == 30u,
+          "_00eb_04bc shifts 16 RGB888 entries into 6-bit palette set zero");
+    CHECK(dm2_v1_skproject_0759_0688_palette_set(
+              &palette_state, rgb, 2u, &palette_receipt) &&
+              palette_receipt.valid && !palette_receipt.base_palette_updated &&
+              palette_state.rgb6[32][0] == 0u,
+          "_0759_0688 delegates to the same palette-set receipt");
+    CHECK(dm2_v1_skproject_0759_06a1_select_palette_set(
+              &palette_state, 2u, &select_receipt) &&
+              select_receipt.valid && palette_state.active_set == 2u &&
+              select_receipt.driver_setcolors_requested,
+          "_0759_06a1 selects the active IBMIO palette set");
+
+    CHECK(dm2_v1_skproject_00eb_070c_blit_4to8(
+              src4, sizeof(src4), 1u, dst8, sizeof(dst8), 3u, 6u, pal16,
+              &blit_receipt) &&
+              blit_receipt.valid && blit_receipt.copied_pixels == 6u &&
+              dst8[3] == 14u && dst8[4] == 13u && dst8[8] == 9u,
+          "_00eb_070c loads the 16-colour table and expands a 4bpp row");
+    memset(dst8, 0, sizeof(dst8));
+    CHECK(dm2_v1_skproject_0759_0310_blit_4to8_self(
+              src4, sizeof(src4), 2u, dst8, sizeof(dst8), 4u, pal16,
+              &blit_receipt) &&
+              blit_receipt.valid && dst8[2] == 13u && dst8[5] == 10u,
+          "_0759_0310 uses the same source and destination pixel offset");
+    CHECK(!dm2_v1_skproject_00eb_070c_blit_4to8(
+              src4, sizeof(src4), 15u, dst8, sizeof(dst8), 0u, 2u, pal16,
+              &blit_receipt) && blit_receipt.blocked_out_of_bounds,
+          "_00eb_070c rejects out-of-bounds source rows");
+
+    CHECK(dm2_v1_skproject_0759_02c6_copy_4bpp_sequence(
+              copy4, sizeof(copy4), 8u, 0u, 4u, &copy_receipt) &&
+              copy_receipt.valid && copy4[4] == 0x01u &&
+              copy4[5] == 0x23u,
+          "_0759_02c6 copies a packed 4bpp sequence inside the animation buffer");
+
+    dm2_v1_skproject_mouse_state_init(&mouse_state);
+    CHECK(dm2_v1_skproject_01b0_0adb_hide_mouse(
+              &mouse_state, &hide_receipt) &&
+              hide_receipt.valid && hide_receipt.hide_depth_after == 1u &&
+              hide_receipt.locked_mouse_event && hide_receipt.redrew_cursor,
+          "_01b0_0adb locks and redraws only for the first hide");
+    CHECK(dm2_v1_skproject_01b0_0adb_hide_mouse(
+              &mouse_state, &hide_receipt) &&
+              hide_receipt.valid && hide_receipt.hide_depth_after == 2u &&
+              !hide_receipt.locked_mouse_event,
+          "_01b0_0adb nested hides only increment the depth");
+    mouse_state.hide_depth = 0u;
+    CHECK(dm2_v1_skproject_01b0_0c70_set_cursor_shape(
+              &mouse_state, 7u, &shape_receipt) &&
+              shape_receipt.valid && shape_receipt.shape_after == 7u &&
+              shape_receipt.redrew_before_shape_change &&
+              shape_receipt.redrew_after_shape_change,
+          "_01b0_0c70 redraws around visible cursor shape changes");
+    CHECK(dm2_v1_skproject_01b0_0ca4_set_cursor_bounds(
+              &mouse_state, bounds, 32u, &bounds_receipt) &&
+              bounds_receipt.valid && bounds_receipt.bounds[2] == 30u &&
+              bounds_receipt.mode == 32u && mouse_state.cursor_bounds_dirty,
+          "_01b0_0ca4 stores four cursor bounds and marks them dirty");
+
+    dm2_v1_skproject_anim_runtime_state_init(&anim_state);
+    CHECK(anim_state.screen_rect.w == 320 && anim_state.screen_rect.h == 200,
+          "ANIM runtime init preserves source 320x200 screen rect");
+    CHECK(dm2_v1_skproject_0759_0126_capture_int_ff(
+              &anim_state, 0xff001234u, &vector_receipt) &&
+              vector_receipt.valid &&
+              anim_state.interrupt_ff_vector == 0xff001234u,
+          "_0759_0126 captures interrupt FF vector");
+    anim_state.anim_countdown = 1000;
+    CHECK(dm2_v1_skproject_0759_06db_install_timer(
+              &anim_state, 0xfe00abcdu, 55u, &timer_install) &&
+              timer_install.valid &&
+              anim_state.interrupt_fe_vector == 0xfe00abcdu &&
+              anim_state.timer_reload_ticks == 55u &&
+              anim_state.display_callback_installed,
+          "_0759_06db captures interrupt FE and installs timer callback");
+    CHECK(dm2_v1_skproject_0759_06c2_timer_tick(
+              &anim_state, &timer_tick) &&
+              timer_tick.valid && timer_tick.countdown_before == 1000 &&
+              timer_tick.countdown_after == 945,
+          "_0759_06c2 subtracts timer reload from ANIM countdown");
+    anim_state.display_mode_active = 1u;
+    CHECK(dm2_v1_skproject_0759_072c_poll_ibmio(
+              &anim_state, &poll_receipt) &&
+              poll_receipt.valid && poll_receipt.display_callback_called &&
+              !poll_receipt.event_available,
+          "_0759_072c polls IBMIO event availability after display callback");
+    CHECK(dm2_v1_skproject_anim_runtime_push_event(&anim_state, 0x1048u) &&
+              dm2_v1_skproject_0759_072c_poll_ibmio(
+                  &anim_state, &poll_receipt) &&
+              poll_receipt.event_available && poll_receipt.event_count == 1u,
+          "ANIM runtime event queue feeds _0759_072c");
+    CHECK(dm2_v1_skproject_0759_071b_wait_ibmio_event(
+              &anim_state, &wait_receipt) &&
+              wait_receipt.valid && wait_receipt.event_word == 0x1048u &&
+              wait_receipt.event_count_before == 1u &&
+              wait_receipt.event_count_after == 0u,
+          "_0759_071b consumes one IBMIO event from the source queue");
+    CHECK(!dm2_v1_skproject_0759_071b_wait_ibmio_event(
+              &anim_state, &wait_receipt) &&
+              wait_receipt.blocked_no_event,
+          "_0759_071b stays fail-closed instead of blocking on empty queue");
+    CHECK(dm2_v1_skproject_0759_065f_fill_screen_rect(
+              &anim_state, &rect_fill) &&
+              rect_fill.valid && rect_fill.filled_pixels == 64000u &&
+              rect_fill.color == 0u,
+          "_0759_065f fills the source screen rect with colour zero");
+    CHECK(dm2_v1_skproject_0759_06b5_clear_screen(
+              &anim_state, &screen_clear) &&
+              screen_clear.valid && screen_clear.lines_filled == 64000u &&
+              screen_clear.lfsr_lines_visited == 65535u,
+          "_0759_06b5 clears screen through source LFSR line order");
+    anim_state.sound_card_type = 0u;
+    CHECK(dm2_v1_skproject_01b0_1ed2_sound_available(
+              &anim_state, &sound_receipt) &&
+              sound_receipt.valid && !sound_receipt.available,
+          "_01b0_1ed2 reports no sound card when type is zero");
+    anim_state.sound_card_type = 2u;
+    CHECK(dm2_v1_skproject_01b0_1ed2_sound_available(
+              &anim_state, &sound_receipt) &&
+              sound_receipt.valid && sound_receipt.available,
+              "_01b0_1ed2 reports sound card availability from runtime type");
+}
+
+static void test_ui_predicate_1031_runtime_family(void)
+{
+    DM2_V1_SkprojectUiPredicateState state;
+    DM2_V1_SkprojectUiNodeRef ref = { 0x84u, 0u, 19u };
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    dm2_v1_skproject_ui_predicate_state_init(&state);
+    CHECK(state.player_at_position[0] == -1 &&
+              state.player_at_position[3] == -1,
+          "_1031 UI predicate state init marks all party positions empty");
+
+    ref.b1 = 7u;
+    CHECK(dm2_v1_skproject_1031_dispatch_predicate(
+              DM2_V1_SKPROJECT_UI_PRED_RETURN_1, &state, &ref, &receipt) &&
+              receipt.valid && receipt.predicate_index == 0u &&
+              receipt.ref_b0 == 0x84u && receipt.ref_w2 == 19u,
+          "_4976_0cba[0] RETURN_1 always admits the UI node");
+
+    state.game_has_ended = 5u;
+    ref.b1 = 5u;
+    CHECK(dm2_v1_skproject_1031_dispatch_predicate(
+              DM2_V1_SKPROJECT_UI_PRED_IS_GAME_ENDED, &state, &ref,
+              &receipt) && receipt.result,
+          "_4976_0cba[1] IS_GAME_ENDED compares ref b1 to glbGameHasEnded");
+
+    state.selected_panel_token = 9u;
+    ref.b1 = 9u;
+    CHECK(dm2_v1_skproject_1031_0023(&state, &ref, &receipt) &&
+              receipt.predicate_index == DM2_V1_SKPROJECT_UI_PRED_1031_0023 &&
+              receipt.result,
+          "_1031_0023 admits the selected right-panel token");
+    ref.b1 = 8u;
+    CHECK(!dm2_v1_skproject_1031_0023(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_0023 rejects a different panel token");
+
+    state.champion_inventory = 2u;
+    ref.b1 = 2u;
+    CHECK(dm2_v1_skproject_1031_003e(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_003e admits the current champion inventory id");
+    ref.b1 = 6u;
+    CHECK(!dm2_v1_skproject_1031_003e(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_003e rejects the champion inventory mirror slot");
+    ref.b1 = 12u;
+    CHECK(dm2_v1_skproject_1031_003e(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_003e admits non-champion inventory UI refs");
+    ref.b1 = 4u;
+    CHECK(!dm2_v1_skproject_1031_003e(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_003e rejects low fixed champion refs");
+
+    state.champion_hp[1] = 42u;
+    ref.b1 = 1u;
+    CHECK(dm2_v1_skproject_1031_007b(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_007b admits a champion with nonzero HP");
+    ref.b1 = 2u;
+    CHECK(!dm2_v1_skproject_1031_007b(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_007b rejects a zero-HP champion");
+    ref.b1 = 4u;
+    CHECK(!dm2_v1_skproject_1031_007b(&state, &ref, &receipt) &&
+              receipt.blocked_champion_index,
+          "_1031_007b fails closed for refs outside glbChampionSquad[4]");
+
+    state.player_dir = 1u;
+    state.player_at_position[3] = 0;
+    ref.b1 = 2u;
+    CHECK(dm2_v1_skproject_1031_009e(&state, &ref, &receipt) &&
+              receipt.player_position_index == 3u &&
+              receipt.player_at_position == 0,
+          "_1031_009e probes GET_PLAYER_AT_POSITION((b1+dir)&3)");
+    ref.b1 = 1u;
+    CHECK(!dm2_v1_skproject_1031_009e(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result &&
+              receipt.player_position_index == 2u,
+          "_1031_009e rejects an empty rotated party position");
+
+    state.toggle_5dbc = 0u;
+    ref.b1 = 0u;
+    CHECK(dm2_v1_skproject_1031_00c5(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_00c5 admits zero ref only when _4976_5dbc is zero");
+    state.toggle_5dbc = 1u;
+    ref.b1 = 3u;
+    CHECK(dm2_v1_skproject_1031_00c5(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_00c5 admits nonzero ref when _4976_5dbc is nonzero");
+    ref.b1 = 0u;
+    CHECK(!dm2_v1_skproject_1031_00c5(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_00c5 rejects zero ref when _4976_5dbc is nonzero");
+
+    state.champion_index = 0u;
+    ref.b1 = 5u;
+    CHECK(dm2_v1_skproject_1031_00f3(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_00f3 admits refs above party position range with no champion index");
+    ref.b1 = 2u;
+    CHECK(dm2_v1_skproject_1031_00f3(&state, &ref, &receipt) &&
+              receipt.result && receipt.player_position_index == 3u,
+          "_1031_00f3 admits occupied rotated party position");
+    state.champion_index = 1u;
+    CHECK(!dm2_v1_skproject_1031_00f3(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_00f3 rejects all refs while champion index is active");
+
+    state.selected_spell_panel = 6u;
+    ref.b1 = 6u;
+    CHECK(dm2_v1_skproject_1031_012d(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_012d admits selected spell panel when champion index is active");
+    state.champion_index = 0u;
+    CHECK(!dm2_v1_skproject_1031_012d(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_012d rejects selected spell panel without champion index");
+
+    state.champion_index = 1u;
+    state.champion_runes_count[0] = 2u;
+    ref.b1 = 0x04u;
+    CHECK(dm2_v1_skproject_1031_dispatch_predicate(
+              DM2_V1_SKPROJECT_UI_PRED_1031_014F, &state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_014f admits refs matching the active champion rune-count bit");
+    ref.b1 = 0x08u;
+    CHECK(!dm2_v1_skproject_1031_014f(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_014f rejects refs without the active rune-count bit");
+    state.champion_index = 5u;
+    CHECK(!dm2_v1_skproject_1031_014f(&state, &ref, &receipt) &&
+              receipt.blocked_champion_index,
+          "_1031_014f fails closed for champion indexes outside the party");
+
+    state.champion_index = 1u;
+    state.magical_map_flags = 0x8000u;
+    state.selected_spell_panel = 6u;
+    ref.b1 = 6u;
+    CHECK(dm2_v1_skproject_1031_dispatch_predicate(
+              DM2_V1_SKPROJECT_UI_PRED_1031_0184, &state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_0184 maps magic-map flag to selected spell panel predicate");
+    state.magical_map_flags = 0u;
+    ref.b1 = 5u;
+    CHECK(dm2_v1_skproject_1031_0184(&state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_0184 maps non-magic-map state to fixed ref five");
+    state.champion_index = 0u;
+    CHECK(!dm2_v1_skproject_1031_0184(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_0184 rejects all refs without an active champion");
+
+    state.right_panel_type = 3u;
+    ref.b1 = 3u;
+    CHECK(dm2_v1_skproject_1031_dispatch_predicate(
+              DM2_V1_SKPROJECT_UI_PRED_1031_01BA, &state, &ref, &receipt) &&
+              receipt.result,
+          "_1031_01ba admits the current right-panel type");
+    ref.b1 = 4u;
+    CHECK(!dm2_v1_skproject_1031_01ba(&state, &ref, &receipt) &&
+              receipt.valid && !receipt.result,
+          "_1031_01ba rejects non-current right-panel type");
+
+    CHECK(!dm2_v1_skproject_1031_dispatch_predicate(
+              12u, &state, &ref, &receipt) &&
+              receipt.blocked_unknown_predicate,
+          "_4976_0cba dispatcher rejects unknown predicate indexes");
+    CHECK(!dm2_v1_skproject_1031_dispatch_predicate(
+              DM2_V1_SKPROJECT_UI_PRED_1031_0023, NULL, &ref, &receipt) &&
+              receipt.blocked_missing_state,
+          "_1031 predicates require real UI runtime state");
+}
+
+static void test_ui_1031_node_flow_helpers(void)
+{
+    DM2_V1_SkprojectUiPredicateState state;
+    DM2_V1_SkprojectUiNodeRef root = { DM2_V1_SKPROJECT_UI_PRED_1031_014F, 0u, 0u };
+    DM2_V1_SkprojectUiNodeRef nodes[4];
+    DM2_V1_SkprojectUiLeafMeta leaves[4];
+    uint8_t child_bytes[5] = { 1u, 2u, 0x80u, 3u, 0x80u };
+    DM2_V1_SkprojectUiChildListReceipt child_receipt;
+    DM2_V1_SkprojectUiResolveRectReceipt rect_receipt;
+    DM2_V1_SkprojectUiTraverseReceipt traverse;
+    DM2_V1_SkprojectRect rects[20];
+    DM2_V1_SkprojectRect out_rect;
+
+    dm2_v1_skproject_ui_predicate_state_init(&state);
+    state.champion_index = 1u;
+    state.champion_runes_count[0] = 2u;
+    state.magical_map_flags = 0x8000u;
+    state.selected_spell_panel = 6u;
+    memset(nodes, 0, sizeof(nodes));
+    memset(leaves, 0, sizeof(leaves));
+    nodes[1].b1 = 0x04u;
+    nodes[1].w2 = 1u;
+    nodes[2].b0 = (uint8_t)(0x80u | DM2_V1_SKPROJECT_UI_PRED_1031_0184);
+    nodes[2].b1 = 0x04u;
+    nodes[2].w2 = 3u;
+    nodes[3].b1 = 6u;
+    nodes[3].w2 = 3u;
+
+    CHECK(dm2_v1_skproject_1031_023b_child_list(
+              child_bytes, sizeof(child_bytes), &root, &child_receipt) &&
+              child_receipt.valid &&
+              child_receipt.child_offset == 0u &&
+              child_receipt.first_child_index == 1u,
+          "_1031_023b returns the child-list cursor from sk1891.w2");
+    root.w2 = 9u;
+    CHECK(!dm2_v1_skproject_1031_023b_child_list(
+              child_bytes, sizeof(child_bytes), &root, &child_receipt) &&
+              child_receipt.blocked_child_offset,
+          "_1031_023b fails closed when the child-list cursor is out of bounds");
+    root.w2 = 0u;
+
+    for (uint16_t i = 0u; i < 20u; ++i) {
+        rects[i].x = (int16_t)i;
+        rects[i].y = (int16_t)(i + 10u);
+        rects[i].w = 5;
+        rects[i].h = 6;
+    }
+    CHECK(dm2_v1_skproject_1031_01d5_resolve_rect(
+              3u, rects, 20u, rects, 20u, &out_rect, &rect_receipt) &&
+              rect_receipt.valid && out_rect.x == 3 && out_rect.y == 13 &&
+              rect_receipt.offset_rectno == 0xffffu,
+          "_1031_01d5 returns QUERY_EXPANDED_RECT without offset flags");
+    CHECK(dm2_v1_skproject_1031_01d5_resolve_rect(
+              0x8003u, rects, 20u, rects, 20u, &out_rect, &rect_receipt) &&
+              rect_receipt.applied_8000_offset &&
+              rect_receipt.offset_rectno == 7u &&
+              out_rect.x == 10 && out_rect.y == 30,
+          "_1031_01d5 applies QUERY_TOPLEFT_OF_RECT(7) for the 0x8000 flag");
+    CHECK(dm2_v1_skproject_1031_01d5_resolve_rect(
+              0x4003u, rects, 20u, rects, 20u, &out_rect, &rect_receipt) &&
+              rect_receipt.applied_4000_offset &&
+              rect_receipt.offset_rectno == 18u &&
+              out_rect.x == 21 && out_rect.y == 41,
+          "_1031_01d5 applies QUERY_TOPLEFT_OF_RECT(18) for the 0x4000 flag");
+    CHECK(!dm2_v1_skproject_1031_01d5_resolve_rect(
+              0x4013u, rects, 20u, rects, 10u, &out_rect, &rect_receipt) &&
+              rect_receipt.blocked_rect_out_of_bounds,
+          "_1031_01d5 fails closed when a required top-left rect is missing");
+
+    CHECK(dm2_v1_skproject_1031_027e_traverse(
+              &state, &root, nodes, 4u, child_bytes, sizeof(child_bytes),
+              leaves, 4u, &traverse) &&
+              traverse.valid &&
+              traverse.visited_nodes == 3u &&
+              traverse.marked_leaves == 2u &&
+              traverse.recursed_nodes == 1u &&
+              (leaves[1].b6 & 0x40u) != 0u &&
+              (leaves[3].b6 & 0x40u) != 0u,
+          "_1031_027e traverses children through the dispatcher and marks leaf metadata");
+    nodes[1].w2 = 9u;
+    leaves[1].b6 = 0u;
+    leaves[3].b6 = 0u;
+    CHECK(!dm2_v1_skproject_1031_027e_traverse(
+              &state, &root, nodes, 4u, child_bytes, sizeof(child_bytes),
+              leaves, 4u, &traverse) &&
+              traverse.blocked_leaf_index,
+          "_1031_027e fails closed when a leaf metadata index is out of bounds");
+}
+
+static void test_ui_1031_action_and_tree_runtime(void)
+{
+    DM2_V1_SkprojectUiPredicateState state;
+    DM2_V1_SkprojectUiRuntimeState runtime;
+    DM2_V1_SkprojectUiNodeRef roots[2];
+    DM2_V1_SkprojectUiNodeRef nodes[4];
+    DM2_V1_SkprojectUiLeafMeta leaves[4];
+    DM2_V1_SkprojectUiClickRectNode clickrects[4];
+    DM2_V1_SkprojectUiAction actions[5];
+    DM2_V1_SkprojectRect rects[20];
+    uint8_t child_bytes[7] = { 1u, 2u, 0x80u, 3u, 0x80u, 0u, 0x80u };
+    DM2_V1_SkprojectUiActionListReceipt action_list;
+    DM2_V1_SkprojectUiActionResolveReceipt resolve;
+    DM2_V1_SkprojectUiHitTestReceipt hit;
+    DM2_V1_SkprojectUiActionSearchReceipt search;
+    DM2_V1_SkprojectUiPendingRedrawReceipt redraw;
+    DM2_V1_SkprojectUiMouseCaptureReceipt capture;
+    DM2_V1_SkprojectUiEventResetReceipt reset;
+    DM2_V1_SkprojectUiSelectTreeReceipt select_receipt;
+    DM2_V1_SkprojectUiButtonGroup button_group;
+    DM2_V1_SkprojectUiCenteredButtonReceipt centered;
+    DM2_V1_SkprojectRect mouse_rect = { 30, 40, 80, 50 };
+    DM2_V1_SkprojectRect centered_rect;
+    DM2_V1_SkprojectUiAction direct_actions[3];
+
+    dm2_v1_skproject_ui_predicate_state_init(&state);
+    dm2_v1_skproject_ui_runtime_state_init(&runtime);
+    memset(roots, 0, sizeof(roots));
+    memset(nodes, 0, sizeof(nodes));
+    memset(leaves, 0, sizeof(leaves));
+    memset(clickrects, 0, sizeof(clickrects));
+    memset(actions, 0, sizeof(actions));
+    state.champion_index = 1u;
+    state.champion_runes_count[0] = 2u;
+    state.magical_map_flags = 0x8000u;
+    state.selected_spell_panel = 6u;
+
+    roots[0].b0 = DM2_V1_SKPROJECT_UI_PRED_1031_014F;
+    roots[0].w2 = 0u;
+    roots[1].b0 = DM2_V1_SKPROJECT_UI_PRED_1031_014F;
+    roots[1].w2 = 5u;
+    nodes[1].b1 = 0x04u;
+    nodes[1].w2 = 1u;
+    nodes[2].b0 = (uint8_t)(0x80u | DM2_V1_SKPROJECT_UI_PRED_1031_0184);
+    nodes[2].b1 = 0x04u;
+    nodes[2].w2 = 3u;
+    nodes[3].b1 = 6u;
+    nodes[3].w2 = 3u;
+    leaves[1].w0 = 4u;
+    leaves[1].w2 = 0u;
+    leaves[1].w4 = 2u;
+    leaves[1].b6 = 1u;
+    leaves[2].w2 = 0xffffu;
+    leaves[3].w0 = 0x8005u;
+    leaves[3].w2 = 0xffffu;
+    leaves[3].w4 = 3u;
+    leaves[3].b6 = 2u;
+    actions[0].w0 = 0x0123u;
+    actions[0].w2 = 4u;
+    actions[0].w4 = 0x0002u;
+    actions[1].w0 = 0x8124u;
+    actions[1].w2 = 5u;
+    actions[1].w4 = 0x0004u;
+    actions[2].w0 = 0x8456u;
+    actions[2].w2 = 0x00aau;
+    actions[2].w4 = 0u;
+    actions[3].w0 = 0x0567u;
+    actions[3].w2 = 0x00bbu;
+    actions[3].w4 = 0u;
+    actions[4].w0 = 0x8568u;
+    actions[4].w2 = 0x00ccu;
+    actions[4].w4 = 0u;
+    for (uint16_t i = 0u; i < 20u; ++i) {
+        rects[i].x = (int16_t)(i * 3u);
+        rects[i].y = (int16_t)(i * 2u);
+        rects[i].w = 8;
+        rects[i].h = 7;
+    }
+
+    CHECK(dm2_v1_skproject_1031_024c_action_list(
+              &nodes[1], leaves, 4u, &action_list) &&
+              action_list.valid && action_list.action_index == 0u,
+          "_1031_024c resolves a leaf action-list index through sk16ed.w2");
+    nodes[1].w2 = 2u;
+    CHECK(!dm2_v1_skproject_1031_024c_action_list(
+              &nodes[1], leaves, 4u, &action_list) &&
+              action_list.valid && !action_list.found &&
+              action_list.action_index == 0xffffu,
+          "_1031_024c returns NULL-equivalent for 0xffff action-list links");
+    nodes[1].w2 = 1u;
+
+    CHECK(dm2_v1_skproject_1031_030a_hit_test(
+              &state, &roots[0], nodes, 4u, child_bytes, sizeof(child_bytes),
+              leaves, 4u, actions, 5u, rects, 20u, rects, 20u,
+              rects[4].x, rects[4].y, 0x0002u, &hit) &&
+              hit.valid && hit.selected_event == 0x0123u &&
+              hit.selected_leaf_index == 1u &&
+              hit.selected_action_index == 0u,
+          "_1031_030a hit-tests leaf rects and returns the first matching action");
+    CHECK(!dm2_v1_skproject_1031_030a_hit_test(
+              &state, &roots[0], nodes, 4u, child_bytes, sizeof(child_bytes),
+              leaves, 4u, actions, 5u, rects, 20u, rects, 20u,
+              300, 190, 0x0002u, &hit) &&
+              !hit.valid && hit.selected_event == 0u,
+          "_1031_030a returns zero when no admitted leaf rect contains the point");
+
+    CHECK(dm2_v1_skproject_1031_03f2_find_action(
+              &state, &roots[0], nodes, 4u, child_bytes, sizeof(child_bytes),
+              leaves, 4u, actions, 5u, 0x00aau, &search) &&
+              search.valid && search.selected_event == 0x0456u &&
+              search.selected_leaf_index == 1u,
+          "_1031_03f2 finds an action code through the admitted node tree");
+    CHECK(dm2_v1_skproject_1031_03f2_find_action(
+              &state, &roots[0], nodes, 4u, child_bytes, sizeof(child_bytes),
+              leaves, 4u, actions, 5u, 0x00bbu, &search) &&
+              search.valid && search.selected_event == 0x0567u &&
+              search.recursed_nodes == 1u,
+          "_1031_03f2 searches recursively through admitted branch nodes");
+
+    memset(direct_actions, 0, sizeof(direct_actions));
+    direct_actions[0].w0 = 0x0020u;
+    direct_actions[0].w2 = 0x8004u;
+    direct_actions[0].w4 = 0x0002u;
+    direct_actions[1].w0 = 0x0021u;
+    direct_actions[1].w2 = 0x4005u;
+    direct_actions[1].w4 = 0x0802u;
+    direct_actions[2].w0 = 0x8022u;
+    direct_actions[2].w2 = 6u;
+    direct_actions[2].w4 = 0x0004u;
+    CHECK(dm2_v1_skproject_1031_0a88_action_hit(
+              &runtime, direct_actions, 3u, 0u, rects, 20u, rects, 20u,
+              (int16_t)(rects[4].x + rects[7].x),
+              (int16_t)(rects[4].y + rects[7].y), 0x0002u, &resolve) &&
+              resolve.valid && resolve.selected_event == 0x0020u &&
+              resolve.selected_rectno == 4u &&
+              resolve.selected_offset_rectno == 7u &&
+              runtime.ui_event_code == 0x0020u &&
+              runtime.ui_event_delta == 1u &&
+              runtime.selected_x == (int16_t)(rects[4].x + rects[7].x),
+          "_1031_0a88 resolves a clickable action and writes the UI event latch");
+    CHECK(!dm2_v1_skproject_1031_0a88_action_hit(
+              &runtime, direct_actions, 3u, 0u, rects, 20u, rects, 20u,
+              300, 190, 0x0002u, &resolve) &&
+              !resolve.found && resolve.rect.w == 0 && resolve.rect.h == 0,
+          "_1031_0a88 returns no event for a real action outside its rect");
+
+    CHECK(dm2_v1_skproject_1031_0c58_select_event(
+              &runtime, 0x0022u, direct_actions, 3u, 0u,
+              rects, 20u, rects, 20u, &resolve) &&
+              resolve.valid && resolve.selected_event == 0x0022u &&
+              resolve.selected_action_index == 2u &&
+              runtime.selected_rectno == 6u &&
+              runtime.selected_x == rects[6].x &&
+              runtime.ui_event_delta == 3u,
+          "_1031_0c58 selects an action by event code and latches rect origin");
+    CHECK(!dm2_v1_skproject_1031_0c58_select_event(
+              &runtime, 0x0030u, direct_actions, 3u, 0u,
+              rects, 20u, rects, 20u, &resolve) &&
+              runtime.selected_rectno == 0xffffu &&
+              runtime.ui_event_code == 0x0030u &&
+              runtime.ui_event_delta == 0u,
+          "_1031_0c58 clears the selected rect when the source list has no event match");
+
+    runtime.event_count = 0u;
+    runtime.event_read_index = 0u;
+    runtime.event_write_index = 0u;
+    runtime.pending_mouse_event = 1u;
+    runtime.pending_event.button = 0x0040u;
+    runtime.pending_event.x = 23;
+    runtime.pending_event.y = 45;
+    runtime.ui_event_code = 0x1234u;
+    CHECK(dm2_v1_skproject_1031_0b7e_flush_pending_mouse(
+              &runtime, &reset) &&
+              reset.valid && reset.queued_pending_event &&
+              runtime.pending_mouse_event == 0u &&
+              runtime.event_count == 1u &&
+              runtime.event_queue[0].button == 0x0040u &&
+              runtime.ui_event_code == 0x1234u,
+          "_1031_0b7e queues the pending mouse event without resetting UI selection");
+
+    memset(&button_group, 0, sizeof(button_group));
+    button_group.button_dbidx = 0xffffu;
+    CHECK(dm2_v1_skproject_1031_10c8_center_button(
+              &button_group, NULL, &mouse_rect, 20u, 10u,
+              &centered_rect, &centered) &&
+              centered.valid && centered.copied_mouse_rect &&
+              centered.requested_alloc_clickrectdata &&
+              centered_rect.x == 60 && centered_rect.y == 60 &&
+              centered_rect.w == 20 && centered_rect.h == 10 &&
+              button_group.copied_mouse_rect &&
+              button_group.allocated_clickrectdata,
+          "_1031_10c8 copies the source mouse rect and centers the requested button rect");
+
+    runtime.pending_capture_redraw = 1u;
+    CHECK(dm2_v1_skproject_1031_04f5_clear_pending_redraw(
+              &runtime, &redraw) &&
+              redraw.valid && redraw.cleared_pending_capture_redraw &&
+              runtime.requested_guidraw_29ee_000f,
+          "_1031_04f5 clears the pending redraw gate and requests the source redraw hook");
+    runtime.show_item_stats = 1u;
+    runtime.capture_item_stats = 1u;
+    CHECK(dm2_v1_skproject_1031_050c_release_item_capture(
+              &runtime, &capture) &&
+              capture.valid && capture.cleared_sources &&
+              capture.requested_mouse_release_capture &&
+              capture.requested_show_mouse_cursor &&
+              runtime.mouse_visibility == 1u,
+          "_1031_050c clears item stat captures and restores mouse visibility");
+
+    runtime.event_queue[0].button = 0x0040u;
+    runtime.event_queue[1].button = 0x0001u;
+    runtime.event_queue[2].button = 0x0060u;
+    runtime.event_count = 3u;
+    runtime.pending_mouse_event = 1u;
+    runtime.pending_event.button = 0x0004u;
+    runtime.ui_event_code = 0x0456u;
+    runtime.selected_rectno = 8u;
+    CHECK(dm2_v1_skproject_1031_098e_reset_events(&runtime, &reset) &&
+              reset.valid && reset.kept_events == 2u &&
+              reset.dropped_events == 1u &&
+              reset.queued_pending_event &&
+              runtime.event_count == 3u &&
+              runtime.ui_event_code == 0u &&
+              runtime.selected_rectno == 0xffffu,
+          "_1031_098e filters mouse queue, resets UI selection, and queues pending event");
+
+    runtime.active_tree = 1u;
+    CHECK(dm2_v1_skproject_1031_0541_select_tree(
+              &runtime, &state, 0u, roots, 2u, nodes, 4u,
+              child_bytes, sizeof(child_bytes), leaves, 4u,
+              clickrects, 4u, &select_receipt) &&
+              select_receipt.valid &&
+              select_receipt.requested_event_reset &&
+              select_receipt.activated_leaves == 2u &&
+              select_receipt.clickrect_refresh_2 == 2u &&
+              (leaves[1].b6 & 0x80u) != 0u &&
+              clickrects[0].refresh_link_2,
+          "_1031_0541 selects a UI tree, traverses leaves, and refreshes activated clickrects");
+    runtime.saved_tree = 0u;
+    CHECK(dm2_v1_skproject_1031_0667_restore_active_tree(
+              &runtime, &state, roots, 2u, nodes, 4u,
+              child_bytes, sizeof(child_bytes), leaves, 4u,
+              clickrects, 4u, &select_receipt) &&
+              select_receipt.valid && runtime.active_tree == 0u,
+          "_1031_0667 restores the saved UI tree through _1031_0541");
+    runtime.show_item_stats = 1u;
+    CHECK(dm2_v1_skproject_1031_0675_reset_and_select_tree(
+              &runtime, &state, 0u, roots, 2u, nodes, 4u,
+              child_bytes, sizeof(child_bytes), leaves, 4u,
+              clickrects, 4u, &select_receipt) &&
+              select_receipt.valid &&
+              runtime.previous_tree == 0u &&
+              runtime.saved_tree == 0u &&
+              runtime.show_item_stats == 0u,
+          "_1031_0675 saves current tree, releases UI captures, and selects the requested tree");
+}
+
+static void test_real_gdat_ibmio_palette_family(void)
+{
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    char path[1024];
+    DM2_V1_AssetLoader loader;
+    DM2_V1_InterfacePalette interface_palette;
+    DM2_V1_SkprojectIbmioPaletteState palette_state;
+    DM2_V1_SkprojectIbmioPaletteReceipt palette_receipt;
+    DM2_V1_SkprojectIbmioBlit4To8Receipt blit_receipt;
+    uint8_t rgb[16][3];
+    uint8_t src4[8] = { 0x01u, 0x23u, 0x45u, 0x67u,
+                        0x89u, 0xabu, 0xcdu, 0xefu };
+    uint8_t dst8[16];
+
+    if (!load_graphics(&graphics, &graphics_size, path, sizeof(path))) {
+        printf("SKIP: real DM2 GRAPHICS.DAT not found for IBMIO palette scan\n");
+        return;
+    }
+    memset(&loader, 0, sizeof(loader));
+    CHECK(dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0,
+          "real DM2 GRAPHICS.DAT initializes for IBMIO palette family");
+    if (!loader.loaded) {
+        free(graphics);
+        return;
+    }
+    CHECK(dm2_v1_asset_load_interface_palette(
+              &loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+              DM2_GDAT_INTERFACE_PALETTE_FIELD, &interface_palette) == 1 &&
+              interface_palette.hash != 0u,
+          "real INTERFACE_GENERAL dtPalIRGB/dtPalette16 feeds IBMIO palette");
+
+    for (uint8_t i = 0u; i < 16u; ++i) {
+        uint8_t index = interface_palette.palette16[i];
+        rgb[i][0] = (uint8_t)(interface_palette.rgb6[index][0] << 2);
+        rgb[i][1] = (uint8_t)(interface_palette.rgb6[index][1] << 2);
+        rgb[i][2] = (uint8_t)(interface_palette.rgb6[index][2] << 2);
+    }
+    memset(dst8, 0, sizeof(dst8));
+    dm2_v1_skproject_ibmio_palette_state_init(&palette_state);
+    CHECK(dm2_v1_skproject_00eb_04bc_palette_set(
+              &palette_state, rgb, 0u, &palette_receipt) &&
+              palette_receipt.valid && palette_receipt.palette_hash != 0u,
+          "real GDAT palette bytes enter _00eb_04bc without fallback");
+    CHECK(dm2_v1_skproject_00eb_070c_blit_4to8(
+              src4, sizeof(src4), 0u, dst8, sizeof(dst8), 0u, 8u,
+              interface_palette.palette16, &blit_receipt) &&
+              blit_receipt.valid && blit_receipt.palette_hash != 0u &&
+              blit_receipt.dest_hash != 0u,
+          "real GDAT dtPalette16 drives _00eb_070c 4-to-8 row expansion");
+
+    dm2_v1_asset_loader_free(&loader);
+    free(graphics);
 }
 
 static void test_util_helpers(void)
@@ -605,6 +1426,10 @@ static void test_palette_helpers(void)
 static void test_gui_receipt_helpers(void)
 {
     DM2_V1_SkprojectDrawIconPictEntryReceipt icon_entry;
+    DM2_V1_Skproject2405RectState rect_state;
+    DM2_V1_Skproject2405RectReceipt rect_receipt;
+    DM2_V1_Skproject2405ItemState item_state;
+    DM2_V1_Skproject2405ItemEntryReceipt entry_receipt;
     DM2_V1_SkprojectDialogueProgressReceipt progress;
     DM2_V1_SkprojectDialoguePictReceipt pict;
     DM2_V1_SkprojectWakeUpTextReceipt wake;
@@ -627,6 +1452,9 @@ static void test_gui_receipt_helpers(void)
     const uint8_t champion_pos[4] = { 0u, 1u, 2u, 3u };
     const uint8_t champion_alive[4] = { 1u, 1u, 0u, 1u };
     const uint8_t champion_enchanted[4] = { 0u, 1u, 0u, 1u };
+    DM2_V1_SkprojectRect blit_rects[4];
+    DM2_V1_SkprojectRect out_rect;
+    uint16_t selected_hand_items[4] = { 0u, 0u, 0x1402u, 0u };
 
     CHECK(dm2_v1_skproject_draw_icon_pict_entry(
               1u, 4u, 20u, 1, 0x3cu, -1, &icon_entry) == 1 &&
@@ -639,6 +1467,72 @@ static void test_gui_receipt_helpers(void)
               1u, 4u, 20u, 0, 0x3cu, -1, &icon_entry) == 0 &&
               icon_entry.blocked_missing_button_group,
           "DRAW_ICON_PICT_ENTRY fails closed without a button group");
+
+    blit_rects[2] = (DM2_V1_SkprojectRect){ 10, 20, 30, 40 };
+    rect_state = (DM2_V1_Skproject2405RectState){ 3, -2, 4 };
+    CHECK(dm2_v1_skproject_2405_00ec_query_blit_rect(
+              &rect_state, 2u, blit_rects, 4u, &out_rect, &rect_receipt) &&
+              rect_receipt.valid &&
+              rect_receipt.requested_query_blit_rect &&
+              out_rect.x == 13 && out_rect.y == 18 &&
+              out_rect.w == 30 && out_rect.h == 40,
+          "_2405_00ec resolves a real caller blit rect with source draw offsets");
+    CHECK(dm2_v1_skproject_2405_011f_query_inflated_rect(
+              &rect_state, 2u, blit_rects, 4u, &out_rect, &rect_receipt) &&
+              rect_receipt.valid &&
+              rect_receipt.requested_inflate_rect &&
+              out_rect.x == 9 && out_rect.y == 14 &&
+              out_rect.w == 38 && out_rect.h == 48,
+          "_2405_011f delegates to _2405_00ec and inflates by the source margin");
+    CHECK(!dm2_v1_skproject_2405_00ec_query_blit_rect(
+              &rect_state, 6u, blit_rects, 4u, &out_rect, &rect_receipt) &&
+              rect_receipt.blocked_rect_out_of_bounds,
+          "_2405_00ec fails closed when the caller rect table has no rectno");
+
+    memset(&item_state, 0, sizeof(item_state));
+    item_state.object_id = 0x1402u;
+    item_state.dbspec_word6 = 0x0505u;
+    item_state.game_tick = 17u;
+    CHECK(dm2_v1_skproject_2405_014a_item_entry(
+              &item_state, 0u, 1u, &entry_receipt) == 0x1cu &&
+              entry_receipt.valid &&
+              entry_receipt.used_tick_mode &&
+              entry_receipt.selected_entry == 0x1cu,
+          "_2405_014a tick mode adds DBIndex to game tick before cls4 selection");
+    item_state.dbspec_word6 = 0x0204u;
+    item_state.player_dir = 3u;
+    CHECK(dm2_v1_skproject_2405_014a_item_entry(
+              &item_state, 0u, 1u, &entry_receipt) == 0x1bu &&
+              entry_receipt.used_direction_mode,
+          "_2405_014a direction mode uses the current player direction");
+    item_state.dbspec_word6 = 0x4001u;
+    item_state.champion_index = 1u;
+    item_state.selected_hand_action = 0u;
+    item_state.selected_hand_items = selected_hand_items;
+    item_state.selected_hand_item_count = 4u;
+    CHECK(dm2_v1_skproject_2405_014a_item_entry(
+              &item_state, 0u, 1u, &entry_receipt) == 0x19u &&
+              entry_receipt.valid &&
+              entry_receipt.used_equip_variant &&
+              entry_receipt.frame_count == 0u,
+          "_2405_014a selected-hand DBSPEC flag advances to the equipped variant frame");
+    item_state.selected_hand_items = NULL;
+    CHECK(dm2_v1_skproject_2405_014a_item_entry(
+              &item_state, 0u, 1u, &entry_receipt) == 0x18u &&
+              entry_receipt.blocked_selected_hand,
+          "_2405_014a selected-hand DBSPEC flag rejects non-held records");
+    item_state.selected_hand_items = selected_hand_items;
+    item_state.dbspec_word6 = 0x04afu;
+    item_state.item_w2 = (uint16_t)(8u << 10);
+    item_state.game_tick = 5u;
+    CHECK(dm2_v1_skproject_2405_014a_item_entry(
+              &item_state, 0u, 2u, &entry_receipt) == 0x1fu &&
+              entry_receipt.valid &&
+              entry_receipt.used_charge_tick_mode &&
+              entry_receipt.charge == 8u &&
+              entry_receipt.max_charge == 15u &&
+              entry_receipt.bucket_width == 5u,
+          "_2405_014a charge/tick mode combines item charge bucket and tick modulo");
 
     CHECK(dm2_v1_skproject_draw_dialogue_progress(
               1, 500u, 200u, 20u, &progress) == 1 &&
@@ -918,10 +1812,13 @@ static void test_map_helpers(void)
     DM2_V1_SkprojectHalftoneRectReceipt half;
     DM2_V1_SkprojectMouseReleaseCaptureReceipt mouse_release;
     DM2_V1_SkprojectHighlightArrowPanelReceipt highlight;
+    DM2_V1_SkprojectMap0CEEWallDecorationState wall_state;
+    DM2_V1_SkprojectMap0CEEWallDecorationReceipt wall_receipt;
     DM2_V1_SkprojectRect half_rect;
     uint8_t tiles[16];
     uint8_t fill_buf[12];
     uint8_t pixels[64];
+    uint16_t wall_words[4];
     int16_t capture_count = 3;
     uint8_t passage[16] = {
         1u, 0u, 1u, 1u,
@@ -1057,6 +1954,59 @@ static void test_map_helpers(void)
                   0u, candidates, 1u, alcoves, &map185a) == 0 &&
                   map185a.blocked_missing_output,
               "DM2_map_0cee_185a rejects missing output words");
+
+        memset(&wall_state, 0, sizeof(wall_state));
+        wall_state.map_width = 12;
+        wall_state.map_height = 8;
+        wall_state.current_map_index = 3;
+        wall_state.x = 4;
+        wall_state.y = 5;
+        wall_state.dungeon_seed = 0x2222u;
+        wall_state.wall_random_decoration_count = 30u;
+        wall_state.gates[0] = 1u;
+        wall_state.gates[1] = 1u;
+        wall_state.gates[2] = 0u;
+        wall_state.gates[3] = 1u;
+        wall_state.rotation = 2u;
+        wall_state.candidate_table = candidates;
+        wall_state.candidate_table_count = 30u;
+        wall_state.ornate_alcove_flags = alcoves;
+        CHECK(dm2_v1_skproject_map_0cee_wall_decoration_chain(
+                  &wall_state, wall_words, &wall_receipt) == 1 &&
+                  wall_receipt.valid &&
+                  wall_receipt.requested_wall_random_decoration_count &&
+                  wall_receipt.requested_random_17e7[0] &&
+                  wall_receipt.requested_random_17e7[1] &&
+                  !wall_receipt.requested_random_17e7[2] &&
+                  wall_receipt.requested_random_17e7[3] &&
+                  wall_receipt.divisor == (uint16_t)((3u << 6) + 12u + 8u + 3000u) &&
+                  wall_receipt.step_plus_one == 6u &&
+                  wall_receipt.random_input[0] == (uint16_t)(32u * 4u + 18u + 2000u) &&
+                  wall_words[0] == candidates[wall_receipt.selected_index[0]] &&
+                  wall_words[1] == candidates[wall_receipt.selected_index[1]] &&
+                  wall_words[2] == 0x00ffu &&
+                  wall_words[3] == candidates[wall_receipt.selected_index[3]] &&
+                  wall_receipt.returned_default[2],
+              "SKWIN _0cee wall decoration chain binds map seed, gates, rotation and v1e02cc candidates");
+
+        for (uint8_t i = 0; i < 30u; ++i)
+            candidates[i] = 0x42u;
+        alcoves[0x42u] = 1u;
+        wall_state.x = 20;
+        wall_state.y = 2;
+        wall_state.gates[2] = 1u;
+        CHECK(dm2_v1_skproject_map_0cee_wall_decoration_chain(
+                  &wall_state, wall_words, &wall_receipt) == 1 &&
+                  wall_receipt.valid &&
+                  wall_receipt.out_of_map &&
+                  wall_receipt.requested_wall_ornate_alcove_type &&
+                  wall_words[0] == 0x00ffu &&
+                  wall_words[1] == 0x00ffu &&
+                  wall_words[2] == 0x00ffu &&
+                  wall_words[3] == 0x00ffu &&
+                  wall_receipt.sanitized[0] &&
+                  wall_receipt.sanitized[3],
+              "SKWIN _0cee wall decoration chain sanitizes ornate alcoves outside the map");
 
         CHECK(dm2_v1_skproject_tmpmap_or_flag(
                   tmpmap, sizeof(tmpmap), 2, 3, 1, &tmpflag) == 1 &&
@@ -1823,6 +2773,13 @@ static void test_picture_mement_helpers(void)
 {
     DM2_V1_SkprojectCacheState state;
     DM2_V1_SkprojectNewPictReceipt new_pict;
+    DM2_V1_Skproject0B36CachePicture cache_picture;
+    DM2_V1_Skproject0B36Picture cached_picture;
+    DM2_V1_Skproject0B36ButtonGroup group;
+    DM2_V1_Skproject0B36CachePictureReceipt cache_receipt;
+    DM2_V1_Skproject0B36DirtyRectReceipt dirty_receipt;
+    DM2_V1_Skproject0B36ButtonGroupInitReceipt group_receipt;
+    DM2_V1_Skproject0B36DrawCachedPictureReceipt draw_cached;
     DM2_V1_SkprojectExtendedPictureRef ext;
     DM2_V1_SkprojectImageMementRequest image;
     DM2_V1_SkprojectPictureRef pict;
@@ -1832,6 +2789,8 @@ static void test_picture_mement_helpers(void)
     DM2_V1_SkprojectRecycleMementReceipt recycle_receipt;
     DM2_V1_SkprojectFreePict6Receipt free_pict6;
     uint16_t pinned_entry = DM2_V1_SKPROJECT_MEMENT_NONE;
+    DM2_V1_SkprojectRect rects[8];
+    DM2_V1_SkprojectRect dirty;
 
     dm2_v1_skproject_cache_state_init(&state, 4, 8, 4);
     CHECK(dm2_v1_skproject_test_mement(-20, -20) == 1,
@@ -1856,6 +2815,99 @@ static void test_picture_mement_helpers(void)
     CHECK(dm2_v1_skproject_calc_pict_ent_hash(&ext) ==
               (((uint32_t)0x1fffu << 12) | ((uint32_t)0x7fu << 5) | 0x1fu),
           "CALC_PICT_ENT_HASH masks and packs w6/w52/w54");
+
+    memset(&cached_picture, 0, sizeof(cached_picture));
+    cache_picture = (DM2_V1_Skproject0B36CachePicture){
+        9u, 24u, 12u, 0x3456u, 1u
+    };
+    CHECK(dm2_v1_skproject_0b36_00c3_cache_picture(
+              &cache_picture, &cached_picture, &cache_receipt) == 1 &&
+              cache_receipt.valid &&
+              cache_receipt.requested_mement_buffer &&
+              cache_receipt.assigned_picture &&
+              cached_picture.has_bits &&
+              cached_picture.w4 == 0x0008u &&
+              cached_picture.w12 == 9u &&
+              cached_picture.width == 24u &&
+              cached_picture.height == 12u &&
+              cached_picture.w22 == 0x3456u,
+          "_0b36_00c3 binds cache mement bits and picture header fields");
+    cache_picture.payload_available = 0u;
+    CHECK(dm2_v1_skproject_0b36_00c3_cache_picture(
+              &cache_picture, &cached_picture, &cache_receipt) == 0 &&
+              cache_receipt.blocked_missing_payload,
+          "_0b36_00c3 fails closed when cache payload is absent");
+    cache_picture.payload_available = 1u;
+
+    memset(rects, 0, sizeof(rects));
+    rects[2] = (DM2_V1_SkprojectRect){ 10, 6, 20, 14 };
+    CHECK(dm2_v1_skproject_0b36_0c52_init_button_group(
+              &group, 2u, 1u, 77u, rects, 8u, &group_receipt) == 1 &&
+              group_receipt.valid &&
+              group_receipt.requested_query_expanded_rect &&
+              group_receipt.requested_alloc_temp_cache_index &&
+              group_receipt.requested_alloc_new_pict &&
+              group_receipt.requested_initial_dirty_rect &&
+              group.dbidx == 77u &&
+              group.rect.x == 10 &&
+              group.rect.y == 6 &&
+              group.rect.w == 20 &&
+              group.rect.h == 14 &&
+              group.group_size == 1u &&
+              group.dirty_rects[0].x == 10 &&
+              group.dirty_rects[0].y == 6,
+          "_0b36_0c52 allocates an 8bpp button-group backing pict and seeds dirty rects");
+
+    dirty = (DM2_V1_SkprojectRect){ 8, 7, 30, 20 };
+    CHECK(dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+              &group, &dirty, &dirty_receipt) == 1 &&
+              dirty_receipt.valid &&
+              dirty_receipt.clipped_to_group &&
+              dirty_receipt.stored_rect.x == 10 &&
+              dirty_receipt.stored_rect.y == 7 &&
+              dirty_receipt.stored_rect.w == 20 &&
+              dirty_receipt.stored_rect.h == 13,
+          "_0b36_0d67 clips dirty rects to the button-group bounds");
+    dirty = group.dirty_rects[1];
+    CHECK(dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+              &group, &dirty, &dirty_receipt) == 1 &&
+              dirty_receipt.reused_covering_rect &&
+              dirty_receipt.new_group_size == group.group_size,
+          "_0b36_0d67 reuses an existing covering dirty rect");
+    group.group_size = 5u;
+    for (uint16_t i = 0u; i < 5u; ++i)
+        group.dirty_rects[i] = (DM2_V1_SkprojectRect){
+            (int16_t)(10 + i), 6, 1, 1
+        };
+    dirty = (DM2_V1_SkprojectRect){ 28, 19, 1, 1 };
+    CHECK(dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+              &group, &dirty, &dirty_receipt) == 1 &&
+              dirty_receipt.requested_compaction &&
+              group.group_size == 1u &&
+              group.dirty_rects[0].x == 28 &&
+              group.dirty_rects[0].y == 19,
+          "_0b36_0d67 compacts full dirty-rect lists before appending");
+
+    rects[3] = (DM2_V1_SkprojectRect){ 15, 9, 20, 14 };
+    cached_picture.width = 12u;
+    cached_picture.height = 8u;
+    CHECK(dm2_v1_skproject_0b36_11c0_draw_cached_picture(
+              &cached_picture, &group, 3u, -17, rects, 8u,
+              &draw_cached) == 1 &&
+              draw_cached.valid &&
+              draw_cached.requested_group_cache_bits &&
+              draw_cached.requested_query_pict_bits &&
+              draw_cached.requested_query_blit_rect &&
+              draw_cached.requested_offset_rect &&
+              draw_cached.requested_draw_def_pict &&
+              draw_cached.requested_dirty_rect &&
+              cached_picture.rect_no == 0xffffu &&
+              cached_picture.color_key_passthrough == -17 &&
+              cached_picture.width == 32u &&
+              cached_picture.height == 22u &&
+              draw_cached.picture_rect.x == 5 &&
+              draw_cached.picture_rect.y == 3,
+          "_0b36_11c0 draws cached picture bits through blit, offset and dirty receipts");
 
     memset(&image, 0, sizeof(image));
     image.cls1 = 1u;
@@ -3001,6 +4053,11 @@ int main(void)
     test_between_value();
     test_temp_rect_ring();
     test_random_helpers();
+    test_ibmio_anim_mouse_runtime_family();
+    test_ui_predicate_1031_runtime_family();
+    test_ui_1031_node_flow_helpers();
+    test_ui_1031_action_and_tree_runtime();
+    test_real_gdat_ibmio_palette_family();
     test_util_helpers();
     test_palette_helpers();
     test_gui_receipt_helpers();
@@ -3156,17 +4213,73 @@ int main(void)
                  "DM2_map_3BF83") != 0,
           "source evidence names cross-map record mover");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_0cee_17e7") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_0cee_1815") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_0cee_185a") != 0,
+          "source evidence names _0cee wall decoration helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_LOAD_DYN4") != 0,
           "source evidence names GDAT DYN4 helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_00eb_04bc") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_00eb_070c") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_01b0_0adb") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_0759_06db") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_01b0_1ed2") != 0,
+          "source evidence names IBMIO palette/anim/mouse runtime helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_4976_0cba") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_0023") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_012d") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_014f") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_027e") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_030a") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_0a88") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_0b7e") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_0c58") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_10c8") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_1031_098e") != 0,
+          "source evidence names _1031 UI predicate dispatch family");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_DRAW_SPELL_PANEL") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_DRAW_ITEM_ICON") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2405_00ec") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2405_011f") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2405_014a") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
                      "DRAW_SQUAD_POS_INTERFACE") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DRAW_SKILL_PANEL") != 0,
           "source evidence names bundled c_gui_draw receipt helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_0b36_00c3") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_0b36_0c52") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_0b36_0d67") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_0b36_11c0") != 0,
+          "source evidence names _0b36 cached picture button-group helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

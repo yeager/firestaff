@@ -39,7 +39,8 @@ enum {
  */
 static const char s_source_evidence[] =
     "pass705 CSB V1 D2C F0111 door-front composition source-lock; "
-    "contract-only, asset-free, and no CSB game-data load. ReDMCSB "
+    "contract-only base route with a fail-closed real-asset receipt for "
+    "DMCSB1 GRAPHICS.DAT item 694, and no CSB game-data load. ReDMCSB "
     "DUNVIEW.C:7244-7389 F0121_DUNGEONVIEW_DrawSquareD2C reaches the "
     "single D2C C17_ELEMENT_DOOR_FRONT branch at 7313-7341: line 7314 "
     "calls F0108 floor ornament with M558_FLOOR_ORNAMENT_ORDINAL and "
@@ -226,6 +227,59 @@ int csb_v1_viewport_d2c_f0111_door_front_is_draw_mutating_pc34(
      */
     if (!spec) return -1;
     return !(spec->f0163_not_called_by_draw && spec->f0164_not_called_by_draw);
+}
+
+int csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
+    const CSB_V1_D2CF0111DoorFrontSpecPc34 *spec,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D2CF0111DoorFrontRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_D2CF0111DoorFrontRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_D2CF0111DoorFrontRealAssetReceiptPc34){0};
+    }
+    if (!spec || !out_receipt || !source_graphics_dat_bound ||
+        !no_synthetic_pixels || !no_fallback_visuals ||
+        source_graphics_item_index != CSB_DOOR_FRONT_BITMAP_D2LCR ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        !spec->source_locked_contract_only ||
+        spec->view_square_index != CSB_VIEW_SQUARE_D2C ||
+        spec->element_door_front != CSB_ELEMENT_DOOR_FRONT ||
+        spec->f0111_front_bitmap_id != CSB_DOOR_FRONT_BITMAP_D2LCR ||
+        spec->door_zone_d2c != CSB_DOOR_ZONE_D2C ||
+        spec->door_width != CSB_D2C_DOOR_WIDTH ||
+        spec->door_height != CSB_D2C_DOOR_HEIGHT) {
+        return 0;
+    }
+
+    receipt = (CSB_V1_D2CF0111DoorFrontRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_PRESENT;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.view_square_index = spec->view_square_index;
+    receipt.element_door_front = spec->element_door_front;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.door_width = spec->door_width;
+    receipt.door_height = spec->door_height;
+    receipt.door_zone_d2c = spec->door_zone_d2c;
+    receipt.f0111_door_ornament_view = spec->f0111_door_ornament_view;
+    receipt.f0115_rear_cell_order = spec->f0115_rear_cell_order;
+    receipt.f0115_front_cell_order = spec->f0115_front_cell_order;
+    receipt.transparent_color = spec->transparent_color;
+    receipt.redmcsb_dunview_anchor = spec->redmcsb_dunview_anchor;
+    *out_receipt = receipt;
+    return 1;
 }
 
 const char *csb_v1_viewport_d2c_f0111_door_front_source_evidence_pc34(void)

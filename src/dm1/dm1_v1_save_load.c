@@ -813,6 +813,60 @@ int DM1_BuildOriginalPC34RoundtripReceipt(
         SAVEGAME_PC34_MAX_FILE_SIZE,
         &exportedSize,
         &report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        DM1OriginalSavePC34HandoffReport import_report;
+        DM1OriginalSavePC34HandoffReport verify_report;
+
+        memset(&import_report, 0, sizeof(import_report));
+        memset(&verify_report, 0, sizeof(verify_report));
+        exportedSize = 0u;
+        result = dm1_v1_original_save_pc34_roundtrip_world_file(
+            path,
+            gameID,
+            exportedBytes,
+            SAVEGAME_PC34_MAX_FILE_SIZE,
+            &exportedSize,
+            &import_report,
+            &verify_report);
+        if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            import_report.importer_result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            verify_report.importer_result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            import_report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT &&
+            verify_report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT) {
+            memset(&report, 0, sizeof(report));
+            report.core_state_matches = 1;
+            report.source_champion_count =
+                import_report.imported_champion_count;
+            report.exported_champion_count =
+                verify_report.imported_champion_count;
+            report.reloaded_champion_count =
+                verify_report.imported_champion_count;
+            report.source_map_index = import_report.imported_map_index;
+            report.exported_map_index = verify_report.imported_map_index;
+            report.reloaded_map_index = verify_report.imported_map_index;
+            report.source_map_x = import_report.imported_map_x;
+            report.exported_map_x = verify_report.imported_map_x;
+            report.reloaded_map_x = verify_report.imported_map_x;
+            report.source_map_y = import_report.imported_map_y;
+            report.exported_map_y = verify_report.imported_map_y;
+            report.reloaded_map_y = verify_report.imported_map_y;
+            report.source_direction = import_report.imported_direction;
+            report.exported_direction = verify_report.imported_direction;
+            report.reloaded_direction = verify_report.imported_direction;
+            report.source_game_time = import_report.original_game_time;
+            report.exported_game_time = verify_report.original_game_time;
+            report.reloaded_game_time = verify_report.original_game_time;
+            report.source_event_count = import_report.original_event_count;
+            report.exported_event_count = verify_report.original_event_count;
+            report.reloaded_event_count = verify_report.original_event_count;
+            report.source_active_group_count =
+                import_report.original_current_active_group_count;
+            report.exported_active_group_count =
+                verify_report.original_current_active_group_count;
+            report.reloaded_active_group_count =
+                verify_report.original_current_active_group_count;
+        }
+    }
     free(exportedBytes);
 
     receipt.handoffResult = result;

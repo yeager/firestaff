@@ -1,4 +1,5 @@
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
+#include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 
@@ -125,10 +126,15 @@ static int verify_valid_attack_route(int creatureAttributes, int expectedAttack)
                                      &afterplay);
     ok &= expect(afterplay.shouldPresentSourceSmoke &&
                      afterplay.requiresKilledAllMutationFirst &&
+                     afterplay.shouldCommitKilledAllWorldMutation &&
+                     afterplay.shouldSuppressReactionEvent &&
+                     afterplay.shouldSuppressGroupLosMoveAfterDeath &&
+                     afterplay.killedAllStateApplyPlan.shouldUnlinkGroupFromSquare &&
+                     afterplay.killedAllStateApplyPlan.shouldRemoveActiveGroupState &&
                      afterplay.sourceSmokeCreateInput.explosionType ==
                          C040_EXPLOSION_SMOKE &&
                      afterplay.sourceSmokeCreateInput.attack == expectedAttack,
-                 "F0190 retains the source-locked C040 attack");
+                 "F0190 orders killed-all mutation before source C040/HUD");
 
     memset(&explosions, 0, sizeof(explosions));
     memset(&advance, 0, sizeof(advance));
@@ -157,12 +163,10 @@ static int verify_valid_attack_route(int creatureAttributes, int expectedAttack)
     ok &= expect(dm1_v1_viewport_runtime_materialization_decide_pc34(
                      &viewportInput, &viewportDecision),
                  "F0115 materialization receipt builds from the live list");
-    ok &= expect(viewportDecision.liveExplosionSourceCount == 1 &&
-                     viewportDecision.liveExplosionSourceSlots[0] == createdSlot &&
-                     viewportDecision.liveExplosionSourceTypes[0] ==
+    ok &= expect(viewportDecision.liveExplosionCount == 1 &&
+                     viewportDecision.liveExplosionSlot == createdSlot &&
+                     viewportDecision.liveExplosionType ==
                          C040_EXPLOSION_SMOKE &&
-                     viewportDecision.liveExplosionSourceRoutes[0] ==
-                         DM1_V1_C15_EXPLOSION_ROUTE_ORDINARY_F0114_PC34 &&
                      viewportDecision.liveRenderableExplosionCount == 1 &&
                      viewportDecision.liveRenderableExplosionTypes[0] ==
                          C040_EXPLOSION_SMOKE &&
@@ -282,7 +286,7 @@ static int verify_same_square_expiry_and_afterplay_order(void)
     ok &= expect(dm1_v1_viewport_runtime_materialization_decide_pc34(
                      &viewportInput, &viewportDecision) &&
                      viewportDecision.liveRenderableExplosionCount == 1 &&
-                     viewportDecision.liveRenderableExplosionSlots[0] == 0 &&
+                     viewportDecision.liveExplosionSlot == 0 &&
                      viewportDecision.liveRenderableExplosionTypes[0] ==
                          C000_EXPLOSION_FIREBALL,
                  "F0115 omits expired C040 while retaining the leading effect");
@@ -297,15 +301,42 @@ static int verify_same_square_expiry_and_afterplay_order(void)
     ok &= expect(dm1_v1_viewport_runtime_materialization_decide_pc34(
                      &viewportInput, &viewportDecision) &&
                      viewportDecision.liveRenderableExplosionCount == 2 &&
-                     viewportDecision.liveRenderableExplosionSlots[0] == 0 &&
                      viewportDecision.liveRenderableExplosionTypes[0] ==
                          C000_EXPLOSION_FIREBALL &&
                      viewportDecision.liveRenderableExplosionAttacks[0] == 20 &&
-                     viewportDecision.liveRenderableExplosionSlots[1] == 1 &&
                      viewportDecision.liveRenderableExplosionTypes[1] ==
                          C040_EXPLOSION_SMOKE &&
                      viewportDecision.liveRenderableExplosionAttacks[1] == 110,
                  "F0115 restores source order after C040 rematerialization");
+    return ok;
+}
+
+static int verify_killed_all_blocks_los_move_materialization(void)
+{
+    DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApply;
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 afterplay;
+    DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
+    DM1_V1_OrdinaryGroupMoveApplyPlanPc34 moveApply;
+    int ok = 1;
+
+    ok &= build_killed_all_afterplay(DM1_SIZE_QUARTER_SQUARE,
+                                     &aftermathApply, &afterplay);
+    ok &= expect(afterplay.valid &&
+                     afterplay.shouldSuppressReactionEvent &&
+                     afterplay.shouldSuppressGroupLosMoveAfterDeath,
+                 "F0190 killed-all suppresses later F0209/LoS movement");
+    ok &= expect(DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+                     8, 9, DM1_V1_DIRECTION_EAST_PC34, 1, 0, 0, 77u,
+                     &movePlan) &&
+                     DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
+                         &movePlan, afterplay.mapIndex, afterplay.mapX,
+                         afterplay.mapY, DM1_V1_DIRECTION_EAST_PC34, 0xff,
+                         77u, &moveApply),
+                 "F0267 ordinary LoS move plan remains independently real");
+    ok &= expect(moveApply.shouldLinkDestination &&
+                     afterplay.killedAllStateApplyPlan.shouldUnlinkGroupFromSquare &&
+                     afterplay.killedAllStateApplyPlan.shouldRemoveActiveGroupState,
+                 "transaction boundary keeps killed-all delete ahead of movement");
     return ok;
 }
 
@@ -369,6 +400,7 @@ int main(void)
     ok &= verify_valid_attack_route(DM1_SIZE_FULL_SQUARE, 255);
     ok &= verify_invalid_attacks_rejected();
     ok &= verify_same_square_expiry_and_afterplay_order();
+    ok &= verify_killed_all_blocks_los_move_materialization();
     ok &= verify_moving_killed_all_source_smoke();
     ok &= audit_m11_live_explosion_handoff();
 

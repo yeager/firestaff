@@ -29,9 +29,65 @@ typedef struct DM1_V1_EndgamePresentationDecisionPc34 {
     DM1_V1_EndgamePresentationActionPc34 action;
 } DM1_V1_EndgamePresentationDecisionPc34;
 
+typedef struct DM1_V1_EndgameFinalPresentationInputPc34 {
+    int gameWon;
+    int finalPresentationReady;
+    int endgameCalledWithTrue;
+    int restartAllowed;
+    int replayCursor;
+    int replayEventCount;
+    int replayFrameRemainingTicks;
+    int fuseDelayRemainingTicks;
+    int textMessageDelayTicks;
+    int finalDelayTicks;
+    int requestedMusicTrackId;
+    int expectedVictoryMusicId;
+    int musicPlayRequestCount;
+    int assetsAvailable;
+    int theEndGraphicId;
+    int championMirrorGraphicId;
+    int championPortraitsGraphicId;
+    int theEndX;
+    int theEndY;
+    int theEndW;
+    int theEndH;
+    int creditsPaletteSize;
+    int creditsPaletteFirstEntry;
+    int creditsPaletteLastEntry;
+} DM1_V1_EndgameFinalPresentationInputPc34;
+
+typedef struct DM1_V1_EndgameFinalPresentationReceiptPc34 {
+    int valid;
+    int finalScreenReady;
+    int gameplayInputBlocked;
+    int saveTerminalStateLocked;
+    int controlsVisible;
+    int f0445ReplayDrained;
+    int finalDelayDrained;
+    int textMessagesCompleted;
+    int originalMusicRequested;
+    int originalGraphicsDatRoute;
+    int creditsPaletteRoute;
+    int theEndGraphicId;
+    int championMirrorGraphicId;
+    int championPortraitsGraphicId;
+    int theEndX;
+    int theEndY;
+    int theEndW;
+    int theEndH;
+    int creditsPaletteSize;
+    int creditsPaletteFirstEntry;
+    int creditsPaletteLastEntry;
+    const char* sourceEvidence;
+} DM1_V1_EndgameFinalPresentationReceiptPc34;
+
 void dm1_v1_endgame_presentation_decide_pc34(
     const DM1_V1_EndgamePresentationInputPc34* input,
     DM1_V1_EndgamePresentationDecisionPc34* output);
+
+int dm1_v1_endgame_final_presentation_receipt_pc34(
+    const DM1_V1_EndgameFinalPresentationInputPc34* input,
+    DM1_V1_EndgameFinalPresentationReceiptPc34* output);
 
 const char* dm1_v1_endgame_presentation_evidence_pc34(void);
 

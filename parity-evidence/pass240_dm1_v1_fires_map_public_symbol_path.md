@@ -13,8 +13,8 @@ Status: `VERIFIED_NEGATIVE_FIRES_MAP_PUBLIC_SYMBOLS_MISSING`
 ## Verified negative on N2
 
 - No `*.MAP`, `*.SYM`, or `*.LST` artifact exists in focused N2-local ReDMCSB/original DM1 roots.
-- Prior bounded ReDMCSB DOSBox build attempt: status `BLOCKED_NO_PROMOTED_CSIP`, return `0`, `FIRES.MAP` size `0`, `DUNVIEW.OBJ` size `0`.
-- Error excerpt: `<firestaff-repo>/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt`
+- Prior bounded ReDMCSB DOSBox build attempt: status `None`, return `None`, `FIRES.MAP` size `None`, `DUNVIEW.OBJ` size `None`.
+- Error excerpt: `None`
 
 ## Source seams audited
 

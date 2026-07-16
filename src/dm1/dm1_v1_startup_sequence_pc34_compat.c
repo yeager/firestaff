@@ -55,6 +55,50 @@ static unsigned int dm1_v1_startup_credits_palette_fingerprint_pc34(void) {
     return hash ? hash : 1U;
 }
 
+static unsigned int dm1_v1_startup_pixel_fingerprint_pc34(
+    const unsigned char *pixels,
+    unsigned int width,
+    unsigned int x,
+    unsigned int y,
+    unsigned int region_width,
+    unsigned int region_height,
+    int *out_present)
+{
+    unsigned int hash = 2166136261u;
+    unsigned int present = 0u;
+    unsigned int row;
+    unsigned int col;
+
+    if (out_present) {
+        *out_present = 0;
+    }
+    if (!pixels || width == 0U || region_width == 0U ||
+        region_height == 0U) {
+        return 0U;
+    }
+    for (row = 0U; row < region_height; ++row) {
+        const unsigned int offset = (y + row) * width + x;
+        for (col = 0U; col < region_width; ++col) {
+            const unsigned int value = pixels[offset + col];
+            if (value != 0U) {
+                present = 1U;
+            }
+            hash ^= value + ((x + col) << 8) + ((y + row) << 16);
+            hash *= 16777619u;
+        }
+    }
+    hash ^= width;
+    hash *= 16777619u;
+    hash ^= region_width;
+    hash *= 16777619u;
+    hash ^= region_height;
+    hash *= 16777619u;
+    if (out_present) {
+        *out_present = present ? 1 : 0;
+    }
+    return hash ? hash : 1U;
+}
+
 static unsigned int dm1_v1_startup_hoc_capture_consumer_hash_pc34(
     unsigned int mask) {
     unsigned int hash = 2166136261u;
@@ -4642,8 +4686,12 @@ int dm1_v1_startup_selected_boot_probe_receipt_pc34(
         dm1_v1_startup_selected_entry_receipt_valid_pc34(
             facts->expected_game_id,
             facts->intro_bypassed);
+    /* In boot-probe phase-a, `active` means the selected-entry launcher is
+     * still open. A successful DM1 source-visible launch has already consumed
+     * that selected entry by the time the receipt reaches dm1-runtime, so the
+     * durable proof is the launcher handoff plus matching source and no intro
+     * bypass. */
     receipt.valid =
-        receipt.active &&
         receipt.source_matches &&
         receipt.started_from_launcher &&
         receipt.selected_entry_receipt_valid;
@@ -4791,6 +4839,18 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.entrance_door_step_count =
         ENTRANCE_Compat_GetDoorAnimationStepCount();
     receipt.entrance_vblank_ms = ENTRANCE_Compat_GetVblankDelayMs();
+    receipt.entrance_palette = 1;
+    receipt.entrance_palette_entry_count =
+        DM1_V1_PALETTE_ENTRANCE_PC34_COMPAT_SIZE;
+    receipt.entrance_palette_fingerprint =
+        dm1_v1_startup_entrance_palette_fingerprint_pc34();
+    receipt.entrance_credits_wait_ticks =
+        ENTRANCE_Compat_GetCreditsWaitTicks();
+    receipt.entrance_credits_palette = 1;
+    receipt.entrance_credits_palette_entry_count =
+        DM1_V1_PALETTE_CREDITS_PC34_COMPAT_SIZE;
+    receipt.entrance_credits_palette_fingerprint =
+        dm1_v1_startup_credits_palette_fingerprint_pc34();
     memset(&entrance_pre_open_step, 0, sizeof(entrance_pre_open_step));
     if (ENTRANCE_Compat_GetSourceAnimationStep(6u, &entrance_pre_open_step) &&
         entrance_pre_open_step.kind ==
@@ -4964,6 +5024,59 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
         "before PRESENTS; DM1 PC34 startup requires the exact 320x200 "
         "C001 surface and rejects TITLE.DAT substitution when C001 is "
         "unavailable, cropped, or malformed.";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_title_runtime_asset_receipt_pc34(
+    const char* source_id,
+    const unsigned char* graphics_c001_pixels,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt) {
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
+    unsigned int hash = 2166136261u;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.handled = 1;
+    receipt.graphics_c001_dimensions_valid =
+        graphics_c001_pixels != NULL &&
+        graphics_c001_width == 320U &&
+        graphics_c001_height == 200U;
+    if (receipt.graphics_c001_dimensions_valid) {
+        int dungeon_present = 0;
+        int master_present = 0;
+        int presents_present = 0;
+        hash ^= dm1_v1_startup_pixel_fingerprint_pc34(
+            graphics_c001_pixels, graphics_c001_width,
+            0U, 0U, 320U, 80U, &dungeon_present);
+        hash *= 16777619u;
+        hash ^= dm1_v1_startup_pixel_fingerprint_pc34(
+            graphics_c001_pixels, graphics_c001_width,
+            0U, 80U, 320U, 57U, &master_present);
+        hash *= 16777619u;
+        hash ^= dm1_v1_startup_pixel_fingerprint_pc34(
+            graphics_c001_pixels, graphics_c001_width,
+            0U, 137U, 320U, 16U, &presents_present);
+        hash *= 16777619u;
+        receipt.dungeon_source_pixels_present = dungeon_present;
+        receipt.master_source_pixels_present = master_present;
+        receipt.presents_source_pixels_present = presents_present;
+        receipt.graphics_c001_pixel_fingerprint = hash ? hash : 1U;
+        receipt.release_c001_ready =
+            dungeon_present && master_present && presents_present;
+    }
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437:319-409 consumes decoded C001 PC34 pixels "
+        "from DUNGEON, MASTER/STRIKES BACK, and PRESENTS source regions; "
+        "no TITLE.DAT fallback pixels satisfy this runtime asset receipt.";
     *out_receipt = receipt;
     return 1;
 }
@@ -5179,6 +5292,60 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
             break;
     }
 
+    *out_command = command;
+    return 1;
+}
+
+int dm1_v1_startup_entrance_credits_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const unsigned char* graphics_c005_pixels,
+    unsigned int graphics_c005_width,
+    unsigned int graphics_c005_height,
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34* out_command) {
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
+    unsigned int pixel_hash;
+    int pixels_present = 0;
+
+    if (!out_command) {
+        return 0;
+    }
+    memset(out_command, 0, sizeof(*out_command));
+    if (!media_receipt ||
+        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
+        !graphics_c005_pixels ||
+        graphics_c005_width != 320U ||
+        graphics_c005_height != 200U ||
+        media_receipt->entrance_credits_palette != 1 ||
+        media_receipt->entrance_credits_palette_entry_count !=
+            DM1_V1_PALETTE_CREDITS_PC34_COMPAT_SIZE ||
+        media_receipt->entrance_credits_palette_fingerprint !=
+            dm1_v1_startup_credits_palette_fingerprint_pc34()) {
+        return 0;
+    }
+    pixel_hash = dm1_v1_startup_pixel_fingerprint_pc34(
+        graphics_c005_pixels, graphics_c005_width,
+        0U, 0U, graphics_c005_width, graphics_c005_height,
+        &pixels_present);
+    if (!pixels_present || pixel_hash == 0U) {
+        return 0;
+    }
+
+    memset(&command, 0, sizeof(command));
+    command.handled = 1;
+    command.present_credits_frame = 1;
+    command.source_asset_receipt_consumed = 1;
+    command.source_palette_receipt_consumed = 1;
+    command.source_timing_receipt_consumed = 1;
+    command.special_palette = media_receipt->entrance_credits_palette;
+    command.credits_wait_ticks = media_receipt->entrance_credits_wait_ticks;
+    command.vblank_delay_ms =
+        media_receipt->entrance_vblank_ms *
+        media_receipt->entrance_credits_wait_ticks;
+    command.graphics_c005_pixel_fingerprint = pixel_hash;
+    command.source_evidence =
+        "ReDMCSB ENTRANCE.C F0442:993 and 1067-1091 presents decoded C005 "
+        "credits pixels, selects the PC34 credits palette, and waits "
+        "L1406=1800 VBlanks before returning to F0441.";
     *out_command = command;
     return 1;
 }

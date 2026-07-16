@@ -42,6 +42,8 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
     projectiles->entries[0].mapY = 12;
     projectiles->entries[0].cell = 3;
     projectiles->entries[0].direction = 1;
+    projectiles->entries[0].reserved1 =
+        (int)((THING_TYPE_WEAPON << 10) | 12);
     explosions->count = 1;
     explosions->entries[0].slotIndex = 4;
     explosions->entries[0].reserved0 = 1;
@@ -92,10 +94,12 @@ int main(void)
               "new throw materializes through the live D1 decision");
         CHECK(d1c.liveProjectileCount == 1 && d1c.liveProjectileSlot == 7 &&
               d1c.liveProjectileSubtype == 10 && d1c.liveProjectileCell == 3 &&
+              d1c.liveProjectileAssociatedThing ==
+                  (unsigned short)((THING_TYPE_WEAPON << 10) | 12) &&
               d1c.liveExplosionCount == 1 && d1c.liveExplosionSlot == 4 &&
               d1c.liveExplosionFrame == 2 && d1c.liveExplosionAttack == 96 &&
               d1c.projectileZone >= 0,
-              "D1 decision owns active projectile and explosion records");
+              "D1 decision owns active projectile, associated thing and explosion records");
 
         projectiles.entries[0].mapX = 12;
         projectiles.entries[0].cell = 1;

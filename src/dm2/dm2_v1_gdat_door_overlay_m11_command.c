@@ -6,6 +6,8 @@
 #include <limits.h>
 #include <string.h>
 
+#define DM2_V1_GDAT_DOOR_LOCAL_PALETTE_SIZE 16u
+
 static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 {
     for (size_t i = 0; i < size; ++i) { hash ^= bytes[i]; hash *= 16777619u; }
@@ -606,10 +608,37 @@ static int resolve_material_address(const DM2_V1_DoorRender *door, int kind,
     return 1;
 }
 
+static int load_door_local_palette(const DM2_V1_AssetLoader *loader,
+                                   int category, int index, int field,
+                                   uint8_t out_palette16[16],
+                                   uint32_t *out_hash)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+
+    if (out_hash) *out_hash = 0u;
+    if (!out_palette16) return 0;
+    memset(out_palette16, 0, DM2_V1_GDAT_DOOR_LOCAL_PALETTE_SIZE);
+    raw = dm2_v1_asset_load_typed_sized(
+        loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE, field, &raw_size);
+    if (!raw || raw_size < DM2_V1_GDAT_DOOR_LOCAL_PALETTE_SIZE) {
+        return 0;
+    }
+    memcpy(out_palette16,
+           raw + raw_size - DM2_V1_GDAT_DOOR_LOCAL_PALETTE_SIZE,
+           DM2_V1_GDAT_DOOR_LOCAL_PALETTE_SIZE);
+    if (out_hash) {
+        *out_hash = hash_bytes(2166136261u, out_palette16,
+                               DM2_V1_GDAT_DOOR_LOCAL_PALETTE_SIZE);
+        return *out_hash != 0u;
+    }
+    return 1;
+}
+
 static int add_material(const DM2_V1_AssetLoader *loader,
                         DM2_V1_GdatDoorOverlayM11CommandPlan *plan,
                         const DM2_V1_DoorRender *door, int kind,
-                        int horizontal_part)
+                        int horizontal_part, int movement_active)
 {
     DM2_V1_GdatDoorOverlayM11Command *command;
     int gdat_index, category, index, field;
@@ -654,9 +683,9 @@ static int add_material(const DM2_V1_AssetLoader *loader,
         command->light_palette = command->draw_distance;
     }
     if (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0 ||
-        !dm2_v1_asset_load_image_local_palette(loader, category, index, field,
-                                                command->palette16,
-                                                &command->palette_hash) ||
+        !load_door_local_palette(loader, category, index, field,
+                                 command->palette16,
+                                 &command->palette_hash) ||
         !command->palette_hash) return 0;
     command->gdat_index = gdat_index;
     command->view_square = (uint8_t)door->view_square;
@@ -669,6 +698,7 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     command->door_opening_dir = door->door_opening_dir;
     command->door_state = door->door_state;
     command->door_open_pct = door->door_open_pct;
+    command->movement_active = movement_active ? 1u : 0u;
     command->raw_hash = hash_bytes(2166136261u, raw, raw_size);
     command->decoded_hash = hash_bytes(2166136261u, command->pixels,
                                        (size_t)width * (size_t)height);
@@ -683,6 +713,8 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                        (uint32_t)door->door_state);
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)door->door_open_pct);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       command->movement_active);
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)door->ornament_index);
     command->selection_hash = hash_u32(command->selection_hash,
@@ -736,8 +768,9 @@ static int add_material(const DM2_V1_AssetLoader *loader,
            command->selection_hash != 0u && ++plan->command_count;
 }
 
-int dm2_v1_gdat_door_overlay_m11_command_plan_build(
+int dm2_v1_gdat_door_overlay_m11_command_plan_build_for_movement(
     const DM2_V1_AssetLoader *loader, const DM2_V1_DoorRenderPlan *door_plan,
+    int movement_active,
     DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan)
 {
     DM2_V1_GdatDoorOverlayM11CommandPlan candidate;
@@ -751,25 +784,27 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
             door_plan->doors[i].door_state < 4u &&
             door_plan->doors[i].door_opening_dir == 0u) {
             if (!add_material(loader, &candidate, &door_plan->doors[i],
-                              DM2_V1_GDAT_DOOR_PANEL, 0) ||
+                              DM2_V1_GDAT_DOOR_PANEL, 0, movement_active) ||
                 !add_material(loader, &candidate, &door_plan->doors[i],
-                              DM2_V1_GDAT_DOOR_PANEL, 1)) goto fail;
+                              DM2_V1_GDAT_DOOR_PANEL, 1,
+                              movement_active)) goto fail;
         } else if (!add_material(loader, &candidate, &door_plan->doors[i],
-                                 DM2_V1_GDAT_DOOR_PANEL, -1)) goto fail;
+                                 DM2_V1_GDAT_DOOR_PANEL, -1,
+                                 movement_active)) goto fail;
         no_frames = candidate.commands[candidate.command_count - 1].no_frames != 0u;
         if (
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE, -1) ||
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK, -1)) goto fail;
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE, -1, movement_active) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK, -1, movement_active)) goto fail;
         if ((!no_frames && door_plan->doors[i].frame_gdat_index != 0 &&
-             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME, -1)) ||
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON, -1)) goto fail;
+             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME, -1, movement_active)) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON, -1, movement_active)) goto fail;
         if (!no_frames) {
             for (int side = 0; side < 2; ++side) {
                 const int kind = side == 0 ? DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT
                                            : DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT;
                 if (door_plan->doors[i].side_frame_gdat_index[side] != 0 &&
                     !add_material(loader, &candidate, &door_plan->doors[i],
-                                  kind, -1)) goto fail;
+                                  kind, -1, movement_active)) goto fail;
             }
         }
     }
@@ -782,4 +817,12 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
 fail:
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&candidate);
     return 0;
+}
+
+int dm2_v1_gdat_door_overlay_m11_command_plan_build(
+    const DM2_V1_AssetLoader *loader, const DM2_V1_DoorRenderPlan *door_plan,
+    DM2_V1_GdatDoorOverlayM11CommandPlan *out_plan)
+{
+    return dm2_v1_gdat_door_overlay_m11_command_plan_build_for_movement(
+        loader, door_plan, 0, out_plan);
 }

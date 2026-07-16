@@ -594,7 +594,7 @@ int dm2_v1_startup_menu_handle_firestaff_input_from_host_facts_with_receipt(
     int menu_input,
     DM2_V1_StartupAction *out_action)
 {
-    if (!facts) {
+    if (!facts || !facts->startup_menu_active) {
         dm2_v1_startup_menu_state_receipt_init(out_receipt);
         dm2_v1_startup_action_clear(out_action);
         return 0;
@@ -713,7 +713,7 @@ int dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
     int y,
     DM2_V1_StartupAction *out_action)
 {
-    if (!facts) {
+    if (!facts || !facts->startup_menu_active) {
         dm2_v1_startup_menu_state_receipt_init(out_receipt);
         dm2_v1_startup_action_clear(out_action);
         return 0;

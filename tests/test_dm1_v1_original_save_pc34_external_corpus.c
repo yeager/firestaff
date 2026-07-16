@@ -75,6 +75,8 @@ int main(void)
           "external corpus scan completes");
     CHECK(report.scan_succeeded && !report.discovery_root_error,
           "external corpus discovery is complete");
+    CHECK(report.discovery_receipt_count == report.scanned_file_count,
+          "external corpus records one discovery receipt per scanned file");
     CHECK(report.pc34_candidate_count > 0,
           "external corpus contains at least one PC34 candidate");
     CHECK(report.roundtrip_failed_count == 0 &&
@@ -96,9 +98,29 @@ int main(void)
 
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        int discovery_seen = 0;
+        int j;
 
         CHECK(receipt_is_runtime_admitted(receipt),
               "external PC34 receipt is runtime-admitted without fallback");
+        for (j = 0; j < report.discovery_receipt_count; ++j) {
+            const DM1OriginalSavePC34CorpusDiscoveryReceipt *discovery =
+                &report.discovery_receipts[j];
+            if (strcmp(discovery->path, receipt->path) == 0) {
+                discovery_seen = 1;
+                CHECK(discovery->pc34_loader_part_envelope_candidate &&
+                          discovery->external_original &&
+                          discovery->roundtrip_eligible &&
+                          discovery->f7057_envelope_end_offset ==
+                              receipt->source_f7057_envelope_end_offset &&
+                          discovery->f7057_trailing_byte_count ==
+                              receipt->source_f7057_trailing_byte_count &&
+                          discovery->save_game_id == receipt->game_id,
+                      "discovery receipt binds loader/F7057 facts to roundtrip receipt");
+            }
+        }
+        CHECK(discovery_seen,
+              "roundtrip receipt has a matching discovery receipt");
         printf("ADMITTED path=%s source_bytes=%u source_hash=%08x "
                "f7057_end=%u tail_bytes=%u exported_bytes=%u "
                "exported_hash=%08x runtime_stage=%d runtime_adopt=%d\\n",

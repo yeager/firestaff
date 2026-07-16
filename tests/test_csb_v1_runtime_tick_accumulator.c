@@ -2978,9 +2978,17 @@ static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
     uint8_t raw[96];
     struct ExplosionCreateInput_Compat input;
     struct TimelineEvent_Compat first_advance;
+    const char *source_evidence;
     int slot = -1;
 
     printf("\n-- CSB C25 persistent smoke requeue --\n");
+
+    source_evidence = csb_v1_runtime_source_evidence();
+    CHECK(source_evidence &&
+              strstr(source_evidence, "PROJEXPL.C: F0213_EXPLOSION_Create") &&
+              strstr(source_evidence,
+                     "PROJEXPL.C: F0220_EXPLOSION_ProcessEvent25_Explosion"),
+          "CSB runtime evidence names F0213 create and F0220 C25 advance");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     csb_v1_runtime_init(&profile, NULL);
@@ -3006,7 +3014,7 @@ static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
               &first_advance) == 1 &&
               slot == 0 &&
               first_advance.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE,
-          "CSB C25 smoke fixture creates a live persistent explosion");
+          "F0213 creates a live persistent explosion with a C25 advance event");
     queue_explosion_advance_event(&profile, &first_advance);
 
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,

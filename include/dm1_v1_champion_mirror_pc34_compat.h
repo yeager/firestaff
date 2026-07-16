@@ -20,6 +20,7 @@ extern "C" {
 
 #define DM1_V1_CHAMPION_MIRROR_MOUSE_LEFT_PC34_COMPAT 0x0002u
 #define DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT 26
+#define DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT 43
 #define DM1_V1_CHAMPION_MIRROR_PORTRAIT_WIDTH_PC34_COMPAT 32
 #define DM1_V1_CHAMPION_MIRROR_PORTRAIT_HEIGHT_PC34_COMPAT 29
 #define DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COLS_PC34_COMPAT 8
@@ -192,6 +193,21 @@ typedef struct DM1_V1_ChampionMirrorHostDrawReceiptPc34 {
     const char *sourceAnchor;
 } DM1_V1_ChampionMirrorHostDrawReceiptPc34;
 
+typedef struct DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 {
+    int valid;
+    int consumedC127WallFact;
+    int relForward;
+    int relSide;
+    int viewWallIndex;
+    int globalOrnamentIndex;
+    int drawWallOrnamentBacking;
+    int drawChampionPortrait;
+    int suppressChampionPortrait;
+    int suppressGenericWallOrnament;
+    int suppressHostFallbackVisuals;
+    const char *sourceAnchor;
+} DM1_V1_ChampionMirrorViewportProjectionReceiptPc34;
+
 /*
  * Runtime hand-off for the HoC D1C mirror path.  M11 supplies the already
  * decoded F0172/F0115 facts; DM1 owns the resulting wall, item, projectile
@@ -300,6 +316,14 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
     int backingAssetAvailable,
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt);
 
+int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+    int relForward,
+    int relSide,
+    int viewWallIndex,
+    int championPortraitOrdinal,
+    int globalOrnamentIndex,
+    DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 *outReceipt);
+
 int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
     const DM1_V1_ChampionMirrorRuntimeRenderInputPc34 *input,
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 *outDecision);
@@ -322,6 +346,8 @@ typedef DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34
     Dm1V1ChampionMirrorThingLayerConsumerReceiptPc34Compat;
 typedef DM1_V1_ChampionMirrorHostDrawReceiptPc34
     Dm1V1ChampionMirrorHostDrawReceiptPc34Compat;
+typedef DM1_V1_ChampionMirrorViewportProjectionReceiptPc34
+    Dm1V1ChampionMirrorViewportProjectionReceiptPc34Compat;
 
 #define DM1_V1_ChampionMirror_InitClickStatePc34Compat \
     DM1_V1_ChampionMirror_InitClickStatePc34
@@ -347,6 +373,8 @@ typedef DM1_V1_ChampionMirrorHostDrawReceiptPc34
     DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34
 #define DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34Compat \
     DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34
+#define DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34Compat \
+    DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34
 #define DM1_V1_ChampionMirror_SourceEvidencePc34Compat \
     DM1_V1_ChampionMirror_SourceEvidencePc34
 

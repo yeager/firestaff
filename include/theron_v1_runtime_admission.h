@@ -770,6 +770,416 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int level_object_loader_route_consumed;
+    int object_table_shape_consumed;
+    int same_capture_as_loader_route;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t consumer_trace_checksum;
+    uint32_t selected_dungeon_index;
+    uint32_t selected_level_index;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t loader_route_pair_hash;
+    size_t object_table_user_data_byte_count;
+    uint32_t object_table_user_data_hash;
+    size_t object_record_count;
+    uint32_t object_table_checksum;
+    unsigned int object_level_mask;
+    size_t selected_level_record_count;
+    uint32_t selected_level_record_hash;
+    uint32_t selected_level_position_hash;
+    uint32_t object_placement_state_hash;
+    uint8_t first_object_id;
+    uint8_t first_object_kind;
+    uint8_t first_object_x;
+    uint8_t first_object_y;
+    uint8_t first_object_level_index;
+    uint8_t first_object_state_low_bits;
+    uint8_t first_object_flags;
+    uint16_t first_object_argument;
+    int object_placement_bytes_bound;
+    int object_state_low_bits_bound;
+    int object_kind_semantics_review_required;
+    int world_object_publish_allowed;
+    int dungeon_runtime_admission_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02ObjectPlacementStateReceipt;
+
+typedef struct {
+    int valid;
+    int object_placement_state_consumed;
+    int object_table_shape_consumed;
+    int same_capture_as_placement_state;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t consumer_trace_checksum;
+    uint32_t selected_dungeon_index;
+    uint32_t selected_level_index;
+    uint32_t object_table_route_hash;
+    uint32_t loader_route_pair_hash;
+    uint32_t object_placement_state_hash;
+    size_t selected_level_record_count;
+    uint32_t selected_level_record_hash;
+    uint32_t selected_level_position_hash;
+    unsigned int runtime_kind_low_mask;
+    int runtime_kind_quest_item_seen;
+    uint32_t object_runtime_state_hash;
+    uint8_t first_runtime_type;
+    uint8_t first_runtime_state;
+    uint32_t first_runtime_flags;
+    int first_runtime_quantity;
+    int object_kind_semantics_proven;
+    int flags_low_bits_state_bound;
+    int argument_quantity_bound;
+    int object_flags_preserved;
+    int all_selected_records_runtime_mappable;
+    int world_object_publish_allowed;
+    int dungeon_runtime_admission_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt;
+
+typedef struct {
+    int valid;
+    int object_gameplay_semantics_consumed;
+    int object_table_shape_consumed;
+    int world_mutated;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t selected_level_index;
+    size_t selected_level_record_count;
+    int before_object_count;
+    int removed_selected_level_object_count;
+    int placed_object_count;
+    int after_object_count;
+    int level_loaded_required;
+    int level_loaded;
+    int current_level_after;
+    int thing_count_after;
+    uint64_t before_world_hash;
+    uint64_t after_world_hash;
+    int dungeon_runtime_admission_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt;
+
+typedef struct {
+    int valid;
+    int source_object_world_handoff_consumed;
+    int target_object_gameplay_semantics_consumed;
+    int same_capture_as_target_loader_route;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t consumer_trace_checksum;
+    uint32_t selected_dungeon_index;
+    uint32_t source_level_index;
+    uint32_t target_level_index;
+    uint32_t target_level_route_hash;
+    uint32_t target_object_table_route_hash;
+    uint32_t target_loader_route_pair_hash;
+    uint32_t target_object_runtime_state_hash;
+    size_t target_level_byte_count;
+    uint32_t target_level_raw_hash;
+    size_t target_object_record_count;
+    uint32_t target_object_level_record_hash;
+    int loader_level_selector_bound;
+    int transition_source_level_bound;
+    int transition_target_level_bound;
+    int party_placement_bound;
+    int object_pool_state_bound;
+    int level_runtime_load_allowed;
+    int dungeon_runtime_admission_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt;
+
+typedef struct {
+    int valid;
+    int level_transition_handoff_consumed;
+    int target_object_world_handoff_consumed;
+    int world_mutated;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t source_level_index;
+    uint32_t target_level_index;
+    int transition_pending_before;
+    int transition_pending_after;
+    int level_loaded;
+    int current_level_after;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int target_object_count;
+    int target_thing_count;
+    uint64_t before_world_hash;
+    uint64_t after_world_hash;
+    int dungeon_runtime_admission_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt;
+
+typedef struct {
+    int valid;
+    int level_transition_runtime_consumed;
+    int same_capture_as_level_transition;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t source_level_index;
+    uint32_t target_level_index;
+    size_t palette_raw_offset;
+    size_t palette_user_data_offset;
+    uint32_t palette_payload_checksum;
+    uint32_t palette_decoded_checksum;
+    uint32_t bitmap_route_mask;
+    uint32_t bitmap_atlas_checksum;
+    uint32_t bitmap_atlas_route_count;
+    uint32_t bitmap_atlas_nonzero_pixel_count;
+    uint32_t bitmap_palette_source_hash;
+    int palette_window_source_bound;
+    int bitmap_route_source_bound;
+    int palette_decode_verified;
+    int bitmap_decode_verified;
+    int pixel_output_verified;
+    int m11_render_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02BitmapPaletteSourceReceipt;
+
+typedef struct {
+    int valid;
+    int bitmap_palette_source_consumed;
+    int real_track02_bytes_consumed;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t source_level_index;
+    uint32_t target_level_index;
+    size_t palette_raw_offset;
+    size_t palette_user_data_offset;
+    uint32_t palette_payload_checksum;
+    uint32_t palette_decoded_checksum;
+    size_t palette_nonblack_entry_count;
+    uint16_t first_palette_word;
+    uint8_t first_palette_red;
+    uint8_t first_palette_green;
+    uint8_t first_palette_blue;
+    uint32_t bitmap_route_mask;
+    uint32_t bitmap_atlas_checksum;
+    size_t bitmap_atlas_route_count;
+    size_t bitmap_atlas_tile_count;
+    size_t bitmap_atlas_nonzero_pixel_count;
+    unsigned int first_bitmap_route_bit;
+    size_t first_bitmap_route_width;
+    size_t first_bitmap_route_height;
+    size_t first_bitmap_route_tile_count;
+    size_t first_bitmap_route_nonzero_pixel_count;
+    uint32_t first_bitmap_route_checksum;
+    size_t first_bitmap_raw_offset;
+    size_t first_bitmap_user_data_offset;
+    unsigned int stage_bitmap_route_bit;
+    size_t stage_bitmap_route_width;
+    size_t stage_bitmap_route_height;
+    size_t stage_bitmap_route_tile_count;
+    size_t stage_bitmap_route_nonzero_pixel_count;
+    uint32_t stage_bitmap_route_checksum;
+    size_t stage_bitmap_raw_offset;
+    size_t stage_bitmap_user_data_offset;
+    uint8_t first_pixel_indices[8];
+    uint32_t first_pixel_row_hash;
+    int palette_decode_verified;
+    int bitmap_decode_verified;
+    int pixel_output_verified;
+    int m11_runtime_consumption_allowed;
+    int m11_render_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt;
+
+typedef struct {
+    int valid;
+    int decode_vector_consumed;
+    int world_runtime_media_consumed;
+    int soul_room_level0_selected;
+    int exact_indexed_atlas_consumed;
+    int huc6260_palette_consumed;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t level_index;
+    unsigned int route_bit;
+    uint16_t source_width;
+    uint16_t source_height;
+    size_t source_tile_count;
+    size_t source_nonzero_pixel_count;
+    uint32_t source_checksum;
+    uint32_t palette_decoded_checksum;
+    size_t palette_nonblack_entry_count;
+    size_t first_raw_offset;
+    size_t last_raw_offset;
+    size_t first_user_data_offset;
+    int host_surface_width;
+    int host_surface_height;
+    int placement_x;
+    int placement_y;
+    int scale_x;
+    int scale_y;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    uint32_t placement_hash;
+    int clip_verified;
+    int scale_verified;
+    int host_presentation_allowed;
+    int m11_runtime_consumption_allowed;
+    int m11_render_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02M11SoulRoomConsumptionReceipt;
+
+typedef struct {
+    int valid;
+    int decode_vector_consumed;
+    int level_transition_runtime_consumed;
+    int world_runtime_media_consumed;
+    int target_level_selected;
+    int exact_indexed_atlas_consumed;
+    int huc6260_palette_consumed;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t source_level_index;
+    uint32_t target_level_index;
+    unsigned int route_bit;
+    uint16_t source_width;
+    uint16_t source_height;
+    size_t source_tile_count;
+    size_t source_nonzero_pixel_count;
+    uint32_t source_checksum;
+    uint32_t palette_decoded_checksum;
+    size_t palette_nonblack_entry_count;
+    size_t first_raw_offset;
+    size_t last_raw_offset;
+    size_t first_user_data_offset;
+    int host_surface_width;
+    int host_surface_height;
+    int placement_x;
+    int placement_y;
+    int scale_x;
+    int scale_y;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    uint32_t placement_hash;
+    int clip_verified;
+    int scale_verified;
+    int host_presentation_allowed;
+    int m11_runtime_consumption_allowed;
+    int m11_render_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02M11LevelConsumptionReceipt;
+
+typedef struct {
+    int valid;
+    int m11_level_consumption_consumed;
+    int level_transition_runtime_consumed;
+    int world_runtime_geometry_consumed;
+    int object_placement_consumed;
+    int viewport_composition_route_bound;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t target_level_index;
+    unsigned int route_bit;
+    uint16_t media_width;
+    uint16_t media_height;
+    uint32_t media_checksum;
+    uint32_t palette_decoded_checksum;
+    int level_width;
+    int level_height;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int current_square;
+    int forward_square;
+    size_t sampled_cell_count;
+    size_t sampled_wall_count;
+    size_t sampled_floor_count;
+    size_t sampled_special_count;
+    size_t sampled_object_count;
+    uint32_t level_geometry_hash;
+    uint32_t object_placement_hash;
+    uint32_t viewport_route_hash;
+    int host_surface_width;
+    int host_surface_height;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    int m11_host_presentation_allowed;
+    int dungeon_draw_route_allowed;
+    int dungeon_pixel_blit_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02M11DungeonDrawRouteReceipt;
+
+typedef struct {
+    int valid;
+    int m11_level_consumption_consumed;
+    int level_transition_runtime_consumed;
+    int original_data_binding_gap_consumed;
+    int world_runtime_state_inspected;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t selected_dungeon_index;
+    uint32_t target_level_index;
+    unsigned int route_bit;
+    uint32_t media_checksum;
+    uint32_t palette_decoded_checksum;
+    size_t nonstartup_window_count;
+    size_t first_nonstartup_raw_offset;
+    size_t first_nonstartup_user_data_offset;
+    size_t first_nonstartup_byte_count;
+    uint32_t first_nonstartup_raw_hash;
+    size_t object_table_raw_offset;
+    size_t object_table_user_data_offset;
+    size_t object_table_byte_count;
+    uint32_t object_table_raw_hash;
+    int level1_world_geometry_loaded;
+    int level1_object_placement_loaded;
+    int transition_level_loaded;
+    int transition_target_object_count;
+    int transition_target_thing_count;
+    int world_object_count;
+    int real_track02_level1_media_bound;
+    int nonstartup_geometry_source_blocked;
+    int object_placement_source_blocked;
+    int loadertrace_geometry_window_missing;
+    int loadertrace_object_window_missing;
+    int dungeon_draw_route_allowed;
+    int dungeon_pixel_blit_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02Level1DrawBlockerReceipt;
+
+typedef struct {
+    int valid;
     int same_capture_as_render_admission;
     Theron_Track02Variant variant;
     char track02_md5[33];
@@ -1077,6 +1487,89 @@ int theron_v1_runtime_bind_track02_level_object_loader_route(
         *binding,
     const char *capture_trace,
     Theron_V1RuntimeTrack02LevelObjectLoaderRouteReceipt *out);
+
+int theron_v1_runtime_bind_track02_object_placement_state(
+    const Theron_V1RuntimeTrack02LevelObjectLoaderRouteReceipt *loader,
+    const Theron_Track02ObjectTable *objects,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02ObjectPlacementStateReceipt *out);
+
+int theron_v1_runtime_bind_track02_object_gameplay_semantics(
+    const Theron_V1RuntimeTrack02ObjectPlacementStateReceipt *placement,
+    const Theron_Track02ObjectTable *objects,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt *out);
+
+int theron_v1_runtime_publish_track02_object_gameplay_state(
+    Theron_V1_World *world,
+    Theron_DungeonID dungeon_id,
+    const Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt *semantics,
+    const Theron_Track02ObjectTable *objects,
+    Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt *out);
+
+int theron_v1_runtime_bind_track02_level_transition_handoff(
+    const Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt *source,
+    const Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt *target,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt *out);
+
+int theron_v1_runtime_publish_track02_level_transition(
+    Theron_V1_World *world,
+    const Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt *handoff,
+    const Theron_V1_Level *target_level,
+    const Theron_Track02ObjectTable *target_objects,
+    const Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt
+        *target_semantics,
+    Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *out);
+
+int theron_v1_runtime_bind_track02_bitmap_palette_source(
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *runtime,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02BitmapPaletteSourceReceipt *out);
+
+int theron_v1_runtime_decode_track02_bitmap_palette_vector(
+    const Theron_V1RuntimeTrack02BitmapPaletteSourceReceipt *source,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt *out);
+
+int theron_v1_runtime_bind_track02_m11_soul_room_consumption(
+    const Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt *decode,
+    Theron_V1_World *world,
+    int host_surface_width,
+    int host_surface_height,
+    int placement_x,
+    int placement_y,
+    int scale_x,
+    int scale_y,
+    Theron_V1RuntimeTrack02M11SoulRoomConsumptionReceipt *out);
+
+int theron_v1_runtime_bind_track02_m11_level_consumption(
+    const Theron_V1RuntimeTrack02BitmapPaletteDecodeVectorReceipt *decode,
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *transition,
+    Theron_V1_World *world,
+    int host_surface_width,
+    int host_surface_height,
+    int placement_x,
+    int placement_y,
+    int scale_x,
+    int scale_y,
+    Theron_V1RuntimeTrack02M11LevelConsumptionReceipt *out);
+
+int theron_v1_runtime_bind_track02_m11_dungeon_draw_route(
+    const Theron_V1RuntimeTrack02M11LevelConsumptionReceipt *level,
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *transition,
+    const Theron_V1_World *world,
+    Theron_V1RuntimeTrack02M11DungeonDrawRouteReceipt *out);
+
+int theron_v1_runtime_bind_track02_level1_draw_blocker(
+    const Theron_V1RuntimeTrack02M11LevelConsumptionReceipt *level,
+    const Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt *transition,
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    const Theron_V1_World *world,
+    const Theron_V1RuntimeTrack02M11DungeonDrawRouteReceipt *draw_route,
+    Theron_V1RuntimeTrack02Level1DrawBlockerReceipt *out);
 
 int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
     const char *capture_trace,

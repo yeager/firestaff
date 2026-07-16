@@ -1,6 +1,7 @@
 {
   "categories": {
     "asset/upscale": 3,
+    "orphan": 1,
     "runtime/ai": 1,
     "runtime/movement": 3,
     "runtime/shell": 9,
@@ -20,7 +21,7 @@
     "ui/minimap": 1,
     "visual/camera": 2,
     "visual/creature": 1,
-    "visual/effects": 14,
+    "visual/effects": 15,
     "visual/item": 1,
     "visual/lighting": 1,
     "visual/transition": 1
@@ -99,8 +100,10 @@
     "m11_v22_render_overlay_pc34",
     "m11_v22_shape_cache_pc34"
   ],
-  "errors": [],
-  "manifestCount": 17,
+  "errors": [
+    "no V2 manifests found"
+  ],
+  "manifestCount": 0,
   "matrix": [
     {
       "category": "support/achievements",
@@ -126,6 +129,11 @@
       "category": "support/persistence",
       "header": "include/dm1_v2_auto_save_pc34.h",
       "module": "src/dm1v2/dm1_v2_auto_save_pc34.c"
+    },
+    {
+      "category": "orphan",
+      "header": "include/dm1_v2_boot_pc34.h",
+      "module": "src/dm1v2/dm1_v2_boot_pc34.c"
     },
     {
       "category": "visual/camera",
@@ -348,6 +356,11 @@
       "module": "src/dm1v2/dm1_v2_spell_effect_overlay_pc34.c"
     },
     {
+      "category": "visual/effects",
+      "header": "include/dm1_v2_startup_title_filter_handoff_pc34.h",
+      "module": "src/dm1v2/dm1_v2_startup_title_filter_handoff_pc34.c"
+    },
+    {
       "category": "support/stats",
       "header": "include/dm1_v2_stat_tracker_pc34.h",
       "module": "src/dm1v2/dm1_v2_stat_tracker_pc34.c"
@@ -378,7 +391,7 @@
       "module": "src/dm1v2/dm1_v2_weather_fx_pc34.c"
     }
   ],
-  "moduleCount": 55,
+  "moduleCount": 57,
   "requiredCTestNames": [
     "dm1_v22_asset_pipeline",
     "dm1_v22_finished_art_material_gate_pc34",
@@ -453,7 +466,7 @@
     "m11_v22_render_overlay_pc34",
     "m11_v22_shape_cache_pc34"
   ],
-  "status": "passed",
-  "testCount": 39,
+  "status": "failed",
+  "testCount": 42,
   "toolCount": 48
 }

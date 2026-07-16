@@ -947,6 +947,2028 @@ int dm2_v1_skproject_xlat_palette(
     return 1;
 }
 
+static uint8_t dm2_v1_skproject_get_4bpp_pixel(
+    const uint8_t *bytes,
+    uint16_t pixel)
+{
+    uint8_t packed = bytes[pixel >> 1];
+    return (pixel & 1u) ? (uint8_t)(packed & 0x0fu)
+                        : (uint8_t)(packed >> 4);
+}
+
+static void dm2_v1_skproject_set_4bpp_pixel(
+    uint8_t *bytes,
+    uint16_t pixel,
+    uint8_t value)
+{
+    uint8_t *packed = &bytes[pixel >> 1];
+
+    value &= 0x0fu;
+    if (pixel & 1u)
+        *packed = (uint8_t)((*packed & 0xf0u) | value);
+    else
+        *packed = (uint8_t)((*packed & 0x0fu) | (uint8_t)(value << 4));
+}
+
+static int dm2_v1_skproject_4bpp_range_ok(
+    size_t size,
+    uint16_t offset,
+    uint16_t width)
+{
+    size_t end;
+
+    if (width == 0u) return 1;
+    end = (size_t)offset + (size_t)width - 1u;
+    return (end >> 1) < size;
+}
+
+static int dm2_v1_skproject_8bpp_range_ok(
+    size_t size,
+    uint16_t offset,
+    uint16_t width)
+{
+    size_t end;
+
+    if (width == 0u) return 1;
+    end = (size_t)offset + (size_t)width;
+    return end <= size;
+}
+
+void dm2_v1_skproject_ibmio_palette_state_init(
+    DM2_V1_SkprojectIbmioPaletteState *state)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+}
+
+int dm2_v1_skproject_00eb_04bc_palette_set(
+    DM2_V1_SkprojectIbmioPaletteState *state,
+    const uint8_t rgb888[16][3],
+    uint16_t set,
+    DM2_V1_SkprojectIbmioPaletteReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIbmioPaletteReceipt receipt;
+    uint16_t base;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.set = (uint8_t)set;
+    if (!state || !rgb888 || set >= 16u) {
+        receipt.blocked_missing_palette = !rgb888;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    base = (uint16_t)(set << 4);
+    for (uint16_t i = 0u; i < 16u; ++i) {
+        state->rgb6[base + i][0] = (uint8_t)(rgb888[i][0] >> 2);
+        state->rgb6[base + i][1] = (uint8_t)(rgb888[i][1] >> 2);
+        state->rgb6[base + i][2] = (uint8_t)(rgb888[i][2] >> 2);
+        if (set == 0u) {
+            state->base_rgb6[i][0] = state->rgb6[i][0];
+            state->base_rgb6[i][1] = state->rgb6[i][1];
+            state->base_rgb6[i][2] = state->rgb6[i][2];
+        }
+    }
+
+    receipt.valid = 1;
+    receipt.driver_update_requested = state->update_palette == 1u;
+    receipt.base_palette_updated = set == 0u;
+    receipt.palette_hash =
+        dm2_v1_skproject_hash_bytes(&state->rgb6[base], 16u * 3u);
+    receipt.receipt_hash =
+        dm2_v1_skproject_hash_bytes(&receipt, sizeof(receipt) -
+                                                   sizeof(receipt.receipt_hash));
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_0688_palette_set(
+    DM2_V1_SkprojectIbmioPaletteState *state,
+    const uint8_t rgb888[16][3],
+    uint16_t set,
+    DM2_V1_SkprojectIbmioPaletteReceipt *out_receipt)
+{
+    return dm2_v1_skproject_00eb_04bc_palette_set(
+        state, rgb888, set, out_receipt);
+}
+
+int dm2_v1_skproject_0759_06a1_select_palette_set(
+    DM2_V1_SkprojectIbmioPaletteState *state,
+    uint8_t set,
+    DM2_V1_SkprojectPaletteSetReceipt *out_receipt)
+{
+    DM2_V1_SkprojectPaletteSetReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt || set >= 16u) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    state->active_set = set;
+    receipt.valid = 1;
+    receipt.set = set;
+    receipt.driver_setcolors_requested = 1;
+    receipt.immediate_colors_after = state->update_palette == 1u;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_00eb_070c_blit_4to8(
+    const uint8_t *src4,
+    size_t src4_size,
+    uint16_t off_src_pixels,
+    uint8_t *dst8,
+    size_t dst8_size,
+    uint16_t off_dst_pixels,
+    uint16_t width_pixels,
+    const uint8_t palette16[16],
+    DM2_V1_SkprojectIbmioBlit4To8Receipt *out_receipt)
+{
+    DM2_V1_SkprojectIbmioBlit4To8Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.off_src_pixels = off_src_pixels;
+    receipt.off_dst_pixels = off_dst_pixels;
+    receipt.width_pixels = width_pixels;
+    if (!src4 || !dst8) {
+        receipt.blocked_missing_buffer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!palette16) {
+        receipt.blocked_missing_palette = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_4bpp_range_ok(src4_size, off_src_pixels,
+                                        width_pixels) ||
+        !dm2_v1_skproject_8bpp_range_ok(dst8_size, off_dst_pixels,
+                                        width_pixels)) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = 0u; i < width_pixels; ++i) {
+        uint8_t pixel = dm2_v1_skproject_get_4bpp_pixel(
+            src4, (uint16_t)(off_src_pixels + i));
+        dst8[(size_t)off_dst_pixels + i] = palette16[pixel];
+    }
+    receipt.valid = 1;
+    receipt.copied_pixels = width_pixels;
+    receipt.palette_hash = dm2_v1_skproject_hash_bytes(palette16, 16u);
+    receipt.dest_hash =
+        dm2_v1_skproject_hash_bytes(dst8 + off_dst_pixels, width_pixels);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_0310_blit_4to8_self(
+    const uint8_t *src4,
+    size_t src4_size,
+    uint16_t off_pixels,
+    uint8_t *dst8,
+    size_t dst8_size,
+    uint16_t width_pixels,
+    const uint8_t palette16[16],
+    DM2_V1_SkprojectIbmioBlit4To8Receipt *out_receipt)
+{
+    return dm2_v1_skproject_00eb_070c_blit_4to8(
+        src4, src4_size, off_pixels, dst8, dst8_size, off_pixels,
+        width_pixels, palette16, out_receipt);
+}
+
+int dm2_v1_skproject_0759_02c6_copy_4bpp_sequence(
+    uint8_t *buffer4,
+    size_t buffer4_size,
+    uint16_t off_dst_pixels,
+    uint16_t off_src_pixels,
+    uint16_t width_pixels,
+    DM2_V1_SkprojectAnimCopy4BppReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAnimCopy4BppReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.off_src_pixels = off_src_pixels;
+    receipt.off_dst_pixels = off_dst_pixels;
+    receipt.width_pixels = width_pixels;
+    if (!buffer4) {
+        receipt.blocked_missing_buffer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_4bpp_range_ok(buffer4_size, off_src_pixels,
+                                        width_pixels) ||
+        !dm2_v1_skproject_4bpp_range_ok(buffer4_size, off_dst_pixels,
+                                        width_pixels)) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint16_t i = 0u; i < width_pixels; ++i) {
+        uint8_t pixel = dm2_v1_skproject_get_4bpp_pixel(
+            buffer4, (uint16_t)(off_src_pixels + i));
+        dm2_v1_skproject_set_4bpp_pixel(
+            buffer4, (uint16_t)(off_dst_pixels + i), pixel);
+    }
+    receipt.valid = 1;
+    receipt.copied_pixels = width_pixels;
+    receipt.buffer_hash = dm2_v1_skproject_hash_bytes(buffer4, buffer4_size);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+void dm2_v1_skproject_mouse_state_init(
+    DM2_V1_SkprojectMouseState *state)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+}
+
+int dm2_v1_skproject_01b0_0adb_hide_mouse(
+    DM2_V1_SkprojectMouseState *state,
+    DM2_V1_SkprojectMouseHideReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseHideReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.hide_depth_before = state->hide_depth;
+    if (state->hide_depth++ == 0u) {
+        state->event_lock_depth++;
+        state->cursor_redraws++;
+        state->event_lock_depth--;
+        receipt.locked_mouse_event = 1u;
+        receipt.redrew_cursor = 1u;
+    }
+    receipt.hide_depth_after = state->hide_depth;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_01b0_0c70_set_cursor_shape(
+    DM2_V1_SkprojectMouseState *state,
+    uint16_t shape,
+    DM2_V1_SkprojectMouseShapeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseShapeReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.shape_before = state->cursor_shape;
+    if (state->hide_depth == 0u) {
+        state->cursor_redraws++;
+        receipt.redrew_before_shape_change = 1u;
+    }
+    state->cursor_shape = shape;
+    receipt.shape_after = state->cursor_shape;
+    if (state->hide_depth == 0u) {
+        state->cursor_redraws++;
+        receipt.redrew_after_shape_change = 1u;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_01b0_0ca4_set_cursor_bounds(
+    DM2_V1_SkprojectMouseState *state,
+    const uint16_t bounds[4],
+    uint16_t mode,
+    DM2_V1_SkprojectMouseBoundsReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseBoundsReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!bounds) {
+        receipt.blocked_missing_bounds = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    memcpy(state->cursor_bounds, bounds, sizeof(state->cursor_bounds));
+    state->cursor_bounds_mode = mode;
+    state->cursor_bounds_dirty = 1u;
+    memcpy(receipt.bounds, bounds, sizeof(receipt.bounds));
+    receipt.mode = mode;
+    receipt.bounds_dirty = state->cursor_bounds_dirty;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+void dm2_v1_skproject_anim_runtime_state_init(
+    DM2_V1_SkprojectAnimRuntimeState *state)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->screen_rect.x = 0;
+    state->screen_rect.y = 0;
+    state->screen_rect.w = 320;
+    state->screen_rect.h = 200;
+}
+
+int dm2_v1_skproject_anim_runtime_push_event(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    uint16_t event_word)
+{
+    uint8_t write_index;
+
+    if (!state || state->event_count >= 10u) return 0;
+    write_index = (uint8_t)((state->event_read_index + state->event_count) % 10u);
+    state->event_queue[write_index] = event_word;
+    state->event_count++;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_0126_capture_int_ff(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    uint32_t host_vector,
+    DM2_V1_SkprojectAnimVectorReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAnimVectorReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    state->interrupt_ff_vector = host_vector;
+    receipt.valid = 1;
+    receipt.captured_vector = host_vector;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_06db_install_timer(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    uint32_t host_vector,
+    uint16_t timer_reload_ticks,
+    DM2_V1_SkprojectAnimTimerInstallReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAnimTimerInstallReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt || timer_reload_ticks == 0u) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    state->interrupt_fe_vector = host_vector;
+    state->active_interrupt_fe_vector = host_vector;
+    state->timer_reload_ticks = timer_reload_ticks;
+    state->display_callback_installed = 1u;
+    receipt.valid = 1;
+    receipt.captured_vector = host_vector;
+    receipt.active_vector = state->active_interrupt_fe_vector;
+    receipt.timer_reload_ticks = timer_reload_ticks;
+    receipt.callback_installed = state->display_callback_installed;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_06c2_timer_tick(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectAnimTimerTickReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAnimTimerTickReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt || state->timer_reload_ticks == 0u) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.countdown_before = state->anim_countdown;
+    receipt.timer_reload_ticks = state->timer_reload_ticks;
+    state->anim_countdown -= (int32_t)state->timer_reload_ticks;
+    receipt.countdown_after = state->anim_countdown;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_072c_poll_ibmio(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectIbmioPollReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIbmioPollReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.display_callback_called =
+        (uint8_t)(state->display_mode_active && state->display_callback_installed);
+    receipt.event_available = (uint8_t)(state->event_count != 0u);
+    receipt.event_count = state->event_count;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_071b_wait_ibmio_event(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectIbmioWaitEventReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIbmioWaitEventReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.event_count_before = state->event_count;
+    if (state->event_count == 0u) {
+        receipt.blocked_no_event = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.event_word = state->event_queue[state->event_read_index];
+    state->event_read_index = (uint8_t)((state->event_read_index + 1u) % 10u);
+    state->event_count--;
+    receipt.event_count_after = state->event_count;
+    receipt.event_read_index_after = state->event_read_index;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_065f_fill_screen_rect(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectScreenRectFillReceipt *out_receipt)
+{
+    DM2_V1_SkprojectScreenRectFillReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt || state->screen_rect.w <= 0 ||
+        state->screen_rect.h <= 0) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.rect = state->screen_rect;
+    receipt.color = 0u;
+    receipt.filled_pixels =
+        (uint32_t)((int32_t)state->screen_rect.w * (int32_t)state->screen_rect.h);
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0759_06b5_clear_screen(
+    DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectScreenClearReceipt *out_receipt)
+{
+    DM2_V1_SkprojectScreenClearReceipt receipt;
+    uint16_t si = 1u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    do {
+        if (si < 0xfa00u)
+            receipt.lines_filled++;
+        receipt.lfsr_lines_visited++;
+        si = (uint16_t)((si & 1u) ? ((si >> 1u) ^ 0xb400u) : (si >> 1u));
+    } while (si != 1u);
+    receipt.lines_filled++;
+    receipt.valid = 1;
+    receipt.color = 0u;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_01b0_1ed2_sound_available(
+    const DM2_V1_SkprojectAnimRuntimeState *state,
+    DM2_V1_SkprojectSoundAvailableReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundAvailableReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.sound_card_type = state->sound_card_type;
+    receipt.available = (uint8_t)(state->sound_card_type != 0u);
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+void dm2_v1_skproject_ui_predicate_state_init(
+    DM2_V1_SkprojectUiPredicateState *state)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    for (size_t i = 0u; i < 4u; ++i)
+        state->player_at_position[i] = -1;
+}
+
+static int dm2_v1_skproject_ui_predicate_prepare(
+    uint8_t predicate_index,
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt,
+    DM2_V1_SkprojectUiPredicateReceipt *receipt)
+{
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->predicate_index = predicate_index;
+    if (!state) receipt->blocked_missing_state = 1;
+    if (!ref) receipt->blocked_missing_ref = 1;
+    if (!state || !ref) {
+        *out_receipt = *receipt;
+        return 0;
+    }
+    receipt->ref_b0 = ref->b0;
+    receipt->ref_b1 = ref->b1;
+    receipt->ref_w2 = ref->w2;
+    return 1;
+}
+
+static int dm2_v1_skproject_ui_predicate_finish(
+    DM2_V1_SkprojectUiPredicateReceipt *receipt,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    receipt->valid = 1;
+    receipt->receipt_hash = dm2_v1_skproject_hash_bytes(
+        receipt, sizeof(*receipt) - sizeof(receipt->receipt_hash));
+    *out_receipt = *receipt;
+    return receipt->result ? 1 : 0;
+}
+
+int dm2_v1_skproject_return_1(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_RETURN_1, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.result = 1u;
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_is_game_ended(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_IS_GAME_ENDED, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.result = (uint8_t)(ref->b1 == state->game_has_ended);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_0023(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_0023, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.result = (uint8_t)(ref->b1 == state->selected_panel_token);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_003e(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+    int inventory_mirror;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_003E, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    inventory_mirror = state->champion_inventory != 0u &&
+                       ref->b1 >= 4u &&
+                       (uint8_t)(ref->b1 - 4u) == state->champion_inventory;
+    receipt.result = (uint8_t)((ref->b1 == state->champion_inventory) ||
+                               !(ref->b1 <= 4u || inventory_mirror));
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_007b(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_007B, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    if (ref->b1 >= 4u) {
+        receipt.blocked_champion_index = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.result = (uint8_t)(state->champion_hp[ref->b1] != 0u);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_009e(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_009E, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.player_position_index =
+        (uint8_t)((ref->b1 + state->player_dir) & 3u);
+    receipt.player_at_position =
+        state->player_at_position[receipt.player_position_index];
+    receipt.result = (uint8_t)(receipt.player_at_position >= 0);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_00c5(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_00C5, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.result = (uint8_t)(((ref->b1 == 0u) &&
+                                (state->toggle_5dbc == 0u)) ||
+                               ((ref->b1 != 0u) &&
+                                (state->toggle_5dbc != 0u)));
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_00f3(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_00F3, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    if (state->champion_index == 0u) {
+        if (ref->b1 > 3u) {
+            receipt.result = 1u;
+            return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+        }
+        receipt.player_position_index =
+            (uint8_t)((ref->b1 + state->player_dir) & 3u);
+        receipt.player_at_position =
+            state->player_at_position[receipt.player_position_index];
+        receipt.result = (uint8_t)(receipt.player_at_position >= 0);
+    }
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_012d(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_012D, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.result = (uint8_t)(state->champion_index != 0u &&
+                               ref->b1 == state->selected_spell_panel);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_014f(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+    uint8_t hero_slot;
+    uint8_t runes_count;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_014F, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    if (state->champion_index == 0u) {
+        return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+    }
+    hero_slot = (uint8_t)(state->champion_index - 1u);
+    if (hero_slot >= 4u) {
+        receipt.blocked_champion_index = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    runes_count = state->champion_runes_count[hero_slot];
+    if (runes_count < 8u)
+        receipt.result = (uint8_t)((ref->b1 & (uint8_t)(1u << runes_count)) != 0u);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_0184(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_0184, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    if (state->champion_index != 0u) {
+        if ((state->magical_map_flags & 0x8000u) != 0u)
+            receipt.result = (uint8_t)(ref->b1 == state->selected_spell_panel);
+        else
+            receipt.result = (uint8_t)(ref->b1 == 5u);
+    }
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_01ba(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    if (!dm2_v1_skproject_ui_predicate_prepare(
+            DM2_V1_SKPROJECT_UI_PRED_1031_01BA, state, ref, out_receipt,
+            &receipt)) {
+        return 0;
+    }
+    receipt.result = (uint8_t)(ref->b1 == state->right_panel_type);
+    return dm2_v1_skproject_ui_predicate_finish(&receipt, out_receipt);
+}
+
+int dm2_v1_skproject_1031_dispatch_predicate(
+    uint8_t predicate_index,
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPredicateReceipt receipt;
+
+    switch (predicate_index) {
+    case DM2_V1_SKPROJECT_UI_PRED_RETURN_1:
+        return dm2_v1_skproject_return_1(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_IS_GAME_ENDED:
+        return dm2_v1_skproject_is_game_ended(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_0023:
+        return dm2_v1_skproject_1031_0023(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_003E:
+        return dm2_v1_skproject_1031_003e(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_007B:
+        return dm2_v1_skproject_1031_007b(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_009E:
+        return dm2_v1_skproject_1031_009e(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_00C5:
+        return dm2_v1_skproject_1031_00c5(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_00F3:
+        return dm2_v1_skproject_1031_00f3(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_012D:
+        return dm2_v1_skproject_1031_012d(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_014F:
+        return dm2_v1_skproject_1031_014f(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_0184:
+        return dm2_v1_skproject_1031_0184(state, ref, out_receipt);
+    case DM2_V1_SKPROJECT_UI_PRED_1031_01BA:
+        return dm2_v1_skproject_1031_01ba(state, ref, out_receipt);
+    default:
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        if (!out_receipt) return 0;
+        memset(&receipt, 0, sizeof(receipt));
+        receipt.predicate_index = predicate_index;
+        receipt.blocked_unknown_predicate = 1;
+        if (ref) {
+            receipt.ref_b0 = ref->b0;
+            receipt.ref_b1 = ref->b1;
+            receipt.ref_w2 = ref->w2;
+        }
+        *out_receipt = receipt;
+        return 0;
+    }
+}
+
+int dm2_v1_skproject_1031_023b_child_list(
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiChildListReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiChildListReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!ref) receipt.blocked_missing_ref = 1u;
+    if (!child_bytes) receipt.blocked_missing_child_bytes = 1u;
+    if (!ref || !child_bytes) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.child_offset = ref->w2;
+    if ((size_t)ref->w2 >= child_bytes_size) {
+        receipt.blocked_child_offset = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.first_child_index = (uint8_t)(child_bytes[ref->w2] & 0x7fu);
+    receipt.first_child_has_stop_bit = (uint8_t)((child_bytes[ref->w2] & 0x80u) != 0u);
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_1031_01d5_resolve_rect(
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectUiResolveRectReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiResolveRectReceipt receipt;
+    uint16_t base_rectno = (uint16_t)(rectno & 0x3fffu);
+    uint16_t offset_rectno = 0xffffu;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_rectno = rectno;
+    receipt.base_rectno = base_rectno;
+    receipt.offset_rectno = 0xffffu;
+    if (!expanded_rects || !topleft_rects)
+        receipt.blocked_missing_rects = 1u;
+    if (!out_rect)
+        receipt.blocked_missing_output = 1u;
+    if (!expanded_rects || !topleft_rects || !out_rect) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (base_rectno >= expanded_rect_count) {
+        receipt.blocked_rect_out_of_bounds = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    *out_rect = expanded_rects[base_rectno];
+    if ((rectno & 0x8000u) != 0u) {
+        offset_rectno = 7u;
+        receipt.applied_8000_offset = 1u;
+    } else if ((rectno & 0x4000u) != 0u) {
+        offset_rectno = 18u;
+        receipt.applied_4000_offset = 1u;
+    }
+    if (offset_rectno != 0xffffu) {
+        if (offset_rectno >= topleft_rect_count) {
+            receipt.blocked_rect_out_of_bounds = 1u;
+            *out_receipt = receipt;
+            return 0;
+        }
+        out_rect->x = (int16_t)(out_rect->x + topleft_rects[offset_rectno].x);
+        out_rect->y = (int16_t)(out_rect->y + topleft_rects[offset_rectno].y);
+        receipt.offset_rectno = offset_rectno;
+    }
+    receipt.rect = *out_rect;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int dm2_v1_skproject_1031_027e_walk(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *parent,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    uint8_t depth,
+    DM2_V1_SkprojectUiTraverseReceipt *receipt)
+{
+    size_t cursor;
+    uint8_t predicate_index;
+
+    if (depth > 32u) {
+        receipt->blocked_recursion_limit = 1u;
+        return 0;
+    }
+    if ((size_t)parent->w2 >= child_bytes_size) {
+        receipt->blocked_child_offset = 1u;
+        return 0;
+    }
+    cursor = parent->w2;
+    predicate_index = (uint8_t)(parent->b0 & 0x7fu);
+    for (;;) {
+        uint8_t node_index = (uint8_t)(child_bytes[cursor] & 0x7fu);
+        const DM2_V1_SkprojectUiNodeRef *child;
+        DM2_V1_SkprojectUiPredicateReceipt pred_receipt;
+        int admitted;
+
+        if (node_index >= node_count) {
+            receipt->blocked_node_index = 1u;
+            receipt->last_node_index = node_index;
+            return 0;
+        }
+        child = &nodes[node_index];
+        receipt->visited_nodes++;
+        receipt->last_predicate_index = predicate_index;
+        receipt->last_node_index = node_index;
+        admitted = dm2_v1_skproject_1031_dispatch_predicate(
+            predicate_index, state, child, &pred_receipt);
+        if (pred_receipt.blocked_unknown_predicate ||
+            pred_receipt.blocked_champion_index ||
+            pred_receipt.blocked_missing_ref ||
+            pred_receipt.blocked_missing_state) {
+            receipt->blocked_node_index = pred_receipt.blocked_unknown_predicate;
+            return 0;
+        }
+        if (admitted) {
+            if ((child->b0 & 0x80u) != 0u) {
+                receipt->recursed_nodes++;
+                if (!dm2_v1_skproject_1031_027e_walk(
+                        state, child, nodes, node_count, child_bytes,
+                        child_bytes_size, leaf_meta, leaf_meta_count,
+                        (uint8_t)(depth + 1u), receipt)) {
+                    return 0;
+                }
+            } else {
+                if (child->w2 >= leaf_meta_count) {
+                    receipt->blocked_leaf_index = 1u;
+                    return 0;
+                }
+                leaf_meta[child->w2].b6 |= 0x40u;
+                receipt->marked_leaves++;
+            }
+        } else {
+            receipt->rejected_nodes++;
+        }
+        cursor++;
+        if (cursor >= child_bytes_size) {
+            receipt->blocked_child_offset = 1u;
+            return 0;
+        }
+        if ((child_bytes[cursor] & 0x80u) != 0u)
+            return 1;
+    }
+}
+
+int dm2_v1_skproject_1031_027e_traverse(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiTraverseReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiTraverseReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) receipt.blocked_missing_state = 1u;
+    if (!nodes || !root) receipt.blocked_missing_nodes = 1u;
+    if (!child_bytes) receipt.blocked_missing_child_bytes = 1u;
+    if (!leaf_meta) receipt.blocked_missing_leaf_meta = 1u;
+    if (!state || !nodes || !root || !child_bytes || !leaf_meta) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_1031_027e_walk(
+            state, root, nodes, node_count, child_bytes, child_bytes_size,
+            leaf_meta, leaf_meta_count, 0u, &receipt)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.leaf_meta_hash =
+        dm2_v1_skproject_hash_bytes(leaf_meta,
+                                    (size_t)leaf_meta_count * sizeof(*leaf_meta));
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_1031_024c_action_list(
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiActionListReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiActionListReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!ref) receipt.blocked_missing_ref = 1u;
+    if (!leaf_meta) receipt.blocked_missing_leaf_meta = 1u;
+    if (!ref || !leaf_meta) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.leaf_index = ref->w2;
+    if (ref->w2 >= leaf_meta_count) {
+        receipt.blocked_leaf_index = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.action_index = leaf_meta[ref->w2].w2;
+    receipt.found = (uint8_t)(receipt.action_index != 0xffffu);
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return receipt.found ? 1 : 0;
+}
+
+static int dm2_v1_skproject_ui_action_index_valid(
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index);
+
+void dm2_v1_skproject_ui_runtime_state_init(
+    DM2_V1_SkprojectUiRuntimeState *state)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->selected_rectno = 0xffffu;
+    state->selected_offset_rectno = 0xffffu;
+}
+
+static uint16_t dm2_v1_skproject_1031_event_delta(
+    uint16_t selected_event,
+    uint16_t first_event)
+{
+    return (uint16_t)(selected_event - (uint16_t)(first_event - 1u));
+}
+
+static uint16_t dm2_v1_skproject_1031_offset_rectno(uint16_t rectno)
+{
+    if ((rectno & 0x8000u) != 0u) return 7u;
+    if ((rectno & 0x4000u) != 0u) return 18u;
+    return 0xffffu;
+}
+
+static void dm2_v1_skproject_1031_apply_resolved_action(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_index,
+    uint16_t first_action_index,
+    const DM2_V1_SkprojectRect *rect,
+    int16_t selected_x,
+    int16_t selected_y,
+    DM2_V1_SkprojectUiActionResolveReceipt *receipt)
+{
+    uint16_t selected_event = (uint16_t)(actions[action_index].w0 & 0x07ffu);
+    uint16_t first_event =
+        (uint16_t)(actions[first_action_index].w0 & 0x07ffu);
+    uint16_t offset_rectno =
+        dm2_v1_skproject_1031_offset_rectno(actions[action_index].w2);
+    uint16_t base_rectno = (uint16_t)(actions[action_index].w2 & 0x3fffu);
+
+    runtime->selected_rectno = base_rectno;
+    runtime->selected_offset_rectno = offset_rectno;
+    runtime->selected_x = selected_x;
+    runtime->selected_y = selected_y;
+    runtime->ui_event_code = selected_event;
+    runtime->queued_action_code = 0u;
+    runtime->ui_event_delta =
+        dm2_v1_skproject_1031_event_delta(selected_event, first_event);
+
+    receipt->found = 1u;
+    receipt->valid = 1;
+    receipt->selected_event = selected_event;
+    receipt->selected_action_index = action_index;
+    receipt->selected_rectno = base_rectno;
+    receipt->selected_offset_rectno = offset_rectno;
+    receipt->selected_event_delta = runtime->ui_event_delta;
+    receipt->selected_x = selected_x;
+    receipt->selected_y = selected_y;
+    receipt->rect = *rect;
+}
+
+int dm2_v1_skproject_1031_0a88_action_hit(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    int16_t point_x,
+    int16_t point_y,
+    uint16_t action_mask,
+    DM2_V1_SkprojectUiActionResolveReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiActionResolveReceipt receipt;
+    uint16_t ordinal = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.point_x = point_x;
+    receipt.point_y = point_y;
+    receipt.action_mask = action_mask;
+    if (!runtime) receipt.blocked_missing_runtime = 1u;
+    if (!actions) receipt.blocked_missing_actions = 1u;
+    if (!expanded_rects || !topleft_rects) receipt.blocked_missing_rects = 1u;
+    if (!runtime || !actions || !expanded_rects || !topleft_rects) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_ui_action_index_valid(
+            actions, action_count, action_index)) {
+        receipt.blocked_action_index = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = action_index; i < action_count; ++i, ++ordinal) {
+        DM2_V1_SkprojectRect rect;
+        DM2_V1_SkprojectUiResolveRectReceipt rect_receipt;
+        uint16_t mask = (uint16_t)(actions[i].w4 & 0x00ffu);
+
+        receipt.scanned_actions++;
+        if ((actions[i].w4 & 0x0800u) == 0u &&
+            (action_mask & mask) != 0u) {
+            if (!dm2_v1_skproject_1031_01d5_resolve_rect(
+                    actions[i].w2, expanded_rects, expanded_rect_count,
+                    topleft_rects, topleft_rect_count, &rect, &rect_receipt)) {
+                receipt.blocked_rect_lookup = 1u;
+                *out_receipt = receipt;
+                return 0;
+            }
+            if (rect.x <= point_x &&
+                (int16_t)(rect.x + rect.w - 1) >= point_x &&
+                rect.y <= point_y &&
+                (int16_t)(rect.y + rect.h - 1) >= point_y) {
+                receipt.selected_action_ordinal = ordinal;
+                dm2_v1_skproject_1031_apply_resolved_action(
+                    runtime, actions, i, action_index, &rect, point_x, point_y,
+                    &receipt);
+                receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+                    &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+                *out_receipt = receipt;
+                return 1;
+            }
+        }
+        if ((actions[i].w0 & 0x8000u) != 0u)
+            break;
+    }
+    receipt.rect.w = 0;
+    receipt.rect.h = 0;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_1031_0c58_select_event(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    uint16_t event_code,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    DM2_V1_SkprojectUiActionResolveReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiActionResolveReceipt receipt;
+    uint16_t ordinal = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!runtime) receipt.blocked_missing_runtime = 1u;
+    if (!actions) receipt.blocked_missing_actions = 1u;
+    if (!expanded_rects || !topleft_rects) receipt.blocked_missing_rects = 1u;
+    if (!runtime || !actions || !expanded_rects || !topleft_rects) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    runtime->selected_offset_rectno = 0xffffu;
+    if (!dm2_v1_skproject_ui_action_index_valid(
+            actions, action_count, action_index)) {
+        receipt.blocked_action_index = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = action_index; i < action_count; ++i, ++ordinal) {
+        uint16_t current_event = (uint16_t)(actions[i].w0 & 0x07ffu);
+
+        if (current_event == 0u)
+            break;
+        receipt.scanned_actions++;
+        if ((actions[i].w4 & 0x0800u) == 0u && current_event == event_code) {
+            DM2_V1_SkprojectRect rect;
+            DM2_V1_SkprojectUiResolveRectReceipt rect_receipt;
+
+            if (!dm2_v1_skproject_1031_01d5_resolve_rect(
+                    actions[i].w2, expanded_rects, expanded_rect_count,
+                    topleft_rects, topleft_rect_count, &rect, &rect_receipt)) {
+                receipt.blocked_rect_lookup = 1u;
+                *out_receipt = receipt;
+                return 0;
+            }
+            receipt.selected_action_ordinal = ordinal;
+            dm2_v1_skproject_1031_apply_resolved_action(
+                runtime, actions, i, action_index, &rect, rect.x, rect.y,
+                &receipt);
+            receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+                &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+            *out_receipt = receipt;
+            return 1;
+        }
+        if ((actions[i].w0 & 0x8000u) != 0u)
+            break;
+    }
+
+    runtime->selected_rectno = 0xffffu;
+    runtime->selected_x = 0;
+    runtime->selected_y = 0;
+    runtime->ui_event_code = event_code;
+    runtime->ui_event_delta = 0u;
+    runtime->queued_action_code = 0u;
+    receipt.selected_event = event_code;
+    receipt.selected_rectno = 0xffffu;
+    receipt.selected_offset_rectno = runtime->selected_offset_rectno;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_1031_0b7e_flush_pending_mouse(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    DM2_V1_SkprojectUiEventResetReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiEventResetReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!runtime || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.previous_event_code = runtime->ui_event_code;
+    if (runtime->pending_mouse_event != 0u) {
+        if (runtime->event_count >= 11u) {
+            receipt.dropped_events = 1u;
+            *out_receipt = receipt;
+            return 0;
+        }
+        uint8_t index =
+            (uint8_t)((runtime->event_read_index + runtime->event_count) % 11u);
+        runtime->event_queue[index] = runtime->pending_event;
+        runtime->event_write_index = index;
+        runtime->event_count++;
+        runtime->pending_mouse_event = 0u;
+        receipt.queued_pending_event = 1u;
+    }
+    receipt.kept_events = runtime->event_count;
+    receipt.event_code_after = runtime->ui_event_code;
+    receipt.selected_rectno_after = runtime->selected_rectno;
+    receipt.queue_hash = dm2_v1_skproject_hash_bytes(
+        runtime->event_queue, sizeof(runtime->event_queue));
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_1031_10c8_center_button(
+    DM2_V1_SkprojectUiButtonGroup *group,
+    const DM2_V1_SkprojectRect *container_rect,
+    const DM2_V1_SkprojectRect *mouse_rect,
+    uint16_t width,
+    uint16_t height,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectUiCenteredButtonReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiCenteredButtonReceipt receipt;
+    const DM2_V1_SkprojectRect *container;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.width = width;
+    receipt.height = height;
+    if (!group) receipt.blocked_missing_group = 1u;
+    if (!out_rect) receipt.blocked_missing_output = 1u;
+    if (!group || !out_rect) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.button_dbidx_before = group->button_dbidx;
+    if (group->button_dbidx == 0xffffu) {
+        if (!mouse_rect) {
+            receipt.blocked_missing_container = 1u;
+            *out_receipt = receipt;
+            return 0;
+        }
+        group->rect = *mouse_rect;
+        group->copied_mouse_rect = 1u;
+        group->allocated_clickrectdata = 1u;
+        receipt.mouse_rect = *mouse_rect;
+        receipt.copied_mouse_rect = 1u;
+        receipt.requested_alloc_clickrectdata = 1u;
+    }
+    container = container_rect ? container_rect : &group->rect;
+    if (!container) {
+        receipt.blocked_missing_container = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.container_rect = *container;
+    out_rect->x = (int16_t)(container->x + (int16_t)((container->w - (int16_t)width) / 2));
+    out_rect->y = (int16_t)(container->y + (int16_t)((container->h - (int16_t)height) / 2));
+    out_rect->w = (int16_t)width;
+    out_rect->h = (int16_t)height;
+    receipt.centered_rect = *out_rect;
+    receipt.button_dbidx_after = group->button_dbidx;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int dm2_v1_skproject_ui_action_index_valid(
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index)
+{
+    return actions && action_index != 0xffffu && action_index < action_count;
+}
+
+static int dm2_v1_skproject_1031_scan_action_list(
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_index,
+    uint16_t action_mask,
+    DM2_V1_SkprojectUiHitTestReceipt *hit_receipt,
+    DM2_V1_SkprojectUiActionSearchReceipt *search_receipt)
+{
+    uint16_t ordinal = 0u;
+
+    if (!dm2_v1_skproject_ui_action_index_valid(actions, action_count, action_index)) {
+        if (hit_receipt) hit_receipt->blocked_action_index = 1u;
+        if (search_receipt) search_receipt->blocked_action_index = 1u;
+        return 0;
+    }
+    for (uint16_t i = action_index; i < action_count; ++i, ++ordinal) {
+        uint16_t event_code = (uint16_t)(actions[i].w0 & 0x07ffu);
+        uint16_t mask = (uint16_t)(actions[i].w4 & 0x00ffu);
+
+        if (hit_receipt) {
+            if ((actions[i].w4 & 0x0800u) == 0u && (action_mask & mask) != 0u) {
+                hit_receipt->selected_event = event_code;
+                hit_receipt->selected_action_index = i;
+                hit_receipt->selected_rectno = actions[i].w2;
+                hit_receipt->selected_action_ordinal = ordinal;
+                return 1;
+            }
+        }
+        if (search_receipt && actions[i].w2 == action_mask) {
+            search_receipt->selected_event = event_code;
+            search_receipt->selected_action_index = i;
+            return 1;
+        }
+        if ((actions[i].w0 & 0x8000u) != 0u)
+            return 0;
+    }
+    if (hit_receipt) hit_receipt->blocked_action_index = 1u;
+    if (search_receipt) search_receipt->blocked_action_index = 1u;
+    return 0;
+}
+
+static int dm2_v1_skproject_1031_030a_walk(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *parent,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    uint8_t depth,
+    DM2_V1_SkprojectUiHitTestReceipt *receipt)
+{
+    size_t cursor;
+    uint8_t predicate_index;
+
+    if (depth > 32u) {
+        receipt->blocked_recursion_limit = 1u;
+        return 0;
+    }
+    if ((size_t)parent->w2 >= child_bytes_size) {
+        receipt->blocked_child_offset = 1u;
+        return 0;
+    }
+    cursor = parent->w2;
+    predicate_index = (uint8_t)(parent->b0 & 0x7fu);
+    for (;;) {
+        uint8_t node_index = (uint8_t)(child_bytes[cursor] & 0x7fu);
+        const DM2_V1_SkprojectUiNodeRef *child;
+        DM2_V1_SkprojectUiPredicateReceipt pred_receipt;
+
+        if (node_index >= node_count) {
+            receipt->blocked_node_index = 1u;
+            return 0;
+        }
+        child = &nodes[node_index];
+        receipt->visited_nodes++;
+        if (dm2_v1_skproject_1031_dispatch_predicate(
+                predicate_index, state, child, &pred_receipt)) {
+            if ((child->b0 & 0x80u) != 0u) {
+                receipt->recursed_nodes++;
+                if (dm2_v1_skproject_1031_030a_walk(
+                        state, child, nodes, node_count, child_bytes,
+                        child_bytes_size, leaf_meta, leaf_meta_count, actions,
+                        action_count, expanded_rects, expanded_rect_count,
+                        topleft_rects, topleft_rect_count, (uint8_t)(depth + 1u),
+                        receipt)) {
+                    return 1;
+                }
+                if (receipt->blocked_node_index || receipt->blocked_child_offset ||
+                    receipt->blocked_leaf_index || receipt->blocked_rect_lookup ||
+                    receipt->blocked_recursion_limit) {
+                    return 0;
+                }
+            } else {
+                DM2_V1_SkprojectRect rect;
+                DM2_V1_SkprojectUiResolveRectReceipt rect_receipt;
+                uint16_t action_index;
+
+                if (child->w2 >= leaf_meta_count) {
+                    receipt->blocked_leaf_index = 1u;
+                    return 0;
+                }
+                receipt->tested_leaves++;
+                if (!dm2_v1_skproject_1031_01d5_resolve_rect(
+                        leaf_meta[child->w2].w0, expanded_rects, expanded_rect_count,
+                        topleft_rects, topleft_rect_count, &rect, &rect_receipt)) {
+                    receipt->blocked_rect_lookup = 1u;
+                    return 0;
+                }
+                if (rect.x <= receipt->point_x &&
+                    (int16_t)(rect.x + rect.w - 1) >= receipt->point_x &&
+                    rect.y <= receipt->point_y &&
+                    (int16_t)(rect.y + rect.h - 1) >= receipt->point_y) {
+                    action_index = leaf_meta[child->w2].w2;
+                    if (dm2_v1_skproject_1031_scan_action_list(
+                            actions, action_count, action_index, receipt->action_mask,
+                            receipt, NULL)) {
+                        receipt->selected_leaf_index = child->w2;
+                        return 1;
+                    }
+                }
+            }
+        } else {
+            receipt->rejected_nodes++;
+        }
+        cursor++;
+        if (cursor >= child_bytes_size) {
+            receipt->blocked_child_offset = 1u;
+            return 0;
+        }
+        if ((child_bytes[cursor] & 0x80u) != 0u)
+            return 0;
+    }
+}
+
+int dm2_v1_skproject_1031_030a_hit_test(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    int16_t point_x,
+    int16_t point_y,
+    uint16_t action_mask,
+    DM2_V1_SkprojectUiHitTestReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiHitTestReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.point_x = point_x;
+    receipt.point_y = point_y;
+    receipt.action_mask = action_mask;
+    if (!state) receipt.blocked_missing_state = 1u;
+    if (!root || !nodes) receipt.blocked_missing_nodes = 1u;
+    if (!child_bytes) receipt.blocked_missing_child_bytes = 1u;
+    if (!leaf_meta) receipt.blocked_missing_leaf_meta = 1u;
+    if (!actions) receipt.blocked_missing_actions = 1u;
+    if (!expanded_rects || !topleft_rects) receipt.blocked_missing_rects = 1u;
+    if (!state || !root || !nodes || !child_bytes || !leaf_meta || !actions ||
+        !expanded_rects || !topleft_rects) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (dm2_v1_skproject_1031_030a_walk(
+            state, root, nodes, node_count, child_bytes, child_bytes_size,
+            leaf_meta, leaf_meta_count, actions, action_count, expanded_rects,
+            expanded_rect_count, topleft_rects, topleft_rect_count, 0u,
+            &receipt)) {
+        receipt.valid = 1;
+        receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+            &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 0;
+}
+
+static int dm2_v1_skproject_1031_03f2_walk(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *parent,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint8_t depth,
+    DM2_V1_SkprojectUiActionSearchReceipt *receipt)
+{
+    size_t cursor;
+    uint8_t predicate_index;
+
+    if (depth > 32u) {
+        receipt->blocked_recursion_limit = 1u;
+        return 0;
+    }
+    if ((size_t)parent->w2 >= child_bytes_size) {
+        receipt->blocked_child_offset = 1u;
+        return 0;
+    }
+    cursor = parent->w2;
+    predicate_index = (uint8_t)(parent->b0 & 0x7fu);
+    for (;;) {
+        uint8_t node_index = (uint8_t)(child_bytes[cursor] & 0x7fu);
+        const DM2_V1_SkprojectUiNodeRef *child;
+        DM2_V1_SkprojectUiPredicateReceipt pred_receipt;
+
+        if (node_index >= node_count) {
+            receipt->blocked_node_index = 1u;
+            return 0;
+        }
+        child = &nodes[node_index];
+        receipt->visited_nodes++;
+        if (dm2_v1_skproject_1031_dispatch_predicate(
+                predicate_index, state, child, &pred_receipt)) {
+            if ((child->b0 & 0x80u) != 0u) {
+                receipt->recursed_nodes++;
+                if (dm2_v1_skproject_1031_03f2_walk(
+                        state, child, nodes, node_count, child_bytes,
+                        child_bytes_size, leaf_meta, leaf_meta_count, actions,
+                        action_count, (uint8_t)(depth + 1u), receipt)) {
+                    return 1;
+                }
+                if (receipt->blocked_node_index || receipt->blocked_child_offset ||
+                    receipt->blocked_leaf_index || receipt->blocked_action_index ||
+                    receipt->blocked_recursion_limit) {
+                    return 0;
+                }
+            } else {
+                uint16_t action_index;
+
+                if (child->w2 >= leaf_meta_count) {
+                    receipt->blocked_leaf_index = 1u;
+                    return 0;
+                }
+                receipt->tested_leaves++;
+                action_index = leaf_meta[child->w2].w4;
+                if (action_index != 0xffffu &&
+                    dm2_v1_skproject_1031_scan_action_list(
+                        actions, action_count, action_index,
+                        receipt->searched_action_code, NULL, receipt)) {
+                    receipt->selected_leaf_index = child->w2;
+                    return 1;
+                }
+            }
+        }
+        cursor++;
+        if (cursor >= child_bytes_size) {
+            receipt->blocked_child_offset = 1u;
+            return 0;
+        }
+        if ((child_bytes[cursor] & 0x80u) != 0u)
+            return 0;
+    }
+}
+
+int dm2_v1_skproject_1031_03f2_find_action(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_code,
+    DM2_V1_SkprojectUiActionSearchReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiActionSearchReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.searched_action_code = action_code;
+    if (!state) receipt.blocked_missing_state = 1u;
+    if (!root || !nodes) receipt.blocked_missing_nodes = 1u;
+    if (!child_bytes) receipt.blocked_missing_child_bytes = 1u;
+    if (!leaf_meta) receipt.blocked_missing_leaf_meta = 1u;
+    if (!actions) receipt.blocked_missing_actions = 1u;
+    if (!state || !root || !nodes || !child_bytes || !leaf_meta || !actions) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (dm2_v1_skproject_1031_03f2_walk(
+            state, root, nodes, node_count, child_bytes, child_bytes_size,
+            leaf_meta, leaf_meta_count, actions, action_count, 0u, &receipt)) {
+        receipt.valid = 1;
+        receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+            &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_1031_04f5_clear_pending_redraw(
+    DM2_V1_SkprojectUiRuntimeState *state,
+    DM2_V1_SkprojectUiPendingRedrawReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiPendingRedrawReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (state->pending_capture_redraw != 0u) {
+        state->pending_capture_redraw = 0u;
+        state->requested_guidraw_29ee_000f = 1u;
+        receipt.cleared_pending_capture_redraw = 1u;
+        receipt.requested_guidraw_29ee_000f = 1u;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_1031_050c_release_item_capture(
+    DM2_V1_SkprojectUiRuntimeState *state,
+    DM2_V1_SkprojectUiMouseCaptureReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiMouseCaptureReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (state->show_item_stats != 0u || state->capture_item_stats != 0u ||
+        state->capture_panel != 0u) {
+        state->show_item_stats = 0u;
+        state->capture_item_stats = 0u;
+        state->capture_panel = 0u;
+        state->requested_mouse_release_capture = 1u;
+        state->mouse_visibility = 1u;
+        state->requested_show_mouse_cursor = 1u;
+        receipt.cleared_sources = 1u;
+        receipt.requested_mouse_release_capture = 1u;
+        receipt.requested_show_mouse_cursor = 1u;
+    }
+    receipt.valid = 1;
+    receipt.mouse_visibility = state->mouse_visibility;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_1031_098e_reset_events(
+    DM2_V1_SkprojectUiRuntimeState *state,
+    DM2_V1_SkprojectUiEventResetReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiEventResetReceipt receipt;
+    DM2_V1_SkprojectUiMouseEvent kept[11];
+    uint8_t kept_count = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(kept, 0, sizeof(kept));
+    receipt.previous_event_code = state->ui_event_code;
+    receipt.drained_host_events = state->event_count;
+    for (uint8_t i = 0u; i < state->event_count && i < 11u; ++i) {
+        uint8_t index = (uint8_t)((state->event_read_index + i) % 11u);
+        uint16_t button = state->event_queue[index].button;
+        if (button == 0x0040u || button == 0x0060u || button == 0x0004u) {
+            kept[kept_count++] = state->event_queue[index];
+        } else {
+            receipt.dropped_events++;
+        }
+    }
+    memcpy(state->event_queue, kept, sizeof(kept));
+    state->event_read_index = 0u;
+    state->event_count = kept_count;
+    state->event_write_index = kept_count == 0u ? 0u : (uint8_t)(kept_count - 1u);
+    receipt.kept_events = kept_count;
+    if (state->pending_mouse_event != 0u && kept_count < 11u) {
+        state->event_queue[kept_count] = state->pending_event;
+        state->event_count++;
+        state->event_write_index = kept_count;
+        state->pending_mouse_event = 0u;
+        receipt.queued_pending_event = 1u;
+    }
+    state->selected_rectno = 0xffffu;
+    state->selected_offset_rectno = 0xffffu;
+    state->selected_x = 0;
+    state->selected_y = 0;
+    state->ui_event_code = 0u;
+    state->ui_event_delta = 0u;
+    state->filter_active = 0u;
+    receipt.event_code_after = state->ui_event_code;
+    receipt.selected_rectno_after = state->selected_rectno;
+    receipt.queue_hash = dm2_v1_skproject_hash_bytes(
+        state->event_queue, sizeof(state->event_queue));
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int dm2_v1_skproject_1031_apply_leaf_transitions(
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *receipt)
+{
+    for (uint16_t i = 0u; i < leaf_meta_count; ++i) {
+        uint8_t b6 = leaf_meta[i].b6;
+        uint8_t marked = (uint8_t)((b6 & 0x40u) != 0u);
+        uint8_t active = (uint8_t)((b6 & 0x80u) != 0u);
+
+        receipt->scanned_leaves++;
+        if (marked != active) {
+            uint8_t click_index = (uint8_t)(b6 & 0x3fu);
+            if (click_index != 0u) {
+                if ((uint16_t)(click_index - 1u) >= clickrect_count) {
+                    receipt->blocked_tree_index = 1u;
+                    return 0;
+                }
+                if (!active)
+                    clickrects[click_index - 1u].flags_b3 |= 0x10u;
+                else
+                    clickrects[click_index - 1u].flags_b3 |= 0x20u;
+            }
+            if (!active) {
+                leaf_meta[i].b6 |= 0x80u;
+                receipt->activated_leaves++;
+            } else {
+                leaf_meta[i].b6 &= 0x7fu;
+                receipt->deactivated_leaves++;
+            }
+        }
+        leaf_meta[i].b6 &= 0xbfu;
+    }
+    for (uint16_t i = 0u; i < clickrect_count; ++i) {
+        uint8_t has_1 = (uint8_t)((clickrects[i].flags_b3 & 0x10u) != 0u);
+        uint8_t has_2 = (uint8_t)((clickrects[i].flags_b3 & 0x20u) != 0u);
+
+        if (has_1 != has_2) {
+            if (has_1) {
+                clickrects[i].refresh_link_2 = 1u;
+                receipt->clickrect_refresh_2++;
+            } else {
+                clickrects[i].refresh_link_1 = 1u;
+                receipt->clickrect_refresh_1++;
+            }
+        }
+        clickrects[i].flags_b3 &= 0xcfu;
+    }
+    return 1;
+}
+
+int dm2_v1_skproject_1031_0541_select_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    uint16_t tree_index,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiSelectTreeReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.selected_tree = (int16_t)tree_index;
+    if (!runtime || !predicate_state) receipt.blocked_missing_state = 1u;
+    if (!roots) receipt.blocked_missing_roots = 1u;
+    if (!leaf_meta) receipt.blocked_missing_leaf_meta = 1u;
+    if (!clickrects) receipt.blocked_missing_clickrects = 1u;
+    if (!runtime || !predicate_state || !roots || !leaf_meta || !clickrects) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.previous_tree = (int16_t)runtime->active_tree;
+    if (tree_index >= root_count) {
+        receipt.blocked_tree_index = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (tree_index != runtime->active_tree) {
+        DM2_V1_SkprojectUiEventResetReceipt reset_receipt;
+        dm2_v1_skproject_1031_098e_reset_events(runtime, &reset_receipt);
+        receipt.requested_event_reset = 1u;
+    }
+    runtime->active_tree = tree_index;
+    if (!dm2_v1_skproject_1031_027e_traverse(
+            predicate_state, &roots[tree_index], nodes, node_count, child_bytes,
+            child_bytes_size, leaf_meta, leaf_meta_count,
+            &receipt.traverse_receipt)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_1031_apply_leaf_transitions(
+            leaf_meta, leaf_meta_count, clickrects, clickrect_count, &receipt)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.leaf_meta_hash = dm2_v1_skproject_hash_bytes(
+        leaf_meta, (size_t)leaf_meta_count * sizeof(*leaf_meta));
+    receipt.clickrect_hash = dm2_v1_skproject_hash_bytes(
+        clickrects, (size_t)clickrect_count * sizeof(*clickrects));
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_1031_0667_restore_active_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt)
+{
+    if (!runtime) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_skproject_1031_0541_select_tree(
+        runtime, predicate_state, runtime->saved_tree, roots, root_count, nodes,
+        node_count, child_bytes, child_bytes_size, leaf_meta, leaf_meta_count,
+        clickrects, clickrect_count, out_receipt);
+}
+
+int dm2_v1_skproject_1031_0675_reset_and_select_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    uint16_t tree_index,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiMouseCaptureReceipt capture_receipt;
+
+    if (!runtime) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    runtime->previous_tree = runtime->active_tree;
+    runtime->saved_tree = runtime->active_tree;
+    runtime->pending_capture_redraw = 0u;
+    runtime->queue_busy = 0u;
+    runtime->filter_active = 0u;
+    dm2_v1_skproject_1031_050c_release_item_capture(runtime, &capture_receipt);
+    return dm2_v1_skproject_1031_0541_select_tree(
+        runtime, predicate_state, tree_index, roots, root_count, nodes,
+        node_count, child_bytes, child_bytes_size, leaf_meta, leaf_meta_count,
+        clickrects, clickrect_count, out_receipt);
+}
+
 int dm2_v1_skproject_sub_blit_specialeffects_receipt(
     const DM2_V1_SkprojectRect *rect,
     uint16_t xend,
@@ -1146,6 +3168,233 @@ int dm2_v1_skproject_draw_icon_pict_entry(
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+}
+
+int dm2_v1_skproject_2405_00ec_query_blit_rect(
+    const DM2_V1_Skproject2405RectState *state,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *blit_rects,
+    uint16_t blit_rect_count,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_Skproject2405RectReceipt *out_receipt)
+{
+    DM2_V1_Skproject2405RectReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rectno = rectno;
+    if (!state) receipt.blocked_missing_state = 1u;
+    if (!blit_rects) receipt.blocked_missing_rects = 1u;
+    if (!out_rect) receipt.blocked_missing_output = 1u;
+    if (!state || !blit_rects || !out_rect) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (rectno >= blit_rect_count) {
+        receipt.blocked_rect_out_of_bounds = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_rect = blit_rects[rectno];
+    receipt.blit_x = state->blit_x;
+    receipt.blit_y = state->blit_y;
+    *out_rect = blit_rects[rectno];
+    out_rect->x = (int16_t)(out_rect->x + state->blit_x);
+    out_rect->y = (int16_t)(out_rect->y + state->blit_y);
+    receipt.rect = *out_rect;
+    receipt.requested_query_blit_rect = 1u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_2405_011f_query_inflated_rect(
+    const DM2_V1_Skproject2405RectState *state,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *blit_rects,
+    uint16_t blit_rect_count,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_Skproject2405RectReceipt *out_receipt)
+{
+    DM2_V1_Skproject2405RectReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    if (!dm2_v1_skproject_2405_00ec_query_blit_rect(
+            state, rectno, blit_rects, blit_rect_count, out_rect, &receipt)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    out_rect->x = (int16_t)(out_rect->x - state->inflate);
+    out_rect->y = (int16_t)(out_rect->y - state->inflate);
+    out_rect->w = (int16_t)(out_rect->w + state->inflate * 2);
+    out_rect->h = (int16_t)(out_rect->h + state->inflate * 2);
+    receipt.rect = *out_rect;
+    receipt.inflate = state->inflate;
+    receipt.requested_inflate_rect = 1u;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+uint8_t dm2_v1_skproject_2405_014a_item_entry(
+    const DM2_V1_Skproject2405ItemState *state,
+    uint16_t equip_slot,
+    uint16_t tick_modulus,
+    DM2_V1_Skproject2405ItemEntryReceipt *out_receipt)
+{
+    DM2_V1_Skproject2405ItemEntryReceipt receipt;
+    uint8_t entry = 0x18u;
+    uint16_t frames;
+    uint16_t mode;
+    uint16_t charge;
+    uint16_t max_charge;
+    uint16_t tick;
+    uint16_t item_w2;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return entry;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.base_entry = entry;
+    if (!state) {
+        receipt.blocked_missing_state = 1u;
+        *out_receipt = receipt;
+        return entry;
+    }
+
+    receipt.object_id = state->object_id;
+    receipt.dbspec_word6 = state->dbspec_word6;
+    receipt.tick_input = state->game_tick;
+    receipt.random_input = state->random16;
+    receipt.player_dir = state->player_dir;
+    item_w2 = state->item_w2;
+    if (tick_modulus == 0u) {
+        receipt.blocked_not_drawn = 1u;
+        *out_receipt = receipt;
+        return entry;
+    }
+
+    frames = (uint16_t)(state->dbspec_word6 & 0x000fu);
+    receipt.frame_count = frames;
+    if (frames == 0u) {
+        receipt.blocked_not_drawn = 1u;
+        *out_receipt = receipt;
+        return entry;
+    }
+    if ((state->dbspec_word6 & 0x8000u) != 0u) {
+        if (!state->fit_for_equip) {
+            receipt.blocked_not_fit_for_equip = 1u;
+            *out_receipt = receipt;
+            return entry;
+        }
+        receipt.used_equip_variant = 1u;
+    }
+    if ((state->dbspec_word6 & 0x4000u) != 0u) {
+        uint16_t hand_index;
+
+        if (state->champion_index == 0u) {
+            receipt.blocked_selected_hand = 1u;
+            *out_receipt = receipt;
+            return entry;
+        }
+        hand_index = (uint16_t)(state->champion_index * 2u +
+                                state->selected_hand_action);
+        if (!state->selected_hand_items ||
+            hand_index >= state->selected_hand_item_count ||
+            state->selected_hand_items[hand_index] != state->object_id) {
+            receipt.blocked_selected_hand = 1u;
+            *out_receipt = receipt;
+            return entry;
+        }
+        receipt.used_equip_variant = 1u;
+    }
+    if (receipt.used_equip_variant) {
+        entry++;
+        frames--;
+        receipt.frame_count = frames;
+    }
+    if (frames == 0u) {
+        receipt.valid = 1;
+        receipt.selected_entry = entry;
+        receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+            &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+        *out_receipt = receipt;
+        return entry;
+    }
+
+    tick = state->game_tick;
+    mode = (uint16_t)((state->dbspec_word6 & 0x1f00u) >> 8);
+    receipt.animation_mode = mode;
+    switch (mode) {
+        case 5u:
+            tick = (uint16_t)(tick + (state->object_id & 0x03ffu));
+            /* fall through */
+        case 0u:
+            entry = (uint8_t)(entry + (uint8_t)(tick % frames));
+            receipt.used_tick_mode = 1u;
+            break;
+        case 1u:
+            entry = (uint8_t)(entry + (uint8_t)(state->random16 % frames));
+            receipt.used_random_mode = 1u;
+            break;
+        case 2u:
+            entry = (uint8_t)(entry + (uint8_t)state->player_dir);
+            receipt.used_direction_mode = 1u;
+            break;
+        case 3u:
+            charge = dm2_v1_skproject_add_item_charge(
+                state->object_id, &item_w2, 0, 0);
+            if (charge != 0u) {
+                max_charge = dm2_v1_skproject_get_max_charge(state->object_id);
+                entry = (uint8_t)(entry +
+                    (uint8_t)(((uint32_t)frames * charge) /
+                              ((uint32_t)max_charge + 1u)));
+                receipt.charge = charge;
+                receipt.max_charge = max_charge;
+                receipt.used_charge_mode = 1u;
+            }
+            break;
+        case 6u:
+            tick = (uint16_t)(tick + (state->object_id & 0x03ffu));
+            /* fall through */
+        case 4u:
+            receipt.bucket_width = (uint16_t)((state->dbspec_word6 & 0x00e0u) >> 5);
+            if (receipt.bucket_width == 0u) {
+                receipt.blocked_zero_bucket_width = 1u;
+                *out_receipt = receipt;
+                return entry;
+            }
+            charge = dm2_v1_skproject_add_item_charge(
+                state->object_id, &item_w2, 0, 0);
+            if (charge != 0u) {
+                uint16_t bucketed_frames =
+                    (uint16_t)(frames / receipt.bucket_width);
+                max_charge = dm2_v1_skproject_get_max_charge(state->object_id);
+                entry = (uint8_t)(entry +
+                    (uint8_t)(((((uint32_t)bucketed_frames * charge) /
+                                ((uint32_t)max_charge + 1u)) *
+                               receipt.bucket_width) +
+                              (tick % tick_modulus) + 1u));
+                receipt.charge = charge;
+                receipt.max_charge = max_charge;
+                receipt.used_charge_tick_mode = 1u;
+            }
+            break;
+        default:
+            break;
+    }
+
+    (void)equip_slot;
+    receipt.valid = 1;
+    receipt.selected_entry = entry;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return entry;
 }
 
 int dm2_v1_skproject_draw_def_pict(
@@ -2059,6 +4308,103 @@ int dm2_v1_skproject_map_0cee_185a(
 
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_map_0cee_wall_decoration_chain(
+    const DM2_V1_SkprojectMap0CEEWallDecorationState *state,
+    uint16_t out_words4[4],
+    DM2_V1_SkprojectMap0CEEWallDecorationReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMap0CEEWallDecorationReceipt receipt;
+    uint16_t selectors[4];
+    uint16_t rot;
+    uint16_t step_plus_one;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.range_input = 30u;
+    if (!state) receipt.blocked_missing_state = 1u;
+    if (!out_words4) receipt.blocked_missing_output = 1u;
+    if (!state || !out_words4) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!state->candidate_table || state->candidate_table_count == 0u ||
+        state->wall_random_decoration_count == 0u) {
+        receipt.blocked_missing_candidates = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.requested_wall_random_decoration_count = 1u;
+    receipt.divisor = (uint16_t)(((uint16_t)state->current_map_index << 6) +
+                                 (uint16_t)state->map_width +
+                                 (uint16_t)state->map_height + 3000u);
+    step_plus_one = (uint16_t)(state->y + 1);
+    receipt.step_plus_one = step_plus_one;
+    rot = (uint16_t)(state->rotation & 3u);
+    selectors[0] = (uint16_t)((rot + 1u) * step_plus_one);
+    rot = (uint16_t)((state->rotation + 1u) & 3u);
+    selectors[1] = (uint16_t)((rot + 1u) * step_plus_one);
+    rot = (uint16_t)((state->rotation + 2u) & 3u);
+    selectors[2] = (uint16_t)((rot + 1u) * step_plus_one);
+    rot = (uint16_t)((state->rotation + 3u) & 3u);
+    selectors[3] = (uint16_t)((rot + 1u) * step_plus_one);
+
+    receipt.out_of_map =
+        state->x < 0 || state->x >= state->map_width ||
+        state->y < 0 || state->y >= state->map_height;
+    receipt.candidate_hash = dm2_v1_skproject_hash_bytes(
+        state->candidate_table, state->candidate_table_count);
+
+    for (uint16_t i = 0u; i < 4u; ++i) {
+        uint16_t selected = 0xffffu;
+        uint16_t value = 0x00ffu;
+        uint16_t limit = state->wall_random_decoration_count;
+
+        receipt.gates[i] = state->gates[i] != 0u ? 1u : 0u;
+        receipt.random_input[i] =
+            (uint16_t)(((uint16_t)state->x << 5) + selectors[i] + 2000u);
+        if (state->gates[i] != 0u) {
+            DM2_V1_SkprojectMapRandomReceipt random_receipt;
+            int random_value = dm2_v1_skproject_map_0cee_17e7(
+                receipt.random_input[i], receipt.divisor, receipt.range_input,
+                state->dungeon_seed, &random_receipt);
+            receipt.requested_random_17e7[i] = 1u;
+            if (!random_receipt.valid) {
+                receipt.blocked_zero_range = 1u;
+                *out_receipt = receipt;
+                return 0;
+            }
+            selected = (uint16_t)random_value;
+            if (limit > state->candidate_table_count)
+                limit = state->candidate_table_count;
+            if (selected < limit) {
+                value = state->candidate_table[selected];
+                receipt.used_candidate[i] = 1u;
+            } else {
+                receipt.returned_default[i] = 1u;
+            }
+        } else {
+            receipt.returned_default[i] = 1u;
+        }
+        receipt.selected_index[i] = selected;
+        if (receipt.out_of_map && state->ornate_alcove_flags &&
+            state->ornate_alcove_flags[value & 0xffu]) {
+            value = 0x00ffu;
+            receipt.sanitized[i] = 1u;
+            receipt.requested_wall_ornate_alcove_type = 1u;
+        }
+        out_words4[i] = value;
+        receipt.values[i] = value;
+    }
+
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
     return 1;
 }
 
@@ -3558,6 +5904,293 @@ uint32_t dm2_v1_skproject_calc_pict_ent_hash(
     return ((uint32_t)(ref->w6 & 0x1fffu) << 12) |
            ((uint32_t)(ref->w52 & 0x007fu) << 5) |
            (uint32_t)(ref->w54 & 0x001fu);
+}
+
+int dm2_v1_skproject_0b36_00c3_cache_picture(
+    const DM2_V1_Skproject0B36CachePicture *cache_picture,
+    DM2_V1_Skproject0B36Picture *picture,
+    DM2_V1_Skproject0B36CachePictureReceipt *out_receipt)
+{
+    DM2_V1_Skproject0B36CachePictureReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!cache_picture) {
+        receipt.blocked_missing_cache_picture = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.cache_index = cache_picture->cache_index;
+    receipt.requested_mement_buffer = 1u;
+    if (!cache_picture->payload_available) {
+        receipt.blocked_missing_payload = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.width = cache_picture->width;
+    receipt.height = cache_picture->height;
+    receipt.word22 = cache_picture->word22;
+    if (picture) {
+        picture->has_bits = 1u;
+        picture->w14 = 0u;
+        picture->w16 = 0u;
+        picture->width = cache_picture->width;
+        picture->height = cache_picture->height;
+        picture->w22 = cache_picture->word22;
+        picture->w12 = cache_picture->cache_index;
+        picture->w4 = 0x0008u;
+        receipt.assigned_picture = 1u;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int dm2_v1_skproject_rect_contains(
+    const DM2_V1_SkprojectRect *outer,
+    const DM2_V1_SkprojectRect *inner)
+{
+    return outer->x <= inner->x &&
+           (int16_t)(outer->x + outer->w - 1) >=
+               (int16_t)(inner->x + inner->w - 1) &&
+           outer->y <= inner->y &&
+           (int16_t)(outer->y + outer->h - 1) >=
+               (int16_t)(inner->y + inner->h - 1);
+}
+
+static int dm2_v1_skproject_clip_rect_to_group(
+    const DM2_V1_SkprojectRect *bounds,
+    DM2_V1_SkprojectRect *rect,
+    uint8_t *clipped)
+{
+    int16_t delta;
+
+    delta = (int16_t)(rect->x - bounds->x);
+    if (delta < 0) {
+        rect->w = (int16_t)(rect->w + delta);
+        if (rect->w <= 0) return 0;
+        rect->x = bounds->x;
+        if (clipped) *clipped = 1u;
+    }
+    delta = (int16_t)(rect->y - bounds->y);
+    if (delta < 0) {
+        rect->h = (int16_t)(rect->h + delta);
+        if (rect->h <= 0) return 0;
+        rect->y = bounds->y;
+        if (clipped) *clipped = 1u;
+    }
+    delta = (int16_t)(bounds->x + bounds->w - 1 -
+                      (rect->x + rect->w - 1));
+    if (delta < 0) {
+        rect->w = (int16_t)(rect->w + delta);
+        if (rect->w <= 0) return 0;
+        if (clipped) *clipped = 1u;
+    }
+    delta = (int16_t)(bounds->y + bounds->h - 1 -
+                      (rect->y + rect->h - 1));
+    if (delta < 0) {
+        rect->h = (int16_t)(rect->h + delta);
+        if (rect->h <= 0) return 0;
+        if (clipped) *clipped = 1u;
+    }
+    return 1;
+}
+
+int dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_Skproject0B36DirtyRectReceipt *out_receipt)
+{
+    DM2_V1_Skproject0B36DirtyRectReceipt receipt;
+    uint16_t slot;
+    DM2_V1_SkprojectRect clipped;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!group) receipt.blocked_missing_group = 1u;
+    if (!rect) receipt.blocked_missing_rect = 1u;
+    if (!group || !rect) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.previous_group_size = group->group_size;
+    receipt.input_rect = *rect;
+
+    for (uint16_t i = 0u; i < group->group_size && i < 5u; ++i) {
+        if (dm2_v1_skproject_rect_contains(&group->dirty_rects[i], rect)) {
+            receipt.reused_covering_rect = 1u;
+            receipt.stored_rect = group->dirty_rects[i];
+            receipt.new_group_size = group->group_size;
+            receipt.valid = 1;
+            receipt.dirty_rect_hash = dm2_v1_skproject_hash_bytes(
+                group->dirty_rects, sizeof(group->dirty_rects));
+            receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+                &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+            *out_receipt = receipt;
+            return 1;
+        }
+        if (dm2_v1_skproject_rect_contains(rect, &group->dirty_rects[i])) {
+            slot = i;
+            receipt.replaced_contained_rect = 1u;
+            goto store_rect;
+        }
+    }
+
+    if (group->group_size >= 5u) {
+        group->group_size = 0u;
+        receipt.requested_compaction = 1u;
+    }
+    slot = group->group_size++;
+
+store_rect:
+    clipped = *rect;
+    if (!dm2_v1_skproject_clip_rect_to_group(
+            &group->rect, &clipped, &receipt.clipped_to_group)) {
+        if (slot + 1u == group->group_size && group->group_size > 0u)
+            group->group_size--;
+        receipt.dropped_empty_clip = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    group->dirty_rects[slot] = clipped;
+    receipt.stored_rect = clipped;
+    receipt.new_group_size = group->group_size;
+    receipt.valid = 1;
+    receipt.dirty_rect_hash = dm2_v1_skproject_hash_bytes(
+        group->dirty_rects, sizeof(group->dirty_rects));
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0b36_0c52_init_button_group(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t rectno,
+    uint16_t add_initial_dirty_rect,
+    uint16_t allocated_cache_index,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    DM2_V1_Skproject0B36ButtonGroupInitReceipt *out_receipt)
+{
+    DM2_V1_Skproject0B36ButtonGroupInitReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rectno = rectno;
+    if (!group) receipt.blocked_missing_group = 1u;
+    if (!expanded_rects && rectno != 0xffffu) receipt.blocked_missing_rects = 1u;
+    if (!group || (!expanded_rects && rectno != 0xffffu)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (rectno != 0xffffu) {
+        if (rectno >= expanded_rect_count) {
+            receipt.blocked_rect_out_of_bounds = 1u;
+            *out_receipt = receipt;
+            return 0;
+        }
+        group->rect = expanded_rects[rectno];
+        receipt.requested_query_expanded_rect = 1u;
+    }
+    group->dbidx = allocated_cache_index;
+    group->group_size = 0u;
+    memset(group->dirty_rects, 0, sizeof(group->dirty_rects));
+    receipt.allocated_cache_index = allocated_cache_index;
+    receipt.width = (uint16_t)group->rect.w;
+    receipt.height = (uint16_t)group->rect.h;
+    receipt.bpp = 8u;
+    receipt.requested_alloc_temp_cache_index = 1u;
+    receipt.requested_alloc_new_pict = 1u;
+    if (add_initial_dirty_rect) {
+        dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+            group, &group->rect, &receipt.dirty_receipt);
+        receipt.requested_initial_dirty_rect = 1u;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0b36_11c0_draw_cached_picture(
+    DM2_V1_Skproject0B36Picture *picture,
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t rectno,
+    int16_t color_key,
+    const DM2_V1_SkprojectRect *blit_rects,
+    uint16_t blit_rect_count,
+    DM2_V1_Skproject0B36DrawCachedPictureReceipt *out_receipt)
+{
+    DM2_V1_Skproject0B36DrawCachedPictureReceipt receipt;
+    DM2_V1_SkprojectRect blit_rect;
+    uint16_t width_delta;
+    uint16_t height_delta;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rectno = rectno;
+    receipt.color_key = color_key;
+    if (!picture) receipt.blocked_missing_picture = 1u;
+    if (!group) receipt.blocked_missing_group = 1u;
+    if (!blit_rects && rectno != 0xffffu) receipt.blocked_missing_blit_rects = 1u;
+    if (!picture || !group || (!blit_rects && rectno != 0xffffu)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.cache_index = group->dbidx;
+    receipt.width_before = picture->width;
+    receipt.height_before = picture->height;
+    receipt.requested_group_cache_bits = 1u;
+    receipt.requested_query_pict_bits = 1u;
+    if (rectno == 0xffffu) {
+        blit_rect = (DM2_V1_SkprojectRect){
+            0, 0, (int16_t)picture->width, (int16_t)picture->height
+        };
+        width_delta = 0u;
+        height_delta = 0u;
+    } else {
+        if (rectno >= blit_rect_count) {
+            receipt.blocked_rect_out_of_bounds = 1u;
+            *out_receipt = receipt;
+            return 0;
+        }
+        blit_rect = blit_rects[rectno];
+        width_delta = (uint16_t)blit_rect.w;
+        height_delta = (uint16_t)blit_rect.h;
+        receipt.requested_query_blit_rect = 1u;
+    }
+
+    picture->width = (uint16_t)(picture->width + width_delta);
+    picture->height = (uint16_t)(picture->height + height_delta);
+    picture->rect_no = 0xffffu;
+    picture->color_key_passthrough = color_key;
+    receipt.width_after = picture->width;
+    receipt.height_after = picture->height;
+    receipt.blit_rect = blit_rect;
+    receipt.picture_rect.x = (int16_t)(blit_rect.x - group->rect.x);
+    receipt.picture_rect.y = (int16_t)(blit_rect.y - group->rect.y);
+    receipt.picture_rect.w = blit_rect.w;
+    receipt.picture_rect.h = blit_rect.h;
+    receipt.requested_offset_rect = 1u;
+    receipt.requested_draw_def_pict = 1u;
+    if (dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+            group, &blit_rect, &receipt.dirty_receipt)) {
+        receipt.requested_dirty_rect = 1u;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
 }
 
 static uint16_t dm2_v1_skproject_select_image_mement_entry(
@@ -6351,8 +8984,24 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_gfx_pal.cpp color_to_palettecolor/"
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
+           "SKWIN/SkWinCore.cpp _00eb_04bc/_0759_0688/"
+           "_0759_06a1/_00eb_070c/_0759_0310/_0759_02c6/"
+           "_01b0_0adb/_01b0_0c70/_01b0_0ca4/"
+           "_0759_0126/_0759_06c2/_0759_06db/_0759_072c/"
+           "_0759_071b/_01b0_1ed2/_0759_06b5/_0759_065f; "
+           "SKWIN/SkWinCore.cpp _4976_0cba/RETURN_1/IS_GAME_ENDED/"
+           "_1031_0023/_1031_003e/_1031_007b/_1031_009e/"
+           "_1031_00c5/_1031_00f3/_1031_012d/"
+           "_1031_014f/_1031_0184/_1031_01ba/"
+           "_1031_023b/_1031_027e/_1031_01d5/"
+           "_1031_024c/_1031_030a/_1031_03f2/"
+           "_1031_0a88/_1031_0b7e/_1031_0c58/_1031_10c8/"
+           "_1031_04f5/_1031_050c/_1031_0541/"
+           "_1031_0667/_1031_0675/_1031_098e; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
-           "SKWIN/SkWinCore.cpp DRAW_ICON_PICT_BUFF/DRAW_DEF_PICT/"
+           "SKWIN/SkWinCore.cpp _0b36_00c3/_0b36_0c52/"
+           "_0b36_0d67/_0b36_11c0/DRAW_ICON_PICT_BUFF/DRAW_DEF_PICT/"
+           "_2405_00ec/_2405_011f/_2405_014a/"
            "DRAW_GRAY_OVERLAY/FILL_ENTIRE_PICT/FILL_RECT_SUMMARY/"
            "DRAW_STRONG_TEXT/HIGHLIGHT_ARROW_PANEL/"
            "IBMIO_FILL_HALFTONE_RECT/FIRE_FILL_HALFTONE_RECTV/"
@@ -6366,7 +9015,9 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "
            "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
            "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001/"
-           "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83; "
+           "DM2_map_0cee_1815/DM2_map_0cee_185a/"
+           "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83 and "
+           "SKWIN/SkWinCore.cpp _0cee_17e7/_0cee_1815/_0cee_185a; "
            "SKULLWIN/c_record.cpp DM2_GET_ADDRESS_OF_RECORD and "
            "SKWIN/SkWinCore.cpp GET_ADDRESS_OF_RECORD/"
            "GET_ADDRESS_OF_RECORD0/GET_ADDRESS_OF_RECORD1/"

@@ -1,6 +1,6 @@
 # Pass576 DM1 V1 side-wall occlusion source-row clipping
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -101,68 +101,68 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
 
 - PASS firestaff_side_wall_metadata_has_returning_side_lanes_only (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.
-  - line 511: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 511: DM1_PC34_ZONE_WALL_D2L2
-  - line 511: DUNVIEW.C:6848-6862 wall case returns
-  - line 512: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 512: DM1_PC34_ZONE_WALL_D2R2
-  - line 512: DUNVIEW.C:6882-6893 wall case returns
-  - line 516: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 516: DM1_PC34_ZONE_WALL_D1L
-  - line 516: DUNVIEW.C:7459-7460 side ornament then return
-  - line 517: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 517: DM1_PC34_ZONE_WALL_D1R
-  - line 517: DUNVIEW.C:7627-7628 side ornament then return
-  - line 519: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
-  - line 519: DM1_PC34_ZONE_WALL_D0L
-  - line 519: DUNVIEW.C:8036-8038 wall case returns
-  - line 520: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
-  - line 520: DM1_PC34_ZONE_WALL_D0R
-  - line 520: DUNVIEW.C:8142-8144 wall case returns
+  - line 1163: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 1163: DM1_PC34_ZONE_WALL_D2L2
+  - line 1163: DUNVIEW.C:6848-6862 wall case returns
+  - line 1164: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 1164: DM1_PC34_ZONE_WALL_D2R2
+  - line 1164: DUNVIEW.C:6882-6893 wall case returns
+  - line 1168: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 1168: DM1_PC34_ZONE_WALL_D1L
+  - line 1168: DUNVIEW.C:7459-7460 side ornament then return
+  - line 1169: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 1169: DM1_PC34_ZONE_WALL_D1R
+  - line 1169: DUNVIEW.C:7627-7628 side ornament then return
+  - line 1171: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
+  - line 1171: DM1_PC34_ZONE_WALL_D0L
+  - line 1171: DUNVIEW.C:8036-8038 wall case returns
+  - line 1172: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
+  - line 1172: DM1_PC34_ZONE_WALL_D0R
+  - line 1172: DUNVIEW.C:8142-8144 wall case returns
 
 - PASS firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.
-  - line 1363: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
-  - line 1375: int src_x = frame->blit_x;
-  - line 1376: int src_y = frame->blit_y;
-  - line 1383: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
-  - line 1390: if (src_x + width > source_width) width = source_width - src_x;
-  - line 1393: if (width <= 0 || height <= 0) return gate;
-  - line 1395: gate.visible = true;
-  - line 1396: gate.src_x = (int16_t)src_x;
-  - line 1397: gate.src_y = (int16_t)src_y;
+  - line 2190: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
+  - line 2202: int src_x = frame->blit_x;
+  - line 2203: int src_y = frame->blit_y;
+  - line 2210: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+  - line 2217: if (src_x + width > source_width) width = source_width - src_x;
+  - line 2220: if (width <= 0 || height <= 0) return gate;
+  - line 2222: gate.visible = true;
+  - line 2223: gate.src_x = (int16_t)src_x;
+  - line 2224: gate.src_y = (int16_t)src_y;
 
-- PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:276-330)
+- FAIL firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:276-330)
   - Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.
-  - line 290: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 290: DM1_PC34_ZONE_WALL_D2L2
-  - line 290: "6862"
-  - line 291: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 291: DM1_PC34_ZONE_WALL_D2R2
-  - line 291: "6893"
-  - line 295: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 295: DM1_PC34_ZONE_WALL_D1L
-  - line 295: "7460"
-  - line 296: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 296: DM1_PC34_ZONE_WALL_D1R
-  - line 296: "7628"
-  - line 298: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
-  - line 298: DM1_PC34_ZONE_WALL_D0L
-  - line 298: "8038"
-  - line 299: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
-  - line 299: DM1_PC34_ZONE_WALL_D0R
-  - line 299: "8144"
+  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - missing: DM1_PC34_ZONE_WALL_D2L2
+  - missing: "6862"
+  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - missing: DM1_PC34_ZONE_WALL_D2R2
+  - missing: "6893"
+  - missing: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - missing: DM1_PC34_ZONE_WALL_D1L
+  - missing: "7460"
+  - missing: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - missing: DM1_PC34_ZONE_WALL_D1R
+  - missing: "7628"
+  - missing: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
+  - missing: DM1_PC34_ZONE_WALL_D0L
+  - missing: "8038"
+  - missing: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
+  - missing: DM1_PC34_ZONE_WALL_D0R
+  - missing: "8144"
 
 - PASS firestaff_clip_row_runtime_assertions_are_registered (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.
-  - line 1179: static void test_wall_source_row_clip_occlusion_gate(void)
-  - line 1184: wall_clip_gate.151713.src_x
-  - line 1185: wall_clip_gate.151713.src_y
-  - line 1208: wall_clip_gate.occluded_source_row
-  - line 1212: wall_clip_gate.occluded_viewport
-  - line 1215: static void test_wall_draw_uses_clip_gate_source_offsets(void)
-  - line 1227: wall_clip_draw.source_offset_next
-  - line 1234: wall_clip_draw.opaque_copies_transparent_color
+  - line 1729: static void test_wall_source_row_clip_occlusion_gate(void)
+  - line 1734: wall_clip_gate.151713.src_x
+  - line 1735: wall_clip_gate.151713.src_y
+  - line 1758: wall_clip_gate.occluded_source_row
+  - line 1762: wall_clip_gate.occluded_viewport
+  - line 1765: static void test_wall_draw_uses_clip_gate_source_offsets(void)
+  - line 1777: wall_clip_draw.source_offset_next
+  - line 1784: wall_clip_draw.opaque_copies_transparent_color
 
 ## DM1 Hash Locks
 - PASS DM1 canonical PC34/V1 GRAPHICS.DAT: /Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes=363417

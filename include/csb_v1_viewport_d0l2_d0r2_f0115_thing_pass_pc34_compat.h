@@ -2,6 +2,7 @@
 #define FIRESTAFF_CSB_V1_VIEWPORT_D0L2_D0R2_F0115_THING_PASS_PC34_COMPAT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,6 +104,26 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_D0L2D0R2F0115ThingPassPc34;
 
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int side;
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int wall_frame_row;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int viewport_clip_x1;
+    int viewport_clip_x2;
+    int viewport_clip_y1;
+    int viewport_clip_y2;
+    int item_projectile_disabled_by_g2028;
+    int creature_cell_gate;
+    const char *redmcsb_f0115_anchor;
+} CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34;
+
 int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_init_pc34(void);
 
 size_t csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_count_pc34(void);
@@ -156,6 +177,16 @@ int csb_v1_viewport_d0l2_d0r2_f0115_centered_explosion_zone_pc34(
 int csb_v1_viewport_d0l2_d0r2_f0115_side_explosion_zone_pc34(
     const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
     int view_cell);
+
+int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    int source_graphics_dat_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void);
 

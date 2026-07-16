@@ -37,28 +37,28 @@
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-draw-order-table",
-      "line": 159,
+      "line": 175,
       "needle": "static const DM1_ViewportDrawStep s_draw_order[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-wall-spec-table",
-      "line": 505,
+      "line": 1157,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-thing-layer-table",
-      "line": 236,
+      "line": 888,
       "needle": "static const DM1_ViewportThingLayerSpec s_thing_layers[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-door-front-occlusion-table",
-      "line": 279,
+      "line": 931,
       "needle": "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]",
       "ok": true
     },
@@ -72,9 +72,9 @@
     {
       "file": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md",
       "id": "pass502-blocker-doc-present",
-      "line": 38,
+      "line": null,
       "needle": "Required next evidence before parity promotion:",
-      "ok": true
+      "ok": false
     }
   ],
   "greatstoneAtlasRoot": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
@@ -83,8 +83,10 @@
     "no runtime capture promotion",
     "no movement-core edits"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "pass502-blocker-doc-present"
+  ],
   "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass503_dm1_v1_viewport_wall_draw_order_evidence.v1",
   "secondaryReferences": [
@@ -276,5 +278,5 @@
       "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
     }
   ],
-  "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
+  "status": "FAIL_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
 }

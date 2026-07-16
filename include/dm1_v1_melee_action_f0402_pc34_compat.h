@@ -720,6 +720,21 @@ typedef struct {
 } DM1_MeleeF0190KilledAllStateApplyPlanPc34;
 
 typedef struct {
+    int valid;
+    int shouldPresentSourceSmoke;
+    int requiresKilledAllMutationFirst;
+    int shouldCommitKilledAllWorldMutation;
+    int shouldSuppressReactionEvent;
+    int shouldSuppressGroupLosMoveAfterDeath;
+    int groupIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    DM1_MeleeF0190KilledAllStateApplyPlanPc34 killedAllStateApplyPlan;
+    struct ExplosionCreateInput_Compat sourceSmokeCreateInput;
+} DM1_MeleeF0190KilledAllAfterplayReceiptPc34;
+
+typedef struct {
     int outcome;
     int groupIndex;
     int creatureAttributes;
@@ -1001,6 +1016,9 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
 int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
     DM1_MeleeF0190KilledAllStateApplyPlanPc34* out);
+int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+    const DM1_MeleeF0231AftermathApplyPlanPc34* aftermathApplyPlan,
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* out);
 int dm1_v1_melee_delete_group_receipt_f0189_pc34(
     const DM1_MeleeF0190KilledAllStatePlanPc34* statePlan,
     DM1_MeleeF0189DeleteGroupReceiptPc34* out);

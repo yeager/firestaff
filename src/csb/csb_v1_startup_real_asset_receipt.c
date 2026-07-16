@@ -374,7 +374,7 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     if (!session->surfaces.valid || !session->surfaces.real_asset_matched ||
         !session->surfaces.title_regions_ready || !session->surfaces.opening_frame_ready ||
         !session->surfaces.entrance_screen_ready || !session->surfaces.hud_surfaces_ready ||
-        !csb_v1_startup_real_surface_matches_pc34(title, 1, 320, 200, -1) ||
+        !csb_v1_startup_real_surface_matches_pc34(title, 1, 320, 153, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(presents, 1, 320, 16, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(chaos, 1, 320, 80, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(strikes, 1, 320, 57, 0) ||
