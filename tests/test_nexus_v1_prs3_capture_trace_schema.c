@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int failures;
 
@@ -126,6 +127,17 @@ static unsigned long long fnv1a64(const unsigned char *data, size_t size) {
         hash *= 1099511628211ULL;
     }
     return hash;
+}
+
+static int write_file_bytes(const char *path, const unsigned char *data,
+                            size_t size) {
+    FILE *file = fopen(path, "wb");
+    if (!file) return 0;
+    if (size > 0U && fwrite(data, 1U, size, file) != size) {
+        fclose(file);
+        return 0;
+    }
+    return fclose(file) == 0;
 }
 
 static void make_bpk(unsigned char data[68]) {
@@ -939,6 +951,186 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
     free(menu); free(dm_bin);
 }
 
+static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
+    const char *home = getenv("HOME");
+    char data_dir[1024];
+    char menu_path[1200];
+    char dm_path[1200];
+    char trace_path[1200];
+    char output_path[1200];
+    char command_path[1200];
+    char palette_path[1200];
+    char producer_path[1200];
+    char ledger_path[1200];
+    unsigned char *menu = NULL;
+    unsigned char *dm_bin = NULL;
+    unsigned char *output = NULL;
+    unsigned char command[0x20];
+    unsigned char palette[0x20];
+    unsigned char producer[] = "mednafen-vdp1-capture-producer";
+    size_t menu_size = 0U;
+    size_t dm_bin_size = 0U;
+    uint32_t entry_index;
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    char trace[4096];
+    int wrote = 0;
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt raw_sidecars;
+    Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance;
+
+    if (!home) {
+        puts("SKIP: HOME is unset; no local Nexus PRS3 V3 sidecar provenance check");
+        return;
+    }
+    snprintf(data_dir, sizeof(data_dir), "%s/.firestaff/data/nexus", home);
+    snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", data_dir);
+    snprintf(dm_path, sizeof(dm_path), "%s/DM.BIN", data_dir);
+    menu = read_asset(data_dir, "MENU.BPK", &menu_size);
+    dm_bin = read_asset(data_dir, "DM.BIN", &dm_bin_size);
+    if (!menu || !dm_bin) {
+        puts("SKIP: local MENU.BPK/DM.BIN not present for PRS3 V3 sidecar provenance");
+        free(menu);
+        free(dm_bin);
+        return;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    for (entry_index = 0U; entry_index < 256U; ++entry_index) {
+        if (nexus_v1_bpk_archive_prs3_stream_plan(
+                menu, menu_size, entry_index, &plan) ==
+                NEXUS_V1_BPK_PRS3_STREAM_OK &&
+            plan.expected_output_bytes > 0U &&
+            plan.expected_output_bytes <= 1024U * 1024U) {
+            break;
+        }
+    }
+    if (entry_index == 256U) {
+        puts("SKIP: no bounded local MENU.BPK PRS3 stream for V3 sidecar provenance");
+        free(menu);
+        free(dm_bin);
+        return;
+    }
+
+    output = (unsigned char *)calloc(plan.expected_output_bytes, 1U);
+    if (!output) {
+        free(menu);
+        free(dm_bin);
+        expect(0, "V3 sidecar output fixture allocates");
+        return;
+    }
+    memset(command, 0, sizeof(command));
+    memset(palette, 0, sizeof(palette));
+    snprintf(trace, sizeof(trace),
+             "NEXUS_PRS3_SH2_VDP1_TRACE_V3\n"
+             "menu_bpk_fnv1a64=%llx\n"
+             "dm_bin_fnv1a64=%llx\n"
+             "entry_index=%x\nstream_offset=%x\nstream_size=%x\n"
+             "expected_output_bytes=%x\n"
+             "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
+             "last_input_read_address=%x\ninput_read_bytes=%x\n"
+             "payload_fnv1a64=%llx\n"
+             "output_ram_address=6020000\nfirst_output_write_address=6020000\n"
+             "last_output_write_address=%x\noutput_write_bytes=%x\n"
+             "output_fnv1a64=%llx\n"
+             "first_opcode_sequence=10\nfirst_input_read_sequence=11\n"
+             "last_input_read_sequence=12\nfirst_output_write_sequence=13\n"
+             "last_output_write_sequence=14\ndecoder_return_sequence=15\n"
+             "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
+             "vdp1_texture_source_address=6020000\n"
+             "vdp1_texture_source_bytes=%x\n"
+             "vdp1_texture_first_read_sequence=17\n"
+             "vdp1_texture_last_read_sequence=18\n"
+             "vdp1_texture_first_read_address=6020000\n"
+             "vdp1_texture_last_read_address=%x\n"
+             "vdp1_texture_read_bytes=%x\nvdp1_texture_fnv1a64=%llx\n"
+             "vdp1_command_first_read_sequence=17\n"
+             "vdp1_command_last_read_sequence=17\n"
+             "vdp1_command_first_read_address=5c00000\n"
+             "vdp1_command_last_read_address=5c0001f\n"
+             "vdp1_command_read_bytes=20\nvdp1_command_fnv1a64=%llx\n"
+             "palette_first_read_sequence=17\npalette_last_read_sequence=18\n"
+             "palette_first_read_address=5f00000\n"
+             "palette_last_read_address=5f0001f\n"
+             "palette_read_bytes=20\npalette_fnv1a64=%llx\n"
+             "decoder_returned_success=1\ncapture_complete=1\n",
+             fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size),
+             entry_index, plan.stream_offset, plan.stream_size,
+             plan.expected_output_bytes,
+             0x6010000U + plan.stream_size - 1U, plan.stream_size,
+             fnv1a64(menu + plan.stream_offset, plan.stream_size),
+             0x6020000U + plan.expected_output_bytes - 1U,
+             plan.expected_output_bytes, fnv1a64(output, plan.expected_output_bytes),
+             plan.expected_output_bytes,
+             0x6020000U + plan.expected_output_bytes - 1U,
+             plan.expected_output_bytes, fnv1a64(output, plan.expected_output_bytes),
+             fnv1a64(command, sizeof(command)), fnv1a64(palette, sizeof(palette)));
+
+    snprintf(trace_path, sizeof(trace_path), "/tmp/nexus-v3-trace-%ld.txt",
+             (long)getpid());
+    snprintf(output_path, sizeof(output_path), "/tmp/nexus-v3-output-%ld.bin",
+             (long)getpid());
+    snprintf(command_path, sizeof(command_path), "/tmp/nexus-v3-command-%ld.bin",
+             (long)getpid());
+    snprintf(palette_path, sizeof(palette_path), "/tmp/nexus-v3-palette-%ld.bin",
+             (long)getpid());
+    snprintf(producer_path, sizeof(producer_path), "/tmp/nexus-v3-producer-%ld.bin",
+             (long)getpid());
+    snprintf(ledger_path, sizeof(ledger_path), "/tmp/nexus-v3-ledger-%ld.txt",
+             (long)getpid());
+
+    wrote = write_file_bytes(trace_path, (const unsigned char *)trace,
+                             strlen(trace)) &&
+            write_file_bytes(output_path, output, plan.expected_output_bytes) &&
+            write_file_bytes(command_path, command, sizeof(command)) &&
+            write_file_bytes(palette_path, palette, sizeof(palette)) &&
+            write_file_bytes(producer_path, producer, sizeof(producer) - 1U);
+    expect(wrote, "V3 sidecar provenance fixtures write to temp files");
+    if (wrote) {
+        memset(&raw_sidecars, 0, sizeof(raw_sidecars));
+        expect(nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
+                   trace_path, menu_path, dm_path, output_path, command_path,
+                   palette_path, &raw_sidecars) &&
+                   raw_sidecars.trace_source_bound &&
+                   raw_sidecars.output_sidecar_bound &&
+                   raw_sidecars.vdp1_command_sidecar_bound &&
+                   raw_sidecars.palette_sidecar_bound &&
+                   raw_sidecars.raw_sidecars_bound &&
+                   !raw_sidecars.capture_producer_authenticated &&
+                   !raw_sidecars.runtime_import_permitted &&
+                   !raw_sidecars.decoder_promoted &&
+                   !raw_sidecars.fallback_visuals_permitted,
+               "real MENU.BPK V3 raw sidecars bind but do not permit runtime import");
+        memset(&provenance, 0, sizeof(provenance));
+        expect(nexus_v1_prs3_vdp1_capture_write_provenance_ledger(
+                   ledger_path, trace_path, menu_path, dm_path, output_path,
+                   command_path, palette_path, producer_path, &raw_sidecars),
+               "real MENU.BPK V3 provenance ledger writes from bound sidecars");
+        expect(nexus_v1_prs3_vdp1_capture_validate_provenance(
+                   ledger_path, trace_path, output_path, command_path,
+                   palette_path, producer_path, &raw_sidecars, &provenance) &&
+                   provenance.ledger_parsed &&
+                   provenance.raw_sidecars_bound &&
+                   provenance.trace_bytes_match &&
+                   provenance.output_bytes_match &&
+                   provenance.vdp1_command_bytes_match &&
+                   provenance.palette_bytes_match &&
+                   provenance.producer_binary_bound &&
+                   provenance.provenance_complete &&
+                   !provenance.capture_producer_authenticated &&
+                   !provenance.runtime_import_permitted,
+               "real MENU.BPK V3 provenance ledger remains evidence-only");
+    }
+
+    remove(trace_path);
+    remove(output_path);
+    remove(command_path);
+    remove(palette_path);
+    remove(producer_path);
+    remove(ledger_path);
+    free(output);
+    free(menu);
+    free(dm_bin);
+}
+
 int main(void) {
     Nexus_V1_Prs3CaptureTraceSchemaReceipt receipt;
     Nexus_V1_Prs3CaptureAssetBindingReceipt binding;
@@ -1260,6 +1452,7 @@ int main(void) {
     test_real_nonzero_transfer_trace_contract();
     test_real_zero_side_trace_contract();
     test_real_v5_decoder_readiness_trace_contract();
+    test_real_v3_raw_sidecar_provenance_no_runtime();
     test_sh2_transfer_trace_gate();
 
     return failures ? 1 : 0;

@@ -769,15 +769,15 @@ DM2_QUERY_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	344		MISSING
 DM2_QUERY_CUR_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	364		MISSING
 DM2_QUERY_PICT_BITS	SKULLWIN	SKULLWIN/c_querydb.cpp	373	include/dm2_v1_asset_loader.h:dm2_v1_query_pict_bits_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt preserves the source route choice: mode bit 2 requires real GDAT image-entry data, mode bit 3 requires a caller-owned cached bitmap, and current-bitmap mode requires an existing bitmap; no substitute pixels are generated.
 DM2_QUERY_GDAT_IMAGE_METRICS	SKULLWIN	SKULLWIN/c_querydb.cpp	406	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_image_metrics_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt returns source IMG3 width/height from the selected real dtImage/default-image payload without decoding or fabricating pixels.
-DM2_QUERY_ORNATE_ANIM_FRAME	SKULLWIN	SKULLWIN/c_querydb.cpp	449		MISSING
+DM2_QUERY_ORNATE_ANIM_FRAME	SKULLWIN	SKULLWIN/c_querydb.cpp	449	include/dm2_v1_asset_loader.h:dm2_v1_query_ornate_anim_frame_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_PICST_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	548	include/dm2_v1_asset_loader.h:dm2_v1_query_picst_image_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt binds the picture descriptor to the selected real GDAT image-entry route, resets x/y, records mode 4 and source dimensions, and never allocates substitute pixels.
 DM2_QUERY_4BPP_PICT_BUFF_AND_PAL	SKULLWIN	SKULLWIN/c_querydb.cpp	561	include/dm2_v1_asset_loader.h:dm2_v1_query_4bpp_pict_buff_and_pal_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt requires loadable real dtImage field 0xF9 plus its local 16-colour palette and returns the source width/divisor result; absent, non-4bpp, or default-image routes fail closed.
 DM2_QUERY_PLAYER_SKILL_LV	SKULLWIN	SKULLWIN/c_querydb.cpp	583		MISSING
 DM2_IS_WALL_ORNATE_ALCOVE	SKULLWIN	SKULLWIN/c_querydb.cpp	635		MISSING
 DM2_IS_TILE_BLOCKED	SKULLWIN	SKULLWIN/c_querydb.cpp	646		MISSING
 DM2_IS_REBIRTH_ALTAR	SKULLWIN	SKULLWIN/c_querydb.cpp	682		MISSING
-DM2_QUERY_DOOR_DAMAGE_RESIST	SKULLWIN	SKULLWIN/c_querydb.cpp	713		MISSING
-DM2_QUERY_GDAT_CREATURE_WORD_VALUE	SKULLWIN	SKULLWIN/c_querydb.cpp	722		MISSING
+DM2_QUERY_DOOR_DAMAGE_RESIST	SKULLWIN	SKULLWIN/c_querydb.cpp	713	include/dm2_v1_asset_loader.h:dm2_v1_query_door_damage_resist_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
+DM2_QUERY_GDAT_CREATURE_WORD_VALUE	SKULLWIN	SKULLWIN/c_querydb.cpp	722	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_WALL_ORNATE_SPRING	SKULLWIN	SKULLWIN/c_querydb.cpp	793		MISSING
 DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803		MISSING
 DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820		MISSING
@@ -786,8 +786,8 @@ DM2_IS_CONTAINER_CHEST	SKULLWIN	SKULLWIN/c_querydb.cpp	861		MISSING
 DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR	SKULLWIN	SKULLWIN/c_querydb.cpp	880		MISSING
 DM2_IS_MISSILE_VALID_TO_LAUNCHER	SKULLWIN	SKULLWIN/c_querydb.cpp	949		MISSING
 DM2_GET_CREATURE_WEIGHT	SKULLWIN	SKULLWIN/c_querydb.cpp	982		MISSING
-DM2_GET_ORNATE_ANIM_LEN	SKULLWIN	SKULLWIN/c_querydb.cpp	992		MISSING
-DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD	SKULLWIN	SKULLWIN/c_querydb.cpp	1038		MISSING
+DM2_GET_ORNATE_ANIM_LEN	SKULLWIN	SKULLWIN/c_querydb.cpp	992	include/dm2_v1_asset_loader.h:dm2_v1_get_ornate_anim_len_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
+DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD	SKULLWIN	SKULLWIN/c_querydb.cpp	1038	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_food_value_from_record_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_CREATURES_ITEM_MASK	SKULLWIN	SKULLWIN/c_querydb.cpp	1045		MISSING
 DM2_IS_ITEM_FIT_FOR_EQUIP	SKULLWIN	SKULLWIN/c_querydb.cpp	1188		MISSING
 DM2_QUERY_MESSAGE_TEXT	SKULLWIN	SKULLWIN/c_querydb.cpp	1239	src/dm2/dm2_v1_dungeon_loader.c:2293	UNCERTAIN
@@ -846,7 +846,7 @@ DM2_query_19f0_124b	SKULLWIN	SKULLWIN/c_querydb.cpp	4807		MISSING
 DM2_query_29ee_18eb	SKULLWIN	SKULLWIN/c_querydb.cpp	4967		MISSING
 DM2_QUERY_CREATURE_BLIT_RECTI	SKULLWIN	SKULLWIN/c_querydb.cpp	4993		MISSING
 DM2_query_0cee_3275	SKULLWIN	SKULLWIN/c_querydb.cpp	4998		MISSING
-DM2_QUERY_DOOR_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	5007		MISSING
+DM2_QUERY_DOOR_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	5007	include/dm2_v1_asset_loader.h:dm2_v1_query_door_strength_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_CREATURE_ALLOWED_ON_LEVEL	SKULLWIN	SKULLWIN/c_querydb.cpp	5025		MISSING
 DM2_query_0cee_319e	SKULLWIN	SKULLWIN/c_querydb.cpp	5073		MISSING
 init	SKULLWIN	SKULLWIN/c_random.cpp	7	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
@@ -1356,7 +1356,7 @@ GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839		MISSING
 IS_TILE_PASSAGE	SKWIN	SKWIN/SkWinCore.cpp	2846		MISSING
 GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/SkWinCore.cpp	2995	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
-QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	3008		MISSING
+QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	3008	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SET_TILE_ATTRIBUTE_02	SKWIN	SKWIN/SkWinCore.cpp	3050		MISSING
 _1c9a_02c3	SKWIN	SKWIN/SkWinCore.cpp	3058		MISSING
 _4937_01a9	SKWIN	SKWIN/SkWinCore.cpp	3070		MISSING
@@ -1493,7 +1493,7 @@ _0cee_17e7	SKWIN	SKWIN/SkWinCore.cpp	9262		MISSING
 _0cee_1815	SKWIN	SKWIN/SkWinCore.cpp	9273		MISSING
 _0cee_185a	SKWIN	SKWIN/SkWinCore.cpp	9298		MISSING
 _0cee_1a46	SKWIN	SKWIN/SkWinCore.cpp	9333	src/dm2/dm2_v1_dungeon_loader.c:2754	UNCERTAIN
-QUERY_ORNATE_ANIM_FRAME	SKWIN	SKWIN/SkWinCore.cpp	9616		MISSING
+QUERY_ORNATE_ANIM_FRAME	SKWIN	SKWIN/SkWinCore.cpp	9616	include/dm2_v1_asset_loader.h:dm2_v1_query_ornate_anim_frame_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SUMMARIZE_STONE_ROOM	SKWIN	SKWIN/SkWinCore.cpp	9680		MISSING
 QUERY_DUNGEON_MAP_CHIP_PICT	SKWIN	SKWIN/SkWinCore.cpp	10079	src/dm2/dm2_v1_viewport_renderer.c:1561	UNCERTAIN
 DRAW_CHIP_OF_MAGIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	10101	src/dm2/dm2_v1_viewport_renderer.c:1558	UNCERTAIN
@@ -1733,7 +1733,7 @@ IS_CONTAINER_MAP	SKWIN	SKWIN/xxx.cpp	3795		MISSING
 _0cee_2de0	SKWIN	SKWIN/xxx.cpp	3807		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKWIN	SKWIN/xxx.cpp	3813		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
-QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826		MISSING
+QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
 IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_is_tile_solid	VERIFIED_SOURCE_MAPPING
 GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	VERIFIED_SOURCE_MAPPING

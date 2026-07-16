@@ -78,6 +78,12 @@
     projectile insertion route, and `F0329` remains open because the strongest
     leader-hand throw proof is currently M11/engine-owned rather than a clean
     DM1-only owner for this pass.
+  - 2026-07-16 DM1 portrait/bar-graph audit update: `F0515`, `F0516`,
+    `F2104`, `F2105`, and `S0287` are now closed through focused portrait
+    planar-conversion and champion bar-graph tests. File/save envelopes,
+    arbitrary editor bitmap dimensions, and live bitmap blitter sequencing
+    remain route-owned; the existing F0329 M11-owned mapping is not changed by
+    this audit pass.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
@@ -135,6 +141,12 @@
     image extraction/decode ownership, text/name formatting, and higher-level
     gameplay queries; these receipts must not be used to fabricate images or
     promote missing scalar entries into buffers.
+  - 2026-07-16 DM2 querydb update: `DM2_QUERY_ORNATE_ANIM_FRAME`,
+    `DM2_GET_ORNATE_ANIM_LEN`, `DM2_QUERY_DOOR_DAMAGE_RESIST`,
+    `DM2_QUERY_DOOR_STRENGTH`, `DM2_QUERY_GDAT_CREATURE_WORD_VALUE`, and
+    `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` are now source-mapped through real
+    parsed GDAT query rows. Remaining adjacent work is live HUD/dungeon
+    consumers for those rows plus broader real GDAT material classes.
   - 2026-07-16 DM2 update: skproject `DM2_QUERY_GDAT_ENTRY_VALUE` and
     `DM2_LOAD_GDAT_ENTRY_DATA_TO` are now closed at the parsed-GDAT loader
     boundary. Firestaff extracts T/I/D/S/P/F/G values from ENT1 rows and

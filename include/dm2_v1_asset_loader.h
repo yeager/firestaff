@@ -472,6 +472,49 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_Query4BppPictBuffAndPalReceipt;
 
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_word_value;
+    uint8_t used_text_sequence;
+    uint8_t category;
+    uint8_t index;
+    uint16_t length;
+    uint16_t frame_base;
+    uint16_t frame;
+    uint32_t receipt_hash;
+} DM2_V1_QueryOrnateAnimFrameReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t decoration_absent;
+    uint8_t used_word_value;
+    uint8_t used_text_sequence;
+    uint8_t category;
+    uint8_t index;
+    uint16_t length;
+    uint32_t receipt_hash;
+} DM2_V1_GetOrnateAnimLenReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_cache_byte;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t value;
+    uint32_t receipt_hash;
+} DM2_V1_GdatWordQueryReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_explicit_strength;
+    uint8_t used_resistance_fallback;
+    uint8_t door_index;
+    uint16_t strength;
+    uint16_t resistance_field_value;
+    uint32_t receipt_hash;
+} DM2_V1_DoorStrengthReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -682,6 +725,39 @@ int dm2_v1_query_gdat_summary_image_receipt(
     int index,
     int field,
     DM2_V1_QueryGdatSummaryImageReceipt *out_receipt);
+int dm2_v1_query_ornate_anim_frame_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    uint32_t tick,
+    uint32_t delta,
+    DM2_V1_QueryOrnateAnimFrameReceipt *out_receipt);
+int dm2_v1_get_ornate_anim_len_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int decoration_absent,
+    DM2_V1_GetOrnateAnimLenReceipt *out_receipt);
+int dm2_v1_query_door_damage_resist_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_creature_word_value_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int creature_index,
+    int field,
+    const uint8_t *cache3,
+    size_t cache_count,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_food_value_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_door_strength_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_DoorStrengthReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,

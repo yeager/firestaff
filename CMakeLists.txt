@@ -13215,6 +13215,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_graphic_ids_pc34_compat
     )
 
+    add_executable(test_dm1_v1_portrait_planar_conversion_pc34_compat
+        tests/test_dm1_v1_portrait_planar_conversion_pc34_compat.c
+        src/dm1/dm1_v1_portrait_panel_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_portrait_planar_conversion_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_portrait_planar_conversion_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_portrait_planar_conversion_pc34_compat
+        COMMAND test_dm1_v1_portrait_planar_conversion_pc34_compat
+    )
+
     add_executable(test_dm1_v1_dialog_layout_pc34_compat
         tests/test_dm1_v1_dialog_layout_pc34_compat.c
         src/dm1/dm1_v1_dialog_layout_pc34_compat.c

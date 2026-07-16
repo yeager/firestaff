@@ -1,5 +1,28 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 portrait/bar-graph symbol bundle: closed
+  `F0515`, `F0516`, `F2104`, `F2105`, and `S0287` through focused ReDMCSB
+  audit mappings. Coverage locks 32x29/464-byte 4bpp portrait planar
+  conversion roundtrips and existing DM1 champion bar-graph table/fill
+  contracts. Verification: portrait planar conversion build/direct run,
+  focused bar-graph/HUD tests, CTest, TSV checks, and `git diff --check`
+  passed.
+
+- 2026-07-16 DM2 querydb symbol bundle: mapped
+  `DM2_QUERY_ORNATE_ANIM_FRAME`, `DM2_GET_ORNATE_ANIM_LEN`,
+  `DM2_QUERY_DOOR_DAMAGE_RESIST`, `DM2_QUERY_DOOR_STRENGTH`,
+  `DM2_QUERY_GDAT_CREATURE_WORD_VALUE`, and
+  `DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD` to real parsed GDAT query rows.
+  Verification: `test_dm2_v1_gdat_querydb_receipts`, focused CTest, and
+  `git diff --check` passed.
+
+- 2026-07-16 Nexus PRS3 V3 raw-sidecar provenance ledger gate: tightened the
+  skip-safe local real `MENU.BPK`/`DM.BIN` path to prove bounded PRS3 stream,
+  raw sidecar, VDP1/palette sidecars, producer trace, and provenance ledger
+  binding while still blocking decoder promotion, runtime import, rendering,
+  and fallback visuals. Verification: PRS3 schema test, focused Nexus CTest
+  set, launcher compile check, and `git diff --check` passed.
+
 - 2026-07-16 Theron real Track02 capture-producer gate: runtime admission now
   has a producer from real Track02 bytes/MD5 that builds level/object routes,
   startup bitmap atlas evidence, palette-window evidence, and render-asset

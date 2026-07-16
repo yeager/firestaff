@@ -15,14 +15,16 @@ extern "C" {
 #define DM1_PORTRAIT_W         32
 #define DM1_PORTRAIT_H         29
 #define DM1_PORTRAIT_BITPLANES  4
+#define DM1_PORTRAIT_PLANAR_BYTES ((DM1_PORTRAIT_W / 8) * DM1_PORTRAIT_H * DM1_PORTRAIT_BITPLANES)
+#define DM1_PORTRAIT_CHUNKY_BYTES (DM1_PORTRAIT_W * DM1_PORTRAIT_H)
 #define DM1_MAX_CHAMPIONS       4
 #define DM1_PANEL_BAR_W        25   /* HP/mana/stamina bar width */
 #define DM1_PANEL_BAR_H         3   /* Bar height in pixels */
 
 /* Champion portrait state */
 typedef struct {
-    uint8_t  planar_data[DM1_PORTRAIT_W / 8 * DM1_PORTRAIT_H * DM1_PORTRAIT_BITPLANES];
-    uint8_t  chunky_data[DM1_PORTRAIT_W * DM1_PORTRAIT_H]; /* converted for blitting */
+    uint8_t  planar_data[DM1_PORTRAIT_PLANAR_BYTES];
+    uint8_t  chunky_data[DM1_PORTRAIT_CHUNKY_BYTES]; /* converted for blitting */
     bool     loaded;
     bool     injured;  /* flash portrait red when damaged */
     uint8_t  damage_flash_timer;
@@ -59,6 +61,12 @@ void DM1_V1_PortraitPanel_InitPc34Compat(DM1_V1_PortraitPanelStatePc34* state);
 void DM1_V1_PortraitPanel_SetChampionCountPc34Compat(DM1_V1_PortraitPanelStatePc34* state, uint8_t count);
 bool DM1_V1_PortraitPanel_LoadPortraitPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port, const uint8_t* planar_data,
                            uint16_t data_size);
+bool DM1_V1_PortraitPanel_ConvertPlanarBufferToChunkyPc34Compat(
+    const uint8_t* planar_data, uint16_t planar_size,
+    uint8_t* chunky_data, uint16_t chunky_size);
+bool DM1_V1_PortraitPanel_ConvertChunkyBufferToPlanarPc34Compat(
+    const uint8_t* chunky_data, uint16_t chunky_size,
+    uint8_t* planar_data, uint16_t planar_size);
 void DM1_V1_PortraitPanel_ConvertPlanarToChunkyPc34Compat(DM1_V1_PortraitPanelPortraitPc34* port);
 void DM1_V1_PortraitPanel_UpdateBarsPc34Compat(DM1_V1_PortraitPanelChampionPc34* panel,
                          int16_t hp, int16_t max_hp,
