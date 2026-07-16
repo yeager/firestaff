@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 tile/fill receipt bundle: mapped
+  `GET_ADDRESS_OF_TILE_RECORD`, `GET_TILE_VALUE`, `FILL_ENTIRE_PICT`, and
+  `FILL_RECT_SUMMARY` to skproject-backed bounded receipts. The receipts cover
+  tile-link addressing, GET_TILE_VALUE boundary masks/0xE0 blocked edges, and
+  source-shaped fill planning without synthetic pixels.
+
 - 2026-07-16 DM2 record-address receipt bundle: mapped
   `DM2_GET_ADDRESS_OF_RECORD`, `GET_ADDRESS_OF_RECORD`, typed
   `GET_ADDRESS_OF_RECORD0` through `GET_ADDRESS_OF_RECORDF`,

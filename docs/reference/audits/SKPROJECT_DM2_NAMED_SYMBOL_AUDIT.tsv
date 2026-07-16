@@ -1352,9 +1352,9 @@ GET_ADDRESS_OF_DETACHED_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2734		src/dm2/dm2_v1_sk
 GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2744	src/dm2/dm2_v1_runtime.c:329	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.
 CHANGE_CURRENT_MAP_TO	SKWIN	SKWIN/SkWinCore.cpp	2774	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
 GET_TILE_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2822	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
-GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839		MISSING
+GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
 IS_TILE_PASSAGE	SKWIN	SKWIN/SkWinCore.cpp	2846		MISSING
-GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874		MISSING
+GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/SkWinCore.cpp	2995	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	3008	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SET_TILE_ATTRIBUTE_02	SKWIN	SKWIN/SkWinCore.cpp	3050		MISSING
@@ -1388,7 +1388,7 @@ _3e74_2b30	SKWIN	SKWIN/SkWinCore.cpp	4301		MISSING
 ALLOC_LOWER_CPXHEAP	SKWIN	SKWIN/SkWinCore.cpp	4379	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt allocates lower heap memory from the lowest address of the selected free span and preserves ordered residual blocks.
 ALLOC_CPXHEAP_MEM	SKWIN	SKWIN/SkWinCore.cpp	4484	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt covers the lower-heap memory allocation/free-list ordering subset without pointer creation or image-buffer ownership.
 _3e74_585a	SKWIN	SKWIN/SkWinCore.cpp	4514		MISSING
-FILL_ENTIRE_PICT	SKWIN	SKWIN/SkWinCore.cpp	4531		MISSING
+FILL_ENTIRE_PICT	SKWIN	SKWIN/SkWinCore.cpp	4531		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_ENTIRE_PICT width alignment and FIRE_FILL_RECT_ANY planning without manufacturing pixel data.
 FIRE_HIDE_MOUSE_CURSOR	SKWIN	SKWIN/SkWinCore.cpp	4547		MISSING
 _01b0_0adb	SKWIN	SKWIN/SkWinCore.cpp	4557		MISSING
 IBMIO_SET_CURSOR_PATTERN	SKWIN	SKWIN/SkWinCore.cpp	4595		MISSING
@@ -1401,7 +1401,7 @@ ALLOC_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4786	include/dm2_v1_skproject_c
 _0b36_0d67	SKWIN	SKWIN/SkWinCore.cpp	4797		MISSING
 _0b36_0c52	SKWIN	SKWIN/SkWinCore.cpp	4894		MISSING
 OFFSET_RECT	SKWIN	SKWIN/SkWinCore.cpp	4916		MISSING
-FILL_RECT_SUMMARY	SKWIN	SKWIN/SkWinCore.cpp	4932		MISSING
+FILL_RECT_SUMMARY	SKWIN	SKWIN/SkWinCore.cpp	4932		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_RECT_SUMMARY null-rect guard, offset rect, fill, and dirty-rect planning.
 _29ee_00a3	SKWIN	SKWIN/SkWinCore.cpp	4955		MISSING
 IS_MISSILE_VALID_TO_LAUNCHER	SKWIN	SKWIN/SkWinCore.cpp	4973		MISSING
 BETWEEN_VALUE	SKWIN	SKWIN/SkWinCore.cpp	4995	include/dm2_v1_skproject_core.h:30	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper clamps newv to min/max exactly like SKWINSPX v4 SkWinCore::BETWEEN_VALUE and is covered by focused core helper test.
@@ -1734,9 +1734,9 @@ _0cee_2de0	SKWIN	SKWIN/xxx.cpp	3807		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKWIN	SKWIN/xxx.cpp	3813		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
-GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
+GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
 IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_is_tile_solid	VERIFIED_SOURCE_MAPPING
-GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	VERIFIED_SOURCE_MAPPING
+GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
 GET_TILE_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	3998	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
 GET_OBJECT_INDEX_FROM_TILE	SKWIN	SKWIN/xxx.cpp	4008	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_object_index_from_tile	VERIFIED_SOURCE_MAPPING
 GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/xxx.cpp	4027	src/dm2/dm2_v1_runtime.c:329	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.

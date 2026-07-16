@@ -172,6 +172,46 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int blocked_missing_tiles;
+    int blocked_missing_passage;
+    int16_t x;
+    int16_t y;
+    int16_t width;
+    int16_t height;
+    int in_bounds;
+    int x_in_bounds;
+    int y_in_bounds;
+    int16_t probed_x;
+    int16_t probed_y;
+    uint8_t returned_tile_value;
+    uint8_t returned_boundary_mask;
+    uint8_t returned_blocked_value;
+    uint8_t used_left_boundary;
+    uint8_t used_right_boundary;
+    uint8_t used_top_boundary;
+    uint8_t used_bottom_boundary;
+    uint8_t used_corner_boundary;
+    uint8_t checked_primary_passage;
+    uint8_t checked_side_passage;
+} DM2_V1_SkprojectGetTileValueReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t width;
+    uint16_t height;
+    uint8_t bpp;
+    uint8_t fill;
+    uint16_t aligned_width;
+    uint32_t pixel_count;
+    uint8_t requested_fill_rect_any;
+    uint8_t requested_offset_rect;
+    uint8_t requested_dirty_rect;
+    int blocked_missing_buffer;
+    int blocked_missing_rect;
+} DM2_V1_SkprojectFillReceipt;
+
+typedef struct {
+    int valid;
     int16_t previous_current_map;
     int16_t new_v1e0270;
     int16_t new_v1e0272;
@@ -1608,6 +1648,34 @@ int dm2_v1_skproject_map_0cee_04e5(
     int16_t x,
     int16_t y,
     DM2_V1_SkprojectMapTileVectorReceipt *out_receipt);
+int dm2_v1_skproject_get_tile_value(
+    const uint8_t *tiles,
+    const uint8_t *passage,
+    int16_t width,
+    int16_t height,
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectGetTileValueReceipt *out_receipt);
+int dm2_v1_skproject_get_address_of_tile_record(
+    int16_t x,
+    int16_t y,
+    uint16_t tile_record_link,
+    const uint16_t record_counts[16],
+    const uint16_t record_sizes[16],
+    DM2_V1_SkprojectRecordAddressReceipt *out_receipt);
+int dm2_v1_skproject_fill_entire_pict(
+    uint16_t width,
+    uint16_t height,
+    uint8_t bpp,
+    uint8_t fill,
+    DM2_V1_SkprojectFillReceipt *out_receipt);
+int dm2_v1_skproject_fill_rect_summary(
+    uint16_t rect_width,
+    uint16_t rect_height,
+    uint8_t fill,
+    int has_buffer,
+    int has_rect,
+    DM2_V1_SkprojectFillReceipt *out_receipt);
 int dm2_v1_skproject_map_3b001(
     int16_t current_map,
     int16_t value_0270,

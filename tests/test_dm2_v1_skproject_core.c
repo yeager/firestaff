@@ -658,8 +658,16 @@ static void test_map_helpers(void)
     DM2_V1_SkprojectMinionDestinationReceipt dest;
     DM2_V1_SkprojectMapRandomReceipt random;
     DM2_V1_SkprojectMapTileVectorReceipt tile;
+    DM2_V1_SkprojectGetTileValueReceipt tile_value;
     DM2_V1_SkprojectMap3B001Receipt map3b001;
+    DM2_V1_SkprojectFillReceipt fill;
     uint8_t tiles[16];
+    uint8_t passage[16] = {
+        1u, 0u, 1u, 1u,
+        0u, 0u, 1u, 0u,
+        1u, 1u, 0u, 1u,
+        0u, 1u, 1u, 1u
+    };
 
     for (uint8_t i = 0; i < 16u; ++i)
         tiles[i] = (uint8_t)(0x80u + i);
@@ -700,6 +708,44 @@ static void test_map_helpers(void)
               0, 4, 4, 0, 0, 0, 0, 0, &tile) == 0 &&
               tile.blocked_missing_tiles,
           "DM2_map_0cee_04e5 rejects missing tile storage");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, 2, 1, &tile_value) == 0x86 &&
+              tile_value.valid &&
+              tile_value.in_bounds &&
+              tile_value.returned_tile_value == 0x86u,
+          "GET_TILE_VALUE returns the current map byte for in-bounds tiles");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, -1, 0, &tile_value) == 4 &&
+              tile_value.valid &&
+              tile_value.used_left_boundary &&
+              tile_value.checked_primary_passage,
+          "GET_TILE_VALUE returns left-boundary mask when adjacent tile is passage");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, 4, 2, &tile_value) == 1 &&
+              tile_value.valid &&
+              tile_value.used_right_boundary,
+          "GET_TILE_VALUE returns right-boundary mask when adjacent tile is passage");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, 1, -1, &tile_value) == 0 &&
+              tile_value.valid &&
+              tile_value.used_top_boundary &&
+              tile_value.checked_side_passage,
+          "GET_TILE_VALUE returns zero when top boundary is blocked but side passage exists");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, 3, 4, &tile_value) == 8 &&
+              tile_value.valid &&
+              tile_value.used_bottom_boundary,
+          "GET_TILE_VALUE returns bottom-boundary mask when adjacent tile is passage");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, -1, -1, &tile_value) == 0 &&
+              tile_value.valid &&
+              tile_value.used_corner_boundary,
+          "GET_TILE_VALUE preserves source corner-boundary zero when corner-adjacent passage exists");
+    CHECK(dm2_v1_skproject_get_tile_value(
+              tiles, passage, 4, 4, -2, 1, &tile_value) == 0xe0 &&
+              tile_value.valid &&
+              tile_value.returned_blocked_value == 0xe0u,
+          "GET_TILE_VALUE returns 0xE0 for non-adjacent out-of-bounds probes");
 
     CHECK(dm2_v1_skproject_map_3b001(
               7, 11, 12, &map3b001) == 1 &&
@@ -873,7 +919,36 @@ static void test_map_helpers(void)
                   &ec9) == 3u &&
                   ec9.valid && ec9.returned_head == 3u,
               "DM2_map_2066_1ec9 returns append chain when existing head is end marker");
+
+        CHECK(dm2_v1_skproject_get_address_of_tile_record(
+                  2, 3, (uint16_t)((5u << 10) | 3u), record_counts,
+                  record_sizes, &addr) == 1 &&
+                  addr.valid &&
+                  addr.db_type == 5u &&
+                  addr.db_index == 3u &&
+                  addr.byte_offset == 21u,
+              "GET_ADDRESS_OF_TILE_RECORD dereferences the tile link through GET_ADDRESS_OF_RECORD");
     }
+
+    CHECK(dm2_v1_skproject_fill_entire_pict(
+              7u, 5u, 4u, 0x22u, &fill) == 1 &&
+              fill.valid &&
+              fill.aligned_width == 8u &&
+              fill.pixel_count == 40u &&
+              fill.requested_fill_rect_any,
+          "FILL_ENTIRE_PICT aligns 4bpp picture width before FIRE_FILL_RECT_ANY");
+    CHECK(dm2_v1_skproject_fill_rect_summary(
+              9u, 3u, 0x44u, 1, 1, &fill) == 1 &&
+              fill.valid &&
+              fill.pixel_count == 27u &&
+              fill.requested_offset_rect &&
+              fill.requested_fill_rect_any &&
+              fill.requested_dirty_rect,
+          "FILL_RECT_SUMMARY offsets the rect, fills it, and marks it dirty");
+    CHECK(dm2_v1_skproject_fill_rect_summary(
+              9u, 3u, 0x44u, 1, 0, &fill) == 0 &&
+              fill.blocked_missing_rect,
+          "FILL_RECT_SUMMARY skips missing rects like the skproject null guard");
 
     {
         DM2_V1_SkprojectMapDescriptor maps[4];
@@ -2436,6 +2511,13 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD") != 0,
           "source evidence names c_record address helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "GET_ADDRESS_OF_TILE_RECORD") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "GET_TILE_VALUE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "FILL_RECT_SUMMARY") != 0,
+          "source evidence names tile and fill helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM_LOCATE_OTHER_LEVEL") != 0,
           "source evidence names other-level locator");
