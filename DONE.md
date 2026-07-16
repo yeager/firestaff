@@ -1,5 +1,108 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Nexus DGN package/host no-draw consumer gate: added
+  `nexus_v1_dgn_package_host_consumer_gate()` as the bounded real-data
+  consumer after the DGN face/material provenance receipt. It admits only a
+  ready no-draw retail-DGN material receipt plus explicit host-route request,
+  package-consumed bit, matching level index, canonical DGN size, face count,
+  and Structure2 descriptor count. Accepted receipts record package/host
+  source-route consumption but keep original Saturn rendering, material
+  semantics, raster input submission, and fallback visuals blocked.
+  Verification: strict direct C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance`, focused Ninja target
+  `test_nexus_v1_dgn_face_material_provenance`, and focused CTest
+  `nexus_v1_dgn_face_material_provenance`.
+
+- 2026-07-16 CSBWin restored DSA DiscardText message boundary: extended the
+  restored timer tick bridge regression so authenticated STKOP_DiscardText
+  reaches only the existing CSB-owned DB2/F0168 one-message receipt. The path
+  clears that receipt through the saved TIMER/DSA owner, keeps generic text
+  mutation blocked, and still cannot create or route a host message log.
+  Verification: focused Ninja target and direct executable
+  `test_csb_v1_dsa_restored_timer_tick_bridge`, focused CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`,
+  `csb_v1_dsa_parameter_message_save_handoff`, and
+  `csb_v1_dsa_localstate1_save_handoff`, plus `git diff --check`. Broader
+  `csb_v1_dsa_trigger_single_step_pc34_compat` still fails its pre-existing
+  unsupported world-mutating AMPERSAND subcode assertion in this checkout.
+
+- 2026-07-16 Theron runtime-session handoff receipt: added
+  `Theron_V1RuntimeSessionHandoffReceipt` and
+  `theron_v1_runtime_session_handoff_from_admission()` so startup/session code
+  can consume the admitted US raw Track 02 FIFO payload without promoting
+  semantics. The receipt copies only the original `$3840` -> READ(6) ->
+  FIFO -> game-RAM consumer provenance, marks real runtime capture as still
+  required, and keeps payload semantics, visual semantics, object-table
+  admission, level admission, and fallback visuals closed. Verification:
+  `cmake --build build-local-ninja --target firestaff_theron_v1_runtime_admission_probe`,
+  direct `build-local-ninja/firestaff_theron_v1_runtime_admission_probe`,
+  focused CTest `theron_v1_runtime_admission`, adjacent CTest
+  `theron_v1_game_payload_trace_corpus`, and the same focused target/CTest in
+  `build-verify`.
+
+- 2026-07-16 DM1 GROUP F0186-F0189 drop/delete receipts: added
+  source-named DM1 receipts for fixed creature possession drops, moving
+  fixed-drop cell stack consumption, GROUP.Slot possession-chain drops, and
+  final group delete gates. The slice is bound to raw C04-shaped group data
+  and preserves ReDMCSB's fixed-drop table payloads, reverse moving-cell
+  consumption, random cell packing, next-thing snapshot, group slot clear,
+  weapon-vs-non-weapon sound choice, group Thing unlink, raw C04 next clear,
+  active-state retirement, and C29-C41 event deletion intent without
+  materializing dungeon things or broader renderer/runtime behavior.
+  Verification: direct strict C99 build/run and focused CTest
+  `dm1_v1_group_drop_delete_receipts_pc34_compat`.
+
+- 2026-07-16 DM2 skproject `CUT_RECORD_FROM` slice: added
+  `dm2_v1_skproject_cut_record_from()` as the bounded source mutation receipt
+  for SKULLWIN `c_record.cpp`. The route rejects null/end cut inputs, masks
+  ObjectIDs with `0x3fff` for the original address/link comparisons, unlinks
+  parent-owned and tile-owned chains, replaces first tile roots with the cut
+  record's next link, compacts single-root ground-stack entries while
+  decrementing later column offsets, and resets the cut record `w0` to
+  `OBJECT_END_MARKER`. Verification: strict direct C11 build/run and focused
+  `dm2_v1_dungeon_loader_first_map_gate`.
+
+- 2026-07-16 Nexus MENU.BPK PRS3 decoded-output proof gate: added a
+  fail-closed `nexus_v1_bpk_archive_prs3_decoded_output_proof_gate()` receipt
+  for caller-supplied PRS3 output sidecars. It reuses the MENU.BPK stream
+  plan, requires exact decoded byte count plus FNV match, records whether the
+  capture source and original Saturn provenance are present, and keeps opcode
+  grammar, decoder promotion, runtime upload, and fallback visuals blocked.
+  Verification: focused strict direct C99 build/run of
+  `test_nexus_v1_bpk_prs3_payload_evidence` with local real MENU.BPK coverage
+  when present, focused Ninja/CTest target
+  `nexus_v1_bpk_prs3_payload_evidence`, and `git diff --check`.
+
+- 2026-07-16 CSBWin SetTimer duplicate-policy matrix: tightened the CSB runtime
+  timer owner so C05..C10 map timers never fall through the shared DM1 merge
+  helper after the CSBWin duplicate scan. Matching source timer functions on
+  the same square/time reuse the original live slot and replace only the action
+  byte; TT_STONEROOM additionally requires the same cell/position; different
+  timer functions on the same square append as separate source-owned timers.
+  Verification: focused Ninja target and CTest
+  `csb_v1_csbwin_duplicate_timer_policy`, plus `git diff --check`.
+  No synthetic save, DSA, dungeon, HUD, or host data was added.
+
+- 2026-07-16 DM2 skproject `ADD_ITEM_CHARGE` source mapping: added
+  `dm2_v1_skproject_add_item_charge()` with the skproject DB5 weapon,
+  DB6 cloth, and DB10 miscellaneous charge bitfields, original max-charge
+  clamps, and fail-closed null/unsupported-object behavior. The SKULLWIN,
+  SkWinCore, and xxx.cpp aliases are now marked source-mapped in the DM2
+  symbol audit. Verification: direct C11 build/run and focused CTest
+  `dm2_v1_skproject_core`.
+
+- 2026-07-16 Theron runtime admission consumes game-owned FIFO corpus
+  receipts: wired `Theron_V1RuntimeAdmissionReceipt` to admit only the
+  existing verified US raw Track 02 game-owned FIFO payload receipt. The new
+  admission path preserves the `$3840` -> `$e009`/READ(6)/FIFO/main-RAM
+  consumer facts, rejects missing consumer proof, wrong variant/hash, and
+  any payload-semantic promotion, and keeps payload semantics, visual
+  semantics, and fallback visuals closed. Verification:
+  `firestaff_theron_v1_runtime_admission_probe` Ninja target and executable
+  run in both `build-local-ninja` and `build-verify`, focused CTest
+  `theron_v1_runtime_admission`, existing CTest
+  `theron_v1_game_payload_trace_corpus`, and `git diff --check`.
+
 - 2026-07-16 DM1 F0139 creature allowed-on-map source gate: added a
   source-named `F0139_DUNGEON_IsCreatureAllowedOnMap` helper that reads raw
   C04 `GROUP.Type` via F0156-owned Thing data and scans only the target map's

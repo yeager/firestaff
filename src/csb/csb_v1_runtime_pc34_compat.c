@@ -14743,6 +14743,7 @@ int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
             existing = &profile->timeline_queue.events[event_index];
             if (existing->type < DM1_EVENT_CORRIDOR ||
                 existing->type > DM1_EVENT_DOOR ||
+                existing->type != event->type ||
                 existing->map_time != event->map_time ||
                 existing->b_mapX != event->b_mapX ||
                 existing->b_mapY != event->b_mapY) {
@@ -14755,6 +14756,7 @@ int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
             existing->c_effect = event->c_effect;
             return event_index;
         }
+        return csb_v1_runtime_append_unmerged_map_timer(profile, event);
     }
     if (event->type >= DM1_EVENT_CORRIDOR &&
         event->type <= DM1_EVENT_DOOR &&

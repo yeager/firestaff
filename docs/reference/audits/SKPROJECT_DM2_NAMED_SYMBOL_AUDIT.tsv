@@ -667,7 +667,7 @@ DM2_IBMIO_USER_INPUT_CHECK	SKULLWIN	SKULLWIN/c_input.cpp	800		MISSING
 DM2_EVENT_LOOP	SKULLWIN	SKULLWIN/c_input.cpp	908		MISSING
 DM2_RETRIEVE_ITEM_BONUS	SKULLWIN	SKULLWIN/c_item.cpp	22		MISSING
 DM2_PROCESS_ITEM_BONUS	SKULLWIN	SKULLWIN/c_item.cpp	59		MISSING
-DM2_ADD_ITEM_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	251		MISSING
+DM2_ADD_ITEM_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	251	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item charge mutation exactly: ObjectID db type 5 writes w2 bits 10..13 with max 15, type 6 writes bits 9..12 with max 15, type 10 writes bits 14..15 with max 3, OBJECT_NULL and unsupported DB types do not mutate.
 DM2_GET_MAX_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	344		MISSING
 DM2_QUERY_ITEM_VALUE	SKULLWIN	SKULLWIN/c_item.cpp	360		MISSING
 DM2_QUERY_ITEM_WEIGHT	SKULLWIN	SKULLWIN/c_item.cpp	496		MISSING
@@ -861,7 +861,7 @@ record_to_long	SKULLWIN	SKULLWIN/c_record.cpp	43		MISSING
 DM2_GET_ADDRESS_OF_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	46	include/dm2_v1_world_model.h:257	UNCERTAIN
 DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for APPEND_RECORD_TO: reject end/null append inputs, reset appended GenericRecord::w0 to OBJECT_END_MARKER, append through a parent link or existing tile chain, and insert into an empty byte-square tile with ground-stack shift plus column-index bump.
-DM2_CUT_RECORD_FROM	SKULLWIN	SKULLWIN/c_record.cpp	121		MISSING
+DM2_CUT_RECORD_FROM	SKULLWIN	SKULLWIN/c_record.cpp	121	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_cut_record_from	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for CUT_RECORD_FROM: reject end/null cut inputs, mask direction bits with 0x3fff for record address and comparisons, unlink from parent-owned chains or tile chains, replace first tile roots with their next link, compact single-root tile ground-stack entries, decrement later column offsets, and reset the cut GenericRecord::w0 to OBJECT_END_MARKER.
 DM2_GET_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	175		MISSING
 DM2_QUERY_CLS2_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	203		MISSING
 DM2_SET_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	284		MISSING
@@ -1317,7 +1317,7 @@ ANIM_BOOTSTRAP_TITLE	SKWIN	SKWIN/SkWinCore.cpp	2045	src/dm2/dm2_v1_anim_bootstra
 QUERY_CREATURES_ITEM_MASK	SKWIN	SKWIN/SkWinCore.cpp	2057		MISSING
 ZERO_MEMORY	SKWIN	SKWIN/SkWinCore.cpp	2166		MISSING
 PROCESS_TIMER_0E	SKWIN	SKWIN/SkWinCore.cpp	2173		MISSING
-ADD_ITEM_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	2197		MISSING
+ADD_ITEM_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	2197	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::ADD_ITEM_CHARGE through the same bounded charge receipt used for the SKULLWIN c_item alias.
 IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	2257		MISSING
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2275		MISSING
 QUERY_ITEM_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2287	src/dm2/dm2_v1_asset_loader.c:839	UNCERTAIN
@@ -1690,7 +1690,7 @@ READ_1BIT	SKWIN	SKWIN/xxx.cpp	184		MISSING
 _47e1_0089	SKWIN	SKWIN/xxx.cpp	195		MISSING
 APPEND_RECORD_TO	SKWIN	SKWIN/xxx.cpp	202	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader maps the xxx.cpp APPEND_RECORD_TO alias to the same bounded source mutation receipt used for SkWinCore and SKULLWIN c_record.
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	533		MISSING
-ADD_ITEM_CHARGE	SKWIN	SKWIN/xxx.cpp	544		MISSING
+ADD_ITEM_CHARGE	SKWIN	SKWIN/xxx.cpp	544	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the xxx.cpp ADD_ITEM_CHARGE alias to the source-equivalent charge bitfield/clamp helper.
 MIN_VALUE	SKWIN	SKWIN/xxx.cpp	602		MISSING
 MAX_VALUE	SKWIN	SKWIN/xxx.cpp	610		MISSING
 ZERO_MEMORY	SKWIN	SKWIN/xxx.cpp	1285		MISSING

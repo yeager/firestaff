@@ -1,14 +1,26 @@
 # TODO.md GAP Audit — DM1 V1 Sections
 Generated: 2026-05-24
 
+## 2026-07-16 CSB Timer Addendum
+
+- CSBWin `SetTimer` duplicate-policy matrix for live C05..C10 map timers is
+  now code-owned by `csb_v1_runtime_add_timeline_event`: same function,
+  square, and time replace only the action byte; TT_STONEROOM also requires the
+  same cell; different map timer functions on the same square append as
+  separate CSBWin timers instead of entering the shared DM1 merge helper.
+- Focus evidence: `csb_v1_csbwin_duplicate_timer_policy`.
+- Remaining CSB timer audit gap: full requeue semantics from a real CSBWin save
+  corpus, including broader `I_Delay`/message ownership. No synthetic save or
+  DSA data was added for this closure.
+
 ## GAP Items Found in DM1 V1 Sections
 
 ---
 
 ### GAP 1: C25 Lord Order + C26 Grey Lord creature behavior
 
-**Location:** TODO.md → DM1 V1 → Creature System  
-**Files:** `dm1_v1_creature_ai_behavior_pc34_compat.c`  
+**Location:** TODO.md → DM1 V1 → Creature System
+**Files:** `dm1_v1_creature_ai_behavior_pc34_compat.c`
 **Header:** `dm1_v1_creature_ai_behavior_pc34_compat.h` (no DM1_CREATURE_TYPE_LORD_ORDER/GREY_LORD constants)
 
 **Evidence:**
@@ -23,8 +35,8 @@ Generated: 2026-05-24
 
 ### GAP 2: C01-C24 Hall of Champions stats (stub values)
 
-**Location:** TODO.md → DM1 V1 → Champion System  
-**Evidence:** manifest at `data/firestaff-hall-champions/manifest.json` (commit 00244f3f)  
+**Location:** TODO.md → DM1 V1 → Champion System
+**Evidence:** manifest at `data/firestaff-hall-champions/manifest.json` (commit 00244f3f)
 ReDMCSB G0243 is source reference; corrections not yet committed.
 
 - 5 flag bugs: C12 Black Flame, C20 Materializer, C14 Couatl, C15 Vexirk, C21 Water Elemental, C24 Lord Chaos
@@ -36,7 +48,7 @@ ReDMCSB G0243 is source reference; corrections not yet committed.
 
 ### GAP 3: portrait sensorData ordinal indexing (m11_game_view.c)
 
-**Location:** `src/m11/m11_game_view.c` line ~8995  
+**Location:** `src/m11/m11_game_view.c` line ~8995
 - Stores raw ordinal+1 without -1 correction for champion portrait sheet indexing
 - Blocked on missing external artifacts (pass449/pass450 framebuffer evidence)
 - Commit 62411518 clarified comment but fix not applied

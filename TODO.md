@@ -83,9 +83,23 @@
     `dm2_v1_dungeon_loader`. It rejects null/end append inputs, resets the
     appended record's `w0` to `OBJECT_END_MARKER`, appends to parent links or
     existing tile chains, and inserts into empty byte-square tiles by shifting
-    the ground-stack root list and bumping later column offsets. Remaining
-    adjacent work is `CUT_RECORD_FROM`, exact CPX/mement free-list ordering,
-    and using these mutations in broader real GDAT/HUD dungeon runtime.
+    the ground-stack root list and bumping later column offsets.
+  - 2026-07-16 DM2 c_record cut update: skproject `DM2_CUT_RECORD_FROM` now
+    has a bounded source mutation receipt in `dm2_v1_dungeon_loader`. It
+    rejects null/end cut inputs, uses the source `0x3fff` ObjectID mask for
+    address and link comparisons, unlinks from parent-owned chains or tile
+    chains, replaces first tile roots with their next link, compacts
+    single-root tile ground-stack entries, decrements later column offsets,
+    and resets the cut record's `w0` to `OBJECT_END_MARKER`. Remaining
+    adjacent work is exact CPX/mement free-list ordering and using these
+    mutations in broader real GDAT/HUD dungeon runtime.
+  - 2026-07-16 DM2 item-charge update: skproject `DM2_ADD_ITEM_CHARGE` /
+    `ADD_ITEM_CHARGE` now has a source-mapped bounded helper in
+    `dm2_v1_skproject_core` for DB5 weapon, DB6 cloth, and DB10 miscellaneous
+    item charge bitfields and clamps. Remaining adjacent item work is
+    `GET_MAX_CHARGE`, `QUERY_ITEM_VALUE`, `QUERY_ITEM_WEIGHT`,
+    `CALC_PLAYER_WEIGHT`, and runtime HUD/item consumption from real GDAT and
+    dungeon records.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -109,7 +123,14 @@
     `dm1_v1_f0139_creature_allowed_on_map_pc34_compat`; the broader
     `m10_c006_generator_reenable_dispatch_pc34_compat` target currently still
     fails one C38 ACTIVE_GROUP aspect assertion in this dirty checkout.
-  Remaining prioritized backlog symbols are `F0185`-`F0193`,
+  - 2026-07-16 update: `F0186`-`F0189` now have DM1-owned source-named
+    drop/delete receipts over raw C04-shaped group cleanup: fixed creature
+    possession table drops, moving fixed-drop cell stack consumption,
+    GROUP.Slot chain drops with source sound choice, and final group
+    unlink/next-clear/active-state/event-delete gates. Covered by
+    `dm1_v1_group_drop_delete_receipts_pc34_compat`; audit rows are closed as
+    `VERIFIED_SOURCE_MAPPING`.
+  Remaining prioritized backlog symbols are `F0185`, `F0190`-`F0193`,
   `F0208`, and `F0224`. Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
@@ -168,6 +189,13 @@
     promotion gap for title/PRESENTS/opening/HUD pages; remaining evidence is
     still real Mac/app capture with local CSB data and positive DSA/save
     corpus proof.
+  - 2026-07-16 update: restored CSBWin DSA STKOP_DiscardText now has runtime
+    evidence through the saved TIMER bridge: it clears only the existing
+    DB2/F0168 one-message receipt, keeps generic text mutation blocked, and
+    cannot create or route a host message log. Remaining CSB work is still
+    real packaged title/HUD/door capture breadth, positive DSA/save corpus
+    execution, and any broader message queue behavior not bound to an
+    authenticated source text receipt.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
@@ -235,6 +263,25 @@
     submission. Remaining Nexus work is still real PRS3 decoded-output proof,
     Saturn VDP1/material/palette capture, and the reviewed DGN/menu host
     upload route before any visual handoff can open.
+  - 2026-07-16 update: MENU.BPK PRS3 decoded-output proof now has a
+    fail-closed gate over a caller-supplied output sidecar. The gate binds the
+    sidecar to one real MENU.BPK PRS3 stream by exact expected byte count and
+    FNV, but still reports provenance required unless the capture source is
+    bound and independently verified as original Saturn execution. Even a
+    proof-ready receipt does not promote opcode grammar, a decoder, runtime
+    upload, or fallback visuals. Remaining Nexus work is still real original
+    Saturn PRS3 opcode/output proof with reviewed producer provenance,
+    Saturn VDP1/material/palette capture, and the reviewed DGN/menu host
+    upload route before any visual handoff can open.
+  - 2026-07-16 update: the DGN package/host consumer now requires the
+    validated real-DGN face/material receipt plus an explicit host-route
+    request, package-consumed bit, level index, canonical DGN size, face count,
+    and Structure2 descriptor count before it records source-route consumption.
+    The accepted receipt is still `ready-no-draw`: original Saturn rendering,
+    material semantics, raster-input submission, and fallback visuals remain
+    false. Remaining Nexus work is the reviewed menu upload consumer, original
+    Saturn PRS3/output producer provenance, Saturn VDP1/material/palette
+    capture, and broad startup/menu/DGN route completion.
 
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
@@ -251,6 +298,22 @@
     Theron work is still positive operator-supplied corpus breadth and runtime
     wiring from that consumer receipt into startup/admission; the receipt does
     not prove level, object, bitmap, palette, or visual semantics.
+  - 2026-07-16 update: the runtime-admission surface now consumes that
+    game-owned FIFO payload receipt directly. Only the verified US raw Track
+    02 `$3840` -> READ(6) -> FIFO -> game-RAM consumer chain can set the
+    opaque runtime admission bit; payload semantics, visual semantics, and
+    fallback visuals remain explicitly false. Remaining Theron work is
+    positive operator-supplied corpus breadth and broader startup/session
+    plumbing from admitted opaque bytes into real runtime capture, not
+    generated presentation.
+  - 2026-07-16 update: admitted FIFO bytes now publish a bounded
+    runtime-session handoff receipt. The receipt preserves the US raw Track
+    02 record, source offset/byte, READ(6), FIFO-to-game-RAM, and game-RAM
+    consumer facts, requires a future real runtime capture, and keeps object
+    table admission, level admission, payload semantics, visual semantics, and
+    fallback visuals closed. Remaining Theron work is still operator-supplied
+    corpus breadth and a reviewed startup/runtime capture consumer that uses
+    this opaque session receipt without inventing presentation data.
 
 - 2026-07-16 Theron Track02 post-envelope loader follow-up: the copied-code
   successor receipt now keeps the second TII source-window offset when mapping
@@ -649,9 +712,14 @@
   `MaxTimers` slot pool separately from its active `NumTimer` heap; free slots
   do not materialize into M10 or DSA. TT_53, TT_60 party +5, TT_DOOR->TT_1, collision-free
   TT_1, and deferred TT_7 CLEAR now use the source-owned atomic
-  `DeleteTimer`/`SetTimer` slot transaction. Remaining work is the exact
-  duplicate-policy matrix and full requeue semantics from a real CSBWin save
-  corpus.
+  `DeleteTimer`/`SetTimer` slot transaction.
+  - 2026-07-16 update: the live CSBWin `SetTimer` duplicate-policy matrix for
+    C05..C10 map timers now stays inside the CSBWin owner. Matching timer
+    functions on the same square/time replace only the action byte, TT_STONEROOM
+    still requires the same cell/position, and different timer functions on the
+    same square append as separate source-owned timers instead of falling
+    through the shared DM1 merge helper. Remaining work is full requeue
+    semantics from a real CSBWin save corpus.
 
 - 2026-07-15 CSBWin TT_1 party-door damage/sound remains fail-closed: the
   source side effects need one rollback-capable owner with the TIMER pool.
@@ -664,8 +732,10 @@
   handle, then calls `AdjustTimerQueue`. Firestaff now uses that atomic
   delete/requeue ownership path for TT_53, collision-free TT_1, and deferred
   TT_7 CLEAR, including source slot/sequence and rollback of a staged timeline
-  event. The duplicate matrix and I_Delay/Message remain blocked until their
-  source comparisons can be staged transactionally.
+  event. The C05..C10 duplicate matrix is now live-owned by the CSBWin timer
+  path; I_Delay/Message and broader requeue corpus execution remain blocked
+  until source comparisons can be staged transactionally from a real CSBWin
+  save.
 
 - 2026-07-15 CSBgraphics runtime inventory: verified local ownership chain is
   `Graphics.cpp:1643 LocateNthGraphic` -> bounded entry spans/LZW boundary ->

@@ -27,6 +27,18 @@ static void wr32_be(uint8_t *p, uint32_t v) {
     p[3] = (uint8_t)v;
 }
 
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t i;
+
+    if (!data || size == 0U) return 0U;
+    for (i = 0U; i < size; ++i) {
+        hash ^= (uint64_t)data[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 /* Synthetic BPPK layout (mirrors the probe's make_synthetic_bppk but
  * with smaller payloads so the test executes quickly). The schema is:
  *   - 24-byte BPPK header
@@ -526,6 +538,61 @@ static void test_optional_local_menumenu_bpk(void) {
                        opcode.witnessed == 161U &&
                        opcode.decoder_promoted == 0,
                    "local MENU.BPK opcode-prefix witness remains diagnostic-only");
+        }
+    }
+
+    {
+        Nexus_V1_BpkPrs3StreamPlan plan;
+        Nexus_V1_BpkPrs3DecodedOutputProofReceipt proof;
+        uint8_t *captured_output;
+        uint64_t captured_hash;
+
+        memset(&plan, 0, sizeof(plan));
+        rc = nexus_v1_bpk_archive_prs3_stream_plan(data, size, 1U, &plan);
+        if (rc == NEXUS_V1_BPK_PRS3_STREAM_OK &&
+            plan.expected_output_bytes > 0U &&
+            plan.expected_output_bytes <= 1024U * 1024U) {
+            captured_output = (uint8_t *)calloc(
+                plan.expected_output_bytes, sizeof(*captured_output));
+            if (captured_output) {
+                captured_hash = fnv1a64(captured_output,
+                                        plan.expected_output_bytes);
+                memset(&proof, 0, sizeof(proof));
+                rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
+                    data, size, 1U, captured_output,
+                    plan.expected_output_bytes, captured_hash,
+                    1, 0, &proof);
+                expect(rc == 0 &&
+                           proof.length_matches &&
+                           proof.hash_matches &&
+                           proof.decoded_output_sidecar_bound &&
+                           !proof.original_saturn_provenance_verified &&
+                           !proof.decoded_output_proof_ready &&
+                           !proof.decoder_promoted &&
+                           !proof.runtime_upload_permitted &&
+                           !proof.fallback_visuals_permitted &&
+                           proof.status ==
+                               NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_PROVENANCE_REQUIRED,
+                       "local MENU.BPK decoded-output sidecar remains provenance-blocked");
+                expect(strcmp(
+                           nexus_v1_bpk_prs3_decoded_output_proof_status_name(
+                               proof.status),
+                           "provenance-required") == 0,
+                       "decoded-output proof status name is stable");
+
+                rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
+                    data, size, 1U, captured_output,
+                    plan.expected_output_bytes, captured_hash ^ 1U,
+                    1, 0, &proof);
+                expect(rc == 0 &&
+                           proof.status ==
+                               NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_HASH_MISMATCH &&
+                           !proof.decoded_output_sidecar_bound &&
+                           !proof.decoder_promoted &&
+                           !proof.runtime_upload_permitted,
+                       "local MENU.BPK decoded-output proof rejects hash drift");
+                free(captured_output);
+            }
         }
     }
 

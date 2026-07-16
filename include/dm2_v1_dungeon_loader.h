@@ -928,6 +928,40 @@ typedef struct {
 } DM2_V1_SkprojectAppendRecordReceipt;
 
 typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t cut_object_id;
+    uint16_t masked_object_id;
+    uint16_t source_previous_next;
+    uint16_t parent_previous_link;
+    uint16_t parent_new_link;
+    uint16_t tile_previous_root;
+    uint16_t tile_new_root;
+    uint16_t preceding_object_id;
+    int cut_type;
+    int cut_index;
+    int cut_record_size;
+    int object_index;
+    int object_index_offset;
+    int shifted_ground_stack_words;
+    int decremented_column_offsets;
+    int parent_link_route;
+    int tile_single_root_remove_route;
+    int tile_root_replace_route;
+    int tile_chain_unlink_route;
+    int source_reset_to_end;
+    int blocked_null_or_end_cut;
+    int blocked_missing_cut_record;
+    int blocked_invalid_parent;
+    int blocked_invalid_tile;
+    int blocked_unbounded_graph;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectCutRecordReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -1055,6 +1089,14 @@ int dm2_v1_skproject_append_record_to(
     int x,
     int y,
     DM2_V1_SkprojectAppendRecordReceipt *out);
+int dm2_v1_skproject_cut_record_from(
+    DM2_V1_DungeonData *d,
+    uint16_t record_to_cut,
+    uint16_t *parent_link,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectCutRecordReceipt *out);
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
 int dm2_v1_dungeon_walk_square_things(
     const DM2_V1_DungeonData *d,

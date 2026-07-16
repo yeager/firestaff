@@ -37,7 +37,14 @@ int main(void)
     struct DM1_Event_V1 first = make_event(DM1_EVENT_WALL, 1u, 0u);
     struct DM1_Event_V1 duplicate = make_event(DM1_EVENT_WALL, 1u, 2u);
     struct DM1_Event_V1 distinct_cell = make_event(DM1_EVENT_WALL, 2u, 1u);
+    struct DM1_Event_V1 corridor = make_event(DM1_EVENT_CORRIDOR, 0u, 1u);
+    struct DM1_Event_V1 corridor_duplicate =
+        make_event(DM1_EVENT_CORRIDOR, 3u, 2u);
+    struct DM1_Event_V1 door_same_square = make_event(DM1_EVENT_DOOR, 0u, 1u);
+    struct DM1_Event_V1 door_duplicate = make_event(DM1_EVENT_DOOR, 2u, 2u);
     int first_index;
+    int corridor_index;
+    int door_index;
 
     csb_v1_runtime_init(&profile, NULL);
     profile.csbwin_delete_duplicate_timers = 1u;
@@ -51,6 +58,21 @@ int main(void)
     check(csb_v1_runtime_add_timeline_event(&profile, &distinct_cell) >= 0 &&
               profile.timeline_queue.eventCount == 2,
           "CSBWin keeps distinct TT_STONEROOM positions separate");
+    corridor_index = csb_v1_runtime_add_timeline_event(&profile, &corridor);
+    check(corridor_index >= 0 &&
+              csb_v1_runtime_add_timeline_event(
+                  &profile, &corridor_duplicate) == corridor_index &&
+              profile.timeline_queue.events[corridor_index].c_effect == 2u,
+          "CSBWin reuses a matching corridor timer and replaces action byte");
+    door_index = csb_v1_runtime_add_timeline_event(&profile, &door_same_square);
+    check(door_index >= 0 && door_index != corridor_index &&
+              profile.timeline_queue.eventCount == 4,
+          "CSBWin keeps different map timer functions separate on the same square");
+    check(csb_v1_runtime_add_timeline_event(&profile, &door_duplicate) ==
+              door_index &&
+              profile.timeline_queue.events[door_index].c_effect == 2u &&
+              profile.timeline_queue.eventCount == 4,
+          "CSBWin reuses a matching door timer without collapsing corridor state");
 
     csb_v1_runtime_cleanup(&profile);
     csb_v1_runtime_init(&profile, NULL);

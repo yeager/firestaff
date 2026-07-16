@@ -20958,6 +20958,32 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_group_drop_delete_receipts_pc34_compat)
+    add_executable(test_dm1_v1_group_drop_delete_receipts_pc34_compat
+        tests/test_dm1_v1_group_drop_delete_receipts_pc34_compat.c
+        src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+        src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
+        src/dm1/dm1_v1_champion_needs_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
+        src/dm1/dm1_v1_g0497_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_damage_factor_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_hit_probability_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_group_drop_delete_receipts_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_group_drop_delete_receipts_pc34_compat
+        COMMAND test_dm1_v1_group_drop_delete_receipts_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_live_action_effects_pc34_compat)
     add_executable(test_dm1_v1_live_action_effects_pc34_compat
         tests/test_dm1_v1_live_action_effects_pc34_compat.c
@@ -27414,6 +27440,23 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_game_payload_trace_corpus
         COMMAND firestaff_theron_v1_game_payload_trace_corpus_probe
+    )
+
+    add_executable(firestaff_theron_v1_runtime_admission_probe
+        probes/theron/firestaff_theron_v1_runtime_admission_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_runtime_admission_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_runtime_admission_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_runtime_admission_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_runtime_admission
+        COMMAND firestaff_theron_v1_runtime_admission_probe
     )
 
     add_executable(firestaff_theron_v1_capture_preflight_chain_probe

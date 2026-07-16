@@ -84,12 +84,63 @@ typedef struct {
     int can_submit_raster_input;
 } Nexus_V1_DgnFaceMaterialReceipt;
 
+typedef enum {
+    NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_INVALID = 0,
+    NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_MATERIAL = 1,
+    NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE = 2,
+    NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_READY_NO_DRAW = 3
+} Nexus_V1_DgnPackageHostConsumerStatus;
+
+typedef struct {
+    const Nexus_V1_DgnFaceMaterialReceipt *material_receipt;
+    int host_route_requested;
+    int package_route_consumed;
+    int expected_level_index;
+    int observed_level_index;
+    int expected_canonical_dgn_size;
+    int observed_canonical_dgn_size;
+    int expected_face_count;
+    int observed_face_count;
+    int expected_structure2_descriptor_count;
+    int observed_structure2_descriptor_count;
+} Nexus_V1_DgnPackageHostConsumerInput;
+
+typedef struct {
+    Nexus_V1_DgnPackageHostConsumerStatus status;
+    int material_receipt_ready;
+    int host_route_requested;
+    int package_route_consumed;
+    int level_index_matches;
+    int canonical_dgn_size_matches;
+    int face_count_matches;
+    int structure2_descriptor_count_matches;
+    int source_route_consumed_by_host;
+    int package_host_route_bound;
+    int original_saturn_capture_required;
+    int original_saturn_rendering_proven;
+    int material_semantics_proven;
+    int can_submit_raster_input;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+    int no_draw_only;
+} Nexus_V1_DgnPackageHostConsumerReceipt;
+
 /* Returns 1 only when a complete retail-DGN binding table is admissible. */
 int nexus_v1_dgn_face_material_validate(
     const Nexus_V1_DgnFaceMaterialInput *input,
     Nexus_V1_DgnFaceMaterialReceipt *out_receipt);
 
+/* Consume the material receipt at a package/host boundary without promoting
+ * material semantics, Saturn rendering, raster input submission, or fallback
+ * visuals. */
+int nexus_v1_dgn_package_host_consumer_gate(
+    const Nexus_V1_DgnPackageHostConsumerInput *input,
+    Nexus_V1_DgnPackageHostConsumerReceipt *out_receipt);
+
 const char *nexus_v1_dgn_face_material_status_name(
     Nexus_V1_DgnFaceMaterialStatus status);
+
+const char *nexus_v1_dgn_package_host_consumer_status_name(
+    Nexus_V1_DgnPackageHostConsumerStatus status);
 
 #endif

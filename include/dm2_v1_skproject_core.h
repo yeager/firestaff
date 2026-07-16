@@ -128,6 +128,20 @@ typedef struct {
     uint16_t cache_index;
 } DM2_V1_SkprojectPictMementReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    int db_type;
+    int delta;
+    uint16_t previous_w2;
+    uint16_t new_w2;
+    uint16_t previous_charge;
+    uint16_t new_charge;
+    uint16_t max_charge;
+    int blocked_null_object;
+    int blocked_unsupported_db_type;
+} DM2_V1_SkprojectItemChargeReceipt;
+
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
 int16_t dm2_v1_skproject_between_value(int16_t minv,
@@ -223,6 +237,11 @@ int dm2_v1_skproject_free_pict_mement(
     const DM2_V1_SkprojectImageMementRequest *image_request,
     uint16_t *pinned_entry,
     DM2_V1_SkprojectFreeImageMementReceipt *out_receipt);
+uint16_t dm2_v1_skproject_add_item_charge(
+    uint16_t object_id,
+    uint16_t *record_w2,
+    int16_t delta,
+    DM2_V1_SkprojectItemChargeReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
