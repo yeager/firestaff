@@ -2875,6 +2875,184 @@ int dm2_v1_skproject_draw_item_on_wood_panel(
     return 1;
 }
 
+static void dm2_v1_skproject_format_3digit(int16_t value, char out[4])
+{
+    if (value < 0) value = 0;
+    if (value > 999) value = 999;
+    out[0] = (char)('0' + (value / 100) % 10);
+    out[1] = (char)('0' + (value / 10) % 10);
+    out[2] = (char)('0' + value % 10);
+    out[3] = '\0';
+}
+
+int dm2_v1_skproject_draw_cur_max_hms(
+    uint16_t rect_no,
+    int16_t current_value,
+    int16_t max_value,
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt receipt;
+    char cur[4];
+    char max[4];
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rect_no = rect_no;
+    receipt.current_value = current_value;
+    receipt.max_value = max_value;
+    receipt.foreground_color = 13u;
+    receipt.background_color = 0x4001u;
+    if (current_value < 0 || current_value > 999 ||
+        max_value < 0 || max_value > 999) {
+        receipt.blocked_invalid_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    dm2_v1_skproject_format_3digit(current_value, cur);
+    dm2_v1_skproject_format_3digit(max_value, max);
+    memcpy(receipt.text, cur, 3u);
+    receipt.text[3] = '/';
+    memcpy(&receipt.text[4], max, 3u);
+    receipt.text[7] = '\0';
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_player_3stat_text(
+    const DM2_V1_SkprojectChampion3StatValues *stats,
+    DM2_V1_SkprojectDrawPlayer3StatTextReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPlayer3StatTextReceipt receipt;
+    int ok;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!stats) {
+        receipt.blocked_missing_stats = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    ok = dm2_v1_skproject_draw_cur_max_hms(
+             0x226u, stats->cur_hp, stats->max_hp, &receipt.hp) &&
+         dm2_v1_skproject_draw_cur_max_hms(
+             0x227u, (int16_t)(stats->cur_stamina / 10),
+             (int16_t)(stats->max_stamina / 10), &receipt.stamina) &&
+         dm2_v1_skproject_draw_cur_max_hms(
+             0x228u, stats->cur_mana, stats->max_mana, &receipt.mana);
+    receipt.valid = ok ? 1 : 0;
+    if (out_receipt) *out_receipt = receipt;
+    return ok ? 1 : 0;
+}
+
+int dm2_v1_skproject_draw_player_3stat_pane(
+    uint16_t player,
+    int cur_hp,
+    uint16_t inventory_player_plus_one,
+    uint8_t button_group_busy,
+    uint8_t clear_group_size,
+    DM2_V1_SkprojectDrawPlayer3StatPaneReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPlayer3StatPaneReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    if (button_group_busy) {
+        receipt.blocked_button_group_busy = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (cur_hp == 0)
+        receipt.panel_variant_cls4 = 1u;
+    else if ((uint16_t)(player + 1u) == inventory_player_plus_one)
+        receipt.panel_variant_cls4 = 9u;
+    else
+        receipt.panel_variant_cls4 = 0u;
+    receipt.panel_button_id = (uint16_t)(player + 0xa1u);
+    receipt.gdat_category = 1u;
+    receipt.gdat_cls2 = 2u;
+    receipt.reset_group_size = clear_group_size ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_food_water_poison_panel(
+    int16_t food,
+    int16_t water,
+    int16_t poison,
+    DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.food = food;
+    receipt.water = water;
+    receipt.poison = poison;
+    receipt.inventory_subpanel = 1u;
+    receipt.panel_icon = (DM2_V1_SkprojectGdatIconPlan){ 7u, 0u, 1u, 0x1eeu };
+    receipt.food_text_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 7u, 0u, 6u, 0x1f4u };
+    receipt.water_text_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 7u, 0u, 7u, 0x1f5u };
+    receipt.poison_text_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 7u, 0u, 8u, 0x1f6u };
+    receipt.food_bar_rect = 0x1f0u;
+    receipt.water_bar_rect = 0x1f1u;
+    receipt.poison_bar_rect = 0x1f3u;
+    receipt.drew_poison = poison != 0 ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_cryocell_lever(
+    uint8_t lever_is_on,
+    DM2_V1_SkprojectDrawCryocellLeverReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawCryocellLeverReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.lever_is_on = lever_is_on ? 1u : 0u;
+    receipt.lever_icon.category = 9u;
+    receipt.lever_icon.cls2 = 0x5bu;
+    receipt.lever_icon.entry = lever_is_on ? 0xfbu : 0xfau;
+    receipt.lever_icon.button_id = 0x1eeu;
+    if (lever_is_on) {
+        receipt.requested_drawings_completed = 1u;
+        receipt.requested_open_sound = 1u;
+    } else {
+        receipt.inventory_subpanel = 7u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_eye_mouth_colored_rectangle(
+    uint8_t cls4,
+    uint16_t rect_no,
+    DM2_V1_SkprojectDrawEyeMouthRectangleReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawEyeMouthRectangleReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls4 = cls4;
+    receipt.rect_no = rect_no;
+    receipt.gdat_category = 1u;
+    receipt.gdat_cls2 = 2u;
+    receipt.blit_mode = 12u;
+    receipt.requested_inflated_rect = 1u;
+    receipt.requested_local_palette = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_query_font(
     const uint8_t *font_plane,
     uint8_t glyph,
@@ -3361,11 +3539,17 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
            "DM2_DRAW_CMD_SLOT/DM2_DRAW_MONEYBOX/"
            "DM2_DRAW_ITEM_STATS_BAR/DM2_DRAW_CONTAINER_PANEL/"
-           "DM2_DRAW_CONTAINER_SURVEY/DM2_DRAW_ITEM_ON_WOOD_PANEL and "
+           "DM2_DRAW_CONTAINER_SURVEY/DM2_DRAW_ITEM_ON_WOOD_PANEL/"
+           "DM2_DRAW_CUR_MAX_HMS/DM2_DRAW_PLAYER_3STAT_TEXT/"
+           "DM2_DRAW_PLAYER_3STAT_PANE/DM2_DRAW_FOOD_WATER_POISON_PANEL/"
+           "DM2_DRAW_CRYOCELL_LEVER/"
+           "DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE and "
            "SKWIN/SkWinCore.cpp DRAW_CHARSHEET_OPTION_ICON/"
            "DRAW_CMD_SLOT/DRAW_MONEYBOX/DRAW_ITEM_STATS_BAR/"
            "DRAW_CONTAINER_PANEL/DRAW_CONTAINER_SURVEY/"
-           "DRAW_ITEM_ON_WOOD_PANEL; "
+           "DRAW_ITEM_ON_WOOD_PANEL/DRAW_CUR_MAX_HMS/"
+           "DRAW_FOOD_WATER_POISON_PANEL/DRAW_CRYOCELL_LEVER/"
+           "DRAW_EYE_MOUTH_COLORED_RECTANGLE; "
            "SKULLWIN/c_gdatfile.cpp DM2_dballoc_3e74_24b8/"
            "DM2_dballoc_3e74_2162/DM2_LOAD_DYN4; "
            "SKULLWIN/c_gfx_str.cpp c_stringdata::init/"

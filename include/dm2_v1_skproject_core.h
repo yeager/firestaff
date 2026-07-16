@@ -890,6 +890,81 @@ typedef struct {
     int blocked_invalid_dimensions;
 } DM2_V1_SkprojectDrawItemOnWoodPanelReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t rect_no;
+    int16_t current_value;
+    int16_t max_value;
+    char text[10];
+    uint16_t foreground_color;
+    uint16_t background_color;
+    int blocked_invalid_range;
+} DM2_V1_SkprojectDrawCurMaxHmsReceipt;
+
+typedef struct {
+    int16_t cur_hp;
+    int16_t max_hp;
+    int16_t cur_stamina;
+    int16_t max_stamina;
+    int16_t cur_mana;
+    int16_t max_mana;
+} DM2_V1_SkprojectChampion3StatValues;
+
+typedef struct {
+    int valid;
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt hp;
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt stamina;
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt mana;
+    int blocked_missing_stats;
+} DM2_V1_SkprojectDrawPlayer3StatTextReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    uint8_t panel_variant_cls4;
+    uint16_t panel_button_id;
+    uint8_t gdat_category;
+    uint8_t gdat_cls2;
+    uint8_t reset_group_size;
+    int blocked_button_group_busy;
+} DM2_V1_SkprojectDrawPlayer3StatPaneReceipt;
+
+typedef struct {
+    int valid;
+    int16_t food;
+    int16_t water;
+    int16_t poison;
+    DM2_V1_SkprojectGdatIconPlan panel_icon;
+    DM2_V1_SkprojectGdatIconPlan food_text_icon;
+    DM2_V1_SkprojectGdatIconPlan water_text_icon;
+    DM2_V1_SkprojectGdatIconPlan poison_text_icon;
+    uint16_t food_bar_rect;
+    uint16_t water_bar_rect;
+    uint16_t poison_bar_rect;
+    uint8_t drew_poison;
+    uint8_t inventory_subpanel;
+} DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t lever_is_on;
+    DM2_V1_SkprojectGdatIconPlan lever_icon;
+    uint8_t requested_drawings_completed;
+    uint8_t requested_open_sound;
+    uint8_t inventory_subpanel;
+} DM2_V1_SkprojectDrawCryocellLeverReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t cls4;
+    uint16_t rect_no;
+    uint8_t gdat_category;
+    uint8_t gdat_cls2;
+    uint8_t blit_mode;
+    uint8_t requested_inflated_rect;
+    uint8_t requested_local_palette;
+} DM2_V1_SkprojectDrawEyeMouthRectangleReceipt;
+
 #define DM2_V1_SKPROJECT_FONT_PLANE_BYTES (6u * 128u)
 #define DM2_V1_SKPROJECT_FONT_PIXELS 24u
 #define DM2_V1_SKPROJECT_TEXT_LIMIT 127u
@@ -1405,6 +1480,33 @@ int dm2_v1_skproject_draw_item_on_wood_panel(
     uint16_t extra_height,
     uint16_t temp_cache_index,
     DM2_V1_SkprojectDrawItemOnWoodPanelReceipt *out_receipt);
+int dm2_v1_skproject_draw_cur_max_hms(
+    uint16_t rect_no,
+    int16_t current_value,
+    int16_t max_value,
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt *out_receipt);
+int dm2_v1_skproject_draw_player_3stat_text(
+    const DM2_V1_SkprojectChampion3StatValues *stats,
+    DM2_V1_SkprojectDrawPlayer3StatTextReceipt *out_receipt);
+int dm2_v1_skproject_draw_player_3stat_pane(
+    uint16_t player,
+    int cur_hp,
+    uint16_t inventory_player_plus_one,
+    uint8_t button_group_busy,
+    uint8_t clear_group_size,
+    DM2_V1_SkprojectDrawPlayer3StatPaneReceipt *out_receipt);
+int dm2_v1_skproject_draw_food_water_poison_panel(
+    int16_t food,
+    int16_t water,
+    int16_t poison,
+    DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt *out_receipt);
+int dm2_v1_skproject_draw_cryocell_lever(
+    uint8_t lever_is_on,
+    DM2_V1_SkprojectDrawCryocellLeverReceipt *out_receipt);
+int dm2_v1_skproject_draw_eye_mouth_colored_rectangle(
+    uint8_t cls4,
+    uint16_t rect_no,
+    DM2_V1_SkprojectDrawEyeMouthRectangleReceipt *out_receipt);
 int dm2_v1_skproject_query_font(
     const uint8_t *font_plane,
     uint8_t glyph,

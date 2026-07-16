@@ -1502,6 +1502,13 @@ static void test_adjust_ui_event(void)
     DM2_V1_SkprojectDrawContainerPanelReceipt container_panel;
     DM2_V1_SkprojectDrawContainerSurveyReceipt survey;
     DM2_V1_SkprojectDrawItemOnWoodPanelReceipt wood_panel;
+    DM2_V1_SkprojectDrawCurMaxHmsReceipt hms;
+    DM2_V1_SkprojectChampion3StatValues stat_values;
+    DM2_V1_SkprojectDrawPlayer3StatTextReceipt stat_text;
+    DM2_V1_SkprojectDrawPlayer3StatPaneReceipt stat_pane;
+    DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt food_panel;
+    DM2_V1_SkprojectDrawCryocellLeverReceipt cryocell;
+    DM2_V1_SkprojectDrawEyeMouthRectangleReceipt eye_mouth;
     const int16_t coin_order[10] = { 2, -1, 0, 1, -1, -1, -1, -1, -1, -1 };
     const int16_t coin_counts[10] = { 5, 40, 2, 0, 0, 0, 0, 0, 0, 0 };
     const uint16_t money_item_ids[10] = {
@@ -1710,6 +1717,101 @@ static void test_adjust_ui_event(void)
               &wood_panel) == 0 &&
               wood_panel.blocked_not_hand_activable,
           "DRAW_ITEM_ON_WOOD_PANEL returns NULL-equivalent when item is not hand-activable");
+
+    CHECK(dm2_v1_skproject_draw_cur_max_hms(
+              0x226u, 7, 123, &hms) == 1 &&
+              hms.valid &&
+              strcmp(hms.text, "007/123") == 0 &&
+              hms.foreground_color == 13u &&
+              hms.background_color == 0x4001u,
+          "DRAW_CUR_MAX_HMS formats 3-digit current/max text and local-text colors");
+    CHECK(dm2_v1_skproject_draw_cur_max_hms(
+              0x226u, -1, 123, &hms) == 0 &&
+              hms.blocked_invalid_range,
+          "DRAW_CUR_MAX_HMS fails closed outside original 0..999 range");
+
+    stat_values = (DM2_V1_SkprojectChampion3StatValues){
+        40, 88, 1234, 2345, 6, 78
+    };
+    CHECK(dm2_v1_skproject_draw_player_3stat_text(
+              &stat_values, &stat_text) == 1 &&
+              stat_text.valid &&
+              stat_text.hp.rect_no == 0x226u &&
+              strcmp(stat_text.hp.text, "040/088") == 0 &&
+              stat_text.stamina.rect_no == 0x227u &&
+              strcmp(stat_text.stamina.text, "123/234") == 0 &&
+              stat_text.mana.rect_no == 0x228u &&
+              strcmp(stat_text.mana.text, "006/078") == 0,
+          "DRAW_PLAYER_3STAT_TEXT routes HP, stamina/10, and mana through DRAW_CUR_MAX_HMS");
+    CHECK(dm2_v1_skproject_draw_player_3stat_text(
+              0, &stat_text) == 0 &&
+              stat_text.blocked_missing_stats,
+          "DRAW_PLAYER_3STAT_TEXT fails closed without champion stats");
+
+    CHECK(dm2_v1_skproject_draw_player_3stat_pane(
+              2u, 44, 3u, 0u, 1u, &stat_pane) == 1 &&
+              stat_pane.valid &&
+              stat_pane.panel_variant_cls4 == 9u &&
+              stat_pane.panel_button_id == 0xa3u &&
+              stat_pane.gdat_category == 1u &&
+              stat_pane.gdat_cls2 == 2u &&
+              stat_pane.reset_group_size,
+          "DRAW_PLAYER_3STAT_PANE draws selected champion panel variant and can reset group size");
+    CHECK(dm2_v1_skproject_draw_player_3stat_pane(
+              2u, 0, 0u, 0u, 0u, &stat_pane) == 1 &&
+              stat_pane.panel_variant_cls4 == 1u,
+          "DRAW_PLAYER_3STAT_PANE uses dead champion panel variant when HP is zero");
+    CHECK(dm2_v1_skproject_draw_player_3stat_pane(
+              2u, 44, 0u, 1u, 0u, &stat_pane) == 0 &&
+              stat_pane.blocked_button_group_busy,
+          "DRAW_PLAYER_3STAT_PANE returns without drawing while button group is busy");
+
+    CHECK(dm2_v1_skproject_draw_food_water_poison_panel(
+              100, 200, 9, &food_panel) == 1 &&
+              food_panel.valid &&
+              food_panel.inventory_subpanel == 1u &&
+              food_panel.panel_icon.category == 7u &&
+              food_panel.panel_icon.entry == 1u &&
+              food_panel.food_bar_rect == 0x1f0u &&
+              food_panel.water_bar_rect == 0x1f1u &&
+              food_panel.poison_bar_rect == 0x1f3u &&
+              food_panel.drew_poison &&
+              food_panel.food_text_icon.button_id == 0x1f4u &&
+              food_panel.water_text_icon.button_id == 0x1f5u &&
+              food_panel.poison_text_icon.button_id == 0x1f6u,
+          "DRAW_FOOD_WATER_POISON_PANEL binds panel/text icons and stat-bar rects");
+    CHECK(dm2_v1_skproject_draw_food_water_poison_panel(
+              100, 200, 0, &food_panel) == 1 &&
+              !food_panel.drew_poison,
+          "DRAW_FOOD_WATER_POISON_PANEL skips poison row when poison value is zero");
+
+    CHECK(dm2_v1_skproject_draw_cryocell_lever(
+              1u, &cryocell) == 1 &&
+              cryocell.valid &&
+              cryocell.lever_icon.category == 9u &&
+              cryocell.lever_icon.cls2 == 0x5bu &&
+              cryocell.lever_icon.entry == 0xfbu &&
+              cryocell.lever_icon.button_id == 0x1eeu &&
+              cryocell.requested_drawings_completed &&
+              cryocell.requested_open_sound,
+          "DRAW_CRYOCELL_LEVER down route draws 0xfb and queues open sound");
+    CHECK(dm2_v1_skproject_draw_cryocell_lever(
+              0u, &cryocell) == 1 &&
+              cryocell.lever_icon.entry == 0xfau &&
+              cryocell.inventory_subpanel == 7u,
+          "DRAW_CRYOCELL_LEVER up route sets resurrection subpanel");
+
+    CHECK(dm2_v1_skproject_draw_eye_mouth_colored_rectangle(
+              4u, 0x1feu, &eye_mouth) == 1 &&
+              eye_mouth.valid &&
+              eye_mouth.gdat_category == 1u &&
+              eye_mouth.gdat_cls2 == 2u &&
+              eye_mouth.cls4 == 4u &&
+              eye_mouth.rect_no == 0x1feu &&
+              eye_mouth.blit_mode == 12u &&
+              eye_mouth.requested_inflated_rect &&
+              eye_mouth.requested_local_palette,
+          "DRAW_EYE_MOUTH_COLORED_RECTANGLE inflates rect and draws interface image with local palette");
 }
 
 static void test_gfx_str_helpers(void)
