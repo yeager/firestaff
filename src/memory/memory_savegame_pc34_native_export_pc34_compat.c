@@ -1373,6 +1373,9 @@ static int pc34_original_group_thing_for_runtime_event(
 }
 
 static int pack_events_and_timeline(const struct SaveGame_Compat* state,
+                                    const struct DungeonDatState_Compat* dungeon,
+                                    const struct DungeonThings_Compat* things,
+                                    const struct ExplosionList_Compat* explosions,
                                     unsigned char* events,
                                     int eventsCap,
                                     unsigned char* timeline,
@@ -2145,7 +2148,7 @@ static int export_pc34_core(
     prngSeed = gameID ^ 0xC0DECAFEu;
     if (prngSeed == 0) prngSeed = 0xDEADBEEFu;
 
-    if (!pack_events_and_timeline(state,
+    if (!pack_events_and_timeline(state, dungeon, things, NULL,
                                   eventsPart, (int)sizeof(eventsPart),
                                   timelinePart, (int)sizeof(timelinePart),
                                   &eventsLen, &timelineLen,

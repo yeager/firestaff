@@ -27,6 +27,8 @@
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_resurrection_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
@@ -57,6 +59,12 @@ static const unsigned char s_orch_thing_data_byte_count[16] = {
 };
 
 static unsigned short orch_make_thing_ref_compat(int type, int index);
+static int orch_cmd_attack_find_door_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outDoorIndex);
 static int orch_square_first_thing_list_index_compat(
     const struct DungeonDatState_Compat* dungeon,
     int mapIndex,
@@ -3695,7 +3703,8 @@ static int orch_find_teleporter_on_square_compat(
 }
 
 static int orch_resolve_group_f0267_teleporter_destination_compat(
-    const struct GameWorld_Compat* world,
+    struct GameWorld_Compat* world,
+    int groupIndex,
     int* inOutMapIndex,
     int* inOutMapX,
     int* inOutMapY,
@@ -7484,7 +7493,7 @@ static int orch_materialize_generated_group_compat(
         DM1_V1_GroupMoveRoutePlanPc34 routePlan;
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
-            world, &destMapIndex, &destMapX, &destMapY,
+            world, groupIndex, &destMapIndex, &destMapX, &destMapY,
             outTeleporterBuzzes);
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
@@ -7581,7 +7590,7 @@ static int orch_handle_deferred_group_move_event_compat(
      * helper above covers the narrow C006 group teleporter/cross-map subcase
      * before the final insertion. */
     (void)orch_resolve_group_f0267_teleporter_destination_compat(
-        world, &retry.mapIndex, &targetMapX, &targetMapY,
+        world, groupIndex, &retry.mapIndex, &targetMapX, &targetMapY,
         &teleporterBuzzes);
     {
         int fallKilledGroup = 0;
@@ -7825,6 +7834,41 @@ static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
     }
 }
 
+static int orch_apply_f0206_active_group_directions_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureSize)
+{
+    (void)world;
+    (void)creatureSize;
+    if (!ai || !group || !activeGroup || direction < 0 || direction > 3) {
+        return 0;
+    }
+    group->direction = (unsigned char)direction;
+    activeGroup->directions = (unsigned char)direction;
+    ai->groupDirection = (unsigned char)direction;
+    return 1;
+}
+
+static int orch_apply_f0209_reaction_move_f0267_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    int groupIndex,
+    const struct DM1BehaviorResult_Compat* behavior,
+    int* outReactionMoveHandled,
+    int* outGroupRemoved)
+{
+    (void)world;
+    (void)ev;
+    (void)groupIndex;
+    if (outReactionMoveHandled) *outReactionMoveHandled = 0;
+    if (outGroupRemoved) *outGroupRemoved = 0;
+    return behavior != NULL;
+}
+
 /* ReDMCSB GROUP.C F0207 lines 1695-1815 performs the action selected by
  * F0209's C38-C41 branch.  F0810 already owns the behavior decision; this
  * M10 bridge owns only the live projectile/champion mutation and receipt. */
@@ -7955,6 +7999,9 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1BehaviorResult_Compat behavior;
     struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
     struct TimelineEvent_Compat next;
+    int reactionMoveHandled = 0;
+    int cellsBeforeBehavior;
+    int creatureCountBeforeBehavior;
 
     (void)result;
     if (!world || !ev || !world->things || !world->things->groups) return 0;
@@ -7962,6 +8009,8 @@ static int orch_handle_creature_reaction_event_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
     if (group->next == THING_NONE) return 1;
+    cellsBeforeBehavior = group->cells;
+    creatureCountBeforeBehavior = group->count;
 
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
     if (activeIndex < 0) {

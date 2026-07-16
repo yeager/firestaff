@@ -81,6 +81,8 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 
+struct DM1ActiveGroup_Compat;
+
 /* ================================================================
  *  Commands (TickInput.command)
  * ================================================================ */

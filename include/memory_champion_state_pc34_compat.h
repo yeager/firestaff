@@ -189,6 +189,12 @@ struct PartyState_Compat {
     unsigned short eventFlags;
     unsigned short magicShieldTime;  /* countdown ticks remaining */
     unsigned short fireShieldTime;   /* countdown ticks remaining */
+
+    /* Opaque PC34 save corpus bytes imported from original saves. */
+    unsigned char pc34InactiveChampionRecordValid[CHAMPION_MAX_PARTY];
+    unsigned char pc34InactiveChampionRecords[CHAMPION_MAX_PARTY][319];
+    int pc34PartyInfoBytesValid;
+    unsigned char pc34PartyInfoBytes[128];
 };
 
 /*
