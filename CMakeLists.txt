@@ -122,6 +122,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0675_get_scaled_bitma
  add_test(NAME redmcsb_f0675_get_scaled_bitmap_pc34_compat COMMAND test_redmcsb_f0675_get_scaled_bitmap_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7088_portrait_transfer_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7088_portrait_transfer_pc34_compat.c")
+    add_executable(test_redmcsb_f7088_portrait_transfer_pc34_compat
+        tests/test_redmcsb_f7088_portrait_transfer_pc34_compat.c
+        src/csb/redmcsb_f7088_portrait_transfer_pc34_compat.c
+        src/csb/redmcsb_f7065_portrait_slots_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7088_portrait_transfer_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7088_portrait_transfer_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7088_portrait_transfer_pc34_compat
+             COMMAND test_redmcsb_f7088_portrait_transfer_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7090_make_new_adventure_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7090_make_new_adventure_pc34_compat.c")
     add_executable(test_redmcsb_f7090_make_new_adventure_pc34_compat

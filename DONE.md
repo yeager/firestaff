@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Theron real Track02 capture-producer gate: runtime admission now
+  has a producer from real Track02 bytes/MD5 that builds level/object routes,
+  startup bitmap atlas evidence, palette-window evidence, and render-asset
+  proof while still blocking staged US data until palette binding and
+  non-startup records are source-locked. Verification: runtime admission probe
+  without media, probe with staged US raw Track02, focused CTest, and
+  `git diff --check` passed.
+
+- 2026-07-16 CSB ReDMCSB F7088-F7090 imported-party registration: registered
+  focused CTests and mapped dispositions for F7088 portrait transfer,
+  F7089 first-empty-cell scan, and F7090 new-adventure normalization.
+  Verification: F7088/F7090 build targets, 13 focused ReDMCSB/CSB CTests, and
+  `git diff --check` passed.
+
+- 2026-07-16 DM2 skproject side-candidate wound helper: mapped
+  `DM2_move_12b4_023f` from `SKULLWIN/c_move.cpp`. Coverage locks
+  `(arg1 + arg0 + 2/3) & 3` direction selection, duplicate champion
+  suppression, source `WOUND_PLAYER(..., 1, 0x18, 2)` admission as
+  caller-provided wound receipts, and `QUEUE_NOISE_GEN2` hero-type requests
+  only after successful wounds. Live wound mutation and audio playback remain
+  caller-owned. Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_skproject_core -j2`, direct test binary, focused CTest, and
+  `git diff --check` passed.
+
 - 2026-07-16 DM2 skproject sound handoff bundle: mapped
   `DM2_GET_MUSIC_INDEX_FROM_MODLIST`, tightened `DM2_SOUND2` to consume that
   helper, and promoted the existing `DM2_PLAY_MUSIC`/`DM2_PLAY_SOUND`

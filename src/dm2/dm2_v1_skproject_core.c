@@ -1079,6 +1079,69 @@ int dm2_v1_skproject_move_12b4_00af(
     return 1;
 }
 
+int dm2_v1_skproject_move_12b4_023f(
+    int16_t x,
+    int16_t y,
+    int16_t arg0,
+    int16_t arg1,
+    const int16_t direction_champions[4],
+    const uint8_t champion_hero_types[4],
+    const uint8_t wound_results[4],
+    DM2_V1_SkprojectMove12B4023FReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMove12B4023FReceipt receipt;
+    int16_t candidates[2];
+    uint8_t directions[2];
+    unsigned i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+    receipt.arg0 = arg0;
+    receipt.arg1 = arg1;
+    receipt.first_candidate = -1;
+    receipt.second_candidate = -1;
+    receipt.wounded_champions[0] = -1;
+    receipt.wounded_champions[1] = -1;
+    if (!direction_champions || !champion_hero_types || !wound_results) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    directions[0] = (uint8_t)((arg1 + arg0 + 2) & 3);
+    directions[1] = (uint8_t)((arg1 + arg0 + 3) & 3);
+    receipt.first_direction = directions[0];
+    receipt.second_direction = directions[1];
+    candidates[0] = direction_champions[directions[0]];
+    candidates[1] = direction_champions[directions[1]];
+    receipt.first_candidate = candidates[0];
+    receipt.second_candidate = candidates[1];
+    if (candidates[0] == candidates[1])
+        candidates[1] = -1;
+
+    for (i = 0; i < 2u; ++i) {
+        int16_t champion = candidates[i];
+        if (champion < 0 || champion >= 4)
+            continue;
+        ++receipt.candidate_count;
+        ++receipt.wound_attempts;
+        if (wound_results[(uint8_t)champion]) {
+            unsigned out = receipt.wound_successes;
+            if (out < 2u) {
+                receipt.wounded_champions[out] = champion;
+                receipt.noise_hero_types[out] = champion_hero_types[(uint8_t)champion];
+            }
+            ++receipt.wound_successes;
+            ++receipt.noise_requests;
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.wound_successes != 0u;
+}
+
 int dm2_v1_skproject_attack_door(
     uint8_t tile_type,
     uint8_t record_byte2,

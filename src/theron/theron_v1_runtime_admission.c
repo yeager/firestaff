@@ -1030,6 +1030,72 @@ int theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
     return 1;
 }
 
+int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
+    const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    size_t palette_raw_offset,
+    int palette_semantic_binding_verified,
+    Theron_V1RuntimeTrack02RenderAssetProof *out) {
+
+    Theron_Track02LevelRouteReceipt level_route;
+    Theron_Track02ObjectTableRouteReceipt object_route;
+    Theron_Track02StartupBitmapCatalog bitmap_catalog;
+    Theron_Track02StartupBitmapAtlas bitmap_atlas;
+    Theron_Track02PaletteWindowEvidence palette_window;
+
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_render_asset_proof_init(out);
+    if (!consumer || !track02_data || track02_size == 0u ||
+        !track02_md5 || track02_md5[0] == '\0' ||
+        !consumer->valid ||
+        strcmp(consumer->track02_md5, track02_md5) != 0) {
+        return 0;
+    }
+
+    if (!theron_v1_track02_capture_level_route_receipt(
+            track02_data, track02_size, track02_md5, &level_route) ||
+        !theron_v1_track02_capture_object_table_route_receipt(
+            track02_data, track02_size, track02_md5, &object_route)) {
+        return 0;
+    }
+
+    memset(&bitmap_catalog, 0, sizeof(bitmap_catalog));
+    memset(&bitmap_atlas, 0, sizeof(bitmap_atlas));
+    if (theron_v1_track02_catalog_startup_bitmap_samples(
+            track02_data, track02_size, track02_md5, &bitmap_catalog) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        theron_v1_track02_build_startup_bitmap_atlas_wide(
+            &bitmap_catalog, &bitmap_atlas) != THERON_TRACK02_SIGNAL_OK) {
+        return 0;
+    }
+
+    memset(&palette_window, 0, sizeof(palette_window));
+    if (theron_v1_track02_inspect_4bpp_palette_window(
+            track02_data,
+            track02_size,
+            track02_md5,
+            palette_raw_offset,
+            &palette_window) != THERON_TRACK02_SIGNAL_OK) {
+        return 0;
+    }
+    if (palette_semantic_binding_verified) {
+        palette_window.semantic_binding_verified = 1;
+        palette_window.promotion_allowed = 1;
+    }
+
+    return theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
+        consumer,
+        &level_route,
+        &object_route,
+        &bitmap_atlas,
+        &palette_window,
+        out);
+}
+
 int theron_v1_runtime_bind_track02_render_asset_admission(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
     const Theron_V1RuntimeTrack02RenderAssetProof *proof,

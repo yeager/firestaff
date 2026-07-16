@@ -729,7 +729,7 @@ set_midi_volume	SKULLWIN	SKULLWIN/c_midi.cpp	56		MISSING
 init_midi	SKULLWIN	SKULLWIN/c_midi.cpp	61		MISSING
 DM2_12b4_0953	SKULLWIN	SKULLWIN/c_move.cpp	32	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_side_offset; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_12b4_0881	SKULLWIN	SKULLWIN/c_move.cpp	64	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_admission; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_move_12b4_023f	SKULLWIN	SKULLWIN/c_move.cpp	117		MISSING
+DM2_move_12b4_023f	SKULLWIN	SKULLWIN/c_move.cpp	117	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_023f; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_PERFORM_MOVE	SKULLWIN	SKULLWIN/c_move.cpp	197		MISSING
 DM2_move_12b4_0d75	SKULLWIN	SKULLWIN/c_move.cpp	614		MISSING
 DM2_move_12b4_099e	SKULLWIN	SKULLWIN/c_move.cpp	805	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_099e; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW

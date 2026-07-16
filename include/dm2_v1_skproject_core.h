@@ -301,6 +301,24 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint8_t candidate_count;
+    uint8_t wound_attempts;
+    uint8_t wound_successes;
+    uint8_t noise_requests;
+    int16_t x;
+    int16_t y;
+    int16_t arg0;
+    int16_t arg1;
+    uint8_t first_direction;
+    uint8_t second_direction;
+    int16_t first_candidate;
+    int16_t second_candidate;
+    int16_t wounded_champions[2];
+    uint8_t noise_hero_types[2];
+} DM2_V1_SkprojectMove12B4023FReceipt;
+
+typedef struct {
+    int valid;
     uint8_t admitted;
     uint8_t blocked_door_closed_flag;
     uint8_t blocked_attack_power;
@@ -930,6 +948,15 @@ int dm2_v1_skproject_move_12b4_00af(
     int16_t located_y,
     int16_t query_rotation,
     DM2_V1_SkprojectOtherLevelReceipt *out_receipt);
+int dm2_v1_skproject_move_12b4_023f(
+    int16_t x,
+    int16_t y,
+    int16_t arg0,
+    int16_t arg1,
+    const int16_t direction_champions[4],
+    const uint8_t champion_hero_types[4],
+    const uint8_t wound_results[4],
+    DM2_V1_SkprojectMove12B4023FReceipt *out_receipt);
 int dm2_v1_skproject_attack_door(
     uint8_t tile_type,
     uint8_t record_byte2,

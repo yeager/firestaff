@@ -108,7 +108,8 @@
     adjacent work is live `DM2_ARRANGE_DUNGEON`, `DM2_LOAD_NEWMAP`,
     full record relocation, and caller-owned map/global mutation.
   - 2026-07-16 DM2 update: skproject move/alcove helper rows
-    `DM2_move_12b4_099e`, `DM2_move_12b4_0092`, `DM2_move_12b4_00af`,
+    `DM2_move_12b4_023f`, `DM2_move_12b4_099e`,
+    `DM2_move_12b4_0092`, `DM2_move_12b4_00af`,
     and `DM2_0cee_317f` are now closed through source-backed narrow receipts.
     Remaining adjacent work includes `DM2_PERFORM_MOVE`, `DM2_ATTACK_WALL`,
     `DM2_ATTACK_DOOR`, and broader live movement mutation.
@@ -2304,6 +2305,10 @@
     CTest-verified, and closed in the audit/disposition tables as the
     source-owned dungeon-part byte checksum boundary. Remaining work here is
     still broader real CSBWin DSA/runtime corpus coverage, not this checksum.
+  - 2026-07-16 CSB audit update: F7088-F7090 now have registered focused
+    CTests and disposition rows. Remaining adjacent work is original
+    media/save corpus interop for imported parties and broader CSB runtime
+    handoff.
   - 2026-07-14 update: `CEDTINCR.C` F7088 now transfers the exact PC34
     `PORTRAITS_INCLUDED` to `PORTRAITS_EXCLUDED` route: four source portrait
     spans of 464 bytes are copied and then rebound through F7066. Other
@@ -5871,6 +5876,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: the same hash-verified JP/US real-asset probe now compares opaque post-descriptor non-startup level-candidate samples across all shared descriptor anchors. It records only entry order, byte count, descriptor delta, and candidate byte hash. The local JP/US media yields `comparable=0x7`, `matching=0x0`, and `mismatch=0x7`; that mismatch is evidence against treating these candidates as a shared multi-level route and leaves level binding, object semantics, runtime, Continue, menus, and palettes blocked. The comparison accepts no ISO, same-region, incomplete, or fallback-capable receipt.
   - 2026-07-11 update: the hash-verified JP/US raw-BIN probe now locks both post-descriptor windows per anchor (entries 6 and 8): raw/MODE1 provenance, 1024-byte spans, nonzero counts, byte hashes, raw BE header words, and bounded compact-row results. The media proves no compact object-table promotion: entry 6 is zero-count at anchors 0/1 and declared-overflow (`52528`) at anchor 2, while entry 8 is zero-count throughout. The six JP/US windows differ by raw hash, so they remain opaque non-startup candidates rather than a shared route. Runtime, Continue, object semantics, and dungeon-record decoding remain blocked pending independent loader/layout evidence.
   - 2026-07-11 update: explicit palette-window inspection is now hash-gated and records MODE1/user-data provenance, a payload checksum, and strict HuC6270 syntax without scanning for or assigning palette offsets. Every inspected window remains semantically unbound and promotion-blocked until real Track 02 loader evidence ties it to title, stage, Soul Room, or forcefield.
+  - 2026-07-16 Theron real Track02 capture-producer update: runtime admission
+    can now construct a fail-closed producer from real Track02 bytes/MD5. It
+    builds the startup bitmap atlas, inspects a supplied palette window, and
+    routes level/object/bitmap/palette evidence into render-asset proof
+    construction. The staged US Track02 corpus is still rejected even when a
+    palette-shaped window is supplied, because non-startup level decode,
+    object-table decode, and source-locked palette binding are still missing.
+    Remaining work: bind loader/capture evidence to the palette offset and
+    promote non-startup level/object-table records from original Track02.
   - 2026-07-11 update: M11 now stops after a completed Track 02 startup-atlas draw in every startup phase, so the synthetic render-plan border and text cannot overlay title, stage select, Soul Room, or forcefield graphics. Launch now rejects incomplete authoritative media and returns to the launcher with an explicit Track02-atlas status. Remaining work is identifying verified Track 02 palette payload offsets and promoting matching real windows beyond the startup level, including multi-level object rows and Mac/app capture.
 - 🔧 2026-07-11 DM2 GDAT render follow-up: the verified `dtPalIRGB`/`dtPalette16` chain now reaches the M11 title/menu presentation, HUD, indexed floor/ceiling, walls, door frames, real GDAT map-chip/HUD sprites, and the live outdoor sky/ground planes via the active map `GRAPHICSSET` records. Indoor wall plans carry `MapGraphicsStyle` into the GDAT address and cache key, matching the `iMapGfx` wall query in skproject; a style switch cannot reuse a different set's decoded wall bitmap. Live scene light plus rain/mist/thunder/darkness words are carried to the runtime receipt; an outdoor frame is not accepted unless both real material planes and HUD reach the host route with no fallback draws. The title/menu regression now follows skproject `SHOW_MENU_SCREEN`: it consumes `TITLE/0 dt07/4` when present and otherwise verifies the decoded image fallback. Next menu/HUD gap is consuming the real `INTERFACE_GENERAL/0 dt07/0x0A` Rect14 placement records; remaining scene work is real GDAT weather-overlay assets and additional dungeon material classes. Do not promote palette metadata or synthetic HUD colours as real-data consumption.
   - 2026-07-14 update: `CHECK_RECOMPUTE_LIGHT`'s admitted active

@@ -525,6 +525,15 @@ int theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
     const Theron_Track02PaletteWindowEvidence *palette_window,
     Theron_V1RuntimeTrack02RenderAssetProof *out);
 
+int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
+    const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    size_t palette_raw_offset,
+    int palette_semantic_binding_verified,
+    Theron_V1RuntimeTrack02RenderAssetProof *out);
+
 int theron_v1_runtime_bind_track02_render_asset_admission(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
     const Theron_V1RuntimeTrack02RenderAssetProof *proof,
