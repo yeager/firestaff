@@ -496,7 +496,7 @@ DM2_DRAW_PLAYER_3STAT_PANE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	642	src/dm2/dm2_v1_s
 DM2_guidraw_29ee_00a3	SKULLWIN	SKULLWIN/c_gui_draw.cpp	683		MISSING
 DM2_DRAW_CMD_SLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	693	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_SPELL_TO_BE_CAST	SKULLWIN	SKULLWIN/c_gui_draw.cpp	714		MISSING
-DM2_DRAW_PLAYER_ATTACK_DIR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	733		MISSING
+DM2_DRAW_PLAYER_ATTACK_DIR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	733	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_SPELL_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	805		MISSING
 DM2_SHOW_ATTACK_RESULT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	864		MISSING
 DM2_guidraw_0b36_105b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1016		MISSING
@@ -520,7 +520,7 @@ DM2_DRAW_HAND_ACTION_ICONS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2341		MISSING
 DM2_DRAW_MAP_CHIP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2412		MISSING
 DM2_guidraw_29ee_1d03	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3499		MISSING
 DM2_guidraw_29ee_1946	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3561		MISSING
-DM2_DRAW_MAJIC_MAP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3928		MISSING
+DM2_DRAW_MAJIC_MAP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3928	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_majic_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DISPLAY_HINT_NEW_LINE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	4138		MISSING
 DM2_DISPLAY_TAKEN_ITEM_NAME	SKULLWIN	SKULLWIN/c_gui_draw.cpp	4144		MISSING
 DM2_HIGHLIGHT_ARROW_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	4151		MISSING
@@ -1502,8 +1502,8 @@ _0cee_2df4	SKWIN	SKWIN/SkWinCore.cpp	10159		MISSING
 _48ae_011a	SKWIN	SKWIN/SkWinCore.cpp	10168	src/dm2/dm2_v1_viewport_renderer.c:1626	UNCERTAIN
 DRAW_MAP_CHIP	SKWIN	SKWIN/SkWinCore.cpp	10201	src/dm2/dm2_v1_creature.c:471	UNCERTAIN
 _29ee_1946	SKWIN	SKWIN/SkWinCore.cpp	10815		MISSING
-DRAW_MAJIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	11012		MISSING
-DRAW_PLAYER_ATTACK_DIR	SKWIN	SKWIN/SkWinCore.cpp	11142		MISSING
+DRAW_MAJIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	11012	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_majic_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DRAW_PLAYER_ATTACK_DIR	SKWIN	SKWIN/SkWinCore.cpp	11142	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 FREE_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	11210		MISSING
 _0b36_0cbe	SKWIN	SKWIN/SkWinCore.cpp	11223		MISSING
 IS_CONTAINER_MAP	SKWIN	SKWIN/SkWinCore.cpp	11269		MISSING
@@ -1545,12 +1545,12 @@ _0b36_129a	SKWIN	SKWIN/SkWinCore.cpp	12636		MISSING
 DRAW_PICST	SKWIN	SKWIN/SkWinCore.cpp	12667	include/dm2_v1_boot.h:1751	UNCERTAIN
 DRAW_STATIC_PIC	SKWIN	SKWIN/SkWinCore.cpp	12793	src/dm2/dm2_v1_inventory_panel.c:728	UNCERTAIN
 DRAW_CHARSHEET_OPTION_ICON	SKWIN	SKWIN/SkWinCore.cpp	12818	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_charsheet_option_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_PLAYER_3STAT_PANE	SKWIN	SKWIN/SkWinCore.cpp	12833		MISSING
+DRAW_PLAYER_3STAT_PANE	SKWIN	SKWIN/SkWinCore.cpp	12833	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CHAMPION_PICTURE	SKWIN	SKWIN/SkWinCore.cpp	12867	src/dm2/dm2_v2_hud_runtime.c:128	UNCERTAIN
 DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_viewport_renderer.c:5369	UNCERTAIN
 DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		MISSING
 DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018		MISSING
+DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041		MISSING
 _2405_011f	SKWIN	SKWIN/SkWinCore.cpp	13062		MISSING
 DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWIN	SKWIN/SkWinCore.cpp	13076	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW

@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 magic-map/attack-dir receipts: mapped
+  `DM2_DRAW_MAJIC_MAP`, `DRAW_MAJIC_MAP`, `DM2_DRAW_PLAYER_ATTACK_DIR`,
+  `DRAW_PLAYER_ATTACK_DIR`, plus SKWIN aliases `DRAW_PLAYER_3STAT_PANE` and
+  `DRAW_PLAYER_3STAT_TEXT`, to skproject-backed narrow receipts. The new
+  receipts cover magic-map held-container flags/panel setup and attack-dir
+  squad icon/aura/arrow draw routing without fabricating pixels.
+
 - 2026-07-16 DM2 querydb command-string receipts: mapped
   `DM2_QUERY_GDAT_ITEM_NAME`, `QUERY_GDAT_ITEM_NAME`,
   `DM2_QUERY_CMDSTR_NAME`, `QUERY_CMDSTR_NAME`,

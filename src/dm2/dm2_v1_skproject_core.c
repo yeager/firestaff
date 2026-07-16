@@ -3105,6 +3105,83 @@ int dm2_v1_skproject_draw_player_3stat_pane(
     return 1;
 }
 
+int dm2_v1_skproject_draw_player_attack_dir(
+    uint16_t champion_index,
+    uint8_t squad_gfx_set,
+    uint8_t aura_of_speed,
+    uint8_t aura_rand_y,
+    uint8_t aura_rand_x,
+    uint8_t enchantment_power,
+    DM2_V1_SkprojectDrawPlayerAttackDirReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPlayerAttackDirReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.champion_index = champion_index;
+    receipt.aura_of_speed = aura_of_speed ? 1u : 0u;
+    receipt.aura_rand_y = aura_rand_y;
+    receipt.aura_rand_x = aura_rand_x;
+    receipt.base_icon.category = 8u;
+    receipt.base_icon.cls2 = squad_gfx_set;
+    receipt.base_icon.entry = 0xf6u;
+    receipt.base_icon.button_id = 0x5du;
+    receipt.squad_icon_rect = 0x5eu;
+    receipt.left_arrow_button = 0x60u;
+    receipt.right_arrow_button = 0x61u;
+    receipt.requested_alloc_pict_buff = 1u;
+    receipt.requested_squad_palette = 1u;
+    receipt.requested_icon_blit = 1u;
+    receipt.requested_free_pict_buff = 1u;
+    if (aura_of_speed && aura_rand_y != 0u) {
+        receipt.jitter_y = (int16_t)((int)aura_rand_y - 2);
+        if (aura_rand_x != 0u)
+            receipt.jitter_x = (int16_t)((int)aura_rand_x - 2);
+    }
+    receipt.drew_enchantment_aura = enchantment_power ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_majic_map(
+    uint16_t record_id,
+    uint8_t container_cls2,
+    uint8_t container_mode,
+    uint16_t flags_before,
+    uint16_t command_slot_count,
+    uint16_t player_x,
+    uint16_t player_y,
+    uint16_t player_map,
+    uint8_t gray_overlay_condition,
+    DM2_V1_SkprojectDrawMajicMapReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawMajicMapReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_id = record_id;
+    receipt.container_cls2 = container_cls2;
+    receipt.container_mode = container_mode;
+    receipt.flags_before = flags_before;
+    receipt.flags_after = (uint16_t)(flags_before | 0x0090u);
+    receipt.target_x = player_x;
+    receipt.target_y = player_y;
+    receipt.target_map = player_map;
+    if (container_mode != 3u)
+        receipt.flags_after = (uint16_t)(receipt.flags_after | 0x0800u);
+    if ((receipt.flags_after & 0x0400u) == 0u) {
+        receipt.requested_container_panel_init = 1u;
+        receipt.requested_command_slots = (uint8_t)(command_slot_count > 0u);
+        receipt.flags_after = (uint16_t)(receipt.flags_after | 0x0400u);
+    }
+    receipt.requested_map_draw = 1u;
+    receipt.requested_gray_overlay = gray_overlay_condition ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_draw_food_water_poison_panel(
     int16_t food,
     int16_t water,
@@ -3668,13 +3745,15 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_DRAW_ITEM_STATS_BAR/DM2_DRAW_CONTAINER_PANEL/"
            "DM2_DRAW_CONTAINER_SURVEY/DM2_DRAW_ITEM_ON_WOOD_PANEL/"
            "DM2_DRAW_CUR_MAX_HMS/DM2_DRAW_PLAYER_3STAT_TEXT/"
-           "DM2_DRAW_PLAYER_3STAT_PANE/DM2_DRAW_FOOD_WATER_POISON_PANEL/"
+           "DM2_DRAW_PLAYER_3STAT_PANE/DM2_DRAW_PLAYER_ATTACK_DIR/"
+           "DM2_DRAW_MAJIC_MAP/DM2_DRAW_FOOD_WATER_POISON_PANEL/"
            "DM2_DRAW_CRYOCELL_LEVER/"
            "DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE and "
            "SKWIN/SkWinCore.cpp DRAW_CHARSHEET_OPTION_ICON/"
            "DRAW_CMD_SLOT/DRAW_MONEYBOX/DRAW_ITEM_STATS_BAR/"
            "DRAW_CONTAINER_PANEL/DRAW_CONTAINER_SURVEY/"
            "DRAW_ITEM_ON_WOOD_PANEL/DRAW_CUR_MAX_HMS/"
+           "DRAW_PLAYER_ATTACK_DIR/DRAW_MAJIC_MAP/"
            "DRAW_FOOD_WATER_POISON_PANEL/DRAW_CRYOCELL_LEVER/"
            "DRAW_EYE_MOUTH_COLORED_RECTANGLE; "
            "SKULLWIN/c_gdatfile.cpp DM2_dballoc_3e74_24b8/"

@@ -984,6 +984,43 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint16_t champion_index;
+    uint8_t aura_of_speed;
+    uint8_t aura_rand_y;
+    uint8_t aura_rand_x;
+    int16_t jitter_x;
+    int16_t jitter_y;
+    DM2_V1_SkprojectGdatIconPlan base_icon;
+    uint16_t squad_icon_rect;
+    uint16_t left_arrow_button;
+    uint16_t right_arrow_button;
+    uint8_t requested_alloc_pict_buff;
+    uint8_t requested_squad_palette;
+    uint8_t requested_icon_blit;
+    uint8_t requested_free_pict_buff;
+    uint8_t drew_enchantment_aura;
+} DM2_V1_SkprojectDrawPlayerAttackDirReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t record_id;
+    uint8_t container_cls2;
+    uint8_t container_mode;
+    uint16_t flags_before;
+    uint16_t flags_after;
+    uint8_t requested_container_panel_init;
+    uint8_t requested_command_slots;
+    uint8_t requested_map_draw;
+    uint8_t requested_gray_overlay;
+    uint16_t target_x;
+    uint16_t target_y;
+    uint16_t target_map;
+    int16_t shift_x;
+    int16_t shift_y;
+} DM2_V1_SkprojectDrawMajicMapReceipt;
+
+typedef struct {
+    int valid;
     int16_t food;
     int16_t water;
     int16_t poison;
@@ -1581,6 +1618,25 @@ int dm2_v1_skproject_draw_player_3stat_pane(
     uint8_t button_group_busy,
     uint8_t clear_group_size,
     DM2_V1_SkprojectDrawPlayer3StatPaneReceipt *out_receipt);
+int dm2_v1_skproject_draw_player_attack_dir(
+    uint16_t champion_index,
+    uint8_t squad_gfx_set,
+    uint8_t aura_of_speed,
+    uint8_t aura_rand_y,
+    uint8_t aura_rand_x,
+    uint8_t enchantment_power,
+    DM2_V1_SkprojectDrawPlayerAttackDirReceipt *out_receipt);
+int dm2_v1_skproject_draw_majic_map(
+    uint16_t record_id,
+    uint8_t container_cls2,
+    uint8_t container_mode,
+    uint16_t flags_before,
+    uint16_t command_slot_count,
+    uint16_t player_x,
+    uint16_t player_y,
+    uint16_t player_map,
+    uint8_t gray_overlay_condition,
+    DM2_V1_SkprojectDrawMajicMapReceipt *out_receipt);
 int dm2_v1_skproject_draw_food_water_poison_panel(
     int16_t food,
     int16_t water,

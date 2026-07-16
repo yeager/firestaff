@@ -52,6 +52,11 @@
     `DM2_QUERY_CMDSTR_ENTRY`, `QUERY_CMDSTR_ENTRY`, and
     `DM2_QUERY_CUR_CMDSTR_ENTRY` now read real `dtText` rows through the asset
     loader. Remaining adjacent work is broader live command-string consumers.
+  - 2026-07-16 DM2 magic-map/attack-dir update: `DM2_DRAW_MAJIC_MAP`,
+    `DRAW_MAJIC_MAP`, `DM2_DRAW_PLAYER_ATTACK_DIR`,
+    `DRAW_PLAYER_ATTACK_DIR`, `DRAW_PLAYER_3STAT_PANE`, and
+    `DRAW_PLAYER_3STAT_TEXT` now have skproject-backed receipts or aliases.
+    Remaining adjacent work is full live pixel rendering for the magic map.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

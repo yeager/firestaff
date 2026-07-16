@@ -1568,6 +1568,8 @@ static void test_adjust_ui_event(void)
     DM2_V1_SkprojectChampion3StatValues stat_values;
     DM2_V1_SkprojectDrawPlayer3StatTextReceipt stat_text;
     DM2_V1_SkprojectDrawPlayer3StatPaneReceipt stat_pane;
+    DM2_V1_SkprojectDrawPlayerAttackDirReceipt attack_dir;
+    DM2_V1_SkprojectDrawMajicMapReceipt majic_map;
     DM2_V1_SkprojectDrawFoodWaterPoisonPanelReceipt food_panel;
     DM2_V1_SkprojectDrawCryocellLeverReceipt cryocell;
     DM2_V1_SkprojectDrawEyeMouthRectangleReceipt eye_mouth;
@@ -1827,6 +1829,40 @@ static void test_adjust_ui_event(void)
               2u, 44, 0u, 1u, 0u, &stat_pane) == 0 &&
               stat_pane.blocked_button_group_busy,
           "DRAW_PLAYER_3STAT_PANE returns without drawing while button group is busy");
+
+    CHECK(dm2_v1_skproject_draw_player_attack_dir(
+              3u, 0xf6u, 1u, 3u, 1u, 7u, &attack_dir) == 1 &&
+              attack_dir.valid &&
+              attack_dir.base_icon.category == 8u &&
+              attack_dir.base_icon.cls2 == 0xf6u &&
+              attack_dir.base_icon.entry == 0xf6u &&
+              attack_dir.base_icon.button_id == 0x5du &&
+              attack_dir.squad_icon_rect == 0x5eu &&
+              attack_dir.left_arrow_button == 0x60u &&
+              attack_dir.right_arrow_button == 0x61u &&
+              attack_dir.jitter_y == 1 &&
+              attack_dir.jitter_x == -1 &&
+              attack_dir.requested_alloc_pict_buff &&
+              attack_dir.requested_squad_palette &&
+              attack_dir.requested_icon_blit &&
+              attack_dir.requested_free_pict_buff &&
+              attack_dir.drew_enchantment_aura,
+          "DRAW_PLAYER_ATTACK_DIR plans squad icon draw, aura jitter, enchantment overlay, and arrow icons");
+
+    CHECK(dm2_v1_skproject_draw_majic_map(
+              0x4500u, 4u, 1u, 0u, 4u, 10u, 11u, 2u, 1u,
+              &majic_map) == 1 &&
+              majic_map.valid &&
+              majic_map.container_cls2 == 4u &&
+              majic_map.flags_after == 0x0c90u &&
+              majic_map.requested_container_panel_init &&
+              majic_map.requested_command_slots &&
+              majic_map.requested_map_draw &&
+              majic_map.requested_gray_overlay &&
+              majic_map.target_x == 10u &&
+              majic_map.target_y == 11u &&
+              majic_map.target_map == 2u,
+          "DRAW_MAJIC_MAP initializes held-container map panel, command slots, map draw, and overlay flags");
 
     CHECK(dm2_v1_skproject_draw_food_water_poison_panel(
               100, 200, 9, &food_panel) == 1 &&
