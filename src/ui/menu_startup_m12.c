@@ -138,6 +138,8 @@ enum {
     M12_SETTINGS_ROW_IMPORT,
     M12_SETTINGS_ROW_SYNC_NOW,
     M12_SETTINGS_ROW_SYNC_STATUS,
+    M12_SETTINGS_ROW_UNICODE_FONT,
+    M12_SETTINGS_ROW_ARTPACK,
     M12_SETTINGS_ROW_UNICODE_FONT_PATH,
     M12_SETTINGS_ROW_ARTPACK_PATH,
     M12_SETTINGS_ROW_COUNT
@@ -1423,6 +1425,11 @@ static const char* m12_text(const M12_StartupMenuState* state, M12_TextId id) {
 
 static const char* m12_tr(const M12_StartupMenuState* state, const char* english) {
     return m12_translate_for_locale(m12_locale_index(state), english);
+}
+
+const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
+                                      const char* english) {
+    return m12_tr(state, english);
 }
 
 static const M12_GraphicsTheme* m12_theme(const M12_StartupMenuState* state) {

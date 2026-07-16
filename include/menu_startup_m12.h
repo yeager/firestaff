@@ -583,6 +583,12 @@ int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
                                               int index);
 const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount);
+const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
+                                      const char* english);
+const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
+                                             int row);
+const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
+                                             int row);
 const char* M12_StartupMenu_GetUnicodeFontPath(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetArtpackPath(const M12_StartupMenuState* state);
 int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,

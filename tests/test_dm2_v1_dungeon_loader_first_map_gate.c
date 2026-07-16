@@ -435,6 +435,11 @@ static size_t build_pc_g1_record_evidence_fixture(uint8_t *buf, size_t cap)
     return raw_map_base + 4u;
 }
 
+static size_t build_pc_g1_extension_record_fixture(uint8_t *buf, size_t cap)
+{
+    return build_pc_g1_record_evidence_fixture(buf, cap);
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -1052,7 +1057,7 @@ static void test_pc_g1_extension_record_transform(void)
     CHECK(dm2_v1_dungeon_collect_g1_record_pool_evidence(
               &dungeon, &evidence) == 1 &&
               evidence.map_root_extension_shape_valid == 2 &&
-              evidence.map_root_shape_invalid == 0 &&
+              evidence.root_shape_invalid == 0 &&
               dungeon.record_graph_complete == 1,
           "extension ownership does not invent a new ObjectID encoding");
     dm2_v1_dungeon_free(&dungeon);
