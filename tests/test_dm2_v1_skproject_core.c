@@ -1565,8 +1565,12 @@ static void test_cache_hash_helpers(void)
 {
     DM2_V1_SkprojectCacheState state;
     DM2_V1_SkprojectFindFreeMementiReceipt free_receipt;
+    DM2_V1_SkprojectFreeCacheIndexReceipt free_cache;
+    DM2_V1_SkprojectFreeIndexedMementReceipt free_indexed;
+    DM2_V1_SkprojectFreeTempCacheIndexReceipt free_temp;
     uint16_t ici = 0xffffu;
     uint16_t cache_index = 0xffffu;
+    uint16_t current_mementi = 0xffffu;
     uint8_t *buff;
 
     dm2_v1_skproject_cache_state_init(&state, 4, 3, 4);
@@ -1622,6 +1626,60 @@ static void test_cache_hash_helpers(void)
               DM2_V1_SKPROJECT_MEMENT_NONE,
           "ALLOC_TEMP_CACHE_INDEX fails closed when cache table is full");
 
+    CHECK(dm2_v1_skproject_free_cache_index(
+              &state, 1u, &free_cache) == 1 &&
+              free_cache.valid &&
+              free_cache.cache_hash == 0x1000u &&
+              free_cache.removed_sorted_entry &&
+              state.cache_count == 3u &&
+              state.hashes[1] == 0u &&
+              state.sorted_cache_indices[0] == 0u &&
+              state.lowest_free_cache_index == 1u,
+          "FREE_CACHE_INDEX clears hash and removes the sorted cache index entry");
+
+    dm2_v1_skproject_cache_state_init(&state, 4, 4, 4);
+    state.raw_to_mement[2] = 2u;
+    current_mementi = 2u;
+    CHECK(dm2_v1_skproject_free_indexed_mement(
+              &state, 2u, 1, &current_mementi, &free_indexed) == 1 &&
+              free_indexed.valid &&
+              free_indexed.cleared_raw_slot &&
+              free_indexed.requested_recycle_mementi &&
+              free_indexed.recycle.valid &&
+              state.raw_to_mement[2] == DM2_V1_SKPROJECT_MEMENT_NONE &&
+              current_mementi == DM2_V1_SKPROJECT_MEMENT_NONE,
+          "FREE_INDEXED_MEMENT clears raw-data mement routes and current mement");
+
+    dm2_v1_skproject_cache_state_init(&state, 4, 2, 4);
+    CHECK(dm2_v1_skproject_add_cache_hash(
+              &state, 0x2222u, &cache_index) == 0 &&
+              cache_index == 0u,
+          "test setup adds cache hash for FREE_INDEXED_MEMENT cache route");
+    state.cache_to_mement[0] = 1u;
+    CHECK(dm2_v1_skproject_free_indexed_mement(
+              &state, 0x8000u, 1, 0, &free_indexed) == 1 &&
+              free_indexed.valid &&
+              free_indexed.used_cache_route &&
+              free_indexed.cleared_cache_slot &&
+              free_indexed.requested_free_cache_index &&
+              free_indexed.free_cache.valid &&
+              state.cache_count == 0u &&
+              state.hashes[0] == 0u,
+          "FREE_INDEXED_MEMENT cache route clears slot and delegates FREE_CACHE_INDEX");
+
+    CHECK(dm2_v1_skproject_add_cache_hash(
+              &state, 0xffff0000u, &cache_index) == 0,
+          "test setup adds temp cache hash");
+    state.cache_to_mement[cache_index] = 2u;
+    CHECK(dm2_v1_skproject_free_temp_cache_index(
+              &state, cache_index, 0, &free_temp) == 1 &&
+              free_temp.valid &&
+              free_temp.requested_temp_pin_clear &&
+              free_temp.requested_free_indexed_mement &&
+              free_temp.indexed.free_cache.valid &&
+              state.cache_count == 0u,
+          "FREE_TEMP_CACHE_INDEX clears temp ownership and frees indexed cache mement");
+
     dm2_v1_skproject_cache_state_init(&state, 4, 4, 4);
     state.cache_to_mement[1] = 1u;
     state.raw_to_mement[2] = 2u;
@@ -1659,6 +1717,7 @@ static void test_picture_mement_helpers(void)
     DM2_V1_SkprojectPictMementReceipt pict_receipt;
     DM2_V1_SkprojectFreeImageMementReceipt free_receipt;
     DM2_V1_SkprojectRecycleMementReceipt recycle_receipt;
+    DM2_V1_SkprojectFreePict6Receipt free_pict6;
     uint16_t pinned_entry = DM2_V1_SKPROJECT_MEMENT_NONE;
 
     dm2_v1_skproject_cache_state_init(&state, 4, 8, 4);
@@ -1777,6 +1836,22 @@ static void test_picture_mement_helpers(void)
               &state, &pict, &image, &pinned_entry, &free_receipt) == 1 &&
               state.cache_to_mement[2] == DM2_V1_SKPROJECT_MEMENT_NONE,
           "FREE_PICT_MEMENT frees cache-backed pictures by w12 index");
+
+    CHECK(dm2_v1_skproject_free_pict6(
+              0u, 1u, 0x12345678u, &free_pict6) == 1 &&
+              free_pict6.valid &&
+              free_pict6.requested_dealloc_upper &&
+              free_pict6.requested_draw_icon_entry,
+          "FREE_PICT6 deallocates upper memory for afDefault and redraws the icon entry");
+    CHECK(dm2_v1_skproject_free_pict6(
+              0u, 2u, 0x12345678u, &free_pict6) == 1 &&
+              free_pict6.requested_dealloc_lower,
+          "FREE_PICT6 deallocates lower memory for non-default allocations");
+    CHECK(dm2_v1_skproject_free_pict6(
+              1u, 1u, 0x12345678u, &free_pict6) == 1 &&
+              !free_pict6.requested_dealloc_upper &&
+              free_pict6.requested_draw_icon_entry,
+          "FREE_PICT6 global gate skips deallocation but still redraws icon entry");
 }
 
 static void test_item_charge_helpers(void)
@@ -2931,6 +3006,15 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "READ_SBYTE") != 0,
           "source evidence names rect and cursor helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "FREE_CACHE_INDEX") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "FREE_INDEXED_MEMENT") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "FREE_TEMP_CACHE_INDEX") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "FREE_PICT6") != 0,
+          "source evidence names cache and picture free helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_GET_ADDRESS_OF_RECORD") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),

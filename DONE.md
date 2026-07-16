@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 cache/mement free receipt bundle: mapped
+  `FREE_CACHE_INDEX`, `FREE_INDEXED_MEMENT`, `FREE_TEMP_CACHE_INDEX`, and
+  `FREE_PICT6` to skproject-backed bounded helpers. The regression covers
+  sorted cache-index compaction, raw/cache mement release, temp-cache indexed
+  release, current-mement clearing, recycle handoff, and upper/lower picture
+  free planning.
+
 - 2026-07-16 DM2 cursor macro receipt bundle: mapped `WRITE_BYTE`,
   `WRITE_WORD`, `READ_BYTE`, and `READ_SBYTE` to skproject-backed bounded
   helpers. The regression covers single-byte writes, little-endian word writes,

@@ -1369,12 +1369,12 @@ FIND_ICI_FROM_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	3332	include/dm2_v1_skproject
 RECYCLE_MEMENTI	SKWIN	SKWIN/SkWinCore.cpp	3374	include/dm2_v1_skproject_core.h:dm2_v1_skproject_recycle_mementi	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core receipt records the source mement recycle route, clears cache/raw mement ownership for free-list recycle, and fails closed outside the bounded mement table.
 TEST_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	3495	include/dm2_v1_skproject_core.h:dm2_v1_skproject_test_mement	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core validates the source dw0/stored-length invariant and guarded 64 KiB probe range without dereferencing arbitrary heap memory.
 _3e74_48c9	SKWIN	SKWIN/SkWinCore.cpp	3519		MISSING
-FREE_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	3666		MISSING
+FREE_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	3666	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_free_cache_index; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the cache hash clear, sorted-index compaction, cache-count decrement, and lowest-free-cache-index update.
 _3e74_4549	SKWIN	SKWIN/SkWinCore.cpp	3700		MISSING
 _3e74_0c8c	SKWIN	SKWIN/SkWinCore.cpp	3800		MISSING
 _3e74_0d32	SKWIN	SKWIN/SkWinCore.cpp	3835		MISSING
 ValidateMements	SKWIN	SKWIN/SkWinCore.cpp	3908		MISSING
-FREE_INDEXED_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	3945		MISSING
+FREE_INDEXED_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	3945	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_free_indexed_mement; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps raw and cache indexed mement release, current-mement clearing, optional FREE_CACHE_INDEX dispatch, and RECYCLE_MEMENTI handoff.
 _3e74_4471	SKWIN	SKWIN/SkWinCore.cpp	4052		MISSING
 INSERT_CACHE_HASH_AT	SKWIN	SKWIN/SkWinCore.cpp	4081	include/dm2_v1_skproject_core.h:dm2_v1_skproject_insert_cache_hash_at	VERIFIED_SOURCE_MAPPING
 _3e74_44ad	SKWIN	SKWIN/SkWinCore.cpp	4131		MISSING
@@ -1415,7 +1415,7 @@ EQUIP_ITEM_TO_INVENTORY	SKWIN	SKWIN/SkWinCore.cpp	5475	include/dm2_v1_skproject_
 _2759_0e93	SKWIN	SKWIN/SkWinCore.cpp	5506		MISSING
 LOAD_PROJECTILE_TO_HAND	SKWIN	SKWIN/SkWinCore.cpp	5543		MISSING
 QUERY_GDAT_ENTRY_DATA_PTR	SKWIN	SKWIN/SkWinCore.cpp	5683	src/dm2/dm2_v1_boot.c:3654	UNCERTAIN
-FREE_PICT6	SKWIN	SKWIN/SkWinCore.cpp	5719		MISSING
+FREE_PICT6	SKWIN	SKWIN/SkWinCore.cpp	5719	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_free_pict6; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the global free gate, upper/lower allocation selector, and required redraw of the icon entry without owning raw heap pointers.
 QUERY_GDAT_PICT_OFFSET	SKWIN	SKWIN/SkWinCore.cpp	5740	src/dm2/dm2_v1_asset_loader.c:863	UNCERTAIN
 QUERY_GDAT_SUMMARY_IMAGE	SKWIN	SKWIN/SkWinCore.cpp	5805	include/dm2_v1_weather_gdat.h:160	UNCERTAIN
 DRAW_DEF_PICT	SKWIN	SKWIN/SkWinCore.cpp	5877	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_def_pict; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -1504,7 +1504,7 @@ DRAW_MAP_CHIP	SKWIN	SKWIN/SkWinCore.cpp	10201	src/dm2/dm2_v1_creature.c:471	UNCE
 _29ee_1946	SKWIN	SKWIN/SkWinCore.cpp	10815		MISSING
 DRAW_MAJIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	11012	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_majic_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_ATTACK_DIR	SKWIN	SKWIN/SkWinCore.cpp	11142	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-FREE_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	11210		MISSING
+FREE_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	11210	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_free_temp_cache_index; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps temp-cache pin clearing plus FREE_INDEXED_MEMENT(cacheIndex|0x8000) dispatch.
 _0b36_0cbe	SKWIN	SKWIN/SkWinCore.cpp	11223		MISSING
 IS_CONTAINER_MAP	SKWIN	SKWIN/SkWinCore.cpp	11269	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus ContainerType==1 predicate mirrors SkWinCore.cpp:11269.
 UPDATE_RIGHT_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11283		MISSING
