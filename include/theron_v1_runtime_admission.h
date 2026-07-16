@@ -348,6 +348,40 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int original_data_gap_consumed;
+    int original_consumer_trace_consumed;
+    int same_original_capture_as_gap;
+    int fail_closed_until_consumer_proven;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t consumer_trace_checksum;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    size_t palette_raw_offset;
+    size_t palette_user_data_offset;
+    uint32_t palette_payload_checksum;
+    uint32_t palette_decoded_checksum;
+    size_t nonstartup_level_raw_offset;
+    size_t nonstartup_level_user_data_offset;
+    uint32_t nonstartup_level_raw_hash;
+    size_t object_table_raw_offset;
+    size_t object_table_user_data_offset;
+    uint32_t object_table_user_data_hash;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    int palette_consumer_bound;
+    int nonstartup_level_consumer_bound;
+    int object_table_consumer_bound;
+    int bitmap_consumer_bound;
+    int runtime_consumer_binding_ready;
+    int render_asset_admission_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt;
+
+typedef struct {
+    int valid;
     int same_capture_as_render_admission;
     Theron_Track02Variant variant;
     char track02_md5[33];
@@ -579,6 +613,14 @@ int theron_v1_runtime_track02_capture_original_data_binding_gap(
     const char *track02_md5,
     size_t palette_raw_offset,
     Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *out);
+
+int theron_v1_runtime_bind_track02_original_consumer_trace(
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    const Theron_V1Track02Post3800ConsumerSemanticReceipt *consumer,
+    size_t palette_raw_offset,
+    size_t nonstartup_level_raw_offset,
+    size_t object_table_raw_offset,
+    Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt *out);
 
 int theron_v1_runtime_bind_track02_render_asset_admission(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,

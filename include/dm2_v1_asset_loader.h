@@ -767,6 +767,18 @@ int dm2_v1_query_door_damage_resist_receipt(
     const DM2_V1_AssetLoader *loader,
     int door_index,
     DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_get_door_stat_0x10_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_get_graphics_for_door_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_0cee_3275_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
 int dm2_v1_query_gdat_creature_word_value_receipt(
     const DM2_V1_AssetLoader *loader,
     int creature_index,

@@ -277,6 +277,8 @@ static int probe_real_track02_capture_producer(
     Theron_V1RuntimeTrack02ConsumerSemanticReceipt consumer;
     Theron_V1RuntimeTrack02RenderAssetProof proof;
     Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt gap;
+    Theron_V1Track02Post3800ConsumerSemanticReceipt original_consumer;
+    Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt binding;
     int ok = 1;
 
     if (!path || !path[0]) {
@@ -363,6 +365,43 @@ static int probe_real_track02_capture_producer(
         gap.object_table_decode_ready ||
         gap.render_asset_admission_allowed ||
         gap.fallback_visuals_allowed) {
+        ok = 0;
+    }
+    memset(&original_consumer, 0, sizeof(original_consumer));
+    if (theron_v1_runtime_bind_track02_original_consumer_trace(
+            &gap,
+            &original_consumer,
+            0x2a06a0u,
+            gap.first_nonstartup_raw_offset,
+            gap.first_container_raw_offset,
+            &binding) ||
+        binding.valid ||
+        !binding.fail_closed_until_consumer_proven) {
+        ok = 0;
+    }
+    original_consumer.valid = 1;
+    original_consumer.no_fallback = 1;
+    original_consumer.original_consumer_trace_bound = 1;
+    original_consumer.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    original_consumer.record = 1156u;
+    original_consumer.payload_checksum = 1u;
+    original_consumer.level_envelope_checksum = 2u;
+    original_consumer.post_envelope_checksum = 3u;
+    original_consumer.consumer_trace_checksum = 4u;
+    original_consumer.dungeon_record_semantics_proven = 1;
+    original_consumer.object_table_semantics_proven = 1;
+    original_consumer.bitmap_route_bound = 1;
+    original_consumer.palette_binding_verified = 0;
+    original_consumer.rgba_output_allowed = 1;
+    if (theron_v1_runtime_bind_track02_original_consumer_trace(
+            &gap,
+            &original_consumer,
+            0x2a06a0u,
+            gap.first_nonstartup_raw_offset,
+            gap.first_container_raw_offset,
+            &binding) ||
+        binding.valid ||
+        !binding.fail_closed_until_consumer_proven) {
         ok = 0;
     }
     free(data);
