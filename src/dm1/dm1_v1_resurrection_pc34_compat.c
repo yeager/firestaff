@@ -406,12 +406,100 @@ ViAltarFullCycleResult_Compat F0868_RESURRECTION_RunViAltarFullCycle_Compat(
     return out;
 }
 
+DecodedChampionValueResult_Compat F0869_RESURRECTION_DecodeChampionValue_Compat(
+    const char* text,
+    uint16_t characterCount)
+{
+    DecodedChampionValueResult_Compat out;
+    uint16_t i;
+
+    out.valid = 0;
+    out.value = 0;
+    out.consumedCharacterCount = 0;
+
+    if (!text || characterCount == 0 || characterCount > 4) {
+        return out;
+    }
+    for (i = 0; i < characterCount; ++i) {
+        unsigned char c = (unsigned char)text[i];
+        if (c < 'A' || c > 'P') {
+            return out;
+        }
+        out.value = (uint16_t)((out.value << 4) + (uint16_t)(c - 'A'));
+    }
+    out.valid = 1;
+    out.consumedCharacterCount = characterCount;
+    return out;
+}
+
+ResetDataToStartGamePlan_Compat F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(
+    const ResetDataToStartGameInput_Compat* in)
+{
+    ResetDataToStartGamePlan_Compat out;
+
+    out.nextLeaderHandThing = DM1_RESET_LEADER_HAND_THING_NONE;
+    out.nextLeaderHandIconIndex = DM1_RESET_LEADER_HAND_ICON_NONE;
+    out.leaderEmptyHanded = 1;
+    out.callsSetPointer = 0;
+    out.callsPutObjectInLeaderHand = 0;
+    out.putObjectThing = DM1_RESET_LEADER_HAND_THING_NONE;
+    out.putObjectSetMousePointer = 0;
+    out.clearAttributesChampionCount = 0;
+    out.clearAttributesMask = 0;
+    out.callsDrawAllChampionStates = 0;
+    out.drawAllChampionStatesMask = 0;
+    out.callsSetLeader = 0;
+    out.setLeaderChampionIndex = DM1_CHAMPION_NONE;
+    out.callsSetMagicCasterAndDrawSpellArea = 0;
+    out.setMagicCasterChampionIndex = DM1_CHAMPION_NONE;
+
+    if (!in) {
+        return out;
+    }
+
+    if (in->newGame) {
+        return out;
+    }
+
+    out.nextLeaderHandThing = in->leaderHandThing;
+    out.nextLeaderHandIconIndex = in->leaderHandIconIndex;
+    if (in->leaderHandThing == DM1_RESET_LEADER_HAND_THING_NONE) {
+        out.nextLeaderHandIconIndex = DM1_RESET_LEADER_HAND_ICON_NONE;
+        out.leaderEmptyHanded = 1;
+        out.callsSetPointer = 1;
+    } else {
+        out.leaderEmptyHanded = 0;
+        out.callsPutObjectInLeaderHand = 1;
+        out.putObjectThing = in->leaderHandThing;
+        out.putObjectSetMousePointer = 1;
+    }
+
+    out.clearAttributesChampionCount =
+        (in->partyChampionCount > 4u) ? 4u : in->partyChampionCount;
+    out.clearAttributesMask = DM1_RESET_CLEAR_ALL_CHAMPION_ATTRS_MASK;
+    out.callsDrawAllChampionStates = 1;
+    out.drawAllChampionStatesMask = DM1_RESET_DIRTY_CHAMPION_MASK;
+
+    if (in->leaderIndex != DM1_CHAMPION_NONE) {
+        out.callsSetLeader = 1;
+        out.setLeaderChampionIndex = in->leaderIndex;
+    }
+    if (in->magicCasterChampionIndex != DM1_CHAMPION_NONE) {
+        out.callsSetMagicCasterAndDrawSpellArea = 1;
+        out.setMagicCasterChampionIndex = in->magicCasterChampionIndex;
+    }
+    return out;
+}
+
 /* -------- Evidence / invariant -------------------------------------- */
 
 const char* dm1_v1_resurrection_GetEvidence(void) {
     return "REVIVE.C:F0280-F0283 resurrection altar processing, "
+           "REVIVE.C:F0279:11-45 A..P nibble decode for mirror health/stamina/mana/stat values, "
            "C080->CLIKVIEW.C:F0377->F0372->MOVESENS.C:F0275 C127->F0280 candidate path; "
            "bones->champion, reincarnation stat halving (MEDIA265_S20E). "
+           "CHAMPRST.C:F0278 reset-to-start-game leader-hand, champion dirty-attribute clear, "
+           "F0293 action/status/icon redraw, leader restore, and magic-caster restore plan. "
            "CHAMPION.C:F0319 bones creation (Type=C05, ChargeCount=champIdx). "
            "CLIKVIEW.C:F0374 alcove+ViAltar bones detection, "
            "C13_EVENT_VI_ALTAR_REBIRTH event creation. "
@@ -442,6 +530,7 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
     ok = ok && (DM1_CHAMPION_ATTR_ICON == 0x0400);
     ok = ok && (DM1_CHAMPION_ATTR_STATUS_BOX == 0x1000);
     ok = ok && (DM1_CHAMPION_ATTR_ACTION_HAND == 0x8000);
+    ok = ok && (DM1_RESET_DIRTY_CHAMPION_MASK == 0x9400u);
 
     /* Verify rebirth health: max=100 → max(25, 100-100/64-1) = max(25,98) = 98, current=49 */
     {
@@ -563,11 +652,31 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
     ok = ok && (F0865_RESURRECTION_IsCommandValid_Compat(160, 0) == 0);
     ok = ok && (F0865_RESURRECTION_IsCommandValid_Compat(99, 1) == 0);
 
+    /* Verify F0279 A..P nibble decode and F0278 reset-plan highlights. */
+    {
+        DecodedChampionValueResult_Compat d =
+            F0869_RESURRECTION_DecodeChampionValue_Compat("APJA", 4);
+        ok = ok && d.valid && d.value == 0x0F90u && d.consumedCharacterCount == 4;
+    }
+    {
+        ResetDataToStartGameInput_Compat in;
+        ResetDataToStartGamePlan_Compat p;
+        in.newGame = 0;
+        in.leaderHandThing = 0x1234u;
+        in.leaderHandIconIndex = 17u;
+        in.leaderIndex = 2;
+        in.magicCasterChampionIndex = 1;
+        in.partyChampionCount = 3;
+        p = F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(&in);
+        ok = ok && p.callsPutObjectInLeaderHand;
+        ok = ok && p.putObjectThing == 0x1234u;
+        ok = ok && p.clearAttributesChampionCount == 3u;
+        ok = ok && p.callsDrawAllChampionStates;
+        ok = ok && p.drawAllChampionStatesMask == DM1_RESET_DIRTY_CHAMPION_MASK;
+        ok = ok && p.callsSetLeader && p.setLeaderChampionIndex == 2;
+        ok = ok && p.callsSetMagicCasterAndDrawSpellArea &&
+                   p.setMagicCasterChampionIndex == 1;
+    }
+
     return ok ? 1u : 0u;
 }
-
-/* ══════════════════════════════════════════════════════════════════════
- * Pass602b — REVIVE.C remaining function citations
- *
- *   REVIVE.C:9 F0279_CHAMPION_G
- * ══════════════════════════════════════════════════════════════════════ */

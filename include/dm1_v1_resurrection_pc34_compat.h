@@ -297,6 +297,70 @@ typedef struct {
 ViAltarFullCycleResult_Compat F0868_RESURRECTION_RunViAltarFullCycle_Compat(
     const ViAltarFullCycleInput_Compat* in);
 
+/* -------- F0279 decoded champion value helper ------------------------ */
+
+typedef struct {
+    int valid;
+    uint16_t value;
+    uint16_t consumedCharacterCount;
+} DecodedChampionValueResult_Compat;
+
+/* F0869: Source-locked narrow F0279 value decode.
+ * Source: REVIVE.C F0279:11-45 decodes CharacterCount bytes from the
+ * champion mirror text as A..P nibbles, accumulating `(value << 4) +
+ * (character - 'A')`. REVIVE.C F0280 consumes 4 chars for health/stamina/mana
+ * and 2 chars for each statistic. Invalid caller-owned spans fail closed. */
+DecodedChampionValueResult_Compat F0869_RESURRECTION_DecodeChampionValue_Compat(
+    const char* text,
+    uint16_t characterCount);
+
+/* -------- F0278 reset-to-start-game narrow plan ---------------------- */
+
+#define DM1_RESET_LEADER_HAND_THING_NONE 0xFFFFu
+#define DM1_RESET_LEADER_HAND_ICON_NONE  0xFFFFu
+#define DM1_RESET_DIRTY_CHAMPION_MASK \
+    (DM1_CHAMPION_ATTR_ICON | DM1_CHAMPION_ATTR_STATUS_BOX | DM1_CHAMPION_ATTR_ACTION_HAND)
+#define DM1_RESET_CLEAR_ALL_CHAMPION_ATTRS_MASK \
+    (0x0080u | 0x0100u | 0x0200u | DM1_CHAMPION_ATTR_ICON | 0x0800u | \
+     DM1_CHAMPION_ATTR_STATUS_BOX | 0x2000u | 0x4000u | DM1_CHAMPION_ATTR_ACTION_HAND)
+
+typedef struct {
+    int newGame;
+    uint16_t leaderHandThing;
+    uint16_t leaderHandIconIndex;
+    int16_t leaderIndex;
+    int16_t magicCasterChampionIndex;
+    uint16_t partyChampionCount;
+} ResetDataToStartGameInput_Compat;
+
+typedef struct {
+    uint16_t nextLeaderHandThing;
+    uint16_t nextLeaderHandIconIndex;
+    int leaderEmptyHanded;
+    int callsSetPointer;
+    int callsPutObjectInLeaderHand;
+    uint16_t putObjectThing;
+    int putObjectSetMousePointer;
+    uint16_t clearAttributesChampionCount;
+    uint16_t clearAttributesMask;
+    int callsDrawAllChampionStates;
+    uint16_t drawAllChampionStatesMask;
+    int callsSetLeader;
+    int16_t setLeaderChampionIndex;
+    int callsSetMagicCasterAndDrawSpellArea;
+    int16_t setMagicCasterChampionIndex;
+} ResetDataToStartGamePlan_Compat;
+
+/* F0870: Source-locked narrow F0278 reset plan.
+ * Source: CHAMPRST.C F0278: clears leader hand immediately for new games.
+ * On resume/restart it either marks an empty hand and resets the pointer, or
+ * temporarily clears G0411 before F0297 puts the saved leader-hand object back.
+ * It clears champion dirty attributes, calls F0293 with action/status/icon,
+ * then restores leader and magic-caster UI owners when present. This function
+ * records the source-ordered side effects; callers own the actual globals. */
+ResetDataToStartGamePlan_Compat F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(
+    const ResetDataToStartGameInput_Compat* in);
+
 /* -------- Evidence / invariant (project convention) ------------------ */
 
 const char* dm1_v1_resurrection_GetEvidence(void);

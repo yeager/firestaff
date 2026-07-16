@@ -614,6 +614,111 @@ static void test_vi_altar_full_cycle_transition(void) {
     CHECK(r.eventCreated == 0, "non-Vi alcove drop does not create the rebirth event");
 }
 
+static void test_decoded_champion_value(void) {
+    DecodedChampionValueResult_Compat r;
+
+    printf("[decoded_champion_value]\n");
+
+    /* REVIVE.C F0279 accumulates A..P as hexadecimal nibbles. F0280 uses
+     * four nibbles for vitals and two nibbles for each statistic. */
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("AAAA", 4);
+    CHECK(r.valid == 1, "F0279 accepts four A nibbles");
+    CHECK(r.value == 0x0000u, "AAAA decodes to 0");
+    CHECK(r.consumedCharacterCount == 4, "four-character decode reports consumed count");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("AAAP", 4);
+    CHECK(r.valid == 1 && r.value == 15u, "AAAP decodes to 15");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("ABCD", 4);
+    CHECK(r.valid == 1 && r.value == 0x0123u, "ABCD decodes as nibble sequence 0x0123");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("PJ", 2);
+    CHECK(r.valid == 1 && r.value == 0xF9u, "PJ decodes as two-stat nibbles 0xF9");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("APJA", 4);
+    CHECK(r.valid == 1 && r.value == 0x0F90u, "APJA preserves zero nibble J as 9 only by ordinal");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("AQ", 2);
+    CHECK(r.valid == 0 && r.value == 0, "Q is outside F0279 A..P source alphabet");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("A?", 2);
+    CHECK(r.valid == 0 && r.value == 0, "punctuation fails closed");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat(NULL, 2);
+    CHECK(r.valid == 0, "NULL text fails closed");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("A", 0);
+    CHECK(r.valid == 0, "zero character count fails closed");
+
+    r = F0869_RESURRECTION_DecodeChampionValue_Compat("AAAAA", 5);
+    CHECK(r.valid == 0, "bounded helper rejects more than four F0280 nibbles");
+}
+
+static void test_reset_data_to_start_game_plan(void) {
+    ResetDataToStartGameInput_Compat in;
+    ResetDataToStartGamePlan_Compat p;
+
+    printf("[reset_data_to_start_game_plan]\n");
+
+    in.newGame = 1;
+    in.leaderHandThing = 0x1234u;
+    in.leaderHandIconIndex = 7;
+    in.leaderIndex = 2;
+    in.magicCasterChampionIndex = 1;
+    in.partyChampionCount = 3;
+    p = F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(&in);
+    CHECK(p.nextLeaderHandThing == DM1_RESET_LEADER_HAND_THING_NONE,
+          "F0278 new-game branch clears leader hand thing");
+    CHECK(p.nextLeaderHandIconIndex == DM1_RESET_LEADER_HAND_ICON_NONE,
+          "F0278 new-game branch clears leader hand icon");
+    CHECK(p.leaderEmptyHanded == 1, "F0278 new-game branch marks leader hand empty");
+    CHECK(p.callsDrawAllChampionStates == 0, "F0278 new-game branch returns before redraw plan");
+
+    in.newGame = 0;
+    in.leaderHandThing = DM1_RESET_LEADER_HAND_THING_NONE;
+    in.leaderHandIconIndex = 42;
+    in.leaderIndex = DM1_CHAMPION_NONE;
+    in.magicCasterChampionIndex = DM1_CHAMPION_NONE;
+    in.partyChampionCount = 2;
+    p = F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(&in);
+    CHECK(p.leaderEmptyHanded == 1, "resume with no hand object marks empty");
+    CHECK(p.nextLeaderHandIconIndex == DM1_RESET_LEADER_HAND_ICON_NONE,
+          "resume with no hand object clears stale icon");
+    CHECK(p.callsSetPointer == 1, "resume empty hand calls F0069 pointer reset");
+    CHECK(p.callsPutObjectInLeaderHand == 0, "resume empty hand skips F0297");
+    CHECK(p.clearAttributesChampionCount == 2, "resume clears attributes for active party count");
+    CHECK(p.clearAttributesMask == DM1_RESET_CLEAR_ALL_CHAMPION_ATTRS_MASK,
+          "resume clears the full F0278 champion attribute mask");
+    CHECK(p.callsDrawAllChampionStates == 1, "resume calls F0293 after clearing attributes");
+    CHECK(p.drawAllChampionStatesMask == DM1_RESET_DIRTY_CHAMPION_MASK,
+          "resume redraw mask is action-hand/status/icon");
+    CHECK(p.callsSetLeader == 0, "no leader skips F0368 restore");
+    CHECK(p.callsSetMagicCasterAndDrawSpellArea == 0, "no caster skips F0394 restore");
+
+    in.newGame = 0;
+    in.leaderHandThing = 0x4567u;
+    in.leaderHandIconIndex = 18;
+    in.leaderIndex = 3;
+    in.magicCasterChampionIndex = 0;
+    in.partyChampionCount = 7;
+    p = F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(&in);
+    CHECK(p.leaderEmptyHanded == 0, "resume with hand object leaves leader hand nonempty");
+    CHECK(p.callsPutObjectInLeaderHand == 1, "resume with hand object routes through F0297");
+    CHECK(p.putObjectThing == 0x4567u, "F0297 plan carries the saved hand thing");
+    CHECK(p.putObjectSetMousePointer == 1, "F0297 plan preserves C1_TRUE pointer argument");
+    CHECK(p.clearAttributesChampionCount == 4, "F0278 plan clamps malformed party count to four");
+    CHECK(p.callsSetLeader == 1 && p.setLeaderChampionIndex == 3,
+          "resume restores previous leader through F0368");
+    CHECK(p.callsSetMagicCasterAndDrawSpellArea == 1 &&
+          p.setMagicCasterChampionIndex == 0,
+          "resume restores previous magic caster through F0394");
+
+    p = F0870_RESURRECTION_ResetDataToStartGamePlan_Compat(NULL);
+    CHECK(p.nextLeaderHandThing == DM1_RESET_LEADER_HAND_THING_NONE,
+          "NULL reset input is a safe cleared plan");
+    CHECK(p.callsDrawAllChampionStates == 0, "NULL reset input emits no redraw plan");
+}
+
 static void test_command_validation(void) {
     printf("[command_validation]\n");
 
@@ -648,6 +753,8 @@ int main(void) {
     test_full_party_candidate_cancel();
     test_mirror_sensor_disable_order();
     test_vi_altar_full_cycle_transition();
+    test_decoded_champion_value();
+    test_reset_data_to_start_game_plan();
     test_command_validation();
     test_invariant();
 

@@ -1,5 +1,37 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject sound queue symbol bundle: added source-backed
+  receipt/runtime-state coverage for `DM2_SOUND1`-`DM2_SOUND9`,
+  `DM2_PROCESS_SOUND`, and `DM2_QUERY_SND_ENTRY_INDEX`. The bundle models
+  skproject queue insertion, duplicate/capacity rejection, one-based queue
+  lookup, pending-batch clearing, volume/music request state, and fail-closed
+  process routing without pretending sample payload playback is available.
+  Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_sound_source_gate -j2` and `ctest --test-dir build-local-ninja
+  --output-on-failure -R '^dm2_v1_sound_source_gate$'` passed.
+
+- 2026-07-16 DM1 CHAMPION HoC/reset F0278/F0279 bundle: added source-backed
+  narrow resurrection-owner contracts for `F0278_CHAMPION_ResetDataToStartGame`,
+  alias `F278_apzz_`, and `F0279_CHAMPION_GetDecodedValue`. `F0278` now records
+  the CHAMPRST.C reset side-effect order for new-game hand clear,
+  resume/restart leader-hand restore, dirty-attribute clear, F0293 redraw,
+  leader restore, and magic-caster restore; `F0279` now locks the REVIVE.C
+  A..P nibble decoder used by F0280 vitals/stat parsing. Full F0280 champion
+  text/materialization and original capture/save breadth remain separate.
+  Verification: focused Ninja target `test_dm1_v1_resurrection_pc34_compat`;
+  focused CTest `dm1_v1_resurrection`.
+
+- 2026-07-16 Nexus startup/menu/DGN fail-closed handoff: repaired the current
+  launcher/startup-menu WIP so verified WARNING.BIN/TITLE.CG/SAVE startup
+  receipts can be consumed while DGN package/host/runtime routes stay blocked
+  as `blocked-dgn-capture-required` unless a real original-Saturn DGN capture
+  admission exists. The focused tests now assert zero copied/cached DGN
+  commands, zero DGN pixels, no startup/DGN fallback visuals, and no synthetic
+  Saturn decoder route. Verification: focused Ninja build targets
+  `test_m11_nexus_startup_runtime_handoff` and
+  `test_nexus_v1_startup_menu_pc34_compat`; focused CTest
+  `m11_nexus_startup_runtime_handoff|nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-16 DM1 CHAMPION slot/hand redraw audit bundle: closed the
   source-backed narrow ReDMCSB dispositions for `F0293`, `F0295`-`F0302`,
   `F292_arzz_`, and the listed Atari ST aliases where bounded Firestaff
