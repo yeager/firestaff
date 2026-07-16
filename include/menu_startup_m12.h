@@ -100,12 +100,14 @@ typedef struct {
     int audioSfxVolume;
     int audioMuted;
     int fontScale;
+    char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY];
     int highContrast;
     int colorblindMode;
     int autoPause;
     int themeIndex;
     int bgAnimationPreset;
     int quickResumeEnabled;
+    char artpackPath[M12_CONFIG_DATA_DIR_CAPACITY];
     int minimapEnabled;
     int autoMapEnabled;
     int combatLogEnabled;

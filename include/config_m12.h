@@ -57,6 +57,7 @@ typedef struct {
 
     /* Accessibility options */
     int fontScale;          /* 1-3, default 1 */
+    char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY]; /* Optional broad Unicode TTF/OTF. */
     int highContrast;       /* 0 = off, 1 = on */
     int colorblindMode;     /* 0 = off, 1 = deuteranopia, 2 = protanopia, 3 = tritanopia */
     int autoPause;          /* 0 = off, 1 = pause on focus loss */
@@ -141,6 +142,7 @@ typedef struct {
 
     /* Quick resume gating. */
     int quickResumeEnabled;              /* 0 = off, 1 = on; default 1 */
+    char artpackPath[M12_CONFIG_DATA_DIR_CAPACITY]; /* Optional .fsart V2.2 pack selected by launcher. */
     int retroAchievementsEnabled;        /* 0 = off, 1 = on; default 0 */
     int retroAchievementsHardcore;       /* 0 = softcore, 1 = hardcore */
     char retroAchievementsUsername[64];  /* Empty = not configured. */

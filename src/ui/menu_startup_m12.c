@@ -137,6 +137,8 @@ enum {
     M12_SETTINGS_ROW_IMPORT,
     M12_SETTINGS_ROW_SYNC_NOW,
     M12_SETTINGS_ROW_SYNC_STATUS,
+    M12_SETTINGS_ROW_UNICODE_FONT_PATH,
+    M12_SETTINGS_ROW_ARTPACK_PATH,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -324,6 +326,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId);
 static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
+static void m12_begin_unicode_font_browse(M12_StartupMenuState* state);
+static void m12_begin_artpack_browse(M12_StartupMenuState* state);
 static void m12_export_save_manifest_json(M12_StartupMenuState* state);
 static void m12_export_save_settings_action(M12_StartupMenuState* state);
 static void m12_export_save_browser_settings_action(M12_StartupMenuState* state);
@@ -1036,7 +1040,9 @@ const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
         M12_SETTINGS_ROW_TOUCH_CONTROLS,
         M12_SETTINGS_ROW_MOVEMENT_MODE,
         M12_SETTINGS_ROW_DEBUG_OVERLAY,
-        M12_SETTINGS_ROW_DEVELOPER_GATES
+        M12_SETTINGS_ROW_DEVELOPER_GATES,
+        M12_SETTINGS_ROW_ARTPACK_PATH,
+        M12_SETTINGS_ROW_UNICODE_FONT_PATH
     };
     static const int audioRows[] = {
         M12_SETTINGS_ROW_AUDIO_MASTER,
@@ -2324,6 +2330,134 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
     }
 }
 
+static int m12_native_dialogs_disabled_for_test(void) {
+    const char* driver = getenv("SDL_VIDEODRIVER");
+    const char* activeDriver = SDL_GetCurrentVideoDriver();
+    if (driver && strcmp(driver, "dummy") == 0) {
+        return 1;
+    }
+    if (activeDriver && strcmp(activeDriver, "dummy") == 0) {
+        return 1;
+    }
+    return 0;
+}
+
+static void SDLCALL m12_unicode_font_dialog_callback(void* userdata,
+                                                     const char* const* filelist,
+                                                     int filter) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
+    (void)filter;
+    if (!state) {
+        return;
+    }
+    state->dataDirPickerActive = 0;
+    if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        snprintf(state->settings.unicodeFontPath,
+                 sizeof(state->settings.unicodeFontPath),
+                 "%s",
+                 filelist[0]);
+        m12_save_config(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "UNICODE FONT SELECTED"),
+                                 filelist[0],
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return;
+    }
+    m12_set_buffered_message(state,
+                             m12_tr(state, "UNICODE FONT UNCHANGED"),
+                             m12_tr(state, "NO FILE SELECTED"),
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+}
+
+static void m12_begin_unicode_font_browse(M12_StartupMenuState* state) {
+    static const SDL_DialogFileFilter filters[] = {
+        {"Font files", "ttf;otf;ttc"},
+        {"All files", "*"}
+    };
+    if (!state || state->dataDirPickerActive) {
+        return;
+    }
+    state->dataDirPickerActive = 1;
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "CHOOSE UNICODE FONT"),
+                             m12_tr(state, "SELECT A BROAD TTF OR OTF FONT"),
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    if (m12_native_dialogs_disabled_for_test()) {
+        state->dataDirPickerActive = 0;
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "UNICODE FONT UNCHANGED"),
+                                 m12_tr(state, "NATIVE FILE DIALOG DISABLED"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return;
+    }
+    SDL_ShowOpenFileDialog(m12_unicode_font_dialog_callback,
+                           state,
+                           NULL,
+                           filters,
+                           (int)(sizeof(filters) / sizeof(filters[0])),
+                           state->settings.unicodeFontPath[0] ? state->settings.unicodeFontPath : NULL,
+                           false);
+}
+
+static void SDLCALL m12_artpack_dialog_callback(void* userdata,
+                                                const char* const* filelist,
+                                                int filter) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
+    (void)filter;
+    if (!state) {
+        return;
+    }
+    state->dataDirPickerActive = 0;
+    if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        snprintf(state->settings.artpackPath,
+                 sizeof(state->settings.artpackPath),
+                 "%s",
+                 filelist[0]);
+        m12_save_config(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "V2.2 ARTPACK SELECTED"),
+                                 filelist[0],
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return;
+    }
+    m12_set_buffered_message(state,
+                             m12_tr(state, "V2.2 ARTPACK UNCHANGED"),
+                             m12_tr(state, "NO FILE SELECTED"),
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+}
+
+static void m12_begin_artpack_browse(M12_StartupMenuState* state) {
+    static const SDL_DialogFileFilter filters[] = {
+        {"Firestaff artpack", "fsart"},
+        {"All files", "*"}
+    };
+    if (!state || state->dataDirPickerActive) {
+        return;
+    }
+    state->dataDirPickerActive = 1;
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "CHOOSE V2.2 ARTPACK"),
+                             m12_tr(state, "SELECT A .FSART FILE"),
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    if (m12_native_dialogs_disabled_for_test()) {
+        state->dataDirPickerActive = 0;
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "V2.2 ARTPACK UNCHANGED"),
+                                 m12_tr(state, "NATIVE FILE DIALOG DISABLED"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return;
+    }
+    SDL_ShowOpenFileDialog(m12_artpack_dialog_callback,
+                           state,
+                           NULL,
+                           filters,
+                           (int)(sizeof(filters) / sizeof(filters[0])),
+                           state->settings.artpackPath[0] ? state->settings.artpackPath : NULL,
+                           false);
+}
+
 
 static int m12_is_valid_dm1_firestaff_quicksave_path(const char* path) {
     static const unsigned char quicksaveMagic[8] = {
@@ -2869,12 +3003,14 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.audioSfxVolume = state->settings.audioSfxVolume;
     config.audioMuted = state->settings.audioMuted;
     config.fontScale = state->settings.fontScale;
+    snprintf(config.unicodeFontPath, sizeof(config.unicodeFontPath), "%s", state->settings.unicodeFontPath);
     config.highContrast = state->settings.highContrast;
     config.colorblindMode = state->settings.colorblindMode;
     config.autoPause = state->settings.autoPause;
     config.themeIndex = state->settings.themeIndex;
     config.bgAnimationPreset = state->settings.bgAnimationPreset;
     config.quickResumeEnabled = state->settings.quickResumeEnabled;
+    snprintf(config.artpackPath, sizeof(config.artpackPath), "%s", state->settings.artpackPath);
     config.retroAchievementsEnabled =
         state->settings.retroAchievementsEnabled ? 1 : 0;
     config.retroAchievementsHardcore =
@@ -3124,6 +3260,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     state->settings.audioSfxVolume = m12_clamp_index(config.audioSfxVolume, 129);
     state->settings.audioMuted = config.audioMuted ? 1 : 0;
     state->settings.fontScale = config.fontScale < 1 ? 1 : (config.fontScale > 3 ? 3 : config.fontScale);
+    snprintf(state->settings.unicodeFontPath,
+             sizeof(state->settings.unicodeFontPath),
+             "%s",
+             config.unicodeFontPath);
     state->settings.highContrast = config.highContrast ? 1 : 0;
     state->settings.colorblindMode = m12_clamp_index(config.colorblindMode,
                                                      (int)(sizeof(g_colorblindModes) / sizeof(g_colorblindModes[0])));
@@ -3133,6 +3273,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     state->settings.bgAnimationPreset = m12_clamp_index(config.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.quickResumeEnabled = config.quickResumeEnabled ? 1 : 0;
+    snprintf(state->settings.artpackPath,
+             sizeof(state->settings.artpackPath),
+             "%s",
+             config.artpackPath);
     state->settings.retroAchievementsEnabled =
         config.retroAchievementsEnabled ? 1 : 0;
     state->settings.retroAchievementsHardcore =
@@ -3907,12 +4051,14 @@ const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_AUDIO_SFX: return m12_tr(state, "SFX VOLUME");
         case M12_SETTINGS_ROW_AUDIO_MUTED: return m12_tr(state, "MUTE AUDIO");
         case M12_SETTINGS_ROW_FONT_SCALE: return m12_tr(state, "FONT SCALE");
+        case M12_SETTINGS_ROW_UNICODE_FONT_PATH: return m12_tr(state, "UNICODE FONT");
         case M12_SETTINGS_ROW_HIGH_CONTRAST: return m12_tr(state, "HIGH CONTRAST");
         case M12_SETTINGS_ROW_COLORBLIND_MODE: return m12_tr(state, "COLORBLIND");
         case M12_SETTINGS_ROW_AUTO_PAUSE: return m12_tr(state, "AUTO PAUSE");
         case M12_SETTINGS_ROW_THEME: return m12_tr(state, "THEME");
         case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
+        case M12_SETTINGS_ROW_ARTPACK_PATH: return m12_tr(state, "V2.2 ARTPACK");
         case M12_SETTINGS_ROW_RETROACHIEVEMENTS: return m12_tr(state, "RETROACHIEVEMENTS");
         case M12_SETTINGS_ROW_RA_HARDCORE: return m12_tr(state, "RETROACHIEVEMENTS HARDCORE");
         case M12_SETTINGS_ROW_RA_USERNAME: return m12_tr(state, "RETROACHIEVEMENTS USER");
@@ -3969,12 +4115,14 @@ const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_AUDIO_SFX: return m12_settings_value_audio_sfx(state);
         case M12_SETTINGS_ROW_AUDIO_MUTED: return m12_settings_value_audio_muted(state);
         case M12_SETTINGS_ROW_FONT_SCALE: return m12_settings_value_font_scale(state);
+        case M12_SETTINGS_ROW_UNICODE_FONT_PATH: return m12_settings_value_path_status(state, state ? state->settings.unicodeFontPath : NULL);
         case M12_SETTINGS_ROW_HIGH_CONTRAST: return m12_settings_value_high_contrast(state);
         case M12_SETTINGS_ROW_COLORBLIND_MODE: return m12_settings_value_colorblind(state);
         case M12_SETTINGS_ROW_AUTO_PAUSE: return m12_settings_value_auto_pause(state);
         case M12_SETTINGS_ROW_THEME: return m12_settings_value_theme(state);
         case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_settings_value_quick_resume(state);
+        case M12_SETTINGS_ROW_ARTPACK_PATH: return m12_settings_value_path_status(state, state ? state->settings.artpackPath : NULL);
         case M12_SETTINGS_ROW_RETROACHIEVEMENTS:
             return m12_settings_value_ra_status(state);
         case M12_SETTINGS_ROW_RA_HARDCORE:
@@ -4535,6 +4683,9 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 delta,
                 3);
             break;
+        case M12_SETTINGS_ROW_UNICODE_FONT_PATH:
+            m12_begin_unicode_font_browse(state);
+            break;
         case M12_SETTINGS_ROW_HIGH_CONTRAST:
             state->settings.highContrast = m12_cycle_index(
                 state->settings.highContrast,
@@ -4574,6 +4725,9 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->quickResumeAvailable = 0;
                 state->quickResumeLaunchRequested = 0;
             }
+            break;
+        case M12_SETTINGS_ROW_ARTPACK_PATH:
+            m12_begin_artpack_browse(state);
             break;
         case M12_SETTINGS_ROW_RETROACHIEVEMENTS:
             state->settings.retroAchievementsEnabled = m12_cycle_index(
