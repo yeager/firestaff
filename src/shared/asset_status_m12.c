@@ -3224,6 +3224,23 @@ const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
     return status ? &status->theronMedia : NULL;
 }
 
+const char* M12_AssetStatus_GetTheronLaunchMediaPath(
+    const M12_AssetStatus* status) {
+    if (!status) return NULL;
+    if (status->theronMedia.track02_path[0] != '\0') {
+        return status->theronMedia.track02_path;
+    }
+    if (status->theronMedia.candidate_path[0] != '\0') {
+        return status->theronMedia.candidate_path;
+    }
+    return NULL;
+}
+
+const Theron_Track02StartupLoaderReceipt*
+M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status) {
+    return status ? &status->theronTrack02LoaderReceipt : NULL;
+}
+
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and
  * valid (critical shape categories present), 0 otherwise.
  * Set during M12_AssetStatus_Scan(). */

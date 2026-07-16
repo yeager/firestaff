@@ -88,6 +88,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     decision.liveProjectileSubtype = -1;
     decision.liveProjectileCell = -1;
     decision.liveProjectileDirection = -1;
+    decision.liveProjectileAssociatedThing = THING_NONE;
     decision.liveExplosionSlot = -1;
     decision.liveExplosionType = -1;
     decision.liveExplosionFrame = -1;
@@ -152,6 +153,18 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 decision.liveExplosionMaxFrames =
                     explosion->maxFrames > 0 ? explosion->maxFrames : 1;
                 decision.liveExplosionAttack = explosion->attack;
+            }
+            if (decision.liveRenderableExplosionCount <
+                DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS) {
+                int renderIndex = decision.liveRenderableExplosionCount++;
+                decision.liveRenderableExplosionTypes[renderIndex] =
+                    explosion->explosionType;
+                decision.liveRenderableExplosionFrames[renderIndex] =
+                    explosion->currentFrame;
+                decision.liveRenderableExplosionMaxFrames[renderIndex] =
+                    explosion->maxFrames > 0 ? explosion->maxFrames : 1;
+                decision.liveRenderableExplosionAttacks[renderIndex] =
+                    explosion->attack;
             }
         }
     }

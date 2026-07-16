@@ -1036,6 +1036,15 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupHostCallerReceipt;
 
+void nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
+    Nexus_V1_StartupTitleTransitionCaptureReceipt *receipt);
+int nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
+    const Nexus_V1_StartupHostCallerReceipt *host_receipt,
+    int title_frame,
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count,
+    Nexus_V1_StartupTitleTransitionCaptureReceipt *out_receipt);
+
 typedef struct {
     Nexus_V1_StartupHostCallerReceipt title_host;
     Nexus_V1_StartupHostCallerReceipt save_host;

@@ -146,6 +146,9 @@ struct DM1ActiveGroup_Compat;
 #define EMIT_ACTION_DISABLED  0x0E  /* payload: champion, ticks, action index, slot */
 #define EMIT_CREATURE_ATTACK  0x0F  /* payload: group, creature, damage/projectile slot, ranged */
 #define EMIT_CHAMPION_DAMAGED 0x10  /* payload: champion, party cell, damage, wound mask */
+#define EMIT_CHAMPION_DAMAGE_HIDDEN 0x11
+#define EMIT_TEXT_MESSAGE     0x12
+#define EMIT_ACTION_ENABLED   0x13
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the

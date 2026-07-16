@@ -52,6 +52,13 @@ int DM1_V1_MouseRoutes_CommandForPointPc34Compat(
     void* user,
     int* outCoordinateSpace,
     int* outZoneId);
+int DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+    int mouseInputList,
+    int screenX,
+    int screenY,
+    int buttonMask,
+    int* outCoordinateSpace,
+    int* outZoneId);
 
 #ifdef __cplusplus
 }

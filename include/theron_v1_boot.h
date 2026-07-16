@@ -957,6 +957,9 @@ int theron_v1_boot_startup_launch_alloc(
 int theron_v1_boot_startup_launch_detach_runtime(
     Theron_V1_BootStartupLaunch *launch,
     Theron_V1_BootStartupRuntimeReceipt *out_receipt);
+int theron_v1_boot_validate_track02_loader_receipt(
+    const Theron_Track02StartupLoaderReceipt *receipt,
+    const char *verified_md5);
 void theron_v1_boot_startup_launch_cleanup(
     Theron_V1_BootStartupLaunch *launch);
 void theron_v1_boot_runtime_release(

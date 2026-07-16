@@ -94,6 +94,14 @@ typedef struct {
 } dm1_v1_champion_panel_food_water_status_box_frame_pc34_t;
 
 typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+    int shadow_offset;
+} dm1_v1_champion_panel_food_water_bar_zone_pc34_t;
+
+typedef struct {
     int valid;
     int rejected_invalid_champion;
     int rejected_dead_champion;
@@ -140,6 +148,11 @@ dm1_v1_champion_panel_food_water_status_box_default_input_pc34(void);
 dm1_v1_champion_panel_food_water_status_box_result_pc34_t
 dm1_v1_champion_panel_food_water_status_box_probe_pc34(
     const dm1_v1_champion_panel_food_water_status_box_input_pc34_t *input);
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_food_bar_zone_pc34(void);
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_water_bar_zone_pc34(void);
 
 #ifdef __cplusplus
 }

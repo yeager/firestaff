@@ -144,6 +144,10 @@ const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
 const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
     const M12_AssetStatus* status);
+const char* M12_AssetStatus_GetTheronLaunchMediaPath(
+    const M12_AssetStatus* status);
+const Theron_Track02StartupLoaderReceipt*
+M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status);
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and
  * valid (critical shape categories present), 0 otherwise.

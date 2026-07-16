@@ -295,3 +295,22 @@ int dm1_v1_front_mirror_render_plan_pc34(
     outPlan->backingHeight = outPlan->ornament.height;
     return 1;
 }
+
+int dm1_v1_wall_ornament_host_material_receipt_pc34(
+    int globalIndex,
+    int viewWallIndex,
+    int maxHeight,
+    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt) {
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!dm1_v1_wall_ornament_render_plan_pc34(
+            globalIndex, viewWallIndex, maxHeight, &outReceipt->plan)) {
+        return 0;
+    }
+    outReceipt->valid = 1;
+    outReceipt->globalOrnamentIndex = globalIndex;
+    outReceipt->viewWallIndex = viewWallIndex;
+    return 1;
+}
