@@ -80,13 +80,113 @@ int DM1_V1_Needs_TimeEffectsDuePc34Compat(uint32_t game_time,
     return (((uint16_t)game_time & cadence_mask) == 0u) ? 1 : 0;
 }
 
+static void normalize_scent_count(DM1_V1_NeedsScentListPc34Compat* scents)
+{
+    if (scents->count > DM1_V1_NEEDS_SCENT_CAPACITY) {
+        scents->count = DM1_V1_NEEDS_SCENT_CAPACITY;
+    }
+}
+
+int DM1_V1_Needs_GetScentOrdinalPc34Compat(
+    const DM1_V1_NeedsScentListPc34Compat* scents,
+    uint16_t currentMapIndex,
+    uint16_t mapX,
+    uint16_t mapY)
+{
+    int index;
+    uint16_t count;
+    if (!scents) return 0;
+    count = scents->count;
+    if (count > DM1_V1_NEEDS_SCENT_CAPACITY) {
+        count = DM1_V1_NEEDS_SCENT_CAPACITY;
+    }
+    for (index = (int)count - 1; index >= 0; --index) {
+        const DM1_V1_NeedsScentPc34Compat* scent = &scents->entries[index];
+        if (scent->mapX == mapX &&
+            scent->mapY == mapY &&
+            scent->mapIndex == currentMapIndex) {
+            return index + 1;
+        }
+    }
+    return 0;
+}
+
+int DM1_V1_Needs_DeleteScentPc34Compat(
+    DM1_V1_NeedsScentListPc34Compat* scents,
+    uint16_t scentIndex)
+{
+    uint16_t tail;
+    if (!scents) return 0;
+    normalize_scent_count(scents);
+    if (scentIndex >= scents->count) return 0;
+
+    for (tail = scentIndex; tail + 1u < scents->count; ++tail) {
+        scents->entries[tail] = scents->entries[tail + 1u];
+    }
+    scents->count--;
+    if (scents->count < DM1_V1_NEEDS_SCENT_CAPACITY) {
+        DM1_V1_NeedsScentPc34Compat empty = {0, 0, 0, 0};
+        scents->entries[scents->count] = empty;
+    }
+
+    if (scentIndex < scents->firstScentIndex) {
+        scents->firstScentIndex--;
+    }
+    if (scentIndex < scents->lastScentIndex) {
+        scents->lastScentIndex--;
+    }
+    return 1;
+}
+
+int DM1_V1_Needs_AddScentStrengthPc34Compat(
+    DM1_V1_NeedsScentListPc34Compat* scents,
+    uint16_t currentMapIndex,
+    uint16_t mapX,
+    uint16_t mapY,
+    uint16_t cycleCount)
+{
+    int index;
+    int cycleCountDefined = 0;
+    int merge = 0;
+    uint8_t newStrength = 0;
+
+    if (!scents) return 0;
+    normalize_scent_count(scents);
+    if (scents->count == 0) return 0;
+
+    if (cycleCount & DM1_V1_NEEDS_SCENT_MERGE_CYCLES_PC34) {
+        merge = 1;
+        cycleCount &= (uint16_t)~DM1_V1_NEEDS_SCENT_MERGE_CYCLES_PC34;
+    }
+    if (cycleCount > 255u) cycleCount = 255u;
+
+    for (index = 0; index < (int)scents->count; ++index) {
+        DM1_V1_NeedsScentPc34Compat* scent = &scents->entries[index];
+        if (scent->mapX == mapX &&
+            scent->mapY == mapY &&
+            scent->mapIndex == currentMapIndex) {
+            if (!cycleCountDefined) {
+                cycleCountDefined = 1;
+                if (merge) {
+                    newStrength = (scent->strength > (uint8_t)cycleCount)
+                                      ? scent->strength
+                                      : (uint8_t)cycleCount;
+                } else {
+                    unsigned int sum = (unsigned int)scent->strength + cycleCount;
+                    newStrength = (uint8_t)((sum > 80u) ? 80u : sum);
+                }
+            }
+            scent->strength = newStrength;
+        }
+    }
+    return cycleCountDefined;
+}
+
 void DM1_V1_Needs_DecayScentsPc34Compat(
     DM1_V1_NeedsScentListPc34Compat* scents) {
     int index;
     if (!scents) return;
-    if (scents->count > DM1_V1_NEEDS_SCENT_CAPACITY) {
-        scents->count = DM1_V1_NEEDS_SCENT_CAPACITY;
-    }
+    normalize_scent_count(scents);
     index = 0;
     /* ReDMCSB CHAMPION.C F0331:2311-2330 deliberately stops at count - 1. */
     while (index < (int)scents->count - 1) {
@@ -94,11 +194,7 @@ void DM1_V1_Needs_DecayScentsPc34Compat(
             scents->entries[index].strength--;
         }
         if (scents->entries[index].strength == 0 && index == 0) {
-            int tail;
-            for (tail = 0; tail + 1 < (int)scents->count; ++tail) {
-                scents->entries[tail] = scents->entries[tail + 1];
-            }
-            scents->count--;
+            (void)DM1_V1_Needs_DeleteScentPc34Compat(scents, 0);
             continue;
         }
         index++;

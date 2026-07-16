@@ -104,6 +104,22 @@ typedef struct {
     const char *status;
 } CSB_V1_F0240_FirstEventExpiredReceipt;
 
+typedef struct {
+    int valid;
+    int tick_fired;
+    int pre_event_count;
+    int post_event_count;
+    int dispatched_count;
+    int first_event_index;
+    uint32_t game_time_before;
+    uint32_t game_time_after;
+    uint32_t first_event_time;
+    uint8_t first_event_type;
+    uint32_t timeline_dispatch_count_before;
+    uint32_t timeline_dispatch_count_after;
+    const char *status;
+} CSB_V1_F0261_ProcessTickReceipt;
+
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
  * CSB uses a 55ms per-tick clock (same as DM1).
@@ -1266,6 +1282,13 @@ int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_f0240_is_first_event_expired(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_F0240_FirstEventExpiredReceipt *out_receipt);
+
+/* CSB-owned ReDMCSB TIMELINE.C F0261 receipt. It advances exactly one live
+ * CSB V1 tick through csb_v1_runtime_tick_v1(), records the source heap before
+ * and after processing, and never constructs replacement EVENT records. */
+int csb_v1_runtime_f0261_process_tick(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_F0261_ProcessTickReceipt *out_receipt);
 
 /* Check if a V1 tick is due at accumulated wall-clock time now_ms.
  * Pass 0 to use profile->total_play_ms. */

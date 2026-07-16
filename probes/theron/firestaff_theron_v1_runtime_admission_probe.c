@@ -234,6 +234,9 @@ int main(void)
     Theron_V1RuntimeTrack02DungeonHandoffProof dungeon_handoff_proof;
     Theron_V1RuntimeTrack02DungeonHandoffProof mutated_dungeon_handoff_proof;
     Theron_V1RuntimeTrack02DungeonHandoffReceipt dungeon_handoff;
+    Theron_V1RuntimeTrack02HostDungeonConsumerProof host_consumer_proof;
+    Theron_V1RuntimeTrack02HostDungeonConsumerProof mutated_host_consumer_proof;
+    Theron_V1RuntimeTrack02HostDungeonConsumerReceipt host_consumer;
     Theron_V1TraceSourceProvenanceReceipt provenance;
     Theron_V1RawLoaderTraceGamePayloadReceipt payload;
     Theron_V1RawLoaderTraceGamePayloadReceipt mutated;
@@ -769,6 +772,126 @@ int main(void)
         dungeon_handoff.fallback_visuals_allowed) {
         return 1;
     }
+    theron_v1_runtime_track02_host_dungeon_consumer_init(&host_consumer);
+    if (host_consumer.valid ||
+        host_consumer.real_track02_dungeon_consumer_ready ||
+        host_consumer.dungeon_draw_allowed ||
+        host_consumer.fallback_visuals_allowed) {
+        return 1;
+    }
+    memset(&host_consumer_proof, 0, sizeof(host_consumer_proof));
+    host_consumer_proof.valid = 1;
+    host_consumer_proof.same_capture_as_dungeon_handoff = 1;
+    host_consumer_proof.variant = THERON_TRACK02_VARIANT_US_BIN;
+    strcpy(host_consumer_proof.track02_md5, THERON_TRACK02_MD5_US_BIN);
+    host_consumer_proof.record = payload.raw_track02_record;
+    host_consumer_proof.level_route_hash = route.level_route_hash;
+    host_consumer_proof.object_table_route_hash =
+        route.object_table_route_hash;
+    host_consumer_proof.all_dungeon_route_hash = route.route_hash;
+    host_consumer_proof.payload_checksum =
+        post3800_consumer.payload_checksum;
+    host_consumer_proof.level_envelope_checksum =
+        post3800_consumer.level_envelope_checksum;
+    host_consumer_proof.post_envelope_checksum =
+        post3800_consumer.post_envelope_checksum;
+    host_consumer_proof.consumer_trace_checksum =
+        post3800_consumer.consumer_trace_checksum;
+    host_consumer_proof.decoded_level_hash =
+        render_proof.decoded_level_hash;
+    host_consumer_proof.decoded_object_table_hash =
+        render_proof.decoded_object_table_hash;
+    host_consumer_proof.decoded_bitmap_hash =
+        render_proof.decoded_bitmap_hash;
+    host_consumer_proof.decoded_palette_hash =
+        render_proof.decoded_palette_hash;
+    host_consumer_proof.original_host_route_bound = 1;
+    host_consumer_proof.level_grid_runtime_consumer_bound = 1;
+    host_consumer_proof.object_table_runtime_consumer_bound = 1;
+    host_consumer_proof.bitmap_palette_runtime_consumer_bound = 1;
+    host_consumer_proof.host_surface_upload_proven = 1;
+    host_consumer_proof.host_capture_frame_proven = 1;
+    if (!theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &host_consumer_proof, &host_consumer)) {
+        return 1;
+    }
+    if (!host_consumer.valid ||
+        !host_consumer.dungeon_handoff_consumed ||
+        !host_consumer.host_consumer_proof_consumed ||
+        !host_consumer.runtime_capture_required ||
+        host_consumer.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(host_consumer.track02_md5,
+               THERON_TRACK02_MD5_US_BIN) != 0 ||
+        host_consumer.record != payload.raw_track02_record ||
+        host_consumer.level_route_hash != route.level_route_hash ||
+        host_consumer.object_table_route_hash !=
+            route.object_table_route_hash ||
+        host_consumer.all_dungeon_route_hash != route.route_hash ||
+        host_consumer.payload_checksum !=
+            post3800_consumer.payload_checksum ||
+        host_consumer.level_envelope_checksum !=
+            post3800_consumer.level_envelope_checksum ||
+        host_consumer.post_envelope_checksum !=
+            post3800_consumer.post_envelope_checksum ||
+        host_consumer.consumer_trace_checksum !=
+            post3800_consumer.consumer_trace_checksum ||
+        host_consumer.decoded_level_hash !=
+            render_proof.decoded_level_hash ||
+        host_consumer.decoded_object_table_hash !=
+            render_proof.decoded_object_table_hash ||
+        host_consumer.decoded_bitmap_hash !=
+            render_proof.decoded_bitmap_hash ||
+        host_consumer.decoded_palette_hash !=
+            render_proof.decoded_palette_hash ||
+        !host_consumer.real_track02_dungeon_consumer_ready ||
+        !host_consumer.host_surface_upload_allowed ||
+        !host_consumer.host_capture_frame_required ||
+        !host_consumer.dungeon_draw_allowed ||
+        host_consumer.fallback_visuals_allowed) {
+        return 1;
+    }
+    mutated_host_consumer_proof = host_consumer_proof;
+    mutated_host_consumer_proof.host_capture_frame_proven = 0;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &mutated_host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
+        return 1;
+    }
+    mutated_host_consumer_proof = host_consumer_proof;
+    mutated_host_consumer_proof.synthetic_host_frame_promoted = 1;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &mutated_host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
+        return 1;
+    }
+    mutated_host_consumer_proof = host_consumer_proof;
+    mutated_host_consumer_proof.decoded_level_hash ^= 0x20u;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &mutated_host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
+        return 1;
+    }
+    mutated_host_consumer_proof = host_consumer_proof;
+    mutated_host_consumer_proof.fallback_visuals_observed = 1;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &mutated_host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
+        return 1;
+    }
+    dungeon_handoff.fallback_visuals_allowed = 1;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
+        return 1;
+    }
+    dungeon_handoff.fallback_visuals_allowed = 0;
+    dungeon_handoff.dungeon_draw_allowed = 1;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
+        return 1;
+    }
+    dungeon_handoff.dungeon_draw_allowed = 0;
     mutated_dungeon_handoff_proof = dungeon_handoff_proof;
     mutated_dungeon_handoff_proof.object_table_layout_proven = 0;
     if (theron_v1_runtime_bind_track02_dungeon_handoff(

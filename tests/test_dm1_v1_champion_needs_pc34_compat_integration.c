@@ -372,6 +372,8 @@ static void test_scent_decay_preserves_newest_entry(void) {
     DM1_V1_NeedsScentListPc34Compat scents;
     memset(&scents, 0, sizeof(scents));
     scents.count = 3;
+    scents.firstScentIndex = 1;
+    scents.lastScentIndex = 3;
     scents.entries[0].strength = 1;
     scents.entries[1].strength = 4;
     scents.entries[2].strength = 9;
@@ -381,6 +383,69 @@ static void test_scent_decay_preserves_newest_entry(void) {
     ASSERT_EQ(scents.count, 2, "expired oldest scent is removed through F0316");
     ASSERT_EQ(scents.entries[0].strength, 3, "shifted scent decays in same tick");
     ASSERT_EQ(scents.entries[1].strength, 9, "newest scent remains untouched");
+    ASSERT_EQ(scents.firstScentIndex, 0, "F0316 adjusts first scent window");
+    ASSERT_EQ(scents.lastScentIndex, 2, "F0316 adjusts last scent window");
+}
+
+static void test_scent_f0315_f0316_f0317_contract(void) {
+    DM1_V1_NeedsScentListPc34Compat scents;
+    memset(&scents, 0, sizeof(scents));
+    scents.count = 4;
+    scents.firstScentIndex = 2;
+    scents.lastScentIndex = 4;
+    scents.entries[0].mapX = 4;
+    scents.entries[0].mapY = 7;
+    scents.entries[0].mapIndex = 1;
+    scents.entries[0].strength = 10;
+    scents.entries[1].mapX = 8;
+    scents.entries[1].mapY = 9;
+    scents.entries[1].mapIndex = 1;
+    scents.entries[1].strength = 12;
+    scents.entries[2].mapX = 4;
+    scents.entries[2].mapY = 7;
+    scents.entries[2].mapIndex = 1;
+    scents.entries[2].strength = 20;
+    scents.entries[3].mapX = 4;
+    scents.entries[3].mapY = 7;
+    scents.entries[3].mapIndex = 2;
+    scents.entries[3].strength = 30;
+
+    ASSERT_EQ(DM1_V1_Needs_GetScentOrdinalPc34Compat(&scents, 1, 4, 7), 3,
+              "F0315 returns latest matching scent as 1-based ordinal");
+    ASSERT_EQ(DM1_V1_Needs_GetScentOrdinalPc34Compat(&scents, 2, 4, 7), 4,
+              "F0315 includes current map index in packed scent");
+    ASSERT_EQ(DM1_V1_Needs_GetScentOrdinalPc34Compat(&scents, 1, 99, 7), 0,
+              "F0315 returns zero when no scent matches");
+
+    ASSERT_EQ(DM1_V1_Needs_AddScentStrengthPc34Compat(&scents, 1, 4, 7, 65), 1,
+              "F0317 adds cycle count to existing matching scents");
+    ASSERT_EQ(scents.entries[0].strength, 75, "F0317 updates first duplicate");
+    ASSERT_EQ(scents.entries[2].strength, 75,
+              "F0317 reuses first matched cycle result for later duplicates");
+    ASSERT_EQ(scents.entries[3].strength, 30, "F0317 does not cross map index");
+
+    ASSERT_EQ(DM1_V1_Needs_AddScentStrengthPc34Compat(
+                  &scents, 1, 4, 7,
+                  DM1_V1_NEEDS_SCENT_MERGE_CYCLES_PC34 | 50u), 1,
+              "F0317 merge flag updates existing scents");
+    ASSERT_EQ(scents.entries[0].strength, 75,
+              "F0317 merge keeps stronger existing scent");
+    ASSERT_EQ(scents.entries[2].strength, 75,
+              "F0317 merge reuses first matched cycle result for duplicates");
+
+    ASSERT_EQ(DM1_V1_Needs_AddScentStrengthPc34Compat(&scents, 1, 40, 70, 9), 0,
+              "F0317 does not append a missing scent");
+    ASSERT_EQ(scents.count, 4, "F0317 missing scent leaves count unchanged");
+
+    ASSERT_EQ(DM1_V1_Needs_DeleteScentPc34Compat(&scents, 1), 1,
+              "F0316 deletes a valid zero-based index");
+    ASSERT_EQ(scents.count, 3, "F0316 decrements scent count");
+    ASSERT_EQ(scents.entries[1].mapX, 4, "F0316 shifts scent tail down");
+    ASSERT_EQ(scents.entries[1].strength, 75, "F0316 shifts strength with scent");
+    ASSERT_EQ(scents.firstScentIndex, 1, "F0316 adjusts first window past delete");
+    ASSERT_EQ(scents.lastScentIndex, 3, "F0316 adjusts last window past delete");
+    ASSERT_EQ(DM1_V1_Needs_DeleteScentPc34Compat(&scents, 9), 0,
+              "F0316 rejects out-of-range delete");
 }
 
 int main(void) {
@@ -404,6 +469,7 @@ int main(void) {
     test_null_safety();
     test_movement_delay_boost();
     test_scent_decay_preserves_newest_entry();
+    test_scent_f0315_f0316_f0317_contract();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

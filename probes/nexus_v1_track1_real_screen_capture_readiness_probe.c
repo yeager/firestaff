@@ -6,10 +6,11 @@
  * Purpose
  * -------
  * Closes the "real runtime screen capture" sub-row of the Nexus V1 E1
- * Track 1 phase-launch gap by proving the Nexus V1 viewport render path
- * (DM.BIN/FONT256.S2D/MNS handoff → nexus_viewport_render →
- * nexus_viewport_to_rgba → local 24-bit BMP receipt writer) reaches a
- * real 24-bit BMP on disk when real Track 1 assets are present.
+ * Track 1 phase-launch gap by proving the Nexus V1 viewport/capture path
+ * (DM.BIN/FONT256.S2D/MNS handoff -> nexus_viewport_render ->
+ * nexus_viewport_to_rgba -> local 24-bit BMP receipt writer) remains
+ * deterministic while DGN presentation stays blocked until an original
+ * Saturn capture/admission exists.
  *
  * This is a *readiness* gate, not a README promotion gate. The probe
  * never writes promoted screenshots, never copies bytes into
@@ -26,8 +27,8 @@
  *    fixture, fills width=64 / height=64 / squares[].
  *  - nexus_viewport_init() succeeds and exposes a valid 320x200
  *    indexed framebuffer (Nexus_Framebuffer).
- *  - nexus_viewport_render() populates the indexed framebuffer against
- *    a synthetic engine state.
+ *  - nexus_viewport_render() accepts the synthetic parse fixture but does
+ *    not use it as a visible fallback.
  *  - nexus_viewport_to_rgba() converts the indexed framebuffer into a
  *    320x200 0xAARRGGBB buffer using the engine's loaded palette.
  *  - the local BMP receipt writer writes a valid 24-bit BMP whose
@@ -42,11 +43,11 @@
  *  - nexus_v1_read_file("FONT256.S2D") returns the verified 25,012-byte
  *    Saturn SCR font, re-parsed via nexus_v1_font_load().
  *  - nexus_viewport_render() + nexus_viewport_to_rgba() produce a
- *    320x200 RGBA buffer driven by real DM.BIN/FONT256.S2D/MNS state.
+ *    320x200 RGBA buffer while DGN remains no-draw/capture-required.
  *  - the local BMP receipt writer writes a 24-bit BMP whose SHA256 is
  *    deterministic across two consecutive runs of the same data root.
- *  - The resulting BMP has >= 200 non-black pixels (i.e. the viewport
- *    actually painted something instead of returning an all-zero RGBA).
+ *  - The resulting BMP has zero non-black pixels until the real Saturn
+ *    capture gate admits DGN rendering.
  *
  * Exit codes
  * ----------
@@ -411,41 +412,6 @@ static long count_non_black_pixels(const uint8_t *rgba, int w, int h)
     return count;
 }
 
-static int stamp_synthetic_capture_marker(Nexus_Viewport *vp)
-{
-    int x;
-    int y;
-    int writes = 0;
-    if (!vp) return 0;
-    for (y = 8; y < 24; ++y) {
-        for (x = 8; x < 24; ++x) {
-            vp->fb.color_buffer[y * NEXUS_FB_W + x] = 15;
-            ++writes;
-        }
-    }
-    return writes;
-}
-
-static int stamp_font_capture_marker(Nexus_Viewport *vp,
-                                     const Nexus_V1_Font *font)
-{
-    int glyph = 65;
-    int writes;
-    if (!vp || !font) return 0;
-    writes = nexus_v1_font_draw_glyph_indexed(
-        font,
-        vp->fb.color_buffer,
-        NEXUS_FB_W,
-        NEXUS_FB_H,
-        NEXUS_FB_W,
-        8,
-        8,
-        glyph,
-        15,
-        14);
-    return writes > 0 ? writes : 0;
-}
-
 static void run_phase_synthetic_capture(const char *out_dir)
 {
     printf("\n=== Phase 3: synthetic DGN + viewport render + RGBA capture ===\n");
@@ -503,16 +469,14 @@ static void run_phase_synthetic_capture(const char *out_dir)
         }
     }
     nexus_viewport_render(&vp, &engine);
-    CHECK(stamp_synthetic_capture_marker(&vp) > 0,
-          "synthetic capture marker reaches indexed framebuffer");
     nexus_viewport_to_rgba(&vp, rgba);
 
-    /* Sanity: viewport render should have populated at least a few
-     * non-zero RGBA pixels from the floor/wall draws. */
+    /* The synthetic fixture proves parser/capture plumbing only. It must not
+     * become a visible DGN fallback. */
     non_black = count_non_black_pixels((const uint8_t *)rgba,
                                        NEXUS_FB_W, NEXUS_FB_H);
-    CHECK(non_black > 0,
-          "synthetic viewport RGBA has > 0 non-black pixels");
+    CHECK(non_black == 0,
+          "synthetic viewport RGBA stays black without fallback pixels");
 
     if (!out_dir || !*out_dir) {
         SKIP("no --output-dir supplied; skipping BMP write");
@@ -529,7 +493,6 @@ static void run_phase_synthetic_capture(const char *out_dir)
     /* Render a second time from the same synth state and capture a
      * second BMP; the hash must match the first one. */
     nexus_viewport_render(&vp, &engine);
-    (void)stamp_synthetic_capture_marker(&vp);
     nexus_viewport_to_rgba(&vp, rgba);
     CHECK(nexus_probe_capture_rgba_bmp((const uint8_t *)rgba,
                                        NEXUS_FB_W, NEXUS_FB_H,
@@ -567,7 +530,6 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     struct stat st;
     Nexus_V1_Font real_font;
     int real_font_loaded = 0;
-    int font_marker_writes = 0;
 
     if (!data_dir || !*data_dir) {
         SKIP("no --data-dir supplied");
@@ -657,17 +619,14 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     }
 
     nexus_viewport_render(&vp, &engine);
-    if (real_font_loaded) {
-        font_marker_writes = stamp_font_capture_marker(&vp, &real_font);
-    }
-    CHECK(font_marker_writes > 200,
-          "real FONT256.S2D capture marker reaches indexed framebuffer");
+    CHECK(real_font_loaded && real_font.char_count >= 256,
+          "real FONT256.S2D remains parsed while DGN capture is blocked");
     nexus_viewport_to_rgba(&vp, rgba);
 
     non_black = count_non_black_pixels((const uint8_t *)rgba,
                                        NEXUS_FB_W, NEXUS_FB_H);
-    CHECK(non_black > 200,
-          "real-data viewport RGBA has > 200 non-black pixels (visible scene)");
+    CHECK(non_black == 0,
+          "real-data viewport RGBA stays black until Saturn DGN capture is admitted");
 
     CHECK(nexus_probe_capture_rgba_bmp((const unsigned char *)rgba,
                                        NEXUS_FB_W, NEXUS_FB_H,
@@ -682,9 +641,6 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
           "first real-data BMP is readable on disk");
 
     nexus_viewport_render(&vp, &engine);
-    if (real_font_loaded) {
-        (void)stamp_font_capture_marker(&vp, &real_font);
-    }
     nexus_viewport_to_rgba(&vp, rgba);
     CHECK(nexus_probe_capture_rgba_bmp((const unsigned char *)rgba,
                                        NEXUS_FB_W, NEXUS_FB_H,

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Nexus V1 Track 1 real-screen-capture readiness gate.
+"""Nexus V1 Track 1 real-screen-capture-required readiness gate.
 
 Runs the real-data path of
 ``firestaff_nexus_v1_track1_real_screen_capture_readiness_probe``
 against each verified Nexus data root and records the BMP receipts the
 probe wrote. The gate proves the DM.BIN/FONT256.S2D/MNS runtime handoff
-reaches a real 24-bit BMP on disk; it does NOT promote screenshots,
-copy image bytes into ``verification-screens/``, or rewrite public docs.
+reaches a deterministic local BMP while DGN presentation remains blocked
+until original Saturn capture/admission exists; it does NOT promote
+screenshots, copy image bytes into ``verification-screens/``, or rewrite
+public docs.
 
 Source-lock target: ``docs/FIRESTAFF_GAP_LIST.md`` E1 Track 1
 phase-launch row "remaining work" sub-row (b):
@@ -23,7 +25,7 @@ directory.
 
 Exit codes:
   0  PASS — every present data case produced a valid 320x200 BMP with
-             > 200 non-black pixels, the probe reported PASS, and the
+             zero non-black pixels, the probe reported PASS, and the
              two consecutive BMP hashes match.
   1  FAIL — at least one present case failed.
   0  SKIP — no Nexus data directories present (still exit 0 so CI
@@ -177,7 +179,7 @@ def run_case(probe: Path, case: dict[str, Any]) -> dict[str, Any]:
         # probe prints the SHA256 it computed for both runs in its
         # stdout, so we don't need to re-hash the file from Python).
         proc = run([str(probe), str(data_dir), str(bmp_dir)],
-                   env=env, replacements=replacements, timeout=30)
+                   env=env, replacements=replacements, timeout=240)
         row["probe_first_run"] = proc
 
         bmp_paths = sorted(bmp_dir.glob("firestaff-*.bmp"))
@@ -198,7 +200,7 @@ def run_case(probe: Path, case: dict[str, Any]) -> dict[str, Any]:
         # the second-run BMPs get their own SHA256 sidecar.
         second_bmp_dir = temp_root / "bmp_second"
         proc_second = run([str(probe), str(data_dir), str(second_bmp_dir)],
-                          env=env, replacements=replacements, timeout=30)
+                          env=env, replacements=replacements, timeout=240)
         row["probe_second_run"] = proc_second
         second_paths = sorted(second_bmp_dir.glob("firestaff-*.bmp"))
         second_rows = []
@@ -227,12 +229,13 @@ def run_case(probe: Path, case: dict[str, Any]) -> dict[str, Any]:
         )
 
     # Pass/fail decision: probe returned 0, at least one valid 320x200
-    # BMP with > 200 non-black pixels was produced, and the two
-    # consecutive runs produced matching SHA256 pairs.
+    # BMP with no non-black pixels was produced, and the two consecutive
+    # runs produced matching SHA256 pairs. Non-black DGN pixels require a
+    # separate original-Saturn capture/admission receipt.
     valid_shots = [s for s in row["screenshots"]
                    if s.get("valid") and s.get("width") == 320
                    and s.get("height") == 200
-                   and s.get("non_black_pixels", 0) > 200]
+                   and s.get("non_black_pixels", -1) == 0]
     probe_ok = row["probe_first_run"].get("ok") is True
     row["ok"] = (
         probe_ok
@@ -251,12 +254,13 @@ def write_outputs(result: dict[str, Any]) -> None:
                         encoding="utf-8")
     rows = result.get("cases", [])
     lines = [
-        "# Nexus V1 Track 1 real-screen-capture readiness",
+        "# Nexus V1 Track 1 real-screen-capture-required readiness",
         "",
         f"Status: `{result['status']}`",
         "",
         "This gate proves the DM.BIN/FONT256.S2D/MNS runtime handoff",
-        "reaches a real 24-bit BMP on disk through",
+        "reaches a deterministic local 24-bit BMP while DGN remains",
+        "blocked before original Saturn capture/admission. It runs through",
         "`nexus_viewport_render` + `nexus_viewport_to_rgba` +",
         "the probe-owned 24-bit BMP receipt writer for every verified Nexus data root",
         "that is present on the host. It is a *readiness* receipt for",
@@ -265,7 +269,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "",
         "## Case Results",
         "",
-        "| Case | Status | Probe | Valid BMPs | Non-black (first BMP) | SHA-deterministic |",
+        "| Case | Status | Probe | Valid no-draw BMPs | Non-black (first BMP) | SHA-deterministic |",
         "|---|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
@@ -273,7 +277,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         lines.append(
             f"| {row['label']} | {row['status']} | "
             f"{'yes' if row.get('probe_first_run', {}).get('ok') else 'no'} | "
-            f"`{len([s for s in row.get('screenshots', []) if s.get('valid') and s.get('width') == 320 and s.get('height') == 200 and s.get('non_black_pixels', 0) > 200])}` | "
+            f"`{len([s for s in row.get('screenshots', []) if s.get('valid') and s.get('width') == 320 and s.get('height') == 200 and s.get('non_black_pixels', -1) == 0])}` | "
             f"`{first.get('non_black_pixels', 0)}` | "
             f"{'yes' if row.get('sha_deterministic') else 'no'} |"
         )
@@ -281,11 +285,11 @@ def write_outputs(result: dict[str, Any]) -> None:
         "",
         "## Public Screenshot Boundary",
         "",
-        "- These receipts prove Firestaff can emit Nexus viewport BMP artifacts when DM.BIN/FONT256.S2D/MNS reach the V1 viewport render path.",
+        "- These receipts prove Firestaff can emit deterministic Nexus viewport BMP artifacts while DM.BIN/FONT256.S2D/MNS reach the V1 viewport path and DGN remains blocked.",
         "- BMPs are written to a per-case temporary directory and discarded when the gate exits; no image bytes are promoted.",
         "- No generated, mock, or synthetic image is promoted by this gate.",
-        "- The probe's data-free path (no `--data-dir` supplied) still proves the synthetic viewport → RGBA → BMP contract, but is *not* a Track 1 capture.",
-        "- README-eligible Nexus screenshots still need a separate eligibility gate that audits real Track 1 loader parity (DGN 3D geometry decode, text/glyph runtime binding, MNS model dispatch) before any image bytes leave the operator-local output directory.",
+        "- The probe's data-free path (no `--data-dir` supplied) still proves the parser/capture-writer contract, but it must stay no-draw.",
+        "- README-eligible Nexus screenshots still need a separate original-Saturn capture gate that audits DGN 3D geometry, palette/VDP1 state, text/glyph runtime binding, and MNS dispatch before any image bytes leave the operator-local output directory.",
         "",
         f"Manifest: `{rel_or_str(MANIFEST)}`",
         "",

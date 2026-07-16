@@ -869,6 +869,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 dsa_handoff_receipt;
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
     CSB_V1_F0240_FirstEventExpiredReceipt f0240_receipt;
+    CSB_V1_F0261_ProcessTickReceipt f0261_receipt;
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
     uint32_t adapter_game_time = 0U;
@@ -964,8 +965,20 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               f0240_receipt.expired == 1 &&
               f0240_receipt.first_event_time == 0U,
           "CSB F0240 reads only the source heap root, not a later future event");
-    CHECK(csb_v1_runtime_tick_v1(&p.runtime) == 1,
-          "post-handoff runtime fires exactly one deterministic V1 tick");
+    CHECK(csb_v1_runtime_f0261_process_tick(
+              &p.runtime, &f0261_receipt) == 1 &&
+              f0261_receipt.valid == 1 &&
+              f0261_receipt.tick_fired == 1 &&
+              f0261_receipt.pre_event_count == 2 &&
+              f0261_receipt.post_event_count == 1 &&
+              f0261_receipt.dispatched_count == 1 &&
+              f0261_receipt.first_event_time == 0U &&
+              f0261_receipt.first_event_type == DM1_EVENT_PLAY_SOUND &&
+              f0261_receipt.game_time_before == 0U &&
+              f0261_receipt.game_time_after == 1U &&
+              strcmp(f0261_receipt.status,
+                     "processed-expired-events") == 0,
+          "CSB F0261 receipt drains expired events through the live runtime tick");
     CHECK(p.runtime.tick_count == 1U && p.runtime.game_time == 1U,
           "post-handoff tick advances tick_count/game_time by one safe step");
     CHECK(p.runtime.game_ticks == CSB_V1_TICK_MS_NOMINAL &&
@@ -979,13 +992,26 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "post-handoff timeline dispatch preserves event coordinates");
     CHECK(p.runtime.timeline_queue.eventCount == 1,
           "post-handoff timeline queue keeps the future event after the first tick");
+    CHECK(csb_v1_runtime_f0261_process_tick(
+              &p.runtime, &f0261_receipt) == 1 &&
+              f0261_receipt.valid == 1 &&
+              f0261_receipt.tick_fired == 1 &&
+              f0261_receipt.pre_event_count == 1 &&
+              f0261_receipt.post_event_count == 1 &&
+              f0261_receipt.dispatched_count == 0 &&
+              f0261_receipt.first_event_time == 5U &&
+              f0261_receipt.game_time_before == 1U &&
+              f0261_receipt.game_time_after == 2U &&
+              strcmp(f0261_receipt.status,
+                     "processed-no-expired-events") == 0,
+          "CSB F0261 receipt preserves future live timeline events");
     CHECK(csb_v1_runtime_f0240_is_first_event_expired(
               &p.runtime, &f0240_receipt) == 1 &&
               f0240_receipt.valid == 1 &&
               f0240_receipt.expired == 0 &&
               f0240_receipt.event_count == 1 &&
               f0240_receipt.first_event_time == 5U &&
-              f0240_receipt.game_time == 1U &&
+              f0240_receipt.game_time == 2U &&
               strcmp(f0240_receipt.status, "waiting-first-event") == 0,
           "CSB F0240 waits when the first source event is still in the future");
     p.runtime.timeline_queue.timeline[0] = (uint16_t)DM1_EVENT_MAX_COUNT;
