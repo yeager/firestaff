@@ -412,6 +412,129 @@ int dm2_v1_skproject_xlat_palette(
     return 1;
 }
 
+int dm2_v1_skproject_sub_blit_specialeffects_receipt(
+    const DM2_V1_SkprojectRect *rect,
+    uint16_t xend,
+    uint16_t srcofs,
+    uint16_t overlay_origin,
+    uint16_t overlay_stride,
+    uint16_t pixperline,
+    int16_t alpha_mask,
+    const uint8_t *overlay_mask,
+    DM2_V1_SkprojectBlitSpecialEffectsReceipt *out_receipt)
+{
+    DM2_V1_SkprojectBlitSpecialEffectsReceipt receipt;
+    uint16_t pixels = xend > srcofs ? (uint16_t)(xend - srcofs) : 0u;
+    uint16_t source_cursor = srcofs;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.width = (uint16_t)rect->w;
+    receipt.height = (uint16_t)rect->h;
+    receipt.xend = xend;
+    receipt.initial_srcofs = srcofs;
+    receipt.pixperline = pixperline;
+    receipt.alpha_mask = alpha_mask;
+    receipt.palette_update_requested = 1u;
+    receipt.used_alpha_blit = alpha_mask >= 0;
+    receipt.dest_start_offset =
+        (uint32_t)(uint16_t)rect->x +
+        (uint32_t)(uint16_t)rect->y * (uint32_t)pixperline;
+
+    if (rect->w < 0 || rect->h < 0 || xend == 0u) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!overlay_mask) {
+        receipt.used_plain_path = 1u;
+        for (uint16_t h = 0; h < receipt.height; ++h) {
+            uint16_t remaining = receipt.width;
+            while (remaining > 0u) {
+                uint16_t run = pixels < remaining ? pixels : remaining;
+                if (run == 0u)
+                    break;
+                receipt.blit_runs++;
+                remaining = (uint16_t)(remaining - run);
+                if (pixels <= run) {
+                    pixels = xend;
+                    source_cursor = 0u;
+                } else {
+                    pixels = (uint16_t)(pixels - run);
+                    source_cursor = (uint16_t)(source_cursor + run);
+                }
+            }
+            if ((receipt.width & 1u) != 0u) {
+                receipt.odd_width_source_advances++;
+                if (pixels > 0u) {
+                    pixels--;
+                    source_cursor++;
+                }
+                if (pixels == 0u) {
+                    pixels = xend;
+                    source_cursor = 0u;
+                }
+            }
+        }
+    } else {
+        receipt.used_overlay_path = 1u;
+        for (uint16_t h = 0; h < receipt.height; ++h) {
+            uint16_t row_start =
+                (uint16_t)(overlay_origin + h * overlay_stride);
+            uint16_t first = 0u;
+            uint16_t last = receipt.width;
+
+            while (first < receipt.width &&
+                   overlay_mask[row_start + first] == 0u) {
+                first++;
+                receipt.skipped_prefix_pixels++;
+                if (--pixels == 0u) {
+                    pixels = xend;
+                    source_cursor = 0u;
+                } else {
+                    source_cursor++;
+                }
+            }
+            while (last > first &&
+                   overlay_mask[row_start + last - 1u] == 0u) {
+                last--;
+                receipt.skipped_suffix_pixels++;
+            }
+            if (last > first) {
+                uint16_t remaining = (uint16_t)(last - first);
+                while (remaining > 0u) {
+                    uint16_t run = pixels < remaining ? pixels : remaining;
+                    if (run == 0u)
+                        break;
+                    receipt.blit_runs++;
+                    remaining = (uint16_t)(remaining - run);
+                    if (pixels <= run) {
+                        pixels = xend;
+                        source_cursor = 0u;
+                    } else {
+                        pixels = (uint16_t)(pixels - run);
+                        source_cursor = (uint16_t)(source_cursor + run);
+                    }
+                }
+            }
+        }
+    }
+
+    receipt.dest_final_offset =
+        receipt.dest_start_offset +
+        (uint32_t)receipt.height * (uint32_t)pixperline;
+    receipt.source_cursor_hash =
+        dm2_v1_skproject_hash_bytes(&source_cursor, sizeof(source_cursor));
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_move_side_offset(
     uint16_t record_word_e,
     int16_t direction_delta,
@@ -2971,6 +3094,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_gfx_pal.cpp color_to_palettecolor/"
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
+           "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
            "DM2_ATTACK_WALL/DM2_ATTACK_DOOR/DM2_move_12b4_0d75/"
            "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "

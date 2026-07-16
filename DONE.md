@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 special-effects blit receipt: mapped
+  `DM2_sub_blit_specialeffects` to a skproject-backed render receipt for
+  palette update, alpha/plain blit selection, source-run splitting, odd-width
+  source advance, and overlay prefix/suffix clipping. Pixel ownership remains
+  with the renderer; no fallback pixels are synthesized.
+
 - 2026-07-16 Theron original consumer trace marker verifier: added a
   Mednafen FIFO-origin log verifier that emits runtime-admission markers only
   when palette, non-startup level and object-table raw Track02 offsets are
