@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 GUI/container receipt bundle: mapped
+  `DM2_DRAW_MONEYBOX`, `DRAW_MONEYBOX`, `DM2_DRAW_ITEM_STATS_BAR`,
+  `DRAW_ITEM_STATS_BAR`, `DM2_DRAW_CONTAINER_PANEL`,
+  `DRAW_CONTAINER_PANEL`, `DM2_DRAW_CONTAINER_SURVEY`,
+  `DRAW_CONTAINER_SURVEY`, `DM2_DRAW_ITEM_ON_WOOD_PANEL`, and
+  `DRAW_ITEM_ON_WOOD_PANEL` to skproject-backed narrow receipts for moneybox
+  coin stacks, stat bars, container slot/survey drawing, and activable
+  hand-item wood-panel admission. No synthetic art was added; live GDAT pixel
+  consumption remains the next boundary.
+
 - 2026-07-16 DM2 command-slot/character-sheet GUI receipts: mapped
   `DM2_DRAW_CMD_SLOT`, `DRAW_CMD_SLOT`, `DM2_DRAW_CHARSHEET_OPTION_ICON`,
   and `DRAW_CHARSHEET_OPTION_ICON` to skproject-backed draw receipts for

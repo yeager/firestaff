@@ -2669,6 +2669,212 @@ int dm2_v1_skproject_draw_cmd_slot(
     return 1;
 }
 
+int dm2_v1_skproject_draw_moneybox(
+    uint16_t moneybox_object_id,
+    uint8_t container_cls2,
+    const int16_t coin_order[10],
+    const int16_t coin_counts[10],
+    const uint16_t money_item_ids[10],
+    DM2_V1_SkprojectDrawMoneyboxReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawMoneyboxReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.moneybox_object_id = moneybox_object_id;
+    receipt.container_cls2 = container_cls2;
+    receipt.box_icon.category = 20u;
+    receipt.box_icon.cls2 = container_cls2;
+    receipt.box_icon.entry = 0x10u;
+    receipt.box_icon.button_id = 0x5cu;
+    if (!coin_order || !coin_counts || !money_item_ids) {
+        receipt.blocked_missing_coin_tables = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint8_t slot = 0u; slot < 10u; ++slot) {
+        int16_t order = coin_order[slot];
+
+        ++receipt.inspected_slots;
+        if (order < 0 || order >= 10)
+            continue;
+        if (coin_counts[order] <= 0)
+            continue;
+        if (receipt.drawn_coin_slots == 0u) {
+            uint16_t item = money_item_ids[order];
+
+            receipt.first_coin_button_id = (uint16_t)(slot + 0xddu);
+            receipt.first_coin_item_db = (uint8_t)((item >> 8) & 0xffu);
+            receipt.first_coin_item_type = (uint8_t)(item & 0xffu);
+            receipt.first_coin_stack_count =
+                (uint8_t)(coin_counts[order] > 32 ? 32 : coin_counts[order]);
+        }
+        receipt.last_coin_button_id = (uint16_t)(slot + 0xddu);
+        ++receipt.drawn_coin_slots;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_item_stats_bar(
+    uint16_t rect_no,
+    int16_t current_value,
+    int16_t max_value,
+    uint8_t rune,
+    uint16_t color,
+    int rect_exists,
+    DM2_V1_SkprojectDrawItemStatsBarReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawItemStatsBarReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rect_no = rect_no;
+    receipt.current_value = current_value;
+    receipt.max_value = max_value;
+    receipt.rune = rune;
+    receipt.color = color;
+    if (!rect_exists) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (max_value <= 0) {
+        receipt.blocked_invalid_max = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.scaled_value = (int16_t)(((int32_t)current_value << 11) /
+                                    (int32_t)max_value);
+    receipt.drew_power_bar = 1u;
+    receipt.drew_rune_label = 1u;
+    receipt.drew_low_marker = 1u;
+    receipt.drew_high_marker = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_container_panel(
+    uint16_t container_object_id,
+    uint8_t container_cls2,
+    uint8_t right_panel,
+    const uint16_t items[8],
+    DM2_V1_SkprojectDrawContainerPanelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawContainerPanelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.container_object_id = container_object_id;
+    receipt.container_cls2 = container_cls2;
+    receipt.right_panel = right_panel ? 1u : 0u;
+    receipt.background_icon.category = 20u;
+    receipt.background_icon.cls2 = container_cls2;
+    receipt.background_icon.entry = 0x10u;
+    receipt.background_icon.button_id = 0x5cu;
+    receipt.opened_lid_icon.category = 20u;
+    receipt.opened_lid_icon.cls2 = container_cls2;
+    receipt.opened_lid_icon.entry = 0x12u;
+    receipt.opened_lid_icon.button_id = 0xe3u;
+    receipt.slot_count = 8u;
+    receipt.uses_inventory_relative_blit = right_panel ? 0u : 1u;
+    if (!items) {
+        receipt.blocked_missing_items = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint8_t slot = 0u; slot < 8u; ++slot) {
+        if (items[slot] == 0xffffu)
+            continue;
+        if (receipt.drawn_slots == 0u)
+            receipt.first_slot_button_id = (uint16_t)(slot + 0xe5u);
+        receipt.last_slot_button_id = (uint16_t)(slot + 0xe5u);
+        ++receipt.drawn_slots;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_container_survey(
+    const uint16_t *record_chain,
+    uint16_t record_count,
+    DM2_V1_SkprojectDrawContainerSurveyReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawContainerSurveyReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!record_chain) {
+        receipt.blocked_missing_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint16_t i = 0u; i < record_count; ++i) {
+        uint16_t record = record_chain[i];
+
+        receipt.terminal_record_id = record;
+        if (record == 0xfffeu)
+            break;
+        if (receipt.drawn_items >= 8u) {
+            receipt.stopped_at_limit = 1;
+            break;
+        }
+        if (receipt.drawn_items == 0u)
+            receipt.first_button_id = 0x2fu;
+        receipt.last_button_id = (uint16_t)(0x2fu + receipt.drawn_items);
+        ++receipt.drawn_items;
+        ++receipt.traversed_records;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_item_on_wood_panel(
+    uint16_t player,
+    uint16_t possession_index,
+    uint16_t object_id,
+    int hand_activable,
+    uint16_t base_width,
+    uint16_t base_height,
+    uint16_t extra_width,
+    uint16_t extra_height,
+    uint16_t temp_cache_index,
+    DM2_V1_SkprojectDrawItemOnWoodPanelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawItemOnWoodPanelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.possession_index = possession_index;
+    receipt.object_id = object_id;
+    receipt.temp_cache_index = temp_cache_index;
+    receipt.requested_hand_activable_probe = 1u;
+    if (!hand_activable) {
+        receipt.blocked_not_hand_activable = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.picture_width = (uint16_t)(base_width + extra_width);
+    receipt.picture_height = (uint16_t)(base_height + extra_height);
+    if (receipt.picture_width == 0u || receipt.picture_height == 0u) {
+        receipt.blocked_invalid_dimensions = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.bpp = 8u;
+    receipt.requested_alloc_temp_cache_index = 1u;
+    receipt.requested_alloc_new_pict = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_query_font(
     const uint8_t *font_plane,
     uint8_t glyph,
@@ -3153,8 +3359,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
            "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
-           "DM2_DRAW_CMD_SLOT and SKWIN/SkWinCore.cpp "
-           "DRAW_CHARSHEET_OPTION_ICON/DRAW_CMD_SLOT; "
+           "DM2_DRAW_CMD_SLOT/DM2_DRAW_MONEYBOX/"
+           "DM2_DRAW_ITEM_STATS_BAR/DM2_DRAW_CONTAINER_PANEL/"
+           "DM2_DRAW_CONTAINER_SURVEY/DM2_DRAW_ITEM_ON_WOOD_PANEL and "
+           "SKWIN/SkWinCore.cpp DRAW_CHARSHEET_OPTION_ICON/"
+           "DRAW_CMD_SLOT/DRAW_MONEYBOX/DRAW_ITEM_STATS_BAR/"
+           "DRAW_CONTAINER_PANEL/DRAW_CONTAINER_SURVEY/"
+           "DRAW_ITEM_ON_WOOD_PANEL; "
            "SKULLWIN/c_gdatfile.cpp DM2_dballoc_3e74_24b8/"
            "DM2_dballoc_3e74_2162/DM2_LOAD_DYN4; "
            "SKULLWIN/c_gfx_str.cpp c_stringdata::init/"

@@ -1497,6 +1497,25 @@ static void test_adjust_ui_event(void)
     DM2_V1_SkprojectCharsheetOptionIconReceipt option_icon;
     DM2_V1_SkprojectCommandSlotItem slot_item;
     DM2_V1_SkprojectDrawCmdSlotReceipt cmd_slot;
+    DM2_V1_SkprojectDrawMoneyboxReceipt moneybox;
+    DM2_V1_SkprojectDrawItemStatsBarReceipt stats_bar;
+    DM2_V1_SkprojectDrawContainerPanelReceipt container_panel;
+    DM2_V1_SkprojectDrawContainerSurveyReceipt survey;
+    DM2_V1_SkprojectDrawItemOnWoodPanelReceipt wood_panel;
+    const int16_t coin_order[10] = { 2, -1, 0, 1, -1, -1, -1, -1, -1, -1 };
+    const int16_t coin_counts[10] = { 5, 40, 2, 0, 0, 0, 0, 0, 0, 0 };
+    const uint16_t money_item_ids[10] = {
+        0x0301u, 0x0302u, 0x0303u, 0u, 0u,
+        0u, 0u, 0u, 0u, 0u
+    };
+    const uint16_t container_items[8] = {
+        0x1001u, 0xffffu, 0x1002u, 0xffffu,
+        0xffffu, 0xffffu, 0xffffu, 0x1003u
+    };
+    const uint16_t chain[10] = {
+        0x2001u, 0x2002u, 0x2003u, 0x2004u, 0x2005u,
+        0x2006u, 0x2007u, 0x2008u, 0x2009u, 0xfffeu
+    };
 
     memset(champions, 0, sizeof(champions));
     for (uint16_t i = 0; i < 4u; ++i) {
@@ -1599,6 +1618,98 @@ static void test_adjust_ui_event(void)
               2u, 1u, 0u, 7u, 0, &cmd_slot) == 0 &&
               cmd_slot.blocked_missing_item,
           "DRAW_CMD_SLOT fails closed without command slot item data");
+
+    CHECK(dm2_v1_skproject_draw_moneybox(
+              0x4400u, 6u, coin_order, coin_counts, money_item_ids,
+              &moneybox) == 1 &&
+              moneybox.valid &&
+              moneybox.box_icon.category == 20u &&
+              moneybox.box_icon.cls2 == 6u &&
+              moneybox.box_icon.entry == 0x10u &&
+              moneybox.box_icon.button_id == 0x5cu &&
+              moneybox.inspected_slots == 10u &&
+              moneybox.drawn_coin_slots == 3u &&
+              moneybox.first_coin_button_id == 0xddu &&
+              moneybox.last_coin_button_id == 0xe0u &&
+              moneybox.first_coin_item_db == 3u &&
+              moneybox.first_coin_item_type == 3u &&
+              moneybox.first_coin_stack_count == 2u,
+          "DRAW_MONEYBOX draws container icon, coin slots, and caps visible stack count at source limit");
+    CHECK(dm2_v1_skproject_draw_moneybox(
+              0x4400u, 6u, 0, coin_counts, money_item_ids,
+              &moneybox) == 0 &&
+              moneybox.blocked_missing_coin_tables,
+          "DRAW_MONEYBOX fails closed without coin order/count/id tables");
+
+    CHECK(dm2_v1_skproject_draw_item_stats_bar(
+              0x1f0u, 75, 100, 'K', 5u, 1, &stats_bar) == 1 &&
+              stats_bar.valid &&
+              stats_bar.scaled_value == 1536 &&
+              stats_bar.drew_power_bar &&
+              stats_bar.drew_rune_label &&
+              stats_bar.drew_low_marker &&
+              stats_bar.drew_high_marker,
+          "DRAW_ITEM_STATS_BAR scales current/max exactly like skproject before drawing rune markers");
+    CHECK(dm2_v1_skproject_draw_item_stats_bar(
+              0x1f0u, 75, 0, 'K', 5u, 1, &stats_bar) == 0 &&
+              stats_bar.blocked_invalid_max,
+          "DRAW_ITEM_STATS_BAR fails closed for invalid maximum value");
+    CHECK(dm2_v1_skproject_draw_item_stats_bar(
+              0x1f0u, 75, 100, 'K', 5u, 0, &stats_bar) == 0 &&
+              stats_bar.blocked_missing_rect,
+          "DRAW_ITEM_STATS_BAR fails closed when QUERY_EXPANDED_RECT misses");
+
+    CHECK(dm2_v1_skproject_draw_container_panel(
+              0x4500u, 4u, 1u, container_items, &container_panel) == 1 &&
+              container_panel.valid &&
+              container_panel.right_panel &&
+              container_panel.background_icon.category == 20u &&
+              container_panel.background_icon.entry == 0x10u &&
+              container_panel.opened_lid_icon.entry == 0x12u &&
+              container_panel.drawn_slots == 3u &&
+              container_panel.first_slot_button_id == 0xe5u &&
+              container_panel.last_slot_button_id == 0xecu &&
+              !container_panel.uses_inventory_relative_blit,
+          "DRAW_CONTAINER_PANEL right-panel route draws container body/lid and item buttons");
+    CHECK(dm2_v1_skproject_draw_container_panel(
+              0x4500u, 4u, 0u, container_items, &container_panel) == 1 &&
+              container_panel.uses_inventory_relative_blit,
+          "DRAW_CONTAINER_PANEL inventory route marks source-relative blit path");
+    CHECK(dm2_v1_skproject_draw_container_panel(
+              0x4500u, 4u, 0u, 0, &container_panel) == 0 &&
+              container_panel.blocked_missing_items,
+          "DRAW_CONTAINER_PANEL fails closed without current-container item table");
+
+    CHECK(dm2_v1_skproject_draw_container_survey(
+              chain, 10u, &survey) == 1 &&
+              survey.valid &&
+              survey.traversed_records == 8u &&
+              survey.drawn_items == 8u &&
+              survey.first_button_id == 0x2fu &&
+              survey.last_button_id == 0x36u &&
+              survey.stopped_at_limit,
+          "DRAW_CONTAINER_SURVEY follows record links and stops at the eight-item container limit");
+    CHECK(dm2_v1_skproject_draw_container_survey(
+              0, 0u, &survey) == 0 &&
+              survey.blocked_missing_chain,
+          "DRAW_CONTAINER_SURVEY fails closed without a record chain");
+
+    CHECK(dm2_v1_skproject_draw_item_on_wood_panel(
+              1u, 0u, 0x3333u, 1, 24u, 18u, 5u, 7u, 0x22u,
+              &wood_panel) == 1 &&
+              wood_panel.valid &&
+              wood_panel.requested_hand_activable_probe &&
+              wood_panel.requested_alloc_temp_cache_index &&
+              wood_panel.requested_alloc_new_pict &&
+              wood_panel.picture_width == 29u &&
+              wood_panel.picture_height == 25u &&
+              wood_panel.bpp == 8u,
+          "DRAW_ITEM_ON_WOOD_PANEL admits only hand-activable items and allocates an 8bpp temp picture");
+    CHECK(dm2_v1_skproject_draw_item_on_wood_panel(
+              1u, 0u, 0x3333u, 0, 24u, 18u, 5u, 7u, 0x22u,
+              &wood_panel) == 0 &&
+              wood_panel.blocked_not_hand_activable,
+          "DRAW_ITEM_ON_WOOD_PANEL returns NULL-equivalent when item is not hand-activable");
 }
 
 static void test_gfx_str_helpers(void)

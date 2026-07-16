@@ -25,6 +25,14 @@
     `DM2_DRAW_CHARSHEET_OPTION_ICON`, and `DRAW_CHARSHEET_OPTION_ICON` now
     have narrow skproject-backed GUI draw receipts. Remaining adjacent work is
     connecting these receipts to live HUD/menu drawing with real GDAT assets.
+  - 2026-07-16 DM2 GUI/container update: `DM2_DRAW_MONEYBOX`,
+    `DRAW_MONEYBOX`, `DM2_DRAW_ITEM_STATS_BAR`, `DRAW_ITEM_STATS_BAR`,
+    `DM2_DRAW_CONTAINER_PANEL`, `DRAW_CONTAINER_PANEL`,
+    `DM2_DRAW_CONTAINER_SURVEY`, `DRAW_CONTAINER_SURVEY`,
+    `DM2_DRAW_ITEM_ON_WOOD_PANEL`, and `DRAW_ITEM_ON_WOOD_PANEL` now have
+    narrow skproject-backed receipts. Remaining adjacent work is live
+    HUD/menu/container pixel consumption from real GDAT, not synthetic
+    container art.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

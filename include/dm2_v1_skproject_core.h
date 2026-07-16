@@ -810,6 +810,86 @@ typedef struct {
     uint8_t blocked_missing_item;
 } DM2_V1_SkprojectDrawCmdSlotReceipt;
 
+typedef struct {
+    uint8_t category;
+    uint8_t cls2;
+    uint8_t entry;
+    uint16_t button_id;
+} DM2_V1_SkprojectGdatIconPlan;
+
+typedef struct {
+    int valid;
+    uint16_t moneybox_object_id;
+    uint8_t container_cls2;
+    DM2_V1_SkprojectGdatIconPlan box_icon;
+    uint8_t inspected_slots;
+    uint8_t drawn_coin_slots;
+    uint16_t first_coin_button_id;
+    uint16_t last_coin_button_id;
+    uint8_t first_coin_item_db;
+    uint8_t first_coin_item_type;
+    uint8_t first_coin_stack_count;
+    int blocked_missing_coin_tables;
+} DM2_V1_SkprojectDrawMoneyboxReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t rect_no;
+    int16_t current_value;
+    int16_t max_value;
+    uint8_t rune;
+    uint16_t color;
+    int16_t scaled_value;
+    uint8_t drew_power_bar;
+    uint8_t drew_rune_label;
+    uint8_t drew_low_marker;
+    uint8_t drew_high_marker;
+    int blocked_missing_rect;
+    int blocked_invalid_max;
+} DM2_V1_SkprojectDrawItemStatsBarReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t container_object_id;
+    uint8_t container_cls2;
+    uint8_t right_panel;
+    DM2_V1_SkprojectGdatIconPlan background_icon;
+    DM2_V1_SkprojectGdatIconPlan opened_lid_icon;
+    uint8_t slot_count;
+    uint8_t drawn_slots;
+    uint16_t first_slot_button_id;
+    uint16_t last_slot_button_id;
+    uint8_t uses_inventory_relative_blit;
+    int blocked_missing_items;
+} DM2_V1_SkprojectDrawContainerPanelReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t traversed_records;
+    uint8_t drawn_items;
+    uint16_t first_button_id;
+    uint16_t last_button_id;
+    uint16_t terminal_record_id;
+    int stopped_at_limit;
+    int blocked_missing_chain;
+} DM2_V1_SkprojectDrawContainerSurveyReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    uint16_t possession_index;
+    uint16_t object_id;
+    uint16_t temp_cache_index;
+    uint16_t picture_width;
+    uint16_t picture_height;
+    uint8_t bpp;
+    uint8_t requested_hand_activable_probe;
+    uint8_t requested_alloc_temp_cache_index;
+    uint8_t requested_alloc_new_pict;
+    int blocked_not_hand_activable;
+    int blocked_invalid_dimensions;
+} DM2_V1_SkprojectDrawItemOnWoodPanelReceipt;
+
 #define DM2_V1_SKPROJECT_FONT_PLANE_BYTES (6u * 128u)
 #define DM2_V1_SKPROJECT_FONT_PIXELS 24u
 #define DM2_V1_SKPROJECT_TEXT_LIMIT 127u
@@ -1289,6 +1369,42 @@ int dm2_v1_skproject_draw_cmd_slot(
     uint8_t held_container_type,
     const DM2_V1_SkprojectCommandSlotItem *item,
     DM2_V1_SkprojectDrawCmdSlotReceipt *out_receipt);
+int dm2_v1_skproject_draw_moneybox(
+    uint16_t moneybox_object_id,
+    uint8_t container_cls2,
+    const int16_t coin_order[10],
+    const int16_t coin_counts[10],
+    const uint16_t money_item_ids[10],
+    DM2_V1_SkprojectDrawMoneyboxReceipt *out_receipt);
+int dm2_v1_skproject_draw_item_stats_bar(
+    uint16_t rect_no,
+    int16_t current_value,
+    int16_t max_value,
+    uint8_t rune,
+    uint16_t color,
+    int rect_exists,
+    DM2_V1_SkprojectDrawItemStatsBarReceipt *out_receipt);
+int dm2_v1_skproject_draw_container_panel(
+    uint16_t container_object_id,
+    uint8_t container_cls2,
+    uint8_t right_panel,
+    const uint16_t items[8],
+    DM2_V1_SkprojectDrawContainerPanelReceipt *out_receipt);
+int dm2_v1_skproject_draw_container_survey(
+    const uint16_t *record_chain,
+    uint16_t record_count,
+    DM2_V1_SkprojectDrawContainerSurveyReceipt *out_receipt);
+int dm2_v1_skproject_draw_item_on_wood_panel(
+    uint16_t player,
+    uint16_t possession_index,
+    uint16_t object_id,
+    int hand_activable,
+    uint16_t base_width,
+    uint16_t base_height,
+    uint16_t extra_width,
+    uint16_t extra_height,
+    uint16_t temp_cache_index,
+    DM2_V1_SkprojectDrawItemOnWoodPanelReceipt *out_receipt);
 int dm2_v1_skproject_query_font(
     const uint8_t *font_plane,
     uint8_t glyph,
