@@ -144,8 +144,10 @@ int main(void) {
     Nexus_V1_DgnStructure3CaptureHostReceipt host_receipt;
     Nexus_V1_DgnStructure3RawCaptureReaderReceipt raw_receipt;
     Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_host_receipt;
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt review_host_receipt;
     Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
     Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
+    Nexus_V1_DgnStructure3ReviewedMaterialUploadReceipt reviewed_upload;
     Nexus_V1_DgnStructure3CaptureTargetReceipt target;
     Nexus_V1_DgnStructure3CaptureTargetReceipt altered_target;
     Nexus_V1_DgnStructure3CaptureCampaignReceipt campaign;
@@ -509,6 +511,11 @@ int main(void) {
     raw_attestation.capture_bundle_fnv1a64 = bundle_hash(&capture);
     raw_attestation.capture_trace_order_fnv1a64 = trace_order_hash(&receipt);
     raw_attestation.original_saturn_source_attested = 1;
+    expect(nexus_v1_dgn_structure3_capture_producer_attestation_parse(
+               valid_producer_attestation, strlen(valid_producer_attestation),
+               &receipt, 0x1234U, &producer_raw_attestation,
+               &producer_attestation) && producer_attestation.workflow_bound,
+           "producer attestation reparses before reviewed DGN upload admission");
     nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(&raw_receipt);
     expect(nexus_v1_dgn_structure3_raw_capture_read(
                &receipt, &raw_paths, &raw_attestation, &raw_receipt) &&
@@ -545,6 +552,41 @@ int main(void) {
                raw_host_receipt.no_draw_only &&
                raw_host_receipt.host.no_draw_only,
            "the package-to-host route forwards only the atomically attested opaque packet and remains no-draw");
+    review_host_receipt = raw_host_receipt;
+    expect(nexus_v1_dgn_structure3_review_material_upload(
+               &review_host_receipt, &producer_attestation, &reviewed_upload) &&
+               reviewed_upload.raw_capture_host_bound &&
+               reviewed_upload.producer_attestation_bound &&
+               reviewed_upload.original_saturn_capture_attested &&
+               reviewed_upload.package_host_route_bound &&
+               reviewed_upload.reviewed_material_upload_bound &&
+               !reviewed_upload.material_semantics_proven &&
+               !reviewed_upload.renderer_handoff_ready &&
+               !reviewed_upload.runtime_upload_permitted &&
+               reviewed_upload.no_draw_only &&
+               !reviewed_upload.fallback_visuals_permitted,
+           "reviewed DGN material upload binds capture evidence but remains no-draw");
+    review_host_receipt.host_intake_invoked = 0;
+    expect(!nexus_v1_dgn_structure3_review_material_upload(
+               &review_host_receipt, &producer_attestation, &reviewed_upload) &&
+               reviewed_upload.raw_capture_host_bound == 0 &&
+               !reviewed_upload.package_host_route_bound &&
+               !reviewed_upload.reviewed_material_upload_bound &&
+               !reviewed_upload.runtime_upload_permitted &&
+               reviewed_upload.no_draw_only &&
+               !reviewed_upload.fallback_visuals_permitted,
+           "reviewed DGN material upload rejects a missing package host route");
+    review_host_receipt = raw_host_receipt;
+    producer_attestation.workflow_bound = 0;
+    expect(!nexus_v1_dgn_structure3_review_material_upload(
+               &review_host_receipt, &producer_attestation, &reviewed_upload) &&
+               reviewed_upload.raw_capture_host_bound &&
+               !reviewed_upload.producer_attestation_bound &&
+               !reviewed_upload.reviewed_material_upload_bound &&
+               !reviewed_upload.runtime_upload_permitted &&
+               reviewed_upload.no_draw_only,
+           "reviewed DGN material upload rejects a drifted producer attestation");
+    producer_attestation.workflow_bound = 1;
     nexus_v1_dgn_structure3_raw_capture_host_receipt_release(&raw_host_receipt);
     memcpy(altered_palette, palette, sizeof(altered_palette));
     altered_palette[0] ^= 1U;

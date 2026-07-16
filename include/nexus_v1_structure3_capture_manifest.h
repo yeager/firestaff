@@ -245,6 +245,22 @@ typedef struct {
     Nexus_V1_DgnStructure3CaptureHostReceipt host;
 } Nexus_V1_DgnStructure3RawCaptureHostReceipt;
 
+/* Reviewed DGN material upload boundary for a Structure3 raw-capture bundle.
+ * It can record that the producer attestation, raw lanes, and package/host
+ * route agree. It still cannot prove material semantics or authorize drawing. */
+typedef struct {
+    int raw_capture_host_bound;
+    int producer_attestation_bound;
+    int original_saturn_capture_attested;
+    int package_host_route_bound;
+    int reviewed_material_upload_bound;
+    int material_semantics_proven;
+    int renderer_handoff_ready;
+    int runtime_upload_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure3ReviewedMaterialUploadReceipt;
+
 void nexus_v1_dgn_structure3_capture_host_receipt_clear(
     Nexus_V1_DgnStructure3CaptureHostReceipt *receipt);
 void nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(
@@ -337,6 +353,14 @@ int nexus_v1_dgn_structure3_raw_capture_host_intake(
     size_t manifest_size, const Nexus_V1_DgnStructure3RawCapturePaths *paths,
     const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
     Nexus_V1_DgnStructure3RawCaptureHostReceipt *out_receipt);
+
+/* Join a verified raw-capture host receipt with a producer workflow
+ * attestation. This is a reviewed upload-path receipt only; it never enables
+ * runtime material upload or renderer handoff. */
+int nexus_v1_dgn_structure3_review_material_upload(
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_host,
+    const Nexus_V1_DgnStructure3ProducerAttestationReceipt *producer,
+    Nexus_V1_DgnStructure3ReviewedMaterialUploadReceipt *out_receipt);
 
 /* Parse one complete, single-face correlation envelope. The manifest retains
  * opaque byte fingerprints and ordering only. It assigns no texture, palette,

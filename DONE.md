@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Nexus Structure3 reviewed material-upload gate: added a
+  no-draw receipt that binds Structure3 raw capture, original Saturn
+  attestation, package/host route and producer workflow attestation. It still
+  blocks material semantics, runtime upload, renderer handoff and fallback
+  visuals. Verification: `nexus_v1_structure3_capture_manifest` and
+  `git diff --check` passed.
+
 - 2026-07-16 Theron original consumer binding gate: added a fail-closed
   binding receipt between the real Track 02 data-gap receipt and original
   post-$3800 consumer semantics. It refuses render admission until palette,
