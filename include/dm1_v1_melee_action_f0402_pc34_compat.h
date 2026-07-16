@@ -710,6 +710,7 @@ typedef struct {
     int shouldUnlinkGroupFromSquare;
     int shouldClearGroupNext;
     int shouldRemoveActiveGroupState;
+    int shouldDeleteGroupEvents;
     int groupIndex;
     int mapIndex;
     int mapX;
@@ -717,6 +718,31 @@ typedef struct {
     unsigned short groupThing;
     unsigned short clearedNextThing;
 } DM1_MeleeF0190KilledAllStateApplyPlanPc34;
+
+typedef struct {
+    int outcome;
+    int groupIndex;
+    int creatureAttributes;
+    int sourceMapIndex;
+    int sourceMapX;
+    int sourceMapY;
+    int sourceCell;
+    int destinationMapIndex;
+    int destinationMapX;
+    int destinationMapY;
+    unsigned int currentTick;
+} DM1_MeleeF0190MovingKilledAllAfterplayInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldPresentSourceSmoke;
+    int requiresDeferredDestinationCleanup;
+    int groupIndex;
+    int destinationMapIndex;
+    int destinationMapX;
+    int destinationMapY;
+    struct ExplosionCreateInput_Compat sourceSmokeCreateInput;
+} DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34;
 
 typedef struct {
     int valid;
@@ -919,6 +945,10 @@ int dm1_v1_melee_reaction_plan_f0231_pc34(
 int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     const DM1_MeleeF0190DeathSmokeInputPc34* in,
     DM1_MeleeF0190DeathSmokePlanPc34* out);
+
+int dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+    const DM1_MeleeF0190MovingKilledAllAfterplayInputPc34* in,
+    DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34* out);
 int dm1_v1_melee_death_smoke_attack_f0190_pc34(int creatureAttributes);
 int dm1_v1_melee_possession_drop_plan_f0190_pc34(
     const DM1_MeleeF0190PossessionDropInputPc34* in,
