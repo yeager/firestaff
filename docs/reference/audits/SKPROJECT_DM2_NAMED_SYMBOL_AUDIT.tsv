@@ -481,18 +481,18 @@ DM2_DRAW_DIALOGUE_PARTS_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	97		MISSING
 DM2_DRAW_DIALOGUE_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	117		MISSING
 DM2_DRAW_WAKE_UP_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	147		MISSING
 DM2_DRAW_PLAYER_3STAT_HEALTH_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	167		MISSING
-DM2_DRAW_CUR_MAX_HMS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	238		MISSING
-DM2_DRAW_PLAYER_3STAT_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	260		MISSING
+DM2_DRAW_CUR_MAX_HMS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	238	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DM2_DRAW_PLAYER_3STAT_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	260	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_PLAYER_NAME_AT_CMDSLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	281		MISSING
 DM2_DRAW_PLAYER_DAMAGE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	289		MISSING
 DM2_DRAW_CHIP_OF_MAGIC_MAP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	311		MISSING
 DM2_QUERY_GDAT_SQUAD_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	390		MISSING
-DM2_DRAW_CRYOCELL_LEVER	SKULLWIN	SKULLWIN/c_gui_draw.cpp	414		MISSING
+DM2_DRAW_CRYOCELL_LEVER	SKULLWIN	SKULLWIN/c_gui_draw.cpp	414	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_CHARSHEET_OPTION_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	441	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_charsheet_option_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_MONEY_BOX_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	458		MISSING
 DM2_DRAW_MONEYBOX	SKULLWIN	SKULLWIN/c_gui_draw.cpp	512	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_moneybox; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_0b36_0c52	SKULLWIN	SKULLWIN/c_gui_draw.cpp	617		MISSING
-DM2_DRAW_PLAYER_3STAT_PANE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	642		MISSING
+DM2_DRAW_PLAYER_3STAT_PANE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	642	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_29ee_00a3	SKULLWIN	SKULLWIN/c_gui_draw.cpp	683		MISSING
 DM2_DRAW_CMD_SLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	693	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_SPELL_TO_BE_CAST	SKULLWIN	SKULLWIN/c_gui_draw.cpp	714		MISSING
@@ -502,7 +502,7 @@ DM2_SHOW_ATTACK_RESULT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	864		MISSING
 DM2_guidraw_0b36_105b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1016		MISSING
 DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1030		MISSING
 DM2_guidraw_24a5_0e82	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1126		MISSING
-DM2_DRAW_FOOD_WATER_POISON_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1215		MISSING
+DM2_DRAW_FOOD_WATER_POISON_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1215	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_ITEM_STATS_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1232	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_stats_bar; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_2405_014a	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1307		MISSING
 DM2_DRAW_ITEM_IN_HAND	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1516		MISSING
@@ -511,7 +511,7 @@ DM2_guidraw_2405_011f	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1626		MISSING
 DM2_guidraw_2405_00ec	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1638		MISSING
 DM2_DRAW_ITEM_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1656		MISSING
 DM2_DRAW_CONTAINER_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1795	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1824		MISSING
+DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1824	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_2e62_03b5	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1833		MISSING
 DM2_DRAW_SCROLL_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1996		MISSING
 DM2_DRAW_ITEM_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2072		MISSING
@@ -1549,16 +1549,16 @@ DRAW_PLAYER_3STAT_PANE	SKWIN	SKWIN/SkWinCore.cpp	12833		MISSING
 DRAW_CHAMPION_PICTURE	SKWIN	SKWIN/SkWinCore.cpp	12867	src/dm2/dm2_v2_hud_runtime.c:128	UNCERTAIN
 DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_viewport_renderer.c:5369	UNCERTAIN
 DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		MISSING
-DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983		MISSING
+DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018		MISSING
 _2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041		MISSING
 _2405_011f	SKWIN	SKWIN/SkWinCore.cpp	13062		MISSING
-DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWIN	SKWIN/SkWinCore.cpp	13076		MISSING
-DRAW_CRYOCELL_LEVER	SKWIN	SKWIN/SkWinCore.cpp	13096		MISSING
+DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWIN	SKWIN/SkWinCore.cpp	13076	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DRAW_CRYOCELL_LEVER	SKWIN	SKWIN/SkWinCore.cpp	13096	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_POWER_STAT_BAR	SKWIN	SKWIN/SkWinCore.cpp	13118		MISSING
 QUERY_FOOD_WATER_BAR_COLOR	SKWIN	SKWIN/SkWinCore.cpp	13194		MISSING
 QUERY_3STAT_BAR_COLOR	SKWIN	SKWIN/SkWinCore.cpp	13203		MISSING
-DRAW_FOOD_WATER_POISON_PANEL	SKWIN	SKWIN/SkWinCore.cpp	13214		MISSING
+DRAW_FOOD_WATER_POISON_PANEL	SKWIN	SKWIN/SkWinCore.cpp	13214	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_GUIDED_STR	SKWIN	SKWIN/SkWinCore.cpp	13258		MISSING
 _24a5_0732	SKWIN	SKWIN/SkWinCore.cpp	13331		MISSING
 DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		MISSING

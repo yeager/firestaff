@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 champion/HUD panel receipt bundle: mapped
+  `DM2_DRAW_CUR_MAX_HMS`, `DRAW_CUR_MAX_HMS`,
+  `DM2_DRAW_PLAYER_3STAT_TEXT`, `DM2_DRAW_PLAYER_3STAT_PANE`,
+  `DM2_DRAW_FOOD_WATER_POISON_PANEL`, `DRAW_FOOD_WATER_POISON_PANEL`,
+  `DM2_DRAW_CRYOCELL_LEVER`, `DRAW_CRYOCELL_LEVER`,
+  `DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE`, and
+  `DRAW_EYE_MOUTH_COLORED_RECTANGLE` to skproject-backed narrow receipts for
+  stat text, champion panel variant selection, food/water/poison panel
+  routing, cryocell lever state, and eye/mouth dialogue-part blits.
+
 - 2026-07-16 DM2 GUI/container receipt bundle: mapped
   `DM2_DRAW_MONEYBOX`, `DRAW_MONEYBOX`, `DM2_DRAW_ITEM_STATS_BAR`,
   `DRAW_ITEM_STATS_BAR`, `DM2_DRAW_CONTAINER_PANEL`,
