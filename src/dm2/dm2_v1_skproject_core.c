@@ -1,5 +1,6 @@
 #include "dm2_v1_skproject_core.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,6 +19,16 @@ static uint32_t dm2_v1_skproject_rect_hash(
     hash = (hash ^ (uint16_t)rect->y) * 16777619u;
     hash = (hash ^ (uint16_t)rect->w) * 16777619u;
     hash = (hash ^ (uint16_t)rect->h) * 16777619u;
+    return hash ? hash : 1u;
+}
+
+static uint32_t dm2_v1_skproject_hash_bytes(const void *data, size_t size)
+{
+    const uint8_t *bytes = (const uint8_t *)data;
+    uint32_t hash = 2166136261u;
+
+    for (size_t i = 0; i < size; ++i)
+        hash = (hash ^ bytes[i]) * 16777619u;
     return hash ? hash : 1u;
 }
 
@@ -262,6 +273,140 @@ int dm2_v1_skproject_fill_i16table(
     for (uint16_t i = 0; i < entries; ++i)
         table[i] = value;
     receipt.written_entries = entries;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
+                                             uint8_t *out_palette)
+{
+    if (!out_palette) return 0;
+    *out_palette = color;
+    return 1;
+}
+
+int dm2_v1_skproject_palettecolor_from_ui8(uint8_t color,
+                                           uint8_t *out_palette)
+{
+    if (!out_palette) return 0;
+    *out_palette = color;
+    return 1;
+}
+
+int dm2_v1_skproject_palettecolor_to_ui8(uint8_t palette,
+                                         uint8_t *out_color)
+{
+    if (!out_color) return 0;
+    *out_color = palette;
+    return 1;
+}
+
+int dm2_v1_skproject_palettecolor_to_pixel(uint8_t palette,
+                                           uint8_t *out_pixel)
+{
+    if (!out_pixel) return 0;
+    *out_pixel = palette;
+    return 1;
+}
+
+int dm2_v1_skproject_convert_driverpalette(
+    const uint8_t *alpha_rgb8_palette,
+    int immediate_colors_before,
+    DM2_V1_SkprojectDriverPaletteReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDriverPaletteReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.immediate_colors_before = immediate_colors_before ? 1 : 0;
+    if (!alpha_rgb8_palette) {
+        receipt.blocked_missing_input = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint32_t i = 0; i < 256u; ++i) {
+        const uint8_t *src = alpha_rgb8_palette + i * 4u;
+        receipt.dmpal6[i][0] = (uint8_t)(src[1] >> 2);
+        receipt.dmpal6[i][1] = (uint8_t)(src[2] >> 2);
+        receipt.dmpal6[i][2] = (uint8_t)(src[3] >> 2);
+    }
+    receipt.converted_entries = 256u;
+    receipt.driver_setcolors_requested = receipt.immediate_colors_before;
+    receipt.dmpal_hash =
+        dm2_v1_skproject_hash_bytes(receipt.dmpal6, sizeof(receipt.dmpal6));
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_select_palette_set(
+    int16_t set,
+    DM2_V1_SkprojectPaletteSetReceipt *out_receipt)
+{
+    DM2_V1_SkprojectPaletteSetReceipt receipt;
+    uint8_t bmode = (uint8_t)set;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.set = bmode;
+    if (bmode == 0u) {
+        receipt.fade_to_black_requested = 1;
+        receipt.vsync_waits = 2000u;
+    } else if (bmode == 1u) {
+        receipt.driver_setcolors_requested = 1;
+    }
+    receipt.immediate_colors_after = bmode == 1u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt.set,
+                                                       sizeof(receipt) -
+                                                           offsetof(DM2_V1_SkprojectPaletteSetReceipt, set));
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_update_blit_palette(
+    const uint8_t *palette,
+    uint16_t colors,
+    const uint8_t **out_palette_ptr)
+{
+    (void)colors;
+    if (!out_palette_ptr) return 0;
+    *out_palette_ptr = palette;
+    return 1;
+}
+
+int dm2_v1_skproject_xlat_palette(
+    const uint8_t *palette,
+    uint16_t colors,
+    const uint8_t *conversion_table,
+    DM2_V1_SkprojectXlatPaletteReceipt *out_receipt)
+{
+    DM2_V1_SkprojectXlatPaletteReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.colors_before = colors;
+    if (!conversion_table || (colors != 0u && !palette) || colors > 256u) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (colors == 0u) {
+        memcpy(receipt.palette, conversion_table, sizeof(receipt.palette));
+        receipt.colors_after = 256u;
+        receipt.converted_colors = 256u;
+        receipt.large_palette_copy = 1u;
+    } else {
+        for (uint16_t i = 0; i < colors; ++i)
+            receipt.palette[i] = conversion_table[palette[i]];
+        receipt.colors_after = colors;
+        receipt.converted_colors = colors;
+    }
+    receipt.palette_hash =
+        dm2_v1_skproject_hash_bytes(receipt.palette, sizeof(receipt.palette));
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;

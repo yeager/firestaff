@@ -440,17 +440,17 @@ DM2_FADE_SCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	212		MISSING
 blit_toscreen	SKULLWIN	SKULLWIN/c_gfx_main.cpp	224		MISSING
 _specialblit	SKULLWIN	SKULLWIN/c_gfx_main.cpp	254		MISSING
 DM2_DRAWINGS_COMPLETED	SKULLWIN	SKULLWIN/c_gfx_main.cpp	273		MISSING
-color_to_palettecolor	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	14		MISSING
-ui8_to_palettecolor	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	15		MISSING
-palettecolor_to_ui8	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	16		MISSING
-palettecolor_to_pixel	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	17		MISSING
+color_to_palettecolor	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	14	src/dm2/dm2_v1_skproject_core.c:281	VERIFIED_SOURCE_MAPPING
+ui8_to_palettecolor	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	15	src/dm2/dm2_v1_skproject_core.c:289	VERIFIED_SOURCE_MAPPING
+palettecolor_to_ui8	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	16	src/dm2/dm2_v1_skproject_core.c:297	VERIFIED_SOURCE_MAPPING
+palettecolor_to_pixel	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	17	src/dm2/dm2_v1_skproject_core.c:305	VERIFIED_SOURCE_MAPPING
 conv	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	19	src/dm2/dm2_v2_touch_runtime.c:110	UNCERTAIN
 init	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	75	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 driver_setcolors	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	89		MISSING
-DM2_CONVERT_DRIVERPALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	117		MISSING
-DM2_SELECT_PALETTE_SET	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	146		MISSING
-DM2_UPDATE_BLIT_PALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	175		MISSING
-DM2_xlat_palette	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	181		MISSING
+DM2_CONVERT_DRIVERPALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	117	src/dm2/dm2_v1_skproject_core.c:313	IMPLEMENTED_NARROW
+DM2_SELECT_PALETTE_SET	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	146	src/dm2/dm2_v1_skproject_core.c:344	IMPLEMENTED_NARROW
+DM2_UPDATE_BLIT_PALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	175	src/dm2/dm2_v1_skproject_core.c:369	VERIFIED_SOURCE_MAPPING
+DM2_xlat_palette	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	181	src/dm2/dm2_v1_skproject_core.c:380	IMPLEMENTED_NARROW
 ui8_to_pixel	SKULLWIN	SKULLWIN/c_gfx_pixel.cpp	8		MISSING
 pixel_to_ui8	SKULLWIN	SKULLWIN/c_gfx_pixel.cpp	9		MISSING
 build_pixels16	SKULLWIN	SKULLWIN/c_gfx_pixel.cpp	13		MISSING
