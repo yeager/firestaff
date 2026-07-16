@@ -27,6 +27,11 @@
     buffer ownership, text/name formatting, and higher-level gameplay queries;
     these receipts must not be used to fabricate images or promote missing
     scalar entries into buffers.
+  - 2026-07-16 DM2 update: skproject `BETWEEN_VALUE`,
+    `DM2_BETWEEN_VALUE`, `ALLOC_TEMP_RECT`, and `ALLOC_TEMP_ORIGIN_RECT` are
+    now source-mapped in `dm2_v1_skproject_core`. Remaining adjacent
+    `SkWinCore.cpp` cache/mement symbols still require real cache-index and
+    mement-table state; do not fake cache hits or image buffers.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate

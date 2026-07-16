@@ -8858,6 +8858,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_gdat_querydb_receipts
     )
 
+    add_executable(test_dm2_v1_skproject_core
+        tests/test_dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_skproject_core.c
+    )
+    target_include_directories(test_dm2_v1_skproject_core PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_skproject_core PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_skproject_core
+        COMMAND test_dm2_v1_skproject_core
+    )
+
     add_executable(test_dm2_v1_gdat_graphicsset_real_data
         tests/test_dm2_v1_gdat_graphicsset_real_data.c
     )

@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject core helpers: added source-mapped
+  `BETWEEN_VALUE`, `DM2_BETWEEN_VALUE`, `ALLOC_TEMP_RECT`, and
+  `ALLOC_TEMP_ORIGIN_RECT`. The temp rectangles use the original four-slot
+  ringbuffer behavior and return receipts; no cache mement, image, or GDAT
+  buffer is fabricated. Verification: direct and Ninja
+  `test_dm2_v1_skproject_core`.
+
 - 2026-07-16 CSB HINTHTC F1918/F1919 initial-load receipt: added a CSB-owned
   wrapper for the source F1918 load sequence and explicit F1919 post gate.
   The route reads the validated 512-byte header, then GLOBAL_DATA,
