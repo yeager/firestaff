@@ -26,6 +26,20 @@ typedef struct DM1_CenterDoorRenderPlanPc34 {
     DM1_CenterDoorBlitPc34 closedPanel;
 } DM1_CenterDoorRenderPlanPc34;
 
+enum {
+    DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS = 5
+};
+
+typedef struct DM1_CenterDoorHostMaterialReceiptPc34 {
+    int valid;
+    int depthIndex;
+    int doorState;
+    int panelVisible;
+    int frameCount;
+    int blitCount;
+    DM1_CenterDoorBlitPc34 blits[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+} DM1_CenterDoorHostMaterialReceiptPc34;
+
 int dm1_v1_center_door_render_plan_count_pc34(void);
 
 int dm1_v1_center_door_render_plan_at_pc34(
@@ -45,6 +59,17 @@ int dm1_v1_center_door_panel_blits_for_cell_pc34(
 int dm1_v1_door_panel_graphic_for_set_depth_pc34(
     int doorSet,
     int depthIndex);
+int dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+    const void* dungeon,
+    int mapIndex,
+    int doorType,
+    int depthIndex);
+int dm1_v1_center_door_host_material_receipt_pc34(
+    int depthIndex,
+    int doorState,
+    int doorVertical,
+    int panelGraphic,
+    DM1_CenterDoorHostMaterialReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
 }

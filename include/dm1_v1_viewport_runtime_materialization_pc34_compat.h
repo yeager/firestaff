@@ -21,6 +21,8 @@ typedef enum DM1_V1_ViewportRuntimeOriginPc34 {
     DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34 = 2
 } DM1_V1_ViewportRuntimeOriginPc34;
 
+#define DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS 8
+
 typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int relativeForward;
     int relativeSide;
@@ -62,12 +64,22 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int liveProjectileSubtype;
     int liveProjectileCell;
     int liveProjectileDirection;
+    unsigned short liveProjectileAssociatedThing;
     int liveExplosionCount;
     int liveExplosionSlot;
     int liveExplosionType;
     int liveExplosionFrame;
     int liveExplosionMaxFrames;
     int liveExplosionAttack;
+    int liveRenderableExplosionCount;
+    int liveRenderableExplosionTypes[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
+    int liveRenderableExplosionFrames[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
+    int liveRenderableExplosionMaxFrames[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
+    int liveRenderableExplosionAttacks[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
     const char *sourceAnchor;
 } DM1_V1_ViewportRuntimeMaterializationDecisionPc34;
 

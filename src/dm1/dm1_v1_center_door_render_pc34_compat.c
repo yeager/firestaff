@@ -4,6 +4,8 @@
 #include "firestaff/dm1/v1/G0183_pc34_compat.h"
 #include "firestaff/dm1/v1/G0186_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     DM1_GFX_DOOR_SIDE_D1_PC34 = 87,
     DM1_GFX_DOOR_SIDE_D2_PC34 = 88,
@@ -204,4 +206,56 @@ int dm1_v1_door_panel_graphic_for_set_depth_pc34(
      * D1 = M633 + doorSet * 3 + 2. */
     depthOffset = 2 - depthIndex;
     return DM1_GFX_DOOR_SET0_D3_PC34 + doorSet * 3 + depthOffset;
+}
+
+int dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+    const void* dungeon,
+    int mapIndex,
+    int doorType,
+    int depthIndex)
+{
+    (void)dungeon;
+    (void)mapIndex;
+    return dm1_v1_door_panel_graphic_for_set_depth_pc34(
+        doorType, depthIndex);
+}
+
+int dm1_v1_center_door_host_material_receipt_pc34(
+    int depthIndex,
+    int doorState,
+    int doorVertical,
+    int panelGraphic,
+    DM1_CenterDoorHostMaterialReceiptPc34* outReceipt) {
+    DM1_CenterDoorRenderPlanPc34 plan;
+    int panelCount = 0;
+    int i;
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!dm1_v1_center_door_render_plan_for_depth_pc34(depthIndex, &plan)) {
+        return 0;
+    }
+    outReceipt->valid = 1;
+    outReceipt->depthIndex = depthIndex;
+    outReceipt->doorState = doorState;
+    outReceipt->frameCount = plan.frameCount;
+    outReceipt->panelVisible = doorState != 4;
+    if (plan.frameA.width > 0) outReceipt->blits[outReceipt->blitCount++] = plan.frameA;
+    if (plan.frameB.width > 0) outReceipt->blits[outReceipt->blitCount++] = plan.frameB;
+    if (plan.frameC.width > 0) outReceipt->blits[outReceipt->blitCount++] = plan.frameC;
+    if (outReceipt->panelVisible &&
+        outReceipt->blitCount < DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS) {
+        DM1_CenterDoorBlitPc34 panels[2];
+        panelCount = dm1_v1_center_door_panel_blits_for_cell_pc34(
+            depthIndex, doorState, doorVertical, panels);
+        for (i = 0; i < panelCount &&
+             outReceipt->blitCount < DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS; ++i) {
+            if (panelGraphic >= 0) {
+                panels[i].graphicIndex = panelGraphic;
+            }
+            outReceipt->blits[outReceipt->blitCount++] = panels[i];
+        }
+    }
+    return outReceipt->blitCount >= outReceipt->frameCount;
 }

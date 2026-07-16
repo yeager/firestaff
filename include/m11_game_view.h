@@ -24,9 +24,11 @@
 #include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
+#include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dialog_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
@@ -117,8 +119,18 @@ static inline int M11_GameView_GetV1StatusHandIconZone(
 
 static inline int M11_GameView_GetV1InventorySourceSlotBoxZone(
     int sourceSlotBoxIndex, int* outX, int* outY, int* outW, int* outH) {
-    return dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
-        sourceSlotBoxIndex, outX, outY, outW, outH);
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_inventory_source_slot_box_zone_pc34(
+            sourceSlotBoxIndex, &zone)) {
+        return 0;
+    }
+    *outX = zone.x; *outY = zone.y; *outW = zone.w; *outH = zone.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1InventorySourceSlotBoxZoneCount(void) {
+    return dm1_v1_inventory_source_slot_box_zone_count_pc34();
 }
 
 static inline int M11_GameView_GetV1InventoryBackpackSlotZone(
@@ -158,8 +170,13 @@ static inline int M11_GameView_GetV1ChestSlotBoxZoneCount(void) {
 
 static inline int M11_GameView_GetV1ChestSlotBoxZone(
     int chestOrdinal, int* outX, int* outY, int* outW, int* outH) {
-    return dm1_v1_inventory_chest_slot_box_zone_xywh_pc34(
-        chestOrdinal, outX, outY, outW, outH);
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_inventory_chest_slot_box_zone_pc34(chestOrdinal, &zone)) {
+        return 0;
+    }
+    *outX = zone.x; *outY = zone.y; *outW = zone.w; *outH = zone.h;
+    return 1;
 }
 
 static inline int M11_GameView_GetV1ArrowOrEyeZone(
@@ -184,21 +201,39 @@ static inline int M11_GameView_GetV1InventoryBackdropZone(
     return 1;
 }
 
-/* Legacy source-lock probes use the old M11 spelling, while production
- * rendering owns the coordinate table in the DM1 helper. */
-static inline int M11_GameView_GetDm1WallOrnamentZone(
-    int coordSet, int viewWallIndex, int* outX, int* outY, int* outW,
-    int* outH) {
-    return dm1_v1_wall_ornament_zone_xywh_pc34(
-        coordSet, viewWallIndex, outX, outY, outW, outH);
-}
-
 static inline int M11_GameView_GetV1MouseCommandForPoint(
     int mouseInputList, int screenX, int screenY, int buttonMask,
     int* outCoordinateSpace, int* outZoneId) {
-    return DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
-        mouseInputList, screenX, screenY, buttonMask, outCoordinateSpace,
-        outZoneId);
+    return DM1_V1_MouseRoutes_CommandForPointPc34Compat(
+        mouseInputList, screenX, screenY, buttonMask, 0, 33, NULL, NULL,
+        outCoordinateSpace, outZoneId);
+}
+
+static inline int M11_GameView_GetV1EndgameTheEndZone(
+    int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_endgame_the_end_rect_pc34(&rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1EndgameChampionMirrorZone(
+    int slot, int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_endgame_champion_mirror_rect_pc34(slot, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1EndgameChampionPortraitZone(
+    int slot, int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_endgame_champion_portrait_rect_pc34(slot, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
 }
 
 static inline int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
@@ -588,6 +623,7 @@ typedef struct {
     M11_MessageLog messageLog;
     int resting;
     int partyDead;
+    unsigned char championDeathHandledMask;
     uint32_t exploredBits[32]; /* 32 * 32 = 1024 cells tracked per level */
 
     /* Asset loader for GRAPHICS.DAT-backed rendering */
@@ -1071,6 +1107,7 @@ typedef struct {
      * direct PC34 save restore is the documented LOADSAVE.C route and does
      * not replay title/entrance media. */
     void *csbStartupRuntimeSession; /* CSB_V1_StartupRuntimeAssetSession_PC34* */
+    void *csbStartupRuntimeAssetSession; /* legacy M11 spelling */
     int csbStartupTimelineRequired;
     int csbStartupLiveHudAuthorized;
     uint32_t csbStartupTerminalSourceTick;
@@ -1108,6 +1145,18 @@ typedef struct {
         int startup_entrance_credits_active;
         int startup_entrance_credits_remaining_ticks;
         int startup_entrance_opening_active;
+        int c040_panel_session_active;
+        uint32_t c040_panel_session_generation;
+        uint32_t c040_panel_source_tick;
+        int presented_frame_capture_ready;
+        int presented_frame_running_from_macos_app;
+        int presented_frame_mac_window_ready;
+        int presented_frame_width;
+        int presented_frame_height;
+        uint32_t presented_frame_hash;
+        int c040_clear_live_hud_ready;
+        uint32_t c040_clear_source_tick;
+        uint32_t c040_clear_session_generation;
         int startup_entrance_opening_delay_ticks;
         int startup_entrance_opening_step;
         int startup_entrance_pending_command;
@@ -1135,6 +1184,7 @@ typedef struct {
                                * the static DM2_V1_BootProfile in
                                * M11_GameView_StartDm2(). */
     void *dm2BootProfile;     /* DM2_V1_BootProfile* */
+    int dm2SaveDialoguePanelActive;
     struct {
         int level_loaded;
         int party_x, party_y, party_dir;
@@ -2005,6 +2055,7 @@ void M11_GameView_ProbeGetD2R2WriteTrace(M11_D2R2WriteTrace* outTrace);
  * final destination geometry. */
 typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int valid;
+    int floorItemLane;
     int graphicsId;
     int transparentColor;
     int usesF0791Blit;

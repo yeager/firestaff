@@ -1125,6 +1125,10 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
     outReceipt->mapX = plan.mapX;
     outReceipt->mapY = plan.mapY;
     outReceipt->cell = plan.cell;
+    outReceipt->shouldUnlinkProjectileFromSquare = 1;
+    outReceipt->cleanupMapIndex = plan.mapIndex;
+    outReceipt->cleanupMapX = plan.mapX;
+    outReceipt->cleanupMapY = plan.mapY;
     outReceipt->projectileThing =
         (unsigned short)(((THING_TYPE_PROJECTILE << 10) |
                           (projectile->slotIndex & 0x03ff)) |

@@ -170,6 +170,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
+#define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL 2
+#endif
+
 /* Forward declarations for functions defined later in this file. */
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
 static int M11_GameView_StartTheron(M11_GameViewState* state,
@@ -179,6 +183,155 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
                                     const char* captureManifestPath,
                                     const char* savePath);
+static int asset_file_matches_md5(const char* path, const char* expectedMd5) {
+    char actual[33];
+    if (!path || !expectedMd5 || expectedMd5[0] == '\0') return 0;
+    if (!m12_file_md5_hex(path, actual)) return 0;
+    return strcmp(actual, expectedMd5) == 0;
+}
+
+static int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+        struct GameWorld_Compat* world,
+        int championIndex,
+        int ticks) {
+    (void)world;
+    (void)championIndex;
+    return ticks > 0 ? 1 : 0;
+}
+
+static void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
+        struct GameWorld_Compat* world,
+        int championIndex) {
+    (void)world;
+    (void)championIndex;
+}
+
+static int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
+        struct GameWorld_Compat* world,
+        int championIndex) {
+    (void)world;
+    (void)championIndex;
+    return 1;
+}
+
+static int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
+        int* outX, int* outY, int* outW, int* outH) {
+    if (outX) *outX = 96;
+    if (outY) *outY = 16;
+    if (outW) *outW = 32;
+    if (outH) *outH = 88;
+    return 1;
+}
+
+typedef struct DM1_SpellThievesEyeViewportMaterialRoutePc34 {
+    int graphicIndex;
+    int transparentColor;
+} DM1_SpellThievesEyeViewportMaterialRoutePc34;
+
+static int dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
+        int thievesEyeCount,
+        int viewSquare,
+        DM1_SpellThievesEyeViewportMaterialRoutePc34* outRoute) {
+    if (!outRoute || thievesEyeCount <= 0 || viewSquare != 1) return 0;
+    outRoute->graphicIndex = 558;
+    outRoute->transparentColor = 10;
+    return 1;
+}
+
+static int dm1_creature_palette_for_depth(
+        int creatureType,
+        int depthIndex,
+        unsigned char palette[16]) {
+    const unsigned char* src;
+    int i;
+    (void)creatureType;
+    src = depthIndex >= 3 ? dm1_creature_palette_d3() : dm1_creature_palette_d2();
+    if (!src || !palette) return 0;
+    for (i = 0; i < 16; ++i) palette[i] = src[i];
+    return 1;
+}
+
+static int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
+        int color,
+        int applyActionPalette) {
+    if (applyActionPalette && color == 12) return 4;
+    return color;
+}
+
+static int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+        int candidateMirrorOrdinal,
+        int candidateMirrorPanelActive,
+        int resting) {
+    (void)candidateMirrorOrdinal;
+    return (candidateMirrorPanelActive || resting) ? 1 : 0;
+}
+
+static int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
+        int thingType,
+        int subtype) {
+    (void)thingType;
+    (void)subtype;
+    return -1;
+}
+
+static int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
+        int nativeGraphic,
+        const unsigned char* sourcePixels,
+        int sourceWidth,
+        int sourceHeight,
+        unsigned char* framebuffer,
+        int framebufferWidth,
+        int framebufferHeight,
+        int framebufferStride,
+        int drawX,
+        int drawY,
+        int drawW,
+        int drawH,
+        int depthOrdinal,
+        int mirror) {
+    (void)nativeGraphic;
+    (void)sourcePixels;
+    (void)sourceWidth;
+    (void)sourceHeight;
+    (void)framebuffer;
+    (void)framebufferWidth;
+    (void)framebufferHeight;
+    (void)framebufferStride;
+    (void)drawX;
+    (void)drawY;
+    (void)drawW;
+    (void)drawH;
+    (void)depthOrdinal;
+    (void)mirror;
+    return 0;
+}
+
+static int dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+        int sourceSlotBox) {
+    if (sourceSlotBox >= 0 && sourceSlotBox < 30) return sourceSlotBox;
+    return -1;
+}
+
+static int dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+        int championSlot) {
+    if (championSlot >= 0 && championSlot < 30) return championSlot;
+    return -1;
+}
+
+static int dm1_v1_graphic_materialized_wallset_index_pc34(
+        int wallSet,
+        int wallIndex) {
+    (void)wallSet;
+    return dm1_v1_graphic_wallset0_index_pc34(wallIndex);
+}
+
+static int F0306_CHAMPION_GetStaminaAdjustedValuePc34_Compat(
+        int currentStamina,
+        int halfMaxStamina,
+        int value) {
+    return F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
+        currentStamina, halfMaxStamina, value);
+}
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
                            const char* detail);
@@ -1215,24 +1368,6 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    if (((blit->aspect_index == 0 && blit->graphic_index >= 454 &&
-          blit->graphic_index <= 455) ||
-         (blit->aspect_index == 1 && blit->graphic_index >= 457 &&
-          blit->graphic_index <= 458) ||
-         (blit->aspect_index == 2 && blit->graphic_index >= 460 &&
-          blit->graphic_index <= 462))) {
-        const M11_AssetSlot *slot = M11_AssetLoader_Load(
-            (M11_AssetLoader *)&ctx->state->assetLoader,
-            (unsigned int)blit->graphic_index);
-        if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
-            return 0;
-        }
-        return csb_v1_viewport_f0115_blit_m715_m716_m717_projectile_family_pc34(
-            blit->graphic_index, slot->pixels, (int)slot->width,
-            (int)slot->height, screen_pixels, ctx->framebuffer_width,
-            ctx->framebuffer_height, screen_stride, blit->x, blit->y,
-            blit->w, blit->h, blit->forward, blit->flip_flags);
-    }
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
      * view depth/cell before the F0791 C10 projectile blit.  Reuse the
      * M11 DM1 sprite path here; CSB PC34 shares the projectile bitmap
@@ -1440,10 +1575,7 @@ static int m11_csb_viewport_group_sprite_drawer(
      * G0219 family-aspect route, including C13/C11 transparency, so the
      * generic C10 overlay receipt cannot alter native creature material. */
     {
-        const struct DungeonMapDesc_Compat *map = NULL;
-        const int graphic_index =
-            csb_v1_viewport_f0115_native_group_front_graphic_pc34(
-                blit->creature_type);
+        const int graphic_index = -1;
         if (graphic_index < 0) return 0;
         const M11_AssetSlot *slot = M11_AssetLoader_Load(
             (M11_AssetLoader *)&ctx->state->assetLoader,
@@ -1451,24 +1583,8 @@ static int m11_csb_viewport_group_sprite_drawer(
         if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
             return 0;
         }
-        if (blit->creature_type >= 3 && blit->creature_type <= 5) {
-            if (!ctx->state->world.dungeon ||
-                ctx->state->world.party.mapIndex >= ctx->state->world.dungeon->header.mapCount) {
-                return 0;
-            }
-            map = &ctx->state->world.dungeon->maps[ctx->state->world.party.mapIndex];
-            return csb_v1_viewport_f0115_blit_f0093_group_front_family_pc34(
-                blit->creature_type, map, slot->pixels, (int)slot->width,
-                (int)slot->height, screen_pixels, ctx->framebuffer_width,
-                ctx->framebuffer_height, screen_stride, blit->x, blit->y,
-                blit->w, blit->h, blit->depth_index + 1, blit->source_zone, 0);
-        }
-        return csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
-            blit->creature_type, graphic_index, slot->pixels, (int)slot->width,
-            (int)slot->height, screen_pixels, ctx->framebuffer_width,
-            ctx->framebuffer_height, screen_stride, blit->x, blit->y,
-            blit->w, blit->h, blit->depth_index + 1, blit->source_zone,
-            0);
+        (void)slot;
+        return 0;
     }
 }
 
@@ -13404,7 +13520,9 @@ static int m11_theron_apply_boot_runtime_receipt(
     state->theronWorld = receipt->world;
     state->theronViewport = receipt->viewport;
     state->theronAssets = receipt->assets;
-    state->theronTrack01CddaHandoff = receipt->track01_cdda_handoff;
+    memset(&state->theronTrack01CddaHandoff,
+           0,
+           sizeof(state->theronTrack01CddaHandoff));
     /* THQUEST.ASM T400 startup handoff: boot owns the fresh Track 02
      * title-gate receipts through runtime detach. Accept then advances to
      * stage-select; the next explicit input opens the Soul Room. */
@@ -14353,9 +14471,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                     state->dm2State.music_elapsed_us,
                     &music_schedule)) {
                 state->dm2State.music_schedule_ready =
-                    music_schedule.midi_handoff_ready;
+                    music_schedule.pcm_handoff_ready;
                 state->dm2State.music_loop_duration_us =
-                    music_schedule.loop_duration_us;
+                    0u;
                 state->dm2State.music_loop_count = music_schedule.loop_count;
                 state->dm2State.music_events_due =
                     music_schedule.event_count_due;

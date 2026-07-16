@@ -1347,6 +1347,20 @@ int dm2_v1_boot_startup_execute_pointer_from_runtime_state(
     void *apply_userdata,
     struct DM2_V1_StartupExecution *out_execution,
     struct DM2_V1_StartupHostActionReceipt *out_receipt);
+int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    int (*apply_session)(void *userdata,
+                         const struct DM2_V1_SessionState *session),
+    void *apply_userdata,
+    struct DM2_V1_StartupExecution *out_execution,
+    struct DM2_V1_StartupHostActionReceipt *out_receipt);
 int dm2_v1_boot_startup_execute_pointer_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
     int x,

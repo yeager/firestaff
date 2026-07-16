@@ -417,3 +417,25 @@ dm1_v1_champion_panel_food_water_status_box_probe_pc34(
 
     return result;
 }
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_food_bar_zone_pc34(void) {
+    dm1_v1_champion_panel_food_water_bar_zone_pc34_t zone;
+    zone.x = 112;
+    zone.y = 67;
+    zone.w = 67;
+    zone.h = 5;
+    zone.shadow_offset = 1;
+    return zone;
+}
+
+dm1_v1_champion_panel_food_water_bar_zone_pc34_t
+dm1_v1_champion_panel_water_bar_zone_pc34(void) {
+    dm1_v1_champion_panel_food_water_bar_zone_pc34_t zone;
+    zone.x = 112;
+    zone.y = 90;
+    zone.w = 67;
+    zone.h = 5;
+    zone.shadow_offset = 1;
+    return zone;
+}

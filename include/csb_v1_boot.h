@@ -1545,6 +1545,14 @@ int csb_v1_boot_startup_release_app_capture_receipt_from_complete_support_pc34(
     CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *out_receipt);
 void csb_v1_boot_startup_presented_app_capture_receipt_init_pc34(
     CSB_V1_StartupPresentedAppCaptureReceipt_PC34 *receipt);
+int csb_v1_boot_startup_presented_app_capture_facts_from_indexed_frame_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const unsigned char *indexed_pixels,
+    int width,
+    int height,
+    int running_from_macos_app_bundle,
+    int mac_window_capture_ready,
+    CSB_V1_StartupPresentedAppCaptureFacts_PC34 *out_facts);
 int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
     const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
     const CSB_V1_StartupPresentedAppCaptureFacts_PC34 *presented_facts,

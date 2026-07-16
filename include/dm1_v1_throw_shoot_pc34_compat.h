@@ -202,6 +202,10 @@ typedef struct {
     int mapX;
     int mapY;
     int cell;
+    int shouldUnlinkProjectileFromSquare;
+    int cleanupMapIndex;
+    int cleanupMapX;
+    int cleanupMapY;
     unsigned short projectileThing;
     unsigned short projectileNextAfterDelete;
     DM1_ProjectileMaterializationPlanPc34 materialization;

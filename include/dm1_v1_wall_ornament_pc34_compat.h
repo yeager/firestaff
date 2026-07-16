@@ -87,6 +87,13 @@ typedef struct DM1_WallOrnamentRenderPlanPc34 {
     int isAlcove;
 } DM1_WallOrnamentRenderPlanPc34;
 
+typedef struct DM1_WallOrnamentHostMaterialReceiptPc34 {
+    int valid;
+    int globalOrnamentIndex;
+    int viewWallIndex;
+    DM1_WallOrnamentRenderPlanPc34 plan;
+} DM1_WallOrnamentHostMaterialReceiptPc34;
+
 typedef struct DM1_FrontMirrorRenderPlanPc34 {
     DM1_WallOrnamentRenderPlanPc34 ornament;
     int portraitGraphicIndex;
@@ -134,6 +141,11 @@ int dm1_v1_wall_ornament_render_plan_pc34(
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan);
+int dm1_v1_wall_ornament_host_material_receipt_pc34(
+    int globalIndex,
+    int viewWallIndex,
+    int maxHeight,
+    DM1_WallOrnamentHostMaterialReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
 }
