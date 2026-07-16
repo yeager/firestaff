@@ -9599,6 +9599,8 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
+    target_link_libraries(test_dm2_v1_g1_weapon_map_chip_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_weapon_map_chip_real_data PRIVATE
             -Wall -Wextra -O2)
@@ -9615,6 +9617,8 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
+    target_link_libraries(test_dm2_v1_g1_container_map_chip_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_container_map_chip_real_data PRIVATE
             -Wall -Wextra -O2)
