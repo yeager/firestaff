@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 Launcher `.fsart` follow-up: the startup menu now persists a
+  selected `.fsart` artpack path and an optional broad Unicode font path.
+  Remaining work is the runtime loader step: safely unpack/validate `.fsart`,
+  promote its `modern_asset_manifest.json` into the existing V2.2 asset-cache
+  path, and wire the chosen Unicode font into the modern menu renderer when a
+  real TTF backend is available. Do not synthesize missing art or glyphs.
+
 - 2026-07-16 Artpack Studio follow-up: DM2 `GRAPHICS.DAT` import now lists the
   real GDAT raw/ENT1 inventory and previews skproject-style IMG3 C4/U4/U8
   records. Full skproject-backed GDAT pixel preview is still warning-only for

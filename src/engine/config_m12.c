@@ -308,6 +308,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->audioSfxVolume = 128;
     config->audioMuted = 0;
     config->fontScale = 1;
+    config->unicodeFontPath[0] = '\0';
     config->highContrast = 0;
     config->colorblindMode = 0;
     config->autoPause = 0;
@@ -365,6 +366,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->ambientVolume = 40;
     config->uiScale = 100;
     config->quickResumeEnabled = 1;
+    config->artpackPath[0] = '\0';
     config->retroAchievementsEnabled = 0;
     config->retroAchievementsHardcore = 1;
     config->retroAchievementsUsername[0] = '\0';
@@ -811,6 +813,11 @@ static void m12_parse_line(M12_Config* config, char* line) {
         m12_copy_string(config->customMusicPath, sizeof(config->customMusicPath), quoted);
         return;
     }
+    if (m12_string_equals(key, "unicode_font_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->unicodeFontPath, sizeof(config->unicodeFontPath), quoted);
+        return;
+    }
     if (m12_string_equals(key, "ambient_enabled")) {
         config->ambientEnabled = m12_parse_int(value, config->ambientEnabled) ? 1 : 0;
         return;
@@ -837,6 +844,11 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "quick_resume_enabled")) {
         config->quickResumeEnabled = m12_parse_int(value, config->quickResumeEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "artpack_path") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->artpackPath, sizeof(config->artpackPath), quoted);
         return;
     }
     if (m12_string_equals(key, "retroachievements_enabled")) {
@@ -1024,10 +1036,16 @@ int M12_Config_Save(const M12_Config* config) {
     fputs("custom_music_path = ", fp);
     m12_escape_and_write(fp, config->customMusicPath);
     fputc('\n', fp);
+    fputs("unicode_font_path = ", fp);
+    m12_escape_and_write(fp, config->unicodeFontPath);
+    fputc('\n', fp);
     fprintf(fp, "ambient_enabled = %d\n", config->ambientEnabled ? 1 : 0);
     fprintf(fp, "ambient_volume = %d\n", config->ambientVolume);
     fprintf(fp, "ui_scale = %d\n", config->uiScale);
     fprintf(fp, "quick_resume_enabled = %d\n", config->quickResumeEnabled ? 1 : 0);
+    fputs("artpack_path = ", fp);
+    m12_escape_and_write(fp, config->artpackPath);
+    fputc('\n', fp);
     fprintf(fp, "retroachievements_enabled = %d\n", config->retroAchievementsEnabled ? 1 : 0);
     fprintf(fp, "retroachievements_hardcore = %d\n", config->retroAchievementsHardcore ? 1 : 0);
     fputs("retroachievements_username = ", fp);
@@ -1327,6 +1345,12 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"ambient_volume\": %d,\n", config->ambientVolume);
     fprintf(fp, "  \"ui_scale\": %d,\n", config->uiScale);
     fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
+    fprintf(fp, "  \"unicode_font_path\": ");
+    m12_json_write_string(fp, config->unicodeFontPath);
+    fprintf(fp, ",\n");
+    fprintf(fp, "  \"artpack_path\": ");
+    m12_json_write_string(fp, config->artpackPath);
+    fprintf(fp, ",\n");
     fprintf(fp, "  \"retroachievements_enabled\": %d,\n", config->retroAchievementsEnabled ? 1 : 0);
     fprintf(fp, "  \"retroachievements_hardcore\": %d,\n", config->retroAchievementsHardcore ? 1 : 0);
     fprintf(fp, "  \"retroachievements_username\": ");
@@ -1655,6 +1679,8 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_INT("ambient_volume", ambientVolume)
         SET_INT("ui_scale", uiScale)
         SET_BOOL("quick_resume_enabled", quickResumeEnabled)
+        SET_STRING("unicode_font_path", unicodeFontPath, M12_CONFIG_DATA_DIR_CAPACITY)
+        SET_STRING("artpack_path", artpackPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_BOOL("retroachievements_enabled", retroAchievementsEnabled)
         SET_BOOL("retroachievements_hardcore", retroAchievementsHardcore)
         SET_STRING("retroachievements_username", retroAchievementsUsername, sizeof(config->retroAchievementsUsername))

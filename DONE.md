@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Launcher artpack/font path settings: startup settings can now
+  choose and persist a `.fsart` V2.2 artpack file and an optional broad Unicode
+  TTF/OTF/TTC font path. Native file dialogs are suppressed in headless/dummy
+  video tests so probes do not block.
+
 - 2026-07-16 DM2 GDAT immediate scalar/raw gate: `dtWordValue` and
   `dtImageOffset` entries no longer alias raw GDAT payload slots through the
   generic asset lookup. Exact typed APIs still expose scalar values. This

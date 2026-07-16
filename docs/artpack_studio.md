@@ -65,6 +65,16 @@ title_frames/title_0001.png
 The studio rejects unsafe archive paths and verifies that the archive game
 matches the selected game before saving the imported manifest.
 
+The Firestaff startup menu can store a selected `.fsart` file under Settings /
+Controls / V2.2 Artpack. The launcher persists that path in
+`startup-menu.toml` as `artpack_path`; runtime unpacking/manifest-cache
+promotion remains a separate loader step and must continue to verify the
+archive contents before using them.
+
+The startup menu also stores an optional broad Unicode font path under Settings
+/ Controls / Unicode Font. Use a TTF/OTF/TTC family with broad language
+coverage, such as Noto Sans. The path is persisted as `unicode_font_path`.
+
 ## Reference Assets
 
 The V1 root defaults to:
