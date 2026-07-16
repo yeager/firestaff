@@ -740,7 +740,7 @@ DM2_0cee_317f	SKULLWIN	SKULLWIN/c_move.cpp	1032	src/dm2/dm2_v1_skproject_core.c:
 DM2_ATTACK_WALL	SKULLWIN	SKULLWIN/c_move.cpp	1053		MISSING
 DM2_move_075f_0af9	SKULLWIN	SKULLWIN/c_move.cpp	1307		MISSING
 DM2_move_075f_06bd	SKULLWIN	SKULLWIN/c_move.cpp	1972		MISSING
-DM2_ATTACK_DOOR	SKULLWIN	SKULLWIN/c_move.cpp	2097		MISSING
+DM2_ATTACK_DOOR	SKULLWIN	SKULLWIN/c_move.cpp	2097	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_attack_door; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_2fcf_0434	SKULLWIN	SKULLWIN/c_move.cpp	2152		MISSING
 DM2_move_075f_1bc2	SKULLWIN	SKULLWIN/c_move.cpp	2861		MISSING
 DM2_move_2c1d_028c	SKULLWIN	SKULLWIN/c_move.cpp	2914		MISSING
