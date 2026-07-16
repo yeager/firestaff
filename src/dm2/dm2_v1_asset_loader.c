@@ -816,6 +816,219 @@ const uint8_t *dm2_v1_asset_load_text_sized(
                                          out_size);
 }
 
+static int dm2_gdat_raw_bounds(const DM2_V1_AssetLoader *loader,
+                               uint16_t raw_index,
+                               uint32_t *out_offset,
+                               uint32_t *out_size)
+{
+    uint32_t offset;
+    uint32_t size;
+
+    if (out_offset) *out_offset = 0u;
+    if (out_size) *out_size = 0u;
+    if (!loader || !loader->loaded || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || raw_index >= loader->raw_data_count) {
+        return 0;
+    }
+    offset = loader->raw_offsets[raw_index];
+    size = loader->raw_sizes[raw_index];
+    if (size == 0u || (uint64_t)offset + size > loader->data_size) {
+        return 0;
+    }
+    if (out_offset) *out_offset = offset;
+    if (out_size) *out_size = size;
+    return 1;
+}
+
+static uint32_t dm2_gdat_entry_receipt_hash(
+    int category, int index, int type, int field, uint16_t data_index,
+    uint16_t raw_index, uint32_t raw_file_pos, uint32_t raw_length)
+{
+    uint32_t hash = 2166136261u;
+
+    hash = (hash ^ (uint32_t)(uint8_t)category) * 16777619u;
+    hash = (hash ^ (uint32_t)(uint8_t)index) * 16777619u;
+    hash = (hash ^ (uint32_t)(uint8_t)type) * 16777619u;
+    hash = (hash ^ (uint32_t)(uint8_t)field) * 16777619u;
+    hash = (hash ^ data_index) * 16777619u;
+    hash = (hash ^ raw_index) * 16777619u;
+    hash = (hash ^ raw_file_pos) * 16777619u;
+    hash = (hash ^ raw_length) * 16777619u;
+    return hash ? hash : 1u;
+}
+
+int dm2_v1_query_gdat_raw_data_file_pos(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    uint32_t *out_file_pos)
+{
+    uint32_t offset = 0u;
+
+    if (out_file_pos) *out_file_pos = 0u;
+    if (!out_file_pos ||
+        !dm2_gdat_raw_bounds(loader, raw_index, &offset, NULL)) {
+        return 0;
+    }
+    /* skproject c_gdatfile.cpp::QUERY_GDAT_RAW_DATA_FILE_POS resolves the
+     * raw payload index through the loaded raw-data offset table. */
+    *out_file_pos = offset;
+    return 1;
+}
+
+int dm2_v1_query_gdat_raw_data_length(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    uint32_t *out_length)
+{
+    uint32_t size = 0u;
+
+    if (out_length) *out_length = 0u;
+    if (!out_length || !dm2_gdat_raw_bounds(loader, raw_index, NULL, &size)) {
+        return 0;
+    }
+    /* skproject c_dballoc/c_gdatfile.cpp::QUERY_GDAT_RAW_DATA_LENGTH returns
+     * the exact raw-table byte count; it is not an image dimension. */
+    *out_length = size;
+    return 1;
+}
+
+const uint8_t *dm2_v1_load_gdat_raw_data(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    size_t *out_size)
+{
+    uint32_t offset = 0u;
+    uint32_t size = 0u;
+
+    if (out_size) *out_size = 0u;
+    if (!dm2_gdat_raw_bounds(loader, raw_index, &offset, &size)) {
+        return NULL;
+    }
+    if (out_size) *out_size = size;
+    return loader->data + offset;
+}
+
+int dm2_v1_query_gdat_entry(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt)
+{
+    const DM2_V1_GdatEntry *entry;
+    uint16_t raw_index;
+    uint32_t raw_file_pos = 0u;
+    uint32_t raw_length = 0u;
+    int loadable_raw = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    entry = dm2_gdat_find_entry(loader, category, index, type, field);
+    if (!entry) return 0;
+
+    raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+    if (type != DM2_GDAT_ENTRY_TYPE_WORD_VALUE &&
+        type != DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+        loadable_raw = dm2_gdat_raw_bounds(loader, raw_index,
+                                           &raw_file_pos, &raw_length);
+        if (!loadable_raw) return 0;
+    }
+
+    out_receipt->present = 1u;
+    out_receipt->loadable_raw = (uint8_t)loadable_raw;
+    out_receipt->category = entry->cls1;
+    out_receipt->index = entry->cls2;
+    out_receipt->type = entry->cls3;
+    out_receipt->field = entry->cls4;
+    out_receipt->data_index = entry->data_index;
+    out_receipt->raw_index = raw_index;
+    out_receipt->raw_file_pos = raw_file_pos;
+    out_receipt->raw_length = raw_length;
+    out_receipt->receipt_hash = dm2_gdat_entry_receipt_hash(
+        category, index, type, field, entry->data_index, raw_index,
+        raw_file_pos, raw_length);
+    return 1;
+}
+
+int dm2_v1_query_gdat_entry_data_index(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    uint16_t *out_data_index)
+{
+    const DM2_V1_GdatEntry *entry;
+
+    if (out_data_index) *out_data_index = 0u;
+    if (!out_data_index) return 0;
+    entry = dm2_gdat_find_entry(loader, category, index, type, field);
+    if (!entry) return 0;
+    *out_data_index = entry->data_index;
+    return 1;
+}
+
+const uint8_t *dm2_v1_query_gdat_entry_data_ptr(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    size_t *out_size)
+{
+    const DM2_V1_GdatEntry *entry;
+
+    if (out_size) *out_size = 0u;
+    if (type == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
+        type == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+        return NULL;
+    }
+    entry = dm2_gdat_find_entry(loader, category, index, type, field);
+    return dm2_gdat_raw_from_entry(loader, entry, out_size);
+}
+
+int dm2_v1_query_gdat_entry_data_length(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    uint32_t *out_length)
+{
+    DM2_V1_GdatEntryQueryReceipt receipt;
+
+    if (out_length) *out_length = 0u;
+    if (!out_length ||
+        !dm2_v1_query_gdat_entry(loader, category, index, type, field,
+                                 &receipt) ||
+        !receipt.loadable_raw) {
+        return 0;
+    }
+    *out_length = receipt.raw_length;
+    return 1;
+}
+
+int dm2_v1_query_gdat_entry_if_loadable(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt)
+{
+    DM2_V1_GdatEntryQueryReceipt receipt;
+
+    if (!dm2_v1_query_gdat_entry(loader, category, index, type, field,
+                                 &receipt) ||
+        !receipt.loadable_raw) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_asset_load_word_value(
     const DM2_V1_AssetLoader *loader,
     int category,
