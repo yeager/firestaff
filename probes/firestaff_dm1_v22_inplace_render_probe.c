@@ -15,6 +15,8 @@
 
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "dm1_v22_finished_pack_receipt_pc34.h"
 #include "fs_portable_compat.h"
 #include "m11_v22_inplace_draw_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
@@ -63,6 +65,37 @@ static uint32_t fnv1a_bytes(const void* data, size_t len) {
 
 static void put_u32(unsigned char* p, uint32_t v) {
     memcpy(p, &v, sizeof(v));
+}
+
+static int write_bytes_file(const char* path, const void* data, size_t size) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (size > 0U && fwrite(data, 1, size, fp) != size) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_text_file(const char* path, const char* text) {
+    return write_bytes_file(path, text, text ? strlen(text) : 0U);
+}
+
+static void put_be32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)((v >> 24) & 0xffU);
+    p[1] = (unsigned char)((v >> 16) & 0xffU);
+    p[2] = (unsigned char)((v >> 8) & 0xffU);
+    p[3] = (unsigned char)(v & 0xffU);
+}
+
+static int write_png_header_file(const char* path, unsigned width, unsigned height) {
+    unsigned char png[24] = {
+        0x89u, 'P', 'N', 'G', 0x0du, 0x0au, 0x1au, 0x0au,
+        0x00u, 0x00u, 0x00u, 0x0du, 'I', 'H', 'D', 'R'
+    };
+    put_be32(png + 16, width);
+    put_be32(png + 20, height);
+    return write_bytes_file(path, png, sizeof(png));
 }
 
 typedef struct ProbeCacheEntry {
@@ -194,6 +227,63 @@ static int write_transparent_wall_dm1_v22_cache(const char* cache_path) {
                                        sizeof(fixtures) / sizeof(fixtures[0]));
 }
 
+static int write_reviewed_pack_fixture(const char* modern_dir) {
+    char path[FSP_PATH_MAX];
+    char receipt[FSP_PATH_MAX];
+    char manifest[FSP_PATH_MAX];
+    char receipt_json[2048];
+    uint32_t hash;
+    static const char* const categories[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        "wall_shapes", "floor_shapes", "floor_shapes", "creature_shapes",
+        "champion_portraits", "door_shapes", "field_shapes"
+    };
+    static const char* const files[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        "wall_d3_carved_hero_01.png",
+        "floor_plain_hero_01.png",
+        "floor_pit_hero_01.png",
+        "creature_demon_hero_01.png",
+        "champion_warrior_hero_01.png",
+        "door_hero_01.png",
+        "field_teleporter_hero_01.png"
+    };
+    static const unsigned widths[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        64U, 64U, 64U, 48U, 48U, 32U, 64U
+    };
+    static const unsigned heights[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        64U, 64U, 64U, 48U, 48U, 48U, 64U
+    };
+    int i;
+    for (i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
+        snprintf(path, sizeof(path), "%s/%s", modern_dir, categories[i]);
+        if (!FSP_CreateDirectoryRecursive(path)) return 0;
+        snprintf(path, sizeof(path), "%s/%s/%s", modern_dir, categories[i], files[i]);
+        if (!write_png_header_file(path, widths[i], heights[i])) return 0;
+    }
+    snprintf(manifest, sizeof(manifest), "%s/modern_asset_manifest.json", modern_dir);
+    if (!write_text_file(manifest,
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-inplace-probe\","
+        "\"wall_shapes\":[{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}],"
+        "\"floor_shapes\":[{\"id\":\"floor_plain_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}],"
+        "\"creature_shapes\":[{\"id\":\"creature_demon_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}],"
+        "\"champion_portraits\":[{\"id\":\"champion_warrior_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"champion_warrior_hero_01.png\",\"width\":48,\"height\":48}],"
+        "\"door_shapes\":[{\"id\":\"door_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}],"
+        "\"field_shapes\":[{\"id\":\"field_teleporter_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"field_teleporter_hero_01.png\",\"width\":64,\"height\":64}]}")) {
+        return 0;
+    }
+    hash = dm1_v22_fpr_fnv1a_file(manifest);
+    snprintf(receipt_json, sizeof(receipt_json),
+        "{\"receiptVersion\":\"1.0.0\",\"manifestPath\":\"modern_asset_manifest.json\","
+        "\"manifestHashFnv1a\":\"%08x\",\"reviewer\":\"dm1-v22-inplace-probe\","
+        "\"reviewedAtUtc\":\"2026-07-16T00:00:00Z\",\"gateTarget\":\"FINISHED_REAL\","
+        "\"reviewedSlots\":[\"wall_d3_carved_hero_01\",\"floor_plain_hero_01\","
+        "\"floor_pit_hero_01\",\"creature_demon_hero_01\",\"champion_warrior_hero_01\","
+        "\"door_hero_01\",\"field_teleporter_hero_01\"]}", hash);
+    snprintf(receipt, sizeof(receipt), "%s/finish_receipt.json", modern_dir);
+    dm1_v22_fpr_reset_state();
+    return write_text_file(receipt, receipt_json);
+}
+
 static int setup_probe_home(char* out_cache_path, size_t out_size) {
     char data_dir[FSP_PATH_MAX];
     char modern_dir[FSP_PATH_MAX];
@@ -209,6 +299,9 @@ static int setup_probe_home(char* out_cache_path, size_t out_size) {
     if (!FSP_CreateDirectoryRecursive(modern_dir)) return 0;
     if (FSP_SetEnv("HOME", "firestaff-dm1-v22-probe-home", 1) != 0) return 0;
     m11_v22_set_manifest_path(data_dir);
+    dm1_v22_famg_set_manifest_path(data_dir);
+    dm1_v22_fpr_set_receipt_path(data_dir);
+    if (!write_reviewed_pack_fixture(modern_dir)) return 0;
 
     n = snprintf(out_cache_path, out_size, "%s/v22_inplace_cache.bin", modern_dir);
     return n > 0 && (size_t)n < out_size;

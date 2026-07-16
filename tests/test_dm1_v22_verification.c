@@ -228,7 +228,10 @@ static void test_modern_assets_available(void) {
         }
     }
 
-    /* Case 5: valid manifest with all 5 required families → 1 */
+    /* Case 5: valid manifest with critical families but no receipt → 0.
+     * DM1 V2.2 runtime availability now requires FINISHED_REAL material
+     * classification and a promoted finish_receipt.json, not just category
+     * discovery. */
     {
         char* d = scratch_path("valid_manifest/data");
         if (d) {
@@ -265,8 +268,8 @@ static void test_modern_assets_available(void) {
                     "]"
                     "}");
                 m11_v22_set_manifest_path(d);
-                CHECK_EQ(m11_v22_modern_assets_available(), 1,
-                         "valid manifest with critical categories → 1");
+                CHECK_EQ(m11_v22_modern_assets_available(), 0,
+                         "manifest-only pack without receipt → 0");
                 free(mf);
             }
             free(d);
