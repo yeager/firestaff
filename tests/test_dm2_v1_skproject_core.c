@@ -587,6 +587,10 @@ static void test_map_helpers(void)
         DM2_V1_SkprojectLiftRequest lift;
         DM2_V1_SkprojectLiftReceipt lift_receipt;
         DM2_V1_SkprojectWallAlcoveReceipt alcove;
+        DM2_V1_SkprojectTeleporterProbe teleporters[5];
+        DM2_V1_SkprojectTeleporterSearchReceipt teleporter_search;
+        DM2_V1_SkprojectThrownObjectTerminalReceipt thrown_terminal;
+        DM2_V1_SkprojectCreaturePushReceipt creature_push;
         const int16_t direction_champions[4] = { 2, -1, 1, 1 };
         const uint8_t hero_types[4] = { 10u, 11u, 12u, 13u };
         const uint8_t wound_results[4] = { 0u, 1u, 1u, 0u };
@@ -794,6 +798,67 @@ static void test_map_helpers(void)
                   0, 0x12, 0x345u, &alcove) == 0 &&
                   !alcove.valid && !alcove.ornate_alcove,
               "DM2_0cee_317f returns zero for non-ornate wall records");
+
+        memset(teleporters, 0, sizeof(teleporters));
+        teleporters[0].present = 1u;
+        teleporters[0].detail_b4 = 0x82u;
+        CHECK(dm2_v1_skproject_move_2fcf_0b8b(
+                  10, 20, teleporters, &teleporter_search) == 1 &&
+                  teleporter_search.valid &&
+                  teleporter_search.direct_present &&
+                  teleporter_search.selected_x == 10 &&
+                  teleporter_search.selected_y == 20 &&
+                  teleporter_search.teleporter_b4 == 0x82u,
+              "DM2_move_2fcf_0b8b accepts direct teleporter detail before adjacent scan");
+        memset(teleporters, 0, sizeof(teleporters));
+        teleporters[2].present = 1u;
+        teleporters[2].detail_b4 = 0x41u;
+        CHECK(dm2_v1_skproject_move_2fcf_0b8b(
+                  10, 20, teleporters, &teleporter_search) == 1 &&
+                  teleporter_search.adjacent_present &&
+                  teleporter_search.checked_adjacent_count == 2u &&
+                  teleporter_search.selected_direction == 1u &&
+                  teleporter_search.selected_x == 11 &&
+                  teleporter_search.selected_y == 20,
+              "DM2_move_2fcf_0b8b scans north/east/south/west neighbours in source order");
+        CHECK(dm2_v1_skproject_move_2fcf_0b8b(
+                  10, 20, 0, &teleporter_search) == 0 &&
+                  teleporter_search.blocked_missing_adjacent_probes,
+              "DM2_move_2fcf_0b8b fails closed without teleporter probe corpus");
+
+        CHECK(dm2_v1_skproject_move_075f_0af9(
+                  0xff89u, 3u, &thrown_terminal) == 1 &&
+                  thrown_terminal.valid &&
+                  thrown_terminal.kept_direction_for_ff89 &&
+                  thrown_terminal.terminal_direction == 3u &&
+                  thrown_terminal.requested_creature_push,
+              "DM2_move_075f_0af9 keeps terminal direction for 0xff89 object records");
+        CHECK(dm2_v1_skproject_move_075f_0af9(
+                  0x1234u, 3u, &thrown_terminal) == 1 &&
+                  thrown_terminal.rotated_for_other_records &&
+                  thrown_terminal.terminal_direction == 1u,
+              "DM2_move_075f_0af9 rotates other terminal records by +2 before creature push");
+
+        CHECK(dm2_v1_skproject_move_12b4_0d75(
+                  5, 6, 1u, 0, 20u, 30u, 0u, &creature_push) == 0 &&
+                  creature_push.valid &&
+                  creature_push.blocked_unmovable,
+              "DM2_move_12b4_0d75 rejects when IS_CREATURE_MOVABLE_THERE fails");
+        CHECK(dm2_v1_skproject_move_12b4_0d75(
+                  5, 6, 1u, 1, 20u, 30u, 9u, &creature_push) == 1 &&
+                  creature_push.lifted_by_force &&
+                  creature_push.requested_lift_handoff,
+              "DM2_move_12b4_0d75 admits push when creature weight is within force threshold");
+        CHECK(dm2_v1_skproject_move_12b4_0d75(
+                  5, 6, 1u, 1, 50u, 30u, 0u, &creature_push) == 1 &&
+                  creature_push.random_range == 6u &&
+                  creature_push.lifted_by_random_zero,
+              "DM2_move_12b4_0d75 admits overweight creature only on source RAND16 zero route");
+        CHECK(dm2_v1_skproject_move_12b4_0d75(
+                  5, 6, 1u, 1, 50u, 30u, 2u, &creature_push) == 0 &&
+                  creature_push.random_range == 6u &&
+                  !creature_push.requested_lift_handoff,
+              "DM2_move_12b4_0d75 leaves overweight nonzero-random creature in place");
     }
 }
 

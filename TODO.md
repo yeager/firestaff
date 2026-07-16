@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1455; 2992 total open rows
+  shared DM1/CSB 1537, DM2 1452; 2989 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -12,10 +12,19 @@
     skproject-backed allocation/filter receipts. Remaining adjacent DM2 work
     is full GDAT HUD/dungeon rendering and real save corpus, not synthetic
     menu/dungeon substitutes.
+  - 2026-07-16 DM2 movement update: `DM2_move_12b4_0d75`,
+    `DM2_move_075f_0af9`, and `DM2_move_2fcf_0b8b` now have narrow
+    skproject-backed handoff receipts. Remaining adjacent movement work is
+    still full `DM2_PERFORM_MOVE`, live map/record mutation, missile deletion,
+    and runtime dungeon rendering with real GDAT state.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer
     markers before the dungeon handoff can be promoted.
+  - 2026-07-16 Theron update: a verifier now turns instrumented Mednafen
+    FIFO-origin logs into the required original consumer markers. Remaining
+    work is running it against a real captured original session and feeding
+    the marker output into `FIRESTAFF_THERON_ORIGINAL_CONSUMER_TRACE`.
   - 2026-07-16 CSB update: the standalone CSB item from that generated queue
     is now closed in the callable audit by the HINTHTC F1918/F1919
     initial-load receipt below. Regenerate aggregate counts from the active

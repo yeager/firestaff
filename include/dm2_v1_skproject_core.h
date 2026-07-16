@@ -421,6 +421,51 @@ typedef struct {
 } DM2_V1_SkprojectWallAlcoveReceipt;
 
 typedef struct {
+    uint8_t present;
+    uint8_t detail_b4;
+} DM2_V1_SkprojectTeleporterProbe;
+
+typedef struct {
+    int valid;
+    int16_t x;
+    int16_t y;
+    uint8_t direct_present;
+    uint8_t adjacent_present;
+    uint8_t checked_adjacent_count;
+    uint8_t selected_direction;
+    int16_t selected_x;
+    int16_t selected_y;
+    uint8_t teleporter_b4;
+    uint8_t blocked_missing_adjacent_probes;
+} DM2_V1_SkprojectTeleporterSearchReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t object_record;
+    uint8_t base_direction;
+    uint8_t terminal_direction;
+    uint8_t kept_direction_for_ff89;
+    uint8_t rotated_for_other_records;
+    uint8_t requested_creature_push;
+} DM2_V1_SkprojectThrownObjectTerminalReceipt;
+
+typedef struct {
+    int valid;
+    int16_t x;
+    int16_t y;
+    uint8_t direction;
+    uint16_t creature_weight;
+    uint16_t force_threshold;
+    uint16_t random_range;
+    uint16_t random_value;
+    uint8_t creature_movable;
+    uint8_t blocked_unmovable;
+    uint8_t lifted_by_force;
+    uint8_t lifted_by_random_zero;
+    uint8_t requested_lift_handoff;
+} DM2_V1_SkprojectCreaturePushReceipt;
+
+typedef struct {
     uint16_t link_word;
     uint8_t record_type;
     uint8_t actuator_class;
@@ -1036,6 +1081,24 @@ int dm2_v1_skproject_wall_ornate_alcove_data_index(
     int16_t cls2,
     uint16_t gdat_data_index,
     DM2_V1_SkprojectWallAlcoveReceipt *out_receipt);
+int dm2_v1_skproject_move_2fcf_0b8b(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_SkprojectTeleporterProbe *adjacent_probes,
+    DM2_V1_SkprojectTeleporterSearchReceipt *out_receipt);
+int dm2_v1_skproject_move_075f_0af9(
+    uint16_t object_record,
+    uint8_t base_direction,
+    DM2_V1_SkprojectThrownObjectTerminalReceipt *out_receipt);
+int dm2_v1_skproject_move_12b4_0d75(
+    int16_t x,
+    int16_t y,
+    uint8_t direction,
+    int creature_movable,
+    uint16_t creature_weight,
+    uint16_t force_threshold,
+    uint16_t random_value,
+    DM2_V1_SkprojectCreaturePushReceipt *out_receipt);
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);

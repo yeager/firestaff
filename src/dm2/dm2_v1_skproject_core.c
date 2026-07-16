@@ -1391,6 +1391,129 @@ int dm2_v1_skproject_wall_ornate_alcove_data_index(
     return gdat_data_index != 0u;
 }
 
+int dm2_v1_skproject_move_2fcf_0b8b(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_SkprojectTeleporterProbe *adjacent_probes,
+    DM2_V1_SkprojectTeleporterSearchReceipt *out_receipt)
+{
+    static const int16_t dx[4] = { 0, 1, 0, -1 };
+    static const int16_t dy[4] = { -1, 0, 1, 0 };
+    DM2_V1_SkprojectTeleporterSearchReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+    receipt.selected_x = x;
+    receipt.selected_y = y;
+    receipt.selected_direction = 0xffu;
+    if (!adjacent_probes) {
+        receipt.blocked_missing_adjacent_probes = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (adjacent_probes[0].present) {
+        receipt.direct_present = 1u;
+        receipt.teleporter_b4 = adjacent_probes[0].detail_b4;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    for (uint8_t i = 0; i < 4u; ++i) {
+        const DM2_V1_SkprojectTeleporterProbe *probe =
+            &adjacent_probes[(uint8_t)(i + 1u)];
+
+        receipt.checked_adjacent_count++;
+        if (!probe->present)
+            continue;
+        receipt.adjacent_present = 1u;
+        receipt.selected_direction = i;
+        receipt.selected_x = (int16_t)(x + dx[i]);
+        receipt.selected_y = (int16_t)(y + dy[i]);
+        receipt.teleporter_b4 = probe->detail_b4;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_move_075f_0af9(
+    uint16_t object_record,
+    uint8_t base_direction,
+    DM2_V1_SkprojectThrownObjectTerminalReceipt *out_receipt)
+{
+    DM2_V1_SkprojectThrownObjectTerminalReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_record = object_record;
+    receipt.base_direction = (uint8_t)(base_direction & 3u);
+    if (object_record == 0xff89u) {
+        receipt.terminal_direction = receipt.base_direction;
+        receipt.kept_direction_for_ff89 = 1u;
+    } else {
+        receipt.terminal_direction = (uint8_t)((receipt.base_direction + 2u) & 3u);
+        receipt.rotated_for_other_records = 1u;
+    }
+    receipt.requested_creature_push = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_move_12b4_0d75(
+    int16_t x,
+    int16_t y,
+    uint8_t direction,
+    int creature_movable,
+    uint16_t creature_weight,
+    uint16_t force_threshold,
+    uint16_t random_value,
+    DM2_V1_SkprojectCreaturePushReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCreaturePushReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+    receipt.direction = (uint8_t)(direction & 3u);
+    receipt.creature_weight = creature_weight;
+    receipt.force_threshold = force_threshold;
+    if (creature_weight > force_threshold)
+        receipt.random_range = (uint16_t)((creature_weight - force_threshold) / 4u + 1u);
+    receipt.random_value = random_value;
+    receipt.creature_movable = creature_movable ? 1u : 0u;
+    receipt.valid = 1;
+
+    if (!creature_movable) {
+        receipt.blocked_unmovable = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (creature_weight <= force_threshold) {
+        receipt.lifted_by_force = 1u;
+        receipt.requested_lift_handoff = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (random_value == 0u) {
+        receipt.lifted_by_random_zero = 1u;
+        receipt.requested_lift_handoff = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b)
@@ -2849,7 +2972,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
-           "DM2_ATTACK_WALL/DM2_ATTACK_DOOR; "
+           "DM2_ATTACK_WALL/DM2_ATTACK_DOOR/DM2_move_12b4_0d75/"
+           "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "
            "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
            "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001/"
            "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83";
