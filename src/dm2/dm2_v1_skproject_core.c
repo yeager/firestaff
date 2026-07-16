@@ -3696,6 +3696,62 @@ int dm2_v1_skproject_calc_player_weight(
     return 1;
 }
 
+int dm2_v1_skproject_equip_item_to_inventory(
+    DM2_V1_SkprojectPlayerWeightRequest *request,
+    uint16_t player,
+    uint16_t object_id,
+    uint16_t inventory_slot,
+    DM2_V1_SkprojectEquipItemReceipt *out_receipt)
+{
+    DM2_V1_SkprojectEquipItemReceipt receipt;
+    uint16_t cleared_object_id;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.raw_object_id = object_id;
+    receipt.inventory_slot = inventory_slot;
+
+    if (!out_receipt)
+        return 0;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!request) {
+        receipt.blocked_missing_request = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    cleared_object_id = (uint16_t)(object_id & 0x3fffu);
+    receipt.cleared_object_id = cleared_object_id;
+    if (inventory_slot >= DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS) {
+        uint16_t container_slot =
+            (uint16_t)(inventory_slot -
+                       DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS);
+        receipt.container_slot = container_slot;
+        if (container_slot >= DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS) {
+            receipt.blocked_inventory_slot_range = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.previous_object_id =
+            request->current_container_items[container_slot];
+        request->current_container_items[container_slot] = cleared_object_id;
+        receipt.equipped_to_container_overlay = 1;
+    } else {
+        receipt.previous_object_id = request->inventory[inventory_slot];
+        request->inventory[inventory_slot] = cleared_object_id;
+    }
+
+    receipt.process_item_bonus_requested = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_count_by_coin_types(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t moneybox_object_id,
@@ -5417,6 +5473,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT; "
            "SKWIN/SkWinCore.cpp ADD_ITEM_CHARGE/GET_MAX_CHARGE/"
            "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
+           "EQUIP_ITEM_TO_INVENTORY/"
            "COUNT_BY_COIN_TYPES/IS_CONTAINER_MONEYBOX/"
            "IS_CONTAINER_CHEST/IS_MISCITEM_CURRENCY/GET_ITEM_NAME/"
            "GET_ITEM_ORDER_IN_CONTAINER/FMT_NUM/FILL_STR/SK_STRLEN/"

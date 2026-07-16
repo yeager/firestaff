@@ -1927,6 +1927,7 @@ static void test_player_weight_helper(void)
     DM2_V1_SkprojectItemValueWorld world;
     DM2_V1_SkprojectPlayerWeightRequest request;
     DM2_V1_SkprojectPlayerWeightReceipt receipt;
+    DM2_V1_SkprojectEquipItemReceipt equip_receipt;
 
     memset(records, 0, sizeof(records));
     memset(&request, 0xff, sizeof(request));
@@ -1982,6 +1983,39 @@ static void test_player_weight_helper(void)
               receipt.final_weight == 9u &&
               receipt.blocked_player_not_selected,
           "CALC_PLAYER_WEIGHT skips overlay for non-selected player");
+
+    CHECK(dm2_v1_skproject_equip_item_to_inventory(
+              &request, 0u, 0x9402u, 3u, &equip_receipt) == 1 &&
+              equip_receipt.valid &&
+              equip_receipt.raw_object_id == 0x9402u &&
+              equip_receipt.cleared_object_id == 0x1402u &&
+              equip_receipt.previous_object_id ==
+                  DM2_V1_SKPROJECT_MEMENT_NONE &&
+              request.inventory[3] == 0x1402u &&
+              equip_receipt.process_item_bonus_requested,
+          "EQUIP_ITEM_TO_INVENTORY clears direction bits and equips champion slot");
+    CHECK(dm2_v1_skproject_equip_item_to_inventory(
+              &request, 0u, 0xa803u,
+              DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS + 2u,
+              &equip_receipt) == 1 &&
+              equip_receipt.valid &&
+              equip_receipt.equipped_to_container_overlay &&
+              equip_receipt.container_slot == 2u &&
+              equip_receipt.cleared_object_id == 0x2803u &&
+              request.current_container_items[2] == 0x2803u,
+          "EQUIP_ITEM_TO_INVENTORY routes slot >=30 to current container items");
+    CHECK(dm2_v1_skproject_equip_item_to_inventory(
+              &request, 0u, DM2_V1_SKPROJECT_MEMENT_NONE, 0u,
+              &equip_receipt) == 0 &&
+              equip_receipt.blocked_null_object,
+          "EQUIP_ITEM_TO_INVENTORY rejects OBJECT_NULL");
+    CHECK(dm2_v1_skproject_equip_item_to_inventory(
+              &request, 0u, 0x1400u,
+              DM2_V1_SKPROJECT_PLAYER_INVENTORY_SLOTS +
+                  DM2_V1_SKPROJECT_CURRENT_CONTAINER_SLOTS,
+              &equip_receipt) == 0 &&
+              equip_receipt.blocked_inventory_slot_range,
+          "EQUIP_ITEM_TO_INVENTORY rejects out-of-range container slot");
 }
 
 static void test_count_by_coin_types(void)

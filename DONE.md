@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 `EQUIP_ITEM_TO_INVENTORY` receipt: mapped the skproject
+  inventory placement helper to `dm2_v1_skproject_equip_item_to_inventory()`.
+  The regression covers direction-bit clearing, champion slot writes,
+  current-container overlay writes, OBJECT_NULL rejection, and range blocking.
+
 - 2026-07-16 DM2 `FIND_FREE_MEMENTI` receipt: mapped the skproject
   next-free mement allocator to `dm2_v1_skproject_find_free_mementi()`.
   The regression covers normal allocation, skipping already referenced
