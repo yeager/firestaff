@@ -86,7 +86,9 @@ static void test_fixture_entry_queries(void)
     const uint8_t *ptr;
     size_t size = 0u;
     uint32_t u32 = 0u;
+    uint32_t value = 0u;
     uint16_t u16 = 0u;
+    uint8_t copy[16];
 
     fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
 
@@ -107,6 +109,20 @@ static void test_fixture_entry_queries(void)
               receipt.raw_index == 0u && receipt.raw_file_pos == 16u &&
               receipt.raw_length == 6u && receipt.receipt_hash != 0u,
           "QUERY_GDAT_ENTRYPTR receipt binds class tuple to raw payload");
+    CHECK(dm2_v1_query_gdat_entry_value(&loader, 0u, 0u, &value) &&
+              value == DM2_GDAT_CATEGORY_TITLE &&
+          dm2_v1_query_gdat_entry_value(&loader, 0u, 1u, &value) &&
+              value == 0u &&
+          dm2_v1_query_gdat_entry_value(&loader, 0u, 2u, &value) &&
+              value == DM2_GDAT_ENTRY_TYPE_IMAGE &&
+          dm2_v1_query_gdat_entry_value(&loader, 0u, 3u, &value) &&
+              value == 4u &&
+          dm2_v1_query_gdat_entry_value(&loader, 0u, 4u, &value) &&
+              value == 0u,
+          "DM2_QUERY_GDAT_ENTRY_VALUE returns source ENT1 group values");
+    CHECK(!dm2_v1_query_gdat_entry_value(&loader, 99u, 0u, &value) &&
+              value == 0u,
+          "DM2_QUERY_GDAT_ENTRY_VALUE rejects out-of-range entry ordinals");
     ptr = dm2_v1_query_gdat_entry_data_ptr(
         &loader, DM2_GDAT_CATEGORY_TITLE, 0,
         DM2_GDAT_ENTRY_TYPE_IMAGE, 4, &size);
@@ -122,6 +138,20 @@ static void test_fixture_entry_queries(void)
               DM2_GDAT_ENTRY_TYPE_TEXT, 7, &receipt) &&
               receipt.loadable_raw && receipt.raw_index == 1u,
           "QUERY_GDAT_ENTRY_IF_LOADABLE accepts loadable dtText");
+    memset(copy, 0, sizeof(copy));
+    CHECK(dm2_v1_load_gdat_entry_data_to(
+              &loader, DM2_GDAT_CATEGORY_MESSAGES, 2,
+              DM2_GDAT_ENTRY_TYPE_TEXT, 7, copy, sizeof(copy), &receipt) &&
+              receipt.copied_to_destination &&
+              receipt.copied_length == 4u &&
+              memcmp(copy, "TEXT", 4u) == 0,
+          "DM2_LOAD_GDAT_ENTRY_DATA_TO copies only the exact raw payload");
+    memset(copy, 0, sizeof(copy));
+    CHECK(!dm2_v1_load_gdat_entry_data_to(
+              &loader, DM2_GDAT_CATEGORY_MESSAGES, 2,
+              DM2_GDAT_ENTRY_TYPE_TEXT, 7, copy, 2u, &receipt) &&
+              !receipt.copied_to_destination,
+          "DM2_LOAD_GDAT_ENTRY_DATA_TO rejects undersized destinations");
 
     CHECK(dm2_v1_query_gdat_entry_data_index(
               &loader, DM2_GDAT_CATEGORY_WEAPONS, 9,
@@ -139,6 +169,12 @@ static void test_fixture_entry_queries(void)
               DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 1, &size) == NULL &&
               size == 0u,
           "scalar GDAT entries are not exposed as synthetic buffers");
+    CHECK(!dm2_v1_load_gdat_entry_data_to(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 9,
+              DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 1, copy, sizeof(copy),
+              &receipt) &&
+              !receipt.copied_to_destination,
+          "DM2_LOAD_GDAT_ENTRY_DATA_TO rejects scalar entries");
 }
 
 static void test_fixture_gdat_entry_iteration_and_sound(void)

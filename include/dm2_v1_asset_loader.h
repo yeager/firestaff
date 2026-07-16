@@ -198,6 +198,7 @@ typedef struct {
 typedef struct {
     uint8_t present;
     uint8_t loadable_raw;
+    uint8_t copied_to_destination;
     uint8_t category;
     uint8_t index;
     uint8_t type;
@@ -206,6 +207,7 @@ typedef struct {
     uint16_t raw_index;
     uint32_t raw_file_pos;
     uint32_t raw_length;
+    uint32_t copied_length;
     uint32_t receipt_hash;
 } DM2_V1_GdatEntryQueryReceipt;
 
@@ -422,6 +424,11 @@ int dm2_v1_query_gdat_entry(
     int type,
     int field,
     DM2_V1_GdatEntryQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_entry_value(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t entry_ordinal,
+    uint8_t group_index,
+    uint32_t *out_value);
 int dm2_v1_query_gdat_entry_data_index(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -449,6 +456,15 @@ int dm2_v1_query_gdat_entry_if_loadable(
     int index,
     int type,
     int field,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt);
+int dm2_v1_load_gdat_entry_data_to(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    uint8_t *destination,
+    size_t destination_capacity,
     DM2_V1_GdatEntryQueryReceipt *out_receipt);
 int dm2_v1_load_ent1_receipt(
     const DM2_V1_AssetLoader *loader,

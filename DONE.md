@@ -1,5 +1,25 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject GDAT entry value/copy bundle: added
+  source-mapped receipts for `DM2_QUERY_GDAT_ENTRY_VALUE` and
+  `DM2_LOAD_GDAT_ENTRY_DATA_TO`. Firestaff now reads T/I/D/S/P/F/G values
+  from parsed ENT1 rows and copies real loader-owned GDAT payload bytes into
+  caller buffers while rejecting scalar rows, absent payloads, and undersized
+  destinations. Verification: focused Ninja target
+  `test_dm2_v1_gdat_querydb_receipts`, focused CTest
+  `dm2_v1_gdat_querydb_receipts`.
+
+- 2026-07-16 DM1 CHAMPION pre-HUD F0280-F0286 bundle: closed the
+  source-backed subset around Hall portrait candidate publication, reincarnate
+  rename UI, Vi Altar rebirth, party direction rotation, cell target lookup,
+  and adjacent attacker target selection. `F0278`/`F0279` remain blockers
+  because no reviewed DM1 reset-data or decoded-value implementation was found.
+  Verification: focused Ninja targets `test_dm1_v1_resurrection_pc34_compat`,
+  `test_dm1_v1_resurrection_rename_ui_gate_pc34_compat`,
+  `test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat`; focused CTests
+  `dm1_v1_resurrection`, `dm1_v1_resurrection_rename_ui_gate_pc34_compat`,
+  and `dm1_v1_mov05_f0284_cell_rotation_pc34_compat`.
+
 - 2026-07-16 DM1 CHAMPION HUD F0287-F0290: added a shared
   `DM1_ChampionPanel_FormatIntegerF0288` formatter and routed champion
   status/stat/load text through it. Verified F0287 bar pixels, F0288

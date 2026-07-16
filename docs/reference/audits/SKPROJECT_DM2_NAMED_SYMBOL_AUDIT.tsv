@@ -345,7 +345,7 @@ DM2_GRAPHICS_DATA_CLOSE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	384	src/dm2/dm2_v1_asse
 DM2_GRAPHICS_DATA_READ	SKULLWIN	SKULLWIN/c_gdatfile.cpp	399	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
 DM2_QUERY_GDAT_RAW_DATA_FILE_POS	SKULLWIN	SKULLWIN/c_gdatfile.cpp	454	include/dm2_v1_asset_loader.h:257	VERIFIED_SOURCE_MAPPING
 DM2_LOAD_GDAT_RAW_DATA	SKULLWIN	SKULLWIN/c_gdatfile.cpp	470	include/dm2_v1_asset_loader.h:265	VERIFIED_SOURCE_MAPPING
-DM2_QUERY_GDAT_ENTRY_VALUE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	515		MISSING
+DM2_QUERY_GDAT_ENTRY_VALUE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	515	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_entry_value	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile ENT1 value receipt extracts T/I/D/S/P/F/G group values from parsed loader-owned entries and rejects missing/out-of-range rows without fabricating data.
 DM2_ALLOC_PICT_BUFF	SKULLWIN	SKULLWIN/c_gdatfile.cpp	529	include/dm2_v1_asset_loader.h:dm2_v1_gdat_alloc_pict_buff_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile bitmap allocation receipt preserves 4bpp even-width row bytes, 8bpp unrounded rows, the six-byte bitmap header, and source pool route without fabricating decoded pixels.
 DM2_FREE_PICT_BUFF	SKULLWIN	SKULLWIN/c_gdatfile.cpp	548	include/dm2_v1_asset_loader.h:dm2_v1_gdat_free_pict_buff_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile bitmap free receipt recomputes the source low-bigpool payload-plus-header byte count from the allocation receipt and rejects CPX-backed entries.
 DM2_ALLOC_NEW_BMP	SKULLWIN	SKULLWIN/c_gdatfile.cpp	560	include/dm2_v1_asset_loader.h:dm2_v1_gdat_alloc_new_bmp_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile CPX bitmap receipt records raw-index ownership, rounded payload-byte allocation, and header fields without allocating a CPX node or image buffer.
@@ -354,7 +354,7 @@ R_2D8AD	SKULLWIN	SKULLWIN/c_gdatfile.cpp	580		MISSING
 R_2D8BA	SKULLWIN	SKULLWIN/c_gdatfile.cpp	587		MISSING
 R_2D802	SKULLWIN	SKULLWIN/c_gdatfile.cpp	594		MISSING
 DM2_FREE_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	618	include/dm2_v1_asset_loader.h:dm2_v1_gdat_free_pict_entry_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile preserved-GFX free receipt admits only matching bitmap headers, records struct-before versus preserved-list unlink routes, and keeps free accounting source-bounded.
-DM2_LOAD_GDAT_ENTRY_DATA_TO	SKULLWIN	SKULLWIN/c_gdatfile.cpp	818		MISSING
+DM2_LOAD_GDAT_ENTRY_DATA_TO	SKULLWIN	SKULLWIN/c_gdatfile.cpp	818	include/dm2_v1_asset_loader.h:dm2_v1_load_gdat_entry_data_to	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile tuple-to-payload copy receipt resolves real parsed GDAT rows into caller-owned destination bytes and rejects scalar rows, absent payloads, and undersized buffers.
 DM2_LOAD_GDAT_ENTRIES	SKULLWIN	SKULLWIN/c_gdatfile.cpp	823	include/dm2_v1_asset_loader.h:dm2_v1_load_gdat_entries_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile preload receipt accounts non-scalar raw GDAT payloads from the parsed ENT1/raw table, including the source length-word allocation bytes, without allocating decoded images.
 DM2_47eb_00a4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	850	include/dm2_v1_asset_loader.h:dm2_v1_gdat_sound_toggle_payload	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile sound-toggle receipt models the header state/flag gate and 0x80 byte XOR over caller-owned sample bytes; already converted or unflagged payloads fail closed.
 s_bbbbw	SKULLWIN	SKULLWIN/c_gdatfile.cpp	857		MISSING

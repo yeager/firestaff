@@ -1009,6 +1009,54 @@ int dm2_v1_query_gdat_entry(
     return 1;
 }
 
+int dm2_v1_query_gdat_entry_value(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t entry_ordinal,
+    uint8_t group_index,
+    uint32_t *out_value)
+{
+    const DM2_V1_GdatEntry *entry;
+
+    if (out_value) *out_value = 0u;
+    if (!loader || !loader->loaded || !loader->entries || !out_value ||
+        entry_ordinal >= loader->entry_count ||
+        group_index >= DM2_GDAT_EP_COUNT) {
+        return 0;
+    }
+    if (loader->ent1_entry_stride != 0u &&
+        !loader->ent1_ep_present[group_index] &&
+        group_index > DM2_GDAT_EP_DATA) {
+        return 0;
+    }
+
+    entry = &loader->entries[entry_ordinal];
+    switch (group_index) {
+    case DM2_GDAT_EP_CLS1:
+        *out_value = entry->cls1;
+        return 1;
+    case DM2_GDAT_EP_CLS2:
+        *out_value = entry->cls2;
+        return 1;
+    case DM2_GDAT_EP_CLS3:
+        *out_value = entry->cls3;
+        return 1;
+    case DM2_GDAT_EP_CLS4:
+        *out_value = entry->cls4;
+        return 1;
+    case DM2_GDAT_EP_DATA:
+        *out_value = entry->data_index;
+        return 1;
+    case DM2_GDAT_EP_CLS5:
+        *out_value = entry->cls5;
+        return 1;
+    case DM2_GDAT_EP_CLS6:
+        *out_value = entry->cls6;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 int dm2_v1_query_gdat_entry_data_index(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -1083,6 +1131,44 @@ int dm2_v1_query_gdat_entry_if_loadable(
         if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_load_gdat_entry_data_to(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    uint8_t *destination,
+    size_t destination_capacity,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt)
+{
+    DM2_V1_GdatEntryQueryReceipt receipt;
+    const uint8_t *payload;
+    size_t payload_size = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!destination ||
+        !dm2_v1_query_gdat_entry_if_loadable(loader, category, index,
+                                             type, field, &receipt)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    payload = dm2_v1_load_gdat_raw_data(loader, receipt.raw_index,
+                                        &payload_size);
+    if (!payload || payload_size != receipt.raw_length ||
+        destination_capacity < payload_size) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memcpy(destination, payload, payload_size);
+    receipt.copied_to_destination = 1u;
+    receipt.copied_length = (uint32_t)payload_size;
+    receipt.receipt_hash = dm2_gdat_entry_receipt_hash(
+        category, index, type, field, receipt.data_index, receipt.raw_index,
+        receipt.raw_file_pos, receipt.copied_length);
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
