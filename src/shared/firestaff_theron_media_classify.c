@@ -390,17 +390,31 @@ static int th_read_file_to_buffer(const char* path, char** out, size_t* out_len)
     return 1;
 }
 
-static int th_resolve_cue_candidate_path(const char* cue_path,
-                                         FirestaffTheronMediaStatus* status) {
+static int th_path_is_readable(const char* path) {
+    FILE* fp;
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
+static int th_resolve_cue_member_path(
+    const char* cue_path,
+    char path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY]) {
     char parent[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
     char resolved[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-    if (!cue_path || !status || status->candidate_path[0] == '\0') {
+    if (!cue_path || !path || path[0] == '\0') {
         return 0;
     }
     if (!FSP_ParentDir(parent, sizeof(parent), cue_path)) {
         return 0;
     }
-    if (!FSP_JoinPath(resolved, sizeof(resolved), parent, status->candidate_path)) {
+    if (!FSP_JoinPath(resolved, sizeof(resolved), parent, path)) {
         return 0;
     }
     th_copy(path, FIRESTAFF_THERON_MEDIA_PATH_CAPACITY, resolved);
