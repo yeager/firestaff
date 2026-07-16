@@ -70,6 +70,33 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int blocked_missing_rect;
+    DM2_V1_SkprojectRect rect;
+    int16_t point_x;
+    int16_t point_y;
+    uint8_t result;
+} DM2_V1_SkprojectPtInRectReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_origin;
+    int blocked_missing_source;
+    int blocked_missing_output;
+    DM2_V1_SkprojectRect origin;
+    DM2_V1_SkprojectRect source;
+    DM2_V1_SkprojectRect output;
+} DM2_V1_SkprojectOffsetRectReceipt;
+
+typedef struct {
+    int valid;
+    uint32_t initial_offset;
+    int32_t delta;
+    uint32_t final_offset;
+    uint8_t blocked_out_of_bounds;
+} DM2_V1_SkprojectPtrAdvanceReceipt;
+
+typedef struct {
+    int valid;
     int blocked_missing_input;
     int immediate_colors_before;
     int driver_setcolors_requested;
@@ -1713,6 +1740,22 @@ int dm2_v1_skproject_fill_i16table(
     int16_t value,
     uint16_t entries,
     DM2_V1_SkprojectFillI16TableReceipt *out_receipt);
+int dm2_v1_skproject_pt_in_rect(
+    const DM2_V1_SkprojectRect *rect,
+    int16_t point_x,
+    int16_t point_y,
+    DM2_V1_SkprojectPtInRectReceipt *out_receipt);
+int dm2_v1_skproject_offset_rect(
+    const DM2_V1_SkprojectRect *origin,
+    const DM2_V1_SkprojectRect *source,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectOffsetRectReceipt *out_receipt);
+int dm2_v1_skproject_ptr_advance(
+    uint32_t initial_offset,
+    int32_t delta,
+    uint32_t capacity,
+    uint32_t *out_offset,
+    DM2_V1_SkprojectPtrAdvanceReceipt *out_receipt);
 int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
                                              uint8_t *out_palette);
 int dm2_v1_skproject_palettecolor_from_ui8(uint8_t color,

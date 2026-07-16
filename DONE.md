@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 rect/cursor receipt bundle: mapped `DM2_OFFSET_RECT`,
+  `OFFSET_RECT`, `PT_IN_RECT`, and `PTR_ADVANCE` to skproject-backed bounded
+  helpers. The regression covers inclusive rect hit-testing, origin-relative
+  rect translation, forward cursor advance, and underflow/overflow rejection.
+
 - 2026-07-16 DM2 scalar/container possession receipt bundle: mapped
   `IS_NEGATIVE`, `IS_CONTAINER_MAP`, `DM2_IS_CONTAINER_MAP`,
   `FIND_POUCH_OR_SCABBARD_POSSESSION_POS`, and

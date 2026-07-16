@@ -101,10 +101,17 @@ static void test_util_helpers(void)
     DM2_V1_SkprojectRandomData randdat;
     DM2_V1_SkprojectVectorDirReceipt dir_receipt;
     DM2_V1_SkprojectFillI16TableReceipt fill_receipt;
+    DM2_V1_SkprojectPtInRectReceipt pt_receipt;
+    DM2_V1_SkprojectOffsetRectReceipt offset_receipt;
+    DM2_V1_SkprojectPtrAdvanceReceipt advance_receipt;
     DM2_V1_SkprojectIsNegativeReceipt neg_receipt;
     DM2_V1_SkprojectContainerMapReceipt map_receipt;
     DM2_V1_SkprojectPossessionSlotReceipt pos_receipt;
     int16_t table[5] = { 1, 2, 3, 4, 5 };
+    DM2_V1_SkprojectRect origin = { 10, 20, 100, 80 };
+    DM2_V1_SkprojectRect source = { 13, 31, 7, 5 };
+    DM2_V1_SkprojectRect out_rect;
+    uint32_t offset = 0u;
     uint16_t inventory[30];
 
     CHECK(dm2_v1_skproject_abs(-12) == 12 &&
@@ -163,6 +170,43 @@ static void test_util_helpers(void)
           "DM2_ATIMESB_RSHIFTC multiplies unsigned 16-bit inputs before shift");
     CHECK(dm2_v1_skproject_atimesb_rshiftc(-2, 4, 2) == 8191,
           "DM2_ATIMESB_RSHIFTC preserves unsignedlong conversion of signed words");
+
+    CHECK(dm2_v1_skproject_pt_in_rect(
+              &source, 19, 35, &pt_receipt) == 1 &&
+              pt_receipt.valid && pt_receipt.result == 1u,
+          "PT_IN_RECT accepts the inclusive lower/right source rectangle edge");
+    CHECK(dm2_v1_skproject_pt_in_rect(
+              &source, 20, 35, &pt_receipt) == 0 &&
+              pt_receipt.valid && pt_receipt.result == 0u,
+          "PT_IN_RECT rejects x past x+w-1");
+    CHECK(dm2_v1_skproject_pt_in_rect(
+              0, 20, 35, &pt_receipt) == 0 &&
+              pt_receipt.blocked_missing_rect,
+          "PT_IN_RECT rejects a missing source rect");
+
+    CHECK(dm2_v1_skproject_offset_rect(
+              &origin, &source, &out_rect, &offset_receipt) == 1 &&
+              offset_receipt.valid &&
+              out_rect.x == 3 && out_rect.y == 11 &&
+              out_rect.w == 7 && out_rect.h == 5,
+          "OFFSET_RECT subtracts origin x/y and preserves source size");
+    CHECK(dm2_v1_skproject_offset_rect(
+              &origin, &source, 0, &offset_receipt) == 0 &&
+              offset_receipt.blocked_missing_output,
+          "OFFSET_RECT rejects missing output rect");
+
+    CHECK(dm2_v1_skproject_ptr_advance(
+              12u, 5, 32u, &offset, &advance_receipt) == 1 &&
+              advance_receipt.valid && offset == 17u,
+          "PTR_ADVANCE adds byte delta to the source cursor");
+    CHECK(dm2_v1_skproject_ptr_advance(
+              12u, -20, 32u, &offset, &advance_receipt) == 0 &&
+              advance_receipt.blocked_out_of_bounds,
+          "PTR_ADVANCE fails closed before buffer start");
+    CHECK(dm2_v1_skproject_ptr_advance(
+              12u, 21, 32u, &offset, &advance_receipt) == 0 &&
+              advance_receipt.blocked_out_of_bounds,
+          "PTR_ADVANCE fails closed past buffer capacity");
 
     CHECK(dm2_v1_skproject_is_negative(-1, &neg_receipt) == 1 &&
               neg_receipt.valid && neg_receipt.value == -1 &&
@@ -2834,6 +2878,13 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "FIND_POUCH_OR_SCABBARD_POSSESSION_POS") != 0,
           "source evidence names scalar/container possession helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "PT_IN_RECT") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "OFFSET_RECT") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "PTR_ADVANCE") != 0,
+          "source evidence names rect and cursor helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_GET_ADDRESS_OF_RECORD") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
