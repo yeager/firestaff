@@ -139,11 +139,9 @@ typedef struct {
     /* UI scale (accessibility extra). Multiplier in percent for
      * HUD and menu text rendering. */
     int uiScale;                         /* 100, 150, 200 (default 100) */
-    char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY]; /* Optional UTF-8/CJK-capable UI font. */
 
     /* Quick resume gating. */
     int quickResumeEnabled;              /* 0 = off, 1 = on; default 1 */
-    char artpackPath[M12_CONFIG_DATA_DIR_CAPACITY]; /* Optional .fsart V2.2 pack selected by launcher. */
     int retroAchievementsEnabled;        /* 0 = off, 1 = on; default 0 */
     int retroAchievementsHardcore;       /* 0 = softcore, 1 = hardcore */
     char retroAchievementsUsername[64];  /* Empty = not configured. */

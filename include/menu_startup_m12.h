@@ -118,7 +118,6 @@ typedef struct {
     int ambientEnabled;
     int ambientVolume;
     int uiScale;
-    char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY];
     int streamerMode;
     int retroAchievementsEnabled;
     int retroAchievementsHardcore;
@@ -176,7 +175,6 @@ typedef struct {
     char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
-    char artpackPath[M12_CONFIG_DATA_DIR_CAPACITY];
 } M12_MenuSettingsState;
 
 typedef enum {
