@@ -353,6 +353,43 @@ typedef struct {
     uint16_t data_index;
 } DM2_V1_SkprojectWallAlcoveReceipt;
 
+typedef struct {
+    uint16_t link_word;
+    uint8_t record_type;
+    uint8_t actuator_class;
+    uint16_t required_item_type;
+    uint8_t target_flag;
+    uint8_t activation_bits;
+    uint8_t consume_projectile;
+    uint8_t tile_type_at_destination;
+    int16_t destination_x;
+    int16_t destination_y;
+    uint8_t side_when_tile_nonzero;
+    uint8_t side_when_tile_zero;
+    uint16_t alcove_data_index;
+} DM2_V1_SkprojectWallAttackRecord;
+
+typedef struct {
+    int valid;
+    uint8_t found_effect;
+    uint8_t projectile_cut;
+    uint8_t projectile_side_after;
+    uint8_t invoked_actuator;
+    uint8_t activated_record_index;
+    uint8_t used_alcove_relocation;
+    uint8_t used_teleport_relocation;
+    uint8_t blocked_no_records;
+    uint8_t checked_records;
+    uint8_t matching_side_records;
+    uint8_t requested_side;
+    uint8_t wall_side;
+    uint16_t projectile_item_type;
+    int16_t source_x;
+    int16_t source_y;
+    int16_t target_x;
+    int16_t target_y;
+} DM2_V1_SkprojectAttackWallReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -905,6 +942,16 @@ int dm2_v1_skproject_attack_door(
     int16_t x,
     int16_t y,
     DM2_V1_SkprojectAttackDoorReceipt *out_receipt);
+int dm2_v1_skproject_attack_wall(
+    const DM2_V1_SkprojectWallAttackRecord *records,
+    uint16_t record_count,
+    uint16_t projectile_record_word,
+    uint16_t projectile_item_type,
+    int16_t attack_dir,
+    uint8_t randdir,
+    int16_t source_x,
+    int16_t source_y,
+    DM2_V1_SkprojectAttackWallReceipt *out_receipt);
 int dm2_v1_skproject_move_12b4_099e(
     const DM2_V1_SkprojectLiftRequest *request,
     DM2_V1_SkprojectLiftReceipt *out_receipt);

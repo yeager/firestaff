@@ -1137,6 +1137,107 @@ int dm2_v1_skproject_attack_door(
     return 1;
 }
 
+static int dm2_v1_skproject_wall_item_matches(uint16_t required_item_type,
+                                              uint16_t projectile_item_type)
+{
+    return required_item_type == 0x01ffu ||
+           required_item_type == projectile_item_type;
+}
+
+int dm2_v1_skproject_attack_wall(
+    const DM2_V1_SkprojectWallAttackRecord *records,
+    uint16_t record_count,
+    uint16_t projectile_record_word,
+    uint16_t projectile_item_type,
+    int16_t attack_dir,
+    uint8_t randdir,
+    int16_t source_x,
+    int16_t source_y,
+    DM2_V1_SkprojectAttackWallReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAttackWallReceipt receipt;
+    uint8_t requested_side = (uint8_t)((attack_dir + 2) & 3);
+    int projectile_cut = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.requested_side = requested_side;
+    receipt.projectile_side_after = (uint8_t)(projectile_record_word >> 14);
+    receipt.projectile_item_type = projectile_item_type;
+    receipt.source_x = source_x;
+    receipt.source_y = source_y;
+    receipt.target_x = source_x;
+    receipt.target_y = source_y;
+
+    if (!records && record_count != 0u) {
+        receipt.blocked_no_records = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = 0; i < record_count; ++i) {
+        const DM2_V1_SkprojectWallAttackRecord *record = &records[i];
+        uint8_t wall_side = (uint8_t)(record->link_word >> 14);
+
+        receipt.checked_records++;
+        if (wall_side != requested_side)
+            continue;
+        receipt.matching_side_records++;
+        receipt.wall_side = wall_side;
+
+        if (!projectile_cut &&
+            ((projectile_record_word >> 10) & 0x0fu) != 0x0fu &&
+            record->alcove_data_index != 0u &&
+            randdir == 0u) {
+            projectile_cut = 1;
+            receipt.projectile_cut = 1u;
+            receipt.projectile_side_after = wall_side;
+            receipt.used_alcove_relocation = 1u;
+            receipt.found_effect = 1u;
+            continue;
+        }
+
+        if (record->record_type != 3u)
+            continue;
+
+        if (record->actuator_class == 0x22u) {
+            uint8_t active =
+                dm2_v1_skproject_wall_item_matches(
+                    record->required_item_type, projectile_item_type) ? 1u : 0u;
+            active ^= (record->target_flag ? 1u : 0u);
+            if (!active)
+                continue;
+            receipt.invoked_actuator = 1u;
+            receipt.activated_record_index = (uint8_t)i;
+            receipt.found_effect = 1u;
+            if (!projectile_cut && record->consume_projectile) {
+                projectile_cut = 1;
+                receipt.projectile_cut = 1u;
+                receipt.projectile_side_after = requested_side;
+            }
+        } else if (record->actuator_class == 0x23u &&
+                   !projectile_cut &&
+                   dm2_v1_skproject_wall_item_matches(
+                       record->required_item_type, projectile_item_type)) {
+            projectile_cut = 1;
+            receipt.projectile_cut = 1u;
+            receipt.used_teleport_relocation = 1u;
+            receipt.found_effect = 1u;
+            receipt.activated_record_index = (uint8_t)i;
+            receipt.target_x = record->destination_x;
+            receipt.target_y = record->destination_y;
+            receipt.projectile_side_after =
+                record->tile_type_at_destination != 0u
+                    ? (record->side_when_tile_nonzero & 3u)
+                    : (record->side_when_tile_zero & 3u);
+        }
+    }
+
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.found_effect ? 1 : 0;
+}
+
 int dm2_v1_skproject_move_12b4_099e(
     const DM2_V1_SkprojectLiftRequest *request,
     DM2_V1_SkprojectLiftReceipt *out_receipt)
@@ -2518,7 +2619,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
-           "DM2_ATTACK_DOOR; "
+           "DM2_ATTACK_WALL/DM2_ATTACK_DOOR; "
            "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
            "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001/"
            "DM_LOCATE_OTHER_LEVEL/DM2_map_3BF83";

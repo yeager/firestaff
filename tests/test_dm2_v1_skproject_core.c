@@ -613,6 +613,8 @@ static void test_map_helpers(void)
 
         {
             DM2_V1_SkprojectAttackDoorReceipt door;
+            DM2_V1_SkprojectWallAttackRecord wall_records[4];
+            DM2_V1_SkprojectAttackWallReceipt wall;
 
             CHECK(dm2_v1_skproject_attack_door(
                       4u, 0u, 0u, 10u, 5u, 0, 0, 0u, 6, 7,
@@ -653,6 +655,60 @@ static void test_map_helpers(void)
                       door.tile_type_after == 5u &&
                       door.x == 6 && door.y == 7,
                   "DM2_ATTACK_DOOR opens tile type 4 to 5 when no timer delay is requested");
+
+            memset(wall_records, 0, sizeof(wall_records));
+            wall_records[0].link_word = (uint16_t)(1u << 14);
+            wall_records[0].alcove_data_index = 0x222u;
+            CHECK(dm2_v1_skproject_attack_wall(
+                      wall_records, 1u, 0x0400u, 0x33u, 3, 0u, 8, 9,
+                      &wall) == 1 &&
+                      wall.valid && wall.found_effect &&
+                      wall.used_alcove_relocation &&
+                      wall.projectile_cut &&
+                      wall.projectile_side_after == 1u &&
+                      wall.matching_side_records == 1u,
+                  "DM2_ATTACK_WALL relocates missile through ornate alcove only on matching side and RANDDIR zero");
+
+            memset(wall_records, 0, sizeof(wall_records));
+            wall_records[0].link_word = (uint16_t)(1u << 14);
+            wall_records[0].record_type = 3u;
+            wall_records[0].actuator_class = 0x22u;
+            wall_records[0].required_item_type = 0x44u;
+            wall_records[0].consume_projectile = 1u;
+            CHECK(dm2_v1_skproject_attack_wall(
+                      wall_records, 1u, 0x0400u, 0x44u, 3, 2u, 8, 9,
+                      &wall) == 1 &&
+                      wall.invoked_actuator &&
+                      wall.projectile_cut &&
+                      wall.projectile_side_after == 1u &&
+                      !wall.used_alcove_relocation,
+                  "DM2_ATTACK_WALL invokes class-0x22 actuator and consumes matching projectile");
+
+            wall_records[0].target_flag = 1u;
+            CHECK(dm2_v1_skproject_attack_wall(
+                      wall_records, 1u, 0x0400u, 0x44u, 3, 2u, 8, 9,
+                      &wall) == 0 &&
+                      !wall.found_effect &&
+                      wall.matching_side_records == 1u,
+                  "DM2_ATTACK_WALL honours class-0x22 target flag inversion");
+
+            memset(wall_records, 0, sizeof(wall_records));
+            wall_records[0].link_word = (uint16_t)(1u << 14);
+            wall_records[0].record_type = 3u;
+            wall_records[0].actuator_class = 0x23u;
+            wall_records[0].required_item_type = 0x01ffu;
+            wall_records[0].tile_type_at_destination = 0u;
+            wall_records[0].destination_x = 12;
+            wall_records[0].destination_y = 14;
+            wall_records[0].side_when_tile_zero = 2u;
+            CHECK(dm2_v1_skproject_attack_wall(
+                      wall_records, 1u, 0x0400u, 0x77u, 3, 2u, 8, 9,
+                      &wall) == 1 &&
+                      wall.used_teleport_relocation &&
+                      wall.projectile_cut &&
+                      wall.target_x == 12 && wall.target_y == 14 &&
+                      wall.projectile_side_after == 2u,
+                  "DM2_ATTACK_WALL teleports wildcard class-0x23 projectile using destination tile side rule");
         }
 
         memset(&lift, 0, sizeof(lift));
@@ -1523,6 +1579,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_12b4_0881") != 0,
           "source evidence names c_move admission helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_ATTACK_WALL") != 0,
+          "source evidence names c_move wall attack helper");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_ATTACK_DOOR") != 0,
           "source evidence names c_move door attack helper");

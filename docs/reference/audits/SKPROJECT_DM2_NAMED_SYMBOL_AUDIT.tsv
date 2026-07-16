@@ -737,7 +737,7 @@ DM2_move_12b4_0092	SKULLWIN	SKULLWIN/c_move.cpp	912	src/dm2/dm2_v1_skproject_cor
 DM2_move_12b4_00af	SKULLWIN	SKULLWIN/c_move.cpp	918	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_12b4_00af; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_2fcf_0b8b	SKULLWIN	SKULLWIN/c_move.cpp	947		MISSING
 DM2_0cee_317f	SKULLWIN	SKULLWIN/c_move.cpp	1032	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_wall_ornate_alcove_data_index; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_ATTACK_WALL	SKULLWIN	SKULLWIN/c_move.cpp	1053		MISSING
+DM2_ATTACK_WALL	SKULLWIN	SKULLWIN/c_move.cpp	1053	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_attack_wall; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_075f_0af9	SKULLWIN	SKULLWIN/c_move.cpp	1307		MISSING
 DM2_move_075f_06bd	SKULLWIN	SKULLWIN/c_move.cpp	1972		MISSING
 DM2_ATTACK_DOOR	SKULLWIN	SKULLWIN/c_move.cpp	2097	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_attack_door; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
