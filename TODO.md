@@ -52,6 +52,13 @@
   executable, absent `test_dm2_v1_boot_profile_smoke` build target, and CMake
   regeneration failure from many unrelated missing non-DM2/probe/shared
   sources.
+  - 2026-07-16 update: skproject `c_map.cpp` `GET_TILE_VALUE`,
+    `GET_ADDRESS_OF_TILE_RECORD`, and `IS_TILE_PASSAGE` now have bounded
+    Firestaff wrappers over the parsed byte-map, column-index, and
+    ground-stack tables. Remaining DM2 c_map work is broader source proof for
+    record-chain traversal, DB8/DB10 roots, map transitions, and complete live
+    dungeon/HUD material; these wrappers must not substitute GDAT pixels or a
+    playable record graph.
 
 - 2026-07-16 DM2 SKSave corpus follow-up: the corpus receipt now exposes the
   first accepted importable payload's source kind and byte size, distinguishing

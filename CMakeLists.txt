@@ -9315,6 +9315,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_dungeon_loader_first_map_gate
     )
 
+    add_executable(test_dm2_v1_c_map_tile_access
+        tests/test_dm2_v1_c_map_tile_access.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_c_map_tile_access PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_c_map_tile_access PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_c_map_tile_access
+        COMMAND test_dm2_v1_c_map_tile_access
+    )
+
     # This probe accepts only a hash-identified original G1 DUNGEON.DAT at
     # runtime, so CI builds it but does not execute it without user media.
     add_executable(test_dm2_v1_g1_runtime_map_validation_real_data

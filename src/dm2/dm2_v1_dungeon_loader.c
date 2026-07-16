@@ -640,6 +640,160 @@ int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d,
     return RD16(d->raw_data + offset);
 }
 
+static int dm2_v1_dungeon_c_map_dimension_ok(const DM2_V1_DungeonData *d,
+                                             int level)
+{
+    return d && d->raw_data && level >= 0 && level < d->level_count &&
+           d->level_widths[level] > 0 && d->level_heights[level] > 0;
+}
+
+const uint8_t *dm2_v1_dungeon_c_map_get_address_of_tile_record(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    uint16_t *out_object_id,
+    int *out_record_offset)
+{
+    uint16_t object_id;
+    const uint8_t *record;
+    int type = -1;
+    int index = -1;
+    int size = 0;
+
+    if (out_object_id) *out_object_id = DM2_THING_END_MARKER;
+    if (out_record_offset) *out_record_offset = -1;
+    if (!dm2_v1_dungeon_c_map_dimension_ok(d, level) ||
+        x < 0 || x >= d->level_widths[level] ||
+        y < 0 || y >= d->level_heights[level]) {
+        return NULL;
+    }
+    object_id = (uint16_t)dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (object_id == DM2_THING_END_MARKER ||
+        object_id == DM2_THING_NULL_MARKER) {
+        return NULL;
+    }
+    record = dm2_v1_dungeon_get_thing_record(
+        d, object_id, &type, &index, &size);
+    if (!record || type < 0 || index < 0 || size <= 0) return NULL;
+    if (out_object_id) *out_object_id = object_id;
+    if (out_record_offset)
+        *out_record_offset = (int)(record - d->raw_data);
+    return record;
+}
+
+int dm2_v1_dungeon_c_map_is_tile_passage(const DM2_V1_DungeonData *d,
+                                         int level,
+                                         int x,
+                                         int y)
+{
+    int raw;
+    int tile_type;
+
+    if (!dm2_v1_dungeon_c_map_dimension_ok(d, level) ||
+        x < 0 || x >= d->level_widths[level] ||
+        y < 0 || y >= d->level_heights[level]) {
+        return 0;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw < 0) return 0;
+    raw &= 0xff;
+    tile_type = raw >> 5;
+    if (tile_type == 0 || tile_type == 7) return 0;
+    return 1;
+}
+
+int dm2_v1_dungeon_c_map_get_tile_value(const DM2_V1_DungeonData *d,
+                                        int level,
+                                        int x,
+                                        int y)
+{
+    int width;
+    int height;
+    int x_in;
+    int y_in;
+    int edge_x;
+    int edge_y;
+
+    if (!dm2_v1_dungeon_c_map_dimension_ok(d, level)) return -1;
+    width = d->level_widths[level];
+    height = d->level_heights[level];
+    x_in = (x >= 0 && x < width);
+    y_in = (y >= 0 && y < height);
+    if (x_in && y_in) {
+        int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+        return raw < 0 ? -1 : (raw & 0xff);
+    }
+    if (x < -1 || x > width || y < -1 || y > height) return 0xe0;
+
+    edge_x = x;
+    edge_y = y;
+    if (!y_in && !x_in) {
+        if (x == -1) edge_x = 0;
+        else if (x == width) edge_x = width - 1;
+        else return 0xe0;
+        if (y == -1) {
+            if (!dm2_v1_dungeon_c_map_is_tile_passage(d, level, edge_x, 0))
+                return 0xe0;
+            edge_y = 0;
+        } else if (y == height) {
+            edge_y = height - 1;
+        } else {
+            return 0xe0;
+        }
+    } else if (!y_in) {
+        if (y == -1) {
+            edge_y = 0;
+            if (dm2_v1_dungeon_c_map_is_tile_passage(d, level, x, edge_y))
+                return 0x02;
+            if (x > 0 &&
+                dm2_v1_dungeon_c_map_is_tile_passage(d, level, x - 1, edge_y))
+                return 0x00;
+            if (x + 1 < width) edge_x = x + 1;
+            else return 0xe0;
+        } else if (y == height) {
+            edge_y = height - 1;
+            if (dm2_v1_dungeon_c_map_is_tile_passage(d, level, x, edge_y))
+                return 0x08;
+            if (x > 0 &&
+                dm2_v1_dungeon_c_map_is_tile_passage(d, level, x - 1, edge_y))
+                return 0x00;
+            if (x + 1 < width) edge_x = x + 1;
+            else return 0xe0;
+        } else {
+            return 0xe0;
+        }
+    } else if (!x_in) {
+        if (x == -1) {
+            edge_x = 0;
+            if (dm2_v1_dungeon_c_map_is_tile_passage(d, level, edge_x, y))
+                return 0x04;
+            if (y > 0 &&
+                dm2_v1_dungeon_c_map_is_tile_passage(d, level, edge_x, y - 1))
+                return 0x00;
+            if (y + 1 < height) edge_y = y + 1;
+            else return 0xe0;
+        } else if (x == width) {
+            edge_x = width - 1;
+            if (dm2_v1_dungeon_c_map_is_tile_passage(d, level, edge_x, y))
+                return 0x01;
+            if (y > 0 &&
+                dm2_v1_dungeon_c_map_is_tile_passage(d, level, edge_x, y - 1))
+                return 0x00;
+            if (y + 1 < height) edge_y = y + 1;
+            else return 0xe0;
+        } else {
+            return 0xe0;
+        }
+    }
+
+    if (edge_x < 0 || edge_x >= width || edge_y < 0 || edge_y >= height)
+        return 0xe0;
+    if (dm2_v1_dungeon_c_map_is_tile_passage(d, level, edge_x, edge_y))
+        return 0x00;
+    return 0xe0;
+}
+
 int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d,
                                 int level,
                                 int x,
@@ -722,6 +876,120 @@ int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d,
         return -1;
     return (int)RD16(d->raw_data + d->square_first_thing_base +
                      thing_index * 2);
+}
+
+int dm2_v1_skproject_get_tile_value(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTileValueReceipt *out) {
+    DM2_V1_SkprojectTileValueReceipt receipt;
+    int raw;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw < 0) return 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.raw_tile = (uint16_t)raw;
+    receipt.tile_value = d && d->square_bytes == 1
+                             ? (uint8_t)(((uint8_t)raw >> 5) & 0x07u)
+                             : (uint8_t)((uint16_t)raw & 0x1fu);
+    receipt.source_symbol = "DM2_GET_TILE_VALUE";
+    receipt.source_line = 107;
+    *out = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_is_tile_passage(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTilePassageReceipt *out) {
+    DM2_V1_SkprojectTileValueReceipt value;
+    DM2_V1_SkprojectTilePassageReceipt receipt;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out || !dm2_v1_skproject_get_tile_value(d, level, x, y, &value))
+        return 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.raw_tile = value.raw_tile;
+    receipt.tile_value = value.tile_value;
+    /* skproject DME.h::tileTypeIndex: G1 byte maps store passage/floor as
+     * tile class 1. Older 16-bit fixtures keep the DM1-style low five bits;
+     * only non-wall floor-like values are admitted as passage here. */
+    receipt.is_passage = d && d->square_bytes == 1
+                             ? (value.tile_value == 1u)
+                             : (value.tile_value != 0u &&
+                                value.tile_value != 4u);
+    receipt.source_symbol = "DM2_IS_TILE_PASSAGE";
+    receipt.source_line = 79;
+    *out = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_get_address_of_tile_record(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectTileRecordAddressReceipt *out) {
+    DM2_V1_SkprojectTileRecordAddressReceipt receipt;
+    int raw;
+    int object_id;
+    int type = -1;
+    int index = -1;
+    int size = 0;
+    const uint8_t *record;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw < 0) return 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.raw_tile = (uint16_t)raw;
+    receipt.source_symbol = "DM2_GET_ADDRESS_OF_TILE_RECORD";
+    receipt.source_line = 69;
+
+    object_id = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (object_id < 0 || object_id == (int)DM2_THING_END_MARKER) {
+        receipt.blocked_no_tile_record_link = 1;
+        *out = receipt;
+        return 0;
+    }
+
+    receipt.object_id = (uint16_t)object_id;
+    record = dm2_v1_dungeon_get_thing_record(
+        d, (uint16_t)object_id, &type, &index, &size);
+    receipt.type = type;
+    receipt.index = index;
+    receipt.record_size = size;
+    if (!record || size <= 0) {
+        receipt.blocked_missing_record = 1;
+        *out = receipt;
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.direct_or_proven_extension_address = 1;
+    *out = receipt;
+    return 1;
 }
 
 const uint8_t *dm2_v1_dungeon_get_thing_record(
