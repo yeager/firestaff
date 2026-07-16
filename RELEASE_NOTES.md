@@ -1,6 +1,25 @@
 
 # Unreleased
 
+# Firestaff v3.0.81
+
+Firestaff v3.0.81 packages current source-owned runtime work from `main`.
+
+## Highlights since v3.0.80
+
+- **DM2**: skproject c_map/c_record scalar receipts and GDAT text/query routes
+  are promoted with focused regression coverage.
+- **DM1/CSB**: ReDMCSB symbol audit work continues to reduce unmapped runtime
+  surface without replacing original data with synthetic fallbacks.
+- **Theron/Nexus**: Track 02 and PRS3/DGN startup evidence remains fail-closed
+  where original decoder semantics are not proven.
+
+## Verification
+
+- Focused DM2 c_map/querydb regression tests passed locally before release
+  dispatch.
+- GitHub Actions packages platform artifacts from the `v3.0.81` tag.
+
 # Firestaff v3.0.80
 
 Firestaff v3.0.80 packages source-owned runtime work from `main`.
