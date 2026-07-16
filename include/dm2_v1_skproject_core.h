@@ -178,6 +178,57 @@ typedef struct {
     int requested_change_to_previous_map;
 } DM2_V1_SkprojectMap3B001Receipt;
 
+typedef struct {
+    int valid;
+    uint8_t blocked_zero_gate;
+    uint8_t blocked_empty_table;
+    uint16_t candidate_count;
+    uint16_t selected_index;
+    uint16_t selected_value;
+    uint32_t mixed_random;
+} DM2_V1_SkprojectMap1815Receipt;
+
+typedef struct {
+    int valid;
+    uint16_t values[4];
+    uint8_t sanitized[4];
+    uint8_t blocked_missing_output;
+} DM2_V1_SkprojectMap185AReceipt;
+
+#define DM2_V1_SKPROJECT_MAP_RECORD_END 0xfffeu
+
+typedef struct {
+    uint16_t next;
+    uint16_t w2;
+    uint8_t record_type;
+} DM2_V1_SkprojectMapRecord;
+
+typedef struct {
+    int valid;
+    uint16_t scanned_records;
+    uint16_t matched_records;
+    uint16_t updated_records;
+    uint16_t counter_increment;
+    uint8_t blocked_missing_records;
+} DM2_V1_SkprojectMap20661F37Receipt;
+
+typedef struct {
+    int valid;
+    uint16_t returned_head;
+    uint16_t rewired_records;
+    uint16_t appended_tail;
+    uint8_t blocked_missing_records;
+} DM2_V1_SkprojectMap20661EC9Receipt;
+
+typedef struct {
+    int valid;
+    uint16_t offset;
+    uint8_t previous_value;
+    uint8_t new_value;
+    uint8_t blocked_missing_tmpmap;
+    uint8_t blocked_out_of_bounds;
+} DM2_V1_SkprojectTmpmapFlagReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -630,6 +681,56 @@ int dm2_v1_skproject_map_3b001(
     int16_t value_0270,
     int16_t value_0272,
     DM2_V1_SkprojectMap3B001Receipt *out_receipt);
+int dm2_v1_skproject_map_0cee_1815(
+    int gate,
+    int16_t map_width,
+    int16_t map_height,
+    int16_t v1d3248,
+    int16_t x,
+    int16_t y,
+    int16_t selector,
+    uint16_t savegame_seed,
+    const uint8_t *candidate_table,
+    uint16_t candidate_count,
+    DM2_V1_SkprojectMap1815Receipt *out_receipt);
+int dm2_v1_skproject_map_0cee_185a(
+    uint16_t *out_words4,
+    int16_t map_width,
+    int16_t map_height,
+    int16_t v1d3248,
+    int16_t gate0,
+    int16_t gate1,
+    int16_t gate2,
+    int16_t gate3,
+    int16_t x,
+    int16_t y,
+    int16_t rotation,
+    int16_t step,
+    uint16_t savegame_seed,
+    const uint8_t *candidate_table,
+    uint16_t candidate_count,
+    const uint8_t *ornate_alcove_flags,
+    DM2_V1_SkprojectMap185AReceipt *out_receipt);
+int dm2_v1_skproject_map_2066_1f37(
+    DM2_V1_SkprojectMapRecord *records,
+    uint16_t record_count,
+    uint16_t head,
+    uint16_t value,
+    int16_t *counter,
+    DM2_V1_SkprojectMap20661F37Receipt *out_receipt);
+uint16_t dm2_v1_skproject_map_2066_1ec9(
+    DM2_V1_SkprojectMapRecord *records,
+    uint16_t record_count,
+    uint16_t head,
+    uint16_t append,
+    DM2_V1_SkprojectMap20661EC9Receipt *out_receipt);
+int dm2_v1_skproject_tmpmap_or_flag(
+    uint8_t *tmpmap,
+    uint16_t tmpmap_size,
+    int16_t y,
+    int16_t x,
+    int16_t offset,
+    DM2_V1_SkprojectTmpmapFlagReceipt *out_receipt);
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);

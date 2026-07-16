@@ -629,6 +629,263 @@ int dm2_v1_skproject_map_3b001(
     return 1;
 }
 
+int dm2_v1_skproject_map_0cee_1815(
+    int gate,
+    int16_t map_width,
+    int16_t map_height,
+    int16_t v1d3248,
+    int16_t x,
+    int16_t y,
+    int16_t selector,
+    uint16_t savegame_seed,
+    const uint8_t *candidate_table,
+    uint16_t candidate_count,
+    DM2_V1_SkprojectMap1815Receipt *out_receipt)
+{
+    DM2_V1_SkprojectMap1815Receipt receipt;
+    uint16_t divisor;
+    uint16_t random_input;
+    int selected;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.candidate_count = candidate_count;
+    if (!gate) {
+        receipt.blocked_zero_gate = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+    if (!candidate_table || candidate_count == 0u) {
+        receipt.blocked_empty_table = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    divisor = (uint16_t)((uint16_t)(v1d3248 << 6) + 0x0bb8u +
+                         (uint16_t)map_width + (uint16_t)map_height);
+    random_input = (uint16_t)(32u * (uint16_t)x + 0x07d0u +
+                              (uint16_t)y);
+    selected = dm2_v1_skproject_map_0cee_17e7(
+        random_input, divisor, (uint16_t)selector, savegame_seed, NULL);
+    receipt.mixed_random =
+        ((((uint32_t)random_input * 0x7ab9u) / 2u) +
+         11u * (uint32_t)divisor + savegame_seed) >> 2;
+    if (selected < 0 || selected >= (int)candidate_count) {
+        receipt.blocked_empty_table = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    receipt.selected_index = (uint16_t)selected;
+    receipt.selected_value = candidate_table[selected];
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.selected_value;
+}
+
+int dm2_v1_skproject_map_0cee_185a(
+    uint16_t *out_words4,
+    int16_t map_width,
+    int16_t map_height,
+    int16_t v1d3248,
+    int16_t gate0,
+    int16_t gate1,
+    int16_t gate2,
+    int16_t gate3,
+    int16_t x,
+    int16_t y,
+    int16_t rotation,
+    int16_t step,
+    uint16_t savegame_seed,
+    const uint8_t *candidate_table,
+    uint16_t candidate_count,
+    const uint8_t *ornate_alcove_flags,
+    DM2_V1_SkprojectMap185AReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMap185AReceipt receipt;
+    int16_t gates[4] = { gate0, gate1, gate2, gate3 };
+    int16_t step_plus_one = (int16_t)(step + 1);
+    int16_t slot = rotation;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_words4) {
+        receipt.blocked_missing_output = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = 0; i < 4u; ++i) {
+        int16_t selector =
+            (int16_t)((((slot & 3) + 1) * step_plus_one) & 0xffff);
+        int value = dm2_v1_skproject_map_0cee_1815(
+            gates[i], map_width, map_height, v1d3248, x, y, selector,
+            savegame_seed, candidate_table, candidate_count, NULL);
+        out_words4[i] = (uint16_t)(uint8_t)value;
+        receipt.values[i] = out_words4[i];
+        slot++;
+    }
+
+    if (x < 0 || x >= map_width || step < 0 || step >= map_height) {
+        for (uint16_t i = 0; i < 4u; ++i) {
+            uint16_t value = out_words4[i] & 0xffu;
+            if (ornate_alcove_flags && value < 256u &&
+                ornate_alcove_flags[value]) {
+                out_words4[i] = 0x00ffu;
+                receipt.values[i] = 0x00ffu;
+                receipt.sanitized[i] = 1u;
+            }
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+static int dm2_v1_skproject_map_record_valid(uint16_t record,
+                                             uint16_t count)
+{
+    return record != DM2_V1_SKPROJECT_MAP_RECORD_END && record < count;
+}
+
+static uint8_t dm2_v1_skproject_map_record_type(
+    const DM2_V1_SkprojectMapRecord *records,
+    uint16_t record)
+{
+    return records[record].record_type;
+}
+
+int dm2_v1_skproject_map_2066_1f37(
+    DM2_V1_SkprojectMapRecord *records,
+    uint16_t record_count,
+    uint16_t head,
+    uint16_t value,
+    int16_t *counter,
+    DM2_V1_SkprojectMap20661F37Receipt *out_receipt)
+{
+    DM2_V1_SkprojectMap20661F37Receipt receipt;
+    uint16_t current = head;
+    int found = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!records || !counter) {
+        receipt.blocked_missing_records = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    while (dm2_v1_skproject_map_record_valid(current, record_count)) {
+        uint16_t next = records[current].next;
+        current = next;
+        if (!dm2_v1_skproject_map_record_valid(current, record_count))
+            break;
+        receipt.scanned_records++;
+        if (dm2_v1_skproject_map_record_type(records, current) == 3u) {
+            uint16_t w2 = records[current].w2;
+            if ((w2 & 0x007fu) == 0x0027u) {
+                found = 1;
+                receipt.matched_records++;
+                if ((w2 & 0x0080u) == 0u) {
+                    records[current].w2 =
+                        (uint16_t)((w2 & 0x007fu) |
+                                   (((uint16_t)(value + 1u) & 0x01ffu)
+                                    << 7));
+                    (*counter)++;
+                    receipt.counter_increment++;
+                    receipt.updated_records++;
+                }
+            }
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return found;
+}
+
+uint16_t dm2_v1_skproject_map_2066_1ec9(
+    DM2_V1_SkprojectMapRecord *records,
+    uint16_t record_count,
+    uint16_t head,
+    uint16_t append,
+    DM2_V1_SkprojectMap20661EC9Receipt *out_receipt)
+{
+    DM2_V1_SkprojectMap20661EC9Receipt receipt;
+    uint16_t result = head;
+    uint16_t current = append;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.returned_head = head;
+    if (!records) {
+        receipt.blocked_missing_records = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return head;
+    }
+    if (head == DM2_V1_SKPROJECT_MAP_RECORD_END) {
+        receipt.returned_head = append;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return append;
+    }
+    if (append == DM2_V1_SKPROJECT_MAP_RECORD_END) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return head;
+    }
+
+    while (dm2_v1_skproject_map_record_valid(current, record_count) &&
+           dm2_v1_skproject_map_record_type(records, current) < 4u) {
+        uint16_t next = records[current].next;
+        uint16_t previous_result = result;
+        result = current;
+        records[current].next = previous_result;
+        current = next;
+        receipt.rewired_records++;
+    }
+    if (dm2_v1_skproject_map_record_valid(result, record_count))
+        records[result].next = current;
+    receipt.appended_tail = current;
+    receipt.returned_head = result;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return result;
+}
+
+int dm2_v1_skproject_tmpmap_or_flag(
+    uint8_t *tmpmap,
+    uint16_t tmpmap_size,
+    int16_t y,
+    int16_t x,
+    int16_t offset,
+    DM2_V1_SkprojectTmpmapFlagReceipt *out_receipt)
+{
+    DM2_V1_SkprojectTmpmapFlagReceipt receipt;
+    int32_t index = ((int32_t)y << 2) + ((int32_t)x << 2) + offset;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!tmpmap) {
+        receipt.blocked_missing_tmpmap = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (index < 0 || index >= tmpmap_size) {
+        receipt.blocked_out_of_bounds = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.offset = (uint16_t)index;
+    receipt.previous_value = tmpmap[index];
+    tmpmap[index] = (uint8_t)(tmpmap[index] | 2u);
+    receipt.new_value = tmpmap[index];
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b)
