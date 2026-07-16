@@ -1,6 +1,7 @@
 #include "dm1_v22_real_art_runtime_gate_pc34.h"
 #include "dm1_v22_finished_art_material_gate_pc34.h"
 #include "dm1_v22_finished_pack_receipt_pc34.h"
+#include "dm1_v2_asset_pipeline_pc34.h"
 #include "dm1_v2_boot_pc34.h"
 #include "fs_portable_compat.h"
 
@@ -130,6 +131,14 @@ int main(void) {
     }
     CHECK(gate.material_finished_real && !gate.receipt_promoted,
           "real art still requires receipt promotion");
+    m11_v22_set_manifest_path(data_dir);
+    m11_v22_set_installed(1);
+    m11_v22_set_epx_cache_warm(1);
+    CHECK(m11_v22_modern_assets_available() == 0,
+          "critical categories alone do not admit DM1 V2.2");
+    CHECK(m11_v22_best_available_shape_source(3) ==
+              DM1_V22_SHAPE_SOURCE_V2_UPSCALED,
+          "installed flag without receipt still falls back to V2.1");
     CHECK(dm1_v2_boot_startup_prepare_pc34("dm1", data_dir, 3, &boot_receipt),
           "boot accepts a DM1 launch request");
     CHECK(boot_receipt.resolved_mode == DM1_V2_PM_V21_UPSCALED &&
@@ -140,6 +149,21 @@ int main(void) {
           "reviewed real pack is admitted");
     CHECK(gate.admitted && gate.asset_root_matches_receipt,
           "admission records root-bound receipt");
+    {
+        char shape_path[FSP_PATH_MAX];
+        CHECK(m11_v22_modern_assets_available() == 1,
+              "reviewed receipt admits DM1 V2.2");
+        CHECK(m11_v22_best_available_shape_source(3) ==
+                  DM1_V22_SHAPE_SOURCE_V2_MODERN,
+              "reviewed pack resolves to V2.2 modern");
+        CHECK(m11_v22_get_shape_path("wall_shapes",
+                                     "wall_d3_carved_hero_01",
+                                     shape_path,
+                                     sizeof(shape_path)) == 1,
+              "compact manifest resolves real wall asset");
+        CHECK(strstr(shape_path, "wall_d3_carved_hero_01.png") != NULL,
+              "resolved path points at the requested real PNG");
+    }
     CHECK(dm1_v2_boot_startup_prepare_pc34("dm1", data_dir, 3, &boot_receipt),
           "boot refreshes the reviewed V2.2 receipt");
     CHECK(boot_receipt.resolved_mode == DM1_V2_PM_V22_MODERN &&

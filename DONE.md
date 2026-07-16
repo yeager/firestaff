@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 V2.2 runtime admission hardening: `m11_v22_modern_assets_available()`
+  now requires both FINISHED_REAL material classification and promoted
+  `finish_receipt.json` before V2.2 can resolve to modern rendering. The
+  legacy missing-texture placeholder is documented as diagnostic-only, compact
+  one-line manifests resolve real asset paths correctly, and the runtime gate
+  regression proves that an `installed=1` flag without a reviewed receipt still
+  falls back to V2.1.
+
 - 2026-07-16 DM2 cache/mement free receipt bundle: mapped
   `FREE_CACHE_INDEX`, `FREE_INDEXED_MEMENT`, `FREE_TEMP_CACHE_INDEX`, and
   `FREE_PICT6` to skproject-backed bounded helpers. The regression covers
