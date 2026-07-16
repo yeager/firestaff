@@ -228,6 +228,9 @@ int main(void)
     Theron_V1RuntimeTrack02CaptureConsumerGapReceipt consumer_gap;
     Theron_V1Track02Post3800ConsumerSemanticReceipt post3800_consumer;
     Theron_V1RuntimeTrack02ConsumerSemanticReceipt consumer_semantics;
+    Theron_V1RuntimeTrack02RenderAssetProof render_proof;
+    Theron_V1RuntimeTrack02RenderAssetProof mutated_render_proof;
+    Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt render_admission;
     Theron_V1TraceSourceProvenanceReceipt provenance;
     Theron_V1RawLoaderTraceGamePayloadReceipt payload;
     Theron_V1RawLoaderTraceGamePayloadReceipt mutated;
@@ -610,6 +613,114 @@ int main(void)
         consumer_semantics.fallback_visuals_allowed) {
         return 1;
     }
+    theron_v1_runtime_track02_render_asset_admission_init(
+        &render_admission);
+    if (render_admission.valid ||
+        render_admission.real_render_assets_admitted ||
+        render_admission.fallback_visuals_allowed) {
+        return 1;
+    }
+    memset(&render_proof, 0, sizeof(render_proof));
+    render_proof.valid = 1;
+    render_proof.same_capture_as_consumer_semantics = 1;
+    render_proof.variant = THERON_TRACK02_VARIANT_US_BIN;
+    strcpy(render_proof.track02_md5, THERON_TRACK02_MD5_US_BIN);
+    render_proof.record = payload.raw_track02_record;
+    render_proof.level_route_hash = route.level_route_hash;
+    render_proof.object_table_route_hash = route.object_table_route_hash;
+    render_proof.all_dungeon_route_hash = route.route_hash;
+    render_proof.payload_checksum = post3800_consumer.payload_checksum;
+    render_proof.level_envelope_checksum =
+        post3800_consumer.level_envelope_checksum;
+    render_proof.post_envelope_checksum =
+        post3800_consumer.post_envelope_checksum;
+    render_proof.consumer_trace_checksum =
+        post3800_consumer.consumer_trace_checksum;
+    render_proof.decoded_level_hash = 0x1e7e1001u;
+    render_proof.decoded_object_table_hash = 0x0b7ec700u;
+    render_proof.decoded_bitmap_hash = 0xb17b00a1u;
+    render_proof.decoded_palette_hash = 0x0fa1e77eu;
+    render_proof.level_consumer_proven = 1;
+    render_proof.object_table_consumer_proven = 1;
+    render_proof.bitmap_consumer_proven = 1;
+    render_proof.palette_consumer_proven = 1;
+    render_proof.decoded_bitmap_pixels_proven = 1;
+    render_proof.decoded_palette_words_proven = 1;
+    if (!theron_v1_runtime_bind_track02_render_asset_admission(
+            &consumer_semantics, &render_proof, &render_admission)) {
+        return 1;
+    }
+    if (!render_admission.valid ||
+        !render_admission.consumer_semantics_consumed ||
+        !render_admission.real_render_asset_proof_consumed ||
+        !render_admission.runtime_capture_required ||
+        render_admission.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(render_admission.track02_md5,
+               THERON_TRACK02_MD5_US_BIN) != 0 ||
+        render_admission.record != payload.raw_track02_record ||
+        render_admission.level_route_hash != route.level_route_hash ||
+        render_admission.object_table_route_hash !=
+            route.object_table_route_hash ||
+        render_admission.all_dungeon_route_hash != route.route_hash ||
+        render_admission.payload_checksum !=
+            post3800_consumer.payload_checksum ||
+        render_admission.level_envelope_checksum !=
+            post3800_consumer.level_envelope_checksum ||
+        render_admission.post_envelope_checksum !=
+            post3800_consumer.post_envelope_checksum ||
+        render_admission.consumer_trace_checksum !=
+            post3800_consumer.consumer_trace_checksum ||
+        render_admission.decoded_level_hash !=
+            render_proof.decoded_level_hash ||
+        render_admission.decoded_object_table_hash !=
+            render_proof.decoded_object_table_hash ||
+        render_admission.decoded_bitmap_hash !=
+            render_proof.decoded_bitmap_hash ||
+        render_admission.decoded_palette_hash !=
+            render_proof.decoded_palette_hash ||
+        !render_admission.object_table_admission_allowed ||
+        !render_admission.level_admission_allowed ||
+        !render_admission.bitmap_admission_allowed ||
+        !render_admission.palette_admission_allowed ||
+        !render_admission.real_render_assets_admitted ||
+        render_admission.fallback_visuals_allowed) {
+        return 1;
+    }
+    mutated_render_proof = render_proof;
+    mutated_render_proof.decoded_bitmap_hash = 0u;
+    if (theron_v1_runtime_bind_track02_render_asset_admission(
+            &consumer_semantics, &mutated_render_proof, &render_admission) ||
+        render_admission.valid) {
+        return 1;
+    }
+    mutated_render_proof = render_proof;
+    mutated_render_proof.synthetic_object_table_promoted = 1;
+    if (theron_v1_runtime_bind_track02_render_asset_admission(
+            &consumer_semantics, &mutated_render_proof, &render_admission) ||
+        render_admission.valid) {
+        return 1;
+    }
+    mutated_render_proof = render_proof;
+    mutated_render_proof.fallback_visuals_observed = 1;
+    if (theron_v1_runtime_bind_track02_render_asset_admission(
+            &consumer_semantics, &mutated_render_proof, &render_admission) ||
+        render_admission.valid) {
+        return 1;
+    }
+    mutated_render_proof = render_proof;
+    mutated_render_proof.level_route_hash ^= 0x100u;
+    if (theron_v1_runtime_bind_track02_render_asset_admission(
+            &consumer_semantics, &mutated_render_proof, &render_admission) ||
+        render_admission.valid) {
+        return 1;
+    }
+    consumer_semantics.fallback_visuals_allowed = 1;
+    if (theron_v1_runtime_bind_track02_render_asset_admission(
+            &consumer_semantics, &render_proof, &render_admission) ||
+        render_admission.valid) {
+        return 1;
+    }
+    consumer_semantics.fallback_visuals_allowed = 0;
     post3800_consumer.record ^= 1u;
     if (theron_v1_runtime_bind_track02_consumer_semantics(
             &consumer_gap, &post3800_consumer, &consumer_semantics) ||

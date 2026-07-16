@@ -252,6 +252,123 @@ typedef struct {
     int fallback_visuals_allowed;
 } Theron_V1RuntimeTrack02ConsumerSemanticReceipt;
 
+typedef struct {
+    int valid;
+    int same_capture_as_consumer_semantics;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t all_dungeon_route_hash;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    uint32_t decoded_level_hash;
+    uint32_t decoded_object_table_hash;
+    uint32_t decoded_bitmap_hash;
+    uint32_t decoded_palette_hash;
+    int level_consumer_proven;
+    int object_table_consumer_proven;
+    int bitmap_consumer_proven;
+    int palette_consumer_proven;
+    int decoded_bitmap_pixels_proven;
+    int decoded_palette_words_proven;
+    int synthetic_level_promoted;
+    int synthetic_object_table_promoted;
+    int synthetic_bitmap_promoted;
+    int synthetic_palette_promoted;
+    int fallback_visuals_observed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02RenderAssetProof;
+
+typedef struct {
+    int valid;
+    int consumer_semantics_consumed;
+    int real_render_asset_proof_consumed;
+    int runtime_capture_required;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t all_dungeon_route_hash;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    uint32_t decoded_level_hash;
+    uint32_t decoded_object_table_hash;
+    uint32_t decoded_bitmap_hash;
+    uint32_t decoded_palette_hash;
+    int object_table_admission_allowed;
+    int level_admission_allowed;
+    int bitmap_admission_allowed;
+    int palette_admission_allowed;
+    int real_render_assets_admitted;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt;
+
+typedef struct {
+    int valid;
+    int same_capture_as_render_admission;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t all_dungeon_route_hash;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    uint32_t decoded_level_hash;
+    uint32_t decoded_object_table_hash;
+    uint32_t decoded_bitmap_hash;
+    uint32_t decoded_palette_hash;
+    int dungeon_runtime_consumer_bound;
+    int object_table_layout_proven;
+    int bitmap_palette_decode_proven;
+    int source_level_bytes_bound;
+    int source_object_table_bytes_bound;
+    int source_bitmap_bytes_bound;
+    int source_palette_bytes_bound;
+    int synthetic_dungeon_state_promoted;
+    int synthetic_object_layout_promoted;
+    int synthetic_bitmap_decode_promoted;
+    int synthetic_palette_decode_promoted;
+    int fallback_visuals_observed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02DungeonHandoffProof;
+
+typedef struct {
+    int valid;
+    int render_asset_admission_consumed;
+    int dungeon_handoff_proof_consumed;
+    int runtime_capture_required;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t record;
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t all_dungeon_route_hash;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    uint32_t decoded_level_hash;
+    uint32_t decoded_object_table_hash;
+    uint32_t decoded_bitmap_hash;
+    uint32_t decoded_palette_hash;
+    int real_data_handoff_to_dungeon;
+    int dungeon_state_admission_allowed;
+    int object_table_layout_admission_allowed;
+    int bitmap_palette_decode_admission_allowed;
+    int dungeon_draw_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02DungeonHandoffReceipt;
+
 void theron_v1_runtime_admission_init(
     Theron_V1RuntimeAdmissionReceipt *out);
 
@@ -275,6 +392,12 @@ void theron_v1_runtime_track02_capture_consumer_gap_init(
 
 void theron_v1_runtime_track02_consumer_semantic_init(
     Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out);
+
+void theron_v1_runtime_track02_render_asset_admission_init(
+    Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *out);
+
+void theron_v1_runtime_track02_dungeon_handoff_init(
+    Theron_V1RuntimeTrack02DungeonHandoffReceipt *out);
 
 int theron_v1_runtime_admission_attach(
     Theron_V1RuntimeAdmissionReceipt *out,
@@ -327,5 +450,15 @@ int theron_v1_runtime_bind_track02_consumer_semantics(
     const Theron_V1RuntimeTrack02CaptureConsumerGapReceipt *gap,
     const Theron_V1Track02Post3800ConsumerSemanticReceipt *consumer,
     Theron_V1RuntimeTrack02ConsumerSemanticReceipt *out);
+
+int theron_v1_runtime_bind_track02_render_asset_admission(
+    const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
+    const Theron_V1RuntimeTrack02RenderAssetProof *proof,
+    Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *out);
+
+int theron_v1_runtime_bind_track02_dungeon_handoff(
+    const Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *admission,
+    const Theron_V1RuntimeTrack02DungeonHandoffProof *proof,
+    Theron_V1RuntimeTrack02DungeonHandoffReceipt *out);
 
 #endif

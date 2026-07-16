@@ -566,10 +566,10 @@ int dm1v1_event_process_tick(
     safetyLimit = DM1_EVENT_MAX_COUNT * 2;  /* prevent infinite loops */
 
     while (dm1v1_event_is_first_expired(queue) && safetyLimit > 0) {
+        if (outResult->count >= DM1_DISPATCH_MAX_PER_TICK) break;
         safetyLimit--;
 
         if (!dm1v1_event_extract_first(queue, &ev)) break;
-        if (outResult->count >= DM1_DISPATCH_MAX_PER_TICK) break;
 
         rec = &outResult->records[outResult->count];
         memset(rec, 0, sizeof(*rec));

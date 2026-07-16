@@ -868,6 +868,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     CSB_V1_BootRuntimeSaveImportReceipt_PC34 save_import_receipt;
     CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 dsa_handoff_receipt;
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
+    CSB_V1_F0240_FirstEventExpiredReceipt f0240_receipt;
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
     uint32_t adapter_game_time = 0U;
@@ -945,6 +946,24 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "post-handoff runtime accepts one timeline event at game_time 0");
     CHECK(p.runtime.timeline_queue.eventCount == 1,
           "post-handoff timeline queue contains one pending event before tick");
+    CHECK(csb_v1_runtime_f0240_is_first_event_expired(
+              &p.runtime, &f0240_receipt) == 1 &&
+              f0240_receipt.valid == 1 &&
+              f0240_receipt.expired == 1 &&
+              f0240_receipt.event_count == 1 &&
+              f0240_receipt.first_event_time == 0U &&
+              f0240_receipt.game_time == 0U &&
+              f0240_receipt.first_event_type == DM1_EVENT_PLAY_SOUND &&
+              strcmp(f0240_receipt.status, "expired-first-event") == 0,
+          "CSB F0240 receipt expires the first live heap event at game_time 0");
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 5);
+    CHECK(csb_v1_runtime_add_timeline_event(&p.runtime, &ev) >= 0,
+          "post-handoff runtime accepts one future timeline event");
+    CHECK(csb_v1_runtime_f0240_is_first_event_expired(
+              &p.runtime, &f0240_receipt) == 1 &&
+              f0240_receipt.expired == 1 &&
+              f0240_receipt.first_event_time == 0U,
+          "CSB F0240 reads only the source heap root, not a later future event");
     CHECK(csb_v1_runtime_tick_v1(&p.runtime) == 1,
           "post-handoff runtime fires exactly one deterministic V1 tick");
     CHECK(p.runtime.tick_count == 1U && p.runtime.game_time == 1U,
@@ -958,8 +977,30 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "post-handoff timeline dispatch stays on the sound boundary");
     CHECK(dispatch.records[0].mapX == 1 && dispatch.records[0].mapY == 1,
           "post-handoff timeline dispatch preserves event coordinates");
-    CHECK(p.runtime.timeline_queue.eventCount == 0,
-          "post-handoff timeline queue is empty after the single tick");
+    CHECK(p.runtime.timeline_queue.eventCount == 1,
+          "post-handoff timeline queue keeps the future event after the first tick");
+    CHECK(csb_v1_runtime_f0240_is_first_event_expired(
+              &p.runtime, &f0240_receipt) == 1 &&
+              f0240_receipt.valid == 1 &&
+              f0240_receipt.expired == 0 &&
+              f0240_receipt.event_count == 1 &&
+              f0240_receipt.first_event_time == 5U &&
+              f0240_receipt.game_time == 1U &&
+              strcmp(f0240_receipt.status, "waiting-first-event") == 0,
+          "CSB F0240 waits when the first source event is still in the future");
+    p.runtime.timeline_queue.timeline[0] = (uint16_t)DM1_EVENT_MAX_COUNT;
+    CHECK(csb_v1_runtime_f0240_is_first_event_expired(
+              &p.runtime, &f0240_receipt) == 0 &&
+              strcmp(f0240_receipt.status,
+                     "malformed-first-event-index") == 0,
+          "CSB F0240 rejects a malformed heap root instead of fabricating an event");
+    p.runtime.timeline_queue.eventCount = 0;
+    CHECK(csb_v1_runtime_f0240_is_first_event_expired(
+              &p.runtime, &f0240_receipt) == 1 &&
+              f0240_receipt.valid == 1 &&
+              f0240_receipt.expired == 0 &&
+              strcmp(f0240_receipt.status, "empty-timeline") == 0,
+          "CSB F0240 treats an empty live timeline as non-expired");
     CHECK(p.runtime.state == CSB_STATE_TITLE,
           "post-handoff tick does not claim a broader CSB gameplay state");
 

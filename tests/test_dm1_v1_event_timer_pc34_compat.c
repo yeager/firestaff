@@ -551,6 +551,45 @@ static void test_dispatch_classification(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test 10b: F0261 bounded recorder does not drop unrecorded events
+ * ---------------------------------------------------------------- */
+static void test_process_tick_record_limit_preserves_heap(void) {
+    struct DM1_EventQueue_V1 queue;
+    struct DM1_Event_V1 ev;
+    struct DM1_TickDispatchResult_V1 result;
+    int i;
+
+    dm1v1_event_queue_init(&queue, 1000);
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_PLAY_SOUND;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 100);
+
+    for (i = 0; i < DM1_DISPATCH_MAX_PER_TICK + 1; ++i) {
+        ev.priority = (uint8_t)i;
+        TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0,
+                    "expired event added for bounded F0261 drain");
+    }
+
+    TEST_ASSERT_INT_EQ(dm1v1_event_process_tick(&queue, &result),
+                       DM1_DISPATCH_MAX_PER_TICK,
+                       "F0261 records only the bounded batch");
+    TEST_ASSERT_INT_EQ(result.count, DM1_DISPATCH_MAX_PER_TICK,
+                       "bounded batch fills the dispatch result");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 1,
+                       "unrecorded expired event remains queued");
+    TEST_ASSERT(dm1v1_event_is_first_expired(&queue),
+                "remaining event is still expired for the next F0261 pass");
+
+    TEST_ASSERT_INT_EQ(dm1v1_event_process_tick(&queue, &result), 1,
+                       "next F0261 pass drains the preserved event");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 0,
+                       "queue is empty after preserved event dispatch");
+
+    tests_passed++;
+    printf("PASS: test_process_tick_record_limit_preserves_heap\n");
+}
+
+/* ----------------------------------------------------------------
  *  Test 11: DOOR_ANIMATION + DOOR merge (toggle resolution)
  * ---------------------------------------------------------------- */
 static void test_door_animation_merge(void) {
@@ -751,6 +790,7 @@ int main(void) {
     test_capacity_limit();
     test_tick_advancement();
     test_dispatch_classification();
+    test_process_tick_record_limit_preserves_heap();
     test_door_animation_merge();
     test_door_destruction_merge_scope();
     test_get_index_and_fix_existing_placement();
