@@ -942,6 +942,21 @@ typedef struct {
 typedef struct {
     int valid;
     int blocked_null_object;
+    int blocked_missing_request;
+    int blocked_inventory_slot_range;
+    int equipped_to_container_overlay;
+    int process_item_bonus_requested;
+    uint16_t player;
+    uint16_t raw_object_id;
+    uint16_t cleared_object_id;
+    uint16_t inventory_slot;
+    uint16_t container_slot;
+    uint16_t previous_object_id;
+} DM2_V1_SkprojectEquipItemReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_null_object;
     int blocked_missing_record;
     uint16_t object_id;
     uint8_t db_type;
@@ -2168,6 +2183,12 @@ int dm2_v1_skproject_calc_player_weight(
     uint16_t player,
     const DM2_V1_SkprojectPlayerWeightRequest *request,
     DM2_V1_SkprojectPlayerWeightReceipt *out_receipt);
+int dm2_v1_skproject_equip_item_to_inventory(
+    DM2_V1_SkprojectPlayerWeightRequest *request,
+    uint16_t player,
+    uint16_t object_id,
+    uint16_t inventory_slot,
+    DM2_V1_SkprojectEquipItemReceipt *out_receipt);
 int dm2_v1_skproject_count_by_coin_types(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t moneybox_object_id,
