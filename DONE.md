@@ -21913,3 +21913,14 @@ Verification: `cmake --build build-local-ninja --target
 test_dm2_v1_gdat_querydb_receipts --parallel 4`, `ctest --test-dir
 build-local-ninja --output-on-failure -R '^dm2_v1_gdat_querydb_receipts$'`,
 and focused `git diff --check` passed.
+
+# ✅ 2026-07-16 DM2 skproject xrect codec
+
+DM2 now maps `DM2_QUERY_RECT`, `DM2_COMPRESS_RECTS`, and `READ_WORD` in the
+shared skproject core layer. The new bounded table codec follows
+`SKULLWIN/c_xrect.cpp` and `SKWIN/SkWinCore.cpp`: raw4 groups become
+source-shaped rnodes, common X/Y and byte/word rectangle fields are preserved,
+zero/missing/truncated rectangles fail closed, and no synthetic rectangle data
+is generated. Verification: `cmake --build build-local-ninja --target
+test_dm2_v1_skproject_core -j4` and `ctest --test-dir build-local-ninja
+--output-on-failure -R '^dm2_v1_skproject_core$'` passed.

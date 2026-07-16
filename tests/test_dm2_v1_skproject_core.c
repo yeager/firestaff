@@ -111,6 +111,7 @@ static void test_util_helpers(void)
     uint8_t cursor_bytes[8] = { 0 };
     uint8_t read_byte = 0u;
     int8_t read_sbyte = 0;
+    uint16_t read_word = 0u;
     int16_t table[5] = { 1, 2, 3, 4, 5 };
     DM2_V1_SkprojectRect origin = { 10, 20, 100, 80 };
     DM2_V1_SkprojectRect source = { 13, 31, 7, 5 };
@@ -235,6 +236,11 @@ static void test_util_helpers(void)
               &cursor_receipt) == 1 &&
               cursor_receipt.valid && read_sbyte == -16,
           "READ_SBYTE preserves signed 8-bit interpretation");
+    CHECK(dm2_v1_skproject_read_word(
+              cursor_bytes, sizeof(cursor_bytes), 4u, &read_word,
+              &cursor_receipt) == 1 &&
+              cursor_receipt.valid && read_word == 0x1234u,
+          "READ_WORD reads little-endian 16-bit data at the source cursor");
     CHECK(dm2_v1_skproject_write_word(
               cursor_bytes, sizeof(cursor_bytes), 7u, 0x5678u,
               &cursor_receipt) == 0 &&
@@ -299,6 +305,113 @@ static void test_util_helpers(void)
               0, 0u, &pos_receipt) == -1 &&
               pos_receipt.blocked_missing_inventory,
           "FIND_POUCH_OR_SCABBARD_POSSESSION_POS rejects missing inventory");
+}
+
+static void test_xrect_codec(void)
+{
+    DM2_V1_SkprojectRectTable table;
+    DM2_V1_SkprojectCompressRectsReceipt compress;
+    DM2_V1_SkprojectQueryRectReceipt query;
+    DM2_V1_SkprojectRect rect;
+    const int16_t common_xy_words[] = {
+        (int16_t)0xfc0d, 1, 100, 101,
+        20, 30, 12, 10,
+        20, 30, 40, 22
+    };
+    const int16_t byte_xy_words[] = {
+        (int16_t)0xfc0d, 1, 200, 201,
+        1, 2, 30, 31,
+        40, 50, 60, 70
+    };
+    const int16_t signed_size_words[] = {
+        (int16_t)0xfc0d, 1, 300, 300,
+        7, 8, -5, 6
+    };
+    const int16_t word_size_words[] = {
+        (int16_t)0xfc0d, 1, 400, 400,
+        40, 20, 260, 9
+    };
+    const int16_t two_groups_words[] = {
+        (int16_t)0xfc0d, 2, 10, 10, 20, 21,
+        5, 6, 7, 8,
+        9, 10, 11, 12,
+        13, 14, 15, 16
+    };
+
+    CHECK(dm2_v1_skproject_compressed_rect_row_size(0x1bu) == 2u &&
+              dm2_v1_skproject_compressed_rect_row_size(0x04u) == 6u &&
+              dm2_v1_skproject_compressed_rect_row_size(0x00u) == 8u,
+          "DM2_CALC_SIZE_OF_COMPRESSED_RECT follows skproject mask rules");
+
+    CHECK(dm2_v1_skproject_compress_rects(
+              common_xy_words,
+              (uint32_t)(sizeof(common_xy_words) / sizeof(common_xy_words[0])),
+              &table, &compress) == 1 &&
+              compress.valid && compress.node_count == 1u &&
+              table.nodes[0].mask == 0x1bu,
+          "DM2_COMPRESS_RECTS stores common x/y and signed byte dimensions");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 101u, &rect, &query) == 1 &&
+              query.valid && rect.x == 20 && rect.y == 30 &&
+              rect.w == 40 && rect.h == 22 && query.row_size == 2u,
+          "DM2_QUERY_RECT expands a common x/y compressed row");
+
+    CHECK(dm2_v1_skproject_compress_rects(
+              byte_xy_words,
+              (uint32_t)(sizeof(byte_xy_words) / sizeof(byte_xy_words[0])),
+              &table, &compress) == 1 &&
+              compress.valid && table.nodes[0].mask == 0x1cu,
+          "DM2_COMPRESS_RECTS uses byte x/y when no common coordinate exists");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 201u, &rect, &query) == 1 &&
+              rect.x == 40 && rect.y == 50 && rect.w == 60 && rect.h == 70,
+          "DM2_QUERY_RECT expands byte-packed x/y/unsigned size rows");
+
+    CHECK(dm2_v1_skproject_compress_rects(
+              signed_size_words,
+              (uint32_t)(sizeof(signed_size_words) / sizeof(signed_size_words[0])),
+              &table, &compress) == 1 &&
+              table.nodes[0].mask == 0x0bu,
+          "DM2_COMPRESS_RECTS preserves signed-byte width/height route");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 300u, &rect, &query) == 1 &&
+              rect.x == 7 && rect.y == 8 && rect.w == -5 && rect.h == 6,
+          "DM2_QUERY_RECT sign-extends signed byte dimensions");
+
+    CHECK(dm2_v1_skproject_compress_rects(
+              word_size_words,
+              (uint32_t)(sizeof(word_size_words) / sizeof(word_size_words[0])),
+              &table, &compress) == 1 &&
+              table.nodes[0].mask == 0x03u,
+          "DM2_COMPRESS_RECTS falls back to word x and unsigned-byte size");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 400u, &rect, &query) == 1 &&
+              rect.x == 40 && rect.y == 20 && rect.w == 260 && rect.h == 9,
+          "DM2_QUERY_RECT expands word-sized fields when byte packing is unsafe");
+
+    CHECK(dm2_v1_skproject_compress_rects(
+              two_groups_words,
+              (uint32_t)(sizeof(two_groups_words) / sizeof(two_groups_words[0])),
+              &table, &compress) == 1 &&
+              compress.valid && compress.node_count == 2u,
+          "DM2_COMPRESS_RECTS appends multiple source ranges as rnodes");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 21u, &rect, &query) == 1 &&
+              query.node_index == 1u && query.local_index == 1u &&
+              rect.x == 13 && rect.y == 14 && rect.w == 15 && rect.h == 16,
+          "DM2_QUERY_RECT walks later rnodes by requested rectangle number");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 0u, &rect, &query) == 0 &&
+              query.blocked_zero_rect,
+          "DM2_QUERY_RECT rejects source rect zero");
+    CHECK(dm2_v1_skproject_query_rect(
+              &table, 99u, &rect, &query) == 0 &&
+              query.blocked_not_found,
+          "DM2_QUERY_RECT fails closed when no rnode owns the rect");
+    CHECK(dm2_v1_skproject_compress_rects(
+              common_xy_words, 3u, &table, &compress) == 0 &&
+              compress.blocked_group_overflow,
+          "DM2_COMPRESS_RECTS rejects truncated raw4 data");
 }
 
 static void test_palette_helpers(void)
@@ -2904,6 +3017,7 @@ int main(void)
     test_adjust_ui_event();
     test_gfx_str_helpers();
     test_gdat_allocation_helpers();
+    test_xrect_codec();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -3004,7 +3118,13 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "READ_BYTE") != 0 &&
               strstr(dm2_v1_skproject_core_source_evidence(),
-                     "READ_SBYTE") != 0,
+                     "READ_SBYTE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "READ_WORD") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "COMPRESS_RECTS") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "QUERY_RECT") != 0,
           "source evidence names rect and cursor helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "FREE_CACHE_INDEX") != 0 &&

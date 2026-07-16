@@ -14,13 +14,17 @@
     real GDAT image-buffer ownership.
   - 2026-07-16 DM2 cursor macro update: `WRITE_BYTE`, `WRITE_WORD`,
     `READ_BYTE`, and `READ_SBYTE` are now closed through skproject-backed
-    bounded cursor receipts. Remaining adjacent work is the full
-    `COMPRESS_RECTS` / `QUERY_RECT` table codec, not synthetic rect data.
+    bounded cursor receipts.
+  - 2026-07-16 DM2 xrect codec update: `READ_WORD`, `DM2_COMPRESS_RECTS`,
+    and `DM2_QUERY_RECT` are now closed through skproject-backed bounded
+    receipts. Firestaff now compresses raw4 rectangle groups into source-shaped
+    rnodes, expands common/byte/word rect fields, rejects malformed tables, and
+    uses no synthetic rect data. Remaining adjacent work is live UI/button-group
+    consumers and broader GDAT HUD/dungeon wiring.
   - 2026-07-16 DM2 rect/cursor update: `DM2_OFFSET_RECT`,
     `OFFSET_RECT`, `PT_IN_RECT`, and `PTR_ADVANCE` are now closed through
-    skproject-backed bounded receipts. Remaining adjacent work is the full
-    `COMPRESS_RECTS` macro family and UI/button-group rect adjustment, not
-    synthetic geometry.
+    skproject-backed bounded receipts. Remaining adjacent work is UI/button-
+    group rect adjustment and live consumers, not synthetic geometry.
   - 2026-07-16 DM2 update: `DM2_dballoc_3e74_24b8`,
     `DM2_dballoc_3e74_2162`, and `DM2_LOAD_DYN4` are now closed through
     skproject-backed allocation/filter receipts. Remaining adjacent DM2 work

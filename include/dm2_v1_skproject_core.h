@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_SKPROJECT_CORE_H
 #define FIRESTAFF_DM2_V1_SKPROJECT_CORE_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct {
@@ -104,6 +105,58 @@ typedef struct {
     uint8_t blocked_out_of_bounds;
     uint8_t blocked_unsupported_width;
 } DM2_V1_SkprojectCursorAccessReceipt;
+
+#define DM2_V1_SKPROJECT_RECT_TABLE_MAX_NODES 64u
+#define DM2_V1_SKPROJECT_RECT_TABLE_PAYLOAD_CAPACITY 8192u
+
+typedef struct {
+    uint16_t next_index;
+    uint16_t min_rect;
+    uint16_t max_rect;
+    uint8_t mask;
+    uint8_t common_x;
+    uint32_t payload_offset;
+    uint32_t payload_size;
+} DM2_V1_SkprojectRectNode;
+
+typedef struct {
+    DM2_V1_SkprojectRectNode nodes[DM2_V1_SKPROJECT_RECT_TABLE_MAX_NODES];
+    uint8_t payload[DM2_V1_SKPROJECT_RECT_TABLE_PAYLOAD_CAPACITY];
+    uint16_t node_count;
+    uint32_t payload_used;
+} DM2_V1_SkprojectRectTable;
+
+typedef struct {
+    int valid;
+    int blocked_bad_magic;
+    int blocked_missing_input;
+    int blocked_missing_output;
+    int blocked_group_overflow;
+    int blocked_payload_overflow;
+    int blocked_malformed_range;
+    int blocked_malformed_words;
+    uint16_t group_count;
+    uint16_t node_count;
+    uint32_t consumed_words;
+    uint32_t payload_used;
+    uint32_t table_hash;
+} DM2_V1_SkprojectCompressRectsReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_zero_rect;
+    int blocked_missing_table;
+    int blocked_not_found;
+    int blocked_payload_bounds;
+    uint16_t rectno;
+    uint16_t node_index;
+    uint16_t local_index;
+    uint8_t mask;
+    uint8_t row_size;
+    DM2_V1_SkprojectRect rect;
+    uint32_t row_offset;
+    uint32_t table_hash;
+} DM2_V1_SkprojectQueryRectReceipt;
 
 typedef struct {
     int valid;
@@ -1842,6 +1895,23 @@ int dm2_v1_skproject_read_sbyte(
     uint32_t offset,
     int8_t *out_value,
     DM2_V1_SkprojectCursorAccessReceipt *out_receipt);
+int dm2_v1_skproject_read_word(
+    const uint8_t *buffer,
+    uint32_t capacity,
+    uint32_t offset,
+    uint16_t *out_value,
+    DM2_V1_SkprojectCursorAccessReceipt *out_receipt);
+uint8_t dm2_v1_skproject_compressed_rect_row_size(uint8_t mask);
+int dm2_v1_skproject_compress_rects(
+    const int16_t *data_words,
+    uint32_t word_count,
+    DM2_V1_SkprojectRectTable *out_table,
+    DM2_V1_SkprojectCompressRectsReceipt *out_receipt);
+int dm2_v1_skproject_query_rect(
+    const DM2_V1_SkprojectRectTable *table,
+    uint16_t rectno,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectQueryRectReceipt *out_receipt);
 int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
                                              uint8_t *out_palette);
 int dm2_v1_skproject_palettecolor_from_ui8(uint8_t color,
