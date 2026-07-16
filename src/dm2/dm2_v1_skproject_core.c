@@ -496,6 +496,139 @@ int dm2_v1_skproject_move_admission(
     return (int)receipt.result_code;
 }
 
+int dm2_v1_skproject_set_destination_of_minion_map(
+    uint16_t previous_record_w6,
+    int16_t current_map,
+    int16_t destination_x,
+    int16_t destination_y,
+    int16_t selected_map,
+    int16_t map_width,
+    int16_t map_height,
+    DM2_V1_SkprojectMinionDestinationReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMinionDestinationReceipt receipt;
+    uint16_t word;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.previous_map = current_map;
+    receipt.selected_map = selected_map;
+    receipt.destination_x = destination_x;
+    receipt.destination_y = destination_y;
+    receipt.previous_record_w6 = previous_record_w6;
+
+    receipt.in_bounds = destination_x >= 0 && destination_x < map_width &&
+                        destination_y >= 0 && destination_y < map_height;
+    if (receipt.in_bounds) {
+        word = (uint16_t)(previous_record_w6 & 0xfc00u);
+        word = (uint16_t)((word & 0xffe0u) |
+                          ((uint16_t)destination_x & 0x001fu));
+        word = (uint16_t)((word & 0xfc1fu) |
+                          (((uint16_t)destination_y & 0x001fu) << 5));
+        word = (uint16_t)((word & 0x03ffu) |
+                          (((uint16_t)selected_map & 0x003fu) << 10));
+        receipt.new_record_w6 = word;
+    } else {
+        receipt.new_record_w6 = previous_record_w6;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.in_bounds;
+}
+
+int dm2_v1_skproject_map_0cee_17e7(
+    uint16_t random_input,
+    uint16_t divisor,
+    uint16_t range_input,
+    uint16_t savegame_seed,
+    DM2_V1_SkprojectMapRandomReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMapRandomReceipt receipt;
+    uint32_t mixed;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.random_input = random_input;
+    receipt.divisor = divisor;
+    receipt.range_input = range_input;
+    receipt.savegame_seed = savegame_seed;
+    if (range_input == 0u) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    mixed = ((uint32_t)random_input * 0x7ab9u) / 2u;
+    mixed += 11u * (uint32_t)divisor;
+    mixed += savegame_seed;
+    mixed >>= 2;
+    receipt.mixed_value = mixed;
+    receipt.result = (uint16_t)(mixed % (uint32_t)range_input);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.result;
+}
+
+int dm2_v1_skproject_map_0cee_04e5(
+    const uint8_t *tiles,
+    int16_t width,
+    int16_t height,
+    int16_t dir,
+    int16_t forward,
+    int16_t side,
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectMapTileVectorReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMapTileVectorReceipt receipt;
+    int16_t tile_x = x;
+    int16_t tile_y = y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.dir = dir;
+    receipt.forward = forward;
+    receipt.side = side;
+    receipt.input_x = x;
+    receipt.input_y = y;
+    dm2_v1_skproject_calc_vector_w_dir(dir, forward, side,
+                                       &tile_x, &tile_y, NULL);
+    receipt.tile_x = tile_x;
+    receipt.tile_y = tile_y;
+    if (!tiles || width <= 0 || height <= 0) {
+        receipt.blocked_missing_tiles = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (tile_x < 0 || tile_y < 0 || tile_x >= width || tile_y >= height) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.tile_value = tiles[(int)tile_y * (int)width + (int)tile_x];
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.tile_value;
+}
+
+int dm2_v1_skproject_map_3b001(
+    int16_t current_map,
+    int16_t value_0270,
+    int16_t value_0272,
+    DM2_V1_SkprojectMap3B001Receipt *out_receipt)
+{
+    DM2_V1_SkprojectMap3B001Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.previous_current_map = current_map;
+    receipt.new_v1e0270 = value_0270;
+    receipt.new_v1e0272 = value_0272;
+    receipt.requested_change_to_previous_map = current_map != -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b)
@@ -1786,5 +1919,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_gfx_pal.cpp color_to_palettecolor/"
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
-           "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881";
+           "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881; "
+           "SKULLWIN/c_map.cpp DM2_SET_DESTINATION_OF_MINION_MAP/"
+           "DM2_map_0cee_17e7/DM2_map_0cee_04e5/DM2_map_3B001";
 }

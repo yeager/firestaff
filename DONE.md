@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject map helper bundle: mapped
+  `DM2_SET_DESTINATION_OF_MINION_MAP`, `DM2_map_0cee_17e7`,
+  `DM2_map_0cee_04e5`, and `DM2_map_3B001` from `SKULLWIN/c_map.cpp`.
+  Coverage locks source bit-packing for minion destinations, mixed modulo map
+  selection, vector-before-tile lookup, and map marker restore receipts without
+  claiming live global map mutation. Verification: `cmake --build
+  build-local-ninja --target test_dm2_v1_skproject_core -j2` and `ctest
+  --test-dir build-local-ninja --output-on-failure -R
+  '^dm2_v1_skproject_core$'` passed.
+
 - 2026-07-16 DM1 CHAMPION skill/stamina/load F0303-F0310 bundle: closed
   source-backed ReDMCSB dispositions for `F0303_CHAMPION_GetSkillLevel`,
   `F0304_CHAMPION_AddSkillExperience`, `F0305_CHAMPION_GetThrowingStaminaCost`,

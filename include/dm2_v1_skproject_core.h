@@ -135,6 +135,49 @@ typedef struct {
     int used_secondary_query;
 } DM2_V1_SkprojectMoveAdmissionReceipt;
 
+typedef struct {
+    int valid;
+    int in_bounds;
+    int16_t previous_map;
+    int16_t selected_map;
+    int16_t destination_x;
+    int16_t destination_y;
+    uint16_t previous_record_w6;
+    uint16_t new_record_w6;
+} DM2_V1_SkprojectMinionDestinationReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t random_input;
+    uint16_t divisor;
+    uint16_t range_input;
+    uint16_t savegame_seed;
+    uint32_t mixed_value;
+    uint16_t result;
+} DM2_V1_SkprojectMapRandomReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_tiles;
+    int blocked_out_of_bounds;
+    int16_t dir;
+    int16_t forward;
+    int16_t side;
+    int16_t input_x;
+    int16_t input_y;
+    int16_t tile_x;
+    int16_t tile_y;
+    uint8_t tile_value;
+} DM2_V1_SkprojectMapTileVectorReceipt;
+
+typedef struct {
+    int valid;
+    int16_t previous_current_map;
+    int16_t new_v1e0270;
+    int16_t new_v1e0272;
+    int requested_change_to_previous_map;
+} DM2_V1_SkprojectMap3B001Receipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -557,6 +600,36 @@ int dm2_v1_skproject_move_side_offset(
 int dm2_v1_skproject_move_admission(
     const DM2_V1_SkprojectMoveAdmissionRequest *request,
     DM2_V1_SkprojectMoveAdmissionReceipt *out_receipt);
+int dm2_v1_skproject_set_destination_of_minion_map(
+    uint16_t previous_record_w6,
+    int16_t current_map,
+    int16_t destination_x,
+    int16_t destination_y,
+    int16_t selected_map,
+    int16_t map_width,
+    int16_t map_height,
+    DM2_V1_SkprojectMinionDestinationReceipt *out_receipt);
+int dm2_v1_skproject_map_0cee_17e7(
+    uint16_t random_input,
+    uint16_t divisor,
+    uint16_t range_input,
+    uint16_t savegame_seed,
+    DM2_V1_SkprojectMapRandomReceipt *out_receipt);
+int dm2_v1_skproject_map_0cee_04e5(
+    const uint8_t *tiles,
+    int16_t width,
+    int16_t height,
+    int16_t dir,
+    int16_t forward,
+    int16_t side,
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectMapTileVectorReceipt *out_receipt);
+int dm2_v1_skproject_map_3b001(
+    int16_t current_map,
+    int16_t value_0270,
+    int16_t value_0272,
+    DM2_V1_SkprojectMap3B001Receipt *out_receipt);
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b);
