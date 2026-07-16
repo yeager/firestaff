@@ -28,6 +28,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from string import Template
@@ -66,6 +67,10 @@ else:
 
 
 GAMES = ("dm1", "csb", "dm2", "theron", "nexus")
+FSART_SUFFIX = ".fsart"
+IMAGE_EXTENSIONS = {".png", ".bmp", ".gif", ".jpg", ".jpeg", ".tga", ".webp"}
+REPO_ROOT = Path(__file__).resolve().parents[1]
+FIRESTAFF_LOGO = REPO_ROOT / "assets" / "branding" / "firestaff-logo.png"
 
 COMMON_CATEGORIES = (
     "wall_shapes",
@@ -151,6 +156,37 @@ def safe_asset_filename(asset_id: str) -> str:
     return (name or "asset") + ".png"
 
 
+def default_reference_dir(game: str) -> Path:
+    return Path.home() / ".firestaff" / "data" / game
+
+
+def infer_category(path: Path, game: str) -> str:
+    categories = set(categories_for_game(game))
+    for part in reversed(path.parts):
+        if part in categories:
+            return part
+    lower = path.stem.lower()
+    if "champ" in lower or "portrait" in lower:
+        return "champion_portraits"
+    if "title" in lower:
+        return "title_frames"
+    if "entrance" in lower:
+        return "entrance_frames"
+    if "wall" in lower:
+        return "wall_shapes"
+    if "floor" in lower:
+        return "floor_shapes"
+    if "door" in lower:
+        return "door_shapes"
+    if "creature" in lower or "monster" in lower:
+        return "creature_shapes"
+    if "object" in lower or "item" in lower:
+        return "object_shapes"
+    if "spell" in lower or "projectile" in lower:
+        return "projectile_shapes"
+    return "ui_chrome"
+
+
 def ensure_rgba(img: Image.Image) -> Image.Image:
     if img.mode != "RGBA":
         return img.convert("RGBA")
@@ -174,6 +210,40 @@ class AssetEntry:
     height: int
     generator: str
     notes: str = ""
+
+
+@dataclass
+class ReferenceAsset:
+    category: str
+    asset_id: str
+    path: Path
+    width: int
+    height: int
+
+
+def scan_reference_assets(game: str, root: Path) -> list[ReferenceAsset]:
+    root = root.expanduser()
+    if not root.exists():
+        return []
+    out: list[ReferenceAsset] = []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in IMAGE_EXTENSIONS:
+            continue
+        try:
+            with Image.open(path) as img:
+                width, height = img.size
+        except Exception:
+            continue
+        out.append(
+            ReferenceAsset(
+                category=infer_category(path.relative_to(root), game),
+                asset_id=path.stem,
+                path=path,
+                width=width,
+                height=height,
+            )
+        )
+    return out
 
 
 class Artpack:
@@ -342,6 +412,40 @@ class Artpack:
         tmp.replace(out)
         return out
 
+    def export_fsart(self, archive_path: Path) -> Path:
+        self.save()
+        archive_path = archive_path.expanduser()
+        if archive_path.suffix.lower() != FSART_SUFFIX:
+            archive_path = archive_path.with_suffix(FSART_SUFFIX)
+        archive_path.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            zf.write(self.manifest_path, "modern_asset_manifest.json")
+            receipt = self.root / "finish_receipt.json"
+            if receipt.exists():
+                zf.write(receipt, "finish_receipt.json")
+            for entry in self.entries():
+                path = self.asset_path(entry)
+                if path.exists():
+                    zf.write(path, f"{entry.category}/{entry.source_file}")
+        return archive_path
+
+    def import_fsart(self, archive_path: Path) -> None:
+        archive_path = archive_path.expanduser()
+        with zipfile.ZipFile(archive_path, "r") as zf:
+            names = zf.namelist()
+            if "modern_asset_manifest.json" not in names:
+                raise ValueError(".fsart archive is missing modern_asset_manifest.json")
+            for name in names:
+                candidate = Path(name)
+                if candidate.is_absolute() or ".." in candidate.parts:
+                    raise ValueError(f"Unsafe archive path: {name}")
+            self.root.mkdir(parents=True, exist_ok=True)
+            zf.extractall(self.root)
+        self.load_or_create()
+        if str(self.data.get("game") or self.game) != self.game:
+            raise ValueError(f".fsart game mismatch: expected {self.game}, got {self.data.get('game')}")
+        self.save()
+
 
 class PixelCanvas(ttk.Frame):
     def __init__(self, master: tk.Misc, title: str, editable: bool):
@@ -480,14 +584,18 @@ class ArtpackStudio(tk.Tk):
         self.minsize(1000, 680)
         self.game = tk.StringVar(value=initial_game)
         self.root = tk.StringVar(value=str(initial_root or default_modern_dir(initial_game)))
+        self.reference_root = tk.StringVar(value=str(default_reference_dir(initial_game)))
         self.category = tk.StringVar(value="wall_shapes")
         self.asset_id = tk.StringVar(value="wall_d3_carved_hero_01")
         self.generator = tk.StringVar(value="operator_import")
         self.ai_command = tk.StringVar(value=os.environ.get("FIRESTAFF_ARTPACK_AI_COMMAND", ""))
         self.status = tk.StringVar(value="Ready")
         self.pack: Artpack | None = None
+        self.reference_assets: list[ReferenceAsset] = []
+        self.asset_rows: list[ReferenceAsset | AssetEntry] = []
         self.source_path: Path | None = None
         self.target_path: Path | None = None
+        self.watermark_photo: ImageTk.PhotoImage | None = None
         self._build_ui()
         self.open_pack()
 
@@ -504,15 +612,38 @@ class ArtpackStudio(tk.Tk):
         ttk.Button(top, text="Open/Create", command=self.open_pack).pack(side="left")
         ttk.Button(top, text="Validate", command=self.validate_pack).pack(side="left", padx=4)
         ttk.Button(top, text="Write Receipt", command=self.write_receipt).pack(side="left")
+        ttk.Button(top, text="Import .fsart", command=self.import_fsart_dialog).pack(side="left", padx=(10, 4))
+        ttk.Button(top, text="Export .fsart", command=self.export_fsart_dialog).pack(side="left")
 
         main = ttk.PanedWindow(self, orient="horizontal")
         main.pack(fill="both", expand=True, padx=8, pady=8)
 
-        left = ttk.Frame(main, width=320)
+        left = tk.Frame(main, width=360, background="#101214")
         main.add(left, weight=0)
-        ttk.Label(left, text="Assets").pack(anchor="w")
-        self.asset_list = tk.Listbox(left, height=22)
-        self.asset_list.pack(fill="both", expand=True)
+        self.watermark = tk.Label(left, background="#101214", borderwidth=0)
+        self.watermark.place(x=8, y=42)
+        self.load_watermark()
+        asset_header = ttk.Frame(left)
+        asset_header.pack(fill="x", padx=6, pady=(6, 2))
+        ttk.Label(asset_header, text="V1 assets / V2.2 targets").pack(side="left")
+        ttk.Button(asset_header, text="Rescan", command=self.rescan_reference_assets).pack(side="right")
+        ref = ttk.Frame(left)
+        ref.pack(fill="x", padx=6, pady=(0, 4))
+        ttk.Label(ref, text="V1 root").pack(side="left")
+        ttk.Entry(ref, textvariable=self.reference_root, width=28).pack(side="left", fill="x", expand=True, padx=4)
+        ttk.Button(ref, text="Browse", command=self.browse_reference_root).pack(side="left")
+        self.asset_list = tk.Listbox(
+            left,
+            height=22,
+            font=("Menlo", 11),
+            background="#15191d",
+            foreground="#d9e4e6",
+            selectbackground="#225b62",
+            borderwidth=0,
+            highlightthickness=1,
+            highlightbackground="#2f3a40",
+        )
+        self.asset_list.pack(fill="both", expand=True, padx=6, pady=(0, 6))
         self.asset_list.bind("<<ListboxSelect>>", lambda _e: self.on_asset_selected())
 
         form = ttk.LabelFrame(left, text="Current asset", padding=6)
@@ -563,6 +694,7 @@ class ArtpackStudio(tk.Tk):
 
     def on_game_changed(self) -> None:
         self.root.set(str(default_modern_dir(self.game.get())))
+        self.reference_root.set(str(default_reference_dir(self.game.get())))
         self.category_box.configure(values=categories_for_game(self.game.get()))
         self.category.set(categories_for_game(self.game.get())[0])
         required = DEFAULT_REQUIRED.get(self.game.get(), [])
@@ -571,17 +703,39 @@ class ArtpackStudio(tk.Tk):
             self.asset_id.set(required[0][1])
         self.open_pack()
 
+    def load_watermark(self) -> None:
+        if not FIRESTAFF_LOGO.exists():
+            return
+        try:
+            img = ensure_rgba(Image.open(FIRESTAFF_LOGO))
+            max_w, max_h = 160, 220
+            scale = min(max_w / img.width, max_h / img.height, 1.0)
+            img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.Resampling.LANCZOS)
+            alpha = img.getchannel("A").point(lambda v: int(v * 0.18))
+            img.putalpha(alpha)
+            self.watermark_photo = ImageTk.PhotoImage(img)
+            self.watermark.configure(image=self.watermark_photo)
+        except Exception:
+            self.watermark_photo = None
+
     def browse_pack(self) -> None:
         selected = filedialog.askdirectory(title="Select V2.2 modern artpack directory")
         if selected:
             self.root.set(selected)
             self.open_pack()
 
+    def browse_reference_root(self) -> None:
+        selected = filedialog.askdirectory(title="Select V1/reference asset root")
+        if selected:
+            self.reference_root.set(selected)
+            self.rescan_reference_assets()
+
     def open_pack(self) -> None:
         try:
             self.pack = Artpack(self.game.get(), Path(self.root.get()))
             self.pack.load_or_create()
             self.pack.save()
+            self.rescan_reference_assets(log=False)
             self.refresh_asset_list()
             self.log_line(f"Opened {self.pack.game} artpack: {self.pack.root}")
         except Exception as exc:
@@ -589,10 +743,38 @@ class ArtpackStudio(tk.Tk):
 
     def refresh_asset_list(self) -> None:
         self.asset_list.delete(0, "end")
+        self.asset_rows = []
         if not self.pack:
             return
+        target_by_key = {(entry.category, entry.asset_id): entry for entry in self.pack.entries()}
+        seen: set[tuple[str, str]] = set()
+        for ref in self.reference_assets:
+            key = (ref.category, ref.asset_id)
+            seen.add(key)
+            target = target_by_key.get(key)
+            status = "OK" if target else "--"
+            dims = f"{ref.width}x{ref.height}"
+            target_dims = f"{target.width}x{target.height}" if target else "missing"
+            self.asset_rows.append(ref)
+            self.asset_list.insert(
+                "end",
+                f"{status:2} V1 {ref.category}/{ref.asset_id} {dims:>9}  | V2.2 {target_dims}",
+            )
         for entry in self.pack.entries():
-            self.asset_list.insert("end", f"{entry.category}/{entry.asset_id}  {entry.width}x{entry.height}")
+            key = (entry.category, entry.asset_id)
+            if key in seen:
+                continue
+            self.asset_rows.append(entry)
+            self.asset_list.insert(
+                "end",
+                f"OK V1 {'missing':<34} | V2.2 {entry.category}/{entry.asset_id} {entry.width}x{entry.height}",
+            )
+
+    def rescan_reference_assets(self, log: bool = True) -> None:
+        self.reference_assets = scan_reference_assets(self.game.get(), Path(self.reference_root.get()))
+        self.refresh_asset_list()
+        if log:
+            self.log_line(f"Scanned {len(self.reference_assets)} V1/reference assets")
 
     def on_asset_selected(self) -> None:
         if not self.pack:
@@ -601,11 +783,31 @@ class ArtpackStudio(tk.Tk):
         if not sel:
             return
         entries = self.pack.entries()
-        if sel[0] >= len(entries):
+        if sel[0] >= len(self.asset_rows):
             return
-        entry = entries[sel[0]]
-        self.category.set(entry.category)
-        self.asset_id.set(entry.asset_id)
+        row = self.asset_rows[sel[0]]
+        self.category.set(row.category)
+        self.asset_id.set(row.asset_id)
+        if isinstance(row, ReferenceAsset):
+            self.source_path = row.path
+            self.source_canvas.load(row.path)
+            target = self.pack.find_raw_entry(row.category, row.asset_id)
+            if target is not None:
+                entry = AssetEntry(
+                    row.category,
+                    row.asset_id,
+                    str(target.get("source_file") or safe_asset_filename(row.asset_id)),
+                    int(target.get("width") or 0),
+                    int(target.get("height") or 0),
+                    str(target.get("generator") or ""),
+                    str(target.get("notes") or ""),
+                )
+                path = self.pack.asset_path(entry)
+                if path.exists():
+                    self.target_path = path
+                    self.target_canvas.load(path)
+            return
+        entry = row
         self.generator.set(entry.generator or "operator_import")
         path = self.pack.asset_path(entry)
         if path.exists():
@@ -752,6 +954,38 @@ class ArtpackStudio(tk.Tk):
         except Exception as exc:
             messagebox.showerror("Receipt failed", str(exc), parent=self)
 
+    def export_fsart_dialog(self) -> None:
+        if not self.pack:
+            return
+        path = filedialog.asksaveasfilename(
+            title="Export Firestaff artpack",
+            defaultextension=FSART_SUFFIX,
+            filetypes=[("Firestaff artpack", f"*{FSART_SUFFIX}"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            out = self.pack.export_fsart(Path(path))
+            self.log_line(f"Exported .fsart: {out}")
+        except Exception as exc:
+            messagebox.showerror("Export failed", str(exc), parent=self)
+
+    def import_fsart_dialog(self) -> None:
+        if not self.pack:
+            return
+        path = filedialog.askopenfilename(
+            title="Import Firestaff artpack",
+            filetypes=[("Firestaff artpack", f"*{FSART_SUFFIX}"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            self.pack.import_fsart(Path(path))
+            self.refresh_asset_list()
+            self.log_line(f"Imported .fsart: {path}")
+        except Exception as exc:
+            messagebox.showerror("Import failed", str(exc), parent=self)
+
 
 def self_test() -> int:
     with tempfile.TemporaryDirectory(prefix="firestaff-artpack-studio-test-") as td:
@@ -775,8 +1009,74 @@ def self_test() -> int:
         data = json.loads(receipt.read_text(encoding="utf-8"))
         assert data["gateTarget"] == "FINISHED_REAL"
         assert len(data["reviewedSlots"]) == len(DM1_REQUIRED_SLOTS)
+        archive = Path(td) / "dm1-modern.fsart"
+        pack.export_fsart(archive)
+        assert archive.exists()
+        imported = Artpack("dm1", Path(td) / "imported" / "dm1" / "modern")
+        imported.load_or_create()
+        imported.import_fsart(archive)
+        assert imported.validate_required() == []
+        refs = scan_reference_assets("dm1", root)
+        assert any(ref.asset_id == "wall_d3_carved_hero_01" for ref in refs)
     print("firestaff_artpack_studio self-test: PASS")
     return 0
+
+
+def render_demo_screenshot(out_path: Path, game: str) -> Path:
+    out_path = out_path.expanduser().resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    w, h = 1440, 900
+    img = Image.new("RGB", (w, h), "#101214")
+    draw = ImageDraw.Draw(img)
+    if FIRESTAFF_LOGO.exists():
+        try:
+            logo = ensure_rgba(Image.open(FIRESTAFF_LOGO))
+            scale = min(230 / logo.width, 310 / logo.height, 1.0)
+            logo = logo.resize((max(1, int(logo.width * scale)), max(1, int(logo.height * scale))), Image.Resampling.LANCZOS)
+            alpha = logo.getchannel("A").point(lambda v: int(v * 0.16))
+            logo.putalpha(alpha)
+            img.paste(logo, (24, 110), logo)
+        except Exception:
+            pass
+    draw.rectangle((0, 0, w, 64), fill="#15191d")
+    draw.text((24, 20), "Firestaff V2.2 Artpack Studio", fill="#e8f4f5")
+    draw.rounded_rectangle((28, 82, 404, 840), radius=8, fill="#15191d", outline="#2f3a40")
+    draw.text((44, 102), "V1 assets / V2.2 targets", fill="#e8f4f5")
+    draw.rounded_rectangle((44, 134, 388, 166), radius=4, fill="#202830", outline="#41515a")
+    draw.text((56, 143), f"V1 root  ~/.firestaff/data/{game}", fill="#b8c6ca")
+    rows = [
+        ("OK", "wall_shapes/wall_d3_carved_hero_01", "224x136", "224x136"),
+        ("OK", "floor_shapes/floor_plain_hero_01", "224x136", "224x136"),
+        ("--", "champion_portraits/champion_warrior", "32x29", "missing"),
+        ("OK", "title_frames/title_0001", "320x200", "640x400"),
+        ("--", "object_shapes/torch", "16x16", "missing"),
+    ]
+    y = 190
+    for status, name, v1_size, v22_size in rows:
+        color = "#30d4a0" if status == "OK" else "#ffcc66"
+        draw.text((52, y), status, fill=color)
+        draw.text((86, y), f"V1 {name}", fill="#d9e4e6")
+        draw.text((300, y), v1_size, fill="#91a4aa")
+        draw.text((86, y + 22), f"V2.2 {v22_size}", fill="#91d7df")
+        y += 58
+    draw.rounded_rectangle((432, 82, 930, 682), radius=8, fill="#202020", outline="#3b474d")
+    draw.rounded_rectangle((958, 82, 1412, 682), radius=8, fill="#202020", outline="#3b474d")
+    draw.text((448, 102), "V1/reference", fill="#e8f4f5")
+    draw.text((974, 102), "V2.2 target/editor", fill="#e8f4f5")
+    for x0, y0, ww, hh, c1, c2 in (
+        (472, 158, 392, 250, "#c8c2b5", "#5f5a52"),
+        (1000, 158, 356, 250, "#9fd5da", "#293c47"),
+    ):
+        draw.rectangle((x0, y0, x0 + ww, y0 + hh), fill=c2)
+        for i in range(0, ww, 16):
+            draw.line((x0 + i, y0, x0 + i // 3, y0 + hh), fill=c1)
+        draw.rectangle((x0 + 70, y0 + 48, x0 + ww - 70, y0 + hh - 32), outline="#111111", width=5)
+    draw.rounded_rectangle((432, 704, 1412, 840), radius=8, fill="#15191d", outline="#2f3a40")
+    draw.text((448, 724), "Opened dm1 artpack: ~/.firestaff/assets/dm1/modern", fill="#b8c6ca")
+    draw.text((448, 754), "Export .fsart: shareable Firestaff artpack archive", fill="#91d7df")
+    draw.text((448, 784), "Imported target image into selected manifest slot", fill="#b8c6ca")
+    img.save(out_path)
+    return out_path
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -784,6 +1084,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     ap.add_argument("--game", choices=GAMES, default="dm1")
     ap.add_argument("--pack-dir", type=Path)
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--screenshot", type=Path, help="Render a static UI screenshot preview and exit")
     return ap.parse_args(argv)
 
 
@@ -791,6 +1092,10 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     if args.self_test:
         return self_test()
+    if args.screenshot:
+        out = render_demo_screenshot(args.screenshot, args.game)
+        print(out)
+        return 0
     app = ArtpackStudio(args.game, args.pack_dir)
     app.mainloop()
     return 0
