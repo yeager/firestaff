@@ -165,6 +165,13 @@
     is intentionally empty except for its schema until each disposition has
     real source evidence. Keep rows in TODO until either Firestaff code maps
     them or a reviewed disposition row excludes them from the open queue.
+  - 2026-07-16 ReDMCSB platform-boundary disposition update: the callable
+    queue now closes reviewed `NON_APPLICABLE` platform rows from
+    `REDMCSB_MISSING_PLATFORM_BOUNDARIES.tsv` and all Atari ST/PRIM ABI aliases
+    through `SYMBOL_DISPOSITIONS.tsv`. This removes 324 nonportable rows from
+    the DM1/CSB open backlog without adding runtime shims or synthetic
+    behavior. FIO/PRIM, host input, media I/O, and runtime families remain
+    open until they have source-backed Firestaff contracts.
   - 2026-07-16 DM1 update: the next ReDMCSB callable-symbol bundle before
     CHAMPION is closed through source-backed dispositions for `F0230`,
     `F0252`-`F0258`, `F0260`, `F0262`, `F0263`, `F0266`, both `F0267`
