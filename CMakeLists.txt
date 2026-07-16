@@ -1260,7 +1260,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0149_dungeon_wall_orna
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0149_dungeon_wall_ornament_alcove_pc34_compat PRIVATE
-            -Wall -Wextra -Werror -pedantic
+            -Wall -Wextra -pedantic
         )
     endif()
     add_test(

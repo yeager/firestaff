@@ -47,6 +47,9 @@ int dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
 #define DM1_ORIGINAL_SAVE_PC34_HANDOFF_ACTIVE_GROUP_REPORT_CAP \
     GAMEWORLD_CREATURE_AI_CAPACITY
 #define DM1_ORIGINAL_SAVE_PC34_ACTIVE_GROUP_PACKED_LANE_COUNT 4
+#define SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT \
+    (CHAMPION_MAX_PARTY * CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT)
+#define DM1_F0259_MOVE_TIMER_AUX4_PC34 0
 
 typedef struct {
     int group_thing_index;
@@ -138,7 +141,16 @@ typedef struct {
     int dungeon_tail_text_data_word_count;
     uint32_t dungeon_tail_thing_data_byte_count;
     uint32_t dungeon_tail_raw_map_data_byte_count;
+    int dungeon_tail_text_string_count;
+    uint32_t dungeon_tail_fingerprint;
     int dungeon_tail_runtime_imported;
+    int imported_event73_count_thieves_eye;
+    int imported_magical_light_amount;
+    int imported_event79_count_footprints;
+    int imported_event71_count_invisibility;
+    int imported_party_shield_defense;
+    int imported_party_fire_shield_defense;
+    int imported_party_spell_shield_defense;
     DM1OriginalSavePC34ActiveGroupRecord
         active_groups[DM1_ORIGINAL_SAVE_PC34_HANDOFF_ACTIVE_GROUP_REPORT_CAP];
     struct DM1_Event_V1 events[DM1_EVENT_MAX_COUNT];
@@ -186,7 +198,110 @@ typedef struct {
     int exported_active_group_count;
     int reloaded_active_group_count;
     int core_state_matches;
+    int header_part_shape_receipt_available;
+    uint16_t source_header_format_id;
+    uint16_t exported_header_format_id;
+    uint16_t source_header_platform;
+    uint16_t exported_header_platform;
+    uint16_t source_header_dungeon_id;
+    uint16_t exported_header_dungeon_id;
+    uint32_t source_header_game_id;
+    uint32_t exported_header_game_id;
+    int header_identity_preservation_ok;
+    uint32_t source_part_byte_counts[5];
+    uint32_t exported_part_byte_counts[5];
+    int part_byte_count_preservation_ok;
+    int c3_event_layout_receipt_available;
+    uint32_t source_c3_event_record_count;
+    uint32_t source_c3_event_byte_count;
+    uint32_t source_c3_event_fingerprint;
+    uint32_t exported_c3_event_record_count;
+    uint32_t exported_c3_event_byte_count;
+    uint32_t exported_c3_event_fingerprint;
+    int c3_event_byte_preservation_ok;
+    int c4_timeline_layout_receipt_available;
+    uint32_t source_c4_timeline_index_count;
+    uint32_t source_c4_timeline_byte_count;
+    uint32_t source_c4_timeline_fingerprint;
+    uint32_t exported_c4_timeline_index_count;
+    uint32_t exported_c4_timeline_byte_count;
+    uint32_t exported_c4_timeline_fingerprint;
+    int c4_timeline_byte_preservation_ok;
+    int source_dungeon_tail_present;
+    uint32_t source_dungeon_tail_byte_count;
+    uint16_t source_dungeon_tail_checksum;
+    uint32_t source_dungeon_tail_fingerprint;
+    int exported_dungeon_tail_present;
+    uint32_t exported_dungeon_tail_byte_count;
+    uint16_t exported_dungeon_tail_checksum;
+    uint32_t exported_dungeon_tail_fingerprint;
+    int reloaded_dungeon_tail_present;
+    uint32_t reloaded_dungeon_tail_byte_count;
+    uint16_t reloaded_dungeon_tail_checksum;
+    int dungeon_tail_matches;
+    int dungeon_tail_byte_receipt_available;
+    int dungeon_tail_byte_preservation_ok;
+    uint32_t source_party_info_byte_count;
+    uint32_t source_party_info_fingerprint;
+    uint32_t exported_party_info_byte_count;
+    uint32_t exported_party_info_fingerprint;
+    int party_info_byte_receipt_available;
+    int party_info_byte_preservation_ok;
+    int external_portrait_byte_receipt_available;
+    uint32_t source_external_portrait_byte_count;
+    uint32_t source_external_portrait_fingerprint;
+    uint32_t exported_external_portrait_byte_count;
+    uint32_t exported_external_portrait_fingerprint;
+    int external_portrait_byte_preservation_ok;
+    int inactive_champion_record_byte_receipt_available;
+    int inactive_champion_record_count;
+    int inactive_champion_record_byte_preserved_count;
+    int inactive_champion_record_byte_preservation_ok;
+    int m516_champion_record_receipt_available;
+    uint32_t source_m516_champion_record_count;
+    uint32_t source_m516_champion_record_byte_count;
+    uint32_t source_m516_champion_record_fingerprint;
+    uint32_t exported_m516_champion_record_count;
+    uint32_t exported_m516_champion_record_byte_count;
+    uint32_t exported_m516_champion_record_fingerprint;
+    int m516_champion_record_byte_preservation_ok;
+    int source_c13_champion_record_reference_count;
+    int c13_champion_record_byte_receipt_available;
+    int c13_champion_record_byte_preserved_count;
+    int c13_champion_record_byte_mismatch_count;
+    int c13_champion_record_byte_preservation_ok;
 } DM1OriginalSavePC34RoundtripReport;
+
+typedef struct {
+    int valid;
+    int source_event_type;
+    int source_event_index;
+    int projectile_index;
+    int projectile_category;
+    int projectile_subtype;
+    int map_index;
+    int map_x;
+    int map_y;
+    int cell;
+    int direction;
+    int step_energy;
+    int first_move_grace;
+    int kinetic_energy;
+    int attack;
+    uint16_t associated_thing;
+} DM1OriginalSavePC34ProjectileEventPlan;
+
+typedef struct {
+    int valid;
+    int source_event_index;
+    int champion_index;
+    int map_index;
+    int map_x;
+    int map_y;
+    int cell;
+    int step;
+    uint32_t fire_at_tick;
+} DM1OriginalSavePC34ViAltarRebirthEventPlan;
 
 #define DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP \
     DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP

@@ -106,6 +106,8 @@ static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
  * Stub shows field offsets consistent with DME.h:1505-1545. */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
+static uint8_t g_creature_ai_row[DM2_AI_TABLE_SIZE];
+static uint8_t g_creature_ai_row_loaded[DM2_AI_TABLE_SIZE];
 static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
 static int g_ccm_program_count = 0;
@@ -136,6 +138,8 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
+    memset(g_creature_ai_row, 0, sizeof(g_creature_ai_row));
+    memset(g_creature_ai_row_loaded, 0, sizeof(g_creature_ai_row_loaded));
 }
 
 void dm2_v1_creature_reset_ccm_programs(void) {
@@ -175,6 +179,7 @@ static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
 int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
     int loaded = 0;
     int i;
+    int creature_type;
 
     if (!loader || !loader->loaded) return -1;
 

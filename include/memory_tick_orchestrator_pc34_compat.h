@@ -286,6 +286,10 @@ struct GameWorld_Compat {
     struct ProjectileList_Compat       projectiles;        /* Phase 17 */
     struct ExplosionList_Compat        explosions;         /* Phase 17 */
     struct LifecycleState_Compat       lifecycle;          /* Phase 18 */
+    uint8_t                             pc34ActiveGroupDirections[GAMEWORLD_CREATURE_AI_CAPACITY];
+    uint8_t                             pc34ActiveGroupHomeMapX[GAMEWORLD_CREATURE_AI_CAPACITY];
+    uint8_t                             pc34ActiveGroupHomeMapY[GAMEWORLD_CREATURE_AI_CAPACITY];
+    int32_t                             pc34ActiveGroupSourceCount;
     int32_t                            candidateAttackInvulnerableEnabled;
     int32_t                            candidateAttackInvulnerableGroupIndex;
     int32_t                            candidateAttackInvulnerableCreatureIndex;
