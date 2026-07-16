@@ -3491,6 +3491,90 @@ int dm2_v1_skproject_draw_spell_panel(
     return 1;
 }
 
+int dm2_v1_skproject_draw_squad_spell_and_leader_icon(
+    uint16_t player,
+    uint16_t yy,
+    uint8_t player_pos,
+    uint8_t player_dir,
+    int cur_hp,
+    uint16_t champion_leader,
+    uint8_t sleeping,
+    uint8_t hero_b44,
+    DM2_V1_SkprojectDrawSquadSpellLeaderReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawSquadSpellLeaderReceipt receipt;
+    uint8_t relative;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.yy = yy;
+    relative = (uint8_t)((player_pos + 4u - (player_dir & 3u)) & 3u);
+    receipt.relative_pos = relative;
+    receipt.mirror_flip = (relative == 1u || relative == 2u) ? 1u : 0u;
+    receipt.requested_fill_rect_summary = 1u;
+    if (cur_hp == 0) {
+        receipt.blocked_dead_champion = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.leader_icon_entry = relative <= 1u ? 10u : 12u;
+    receipt.spell_icon_entry = relative <= 1u ? 6u : 8u;
+    if (player == champion_leader)
+        receipt.leader_icon_entry++;
+    if (yy != 0u)
+        receipt.spell_icon_entry++;
+    receipt.leader_rect_no = (uint16_t)(relative + 0x53u);
+    receipt.spell_rect_no = (uint16_t)(relative + 0x57u);
+    receipt.requested_leader_summary_image = 1u;
+    receipt.requested_spell_summary_image = 1u;
+    receipt.requested_gray_overlay =
+        (sleeping != 0u || hero_b44 != 0u) ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_squad_pos_interface(
+    uint8_t squad_gfx_set,
+    const uint8_t *champion_pos,
+    const uint8_t *champion_alive,
+    const uint8_t *champion_enchanted,
+    uint8_t champion_count,
+    uint8_t player_dir,
+    uint8_t selected_pos_plus_one,
+    DM2_V1_SkprojectDrawSquadPosInterfaceReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawSquadPosInterfaceReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.squad_gfx_set = squad_gfx_set;
+    receipt.champion_count = champion_count;
+    receipt.base_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 8u, squad_gfx_set, 0xf5u, 47u };
+    receipt.requested_alloc_pict_buff = 1u;
+    receipt.requested_free_pict_buff = 1u;
+    if (!champion_pos || !champion_alive) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint8_t i = 0; i < champion_count; ++i) {
+        uint8_t relative =
+            (uint8_t)((champion_pos[i] + 4u - (player_dir & 3u)) & 3u);
+
+        if (!champion_alive[i] || relative + 1u == selected_pos_plus_one)
+            continue;
+        receipt.drawn_champions++;
+        receipt.requested_squad_icon_palette = 1u;
+        if (champion_enchanted && champion_enchanted[i])
+            receipt.requested_aura_summary_image = 1u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_draw_player_attack_dir(
     uint16_t champion_index,
     uint8_t squad_gfx_set,
@@ -3595,6 +3679,151 @@ int dm2_v1_skproject_draw_food_water_poison_panel(
     receipt.drew_poison = poison != 0 ? 1u : 0u;
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_power_stat_bar(
+    int16_t current_value,
+    uint16_t rect_no,
+    uint16_t color,
+    int16_t floor_value,
+    uint16_t tail_color,
+    int rect_exists,
+    DM2_V1_SkprojectDrawPowerStatBarReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPowerStatBarReceipt receipt;
+    int32_t numerator;
+    int32_t denominator;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.current_value = current_value;
+    receipt.floor_value = floor_value;
+    receipt.rect_no = rect_no;
+    receipt.color = color;
+    receipt.tail_color = tail_color;
+    receipt.selected_color =
+        current_value < -512 ? 8u : (current_value < 0 ? 11u : color);
+    if (!rect_exists) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    denominator = 2048 - (int32_t)floor_value;
+    numerator = ((int32_t)current_value - (int32_t)floor_value) * 10000;
+    if (denominator <= 0) {
+        receipt.blocked_invalid_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.scaled_value = (int16_t)(numerator / denominator);
+    receipt.requested_scale_rect = 1u;
+    receipt.requested_black_background_fill = 1u;
+    receipt.requested_value_fill = 1u;
+    receipt.requested_tail_fill = tail_color != 0u ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_scroll_text(
+    uint16_t object_id,
+    int object_is_scroll,
+    const char *message_text,
+    DM2_V1_SkprojectDrawScrollTextReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawScrollTextReceipt receipt;
+    uint16_t lines = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.inventory_subpanel = 5u;
+    receipt.first_text_rect = 0x230u;
+    if (!object_is_scroll) {
+        receipt.blocked_not_scroll = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.requested_message_text = 1u;
+    receipt.requested_scroll_background = 1u;
+    receipt.requested_scroll_overlay = 1u;
+    if (message_text && *message_text) {
+        lines = 1u;
+        for (const char *p = message_text; *p; ++p) {
+            if (*p == '\n' && p[1] != '\0')
+                ++lines;
+        }
+    }
+    receipt.line_count = lines;
+    receipt.requested_centered_lines = lines != 0u ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_simple_str(
+    uint16_t rect_no,
+    uint16_t foreground_color,
+    uint16_t background_color,
+    const char *text,
+    int rect_exists,
+    DM2_V1_SkprojectDrawSimpleStrReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawSimpleStrReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rect_no = rect_no;
+    receipt.foreground_color = foreground_color;
+    receipt.background_color = background_color;
+    if (!text) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.text_len = (uint16_t)strlen(text);
+    receipt.requested_query_str_metrics = 1u;
+    receipt.requested_query_blit_rect = 1u;
+    if (!rect_exists) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.draw_x = 0;
+    receipt.draw_y = 0;
+    receipt.requested_draw_string = 1u;
+    receipt.requested_dirty_rect = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_skill_panel(
+    uint16_t champion_index,
+    uint8_t visible_skill_lines,
+    uint8_t visible_attribute_lines,
+    DM2_V1_SkprojectDrawSkillPanelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawSkillPanelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.champion_index = champion_index;
+    receipt.skill_lines = visible_skill_lines;
+    receipt.attribute_lines = visible_attribute_lines;
+    receipt.inventory_subpanel = 2u;
+    receipt.skill_text_rect = 557u;
+    receipt.attribute_text_rect = 559u;
+    receipt.requested_blank_panel = 1u;
+    receipt.requested_skill_names = visible_skill_lines != 0u ? 1u : 0u;
+    receipt.requested_attribute_names =
+        visible_attribute_lines != 0u ? 1u : 0u;
+    receipt.requested_ability_values =
+        visible_attribute_lines != 0u ? 1u : 0u;
+    receipt.valid = 1;
+    *out_receipt = receipt;
     return 1;
 }
 
@@ -4139,8 +4368,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_DRAW_PLAYER_3STAT_HEALTH_BAR/"
            "DM2_DRAW_PLAYER_NAME_AT_CMDSLOT/DM2_DRAW_PLAYER_DAMAGE/"
            "DM2_DRAW_SPELL_TO_BE_CAST/DM2_DRAW_SPELL_PANEL/"
+           "DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON/"
            "DM2_DRAW_PLAYER_ATTACK_DIR/"
            "DM2_DRAW_MAJIC_MAP/DM2_DRAW_FOOD_WATER_POISON_PANEL/"
+           "DM2_DRAW_SCROLL_TEXT/"
            "DM2_DRAW_CRYOCELL_LEVER/"
            "DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE and "
            "SKWIN/SkWinCore.cpp DRAW_CHARSHEET_OPTION_ICON/"
@@ -4152,8 +4383,12 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DRAW_ITEM_ON_WOOD_PANEL/DRAW_CUR_MAX_HMS/"
            "DRAW_PLAYER_NAME_AT_CMDSLOT/DRAW_PLAYER_DAMAGE/"
            "DRAW_SPELL_TO_BE_CAST/DRAW_SPELL_PANEL/"
+           "DRAW_SQUAD_SPELL_AND_LEADER_ICON/"
+           "DRAW_SQUAD_POS_INTERFACE/"
            "DRAW_PLAYER_ATTACK_DIR/DRAW_MAJIC_MAP/"
            "DRAW_FOOD_WATER_POISON_PANEL/DRAW_CRYOCELL_LEVER/"
+           "DRAW_POWER_STAT_BAR/DRAW_SCROLL_TEXT/DRAW_SIMPLE_STR/"
+           "DRAW_SKILL_PANEL/"
            "DRAW_EYE_MOUTH_COLORED_RECTANGLE; "
            "SKULLWIN/c_gdatfile.cpp DM2_dballoc_3e74_24b8/"
            "DM2_dballoc_3e74_2162/DM2_LOAD_DYN4; "

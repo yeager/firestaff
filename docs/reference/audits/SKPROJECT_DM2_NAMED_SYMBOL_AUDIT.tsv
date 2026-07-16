@@ -500,7 +500,7 @@ DM2_DRAW_PLAYER_ATTACK_DIR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	733	src/dm2/dm2_v1_s
 DM2_DRAW_SPELL_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	805		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_SHOW_ATTACK_RESULT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	864		MISSING
 DM2_guidraw_0b36_105b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1016		MISSING
-DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1030		MISSING
+DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1030		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds skproject squad spell/leader icon slot, mirror, leader, spell, and overlay routing.
 DM2_guidraw_24a5_0e82	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1126		MISSING
 DM2_DRAW_FOOD_WATER_POISON_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1215	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_ITEM_STATS_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1232	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_stats_bar; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -1436,7 +1436,7 @@ _44c8_20e5	SKWIN	SKWIN/SkWinCore.cpp	6501		MISSING
 _44c8_2143	SKWIN	SKWIN/SkWinCore.cpp	6539		MISSING
 FIRE_STRETCH_BLIT_TO_MEMORY_4TO4BPP	SKWIN	SKWIN/SkWinCore.cpp	6592		MISSING
 QUERY_PICST_IT	SKWIN	SKWIN/SkWinCore.cpp	6647		MISSING
-DRAW_SIMPLE_STR	SKWIN	SKWIN/SkWinCore.cpp	6815		MISSING
+DRAW_SIMPLE_STR	SKWIN	SKWIN/SkWinCore.cpp	6815		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds simple text metric query, blit rect, draw string, and dirty rect route.
 DRAW_ICON_PICT_BUFF	SKWIN	SKWIN/SkWinCore.cpp	6855	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_icon_pict_buff; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_ICON_PICT_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	6901	src/dm2/dm2_v1_inventory_panel.c:334	UNCERTAIN
 SHOW_ATTACK_RESULT	SKWIN	SKWIN/SkWinCore.cpp	6929		MISSING
@@ -1450,11 +1450,11 @@ FIRE_BLIT_TO_MEMORY_ROW_4TO8BPP	SKWIN	SKWIN/SkWinCore.cpp	7368		MISSING
 _44c8_1aca	SKWIN	SKWIN/SkWinCore.cpp	7459		MISSING
 DRAW_GRAY_OVERLAY	SKWIN	SKWIN/SkWinCore.cpp	7513	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_gray_overlay; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_HAND_ACTION_ICONS	SKWIN	SKWIN/SkWinCore.cpp	7536	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_hand_action_icons; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN hand-action icon route; runtime inventory panel remains an additional consumer.
-DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKWIN	SKWIN/SkWinCore.cpp	7594		MISSING
+DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKWIN	SKWIN/SkWinCore.cpp	7594		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad spell/leader icon slot, mirror, leader, spell, and overlay routing.
 __CHECK_ROOM_FOR_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7682		MISSING
 DRAW_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	7714	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_moneybox; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CONTAINER_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7767	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_SQUAD_POS_INTERFACE	SKWIN	SKWIN/SkWinCore.cpp	7817		MISSING
+DRAW_SQUAD_POS_INTERFACE	SKWIN	SKWIN/SkWinCore.cpp	7817		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad position panel base icon, alive/selected filtering, palette, aura, and pict buffer routing.
 DRAW_STRONG_TEXT	SKWIN	SKWIN/SkWinCore.cpp	7910		MISSING
 DRAW_NAME_STR	SKWIN	SKWIN/SkWinCore.cpp	7948	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_NAME_AT_CMDSLOT	SKWIN	SKWIN/SkWinCore.cpp	7983		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
@@ -1555,13 +1555,13 @@ _2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041		MISSING
 _2405_011f	SKWIN	SKWIN/SkWinCore.cpp	13062		MISSING
 DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWIN	SKWIN/SkWinCore.cpp	13076	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CRYOCELL_LEVER	SKWIN	SKWIN/SkWinCore.cpp	13096	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_POWER_STAT_BAR	SKWIN	SKWIN/SkWinCore.cpp	13118		MISSING
+DRAW_POWER_STAT_BAR	SKWIN	SKWIN/SkWinCore.cpp	13118		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds power stat bar rect scaling, warning colour selection, background fill, value fill, and tail fill.
 QUERY_FOOD_WATER_BAR_COLOR	SKWIN	SKWIN/SkWinCore.cpp	13194		MISSING
 QUERY_3STAT_BAR_COLOR	SKWIN	SKWIN/SkWinCore.cpp	13203		MISSING
 DRAW_FOOD_WATER_POISON_PANEL	SKWIN	SKWIN/SkWinCore.cpp	13214	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_GUIDED_STR	SKWIN	SKWIN/SkWinCore.cpp	13258	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _24a5_0732	SKWIN	SKWIN/SkWinCore.cpp	13331		MISSING
-DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		MISSING
+DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds scroll-object message text, scroll panel subpanel, static art, and centered line draw planning.
 QUERY_GDAT_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13434	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_gdat_item_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
 GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447		MISSING
 DRAW_ITEM_ICON	SKWIN	SKWIN/SkWinCore.cpp	13478	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN item icon route; runtime inventory panel remains an additional consumer.
@@ -1581,7 +1581,7 @@ FILL_STR	SKWIN	SKWIN/SkWinCore.cpp	14408		MISSING
 FMT_NUM	SKWIN	SKWIN/SkWinCore.cpp	14418		MISSING
 SK_STRCPY	SKWIN	SKWIN/SkWinCore.cpp	14462		MISSING
 SK_STRCAT	SKWIN	SKWIN/SkWinCore.cpp	14467		MISSING
-DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473		MISSING
+DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds skill panel subpanel, blank panel, skill labels, attribute labels, and ability-value route.
 REFRESH_PLAYER_STAT_DISP	SKWIN	SKWIN/SkWinCore.cpp	14573		MISSING
 PTR_ADVANCE	SKWIN	SKWIN/SkWinCore.cpp	33667		MISSING
 WRITE_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33668		MISSING

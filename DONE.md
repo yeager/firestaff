@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 SKWIN HUD alias receipt bundle: mapped
+  `DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON`,
+  `DRAW_SQUAD_SPELL_AND_LEADER_ICON`, `DRAW_SQUAD_POS_INTERFACE`,
+  `DRAW_POWER_STAT_BAR`, `DRAW_SCROLL_TEXT`, `DRAW_SIMPLE_STR`, and
+  `DRAW_SKILL_PANEL` to skproject-backed narrow receipts. The receipts cover
+  squad spell/leader icons, squad position filtering, power bars, scroll
+  text, simple text drawing, and skill-panel routes without synthetic art.
+
 - 2026-07-16 DM2 HUD/dialog/item GUI receipt bundle: mapped
   `DM2_DRAW_ICON_PICT_ENTRY`, `DM2_DRAW_DIALOGUE_PROGRESS`,
   `DM2_DRAW_DIALOGUE_PARTS_PICT`, `DM2_DRAW_DIALOGUE_PICT`,
