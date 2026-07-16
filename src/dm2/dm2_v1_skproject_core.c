@@ -535,6 +535,133 @@ int dm2_v1_skproject_sub_blit_specialeffects_receipt(
     return 1;
 }
 
+int dm2_v1_skproject_draw_icon_pict_buff(
+    int has_rect,
+    uint16_t rect_x,
+    uint16_t rect_y,
+    uint16_t rect_w,
+    uint16_t rect_h,
+    int16_t src_x,
+    int16_t src_y,
+    int16_t color_key,
+    int16_t flip_mirror,
+    uint16_t source_width,
+    uint16_t source_height,
+    uint16_t dest_stride,
+    const uint8_t *local_palette,
+    DM2_V1_SkprojectDrawIconPictBuffReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawIconPictBuffReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!has_rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.rect_x = rect_x;
+    receipt.rect_y = rect_y;
+    receipt.rect_w = rect_w;
+    receipt.rect_h = rect_h;
+    receipt.src_x = src_x;
+    receipt.src_y = src_y;
+    receipt.color_key = color_key;
+    receipt.flip_mirror = flip_mirror;
+    receipt.source_width = source_width;
+    receipt.source_height = source_height;
+    receipt.dest_stride = dest_stride;
+    receipt.bpp = 8u;
+    receipt.requested_offset_rect = 1u;
+    receipt.requested_fire_blit_picture = 1u;
+    receipt.requested_dirty_rect = 1u;
+    receipt.requested_local_palette = local_palette ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_def_pict(
+    const DM2_V1_SkprojectExtendedPictureRef *picture,
+    uint16_t rect_no,
+    uint16_t width,
+    uint16_t height,
+    int16_t src_x,
+    int16_t src_y,
+    int16_t dst_x,
+    int16_t dst_y,
+    int16_t color_key,
+    int blit_rect_exists,
+    DM2_V1_SkprojectDrawDefPictReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawDefPictReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!picture) {
+        receipt.blocked_missing_picture = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.rect_no = rect_no;
+    receipt.width = width;
+    receipt.height = height;
+    receipt.src_x = src_x;
+    receipt.src_y = src_y;
+    receipt.dst_x = dst_x;
+    receipt.dst_y = dst_y;
+    receipt.color_key = color_key;
+    if (width == 0u || height == 0u) {
+        receipt.blocked_invalid_dimensions = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.requested_query_pict_bits = 1u;
+    if (rect_no == 0xffffu) {
+        receipt.rect_no_used_direct_xy = 1u;
+    } else {
+        receipt.rect_no_forced_blit_flag = (rect_no & 0x8000u) ? 0u : 1u;
+        receipt.requested_query_blit_rect = 1u;
+        if (!blit_rect_exists) {
+            receipt.blocked_missing_blit_rect = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+    }
+    receipt.requested_blit = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_gray_overlay(
+    int has_rect,
+    uint16_t cache_index,
+    uint16_t dest_stride,
+    uint16_t overlay_pattern,
+    DM2_V1_SkprojectDrawGrayOverlayReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawGrayOverlayReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cache_index = cache_index;
+    receipt.dest_stride = dest_stride;
+    receipt.overlay_pattern = overlay_pattern;
+    if (!has_rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.requested_cache_buffer = 1u;
+    receipt.requested_offset_rect = 1u;
+    receipt.requested_gray_blit = 1u;
+    receipt.requested_dirty_rect = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_move_side_offset(
     uint16_t record_word_e,
     int16_t direction_delta,
@@ -3564,6 +3691,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
            "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
+           "SKWIN/SkWinCore.cpp DRAW_ICON_PICT_BUFF/DRAW_DEF_PICT/"
+           "DRAW_GRAY_OVERLAY; "
            "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881/"
            "DM2_ATTACK_WALL/DM2_ATTACK_DOOR/DM2_move_12b4_0d75/"
            "DM2_move_075f_0af9/DM2_move_2fcf_0b8b; "

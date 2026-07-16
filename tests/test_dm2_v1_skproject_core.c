@@ -167,6 +167,10 @@ static void test_palette_helpers(void)
     DM2_V1_SkprojectPaletteSetReceipt set_receipt;
     DM2_V1_SkprojectXlatPaletteReceipt xlat_receipt;
     DM2_V1_SkprojectBlitSpecialEffectsReceipt blit;
+    DM2_V1_SkprojectDrawIconPictBuffReceipt icon_blit;
+    DM2_V1_SkprojectDrawDefPictReceipt def_pict;
+    DM2_V1_SkprojectDrawGrayOverlayReceipt gray;
+    DM2_V1_SkprojectExtendedPictureRef ext_pict;
     DM2_V1_SkprojectRect rect;
     uint8_t alpha_rgb[1024];
     uint8_t palette[4] = { 1u, 2u, 3u, 4u };
@@ -285,6 +289,64 @@ static void test_palette_helpers(void)
               blit.skipped_prefix_pixels == 1u &&
               blit.skipped_suffix_pixels == 1u,
           "DM2_sub_blit_specialeffects overlay path trims transparent prefix and suffix before blit");
+
+    CHECK(dm2_v1_skproject_draw_icon_pict_buff(
+              1, 4u, 5u, 6u, 7u, 1, 2, -1, 0, 16u, 12u, 320u,
+              palette, &icon_blit) == 1 &&
+              icon_blit.valid &&
+              icon_blit.requested_offset_rect &&
+              icon_blit.requested_fire_blit_picture &&
+              icon_blit.requested_dirty_rect &&
+              icon_blit.requested_local_palette &&
+              icon_blit.bpp == 8u &&
+              icon_blit.dest_stride == 320u,
+          "DRAW_ICON_PICT_BUFF plans offset rect, 8bpp FIRE_BLIT_PICTURE, and dirty rect update");
+    CHECK(dm2_v1_skproject_draw_icon_pict_buff(
+              0, 4u, 5u, 6u, 7u, 1, 2, -1, 0, 16u, 12u, 320u,
+              palette, &icon_blit) == 0 &&
+              icon_blit.blocked_missing_rect,
+          "DRAW_ICON_PICT_BUFF returns without drawing when rect is NULL");
+
+    ext_pict = (DM2_V1_SkprojectExtendedPictureRef){ 0x20u, 0x30u, 0x40u };
+    CHECK(dm2_v1_skproject_draw_def_pict(
+              &ext_pict, 0xffffu, 20u, 30u, 3, 4, 5, 6, -1, 0,
+              &def_pict) == 1 &&
+              def_pict.valid &&
+              def_pict.rect_no_used_direct_xy &&
+              def_pict.requested_query_pict_bits &&
+              !def_pict.requested_query_blit_rect &&
+              def_pict.requested_blit,
+          "DRAW_DEF_PICT rect 0xffff uses direct picture coordinates");
+    CHECK(dm2_v1_skproject_draw_def_pict(
+              &ext_pict, 0x002au, 20u, 30u, 3, 4, 5, 6, -1, 1,
+              &def_pict) == 1 &&
+              def_pict.rect_no_forced_blit_flag &&
+              def_pict.requested_query_blit_rect &&
+              def_pict.requested_blit,
+          "DRAW_DEF_PICT normal rect forces the blit flag before QUERY_BLIT_RECT");
+    CHECK(dm2_v1_skproject_draw_def_pict(
+              &ext_pict, 0x002au, 20u, 30u, 3, 4, 5, 6, -1, 0,
+              &def_pict) == 0 &&
+              def_pict.blocked_missing_blit_rect,
+          "DRAW_DEF_PICT fails closed when QUERY_BLIT_RECT has no destination");
+    CHECK(dm2_v1_skproject_draw_def_pict(
+              0, 0x002au, 20u, 30u, 3, 4, 5, 6, -1, 1,
+              &def_pict) == 0 &&
+              def_pict.blocked_missing_picture,
+          "DRAW_DEF_PICT rejects missing picture metadata");
+
+    CHECK(dm2_v1_skproject_draw_gray_overlay(
+              1, 0x22u, 320u, 0xaaaa, &gray) == 1 &&
+              gray.valid &&
+              gray.requested_cache_buffer &&
+              gray.requested_offset_rect &&
+              gray.requested_gray_blit &&
+              gray.requested_dirty_rect,
+          "DRAW_GRAY_OVERLAY plans cache-buffer gray overlay and dirty rect update");
+    CHECK(dm2_v1_skproject_draw_gray_overlay(
+              0, 0x22u, 320u, 0xaaaa, &gray) == 0 &&
+              gray.blocked_missing_rect,
+          "DRAW_GRAY_OVERLAY returns without drawing when rect is NULL");
 }
 
 static void test_move_admission_helpers(void)
