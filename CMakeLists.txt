@@ -32507,6 +32507,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f1918_hintload_pc34_co
              COMMAND test_redmcsb_f1918_hintload_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f1918_hintload_initial_load_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f1918_hintload_initial_load_pc34_compat.c")
+    add_executable(test_csb_v1_f1918_hintload_initial_load_pc34_compat
+        tests/test_csb_v1_f1918_hintload_initial_load_pc34_compat.c
+        src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+        src/csb/redmcsb_f7061_save_header_pc34_compat.c
+        src/csb/redmcsb_f1918_hintload_pc34_compat.c
+        src/csb/csb_v1_f1918_hintload_initial_load_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1918_hintload_initial_load_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1918_hintload_initial_load_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_f1918_hintload_initial_load_pc34_compat
+             COMMAND test_csb_v1_f1918_hintload_initial_load_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8152_vidrv_fill_box_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f8152_vidrv_fill_box_pc34_compat.c")
     add_executable(test_redmcsb_f8152_vidrv_fill_box_pc34_compat

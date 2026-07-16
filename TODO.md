@@ -7,6 +7,10 @@
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
+  - 2026-07-16 CSB update: the standalone CSB item from that generated queue
+    is now closed in the callable audit by the HINTHTC F1918/F1919
+    initial-load receipt below. Regenerate aggregate counts from the active
+    checkout before reporting fresh totals.
   - 2026-07-16 update: `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv` is
     now the required evidence file for closing symbol rows as implemented,
     external/host-owned, or source-nonapplicable without code work. The file
@@ -49,6 +53,14 @@
     whose route hash is not one of the receipt-owned title, HUD/door, or
     credits capture hashes. Remaining CSB evidence is still real Mac/app
     capture with local CSB data, not a synthetic title/door/HUD substitute.
+  - 2026-07-16 update: the standalone CSB callable backlog item for
+    HINTHTC `F1918_LoadGame_CPSX`/`F1919_Post_F1918_LoadGame_CPSX` is now
+    source-mapped through a CSB-owned initial-load/post receipt. It consumes
+    only the accepted ReDMCSB F1914 header and exact GLOBAL_DATA,
+    ACTIVE_GROUPS, and PARTY spans, then blocks later handoff unless all
+    three source parts were accepted. Remaining CSB work is still real
+    packaged title/HUD/door capture breadth and positive DSA/save-runtime
+    corpus proof, not inferred save-tail or DSA construction.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,

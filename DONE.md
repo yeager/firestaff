@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 CSB HINTHTC F1918/F1919 initial-load receipt: added a CSB-owned
+  wrapper for the source F1918 load sequence and explicit F1919 post gate.
+  The route reads the validated 512-byte header, then GLOBAL_DATA,
+  ACTIVE_GROUPS, and PARTY through exact caller-owned spans; partial, failed,
+  NULL, odd, or missing spans fail closed before any later save-tail handoff.
+  Verification: strict direct C11 build/run of
+  `test_csb_v1_f1918_hintload_initial_load_pc34_compat`; no synthetic save,
+  DSA, title, door, HUD, or visual data was added.
+
 - 2026-07-16 CSB startup presented-frame route hash gate: Mac/app presented
   capture now requires a 320x200 indexed real-CSB frame to carry a route hash
   from the receipt-owned title, HUD/door, or credits capture path. Unrelated
