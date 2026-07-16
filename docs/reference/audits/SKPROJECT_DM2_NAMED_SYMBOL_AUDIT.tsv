@@ -801,9 +801,9 @@ DM2_QUERY_GDAT_SUMMARY_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	1781	include/dm2_v1
 DM2_GET_PLAYER_AT_POSITION	SKULLWIN	SKULLWIN/c_querydb.cpp	1828		MISSING
 DM2_FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1858		MISSING
 DM2_DIR_FROM_5x5_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1900		MISSING
-DM2_GET_DOOR_STAT_0X10	SKULLWIN	SKULLWIN/c_querydb.cpp	1917		MISSING
+DM2_GET_DOOR_STAT_0X10	SKULLWIN	SKULLWIN/c_querydb.cpp	1917	include/dm2_v1_asset_loader.h:dm2_v1_get_door_stat_0x10_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0e through QUERY_GDAT_ENTRY_DATA_INDEX and fails closed when the source row is absent.
 DM2_GET_GLOB_VAR	SKULLWIN	SKULLWIN/c_querydb.cpp	1926		MISSING
-DM2_GET_GRAPHICS_FOR_DOOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1955		MISSING
+DM2_GET_GRAPHICS_FOR_DOOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1955	include/dm2_v1_asset_loader.h:dm2_v1_get_graphics_for_door_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0d for the SKULLWIN door-type contract and fails closed when the source row is absent.
 DM2_GET_ITEM_ORDER_IN_CONTAINER	SKULLWIN	SKULLWIN/c_querydb.cpp	1964		MISSING
 DM2_COUNT_BY_COIN_TYPES	SKULLWIN	SKULLWIN/c_querydb.cpp	2088	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
 DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKULLWIN	SKULLWIN/c_querydb.cpp	2144	src/dm2/dm2_v1_weather_gdat.c:241	UNCERTAIN
@@ -845,7 +845,7 @@ DM2_query_0cee_06dc	SKULLWIN	SKULLWIN/c_querydb.cpp	4765		MISSING
 DM2_query_19f0_124b	SKULLWIN	SKULLWIN/c_querydb.cpp	4807		MISSING
 DM2_query_29ee_18eb	SKULLWIN	SKULLWIN/c_querydb.cpp	4967		MISSING
 DM2_QUERY_CREATURE_BLIT_RECTI	SKULLWIN	SKULLWIN/c_querydb.cpp	4993		MISSING
-DM2_query_0cee_3275	SKULLWIN	SKULLWIN/c_querydb.cpp	4998		MISSING
+DM2_query_0cee_3275	SKULLWIN	SKULLWIN/c_querydb.cpp	4998	include/dm2_v1_asset_loader.h:dm2_v1_query_0cee_3275_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x10 through QUERY_GDAT_ENTRY_DATA_INDEX and fails closed when the source row is absent.
 DM2_QUERY_DOOR_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	5007	include/dm2_v1_asset_loader.h:dm2_v1_query_door_strength_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_CREATURE_ALLOWED_ON_LEVEL	SKULLWIN	SKULLWIN/c_querydb.cpp	5025		MISSING
 DM2_query_0cee_319e	SKULLWIN	SKULLWIN/c_querydb.cpp	5073		MISSING

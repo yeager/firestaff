@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Theron original consumer binding gate: added a fail-closed
+  binding receipt between the real Track 02 data-gap receipt and original
+  post-$3800 consumer semantics. It refuses render admission until palette,
+  non-startup level, object-table and bitmap consumers are all proven.
+  Verification: `theron_v1_runtime_admission` and `git diff --check` passed.
+
+- 2026-07-16 DM2 door querydb bundle: mapped `DM2_GET_DOOR_STAT_0X10`,
+  `DM2_GET_GRAPHICS_FOR_DOOR`, and `DM2_query_0cee_3275` to real DOORS
+  dtWordValue rows. Missing source rows fail closed; no synthetic door stats
+  or graphics defaults are introduced. Verification:
+  `test_dm2_v1_gdat_querydb_receipts` and `git diff --check` passed.
+
 - 2026-07-16 Nexus MENU.BPK reviewed upload receipt: added a PRS3 V3 review
   boundary that binds raw sidecars, provenance ledger, producer binary and
   attestation into one source evidence chain. Runtime upload, decoder

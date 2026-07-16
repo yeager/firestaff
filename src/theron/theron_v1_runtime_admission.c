@@ -73,6 +73,14 @@ void theron_v1_runtime_track02_original_data_binding_gap_init(
     }
 }
 
+static void theron_v1_runtime_track02_original_consumer_binding_init(
+    Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+        out->fail_closed_until_consumer_proven = 1;
+    }
+}
+
 void theron_v1_runtime_track02_render_asset_proof_init(
     Theron_V1RuntimeTrack02RenderAssetProof *out) {
     if (out) {
@@ -1197,6 +1205,95 @@ int theron_v1_runtime_track02_capture_original_data_binding_gap(
     out->render_asset_admission_allowed = 0;
     out->fallback_visuals_allowed = 0;
     return out->valid;
+}
+
+int theron_v1_runtime_bind_track02_original_consumer_trace(
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    const Theron_V1Track02Post3800ConsumerSemanticReceipt *consumer,
+    size_t palette_raw_offset,
+    size_t nonstartup_level_raw_offset,
+    size_t object_table_raw_offset,
+    Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_original_consumer_binding_init(out);
+    if (!gap || !consumer ||
+        !gap->valid ||
+        !gap->verified_track02_capture_consumed ||
+        !gap->fail_closed ||
+        gap->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap->level_route_hash == 0u ||
+        gap->object_table_route_hash == 0u ||
+        gap->palette_raw_offset != palette_raw_offset ||
+        gap->palette_payload_checksum == 0u ||
+        gap->palette_decoded_checksum == 0u ||
+        !gap->palette_format_valid ||
+        gap->palette_semantic_binding_verified ||
+        gap->palette_promotion_allowed ||
+        gap->first_nonstartup_raw_offset != nonstartup_level_raw_offset ||
+        gap->first_nonstartup_user_data_offset == 0u ||
+        gap->first_nonstartup_raw_hash == 0u ||
+        gap->first_container_raw_offset != object_table_raw_offset ||
+        gap->first_container_user_data_offset == 0u ||
+        gap->first_container_user_data_hash == 0u ||
+        gap->nonstartup_level_decode_ready ||
+        gap->object_table_decode_ready ||
+        gap->render_asset_admission_allowed ||
+        gap->fallback_visuals_allowed ||
+        !consumer->valid ||
+        !consumer->no_fallback ||
+        !consumer->original_consumer_trace_bound ||
+        consumer->track02_variant != gap->variant ||
+        consumer->payload_checksum == 0u ||
+        consumer->level_envelope_checksum == 0u ||
+        consumer->post_envelope_checksum == 0u ||
+        consumer->consumer_trace_checksum == 0u ||
+        !consumer->dungeon_record_semantics_proven ||
+        !consumer->object_table_semantics_proven ||
+        !consumer->bitmap_route_bound ||
+        !consumer->palette_binding_verified ||
+        !consumer->rgba_output_allowed ||
+        consumer->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->original_data_gap_consumed = 1;
+    out->original_consumer_trace_consumed = 1;
+    out->same_original_capture_as_gap = 1;
+    out->fail_closed_until_consumer_proven = 0;
+    out->variant = gap->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             gap->track02_md5);
+    out->record = consumer->record;
+    out->consumer_trace_checksum = consumer->consumer_trace_checksum;
+    out->payload_checksum = consumer->payload_checksum;
+    out->level_envelope_checksum = consumer->level_envelope_checksum;
+    out->post_envelope_checksum = consumer->post_envelope_checksum;
+    out->palette_raw_offset = gap->palette_raw_offset;
+    out->palette_user_data_offset = gap->palette_user_data_offset;
+    out->palette_payload_checksum = gap->palette_payload_checksum;
+    out->palette_decoded_checksum = gap->palette_decoded_checksum;
+    out->nonstartup_level_raw_offset = gap->first_nonstartup_raw_offset;
+    out->nonstartup_level_user_data_offset =
+        gap->first_nonstartup_user_data_offset;
+    out->nonstartup_level_raw_hash = gap->first_nonstartup_raw_hash;
+    out->object_table_raw_offset = gap->first_container_raw_offset;
+    out->object_table_user_data_offset =
+        gap->first_container_user_data_offset;
+    out->object_table_user_data_hash = gap->first_container_user_data_hash;
+    out->level_route_hash = gap->level_route_hash;
+    out->object_table_route_hash = gap->object_table_route_hash;
+    out->palette_consumer_bound = 1;
+    out->nonstartup_level_consumer_bound = 1;
+    out->object_table_consumer_bound = 1;
+    out->bitmap_consumer_bound = 1;
+    out->runtime_consumer_binding_ready = 1;
+    out->render_asset_admission_allowed = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
 }
 
 int theron_v1_runtime_bind_track02_render_asset_admission(

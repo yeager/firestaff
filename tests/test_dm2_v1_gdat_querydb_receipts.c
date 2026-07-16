@@ -616,7 +616,7 @@ static void test_querydb_word_and_ornate_receipts(void)
     uint8_t data[64];
     uint32_t raw_offsets[2];
     uint32_t raw_sizes[2];
-    DM2_V1_GdatEntry entries[13];
+    DM2_V1_GdatEntry entries[16];
     DM2_V1_QueryOrnateAnimFrameReceipt frame;
     DM2_V1_GetOrnateAnimLenReceipt len;
     DM2_V1_GdatWordQueryReceipt word;
@@ -674,6 +674,15 @@ static void test_querydb_word_and_ornate_receipts(void)
     entries[12] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_WEAPONS, 10u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
         0x04u, 0u, 0u, 0x0040u};
+    entries[13] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 6u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x0du, 0u, 0u, 0x0007u};
+    entries[14] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 6u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x0eu, 0u, 0u, 0x0008u};
+    entries[15] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_DOORS, 6u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x10u, 0u, 0u, 0x0009u};
 
     loader.data = data;
     loader.data_size = sizeof(data);
@@ -683,7 +692,7 @@ static void test_querydb_word_and_ornate_receipts(void)
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 13u;
+    loader.entry_count = 16u;
 
     CHECK(dm2_v1_query_ornate_anim_frame_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
@@ -727,6 +736,17 @@ static void test_querydb_word_and_ornate_receipts(void)
           "DM2_QUERY_DOOR_STRENGTH maps nonzero field 0x10 fallback to one");
     CHECK(!dm2_v1_query_door_strength_receipt(&loader, 5, &strength),
           "DM2_QUERY_DOOR_STRENGTH rejects zero explicit strength without source fallback");
+    CHECK(dm2_v1_get_graphics_for_door_receipt(&loader, 6, &word) &&
+              word.accepted && word.field == 0x0du && word.value == 0x0007u,
+          "DM2_GET_GRAPHICS_FOR_DOOR binds DOORS dtWordValue field 0x0d");
+    CHECK(dm2_v1_get_door_stat_0x10_receipt(&loader, 6, &word) &&
+              word.accepted && word.field == 0x0eu && word.value == 0x0008u,
+          "DM2_GET_DOOR_STAT_0X10 binds DOORS dtWordValue field 0x0e");
+    CHECK(dm2_v1_query_0cee_3275_receipt(&loader, 6, &word) &&
+              word.accepted && word.field == 0x10u && word.value == 0x0009u,
+          "DM2_query_0cee_3275 binds DOORS dtWordValue field 0x10");
+    CHECK(!dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word),
+          "DM2_GET_GRAPHICS_FOR_DOOR rejects absent door rows without fallback");
     CHECK(dm2_v1_query_gdat_creature_word_value_receipt(
               &loader, 5, 1, NULL, 0u, &word) &&
               word.accepted && !word.used_cache_byte && word.value == 0x0044u,

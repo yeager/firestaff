@@ -2160,6 +2160,46 @@ int dm2_v1_query_door_damage_resist_receipt(
                                  value, 0u, out_receipt);
 }
 
+static int dm2_door_word_field_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    int field,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    uint16_t value = 0u;
+    if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                      door_index, field, &value)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_gdat_word_receipt(DM2_GDAT_CATEGORY_DOORS, door_index, field,
+                                 value, 0u, out_receipt);
+}
+
+int dm2_v1_get_door_stat_0x10_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_door_word_field_receipt(loader, door_index, 0x0e, out_receipt);
+}
+
+int dm2_v1_get_graphics_for_door_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_door_word_field_receipt(loader, door_index, 0x0d, out_receipt);
+}
+
+int dm2_v1_query_0cee_3275_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_door_word_field_receipt(loader, door_index, 0x10, out_receipt);
+}
+
 int dm2_v1_query_gdat_creature_word_value_receipt(
     const DM2_V1_AssetLoader *loader,
     int creature_index,

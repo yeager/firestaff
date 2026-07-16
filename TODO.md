@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1461; 2998 total open rows
+  shared DM1/CSB 1537, DM2 1458; 2995 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -98,6 +98,14 @@
     receipt that binds sidecars, ledger and producer attestation. Full runtime
     upload remains open until independent Saturn capture authentication and
     decoder promotion are proven.
+  - 2026-07-16 DM2 door querydb update: `DM2_GET_DOOR_STAT_0X10`,
+    `DM2_GET_GRAPHICS_FOR_DOOR`, and `DM2_query_0cee_3275` are now closed
+    through real DOORS dtWordValue rows. Broader live door/HUD consumers remain
+    open until they consume these values through source-shaped runtime paths.
+  - 2026-07-16 Theron update: original Track 02 data-gap evidence can now be
+    bound to post-$3800 consumer semantics, but render/runtime admission stays
+    closed until real palette, non-startup level, object-table and bitmap
+    consumers are proven from the original loader/capture trace.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
