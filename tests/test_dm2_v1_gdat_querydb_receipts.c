@@ -346,6 +346,9 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
     DM2_V1_GdatEntryQueryReceipt entry_receipt;
     DM2_V1_GdatSoundToggleReceipt toggle;
     DM2_V1_GdatSoundEntryReceipt sound_receipt;
+    DM2_V1_DballocSoundCensusReceipt census;
+    DM2_V1_DballocEntryFilterReceipt filter;
+    DM2_V1_LoadDyn4AdmissionReceipt dyn4;
 
     fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
 
@@ -408,6 +411,40 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
               &loader, DM2_GDAT_CATEGORY_MUSICS, 1, 2,
               7, 0, &sound_receipt),
           "DM2_482b_0684 does not admit payloads rejected by SOUND7");
+
+    CHECK(dm2_v1_dballoc_3e74_24b8_receipt(&loader, &census) &&
+              census.accepted &&
+              census.sound_entry_count == 1u &&
+              census.unique_raw_index_count == 1u &&
+              census.max_raw_length == 10u &&
+              census.scratch_allocation_bytes == 2u,
+          "DM2_dballoc_3e74_24b8 counts sound GDAT entries and max raw length");
+    CHECK(dm2_v1_dballoc_3e74_2162_receipt(&loader, 0u, 0x10u, &filter) &&
+              filter.accepted && filter.allowed && filter.cls5_mask == 0u,
+          "DM2_dballoc_3e74_2162 accepts zero cls5 high-nibble mask");
+    entries[0].cls5 = 0x20u;
+    CHECK(dm2_v1_dballoc_3e74_2162_receipt(&loader, 0u, 0x10u, &filter) &&
+              filter.accepted && !filter.allowed &&
+              filter.cls5_mask == 0x20u,
+          "DM2_dballoc_3e74_2162 rejects nonmatching cls5 high-nibble mask");
+    entries[0].cls5 = 0x10u;
+    CHECK(dm2_v1_dballoc_3e74_2162_receipt(&loader, 0u, 0x10u, &filter) &&
+              filter.accepted && filter.allowed &&
+              filter.cls5_mask == 0x10u,
+          "DM2_dballoc_3e74_2162 accepts active cls5 high-nibble mask");
+    entries[0].cls5 = 0u;
+    CHECK(dm2_v1_load_dyn4_admission_receipt(&loader, 2u, 0, &dyn4) &&
+              dyn4.accepted &&
+              dyn4.entry_count == 9u &&
+              dyn4.descriptor_count == 2u &&
+              dyn4.marker_allocation_bytes == 9u &&
+              dyn4.requested_sound_cleanup,
+          "DM2_LOAD_DYN4 admission allocates clean low-pool marker bytes and requests SOUND5");
+    CHECK(dm2_v1_load_dyn4_admission_receipt(&loader, 2u, 1, &dyn4) &&
+              dyn4.accepted &&
+              dyn4.early_dealloc_when_locked &&
+              !dyn4.requested_sound_cleanup,
+          "DM2_LOAD_DYN4 admission records cache-locked early deallocation route");
 }
 
 static void test_graphics_structure_and_image_extract(void)
@@ -558,7 +595,19 @@ static void test_fixture_pict_allocation_receipts(void)
 {
     DM2_V1_GdatPictAllocationReceipt alloc;
     DM2_V1_GdatPictFreeReceipt free_receipt;
+    DM2_V1_GdatBigpoolMemoryReceipt pool;
 
+    CHECK(dm2_v1_gdat_bigpool_memory_receipt(
+              5u, DM2_V1_GDAT_PICT_POOL_LOBIG, 1, 0, &pool) &&
+              pool.accepted && pool.clean &&
+              !pool.deallocate &&
+              pool.aligned_bytes == 6u,
+          "DM2_ALLOC_LOBIGPOOL_MEMORY aligns odd low-pool allocation bytes");
+    CHECK(dm2_v1_gdat_bigpool_memory_receipt(
+              7u, DM2_V1_GDAT_PICT_POOL_HIBIG, 0, 1, &pool) &&
+              pool.accepted && pool.deallocate &&
+              pool.aligned_bytes == 8u,
+          "DM2_DEALLOC_HIBIGPOOL aligns odd high-pool deallocation bytes");
     CHECK(dm2_v1_gdat_alloc_pict_buff_receipt(
               13u, 5u, 4u, DM2_V1_GDAT_PICT_POOL_LOBIG, &alloc) &&
               alloc.accepted && !alloc.is_cpx_heap &&
@@ -613,10 +662,10 @@ static void test_fixture_pict_allocation_receipts(void)
 static void test_querydb_word_and_ornate_receipts(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[128];
-    uint32_t raw_offsets[4];
-    uint32_t raw_sizes[4];
-    DM2_V1_GdatEntry entries[19];
+    uint8_t data[160];
+    uint32_t raw_offsets[5];
+    uint32_t raw_sizes[5];
+    DM2_V1_GdatEntry entries[20];
     DM2_V1_QueryOrnateAnimFrameReceipt frame;
     DM2_V1_GetOrnateAnimLenReceipt len;
     DM2_V1_GdatWordQueryReceipt word;
@@ -626,7 +675,10 @@ static void test_querydb_word_and_ornate_receipts(void)
     DM2_V1_GdatNameReceipt name;
     DM2_V1_CmdstrEntryReceipt cmdstr;
     DM2_V1_CurCmdstrContext curcmd;
+    DM2_V1_ItemOrderInContainerReceipt order;
     uint8_t cache3[3] = {0x21u, 0xffu, 0x44u};
+    uint16_t money_ids[6] = {0x0100u, 0x0101u, 0x0102u,
+                             0x0103u, 0x0104u, 0x0105u};
 
     memset(&loader, 0, sizeof(loader));
     memset(data, 0, sizeof(data));
@@ -636,6 +688,7 @@ static void test_querydb_word_and_ornate_receipts(void)
     data[50u] = 0u;
     memcpy(data + 64u, "BLADE:SK=4SK=8DM=-5HN=12", 26u);
     data[90u] = 0u;
+    memcpy(data + 96u, "J0-5", 5u);
     raw_offsets[0] = 0u;
     raw_sizes[0] = 4u;
     raw_offsets[1] = 8u;
@@ -644,6 +697,8 @@ static void test_querydb_word_and_ornate_receipts(void)
     raw_sizes[2] = 19u;
     raw_offsets[3] = 64u;
     raw_sizes[3] = 27u;
+    raw_offsets[4] = 96u;
+    raw_sizes[4] = 5u;
 
     memset(entries, 0, sizeof(entries));
     entries[0] = (DM2_V1_GdatEntry){
@@ -703,16 +758,19 @@ static void test_querydb_word_and_ornate_receipts(void)
     entries[18] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_WEAPONS, 3u, DM2_GDAT_ENTRY_TYPE_TEXT,
         0x08u, 0u, 0u, 0x8003u};
+    entries[19] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_CONTAINERS, 7u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x40u, 0u, 0u, 4u};
 
     loader.data = data;
     loader.data_size = sizeof(data);
     loader.loaded = 1;
     loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader.raw_data_count = 4u;
+    loader.raw_data_count = 5u;
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 19u;
+    loader.entry_count = 20u;
 
     CHECK(dm2_v1_query_ornate_anim_frame_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
@@ -805,6 +863,16 @@ static void test_querydb_word_and_ornate_receipts(void)
               strcmp(cmdstr.key, "HN") == 0 &&
               cmdstr.value == 12,
           "DM2_QUERY_CUR_CMDSTR_ENTRY reuses the caller-owned current command string context");
+    CHECK(dm2_v1_get_item_order_in_container_receipt(
+              &loader, 7, 5, money_ids, 6u, &order) &&
+              order.accepted && order.field == 0x40u &&
+              order.enumerated_order == 5u &&
+              order.resolved_item_type == 0x0105u &&
+              order.money_item_index == 5,
+          "DM2_GET_ITEM_ORDER_IN_CONTAINER parses real CONTAINERS text order");
+    CHECK(!dm2_v1_get_item_order_in_container_receipt(
+              &loader, 7, 6, money_ids, 6u, &order),
+          "DM2_GET_ITEM_ORDER_IN_CONTAINER rejects out-of-range order without fallback");
     CHECK(dm2_v1_query_gdat_creature_word_value_receipt(
               &loader, 5, 1, NULL, 0u, &word) &&
               word.accepted && !word.used_cache_byte && word.value == 0x0044u,
