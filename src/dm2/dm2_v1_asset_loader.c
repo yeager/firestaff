@@ -122,6 +122,18 @@ static int dm2_gdat_ent1_group_id_to_ep(uint8_t id) {
     }
 }
 
+static uint32_t dm2_fnv1a_bytes(const uint8_t *data, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!data && size != 0u) return 0u;
+    for (i = 0; i < size; ++i) {
+        hash = (hash ^ data[i]) * 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 static int dm2_gdat_parse_raw_table(DM2_V1_AssetLoader *loader,
                                     uint16_t raw_count) {
     uint32_t offset;
@@ -194,6 +206,8 @@ static int dm2_gdat_parse_ent1(DM2_V1_AssetLoader *loader) {
         if (ep >= 0 && ep < DM2_GDAT_EP_COUNT) {
             entry_offsets[ep] = stride;
             entry_lengths[ep] = len;
+            loader->ent1_ep_present[ep] = 1u;
+            loader->ent1_ep_lengths[ep] = len;
         }
         stride += len;
         pos += 2;
@@ -213,6 +227,7 @@ static int dm2_gdat_parse_ent1(DM2_V1_AssetLoader *loader) {
     loader->entries = calloc(entry_count, sizeof(*loader->entries));
     if (!loader->entries) return -1;
     loader->entry_count = entry_count;
+    loader->ent1_entry_stride = (uint16_t)stride;
     entry_base = ent + pos;
 
     for (e = 0; e < entry_count; ++e) {
@@ -1069,6 +1084,227 @@ int dm2_v1_query_gdat_entry_if_loadable(
         return 0;
     }
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_load_ent1_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatEnt1Receipt *out_receipt)
+{
+    const uint8_t *ent;
+    uint16_t (*rd16)(const uint8_t *);
+    uint16_t entry_count;
+    uint16_t group_count;
+    uint32_t stride = 0u;
+    uint32_t pos = 6u;
+    uint16_t g;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded || !loader->data ||
+        !loader->raw_offsets || !loader->raw_sizes ||
+        loader->raw_data_count == 0u || loader->raw_sizes[0] < 6u) {
+        return 0;
+    }
+    ent = loader->data + loader->raw_offsets[0];
+    if (rd16le(ent) == DM2_PC_GDAT_ENT1_WORD) {
+        rd16 = rd16le;
+        out_receipt->endian_swapped = 0u;
+    } else if (rd16be(ent) == DM2_PC_GDAT_ENT1_WORD) {
+        rd16 = rd16be;
+        out_receipt->endian_swapped = 1u;
+    } else {
+        return 0;
+    }
+    entry_count = rd16(ent + 2);
+    group_count = rd16(ent + 4);
+    if (entry_count == 0u || group_count == 0u ||
+        6u + ((uint32_t)group_count * 2u) > loader->raw_sizes[0]) {
+        return 0;
+    }
+    for (g = 0; g < group_count; ++g) {
+        int ep = dm2_gdat_ent1_group_id_to_ep(ent[pos]);
+        uint8_t len = ent[pos + 1u];
+        if (ep >= 0 && ep < DM2_GDAT_EP_COUNT) {
+            out_receipt->ep_present[ep] = 1u;
+            out_receipt->ep_lengths[ep] = len;
+            out_receipt->ep_offsets[ep] = (uint16_t)stride;
+        }
+        stride += len;
+        pos += 2u;
+    }
+    if (stride == 0u ||
+        pos + ((uint32_t)entry_count * stride) > loader->raw_sizes[0]) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->valid = 1u;
+    out_receipt->entry_count = entry_count;
+    out_receipt->group_count = (uint8_t)group_count;
+    out_receipt->entry_stride = (uint16_t)stride;
+    out_receipt->raw0_length = loader->raw_sizes[0];
+    out_receipt->receipt_hash = dm2_fnv1a_bytes(ent, loader->raw_sizes[0]);
+    return 1;
+}
+
+int dm2_v1_load_gdat_entries_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatLoadEntriesReceipt *out_receipt)
+{
+    uint16_t i;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded || !loader->entries ||
+        !loader->raw_offsets || !loader->raw_sizes) {
+        return 0;
+    }
+
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        uint16_t raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+        uint32_t raw_length = 0u;
+
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+            ++out_receipt->scalar_entry_count;
+            continue;
+        }
+        if (!dm2_gdat_raw_bounds(loader, raw_index, NULL, &raw_length)) {
+            ++out_receipt->rejected_raw_count;
+            continue;
+        }
+        ++out_receipt->loadable_entry_count;
+        out_receipt->payload_bytes += raw_length;
+        out_receipt->allocated_bytes_with_length_words += raw_length + 2u;
+        hash = (hash ^ entry->cls1) * 16777619u;
+        hash = (hash ^ entry->cls2) * 16777619u;
+        hash = (hash ^ entry->cls3) * 16777619u;
+        hash = (hash ^ entry->cls4) * 16777619u;
+        hash = (hash ^ raw_index) * 16777619u;
+        hash = (hash ^ raw_length) * 16777619u;
+    }
+    out_receipt->valid = 1u;
+    out_receipt->entry_count = loader->entry_count;
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    return 1;
+}
+
+int dm2_v1_query_next_gdat_entry(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatEntryIterator *iterator,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt)
+{
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded || !loader->entries || !iterator ||
+        !out_receipt) {
+        return 0;
+    }
+    if (iterator->category_first < 0) iterator->category_first = 0;
+    if (iterator->category_last < 0 ||
+        iterator->category_last > DM2_GDAT_CATEGORY_LIMIT) {
+        iterator->category_last = DM2_GDAT_CATEGORY_LIMIT;
+    }
+    if (iterator->category_first > iterator->category_last) return 0;
+
+    for (i = iterator->cursor; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if ((int)entry->cls1 < iterator->category_first ||
+            (int)entry->cls1 > iterator->category_last ||
+            (iterator->index_filter >= 0 &&
+             (int)entry->cls2 != iterator->index_filter) ||
+            (iterator->type_filter >= 0 &&
+             (int)entry->cls3 != iterator->type_filter) ||
+            (iterator->field_filter >= 0 &&
+             (int)entry->cls4 != iterator->field_filter)) {
+            continue;
+        }
+        iterator->cursor = (uint16_t)(i + 1u);
+        return dm2_v1_query_gdat_entry(loader, entry->cls1, entry->cls2,
+                                       entry->cls3, entry->cls4,
+                                       out_receipt);
+    }
+    iterator->cursor = loader->entry_count;
+    return 0;
+}
+
+int dm2_v1_gdat_sound_toggle_payload(
+    uint8_t *payload,
+    uint16_t payload_length,
+    uint16_t header_state,
+    uint8_t header_flags,
+    DM2_V1_GdatSoundToggleReceipt *out_receipt)
+{
+    uint16_t i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->header_state_before = (uint8_t)header_state;
+    out_receipt->header_state_after = (uint8_t)header_state;
+    out_receipt->flags_before = header_flags;
+    out_receipt->flags_after = header_flags;
+    out_receipt->payload_hash_before = dm2_fnv1a_bytes(payload,
+                                                       payload_length);
+    out_receipt->payload_hash_after = out_receipt->payload_hash_before;
+    if (!payload || payload_length == 0u || header_state == 1u) {
+        return 0;
+    }
+    if (header_state != 0u) {
+        out_receipt->header_state_after = 1u;
+    } else {
+        if ((header_flags & 1u) == 0u) return 0;
+        out_receipt->flags_after = (uint8_t)(header_flags & (uint8_t)~1u);
+    }
+    for (i = 0; i < payload_length; ++i) {
+        payload[i] ^= 0x80u;
+    }
+    out_receipt->accepted = 1u;
+    out_receipt->toggled_bytes = payload_length;
+    out_receipt->payload_hash_after = dm2_fnv1a_bytes(payload,
+                                                      payload_length);
+    return 1;
+}
+
+int dm2_v1_gdat_sound_entry_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int sound7_result,
+    int extended_header,
+    DM2_V1_GdatSoundEntryReceipt *out_receipt)
+{
+    DM2_V1_GdatEntryQueryReceipt entry_receipt;
+    uint32_t skip;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (sound7_result != 0 ||
+        !dm2_v1_query_gdat_entry(loader, category, index,
+                                 DM2_GDAT_ENTRY_TYPE_SOUND, field,
+                                 &entry_receipt) ||
+        !entry_receipt.loadable_raw) {
+        return 0;
+    }
+    skip = extended_header ? 6u : 2u;
+    if (entry_receipt.raw_length <= skip) return 0;
+    out_receipt->accepted = 1u;
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->field = (uint8_t)field;
+    out_receipt->header_skip_bytes = (uint8_t)skip;
+    out_receipt->data_index = entry_receipt.data_index;
+    out_receipt->raw_index = entry_receipt.raw_index;
+    out_receipt->raw_length = entry_receipt.raw_length;
+    out_receipt->payload_length = entry_receipt.raw_length - skip;
+    out_receipt->payload_offset = entry_receipt.raw_file_pos + skip;
+    out_receipt->receipt_hash = dm2_gdat_entry_receipt_hash(
+        category, index, DM2_GDAT_ENTRY_TYPE_SOUND, field,
+        entry_receipt.data_index, entry_receipt.raw_index,
+        out_receipt->payload_offset, out_receipt->payload_length);
     return 1;
 }
 

@@ -66,6 +66,13 @@ void theron_v1_runtime_track02_render_asset_admission_init(
     }
 }
 
+void theron_v1_runtime_track02_dungeon_handoff_init(
+    Theron_V1RuntimeTrack02DungeonHandoffReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
 int theron_v1_runtime_admission_attach(
     Theron_V1RuntimeAdmissionReceipt *out,
     const char *trace_identity,
@@ -920,6 +927,100 @@ int theron_v1_runtime_bind_track02_render_asset_admission(
     out->bitmap_admission_allowed = 1;
     out->palette_admission_allowed = 1;
     out->real_render_assets_admitted = 1;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_dungeon_handoff(
+    const Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *admission,
+    const Theron_V1RuntimeTrack02DungeonHandoffProof *proof,
+    Theron_V1RuntimeTrack02DungeonHandoffReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_dungeon_handoff_init(out);
+    if (!admission || !proof ||
+        !admission->valid ||
+        !admission->consumer_semantics_consumed ||
+        !admission->real_render_asset_proof_consumed ||
+        !admission->runtime_capture_required ||
+        admission->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(admission->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        admission->level_route_hash == 0u ||
+        admission->object_table_route_hash == 0u ||
+        admission->all_dungeon_route_hash == 0u ||
+        admission->payload_checksum == 0u ||
+        admission->level_envelope_checksum == 0u ||
+        admission->post_envelope_checksum == 0u ||
+        admission->consumer_trace_checksum == 0u ||
+        admission->decoded_level_hash == 0u ||
+        admission->decoded_object_table_hash == 0u ||
+        admission->decoded_bitmap_hash == 0u ||
+        admission->decoded_palette_hash == 0u ||
+        !admission->object_table_admission_allowed ||
+        !admission->level_admission_allowed ||
+        !admission->bitmap_admission_allowed ||
+        !admission->palette_admission_allowed ||
+        !admission->real_render_assets_admitted ||
+        admission->fallback_visuals_allowed ||
+        !proof->valid ||
+        !proof->same_capture_as_render_admission ||
+        proof->variant != admission->variant ||
+        strcmp(proof->track02_md5, admission->track02_md5) != 0 ||
+        proof->record != admission->record ||
+        proof->level_route_hash != admission->level_route_hash ||
+        proof->object_table_route_hash != admission->object_table_route_hash ||
+        proof->all_dungeon_route_hash != admission->all_dungeon_route_hash ||
+        proof->payload_checksum != admission->payload_checksum ||
+        proof->level_envelope_checksum !=
+            admission->level_envelope_checksum ||
+        proof->post_envelope_checksum != admission->post_envelope_checksum ||
+        proof->consumer_trace_checksum != admission->consumer_trace_checksum ||
+        proof->decoded_level_hash != admission->decoded_level_hash ||
+        proof->decoded_object_table_hash !=
+            admission->decoded_object_table_hash ||
+        proof->decoded_bitmap_hash != admission->decoded_bitmap_hash ||
+        proof->decoded_palette_hash != admission->decoded_palette_hash ||
+        !proof->dungeon_runtime_consumer_bound ||
+        !proof->object_table_layout_proven ||
+        !proof->bitmap_palette_decode_proven ||
+        !proof->source_level_bytes_bound ||
+        !proof->source_object_table_bytes_bound ||
+        !proof->source_bitmap_bytes_bound ||
+        !proof->source_palette_bytes_bound ||
+        proof->synthetic_dungeon_state_promoted ||
+        proof->synthetic_object_layout_promoted ||
+        proof->synthetic_bitmap_decode_promoted ||
+        proof->synthetic_palette_decode_promoted ||
+        proof->fallback_visuals_observed ||
+        proof->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->render_asset_admission_consumed = 1;
+    out->dungeon_handoff_proof_consumed = 1;
+    out->runtime_capture_required = 1;
+    out->variant = admission->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             admission->track02_md5);
+    out->record = admission->record;
+    out->level_route_hash = admission->level_route_hash;
+    out->object_table_route_hash = admission->object_table_route_hash;
+    out->all_dungeon_route_hash = admission->all_dungeon_route_hash;
+    out->payload_checksum = admission->payload_checksum;
+    out->level_envelope_checksum = admission->level_envelope_checksum;
+    out->post_envelope_checksum = admission->post_envelope_checksum;
+    out->consumer_trace_checksum = admission->consumer_trace_checksum;
+    out->decoded_level_hash = admission->decoded_level_hash;
+    out->decoded_object_table_hash = admission->decoded_object_table_hash;
+    out->decoded_bitmap_hash = admission->decoded_bitmap_hash;
+    out->decoded_palette_hash = admission->decoded_palette_hash;
+    out->real_data_handoff_to_dungeon = 1;
+    out->dungeon_state_admission_allowed = 1;
+    out->object_table_layout_admission_allowed = 1;
+    out->bitmap_palette_decode_admission_allowed = 1;
+    out->dungeon_draw_allowed = 0;
     out->fallback_visuals_allowed = 0;
     return 1;
 }

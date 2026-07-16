@@ -42,9 +42,9 @@ definitions and their executable behavior.
 
 | Status | Count |
 | --- | ---: |
-| VERIFIED_SOURCE_MAPPING | 103 |
+| VERIFIED_SOURCE_MAPPING | 108 |
 | UNCERTAIN | 131 |
-| MISSING | 1448 |
+| MISSING | 1443 |
 | NONAPPLICABLE | 69 |
 | **Total** | **1751** |
 

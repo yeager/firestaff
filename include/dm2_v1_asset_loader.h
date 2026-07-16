@@ -77,6 +77,7 @@ typedef enum {
 
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
+    DM2_GDAT_ENTRY_TYPE_SOUND        = 0x02,
     /* skproject SKWIN/DME.h dtText.  QUERY_GDAT_TEXT selects this exact
      * type; it must not be confused with a drawable environment image. */
     DM2_GDAT_ENTRY_TYPE_TEXT         = 0x05,
@@ -161,6 +162,9 @@ typedef struct {
     DM2_V1_GdatEntry *entries;
     uint16_t       entry_count;
     uint16_t       category_entry_counts[DM2_GDAT_CATEGORY_LIMIT + 1];
+    uint8_t        ent1_ep_present[7];
+    uint8_t        ent1_ep_lengths[7];
+    uint16_t       ent1_entry_stride;
 } DM2_V1_AssetLoader;
 
 /* Main 256-colour palette and the 16-colour logical-index table loaded by
@@ -239,6 +243,64 @@ typedef struct {
     uint32_t free_bytes;
     uint32_t receipt_hash;
 } DM2_V1_GdatPictFreeReceipt;
+
+typedef struct {
+    uint8_t valid;
+    uint8_t endian_swapped;
+    uint8_t group_count;
+    uint16_t entry_stride;
+    uint16_t entry_count;
+    uint32_t raw0_length;
+    uint8_t ep_present[7];
+    uint8_t ep_lengths[7];
+    uint16_t ep_offsets[7];
+    uint32_t receipt_hash;
+} DM2_V1_GdatEnt1Receipt;
+
+typedef struct {
+    uint8_t valid;
+    uint16_t entry_count;
+    uint16_t loadable_entry_count;
+    uint16_t scalar_entry_count;
+    uint16_t rejected_raw_count;
+    uint32_t payload_bytes;
+    uint32_t allocated_bytes_with_length_words;
+    uint32_t receipt_hash;
+} DM2_V1_GdatLoadEntriesReceipt;
+
+typedef struct {
+    uint16_t cursor;
+    int category_first;
+    int category_last;
+    int index_filter;
+    int type_filter;
+    int field_filter;
+} DM2_V1_GdatEntryIterator;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t header_state_before;
+    uint8_t header_state_after;
+    uint8_t flags_before;
+    uint8_t flags_after;
+    uint16_t toggled_bytes;
+    uint32_t payload_hash_before;
+    uint32_t payload_hash_after;
+} DM2_V1_GdatSoundToggleReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t header_skip_bytes;
+    uint16_t data_index;
+    uint16_t raw_index;
+    uint32_t raw_length;
+    uint32_t payload_length;
+    uint32_t payload_offset;
+    uint32_t receipt_hash;
+} DM2_V1_GdatSoundEntryReceipt;
 
 /* ── Public API ─────────────────────────────────────────────────── */
 
@@ -336,6 +398,30 @@ int dm2_v1_query_gdat_entry_if_loadable(
     int type,
     int field,
     DM2_V1_GdatEntryQueryReceipt *out_receipt);
+int dm2_v1_load_ent1_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatEnt1Receipt *out_receipt);
+int dm2_v1_load_gdat_entries_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatLoadEntriesReceipt *out_receipt);
+int dm2_v1_query_next_gdat_entry(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatEntryIterator *iterator,
+    DM2_V1_GdatEntryQueryReceipt *out_receipt);
+int dm2_v1_gdat_sound_toggle_payload(
+    uint8_t *payload,
+    uint16_t payload_length,
+    uint16_t header_state,
+    uint8_t header_flags,
+    DM2_V1_GdatSoundToggleReceipt *out_receipt);
+int dm2_v1_gdat_sound_entry_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int sound7_result,
+    int extended_header,
+    DM2_V1_GdatSoundEntryReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,
