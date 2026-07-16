@@ -4823,33 +4823,6 @@ static int dm2_v1_wall_button_receipt_matches(
     return 0;
 }
 
-static int dm2_v1_g1_creature_map_chip_matches_decoded_material(
-    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
-    int creature_type,
-    int decoded_width,
-    int decoded_height,
-    uint32_t palette_hash)
-{
-    int i;
-
-    if (!receipt || !receipt->valid || palette_hash == 0u ||
-        decoded_width <= 0 || decoded_height <= 0) {
-        return 0;
-    }
-    for (i = 0; i < receipt->material_count &&
-                i < DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX; ++i) {
-        const DM2_V1_G1CreatureMapChipMaterial *material =
-            &receipt->materials[i];
-        if (material->creature_type == (uint8_t)creature_type &&
-            material->decoded_width == decoded_width &&
-            material->decoded_height == decoded_height &&
-            material->local_palette_hash == palette_hash) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 {
     typedef struct {

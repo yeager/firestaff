@@ -471,6 +471,20 @@ typedef struct {
     int16_t primary_handle;
     int16_t secondary_handle;
     uint32_t receipt_hash;
+    uint16_t gdat_version;
+    uint16_t raw_data_count;
+    uint16_t entry_count;
+    uint32_t container_byte_count;
+    uint32_t typed_graph_hash;
+    uint32_t interface_palette_hash;
+    uint32_t title_menu_pixel_count;
+    uint32_t title_menu_hash;
+    uint32_t hud_hand_action_image_mask;
+    uint32_t hud_hand_action_palette_hash;
+    uint32_t hud_hand_action_pixel_hash;
+    uint32_t environment_text_count;
+    uint32_t environment_text_hash;
+    uint32_t admission_hash;
 } DM2_V1_GraphicsDataOpenReceipt;
 
 typedef struct {

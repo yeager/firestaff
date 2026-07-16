@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_dialogue_gdat.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_weather_gdat.h"
 #include <stddef.h>
 
 #define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
@@ -1806,6 +1810,10 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int *out_w,
                                      int *out_h,
                                      int *out_stride);
+int dm2_v1_boot_viewport_asset_palette_fetch(void *user,
+                                             int gdat_index,
+                                             uint8_t out_palette16[16],
+                                             uint32_t *out_hash);
 
 /* Fetch a DM2 object icon image from the boot-owned GRAPHICS.DAT handle.
  * The returned pixel buffer is owned by the caller and must be freed with
