@@ -30,16 +30,23 @@ python3 -m pip install Pillow
 
 - Open or create a V2.2 artpack directory.
 - Scan a V1/reference asset directory and list every discovered image asset.
+- Import original game data files such as `GRAPHICS.DAT`, identify the game by
+  SHA-256 when the file is known, and list every discovered original graphics
+  record.
+- Show asset statistics and warnings for unknown hashes, unsupported formats,
+  or records that can only be listed as metadata.
 - Show V1/reference assets and V2.2 target assets side by side.
 - Load a V1/reference image.
-- Load or import a V2.2 target image.
+- Load or import a V2.2 target image from a file picker or drag and drop when
+  the optional platform Tk DND package is available.
 - View reference and target side by side.
 - Edit target pixels with pencil, color picker, flood fill, zoom, and grid.
 - Import the edited target into the selected manifest category and asset id.
 - Import and export shareable `.fsart` artpack archives.
 - Validate required slots for the selected game.
 - Write `finish_receipt.json` for completed packs.
-- Generate an AI prompt or run an external AI generation command.
+- Generate an AI prompt, run an external AI generation command for one asset,
+  or batch-generate missing/all assets with an operator custom prompt.
 
 ## `.fsart` Format
 
@@ -71,6 +78,30 @@ names are taken from matching path components when possible and inferred from
 filenames otherwise. Rows marked `OK` have a matching V2.2 target in the open
 pack; rows marked `--` still need a V2.2 replacement.
 
+## Original Game Data Import
+
+Use **Import game data** to select a local original file, for example
+`GRAPHICS.DAT`. The studio hashes the file and compares it with
+`docs/VERIFIED_HASHES.md`. Known hashes select the exact game/variant; unknown
+files are marked with a warning and only get a filename/size-based game guess.
+
+For DM1/CSB-style `GRAPHICS.DAT`, the importer reads the same new/old header
+shape used by Firestaff's ReDMCSB-compatible `F0479` path:
+
+- signature/count
+- compressed byte table
+- decompressed byte table
+- width/height table
+- per-record byte offsets
+
+Records that can be decoded by the IMG3 expander are shown as original
+graphics. Records that cannot be decoded are still listed with dimensions,
+offsets, hashes, and a decode warning; the studio does not invent replacement
+pixels for them.
+
+The status line reports imported asset count, warning count, and byte size. The
+**Warnings** button shows file-level and per-record warnings.
+
 ## AI Generation Hook
 
 The studio does not hard-code a specific cloud AI API. Instead it runs an
@@ -96,6 +127,10 @@ Available placeholders:
 
 The command must write a PNG to `{output}`. The studio then loads that image as
 the V2.2 target so the operator can inspect, edit, and import it.
+
+The first AI field is optional custom prompt text. **AI selected** generates
+only the selected asset. **AI missing/all** walks missing V2.2 targets first and
+falls back to all listed reference/original assets when nothing is missing.
 
 ## Validation
 

@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 V2.2 artpack studio game-data import: the studio can now import
+  original files such as `GRAPHICS.DAT`, identify known game/variant hashes via
+  `docs/VERIFIED_HASHES.md`, list original DM1/CSB graphics records and DM2
+  GDAT ENT1 records, show asset statistics/warnings, drag/drop target images
+  where Tk DND is available, batch-run the AI generation hook with a custom
+  prompt, and export/import `.fsart`.
+
 - 2026-07-16 ReDMCSB platform-symbol disposition cleanup: added
   source-backed `SYMBOL_DISPOSITIONS.tsv` rows for reviewed non-applicable
   platform boundaries and Atari ST/PRIM ABI aliases. The DM1/CSB callable
