@@ -781,7 +781,7 @@ DM2_QUERY_GDAT_CREATURE_WORD_VALUE	SKULLWIN	SKULLWIN/c_querydb.cpp	722	include/d
 DM2_IS_WALL_ORNATE_SPRING	SKULLWIN	SKULLWIN/c_querydb.cpp	793		MISSING
 DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
 DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
-DM2_IS_CONTAINER_MAP	SKULLWIN	SKULLWIN/c_querydb.cpp	845		MISSING
+DM2_IS_CONTAINER_MAP	SKULLWIN	SKULLWIN/c_querydb.cpp	845	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus CONTAINERS ContainerType==1 predicate mirrors c_querydb.cpp:845.
 DM2_IS_CONTAINER_CHEST	SKULLWIN	SKULLWIN/c_querydb.cpp	861		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
 DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR	SKULLWIN	SKULLWIN/c_querydb.cpp	880		MISSING
 DM2_IS_MISSILE_VALID_TO_LAUNCHER	SKULLWIN	SKULLWIN/c_querydb.cpp	949		MISSING
@@ -799,7 +799,7 @@ DM2_FIND_TILE_ACTUATOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1576		MISSING
 DM2_FIND_LADDAR_AROUND	SKULLWIN	SKULLWIN/c_querydb.cpp	1645		MISSING
 DM2_QUERY_GDAT_SUMMARY_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	1781	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_summary_image_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt initializes the source image descriptor, binds dtImage data index, source offsets and local palette when present, and preserves the cls1 FF no-GDAT bypass without synthetic imagery.
 DM2_GET_PLAYER_AT_POSITION	SKULLWIN	SKULLWIN/c_querydb.cpp	1828		MISSING
-DM2_FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1858		MISSING
+DM2_FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1858	include/dm2_v1_skproject_core.h:dm2_v1_skproject_find_pouch_or_scabbard_possession_pos; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Inventory-slot scan matches c_querydb.cpp:1858 / SkWinCore.cpp:8337: scabbard 12 then 7..9, pouch 11 then 6.
 DM2_DIR_FROM_5x5_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1900		MISSING
 DM2_GET_DOOR_STAT_0X10	SKULLWIN	SKULLWIN/c_querydb.cpp	1917	include/dm2_v1_asset_loader.h:dm2_v1_get_door_stat_0x10_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0e through QUERY_GDAT_ENTRY_DATA_INDEX and fails closed when the source row is absent.
 DM2_GET_GLOB_VAR	SKULLWIN	SKULLWIN/c_querydb.cpp	1926		MISSING
@@ -1275,7 +1275,7 @@ getUIEventName	SKWIN	SKWIN/SkWinCore.cpp	558		MISSING
 getAIName	SKWIN	SKWIN/SkWinCore.cpp	741	src/dm2/dm2_v1_creature.c:23	UNCERTAIN
 getRecordNameOf	SKWIN	SKWIN/SkWinCore.cpp	824		MISSING
 printDistMap	SKWIN	SKWIN/SkWinCore.cpp	864		MISSING
-IS_NEGATIVE	SKWIN	SKWIN/SkWinCore.cpp	906		MISSING
+IS_NEGATIVE	SKWIN	SKWIN/SkWinCore.cpp	906	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_negative; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Signed-word predicate matches SkWinCore.cpp:906 and records exact 0/1 result.
 ANIM_FILE_OPEN	SKWIN	SKWIN/SkWinCore.cpp	915	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_GET_FILE_SIZE	SKWIN	SKWIN/SkWinCore.cpp	924	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
 ANIM_farmalloc	SKWIN	SKWIN/SkWinCore.cpp	934	src/dm2/dm2_v1_anim_bootstrap.c	VERIFIED_SOURCE_MAPPING
@@ -1466,7 +1466,7 @@ QUERY_CMDSTR_TEXT	SKWIN	SKWIN/SkWinCore.cpp	8136		MISSING
 QUERY_CMDSTR_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	8187	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real command-string key lookup.
 GET_MISSILE_REF_OF_MINION	SKWIN	SKWIN/SkWinCore.cpp	8205		MISSING
 _2759_01fe	SKWIN	SKWIN/SkWinCore.cpp	8249		MISSING
-FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKWIN	SKWIN/SkWinCore.cpp	8337		MISSING
+FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKWIN	SKWIN/SkWinCore.cpp	8337	include/dm2_v1_skproject_core.h:dm2_v1_skproject_find_pouch_or_scabbard_possession_pos; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Inventory-slot scan matches SkWinCore.cpp:8337: scabbard 12 then 7..9, pouch 11 then 6, no synthetic item data.
 QUERY_PLAYER_SKILL_LV	SKWIN	SKWIN/SkWinCore.cpp	8381		MISSING
 IS_ITEM_HAND_ACTIVABLE	SKWIN	SKWIN/SkWinCore.cpp	8423		MISSING
 FIRE_QUEUE_MOUSE_EVENT	SKWIN	SKWIN/SkWinCore.cpp	8547		MISSING
@@ -1506,7 +1506,7 @@ DRAW_MAJIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	11012	src/dm2/dm2_v1_skproject_core.c:d
 DRAW_PLAYER_ATTACK_DIR	SKWIN	SKWIN/SkWinCore.cpp	11142	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 FREE_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	11210		MISSING
 _0b36_0cbe	SKWIN	SKWIN/SkWinCore.cpp	11223		MISSING
-IS_CONTAINER_MAP	SKWIN	SKWIN/SkWinCore.cpp	11269		MISSING
+IS_CONTAINER_MAP	SKWIN	SKWIN/SkWinCore.cpp	11269	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus ContainerType==1 predicate mirrors SkWinCore.cpp:11269.
 UPDATE_RIGHT_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11283		MISSING
 _1031_04f5	SKWIN	SKWIN/SkWinCore.cpp	11729		MISSING
 HIGHLIGHT_ARROW_PANEL	SKWIN	SKWIN/SkWinCore.cpp	11745	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core records the SKWIN arrow-panel redraw route: bright cls4 increment, mouse hide/show, icon redraw, and refresh wait.
@@ -1729,7 +1729,7 @@ IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/xxx.cpp	3578		src/dm2/dm2_v1_skproject_core.c;
 GET_WALL_DECORATION_OF_ACTUATOR	SKWIN	SKWIN/xxx.cpp	3617	src/dm2/dm2_v1_dungeon_loader.c:2516	UNCERTAIN
 QUERY_GDAT_ENTRY_DATA_INDEX	SKWIN	SKWIN/xxx.cpp	3693	src/dm2/dm2_v1_asset_loader.c:837	UNCERTAIN
 QUERY_GDAT_ENTRYPTR	SKWIN	SKWIN/xxx.cpp	3721		MISSING
-IS_CONTAINER_MAP	SKWIN	SKWIN/xxx.cpp	3795		MISSING
+IS_CONTAINER_MAP	SKWIN	SKWIN/xxx.cpp	3795	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus ContainerType==1 predicate mirrors SkWinCore.cpp:11269.
 _0cee_2de0	SKWIN	SKWIN/xxx.cpp	3807		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKWIN	SKWIN/xxx.cpp	3813		MISSING
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
