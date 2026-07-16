@@ -665,11 +665,13 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
 
     candidate.current_dungeon = dungeon_id;
     candidate.current_level = 0;
-    candidate.levels[(int)dungeon_id - 1][0] = route.level;
+    /* The loader-owned envelope is the live source of level bytes. The
+     * independently reconstructed route above is an audit comparison. */
+    candidate.levels[(int)dungeon_id - 1][0] = payload_level;
     candidate.levels[(int)dungeon_id - 1][0].thing_count = 0;
     candidate.level_loaded[(int)dungeon_id - 1][0] = 1;
-    theron_v1_party_place(&candidate, route.level.start_x, route.level.start_y,
-                          route.level.start_dir);
+    theron_v1_party_place(&candidate, payload_level.start_x, payload_level.start_y,
+                          payload_level.start_dir);
 
     receipt.received = 1;
     receipt.no_fallback = 1;
@@ -678,7 +680,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
     receipt.route_hash = route.route_hash;
     receipt.payload_checksum = payload_receipt.payload_checksum;
     receipt.envelope_checksum = handoff->loader_level_envelope.envelope_checksum;
-    receipt.status = "initial_level_route_runtime_received_no_object_or_visual_semantics";
+    receipt.status = "initial_level_record_runtime_received_no_object_or_visual_semantics";
     *world = candidate;
     *out_receipt = receipt;
     return 1;
