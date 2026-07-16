@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Theron original consumer trace marker verifier: added a
+  Mednafen FIFO-origin log verifier that emits runtime-admission markers only
+  when palette, non-startup level and object-table raw Track02 offsets are
+  observed as game-owned main-RAM consumers.
+
+- 2026-07-16 DM2 movement handoff bundle: added skproject-backed narrow
+  receipts for `DM2_move_12b4_0d75`, `DM2_move_075f_0af9`, and
+  `DM2_move_2fcf_0b8b`. Coverage locks creature push/lift admission,
+  thrown-object terminal direction handoff, and direct/adjacent teleporter
+  search order without inventing dungeon mutation or synthetic map state.
+
 - 2026-07-16 DM2 GDAT allocation/DYN4 bundle: mapped
   `DM2_dballoc_3e74_24b8`, `DM2_dballoc_3e74_2162`, and `DM2_LOAD_DYN4`
   to skproject-backed receipts for type-2 GDAT raw-index allocation,
