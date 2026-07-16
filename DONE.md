@@ -1,5 +1,21 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 querydb equipment bundle: mapped
+  `DM2_QUERY_CREATURES_ITEM_MASK`, `QUERY_CREATURES_ITEM_MASK`,
+  `DM2_IS_ITEM_FIT_FOR_EQUIP`, and `IS_ITEM_FIT_FOR_EQUIP` to skproject
+  querydb semantics over real parsed GDAT rows. Coverage locks CREATURES
+  dtText item-mask ranges and DB-spec dtWordValue equipment flags without
+  synthetic defaults. Verification: `test_dm2_v1_gdat_querydb_receipts`,
+  focused CTest, and `git diff --check` passed.
+
+- 2026-07-16 Theron original Track 02 binding gap receipt: runtime admission
+  now records concrete original-media facts for the still-blocked Track 02
+  dungeon handoff: palette offsets/hashes, non-startup sector/container
+  hashes, first descriptor-window offsets, and route hashes. The receipt
+  remains fail-closed for palette promotion, non-startup decode, object-table
+  decode, render admission, and fallback visuals. Verification: runtime
+  admission probe, focused CTest, and `git diff --check` passed.
+
 - 2026-07-16 DM1 portrait/bar-graph symbol bundle: closed
   `F0515`, `F0516`, `F2104`, `F2105`, and `S0287` through focused ReDMCSB
   audit mappings. Coverage locks 32x29/464-byte 4bpp portrait planar

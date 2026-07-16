@@ -515,6 +515,31 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_DoorStrengthReceipt;
 
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t creature_route;
+    uint8_t mask[64];
+    uint16_t set_bits;
+    uint32_t text_hash;
+    uint32_t receipt_hash;
+} DM2_V1_CreaturesItemMaskReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    int16_t inventory_slot;
+    uint8_t only_body_part;
+    uint8_t used_active_hand_result;
+    uint16_t equip_flags;
+    uint16_t tested_mask;
+    uint16_t result;
+    uint32_t receipt_hash;
+} DM2_V1_ItemFitForEquipReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -758,6 +783,20 @@ int dm2_v1_query_door_strength_receipt(
     const DM2_V1_AssetLoader *loader,
     int door_index,
     DM2_V1_DoorStrengthReceipt *out_receipt);
+int dm2_v1_query_creatures_item_mask_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int creature_index,
+    int text_field_base,
+    int is_creature,
+    DM2_V1_CreaturesItemMaskReceipt *out_receipt);
+int dm2_v1_is_item_fit_for_equip_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int inventory_slot,
+    int only_body_part,
+    int active_hand_fit_result,
+    DM2_V1_ItemFitForEquipReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,

@@ -613,21 +613,26 @@ static void test_fixture_pict_allocation_receipts(void)
 static void test_querydb_word_and_ornate_receipts(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[16];
-    uint32_t raw_offsets[1];
-    uint32_t raw_sizes[1];
-    DM2_V1_GdatEntry entries[10];
+    uint8_t data[64];
+    uint32_t raw_offsets[2];
+    uint32_t raw_sizes[2];
+    DM2_V1_GdatEntry entries[13];
     DM2_V1_QueryOrnateAnimFrameReceipt frame;
     DM2_V1_GetOrnateAnimLenReceipt len;
     DM2_V1_GdatWordQueryReceipt word;
     DM2_V1_DoorStrengthReceipt strength;
+    DM2_V1_CreaturesItemMaskReceipt mask;
+    DM2_V1_ItemFitForEquipReceipt fit;
     uint8_t cache3[3] = {0x21u, 0xffu, 0x44u};
 
     memset(&loader, 0, sizeof(loader));
     memset(data, 0, sizeof(data));
     memcpy(data, "2A4", 4u);
+    memcpy(data + 8u, "A1-2J0P3S0C1W4", 16u);
     raw_offsets[0] = 0u;
     raw_sizes[0] = 4u;
+    raw_offsets[1] = 8u;
+    raw_sizes[1] = 16u;
 
     memset(entries, 0, sizeof(entries));
     entries[0] = (DM2_V1_GdatEntry){
@@ -660,16 +665,25 @@ static void test_querydb_word_and_ornate_receipts(void)
     entries[9] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_DOORS, 5u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
         0x11u, 0u, 0u, 0x0000u};
+    entries[10] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_CREATURES, 9u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x12u, 0u, 0u, 1u};
+    entries[11] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WEAPONS, 9u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x04u, 0u, 0u, 0x8444u};
+    entries[12] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WEAPONS, 10u, DM2_GDAT_ENTRY_TYPE_WORD_VALUE,
+        0x04u, 0u, 0u, 0x0040u};
 
     loader.data = data;
     loader.data_size = sizeof(data);
     loader.loaded = 1;
     loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader.raw_data_count = 1u;
+    loader.raw_data_count = 2u;
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 10u;
+    loader.entry_count = 13u;
 
     CHECK(dm2_v1_query_ornate_anim_frame_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
@@ -725,6 +739,42 @@ static void test_querydb_word_and_ornate_receipts(void)
               &loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, 6, &word) &&
               word.accepted && word.field == 0x03u && word.value == 0x0066u,
           "DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD binds DB spec word field 0x03");
+    CHECK(dm2_v1_query_creatures_item_mask_receipt(
+              &loader, 9, 2, 0, &mask) &&
+              mask.accepted && mask.field == 0x12u &&
+              mask.set_bits == 7u &&
+              (mask.mask[129u / 8u] & (1u << (129u & 7u))) &&
+              (mask.mask[130u / 8u] & (1u << (130u & 7u))) &&
+              (mask.mask[256u / 8u] & (1u << (256u & 7u))) &&
+              (mask.mask[387u / 8u] & (1u << (387u & 7u))) &&
+              (mask.mask[508u / 8u] & (1u << (508u & 7u))) &&
+              (mask.mask[481u / 8u] & (1u << (481u & 7u))) &&
+              (mask.mask[4u / 8u] & (1u << (4u & 7u))),
+          "DM2_QUERY_CREATURES_ITEM_MASK parses source dtText equipment ranges");
+    CHECK(dm2_v1_query_creatures_item_mask_receipt(
+              &loader, 9, 2, 1, &mask) &&
+              mask.accepted && mask.creature_route &&
+              (mask.mask[1u / 8u] & (1u << (1u & 7u))),
+          "DM2_QUERY_CREATURES_ITEM_MASK maps C ranges to creature-local base");
+    CHECK(dm2_v1_is_item_fit_for_equip_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 9, 3, 1, -1, &fit) &&
+              fit.accepted && fit.only_body_part &&
+              fit.tested_mask == 0x0004u && fit.result == 0x0004u,
+          "DM2_IS_ITEM_FIT_FOR_EQUIP tests source body-part mask");
+    CHECK(dm2_v1_is_item_fit_for_equip_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 9, 30, 0, -1, &fit) &&
+              fit.accepted && fit.result == 0u,
+          "DM2_IS_ITEM_FIT_FOR_EQUIP blocks over slots when high flag is set");
+    CHECK(dm2_v1_is_item_fit_for_equip_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 10, 30, 0, 0, &fit) &&
+              fit.accepted && fit.used_active_hand_result &&
+              fit.result == 1u,
+          "DM2_IS_ITEM_FIT_FOR_EQUIP over slot admits empty active-hand result");
+    CHECK(dm2_v1_is_item_fit_for_equip_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 10, 30, 0, 1, &fit) &&
+              fit.accepted && fit.used_active_hand_result &&
+              fit.result == 0x0040u,
+          "DM2_IS_ITEM_FIT_FOR_EQUIP over slot tests source flag 0x40 after hand fit");
 }
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)

@@ -312,6 +312,42 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int verified_track02_capture_consumed;
+    int fail_closed;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t level_route_hash;
+    uint32_t object_table_route_hash;
+    uint32_t nonstartup_sector_receipt_hash;
+    uint32_t nonstartup_container_index_hash;
+    size_t palette_raw_offset;
+    size_t palette_user_data_offset;
+    uint32_t palette_payload_checksum;
+    uint32_t palette_decoded_checksum;
+    int palette_format_valid;
+    int palette_semantic_binding_verified;
+    int palette_promotion_allowed;
+    size_t nonstartup_anchor_count;
+    size_t nonstartup_window_count;
+    size_t first_nonstartup_entry_index;
+    size_t first_nonstartup_raw_offset;
+    size_t first_nonstartup_user_data_offset;
+    size_t first_nonstartup_byte_count;
+    uint32_t first_nonstartup_raw_hash;
+    size_t indexed_container_count;
+    size_t first_container_entry_index;
+    size_t first_container_raw_offset;
+    size_t first_container_user_data_offset;
+    size_t first_container_user_data_byte_count;
+    uint32_t first_container_user_data_hash;
+    int nonstartup_level_decode_ready;
+    int object_table_decode_ready;
+    int render_asset_admission_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt;
+
+typedef struct {
+    int valid;
     int same_capture_as_render_admission;
     Theron_Track02Variant variant;
     char track02_md5[33];
@@ -453,6 +489,9 @@ void theron_v1_runtime_track02_consumer_semantic_init(
 void theron_v1_runtime_track02_render_asset_admission_init(
     Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt *out);
 
+void theron_v1_runtime_track02_original_data_binding_gap_init(
+    Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *out);
+
 void theron_v1_runtime_track02_render_asset_proof_init(
     Theron_V1RuntimeTrack02RenderAssetProof *out);
 
@@ -533,6 +572,13 @@ int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
     size_t palette_raw_offset,
     int palette_semantic_binding_verified,
     Theron_V1RuntimeTrack02RenderAssetProof *out);
+
+int theron_v1_runtime_track02_capture_original_data_binding_gap(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    size_t palette_raw_offset,
+    Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *out);
 
 int theron_v1_runtime_bind_track02_render_asset_admission(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
