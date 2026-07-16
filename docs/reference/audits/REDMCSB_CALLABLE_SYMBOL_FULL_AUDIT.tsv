@@ -1449,8 +1449,8 @@ F1913_LoadAndDeobfuscateSavedGamePart	F	LoadAndDeobfuscateSavedGamePart	HINTLOAD
 F1914_LoadAndDeobfuscateSavedGameHeader	F	LoadAndDeobfuscateSavedGameHeader	HINTLOAD.C:189	src/csb/csb_v1_save_load_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	CSB-owned 512-byte header loader validates through the SAVEHEAD checksum relation before production load reads any state part.
 F1915_UnloadGame	F	UnloadGame	HINTHTC.C:468	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1916_Pre_F1918_LoadGame_CPSX	F	Pre	HINTHTC.C:12	include/title_dat_loader_v1.h:11	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F1918_LoadGame_CPSX	F	LoadGame	HINTHTC.C:149	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1919_Post_F1918_LoadGame_CPSX	F	Post	HINTHTC.C:11	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1918_LoadGame_CPSX	F	LoadGame	HINTHTC.C:149	src/csb/csb_v1_f1918_hintload_initial_load_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	CSB-owned wrapper drives the ReDMCSB HINTLOAD F1914 header read plus GLOBAL_DATA, ACTIVE_GROUPS, and PARTY F1913 part reads in source order; focused CSB test covers exact stream consumption and source failure slots.
+F1919_Post_F1918_LoadGame_CPSX	F	Post	HINTHTC.C:11	src/csb/csb_v1_f1918_hintload_initial_load_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	CSB-owned post boundary admits only a completed F1918 receipt with a valid header and all three caller-owned even-sized part spans before later save-tail handoff; focused CSB test covers NULL/failed/partial rejection.
 F1920_AllocateMemory	F	AllocateMemory	HINTHTC.C:39	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1921_FreeMemory	F	FreeMemory	HINTHTC.C:56	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1922_ReadFromHTCFile	F	ReadFromHTCFile	HINTHTC.C:68	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
