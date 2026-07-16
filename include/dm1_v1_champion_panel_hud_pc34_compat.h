@@ -291,6 +291,9 @@ void DM1_ChampionPanel_BarGraphScreenXY(int champIdx, int statIndex,
                                          int *outX, int *outY);
 
 /* Inventory HP/stamina/mana numeric value format - CHAMDRAW.C F0289/F0290 */
+int DM1_ChampionPanel_FormatIntegerF0288(int value, int paddingEnabled,
+                                         int width, char *out,
+                                         size_t outSize);
 int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
                                         int currentHealth, int maximumHealth,
                                         int currentStamina, int maximumStamina,

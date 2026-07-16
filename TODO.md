@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 69, CSB 1, shared DM1/CSB 1589, DM2 1529; 3188 total open rows
+  DM1 50, CSB 1, shared DM1/CSB 1589, DM2 1529; 3169 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -27,6 +27,13 @@
     side effect, F0258 only through the F0259 quiver movement planner, F0260
     only at the HUD receipt boundary, and F0266/F0267 only for the currently
     implemented movement/projectile route breadth.
+  - 2026-07-16 DM1 CHAMPION/HUD update: `F0287`-`F0290` are now closed
+    through the DM1 champion-panel HUD owner. The shared `F0288` integer
+    formatter is used by status/stat/load text, `F0289`/`F0290` consume it
+    for HP/stamina/mana including stamina /10 and C550/C551/C552 routing,
+    and `F0287` remains covered by the PC34 bar pixel-band model. Remaining
+    adjacent work is live original/Mac pixel capture, not alternate fonts or
+    host-scaled HUD text.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,

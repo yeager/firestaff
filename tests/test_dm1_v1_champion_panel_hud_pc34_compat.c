@@ -521,6 +521,21 @@ int main(void)
     }
     {
         char value[8];
+        if (!DM1_ChampionPanel_FormatIntegerF0288(7, 1, 3,
+                value, sizeof(value)) || strcmp(value, "  7") != 0) {
+            fprintf(stderr, "FAIL: F0288 padded integer got %s\n", value);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_FormatIntegerF0288(1234, 1, 3,
+                value, sizeof(value)) || strcmp(value, "1234") != 0) {
+            fprintf(stderr, "FAIL: F0288 overflow-width integer got %s\n", value);
+            failures++;
+        }
+        if (!DM1_ChampionPanel_FormatIntegerF0288(42, 0, 3,
+                value, sizeof(value)) || strcmp(value, "42") != 0) {
+            fprintf(stderr, "FAIL: F0288 unpadded integer got %s\n", value);
+            failures++;
+        }
         if (!DM1_ChampionPanel_FormatStatusValue(
                 DM1_STATUS_VALUE_HEALTH, 77, 100, 666, 999, 12, 33,
                 value, sizeof(value)) || strcmp(value, " 77/100") != 0) {

@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 CHAMPION HUD F0287-F0290: added a shared
+  `DM1_ChampionPanel_FormatIntegerF0288` formatter and routed champion
+  status/stat/load text through it. Verified F0287 bar pixels, F0288
+  padded/unpadded integer strings, F0289 status value text, F0290
+  HP/stamina/mana order and stamina /10 routing, plus the existing action
+  menu source-font gate.
+
 - 2026-07-16 DM2 skproject GRAPHICS_DATA file lifecycle bundle: added
   bounded receipts for `DM2_GRAPHICS_DATA_OPEN`, `DM2_GRAPHICS_DATA_CLOSE`,
   and `DM2_GRAPHICS_DATA_READ`, preserving open-counter nesting, primary/

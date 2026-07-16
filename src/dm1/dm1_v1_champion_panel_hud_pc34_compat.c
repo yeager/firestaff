@@ -368,6 +368,36 @@ int DM1_ChampionPanel_StatusValueZone(int valueIndex)
     }
 }
 
+int DM1_ChampionPanel_FormatIntegerF0288(int value, int paddingEnabled,
+                                         int width, char *out,
+                                         size_t outSize)
+{
+    char digits[32];
+    int digitCount;
+    int padCount;
+    int i;
+
+    if (!out || outSize == 0) return 0;
+    out[0] = '\0';
+
+    digitCount = snprintf(digits, sizeof(digits), "%d", value);
+    if (digitCount < 0 || (size_t)digitCount >= sizeof(digits)) {
+        return 0;
+    }
+    if (!paddingEnabled || width <= digitCount) {
+        if ((size_t)digitCount >= outSize) return 0;
+        memcpy(out, digits, (size_t)digitCount + 1u);
+        return 1;
+    }
+    if ((size_t)width >= outSize) return 0;
+    padCount = width - digitCount;
+    for (i = 0; i < padCount; ++i) {
+        out[i] = ' ';
+    }
+    memcpy(out + padCount, digits, (size_t)digitCount + 1u);
+    return 1;
+}
+
 int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
                                         int currentHealth, int maximumHealth,
                                         int currentStamina, int maximumStamina,
@@ -376,7 +406,8 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
 {
     int current;
     int maximum;
-    int written;
+    char currentText[16];
+    char maximumText[16];
 
     if (!out || outSize == 0) return 0;
 
@@ -398,8 +429,15 @@ int DM1_ChampionPanel_FormatStatusValue(int valueIndex,
         return 0;
     }
 
-    written = snprintf(out, outSize, "%3d/%3d", current, maximum);
-    return written >= 0 && (size_t)written < outSize;
+    if (!DM1_ChampionPanel_FormatIntegerF0288(
+            current, 1, 3, currentText, sizeof(currentText)) ||
+        !DM1_ChampionPanel_FormatIntegerF0288(
+            maximum, 1, 3, maximumText, sizeof(maximumText))) {
+        out[0] = '\0';
+        return 0;
+    }
+    return snprintf(out, outSize, "%s/%s", currentText, maximumText) >= 0 &&
+           strlen(out) + 1u <= outSize;
 }
 
 /* =====================================================================
@@ -439,11 +477,16 @@ int DM1_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
         return 0;
     }
 
-    currentWritten = snprintf(currentOut, currentOutSize, "%3d", currentValue);
-    maximumWritten = snprintf(maximumOut, maximumOutSize, "/%3d", maximumValue);
-    return currentWritten >= 0 && maximumWritten >= 0 &&
-           (size_t)currentWritten < currentOutSize &&
-           (size_t)maximumWritten < maximumOutSize;
+    currentWritten = DM1_ChampionPanel_FormatIntegerF0288(
+        currentValue, 1, 3, currentOut, currentOutSize);
+    if (maximumOutSize < 2) {
+        if (maximumOutSize > 0) maximumOut[0] = '\0';
+        return 0;
+    }
+    maximumOut[0] = '/';
+    maximumWritten = DM1_ChampionPanel_FormatIntegerF0288(
+        maximumValue, 1, 3, maximumOut + 1, maximumOutSize - 1u);
+    return currentWritten && maximumWritten;
 }
 
 int DM1_ChampionPanel_BuildStatisticRowModel(
@@ -517,15 +560,24 @@ int DM1_ChampionPanel_FormatLoadValue(int load, int maximumLoad,
     int loadKg;
     int loadTenths;
     int maximumKg;
-    int written;
+    char loadKgText[16];
+    char maximumKgText[16];
 
     if (!out || outSize == 0) return 0;
 
     loadKg = load / 10;
     loadTenths = load - (loadKg * 10);
     maximumKg = (maximumLoad + 5) / 10;
-    written = snprintf(out, outSize, "%3d.%d/%3d KG", loadKg, loadTenths, maximumKg);
-    return written >= 0 && (size_t)written < outSize;
+    if (!DM1_ChampionPanel_FormatIntegerF0288(
+            loadKg, 1, 3, loadKgText, sizeof(loadKgText)) ||
+        !DM1_ChampionPanel_FormatIntegerF0288(
+            maximumKg, 1, 3, maximumKgText, sizeof(maximumKgText))) {
+        out[0] = '\0';
+        return 0;
+    }
+    return snprintf(out, outSize, "%s.%d/%s KG",
+                    loadKgText, loadTenths, maximumKgText) >= 0 &&
+           strlen(out) + 1u <= outSize;
 }
 
 int DM1_ChampionPanel_LoadValueZone(void)
