@@ -85,13 +85,41 @@ int DM1_V1_Needs_TimeEffectsDuePc34Compat(uint32_t game_time,
 typedef struct {
     uint16_t mapX;
     uint16_t mapY;
+    uint16_t mapIndex;
     uint8_t strength;
 } DM1_V1_NeedsScentPc34Compat;
 
 typedef struct {
     DM1_V1_NeedsScentPc34Compat entries[DM1_V1_NEEDS_SCENT_CAPACITY];
     uint16_t count;
+    uint16_t firstScentIndex;
+    uint16_t lastScentIndex;
 } DM1_V1_NeedsScentListPc34Compat;
+
+#define DM1_V1_NEEDS_SCENT_MERGE_CYCLES_PC34 0x8000u
+
+/* F0315 returns a 1-based scent ordinal or 0 when absent. */
+int DM1_V1_Needs_GetScentOrdinalPc34Compat(
+    const DM1_V1_NeedsScentListPc34Compat* scents,
+    uint16_t currentMapIndex,
+    uint16_t mapX,
+    uint16_t mapY);
+
+/* F0316 deletes a zero-based scent index, shifts both arrays, and adjusts the
+ * Footprints first/last scent window exactly as the source does. */
+int DM1_V1_Needs_DeleteScentPc34Compat(
+    DM1_V1_NeedsScentListPc34Compat* scents,
+    uint16_t scentIndex);
+
+/* F0317 updates an existing scent at (mapX,mapY,currentMapIndex).  Without
+ * MASK0x8000_MERGE_CYCLES it adds cycleCount and caps at 80; with the mask it
+ * stores max(existing, cycleCount).  The source does not append new scents. */
+int DM1_V1_Needs_AddScentStrengthPc34Compat(
+    DM1_V1_NeedsScentListPc34Compat* scents,
+    uint16_t currentMapIndex,
+    uint16_t mapX,
+    uint16_t mapY,
+    uint16_t cycleCount);
 
 typedef struct {
     int draw;

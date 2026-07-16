@@ -22732,6 +22732,73 @@ int csb_v1_runtime_f0240_is_first_event_expired(
     return 1;
 }
 
+int csb_v1_runtime_f0261_process_tick(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_F0261_ProcessTickReceipt *out_receipt)
+{
+    const struct DM1_EventQueue_V1 *queue;
+    int event_index = -1;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->first_event_index = -1;
+    if (!profile) {
+        out_receipt->status = "missing-profile";
+        return 0;
+    }
+    if (profile->paused || profile->game_over || profile->victory) {
+        out_receipt->status = "tick-blocked";
+        return 0;
+    }
+
+    queue = &profile->timeline_queue;
+    out_receipt->pre_event_count = queue->eventCount;
+    out_receipt->game_time_before = profile->game_time & 0x00ffffffu;
+    out_receipt->timeline_dispatch_count_before =
+        profile->timeline_dispatch_count;
+    if (queue->eventCount < 0 ||
+        queue->eventCount > DM1_EVENT_MAX_COUNT ||
+        queue->maxEvents <= 0 ||
+        queue->maxEvents > DM1_EVENT_MAX_COUNT) {
+        out_receipt->status = "malformed-timeline-count";
+        return 0;
+    }
+    if (queue->eventCount > 0) {
+        event_index = queue->timeline[0];
+        out_receipt->first_event_index = event_index;
+        if (event_index < 0 || event_index >= queue->maxEvents ||
+            event_index >= DM1_EVENT_MAX_COUNT) {
+            out_receipt->status = "malformed-first-event-index";
+            return 0;
+        }
+        out_receipt->first_event_type = queue->events[event_index].type;
+        out_receipt->first_event_time =
+            DM1_MAP_TIME_TIME(queue->events[event_index].map_time);
+        if (out_receipt->first_event_type == DM1_EVENT_NONE) {
+            out_receipt->status = "malformed-empty-first-event";
+            return 0;
+        }
+    }
+
+    out_receipt->tick_fired = csb_v1_runtime_tick_v1(profile);
+    out_receipt->game_time_after = profile->game_time & 0x00ffffffu;
+    out_receipt->post_event_count = profile->timeline_queue.eventCount;
+    out_receipt->timeline_dispatch_count_after =
+        profile->timeline_dispatch_count;
+    out_receipt->dispatched_count =
+        (int)(out_receipt->timeline_dispatch_count_after -
+              out_receipt->timeline_dispatch_count_before);
+    out_receipt->valid = out_receipt->tick_fired == 1;
+    if (!out_receipt->valid) {
+        out_receipt->status = "tick-not-fired";
+        return 0;
+    }
+    out_receipt->status = out_receipt->dispatched_count > 0
+        ? "processed-expired-events"
+        : "processed-no-expired-events";
+    return 1;
+}
+
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms)
 {
     uint64_t wall_ms;

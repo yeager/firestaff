@@ -7,8 +7,9 @@
  * Scope:
  *   - no-data hosts: write an explicit readiness manifest with status SKIP;
  *   - real Track 1 hosts: drive the runtime handoff across DM.BIN,
- *     FONT256.S2D, LEV00.DGN, and SCORPION.MNS, then render one 320x200
- *     Nexus viewport into a local PPM receipt.
+ *     FONT256.S2D, LEV00.DGN, and SCORPION.MNS, then prove the DGN
+ *     viewport remains capture-required/no-draw before writing a local
+ *     PPM receipt.
  *
  * This is a readiness/provenance tool, not a final public screenshot
  * promotion. The PPM and JSON receipts are operator-local artifacts and
@@ -156,6 +157,8 @@ static int write_manifest(const char *path,
                           int level_w,
                           int level_h,
                           int viewport_nonzero,
+                          int dgn_host_status,
+                          int dgn_blocks_runtime,
                           int font_glyph_index,
                           int font_writes,
                           uint64_t viewport_hash,
@@ -204,14 +207,16 @@ static int write_manifest(const char *path,
     fprintf(fp, "\", \"hash_verified\": %s }\n  },\n",
             static_materials && static_materials->wall_mns.canonical_hash_verified
                 ? "true" : "false");
-    fprintf(fp, "  \"viewport\": { \"width\": %d, \"height\": %d, \"nonzero_pixels\": %d, \"fnv1a64\": \"0x%016llx\", \"ppm_path\": \"",
+    fprintf(fp, "  \"viewport\": { \"width\": %d, \"height\": %d, \"nonzero_pixels\": %d, \"dgn_host_status\": %d, \"dgn_blocks_runtime\": %s, \"fnv1a64\": \"0x%016llx\", \"ppm_path\": \"",
             NEXUS_FB_W, NEXUS_FB_H, viewport_nonzero,
+            dgn_host_status, dgn_blocks_runtime ? "true" : "false",
             (unsigned long long)viewport_hash);
     json_escape(fp, capture_path);
     fprintf(fp, "\" },\n");
     fprintf(fp, "  \"non_claims\": [\n");
     fprintf(fp, "    \"readiness receipt only\",\n");
     fprintf(fp, "    \"not original Saturn pixel parity\",\n");
+    fprintf(fp, "    \"DGN remains blocked until original Saturn capture is admitted\",\n");
     fprintf(fp, "    \"not README/public screenshot promotion\",\n");
     fprintf(fp, "    \"MNS model is loaded for handoff provenance but not yet rendered as a creature\"\n");
     fprintf(fp, "  ]\n");
@@ -279,7 +284,7 @@ static void probe_no_data_skip(const char *data_dir, const char *manifest_path)
     CHECK(write_manifest(manifest_path, "SKIP_NO_TRACK1_DATA",
                          data_dir ? data_dir : "",
                          "none", "", 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 0,
-                         0, NULL),
+                         -1, 0, 0, NULL),
           "skip manifest written");
 }
 
@@ -357,26 +362,25 @@ static void probe_real_data(const char *data_dir,
     memset(&dgn_render, 0, sizeof(dgn_render));
     CHECK(nexus_viewport_last_dgn_render_receipt(&vp, &dgn_render) == 0 &&
           dgn_render.attempted && dgn_render.used_real_dgn_route &&
-          dgn_render.ready && !dgn_render.blocked &&
           !dgn_render.fallback_visuals_permitted &&
-          dgn_render.command_count > 0 &&
-          dgn_render.command_count == dgn_render.material_surface_count &&
-          dgn_render.command_count == dgn_render.rasterized_command_count &&
-          dgn_render.bpk_material_surface_count == 0 &&
-          dgn_render.written_pixels > 0,
-          "real DGN/MNS viewport route produces a complete raster receipt");
+          dgn_render.blocked &&
+          !dgn_render.ready &&
+          dgn_render.rasterized_command_count == 0 &&
+          dgn_render.written_pixels == 0 &&
+          !dgn_render.captured_frame_ready,
+          "real DGN/MNS viewport route stays capture-required/no-draw");
     memset(&dgn_host_route, 0, sizeof(dgn_host_route));
     CHECK(nexus_viewport_dgn_host_route_receipt(&vp, &engine,
                                                 &dgn_host_route) == 0 &&
-          dgn_host_route.status == NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
-          dgn_host_route.host_route_consumed &&
-          dgn_host_route.can_present_runtime_dgn &&
-          !dgn_host_route.blocks_runtime_dgn &&
-          dgn_host_route.command_count == dgn_render.command_count &&
-          dgn_host_route.rasterized_command_count == dgn_render.command_count,
-          "real DGN/MNS raster receipt reaches the runtime host route");
+          dgn_host_route.status != NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
+          !dgn_host_route.can_present_runtime_dgn &&
+          dgn_host_route.blocks_runtime_dgn &&
+          !dgn_host_route.fallback_visuals_permitted &&
+          dgn_host_route.rasterized_command_count == 0 &&
+          dgn_host_route.written_pixels == 0,
+          "real DGN/MNS host route blocks runtime presentation");
     nonzero = count_nonzero(vp.fb.color_buffer, NEXUS_FB_W * NEXUS_FB_H);
-    CHECK(nonzero > 0, "runtime viewport render writes non-zero indexed pixels");
+    CHECK(nonzero == 0, "runtime viewport render writes no DGN fallback pixels");
 
     font_glyph = find_drawable_glyph(&engine.font);
     CHECK(font_glyph >= 0, "real FONT256.S2D exposes at least one drawable glyph");
@@ -399,7 +403,9 @@ static void probe_real_data(const char *data_dir,
                          model_index >= 0 ? engine.models[model_index].vertex_count : 0,
                          model_index >= 0 ? engine.models[model_index].face_count : 0,
                          engine.current_level.width, engine.current_level.height,
-                         nonzero, font_glyph, font_writes, viewport_hash,
+                         nonzero, (int)dgn_host_route.status,
+                         dgn_host_route.blocks_runtime_dgn,
+                         font_glyph, font_writes, viewport_hash,
                          &static_materials),
           "readiness JSON manifest written");
 

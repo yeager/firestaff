@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 19, CSB 1, shared DM1/CSB 1565, DM2 1490; 3075 total open rows
+  DM1 16, shared DM1/CSB 1562, DM2 1489; 3067 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -51,6 +51,13 @@
     tested skill query/XP mutation paths rather than every live award site,
     `F0305` keeps object-weight ownership with object data callers, and
     `F0307`/`F0308` do not claim broader all-callers RNG replay.
+  - 2026-07-16 DM1 CHAMPION stat/wake/scent/death update: `F0311`-`F0319`
+    are now closed except no `F0323` row exists in this queue, with listed
+    aliases through `F317_adzz_`. `F0315`-`F0317` now have a source-backed
+    DM1 champion-needs scent owner for 1-based lookup, zero-based
+    delete/shift/window adjustment, and existing-scent strength updates.
+    Live Footprints/Thieves Eye/group smell consumers and movement scent
+    append remain route-owned.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
@@ -315,6 +322,15 @@
     work is the real decoder/capture producer that supplies those decoded
     level, object-table, bitmap, and palette proofs from captured Track 02
     data; fallback visuals remain closed.
+  - 2026-07-16 Theron host-dungeon consumer update: the runtime admission
+    surface can now consume the real Track 02 dungeon handoff into a host
+    dungeon-consumer receipt. It opens dungeon draw only when the same capture
+    has matching decoded level/object-table/bitmap/palette hashes, proven
+    original host route, level-grid/object-table/bitmap-palette runtime
+    consumers, host surface upload, and host capture frame. It rejects any
+    already-open draw state, synthetic host/level/object/bitmap promotion, hash
+    drift, or fallback visuals. Remaining Theron work is the real capture/
+    decoder producer that supplies those proofs from original Track 02 bytes.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -430,9 +446,10 @@
   `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv` instead.
 
 - 2026-07-16 CSB HINTLOAD follow-up: F2262's PC34 input-wait timer boundary
-  is now isolated and tested, with the FM-Towns SND branch recorded as a
-  non-PC34 platform branch unless a future FM-Towns target supplies real
-  counter/volume state. HINTLOAD `F1910_LoadSavedGamePart`,
+  is now isolated, CMake-registered, tested, and audit-mapped, with the
+  FM-Towns SND branch recorded as a non-PC34 platform branch unless a future
+  FM-Towns target supplies real counter/volume state. HINTLOAD
+  `F1910_LoadSavedGamePart`,
   `F1913_LoadAndDeobfuscateSavedGamePart`, and
   `F1914_LoadAndDeobfuscateSavedGameHeader` now sit on the existing CSB
   save/header load path. Remaining CSB startup work is real packaged
@@ -517,6 +534,13 @@
     fabricating a timer/event. Remaining CSB TIMER work is the broader F0261
     event body/corpus execution surface and positive DSA-bearing save breadth,
     not the first-event expiry predicate.
+  - 2026-07-16 update: the CSB runtime now has a source-named
+    `F0261_TIMELINE_Process` receipt over the live V1 tick path. It records
+    the real heap before/after `csb_v1_runtime_tick_v1()`, drains only expired
+    events through the existing ReDMCSB queue processor, preserves future
+    events, and rejects malformed heaps before ticking. Remaining CSB TIMER
+    work is positive DSA-bearing corpus breadth and broader event-family
+    execution evidence, not another synthetic timer wrapper.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
@@ -612,6 +636,15 @@
     Nexus work is still the real original-Saturn PRS3/output producer
     provenance, Saturn VDP1/material/palette capture, and reviewed DGN/menu
     upload route before any visual handoff can open.
+  - 2026-07-16 update: the Track 1 screen-capture readiness probes now prove
+    real DM.BIN/FONT256.S2D/LEV00.DGN/SCORPION.MNS reach the Nexus capture
+    path while DGN remains no-draw/capture-required. The updated gates require
+    deterministic local BMP/PPM receipts with zero DGN/fallback pixels, block
+    runtime host presentation before original Saturn capture/admission, and
+    keep MENU.BPK PRS3 and Structure3 evidence non-promoting. Remaining Nexus
+    work is still the real original-Saturn PRS3/output producer provenance,
+    Saturn VDP1/material/palette capture, and reviewed DGN/menu upload route
+    before any visual handoff can open.
 
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,

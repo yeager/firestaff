@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 CHAMPION scent F0315-F0317 bundle: added source-backed
+  champion-needs scent helpers for `F0315_CHAMPION_GetScentOrdinal`,
+  `F0316_CHAMPION_DeleteScent`, `F0317_CHAMPION_AddScentStrength`, and aliases
+  `F315_arzz_`, `F316_aizz_`, and `F317_adzz_`. Coverage locks ReDMCSB
+  newest-to-oldest 1-based lookup, zero-based delete/shift plus
+  FirstScentIndex/LastScentIndex adjustment, normal strength addition capped
+  at 80, MASK0x8000 merge max behavior, duplicate-match result reuse, and the
+  source boundary that missing scents are not appended by F0317 itself.
+  Verification: `ninja -C build-local-ninja
+  test_dm1_v1_champion_needs_pc34_compat_integration`,
+  `./build-local-ninja/test_dm1_v1_champion_needs_pc34_compat_integration`,
+  and `ctest --test-dir build-local-ninja --output-on-failure -R
+  '^dm1_v1_champion_needs_source_lock$'` passed.
+
 - 2026-07-16 DM2 skproject `DM2_3D93B` text/map scan receipt: added a
   bounded c_map/c_record receipt in `dm2_v1_dungeon_loader` for skproject
   `c_gdatfile.cpp` line 2108. It scans source-owned byte maps and DB2 Text
@@ -9,6 +23,29 @@
   G1 record graphs and does not touch GDAT images or synthetic runtime state.
   Verification: focused Ninja target `test_dm2_v1_c_map_tile_access`, focused
   CTest `dm2_v1_c_map_tile_access`, and `git diff --check`.
+
+- 2026-07-16 Theron Track 02 host dungeon consumer gate: added a fail-closed
+  runtime consumer receipt after dungeon handoff. It admits dungeon draw only
+  for the same real US Track 02 capture with matching route/checksum/decoded
+  hashes, original host route proof, level/object/bitmap-palette runtime
+  consumers, host surface upload, and host capture-frame proof. It rejects
+  synthetic host/level/object/bitmap promotion, hash drift, pre-opened draw,
+  and fallback visuals. Verification: `cmake --build build-local-ninja
+  --target firestaff_theron_v1_runtime_admission_probe -j2`,
+  `./build-local-ninja/firestaff_theron_v1_runtime_admission_probe`,
+  `ctest --test-dir build-local-ninja --output-on-failure -R
+  '^theron_v1_runtime_admission$'`, and scoped `git diff --check` passed.
+
+- 2026-07-16 DM2 skproject move/alcove helper bundle: mapped
+  `DM2_move_12b4_099e`, `DM2_move_12b4_0092`, `DM2_move_12b4_00af`, and
+  `DM2_0cee_317f` from `SKULLWIN/c_move.cpp`. Coverage locks party
+  creature-lift admission/stamina drain planning, arrow-panel highlight
+  gating, other-level transition planning, and ornate wall-alcove GDAT
+  data-index handoff without claiming full live `DM2_PERFORM_MOVE` or
+  `DM2_ATTACK_WALL` mutation. Verification: `cmake --build
+  build-local-ninja --target test_dm2_v1_skproject_core -j2` and `ctest
+  --test-dir build-local-ninja --output-on-failure -R
+  '^dm2_v1_skproject_core$'` passed.
 
 - 2026-07-16 DM2 skproject map/list helper bundle: mapped
   `DM2_map_0cee_1815`, `DM2_map_0cee_185a`, `DM2_map_2066_1f37`,
@@ -20,6 +57,16 @@
   test_dm2_v1_skproject_core -j2` and `ctest --test-dir build-local-ninja
   --output-on-failure -R '^dm2_v1_skproject_core$'` passed.
 
+- 2026-07-16 Nexus Track 1 capture-required readiness gate: updated the
+  Track 1 screen-capture readiness probes so real DM.BIN, FONT256.S2D,
+  LEV00.DGN, SCORPION.MNS, MENU.BPK PRS3, and Structure3 capture evidence can
+  be verified while DGN presentation remains no-draw/capture-required. The
+  probes now reject nonzero DGN/fallback pixels before original Saturn
+  capture/admission and keep the local BMP/PPM receipts deterministic without
+  promoting screenshots. Verification: focused Ninja targets for the two
+  Track 1 readiness probes plus Nexus PRS3, Structure3, direct-capture, and
+  MENU.BPK handoff tests; focused CTest passed 11/11 for the same gate set.
+
 - 2026-07-16 DM2 skproject map helper bundle: mapped
   `DM2_SET_DESTINATION_OF_MINION_MAP`, `DM2_map_0cee_17e7`,
   `DM2_map_0cee_04e5`, and `DM2_map_3B001` from `SKULLWIN/c_map.cpp`.
@@ -29,6 +76,26 @@
   build-local-ninja --target test_dm2_v1_skproject_core -j2` and `ctest
   --test-dir build-local-ninja --output-on-failure -R
   '^dm2_v1_skproject_core$'` passed.
+
+- 2026-07-16 DM1 CHAMPION stat/wake/death F0311-F0314/F0318-F0319 bundle:
+  closed source-backed ReDMCSB dispositions for `F0311_CHAMPION_GetDexterity`,
+  `F0312_CHAMPION_GetStrength`, `F0313_CHAMPION_GetWoundDefense`,
+  `F0314_CHAMPION_WakeUp`, aliases `F311_wzzz_`, `F312_xzzz_`,
+  `F314_gzzz_`, plus `F0318_CHAMPION_DropAllObjects` and
+  `F0319_CHAMPION_Kill`. The closures bind existing DM1 combat,
+  mirror-candidate C146 wake-up, chest auto-close on leader death,
+  pending-damage kill dispatch, and resurrection/bones receipts. `F0315`,
+  `F0316`, `F0317`, and their aliases remain open because this pass found no
+  reviewed production DM1 owner strong enough to close them. Verification:
+  focused Ninja targets `test_dm1_v1_combat_pc34_compat_integration`,
+  `test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat`,
+  `test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat`, and
+  `test_dm1_v1_resurrection_pc34_compat`; focused CTests
+  `dm1_v1_combat_damage_source_lock`,
+  `dm1_v1_chest_auto_close_on_leader_death_pc34_compat`,
+  `dm1_v1_champion_panel_pending_damage_apply_pc34_compat`, and
+  `dm1_v1_resurrection`; direct compile/run of
+  `tests/test_dm1_v1_mirror_candidate_c146_sleep_wakeup_repaint_gate_pc34_compat.c`.
 
 - 2026-07-16 DM1 CHAMPION skill/stamina/load F0303-F0310 bundle: closed
   source-backed ReDMCSB dispositions for `F0303_CHAMPION_GetSkillLevel`,
@@ -21325,3 +21392,27 @@ F0258 UI querying, full status-box pixel parity, and unimplemented F0266/F0267
 route breadth are not claimed. Verification: focused Ninja/CTest,
 `git diff --check`, and `python3 tools/symbol_backlog.py --game DM1 --limit
 40`.
+
+# ✅ 2026-07-16 CSB TIMELINE F0261 runtime tick receipt
+
+CSB now exposes a source-named `F0261_TIMELINE_Process` receipt over the live
+runtime tick path. The receipt records the live `timeline_queue` before and
+after `csb_v1_runtime_tick_v1()`, drains expired events through the existing
+ReDMCSB heap processor, preserves future events, and rejects malformed heaps
+before ticking. It does not create timer/event substitutes or a synthetic DSA
+corpus. Verification: `cmake --build build-local-ninja --target
+test_csb_v1_boot_runtime_handoff -j2`, `ctest --test-dir build-local-ninja
+-R '^csb_v1_boot_runtime_handoff$' --output-on-failure`, and
+`git diff --check` passed.
+
+# ✅ 2026-07-16 CSB TIMER F2262 CMake/test closure
+
+The existing CSB `F2262_TIMER_A_EVENT` PC34 input-wait Timer A boundary is now
+registered in CMake and mapped in the ReDMCSB audit/disposition tables. It
+increments the wait-for-input VBlank counter, sets the stop-waiting flag at the
+source threshold, and keeps the FM-Towns sound counter/fade path explicitly
+unavailable for PC34 instead of synthesizing audio state. Verification:
+`cmake --build build-local-ninja --target
+test_csb_v1_f2262_timer_a_event_pc34_compat -j2`, `ctest --test-dir
+build-local-ninja -R '^csb_v1_f2262_timer_a_event_pc34_compat$'
+--output-on-failure`, and focused `git diff --check` passed.
