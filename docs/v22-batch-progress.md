@@ -255,7 +255,25 @@ listed candidates).
 **Total V2.2 hero art count: 19** (3 batch 1 + 5 batch 2 + 5 batch 3 + 6 batch 4).
 **Total V2.2 asset pack entries: 29** across 6 categories (wall_shapes 6, floor_shapes 7, creature_shapes 8, ui_chrome 3, champion_portraits 4, door_shapes 1).
 
-**Manifest upgraded to v1.4.0.** All 6 new entries follow the
+## Batch 5 — Complete Runtime-Gated Pack (2026-07-16)
+
+`scripts/build_dm1_v22_complete_artpack.py` builds the local DM1 V2.2 pack
+into the exact seven-slot surface required by the finished-art material gate:
+wall, floor, pit, creature, champion portrait, door, and teleporter field.
+The installed local pack now includes `field_shapes/field_teleporter_hero_01.png`,
+updates each required manifest entry with a non-placeholder generator marker,
+validates PNG IHDR dimensions against the manifest, and writes
+`finish_receipt.json` with the matching FNV-1a manifest hash.
+
+Verification:
+
+- `python3 scripts/build_dm1_v22_complete_artpack.py --modern-dir ~/.firestaff/assets/dm1/modern`
+- `ctest --test-dir build-local-ninja --output-on-failure -R 'dm1_v22_(finished_art_material_gate_pc34|finished_pack_receipt_pc34|real_art_runtime_gate_pc34)|firestaff_dm1_v22_finished_pack_receipt_probe'`
+
+Remaining DM1 V2.2 work is packaged Mac/app capture of the installed complete
+pack, not another placeholder or partial-art promotion path.
+
+**Manifest upgraded to v1.5.0 after Batch 5.** Batch 4's 6 entries follow the
 validator-friendly single-line format used since v1.2. `m11_v22_validate_manifest()`
 returns 1, `m11_v22_modern_assets_available()` returns 1 for the real DM1 data dir.
 
