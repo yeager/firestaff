@@ -3,10 +3,14 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1300; 2837 total open rows
+  shared DM1/CSB 1537, DM2 1296; 2833 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
+  - 2026-07-16 DM2 cursor macro update: `WRITE_BYTE`, `WRITE_WORD`,
+    `READ_BYTE`, and `READ_SBYTE` are now closed through skproject-backed
+    bounded cursor receipts. Remaining adjacent work is the full
+    `COMPRESS_RECTS` / `QUERY_RECT` table codec, not synthetic rect data.
   - 2026-07-16 DM2 rect/cursor update: `DM2_OFFSET_RECT`,
     `OFFSET_RECT`, `PT_IN_RECT`, and `PTR_ADVANCE` are now closed through
     skproject-backed bounded receipts. Remaining adjacent work is the full
