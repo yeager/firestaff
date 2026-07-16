@@ -36,6 +36,16 @@ void redmcsb_f1002_call_f0132_video_blit(
     int16_t flip,
     redmcsb_f1002_video_blit video_blit);
 
+void F1002_Call_F0132_VIDEO_Blit(
+    uint8_t *bitmap_source,
+    uint8_t *bitmap_destination,
+    int16_t *xyz,
+    int16_t x,
+    int16_t y,
+    int16_t transparent_color,
+    int16_t flip,
+    redmcsb_f1002_video_blit video_blit);
+
 const char *redmcsb_f1002_call_f0132_video_blit_source_evidence(void);
 
 #ifdef __cplusplus

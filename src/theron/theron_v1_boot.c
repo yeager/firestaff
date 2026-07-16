@@ -36,6 +36,7 @@
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
 #include "theron_v1_mechanics.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
@@ -5329,6 +5330,13 @@ static void theron_v1_boot_runtime_render_v2_hud(
                          viewport->fb.h);
 }
 
+static int theron_v1_boot_asset_bundle_allows_v1_rendering(
+    const TrAssetBundle *assets)
+{
+    return assets && assets->assets_verified &&
+           assets->hucard_rom && assets->hucard_rom_size > 0u;
+}
+
 int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
                                         Theron_V1_Viewport *viewport,
                                         const TrAssetBundle *assets,
@@ -5345,7 +5353,7 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
     /* A caller can present a viewport-only indexed frame without asking for
      * generated V1 artwork. If an asset bundle is supplied, it must still be
      * original-data backed before its palette/tile path is consumed. */
-    if (assets && !tr_asset_generated_v1_rendering_allowed(assets)) {
+    if (assets && !theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
         return 0;
     }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
