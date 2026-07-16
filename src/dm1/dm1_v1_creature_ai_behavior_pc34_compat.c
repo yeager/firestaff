@@ -57,6 +57,23 @@ static int bounded_val(int min, int value, int max) {
     return value;
 }
 
+static void apply_archenemy_double_move_f0204(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    struct DM1BehaviorResult_Compat* result)
+{
+    int direction;
+
+    if (!ctx || !result || !ctx->isArchenemy ||
+        result->actionKind != DM1_ACTION_MOVE) {
+        return;
+    }
+
+    direction = result->moveDirection & 3;
+    result->archenemyDoubleMove = 1;
+    result->moveDestMapX += g_dx[direction];
+    result->moveDestMapY += g_dy[direction];
+}
+
 int F0208_DM1_GROUP_BuildAddEventPlan_Compat(
     int eventType,
     uint32_t eventMapTime,
@@ -714,6 +731,8 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
     int* outBlockedByParty,
     int* outBlockedByGroup)
 {
+    const struct DM1GroupMovementFacts_Compat* facts;
+
     (void)allowImaginaryPitsAndFakeWalls; /* Caller pre-bakes into masks */
 
     if (!ctx || direction < 0 || direction > 3) return 0;
