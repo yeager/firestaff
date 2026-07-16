@@ -643,7 +643,9 @@ const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
                                    int category, int index, int field);
 
 /* Load raw asset by (category, index, field), returning its byte size.
- * Source: skproject SKWIN/SkWinCore.cpp QUERY_GDAT_ENTRY_DATA_PTR */
+ * Immediate dtWordValue/dtImageOffset entries are intentionally excluded;
+ * use their exact typed APIs below. Source: skproject SKWIN/SkWinCore.cpp
+ * QUERY_GDAT_ENTRY_DATA_PTR */
 const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
                                         int category, int index, int field,
                                         size_t *out_size);

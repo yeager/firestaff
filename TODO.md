@@ -23,6 +23,11 @@
     closed through skproject-backed bounded receipts. Remaining adjacent work
     is the broader CPX heap/mement chain owner, full `QUERY_RECT` codec, and
     real GDAT image-buffer ownership.
+  - 2026-07-16 DM2 GDAT scalar/raw update: `dtWordValue` and `dtImageOffset`
+    entries are now blocked from generic raw-payload lookup and remain
+    available only through typed scalar APIs. Remaining adjacent work is
+    applying the same source-owned separation to every live GDAT HUD/dungeon
+    consumer.
   - 2026-07-16 DM2 cursor macro update: `WRITE_BYTE`, `WRITE_WORD`,
     `READ_BYTE`, and `READ_SBYTE` are now closed through skproject-backed
     bounded cursor receipts.
