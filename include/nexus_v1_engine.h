@@ -2006,6 +2006,38 @@ typedef struct {
     int readable_level_count;
     int parsed_level_count;
     int geometry_ready_level_count;
+    int structure1f_valid_level_count;
+    int structure1f_typed_entry_count;
+    int structure1g_present_level_count;
+    int structure1g_valid_level_count;
+    int structure1g_animated_texture_count;
+    int structure1g_sequence_count;
+    int structure1g_floor_animation_cell_count;
+    int structure1g_floor_animation_bound_count;
+    int structure1g_image_instruction_count;
+    int structure1g_goto_instruction_count;
+    int structure1g_structure2_image_instruction_bound_count;
+    int structure1g_structure2_image_instruction_unbound_count;
+    int structure1g_structure2_first_image_bound_count;
+    int structure2_valid_level_count;
+    int structure2_texture_count;
+    int structure2_payload_envelope_valid_level_count;
+    int structure2_opaque_payload_byte_count;
+    int structure2_nonzero_descriptor_offset_count;
+    int structure2_descriptor_offsets_in_opaque_payload_count;
+    int structure2_descriptor_offsets_outside_opaque_payload_count;
+    int structure2_descriptor_offsets_word_bounded_count;
+    int structure2_descriptor_offsets_unaligned_count;
+    int structure2_descriptor_offset_unique_count;
+    int structure2_descriptor_offset_reused_count;
+    int structure2_local_payload_offset_pattern_level_count;
+    int structure2_local_payload_word_aligned_offset_pattern_level_count;
+    int structure2_local_payload_word_bounded_offset_pattern_level_count;
+    int structure2_canonical_source_verified_level_count;
+    int structure2_materialization_bound_level_count;
+    int structure2_material_or_image_data_proven_level_count;
+    int plan_ready;
+    int static_mns_host_route_complete;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt ceiling_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;
@@ -2124,68 +2156,8 @@ typedef struct {
     int structure3_zero_based_directory_ordinal_mapping_disproven_level_count;
     int structure3_one_based_directory_ordinal_mapping_disproven_level_count;
     int structure3_direct_directory_ordinal_mapping_disproven_level_count;
-    Nexus_V1_DgnStructure3PayloadReceipt structure3_payloads[16];
-    Nexus_V1_DgnStructure3DirectoryReceipt structure3_directories[16];
-    Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers[16];
-    Nexus_V1_DgnStructure3ModelReferenceReceipt
-        structure3_model_references[16];
-    Nexus_V1_DgnStructure1ATransformSelectorReceipt
-        structure1a_transform_selectors[16];
-    Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors[16];
-    Nexus_V1_DgnStructure1FRotationSelectorReceipt
-        structure1f_rotation_selectors[16];
-    Nexus_V1_DgnStructure1FFaceRotationPairReceipt
-        structure1f_face_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs[16];
-    Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt
-        structure1f_wall_payload_selectors[16];
-    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt
-        structure1f_wall_sensor_destinations[16];
-    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
-        structure1f_wall_sensor_control_selectors[16];
-    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt
-        structure1f_wall_sensor_control_destination_tuples[16];
-    Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
-        structure1f_wall_sensor_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
-        structure1f_wall_decoration_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
-        structure1f_alcove_payload_selectors[16];
-    Nexus_V1_DgnStructure1FAlcovePayloadRotationPairReceipt
-        structure1f_alcove_payload_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
-        structure1f_floor_sensor_control_selectors[16];
-    Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt
-        structure1f_floor_sensor_destinations[16];
-    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt
-        structure1f_floor_sensor_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FFloorSensorExtentPairReceipt
-        structure1f_floor_sensor_extent_pairs[16];
-    Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt
-        structure1f_floor_decoration_payload_selectors[16];
-    Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
-        structure1f_floor_decoration_rotation_selectors[16];
-    Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt
-        structure1f_floor_decoration_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
-        structure1f_floor_decoration_offset_pairs[16];
-    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
-        structure1f_floor_decoration_control_extents[16];
-    Nexus_V1_DgnStructure1FItemAttributePairReceipt
-        structure1f_item_attribute_pairs[16];
-    Nexus_V1_DgnStructure1FItemLocationPairReceipt
-        structure1f_item_location_pairs[16];
-    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt
-        structure1f_item_coordinate_pairs[16];
     Nexus_V1_DgnStructure1FOwnerModelSelectorCorpusReceipt
         structure1f_owner_model_selectors[16];
-    Nexus_V1_DgnStructure3OrdinalCorrelationReceipt
-        structure3_ordinal_correlations[16];
-    Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
-    Nexus_V1_DgnMaterialCategoryCoverageReceipt ceiling_coverage;
-    Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;
-    Nexus_V1_DgnMaterialContainerReceipt floor_container;
-    Nexus_V1_DgnMaterialContainerReceipt wall_container;
     Nexus_V1_DgnStaticMaterialSourceReceipt static_mns_sources;
     Nexus_V1_DgnStructure2SourceReceipt structure2_sources[16];
     int bpk_host_routes_complete;
@@ -2294,8 +2266,6 @@ struct Nexus_V1_Engine {
     /* Audio */
     Nexus_SoundEngine audio;
     Nexus_SfxRuntimeReceipt sfx_runtime_receipt;
-    Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
-    Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
     int current_cd_track;
     int audio_enabled;
 

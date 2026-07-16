@@ -145,9 +145,6 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
-    int sal_canonical_source_verified;
-    int map_canonical_source_verified;
-    int sound_driver_canonical_source_verified;
     uint16_t event_sample_index[32];
     uint32_t event_sal_offset[32];
     uint16_t event_sal_size[32];

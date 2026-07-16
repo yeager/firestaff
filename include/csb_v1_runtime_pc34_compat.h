@@ -53,6 +53,7 @@
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_csbwin_graphics_signature_gate.h"
 #include "csb_v1_chaos_magic_pc34_compat.h"
+#include "csb_v1_monster_pc34_compat.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"

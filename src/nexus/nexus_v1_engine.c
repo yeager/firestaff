@@ -258,6 +258,38 @@ const char *nexus_v1_known_file_md5(const char *name)
 
 static int nexus_path_is_file(const char *path);
 
+static int asset_file_matches_md5(const char *path, const char *expected_md5)
+{
+    FILE *file;
+    uint8_t *bytes;
+    long size;
+    int ok;
+
+    if (!path || !expected_md5) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return 0;
+    }
+    size = ftell(file);
+    if (size < 0 || fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes) {
+        fclose(file);
+        return 0;
+    }
+    ok = fread(bytes, 1U, (size_t)size, file) == (size_t)size &&
+         nexus_v1_dgn_bytes_match_canonical_md5(bytes, (int)size,
+                                                expected_md5);
+    free(bytes);
+    fclose(file);
+    return ok ? 1 : 0;
+}
+
 static uint64_t nexus_v1_dgn_bytes_fnv1a64(const uint8_t *data, int size)
 {
     uint64_t hash = UINT64_C(1469598103934665603);
@@ -311,7 +343,6 @@ static int nexus_v1_level_aux_source_receipt(
     if (!md5) return 0;
     strncpy(out_receipt->canonical_md5, md5,
             sizeof(out_receipt->canonical_md5) - 1U);
-
     if (engine->source == NEXUS_SRC_EXTRACTED) {
         snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
         out_receipt->exact_source_entry_observed = nexus_path_is_file(path);
@@ -361,6 +392,7 @@ static int nexus_v1_structure2_source_receipt(
     const char *md5;
     const Nexus_ISOFile *file;
     const char *slash;
+    int loaded_bytes_canonical;
 
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -376,6 +408,8 @@ static int nexus_v1_structure2_source_receipt(
     if (!md5) return 0;
     strncpy(out_receipt->canonical_md5, md5,
             sizeof(out_receipt->canonical_md5) - 1U);
+    loaded_bytes_canonical = nexus_v1_dgn_bytes_match_canonical_md5(
+        loaded_dgn_data, loaded_dgn_size, md5);
     /* A canonical hash alone cannot admit a malformed local descriptor
      * layout. Retain the existing no-decoder policy, but require the parsed
      * descriptor targets to remain within the one proven Structure2 envelope
@@ -1123,33 +1157,34 @@ int nexus_v1_current_level_dgn_face_material_source_receipt(
 {
     Nexus_V1_DgnFaceMaterialBinding bindings[NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES];
     Nexus_V1_DgnFaceMaterialInput input;
+    char level_name[16];
     int binding_count = 0;
 
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_INPUT;
-    if (!engine || !engine->level_loaded || !engine->current_level_dgn_bytes ||
+    snprintf(level_name, sizeof(level_name), "LEV%02d.DGN",
+             engine ? engine->game.current_level : 0);
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0 ||
-        !engine->current_level_dgn_bytes_canonical ||
-        !engine->current_level_dgn_canonical_md5[0] ||
         !nexus_v1_dgn_bytes_match_canonical_md5(
-            engine->current_level_dgn_bytes, engine->current_level_dgn_size,
-            engine->current_level_dgn_canonical_md5)) {
+            engine->current_level_dgn_data, engine->current_level_dgn_size,
+            nexus_known_boot_file_md5(level_name))) {
         out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE;
         return 0;
     }
     if (nexus_v1_level_collect_structure3_face_material_bindings(
-            &engine->current_level, engine->current_level_dgn_bytes,
+            &engine->current_level, engine->current_level_dgn_data,
             engine->current_level_dgn_size, bindings,
             NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES, &binding_count) != 0) {
         return 0;
     }
     memset(&input, 0, sizeof(input));
     input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN;
-    input.dgn_bytes = engine->current_level_dgn_bytes;
+    input.dgn_bytes = engine->current_level_dgn_data;
     input.dgn_size = engine->current_level_dgn_size;
     /* The MD5 above authenticated this exact retained launch buffer. */
-    input.canonical_dgn_bytes = engine->current_level_dgn_bytes;
+    input.canonical_dgn_bytes = engine->current_level_dgn_data;
     input.canonical_dgn_size = engine->current_level_dgn_size;
     input.canonical_source_verified = 1;
     input.bindings = bindings;
@@ -9506,7 +9541,8 @@ int nexus_v1_current_level_dgn_renderer_handoff_receipt(
         return -1;
     }
     nexus_v1_dgn_renderer_handoff_require_canonical_source(
-        out_receipt, engine->current_level_dgn_bytes_canonical);
+        out_receipt,
+        engine->current_level_structure2_source.canonical_hash_verified);
     return 0;
 }
 

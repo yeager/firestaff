@@ -79,7 +79,6 @@ typedef struct {
     int candidate_source_loaded;
     int candidate_source_bytes;
     uint64_t candidate_source_fnv1a64;
-    int canonical_source_verified;
     int parser_supported;
     int dispatch_enabled;
     int parsed_record_size;
@@ -87,6 +86,8 @@ typedef struct {
     int real_task_profile_supported;
     int real_task_header_supported;
     int real_task_header_size;
+    int real_task_word_count;
+    int real_task_first_opcode;
     int real_task_setup_immediate;
     Nexus_SlevSetupImmediateProvenance real_task_setup_immediate_provenance;
     int real_task_primary_literal_instruction_offset;
@@ -122,7 +123,6 @@ typedef struct {
     int candidate_source_loaded;
     int candidate_source_bytes;
     uint64_t candidate_source_fnv1a64;
-    int canonical_source_verified;
     int parser_supported;
     int dispatch_enabled;
     int parsed_record_size;

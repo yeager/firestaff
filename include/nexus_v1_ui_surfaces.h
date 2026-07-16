@@ -200,13 +200,6 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_UI_FacePrs3CaptureCampaignReceipt;
 
-typedef enum {
-    NEXUS_UI_FACE_RECORD_NONE = 0,
-    /* Canonical Saturn FACE.BIN frames are PRS3-compressed 56x56 records.
-     * Their opcode grammar is not established, so no pixel output is legal. */
-    NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN
-} Nexus_UI_FaceRecordDecodeKind;
-
 typedef struct {
     Nexus_UI_FaceRecordDecodeKind kind;
     int source_size;
