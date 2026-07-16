@@ -368,7 +368,7 @@ DM2_EXTRACT_GDAT_IMAGE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1132	include/dm2_v1_asse
 DM2_LOAD_DYN4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1294		MISSING
 DM2_LOAD_GDAT_INTERFACE_00_02	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1922	src/dm2/dm2_v1_viewport_renderer.c:273	UNCERTAIN
 DM2_LOAD_GDAT_INTERFACE_00_0A	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2008		MISSING
-DM2_3D93B	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2108		MISSING
+DM2_3D93B	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2108	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_3d93b_text_scan	VERIFIED_SOURCE_MAPPING	DM2 v1 c_map/c_record receipt scans source-owned byte maps and DB2 Text records for ext-0x0B/0x0F/0x10 SimpleTextExtUsage behavior, including mode 4 visibility-bit clearing, without GDAT image fallback or incomplete G1 graph promotion.
 init	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	26	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 xlat	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	39		MISSING
 blit_within_screen	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	48		MISSING

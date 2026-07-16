@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject `DM2_3D93B` text/map scan receipt: added a
+  bounded c_map/c_record receipt in `dm2_v1_dungeon_loader` for skproject
+  `c_gdatfile.cpp` line 2108. It scans source-owned byte maps and DB2 Text
+  records, preserves the `TextMode` and `SimpleTextExtUsage` gates, counts or
+  selects ext-0x0B records, records ext-0x10 fallback coordinates, and clears
+  only the original ext-0x0F visibility bit for mode 4. It refuses incomplete
+  G1 record graphs and does not touch GDAT images or synthetic runtime state.
+  Verification: focused Ninja target `test_dm2_v1_c_map_tile_access`, focused
+  CTest `dm2_v1_c_map_tile_access`, and `git diff --check`.
+
 - 2026-07-16 DM2 skproject map/list helper bundle: mapped
   `DM2_map_0cee_1815`, `DM2_map_0cee_185a`, `DM2_map_2066_1f37`,
   `DM2_map_2066_1ec9`, and `SKW_2066_1ea3` from `SKULLWIN/c_map.cpp`.
