@@ -4,6 +4,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
+#include "dm1_v1_projectile_impact_attack_f0216_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
@@ -1520,8 +1521,8 @@ int dm1_v1_projectile_creature_precheck_damage_plan_pc34(
     outPlan->valid = 1;
     outPlan->handled = 1;
 
-    impactAttack = projectile->attack ? projectile->attack
-                                      : projectile->kineticEnergy;
+    impactAttack = F0216_PROJECTILE_GetImpactAttack(projectile);
+    if (impactAttack < 0) return 0;
     if (projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
         group->creatureType == DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34) {
         int healed = (int)group->health[creatureIndex] + impactAttack;
@@ -1645,7 +1646,8 @@ int dm1_v1_projectile_champion_action_plan_pc34(
     outPlan->impactMapY = action->targetMapY;
     outPlan->impactCell = action->targetCell;
     outPlan->attackTypeCode = action->attackTypeCode;
-    outPlan->rawAttackValue = action->rawAttackValue;
+    outPlan->rawAttackValue = F0216_PROJECTILE_GetImpactAttack(projectile);
+    if (outPlan->rawAttackValue < 0) return 0;
     outPlan->allowedWounds = action->allowedWounds;
     return 1;
 }

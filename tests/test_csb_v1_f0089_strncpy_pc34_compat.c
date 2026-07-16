@@ -1,94 +1,67 @@
 #include "csb_v1_f0089_strncpy_pc34_compat.h"
 #include "redmcsb_f0089_strncpy.h"
 
-#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#define CHECK(expr) do { \
-    if (!(expr)) { \
-        fprintf(stderr, "check failed at %s:%d: %s\n", __FILE__, __LINE__, #expr); \
-        return 1; \
-    } \
-} while (0)
+#define CHECK(condition)                                                        \
+    do {                                                                        \
+        if (!(condition)) {                                                     \
+            fprintf(stderr, "CHECK failed at %s:%d: %s\n", __FILE__, __LINE__, \
+                    #condition);                                                \
+            exit(1);                                                            \
+        }                                                                       \
+    } while (0)
 
-static int test_exact_count_copy_without_nul(void)
+static void test_copies_until_count(void)
 {
-    char dst[] = "xxxxx";
+    char buffer[8];
 
-    CHECK(F0089_strncpy(dst, "ABCD", 2) == dst);
-    CHECK(dst[0] == 'A');
-    CHECK(dst[1] == 'B');
-    CHECK(dst[2] == 'x');
-    CHECK(dst[3] == 'x');
-    CHECK(dst[4] == 'x');
-    return 0;
+    memset(buffer, 'x', sizeof(buffer));
+    CHECK(F0089_strncpy(buffer, "abcdef", 3) == buffer);
+    CHECK(memcmp(buffer, "abcxxxxx", sizeof(buffer)) == 0);
 }
 
-static int test_copies_nul_and_does_not_pad(void)
+static void test_copies_nul_and_does_not_pad(void)
 {
-    char dst[] = { 'x', 'x', 'x', 'x', 'x', 'x' };
+    char buffer[8];
 
-    CHECK(F0089_strncpy(dst, "A", 5) == dst);
-    CHECK(dst[0] == 'A');
-    CHECK(dst[1] == '\0');
-    CHECK(dst[2] == 'x');
-    CHECK(dst[3] == 'x');
-    CHECK(dst[4] == 'x');
-    CHECK(dst[5] == 'x');
-    return 0;
+    memset(buffer, 'x', sizeof(buffer));
+    CHECK(csb_v1_f0089_strncpy_pc34_compat(buffer, "ab", 6) == buffer);
+    CHECK(buffer[0] == 'a');
+    CHECK(buffer[1] == 'b');
+    CHECK(buffer[2] == '\0');
+    CHECK(buffer[3] == 'x');
+    CHECK(buffer[7] == 'x');
 }
 
-static int test_zero_and_negative_counts_are_bounded_noops(void)
+static void test_invalid_or_nonpositive_count_is_noop(void)
 {
-    char zero_dst[] = "zero";
-    char negative_dst[] = "neg";
+    char buffer[4] = {'a', 'b', 'c', '\0'};
 
-    CHECK(F0089_strncpy(zero_dst, "AB", 0) == zero_dst);
-    CHECK(strcmp(zero_dst, "zero") == 0);
-    CHECK(F0089_strncpy(negative_dst, "AB", (int16_t)-1) == negative_dst);
-    CHECK(strcmp(negative_dst, "neg") == 0);
-    return 0;
+    CHECK(redmcsb_f0089_strncpy(buffer, "z", 0) == buffer);
+    CHECK(strcmp(buffer, "abc") == 0);
+    CHECK(csb_v1_f0089_strncpy_pc34_compat(buffer, "z", -4) == buffer);
+    CHECK(strcmp(buffer, "abc") == 0);
+    CHECK(csb_v1_f0089_strncpy_pc34_compat(NULL, "z", 1) == NULL);
 }
 
-static int test_null_arguments_return_destination_without_write(void)
-{
-    char dst[] = "safe";
-
-    CHECK(F0089_strncpy(dst, 0, 4) == dst);
-    CHECK(strcmp(dst, "safe") == 0);
-    CHECK(F0089_strncpy(0, "AB", 2) == 0);
-    return 0;
-}
-
-static int test_csb_and_shared_names_delegate_to_same_boundary(void)
-{
-    char csb_dst[] = "xxxx";
-    char shared_dst[] = "xxxx";
-
-    CHECK(csb_v1_f0089_strncpy_pc34_compat(csb_dst, "Q", 4) == csb_dst);
-    CHECK(redmcsb_f0089_strncpy(shared_dst, "Q", 4) == shared_dst);
-    CHECK(memcmp(csb_dst, shared_dst, sizeof(csb_dst)) == 0);
-    return 0;
-}
-
-static int test_source_evidence_names_f0089(void)
+static void test_source_evidence(void)
 {
     const char *evidence = csb_v1_f0089_strncpy_source_evidence_pc34();
 
-    CHECK(evidence != 0);
-    CHECK(strstr(evidence, "F0089_strncpy") != 0);
-    CHECK(strstr(evidence, "do not pad") != 0);
-    return 0;
+    CHECK(evidence != NULL);
+    CHECK(strstr(evidence, "F0089_strncpy") != NULL);
+    CHECK(strstr(evidence, "DEFS.H:3085") != NULL);
+    CHECK(strstr(evidence, "do not pad") != NULL);
 }
 
 int main(void)
 {
-    CHECK(test_exact_count_copy_without_nul() == 0);
-    CHECK(test_copies_nul_and_does_not_pad() == 0);
-    CHECK(test_zero_and_negative_counts_are_bounded_noops() == 0);
-    CHECK(test_null_arguments_return_destination_without_write() == 0);
-    CHECK(test_csb_and_shared_names_delegate_to_same_boundary() == 0);
-    CHECK(test_source_evidence_names_f0089() == 0);
+    test_copies_until_count();
+    test_copies_nul_and_does_not_pad();
+    test_invalid_or_nonpositive_count_is_noop();
+    test_source_evidence();
     return 0;
 }

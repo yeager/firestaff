@@ -587,6 +587,41 @@ typedef struct {
     uint32_t receipt_hash;
 } Theron_Track02NonstartupSectorReceipt;
 
+#define THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS \
+    (THERON_TRACK02_MAX_BANK_ANCHORS * \
+     THERON_TRACK02_MAX_NONSTARTUP_SECTOR_WINDOWS)
+
+typedef struct {
+    size_t user_data_offset;
+    size_t byte_count;
+    uint32_t hash;
+} Theron_Track02NonstartupContainerSegment;
+
+typedef struct {
+    size_t descriptor_entry_index;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t user_data_byte_count;
+    uint32_t user_data_hash;
+    size_t user_data_segment_count;
+    Theron_Track02NonstartupContainerSegment user_data_segments
+        [THERON_TRACK02_MAX_USER_DATA_WINDOWS];
+    int opaque;
+    int promotion_blocked;
+} Theron_Track02NonstartupContainer;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t container_count;
+    Theron_Track02NonstartupContainer containers
+        [THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS];
+    int valid;
+    int verified_track02;
+    int opaque_only;
+    int promotion_blocked;
+    uint32_t index_hash;
+} Theron_Track02NonstartupContainerIndex;
+
 /* Cross-region comparison of opaque post-descriptor windows.
  *
  * This is deliberately a layout observation, not a decoder.  A matching
@@ -630,6 +665,16 @@ Theron_Track02SignalStatus theron_v1_track02_capture_nonstartup_sector_receipt(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02NonstartupSectorReceipt *out_receipt);
+
+/* Build a conservative opaque container index from the real raw-BIN
+ * non-startup sector receipt. Only already verified, contiguous user-data
+ * windows are indexed. The index does not decode object, level, bitmap,
+ * palette, text, or runtime semantics and keeps promotion blocked. */
+Theron_Track02SignalStatus theron_v1_track02_build_nonstartup_container_index(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02NonstartupContainerIndex *out_index);
 
 const char *theron_v1_track02_nonstartup_sector_layout_comparison_status_name(
     Theron_Track02NonstartupSectorLayoutComparisonStatus status);

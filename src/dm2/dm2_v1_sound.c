@@ -10,6 +10,7 @@
 
 #include "dm2_v1_sound.h"
 #include <stdio.h>
+#include <string.h>
 
 /* ── Sound name tables by category ────────────────────────────────────────
  * Source: docs/dm2_audio.md, docs/dm2_sound_combat.md
@@ -74,6 +75,13 @@ static const char *const g_music_track_names[DM2_MUSIC_TRACK_COUNT] = {
     /* Tracks 16-27 (0x10-0x1b) additional dungeon/building themes */
 };
 
+static const uint16_t g_skproject_sound_bearing_table[24] = {
+    0x25a0u, 0x11f0u, 0x0b00u, 0x0730u, 0x0490u, 0x0290u,
+    0x00d0u, 0x0000u, 0x0800u, 0x1700u, 0x2600u, 0x3500u,
+    0x4400u, 0x5300u, 0x6200u, 0x7100u, 0x8f00u, 0x9e00u,
+    0xad00u, 0xbc00u, 0xcb00u, 0xda00u, 0xe900u, 0xf800u
+};
+
 static void dm2_v1_skproject_sound_clear_receipt(
     DM2_V1_SkprojectSoundReceipt *receipt)
 {
@@ -95,8 +103,11 @@ void dm2_v1_skproject_sound_state_init(DM2_V1_SkprojectSoundState *state,
     state->sfx_active = 1;
     state->current_music_track = -1;
     state->pending_music_track = -1;
+    state->midi_program = 90u;
     for (uint16_t i = 0; i < DM2_V1_SKPROJECT_SOUND_QUEUE_MAX; ++i)
         state->queue[i].w_05 = -1;
+    for (uint16_t i = 0; i < 64u; ++i)
+        state->active_sample_handles[i] = -1;
 }
 
 uint16_t dm2_v1_skproject_query_snd_entry_index(
@@ -377,6 +388,299 @@ int dm2_v1_skproject_process_sound(DM2_V1_SkprojectSoundState *state,
         state->queue[index].b_04 == party_map)
         receipt.queue_noise_requested = 1;
     state->queue[index].w_05 = -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_midi_program(
+    DM2_V1_SkprojectSoundState *state,
+    uint8_t program,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = (int16_t)program;
+    if (!state) return 0;
+    state->midi_program = program;
+    for (uint16_t i = 0; i < 8u; ++i)
+        if ((state->midi_active_voice_mask & (uint8_t)(1u << i)) != 0u)
+            receipt.refresh_count++;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_discard_midi_word(
+    DM2_V1_SkprojectSoundReceipt *out_receipt,
+    uint16_t word)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = (int16_t)word;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_reset_midi_voice(
+    DM2_V1_SkprojectSoundState *state,
+    uint32_t voice_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = (int16_t)voice_index;
+    if (!state) return 0;
+    if (voice_index >= 8u) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    state->midi_voices[voice_index].l_00 = 0;
+    state->midi_voices[voice_index].w_04 = 0;
+    receipt.reset_count = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_stop_armed_music(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    if (state->midi_handle_present && state->midi_stop_armed) {
+        (void)dm2_v1_skproject_sound_reset_midi_voice(
+            state, state->midi_selected_voice, NULL);
+        state->midi_stop_armed = 0;
+        state->midi_defer_stop = 0;
+        state->midi_fade_counter = 0;
+        receipt.stop_music_requested = 1;
+        receipt.reset_count = 1;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_compute_sfx_metric(
+    DM2_V1_SkprojectSfx *sfx,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    int32_t x;
+    int32_t y;
+    uint32_t divisor;
+
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!sfx) return 0;
+
+    x = (int32_t)sfx->ub_06;
+    y = (int32_t)sfx->ub_07;
+    divisor = (uint32_t)(x * x + y * y + 8);
+    sfx->s59_08.ub_00 =
+        (uint8_t)((((uint32_t)sfx->ub_05 << 8) / divisor) >> 5);
+
+    if (x == 0) {
+        sfx->s59_08.w_01 = 0x8000u;
+    } else if (y == 0) {
+        sfx->s59_08.w_01 = g_skproject_sound_bearing_table[23];
+    } else {
+        uint16_t ratio = (uint16_t)(((uint32_t)x << 11) / (uint32_t)y);
+        uint16_t angle_index = 7u;
+        for (uint16_t i = 0; i < 8u; ++i) {
+            if (ratio >= g_skproject_sound_bearing_table[i]) {
+                angle_index = i;
+                break;
+            }
+        }
+        sfx->s59_08.w_01 =
+            g_skproject_sound_bearing_table[8u + 15u - angle_index];
+    }
+
+    receipt.attenuation = sfx->s59_08.ub_00;
+    receipt.bearing = sfx->s59_08.w_01;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_sfx_precedes(
+    const DM2_V1_SkprojectSfx *lhs,
+    const DM2_V1_SkprojectSfx *rhs)
+{
+    if (!lhs || !rhs) return 0;
+    if (lhs->ub_04 > rhs->ub_04) return 1;
+    if (lhs->ub_04 == rhs->ub_04)
+        return lhs->s59_08.ub_00 >= rhs->s59_08.ub_00;
+    return 0;
+}
+
+int dm2_v1_skproject_sound_sample_state(uint32_t sample_index)
+{
+    if (sample_index >= 32u) return 10;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_stop_sample_slot(
+    DM2_V1_SkprojectSoundState *state,
+    uint32_t sample_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = (int16_t)sample_index;
+    if (!state) return 0;
+    if (sample_index >= 32u) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+uint16_t dm2_v1_skproject_sound_active_sample_slots(
+    const DM2_V1_SkprojectSoundState *state)
+{
+    (void)state;
+    return 0;
+}
+
+int dm2_v1_skproject_sound_drain_samples(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    receipt.scanned_count = dm2_v1_skproject_sound_active_sample_slots(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_stop_handle_table(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    if (state->sound_enabled) {
+        for (uint16_t i = 0; i < 64u; ++i) {
+            if (state->active_sample_handles[i] != -1) {
+                receipt.scanned_count++;
+                (void)dm2_v1_skproject_sound_stop_sample_slot(
+                    state, (uint32_t)state->active_sample_handles[i], NULL);
+            }
+        }
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_release_allocation_node(
+    DM2_V1_SkprojectSoundState *state,
+    const DM2_V1_SkprojectSoundAllocationNode *nodes,
+    uint16_t node_count,
+    uint16_t head_index,
+    uint16_t target_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    uint16_t cursor;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = (int16_t)target_index;
+    receipt.argument1 = (int16_t)head_index;
+    if (!state || !nodes || head_index >= node_count ||
+        target_index >= node_count) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!nodes[head_index].present || !nodes[target_index].present) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    (void)dm2_v1_skproject_sound_stop_handle_table(state, NULL);
+    for (cursor = head_index; cursor < node_count && nodes[cursor].present;
+         cursor = nodes[cursor].next_index) {
+        receipt.scanned_count++;
+        if (cursor == target_index) {
+            receipt.returned_index = (uint16_t)(cursor + 1u);
+            if (nodes[cursor].next_index < node_count &&
+                nodes[nodes[cursor].next_index].present) {
+                receipt.argument2 = (int16_t)nodes[cursor].next_index;
+            } else {
+                receipt.argument2 = -1;
+            }
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (nodes[cursor].next_index >= node_count) break;
+    }
+
+    receipt.argument2 = -1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_sound_stop_all(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    state->pending_immediate_count = 0;
+    state->pending_positional_count = 0;
+    state->pending_music_track = -1;
+    state->current_music_track = -1;
+    state->midi_stop_armed = 0;
+    receipt.stop_sfx_requested = 1;
+    receipt.stop_music_requested = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound_destruct(
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.uninstall_audio_requested = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sound6_sndptr6_allocation(
+    uint32_t v1e0ad4,
+    DM2_V1_SkprojectSoundReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSoundReceipt receipt;
+    dm2_v1_skproject_sound_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.argument0 = (int16_t)(v1e0ad4 & 0xffffu);
+    receipt.allocation_size = v1e0ad4;
+    receipt.allocation_requested = v1e0ad4 != 0u;
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;

@@ -3348,12 +3348,13 @@ int nexus_v1_startup_presentation_receipt(int title_active,
                                           int *out_title_ready)
 {
     const int active_title = title_active ? 1 : 0;
+    const int active_champion = champion_select_active ? 1 : 0;
     const int ready_frames = nexus_v1_boot_start_ready_frames();
     const char *animation = "nexus-runtime";
 
     if (active_title) {
         animation = "nexus-title";
-    } else if (champion_select_active) {
+    } else if (active_champion) {
         animation = "nexus-champion-select";
     }
 
@@ -3372,7 +3373,7 @@ int nexus_v1_startup_presentation_receipt(int title_active,
     }
     snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
     if (out_animation_active) {
-        *out_animation_active = active_title;
+        *out_animation_active = (active_title || active_champion) ? 1 : 0;
     }
     if (out_title_frame) {
         *out_title_frame = active_title ? title_frame : -1;
@@ -3383,5 +3384,128 @@ int nexus_v1_startup_presentation_receipt(int title_active,
     if (out_title_ready) {
         *out_title_ready = !active_title || title_frame >= ready_frames;
     }
+    return 1;
+}
+
+int nexus_v1_startup_presentation_animation_package_gate(
+    const Nexus_V1_StartupPresentationAnimationPackageGateInput *input,
+    Nexus_V1_StartupPresentationAnimationPackageGateReceipt *out_receipt)
+{
+    int title_requested = 0;
+    int champion_requested = 0;
+    int runtime_or_save = 0;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->blocked_no_draw = 1;
+    out_receipt->fallback_visuals_blocked = 1;
+
+    if (!input || !input->animation) {
+        return 0;
+    }
+
+    title_requested = input->animation_active &&
+                      input->title_active &&
+                      strcmp(input->animation, "nexus-title") == 0;
+    champion_requested = input->animation_active &&
+                         input->champion_select_active &&
+                         strcmp(input->animation,
+                                "nexus-champion-select") == 0;
+    runtime_or_save = !input->animation_active &&
+                      strcmp(input->animation, "nexus-runtime") == 0 &&
+                      !input->title_active;
+
+    out_receipt->title_animation_requested = title_requested ? 1 : 0;
+    out_receipt->champion_animation_requested = champion_requested ? 1 : 0;
+    out_receipt->active_animation_requested =
+        (title_requested || champion_requested) ? 1 : 0;
+    out_receipt->inactive_runtime_or_save = runtime_or_save ? 1 : 0;
+    out_receipt->animation_label_recognized =
+        (out_receipt->active_animation_requested || runtime_or_save) ? 1 : 0;
+    out_receipt->host_display_caller_expected =
+        input->host_display_caller_expected ? 1 : 0;
+    out_receipt->real_package_assets_bound =
+        input->real_package_assets_bound ? 1 : 0;
+    out_receipt->saturn_timing_exact = input->saturn_timing_exact ? 1 : 0;
+    out_receipt->saturn_capture_frames_exact =
+        input->saturn_capture_frames_exact ? 1 : 0;
+    out_receipt->fallback_visuals_permitted =
+        input->fallback_visuals_permitted ? 1 : 0;
+    out_receipt->menu_bpk_prs3_blocked =
+        input->menu_bpk_prs3_blocked ? 1 : 0;
+
+    out_receipt->package_ready =
+        input->full_start_package_receipt_ready &&
+        input->host_display_caller_expected &&
+        input->real_package_assets_bound &&
+        input->saturn_timing_exact &&
+        input->saturn_capture_frames_exact &&
+        !input->fallback_visuals_permitted &&
+        !input->menu_bpk_prs3_blocked;
+
+    if (runtime_or_save) {
+        return 1;
+    }
+    if (!out_receipt->active_animation_requested ||
+        !out_receipt->package_ready) {
+        return 0;
+    }
+
+    out_receipt->package_animation_bound = 1;
+    out_receipt->animation_draw_permitted = 1;
+    out_receipt->blocked_no_draw = 0;
+    return 1;
+}
+
+int nexus_v1_startup_menu_animation_handoff_gate(
+    const Nexus_V1_StartupMenuAnimationHandoffGateInput *input,
+    Nexus_V1_StartupMenuAnimationHandoffGateReceipt *out_receipt)
+{
+    const Nexus_V1_StartupPresentationAnimationPackageGateReceipt *package;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->blocked_no_draw = 1;
+    out_receipt->fallback_visuals_blocked = 1;
+
+    if (!input || !input->package_gate) {
+        return 0;
+    }
+
+    package = input->package_gate;
+    out_receipt->package_animation_bound =
+        package->package_animation_bound &&
+        package->animation_draw_permitted &&
+        !package->blocked_no_draw;
+    out_receipt->menu_bpk_source_hash_verified =
+        input->menu_bpk_source_hash_verified ? 1 : 0;
+    out_receipt->stored_surface_route_bound =
+        input->menu_bpk_can_render_stored_surfaces ? 1 : 0;
+    out_receipt->prs3_trace_required =
+        input->menu_bpk_prs3_trace_required ? 1 : 0;
+    out_receipt->saturn_presentation_required =
+        input->menu_bpk_saturn_presentation_required ? 1 : 0;
+
+    out_receipt->menu_bpk_handoff_bound =
+        input->menu_bpk_handoff_receipt_valid &&
+        input->menu_bpk_source_hash_verified &&
+        input->menu_bpk_can_render_stored_surfaces &&
+        !input->menu_bpk_blocks_real_menu_surface_render &&
+        !input->menu_bpk_prs3_trace_required &&
+        !input->menu_bpk_saturn_presentation_required &&
+        !input->fallback_visuals_permitted;
+
+    if (!out_receipt->package_animation_bound ||
+        !out_receipt->menu_bpk_handoff_bound) {
+        return 0;
+    }
+
+    out_receipt->boot_menu_real_data_route_bound = 1;
+    out_receipt->animation_draw_permitted = 1;
+    out_receipt->blocked_no_draw = 0;
     return 1;
 }

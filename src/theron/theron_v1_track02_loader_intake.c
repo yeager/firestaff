@@ -15,6 +15,31 @@ static uint32_t theron_v1_track02_loader_intake_fnv1a32(
     return hash;
 }
 
+static int theron_v1_track02_loader_intake_consumer_windows_match(
+    const Theron_V1Track02LoaderSemanticGateReceipt *loader_gate,
+    const Theron_V1Track02Post3800ConsumerTraceFacts *facts) {
+    return facts->loader_record_user_data_offset ==
+               THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET &&
+           facts->loader_destination ==
+               THERON_V1_INITIAL_ENVELOPE_DESTINATION &&
+           facts->loader_payload_bytes ==
+               THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES &&
+           facts->dungeon_record_consumer_pc != 0u &&
+           facts->object_table_consumer_pc != 0u &&
+           facts->dungeon_record_payload_offset ==
+               THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET &&
+           facts->dungeon_record_byte_count ==
+               THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES &&
+           facts->dungeon_record_window_checksum ==
+               loader_gate->level_envelope_checksum &&
+           facts->object_table_payload_offset ==
+               THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET &&
+           facts->object_table_byte_count ==
+               THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES &&
+           facts->object_table_window_checksum ==
+               loader_gate->post_envelope_checksum;
+}
+
 int theron_v1_track02_loader_intake_observe(
     const Theron_V1Track02LoaderReadFacts *facts,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
@@ -271,6 +296,8 @@ int theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
         facts->post_envelope_checksum !=
             loader_gate->post_envelope_checksum ||
         facts->consumer_trace_checksum == 0u ||
+        !theron_v1_track02_loader_intake_consumer_windows_match(
+            loader_gate, facts) ||
         !facts->dungeon_record_consumer_observed ||
         !facts->object_table_consumer_observed ||
         !facts->bitmap_consumer_observed ||
@@ -289,6 +316,10 @@ int theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
     receipt.original_consumer_trace_bound = 1;
     receipt.track02_variant = facts->track02_variant;
     receipt.record = facts->record;
+    receipt.loader_record_user_data_offset =
+        facts->loader_record_user_data_offset;
+    receipt.loader_destination = facts->loader_destination;
+    receipt.loader_payload_bytes = facts->loader_payload_bytes;
     receipt.payload_checksum = facts->payload_checksum;
     receipt.level_envelope_checksum = facts->level_envelope_checksum;
     receipt.post_envelope_checksum = facts->post_envelope_checksum;
@@ -301,6 +332,95 @@ int theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
     receipt.fallback_visuals_allowed = 0;
     receipt.status =
         "post_3800_original_consumer_semantics_bound_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int theron_v1_track02_loader_intake_object_dungeon_consumer_grammar_gate(
+    const Theron_V1Track02LoaderSemanticGateReceipt *loader_gate,
+    const Theron_V1Track02Post3800ConsumerTraceFacts *facts,
+    Theron_V1Track02ObjectDungeonConsumerGrammarReceipt *out_receipt) {
+    Theron_V1Track02ObjectDungeonConsumerGrammarReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader_gate || !facts || !out_receipt || !loader_gate->valid ||
+        !loader_gate->no_fallback ||
+        !loader_gate->real_payload_available ||
+        !loader_gate->level_envelope_available ||
+        !loader_gate->post_envelope_available ||
+        loader_gate->dungeon_record_semantics_proven ||
+        loader_gate->object_table_semantics_proven ||
+        loader_gate->bitmap_route_bound ||
+        loader_gate->palette_binding_verified ||
+        loader_gate->rgba_output_allowed ||
+        loader_gate->fallback_visuals_allowed ||
+        !facts->authenticated_original_trace ||
+        !facts->post_3800_execution_observed ||
+        !facts->same_capture_as_loader_payload ||
+        (facts->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         facts->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
+        facts->track02_variant != loader_gate->track02_variant ||
+        facts->record != loader_gate->record ||
+        facts->payload_checksum == 0u ||
+        facts->level_envelope_checksum == 0u ||
+        facts->post_envelope_checksum == 0u ||
+        facts->payload_checksum != loader_gate->payload_checksum ||
+        facts->level_envelope_checksum !=
+            loader_gate->level_envelope_checksum ||
+        facts->post_envelope_checksum !=
+            loader_gate->post_envelope_checksum ||
+        facts->consumer_trace_checksum == 0u ||
+        !theron_v1_track02_loader_intake_consumer_windows_match(
+            loader_gate, facts) ||
+        !facts->dungeon_record_consumer_observed ||
+        !facts->object_table_consumer_observed ||
+        facts->bitmap_consumer_observed ||
+        facts->palette_consumer_observed ||
+        facts->synthetic_dungeon_promoted ||
+        facts->synthetic_object_table_promoted ||
+        facts->synthetic_bitmap_promoted ||
+        facts->synthetic_palette_promoted ||
+        facts->fallback_visuals_observed ||
+        facts->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.no_fallback = 1;
+    receipt.original_consumer_trace_bound = 1;
+    receipt.same_capture_as_loader_payload = 1;
+    receipt.track02_variant = facts->track02_variant;
+    receipt.record = facts->record;
+    receipt.loader_record_user_data_offset =
+        facts->loader_record_user_data_offset;
+    receipt.loader_destination = facts->loader_destination;
+    receipt.loader_payload_bytes = facts->loader_payload_bytes;
+    receipt.payload_checksum = facts->payload_checksum;
+    receipt.level_envelope_checksum = facts->level_envelope_checksum;
+    receipt.post_envelope_checksum = facts->post_envelope_checksum;
+    receipt.consumer_trace_checksum = facts->consumer_trace_checksum;
+    receipt.dungeon_record_consumer_pc = facts->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = facts->object_table_consumer_pc;
+    receipt.dungeon_record_payload_offset =
+        facts->dungeon_record_payload_offset;
+    receipt.dungeon_record_byte_count = facts->dungeon_record_byte_count;
+    receipt.dungeon_record_window_checksum =
+        facts->dungeon_record_window_checksum;
+    receipt.object_table_payload_offset = facts->object_table_payload_offset;
+    receipt.object_table_byte_count = facts->object_table_byte_count;
+    receipt.object_table_window_checksum =
+        facts->object_table_window_checksum;
+    receipt.dungeon_record_grammar_proven = 1;
+    receipt.object_table_grammar_proven = 1;
+    receipt.dungeon_record_fields_blocked = 1;
+    receipt.object_table_fields_blocked = 1;
+    receipt.bitmap_route_bound = 0;
+    receipt.palette_binding_verified = 0;
+    receipt.rgba_output_allowed = 0;
+    receipt.runtime_handoff_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    receipt.status =
+        "post_3800_object_dungeon_grammar_bound_visuals_runtime_blocked_no_fallback";
     *out_receipt = receipt;
     return 1;
 }

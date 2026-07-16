@@ -154,10 +154,21 @@ typedef struct {
     int same_capture_as_loader_payload;
     Theron_Track02Variant track02_variant;
     uint32_t record;
+    uint32_t loader_record_user_data_offset;
+    uint32_t loader_destination;
+    uint32_t loader_payload_bytes;
     uint32_t payload_checksum;
     uint32_t level_envelope_checksum;
     uint32_t post_envelope_checksum;
     uint32_t consumer_trace_checksum;
+    uint32_t dungeon_record_consumer_pc;
+    uint32_t object_table_consumer_pc;
+    size_t dungeon_record_payload_offset;
+    size_t dungeon_record_byte_count;
+    uint32_t dungeon_record_window_checksum;
+    size_t object_table_payload_offset;
+    size_t object_table_byte_count;
+    uint32_t object_table_window_checksum;
     int dungeon_record_consumer_observed;
     int object_table_consumer_observed;
     int bitmap_consumer_observed;
@@ -176,6 +187,9 @@ typedef struct {
     int original_consumer_trace_bound;
     Theron_Track02Variant track02_variant;
     uint32_t record;
+    uint32_t loader_record_user_data_offset;
+    uint32_t loader_destination;
+    uint32_t loader_payload_bytes;
     uint32_t payload_checksum;
     uint32_t level_envelope_checksum;
     uint32_t post_envelope_checksum;
@@ -188,6 +202,43 @@ typedef struct {
     int fallback_visuals_allowed;
     const char *status;
 } Theron_V1Track02Post3800ConsumerSemanticReceipt;
+
+/* Narrow object/dungeon grammar gate for the same original post-$3800
+ * consumer evidence. Unlike the broader semantic gate, this does not admit
+ * bitmap, palette, RGBA, runtime, or fallback visual routes. */
+typedef struct {
+    int valid;
+    int no_fallback;
+    int original_consumer_trace_bound;
+    int same_capture_as_loader_payload;
+    Theron_Track02Variant track02_variant;
+    uint32_t record;
+    uint32_t loader_record_user_data_offset;
+    uint32_t loader_destination;
+    uint32_t loader_payload_bytes;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    uint32_t consumer_trace_checksum;
+    uint32_t dungeon_record_consumer_pc;
+    uint32_t object_table_consumer_pc;
+    size_t dungeon_record_payload_offset;
+    size_t dungeon_record_byte_count;
+    uint32_t dungeon_record_window_checksum;
+    size_t object_table_payload_offset;
+    size_t object_table_byte_count;
+    uint32_t object_table_window_checksum;
+    int dungeon_record_grammar_proven;
+    int object_table_grammar_proven;
+    int dungeon_record_fields_blocked;
+    int object_table_fields_blocked;
+    int bitmap_route_bound;
+    int palette_binding_verified;
+    int rgba_output_allowed;
+    int runtime_handoff_allowed;
+    int fallback_visuals_allowed;
+    const char *status;
+} Theron_V1Track02ObjectDungeonConsumerGrammarReceipt;
 
 /* Byte-faithful ISO handoff for the first level sector. The post-envelope
  * span is retained only as opaque source bytes; object/bitmap semantics stay
@@ -267,6 +318,14 @@ int theron_v1_track02_loader_intake_post3800_consumer_semantic_gate(
     const Theron_V1Track02LoaderSemanticGateReceipt *loader_gate,
     const Theron_V1Track02Post3800ConsumerTraceFacts *facts,
     Theron_V1Track02Post3800ConsumerSemanticReceipt *out_receipt);
+
+/* Admits only object/dungeon grammar provenance from an original post-$3800
+ * consumer trace. Rendering, palette, bitmap, runtime, and fallback visual
+ * routes remain blocked. */
+int theron_v1_track02_loader_intake_object_dungeon_consumer_grammar_gate(
+    const Theron_V1Track02LoaderSemanticGateReceipt *loader_gate,
+    const Theron_V1Track02Post3800ConsumerTraceFacts *facts,
+    Theron_V1Track02ObjectDungeonConsumerGrammarReceipt *out_receipt);
 
 /* Copies the first MODE1/2048 ISO level-sector bytes only after a separate
  * ISO capture proves the record, destination, and exact payload checksum.

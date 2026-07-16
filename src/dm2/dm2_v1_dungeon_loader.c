@@ -77,7 +77,8 @@ static void wr16le(uint8_t *p, uint16_t v) {
     p[1] = (uint8_t)(v >> 8);
 }
 
-static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
+static __attribute__((unused)) uint32_t
+dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 {
     uint32_t hash = 2166136261u;
     uint32_t i;
@@ -102,6 +103,7 @@ static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 #define DM2_MAP_DESC_SIZE 16
 #define DM2_THING_TYPE_COUNT 16
 #define DM2_THING_END_MARKER 0xfffeu
+#define DM2_THING_NULL_MARKER 0xffffu
 
 /* PC DOS G1 keeps a 256-byte extension between the 28 Map_definitions and
  * the c_map.cpp-owned tables.  The real EN/FR dungeon member is identical;
@@ -110,6 +112,9 @@ static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
  * before dunGroundStacks, and c_map.cpp maps tile bit 0x10 through it. */
 #define DM2_PC_G1_MAP_EXTENSION_BYTES       256
 #define DM2_PC_G1_GROUND_STACK_COUNT_OFFSET 10
+#define DM2_PC_G1_DB3_EXTENDED_COUNT        1024
+#define DM2_PC_G1_DB4_EXTENDED_COUNT        300
+#define DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES 9
 
 static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x06, 0x04, 0x08,
@@ -184,6 +189,11 @@ static int dm2_v1_g1_extension_record_offset(const DM2_V1_DungeonData *d,
 
 static int dm2_v1_dungeon_record_list_traversal_allowed(
     const DM2_V1_DungeonData *d);
+
+static int dm2_v1_dungeon_record_list_traversal_allowed(
+    const DM2_V1_DungeonData *d) {
+    return d && d->raw_data && d->record_graph_complete;
+}
 
 static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
                                   int level,
@@ -463,6 +473,7 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
+    dm2_v1_configure_pc_g1_extension_records(out);
     /* The public validator intentionally rejects unpromoted graphs. Enable
      * this candidate only for its complete bounded walk, then clear it again
      * on the first invalid root/link/cycle. */
@@ -1976,6 +1987,61 @@ static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
            index >= 0 && index < d->thing_type_counts[type];
 }
 
+static int dm2_v1_g1_link_has_extension_shape(const DM2_V1_DungeonData *d,
+                                               uint16_t link) {
+    int type;
+    int index;
+    int offset;
+
+    if (!d || link == DM2_THING_END_MARKER ||
+        link == DM2_THING_NULL_MARKER) {
+        return 0;
+    }
+    type = (int)((link >> 10) & 0x0fu);
+    index = (int)(link & 0x03ffu);
+    return dm2_v1_g1_extension_record_offset(d, type, index, &offset);
+}
+
+static int dm2_v1_g1_link_has_record_shape(const DM2_V1_DungeonData *d,
+                                            uint16_t link) {
+    return dm2_v1_g1_link_has_declared_shape(d, link) ||
+           dm2_v1_g1_link_has_extension_shape(d, link);
+}
+
+static int dm2_v1_g1_read_teleporter_root(
+    const DM2_V1_DungeonData *d,
+    uint16_t root,
+    int x,
+    int y,
+    DM2_V1_G1DirectTeleporterRoot *out) {
+    const uint8_t *record;
+    uint16_t w2;
+    uint16_t w4;
+
+    if (!out || ((root >> 10) & 0x0fu) != 1u ||
+        !dm2_v1_g1_link_has_declared_shape(d, root)) {
+        return 0;
+    }
+    record = dm2_v1_dungeon_get_thing_record(d, root, NULL, NULL, NULL);
+    if (!record) return 0;
+    w2 = RD16(record + 2);
+    w4 = RD16(record + 4);
+    memset(out, 0, sizeof(*out));
+    out->x = x;
+    out->y = y;
+    out->object_id = root;
+    out->index = root & 0x03ffu;
+    out->direction = (uint8_t)(root >> 14);
+    out->destination_x = (uint8_t)(w2 & 0x001fu);
+    out->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
+    out->destination_map = (uint8_t)(w4 >> 8);
+    out->scope = (uint8_t)(w4 & 0x000fu);
+    out->sound = (uint8_t)((w4 >> 4) & 1u);
+    out->rotation = (uint8_t)((w4 >> 5) & 3u);
+    out->rotation_type = (uint8_t)((w4 >> 7) & 1u);
+    return 1;
+}
+
 static uint32_t dm2_arrange_hash_step(uint32_t hash, uint32_t value) {
     hash ^= value;
     return hash * 16777619u;
@@ -2172,6 +2238,107 @@ int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
     return 1;
 }
 
+int dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1GroundStackMapCorpusReceipt *out) {
+    int column_bytes;
+    int ground_bytes;
+    int map_bytes;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->column_index_base < 0 || d->square_first_thing_base < 0 ||
+        d->raw_map_data_base < 0 || d->raw_map_data_base > d->raw_size) {
+        out->g1_layout_absent = 1;
+        return 1;
+    }
+    column_bytes = d->square_first_thing_base - d->column_index_base;
+    ground_bytes = d->square_first_thing_count * 2;
+    map_bytes = d->raw_size - d->raw_map_data_base;
+    if (column_bytes <= 0 || (column_bytes & 1) != 0 ||
+        ground_bytes <= 0 || d->square_first_thing_base + ground_bytes >
+            d->raw_size || map_bytes <= 0) {
+        out->g1_layout_absent = 1;
+        return 1;
+    }
+    out->available = 1;
+    out->raw_only = 1;
+    out->column_index_base = d->column_index_base;
+    out->column_index_word_count = column_bytes / 2;
+    out->column_index_byte_count = (uint32_t)column_bytes;
+    out->column_index_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->column_index_base, (uint32_t)column_bytes);
+    out->ground_stack_base = d->square_first_thing_base;
+    out->ground_stack_word_count = d->square_first_thing_count;
+    out->ground_stack_byte_count = (uint32_t)ground_bytes;
+    out->ground_stack_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->square_first_thing_base, (uint32_t)ground_bytes);
+    out->map_data_base = d->raw_map_data_base;
+    out->map_data_byte_count = (uint32_t)map_bytes;
+    out->map_data_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->raw_map_data_base, (uint32_t)map_bytes);
+    out->column_index_semantics_unresolved = 1;
+    out->ground_stack_semantics_unresolved = 1;
+    return 1;
+}
+
+int dm2_v1_dungeon_collect_g1_map_corpus_receipt(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1MapCorpusReceipt *out) {
+    int map_bytes;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->raw_map_data_base < 0 || d->raw_map_data_base > d->raw_size ||
+        d->level_count <= 0 || d->level_count > DM2_V1_MAX_LEVELS) {
+        out->g1_layout_absent = 1;
+        return 1;
+    }
+    map_bytes = d->raw_size - d->raw_map_data_base;
+    if (map_bytes <= 0) {
+        out->g1_layout_absent = 1;
+        return 1;
+    }
+    out->available = 1;
+    out->raw_only = 1;
+    out->tile_semantics_unresolved = 1;
+    out->map_count = d->level_count;
+    out->map_data_base = d->raw_map_data_base;
+    out->map_data_byte_count = (uint32_t)map_bytes;
+    out->map_data_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->raw_map_data_base, (uint32_t)map_bytes);
+    for (int map = 0; map < d->level_count; ++map) {
+        DM2_V1_G1MapCorpusEntry *entry = &out->maps[map];
+        int descriptor_base = DM2_DUNGEON_HEADER_SIZE + map * DM2_MAP_DESC_SIZE;
+        int width = d->level_widths[map];
+        int height = d->level_heights[map];
+        int offset = d->level_offsets[map];
+        int bytes = width * height;
+
+        if (descriptor_base < 0 ||
+            descriptor_base + DM2_MAP_DESC_SIZE > d->raw_size ||
+            width <= 0 || height <= 0 || offset < 0 || bytes <= 0 ||
+            offset + bytes > map_bytes) {
+            memset(out, 0, sizeof(*out));
+            out->g1_layout_absent = 1;
+            return 1;
+        }
+        entry->map = map;
+        entry->descriptor_base = descriptor_base;
+        entry->map_data_offset = offset;
+        entry->width = width;
+        entry->height = height;
+        entry->map_byte_count = (uint32_t)bytes;
+        entry->descriptor_hash = dm2_v1_g1_receipt_hash(
+            d->raw_data + descriptor_base, DM2_MAP_DESC_SIZE);
+        entry->map_hash = dm2_v1_g1_receipt_hash(
+            d->raw_data + d->raw_map_data_base + offset, (uint32_t)bytes);
+    }
+    return 1;
+}
+
 int dm2_v1_dungeon_collect_g1_record_pool_evidence(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1RecordPoolEvidence *out) {
@@ -2233,6 +2400,8 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
             ++out->root_end_markers;
         else if (dm2_v1_g1_link_has_declared_shape(d, link))
             ++out->root_shape_valid;
+        else if (dm2_v1_g1_link_has_extension_shape(d, link))
+            ++out->map_root_extension_shape_valid;
         else
             ++out->root_shape_invalid;
     }
@@ -2249,6 +2418,8 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
                 ++out->candidate_first_link_end_markers;
             else if (dm2_v1_g1_link_has_declared_shape(d, link))
                 ++out->candidate_first_link_shape_valid;
+            else if (dm2_v1_g1_link_has_extension_shape(d, link))
+                ++out->candidate_first_link_extension_shape_valid;
             else
                 ++out->candidate_first_link_shape_invalid;
         }
@@ -2270,8 +2441,32 @@ int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d) {
         evidence.text_end != evidence.candidate_base) {
         return 0;
     }
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_partial_map_boot(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1PartialMapBootReceipt *out) {
+    DM2_V1_G1PartialMapBootReceipt candidate;
+    int column_index = 0;
+
+    if (!out || !dm2_v1_dungeon_validate_record_pools(d)) return 0;
     memset(&candidate, 0, sizeof(candidate));
+    candidate.valid = 1;
     candidate.level_count = d->level_count;
+    candidate.map_count = d->level_count;
+    candidate.square_bytes = d->square_bytes;
+    candidate.column_index_base = d->column_index_base;
+    candidate.ground_stack_base = d->square_first_thing_base;
+    candidate.ground_stack_count = d->square_first_thing_count;
+    candidate.text_data_base = d->text_data_base;
+    candidate.text_word_count = d->text_word_count;
+    candidate.candidate_pool_base = d->partial_map_boot.candidate_pool_base;
+    candidate.candidate_pool_end = d->partial_map_boot.candidate_pool_end;
+    candidate.g1_extension_base = d->g1_extension_base;
+    candidate.g1_extension_size = d->g1_extension_size;
+    candidate.raw_map_data_base = d->raw_map_data_base;
+    candidate.record_graph_complete = d->record_graph_complete;
 
     /* c_map.cpp selects dunGroundStacks only for bit 0x10 squares.  Read the
      * root ObjectID once, classify its source-proven address transform, and
@@ -3350,7 +3545,7 @@ typedef struct {
     uint16_t image_offset;
 } DM2_V1_G1WallGfxScalars;
 
-static int dm2_v1_g1_read_wall_gfx_scalars(
+static __attribute__((unused)) int dm2_v1_g1_read_wall_gfx_scalars(
     DM2_V1_G1GdatScalarRead read_scalar,
     void *read_userdata,
     uint8_t wall_gfx_index,

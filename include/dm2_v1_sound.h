@@ -1,5 +1,6 @@
 #ifndef FIRESTAFF_DM2_V1_SOUND_H
 #define FIRESTAFF_DM2_V1_SOUND_H
+#include <stddef.h>
 #include <stdint.h>
 
 /* DM2 V1 — Sound System
@@ -83,6 +84,73 @@
 #define DM2_MUSIC_TRACK_COUNT          28  /* 00-1c = 28 tracks */
 #define DM2_MUSIC_MAP_COUNT             64  /* tMusicMaps[64] lookup table */
 
+typedef enum {
+    DM2_V1_MUSIC_FORMAT_UNKNOWN = 0,
+    DM2_V1_MUSIC_FORMAT_STANDARD_MIDI,
+    DM2_V1_MUSIC_FORMAT_HMP_V1
+} DM2_V1_MusicFormat;
+
+typedef enum {
+    DM2_V1_MUSIC_INSPECT_OK = 0,
+    DM2_V1_MUSIC_INSPECT_BAD_EVENT = -1,
+    DM2_V1_MUSIC_INSPECT_BAD_HEADER = -2
+} DM2_V1_MusicInspectResult;
+
+typedef enum {
+    DM2_V1_MUSIC_QUEUE_READY = 1,
+    DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE = 0,
+    DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED = -1,
+    DM2_V1_MUSIC_QUEUE_TRACK_OUT_OF_RANGE = -2,
+    DM2_V1_MUSIC_QUEUE_ASSET_MISSING = -3
+} DM2_V1_MusicQueueResult;
+
+typedef struct {
+    uint32_t tick;
+    uint8_t status;
+    uint8_t data1;
+    uint8_t data2;
+    uint8_t data_size;
+} DM2_V1_MusicScheduledEvent;
+
+typedef struct {
+    uint16_t end_of_track_count;
+} DM2_V1_MusicTrackReceipt;
+
+typedef struct {
+    int valid;
+    DM2_V1_MusicFormat format;
+    uint16_t track_count;
+    uint32_t event_count;
+    uint32_t channel_event_count;
+    uint32_t meta_event_count;
+    uint32_t duration_ticks;
+    uint32_t loop_duration_us;
+    uint16_t schedule_event_count;
+    int schedule_handoff_ready;
+    int midi_handoff_ready;
+    int pcm_handoff_ready;
+    DM2_V1_MusicTrackReceipt tracks[16];
+} DM2_V1_MusicStreamReceipt;
+
+typedef struct {
+    int asset_resolved;
+    int request_queued;
+    int decoder_proven;
+    int backend_proven;
+    int schedule_handoff_ready;
+    uint32_t loop_duration_us;
+    uint16_t schedule_event_count;
+    char asset_path[256];
+} DM2_V1_MusicQueueReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t event_count_due;
+    uint16_t loop_count;
+    int backend_proven;
+    int pcm_handoff_ready;
+} DM2_V1_MusicScheduleReceipt;
+
 /* ── Sound queue ────────────────────────────────────────────────────────
  * Source: skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
  * 16-slot ring buffer with world-coordinate positional audio.
@@ -100,6 +168,30 @@ typedef struct {
 } DM2_V1_SkprojectSoundQueueEntry;
 
 typedef struct {
+    int32_t l_00;
+    int16_t w_04;
+} DM2_V1_SkprojectMidiVoice;
+
+typedef struct {
+    uint8_t ub_00;
+    uint16_t w_01;
+} DM2_V1_SkprojectSoundBearing;
+
+typedef struct {
+    uint8_t ub_04;
+    uint8_t ub_05;
+    uint8_t ub_06;
+    uint8_t ub_07;
+    DM2_V1_SkprojectSoundBearing s59_08;
+    uint8_t ub_0b;
+} DM2_V1_SkprojectSfx;
+
+typedef struct {
+    uint16_t next_index;
+    int present;
+} DM2_V1_SkprojectSoundAllocationNode;
+
+typedef struct {
     int sound_enabled;
     int midi_handle_present;
     int midi_transition_enabled;
@@ -110,11 +202,19 @@ typedef struct {
     int pending_music_track;
     int current_music_track;
     int pending_music_fade;
+    int midi_stop_armed;
+    int midi_defer_stop;
+    int16_t midi_fade_counter;
+    uint8_t midi_program;
+    uint8_t midi_active_voice_mask;
+    uint8_t midi_selected_voice;
     uint16_t queued_count;
     uint16_t queue_capacity;
     uint16_t active_sample_count;
     uint16_t pending_positional_count;
     uint16_t pending_immediate_count;
+    int32_t active_sample_handles[64];
+    DM2_V1_SkprojectMidiVoice midi_voices[8];
     DM2_V1_SkprojectSoundQueueEntry
         queue[DM2_V1_SKPROJECT_SOUND_QUEUE_MAX];
 } DM2_V1_SkprojectSoundState;
@@ -128,16 +228,25 @@ typedef struct {
     int play_music_requested;
     int stop_music_requested;
     int queue_noise_requested;
+    int stop_sfx_requested;
+    int uninstall_audio_requested;
+    int allocation_requested;
     uint16_t returned_index;
     uint16_t queued_count_before;
     uint16_t queued_count_after;
     uint16_t removed_count;
     uint16_t play_count;
+    uint16_t reset_count;
+    uint16_t refresh_count;
+    uint16_t scanned_count;
+    uint32_t allocation_size;
     int16_t argument0;
     int16_t argument1;
     int16_t argument2;
     int16_t selected_music_track;
     int16_t volume;
+    uint16_t bearing;
+    uint8_t attenuation;
 } DM2_V1_SkprojectSoundReceipt;
 
 /* ── Sound definition entry (per-category lookup) ────────────────────────
@@ -207,6 +316,54 @@ int dm2_v1_skproject_process_sound(DM2_V1_SkprojectSoundState *state,
                                    int16_t current_map,
                                    int16_t party_map,
                                    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_midi_program(
+    DM2_V1_SkprojectSoundState *state,
+    uint8_t program,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_discard_midi_word(
+    DM2_V1_SkprojectSoundReceipt *out_receipt,
+    uint16_t word);
+int dm2_v1_skproject_sound_reset_midi_voice(
+    DM2_V1_SkprojectSoundState *state,
+    uint32_t voice_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_stop_armed_music(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_compute_sfx_metric(
+    DM2_V1_SkprojectSfx *sfx,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_sfx_precedes(
+    const DM2_V1_SkprojectSfx *lhs,
+    const DM2_V1_SkprojectSfx *rhs);
+int dm2_v1_skproject_sound_sample_state(uint32_t sample_index);
+int dm2_v1_skproject_sound_stop_sample_slot(
+    DM2_V1_SkprojectSoundState *state,
+    uint32_t sample_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+uint16_t dm2_v1_skproject_sound_active_sample_slots(
+    const DM2_V1_SkprojectSoundState *state);
+int dm2_v1_skproject_sound_drain_samples(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_stop_handle_table(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_release_allocation_node(
+    DM2_V1_SkprojectSoundState *state,
+    const DM2_V1_SkprojectSoundAllocationNode *nodes,
+    uint16_t node_count,
+    uint16_t head_index,
+    uint16_t target_index,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_stop_all(
+    DM2_V1_SkprojectSoundState *state,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound_destruct(
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
+int dm2_v1_skproject_sound6_sndptr6_allocation(
+    uint32_t v1e0ad4,
+    DM2_V1_SkprojectSoundReceipt *out_receipt);
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
                                              int primary_assets_verified);
 int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,

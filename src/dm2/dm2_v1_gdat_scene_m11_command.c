@@ -2,6 +2,10 @@
 
 #include <string.h>
 
+int dm2_v1_asset_load_image_local_palette(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    uint8_t out_palette16[16], uint32_t *out_hash);
+
 #define DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH 224u
 #define DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT 136u
 

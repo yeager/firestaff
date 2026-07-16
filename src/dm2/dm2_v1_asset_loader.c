@@ -98,6 +98,11 @@ static DM2_MAYBE_UNUSED uint32_t rd32le(const uint8_t *p) {
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
 
+static uint32_t dm2_gdat_file_receipt_hash(uint32_t a,
+                                           uint32_t b,
+                                           uint32_t c,
+                                           uint32_t d);
+
 static uint32_t dm2_gdat_read_be_bytes(const uint8_t *p, int len) {
     uint32_t v = 0;
     int i;
@@ -283,10 +288,36 @@ static int dm2_gdat_entry_owns_raw_payload(const DM2_V1_GdatEntry *entry) {
            entry->cls3 != DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
 }
 
-static int dm2_gdat_entry_owns_raw_payload(const DM2_V1_GdatEntry *entry) {
-    if (!entry) return 0;
-    return entry->cls3 != DM2_GDAT_ENTRY_TYPE_WORD_VALUE &&
-           entry->cls3 != DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
+static int dm2_img3_bits_per_pixel(uint16_t cy, uint16_t bpp_word,
+                                   uint16_t *out_bpp) {
+    int offset_y;
+
+    if (out_bpp) *out_bpp = 0u;
+    offset_y = dm2_img3_signed_offset(cy);
+    if (offset_y == 31) {
+        if (out_bpp) *out_bpp = 8u;
+        return 1;
+    }
+    if (bpp_word == 4u || bpp_word == 8u) {
+        if (out_bpp) *out_bpp = bpp_word;
+        return 1;
+    }
+    return 0;
+}
+
+static int dm2_img3_raw_bits_per_pixel(const uint8_t *raw,
+                                       size_t raw_size,
+                                       uint16_t *out_bpp) {
+    uint16_t cy;
+
+    if (out_bpp) *out_bpp = 0u;
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
+    cy = rd16le(raw + 2u);
+    if (dm2_img3_bits_per_pixel(cy, rd16le(raw + 4u), out_bpp)) return 1;
+    if (dm2_img3_signed_offset(cy) == -32) {
+        return dm2_img3_bits_per_pixel(cy, rd16le(raw + 6u), out_bpp);
+    }
+    return 0;
 }
 
 static const DM2_V1_GdatEntry *dm2_gdat_find_entry(
@@ -339,6 +370,86 @@ static const uint8_t *dm2_gdat_raw_from_entry(
     }
     if (out_size) *out_size = loader->raw_sizes[raw_index];
     return loader->data + loader->raw_offsets[raw_index];
+}
+
+static int dm2_v1_asset_load_image_metadata(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatImageMetadata *out_metadata) {
+    const DM2_V1_GdatEntry *entry;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t cy;
+    uint16_t bpp = 0u;
+
+    if (!out_metadata) return 0;
+    memset(out_metadata, 0, sizeof(*out_metadata));
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
+    cy = rd16le(raw + 2u);
+    if (!dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp)) return 0;
+    out_metadata->width = (uint16_t)(rd16le(raw) & 0x03ffu);
+    out_metadata->height = (uint16_t)(cy & 0x03ffu);
+    if (out_metadata->width == 0u || out_metadata->height == 0u) {
+        memset(out_metadata, 0, sizeof(*out_metadata));
+        return 0;
+    }
+    out_metadata->bits_per_pixel = (uint8_t)bpp;
+    out_metadata->query_offset_y = (int16_t)dm2_img3_signed_offset(cy);
+    out_metadata->metadata_hash = dm2_gdat_file_receipt_hash(
+        entry ? entry->data_index : 0u,
+        ((uint32_t)out_metadata->width << 16) | out_metadata->height,
+        ((uint32_t)out_metadata->bits_per_pixel << 16) |
+            (uint16_t)out_metadata->query_offset_y,
+        dm2_fnv1a_bytes(raw, raw_size));
+    return 1;
+}
+
+static int dm2_v1_asset_load_image_local_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash) {
+    const DM2_V1_GdatEntry *entry;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t width;
+    uint16_t height;
+    uint16_t bpp = 0u;
+    size_t payload_bytes;
+    size_t palette_offset;
+
+    if (out_hash) *out_hash = 0u;
+    if (!out_palette16) return 0;
+    memset(out_palette16, 0, 16u);
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + DM2_IMG_LOCAL_PALETTE_SIZE ||
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp) ||
+        bpp != 4u) {
+        return 0;
+    }
+    width = (uint16_t)(rd16le(raw) & 0x03ffu);
+    height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
+    if (width == 0u || height == 0u) return 0;
+    payload_bytes = (size_t)(((width + 1u) & 0xfffeu) >> 1) * (size_t)height;
+    palette_offset = DM2_IMG3_HEADER_SIZE + payload_bytes;
+    if (palette_offset + DM2_IMG_LOCAL_PALETTE_SIZE > raw_size) {
+        palette_offset = raw_size - DM2_IMG_LOCAL_PALETTE_SIZE;
+    }
+    memcpy(out_palette16, raw + palette_offset, DM2_IMG_LOCAL_PALETTE_SIZE);
+    if (out_hash) {
+        *out_hash = dm2_fnv1a_bytes(out_palette16,
+                                    DM2_IMG_LOCAL_PALETTE_SIZE);
+    }
+    return 1;
 }
 
 static uint8_t *dm2_decode_uncompressed_image(const uint8_t *raw,
@@ -1074,6 +1185,93 @@ const uint8_t *dm2_v1_query_gdat_entry_data_ptr(
     return dm2_gdat_raw_from_entry(loader, entry, out_size);
 }
 
+const uint8_t *dm2_v1_direct_query_gdat_entry_data_buff_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    size_t *out_size,
+    DM2_V1_DirectGdatEntryDataBuffReceipt *out_receipt)
+{
+    DM2_V1_GdatEntryQueryReceipt query;
+    DM2_V1_DirectGdatEntryDataBuffReceipt receipt;
+    const uint8_t *ptr;
+    size_t size = 0u;
+
+    if (out_size) *out_size = 0u;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_receipt) return NULL;
+    if (!dm2_v1_query_gdat_entry_if_loadable(loader, category, index, type,
+                                             field, &query)) {
+        return NULL;
+    }
+    ptr = dm2_v1_query_gdat_entry_data_ptr(loader, category, index, type,
+                                           field, &size);
+    if (!ptr || size == 0u || size != (size_t)query.raw_length) {
+        return NULL;
+    }
+
+    receipt.accepted = 1u;
+    receipt.category = (uint8_t)category;
+    receipt.index = (uint8_t)index;
+    receipt.type = (uint8_t)type;
+    receipt.field = (uint8_t)field;
+    receipt.raw_index = query.raw_index;
+    receipt.data_index = query.data_index;
+    receipt.raw_length = query.raw_length;
+    receipt.raw_hash = dm2_fnv1a_bytes(ptr, size);
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        query.receipt_hash,
+        ((uint32_t)receipt.category << 24) |
+            ((uint32_t)receipt.index << 16) |
+            ((uint32_t)receipt.type << 8) | receipt.field,
+        receipt.raw_length,
+        receipt.raw_hash);
+    *out_receipt = receipt;
+    if (out_size) *out_size = size;
+    return ptr;
+}
+
+const uint8_t *dm2_v1_direct_query_gdat_text_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    size_t *out_size,
+    DM2_V1_DirectGdatTextReceipt *out_receipt)
+{
+    DM2_V1_DirectGdatEntryDataBuffReceipt data;
+    DM2_V1_DirectGdatTextReceipt receipt;
+    const uint8_t *ptr;
+    size_t size = 0u;
+
+    if (out_size) *out_size = 0u;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_receipt) return NULL;
+    ptr = dm2_v1_direct_query_gdat_entry_data_buff_receipt(
+        loader, category, index, DM2_GDAT_ENTRY_TYPE_TEXT, field, &size,
+        &data);
+    if (!ptr || size == 0u) return NULL;
+
+    receipt.accepted = 1u;
+    receipt.category = data.category;
+    receipt.index = data.index;
+    receipt.field = data.field;
+    receipt.raw_index = data.raw_index;
+    receipt.data_index = data.data_index;
+    receipt.text_length = data.raw_length;
+    receipt.text_hash = data.raw_hash;
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        data.receipt_hash, DM2_GDAT_ENTRY_TYPE_TEXT, receipt.text_length,
+        receipt.text_hash);
+    *out_receipt = receipt;
+    if (out_size) *out_size = size;
+    return ptr;
+}
+
 int dm2_v1_query_gdat_entry_data_length(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -1374,6 +1572,59 @@ int dm2_v1_gdat_sound_entry_receipt(
     return 1;
 }
 
+uint16_t dm2_v1_r_2bad4_swap_word(uint16_t value)
+{
+    /* skproject SKULLWIN/c_gdatfile.cpp R_2BAD4 byte-swaps a 16-bit word. */
+    return (uint16_t)((value >> 8) | (uint16_t)(value << 8));
+}
+
+int dm2_v1_r_2d07d_max_raw_length_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t type_filter,
+    uint8_t field_filter,
+    DM2_V1_GdatMaxRawLengthReceipt *out_receipt)
+{
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+    uint16_t max_raw = 0u;
+    uint16_t scanned = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded || !loader->entries || !loader->raw_sizes) {
+        return 0;
+    }
+
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0;
+    iterator.category_last = DM2_GDAT_CATEGORY_LIMIT;
+    iterator.index_filter = -1;
+    iterator.type_filter = type_filter;
+    iterator.field_filter = field_filter;
+    while (dm2_v1_query_next_gdat_entry(loader, &iterator, &entry)) {
+        ++scanned;
+        if (entry.raw_length > 0xffffu) return 0;
+        if ((uint16_t)entry.raw_length > max_raw) {
+            max_raw = (uint16_t)entry.raw_length;
+        }
+        hash = (hash ^ entry.category) * 16777619u;
+        hash = (hash ^ entry.index) * 16777619u;
+        hash = (hash ^ entry.type) * 16777619u;
+        hash = (hash ^ entry.field) * 16777619u;
+        hash = (hash ^ entry.raw_index) * 16777619u;
+        hash = (hash ^ entry.raw_length) * 16777619u;
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->type_filter = type_filter;
+    out_receipt->field_filter = field_filter;
+    out_receipt->scanned_entry_count = scanned;
+    out_receipt->max_raw_length = max_raw;
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static uint32_t dm2_gdat_file_receipt_hash(uint32_t a,
                                            uint32_t b,
                                            uint32_t c,
@@ -1614,7 +1865,6 @@ int dm2_v1_extract_gdat_image_receipt(
     uint8_t *pixels = NULL;
     size_t raw_size = 0u;
     uint16_t cy;
-    uint16_t w4;
     uint16_t bpp = 0u;
     uint32_t row_bytes;
     int16_t underlay_raw = -1;
@@ -1627,11 +1877,10 @@ int dm2_v1_extract_gdat_image_receipt(
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
 
     cy = rd16le(raw + 2);
-    w4 = rd16le(raw + 6);
     receipt.width = (uint16_t)(rd16le(raw) & 0x03ffu);
     receipt.height = (uint16_t)(cy & 0x03ffu);
     if (receipt.width == 0u || receipt.height == 0u ||
-        !dm2_img3_bits_per_pixel(cy, w4, &bpp)) {
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp)) {
         return 0;
     }
 
@@ -1713,7 +1962,7 @@ int dm2_v1_query_gdat_image_entry_buff_receipt(
     }
     raw = dm2_gdat_raw_from_entry(loader, selected, &raw_size);
     if (!selected || !raw || raw_size < DM2_IMG3_HEADER_SIZE ||
-        !dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 6u), &bpp)) {
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp)) {
         return 0;
     }
 
@@ -2424,6 +2673,62 @@ int dm2_v1_query_gdat_food_value_from_record_receipt(
                                  out_receipt);
 }
 
+static int dm2_item_dbspec_word_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    uint16_t value = 0u;
+    if (!dm2_v1_asset_load_word_value(loader, category, index, field,
+                                      &value)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_gdat_word_receipt(category, index, field, value, 0u,
+                                 out_receipt);
+}
+
+int dm2_v1_query_gdat_potion_spell_type_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_item_dbspec_word_from_record_receipt(
+        loader, category, index, 0x4d, out_receipt);
+}
+
+int dm2_v1_query_gdat_potion_behaviour_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_item_dbspec_word_from_record_receipt(
+        loader, category, index, 0x05, out_receipt);
+}
+
+int dm2_v1_query_gdat_water_value_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_item_dbspec_word_from_record_receipt(
+        loader, category, index, 0x43, out_receipt);
+}
+
+int dm2_v1_query_gdat_door_is_mirrored_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt)
+{
+    return dm2_door_word_field_receipt(loader, door_index, 0x20,
+                                       out_receipt);
+}
+
 int dm2_v1_query_door_strength_receipt(
     const DM2_V1_AssetLoader *loader,
     int door_index,
@@ -2898,6 +3203,148 @@ int dm2_v1_gdat_bigpool_memory_receipt(
         (uint16_t)(aligned & 0xffffu),
         (uint16_t)(aligned >> 16), 0u, (uint8_t)pool,
         requested_bytes, aligned);
+    return 1;
+}
+
+static int dm2_gdat_cpx_block_words(uint32_t raw_length,
+                                    uint16_t *out_words)
+{
+    uint32_t bytes = ((raw_length & 0xffffu) + 1u) & 0xfffffffeu;
+
+    if (!out_words) return 0;
+    bytes += 4u;
+    if (bytes == 0u || bytes > 0xfffeu || (bytes & 1u) != 0u) return 0;
+    *out_words = (uint16_t)(bytes / 2u);
+    return 1;
+}
+
+int dm2_v1_gdat_cpx_reserve_receipt(
+    uint16_t wp08_word,
+    uint32_t byte_count,
+    DM2_V1_GdatCpxReserveReceipt *out_receipt)
+{
+    uint32_t aligned = (byte_count + 1u) & 0xfffffffeu;
+    uint32_t words = aligned / 2u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (byte_count == 0u || aligned == 0u || words > wp08_word ||
+        words > 0xffffu) {
+        return 0;
+    }
+    /* skproject R_2D8AD subtracts the requested byte count from wp_08 and
+     * returns the new top-down reservation pointer. */
+    out_receipt->accepted = 1u;
+    out_receipt->old_wp08_word = wp08_word;
+    out_receipt->requested_bytes = (uint16_t)byte_count;
+    out_receipt->reserved_words = (uint16_t)words;
+    out_receipt->new_wp08_word = (uint16_t)(wp08_word - words);
+    out_receipt->returned_word = out_receipt->new_wp08_word;
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        0x32443841u, 0u, wp08_word, out_receipt->new_wp08_word,
+        0u, DM2_V1_GDAT_PICT_POOL_CPXHEAP, byte_count, aligned);
+    return 1;
+}
+
+int dm2_v1_gdat_cpx_copy_receipt(
+    uint16_t wp08_word,
+    uint32_t byte_count,
+    const uint8_t *source_with_header,
+    uint32_t source_byte_count,
+    DM2_V1_GdatCpxCopyReceipt *out_receipt)
+{
+    DM2_V1_GdatCpxReserveReceipt reserve;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!source_with_header || source_byte_count < byte_count ||
+        !dm2_v1_gdat_cpx_reserve_receipt(wp08_word, byte_count, &reserve)) {
+        return 0;
+    }
+    /* skproject R_2D8BA copies from xedxp - 2 into the reservation, then
+     * returns wptr + 1 so callers store the GDAT payload pointer after the
+     * two-byte length word. */
+    out_receipt->accepted = 1u;
+    out_receipt->source_header_included = 1u;
+    out_receipt->copied_bytes = (uint16_t)byte_count;
+    out_receipt->returned_payload_word = (uint16_t)(reserve.returned_word + 1u);
+    out_receipt->reserve = reserve;
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        0x32443842u, 0u, reserve.old_wp08_word, reserve.new_wp08_word,
+        0u, DM2_V1_GDAT_PICT_POOL_CPXHEAP, byte_count,
+        out_receipt->returned_payload_word);
+    return 1;
+}
+
+int dm2_v1_gdat_cpx_compact_receipt(
+    uint16_t pool_top_word,
+    uint16_t wp08_word,
+    const DM2_V1_GdatCpxBlockInput *blocks,
+    uint16_t block_count,
+    DM2_V1_GdatCpxCompactReceipt *out_receipt)
+{
+    uint16_t write_word = pool_top_word;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (block_count == 0u) {
+        out_receipt->accepted = 1u;
+        out_receipt->empty_pool = 1u;
+        out_receipt->old_wp08_word = wp08_word;
+        out_receipt->new_wp08_word = wp08_word;
+        out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+            0x32443830u, 0u, pool_top_word, wp08_word, 0u,
+            DM2_V1_GDAT_PICT_POOL_CPXHEAP, 0u, wp08_word);
+        return 1;
+    }
+    if (!blocks || block_count > DM2_V1_GDAT_CPX_COMPACT_MAX_BLOCKS ||
+        wp08_word > pool_top_word) {
+        return 0;
+    }
+    out_receipt->accepted = 1u;
+    out_receipt->old_wp08_word = wp08_word;
+    out_receipt->input_block_count = block_count;
+
+    for (uint16_t i = 0u; i < block_count; ++i) {
+        const DM2_V1_GdatCpxBlockInput *in = &blocks[i];
+        DM2_V1_GdatCpxCompactBlockReceipt *block = &out_receipt->blocks[i];
+        uint16_t words = 0u;
+
+        if (!dm2_gdat_cpx_block_words(in->raw_length, &words) ||
+            in->old_start_word < wp08_word ||
+            in->old_start_word + words > pool_top_word ||
+            words > write_word) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+            return 0;
+        }
+        block->raw_index = (uint16_t)(in->raw_index & 0x7fffu);
+        block->raw_length = in->raw_length;
+        block->word_count = words;
+        block->old_start_word = in->old_start_word;
+        if (in->marked_free || (in->raw_index & 0x8000u) != 0u) {
+            block->skipped_free = 1u;
+            ++out_receipt->skipped_free_block_count;
+            continue;
+        }
+        write_word = (uint16_t)(write_word - words);
+        block->preserved = 1u;
+        block->new_start_word = write_word;
+        if (block->new_start_word != block->old_start_word)
+            ++out_receipt->moved_block_count;
+        ++out_receipt->preserved_block_count;
+        out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+            out_receipt->receipt_hash ? out_receipt->receipt_hash
+                                      : 0x32443830u,
+            block->raw_index, block->old_start_word, block->new_start_word,
+            0u, DM2_V1_GDAT_PICT_POOL_CPXHEAP,
+            block->raw_length, block->word_count);
+    }
+    out_receipt->new_wp08_word = write_word;
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        out_receipt->receipt_hash ? out_receipt->receipt_hash : 0x32443830u,
+        out_receipt->preserved_block_count, out_receipt->skipped_free_block_count,
+        out_receipt->moved_block_count, 0u, DM2_V1_GDAT_PICT_POOL_CPXHEAP,
+        wp08_word, write_word);
     return 1;
 }
 

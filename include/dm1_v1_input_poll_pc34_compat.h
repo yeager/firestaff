@@ -223,8 +223,22 @@ int DM1_V1_Input_AnyActivityPc34Compat(DM1_V1_InputStatePc34 *state);
 /* Wait for keyboard or mouse activity (F0541 equivalent — non-blocking poll). */
 int DM1_V1_Input_WaitForActivityPc34Compat(const DM1_V1_InputStatePc34 *state);
 
+/* ── ReDMCSB USIO2 keyboard accessors (F1690/F1691/F1692) ────────── */
+
+/* Extract the explicit low-byte ASCII/control value from a raw key code. */
+uint16_t F1690_GetASCIICode(uint16_t rawKeyCode);
+
+/* Check caller-owned keyboard input availability. */
+int F1691_Cconis(const DM1_V1_InputStatePc34 *state);
+
+/* Extract one caller-owned keyboard input value, or 0 if none is pending. */
+uint16_t F1692_Crawcin(DM1_V1_InputStatePc34 *state);
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *DM1_V1_Input_SourceEvidencePc34Compat(void);
+const char *F1690_GetASCIICode_SourceEvidence(void);
+const char *F1691_Cconis_SourceEvidence(void);
+const char *F1692_Crawcin_SourceEvidence(void);
 
 #ifdef __cplusplus
 }

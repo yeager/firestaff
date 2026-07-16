@@ -3529,7 +3529,6 @@ int theron_v1_raw_loader_trace_final_bind(
     const Theron_StartupMediaStateReceipt *media,
     Theron_V1RawLoaderTraceReceipt *out)
 {
-    Theron_StartupRawBitmapRouteReceipt soul_room;
     size_t dynamic_span_first_raw_offset;
     size_t dynamic_span_end_raw_offset;
     size_t soul_room_end_raw_offset;
@@ -3554,15 +3553,14 @@ int theron_v1_raw_loader_trace_final_bind(
         !media->startup_bitmap_atlas_checksum) {
         return 0;
     }
-    if (!theron_v1_startup_media_consume_raw_bitmap_route(
-            media, THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
-            &soul_room) || !soul_room.valid || !soul_room.raw_source_verified ||
-        soul_room.variant != trace->variant ||
-        strcmp(soul_room.track02_md5, trace->track02_md5) != 0 ||
-        soul_room.route_bit != THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM ||
-        soul_room.tile_count == 0u || soul_room.checksum == 0u ||
-        soul_room.first_raw_offset > soul_room.last_raw_offset ||
-        soul_room.last_raw_offset >
+    if (!media->startup_bitmap_soul_room_route_ready ||
+        !(media->startup_bitmap_raw_route_mask &
+          THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM) ||
+        media->startup_bitmap_soul_room_atlas_tile_count == 0u ||
+        media->startup_bitmap_soul_room_checksum == 0u ||
+        media->startup_bitmap_soul_room_first_raw_offset >
+            media->startup_bitmap_soul_room_last_raw_offset ||
+        media->startup_bitmap_soul_room_last_raw_offset >
             SIZE_MAX - THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES ||
         trace->dynamic_cd_read_raw_offset >
             SIZE_MAX - THERON_TRACK02_RAW_USER_DATA_OFFSET ||
@@ -3575,17 +3573,20 @@ int theron_v1_raw_loader_trace_final_bind(
         THERON_TRACK02_RAW_USER_DATA_OFFSET;
     dynamic_span_end_raw_offset = dynamic_span_first_raw_offset +
         trace->dynamic_cd_read_destination_span_bytes;
-    soul_room_end_raw_offset = soul_room.last_raw_offset +
+    soul_room_end_raw_offset = media->startup_bitmap_soul_room_last_raw_offset +
         THERON_TRACK02_STARTUP_BITMAP_TILE_BYTES;
-    if (!(dynamic_span_end_raw_offset <= soul_room.first_raw_offset ||
+    if (!(dynamic_span_end_raw_offset <=
+              media->startup_bitmap_soul_room_first_raw_offset ||
           soul_room_end_raw_offset <= dynamic_span_first_raw_offset)) {
         return 0;
     }
     *out = *trace;
     out->soul_room_raw_route_verified = 1;
-    out->soul_room_first_raw_offset = soul_room.first_raw_offset;
-    out->soul_room_last_raw_offset = soul_room.last_raw_offset;
-    out->soul_room_checksum = soul_room.checksum;
+    out->soul_room_first_raw_offset =
+        media->startup_bitmap_soul_room_first_raw_offset;
+    out->soul_room_last_raw_offset =
+        media->startup_bitmap_soul_room_last_raw_offset;
+    out->soul_room_checksum = media->startup_bitmap_soul_room_checksum;
     out->soul_room_route_disjoint_from_dynamic_span = 1;
     out->bitmap_route_mask = media->startup_bitmap_raw_route_mask;
     out->bitmap_atlas_checksum = media->startup_bitmap_atlas_checksum;

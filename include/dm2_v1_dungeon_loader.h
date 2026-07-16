@@ -3,6 +3,8 @@
 #define FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #include <stdint.h>
 
+#include "dm2_v1_asset_loader.h"
+
 /* DM2: The Legend of Skullkeep (1993)
  * Uses enhanced dungeon.dat format:
  *   - Outdoor levels (sky, trees, buildings)
@@ -65,14 +67,28 @@ typedef struct {
     int root_count;
     int root_end_markers;
     int root_shape_valid;
+    int map_root_extension_shape_valid;
     int root_shape_invalid;
     int candidate_record_count;
     int candidate_first_link_end_markers;
     int candidate_first_link_shape_valid;
+    int candidate_first_link_extension_shape_valid;
     int candidate_first_link_shape_invalid;
     int tail_pool_base;
     int tail_pool_base_rejected;
 } DM2_V1_G1RecordPoolEvidence;
+
+#define DM2_V1_G1_TEXT_MESSAGE_MAX 16
+#define DM2_V1_G1_TEXT_MESSAGE_CHARS 128
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t text_index;
+    char text[DM2_V1_G1_TEXT_MESSAGE_CHARS];
+    uint16_t source_word_count;
+} DM2_V1_G1TextMessage;
 
 typedef struct {
     int valid;
@@ -109,6 +125,48 @@ typedef struct {
     DM2_V1_G1GdatTextMessage
         messages[DM2_V1_G1_GDAT_TEXT_MESSAGE_MAX];
 } DM2_V1_G1GdatTextMessageRuntimeReceipt;
+
+typedef struct {
+    int map;
+    int descriptor_base;
+    int map_data_offset;
+    int width;
+    int height;
+    uint32_t map_byte_count;
+    uint32_t descriptor_hash;
+    uint32_t map_hash;
+} DM2_V1_G1MapCorpusEntry;
+
+typedef struct {
+    int available;
+    int g1_layout_absent;
+    int raw_only;
+    int column_index_base;
+    int column_index_word_count;
+    uint32_t column_index_byte_count;
+    uint32_t column_index_hash;
+    int ground_stack_base;
+    int ground_stack_word_count;
+    uint32_t ground_stack_byte_count;
+    uint32_t ground_stack_hash;
+    int map_data_base;
+    uint32_t map_data_byte_count;
+    uint32_t map_data_hash;
+    int column_index_semantics_unresolved;
+    int ground_stack_semantics_unresolved;
+} DM2_V1_G1GroundStackMapCorpusReceipt;
+
+typedef struct {
+    int available;
+    int g1_layout_absent;
+    int raw_only;
+    int tile_semantics_unresolved;
+    int map_count;
+    int map_data_base;
+    uint32_t map_data_byte_count;
+    uint32_t map_data_hash;
+    DM2_V1_G1MapCorpusEntry maps[DM2_V1_MAX_LEVELS];
+} DM2_V1_G1MapCorpusReceipt;
 
 #define DM2_V1_G1_TEXT_WALL_GFX_MAX 16
 
@@ -319,6 +377,300 @@ typedef int (*DM2_V1_G1GdatTextRead)(void *userdata,
                                      const uint8_t **out_data,
                                      uint32_t *out_byte_count);
 
+typedef struct {
+    int map;
+    int x;
+    int y;
+    uint16_t object_id;
+    int type;
+    int index;
+} DM2_V1_G1BlockedRoot;
+
+#define DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS 5
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int width;
+    int height;
+    int map_data_base;
+    int map_data_offset;
+    uint32_t map_data_byte_count;
+    uint32_t map_data_hash;
+    int root_count;
+    int direct_root_count;
+    int db3_root_count;
+    int db4_root_count;
+    int blocked_root_count;
+    int generic_record_reads;
+    int blocked_record_reads;
+} DM2_V1_G1RuntimeMapValidationReceipt;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int level;
+    int x;
+    int y;
+    uint16_t object_id;
+    uint8_t type;
+    uint16_t index;
+    int record_offset;
+    int record_size;
+} DM2_V1_G1DirectRootRecordAddressReceipt;
+
+typedef struct {
+    uint16_t object_id;
+    uint8_t type;
+    uint16_t index;
+    int record_offset;
+    int record_size;
+} DM2_V1_G1DirectChainNode;
+
+#define DM2_V1_G1_DIRECT_CHAIN_MAX 16
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int level;
+    int x;
+    int y;
+    int node_count;
+    int link_word_reads;
+    DM2_V1_G1DirectChainNode nodes[DM2_V1_G1_DIRECT_CHAIN_MAX];
+} DM2_V1_G1DirectRootChainReceipt;
+
+typedef enum {
+    DM2_V1_G1_SCENE_TILE_WALL = 1,
+    DM2_V1_G1_SCENE_TILE_FLOOR = 2,
+    DM2_V1_G1_SCENE_TILE_DOOR = 3
+} DM2_V1_G1SceneTileClass;
+
+typedef enum {
+    DM2_V1_G1_SCENE_ROOT_GENERIC = 1,
+    DM2_V1_G1_SCENE_ROOT_DOOR = 2,
+    DM2_V1_G1_SCENE_ROOT_CREATURE = 3
+} DM2_V1_G1SceneRootClass;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int level;
+    int x;
+    int y;
+    uint8_t raw_tile;
+    DM2_V1_G1SceneTileClass tile_class;
+    DM2_V1_G1SceneRootClass root_class;
+    DM2_V1_G1DirectRootChainReceipt chain;
+} DM2_V1_G1DungeonSceneClassificationReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t button;
+    uint8_t door_type;
+    uint8_t button_state;
+    uint8_t opening_dir;
+    uint8_t ornate_index;
+    uint8_t destroyable_by_fireball;
+    uint8_t bashable_by_chopping;
+} DM2_V1_G1DirectDoorRoot;
+
+#define DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS 32
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int door_root_count;
+    int door_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectDoorRoot doors[DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS];
+} DM2_V1_G1RuntimeMapDoorReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t actuator_type;
+    uint16_t actuator_data;
+    uint8_t graphic_number;
+    uint8_t disabled;
+    uint8_t delay;
+    uint8_t sound_effect;
+    uint8_t revert_effect;
+    uint8_t action_type;
+    uint8_t once_only;
+    uint8_t active_status;
+    uint8_t target_direction;
+    uint8_t target_x;
+    uint8_t target_y;
+} DM2_V1_G1DirectActuatorRoot;
+
+#define DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS 64
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int actuator_root_count;
+    int actuator_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectActuatorRoot
+        actuators[DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS];
+} DM2_V1_G1RuntimeMapActuatorReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t creature_type;
+    uint16_t hit_points_1;
+} DM2_V1_G1DirectCreatureRoot;
+
+#define DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS 64
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int creature_root_count;
+    int creature_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectCreatureRoot
+        creatures[DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS];
+} DM2_V1_G1RuntimeMapCreatureReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t item_type;
+    uint8_t important;
+    uint8_t charges;
+} DM2_V1_G1DirectWeaponRoot;
+
+#define DM2_V1_G1_RUNTIME_MAP_MAX_WEAPON_ROOTS 32
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int weapon_root_count;
+    int weapon_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectWeaponRoot
+        weapons[DM2_V1_G1_RUNTIME_MAP_MAX_WEAPON_ROOTS];
+} DM2_V1_G1RuntimeMapWeaponReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t opened;
+    uint8_t container_type;
+} DM2_V1_G1DirectContainerRoot;
+
+#define DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS 16
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int container_root_count;
+    int container_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectContainerRoot
+        containers[DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS];
+} DM2_V1_G1RuntimeMapContainerReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int type;
+    int index;
+} DM2_V1_G1VerifiedRoot;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t destination_x;
+    uint8_t destination_y;
+    uint8_t destination_map;
+    uint8_t scope;
+    uint8_t sound;
+    uint8_t rotation;
+    uint8_t rotation_type;
+} DM2_V1_G1DirectTeleporterRoot;
+
+#define DM2_V1_G1_FIRST_MAP_MAX_ROOTS 64
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int width;
+    int height;
+    int root_count;
+    int direct_root_count;
+    int db3_root_count;
+    int db4_root_count;
+    int verified_root_count;
+    int blocked_root_count;
+    int teleporter_root_count;
+    int teleporter_record_reads;
+    int object_count;
+    int blocked_record_reads;
+    DM2_V1_G1VerifiedRoot roots[DM2_V1_G1_FIRST_MAP_MAX_ROOTS];
+    DM2_V1_G1DirectTeleporterRoot
+        teleporters[DM2_V1_G1_FIRST_MAP_MAX_ROOTS];
+} DM2_V1_G1FirstMapRuntimeReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int index;
+    uint8_t direction;
+    uint8_t visible;
+    uint8_t mode;
+    uint16_t text_index;
+} DM2_V1_G1TextRoot;
+
+#define DM2_V1_G1_MAP5_MAX_TEXT_ROOTS 16
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int text_root_count;
+    int text_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1TextRoot texts[DM2_V1_G1_MAP5_MAX_TEXT_ROOTS];
+} DM2_V1_G1Map5TextRuntimeReceipt;
+
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
  * directly to c_map.cpp CHANGE_CURRENT_MAP_TO(), whose map-array access has no
@@ -367,8 +719,22 @@ typedef struct {
 } DM2_V1_G1TeleporterTransitionReceipt;
 
 typedef struct {
+    int valid;
     int committed;
     int incomplete;
+    int map_count;
+    int square_bytes;
+    int column_index_base;
+    int ground_stack_base;
+    int ground_stack_count;
+    int text_data_base;
+    int text_word_count;
+    int candidate_pool_base;
+    int candidate_pool_end;
+    int g1_extension_base;
+    int g1_extension_size;
+    int raw_map_data_base;
+    int record_graph_complete;
     int level_count;
     int map_root_count;
     int direct_root_count;
@@ -609,6 +975,8 @@ typedef struct {
     int text_word_count;
     int g1_extension_base;
     int g1_extension_size;
+    int g1_extension_record_bases[16];
+    int g1_extension_record_counts[16];
     int thing_data_bases[16];
     int thing_type_counts[16];
     /* Set only when the source layout has materialized every map-to-record

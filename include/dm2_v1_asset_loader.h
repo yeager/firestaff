@@ -78,6 +78,7 @@ typedef enum {
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
     DM2_GDAT_ENTRY_TYPE_SOUND        = 0x02,
+    DM2_GDAT_ENTRY_TYPE_RAW4         = 0x04,
     /* skproject SKWIN/DME.h dtText.  QUERY_GDAT_TEXT selects this exact
      * type; it must not be confused with a drawable environment image. */
     DM2_GDAT_ENTRY_TYPE_TEXT         = 0x05,
@@ -138,7 +139,7 @@ typedef enum {
 
 /* ── Asset Loader Context ─────────────────────────────────────────── */
 
-typedef struct {
+typedef struct DM2_V1_AssetLoader {
     uint8_t cls1;
     uint8_t cls2;
     uint8_t cls3;
@@ -165,6 +166,18 @@ typedef struct {
     uint8_t        ent1_ep_lengths[7];
     uint16_t       ent1_entry_stride;
 } DM2_V1_AssetLoader;
+
+#ifndef DM2_V1_GDAT_IMAGE_METADATA_DEFINED
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+    uint8_t bits_per_pixel;
+    int16_t query_offset_x;
+    int16_t query_offset_y;
+    uint32_t metadata_hash;
+} DM2_V1_GdatImageMetadata;
+#define DM2_V1_GDAT_IMAGE_METADATA_DEFINED 1
+#endif
 
 /* Main 256-colour palette and the 16-colour logical-index table loaded by
  * SkWinCore::INIT before the HUD and dungeon viewport are drawn.  RGB values
@@ -220,6 +233,31 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatEntryQueryReceipt;
 
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t type;
+    uint8_t field;
+    uint16_t raw_index;
+    uint16_t data_index;
+    uint32_t raw_length;
+    uint32_t raw_hash;
+    uint32_t receipt_hash;
+} DM2_V1_DirectGdatEntryDataBuffReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t raw_index;
+    uint16_t data_index;
+    uint32_t text_length;
+    uint32_t text_hash;
+    uint32_t receipt_hash;
+} DM2_V1_DirectGdatTextReceipt;
+
 typedef enum {
     DM2_V1_GDAT_PICT_POOL_FREE = 0,
     DM2_V1_GDAT_PICT_POOL_LOBIG = 1,
@@ -265,6 +303,58 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatBigpoolMemoryReceipt;
 
+#define DM2_V1_GDAT_CPX_COMPACT_MAX_BLOCKS 16
+
+typedef struct {
+    uint8_t accepted;
+    uint16_t old_wp08_word;
+    uint16_t requested_bytes;
+    uint16_t reserved_words;
+    uint16_t new_wp08_word;
+    uint16_t returned_word;
+    uint32_t receipt_hash;
+} DM2_V1_GdatCpxReserveReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t source_header_included;
+    uint16_t copied_bytes;
+    uint16_t returned_payload_word;
+    DM2_V1_GdatCpxReserveReceipt reserve;
+    uint32_t receipt_hash;
+} DM2_V1_GdatCpxCopyReceipt;
+
+typedef struct {
+    uint16_t raw_index;
+    uint16_t raw_length;
+    uint16_t old_start_word;
+    uint8_t marked_free;
+} DM2_V1_GdatCpxBlockInput;
+
+typedef struct {
+    uint8_t preserved;
+    uint8_t skipped_free;
+    uint16_t raw_index;
+    uint16_t raw_length;
+    uint16_t word_count;
+    uint16_t old_start_word;
+    uint16_t new_start_word;
+} DM2_V1_GdatCpxCompactBlockReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t empty_pool;
+    uint16_t old_wp08_word;
+    uint16_t new_wp08_word;
+    uint16_t input_block_count;
+    uint16_t preserved_block_count;
+    uint16_t skipped_free_block_count;
+    uint16_t moved_block_count;
+    DM2_V1_GdatCpxCompactBlockReceipt
+        blocks[DM2_V1_GDAT_CPX_COMPACT_MAX_BLOCKS];
+    uint32_t receipt_hash;
+} DM2_V1_GdatCpxCompactReceipt;
+
 typedef struct {
     uint8_t accepted;
     uint16_t sound_entry_count;
@@ -292,6 +382,15 @@ typedef struct {
     uint32_t marker_allocation_bytes;
     uint32_t receipt_hash;
 } DM2_V1_LoadDyn4AdmissionReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t type_filter;
+    uint8_t field_filter;
+    uint16_t scanned_entry_count;
+    uint16_t max_raw_length;
+    uint32_t receipt_hash;
+} DM2_V1_GdatMaxRawLengthReceipt;
 
 typedef struct {
     uint8_t valid;
@@ -693,6 +792,21 @@ const uint8_t *dm2_v1_query_gdat_entry_data_ptr(
     int type,
     int field,
     size_t *out_size);
+const uint8_t *dm2_v1_direct_query_gdat_entry_data_buff_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field,
+    size_t *out_size,
+    DM2_V1_DirectGdatEntryDataBuffReceipt *out_receipt);
+const uint8_t *dm2_v1_direct_query_gdat_text_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    size_t *out_size,
+    DM2_V1_DirectGdatTextReceipt *out_receipt);
 int dm2_v1_query_gdat_entry_data_length(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -740,6 +854,12 @@ int dm2_v1_gdat_sound_entry_receipt(
     int sound7_result,
     int extended_header,
     DM2_V1_GdatSoundEntryReceipt *out_receipt);
+uint16_t dm2_v1_r_2bad4_swap_word(uint16_t value);
+int dm2_v1_r_2d07d_max_raw_length_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t type_filter,
+    uint8_t field_filter,
+    DM2_V1_GdatMaxRawLengthReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp GRAPHICS_DATA_OPEN/READ/CLOSE receipts.
  * These expose file-counter, handle, and split-read routing only; callers own
@@ -857,6 +977,25 @@ int dm2_v1_query_gdat_food_value_from_record_receipt(
     int category,
     int index,
     DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_potion_spell_type_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_potion_behaviour_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_water_value_from_record_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
+int dm2_v1_query_gdat_door_is_mirrored_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int door_index,
+    DM2_V1_GdatWordQueryReceipt *out_receipt);
 int dm2_v1_query_door_strength_receipt(
     const DM2_V1_AssetLoader *loader,
     int door_index,
@@ -936,6 +1075,22 @@ int dm2_v1_gdat_bigpool_memory_receipt(
     int clean,
     int deallocate,
     DM2_V1_GdatBigpoolMemoryReceipt *out_receipt);
+int dm2_v1_gdat_cpx_reserve_receipt(
+    uint16_t wp08_word,
+    uint32_t byte_count,
+    DM2_V1_GdatCpxReserveReceipt *out_receipt);
+int dm2_v1_gdat_cpx_copy_receipt(
+    uint16_t wp08_word,
+    uint32_t byte_count,
+    const uint8_t *source_with_header,
+    uint32_t source_byte_count,
+    DM2_V1_GdatCpxCopyReceipt *out_receipt);
+int dm2_v1_gdat_cpx_compact_receipt(
+    uint16_t pool_top_word,
+    uint16_t wp08_word,
+    const DM2_V1_GdatCpxBlockInput *blocks,
+    uint16_t block_count,
+    DM2_V1_GdatCpxCompactReceipt *out_receipt);
 int dm2_v1_dballoc_3e74_24b8_receipt(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_DballocSoundCensusReceipt *out_receipt);

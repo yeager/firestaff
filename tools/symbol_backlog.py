@@ -63,8 +63,17 @@ DM2_RUNTIME_SOURCES = {
 
 
 def read_tsv(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        raise FileNotFoundError(f"required audit TSV is missing: {path}")
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle, delimiter="\t"))
+
+
+def read_optional_tsv(path: Path, warnings: list[str]) -> list[dict[str, str]]:
+    if not path.exists():
+        warnings.append(f"missing audit TSV: {path}")
+        return []
+    return read_tsv(path)
 
 
 def read_dispositions(path: Path = SYMBOL_DISPOSITIONS) -> dict[tuple[str, str], dict[str, str]]:
@@ -229,12 +238,25 @@ def print_text(items: list[dict[str, object]], limit: int) -> None:
         )
 
 
+def print_jsonl(items: list[dict[str, object]], limit: int) -> None:
+    for item in items[:limit]:
+        print(json.dumps(item, sort_keys=True))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game", choices=["DM1", "CSB", "DM1/CSB", "DM2"], help="only emit one queue")
+    parser.add_argument("--reference", choices=["ReDMCSB", "skproject"], help="only emit one reference queue")
+    parser.add_argument("--family", help="only emit one symbol family")
     parser.add_argument("--limit", type=int, default=50)
-    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--json", action="store_true", help="deprecated alias for --format json")
+    parser.add_argument("--format", choices=["text", "json", "jsonl"], default="text")
     parser.add_argument("--include-disposed", action="store_true", help="include rows with explicit closed dispositions")
+    parser.add_argument(
+        "--allow-missing-audits",
+        action="store_true",
+        help="emit the available backlog instead of failing when an audit TSV is absent",
+    )
     parser.add_argument(
         "--dispositions",
         type=Path,
@@ -244,14 +266,32 @@ def main() -> int:
     args = parser.parse_args()
 
     dispositions = read_dispositions(args.dispositions)
-    items = redmcsb_backlog(read_tsv(REDMCSB_AUDIT), dispositions, args.include_disposed)
-    items.extend(skproject_backlog(read_tsv(SKPROJECT_AUDIT), dispositions, args.include_disposed))
+    warnings: list[str] = []
+    if args.allow_missing_audits:
+        redmcsb_rows = read_optional_tsv(REDMCSB_AUDIT, warnings)
+        skproject_rows = read_optional_tsv(SKPROJECT_AUDIT, warnings)
+    else:
+        redmcsb_rows = read_tsv(REDMCSB_AUDIT)
+        skproject_rows = read_tsv(SKPROJECT_AUDIT)
+    items = redmcsb_backlog(redmcsb_rows, dispositions, args.include_disposed)
+    items.extend(skproject_backlog(skproject_rows, dispositions, args.include_disposed))
     if args.game:
         items = [item for item in items if item["game"] == args.game]
+    if args.reference:
+        items = [item for item in items if item["reference"] == args.reference]
+    if args.family:
+        items = [item for item in items if item["family"] == args.family]
     items.sort(key=lambda item: (-int(item["priority"]), str(item["game"]), str(item["symbol"])))
-    if args.json:
-        print(json.dumps({"summary": summarize(items), "items": items[:args.limit]}, indent=2, sort_keys=True))
+    output_format = "json" if args.json else args.format
+    if output_format == "json":
+        print(json.dumps({"summary": summarize(items), "warnings": warnings, "items": items[:args.limit]}, indent=2, sort_keys=True))
+    elif output_format == "jsonl":
+        for warning in warnings:
+            print(json.dumps({"warning": warning}, sort_keys=True))
+        print_jsonl(items, args.limit)
     else:
+        for warning in warnings:
+            print(f"WARNING: {warning}")
         print_text(items, args.limit)
     return 0
 

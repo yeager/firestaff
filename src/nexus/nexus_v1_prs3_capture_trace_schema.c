@@ -64,6 +64,137 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+static uint32_t md5_leftrotate(uint32_t value, uint32_t shift)
+{
+    return (value << shift) | (value >> (32U - shift));
+}
+
+static uint32_t md5_read_le32(const uint8_t *data)
+{
+    return (uint32_t)data[0] | ((uint32_t)data[1] << 8) |
+        ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+}
+
+static void md5_process_block(const uint8_t block[64], uint32_t state[4])
+{
+    static const uint32_t shifts[64] = {
+        7U, 12U, 17U, 22U, 7U, 12U, 17U, 22U,
+        7U, 12U, 17U, 22U, 7U, 12U, 17U, 22U,
+        5U, 9U, 14U, 20U, 5U, 9U, 14U, 20U,
+        5U, 9U, 14U, 20U, 5U, 9U, 14U, 20U,
+        4U, 11U, 16U, 23U, 4U, 11U, 16U, 23U,
+        4U, 11U, 16U, 23U, 4U, 11U, 16U, 23U,
+        6U, 10U, 15U, 21U, 6U, 10U, 15U, 21U,
+        6U, 10U, 15U, 21U, 6U, 10U, 15U, 21U
+    };
+    static const uint32_t constants[64] = {
+        0xd76aa478U, 0xe8c7b756U, 0x242070dbU, 0xc1bdceeeU,
+        0xf57c0fafU, 0x4787c62aU, 0xa8304613U, 0xfd469501U,
+        0x698098d8U, 0x8b44f7afU, 0xffff5bb1U, 0x895cd7beU,
+        0x6b901122U, 0xfd987193U, 0xa679438eU, 0x49b40821U,
+        0xf61e2562U, 0xc040b340U, 0x265e5a51U, 0xe9b6c7aaU,
+        0xd62f105dU, 0x02441453U, 0xd8a1e681U, 0xe7d3fbc8U,
+        0x21e1cde6U, 0xc33707d6U, 0xf4d50d87U, 0x455a14edU,
+        0xa9e3e905U, 0xfcefa3f8U, 0x676f02d9U, 0x8d2a4c8aU,
+        0xfffa3942U, 0x8771f681U, 0x6d9d6122U, 0xfde5380cU,
+        0xa4beea44U, 0x4bdecfa9U, 0xf6bb4b60U, 0xbebfbc70U,
+        0x289b7ec6U, 0xeaa127faU, 0xd4ef3085U, 0x04881d05U,
+        0xd9d4d039U, 0xe6db99e5U, 0x1fa27cf8U, 0xc4ac5665U,
+        0xf4292244U, 0x432aff97U, 0xab9423a7U, 0xfc93a039U,
+        0x655b59c3U, 0x8f0ccc92U, 0xffeff47dU, 0x85845dd1U,
+        0x6fa87e4fU, 0xfe2ce6e0U, 0xa3014314U, 0x4e0811a1U,
+        0xf7537e82U, 0xbd3af235U, 0x2ad7d2bbU, 0xeb86d391U
+    };
+    uint32_t words[16];
+    uint32_t a = state[0], b = state[1], c = state[2], d = state[3];
+    uint32_t i;
+
+    for (i = 0U; i < 16U; ++i) words[i] = md5_read_le32(block + i * 4U);
+    for (i = 0U; i < 64U; ++i) {
+        uint32_t f, g, temp;
+        if (i < 16U) {
+            f = (b & c) | ((~b) & d);
+            g = i;
+        } else if (i < 32U) {
+            f = (d & b) | ((~d) & c);
+            g = (5U * i + 1U) & 15U;
+        } else if (i < 48U) {
+            f = b ^ c ^ d;
+            g = (3U * i + 5U) & 15U;
+        } else {
+            f = c ^ (b | (~d));
+            g = (7U * i) & 15U;
+        }
+        temp = d;
+        d = c;
+        c = b;
+        b += md5_leftrotate(a + f + constants[i] + words[g], shifts[i]);
+        a = temp;
+    }
+    state[0] += a;
+    state[1] += b;
+    state[2] += c;
+    state[3] += d;
+}
+
+static void md5_digest(const uint8_t *data, size_t size, uint8_t out[16])
+{
+    uint32_t state[4] = {
+        0x67452301U, 0xefcdab89U, 0x98badcfeU, 0x10325476U
+    };
+    uint8_t block[128];
+    uint64_t bit_length = (uint64_t)size * 8U;
+    size_t offset = 0U;
+    size_t tail;
+    size_t padded;
+    uint32_t i;
+
+    while (size - offset >= 64U) {
+        md5_process_block(data + offset, state);
+        offset += 64U;
+    }
+    tail = size - offset;
+    memset(block, 0, sizeof(block));
+    if (tail > 0U) memcpy(block, data + offset, tail);
+    block[tail] = 0x80U;
+    padded = (tail >= 56U) ? 128U : 64U;
+    for (i = 0U; i < 8U; ++i) {
+        block[padded - 8U + i] = (uint8_t)(bit_length >> (i * 8U));
+    }
+    md5_process_block(block, state);
+    if (padded == 128U) md5_process_block(block + 64U, state);
+    for (i = 0U; i < 4U; ++i) {
+        out[i * 4U] = (uint8_t)(state[i] & 0xffU);
+        out[i * 4U + 1U] = (uint8_t)((state[i] >> 8) & 0xffU);
+        out[i * 4U + 2U] = (uint8_t)((state[i] >> 16) & 0xffU);
+        out[i * 4U + 3U] = (uint8_t)((state[i] >> 24) & 0xffU);
+    }
+}
+
+static int hex_digit_value(char ch)
+{
+    if (ch >= '0' && ch <= '9') return ch - '0';
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    return -1;
+}
+
+static int md5_matches_hex(const uint8_t digest[16], const char *hex)
+{
+    uint32_t i;
+
+    if (!hex || strlen(hex) != 32U) return 0;
+    for (i = 0U; i < 16U; ++i) {
+        int hi = hex_digit_value(hex[i * 2U]);
+        int lo = hex_digit_value(hex[i * 2U + 1U]);
+        if (hi < 0 || lo < 0 ||
+            digest[i] != (uint8_t)((hi << 4) | lo)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int sh2_bra_target(uint16_t instruction, uint32_t instruction_offset,
                           uint32_t *out_target) {
     int32_t displacement;
@@ -1567,19 +1698,14 @@ int nexus_v1_prs3_vdp1_capture_validate_files(
     size_t trace_size = 0U;
     size_t menu_bpk_size = 0U;
     size_t dm_bin_size = 0U;
+    uint8_t digest[16];
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
-    if (!trace_path || !menu_bpk_path || !dm_bin_path ||
-        !asset_file_matches_md5(menu_bpk_path,
-                                NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5) ||
-        !asset_file_matches_md5(dm_bin_path,
-                                NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5)) {
+    if (!trace_path || !menu_bpk_path || !dm_bin_path) {
         *out_receipt = receipt;
         return 0;
     }
-    receipt.menu_bpk_original_hash_verified = 1;
-    receipt.dm_bin_original_hash_verified = 1;
     trace_data = read_capture_file(trace_path, NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
                                    &trace_size);
     menu_bpk = read_capture_file(menu_bpk_path, 16U * 1024U * 1024U,
@@ -1587,6 +1713,14 @@ int nexus_v1_prs3_vdp1_capture_validate_files(
     dm_bin = read_capture_file(dm_bin_path, 16U * 1024U * 1024U,
                                &dm_bin_size);
     if (!trace_data || !menu_bpk || !dm_bin) goto done;
+    md5_digest(menu_bpk, menu_bpk_size, digest);
+    receipt.menu_bpk_original_hash_verified =
+        md5_matches_hex(digest, NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5);
+    md5_digest(dm_bin, dm_bin_size, digest);
+    receipt.dm_bin_original_hash_verified =
+        md5_matches_hex(digest, NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5);
+    if (!receipt.menu_bpk_original_hash_verified ||
+        !receipt.dm_bin_original_hash_verified) goto done;
     receipt.trace_file_read = 1;
     receipt.v3_trace_parsed = nexus_v1_prs3_vdp1_capture_schema_parse(
         (const char *)trace_data, trace_size, &receipt.trace) &&
@@ -1966,4 +2100,69 @@ int nexus_v1_prs3_vdp1_capture_review_menu_bpk_upload(
     receipt.fallback_visuals_permitted = 0;
     *out_receipt = receipt;
     return receipt.reviewed_upload_path_bound;
+}
+
+int nexus_v1_prs3_vdp1_capture_review_output_upload(
+    const Nexus_V1_BpkPrs3DecodedOutputProofReceipt *output_proof,
+    const Nexus_V1_Prs3Vdp1ReviewedUploadReceipt *reviewed_upload,
+    Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1ReviewedOutputUploadReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.independent_authentication_required = 1;
+    if (!output_proof || !reviewed_upload) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.entry_index = output_proof->entry_index;
+    receipt.stream_offset = output_proof->stream_offset;
+    receipt.stream_size = output_proof->stream_size;
+    receipt.expected_output_bytes = output_proof->expected_output_bytes;
+    receipt.output_fnv1a64 = output_proof->observed_output_fnv1a64;
+    receipt.decoded_output_sidecar_bound =
+        output_proof->decoded_output_sidecar_bound != 0;
+    receipt.decoded_output_proof_bound =
+        output_proof->status ==
+            NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_SOURCE_BOUND_NO_RUNTIME &&
+        output_proof->decoded_output_proof_ready != 0 &&
+        receipt.decoded_output_sidecar_bound &&
+        output_proof->original_saturn_provenance_verified != 0 &&
+        output_proof->opcode_grammar_proven == 0 &&
+        output_proof->decoder_promoted == 0 &&
+        output_proof->runtime_upload_permitted == 0 &&
+        output_proof->fallback_visuals_permitted == 0;
+    receipt.reviewed_upload_path_bound =
+        reviewed_upload->reviewed_upload_path_bound != 0 &&
+        reviewed_upload->producer_attestation_bound != 0 &&
+        reviewed_upload->producer_binary_bound != 0 &&
+        reviewed_upload->artifact_hashes_bound != 0 &&
+        reviewed_upload->runtime_upload_permitted == 0 &&
+        reviewed_upload->decoder_promoted == 0 &&
+        reviewed_upload->fallback_visuals_permitted == 0;
+    receipt.menu_bpk_upload_reviewed =
+        reviewed_upload->menu_bpk_upload_reviewed != 0;
+    receipt.original_saturn_provenance_verified =
+        output_proof->original_saturn_provenance_verified != 0 &&
+        reviewed_upload->original_saturn_execution_claimed != 0;
+    receipt.independent_authentication_required =
+        reviewed_upload->independent_authentication_required != 0;
+    receipt.original_saturn_capture_authenticated =
+        reviewed_upload->original_saturn_capture_authenticated != 0;
+
+    receipt.source_bound_no_runtime =
+        receipt.decoded_output_proof_bound &&
+        receipt.reviewed_upload_path_bound &&
+        receipt.menu_bpk_upload_reviewed &&
+        receipt.original_saturn_provenance_verified &&
+        receipt.independent_authentication_required &&
+        !receipt.original_saturn_capture_authenticated;
+    receipt.runtime_upload_permitted = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+
+    *out_receipt = receipt;
+    return receipt.source_bound_no_runtime;
 }

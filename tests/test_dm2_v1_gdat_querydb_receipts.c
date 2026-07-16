@@ -349,6 +349,7 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
     DM2_V1_DballocSoundCensusReceipt census;
     DM2_V1_DballocEntryFilterReceipt filter;
     DM2_V1_LoadDyn4AdmissionReceipt dyn4;
+    DM2_V1_GdatMaxRawLengthReceipt max_raw;
 
     fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
 
@@ -411,6 +412,23 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
               &loader, DM2_GDAT_CATEGORY_MUSICS, 1, 2,
               7, 0, &sound_receipt),
           "DM2_482b_0684 does not admit payloads rejected by SOUND7");
+
+    CHECK(dm2_v1_r_2bad4_swap_word(0x1234u) == 0x3412u &&
+              dm2_v1_r_2bad4_swap_word(0x00ffu) == 0xff00u,
+          "R_2BAD4 byte-swaps source 16-bit words");
+    entries[0].cls4 = 3u;
+    entries[0].data_index = 2u;
+    CHECK(dm2_v1_r_2d07d_max_raw_length_receipt(
+              &loader, DM2_GDAT_ENTRY_TYPE_IMAGE, 3u, &max_raw) &&
+              max_raw.accepted &&
+              max_raw.type_filter == DM2_GDAT_ENTRY_TYPE_IMAGE &&
+              max_raw.field_filter == 3u &&
+              max_raw.scanned_entry_count == 1u &&
+              max_raw.max_raw_length == 16u &&
+              max_raw.receipt_hash != 0u,
+          "R_2D07D scans GDAT field-3 loadable image entries for max raw length");
+    entries[0].cls4 = 4u;
+    entries[0].data_index = 0u;
 
     CHECK(dm2_v1_dballoc_3e74_24b8_receipt(&loader, &census) &&
               census.accepted &&
@@ -596,6 +614,18 @@ static void test_fixture_pict_allocation_receipts(void)
     DM2_V1_GdatPictAllocationReceipt alloc;
     DM2_V1_GdatPictFreeReceipt free_receipt;
     DM2_V1_GdatBigpoolMemoryReceipt pool;
+    DM2_V1_GdatCpxReserveReceipt reserve;
+    DM2_V1_GdatCpxCopyReceipt copy;
+    DM2_V1_GdatCpxCompactReceipt compact;
+    const uint8_t source_payload[10] = {
+        0x04u, 0x00u, 0xaau, 0xbbu, 0xccu,
+        0xddu, 0xeeu, 0xffu, 0x11u, 0x22u
+    };
+    const DM2_V1_GdatCpxBlockInput cpx_blocks[] = {
+        { 7u, 6u, 91u, 0u },
+        { 0x8008u, 4u, 87u, 1u },
+        { 9u, 5u, 82u, 0u }
+    };
 
     CHECK(dm2_v1_gdat_bigpool_memory_receipt(
               5u, DM2_V1_GDAT_PICT_POOL_LOBIG, 1, 0, &pool) &&
@@ -657,6 +687,51 @@ static void test_fixture_pict_allocation_receipts(void)
     CHECK(!dm2_v1_gdat_free_pict_entry_receipt(
               &alloc, 0, 1, 0, &free_receipt),
           "DM2_FREE_PICT_ENTRY rejects mismatched bitmap headers");
+
+    CHECK(dm2_v1_gdat_cpx_reserve_receipt(100u, 8u, &reserve) &&
+              reserve.accepted && reserve.old_wp08_word == 100u &&
+              reserve.reserved_words == 4u &&
+              reserve.new_wp08_word == 96u &&
+              reserve.returned_word == 96u &&
+              reserve.receipt_hash != 0u,
+          "R_2D8AD reserves CPX bytes by moving wp_08 downward");
+    CHECK(!dm2_v1_gdat_cpx_reserve_receipt(3u, 8u, &reserve),
+          "R_2D8AD rejects reservations that would underflow wp_08");
+    CHECK(dm2_v1_gdat_cpx_copy_receipt(
+              100u, 8u, source_payload, sizeof(source_payload), &copy) &&
+              copy.accepted && copy.source_header_included &&
+              copy.reserve.new_wp08_word == 96u &&
+              copy.returned_payload_word == 97u &&
+              copy.copied_bytes == 8u &&
+              copy.receipt_hash != 0u,
+          "R_2D8BA copies the source header span and returns payload word");
+    CHECK(!dm2_v1_gdat_cpx_copy_receipt(
+              100u, 12u, source_payload, sizeof(source_payload), &copy),
+          "R_2D8BA rejects undersized caller-owned source spans");
+    CHECK(dm2_v1_gdat_cpx_compact_receipt(
+              100u, 80u, cpx_blocks,
+              (uint16_t)(sizeof(cpx_blocks) / sizeof(cpx_blocks[0])),
+              &compact) &&
+              compact.accepted &&
+              compact.input_block_count == 3u &&
+              compact.preserved_block_count == 2u &&
+              compact.skipped_free_block_count == 1u &&
+              compact.moved_block_count == 2u &&
+              compact.new_wp08_word == 90u &&
+              compact.blocks[0].preserved &&
+              compact.blocks[0].word_count == 5u &&
+              compact.blocks[0].new_start_word == 95u &&
+              compact.blocks[1].skipped_free &&
+              compact.blocks[2].preserved &&
+              compact.blocks[2].word_count == 5u &&
+              compact.blocks[2].new_start_word == 90u &&
+              compact.receipt_hash != 0u,
+          "R_2D802 compacts active CPX GDAT blocks and skips high-bit frees");
+    CHECK(!dm2_v1_gdat_cpx_compact_receipt(
+              100u, 90u, cpx_blocks,
+              (uint16_t)(sizeof(cpx_blocks) / sizeof(cpx_blocks[0])),
+              &compact),
+          "R_2D802 rejects blocks outside the current CPX pool window");
 }
 
 static void test_querydb_word_and_ornate_receipts(void)

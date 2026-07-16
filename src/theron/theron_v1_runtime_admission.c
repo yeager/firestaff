@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 void theron_v1_runtime_admission_init(
     Theron_V1RuntimeAdmissionReceipt *out) {
@@ -901,6 +902,36 @@ static uint32_t theron_v1_runtime_mix_hash(uint32_t hash, uint32_t value) {
     return hash;
 }
 
+static uint32_t theron_v1_runtime_track02_loader_route_pair_hash(
+    uint32_t record,
+    uint32_t consumer_trace_checksum,
+    uint32_t selected_dungeon_index,
+    uint32_t level_route_hash,
+    uint32_t object_table_route_hash,
+    size_t nonstartup_level_byte_count,
+    uint32_t nonstartup_level_raw_hash,
+    size_t object_table_user_data_byte_count,
+    uint32_t object_table_user_data_hash,
+    uint32_t dungeon_record_consumer_pc,
+    uint32_t object_table_consumer_pc) {
+    uint32_t hash = 2166136261u;
+
+    hash = theron_v1_runtime_mix_hash(hash, record);
+    hash = theron_v1_runtime_mix_hash(hash, consumer_trace_checksum);
+    hash = theron_v1_runtime_mix_hash(hash, selected_dungeon_index);
+    hash = theron_v1_runtime_mix_hash(hash, level_route_hash);
+    hash = theron_v1_runtime_mix_hash(hash, object_table_route_hash);
+    hash = theron_v1_runtime_mix_hash(
+        hash, (uint32_t)nonstartup_level_byte_count);
+    hash = theron_v1_runtime_mix_hash(hash, nonstartup_level_raw_hash);
+    hash = theron_v1_runtime_mix_hash(
+        hash, (uint32_t)object_table_user_data_byte_count);
+    hash = theron_v1_runtime_mix_hash(hash, object_table_user_data_hash);
+    hash = theron_v1_runtime_mix_hash(hash, dungeon_record_consumer_pc);
+    hash = theron_v1_runtime_mix_hash(hash, object_table_consumer_pc);
+    return hash ? hash : 2166136261u;
+}
+
 static uint32_t theron_v1_runtime_trace_text_checksum(const char *text) {
     uint32_t hash = 2166136261u;
     const unsigned char *p = (const unsigned char *)text;
@@ -910,6 +941,143 @@ static uint32_t theron_v1_runtime_trace_text_checksum(const char *text) {
         hash *= 16777619u;
     }
     return hash ? hash : 2166136261u;
+}
+
+static int theron_v1_runtime_raw_user_data_coordinate(
+    size_t raw_offset,
+    size_t user_data_offset,
+    size_t byte_count,
+    size_t *out_raw_sector,
+    size_t *out_raw_sector_user_data_offset) {
+    size_t raw_sector;
+    size_t raw_sector_offset;
+    size_t raw_user_offset;
+    size_t expected_user_data_offset;
+
+    if (out_raw_sector) *out_raw_sector = 0u;
+    if (out_raw_sector_user_data_offset) {
+        *out_raw_sector_user_data_offset = 0u;
+    }
+    if (raw_offset == 0u || user_data_offset == 0u || byte_count == 0u) {
+        return 0;
+    }
+    raw_sector = raw_offset / THERON_TRACK02_RAW_SECTOR_BYTES;
+    raw_sector_offset = raw_offset % THERON_TRACK02_RAW_SECTOR_BYTES;
+    if (raw_sector_offset < THERON_TRACK02_RAW_USER_DATA_OFFSET ||
+        raw_sector_offset >= THERON_TRACK02_RAW_USER_DATA_OFFSET +
+            THERON_TRACK02_RAW_USER_DATA_BYTES) {
+        return 0;
+    }
+    raw_user_offset = raw_sector_offset - THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    if (byte_count > THERON_TRACK02_RAW_USER_DATA_BYTES - raw_user_offset) {
+        return 0;
+    }
+    expected_user_data_offset =
+        raw_sector * THERON_TRACK02_RAW_USER_DATA_BYTES + raw_user_offset;
+    if (user_data_offset != expected_user_data_offset) {
+        return 0;
+    }
+    if (out_raw_sector) *out_raw_sector = raw_sector;
+    if (out_raw_sector_user_data_offset) {
+        *out_raw_sector_user_data_offset = raw_sector_offset;
+    }
+    return 1;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_build_nonstartup_container_index(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02NonstartupContainerIndex *out_index) {
+    Theron_Track02NonstartupSectorReceipt receipt;
+    Theron_Track02SignalStatus status;
+    size_t anchor;
+    size_t window_index;
+    uint32_t index_hash = 2166136261u;
+
+    if (!out_index) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    memset(out_index, 0, sizeof(*out_index));
+    if (!track02_data || track02_size == 0u || !md5_hex ||
+        md5_hex[0] == '\0') {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_capture_nonstartup_sector_receipt(
+        track02_data, track02_size, md5_hex, &receipt);
+    if (status != THERON_TRACK02_SIGNAL_OK || !receipt.valid ||
+        !receipt.verified_track02 || !receipt.opaque_only ||
+        !receipt.promotion_blocked || receipt.receipt_hash == 0u) {
+        return status == THERON_TRACK02_SIGNAL_OK ?
+            THERON_TRACK02_SIGNAL_NOT_FOUND : status;
+    }
+
+    out_index->variant = receipt.variant;
+    out_index->verified_track02 = 1;
+    out_index->opaque_only = 1;
+    out_index->promotion_blocked = 1;
+    index_hash = theron_v1_runtime_mix_hash(index_hash, receipt.receipt_hash);
+
+    for (anchor = 0u; anchor < receipt.anchor_count; ++anchor) {
+        for (window_index = 0u;
+             window_index < receipt.window_count[anchor];
+             ++window_index) {
+            const Theron_Track02NonstartupSectorWindowReceipt *window =
+                &receipt.windows[anchor][window_index];
+            Theron_Track02NonstartupContainer *container;
+
+            if (out_index->container_count >=
+                THERON_TRACK02_MAX_NONSTARTUP_CONTAINERS) {
+                return THERON_TRACK02_SIGNAL_BAD_INPUT;
+            }
+            if (!window->opaque || !window->promotion_blocked ||
+                !window->user_data_span_contiguous ||
+                window->raw_span_contains_non_user_data ||
+                window->raw_span_hash == 0u ||
+                window->byte_count == 0u ||
+                window->user_data_end_offset <= window->user_data_offset ||
+                window->user_data_end_offset - window->user_data_offset !=
+                    window->byte_count ||
+                window->raw_offset > track02_size ||
+                window->byte_count > track02_size - window->raw_offset) {
+                continue;
+            }
+
+            container = &out_index->containers[out_index->container_count++];
+            container->descriptor_entry_index = window->descriptor_entry_index;
+            container->raw_offset = window->raw_offset;
+            container->user_data_offset = window->user_data_offset;
+            container->user_data_byte_count = window->byte_count;
+            container->user_data_hash = window->raw_span_hash;
+            container->user_data_segment_count = 1u;
+            container->user_data_segments[0].user_data_offset =
+                window->user_data_offset;
+            container->user_data_segments[0].byte_count = window->byte_count;
+            container->user_data_segments[0].hash = window->raw_span_hash;
+            container->opaque = 1;
+            container->promotion_blocked = 1;
+
+            index_hash = theron_v1_runtime_mix_hash(
+                index_hash, (uint32_t)container->descriptor_entry_index);
+            index_hash = theron_v1_runtime_mix_hash(
+                index_hash, (uint32_t)container->raw_offset);
+            index_hash = theron_v1_runtime_mix_hash(
+                index_hash, (uint32_t)container->user_data_offset);
+            index_hash = theron_v1_runtime_mix_hash(
+                index_hash, (uint32_t)container->user_data_byte_count);
+            index_hash = theron_v1_runtime_mix_hash(
+                index_hash, container->user_data_hash);
+        }
+    }
+
+    if (out_index->container_count == 0u) {
+        memset(out_index, 0, sizeof(*out_index));
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_index->valid = 1;
+    out_index->index_hash = index_hash ? index_hash : 2166136261u;
+    return THERON_TRACK02_SIGNAL_OK;
 }
 
 static int theron_v1_runtime_trace_has(const char *trace, const char *token) {
@@ -942,6 +1110,67 @@ static int theron_v1_runtime_trace_has_size(
     }
     snprintf(token, sizeof(token), "%s=0x%zx", name, value);
     return theron_v1_runtime_trace_has(trace, token);
+}
+
+static int theron_v1_runtime_trace_read_unsigned(
+    const char *trace,
+    const char *name,
+    unsigned long long max_value,
+    unsigned long long *out_value) {
+    char token[80];
+    const char *match;
+
+    if (out_value) {
+        *out_value = 0u;
+    }
+    if (!trace || !name || !out_value) {
+        return 0;
+    }
+    snprintf(token, sizeof(token), "%s=", name);
+    match = strstr(trace, token);
+    if (!match) {
+        return 0;
+    }
+    match += strlen(token);
+    {
+        char *end = NULL;
+        unsigned long long value = strtoull(match, &end, 0);
+        if (end == match || value > max_value) {
+            return 0;
+        }
+        *out_value = value;
+    }
+    return 1;
+}
+
+static int theron_v1_runtime_trace_read_u32(
+    const char *trace,
+    const char *name,
+    uint32_t *out_value) {
+    unsigned long long value;
+
+    if (!out_value ||
+        !theron_v1_runtime_trace_read_unsigned(
+            trace, name, 0xffffffffull, &value)) {
+        return 0;
+    }
+    *out_value = (uint32_t)value;
+    return 1;
+}
+
+static int theron_v1_runtime_trace_read_size(
+    const char *trace,
+    const char *name,
+    size_t *out_value) {
+    unsigned long long value;
+
+    if (!out_value ||
+        !theron_v1_runtime_trace_read_unsigned(
+            trace, name, (unsigned long long)((size_t)-1), &value)) {
+        return 0;
+    }
+    *out_value = (size_t)value;
+    return 1;
 }
 
 int theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
@@ -1315,6 +1544,10 @@ int theron_v1_runtime_bind_track02_original_consumer_trace(
     out->payload_checksum = consumer->payload_checksum;
     out->level_envelope_checksum = consumer->level_envelope_checksum;
     out->post_envelope_checksum = consumer->post_envelope_checksum;
+    out->loader_record_user_data_offset =
+        consumer->loader_record_user_data_offset;
+    out->loader_destination = consumer->loader_destination;
+    out->loader_payload_bytes = consumer->loader_payload_bytes;
     out->palette_raw_offset = gap->palette_raw_offset;
     out->palette_user_data_offset = gap->palette_user_data_offset;
     out->palette_payload_checksum = gap->palette_payload_checksum;
@@ -1336,6 +1569,1645 @@ int theron_v1_runtime_bind_track02_original_consumer_trace(
     out->runtime_consumer_binding_ready = 1;
     out->render_asset_admission_allowed = 0;
     out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_original_object_dungeon_consumer_trace(
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    const Theron_V1Track02ObjectDungeonConsumerGrammarReceipt *grammar,
+    Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt *out) {
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_original_consumer_binding_init(out);
+    if (!gap || !grammar ||
+        !gap->valid ||
+        !gap->verified_track02_capture_consumed ||
+        !gap->fail_closed ||
+        gap->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap->level_route_hash == 0u ||
+        gap->object_table_route_hash == 0u ||
+        gap->first_nonstartup_raw_offset == 0u ||
+        gap->first_nonstartup_user_data_offset == 0u ||
+        gap->first_nonstartup_raw_hash == 0u ||
+        gap->first_container_raw_offset == 0u ||
+        gap->first_container_user_data_offset == 0u ||
+        gap->first_container_user_data_hash == 0u ||
+        gap->nonstartup_level_decode_ready ||
+        gap->object_table_decode_ready ||
+        gap->render_asset_admission_allowed ||
+        gap->fallback_visuals_allowed ||
+        !grammar->valid ||
+        !grammar->no_fallback ||
+        !grammar->original_consumer_trace_bound ||
+        !grammar->same_capture_as_loader_payload ||
+        grammar->track02_variant != gap->variant ||
+        grammar->record == 0u ||
+        grammar->loader_record_user_data_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        grammar->loader_destination != THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        grammar->loader_payload_bytes !=
+            THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        grammar->payload_checksum == 0u ||
+        grammar->level_envelope_checksum == 0u ||
+        grammar->post_envelope_checksum == 0u ||
+        grammar->consumer_trace_checksum == 0u ||
+        grammar->dungeon_record_consumer_pc == 0u ||
+        grammar->object_table_consumer_pc == 0u ||
+        grammar->dungeon_record_payload_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        grammar->dungeon_record_byte_count !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        grammar->dungeon_record_window_checksum !=
+            grammar->level_envelope_checksum ||
+        grammar->object_table_payload_offset !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        grammar->object_table_byte_count !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        grammar->object_table_window_checksum !=
+            grammar->post_envelope_checksum ||
+        !grammar->dungeon_record_grammar_proven ||
+        !grammar->object_table_grammar_proven ||
+        !grammar->dungeon_record_fields_blocked ||
+        !grammar->object_table_fields_blocked ||
+        grammar->bitmap_route_bound ||
+        grammar->palette_binding_verified ||
+        grammar->rgba_output_allowed ||
+        grammar->runtime_handoff_allowed ||
+        grammar->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->original_data_gap_consumed = 1;
+    out->original_consumer_trace_consumed = 1;
+    out->same_original_capture_as_gap = 1;
+    out->fail_closed_until_consumer_proven = 0;
+    out->variant = gap->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             gap->track02_md5);
+    out->record = grammar->record;
+    out->consumer_trace_checksum = grammar->consumer_trace_checksum;
+    out->payload_checksum = grammar->payload_checksum;
+    out->level_envelope_checksum = grammar->level_envelope_checksum;
+    out->post_envelope_checksum = grammar->post_envelope_checksum;
+    out->loader_record_user_data_offset =
+        grammar->loader_record_user_data_offset;
+    out->loader_destination = grammar->loader_destination;
+    out->loader_payload_bytes = grammar->loader_payload_bytes;
+    out->dungeon_record_consumer_pc = grammar->dungeon_record_consumer_pc;
+    out->object_table_consumer_pc = grammar->object_table_consumer_pc;
+    out->dungeon_record_payload_offset =
+        grammar->dungeon_record_payload_offset;
+    out->dungeon_record_byte_count = grammar->dungeon_record_byte_count;
+    out->dungeon_record_window_checksum =
+        grammar->dungeon_record_window_checksum;
+    out->object_table_payload_offset = grammar->object_table_payload_offset;
+    out->object_table_byte_count = grammar->object_table_byte_count;
+    out->object_table_window_checksum =
+        grammar->object_table_window_checksum;
+    out->nonstartup_level_raw_offset = gap->first_nonstartup_raw_offset;
+    out->nonstartup_level_user_data_offset =
+        gap->first_nonstartup_user_data_offset;
+    out->nonstartup_level_raw_hash = gap->first_nonstartup_raw_hash;
+    out->object_table_raw_offset = gap->first_container_raw_offset;
+    out->object_table_user_data_offset =
+        gap->first_container_user_data_offset;
+    out->object_table_user_data_hash = gap->first_container_user_data_hash;
+    out->level_route_hash = gap->level_route_hash;
+    out->object_table_route_hash = gap->object_table_route_hash;
+    out->palette_consumer_bound = 0;
+    out->nonstartup_level_consumer_bound = 1;
+    out->object_table_consumer_bound = 1;
+    out->bitmap_consumer_bound = 0;
+    out->runtime_consumer_binding_ready = 1;
+    out->render_asset_admission_allowed = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_raw_nonstartup_dungeon_handoff(
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    const Theron_V1RuntimeTrack02OriginalConsumerBindingReceipt *binding,
+    Theron_V1RuntimeTrack02RawNonstartupDungeonHandoffReceipt *out) {
+    Theron_V1RuntimeTrack02RawNonstartupDungeonHandoffReceipt receipt = {0};
+    size_t level_raw_sector;
+    size_t level_raw_sector_user_data_offset;
+    size_t object_raw_sector;
+    size_t object_raw_sector_user_data_offset;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!gap || !binding || !out ||
+        !gap->valid ||
+        !gap->verified_track02_capture_consumed ||
+        !gap->fail_closed ||
+        gap->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap->level_route_hash == 0u ||
+        gap->object_table_route_hash == 0u ||
+        gap->first_nonstartup_raw_offset == 0u ||
+        gap->first_nonstartup_user_data_offset == 0u ||
+        gap->first_nonstartup_byte_count == 0u ||
+        gap->first_nonstartup_raw_hash == 0u ||
+        gap->first_container_raw_offset == 0u ||
+        gap->first_container_user_data_offset == 0u ||
+        gap->first_container_user_data_byte_count == 0u ||
+        gap->first_container_user_data_hash == 0u ||
+        gap->nonstartup_level_decode_ready ||
+        gap->object_table_decode_ready ||
+        gap->render_asset_admission_allowed ||
+        gap->fallback_visuals_allowed ||
+        !binding->valid ||
+        !binding->original_data_gap_consumed ||
+        !binding->original_consumer_trace_consumed ||
+        !binding->same_original_capture_as_gap ||
+        binding->fail_closed_until_consumer_proven ||
+        binding->variant != gap->variant ||
+        strcmp(binding->track02_md5, gap->track02_md5) != 0 ||
+        binding->record == 0u ||
+        binding->consumer_trace_checksum == 0u ||
+        binding->payload_checksum == 0u ||
+        binding->level_envelope_checksum == 0u ||
+        binding->post_envelope_checksum == 0u ||
+        binding->loader_record_user_data_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        binding->loader_destination != THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        binding->loader_payload_bytes !=
+            THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        binding->dungeon_record_consumer_pc == 0u ||
+        binding->object_table_consumer_pc == 0u ||
+        binding->dungeon_record_payload_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        binding->dungeon_record_byte_count !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        binding->dungeon_record_window_checksum !=
+            binding->level_envelope_checksum ||
+        binding->object_table_payload_offset !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        binding->object_table_byte_count !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        binding->object_table_window_checksum !=
+            binding->post_envelope_checksum ||
+        binding->nonstartup_level_raw_offset !=
+            gap->first_nonstartup_raw_offset ||
+        binding->nonstartup_level_user_data_offset !=
+            gap->first_nonstartup_user_data_offset ||
+        binding->nonstartup_level_raw_hash !=
+            gap->first_nonstartup_raw_hash ||
+        binding->object_table_raw_offset != gap->first_container_raw_offset ||
+        binding->object_table_user_data_offset !=
+            gap->first_container_user_data_offset ||
+        binding->object_table_user_data_hash !=
+            gap->first_container_user_data_hash ||
+        binding->level_route_hash != gap->level_route_hash ||
+        binding->object_table_route_hash != gap->object_table_route_hash ||
+        !binding->nonstartup_level_consumer_bound ||
+        !binding->object_table_consumer_bound ||
+        !binding->runtime_consumer_binding_ready ||
+        binding->render_asset_admission_allowed ||
+        binding->fallback_visuals_allowed ||
+        !theron_v1_runtime_raw_user_data_coordinate(
+            gap->first_nonstartup_raw_offset,
+            gap->first_nonstartup_user_data_offset,
+            gap->first_nonstartup_byte_count,
+            &level_raw_sector,
+            &level_raw_sector_user_data_offset) ||
+        !theron_v1_runtime_raw_user_data_coordinate(
+            gap->first_container_raw_offset,
+            gap->first_container_user_data_offset,
+            gap->first_container_user_data_byte_count,
+            &object_raw_sector,
+            &object_raw_sector_user_data_offset)) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.original_data_gap_consumed = 1;
+    receipt.original_consumer_binding_consumed = 1;
+    receipt.same_original_capture_as_gap = 1;
+    receipt.variant = gap->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             gap->track02_md5);
+    receipt.record = binding->record;
+    receipt.consumer_trace_checksum = binding->consumer_trace_checksum;
+    receipt.payload_checksum = binding->payload_checksum;
+    receipt.level_envelope_checksum = binding->level_envelope_checksum;
+    receipt.post_envelope_checksum = binding->post_envelope_checksum;
+    receipt.loader_record_user_data_offset =
+        binding->loader_record_user_data_offset;
+    receipt.loader_destination = binding->loader_destination;
+    receipt.loader_payload_bytes = binding->loader_payload_bytes;
+    receipt.dungeon_record_consumer_pc = binding->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = binding->object_table_consumer_pc;
+    receipt.dungeon_record_payload_offset =
+        binding->dungeon_record_payload_offset;
+    receipt.dungeon_record_byte_count = binding->dungeon_record_byte_count;
+    receipt.dungeon_record_window_checksum =
+        binding->dungeon_record_window_checksum;
+    receipt.object_table_payload_offset = binding->object_table_payload_offset;
+    receipt.object_table_byte_count = binding->object_table_byte_count;
+    receipt.object_table_window_checksum =
+        binding->object_table_window_checksum;
+    receipt.nonstartup_level_raw_offset = gap->first_nonstartup_raw_offset;
+    receipt.nonstartup_level_raw_sector = level_raw_sector;
+    receipt.nonstartup_level_raw_sector_user_data_offset =
+        level_raw_sector_user_data_offset;
+    receipt.nonstartup_level_user_data_offset =
+        gap->first_nonstartup_user_data_offset;
+    receipt.nonstartup_level_byte_count = gap->first_nonstartup_byte_count;
+    receipt.nonstartup_level_raw_hash = gap->first_nonstartup_raw_hash;
+    receipt.object_table_raw_offset = gap->first_container_raw_offset;
+    receipt.object_table_raw_sector = object_raw_sector;
+    receipt.object_table_raw_sector_user_data_offset =
+        object_raw_sector_user_data_offset;
+    receipt.object_table_user_data_offset =
+        gap->first_container_user_data_offset;
+    receipt.object_table_user_data_byte_count =
+        gap->first_container_user_data_byte_count;
+    receipt.object_table_user_data_hash = gap->first_container_user_data_hash;
+    receipt.level_route_hash = gap->level_route_hash;
+    receipt.object_table_route_hash = gap->object_table_route_hash;
+    receipt.raw_sector_user_data_bound = 1;
+    receipt.nonstartup_dungeon_path_ready = 1;
+    receipt.exact_level_fields_blocked = 1;
+    receipt.exact_object_fields_blocked = 1;
+    receipt.bitmap_route_bound = 0;
+    receipt.palette_binding_verified = 0;
+    receipt.rgba_output_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_object_level_admission(
+    const Theron_V1RuntimeTrack02RawNonstartupDungeonHandoffReceipt *handoff,
+    const Theron_V1Track02ObjectDungeonConsumerGrammarReceipt *grammar,
+    Theron_V1RuntimeTrack02ObjectLevelAdmissionReceipt *out) {
+    Theron_V1RuntimeTrack02ObjectLevelAdmissionReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!handoff || !grammar || !out ||
+        !handoff->valid ||
+        !handoff->original_data_gap_consumed ||
+        !handoff->original_consumer_binding_consumed ||
+        !handoff->same_original_capture_as_gap ||
+        handoff->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(handoff->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        handoff->record == 0u ||
+        handoff->consumer_trace_checksum == 0u ||
+        handoff->payload_checksum == 0u ||
+        handoff->level_envelope_checksum == 0u ||
+        handoff->post_envelope_checksum == 0u ||
+        handoff->loader_record_user_data_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        handoff->loader_destination != THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        handoff->loader_payload_bytes !=
+            THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        handoff->dungeon_record_consumer_pc == 0u ||
+        handoff->object_table_consumer_pc == 0u ||
+        handoff->dungeon_record_payload_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        handoff->dungeon_record_byte_count !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        handoff->dungeon_record_window_checksum !=
+            handoff->level_envelope_checksum ||
+        handoff->object_table_payload_offset !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        handoff->object_table_byte_count !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        handoff->object_table_window_checksum !=
+            handoff->post_envelope_checksum ||
+        handoff->nonstartup_level_raw_offset == 0u ||
+        handoff->nonstartup_level_raw_hash == 0u ||
+        handoff->nonstartup_level_byte_count == 0u ||
+        handoff->object_table_raw_offset == 0u ||
+        handoff->object_table_user_data_hash == 0u ||
+        handoff->object_table_user_data_byte_count == 0u ||
+        handoff->level_route_hash == 0u ||
+        handoff->object_table_route_hash == 0u ||
+        !handoff->raw_sector_user_data_bound ||
+        !handoff->nonstartup_dungeon_path_ready ||
+        !handoff->exact_level_fields_blocked ||
+        !handoff->exact_object_fields_blocked ||
+        handoff->bitmap_route_bound ||
+        handoff->palette_binding_verified ||
+        handoff->rgba_output_allowed ||
+        handoff->dungeon_draw_allowed ||
+        handoff->fallback_visuals_allowed ||
+        !grammar->valid ||
+        !grammar->no_fallback ||
+        !grammar->original_consumer_trace_bound ||
+        !grammar->same_capture_as_loader_payload ||
+        grammar->track02_variant != handoff->variant ||
+        grammar->record != handoff->record ||
+        grammar->payload_checksum != handoff->payload_checksum ||
+        grammar->level_envelope_checksum !=
+            handoff->level_envelope_checksum ||
+        grammar->post_envelope_checksum != handoff->post_envelope_checksum ||
+        grammar->consumer_trace_checksum != handoff->consumer_trace_checksum ||
+        grammar->loader_record_user_data_offset !=
+            handoff->loader_record_user_data_offset ||
+        grammar->loader_destination != handoff->loader_destination ||
+        grammar->loader_payload_bytes != handoff->loader_payload_bytes ||
+        grammar->dungeon_record_consumer_pc !=
+            handoff->dungeon_record_consumer_pc ||
+        grammar->object_table_consumer_pc !=
+            handoff->object_table_consumer_pc ||
+        grammar->dungeon_record_payload_offset !=
+            handoff->dungeon_record_payload_offset ||
+        grammar->dungeon_record_byte_count !=
+            handoff->dungeon_record_byte_count ||
+        grammar->dungeon_record_window_checksum !=
+            handoff->dungeon_record_window_checksum ||
+        grammar->object_table_payload_offset !=
+            handoff->object_table_payload_offset ||
+        grammar->object_table_byte_count != handoff->object_table_byte_count ||
+        grammar->object_table_window_checksum !=
+            handoff->object_table_window_checksum ||
+        grammar->loader_record_user_data_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        grammar->loader_destination != THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        grammar->loader_payload_bytes !=
+            THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        grammar->dungeon_record_consumer_pc == 0u ||
+        grammar->object_table_consumer_pc == 0u ||
+        grammar->dungeon_record_payload_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        grammar->dungeon_record_byte_count !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        grammar->dungeon_record_window_checksum !=
+            handoff->level_envelope_checksum ||
+        grammar->object_table_payload_offset !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        grammar->object_table_byte_count !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        grammar->object_table_window_checksum !=
+            handoff->post_envelope_checksum ||
+        !grammar->dungeon_record_grammar_proven ||
+        !grammar->object_table_grammar_proven ||
+        !grammar->dungeon_record_fields_blocked ||
+        !grammar->object_table_fields_blocked ||
+        grammar->bitmap_route_bound ||
+        grammar->palette_binding_verified ||
+        grammar->rgba_output_allowed ||
+        grammar->runtime_handoff_allowed ||
+        grammar->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.raw_nonstartup_dungeon_handoff_consumed = 1;
+    receipt.object_dungeon_grammar_consumed = 1;
+    receipt.variant = handoff->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             handoff->track02_md5);
+    receipt.record = handoff->record;
+    receipt.consumer_trace_checksum = handoff->consumer_trace_checksum;
+    receipt.payload_checksum = handoff->payload_checksum;
+    receipt.level_envelope_checksum = handoff->level_envelope_checksum;
+    receipt.post_envelope_checksum = handoff->post_envelope_checksum;
+    receipt.loader_record_user_data_offset =
+        handoff->loader_record_user_data_offset;
+    receipt.loader_destination = handoff->loader_destination;
+    receipt.loader_payload_bytes = handoff->loader_payload_bytes;
+    receipt.dungeon_record_payload_offset =
+        handoff->dungeon_record_payload_offset;
+    receipt.dungeon_record_byte_count = handoff->dungeon_record_byte_count;
+    receipt.dungeon_record_window_checksum =
+        handoff->dungeon_record_window_checksum;
+    receipt.object_table_payload_offset = handoff->object_table_payload_offset;
+    receipt.object_table_byte_count = handoff->object_table_byte_count;
+    receipt.object_table_window_checksum =
+        handoff->object_table_window_checksum;
+    receipt.nonstartup_level_raw_offset =
+        handoff->nonstartup_level_raw_offset;
+    receipt.nonstartup_level_raw_sector =
+        handoff->nonstartup_level_raw_sector;
+    receipt.nonstartup_level_raw_sector_user_data_offset =
+        handoff->nonstartup_level_raw_sector_user_data_offset;
+    receipt.nonstartup_level_user_data_offset =
+        handoff->nonstartup_level_user_data_offset;
+    receipt.nonstartup_level_byte_count =
+        handoff->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = handoff->nonstartup_level_raw_hash;
+    receipt.object_table_raw_offset = handoff->object_table_raw_offset;
+    receipt.object_table_raw_sector = handoff->object_table_raw_sector;
+    receipt.object_table_raw_sector_user_data_offset =
+        handoff->object_table_raw_sector_user_data_offset;
+    receipt.object_table_user_data_offset =
+        handoff->object_table_user_data_offset;
+    receipt.object_table_user_data_byte_count =
+        handoff->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        handoff->object_table_user_data_hash;
+    receipt.level_route_hash = handoff->level_route_hash;
+    receipt.object_table_route_hash = handoff->object_table_route_hash;
+    receipt.dungeon_record_consumer_pc = handoff->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = handoff->object_table_consumer_pc;
+    receipt.raw_sector_user_data_bound = 1;
+    receipt.dungeon_record_grammar_proven = 1;
+    receipt.object_table_grammar_proven = 1;
+    receipt.nonstartup_level_admission_allowed = 1;
+    receipt.object_table_admission_allowed = 1;
+    receipt.exact_level_fields_blocked = 1;
+    receipt.exact_object_fields_blocked = 1;
+    receipt.bitmap_route_bound = 0;
+    receipt.palette_binding_verified = 0;
+    receipt.rgba_output_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_nonstartup_level_record_evidence(
+    const Theron_V1RuntimeTrack02ObjectLevelAdmissionReceipt *admission,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02NonstartupLevelRecordEvidenceReceipt *out) {
+    Theron_V1RuntimeTrack02NonstartupLevelRecordEvidenceReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!admission || !capture_trace || !out ||
+        !admission->valid ||
+        !admission->raw_nonstartup_dungeon_handoff_consumed ||
+        !admission->object_dungeon_grammar_consumed ||
+        admission->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(admission->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        admission->record == 0u ||
+        admission->consumer_trace_checksum == 0u ||
+        admission->level_route_hash == 0u ||
+        admission->nonstartup_level_raw_offset == 0u ||
+        admission->nonstartup_level_user_data_offset == 0u ||
+        admission->nonstartup_level_byte_count == 0u ||
+        admission->nonstartup_level_raw_hash == 0u ||
+        admission->dungeon_record_consumer_pc == 0u ||
+        admission->dungeon_record_payload_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        admission->dungeon_record_byte_count !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        admission->dungeon_record_window_checksum !=
+            admission->level_envelope_checksum ||
+        !admission->raw_sector_user_data_bound ||
+        !admission->dungeon_record_grammar_proven ||
+        !admission->nonstartup_level_admission_allowed ||
+        !admission->exact_level_fields_blocked ||
+        admission->bitmap_route_bound ||
+        admission->palette_binding_verified ||
+        admission->rgba_output_allowed ||
+        admission->dungeon_draw_allowed ||
+        admission->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_nonstartup_level_record_trace") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_object_level_admission=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", admission->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            admission->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", admission->level_route_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_raw_offset",
+            admission->nonstartup_level_raw_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_user_data_offset",
+            admission->nonstartup_level_user_data_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_byte_count",
+            admission->nonstartup_level_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "nonstartup_level_raw_hash",
+            admission->nonstartup_level_raw_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_consumer_pc",
+            admission->dungeon_record_consumer_pc) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "dungeon_record_payload_offset",
+            admission->dungeon_record_payload_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "dungeon_record_byte_count",
+            admission->dungeon_record_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_window_checksum",
+            admission->dungeon_record_window_checksum) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "source_nonstartup_level_bytes_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "nonstartup_level_record_route_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "exact_level_fields_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_layout_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "bitmap_route_bound=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "palette_binding_verified=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "rgba_output_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.object_level_admission_consumed = 1;
+    receipt.same_capture_as_object_level_admission = 1;
+    receipt.variant = admission->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             admission->track02_md5);
+    receipt.record = admission->record;
+    receipt.consumer_trace_checksum = admission->consumer_trace_checksum;
+    receipt.level_route_hash = admission->level_route_hash;
+    receipt.nonstartup_level_raw_offset =
+        admission->nonstartup_level_raw_offset;
+    receipt.nonstartup_level_raw_sector =
+        admission->nonstartup_level_raw_sector;
+    receipt.nonstartup_level_raw_sector_user_data_offset =
+        admission->nonstartup_level_raw_sector_user_data_offset;
+    receipt.nonstartup_level_user_data_offset =
+        admission->nonstartup_level_user_data_offset;
+    receipt.nonstartup_level_byte_count =
+        admission->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash =
+        admission->nonstartup_level_raw_hash;
+    receipt.dungeon_record_consumer_pc =
+        admission->dungeon_record_consumer_pc;
+    receipt.dungeon_record_payload_offset =
+        admission->dungeon_record_payload_offset;
+    receipt.dungeon_record_byte_count =
+        admission->dungeon_record_byte_count;
+    receipt.dungeon_record_window_checksum =
+        admission->dungeon_record_window_checksum;
+    receipt.source_nonstartup_level_bytes_bound = 1;
+    receipt.nonstartup_level_record_route_observed = 1;
+    receipt.exact_level_fields_blocked = 1;
+    receipt.object_table_layout_blocked = 1;
+    receipt.bitmap_route_bound = 0;
+    receipt.palette_binding_verified = 0;
+    receipt.rgba_output_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_object_table_route_evidence(
+    const Theron_V1RuntimeTrack02ObjectLevelAdmissionReceipt *admission,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02ObjectTableRouteEvidenceReceipt *out) {
+    Theron_V1RuntimeTrack02ObjectTableRouteEvidenceReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!admission || !capture_trace || !out ||
+        !admission->valid ||
+        !admission->raw_nonstartup_dungeon_handoff_consumed ||
+        !admission->object_dungeon_grammar_consumed ||
+        admission->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(admission->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        admission->record == 0u ||
+        admission->consumer_trace_checksum == 0u ||
+        admission->object_table_route_hash == 0u ||
+        admission->object_table_raw_offset == 0u ||
+        admission->object_table_user_data_offset == 0u ||
+        admission->object_table_user_data_byte_count == 0u ||
+        admission->object_table_user_data_hash == 0u ||
+        admission->object_table_consumer_pc == 0u ||
+        admission->object_table_payload_offset !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        admission->object_table_byte_count !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        admission->object_table_window_checksum !=
+            admission->post_envelope_checksum ||
+        !admission->raw_sector_user_data_bound ||
+        !admission->object_table_grammar_proven ||
+        !admission->object_table_admission_allowed ||
+        !admission->exact_object_fields_blocked ||
+        admission->bitmap_route_bound ||
+        admission->palette_binding_verified ||
+        admission->rgba_output_allowed ||
+        admission->dungeon_draw_allowed ||
+        admission->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_object_table_route_trace") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_object_level_admission=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", admission->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            admission->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            admission->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_raw_offset",
+            admission->object_table_raw_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_offset",
+            admission->object_table_user_data_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_byte_count",
+            admission->object_table_user_data_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_user_data_hash",
+            admission->object_table_user_data_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_consumer_pc",
+            admission->object_table_consumer_pc) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_payload_offset",
+            admission->object_table_payload_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_byte_count",
+            admission->object_table_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_window_checksum",
+            admission->object_table_window_checksum) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "source_object_table_bytes_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_route_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_layout_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "exact_object_fields_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "bitmap_route_bound=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "palette_binding_verified=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "rgba_output_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.object_level_admission_consumed = 1;
+    receipt.same_capture_as_object_level_admission = 1;
+    receipt.variant = admission->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             admission->track02_md5);
+    receipt.record = admission->record;
+    receipt.consumer_trace_checksum = admission->consumer_trace_checksum;
+    receipt.object_table_route_hash = admission->object_table_route_hash;
+    receipt.object_table_raw_offset = admission->object_table_raw_offset;
+    receipt.object_table_raw_sector = admission->object_table_raw_sector;
+    receipt.object_table_raw_sector_user_data_offset =
+        admission->object_table_raw_sector_user_data_offset;
+    receipt.object_table_user_data_offset =
+        admission->object_table_user_data_offset;
+    receipt.object_table_user_data_byte_count =
+        admission->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        admission->object_table_user_data_hash;
+    receipt.object_table_consumer_pc = admission->object_table_consumer_pc;
+    receipt.object_table_payload_offset =
+        admission->object_table_payload_offset;
+    receipt.object_table_byte_count = admission->object_table_byte_count;
+    receipt.object_table_window_checksum =
+        admission->object_table_window_checksum;
+    receipt.source_object_table_bytes_bound = 1;
+    receipt.object_table_route_observed = 1;
+    receipt.object_table_layout_blocked = 1;
+    receipt.exact_object_fields_blocked = 1;
+    receipt.bitmap_route_bound = 0;
+    receipt.palette_binding_verified = 0;
+    receipt.rgba_output_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_level_object_handoff_evidence(
+    const Theron_V1RuntimeTrack02NonstartupLevelRecordEvidenceReceipt *level,
+    const Theron_V1RuntimeTrack02ObjectTableRouteEvidenceReceipt *object,
+    Theron_V1RuntimeTrack02LevelObjectHandoffEvidenceReceipt *out) {
+    Theron_V1RuntimeTrack02LevelObjectHandoffEvidenceReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!level || !object || !out ||
+        !level->valid ||
+        !level->object_level_admission_consumed ||
+        !level->same_capture_as_object_level_admission ||
+        level->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(level->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        level->record == 0u ||
+        level->consumer_trace_checksum == 0u ||
+        level->level_route_hash == 0u ||
+        level->nonstartup_level_raw_offset == 0u ||
+        level->nonstartup_level_user_data_offset == 0u ||
+        level->nonstartup_level_byte_count == 0u ||
+        level->nonstartup_level_raw_hash == 0u ||
+        level->dungeon_record_consumer_pc == 0u ||
+        level->dungeon_record_window_checksum == 0u ||
+        !level->source_nonstartup_level_bytes_bound ||
+        !level->nonstartup_level_record_route_observed ||
+        !level->exact_level_fields_blocked ||
+        !level->object_table_layout_blocked ||
+        level->bitmap_route_bound ||
+        level->palette_binding_verified ||
+        level->rgba_output_allowed ||
+        level->dungeon_draw_allowed ||
+        level->fallback_visuals_allowed ||
+        !object->valid ||
+        !object->object_level_admission_consumed ||
+        !object->same_capture_as_object_level_admission ||
+        object->variant != level->variant ||
+        strcmp(object->track02_md5, level->track02_md5) != 0 ||
+        object->record != level->record ||
+        object->consumer_trace_checksum != level->consumer_trace_checksum ||
+        object->object_table_route_hash == 0u ||
+        object->object_table_raw_offset == 0u ||
+        object->object_table_user_data_offset == 0u ||
+        object->object_table_user_data_byte_count == 0u ||
+        object->object_table_user_data_hash == 0u ||
+        object->object_table_consumer_pc == 0u ||
+        object->object_table_window_checksum == 0u ||
+        !object->source_object_table_bytes_bound ||
+        !object->object_table_route_observed ||
+        !object->object_table_layout_blocked ||
+        !object->exact_object_fields_blocked ||
+        object->bitmap_route_bound ||
+        object->palette_binding_verified ||
+        object->rgba_output_allowed ||
+        object->dungeon_draw_allowed ||
+        object->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.nonstartup_level_record_evidence_consumed = 1;
+    receipt.object_table_route_evidence_consumed = 1;
+    receipt.same_capture_as_object_level_admission = 1;
+    receipt.variant = level->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             level->track02_md5);
+    receipt.record = level->record;
+    receipt.consumer_trace_checksum = level->consumer_trace_checksum;
+    receipt.level_route_hash = level->level_route_hash;
+    receipt.object_table_route_hash = object->object_table_route_hash;
+    receipt.nonstartup_level_raw_offset = level->nonstartup_level_raw_offset;
+    receipt.nonstartup_level_user_data_offset =
+        level->nonstartup_level_user_data_offset;
+    receipt.nonstartup_level_byte_count = level->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = level->nonstartup_level_raw_hash;
+    receipt.object_table_raw_offset = object->object_table_raw_offset;
+    receipt.object_table_user_data_offset =
+        object->object_table_user_data_offset;
+    receipt.object_table_user_data_byte_count =
+        object->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash = object->object_table_user_data_hash;
+    receipt.dungeon_record_consumer_pc = level->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = object->object_table_consumer_pc;
+    receipt.dungeon_record_window_checksum =
+        level->dungeon_record_window_checksum;
+    receipt.object_table_window_checksum =
+        object->object_table_window_checksum;
+    receipt.source_nonstartup_level_bytes_bound = 1;
+    receipt.source_object_table_bytes_bound = 1;
+    receipt.level_object_pair_route_observed = 1;
+    receipt.exact_level_fields_blocked = 1;
+    receipt.exact_object_fields_blocked = 1;
+    receipt.object_table_layout_blocked = 1;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_level_object_field_boundary(
+    const Theron_V1RuntimeTrack02LevelObjectHandoffEvidenceReceipt *handoff,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02LevelObjectFieldBoundaryReceipt *out) {
+    Theron_V1RuntimeTrack02LevelObjectFieldBoundaryReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!handoff || !capture_trace || !out ||
+        !handoff->valid ||
+        !handoff->nonstartup_level_record_evidence_consumed ||
+        !handoff->object_table_route_evidence_consumed ||
+        !handoff->same_capture_as_object_level_admission ||
+        handoff->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(handoff->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        handoff->record == 0u ||
+        handoff->consumer_trace_checksum == 0u ||
+        handoff->level_route_hash == 0u ||
+        handoff->object_table_route_hash == 0u ||
+        handoff->nonstartup_level_byte_count == 0u ||
+        handoff->nonstartup_level_raw_hash == 0u ||
+        handoff->object_table_user_data_byte_count == 0u ||
+        handoff->object_table_user_data_hash == 0u ||
+        handoff->dungeon_record_consumer_pc == 0u ||
+        handoff->object_table_consumer_pc == 0u ||
+        handoff->dungeon_record_window_checksum == 0u ||
+        handoff->object_table_window_checksum == 0u ||
+        !handoff->source_nonstartup_level_bytes_bound ||
+        !handoff->source_object_table_bytes_bound ||
+        !handoff->level_object_pair_route_observed ||
+        !handoff->exact_level_fields_blocked ||
+        !handoff->exact_object_fields_blocked ||
+        !handoff->object_table_layout_blocked ||
+        handoff->dungeon_draw_allowed ||
+        handoff->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_level_object_field_boundary") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_level_object_handoff=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", handoff->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            handoff->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", handoff->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            handoff->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_byte_count",
+            handoff->nonstartup_level_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "nonstartup_level_raw_hash",
+            handoff->nonstartup_level_raw_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_byte_count",
+            handoff->object_table_user_data_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_user_data_hash",
+            handoff->object_table_user_data_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_consumer_pc",
+            handoff->dungeon_record_consumer_pc) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_consumer_pc",
+            handoff->object_table_consumer_pc) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_window_checksum",
+            handoff->dungeon_record_window_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_window_checksum",
+            handoff->object_table_window_checksum) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "source_nonstartup_level_bytes_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "source_object_table_bytes_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "exact_level_fields_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "exact_object_fields_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_layout_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_route_handoff_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.level_object_handoff_evidence_consumed = 1;
+    receipt.same_capture_as_level_object_handoff = 1;
+    receipt.variant = handoff->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             handoff->track02_md5);
+    receipt.record = handoff->record;
+    receipt.consumer_trace_checksum = handoff->consumer_trace_checksum;
+    receipt.level_route_hash = handoff->level_route_hash;
+    receipt.object_table_route_hash = handoff->object_table_route_hash;
+    receipt.nonstartup_level_byte_count =
+        handoff->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = handoff->nonstartup_level_raw_hash;
+    receipt.object_table_user_data_byte_count =
+        handoff->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        handoff->object_table_user_data_hash;
+    receipt.dungeon_record_consumer_pc = handoff->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = handoff->object_table_consumer_pc;
+    receipt.dungeon_record_window_checksum =
+        handoff->dungeon_record_window_checksum;
+    receipt.object_table_window_checksum =
+        handoff->object_table_window_checksum;
+    receipt.source_nonstartup_level_bytes_bound = 1;
+    receipt.source_object_table_bytes_bound = 1;
+    receipt.field_decoder_required = 1;
+    receipt.exact_level_fields_blocked = 1;
+    receipt.exact_object_fields_blocked = 1;
+    receipt.object_table_layout_blocked = 1;
+    receipt.dungeon_route_handoff_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_reviewed_field_decoder_boundary(
+    const Theron_V1RuntimeTrack02LevelObjectFieldBoundaryReceipt *boundary,
+    const char *reviewed_decoder_identity,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02ReviewedFieldDecoderBoundaryReceipt *out) {
+    Theron_V1RuntimeTrack02ReviewedFieldDecoderBoundaryReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!boundary || !reviewed_decoder_identity || !capture_trace || !out ||
+        reviewed_decoder_identity[0] == '\0' ||
+        strstr(reviewed_decoder_identity, "placeholder") ||
+        strstr(reviewed_decoder_identity, "synthetic") ||
+        strstr(reviewed_decoder_identity, "fallback") ||
+        !boundary->valid ||
+        !boundary->level_object_handoff_evidence_consumed ||
+        !boundary->same_capture_as_level_object_handoff ||
+        boundary->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(boundary->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        boundary->record == 0u ||
+        boundary->consumer_trace_checksum == 0u ||
+        boundary->level_route_hash == 0u ||
+        boundary->object_table_route_hash == 0u ||
+        !boundary->source_nonstartup_level_bytes_bound ||
+        !boundary->source_object_table_bytes_bound ||
+        !boundary->field_decoder_required ||
+        !boundary->exact_level_fields_blocked ||
+        !boundary->exact_object_fields_blocked ||
+        !boundary->object_table_layout_blocked ||
+        boundary->dungeon_route_handoff_allowed ||
+        boundary->dungeon_draw_allowed ||
+        boundary->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_reviewed_field_decoder_boundary") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_field_boundary=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, reviewed_decoder_identity) ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", boundary->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            boundary->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", boundary->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            boundary->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "reviewed_decoder_source_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_execution_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "exact_level_fields_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "exact_object_fields_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_layout_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_route_handoff_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.level_object_field_boundary_consumed = 1;
+    receipt.same_capture_as_field_boundary = 1;
+    receipt.variant = boundary->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             boundary->track02_md5);
+    receipt.record = boundary->record;
+    receipt.consumer_trace_checksum = boundary->consumer_trace_checksum;
+    receipt.level_route_hash = boundary->level_route_hash;
+    receipt.object_table_route_hash = boundary->object_table_route_hash;
+    snprintf(receipt.reviewed_decoder_identity,
+             sizeof(receipt.reviewed_decoder_identity), "%s",
+             reviewed_decoder_identity);
+    receipt.reviewed_decoder_source_bound = 1;
+    receipt.field_decoder_required = 1;
+    receipt.field_decoder_execution_allowed = 0;
+    receipt.exact_level_fields_blocked = 1;
+    receipt.exact_object_fields_blocked = 1;
+    receipt.object_table_layout_blocked = 1;
+    receipt.dungeon_route_handoff_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_dungeon_route_admission_boundary(
+    const Theron_V1RuntimeTrack02ReviewedFieldDecoderBoundaryReceipt *boundary,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02DungeonRouteAdmissionBoundaryReceipt *out) {
+    Theron_V1RuntimeTrack02DungeonRouteAdmissionBoundaryReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!boundary || !capture_trace || !out ||
+        !boundary->valid ||
+        !boundary->level_object_field_boundary_consumed ||
+        !boundary->same_capture_as_field_boundary ||
+        boundary->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(boundary->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        boundary->record == 0u ||
+        boundary->consumer_trace_checksum == 0u ||
+        boundary->level_route_hash == 0u ||
+        boundary->object_table_route_hash == 0u ||
+        boundary->reviewed_decoder_identity[0] == '\0' ||
+        !boundary->reviewed_decoder_source_bound ||
+        !boundary->field_decoder_required ||
+        boundary->field_decoder_execution_allowed ||
+        !boundary->exact_level_fields_blocked ||
+        !boundary->exact_object_fields_blocked ||
+        !boundary->object_table_layout_blocked ||
+        boundary->dungeon_route_handoff_allowed ||
+        boundary->dungeon_draw_allowed ||
+        boundary->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_dungeon_route_admission_boundary") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_reviewed_decoder_boundary=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, boundary->reviewed_decoder_identity) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", boundary->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            boundary->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", boundary->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            boundary->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "reviewed_decoder_source_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_execution_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "real_track02_level_object_boundary_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_route_review_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_route_handoff_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.reviewed_field_decoder_boundary_consumed = 1;
+    receipt.same_capture_as_reviewed_decoder_boundary = 1;
+    receipt.variant = boundary->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             boundary->track02_md5);
+    receipt.record = boundary->record;
+    receipt.consumer_trace_checksum = boundary->consumer_trace_checksum;
+    receipt.level_route_hash = boundary->level_route_hash;
+    receipt.object_table_route_hash = boundary->object_table_route_hash;
+    snprintf(receipt.reviewed_decoder_identity,
+             sizeof(receipt.reviewed_decoder_identity), "%s",
+             boundary->reviewed_decoder_identity);
+    receipt.reviewed_decoder_source_bound = 1;
+    receipt.field_decoder_required = 1;
+    receipt.field_decoder_execution_allowed = 0;
+    receipt.real_track02_level_object_boundary_bound = 1;
+    receipt.dungeon_route_review_required = 1;
+    receipt.dungeon_route_handoff_allowed = 0;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_level_object_facts_handoff(
+    const Theron_V1RuntimeTrack02DungeonRouteAdmissionBoundaryReceipt *route,
+    const Theron_V1RuntimeTrack02LevelObjectFieldBoundaryReceipt *boundary,
+    Theron_V1RuntimeTrack02LevelObjectFactsHandoffReceipt *out) {
+    Theron_V1RuntimeTrack02LevelObjectFactsHandoffReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!route || !boundary || !out ||
+        !route->valid ||
+        !route->reviewed_field_decoder_boundary_consumed ||
+        !route->same_capture_as_reviewed_decoder_boundary ||
+        route->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(route->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        route->record == 0u ||
+        route->consumer_trace_checksum == 0u ||
+        route->level_route_hash == 0u ||
+        route->object_table_route_hash == 0u ||
+        route->reviewed_decoder_identity[0] == '\0' ||
+        !route->reviewed_decoder_source_bound ||
+        !route->field_decoder_required ||
+        route->field_decoder_execution_allowed ||
+        !route->real_track02_level_object_boundary_bound ||
+        !route->dungeon_route_review_required ||
+        route->dungeon_route_handoff_allowed ||
+        route->dungeon_runtime_admission_allowed ||
+        route->dungeon_draw_allowed ||
+        route->fallback_visuals_allowed ||
+        !boundary->valid ||
+        !boundary->level_object_handoff_evidence_consumed ||
+        !boundary->same_capture_as_level_object_handoff ||
+        boundary->variant != route->variant ||
+        strcmp(boundary->track02_md5, route->track02_md5) != 0 ||
+        boundary->record != route->record ||
+        boundary->consumer_trace_checksum != route->consumer_trace_checksum ||
+        boundary->level_route_hash != route->level_route_hash ||
+        boundary->object_table_route_hash != route->object_table_route_hash ||
+        boundary->nonstartup_level_byte_count == 0u ||
+        boundary->nonstartup_level_raw_hash == 0u ||
+        boundary->object_table_user_data_byte_count == 0u ||
+        boundary->object_table_user_data_hash == 0u ||
+        boundary->dungeon_record_consumer_pc == 0u ||
+        boundary->object_table_consumer_pc == 0u ||
+        !boundary->source_nonstartup_level_bytes_bound ||
+        !boundary->source_object_table_bytes_bound ||
+        !boundary->field_decoder_required ||
+        !boundary->exact_level_fields_blocked ||
+        !boundary->exact_object_fields_blocked ||
+        !boundary->object_table_layout_blocked ||
+        boundary->dungeon_route_handoff_allowed ||
+        boundary->dungeon_draw_allowed ||
+        boundary->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.dungeon_route_boundary_consumed = 1;
+    receipt.level_object_field_boundary_consumed = 1;
+    receipt.same_capture_as_dungeon_route_boundary = 1;
+    receipt.variant = route->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             route->track02_md5);
+    receipt.record = route->record;
+    receipt.consumer_trace_checksum = route->consumer_trace_checksum;
+    receipt.level_route_hash = route->level_route_hash;
+    receipt.object_table_route_hash = route->object_table_route_hash;
+    receipt.nonstartup_level_byte_count =
+        boundary->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = boundary->nonstartup_level_raw_hash;
+    receipt.object_table_user_data_byte_count =
+        boundary->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        boundary->object_table_user_data_hash;
+    receipt.dungeon_record_consumer_pc = boundary->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = boundary->object_table_consumer_pc;
+    snprintf(receipt.reviewed_decoder_identity,
+             sizeof(receipt.reviewed_decoder_identity), "%s",
+             route->reviewed_decoder_identity);
+    receipt.real_track02_level_object_boundary_bound = 1;
+    receipt.field_decoder_required = 1;
+    receipt.field_decoder_execution_allowed = 0;
+    receipt.dungeon_route_review_required = 1;
+    receipt.dungeon_route_handoff_allowed = 0;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_dungeon_selection_level_record_boundary(
+    const Theron_V1RuntimeTrack02LevelObjectFactsHandoffReceipt *handoff,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02DungeonSelectionLevelRecordBoundaryReceipt *out) {
+    Theron_V1RuntimeTrack02DungeonSelectionLevelRecordBoundaryReceipt receipt =
+        {0};
+    uint32_t selected_dungeon_index;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!handoff || !capture_trace || !out ||
+        !handoff->valid ||
+        !handoff->dungeon_route_boundary_consumed ||
+        !handoff->level_object_field_boundary_consumed ||
+        !handoff->same_capture_as_dungeon_route_boundary ||
+        handoff->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(handoff->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        handoff->record == 0u ||
+        handoff->consumer_trace_checksum == 0u ||
+        handoff->level_route_hash == 0u ||
+        handoff->object_table_route_hash == 0u ||
+        handoff->nonstartup_level_byte_count == 0u ||
+        handoff->nonstartup_level_raw_hash == 0u ||
+        handoff->object_table_user_data_byte_count == 0u ||
+        handoff->object_table_user_data_hash == 0u ||
+        handoff->dungeon_record_consumer_pc == 0u ||
+        handoff->object_table_consumer_pc == 0u ||
+        !handoff->real_track02_level_object_boundary_bound ||
+        !handoff->field_decoder_required ||
+        handoff->field_decoder_execution_allowed ||
+        !handoff->dungeon_route_review_required ||
+        handoff->dungeon_route_handoff_allowed ||
+        handoff->dungeon_runtime_admission_allowed ||
+        handoff->dungeon_draw_allowed ||
+        handoff->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace,
+            "theron_track02_dungeon_selection_level_record_boundary") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_facts_handoff=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", handoff->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            handoff->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", handoff->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            handoff->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_byte_count",
+            handoff->nonstartup_level_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "nonstartup_level_raw_hash",
+            handoff->nonstartup_level_raw_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_byte_count",
+            handoff->object_table_user_data_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_user_data_hash",
+            handoff->object_table_user_data_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_consumer_pc",
+            handoff->dungeon_record_consumer_pc) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_consumer_pc",
+            handoff->object_table_consumer_pc) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "selected_dungeon_index",
+            &selected_dungeon_index) ||
+        selected_dungeon_index == 0u ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_selection_route_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_record_route_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_record_review_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_layout_blocked=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_execution_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.level_object_facts_handoff_consumed = 1;
+    receipt.same_capture_as_facts_handoff = 1;
+    receipt.variant = handoff->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             handoff->track02_md5);
+    receipt.record = handoff->record;
+    receipt.consumer_trace_checksum = handoff->consumer_trace_checksum;
+    receipt.level_route_hash = handoff->level_route_hash;
+    receipt.object_table_route_hash = handoff->object_table_route_hash;
+    receipt.selected_dungeon_index = selected_dungeon_index;
+    receipt.nonstartup_level_byte_count = handoff->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = handoff->nonstartup_level_raw_hash;
+    receipt.object_table_user_data_byte_count =
+        handoff->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        handoff->object_table_user_data_hash;
+    receipt.dungeon_record_consumer_pc = handoff->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = handoff->object_table_consumer_pc;
+    receipt.dungeon_selection_route_observed = 1;
+    receipt.level_record_route_bound = 1;
+    receipt.level_record_review_required = 1;
+    receipt.object_table_layout_blocked = 1;
+    receipt.field_decoder_execution_allowed = 0;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_dungeon_object_level_table_binding(
+    const Theron_V1RuntimeTrack02DungeonSelectionLevelRecordBoundaryReceipt
+        *boundary,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02DungeonObjectLevelTableBindingReceipt *out) {
+    Theron_V1RuntimeTrack02DungeonObjectLevelTableBindingReceipt receipt = {0};
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!boundary || !capture_trace || !out ||
+        !boundary->valid ||
+        !boundary->level_object_facts_handoff_consumed ||
+        !boundary->same_capture_as_facts_handoff ||
+        boundary->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(boundary->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        boundary->record == 0u ||
+        boundary->consumer_trace_checksum == 0u ||
+        boundary->level_route_hash == 0u ||
+        boundary->object_table_route_hash == 0u ||
+        boundary->selected_dungeon_index == 0u ||
+        boundary->nonstartup_level_byte_count == 0u ||
+        boundary->nonstartup_level_raw_hash == 0u ||
+        boundary->object_table_user_data_byte_count == 0u ||
+        boundary->object_table_user_data_hash == 0u ||
+        boundary->dungeon_record_consumer_pc == 0u ||
+        boundary->object_table_consumer_pc == 0u ||
+        !boundary->dungeon_selection_route_observed ||
+        !boundary->level_record_route_bound ||
+        !boundary->level_record_review_required ||
+        !boundary->object_table_layout_blocked ||
+        boundary->field_decoder_execution_allowed ||
+        boundary->dungeon_runtime_admission_allowed ||
+        boundary->dungeon_draw_allowed ||
+        boundary->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace,
+            "theron_track02_dungeon_object_level_table_binding") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace,
+            "same_capture_as_dungeon_selection_boundary=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", boundary->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            boundary->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", boundary->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            boundary->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_dungeon_index",
+            boundary->selected_dungeon_index) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_byte_count",
+            boundary->nonstartup_level_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "nonstartup_level_raw_hash",
+            boundary->nonstartup_level_raw_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_byte_count",
+            boundary->object_table_user_data_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_user_data_hash",
+            boundary->object_table_user_data_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_consumer_pc",
+            boundary->dungeon_record_consumer_pc) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_consumer_pc",
+            boundary->object_table_consumer_pc) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_record_table_route_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_route_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_object_table_pair_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_record_review_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_layout_review_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_execution_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_route_handoff_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.dungeon_selection_level_record_boundary_consumed = 1;
+    receipt.same_capture_as_dungeon_selection_boundary = 1;
+    receipt.variant = boundary->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             boundary->track02_md5);
+    receipt.record = boundary->record;
+    receipt.consumer_trace_checksum = boundary->consumer_trace_checksum;
+    receipt.level_route_hash = boundary->level_route_hash;
+    receipt.object_table_route_hash = boundary->object_table_route_hash;
+    receipt.selected_dungeon_index = boundary->selected_dungeon_index;
+    receipt.nonstartup_level_byte_count =
+        boundary->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = boundary->nonstartup_level_raw_hash;
+    receipt.object_table_user_data_byte_count =
+        boundary->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        boundary->object_table_user_data_hash;
+    receipt.dungeon_record_consumer_pc = boundary->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = boundary->object_table_consumer_pc;
+    receipt.level_record_table_route_bound = 1;
+    receipt.object_table_route_bound = 1;
+    receipt.level_object_table_pair_bound = 1;
+    receipt.level_record_review_required = 1;
+    receipt.object_table_layout_review_required = 1;
+    receipt.field_decoder_execution_allowed = 0;
+    receipt.dungeon_route_handoff_allowed = 0;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_runtime_bind_track02_level_object_loader_route(
+    const Theron_V1RuntimeTrack02DungeonObjectLevelTableBindingReceipt
+        *binding,
+    const char *capture_trace,
+    Theron_V1RuntimeTrack02LevelObjectLoaderRouteReceipt *out) {
+    Theron_V1RuntimeTrack02LevelObjectLoaderRouteReceipt receipt = {0};
+    uint32_t loader_route_pair_hash;
+
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!binding || !capture_trace || !out ||
+        !binding->valid ||
+        !binding->dungeon_selection_level_record_boundary_consumed ||
+        !binding->same_capture_as_dungeon_selection_boundary ||
+        binding->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(binding->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        binding->record == 0u ||
+        binding->consumer_trace_checksum == 0u ||
+        binding->selected_dungeon_index == 0u ||
+        binding->level_route_hash == 0u ||
+        binding->object_table_route_hash == 0u ||
+        binding->nonstartup_level_byte_count == 0u ||
+        binding->nonstartup_level_raw_hash == 0u ||
+        binding->object_table_user_data_byte_count == 0u ||
+        binding->object_table_user_data_hash == 0u ||
+        binding->dungeon_record_consumer_pc == 0u ||
+        binding->object_table_consumer_pc == 0u ||
+        !binding->level_record_table_route_bound ||
+        !binding->object_table_route_bound ||
+        !binding->level_object_table_pair_bound ||
+        !binding->level_record_review_required ||
+        !binding->object_table_layout_review_required ||
+        binding->field_decoder_execution_allowed ||
+        binding->dungeon_route_handoff_allowed ||
+        binding->dungeon_runtime_admission_allowed ||
+        binding->dungeon_draw_allowed ||
+        binding->fallback_visuals_allowed) {
+        return 0;
+    }
+
+    loader_route_pair_hash =
+        theron_v1_runtime_track02_loader_route_pair_hash(
+            binding->record,
+            binding->consumer_trace_checksum,
+            binding->selected_dungeon_index,
+            binding->level_route_hash,
+            binding->object_table_route_hash,
+            binding->nonstartup_level_byte_count,
+            binding->nonstartup_level_raw_hash,
+            binding->object_table_user_data_byte_count,
+            binding->object_table_user_data_hash,
+            binding->dungeon_record_consumer_pc,
+            binding->object_table_consumer_pc);
+
+    if (!theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_level_object_loader_route") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_table_binding=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "record", binding->record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "consumer_trace_checksum",
+            binding->consumer_trace_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "selected_dungeon_index",
+            binding->selected_dungeon_index) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_route_hash", binding->level_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_route_hash",
+            binding->object_table_route_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_route_pair_hash",
+            loader_route_pair_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_byte_count",
+            binding->nonstartup_level_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "nonstartup_level_raw_hash",
+            binding->nonstartup_level_raw_hash) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_user_data_byte_count",
+            binding->object_table_user_data_byte_count) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_user_data_hash",
+            binding->object_table_user_data_hash) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "dungeon_record_consumer_pc",
+            binding->dungeon_record_consumer_pc) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "object_table_consumer_pc",
+            binding->object_table_consumer_pc) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "loader_route_record_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "loader_route_source_windows_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "level_object_table_pair_bound=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "loader_route_review_required=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "field_decoder_execution_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_route_handoff_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_runtime_admission_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_draw_allowed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0")) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.dungeon_object_level_table_binding_consumed = 1;
+    receipt.same_capture_as_table_binding = 1;
+    receipt.variant = binding->variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             binding->track02_md5);
+    receipt.record = binding->record;
+    receipt.consumer_trace_checksum = binding->consumer_trace_checksum;
+    receipt.selected_dungeon_index = binding->selected_dungeon_index;
+    receipt.level_route_hash = binding->level_route_hash;
+    receipt.object_table_route_hash = binding->object_table_route_hash;
+    receipt.loader_route_pair_hash = loader_route_pair_hash;
+    receipt.nonstartup_level_byte_count =
+        binding->nonstartup_level_byte_count;
+    receipt.nonstartup_level_raw_hash = binding->nonstartup_level_raw_hash;
+    receipt.object_table_user_data_byte_count =
+        binding->object_table_user_data_byte_count;
+    receipt.object_table_user_data_hash =
+        binding->object_table_user_data_hash;
+    receipt.dungeon_record_consumer_pc = binding->dungeon_record_consumer_pc;
+    receipt.object_table_consumer_pc = binding->object_table_consumer_pc;
+    receipt.loader_route_record_bound = 1;
+    receipt.loader_route_source_windows_bound = 1;
+    receipt.level_object_table_pair_bound = 1;
+    receipt.loader_route_review_required = 1;
+    receipt.field_decoder_execution_allowed = 0;
+    receipt.dungeon_route_handoff_allowed = 0;
+    receipt.dungeon_runtime_admission_allowed = 0;
+    receipt.dungeon_draw_allowed = 0;
+    receipt.fallback_visuals_allowed = 0;
+    *out = receipt;
     return 1;
 }
 
@@ -1377,6 +3249,15 @@ int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
             capture_trace, "same_capture_as_loader_payload=1") ||
         !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
         !theron_v1_runtime_trace_has_u32(capture_trace, "record", record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_record_user_data_offset",
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_destination",
+            THERON_V1_INITIAL_ENVELOPE_DESTINATION) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_payload_bytes",
+            THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES) ||
         !theron_v1_runtime_trace_has_u32(
             capture_trace, "payload_checksum", payload_checksum) ||
         !theron_v1_runtime_trace_has_u32(
@@ -1420,6 +3301,10 @@ int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
     out->same_capture_as_loader_payload = 1;
     out->track02_variant = gap->variant;
     out->record = record;
+    out->loader_record_user_data_offset =
+        THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET;
+    out->loader_destination = THERON_V1_INITIAL_ENVELOPE_DESTINATION;
+    out->loader_payload_bytes = THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES;
     out->payload_checksum = payload_checksum;
     out->level_envelope_checksum = level_envelope_checksum;
     out->post_envelope_checksum = post_envelope_checksum;
@@ -1429,6 +3314,159 @@ int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
     out->object_table_consumer_observed = 1;
     out->bitmap_consumer_observed = 1;
     out->palette_consumer_observed = 1;
+    out->synthetic_dungeon_promoted = 0;
+    out->synthetic_object_table_promoted = 0;
+    out->synthetic_bitmap_promoted = 0;
+    out->synthetic_palette_promoted = 0;
+    out->fallback_visuals_observed = 0;
+    out->fallback_visuals_allowed = 0;
+    return 1;
+}
+
+int theron_v1_runtime_track02_object_dungeon_trace_facts_from_capture(
+    const char *capture_trace,
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap,
+    uint32_t record,
+    uint32_t payload_checksum,
+    uint32_t level_envelope_checksum,
+    uint32_t post_envelope_checksum,
+    Theron_V1Track02Post3800ConsumerTraceFacts *out) {
+    uint32_t dungeon_pc;
+    uint32_t object_pc;
+    size_t dungeon_offset;
+    size_t dungeon_bytes;
+    size_t object_offset;
+    size_t object_bytes;
+    uint32_t dungeon_checksum;
+    uint32_t object_checksum;
+
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    if (!capture_trace || !gap ||
+        !gap->valid ||
+        !gap->verified_track02_capture_consumed ||
+        !gap->fail_closed ||
+        gap->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap->first_nonstartup_raw_offset == 0u ||
+        gap->first_container_raw_offset == 0u ||
+        payload_checksum == 0u ||
+        level_envelope_checksum == 0u ||
+        post_envelope_checksum == 0u ||
+        gap->nonstartup_level_decode_ready ||
+        gap->object_table_decode_ready ||
+        gap->render_asset_admission_allowed ||
+        gap->fallback_visuals_allowed ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "theron_track02_object_dungeon_consumer_trace") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "authenticated_original_trace=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "post_3800_execution_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "same_capture_as_loader_payload=1") ||
+        !theron_v1_runtime_trace_has(capture_trace, "track02_variant=us_bin") ||
+        !theron_v1_runtime_trace_has_u32(capture_trace, "record", record) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_record_user_data_offset",
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_destination",
+            THERON_V1_INITIAL_ENVELOPE_DESTINATION) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "loader_payload_bytes",
+            THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "payload_checksum", payload_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "level_envelope_checksum",
+            level_envelope_checksum) ||
+        !theron_v1_runtime_trace_has_u32(
+            capture_trace, "post_envelope_checksum", post_envelope_checksum) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "nonstartup_level_raw_offset",
+            gap->first_nonstartup_raw_offset) ||
+        !theron_v1_runtime_trace_has_size(
+            capture_trace, "object_table_raw_offset",
+            gap->first_container_raw_offset) ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "dungeon_record_consumer_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "object_table_consumer_observed=1") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "bitmap_consumer_observed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "palette_consumer_observed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_dungeon_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_object_table_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_bitmap_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "synthetic_palette_promoted=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_observed=0") ||
+        !theron_v1_runtime_trace_has(
+            capture_trace, "fallback_visuals_allowed=0") ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "dungeon_record_consumer_pc", &dungeon_pc) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "object_table_consumer_pc", &object_pc) ||
+        !theron_v1_runtime_trace_read_size(
+            capture_trace, "dungeon_record_payload_offset",
+            &dungeon_offset) ||
+        !theron_v1_runtime_trace_read_size(
+            capture_trace, "dungeon_record_byte_count", &dungeon_bytes) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "dungeon_record_window_checksum",
+            &dungeon_checksum) ||
+        !theron_v1_runtime_trace_read_size(
+            capture_trace, "object_table_payload_offset", &object_offset) ||
+        !theron_v1_runtime_trace_read_size(
+            capture_trace, "object_table_byte_count", &object_bytes) ||
+        !theron_v1_runtime_trace_read_u32(
+            capture_trace, "object_table_window_checksum",
+            &object_checksum) ||
+        dungeon_pc == 0u ||
+        object_pc == 0u ||
+        dungeon_offset != THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        dungeon_bytes != THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        dungeon_checksum != level_envelope_checksum ||
+        object_offset != THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        object_bytes != THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        object_checksum != post_envelope_checksum) {
+        return 0;
+    }
+
+    out->authenticated_original_trace = 1;
+    out->post_3800_execution_observed = 1;
+    out->same_capture_as_loader_payload = 1;
+    out->track02_variant = gap->variant;
+    out->record = record;
+    out->loader_record_user_data_offset =
+        THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET;
+    out->loader_destination = THERON_V1_INITIAL_ENVELOPE_DESTINATION;
+    out->loader_payload_bytes = THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES;
+    out->payload_checksum = payload_checksum;
+    out->level_envelope_checksum = level_envelope_checksum;
+    out->post_envelope_checksum = post_envelope_checksum;
+    out->consumer_trace_checksum =
+        theron_v1_runtime_trace_text_checksum(capture_trace);
+    out->dungeon_record_consumer_pc = dungeon_pc;
+    out->object_table_consumer_pc = object_pc;
+    out->dungeon_record_payload_offset = dungeon_offset;
+    out->dungeon_record_byte_count = dungeon_bytes;
+    out->dungeon_record_window_checksum = dungeon_checksum;
+    out->object_table_payload_offset = object_offset;
+    out->object_table_byte_count = object_bytes;
+    out->object_table_window_checksum = object_checksum;
+    out->dungeon_record_consumer_observed = 1;
+    out->object_table_consumer_observed = 1;
+    out->bitmap_consumer_observed = 0;
+    out->palette_consumer_observed = 0;
     out->synthetic_dungeon_promoted = 0;
     out->synthetic_object_table_promoted = 0;
     out->synthetic_bitmap_promoted = 0;
