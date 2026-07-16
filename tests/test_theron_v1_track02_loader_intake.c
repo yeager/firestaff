@@ -68,6 +68,7 @@ int main(void) {
     Theron_V1Track02LoaderPayloadReceipt payload_receipt;
     Theron_V1Track02LoaderLevelEnvelopeReceipt level_envelope_receipt;
     Theron_V1Track02LoaderPostEnvelopeReceipt post_envelope_receipt;
+    Theron_V1Track02LoaderSemanticGateReceipt semantic_gate;
     Theron_V1Track02IsoLevelObjectReceipt iso_receipt;
     uint8_t payload[THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES];
     uint8_t raw_track02[THERON_TRACK02_RAW_SECTOR_BYTES * 2u];
@@ -162,6 +163,42 @@ int main(void) {
                  THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES) == 0);
     CHECK(strcmp(post_envelope_receipt.status,
                  "initial_level_post_envelope_source_bytes_no_object_semantics") == 0);
+    CHECK(theron_v1_track02_loader_intake_semantic_gate(
+        &payload_receipt, &level_envelope_receipt, &post_envelope_receipt,
+        &semantic_gate));
+    CHECK(semantic_gate.valid && semantic_gate.no_fallback);
+    CHECK(semantic_gate.real_payload_available);
+    CHECK(semantic_gate.level_envelope_available);
+    CHECK(semantic_gate.post_envelope_available);
+    CHECK(semantic_gate.track02_variant == receipt.track02_variant);
+    CHECK(semantic_gate.record == THERON_V1_INITIAL_ENVELOPE_RECORD);
+    CHECK(semantic_gate.payload_checksum == facts.complete_payload_checksum);
+    CHECK(semantic_gate.level_envelope_checksum ==
+          level_envelope_receipt.envelope_checksum);
+    CHECK(semantic_gate.post_envelope_checksum == post_envelope_receipt.checksum);
+    CHECK(!semantic_gate.dungeon_record_semantics_proven);
+    CHECK(!semantic_gate.object_table_semantics_proven);
+    CHECK(!semantic_gate.bitmap_route_bound);
+    CHECK(!semantic_gate.palette_binding_verified);
+    CHECK(!semantic_gate.rgba_output_allowed);
+    CHECK(!semantic_gate.fallback_visuals_allowed);
+    CHECK(strcmp(semantic_gate.status,
+                 "real_loader_bytes_available_semantic_routes_blocked_no_fallback") == 0);
+    ++level_envelope_receipt.envelope[0];
+    CHECK(!theron_v1_track02_loader_intake_semantic_gate(
+        &payload_receipt, &level_envelope_receipt, &post_envelope_receipt,
+        &semantic_gate));
+    CHECK(!semantic_gate.valid && semantic_gate.status == NULL);
+    --level_envelope_receipt.envelope[0];
+    CHECK(theron_v1_track02_loader_intake_semantic_gate(
+        &payload_receipt, &level_envelope_receipt, &post_envelope_receipt,
+        &semantic_gate));
+    post_envelope_receipt.track02_variant = THERON_TRACK02_VARIANT_US_ISO;
+    CHECK(!theron_v1_track02_loader_intake_semantic_gate(
+        &payload_receipt, &level_envelope_receipt, &post_envelope_receipt,
+        &semantic_gate));
+    CHECK(!semantic_gate.valid && semantic_gate.status == NULL);
+    post_envelope_receipt.track02_variant = payload_receipt.track02_variant;
     CHECK(!theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
         &payload_receipt, post_envelope_receipt.checksum ^ 1u,
         &post_envelope_receipt));

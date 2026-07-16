@@ -2990,6 +2990,38 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_post_envelope.checksum;
     hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.valid ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.no_fallback ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.real_payload_available ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.level_envelope_available ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.post_envelope_available ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->loader_semantic_gate.track02_variant;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.record;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.payload_checksum;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.level_envelope_checksum;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.post_envelope_checksum;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.dungeon_record_semantics_proven ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.object_table_semantics_proven ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.bitmap_route_bound ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.palette_binding_verified ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.rgba_output_allowed ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_semantic_gate.fallback_visuals_allowed ? 1u : 0u;
+    hash *= 16777619u;
     hash ^= receipt->capture_manifest_bound ? 1u : 0u;
     hash *= 16777619u;
     hash ^= tqr_trace_fnv1a_bytes(
@@ -3095,6 +3127,25 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            tqr_trace_fnv1a_bytes(receipt->loader_post_envelope.bytes,
                                  receipt->loader_post_envelope.byte_count) ==
                receipt->loader_post_envelope.checksum &&
+           receipt->loader_semantic_gate.valid &&
+           receipt->loader_semantic_gate.no_fallback &&
+           receipt->loader_semantic_gate.real_payload_available &&
+           receipt->loader_semantic_gate.level_envelope_available &&
+           receipt->loader_semantic_gate.post_envelope_available &&
+           receipt->loader_semantic_gate.track02_variant == receipt->variant &&
+           receipt->loader_semantic_gate.record == receipt->observed_track02_record &&
+           receipt->loader_semantic_gate.payload_checksum ==
+               receipt->complete_payload_checksum &&
+           receipt->loader_semantic_gate.level_envelope_checksum ==
+               receipt->loader_level_envelope.envelope_checksum &&
+           receipt->loader_semantic_gate.post_envelope_checksum ==
+               receipt->loader_post_envelope.checksum &&
+           !receipt->loader_semantic_gate.dungeon_record_semantics_proven &&
+           !receipt->loader_semantic_gate.object_table_semantics_proven &&
+           !receipt->loader_semantic_gate.bitmap_route_bound &&
+           !receipt->loader_semantic_gate.palette_binding_verified &&
+           !receipt->loader_semantic_gate.rgba_output_allowed &&
+           !receipt->loader_semantic_gate.fallback_visuals_allowed &&
            receipt->receipt_hash != 0u &&
            receipt->receipt_hash == tqr_trace_initial_level_handoff_hash(receipt);
 }
@@ -3180,6 +3231,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     Theron_V1Track02LoaderPayloadReceipt loader_payload;
     Theron_V1Track02LoaderLevelEnvelopeReceipt loader_level_envelope;
     Theron_V1Track02LoaderPostEnvelopeReceipt loader_post_envelope;
+    Theron_V1Track02LoaderSemanticGateReceipt loader_semantic_gate;
     Theron_Track02Stage2DynamicPayloadReceipt stage3_payload;
     Theron_V1Stage3ManifestEvidence stage3_manifest;
     Theron_V1Stage3DescriptorRecordBoundary descriptor_boundary;
@@ -3282,6 +3334,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     memset(&loader_payload, 0, sizeof(loader_payload));
     memset(&loader_level_envelope, 0, sizeof(loader_level_envelope));
     memset(&loader_post_envelope, 0, sizeof(loader_post_envelope));
+    memset(&loader_semantic_gate, 0, sizeof(loader_semantic_gate));
     loader_facts.authenticated_original_trace = 1;
     loader_facts.later_than_stage2_transfer = 1;
     loader_facts.track02_variant = coalesced_receipt->variant;
@@ -3359,6 +3412,11 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &loader_post_envelope)) {
         return 0;
     }
+    if (!theron_v1_track02_loader_intake_semantic_gate(
+            &loader_payload, &loader_level_envelope, &loader_post_envelope,
+            &loader_semantic_gate)) {
+        return 0;
+    }
 
     out->valid = 1;
     out->variant = coalesced_receipt->variant;
@@ -3400,6 +3458,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     out->loader_payload = loader_payload;
     out->loader_level_envelope = loader_level_envelope;
     out->loader_post_envelope = loader_post_envelope;
+    out->loader_semantic_gate = loader_semantic_gate;
     out->initial_level_boundary = boundary;
     /* The source-bound `$3800` transfer is a loader/media fact. Keep the
      * historical route member zeroed until a captured game consumer proves

@@ -7,6 +7,8 @@ static void set_status(Nexus_V1_DgnFaceMaterialReceipt *receipt,
 {
     memset(receipt, 0, sizeof(*receipt));
     receipt->status = status;
+    receipt->no_draw_only = 1;
+    receipt->blocks_real_dgn_mesh_render = 1;
 }
 
 int nexus_v1_dgn_face_material_validate(
@@ -22,6 +24,7 @@ int nexus_v1_dgn_face_material_validate(
         !input->canonical_dgn_bytes || input->canonical_dgn_size <= 0 ||
         !input->bindings || input->face_count <= 0 ||
         input->face_count > NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES ||
+        input->structure2_descriptor_count <= 0 ||
         input->material_selector_count <= 0) {
         return 0;
     }
@@ -46,6 +49,10 @@ int nexus_v1_dgn_face_material_validate(
         if (binding->face_ordinal >= (uint16_t)input->face_count ||
             seen[binding->face_ordinal] ||
             binding->material_selector >= input->material_selector_count ||
+            (binding->selector_kind ==
+                 NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC &&
+             binding->material_selector >=
+                 input->structure2_descriptor_count) ||
             (binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC &&
              binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED)) {
             set_status(out_receipt, NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING);
@@ -60,7 +67,12 @@ int nexus_v1_dgn_face_material_validate(
 
     out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_READY;
     out_receipt->face_count = input->face_count;
+    out_receipt->structure2_descriptor_count =
+        input->structure2_descriptor_count;
+    out_receipt->structure3_mesh_materials_bound = 1;
+    out_receipt->structure2_descriptor_route_bound = 1;
     out_receipt->selector_bindings_complete = 1;
+    out_receipt->package_host_route_bound = 1;
     out_receipt->can_submit_raster_input = 1;
     return 1;
 }

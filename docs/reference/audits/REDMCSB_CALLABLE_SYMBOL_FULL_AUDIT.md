@@ -27,10 +27,12 @@ The inventory includes four-digit named callable symbols, documented unnamed F r
 
 | Status | Count |
 | --- | ---: |
-| IMPLEMENTED_NARROW | 192 |
-| MISSING | 854 |
-| SOURCE_NONAPPLICABLE | 61 |
-| UNCERTAIN_NUMBERED_EVIDENCE | 1030 |
+| IMPLEMENTED_NARROW | 342 |
+| MISSING | 824 |
+| PC34_SOURCE_IMPLEMENTED | 5 |
+| SOURCE_NONAPPLICABLE | 64 |
+| UNCERTAIN_NUMBERED_EVIDENCE | 892 |
+| VERIFIED_SOURCE_MAPPING | 10 |
 | **Total** | **2137** |
 
 Machine-check the ledger shape with:

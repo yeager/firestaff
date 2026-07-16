@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 117, CSB 1, shared DM1/CSB 1611, DM2 1665; 3394 total open rows
+  DM1 111, CSB 1, shared DM1/CSB 1603, DM2 1626; 3341 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -47,18 +47,24 @@
     against canonical PC G1 `DUNGEON.DAT` map bytes and map-root ObjectIDs.
     `GET_TILE_RECORD_LINK` and `GET_NEXT_RECORD_LINK` are now also consumed
     through the loader-owned square-chain walker by the object model.
-    Remaining DM2 dungeon/runtime work is `GET_OBJECT_INDEX_FROM_TILE`,
-    `CHANGE_CURRENT_MAP_TO`, DB8/DB10 root ownership, and HUD/runtime material
-    that consumes real GDAT/dungeon state without fallback visuals.
+    `GET_OBJECT_INDEX_FROM_TILE` now also has a source-named receipt for the
+    c_map column-prefix lookup, row-adjusted ground-stack index, and selected
+    ObjectID word, and the partial PC G1 boot receipt records the unresolved
+    roots by DB type (1 DB8 and 4 DB10 in the canonical corpus) without
+    reading their records. `CHANGE_CURRENT_MAP_TO` now has a bounded
+    source-named map-pointer receipt for same-map, negative/range, dimensions,
+    raw tile-map offset, and column-index offset. Remaining DM2 dungeon/runtime
+    work is the original DB8/DB10 payload/layout proof and HUD/runtime
+    material that consumes real GDAT/dungeon state without fallback visuals.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
   resolution, square lookup, relative square lookup, and relative square type;
-  `F0180`, `F0183`, `F0184`, `F0222`, and `F0223` are now closed with focused
-  raw C04 active-state/source-square-type tests. The audit rows are closed as
-  `VERIFIED_SOURCE_MAPPING`. Remaining
+  `F0179`, `F0180`, `F0183`, `F0184`, `F0222`, and `F0223` are now closed
+  with focused raw C04 active-state/source-square-type tests. The audit rows
+  are closed as `VERIFIED_SOURCE_MAPPING`. Remaining
   prioritized backlog symbols are `F0139`, `F0173`, `F0174`,
-  `F0179`, `F0185`-`F0193`, `F0208`, and `F0224`. Prefer the next
+  `F0185`-`F0193`, `F0208`, and `F0224`. Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
   audit hits as implementation evidence. Note: `tools/symbol_backlog.py` was
@@ -92,6 +98,13 @@
     and does not create pixels, panel state, save data, DSA state, or host HUD
     fallback. Remaining CSB work is unchanged: real packaged title/HUD/door
     capture breadth and positive DSA/save-runtime corpus proof.
+  - 2026-07-16 update: the CSB startup packed-page presenter now accepts only
+    a 320x200 indexed page named by the exact CSB host-surface receipt,
+    matching host-surface hash, raster route hash, and recomputed pixel hash
+    before F0692/F0693 presentation. This closes the stale/wrapper raster
+    promotion gap for title/PRESENTS/opening/HUD pages; remaining evidence is
+    still real Mac/app capture with local CSB data and positive DSA/save
+    corpus proof.
 
 - 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
   viewport GDAT frame/HUD/weather contracts, direct render material receipts,
@@ -133,6 +146,16 @@
   coverage. Keep MENU.BPK/PRS3 blocked without fallback visuals and do not
   promote Structure2 opaque spans into decoded pixels or palette semantics
   without authentic Saturn capture evidence.
+  - 2026-07-16 update: the MENU.BPK renderer handoff test is now a CMake/CTest
+    target and proves `READY_DECODED` still maps to `blocked-prs3` unless an
+    authentic PRS3 route exists; parseable MENU.BPK receipts without the
+    canonical source hash also block with no fallback. The DGN
+    face/material provenance gate now requires static Structure3 material
+    selectors to resolve into the same canonical Structure2 descriptor table
+    before publishing a package/host no-draw boundary. Remaining work is still
+    real PRS3 opcode/output proof, Saturn presentation capture, runtime DGN
+    material decode semantics, Track 02 SFX/script blockers, and broad
+    startup/menu/DGN host-route completion.
 
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
@@ -164,6 +187,10 @@
   HUD receipt gate is now code-owned and rejects stale source ticks,
   generation changes, wrappers, fallback routes, incomplete title phase masks,
   stale door-open state, and mismatched HUD geometry/GRAPHICS.DAT ownership.
+  The packed 4bpp presentation edge now also requires the exact receipt-owned
+  startup host surface and recomputed indexed-pixel hash before touching the
+  destination page, so a standalone title/door/HUD raster cannot bypass the
+  CSB session receipt.
   Remaining CSB startup evidence is real Mac/release app presented-frame
   capture with local CSB data through that receipt path, not another synthetic
   title/door/HUD path.
@@ -1238,6 +1265,13 @@
   and its receipt hash is revalidated by the Soul Room runtime gate. Remaining
   evidence is still an authenticated positive capture and a separately
   source-owned dungeon transition; this change does not infer either.
+  A dedicated loader semantic-gate receipt now also travels with the
+  manifest-bound handoff: it proves that the real `$0b52` payload, initial
+  envelope, and adjacent post-envelope bytes are available, while
+  dungeon-record, object-table, bitmap, palette/RGBA, and fallback visual
+  promotion remain explicitly false and hash-covered. Remaining evidence is
+  still a real original consumer that assigns grammar or visual ownership to
+  those bytes; do not replace that with synthetic routes or fallback art.
   M11 now forwards an explicitly supplied capture-manifest path to that
   prepared-launch intake before runtime publication. A missing or
   unauthenticated manifest rejects the launch; this does not provide a
@@ -1817,6 +1851,11 @@
     IMAGE3 expansion. Real-data regressions lock TITLE.C PRESENTS/CHAOS/
     STRIKES palette/raster output and ENTRANCE.C C004/C002/C003 y=30 output.
     This evidence does not extend to other media branches.
+  - 2026-07-16 update: the PC34 startup presenter now refuses to pack or
+    VBlank-present a title/opening/HUD page unless it is the exact indexed
+    raster named by the CSB host-surface receipt, including route and pixel
+    hashes. This is a presenter-receipt hardening only; external original
+    Mac/app capture remains required.
 
 - REDMCSB-CSB-GAP-007 — **Platform service shims are opaque dispatches, not
   portable behavioral specifications.** `USIOSTUB.C` forwards mouse, input,

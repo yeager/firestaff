@@ -2,6 +2,42 @@
 
 #include <string.h>
 
+#define DM1_F0179_ASPECT_FLIP_BITMAP 0x40
+#define DM1_F0179_ASPECT_IS_ATTACKING 0x80
+#define DM1_F0179_GI_FLIP_NON_ATTACK 0x0004
+#define DM1_F0179_GI_FLIP_ATTACK 0x0200
+#define DM1_F0179_GI_FLIP_DURING_ATTACK 0x0400
+
+static int f0179_random_pc34(struct RngState_Compat *rng, int modulus)
+{
+    uint32_t raw;
+
+    if (!rng || modulus <= 0) return 0;
+    rng->seed = rng->seed * 1103515245u + 12345u;
+    raw = (rng->seed >> 16) & 0x7fffu;
+    return (int)(raw % (uint32_t)modulus);
+}
+
+static int f0179_maximum_horizontal_offset_pc34(int graphic_info)
+{
+    return (graphic_info >> 12) & 3;
+}
+
+static int f0179_maximum_vertical_offset_pc34(int graphic_info)
+{
+    return (graphic_info >> 14) & 3;
+}
+
+static int f0179_next_non_attack_ticks_pc34(int animation_ticks)
+{
+    return (animation_ticks >> 4) & 0x0f;
+}
+
+static int f0179_next_attack_ticks_pc34(int animation_ticks)
+{
+    return (animation_ticks >> 8) & 0x0f;
+}
+
 static int pack_direction_for_group_pc34(int direction, int creature_count)
 {
     int packed = 0;
@@ -14,6 +50,120 @@ static int pack_direction_for_group_pc34(int direction, int creature_count)
         packed |= (direction & 3) << (creature_index * 2);
     }
     return packed;
+}
+
+int F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+    struct DM1ActiveGroup_Compat *active_group,
+    const struct DungeonGroup_Compat *group,
+    const struct DM1CreatureInfo_Compat *creature_info,
+    int creature_index,
+    int is_attacking,
+    uint32_t game_time,
+    struct RngState_Compat *rng,
+    DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 *out_receipt)
+{
+    int process_group;
+    int index;
+    int first_index;
+    int last_index;
+    int processed = 0;
+    int graphic_info;
+    int offset;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!active_group || !group || !creature_info || !rng || !out_receipt ||
+        active_group->groupThingIndex < 0 || group->count > 3 ||
+        group->creatureType > 26 ||
+        creature_index > 3 || (creature_index >= 0 &&
+            creature_index > (int)group->count)) {
+        return 0;
+    }
+
+    graphic_info = creature_info->graphicInfo;
+    process_group = creature_index < 0;
+    index = process_group ? (int)group->count : creature_index;
+    first_index = index;
+    last_index = index;
+
+    do {
+        int aspect = active_group->aspect[index] &
+            (DM1_F0179_ASPECT_IS_ATTACKING | DM1_F0179_ASPECT_FLIP_BITMAP);
+
+        offset = f0179_maximum_horizontal_offset_pc34(graphic_info);
+        if (offset) {
+            offset = f0179_random_pc34(rng, offset);
+            if (f0179_random_pc34(rng, 2)) offset = (-offset) & 7;
+            aspect |= offset & 7;
+        }
+
+        offset = f0179_maximum_vertical_offset_pc34(graphic_info);
+        if (offset) {
+            offset = f0179_random_pc34(rng, offset);
+            if (f0179_random_pc34(rng, 2)) offset = (-offset) & 7;
+            aspect |= (offset & 7) << 3;
+        }
+
+        if (is_attacking) {
+            if (graphic_info & DM1_F0179_GI_FLIP_ATTACK) {
+                if ((aspect & DM1_F0179_ASPECT_IS_ATTACKING) &&
+                    group->creatureType == DM1_CREATURE_TYPE_ANIMATED_ARMOUR) {
+                    if (f0179_random_pc34(rng, 2)) {
+                        aspect ^= DM1_F0179_ASPECT_FLIP_BITMAP;
+                    }
+                } else if (!(aspect & DM1_F0179_ASPECT_IS_ATTACKING) ||
+                           !(graphic_info &
+                             DM1_F0179_GI_FLIP_DURING_ATTACK)) {
+                    if (f0179_random_pc34(rng, 2)) {
+                        aspect |= DM1_F0179_ASPECT_FLIP_BITMAP;
+                    } else {
+                        aspect &= ~DM1_F0179_ASPECT_FLIP_BITMAP;
+                    }
+                }
+            } else {
+                aspect &= ~DM1_F0179_ASPECT_FLIP_BITMAP;
+            }
+            aspect |= DM1_F0179_ASPECT_IS_ATTACKING;
+        } else {
+            if (graphic_info & DM1_F0179_GI_FLIP_NON_ATTACK) {
+                if (group->creatureType == CREATURE_TYPE_COUATL) {
+                    if (f0179_random_pc34(rng, 2)) {
+                        aspect ^= DM1_F0179_ASPECT_FLIP_BITMAP;
+                    }
+                } else if (f0179_random_pc34(rng, 2)) {
+                    aspect |= DM1_F0179_ASPECT_FLIP_BITMAP;
+                } else {
+                    aspect &= ~DM1_F0179_ASPECT_FLIP_BITMAP;
+                }
+            } else {
+                aspect &= ~DM1_F0179_ASPECT_FLIP_BITMAP;
+            }
+            aspect &= ~DM1_F0179_ASPECT_IS_ATTACKING;
+        }
+
+        active_group->aspect[index] = aspect;
+        if (index < last_index) last_index = index;
+        ++processed;
+    } while (process_group && (index--));
+
+    out_receipt->valid = 1;
+    out_receipt->group_index = active_group->groupThingIndex;
+    out_receipt->creature_index = creature_index;
+    out_receipt->processed_first_index = first_index;
+    out_receipt->processed_last_index = last_index;
+    out_receipt->processed_count = processed;
+    out_receipt->creature_type = group->creatureType;
+    out_receipt->graphic_info = graphic_info;
+    out_receipt->animation_ticks = creature_info->animationTicks;
+    out_receipt->attacking = is_attacking ? 1 : 0;
+    out_receipt->next_update_time = game_time +
+        (uint32_t)(is_attacking
+            ? f0179_next_attack_ticks_pc34(creature_info->animationTicks)
+            : f0179_next_non_attack_ticks_pc34(creature_info->animationTicks)) +
+        (uint32_t)f0179_random_pc34(rng, 2);
+    out_receipt->source_line_start = 187;
+    out_receipt->source_line_end = 308;
+    out_receipt->source_symbol = "F0179_GROUP_GetCreatureAspectUpdateTime";
+    return 1;
 }
 
 int F0180_DM1_GROUP_StartWandering_Compat(

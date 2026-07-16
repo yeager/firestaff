@@ -17,7 +17,10 @@ int main(void)
 {
     struct DM1ActiveGroup_Compat active_groups[2];
     struct DungeonGroup_Compat groups[2];
+    struct DM1CreatureInfo_Compat creature_info;
     struct TimelineEvent_Compat wander_event;
+    struct RngState_Compat rng;
+    DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspect_receipt;
     DM1_V1_F0180_StartWanderingReceipt_PC34 wander_receipt;
     DM1_V1_F0183_AddActiveGroupReceipt_PC34 add_receipt;
     DM1_V1_F0184_RemoveActiveGroupReceipt_PC34 remove_receipt;
@@ -33,6 +36,58 @@ int main(void)
     groups[1].count = 0u;
     groups[1].direction = 3u;
     groups[1].behavior = DM1_BEHAVIOR_USELESS3;
+    memset(&creature_info, 0, sizeof(creature_info));
+    creature_info.graphicInfo = 0;
+    creature_info.animationTicks = 0x03a0;
+
+    active_groups[0].groupThingIndex = 0;
+    active_groups[0].aspect[0] = 0xff;
+    active_groups[0].aspect[1] = 0x55;
+    active_groups[0].aspect[2] = 0xaa;
+    active_groups[0].aspect[3] = 0xff;
+    rng.seed = 7u;
+    check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+              &active_groups[0], &groups[0], &creature_info, -1, 0,
+              1000u, &rng, &aspect_receipt) == 1,
+          "F0179 updates every creature when index is negative");
+    check(active_groups[0].aspect[0] == 0 &&
+              active_groups[0].aspect[1] == 0 &&
+              active_groups[0].aspect[2] == 0xaa &&
+              active_groups[0].aspect[3] == 0xff,
+          "F0179 non-attack group update clears only source creature aspects");
+    check(aspect_receipt.valid &&
+              aspect_receipt.processed_first_index == 1 &&
+              aspect_receipt.processed_last_index == 0 &&
+              aspect_receipt.processed_count == 2 &&
+              aspect_receipt.next_update_time >= 1010u &&
+              aspect_receipt.next_update_time <= 1011u,
+          "F0179 non-attack receipt preserves group span and timing window");
+    check(aspect_receipt.source_symbol &&
+              strcmp(aspect_receipt.source_symbol,
+                     "F0179_GROUP_GetCreatureAspectUpdateTime") == 0,
+          "F0179 receipt is source named");
+
+    active_groups[0].aspect[1] = 0;
+    rng.seed = 11u;
+    check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+              &active_groups[0], &groups[0], &creature_info, 1, 1,
+              2000u, &rng, &aspect_receipt) == 1,
+          "F0179 updates a single attacking creature");
+    check(active_groups[0].aspect[0] == 0 &&
+              active_groups[0].aspect[1] == 0x80 &&
+              aspect_receipt.processed_count == 1 &&
+              aspect_receipt.next_update_time >= 2003u &&
+              aspect_receipt.next_update_time <= 2004u,
+          "F0179 attacking update sets the attack latch and attack cadence");
+
+    active_groups[0].aspect[0] = 0x11;
+    rng.seed = 13u;
+    check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+              &active_groups[0], &groups[0], &creature_info, 2, 0,
+              1u, &rng, &aspect_receipt) == 0,
+          "F0179 rejects creature indices beyond raw C04 Count");
+    check(active_groups[0].aspect[0] == 0x11,
+          "F0179 rejects before mutating active aspects");
 
     check(F0180_DM1_GROUP_StartWandering_Compat(
               5, 12, 2, 7, 8, 100u, &wander_event,

@@ -52,6 +52,33 @@ typedef struct DM1_V1_F0180_StartWanderingReceipt_PC34 {
     const char *source_symbol;
 } DM1_V1_F0180_StartWanderingReceipt_PC34;
 
+typedef struct DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 {
+    int valid;
+    int group_index;
+    int creature_index;
+    int processed_first_index;
+    int processed_last_index;
+    int processed_count;
+    int creature_type;
+    int graphic_info;
+    int animation_ticks;
+    int attacking;
+    uint32_t next_update_time;
+    int source_line_start;
+    int source_line_end;
+    const char *source_symbol;
+} DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34;
+
+int F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+    struct DM1ActiveGroup_Compat *active_group,
+    const struct DungeonGroup_Compat *group,
+    const struct DM1CreatureInfo_Compat *creature_info,
+    int creature_index,
+    int is_attacking,
+    uint32_t game_time,
+    struct RngState_Compat *rng,
+    DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 *out_receipt);
+
 int F0180_DM1_GROUP_StartWandering_Compat(
     int group_index,
     int creature_type,

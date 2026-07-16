@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Nexus MENU.BPK/DGN fail-closed route slice: wired the
+  `test_nexus_v1_menu_bpk_renderer_handoff_gate` CMake/CTest target, fixed
+  the MENU.BPK `READY_DECODED` contract so generic decoded PRS3 remains
+  `blocked-prs3`, and added an unverified-source regression that refuses a
+  parseable MENU.BPK route without the canonical source hash. The DGN
+  face/material provenance receipt now requires static Structure3 selectors
+  to resolve into the same canonical Structure2 descriptor table before
+  publishing a package/host no-draw boundary; it still blocks real DGN mesh
+  render and permits no fallback visuals. Verification: focused CTest passed
+  for `nexus_v1_dgn_face_material_provenance` and
+  `nexus_v1_menu_bpk_renderer_handoff_gate`. The broad
+  `nexus_v1_startup_menu_pc34_compat` regression still fails on the existing
+  39 startup/Saturn/DGN/SFX completeness assertions.
+
 - 2026-07-16 DM2 skproject core/random/cache helper slice: added source-named
   wrappers for `DM2_RAND16`, `DM2_RANDBIT`, `DM2_RANDDIR`,
   `FIND_ICI_FROM_CACHE_HASH`, `INSERT_CACHE_HASH_AT`,
@@ -39,6 +53,22 @@
   build/run of `test_dm2_v1_c_map_tile_access_real_data` against local
   canonical DM2 data, direct existing `test_dm2_v1_c_map_tile_access`, and
   strict `-fsyntax-only` for `src/dm2/dm2_v1_dungeon_loader.c`.
+
+- 2026-07-16 DM2 c_map object-index/root ownership follow-up: promoted
+  skproject `GET_OBJECT_INDEX_FROM_TILE` to a source-named receipt that
+  exposes the column-prefix table offset, row-adjusted ground-stack index,
+  ground-stack word offset, and selected ObjectID without resolving a record.
+  The PC G1 partial boot receipt now records blocked roots by DB type, proving
+  the canonical unresolved set as 1 DB8 and 4 DB10 roots while still reporting
+  no blocked-record reads and no `GenericRecord::w0` traversal.
+
+- 2026-07-16 DM2 c_map `CHANGE_CURRENT_MAP_TO` receipt: added a bounded
+  source-named map-pointer receipt for same-map early return, negative/range
+  rejection, selected map dimensions, raw tile-map offset, column-index
+  offset, and player fallback pose fields. The route records skproject map
+  state only; it does not invent renderer, save, GDAT, or live HUD state.
+  Verification: strict direct `test_dm2_v1_c_map_tile_access` and focused
+  `git diff --check`.
 
 - 2026-07-16 CSB PANEL.C F0347 HUD-panel receipt: added a CSB-owned
   `F0347_INVENTORY_DrawPanel` adapter over the existing real C017/C040
@@ -550,6 +580,16 @@
   and C002/C003 door strips to match their exact PC34 source dimensions and
   asset ids before HUD/runtime handoff. Focused startup-session contract
   coverage rejects forged one-line C001 and one-byte C003 stand-ins.
+
+- ✅ 2026-07-16 CSB startup packed-raster receipt hardening: the PC34 startup
+  raster presenter now requires the exact CSB host-surface receipt before it
+  packs a 320x200 indexed title/PRESENTS/opening/HUD page into the 4bpp host
+  page. It checks the receipt-owned host-surface hash, raster route hash, and
+  recomputed pixel hash, and rejects missing receipts, wrapper/synthetic
+  surfaces, stale route hashes, changed pixels, and out-of-range palette
+  nibbles without clearing the destination. Verification: focused
+  `csb_v1_startup_raster_present_pc34_compat` and
+  `csb_v1_startup_terminal_handoff_real_data_pc34_compat` CTests pass.
 
 - ✅ 2026-07-15 CSB terminal handoff full-surface gate: the F0806/F0807
   entrance-to-HUD handoff now reuses the full resident startup surface
@@ -20443,3 +20483,26 @@ JP/US raw BIN variants. ISO byte lookup remains an inspection boundary, but a
 `MODE1/2048` ISO cannot reuse a raw-BIN loader/object-table route or become a
 synthetic dungeon substitute. Verification: `theron_v1_track02_loader_intake`
 and `theron_v1_raw_loader_trace_initial_level_handoff` pass.
+
+# ✅ 2026-07-16 Theron Track 02 loader semantic gate
+
+The real `$0b52` loader handoff now carries a hash-covered semantic-gate
+receipt beside the full payload, initial envelope, and post-envelope bytes.
+It exposes real byte availability while keeping dungeon-record,
+object-table, bitmap, palette/RGBA, and fallback-visual promotion explicitly
+blocked until an original consumer proves them. Verification:
+`ctest --test-dir build-local-ninja -R
+'theron_v1_track02_loader_intake|theron_v1_raw_loader_trace_initial_level_handoff'
+--output-on-failure` passes.
+
+# ✅ 2026-07-16 DM1 GROUP F0179 aspect update source mapping
+
+DM1 now has a source-named `F0179_GROUP_GetCreatureAspectUpdateTime` compat
+adapter next to the active-group bridge. The adapter consumes caller-owned raw
+C04 group data, the matching G0243 creature-info row, explicit game time, and
+caller RNG, then mutates only the source ACTIVE_GROUP aspect slots selected by
+the original creature-index/group sentinel path. It preserves the source
+attack/non-attack latch and flip rules, horizontal/vertical offset draws, and
+`AnimationTicks` cadence without consulting decoded substitutes or hidden
+globals. Verification: `ctest --test-dir build-local-ninja -R
+'^dm1_v1_group_active_state_pc34_compat$' --output-on-failure` passed.

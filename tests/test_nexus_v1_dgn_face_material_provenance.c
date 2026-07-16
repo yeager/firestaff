@@ -33,6 +33,7 @@ int main(void)
     input.canonical_source_verified = 1;
     input.bindings = bindings;
     input.face_count = 3;
+    input.structure2_descriptor_count = 4;
     input.material_selector_count = 4;
 
     expect(nexus_v1_dgn_face_material_validate(&input, &receipt) == 1 &&
@@ -40,11 +41,19 @@ int main(void)
                receipt.canonical_source_verified &&
                receipt.reopened_bytes_match_canonical &&
                receipt.canonical_dgn_size == (int)sizeof(retail_dgn) &&
-               receipt.face_count == 3 && receipt.static_selector_count == 2 &&
+               receipt.face_count == 3 &&
+               receipt.structure2_descriptor_count == 4 &&
+               receipt.static_selector_count == 2 &&
                receipt.animated_selector_count == 1 &&
+               receipt.structure3_mesh_materials_bound &&
+               receipt.structure2_descriptor_route_bound &&
                receipt.selector_bindings_complete &&
-               receipt.can_submit_raster_input && !receipt.permits_fallback_visuals,
-           "canonical retail DGN bindings alone reach the raster-input boundary");
+               receipt.package_host_route_bound &&
+               receipt.no_draw_only &&
+               receipt.blocks_real_dgn_mesh_render &&
+               receipt.can_submit_raster_input &&
+               !receipt.permits_fallback_visuals,
+           "canonical retail DGN bindings reach the package/host no-draw boundary");
 
     {
         uint8_t reopened_dgn[sizeof(retail_dgn)];
@@ -86,6 +95,15 @@ int main(void)
                receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING,
            "duplicate face ordinals fail closed");
     bindings[2].face_ordinal = 2;
+    input.structure2_descriptor_count = 3;
+    expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
+               receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING &&
+               !receipt.package_host_route_bound &&
+               receipt.no_draw_only &&
+               receipt.blocks_real_dgn_mesh_render &&
+               !receipt.permits_fallback_visuals,
+           "static Structure3 selectors must resolve into Structure2 descriptors");
+    input.structure2_descriptor_count = 4;
     bindings[1].material_selector = 4;
     expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
                receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING &&

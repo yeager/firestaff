@@ -46,6 +46,12 @@ typedef struct {
     int canonical_source_verified;
     const Nexus_V1_DgnFaceMaterialBinding *bindings;
     int face_count;
+    /*
+     * Bounded Structure2 descriptor count from the same canonical DGN.
+     * Static Structure3 material selectors must resolve into this table
+     * before the package/host handoff is considered source-bound.
+     */
+    int structure2_descriptor_count;
     int material_selector_count;
 } Nexus_V1_DgnFaceMaterialInput;
 
@@ -62,9 +68,15 @@ typedef struct {
     int reopened_bytes_match_canonical;
     int canonical_dgn_size;
     int face_count;
+    int structure2_descriptor_count;
     int static_selector_count;
     int animated_selector_count;
+    int structure3_mesh_materials_bound;
+    int structure2_descriptor_route_bound;
     int selector_bindings_complete;
+    int package_host_route_bound;
+    int no_draw_only;
+    int blocks_real_dgn_mesh_render;
     int permits_fallback_visuals;
     int can_submit_raster_input;
 } Nexus_V1_DgnFaceMaterialReceipt;

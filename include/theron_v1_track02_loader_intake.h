@@ -120,6 +120,30 @@ typedef struct {
     const char *status;
 } Theron_V1Track02LoaderPostEnvelopeReceipt;
 
+/* Consolidated semantic gate for the real initial loader sector. A valid
+ * receipt means the source bytes are available to consumers, while every
+ * semantic promotion remains explicitly false until separate original loader
+ * evidence proves it. */
+typedef struct {
+    int valid;
+    int no_fallback;
+    int real_payload_available;
+    int level_envelope_available;
+    int post_envelope_available;
+    Theron_Track02Variant track02_variant;
+    uint32_t record;
+    uint32_t payload_checksum;
+    uint32_t level_envelope_checksum;
+    uint32_t post_envelope_checksum;
+    int dungeon_record_semantics_proven;
+    int object_table_semantics_proven;
+    int bitmap_route_bound;
+    int palette_binding_verified;
+    int rgba_output_allowed;
+    int fallback_visuals_allowed;
+    const char *status;
+} Theron_V1Track02LoaderSemanticGateReceipt;
+
 /* Byte-faithful ISO handoff for the first level sector. The post-envelope
  * span is retained only as opaque source bytes; object/bitmap semantics stay
  * blocked until an original ISO loader consumer proves them. */
@@ -181,6 +205,14 @@ int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
     const Theron_V1Track02LoaderPayloadReceipt *payload,
     uint32_t post_envelope_checksum,
     Theron_V1Track02LoaderPostEnvelopeReceipt *out_receipt);
+
+/* Publishes the current real-data availability boundary without upgrading
+ * bytes into gameplay or visual semantics. */
+int theron_v1_track02_loader_intake_semantic_gate(
+    const Theron_V1Track02LoaderPayloadReceipt *payload,
+    const Theron_V1Track02LoaderLevelEnvelopeReceipt *level_envelope,
+    const Theron_V1Track02LoaderPostEnvelopeReceipt *post_envelope,
+    Theron_V1Track02LoaderSemanticGateReceipt *out_receipt);
 
 /* Copies the first MODE1/2048 ISO level-sector bytes only after a separate
  * ISO capture proves the record, destination, and exact payload checksum.

@@ -538,6 +538,7 @@ typedef struct {
     int db4_root_count;
     int materialized_root_count;
     int blocked_root_count;
+    int blocked_root_count_by_type[16];
     int blocked_root_count_by_map[DM2_V1_MAX_LEVELS];
     DM2_V1_G1BlockedRoot blocked_roots[DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS];
 } DM2_V1_G1PartialMapBootReceipt;
@@ -860,6 +861,43 @@ typedef struct {
 } DM2_V1_SkprojectTileRecordAddressReceipt;
 
 typedef struct {
+    int valid;
+    int level;
+    int x;
+    int y;
+    uint16_t raw_tile;
+    int object_index;
+    int column_base_index;
+    int column_index_offset;
+    int object_index_offset;
+    uint16_t object_id;
+    int preceding_root_count;
+    int blocked_no_tile_record_link;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectObjectIndexReceipt;
+
+typedef struct {
+    int valid;
+    int requested_map;
+    int previous_map;
+    int unchanged;
+    int current_map;
+    int width;
+    int height;
+    int raw_tile_map_offset;
+    int column_index_offset;
+    int player_x;
+    int player_y;
+    int player_map;
+    int player_dir;
+    int blocked_negative_map;
+    int blocked_map_range;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_SkprojectChangeCurrentMapReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -964,6 +1002,21 @@ int dm2_v1_skproject_get_address_of_tile_record(
     int x,
     int y,
     DM2_V1_SkprojectTileRecordAddressReceipt *out);
+int dm2_v1_skproject_get_object_index_from_tile(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectObjectIndexReceipt *out);
+int dm2_v1_skproject_change_current_map_to(
+    const DM2_V1_DungeonData *d,
+    int previous_map,
+    int new_map,
+    int player_x,
+    int player_y,
+    int player_map,
+    int player_dir,
+    DM2_V1_SkprojectChangeCurrentMapReceipt *out);
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
 int dm2_v1_dungeon_walk_square_things(
     const DM2_V1_DungeonData *d,
