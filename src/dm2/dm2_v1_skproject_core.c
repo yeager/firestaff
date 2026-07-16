@@ -581,6 +581,38 @@ int dm2_v1_skproject_draw_icon_pict_buff(
     return 1;
 }
 
+int dm2_v1_skproject_draw_icon_pict_entry(
+    uint8_t category,
+    uint8_t cls2,
+    uint8_t entry,
+    int has_button_group,
+    uint16_t button_id,
+    int16_t alpha_mask,
+    DM2_V1_SkprojectDrawIconPictEntryReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawIconPictEntryReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.category = category;
+    receipt.cls2 = cls2;
+    receipt.entry = entry;
+    receipt.button_id = button_id;
+    receipt.alpha_mask = alpha_mask;
+    if (!has_button_group) {
+        receipt.blocked_missing_button_group = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.requested_image_entry = 1u;
+    receipt.requested_blit_rect = 1u;
+    receipt.requested_local_palette = 1u;
+    receipt.requested_icon_pict_buff = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_draw_def_pict(
     const DM2_V1_SkprojectExtendedPictureRef *picture,
     uint16_t rect_no,
@@ -659,6 +691,104 @@ int dm2_v1_skproject_draw_gray_overlay(
     receipt.requested_dirty_rect = 1u;
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_dialogue_progress(
+    int dballoc_active,
+    uint16_t progress_per_mille,
+    uint16_t expanded_rect_width,
+    uint16_t previous_width,
+    DM2_V1_SkprojectDialogueProgressReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDialogueProgressReceipt receipt;
+    uint32_t width;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.progress_per_mille = progress_per_mille;
+    receipt.expanded_rect_no = 474u;
+    receipt.previous_width = previous_width;
+    if (!dballoc_active) {
+        receipt.blocked_inactive = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    width = ((uint32_t)expanded_rect_width * (uint32_t)progress_per_mille) /
+            1000u;
+    if (width > 0xffffu) width = 0xffffu;
+    receipt.computed_width = (uint16_t)width;
+    if (receipt.computed_width > 0u &&
+        receipt.computed_width != previous_width) {
+        receipt.requested_fill_backbuff_rect = 1u;
+        receipt.requested_dialogue_to_screen = 1u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_dialogue_pict(
+    int has_src_bitmap,
+    int has_dest_bitmap,
+    int has_rect,
+    uint16_t src_width,
+    uint16_t dest_bitmap_width,
+    int dest_is_screen,
+    int16_t src_x,
+    int16_t src_y,
+    int16_t alpha_mask,
+    uint8_t source_bpp,
+    uint8_t dest_bpp,
+    const uint8_t *palette,
+    DM2_V1_SkprojectDialoguePictReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDialoguePictReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.src_width = src_width;
+    receipt.dest_width = dest_is_screen ? 320u : dest_bitmap_width;
+    receipt.dest_is_screen = dest_is_screen ? 1 : 0;
+    receipt.src_x = src_x;
+    receipt.src_y = src_y;
+    receipt.alpha_mask = alpha_mask;
+    receipt.source_bpp = source_bpp;
+    receipt.dest_bpp = dest_bpp;
+    receipt.requested_palette = palette ? 1u : 0u;
+    if (!has_src_bitmap || !has_dest_bitmap) {
+        receipt.blocked_missing_bitmap = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!has_rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.requested_blit = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_wake_up_text(
+    DM2_V1_SkprojectWakeUpTextReceipt *out_receipt)
+{
+    DM2_V1_SkprojectWakeUpTextReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requested_fill_entire_pict = 1u;
+    receipt.gdat_text_category = 1u;
+    receipt.gdat_text_cls2 = 0u;
+    receipt.gdat_text_entry = 0x11u;
+    receipt.text_rect_no = 6u;
+    receipt.foreground_color = 4u;
+    receipt.requested_vp_rc_str = 1u;
+    receipt.valid = 1;
+    *out_receipt = receipt;
     return 1;
 }
 
@@ -2926,6 +3056,42 @@ int dm2_v1_skproject_draw_container_panel(
     return 1;
 }
 
+int dm2_v1_skproject_draw_item_icon(
+    uint16_t object_id,
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t cls4,
+    uint16_t rect_no,
+    uint8_t slot_index,
+    int selected,
+    DM2_V1_SkprojectDrawItemIconReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawItemIconReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.cls1 = cls1;
+    receipt.cls2 = cls2;
+    receipt.cls4 = cls4;
+    receipt.rect_no = rect_no;
+    receipt.slot_index = slot_index;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.item_icon_entry = cls4;
+    receipt.background_entry = slot_index < 8u ? 0u : 0xffu;
+    receipt.highlight_entry = selected ? 6u : 0u;
+    receipt.requested_background_dialogue = slot_index < 0x26u ? 1u : 0u;
+    receipt.requested_highlight_overlay = selected ? 1u : 0u;
+    receipt.requested_icon_entry = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_draw_container_survey(
     const uint16_t *record_chain,
     uint16_t record_count,
@@ -2956,6 +3122,93 @@ int dm2_v1_skproject_draw_container_survey(
         ++receipt.drawn_items;
         ++receipt.traversed_records;
     }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_item_in_hand(
+    uint16_t object_id,
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t cls4,
+    uint16_t width,
+    uint16_t height,
+    DM2_V1_SkprojectDrawItemInHandReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawItemInHandReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.cls1 = cls1;
+    receipt.cls2 = cls2;
+    receipt.item_icon_entry = cls4;
+    receipt.width = width;
+    receipt.height = height;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_missing_item_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.requested_image_entry = 1u;
+    receipt.requested_local_palette = 1u;
+    receipt.requested_4bpp_blit = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_item_survey(
+    uint16_t object_id,
+    uint8_t show_details,
+    DM2_V1_SkprojectDrawItemSurveyReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawItemSurveyReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_id = object_id;
+    receipt.show_details = show_details ? 1u : 0u;
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_null_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.used_scroll_text = show_details ? 1u : 0u;
+    receipt.used_item_icon = 1u;
+    receipt.item_icon_rect = 0x2eu;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_hand_action_icons(
+    uint16_t player,
+    uint16_t object_id,
+    uint8_t primary_action_icon,
+    uint8_t secondary_action_icon,
+    uint8_t selected_hand,
+    DM2_V1_SkprojectDrawHandActionIconsReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawHandActionIconsReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.object_id = object_id;
+    receipt.primary_action_icon = primary_action_icon;
+    receipt.secondary_action_icon = secondary_action_icon;
+    receipt.selected_hand = (uint8_t)(selected_hand & 1u);
+    if (object_id == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_missing_object = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.action_button_id = (uint16_t)(0x74u + player * 2u +
+                                          receipt.selected_hand);
+    receipt.requested_dialogue_pict = 1u;
+    receipt.requested_icon_entry = 1u;
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;
@@ -3102,6 +3355,139 @@ int dm2_v1_skproject_draw_player_3stat_pane(
     receipt.reset_group_size = clear_group_size ? 1u : 0u;
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_player_3stat_health_bar(
+    uint16_t player,
+    int rect_exists,
+    DM2_V1_SkprojectDrawPlayer3StatHealthBarReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPlayer3StatHealthBarReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.rect_no = (uint16_t)(0xb9u + player);
+    receipt.hms_rect_base = 0x226u;
+    if (!rect_exists) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.queried_expanded_rect = 1u;
+    receipt.drew_health = 1u;
+    receipt.drew_stamina = 1u;
+    receipt.drew_mana = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_player_name_at_cmdslot(
+    uint16_t curacthero,
+    uint16_t event_heroidx,
+    DM2_V1_SkprojectDrawPlayerNameAtCmdSlotReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPlayerNameAtCmdSlotReceipt receipt;
+    uint16_t hero_index;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    hero_index = curacthero == 0u ? 0u : (uint16_t)(curacthero - 1u);
+    receipt.left_name_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 1u, 4u, 20u, 0x3cu };
+    receipt.right_name_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 1u, 4u, 14u, 0x3bu };
+    receipt.name_button_id = 0x3du;
+    receipt.foreground_color = hero_index != event_heroidx ? 15u : 9u;
+    receipt.background_color = 0x400cu;
+    receipt.used_event_hero_color = hero_index == event_heroidx ? 1u : 0u;
+    receipt.requested_name_string = 1u;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_player_damage(
+    uint16_t player,
+    uint16_t damage_value,
+    DM2_V1_SkprojectDrawPlayerDamageReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawPlayerDamageReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.damage_value = damage_value;
+    receipt.damage_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 1u, 2u, 3u,
+                                        (uint16_t)(0xb1u + player) };
+    receipt.text_button_id = receipt.damage_icon.button_id;
+    receipt.foreground_color = 15u;
+    receipt.background_color = 8u;
+    dm2_v1_skproject_format_3digit((int16_t)damage_value,
+                                   receipt.damage_text);
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_spell_to_be_cast(
+    const char *runes,
+    int draw_frame_icon,
+    DM2_V1_SkprojectDrawSpellToBeCastReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawSpellToBeCastReceipt receipt;
+    size_t rune_count = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requested_clear_spell_area = 1u;
+    receipt.draw_frame_icon = draw_frame_icon ? 1u : 0u;
+    receipt.frame_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 1u, 5u, 9u, 0xfcu };
+    if (runes)
+        rune_count = strlen(runes);
+    if (rune_count > 6u)
+        rune_count = 6u;
+    receipt.rune_count = (uint8_t)rune_count;
+    if (rune_count > 0u) {
+        receipt.first_rune_button_id = 0x105u;
+        receipt.last_rune_button_id = (uint16_t)(0x105u + rune_count - 1u);
+    }
+    receipt.foreground_color = 0u;
+    receipt.background_color = 0x400du;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_draw_spell_panel(
+    uint8_t nrunes,
+    DM2_V1_SkprojectDrawSpellPanelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDrawSpellPanelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.nrunes = nrunes;
+    receipt.panel_icon =
+        (DM2_V1_SkprojectGdatIconPlan){ 1u, 5u, (uint8_t)(nrunes + 1u),
+                                        0x5cu };
+    if (nrunes < 4u) {
+        receipt.drew_rune_choice_buttons = 1u;
+        receipt.first_choice_button_id = 0xffu;
+        receipt.last_choice_button_id = 0x104u;
+    }
+    receipt.requested_spell_to_be_cast = 1u;
+    receipt.requested_player_attack_dir = 1u;
+    receipt.valid = 1;
+    *out_receipt = receipt;
     return 1;
 }
 
@@ -3741,18 +4127,31 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
            "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
-           "DM2_DRAW_CMD_SLOT/DM2_DRAW_MONEYBOX/"
+           "DM2_DRAW_ICON_PICT_ENTRY/DM2_DRAW_DIALOGUE_PROGRESS/"
+           "DM2_DRAW_DIALOGUE_PARTS_PICT/DM2_DRAW_DIALOGUE_PICT/"
+           "DM2_DRAW_WAKE_UP_TEXT/DM2_DRAW_CMD_SLOT/DM2_DRAW_MONEYBOX/"
            "DM2_DRAW_ITEM_STATS_BAR/DM2_DRAW_CONTAINER_PANEL/"
-           "DM2_DRAW_CONTAINER_SURVEY/DM2_DRAW_ITEM_ON_WOOD_PANEL/"
+           "DM2_DRAW_ITEM_ICON/DM2_DRAW_CONTAINER_SURVEY/"
+           "DM2_DRAW_ITEM_IN_HAND/DM2_DRAW_ITEM_SURVEY/"
+           "DM2_DRAW_HAND_ACTION_ICONS/DM2_DRAW_ITEM_ON_WOOD_PANEL/"
            "DM2_DRAW_CUR_MAX_HMS/DM2_DRAW_PLAYER_3STAT_TEXT/"
-           "DM2_DRAW_PLAYER_3STAT_PANE/DM2_DRAW_PLAYER_ATTACK_DIR/"
+           "DM2_DRAW_PLAYER_3STAT_PANE/"
+           "DM2_DRAW_PLAYER_3STAT_HEALTH_BAR/"
+           "DM2_DRAW_PLAYER_NAME_AT_CMDSLOT/DM2_DRAW_PLAYER_DAMAGE/"
+           "DM2_DRAW_SPELL_TO_BE_CAST/DM2_DRAW_SPELL_PANEL/"
+           "DM2_DRAW_PLAYER_ATTACK_DIR/"
            "DM2_DRAW_MAJIC_MAP/DM2_DRAW_FOOD_WATER_POISON_PANEL/"
            "DM2_DRAW_CRYOCELL_LEVER/"
            "DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE and "
            "SKWIN/SkWinCore.cpp DRAW_CHARSHEET_OPTION_ICON/"
-           "DRAW_CMD_SLOT/DRAW_MONEYBOX/DRAW_ITEM_STATS_BAR/"
-           "DRAW_CONTAINER_PANEL/DRAW_CONTAINER_SURVEY/"
+           "DRAW_ICON_PICT_ENTRY/DRAW_DIALOGUE_PROGRESS/"
+           "DRAW_DIALOGUE_PICT/DRAW_WAKE_UP_TEXT/DRAW_CMD_SLOT/"
+           "DRAW_MONEYBOX/DRAW_ITEM_STATS_BAR/"
+           "DRAW_CONTAINER_PANEL/DRAW_ITEM_ICON/DRAW_CONTAINER_SURVEY/"
+           "DRAW_ITEM_IN_HAND/DRAW_ITEM_SURVEY/DRAW_HAND_ACTION_ICONS/"
            "DRAW_ITEM_ON_WOOD_PANEL/DRAW_CUR_MAX_HMS/"
+           "DRAW_PLAYER_NAME_AT_CMDSLOT/DRAW_PLAYER_DAMAGE/"
+           "DRAW_SPELL_TO_BE_CAST/DRAW_SPELL_PANEL/"
            "DRAW_PLAYER_ATTACK_DIR/DRAW_MAJIC_MAP/"
            "DRAW_FOOD_WATER_POISON_PANEL/DRAW_CRYOCELL_LEVER/"
            "DRAW_EYE_MOUTH_COLORED_RECTANGLE; "
