@@ -1122,3 +1122,62 @@ int nexus_v1_dgn_structure3_raw_capture_host_intake(
     *out_receipt = receipt;
     return receipt.host.import_receipt.complete_source_binding ? 1 : 0;
 }
+
+int nexus_v1_dgn_structure3_review_material_upload(
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_host,
+    const Nexus_V1_DgnStructure3ProducerAttestationReceipt *producer,
+    Nexus_V1_DgnStructure3ReviewedMaterialUploadReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3ReviewedMaterialUploadReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!raw_host || !producer) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_capture_host_bound =
+        raw_host->manifest_parsed &&
+        raw_host->raw_reader_invoked &&
+        raw_host->raw_reader.import_ready &&
+        raw_host->raw_reader.raw_span_hashes_match &&
+        raw_host->raw_reader.attestation_session_matches &&
+        raw_host->raw_reader.attestation_bundle_matches &&
+        raw_host->raw_reader.attestation_trace_order_matches &&
+        raw_host->raw_reader.original_saturn_source_attested &&
+        raw_host->host_intake_invoked &&
+        raw_host->host.capture_source_verified &&
+        raw_host->host.importer_invoked &&
+        raw_host->no_draw_only &&
+        raw_host->host.no_draw_only &&
+        raw_host->host.import_receipt.blocks_real_dgn_mesh_render;
+    receipt.producer_attestation_bound =
+        producer->attestation_parsed &&
+        producer->producer_binary_bound &&
+        producer->capture_mode_declared &&
+        producer->original_saturn_execution_claimed &&
+        producer->workflow_bound &&
+        producer->independent_authentication_required &&
+        producer->no_draw_only &&
+        !producer->runtime_import_permitted;
+    receipt.original_saturn_capture_attested =
+        raw_host->raw_reader.original_saturn_source_attested &&
+        raw_host->raw_reader.import_packet.original_saturn_capture_verified;
+    receipt.package_host_route_bound =
+        raw_host->host_intake_invoked &&
+        raw_host->host.host_dgn_source_verified &&
+        raw_host->host.capture_source_verified &&
+        raw_host->host.importer_invoked;
+    receipt.reviewed_material_upload_bound =
+        receipt.raw_capture_host_bound &&
+        receipt.producer_attestation_bound &&
+        receipt.original_saturn_capture_attested &&
+        receipt.package_host_route_bound;
+    receipt.material_semantics_proven = 0;
+    receipt.renderer_handoff_ready = 0;
+    receipt.runtime_upload_permitted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.reviewed_material_upload_bound;
+}

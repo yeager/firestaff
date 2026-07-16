@@ -106,6 +106,10 @@
     bound to post-$3800 consumer semantics, but render/runtime admission stays
     closed until real palette, non-startup level, object-table and bitmap
     consumers are proven from the original loader/capture trace.
+  - 2026-07-16 Nexus update: Structure3 DGN raw capture now has a reviewed
+    material-upload gate binding capture, Saturn attestation, package/host
+    route and producer workflow. Full DGN material semantics and runtime
+    renderer handoff remain open.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
