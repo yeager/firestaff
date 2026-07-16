@@ -32,6 +32,15 @@
     now source-mapped in `dm2_v1_skproject_core`. Remaining adjacent
     `SkWinCore.cpp` cache/mement symbols still require real cache-index and
     mement-table state; do not fake cache hits or image buffers.
+  - 2026-07-16 DM2 core/cache update: skproject `c_random.cpp`
+    `DM2_RAND16`/`DM2_RANDBIT`/`DM2_RANDDIR` plus the bounded
+    `FIND_ICI_FROM_CACHE_HASH`, `INSERT_CACHE_HASH_AT`,
+    `QUERY_MEMENTI_FROM`, `ADD_CACHE_HASH`,
+    `QUERY_MEMENT_BUFF_FROM_CACHE_INDEX`, `GET_TEMP_CACHE_HASH`, and
+    `ALLOC_TEMP_CACHE_INDEX` subset are now source-mapped in
+    `dm2_v1_skproject_core`. Remaining adjacent cache/mement work is
+    `RECYCLE_MEMENTI`, `TEST_MEMENT`, free/recycle eviction lifecycle, and
+    image/pict mement allocation/free; do not fabricate image buffers.
   - 2026-07-16 DM2 c_map real-data update: `GET_TILE_VALUE`,
     `GET_ADDRESS_OF_TILE_RECORD`, `IS_TILE_PASSAGE`, and SKWIN
     `IS_TILE_SOLID` now have source-named dungeon-loader receipts verified

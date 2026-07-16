@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject core/random/cache helper slice: added source-named
+  wrappers for `DM2_RAND16`, `DM2_RANDBIT`, `DM2_RANDDIR`,
+  `FIND_ICI_FROM_CACHE_HASH`, `INSERT_CACHE_HASH_AT`,
+  `QUERY_MEMENTI_FROM`, `ADD_CACHE_HASH`,
+  `QUERY_MEMENT_BUFF_FROM_CACHE_INDEX`, `GET_TEMP_CACHE_HASH`, and
+  `ALLOC_TEMP_CACHE_INDEX`. The cache model preserves skproject's sorted
+  indirect hash table and cache-index/raw-data mement routing, but fails closed
+  when eviction/full mement lifecycle state is not supplied. Verification:
+  focused strict direct and Ninja `test_dm2_v1_skproject_core`.
+
 - 2026-07-16 DM2 skproject square-chain traversal handoff: added
   `dm2_v1_dungeon_walk_square_things()` as the loader-owned bounded route for
   `GET_TILE_RECORD_LINK` plus `GET_NEXT_RECORD_LINK` consumers. The object

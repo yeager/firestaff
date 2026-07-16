@@ -75,16 +75,106 @@ static void test_temp_rect_ring(void)
           "ALLOC_TEMP_RECT rejects missing receipt");
 }
 
+static void test_random_helpers(void)
+{
+    DM2_V1_SkprojectRandomData randdat;
+
+    dm2_v1_skproject_random_init(&randdat);
+    CHECK(randdat.random == 0u, "c_random init clears random seed");
+    CHECK(dm2_v1_skproject_rand(&randdat) == 0u &&
+              randdat.random == 11u,
+          "DM2_RAND returns seed*magic+11 shifted by 8");
+    CHECK(dm2_v1_skproject_rand16(&randdat, 10u) == 9u,
+          "DM2_RAND16 modulo uses the 24-bit DM2_RAND value");
+    CHECK(dm2_v1_skproject_randbit(&randdat) == 0,
+          "DM2_RANDBIT masks one random bit");
+    CHECK(dm2_v1_skproject_randdir(&randdat) == 0u,
+          "DM2_RANDDIR masks two random direction bits");
+    CHECK(dm2_v1_skproject_rand(&randdat) == 13344383u,
+          "c_random sequence advances through every helper");
+    CHECK(dm2_v1_skproject_rand16(&randdat, 0u) == 0u,
+          "DM2_RAND16 zero range returns zero");
+}
+
+static void test_cache_hash_helpers(void)
+{
+    DM2_V1_SkprojectCacheState state;
+    uint16_t ici = 0xffffu;
+    uint16_t cache_index = 0xffffu;
+    uint8_t *buff;
+
+    dm2_v1_skproject_cache_state_init(&state, 4, 3, 4);
+    state.raw_to_mement[2] = 3u;
+
+    CHECK(state.cache_capacity == 4 && state.raw_count == 3 &&
+              state.mement_count == 4,
+          "cache state clamps source table sizes");
+    CHECK(dm2_v1_skproject_find_ici_from_cache_hash(
+              &state, 0x2000u, &ici) == 0 && ici == 0u,
+          "FIND_ICI_FROM_CACHE_HASH returns insertion slot for empty table");
+    CHECK(dm2_v1_skproject_insert_cache_hash_at(
+              &state, 0x2000u, ici) == 0u,
+          "INSERT_CACHE_HASH_AT inserts the first cache hash");
+    CHECK(dm2_v1_skproject_find_ici_from_cache_hash(
+              &state, 0x1000u, &ici) == 0 && ici == 0u,
+          "FIND_ICI_FROM_CACHE_HASH finds lower insertion point");
+    CHECK(dm2_v1_skproject_insert_cache_hash_at(
+              &state, 0x1000u, ici) == 1u,
+          "INSERT_CACHE_HASH_AT preserves sorted hash order");
+    CHECK(state.cache_count == 2 &&
+              state.sorted_cache_indices[0] == 1u &&
+              state.sorted_cache_indices[1] == 0u,
+          "sorted cache index table mirrors skproject indirect order");
+    CHECK(dm2_v1_skproject_find_ici_from_cache_hash(
+              &state, 0x2000u, &ici) == 1 && ici == 1u,
+          "FIND_ICI_FROM_CACHE_HASH returns existing sorted index");
+    CHECK(dm2_v1_skproject_add_cache_hash(
+              &state, 0x2000u, &cache_index) == 1 &&
+              cache_index == 0u,
+          "ADD_CACHE_HASH returns existing cache index");
+    CHECK(dm2_v1_skproject_add_cache_hash(
+              &state, 0x3000u, &cache_index) == 0 &&
+              cache_index == 2u,
+          "ADD_CACHE_HASH inserts a new cache index");
+    CHECK(dm2_v1_skproject_query_mementi_from(&state, 0x8000u) == 0u &&
+              dm2_v1_skproject_query_mementi_from(&state, 0x8001u) == 1u &&
+              dm2_v1_skproject_query_mementi_from(&state, 2u) == 3u,
+          "QUERY_MEMENTI_FROM handles cache-index and raw-data routes");
+    CHECK(dm2_v1_skproject_query_mementi_from(&state, 0x8008u) ==
+              DM2_V1_SKPROJECT_MEMENT_NONE,
+          "QUERY_MEMENTI_FROM rejects out-of-range cache index");
+    buff = dm2_v1_skproject_query_mement_buff_from_cache_index(&state, 1u);
+    CHECK(buff == state.mement_buffers[1],
+          "QUERY_MEMENT_BUFF_FROM_CACHE_INDEX returns mement payload bytes");
+    CHECK(dm2_v1_skproject_get_temp_cache_hash(&state) == 0xffff0000u,
+          "GET_TEMP_CACHE_HASH starts in the source temp hash range");
+    CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) == 3u &&
+              state.hashes[3] == 0xffff0000u &&
+              state.temp_hash_counter == 1u,
+          "ALLOC_TEMP_CACHE_INDEX allocates a temp hash through ADD_CACHE_HASH");
+    CHECK(dm2_v1_skproject_alloc_temp_cache_index(&state) ==
+              DM2_V1_SKPROJECT_MEMENT_NONE,
+          "ALLOC_TEMP_CACHE_INDEX fails closed when cache table is full");
+}
+
 int main(void)
 {
     test_between_value();
     test_temp_rect_ring();
+    test_random_helpers();
+    test_cache_hash_helpers();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_BETWEEN_VALUE") != 0,
           "source evidence names DM2_BETWEEN_VALUE");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_RAND16") != 0,
+          "source evidence names c_random helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "ADD_CACHE_HASH") != 0,
+          "source evidence names cache hash helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
