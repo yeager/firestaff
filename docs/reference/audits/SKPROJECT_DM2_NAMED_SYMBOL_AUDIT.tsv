@@ -851,9 +851,9 @@ DM2_IS_CREATURE_ALLOWED_ON_LEVEL	SKULLWIN	SKULLWIN/c_querydb.cpp	5025		MISSING
 DM2_query_0cee_319e	SKULLWIN	SKULLWIN/c_querydb.cpp	5073		MISSING
 init	SKULLWIN	SKULLWIN/c_random.cpp	7	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_RAND	SKULLWIN	SKULLWIN/c_random.cpp	13		MISSING
-DM2_RAND16	SKULLWIN	SKULLWIN/c_random.cpp	21		MISSING
-DM2_RANDBIT	SKULLWIN	SKULLWIN/c_random.cpp	30		MISSING
-DM2_RANDDIR	SKULLWIN	SKULLWIN/c_random.cpp	40		MISSING
+DM2_RAND16	SKULLWIN	SKULLWIN/c_random.cpp	21	include/dm2_v1_skproject_core.h:dm2_v1_skproject_rand16	VERIFIED_SOURCE_MAPPING
+DM2_RANDBIT	SKULLWIN	SKULLWIN/c_random.cpp	30	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randbit	VERIFIED_SOURCE_MAPPING
+DM2_RANDDIR	SKULLWIN	SKULLWIN/c_random.cpp	40	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randdir	VERIFIED_SOURCE_MAPPING
 init_global_records	SKULLWIN	SKULLWIN/c_record.cpp	33		MISSING
 mk_record	SKULLWIN	SKULLWIN/c_record.cpp	41		MISSING
 record_to_word	SKULLWIN	SKULLWIN/c_record.cpp	42		MISSING
@@ -1365,7 +1365,7 @@ ORIGINAL__GRAPHICS_DATA_OPEN	SKWIN	SKWIN/SkWinCore.cpp	3179		MISSING
 LOCATE_OTHER_LEVEL	SKWIN	SKWIN/SkWinCore.cpp	3207		MISSING
 ALLOC_TEMP_RECT	SKWIN	SKWIN/SkWinCore.cpp	3302	include/dm2_v1_skproject_core.h:36	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject temp-rect ring keeps the original four-slot ringbuffer, writes x/y/w/h, advances modulo four, and is covered by focused core helper test.
 ALLOC_TEMP_ORIGIN_RECT	SKWIN	SKWIN/SkWinCore.cpp	3324	include/dm2_v1_skproject_core.h:43	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject temp-origin helper delegates to ALLOC_TEMP_RECT with x/y zero and is covered by focused core helper test.
-FIND_ICI_FROM_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	3332		MISSING
+FIND_ICI_FROM_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	3332	include/dm2_v1_skproject_core.h:dm2_v1_skproject_find_ici_from_cache_hash	VERIFIED_SOURCE_MAPPING
 RECYCLE_MEMENTI	SKWIN	SKWIN/SkWinCore.cpp	3374		MISSING
 TEST_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	3495		MISSING
 _3e74_48c9	SKWIN	SKWIN/SkWinCore.cpp	3519		MISSING
@@ -1376,11 +1376,11 @@ _3e74_0d32	SKWIN	SKWIN/SkWinCore.cpp	3835		MISSING
 ValidateMements	SKWIN	SKWIN/SkWinCore.cpp	3908		MISSING
 FREE_INDEXED_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	3945		MISSING
 _3e74_4471	SKWIN	SKWIN/SkWinCore.cpp	4052		MISSING
-INSERT_CACHE_HASH_AT	SKWIN	SKWIN/SkWinCore.cpp	4081		MISSING
+INSERT_CACHE_HASH_AT	SKWIN	SKWIN/SkWinCore.cpp	4081	include/dm2_v1_skproject_core.h:dm2_v1_skproject_insert_cache_hash_at	VERIFIED_SOURCE_MAPPING
 _3e74_44ad	SKWIN	SKWIN/SkWinCore.cpp	4131		MISSING
-QUERY_MEMENTI_FROM	SKWIN	SKWIN/SkWinCore.cpp	4166		MISSING
-ADD_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4190		MISSING
-QUERY_MEMENT_BUFF_FROM_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4219		MISSING
+QUERY_MEMENTI_FROM	SKWIN	SKWIN/SkWinCore.cpp	4166	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_mementi_from	VERIFIED_SOURCE_MAPPING
+ADD_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4190	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_cache_hash	VERIFIED_SOURCE_MAPPING
+QUERY_MEMENT_BUFF_FROM_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4219	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_mement_buff_from_cache_index	VERIFIED_SOURCE_MAPPING
 _3e74_583a	SKWIN	SKWIN/SkWinCore.cpp	4226		MISSING
 FIND_FREE_MEMENTI	SKWIN	SKWIN/SkWinCore.cpp	4241		MISSING
 GUARANTEE_FREE_CPXHEAP_SIZE	SKWIN	SKWIN/SkWinCore.cpp	4273		MISSING
@@ -1396,8 +1396,8 @@ _01b0_0c70	SKWIN	SKWIN/SkWinCore.cpp	4681		MISSING
 _01b0_0ca4	SKWIN	SKWIN/SkWinCore.cpp	4708		MISSING
 _443c_040e	SKWIN	SKWIN/SkWinCore.cpp	4732		MISSING
 ALLOC_NEW_PICT	SKWIN	SKWIN/SkWinCore.cpp	4748		MISSING
-GET_TEMP_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4771		MISSING
-ALLOC_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4786		MISSING
+GET_TEMP_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4771	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_temp_cache_hash	VERIFIED_SOURCE_MAPPING
+ALLOC_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4786	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_temp_cache_index	VERIFIED_SOURCE_MAPPING
 _0b36_0d67	SKWIN	SKWIN/SkWinCore.cpp	4797		MISSING
 _0b36_0c52	SKWIN	SKWIN/SkWinCore.cpp	4894		MISSING
 OFFSET_RECT	SKWIN	SKWIN/SkWinCore.cpp	4916		MISSING
