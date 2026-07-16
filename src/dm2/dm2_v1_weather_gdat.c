@@ -30,18 +30,6 @@ static int dm2_weather_text_has_nul(const uint8_t *text, size_t size)
     return text && memchr(text, '\0', size) != NULL;
 }
 
-const uint8_t *dm2_v1_asset_load_text_sized(
-    const DM2_V1_AssetLoader *loader, int category, int index, int field,
-    size_t *out_size)
-{
-    /* skproject QUERY_GDAT_TEXT is a typed GDAT text/raw query.  Keep this
-     * exact so weather command strings cannot borrow an image, word value, or
-     * unrelated raw payload that happens to share category/index/field. */
-    return dm2_v1_asset_load_typed_sized(loader, category, index,
-                                         DM2_GDAT_ENTRY_TYPE_TEXT, field,
-                                         out_size);
-}
-
 int dm2_v1_asset_load_image_metadata(
     const DM2_V1_AssetLoader *loader, int category, int index, int field,
     DM2_V1_GdatImageMetadata *out_metadata)
