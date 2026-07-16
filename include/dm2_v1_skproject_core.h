@@ -773,6 +773,43 @@ typedef struct {
     int blocked_leader_hand_cooldown;
 } DM2_V1_SkprojectAdjustUiEventReceipt;
 
+typedef struct {
+    int valid;
+    uint8_t cls4_input;
+    uint16_t rect_no;
+    uint16_t option_mask;
+    uint16_t active_mask;
+    uint8_t cls4_drawn;
+    uint8_t incremented_for_active_option;
+    uint8_t gdat_category;
+    uint8_t gdat_cls2;
+    int16_t alpha;
+} DM2_V1_SkprojectCharsheetOptionIconReceipt;
+
+typedef struct {
+    uint8_t category;
+    uint8_t index;
+    uint8_t entry;
+} DM2_V1_SkprojectCommandSlotItem;
+
+typedef struct {
+    int valid;
+    uint16_t slot;
+    uint8_t ww;
+    uint8_t magical_map_flags;
+    uint8_t used_container_icon;
+    uint8_t used_interface_icon;
+    uint8_t icon_category;
+    uint8_t icon_index;
+    uint8_t icon_entry;
+    uint16_t icon_button_id;
+    uint16_t name_button_id;
+    uint8_t requested_name_string;
+    uint16_t foreground_color;
+    uint16_t background_color;
+    uint8_t blocked_missing_item;
+} DM2_V1_SkprojectDrawCmdSlotReceipt;
+
 #define DM2_V1_SKPROJECT_FONT_PLANE_BYTES (6u * 128u)
 #define DM2_V1_SKPROJECT_FONT_PIXELS 24u
 #define DM2_V1_SKPROJECT_TEXT_LIMIT 127u
@@ -1239,6 +1276,19 @@ int dm2_v1_skproject_adjust_ui_event(
     const DM2_V1_SkprojectUiChampionState *champions,
     uint16_t champion_count,
     DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
+int dm2_v1_skproject_draw_charsheet_option_icon(
+    uint8_t cls4,
+    uint16_t rect_no,
+    uint16_t option_mask,
+    uint16_t active_mask,
+    DM2_V1_SkprojectCharsheetOptionIconReceipt *out_receipt);
+int dm2_v1_skproject_draw_cmd_slot(
+    uint16_t slot,
+    uint8_t ww,
+    uint8_t magical_map_flags,
+    uint8_t held_container_type,
+    const DM2_V1_SkprojectCommandSlotItem *item,
+    DM2_V1_SkprojectDrawCmdSlotReceipt *out_receipt);
 int dm2_v1_skproject_query_font(
     const uint8_t *font_plane,
     uint8_t glyph,

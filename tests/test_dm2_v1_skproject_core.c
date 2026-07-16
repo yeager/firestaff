@@ -1494,6 +1494,9 @@ static void test_adjust_ui_event(void)
     int16_t positions[4] = { 2, -1, 0, 1 };
     DM2_V1_SkprojectUiEvent event;
     DM2_V1_SkprojectAdjustUiEventReceipt receipt;
+    DM2_V1_SkprojectCharsheetOptionIconReceipt option_icon;
+    DM2_V1_SkprojectCommandSlotItem slot_item;
+    DM2_V1_SkprojectDrawCmdSlotReceipt cmd_slot;
 
     memset(champions, 0, sizeof(champions));
     for (uint16_t i = 0; i < 4u; ++i) {
@@ -1553,6 +1556,49 @@ static void test_adjust_ui_event(void)
               &event, 0u, positions, champions, 4u, &receipt) == 1 &&
               event.event == 50u && receipt.untouched_non_adjustable_event,
           "ADJUST_UI_EVENT leaves unrelated UI events untouched");
+
+    CHECK(dm2_v1_skproject_draw_charsheet_option_icon(
+              4u, 0x123u, 0x0002u, 0x0002u, &option_icon) == 1 &&
+              option_icon.valid &&
+              option_icon.incremented_for_active_option &&
+              option_icon.cls4_drawn == 5u &&
+              option_icon.gdat_category == 7u &&
+              option_icon.gdat_cls2 == 0u &&
+              option_icon.alpha == -1,
+          "DRAW_CHARSHEET_OPTION_ICON increments cls4 for active option mask before static GDAT draw");
+    CHECK(dm2_v1_skproject_draw_charsheet_option_icon(
+              4u, 0x123u, 0x0002u, 0x0004u, &option_icon) == 1 &&
+              !option_icon.incremented_for_active_option &&
+              option_icon.cls4_drawn == 4u,
+          "DRAW_CHARSHEET_OPTION_ICON preserves cls4 when option mask is inactive");
+
+    slot_item = (DM2_V1_SkprojectCommandSlotItem){ 9u, 3u, 12u };
+    CHECK(dm2_v1_skproject_draw_cmd_slot(
+              2u, 1u, 0u, 7u, &slot_item, &cmd_slot) == 1 &&
+              cmd_slot.valid &&
+              cmd_slot.used_interface_icon &&
+              cmd_slot.icon_category == 1u &&
+              cmd_slot.icon_index == 4u &&
+              cmd_slot.icon_entry == 0x16u &&
+              cmd_slot.icon_button_id == 0x41u &&
+              cmd_slot.name_button_id == 0x44u &&
+              cmd_slot.requested_name_string &&
+              cmd_slot.foreground_color == 15u &&
+              cmd_slot.background_color == 0x4000u,
+          "DRAW_CMD_SLOT normal route draws interface icon and command name string");
+    CHECK(dm2_v1_skproject_draw_cmd_slot(
+              2u, 1u, 1u, 7u, &slot_item, &cmd_slot) == 1 &&
+              cmd_slot.used_container_icon &&
+              cmd_slot.icon_category == 20u &&
+              cmd_slot.icon_index == 7u &&
+              cmd_slot.icon_entry == 0x4au &&
+              cmd_slot.icon_button_id == 0x70u &&
+              !cmd_slot.requested_name_string,
+          "DRAW_CMD_SLOT magical-map route draws held-container icon only");
+    CHECK(dm2_v1_skproject_draw_cmd_slot(
+              2u, 1u, 0u, 7u, 0, &cmd_slot) == 0 &&
+              cmd_slot.blocked_missing_item,
+          "DRAW_CMD_SLOT fails closed without command slot item data");
 }
 
 static void test_gfx_str_helpers(void)
