@@ -405,6 +405,20 @@ typedef struct {
     int                     csbwin_extended_level_index_present;
     uint16_t                csbwin_extended_level_dsa_index[64][32];
     CSB_V1_ChaosMagicState  csbwin_extended_dsa_state;
+    int                     csbwin_global_variables_valid;
+    uint32_t                csbwin_global_variable_count;
+    uint32_t                csbwin_global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
+    int                     csbwin_overlay_palette_valid;
+    uint32_t                csbwin_overlay_palette_tail_fnv1a;
+    uint8_t                 csbwin_overlay_palette[CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
+    int                     csbwin_saves_disabled;
+    uint32_t                csbwin_delete_duplicate_timers;
+    uint32_t                csbwin_debugging_data;
+    uint32_t                csbwin_csbgraphics_signature_data;
+    uint32_t                csbwin_graphics_signature_data;
+    uint32_t                csbwin_version_data;
+    CSB_V1_CSBWinDSATracingReport
+                            csbwin_dsa_tracing;
     int                     csbwin_body_runtime_summary_valid;
     int16_t                 csbwin_character_tail_brightness;
     uint8_t                 csbwin_character_tail_see_thru_walls;
@@ -470,6 +484,10 @@ typedef struct {
     struct ExplosionList_Compat explosions;
     CsbV1AudioRuntime audio_runtime;
     CSB_V1_SkinCache skin_cache;
+    int                     csbwin_skin_cache_tail_receipt_valid;
+    int                     csbwin_skin_cache_tail_valid;
+    size_t                  csbwin_skin_cache_tail_size;
+    uint32_t                csbwin_skin_cache_tail_fnv1a;
     int                     object_name_table_valid;
     char                    object_names[CSB_V1_OBJECT_NAME_COUNT]
                                             [CSB_V1_OBJECT_NAME_MAX_CHARS + 1];

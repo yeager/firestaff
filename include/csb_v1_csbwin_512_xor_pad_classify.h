@@ -353,6 +353,7 @@ typedef struct {
     uint8_t ubyte9;
     uint16_t sequence;
     uint8_t level;
+    uint16_t source_index;
 } CSB_V1_CSBWin512TimerSummary;
 
 typedef struct {

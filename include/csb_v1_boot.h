@@ -1102,6 +1102,9 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int special_palette;
     int title_special_palette;
     uint32_t frame_route_hash;
+    uint32_t hud_inventory_pixel_hash;
+    uint32_t hud_resurrect_pixel_hash;
+    uint32_t hud_binding_hash;
     uint32_t source_tick;
     uint32_t session_generation;
     CSB_V1_StartupStage_PC34 stage;
