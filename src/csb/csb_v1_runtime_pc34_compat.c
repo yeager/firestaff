@@ -89,6 +89,32 @@ static int csb_v1_runtime_dsa_has_wing_character(void *user,
 static int csb_v1_runtime_dsa_set_wing_talents(void *user,
                                                uint16_t fingerprint,
                                                uint32_t talents);
+static void csb_v1_runtime_add_party_steal_skill_experience(
+    CSB_V1_RuntimeProfile *profile,
+    int amount);
+static void csb_v1_runtime_trigger_remote_sensor_event_after(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell,
+    int delay);
+static int csb_v1_runtime_append_unmerged_map_timer(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_Event_V1 *event);
+static int csb_v1_runtime_square_contains_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int level,
+    int map_x,
+    int map_y);
+static int csb_v1_runtime_dsa_get_skin(void *user,
+                                       uint32_t location,
+                                       uint8_t *out_skin);
+static int csb_v1_runtime_dsa_set_skin(void *user,
+                                       uint32_t location,
+                                       uint8_t skin);
 static int csb_v1_runtime_dsa_get_info(void *user, uint16_t thing,
                                         int *out_selector, int *out_state,
                                         int *out_parameter_a,
@@ -2250,6 +2276,8 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     uint16_t source_queue_slots[DM1_DISPATCH_MAX_PER_TICK];
     uint16_t source_event_indices[DM1_DISPATCH_MAX_PER_TICK];
     uint8_t source_generator_consumed[DM1_DISPATCH_MAX_PER_TICK] = { 0 };
+    int source_count = 0;
+    int i;
     int dispatched;
 
     /* Source: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
@@ -6106,7 +6134,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 *inout_thing,
                 *inout_map_index,
                 *inout_map_x,
-                *inout_map_y);
+                *inout_map_y,
+                1);
             continue;
         }
         if ((raw_square & 0x08) == 0) break;
@@ -6158,7 +6187,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             *inout_thing,
             *inout_map_index,
             *inout_map_x,
-            *inout_map_y);
+            *inout_map_y,
+            1);
         if (self_target) break;
     }
     /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
@@ -6234,7 +6264,8 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
         placed_thing,
         map_index,
         map_x,
-        map_y);
+        map_y,
+        1);
     return csb_v1_runtime_apply_object_consequences_at_square(
                profile,
                dungeon,
@@ -6490,7 +6521,8 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
                 thing,
                 drop_level,
                 drop_x,
-                drop_y);
+                drop_y,
+                1);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
                 profile,
                 dungeon,
@@ -6588,7 +6620,8 @@ static void csb_v1_runtime_drop_group_slot_possessions(
                 dropped_thing,
                 drop_level,
                 drop_x,
-                drop_y);
+                drop_y,
+                1);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
                 profile,
                 dungeon,
@@ -8588,12 +8621,14 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     uint16_t placed_thing,
     int level,
     int map_x,
-    int map_y)
+    int map_y,
+    int add_thing)
 {
     int raw_square;
     int first_thing;
     int thing;
     int object_type;
+    int placed_thing_type;
     int guard;
 
     if (!profile || !dungeon || !dungeon->raw_data ||
@@ -11830,6 +11865,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     int first_thing;
     int thing;
     int guard;
+    int party_square = 0;
 
     if (!profile || !result) return;
     dungeon = (profile->dungeon_handle)
@@ -12146,6 +12182,72 @@ static void csb_v1_runtime_trigger_remote_sensor_event(
     event.c_cell = (uint8_t)target_cell;
     event.c_effect = (uint8_t)sensor_effect;
     (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_trigger_remote_sensor_event_after(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell,
+    int delay)
+{
+    uint32_t old_time;
+    if (!profile) return;
+    old_time = profile->game_time;
+    if (delay > 0) profile->game_time += (uint32_t)delay;
+    csb_v1_runtime_trigger_remote_sensor_event(profile, level, sensor_effect,
+                                               target_x, target_y, target_cell);
+    profile->game_time = old_time;
+}
+
+static void csb_v1_runtime_add_party_steal_skill_experience(
+    CSB_V1_RuntimeProfile *profile,
+    int amount)
+{
+    int champion_index;
+    int delta = amount > 0 ? amount : 1;
+    if (!profile || !profile->party_state_valid) return;
+    for (champion_index = 0;
+         champion_index < profile->party_state.ChampionCount &&
+             champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        profile->party_state.Champions[champion_index].SkillExperience[0] +=
+            (uint16_t)delta;
+    }
+}
+
+static int csb_v1_runtime_append_unmerged_map_timer(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_Event_V1 *event)
+{
+    if (!profile || !event) return -1;
+    return dm1v1_event_add(&profile->timeline_queue, event);
+}
+
+static int csb_v1_runtime_square_contains_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int current;
+    int guard;
+    if (!dungeon || level < 0 || level >= dungeon->level_count) return 0;
+    current = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+    for (guard = 0;
+         guard < 128 && current >= 0 && current != 0xFFFE && current != 0xFFFF;
+         ++guard) {
+        const uint8_t *record;
+        if ((uint16_t)current == thing) return 1;
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)current, NULL, NULL, NULL);
+        if (!record) break;
+        current = (int)((uint16_t)record[0] | ((uint16_t)record[1] << 8));
+    }
+    return 0;
 }
 
 static uint8_t *csb_v1_runtime_square_byte_ptr(
@@ -14119,6 +14221,7 @@ const char *csb_v1_runtime_get_bonus_dungeon_path(
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
                                       const struct DM1_Event_V1 *event)
 {
+    int i;
     if (!profile || !event) return -1;
     profile->timeline_queue.gameTick = profile->game_time;
 
@@ -17046,6 +17149,56 @@ static int csb_v1_runtime_dsa_get_info(void *user, uint16_t thing,
     *out_parameter_b = (int)((uint16_t)record[6] |
                              ((uint16_t)record[7] << 8));
     return 1;
+}
+
+static int csb_v1_runtime_dsa_get_skin(void *user,
+                                       uint32_t location,
+                                       uint8_t *out_skin)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_RuntimeSkinCacheLookupCtx lookup_ctx;
+    int level = (int)((location >> 10) & 0x3fu);
+    int x = (int)((location >> 5) & 0x1fu);
+    int y = (int)(location & 0x1fu);
+    if (!profile || !out_skin || !profile->dungeon_handle ||
+        level < 0 || level >= profile->dungeon_handle->level_count) {
+        return 0;
+    }
+    memset(&lookup_ctx, 0, sizeof(lookup_ctx));
+    lookup_ctx.profile = profile;
+    lookup_ctx.dungeon = profile->dungeon_handle;
+    *out_skin = csb_v1_skin_cache_get_skin(
+        &profile->skin_cache,
+        csb_v1_runtime_skin_cache_record_lookup,
+        &lookup_ctx,
+        level,
+        profile->dungeon_handle->level_widths[level],
+        profile->dungeon_handle->level_heights[level],
+        x,
+        y);
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_set_skin(void *user,
+                                       uint32_t location,
+                                       uint8_t skin)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    int level = (int)((location >> 10) & 0x3fu);
+    int x = (int)((location >> 5) & 0x1fu);
+    int y = (int)(location & 0x1fu);
+    if (!profile || !profile->dungeon_handle ||
+        level < 0 || level >= profile->dungeon_handle->level_count) {
+        return 0;
+    }
+    return csb_v1_skin_cache_set_skin(
+        &profile->skin_cache,
+        level,
+        profile->dungeon_handle->level_widths[level],
+        profile->dungeon_handle->level_heights[level],
+        x,
+        y,
+        skin);
 }
 
 int csb_v1_runtime_read_csbwin_extended_cell_flags(

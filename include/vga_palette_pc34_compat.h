@@ -32,6 +32,9 @@
  * word was lit with a brown/gold palette that made it look red.
  */
 #define VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS  3
+#define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS
+#define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS    VGA_PALETTE_PC34_SPECIAL_TITLE
+#define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES  VGA_PALETTE_PC34_SPECIAL_TITLE
 
 /* Brightest palette (index 0) — title/menu/brightest dungeon */
 extern const unsigned char G9010_auc_VgaPaletteBrightest_Compat[16][3];
