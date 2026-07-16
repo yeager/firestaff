@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 HUD/dialog/item GUI receipt bundle: mapped
+  `DM2_DRAW_ICON_PICT_ENTRY`, `DM2_DRAW_DIALOGUE_PROGRESS`,
+  `DM2_DRAW_DIALOGUE_PARTS_PICT`, `DM2_DRAW_DIALOGUE_PICT`,
+  `DM2_DRAW_WAKE_UP_TEXT`, `DM2_DRAW_PLAYER_3STAT_HEALTH_BAR`,
+  `DM2_DRAW_PLAYER_NAME_AT_CMDSLOT`, `DM2_DRAW_PLAYER_DAMAGE`,
+  `DM2_DRAW_SPELL_TO_BE_CAST`, `DM2_DRAW_SPELL_PANEL`,
+  `DM2_DRAW_ITEM_IN_HAND`, `DM2_DRAW_ITEM_ICON`, `DM2_DRAW_ITEM_SURVEY`,
+  `DM2_DRAW_HAND_ACTION_ICONS`, and covered SKWIN aliases to
+  skproject-backed narrow receipts. The receipts bind real GDAT image/text,
+  button, palette and blit requests without adding synthetic visuals.
+
 - 2026-07-16 DM2 magic-map/attack-dir receipts: mapped
   `DM2_DRAW_MAJIC_MAP`, `DRAW_MAJIC_MAP`, `DM2_DRAW_PLAYER_ATTACK_DIR`,
   `DRAW_PLAYER_ATTACK_DIR`, plus SKWIN aliases `DRAW_PLAYER_3STAT_PANE` and

@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1447; 2984 total open rows
+  shared DM1/CSB 1537, DM2 1383; 2920 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -57,6 +57,16 @@
     `DRAW_PLAYER_ATTACK_DIR`, `DRAW_PLAYER_3STAT_PANE`, and
     `DRAW_PLAYER_3STAT_TEXT` now have skproject-backed receipts or aliases.
     Remaining adjacent work is full live pixel rendering for the magic map.
+  - 2026-07-16 DM2 HUD/dialog/item GUI update:
+    `DM2_DRAW_ICON_PICT_ENTRY`, `DM2_DRAW_DIALOGUE_PROGRESS`,
+    `DM2_DRAW_DIALOGUE_PARTS_PICT`, `DM2_DRAW_DIALOGUE_PICT`,
+    `DM2_DRAW_WAKE_UP_TEXT`, `DM2_DRAW_PLAYER_3STAT_HEALTH_BAR`,
+    `DM2_DRAW_PLAYER_NAME_AT_CMDSLOT`, `DM2_DRAW_PLAYER_DAMAGE`,
+    `DM2_DRAW_SPELL_TO_BE_CAST`, `DM2_DRAW_SPELL_PANEL`,
+    `DM2_DRAW_ITEM_IN_HAND`, `DM2_DRAW_ITEM_ICON`, `DM2_DRAW_ITEM_SURVEY`,
+    `DM2_DRAW_HAND_ACTION_ICONS`, and their covered SKWIN aliases now have
+    narrow skproject-backed receipts. Remaining adjacent work is full live
+    decoded GDAT pixel consumption in HUD/menu/dungeon.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

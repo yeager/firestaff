@@ -241,6 +241,22 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int blocked_missing_button_group;
+    uint8_t category;
+    uint8_t cls2;
+    uint8_t entry;
+    uint16_t button_id;
+    int16_t alpha_mask;
+    int16_t src_x;
+    int16_t src_y;
+    uint8_t requested_image_entry;
+    uint8_t requested_blit_rect;
+    uint8_t requested_local_palette;
+    uint8_t requested_icon_pict_buff;
+} DM2_V1_SkprojectDrawIconPictEntryReceipt;
+
+typedef struct {
+    int valid;
     int blocked_missing_picture;
     int blocked_invalid_dimensions;
     int blocked_missing_blit_rect;
@@ -270,6 +286,44 @@ typedef struct {
     uint8_t requested_gray_blit;
     uint8_t requested_dirty_rect;
 } DM2_V1_SkprojectDrawGrayOverlayReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_inactive;
+    uint16_t progress_per_mille;
+    uint16_t expanded_rect_no;
+    uint16_t computed_width;
+    uint16_t previous_width;
+    uint8_t requested_fill_backbuff_rect;
+    uint8_t requested_dialogue_to_screen;
+} DM2_V1_SkprojectDialogueProgressReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_bitmap;
+    int blocked_missing_rect;
+    int dest_is_screen;
+    uint16_t src_width;
+    uint16_t dest_width;
+    int16_t src_x;
+    int16_t src_y;
+    int16_t alpha_mask;
+    uint8_t source_bpp;
+    uint8_t dest_bpp;
+    uint8_t requested_blit;
+    uint8_t requested_palette;
+} DM2_V1_SkprojectDialoguePictReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t requested_fill_entire_pict;
+    uint8_t gdat_text_category;
+    uint8_t gdat_text_cls2;
+    uint8_t gdat_text_entry;
+    uint16_t text_rect_no;
+    uint16_t foreground_color;
+    uint8_t requested_vp_rc_str;
+} DM2_V1_SkprojectWakeUpTextReceipt;
 
 #define DM2_V1_SKPROJECT_MAP_RECORD_END 0xfffeu
 
@@ -918,6 +972,23 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint16_t object_id;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls4;
+    uint16_t rect_no;
+    uint8_t slot_index;
+    uint8_t item_icon_entry;
+    uint8_t background_entry;
+    uint8_t highlight_entry;
+    uint8_t requested_background_dialogue;
+    uint8_t requested_highlight_overlay;
+    uint8_t requested_icon_entry;
+    int blocked_null_object;
+} DM2_V1_SkprojectDrawItemIconReceipt;
+
+typedef struct {
+    int valid;
     uint8_t traversed_records;
     uint8_t drawn_items;
     uint16_t first_button_id;
@@ -926,6 +997,43 @@ typedef struct {
     int stopped_at_limit;
     int blocked_missing_chain;
 } DM2_V1_SkprojectDrawContainerSurveyReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t item_icon_entry;
+    uint16_t width;
+    uint16_t height;
+    uint8_t requested_image_entry;
+    uint8_t requested_local_palette;
+    uint8_t requested_4bpp_blit;
+    int blocked_missing_item_record;
+} DM2_V1_SkprojectDrawItemInHandReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    uint8_t show_details;
+    uint8_t used_scroll_text;
+    uint8_t used_item_icon;
+    uint16_t item_icon_rect;
+    int blocked_null_object;
+} DM2_V1_SkprojectDrawItemSurveyReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    uint16_t object_id;
+    uint8_t primary_action_icon;
+    uint8_t secondary_action_icon;
+    uint8_t selected_hand;
+    uint16_t action_button_id;
+    uint8_t requested_dialogue_pict;
+    uint8_t requested_icon_entry;
+    int blocked_missing_object;
+} DM2_V1_SkprojectDrawHandActionIconsReceipt;
 
 typedef struct {
     int valid;
@@ -981,6 +1089,63 @@ typedef struct {
     uint8_t reset_group_size;
     int blocked_button_group_busy;
 } DM2_V1_SkprojectDrawPlayer3StatPaneReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    uint16_t rect_no;
+    uint8_t queried_expanded_rect;
+    uint8_t drew_health;
+    uint8_t drew_stamina;
+    uint8_t drew_mana;
+    uint16_t hms_rect_base;
+    int blocked_missing_rect;
+} DM2_V1_SkprojectDrawPlayer3StatHealthBarReceipt;
+
+typedef struct {
+    int valid;
+    DM2_V1_SkprojectGdatIconPlan left_name_icon;
+    DM2_V1_SkprojectGdatIconPlan right_name_icon;
+    uint16_t name_button_id;
+    uint16_t foreground_color;
+    uint16_t background_color;
+    uint8_t used_event_hero_color;
+    uint8_t requested_name_string;
+} DM2_V1_SkprojectDrawPlayerNameAtCmdSlotReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    uint16_t damage_value;
+    DM2_V1_SkprojectGdatIconPlan damage_icon;
+    uint16_t text_button_id;
+    uint16_t foreground_color;
+    uint16_t background_color;
+    char damage_text[4];
+} DM2_V1_SkprojectDrawPlayerDamageReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t draw_frame_icon;
+    uint8_t rune_count;
+    uint16_t first_rune_button_id;
+    uint16_t last_rune_button_id;
+    uint8_t requested_clear_spell_area;
+    DM2_V1_SkprojectGdatIconPlan frame_icon;
+    uint16_t foreground_color;
+    uint16_t background_color;
+} DM2_V1_SkprojectDrawSpellToBeCastReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t nrunes;
+    DM2_V1_SkprojectGdatIconPlan panel_icon;
+    uint8_t drew_rune_choice_buttons;
+    uint16_t first_choice_button_id;
+    uint16_t last_choice_button_id;
+    uint8_t requested_spell_to_be_cast;
+    uint8_t requested_player_attack_dir;
+} DM2_V1_SkprojectDrawSpellPanelReceipt;
 
 typedef struct {
     int valid;
@@ -1246,6 +1411,14 @@ int dm2_v1_skproject_draw_icon_pict_buff(
     uint16_t dest_stride,
     const uint8_t *local_palette,
     DM2_V1_SkprojectDrawIconPictBuffReceipt *out_receipt);
+int dm2_v1_skproject_draw_icon_pict_entry(
+    uint8_t category,
+    uint8_t cls2,
+    uint8_t entry,
+    int has_button_group,
+    uint16_t button_id,
+    int16_t alpha_mask,
+    DM2_V1_SkprojectDrawIconPictEntryReceipt *out_receipt);
 int dm2_v1_skproject_draw_def_pict(
     const DM2_V1_SkprojectExtendedPictureRef *picture,
     uint16_t rect_no,
@@ -1264,6 +1437,28 @@ int dm2_v1_skproject_draw_gray_overlay(
     uint16_t dest_stride,
     uint16_t overlay_pattern,
     DM2_V1_SkprojectDrawGrayOverlayReceipt *out_receipt);
+int dm2_v1_skproject_draw_dialogue_progress(
+    int dballoc_active,
+    uint16_t progress_per_mille,
+    uint16_t expanded_rect_width,
+    uint16_t previous_width,
+    DM2_V1_SkprojectDialogueProgressReceipt *out_receipt);
+int dm2_v1_skproject_draw_dialogue_pict(
+    int has_src_bitmap,
+    int has_dest_bitmap,
+    int has_rect,
+    uint16_t src_width,
+    uint16_t dest_bitmap_width,
+    int dest_is_screen,
+    int16_t src_x,
+    int16_t src_y,
+    int16_t alpha_mask,
+    uint8_t source_bpp,
+    uint8_t dest_bpp,
+    const uint8_t *palette,
+    DM2_V1_SkprojectDialoguePictReceipt *out_receipt);
+int dm2_v1_skproject_draw_wake_up_text(
+    DM2_V1_SkprojectWakeUpTextReceipt *out_receipt);
 int dm2_v1_skproject_move_side_offset(
     uint16_t record_word_e,
     int16_t direction_delta,
@@ -1588,10 +1783,38 @@ int dm2_v1_skproject_draw_container_panel(
     uint8_t right_panel,
     const uint16_t items[8],
     DM2_V1_SkprojectDrawContainerPanelReceipt *out_receipt);
+int dm2_v1_skproject_draw_item_icon(
+    uint16_t object_id,
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t cls4,
+    uint16_t rect_no,
+    uint8_t slot_index,
+    int selected,
+    DM2_V1_SkprojectDrawItemIconReceipt *out_receipt);
 int dm2_v1_skproject_draw_container_survey(
     const uint16_t *record_chain,
     uint16_t record_count,
     DM2_V1_SkprojectDrawContainerSurveyReceipt *out_receipt);
+int dm2_v1_skproject_draw_item_in_hand(
+    uint16_t object_id,
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t cls4,
+    uint16_t width,
+    uint16_t height,
+    DM2_V1_SkprojectDrawItemInHandReceipt *out_receipt);
+int dm2_v1_skproject_draw_item_survey(
+    uint16_t object_id,
+    uint8_t show_details,
+    DM2_V1_SkprojectDrawItemSurveyReceipt *out_receipt);
+int dm2_v1_skproject_draw_hand_action_icons(
+    uint16_t player,
+    uint16_t object_id,
+    uint8_t primary_action_icon,
+    uint8_t secondary_action_icon,
+    uint8_t selected_hand,
+    DM2_V1_SkprojectDrawHandActionIconsReceipt *out_receipt);
 int dm2_v1_skproject_draw_item_on_wood_panel(
     uint16_t player,
     uint16_t possession_index,
@@ -1618,6 +1841,25 @@ int dm2_v1_skproject_draw_player_3stat_pane(
     uint8_t button_group_busy,
     uint8_t clear_group_size,
     DM2_V1_SkprojectDrawPlayer3StatPaneReceipt *out_receipt);
+int dm2_v1_skproject_draw_player_3stat_health_bar(
+    uint16_t player,
+    int rect_exists,
+    DM2_V1_SkprojectDrawPlayer3StatHealthBarReceipt *out_receipt);
+int dm2_v1_skproject_draw_player_name_at_cmdslot(
+    uint16_t curacthero,
+    uint16_t event_heroidx,
+    DM2_V1_SkprojectDrawPlayerNameAtCmdSlotReceipt *out_receipt);
+int dm2_v1_skproject_draw_player_damage(
+    uint16_t player,
+    uint16_t damage_value,
+    DM2_V1_SkprojectDrawPlayerDamageReceipt *out_receipt);
+int dm2_v1_skproject_draw_spell_to_be_cast(
+    const char *runes,
+    int draw_frame_icon,
+    DM2_V1_SkprojectDrawSpellToBeCastReceipt *out_receipt);
+int dm2_v1_skproject_draw_spell_panel(
+    uint8_t nrunes,
+    DM2_V1_SkprojectDrawSpellPanelReceipt *out_receipt);
 int dm2_v1_skproject_draw_player_attack_dir(
     uint16_t champion_index,
     uint8_t squad_gfx_set,

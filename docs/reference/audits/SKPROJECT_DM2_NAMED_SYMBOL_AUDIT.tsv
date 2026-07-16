@@ -475,16 +475,16 @@ DM2_gfxstr_24a5_0732	SKULLWIN	SKULLWIN/c_gfx_str.cpp	717	src/dm2/dm2_v1_skprojec
 DM2_DISPLAY_HINT_TEXT	SKULLWIN	SKULLWIN/c_gfx_str.cpp	775	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_SCROLLBOX_MESSAGE	SKULLWIN	SKULLWIN/c_gfx_str.cpp	846	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_ICON_PICT_BUFF	SKULLWIN	SKULLWIN/c_gui_draw.cpp	31	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_icon_pict_buff; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_ICON_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	58		MISSING
-DM2_DRAW_DIALOGUE_PROGRESS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	79		MISSING
-DM2_DRAW_DIALOGUE_PARTS_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	97		MISSING
-DM2_DRAW_DIALOGUE_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	117		MISSING
-DM2_DRAW_WAKE_UP_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	147		MISSING
-DM2_DRAW_PLAYER_3STAT_HEALTH_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	167		MISSING
+DM2_DRAW_ICON_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	58		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_DIALOGUE_PROGRESS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	79		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_DIALOGUE_PARTS_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	97		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_DIALOGUE_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	117		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_WAKE_UP_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	147		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_PLAYER_3STAT_HEALTH_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	167		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CUR_MAX_HMS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	238	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_PLAYER_3STAT_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	260	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_PLAYER_NAME_AT_CMDSLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	281		MISSING
-DM2_DRAW_PLAYER_DAMAGE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	289		MISSING
+DM2_DRAW_PLAYER_NAME_AT_CMDSLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	281		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_PLAYER_DAMAGE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	289		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CHIP_OF_MAGIC_MAP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	311		MISSING
 DM2_QUERY_GDAT_SQUAD_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	390		MISSING
 DM2_DRAW_CRYOCELL_LEVER	SKULLWIN	SKULLWIN/c_gui_draw.cpp	414	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -495,28 +495,28 @@ DM2_guidraw_0b36_0c52	SKULLWIN	SKULLWIN/c_gui_draw.cpp	617		MISSING
 DM2_DRAW_PLAYER_3STAT_PANE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	642	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_29ee_00a3	SKULLWIN	SKULLWIN/c_gui_draw.cpp	683		MISSING
 DM2_DRAW_CMD_SLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	693	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_SPELL_TO_BE_CAST	SKULLWIN	SKULLWIN/c_gui_draw.cpp	714		MISSING
+DM2_DRAW_SPELL_TO_BE_CAST	SKULLWIN	SKULLWIN/c_gui_draw.cpp	714		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_PLAYER_ATTACK_DIR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	733	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_SPELL_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	805		MISSING
+DM2_DRAW_SPELL_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	805		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_SHOW_ATTACK_RESULT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	864		MISSING
 DM2_guidraw_0b36_105b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1016		MISSING
 DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1030		MISSING
 DM2_guidraw_24a5_0e82	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1126		MISSING
 DM2_DRAW_FOOD_WATER_POISON_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1215	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_ITEM_STATS_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1232	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_stats_bar; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_guidraw_2405_014a	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1307		MISSING
-DM2_DRAW_ITEM_IN_HAND	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1516		MISSING
+DM2_guidraw_2405_014a	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1307		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ITEM_IN_HAND	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1516		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CONTAINER_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1540	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_2405_011f	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1626		MISSING
-DM2_guidraw_2405_00ec	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1638		MISSING
-DM2_DRAW_ITEM_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1656		MISSING
+DM2_guidraw_2405_00ec	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1638		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ITEM_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1656		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CONTAINER_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1795	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1824	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_2e62_03b5	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1833		MISSING
-DM2_DRAW_SCROLL_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1996		MISSING
-DM2_DRAW_ITEM_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2072		MISSING
+DM2_DRAW_SCROLL_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1996		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ITEM_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2072		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_ITEM_ON_WOOD_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2234	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_on_wood_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_HAND_ACTION_ICONS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2341		MISSING
+DM2_DRAW_HAND_ACTION_ICONS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2341		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_MAP_CHIP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2412		MISSING
 DM2_guidraw_29ee_1d03	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3499		MISSING
 DM2_guidraw_29ee_1946	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3561		MISSING
@@ -1449,7 +1449,7 @@ DRAW_ITEM_ON_WOOD_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7262	src/dm2/dm2_v1_skproject_
 FIRE_BLIT_TO_MEMORY_ROW_4TO8BPP	SKWIN	SKWIN/SkWinCore.cpp	7368		MISSING
 _44c8_1aca	SKWIN	SKWIN/SkWinCore.cpp	7459		MISSING
 DRAW_GRAY_OVERLAY	SKWIN	SKWIN/SkWinCore.cpp	7513	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_gray_overlay; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_HAND_ACTION_ICONS	SKWIN	SKWIN/SkWinCore.cpp	7536	src/dm2/dm2_v1_inventory_panel.c:562	UNCERTAIN
+DRAW_HAND_ACTION_ICONS	SKWIN	SKWIN/SkWinCore.cpp	7536	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_hand_action_icons; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN hand-action icon route; runtime inventory panel remains an additional consumer.
 DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKWIN	SKWIN/SkWinCore.cpp	7594		MISSING
 __CHECK_ROOM_FOR_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7682		MISSING
 DRAW_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	7714	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_moneybox; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -1457,10 +1457,10 @@ DRAW_CONTAINER_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7767	src/dm2/dm2_v1_skproject_cor
 DRAW_SQUAD_POS_INTERFACE	SKWIN	SKWIN/SkWinCore.cpp	7817		MISSING
 DRAW_STRONG_TEXT	SKWIN	SKWIN/SkWinCore.cpp	7910		MISSING
 DRAW_NAME_STR	SKWIN	SKWIN/SkWinCore.cpp	7948	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_PLAYER_NAME_AT_CMDSLOT	SKWIN	SKWIN/SkWinCore.cpp	7983		MISSING
+DRAW_PLAYER_NAME_AT_CMDSLOT	SKWIN	SKWIN/SkWinCore.cpp	7983		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 SK_STRLEN	SKWIN	SKWIN/SkWinCore.cpp	8006		MISSING
-DRAW_SPELL_TO_BE_CAST	SKWIN	SKWIN/SkWinCore.cpp	8020		MISSING
-DRAW_SPELL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	8056		MISSING
+DRAW_SPELL_TO_BE_CAST	SKWIN	SKWIN/SkWinCore.cpp	8020		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
+DRAW_SPELL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	8056		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 SK_STRSTR	SKWIN	SKWIN/SkWinCore.cpp	8099		MISSING
 QUERY_CMDSTR_TEXT	SKWIN	SKWIN/SkWinCore.cpp	8136		MISSING
 QUERY_CMDSTR_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	8187	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_cmdstr_entry_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
@@ -1548,7 +1548,7 @@ DRAW_CHARSHEET_OPTION_ICON	SKWIN	SKWIN/SkWinCore.cpp	12818	src/dm2/dm2_v1_skproj
 DRAW_PLAYER_3STAT_PANE	SKWIN	SKWIN/SkWinCore.cpp	12833	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CHAMPION_PICTURE	SKWIN	SKWIN/SkWinCore.cpp	12867	src/dm2/dm2_v2_hud_runtime.c:128	UNCERTAIN
 DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_viewport_renderer.c:5369	UNCERTAIN
-DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		MISSING
+DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041		MISSING
@@ -1564,7 +1564,7 @@ _24a5_0732	SKWIN	SKWIN/SkWinCore.cpp	13331		MISSING
 DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		MISSING
 QUERY_GDAT_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13434	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_gdat_item_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
 GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447		MISSING
-DRAW_ITEM_ICON	SKWIN	SKWIN/SkWinCore.cpp	13478	src/dm2/dm2_v1_inventory_panel.c:170	UNCERTAIN
+DRAW_ITEM_ICON	SKWIN	SKWIN/SkWinCore.cpp	13478	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN item icon route; runtime inventory panel remains an additional consumer.
 DRAW_CONTAINER_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13612	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 IS_MISCITEM_CURRENCY	SKWIN	SKWIN/SkWinCore.cpp	13634		MISSING
 COUNT_BY_COIN_TYPES	SKWIN	SKWIN/SkWinCore.cpp	13651	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
@@ -1573,7 +1573,7 @@ SK_LTOA10	SKWIN	SKWIN/SkWinCore.cpp	13776		MISSING
 MONEY_BOX_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13814		MISSING
 _2759_0155	SKWIN	SKWIN/SkWinCore.cpp	13854		MISSING
 DRAW_ITEM_STATS_BAR	SKWIN	SKWIN/SkWinCore.cpp	13894	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_stats_bar; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_ITEM_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13962	src/dm2/dm2_v1_inventory_panel.c:384	UNCERTAIN
+DRAW_ITEM_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13962	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN item survey route; runtime inventory panel remains an additional consumer.
 _2e62_03b5	SKWIN	SKWIN/SkWinCore.cpp	14236		MISSING
 DRAW_LOCAL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	14343	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 GET_PLAYER_ABILITY	SKWIN	SKWIN/SkWinCore.cpp	14379		MISSING

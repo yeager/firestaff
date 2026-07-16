@@ -349,6 +349,127 @@ static void test_palette_helpers(void)
           "DRAW_GRAY_OVERLAY returns without drawing when rect is NULL");
 }
 
+static void test_gui_receipt_helpers(void)
+{
+    DM2_V1_SkprojectDrawIconPictEntryReceipt icon_entry;
+    DM2_V1_SkprojectDialogueProgressReceipt progress;
+    DM2_V1_SkprojectDialoguePictReceipt pict;
+    DM2_V1_SkprojectWakeUpTextReceipt wake;
+    DM2_V1_SkprojectDrawPlayer3StatHealthBarReceipt health_bar;
+    DM2_V1_SkprojectDrawPlayerNameAtCmdSlotReceipt name;
+    DM2_V1_SkprojectDrawPlayerDamageReceipt damage;
+    DM2_V1_SkprojectDrawSpellToBeCastReceipt spell_cast;
+    DM2_V1_SkprojectDrawSpellPanelReceipt spell_panel;
+    DM2_V1_SkprojectDrawItemIconReceipt item_icon;
+    DM2_V1_SkprojectDrawItemInHandReceipt item_hand;
+    DM2_V1_SkprojectDrawItemSurveyReceipt item_survey;
+    DM2_V1_SkprojectDrawHandActionIconsReceipt hand_actions;
+    uint8_t palette[16] = { 0 };
+
+    CHECK(dm2_v1_skproject_draw_icon_pict_entry(
+              1u, 4u, 20u, 1, 0x3cu, -1, &icon_entry) == 1 &&
+              icon_entry.valid && icon_entry.requested_image_entry &&
+              icon_entry.requested_blit_rect &&
+              icon_entry.requested_local_palette &&
+              icon_entry.requested_icon_pict_buff,
+          "DRAW_ICON_PICT_ENTRY plans image, blit rect, palette, and icon blit");
+    CHECK(dm2_v1_skproject_draw_icon_pict_entry(
+              1u, 4u, 20u, 0, 0x3cu, -1, &icon_entry) == 0 &&
+              icon_entry.blocked_missing_button_group,
+          "DRAW_ICON_PICT_ENTRY fails closed without a button group");
+
+    CHECK(dm2_v1_skproject_draw_dialogue_progress(
+              1, 500u, 200u, 20u, &progress) == 1 &&
+              progress.valid && progress.expanded_rect_no == 474u &&
+              progress.computed_width == 100u &&
+              progress.requested_fill_backbuff_rect &&
+              progress.requested_dialogue_to_screen,
+          "DRAW_DIALOGUE_PROGRESS scales rect 474 width and requests screen update");
+    CHECK(dm2_v1_skproject_draw_dialogue_progress(
+              0, 500u, 200u, 20u, &progress) == 0 &&
+              progress.blocked_inactive,
+          "DRAW_DIALOGUE_PROGRESS is gated by active dballoc dialogue state");
+
+    CHECK(dm2_v1_skproject_draw_dialogue_pict(
+              1, 1, 1, 64u, 128u, 1, 3, 4, 12, 4u, 8u,
+              palette, &pict) == 1 &&
+              pict.valid && pict.dest_width == 320u &&
+              pict.requested_blit && pict.requested_palette,
+          "DRAW_DIALOGUE_PICT uses ORIG_SWIDTH for screen destination and records blit");
+    CHECK(dm2_v1_skproject_draw_dialogue_pict(
+              1, 1, 0, 64u, 128u, 0, 0, 0, -1, 8u, 8u,
+              0, &pict) == 0 &&
+              pict.blocked_missing_rect,
+          "DRAW_DIALOGUE_PICT fails closed without the caller rect");
+
+    CHECK(dm2_v1_skproject_draw_wake_up_text(&wake) == 1 &&
+              wake.valid && wake.gdat_text_category == 1u &&
+              wake.gdat_text_entry == 0x11u &&
+              wake.text_rect_no == 6u &&
+              wake.requested_vp_rc_str,
+          "DRAW_WAKE_UP_TEXT binds the real GDAT wake text route");
+
+    CHECK(dm2_v1_skproject_draw_player_3stat_health_bar(
+              2u, 1, &health_bar) == 1 &&
+              health_bar.valid && health_bar.rect_no == 0xbbu &&
+              health_bar.drew_health && health_bar.drew_stamina &&
+              health_bar.drew_mana,
+          "DRAW_PLAYER_3STAT_HEALTH_BAR plans the three stat bar draws");
+    CHECK(dm2_v1_skproject_draw_player_name_at_cmdslot(
+              2u, 1u, &name) == 1 &&
+              name.valid && name.used_event_hero_color &&
+              name.left_name_icon.button_id == 0x3cu &&
+              name.right_name_icon.button_id == 0x3bu &&
+              name.name_button_id == 0x3du,
+          "DRAW_PLAYER_NAME_AT_CMDSLOT emits both frame icons and name text");
+    CHECK(dm2_v1_skproject_draw_player_damage(
+              1u, 47u, &damage) == 1 &&
+              damage.valid && damage.damage_icon.button_id == 0xb2u &&
+              strcmp(damage.damage_text, "047") == 0,
+          "DRAW_PLAYER_DAMAGE binds damage icon and formatted text");
+
+    CHECK(dm2_v1_skproject_draw_spell_to_be_cast(
+              "FUL", 1, &spell_cast) == 1 &&
+              spell_cast.valid && spell_cast.draw_frame_icon &&
+              spell_cast.rune_count == 3u &&
+              spell_cast.first_rune_button_id == 0x105u &&
+              spell_cast.last_rune_button_id == 0x107u,
+          "DRAW_SPELL_TO_BE_CAST draws current rune letters on source buttons");
+    CHECK(dm2_v1_skproject_draw_spell_panel(
+              2u, &spell_panel) == 1 &&
+              spell_panel.valid &&
+              spell_panel.panel_icon.entry == 3u &&
+              spell_panel.drew_rune_choice_buttons &&
+              spell_panel.requested_player_attack_dir,
+          "DRAW_SPELL_PANEL plans rune choices, current spell, and attack dir");
+
+    CHECK(dm2_v1_skproject_draw_item_icon(
+              0x1401u, 1u, 2u, 7u, 0x2eu, 3u, 1, &item_icon) == 1 &&
+              item_icon.valid && item_icon.requested_background_dialogue &&
+              item_icon.requested_highlight_overlay &&
+              item_icon.requested_icon_entry &&
+              item_icon.item_icon_entry == 7u,
+          "DRAW_ITEM_ICON plans background, highlight, and item GDAT icon");
+    CHECK(dm2_v1_skproject_draw_item_in_hand(
+              0x1401u, 1u, 2u, 7u, 32u, 24u, &item_hand) == 1 &&
+              item_hand.valid && item_hand.requested_image_entry &&
+              item_hand.requested_local_palette &&
+              item_hand.requested_4bpp_blit,
+          "DRAW_ITEM_IN_HAND binds cls1/cls2/cls4 to a real GDAT image route");
+    CHECK(dm2_v1_skproject_draw_item_survey(
+              0x1401u, 1u, &item_survey) == 1 &&
+              item_survey.valid && item_survey.used_scroll_text &&
+              item_survey.used_item_icon &&
+              item_survey.item_icon_rect == 0x2eu,
+          "DRAW_ITEM_SURVEY routes detail text and item icon");
+    CHECK(dm2_v1_skproject_draw_hand_action_icons(
+              2u, 0x1401u, 4u, 5u, 1u, &hand_actions) == 1 &&
+              hand_actions.valid && hand_actions.action_button_id == 0x79u &&
+              hand_actions.requested_dialogue_pict &&
+              hand_actions.requested_icon_entry,
+          "DRAW_HAND_ACTION_ICONS binds action icons to player hand buttons");
+}
+
 static void test_move_admission_helpers(void)
 {
     DM2_V1_SkprojectMoveSideOffsetReceipt side;
@@ -2079,6 +2200,7 @@ int main(void)
     test_random_helpers();
     test_util_helpers();
     test_palette_helpers();
+    test_gui_receipt_helpers();
     test_move_admission_helpers();
     test_map_helpers();
     test_calc_vector_w_dir();
@@ -2158,6 +2280,11 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_LOAD_DYN4") != 0,
           "source evidence names GDAT DYN4 helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_DRAW_SPELL_PANEL") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_DRAW_ITEM_ICON") != 0,
+          "source evidence names bundled c_gui_draw receipt helpers");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
