@@ -17,6 +17,8 @@
 #define CSB_V1_DSA_FLAG_COUNT 256
 #define CSB_V1_DSA_LOADED_BYTECODE_MAGIC 0x43534244u /* 'CSBD' */
 
+static int csb_v1_csbwin_dsa_sign_extend(uint16_t value, int bits);
+
 static int csb_v1_dsa_has_operands(const CSB_V1_DSAScript *script, int count) {
     return script && count >= 0 && script->pc <= script->bytecode_len &&
            count <= script->bytecode_len - script->pc;
@@ -85,6 +87,8 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
     CSB_V1_CSBWinExtendedDSAReport report;
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_DSAImportedAction *actions = NULL;
+    CSB_V1_CSBWinDSAImportedHeader
+        headers[CSB_V1_MAX_DSA_SCRIPTS];
     size_t offset;
     int action_count = 0;
     uint16_t dsa_ordinal;
@@ -102,16 +106,35 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
         actions = calloc((size_t)report.action_count, sizeof(*actions));
         if (!actions) return -1;
     }
+    memset(headers, 0, sizeof(headers));
 
     offset = features.extension_payload_offset;
     for (dsa_ordinal = 0u; dsa_ordinal < features.dsa_count; ++dsa_ordinal) {
         uint32_t dsa_id;
+        uint32_t persistent_state;
+        uint32_t local_state;
+        uint32_t group_id;
+        uint32_t state_slot_count;
         uint32_t non_empty_states;
         uint32_t state_ordinal;
         if (offset > (size_t)size || (size_t)size - offset < 108u) goto reject;
         dsa_id = csb_v1_read_le32(bytes + offset);
-        offset += 4u + 80u + 12u;
-        offset += 4u; /* DSAState slot count, already validated by inspector. */
+        offset += 4u + 80u;
+        persistent_state = csb_v1_read_le32(bytes + offset);
+        offset += 4u;
+        local_state = csb_v1_read_le32(bytes + offset);
+        offset += 4u;
+        group_id = csb_v1_read_le32(bytes + offset);
+        offset += 4u;
+        state_slot_count = csb_v1_read_le32(bytes + offset);
+        offset += 4u;
+        if (dsa_id < CSB_V1_MAX_DSA_SCRIPTS) {
+            headers[dsa_id].valid = 1;
+            headers[dsa_id].persistent_state = persistent_state;
+            headers[dsa_id].local_state = local_state;
+            headers[dsa_id].group_id = group_id;
+            headers[dsa_id].state_slot_count = state_slot_count;
+        }
         offset += 4u; /* first displayed state */
         non_empty_states = csb_v1_read_le32(bytes + offset);
         offset += 4u;
@@ -158,6 +181,7 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
         offset != report.dsa_payload_offset + report.dsa_payload_size) goto reject;
 
     csb_v1_dsa_free_imported_actions(state);
+    memcpy(state->imported_headers, headers, sizeof(headers));
     state->imported_actions = actions;
     state->imported_action_count = action_count;
     return action_count;
