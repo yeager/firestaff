@@ -99,6 +99,35 @@ static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState)
     return menuState != NULL;
 }
 
+int M11_ResolveScaleModeForWindowMode(int requestedScaleMode, int windowMode);
+static int m11_running_from_macos_app_bundle(void);
+static int m11_map_window_pointer_to_game_source(const M11_GameViewState* gameView,
+                                                 int windowX,
+                                                 int windowY,
+                                                 int* outX,
+                                                 int* outY);
+static int m11_draw_entrance_credits_asset(M11_GameViewState* gameView,
+                                           unsigned char* framebuffer) {
+    (void)gameView;
+    (void)framebuffer;
+    return 0;
+}
+static int DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
+    const DM1_V1_EntranceFullStartRenderReceiptPc34* receipt) {
+    return receipt && receipt->realAssetCaptureProof &&
+           receipt->requiresGraphicsDat && receipt->noHostRenderInference;
+}
+static int DM1_V1_InputMenuTokenUsesHeldRepeatPc34Compat(int token) {
+    return token == M12_MENU_INPUT_LEFT || token == M12_MENU_INPUT_RIGHT ||
+           token == M12_MENU_INPUT_UP || token == M12_MENU_INPUT_DOWN ||
+           token == M12_MENU_INPUT_STRAFE_LEFT ||
+           token == M12_MENU_INPUT_STRAFE_RIGHT;
+}
+static int M12_StartupMenu_PrepareSelectedGameLaunch(
+        M12_StartupMenuState* menuState) {
+    return menuState != NULL;
+}
+
 static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
     const M12_MenuEntry* entry = NULL;
     const char* gameId = NULL;
@@ -406,8 +435,14 @@ static void m11_record_csb_presented_frame(M11_GameViewState *gameView)
     if (!gameView || gameView->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return;
     }
-    rgba = M11_Render_GetPresentedRGBA(&width, &height);
-    (void)M11_GameView_RecordCsbPresentedFrame(gameView, rgba, width, height);
+    (void)M11_Render_GetPresentedRGBA(&width, &height);
+    M11_GameView_RecordCSBPresentedIndexedFrame(
+        gameView,
+        M11_Render_GetFramebuffer(),
+        M11_FB_WIDTH,
+        M11_FB_HEIGHT,
+        m11_running_from_macos_app_bundle(),
+        width > 0 && height > 0);
 }
 
 static void m11_publish_dm1_hoc_presented_capture_to_m12(
@@ -1099,7 +1134,8 @@ static int m11_play_redmcsb_entrance_transition(
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
                 int creditsResult =
-                    m11_show_redmcsb_entrance_credits(gameView, framebuffer);
+                    m11_show_redmcsb_entrance_credits(
+                        gameView, framebuffer, mediaReceipt, NULL);
                 if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
                     free(dungeonFrame);
                     return M11_ENTRANCE_COMMAND_QUIT;
@@ -1498,6 +1534,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     Uint64 presentationStartedMs = 0U;
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
+    DM1_V1_StartupTitlePresentationCommand_PC34 command;
     int hasDm1Media;
 
     if (outPlayedAnyFrame) {
@@ -1552,6 +1590,15 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     }
 
     memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
+    if (!dm1_v1_startup_title_runtime_asset_receipt_pc34(
+            "dm1",
+            titleGraphic ? titleGraphic->pixels : NULL,
+            titleGraphic ? titleGraphic->width : 0U,
+            titleGraphic ? titleGraphic->height : 0U,
+            &titleAssetReceipt)) {
+        memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
+    }
 
     /* ReDMCSB TITLE.C F0437 PC/F20 source-lock:
      * - TITLE.C:309 loads/decompresses C001_GRAPHIC_TITLE.

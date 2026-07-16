@@ -3759,6 +3759,215 @@ int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     return 0;
 }
 
+static int dm2_v1_g1_wall_gfx_read_scalars(
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    int wall_gfx_index,
+    uint16_t *out_colorkey,
+    uint16_t *out_position,
+    uint16_t *out_do_not_flip,
+    uint16_t *out_alcove_type,
+    uint16_t *out_image_offset)
+{
+    return read_scalar && out_colorkey && out_position && out_do_not_flip &&
+           out_alcove_type && out_image_offset &&
+           read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x04,
+                       out_colorkey) &&
+           read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x05,
+                       out_position) &&
+           read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x07,
+                       out_do_not_flip) &&
+           read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x0a,
+                       out_alcove_type) &&
+           read_scalar(read_userdata, 0x0c, 0x09, wall_gfx_index, 0xfd,
+                       out_image_offset);
+}
+
+static int dm2_v1_g1_text_index_allows_wall_gfx(uint16_t text_index)
+{
+    switch ((text_index >> 8) & 0xffu) {
+        case 0x00:
+        case 0x02:
+        case 0x03:
+        case 0x05:
+        case 0x0d:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    int i;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!texts || !texts->committed || texts->generic_record_reads ||
+        texts->blocked_record_reads || !read_scalar) {
+        return 0;
+    }
+    out->valid = 1;
+    out->map = texts->map;
+    out->source_text_root_count = texts->text_root_count;
+    for (i = 0; i < texts->text_root_count &&
+                i < DM2_V1_G1_MAP5_MAX_TEXT_ROOTS &&
+                out->material_count < DM2_V1_G1_TEXT_WALL_GFX_MAX; ++i) {
+        const DM2_V1_G1TextRoot *root = &texts->texts[i];
+        DM2_V1_G1TextWallGfxMaterial *mat;
+        int wall_gfx_index;
+        if (root->mode != 1) continue;
+        if (!dm2_v1_g1_text_index_allows_wall_gfx(root->text_index)) continue;
+        wall_gfx_index = (int)(root->text_index & 0xffu);
+        mat = &out->materials[out->material_count];
+        memset(mat, 0, sizeof(*mat));
+        if (!dm2_v1_g1_wall_gfx_read_scalars(
+                read_scalar, read_userdata, wall_gfx_index, &mat->colorkey,
+                &mat->position, &mat->do_not_flip, &mat->alcove_type,
+                &mat->image_offset)) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        mat->x = root->x;
+        mat->y = root->y;
+        mat->object_id = root->object_id;
+        mat->direction = root->direction;
+        mat->text_index = root->text_index;
+        mat->wall_gfx_index = (uint8_t)wall_gfx_index;
+        ++out->material_count;
+    }
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    int i;
+    if (!dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
+            texts, read_scalar, read_userdata, out)) return 0;
+    if (!read_image_metadata) return 1;
+    for (i = 0; i < out->material_count; ++i) {
+        int w = 0, h = 0, f = 0;
+        if (read_image_metadata(read_userdata, 0x09,
+                                out->materials[i].wall_gfx_index, 1,
+                                &w, &h, &f)) {
+            out->materials[i].front_image_ready = 1;
+            out->materials[i].front_image_width = (uint16_t)w;
+            out->materials[i].front_image_height = (uint16_t)h;
+            out->materials[i].front_image_format = (uint8_t)f;
+        }
+    }
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
+{
+    int i;
+    if (!dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+            texts, read_scalar, read_image_metadata, read_userdata, out))
+        return 0;
+    if (!read_local_palette) return 1;
+    for (i = 0; i < out->material_count; ++i) {
+        uint32_t hash = 0;
+        if (out->materials[i].front_image_ready &&
+            read_local_palette(read_userdata, 0x09,
+                               out->materials[i].wall_gfx_index, 1,
+                               out->materials[i].local_palette16, &hash)) {
+            out->materials[i].local_palette_hash = hash;
+        } else {
+            out->materials[i].front_image_ready = 0;
+            out->materials[i].local_palette_hash = 0;
+            memset(out->materials[i].local_palette16, 0, 16u);
+        }
+    }
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
+{
+    DM2_V1_G1ActuatorWallGfxMaterial *mat;
+    int ordinal;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !d->raw_data || !d->record_graph_complete || !read_scalar) {
+        return 0;
+    }
+    ordinal = (int)((RD16(d->raw_data + 8) >> 12) & 0x0fu);
+    if (ordinal <= 0 || d->raw_map_data_base < 0) return 0;
+    out->valid = 1;
+    out->map = map;
+    out->source_actuator_root_count = 1;
+    out->material_count = 1;
+    mat = &out->materials[0];
+    memset(mat, 0, sizeof(*mat));
+    mat->object_id = RD16(d->raw_data + 2);
+    mat->graphic_ordinal = (uint8_t)ordinal;
+    mat->wall_gfx_index = d->raw_data[d->raw_map_data_base + ordinal];
+    if (!dm2_v1_g1_wall_gfx_read_scalars(
+            read_scalar, read_userdata, mat->wall_gfx_index, &mat->colorkey,
+            &mat->position, &mat->do_not_flip, &mat->alcove_type,
+            &mat->image_offset)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return 1;
+}
+
+int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1GdatScalarRead read_scalar,
+    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
+    void *read_userdata,
+    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
+{
+    if (!dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+            d, map, read_scalar, read_userdata, out)) return 0;
+    if (out->material_count > 0 && read_image_metadata) {
+        int w = 0, h = 0, f = 0;
+        DM2_V1_G1ActuatorWallGfxMaterial *mat = &out->materials[0];
+        if (read_image_metadata(read_userdata, 0x09, mat->wall_gfx_index, 1,
+                                &w, &h, &f)) {
+            mat->front_image_ready = 1;
+            mat->front_image_width = (uint16_t)w;
+            mat->front_image_height = (uint16_t)h;
+            mat->front_image_format = (uint8_t)f;
+            if (read_local_palette) {
+                uint32_t hash = 0;
+                if (read_local_palette(read_userdata, 0x09,
+                                       mat->wall_gfx_index, 1,
+                                       mat->local_palette16, &hash)) {
+                    mat->local_palette_hash = hash;
+                } else {
+                    mat->front_image_ready = 0;
+                    memset(mat->local_palette16, 0, 16u);
+                    mat->local_palette_hash = 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 int dm2_v1_dungeon_get_map_wall_gfx_list(
     const DM2_V1_DungeonData *d,
     int level,

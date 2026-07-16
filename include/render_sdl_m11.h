@@ -255,6 +255,7 @@ int  M11_Render_SetIntegerScaling(int enabled);
 int  M11_Render_GetIntegerScaling(void);
 int  M11_Render_SetScaleFilter(int filterIndex);
 int  M11_Render_GetScaleFilter(void);
+void M11_Render_SetV2PresentationActive(int active);
 int  M11_Render_SetVSync(int vsyncIndex);
 int  M11_Render_GetVSync(void);
 void M11_Render_RaiseWindow(void);
