@@ -902,6 +902,17 @@ typedef struct {
     int weather_zone_count;
 } DM2_V1_DungeonData;
 
+typedef int (*DM2_V1_DungeonThingVisitor)(
+    void *user,
+    uint16_t thing,
+    int type,
+    int index,
+    const uint8_t *record,
+    int record_size,
+    int level,
+    int x,
+    int y);
+
 /* SKProject DME.h::Map_definitions::Difficulty() is the high nibble of w12.
  * c_light.cpp selects its fixed-light branch only for difficulty zero. Keep
  * this raw map-descriptor proof separate from the later live light
@@ -954,6 +965,14 @@ int dm2_v1_skproject_get_address_of_tile_record(
     int y,
     DM2_V1_SkprojectTileRecordAddressReceipt *out);
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
+int dm2_v1_dungeon_walk_square_things(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    int max_steps,
+    DM2_V1_DungeonThingVisitor visitor,
+    void *user);
 int dm2_v1_dungeon_find_thing_of_type(
     const DM2_V1_DungeonData *d,
     uint16_t first_thing,

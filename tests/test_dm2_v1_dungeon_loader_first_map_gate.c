@@ -41,6 +41,45 @@ static void put16le(uint8_t *p, uint16_t v)
     p[1] = (uint8_t)((v >> 8) & 0xffU);
 }
 
+typedef struct {
+    int count;
+    uint16_t things[4];
+    int types[4];
+    int indexes[4];
+    int levels[4];
+    int xs[4];
+    int ys[4];
+    uint16_t w0s[4];
+} WalkCapture;
+
+static int capture_walk_thing(void *user,
+                              uint16_t thing,
+                              int type,
+                              int index,
+                              const uint8_t *record,
+                              int record_size,
+                              int level,
+                              int x,
+                              int y)
+{
+    WalkCapture *capture = (WalkCapture *)user;
+    if (!capture || !record || record_size < 2 ||
+        capture->count >= (int)(sizeof(capture->things) /
+                                sizeof(capture->things[0]))) {
+        return -1;
+    }
+    capture->things[capture->count] = thing;
+    capture->types[capture->count] = type;
+    capture->indexes[capture->count] = index;
+    capture->levels[capture->count] = level;
+    capture->xs[capture->count] = x;
+    capture->ys[capture->count] = y;
+    capture->w0s[capture->count] =
+        (uint16_t)record[0] | ((uint16_t)record[1] << 8);
+    capture->count++;
+    return 0;
+}
+
 static size_t build_first_map_fixture(uint8_t *buf, size_t cap)
 {
     const int w = 3;
@@ -461,6 +500,7 @@ static void test_skproject_chained_first_thing_finds_door_record(void)
     uint8_t dat[160];
     DM2_V1_DungeonData dungeon;
     size_t size = build_skproject_chained_door_fixture(dat, sizeof(dat));
+    WalkCapture capture;
     int thing;
 
     CHECK(size > 0, "skproject chained door fixture is complete");
@@ -477,6 +517,20 @@ static void test_skproject_chained_first_thing_finds_door_record(void)
     CHECK(dm2_v1_dungeon_find_thing_of_type(
               &dungeon, (uint16_t)thing, 0, 1) == -1,
           "skproject chained tile search respects the bounded step limit");
+    memset(&capture, 0, sizeof(capture));
+    CHECK(dm2_v1_dungeon_walk_square_things(
+              &dungeon, 0, 1, 0, 8, capture_walk_thing, &capture) == 2,
+          "source-owned square-chain walker visits both linked records");
+    CHECK(capture.count == 2 &&
+              capture.things[0] == 0x0800 && capture.types[0] == 2 &&
+              capture.indexes[0] == 0 && capture.w0s[0] == 0x0000 &&
+              capture.things[1] == 0x0000 && capture.types[1] == 0 &&
+              capture.indexes[1] == 0 && capture.w0s[1] == 0xfffe,
+          "source-owned square-chain walker preserves ObjectID order and w0 links");
+    CHECK(capture.levels[0] == 0 && capture.xs[0] == 1 &&
+              capture.ys[0] == 0 && capture.levels[1] == 0 &&
+              capture.xs[1] == 1 && capture.ys[1] == 0,
+          "source-owned square-chain walker reports the owning square");
 
     dm2_v1_dungeon_free(&dungeon);
 }
@@ -647,6 +701,9 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
               dm2_v1_dungeon_get_thing_record(&dungeon, 0x0000,
                                                NULL, NULL, NULL) != NULL,
           "source-ordered G1 c_record ownership enables bounded traversal");
+    CHECK(dm2_v1_dungeon_walk_square_things(
+              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == 1,
+          "complete G1 graph can be walked through the loader-owned route");
 
     put16le(dat + 328, 0x0002); /* Unreachable DB0 index 2 exceeds count. */
     dm2_v1_dungeon_free(&dungeon);
@@ -668,6 +725,9 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
     CHECK(dungeon.record_graph_complete == 0 &&
               dm2_v1_dungeon_get_next_thing(&dungeon, 0x0000) == -1,
           "reachable out-of-range w0 blocks G1 traversal");
+    CHECK(dm2_v1_dungeon_walk_square_things(
+              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == -1,
+          "root-reachable invalid G1 link cannot bypass the loader traversal guard");
     dm2_v1_dungeon_free(&dungeon);
 
     put16le(dat + 324, 0x0001); /* DB0[0] -> DB0[1]. */
@@ -677,6 +737,9 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
     CHECK(dungeon.record_graph_complete == 0 &&
               dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
           "reachable w0 cycle blocks G1 traversal");
+    CHECK(dm2_v1_dungeon_walk_square_things(
+              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == -1,
+          "root-reachable G1 cycle cannot bypass the loader traversal guard");
     dm2_v1_dungeon_free(&dungeon);
 }
 

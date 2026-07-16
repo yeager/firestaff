@@ -1114,6 +1114,47 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     return next == DM2_THING_NULL_MARKER ? -1 : (int)next;
 }
 
+int dm2_v1_dungeon_walk_square_things(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    int max_steps,
+    DM2_V1_DungeonThingVisitor visitor,
+    void *user) {
+    int thing;
+    int steps = 0;
+
+    /* skproject c_map.cpp GET_TILE_RECORD_LINK owns the square root and
+     * c_record.cpp/GET_NEXT_RECORD_LINK owns GenericRecord::w0 traversal.
+     * Keep callers on this bounded loader route so incomplete PC G1 graphs
+     * fail closed instead of letting consumers read w0 locally. */
+    if (!d || !visitor || max_steps <= 0) return -1;
+    thing = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (thing < 0) return 0;
+
+    while (thing != (int)DM2_THING_END_MARKER) {
+        int type = -1;
+        int index = -1;
+        int record_size = 0;
+        int next;
+        const uint8_t *record;
+
+        if (++steps > max_steps) return -1;
+        record = dm2_v1_dungeon_get_thing_record(
+            d, (uint16_t)thing, &type, &index, &record_size);
+        if (!record || record_size < 2) return -1;
+        if (visitor(user, (uint16_t)thing, type, index, record,
+                    record_size, level, x, y) != 0) {
+            return -1;
+        }
+        next = dm2_v1_dungeon_get_next_thing(d, (uint16_t)thing);
+        if (next < 0) return -1;
+        thing = next;
+    }
+    return steps;
+}
+
 static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
                                               uint16_t link) {
     int type;
