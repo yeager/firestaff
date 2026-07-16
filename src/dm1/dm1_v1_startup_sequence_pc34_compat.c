@@ -4968,6 +4968,72 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     return 1;
 }
 
+int dm1_v1_startup_title_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* asset_receipt,
+    unsigned int source_step,
+    DM1_V1_StartupTitlePresentationCommand_PC34* out_command) {
+    DM1_V1_StartupTitlePresentationCommand_PC34 command;
+    V1_TitleFrontendSourceAnimationStep step;
+    int special_palette = -1;
+
+    if (!out_command) {
+        return 0;
+    }
+    memset(out_command, 0, sizeof(*out_command));
+    if (!media_receipt ||
+        !dm1_v1_startup_title_timing_receipt_valid_pc34(media_receipt) ||
+        !asset_receipt || !asset_receipt->handled ||
+        !asset_receipt->release_c001_ready ||
+        source_step == 0U ||
+        source_step > media_receipt->title_source_animation_steps ||
+        !V1_TitleFrontend_GetSourceAnimationStep(source_step, &step) ||
+        !V1_TitleFrontend_GetStepPalette(step.kind, &special_palette)) {
+        return 0;
+    }
+
+    memset(&command, 0, sizeof(command));
+    command.handled = 1;
+    command.source_step = source_step;
+    command.special_palette = special_palette;
+    command.source_timing_receipt_consumed = 1;
+    command.source_asset_receipt_consumed = 1;
+    command.source_evidence = step.sourceLineEvidence;
+
+    switch (step.kind) {
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
+        command.present_frame = 1;
+        command.clear_before_present = 1;
+        command.post_present_delay_ms = media_receipt->title_presents_hold_ms;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+        command.present_frame = 1;
+        command.clear_before_present = 1;
+        command.pre_present_delay_ms = media_receipt->title_zoom_frame_delay_ms;
+        command.palette_before_pre_present_delay = (source_step == 2U) ? 1 : 0;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
+        command.present_frame = 0;
+        command.pre_present_delay_ms = media_receipt->title_zoom_frame_delay_ms;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
+        command.present_frame = 1;
+        command.clear_before_present = 0;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
+        command.present_frame = 0;
+        command.pre_present_delay_ms =
+            media_receipt->title_zoom_frame_delay_ms +
+            media_receipt->title_c001_cadence_pad_ms;
+        break;
+    default:
+        return 0;
+    }
+
+    *out_command = command;
+    return 1;
+}
+
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,

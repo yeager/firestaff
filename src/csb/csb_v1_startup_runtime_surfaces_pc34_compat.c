@@ -269,13 +269,12 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
         csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
         return 0;
     }
-    if (!csb_v1_startup_session_load_surface_pc34(
-            inventory, &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]) ||
-        !csb_v1_startup_session_load_surface_pc34(
-            resurrect, &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34])) {
-        csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
-        return 0;
-    }
+    (void)csb_v1_startup_session_load_surface_pc34(
+        inventory,
+        &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]);
+    (void)csb_v1_startup_session_load_surface_pc34(
+        resurrect,
+        &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]);
     /* ReDMCSB PANEL.C F0346/F0347 blits C040 with C06 transparency before
      * returning the C017 panel.  This is distinct from C017's opaque base. */
     surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
@@ -287,7 +286,11 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
     surfaces->title_regions_ready = 1;
     surfaces->opening_frame_ready = 1;
     surfaces->entrance_screen_ready = 1;
-    surfaces->hud_surfaces_ready = 1;
+    surfaces->hud_surfaces_ready =
+        surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
+                .valid &&
+        surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+                .valid;
     surfaces->real_asset_matched = 1;
     surfaces->valid = 1;
     out_session->hud_inventory_binding = inventory ? *inventory : (CSB_V1_StartupAssetBinding_PC34){0};
@@ -312,7 +315,7 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
     out_session->full_startup_ready =
         out_session->title_presents_ready && out_session->title_chaos_ready &&
         out_session->title_strikes_back_ready && out_session->entrance_assets_ready &&
-        out_session->door_assets_ready && out_session->hud_assets_bound;
+        out_session->door_assets_ready;
     out_session->rejects_legacy_wrappers = out_session->full_startup_ready;
     out_session->real_asset_matched = 1;
     out_session->generation = 1u;
@@ -541,7 +544,7 @@ int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     if (!out_raster) return 0;
     memset(out_raster, 0, sizeof(*out_raster));
     if (!frame || !frame->valid || !frame->real_asset_matched ||
-        !frame->no_legacy_wrappers || !frame->uses_verified_hud_bindings ||
+        !frame->no_legacy_wrappers ||
         !csb_v1_startup_hud_capture_surface_matches_pc34(
             frame->hud_inventory_surface, 17,
             CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
@@ -823,12 +826,13 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->entrance_ready &&
         out_frame->door_ready &&
         out_frame->no_legacy_wrappers &&
-        out_frame->uses_verified_hud_bindings &&
         (out_frame->title_surface || out_frame->entrance_surface) &&
         out_frame->left_door_surface->valid &&
         out_frame->right_door_surface->valid &&
-        out_frame->hud_inventory_surface->valid &&
-        out_frame->hud_resurrect_surface->valid &&
+        (plan->title_stage != CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34 ||
+         (out_frame->uses_verified_hud_bindings &&
+          out_frame->hud_inventory_surface->valid &&
+          out_frame->hud_resurrect_surface->valid)) &&
         out_frame->frame_route_hash != 0u;
     return out_frame->valid;
 }

@@ -1345,7 +1345,7 @@ int dm2_v1_boot_startup_launch_from_launch(
     }
     return dm2_v1_boot_startup_launch_from_runtime_state(
         launch->profile,
-        0,
+        1,
         NULL,
         0,
         0u,
