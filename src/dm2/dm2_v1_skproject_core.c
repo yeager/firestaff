@@ -2644,6 +2644,171 @@ int dm2_v1_skproject_split_hint_line(
     return 1;
 }
 
+int dm2_v1_skproject_gdat_sound_allocation_scan(
+    const DM2_V1_SkprojectGdatDescriptor *entries,
+    uint16_t entry_count,
+    DM2_V1_SkprojectGdatSoundAllocationReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGdatSoundAllocationReceipt receipt;
+    uint16_t unique[256];
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(unique, 0xff, sizeof(unique));
+    if (!out_receipt) {
+        return 0;
+    }
+    if (!entries && entry_count != 0u) {
+        receipt.blocked_missing_entries = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t i = 0; i < entry_count; ++i) {
+        const DM2_V1_SkprojectGdatDescriptor *entry = &entries[i];
+
+        if (entry->type != 2u) {
+            continue;
+        }
+        receipt.inspected_entries++;
+        receipt.sound_category_available = 1;
+        if (entry->raw_length > receipt.largest_raw_length)
+            receipt.largest_raw_length = entry->raw_length;
+
+        int seen = 0;
+        for (uint16_t j = 0; j < receipt.unique_raw_indexes; ++j) {
+            if (unique[j] == entry->raw_index) {
+                seen = 1;
+                break;
+            }
+        }
+        if (!seen && receipt.unique_raw_indexes < 256u) {
+            unique[receipt.unique_raw_indexes++] = entry->raw_index;
+            receipt.sound_unique_count++;
+        }
+    }
+
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        unique, receipt.unique_raw_indexes * sizeof(unique[0]));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_gdat_accepts_current_zone(
+    uint16_t raw_index,
+    uint16_t entry_type_2,
+    uint16_t entry_type_5,
+    uint8_t current_zone,
+    DM2_V1_SkprojectGdatZoneReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGdatZoneReceipt receipt;
+    uint8_t upper_nibble;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.raw_index = raw_index;
+    receipt.entry_type_2 = entry_type_2;
+    receipt.entry_type_5 = entry_type_5;
+    receipt.current_zone = current_zone;
+    upper_nibble = (uint8_t)(entry_type_5 & 0xf0u);
+    receipt.upper_nibble = upper_nibble;
+    receipt.accepted_zero_gate = upper_nibble == 0u;
+    receipt.accepted_current_zone = upper_nibble == current_zone;
+    receipt.rejected_other_zone =
+        !receipt.accepted_zero_gate && !receipt.accepted_current_zone;
+    receipt.valid = !receipt.rejected_other_zone;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int dm2_v1_skproject_load_dyn4_receipt(
+    const DM2_V1_SkprojectGdatDescriptor *scripts,
+    uint16_t script_count,
+    const DM2_V1_SkprojectGdatDescriptor *entries,
+    uint16_t entry_count,
+    uint8_t *marks,
+    uint16_t mark_capacity,
+    int sound_table_active,
+    DM2_V1_SkprojectLoadDyn4Receipt *out_receipt)
+{
+    DM2_V1_SkprojectLoadDyn4Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.script_count = script_count;
+    receipt.sound_table_active = sound_table_active ? 1u : 0u;
+    if (!scripts && script_count != 0u) {
+        receipt.blocked_missing_scripts = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if ((!entries && entry_count != 0u) || !marks) {
+        receipt.blocked_missing_marks = !marks;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    for (uint16_t script_index = 0; script_index < script_count; ++script_index) {
+        const DM2_V1_SkprojectGdatDescriptor *script = &scripts[script_index];
+        const int decrement = (script->raw_index & 0x8000u) != 0u;
+
+        for (uint16_t entry_index = 0; entry_index < entry_count; ++entry_index) {
+            const DM2_V1_SkprojectGdatDescriptor *entry = &entries[entry_index];
+            uint16_t raw_index = (uint16_t)(entry->raw_index & 0x7fffu);
+            uint8_t mark;
+
+            if (entry->category != script->category ||
+                entry->cls2 != script->cls2 ||
+                entry->type != script->type) {
+                continue;
+            }
+            if (entry->cls4 == 0x0bu || entry->cls4 == 0x0cu) {
+                receipt.skipped_b_or_c_entries++;
+                continue;
+            }
+            if ((entry->raw_index & 0x8000u) != 0u) {
+                receipt.skipped_highbit_entries++;
+                continue;
+            }
+            if (raw_index >= mark_capacity) {
+                receipt.blocked_mark_capacity = 1;
+                *out_receipt = receipt;
+                return 0;
+            }
+            receipt.visited_entries++;
+            mark = marks[raw_index];
+            if (!decrement) {
+                if (mark == 0u) {
+                    if (entry->cls4 == 2u && !sound_table_active) {
+                        receipt.sound_gate_skips++;
+                        continue;
+                    }
+                    marks[raw_index] = 1u;
+                    receipt.incremented_entries++;
+                } else if ((mark & 0x1fu) != 0x1fu) {
+                    marks[raw_index] = (uint8_t)(mark + 1u);
+                    receipt.incremented_entries++;
+                }
+            } else if ((mark & 0x1fu) != 0u && (mark & 0x1fu) != 0x1fu) {
+                marks[raw_index] = (uint8_t)(mark - 1u);
+                receipt.decremented_entries++;
+            }
+        }
+    }
+
+    receipt.valid = 1;
+    receipt.mark_hash = dm2_v1_skproject_hash_bytes(marks, mark_capacity);
+    *out_receipt = receipt;
+    return 1;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -2670,6 +2835,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES; "
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
+           "SKULLWIN/c_gdatfile.cpp DM2_dballoc_3e74_24b8/"
+           "DM2_dballoc_3e74_2162/DM2_LOAD_DYN4; "
            "SKULLWIN/c_gfx_str.cpp c_stringdata::init/"
            "DM2_QUERY_FONT/DM2_QUERY_STR_METRICS/DM2_DRAW_STRING/"
            "DM2_DRAW_STRONG_TEXT/DM2_DRAW_BUTTON_STR/DM2_DRAW_NAME_STR/"
