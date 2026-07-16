@@ -72,6 +72,10 @@
 
 #include <stdint.h>
 
+struct ExplosionList_Compat;
+struct GameWorld_Compat;
+struct ProjectileList_Compat;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -169,6 +173,45 @@ int dm1_v1_f0142_get_projectile_aspect_pc34(
  * M636 explosion-pattern bank or a host replacement sprite.
  * Source: ReDMCSB DUNVIEW.C F0115:5965-5969,5977-5979; DEFS.H M613/C03. */
 int dm1_v1_c100_rebirth_lightning_graphic_index_pc34(void);
+typedef struct DM1_ProjectileMaterialResolutionPc34 {
+    int valid;
+    int uses_object_aspect;
+    int graphic_index;
+    int aspect_index;
+    int transparent_color;
+} DM1_ProjectileMaterialResolutionPc34;
+int dm1_v1_projectile_material_resolve_pc34(
+    int projectileSubtype,
+    int associatedThingType,
+    int associatedThingSubtype,
+    int weaponProjectileAspectOrdinal,
+    DM1_ProjectileMaterialResolutionPc34 *outResolution);
+typedef struct DM1_ThrownObjectProjectileBlitPlanPc34 {
+    int graphic_index;
+    int transparent_color;
+    int source_scale_index;
+    int scale_units;
+    int draw_x;
+    int draw_y;
+    int draw_w;
+    int draw_h;
+    int use_mirror;
+    int uses_source_row;
+} DM1_ThrownObjectProjectileBlitPlanPc34;
+int dm1_v1_thrown_object_projectile_blit_plan_pc34(
+    DM1_ThrownObjectProjectileBlitPlanPc34 *outPlan,
+    int graphicIndex,
+    int objectAspectIndex,
+    int depthIndex,
+    int relativeCell,
+    int viewLane,
+    int sourceZoneRow,
+    int viewportX,
+    int viewportY,
+    int viewportW,
+    int viewportH,
+    int spriteW,
+    int spriteH);
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
@@ -311,6 +354,46 @@ typedef struct DM1_F0115RuntimeSummaryPc34 {
     int doors;
 } DM1_F0115RuntimeSummaryPc34;
 
+typedef struct DM1_F0115RuntimeInstanceInputPc34 {
+    const unsigned short* thingRefs;
+    int thingCount;
+    const struct ProjectileList_Compat* projectiles;
+    const struct ExplosionList_Compat* explosions;
+    int mapIndex;
+    int mapX;
+    int mapY;
+} DM1_F0115RuntimeInstanceInputPc34;
+
+#define DM1_F0115_MAX_WORLD_GROUPS 8
+
+typedef int (*DM1_F0115MirrorOrdinalLookupPc34)(void* user,
+                                                int textStringIndex);
+
+typedef struct DM1_F0115WorldGroupCandidatePc34 {
+    unsigned short thing;
+    int creatureType;
+    int creatureCount;
+    int direction;
+} DM1_F0115WorldGroupCandidatePc34;
+
+typedef struct DM1_F0115WorldItemCandidatePc34 {
+    unsigned short thing;
+    int thingType;
+    int subtype;
+    int cell;
+} DM1_F0115WorldItemCandidatePc34;
+
+typedef struct DM1_F0115WorldCandidatesPc34 {
+    int valid;
+    int chainCount;
+    int overflow;
+    DM1_F0115ThingLayerReceiptPc34 staticReceipt;
+    int groupCount;
+    DM1_F0115WorldGroupCandidatePc34 groups[DM1_F0115_MAX_WORLD_GROUPS];
+    int itemCount;
+    DM1_F0115WorldItemCandidatePc34 items[DM1_F0115_MAX_RECEIPT_ITEMS];
+} DM1_F0115WorldCandidatesPc34;
+
 int dm1_v1_verify_f0115_draw_order(const int* order, int count);
 int dm1_v1_f0115_thing_layer_receipt_pc34(
     const unsigned short* thingRefs,
@@ -332,6 +415,23 @@ int dm1_v1_f0115_runtime_summary_pc34(
     int liveProjectileCount,
     int liveExplosionCount,
     DM1_F0115RuntimeSummaryPc34* outSummary);
+int dm1_v1_f0115_runtime_instance_summary_pc34(
+    const DM1_F0115RuntimeInstanceInputPc34* input,
+    DM1_F0115RuntimeSummaryPc34* outSummary);
+int dm1_v1_f0115_runtime_summary_from_world_pc34(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    DM1_F0115RuntimeSummaryPc34* outSummary);
+int dm1_v1_f0115_world_candidates_pc34(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    DM1_F0115MirrorOrdinalLookupPc34 mirrorOrdinalLookup,
+    void* mirrorUser,
+    DM1_F0115WorldCandidatesPc34* outCandidates);
 
 #ifdef __cplusplus
 }

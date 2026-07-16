@@ -114,6 +114,7 @@ static inline int dm1_is_alcove_ornament(int globalIndex) {
 
 int dm1_item_aspect_index(int thingType, int subtype);
 unsigned int dm1_item_sprite_index(int thingType, int subtype);
+unsigned int dm1_object_aspect_graphic_index(int aspectIndex);
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex);
 int dm1_object_aspect_coordinate_set(int aspectIndex);
 int dm1_v1_thing_type_is_floor_item_pc34(int thingType);
