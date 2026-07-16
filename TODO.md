@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 33, CSB 1, shared DM1/CSB 1574, DM2 1505; 3113 total open rows
+  DM1 25, CSB 1, shared DM1/CSB 1568, DM2 1503; 3097 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -44,6 +44,13 @@
     Rabbit's Foot C30 chest exclusion plus modifier-apply cadence in the
     modeled owner-change route, and the broader all-item modifier matrix plus
     original pixel parity remain open.
+  - 2026-07-16 DM1 CHAMPION skill/stamina/load update: `F0303`-`F0310`
+    and their listed Atari ST ABI aliases are now closed through source-backed
+    DM1 skill-experience, throw/shoot stamina, champion-stat, and combat
+    receipts. Narrow boundaries remain deliberate: `F0303`/`F0304` cover the
+    tested skill query/XP mutation paths rather than every live award site,
+    `F0305` keeps object-weight ownership with object data callers, and
+    `F0307`/`F0308` do not claim broader all-callers RNG replay.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
