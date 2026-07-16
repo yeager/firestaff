@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 Artpack Studio DM2 GDAT preview: added skproject-style preview
+  decoding for DM2 GDAT IMG3 C4 plus uncompressed U4/U8 records. Local
+  `~/.firestaff/data/dm2/GRAPHICS.DAT` now imports 11,854 ENT1 rows and shows
+  453 real decoded previews instead of metadata-only placeholders; unsupported
+  payloads remain warning-only.
+
 - 2026-07-16 V2.2 artpack studio game-data import: the studio can now import
   original files such as `GRAPHICS.DAT`, identify known game/variant hashes via
   `docs/VERIFIED_HASHES.md`, list original DM1/CSB graphics records and DM2

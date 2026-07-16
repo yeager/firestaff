@@ -270,6 +270,25 @@ DM1_DUNGEON_PALETTE = [
     (0xFF, 0xFF, 0xFF, 255),
 ]
 
+DM2_PREVIEW_PALETTE = [
+    (0x00, 0x00, 0x00, 255),
+    (0x2A, 0x2A, 0x2A, 255),
+    (0x55, 0x55, 0x55, 255),
+    (0x7F, 0x7F, 0x7F, 255),
+    (0xAA, 0xAA, 0xAA, 255),
+    (0xD4, 0xD4, 0xD4, 255),
+    (0xE6, 0xD0, 0xA8, 255),
+    (0xB8, 0x88, 0x58, 255),
+    (0x7E, 0x52, 0x2C, 255),
+    (0x31, 0x64, 0x30, 255),
+    (0x4F, 0x8E, 0x44, 255),
+    (0x82, 0xB8, 0x60, 255),
+    (0x2B, 0x6B, 0x8E, 255),
+    (0x54, 0xA0, 0xBE, 255),
+    (0xC8, 0x40, 0x30, 255),
+    (0xFF, 0xD0, 0x40, 255),
+]
+
 
 def le16(data: bytes, offset: int) -> int:
     return data[offset] | (data[offset + 1] << 8)
@@ -431,6 +450,159 @@ def expand_img3_to_image(source: bytes, width: int, height: int) -> Image.Image:
         for x in range(width):
             pix[x, y] = DM1_DUNGEON_PALETTE[get_pixel(y * stride_pixels + x) & 0x0F]
     return img
+
+
+def dm2_img3_signed_offset(value: int) -> int:
+    if value & 0x8000:
+        value -= 0x10000
+    return value >> 10
+
+
+def dm2_record_dimensions(raw: bytes) -> tuple[int, int, int, int]:
+    if len(raw) < 10:
+        return 0, 0, 0, 0
+    cx = le16(raw, 0)
+    cy = le16(raw, 2)
+    w4 = le16(raw, 4)
+    return cx & 0x03FF, cy & 0x03FF, w4, dm2_img3_signed_offset(cy)
+
+
+class Dm2NibbleReader:
+    def __init__(self, raw: bytes, start_nibble: int = 16) -> None:
+        self.raw = raw
+        self.cursor = start_nibble
+
+    def nibble(self) -> int:
+        byte_pos = self.cursor >> 1
+        if byte_pos >= len(self.raw):
+            raise ValueError("truncated IMG3 nibble stream")
+        value = (self.raw[byte_pos] & 0x0F) if (self.cursor & 1) else (self.raw[byte_pos] >> 4)
+        self.cursor += 1
+        return value
+
+    def duration(self) -> int:
+        n = self.nibble()
+        if n == 0x0F:
+            v = (self.nibble() << 4) | self.nibble()
+            if v == 0xFF:
+                v = (self.nibble() << 12) | (self.nibble() << 8) | (self.nibble() << 4) | self.nibble()
+                if v <= 0:
+                    raise ValueError("invalid IMG3 long duration")
+                return v
+            return v + 0x11
+        return n + 2
+
+
+def dm2_emit_run(
+    padded: bytearray,
+    width: int,
+    even_width: int,
+    pos_ref: list[int],
+    line_left_ref: list[int],
+    count: int,
+    color: int,
+    copy_previous_line: bool,
+) -> None:
+    total = len(padded)
+    while count > 0:
+        pos = pos_ref[0]
+        line_left = line_left_ref[0]
+        if line_left <= 0 or pos < 0 or pos >= total:
+            raise ValueError("invalid IMG3 destination state")
+        n = min(count, line_left)
+        if pos + n > total:
+            raise ValueError("IMG3 run exceeds output")
+        if copy_previous_line:
+            copy_n = line_left if n < line_left else n
+            if pos < even_width or pos + copy_n > total:
+                raise ValueError("IMG3 previous-line copy out of range")
+            for i in range(copy_n):
+                padded[pos + i] = padded[pos - even_width + i]
+        else:
+            padded[pos : pos + n] = bytes([color & 0xFF]) * n
+        pos += n
+        line_left -= n
+        count -= n
+        if line_left == 0 and pos < total:
+            pos += even_width - width
+            line_left = width
+        pos_ref[0] = pos
+        line_left_ref[0] = line_left
+
+
+def dm2_decode_img3_c4(raw: bytes, width: int, height: int) -> bytes:
+    if len(raw) < 10 or width <= 0 or height <= 0:
+        raise ValueError("invalid IMG3 C4 header")
+    even_width = (width + 1) & ~1
+    padded = bytearray(even_width * height)
+    palette = list(raw[10:16])
+    if len(palette) < 6:
+        raise ValueError("missing IMG3 local palette")
+    reader = Dm2NibbleReader(raw, 16)
+    pos_ref = [0]
+    line_left_ref = [width]
+    while pos_ref[0] < len(padded):
+        command = reader.nibble()
+        code = command & 0x07
+        if code == 6:
+            run = reader.duration() if (command & 0x08) else 1
+            dm2_emit_run(padded, width, even_width, pos_ref, line_left_ref, run, 0, True)
+            continue
+        if code < 6:
+            color = palette[code]
+        else:
+            color = reader.nibble()
+        run = reader.duration() if (command & 0x08) else 1
+        dm2_emit_run(padded, width, even_width, pos_ref, line_left_ref, run, color, False)
+    pixels = bytearray(width * height)
+    for y in range(height):
+        start = y * even_width
+        pixels[y * width : (y + 1) * width] = padded[start : start + width]
+    return bytes(pixels)
+
+
+def dm2_decode_uncompressed(raw: bytes, width: int, height: int, bpp: int) -> bytes:
+    if len(raw) < 10 or width <= 0 or height <= 0:
+        raise ValueError("invalid uncompressed GDAT image")
+    pixel_count = width * height
+    if bpp == 4:
+        src_size = (((width + 1) & ~1) // 2) * height
+        payload = raw[10 : 10 + src_size]
+        if len(payload) < src_size:
+            raise ValueError("truncated U4 image")
+        out = bytearray(pixel_count)
+        for i in range(pixel_count):
+            byte = payload[i >> 1]
+            out[i] = (byte & 0x0F) if (i & 1) else ((byte >> 4) & 0x0F)
+        return bytes(out)
+    if bpp == 8:
+        payload = raw[10 : 10 + pixel_count]
+        if len(payload) < pixel_count:
+            raise ValueError("truncated U8 image")
+        return bytes(payload)
+    raise ValueError(f"unsupported uncompressed bpp {bpp}")
+
+
+def dm2_indices_to_image(pixels: bytes, width: int, height: int) -> Image.Image:
+    img = Image.new("RGBA", (max(1, width), max(1, height)))
+    pix = img.load()
+    for y in range(height):
+        for x in range(width):
+            pix[x, y] = DM2_PREVIEW_PALETTE[pixels[y * width + x] & 0x0F]
+    return img
+
+
+def dm2_decode_gdat_image(raw: bytes) -> tuple[Image.Image, str]:
+    width, height, w4, offset_y = dm2_record_dimensions(raw)
+    if width <= 0 or height <= 0:
+        raise ValueError("GDAT image has zero dimensions")
+    if offset_y == -32:
+        pixels = dm2_decode_uncompressed(raw, width, height, w4)
+        return dm2_indices_to_image(pixels, width, height), f"U{w4}"
+    if offset_y == 31:
+        raise ValueError("IMG9 C8 preview not implemented")
+    pixels = dm2_decode_img3_c4(raw, width, height)
+    return dm2_indices_to_image(pixels, width, height), "IMG3-C4"
 
 
 def parse_graphics_dat_assets(path: Path, data: bytes, detected_game: str) -> tuple[list[GameDataAsset], list[str]]:
@@ -635,9 +807,14 @@ def dm2_parse_gdat_assets(path: Path, data: bytes) -> tuple[list[GameDataAsset],
             raw_offset = raw_offsets[data_index]
             raw_size = raw_sizes[data_index]
             raw = data[raw_offset : raw_offset + raw_size]
-            width = (le16(raw, 0) & 0x03FF) if raw_size >= 10 and cls3 == 1 else 0
-            height = (le16(raw, 2) & 0x03FF) if raw_size >= 10 and cls3 == 1 else 0
-            warning = "" if cls3 == 1 and width and height else "metadata only; non-image or unsupported GDAT payload"
+            width, height, _w4, _offset_y = dm2_record_dimensions(raw) if raw_size >= 10 and cls3 == 1 else (0, 0, 0, 0)
+            warning = "metadata only; non-image or unsupported GDAT payload"
+            if cls3 == 1 and width and height:
+                try:
+                    _img, decode_kind = dm2_decode_gdat_image(raw)
+                    warning = "" if decode_kind != "IMG9-C8" else "metadata only; IMG9 preview not implemented"
+                except Exception as exc:
+                    warning = f"metadata only; GDAT decode warning: {exc}"
         assets.append(
             GameDataAsset(
                 category=dm2_category_to_artpack_category(cls1),
@@ -1463,6 +1640,14 @@ class ArtpackStudio(tk.Tk):
                 return expand_img3_to_image(record, asset.width, asset.height)
             except Exception:
                 return None
+        if asset.source_kind == "DM2-GDAT":
+            data = asset.path.read_bytes()
+            record = data[asset.offset : asset.offset + asset.compressed_bytes]
+            try:
+                image, _kind = dm2_decode_gdat_image(record)
+                return image
+            except Exception:
+                return None
         if asset.source_kind == "image":
             return ensure_rgba(Image.open(asset.path))
         return None
@@ -1724,6 +1909,16 @@ def self_test() -> int:
         assert len(imported_data.assets) == 1
         assert imported_data.assets[0].asset_id == "graphics_0000"
         assert imported_data.assets[0].width == 2
+        dm2_raw = (
+            (2).to_bytes(2, "little")
+            + (0x8001).to_bytes(2, "little")  # height 1, offsetY -32
+            + (4).to_bytes(2, "little")
+            + b"\x00\x00\x00\x00"
+            + b"\x12"
+        )
+        dm2_img, dm2_kind = dm2_decode_gdat_image(dm2_raw)
+        assert dm2_kind == "U4"
+        assert dm2_img.size == (2, 1)
     print("firestaff_artpack_studio self-test: PASS")
     return 0
 
