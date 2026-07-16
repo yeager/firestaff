@@ -177,6 +177,12 @@
     before stop, and release before TITLE.C F0437 consumes C001; synthetic
     sound data, host audio-device emulation, and legacy swoosh wrappers are
     rejected.
+  - 2026-07-16 CSB/ReDMCSB F0902 update:
+    `F0902_DrawFTLLogo` now has a CSB-owned pre-title FTL-logo receipt before
+    the swoosh path. It accepts only caller-bound original `Graphic_FTLLogo`
+    data with the source 320x200 packed frame, 160-byte row stride, and
+    16-color palette shape before `F0908_InitSound`; synthetic graphic bytes,
+    synthetic palette data, and legacy logo wrappers are rejected.
   - 2026-07-16 CSB/ReDMCSB F0904 update:
     `F0904_PaletteAnimation` now has a CSB-owned pre-title startup receipt
     between `F0909_PlaySwooshSound` and `F0910_ReleaseSwooshSound`. It accepts

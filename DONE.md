@@ -110,6 +110,14 @@
   palette wrappers remain closed. Verification: strict C11 F0904 build/run and
   source/test syntax checks passed.
 
+- 2026-07-16 CSB/ReDMCSB `SWSH.C F0902`: added a CSB-owned FTL-logo startup
+  receipt before the swoosh path. The gate accepts only caller-bound original
+  `Graphic_FTLLogo` data with the source 320x200 packed frame, 160-byte row
+  stride, and 16-color palette shape before `F0908_InitSound`; synthetic
+  graphic bytes, synthetic palette data, and legacy logo wrappers remain
+  closed. Verification: strict C11 F0902 build/run and source/test syntax
+  checks passed.
+
 - 2026-07-16 DM1/CSB ReDMCSB CEDT019 portrait save/load batch:
   added DM1-owned narrow PC34 callables for
   `F2122_DecodeAllPortraitsWhileLoading`,
