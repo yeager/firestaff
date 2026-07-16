@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 text/fill/mouse wrapper receipt bundle: mapped
+  `FILL_STR`, `DRAW_STRONG_TEXT`, `HIGHLIGHT_ARROW_PANEL`,
+  `IBMIO_FILL_HALFTONE_RECT`, `FIRE_FILL_HALFTONE_RECTV`,
+  `FIRE_FILL_HALFTONE_RECTI`, `IBMIO_MOUSE_RELEASE_CAPTURE`,
+  `FIRE_MOUSE_RELEASE_CAPTURE`, and SKULLWIN aliases `DM2_FILL_STR`,
+  `DM2_FILL_HALFTONE_RECTV`, `DM2_FILL_HALFTONE_RECTI`, and
+  `DM2_MOUSE_RELEASE_CAPTURE` to skproject-backed receipts. The receipts
+  cover strided byte fills, strong-text draw planning, arrow-panel redraw,
+  checkerboard halftone fills, and mouse capture release side effects.
+
 - 2026-07-16 DM2 item/container classifier receipt bundle: mapped
   `GET_ITEM_NAME`, `IS_MISCITEM_CURRENCY`, `IS_CONTAINER_MONEYBOX`,
   `IS_CONTAINER_CHEST`, `GET_ITEM_ORDER_IN_CONTAINER`, `FMT_NUM`, and their

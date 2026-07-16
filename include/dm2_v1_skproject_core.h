@@ -212,6 +212,51 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int blocked_missing_buffer;
+    uint16_t count;
+    uint16_t delta;
+    uint8_t value;
+    uint16_t written_entries;
+    uint16_t last_offset;
+    uint32_t buffer_hash;
+} DM2_V1_SkprojectFillStrReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_rect;
+    int blocked_missing_pixels;
+    int used_query_expanded_rect;
+    uint16_t rectno;
+    DM2_V1_SkprojectRect rect;
+    uint16_t stride;
+    uint16_t visited_pixels;
+    uint16_t cleared_pixels;
+    uint32_t pixel_hash;
+} DM2_V1_SkprojectHalftoneRectReceipt;
+
+typedef struct {
+    int valid;
+    int16_t previous_capture_count;
+    int16_t new_capture_count;
+    uint8_t requested_driver_command;
+} DM2_V1_SkprojectMouseReleaseCaptureReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t cls4_input;
+    uint8_t cls4_drawn;
+    uint16_t rectno;
+    uint8_t bright;
+    uint8_t requested_hide_mouse;
+    uint8_t requested_query_rect;
+    uint8_t requested_fill_entire_pict;
+    uint8_t requested_draw_icon_entry;
+    uint8_t requested_show_mouse;
+    uint8_t requested_wait_refresh;
+} DM2_V1_SkprojectHighlightArrowPanelReceipt;
+
+typedef struct {
+    int valid;
     int16_t previous_current_map;
     int16_t new_v1e0270;
     int16_t new_v1e0272;
@@ -1730,6 +1775,34 @@ int dm2_v1_skproject_fill_rect_summary(
     int has_buffer,
     int has_rect,
     DM2_V1_SkprojectFillReceipt *out_receipt);
+int dm2_v1_skproject_fill_str(
+    uint8_t *buffer,
+    uint16_t buffer_capacity,
+    uint16_t count,
+    uint8_t value,
+    uint16_t delta,
+    DM2_V1_SkprojectFillStrReceipt *out_receipt);
+int dm2_v1_skproject_fill_halftone_rectv(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    const DM2_V1_SkprojectRect *rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
+int dm2_v1_skproject_fill_halftone_recti(
+    uint8_t *pixels,
+    uint16_t pixel_capacity,
+    uint16_t stride,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rect,
+    DM2_V1_SkprojectHalftoneRectReceipt *out_receipt);
+int dm2_v1_skproject_mouse_release_capture(
+    int16_t *capture_count,
+    DM2_V1_SkprojectMouseReleaseCaptureReceipt *out_receipt);
+int dm2_v1_skproject_highlight_arrow_panel(
+    uint8_t cls4,
+    uint16_t rectno,
+    uint8_t bright,
+    DM2_V1_SkprojectHighlightArrowPanelReceipt *out_receipt);
 int dm2_v1_skproject_map_3b001(
     int16_t current_map,
     int16_t value_0270,
