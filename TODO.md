@@ -30,7 +30,7 @@
   DM2 memory/mement/projectile, DM1 Amiga/Copper/CPSX, DM1 hint string,
   DM1 USIO input queue/mouse/keyboard plus CEDT004 object disposition batches,
   the DM2 HUD/item/object alias audit correction, and the DM2 sound helper batch:
-  shared DM1/CSB 1128, DM2 1195; 2323 total open rows
+  shared DM1/CSB 1124, DM2 1190; 2314 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
