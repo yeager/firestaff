@@ -104,3 +104,27 @@ bool F0550_VIDEO_FillScreenBox_PC34(
 
     return true;
 }
+
+bool F0550_VIDEO_FillScreenBox(
+    uint8_t *bitmap,
+    size_t bitmap_size,
+    size_t byte_width,
+    size_t pixel_height,
+    const void *box,
+    bool use_byte_box_coordinates,
+    uint16_t color)
+{
+    return F0550_VIDEO_FillScreenBox_PC34(
+        bitmap,
+        bitmap_size,
+        byte_width,
+        pixel_height,
+        box,
+        use_byte_box_coordinates,
+        color);
+}
+
+const char *redmcsb_f0550_video_fill_screen_box_pc34_compat_source_evidence(void)
+{
+    return "ReDMCSB VIDEO.C F0550_VIDEO_FillScreenBox; AMIGA.H:351";
+}

@@ -130,6 +130,25 @@ static void test_projectile_bitmap_deltas(void) {
 
 static void test_projectile_subtype_mapping(void) {
     printf("  projectile subtype mapping...\n");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_FIREBALL),
+              DM1_PROJ_ASPECT_FIREBALL, "F0142 fireball->10");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_SLIME),
+              DM1_PROJ_ASPECT_SLIME, "F0142 slime->12");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_LIGHTNING_BOLT),
+              DM1_PROJ_ASPECT_LIGHTNING_BOLT, "F0142 lightning->3");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_POISON_BOLT),
+              DM1_PROJ_ASPECT_POISON, "F0142 poison_bolt->13");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_POISON_CLOUD),
+              DM1_PROJ_ASPECT_POISON, "F0142 poison_cloud->13");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_HARM_NON_MATERIAL),
+              DM1_PROJ_ASPECT_DEFAULT, "F0142 harm->11");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_OPEN_DOOR),
+              DM1_PROJ_ASPECT_DEFAULT, "F0142 open-door->11");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_KINETIC_ARROW),
+              0, "F0142 kinetic->0");
+    ASSERT_EQ(F0142_DUNGEON_GetProjectileAspect(-1),
+              0, "F0142 invalid->0");
+
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_FIREBALL),
               DM1_PROJ_ASPECT_FIREBALL, "fireball->10");
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_SLIME),
@@ -144,6 +163,9 @@ static void test_projectile_subtype_mapping(void) {
               DM1_PROJ_ASPECT_DEFAULT, "harm->11");
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_KINETIC_ARROW),
               0, "kinetic->0");
+    ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_FIREBALL),
+              F0142_DUNGEON_GetProjectileAspect(PROJECTILE_SUBTYPE_FIREBALL),
+              "compat helper aliases F0142");
 
     ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_FIREBALL),
               DM1_GFX_FIRST_PROJECTILE + 28, "fireball subtype gfx");

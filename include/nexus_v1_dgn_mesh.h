@@ -77,6 +77,17 @@ typedef struct {
     int permits_fallback_visuals;
     int can_submit_geometry;
     int can_submit_textured_raster;
+    int textured_raster_blocked;
+    int static_texture_raster_blocked;
+    int animated_texture_raster_blocked;
+    int material_provenance_required;
+    int structure2_material_required;
+    int structure1g_material_required;
+    int structure2_pixel_semantics_required;
+    int structure1g_animation_semantics_required;
+    int material_bank_mutation_blocked;
+    int vdp1_draw_list_blocked;
+    int vdp1_provenance_required;
 } Nexus_V1_DgnMesh;
 
 /* Builds only real, parser-validated DGN geometry. Returns 1 on success. */

@@ -13,6 +13,13 @@
 
 #include "memory_projectile_pc34_compat.h"
 
+int F0218_PROJECTILE_GetImpactCount(
+    const struct ProjectileList_Compat *projectiles,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell);
+
 int F0218_PROJECTILE_GetImpactCount_Compat(
     const struct ProjectileList_Compat *projectiles,
     int mapIndex,

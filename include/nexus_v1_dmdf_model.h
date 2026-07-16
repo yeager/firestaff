@@ -222,6 +222,11 @@ typedef struct {
     uint32_t blocked_truncated_uploads;
     uint64_t expected_upload_bytes;
     uint64_t extractable_upload_bytes;
+    int prs3_evidence_only;
+    int prs3_decoder_promoted;
+    uint32_t prs3_decoded_pixels_emitted;
+    int prs3_upload_blocked;
+    int renderer_handoff_blocked;
     int blocks_real_surface_render;
     int fallback_visuals_permitted;
     int before_surface_count;
@@ -231,6 +236,9 @@ typedef struct {
     int imported_truecolor_surface_count;
     int imported_prs3_surface_count;
     int host_consumed_surfaces;
+    int material_pixel_promotion_blocked;
+    int material_promotion_blocked;
+    int material_bank_mutation_blocked;
 } Nexus_V1_BpkMaterialHostRouteReceipt;
 
 /* Parser-level bounds gates. Return 1 on success, 0 on any bounds

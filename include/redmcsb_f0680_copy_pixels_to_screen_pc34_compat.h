@@ -42,6 +42,15 @@ bool redmcsb_f0680_copy_pixels_to_screen_pc34_compat(
     size_t pixel_count,
     uint8_t viewport_color_index_offset);
 
+bool F0680_CopyPixelsToScreenWithoutTransparency(
+    const uint8_t *source,
+    size_t source_byte_count,
+    size_t source_pixel_index,
+    RedmcsbF0680C25VgaAperturePc34Compat *vga_aperture,
+    size_t destination_pixel_index,
+    size_t pixel_count,
+    uint8_t viewport_color_index_offset);
+
 const char *redmcsb_f0680_copy_pixels_to_screen_source_evidence_pc34(void);
 
 #ifdef __cplusplus

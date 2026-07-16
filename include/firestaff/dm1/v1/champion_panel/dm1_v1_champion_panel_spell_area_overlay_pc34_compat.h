@@ -81,6 +81,8 @@
  *       and never reads or mutates real GRAPHICS.DAT bytes.
  */
 
+#include "dm1_v1_spell_casting_pc34_compat.h"
+
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -290,6 +292,18 @@ typedef struct DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 {
         [DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34];
 } DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34;
 
+typedef struct DM1_V1_ChampionPanelSpellAreaCastResultRefreshPc34 {
+    int valid;
+    int consumed_f0412_receipt;
+    int cast_result;
+    int failure_type;
+    int symbols_cleared_from_f0412;
+    int retained_symbols_for_needs_hand_item;
+    int redrew_available_symbols;
+    int redrew_champion_symbols;
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 overlay_plan;
+} DM1_V1_ChampionPanelSpellAreaCastResultRefreshPc34;
+
 const DM1_V1_ChampionPanelSpellAreaOverlayPc34Contract *
 dm1_v1_champion_panel_spell_area_overlay_contract_pc34(void);
 
@@ -299,6 +313,11 @@ dm1_v1_champion_panel_spell_area_overlay_source_evidence_pc34(void);
 int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     const DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 *input,
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 *out_plan);
+
+int dm1_v1_champion_panel_spell_area_cast_result_refresh_pc34(
+    const DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 *input,
+    const DM1_SpellF0412RuntimeReceipt *f0412_receipt,
+    DM1_V1_ChampionPanelSpellAreaCastResultRefreshPc34 *out_refresh);
 
 #ifdef __cplusplus
 }

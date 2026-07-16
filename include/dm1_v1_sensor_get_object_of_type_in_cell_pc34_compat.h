@@ -30,6 +30,12 @@ typedef struct DM1_V1_SensorCellObjectPc34 {
  * requested cell or any cell when cell is DM1_V1_SENSOR_CELL_ANY_PC34.
  * Returns DM1_V1_SENSOR_THING_NONE_PC34 when no entry matches.
  */
+uint16_t F0273_SENSOR_GetObjectOfTypeInCell(
+    const DM1_V1_SensorCellObjectPc34 *objects,
+    size_t objectCount,
+    int16_t cell,
+    uint16_t objectType);
+
 uint16_t F0273_SENSOR_GetObjectOfTypeInCell_Compat(
     const DM1_V1_SensorCellObjectPc34 *objects,
     size_t objectCount,

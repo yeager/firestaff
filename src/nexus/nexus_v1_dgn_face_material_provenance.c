@@ -68,6 +68,58 @@ int nexus_v1_dgn_face_material_validate(
     out_receipt->face_count = input->face_count;
     out_receipt->selector_bindings_complete = 1;
     out_receipt->can_submit_raster_input = 1;
+    out_receipt->static_texture_draw_blocked =
+        out_receipt->static_selector_count > 0 ? 1 : 0;
+    out_receipt->animated_texture_draw_blocked =
+        out_receipt->animated_selector_count > 0 ? 1 : 0;
+    out_receipt->structure2_material_required =
+        out_receipt->static_texture_draw_blocked;
+    out_receipt->structure1g_material_required =
+        out_receipt->animated_texture_draw_blocked;
+    out_receipt->structure2_pixel_semantics_required =
+        out_receipt->static_texture_draw_blocked;
+    out_receipt->structure1g_animation_semantics_required =
+        out_receipt->animated_texture_draw_blocked;
+    out_receipt->material_host_route_bound =
+        input->material_host_route_bound ? 1 : 0;
+    out_receipt->material_host_route_prs3_blocked =
+        input->material_host_route_prs3_blocked ? 1 : 0;
+    out_receipt->material_host_route_pixel_promotion_blocked =
+        input->material_host_route_pixel_promotion_blocked ? 1 : 0;
+    out_receipt->material_host_route_decoder_promoted =
+        input->material_host_route_decoder_promoted ? 1 : 0;
+    out_receipt->material_admission_blocked =
+        (out_receipt->structure2_material_required ||
+         out_receipt->structure1g_material_required)
+            ? 1
+            : 0;
+    if (out_receipt->material_host_route_bound &&
+        !out_receipt->material_host_route_prs3_blocked &&
+        !out_receipt->material_host_route_pixel_promotion_blocked &&
+        !out_receipt->material_host_route_decoder_promoted) {
+        out_receipt->material_admission_blocked = 0;
+    }
+    out_receipt->structure3_texture_admission_blocked =
+        (out_receipt->material_admission_blocked ||
+         out_receipt->material_host_route_decoder_promoted)
+            ? 1
+            : 0;
+    out_receipt->material_bank_mutation_blocked =
+        (out_receipt->structure3_texture_admission_blocked ||
+         out_receipt->material_host_route_pixel_promotion_blocked)
+            ? 1
+            : 0;
+    out_receipt->vdp1_command_required =
+        (out_receipt->static_selector_count > 0 ||
+         out_receipt->animated_selector_count > 0)
+            ? 1
+            : 0;
+    out_receipt->vdp1_command_proven = 0;
+    out_receipt->vdp1_draw_list_blocked =
+        out_receipt->vdp1_command_required;
+    out_receipt->can_submit_textured_draw = 0;
+    out_receipt->textured_draw_blocked =
+        out_receipt->vdp1_command_required;
     return 1;
 }
 

@@ -169,7 +169,7 @@ int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell) {
 }
 
 /* F0142_DUNGEON_GetProjectileAspect — subtype to aspect index mapping. */
-int dm1_v1_projectile_subtype_to_aspect(int subtype) {
+int F0142_DUNGEON_GetProjectileAspect(int subtype) {
     switch (subtype) {
         case PROJECTILE_SUBTYPE_FIREBALL:           return DM1_PROJ_ASPECT_FIREBALL;
         case PROJECTILE_SUBTYPE_SLIME:              return DM1_PROJ_ASPECT_SLIME;
@@ -181,6 +181,10 @@ int dm1_v1_projectile_subtype_to_aspect(int subtype) {
         case PROJECTILE_SUBTYPE_KINETIC_ARROW:
         default:                                    return 0;
     }
+}
+
+int dm1_v1_projectile_subtype_to_aspect(int subtype) {
+    return F0142_DUNGEON_GetProjectileAspect(subtype);
 }
 
 int dm1_v1_projectile_renderable_pc34(int projectileCount,

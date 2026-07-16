@@ -44,6 +44,13 @@ typedef struct DM1_V1_CommandHighlightRenderPlanPc34Compat {
  * Implements the MEDIA529 PC 3.4 F0362 route: resolve a source layout zone,
  * retain its exact inclusive rectangle, and emit its inversion transaction.
  */
+int F0362_COMMAND_HighlightBoxEnable(
+    DM1_V1_CommandHighlightStatePc34Compat *state,
+    int zoneIndex,
+    DM1_V1_CommandHighlightZoneResolverPc34Compat resolveZone,
+    void *resolverContext,
+    DM1_V1_CommandHighlightRenderPlanPc34Compat *outPlan);
+
 int dm1_v1_command_highlight_box_enable_pc34(
     DM1_V1_CommandHighlightStatePc34Compat *state,
     int zoneIndex,

@@ -10,7 +10,7 @@ static const char s_source_evidence[] =
     "inverts it, enables highlight state, disables screen updates, then "
     "waits one vertical blank.";
 
-int dm1_v1_command_highlight_box_enable_pc34(
+int F0362_COMMAND_HighlightBoxEnable(
     DM1_V1_CommandHighlightStatePc34Compat *state,
     int zoneIndex,
     DM1_V1_CommandHighlightZoneResolverPc34Compat resolveZone,
@@ -41,6 +41,17 @@ int dm1_v1_command_highlight_box_enable_pc34(
     outPlan->steps[3] = DM1_V1_COMMAND_HIGHLIGHT_WAIT_VERTICAL_BLANK_PC34;
     outPlan->stepCount = DM1_V1_COMMAND_HIGHLIGHT_RENDER_STEP_COUNT_PC34;
     return 1;
+}
+
+int dm1_v1_command_highlight_box_enable_pc34(
+    DM1_V1_CommandHighlightStatePc34Compat *state,
+    int zoneIndex,
+    DM1_V1_CommandHighlightZoneResolverPc34Compat resolveZone,
+    void *resolverContext,
+    DM1_V1_CommandHighlightRenderPlanPc34Compat *outPlan)
+{
+    return F0362_COMMAND_HighlightBoxEnable(
+        state, zoneIndex, resolveZone, resolverContext, outPlan);
 }
 
 const char *dm1_v1_command_highlight_box_enable_source_evidence_pc34(void)

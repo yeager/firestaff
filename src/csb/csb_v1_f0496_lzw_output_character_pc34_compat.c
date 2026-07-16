@@ -47,6 +47,13 @@ int csb_v1_f0496_lzw_output_character_pc34_compat(
     return 1;
 }
 
+int F0496_LZW_OutputCharacter(
+    CsbV1F0496LzwDecoderStatePc34Compat *state,
+    uint8_t character)
+{
+    return csb_v1_f0496_lzw_output_character_pc34_compat(state, character);
+}
+
 const char *csb_v1_f0496_lzw_output_character_pc34_compat_source_evidence(void)
 {
     return "ReDMCSB Toolchains/Common/Source/LZW.C "

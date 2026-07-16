@@ -15,6 +15,8 @@ extern "C" {
  */
 bool redmcsb_f1026_identify_disk_in_drive_pc34_compat(int16_t drive_pda);
 
+bool F1026_IdentifyDiskInDrive_CPSX(int16_t drive_pda);
+
 const char *
 redmcsb_f1026_identify_disk_in_drive_source_evidence_pc34(void);
 

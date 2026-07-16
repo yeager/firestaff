@@ -20,14 +20,17 @@ The inventory includes four-digit named callable symbols, documented unnamed F r
 
 - `UNCERTAIN_NUMBERED_EVIDENCE` means the same numeric token appears in a Firestaff source/header location. This is only a candidate trace; it does **not** claim a behaviorally equivalent or implemented ReDMCSB symbol.
 - `MISSING` means no exact numbered token was found in Firestaff `src/` or `include/`. It makes no claim about an unnamed or differently numbered implementation.
-- No row is marked implemented or verified by this audit. Source locations are first textual anchors in the supplied ReDMCSB reference corpus.
+- `PC34_HOST_BOUNDARY` records a source-proven unavailable PC34 platform boundary; it does not claim host behavior.
+- `PC34_SOURCE_IMPLEMENTED` records a source-locked PC34 adapter with a focused regression. Source locations remain the textual anchors in the supplied ReDMCSB reference corpus.
 
 ## Result
 
 | Status | Count |
 | --- | ---: |
-| UNCERTAIN_NUMBERED_EVIDENCE | 1156 |
-| MISSING | 981 |
+| UNCERTAIN_NUMBERED_EVIDENCE | 1155 |
+| MISSING | 973 |
+| PC34_HOST_BOUNDARY | 4 |
+| PC34_SOURCE_IMPLEMENTED | 5 |
 | **Total** | **2137** |
 
 Machine-check the ledger shape with:

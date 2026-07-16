@@ -14,6 +14,8 @@ extern "C" {
  */
 bool redmcsb_f1025_get_floppy_drive_status_pc34_compat(int16_t drive_pda);
 
+bool F1025_GetFloppyDriveStatus(int16_t drive_pda);
+
 const char *
 redmcsb_f1025_get_floppy_drive_status_source_evidence_pc34(void);
 

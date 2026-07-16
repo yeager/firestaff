@@ -12,6 +12,8 @@ extern "C" {
  */
 void redmcsb_f1061_pre_unreferenced_pc34_compat(void);
 
+void F1061_Pre_Unreferenced(void);
+
 const char *redmcsb_f1061_pre_unreferenced_source_evidence_pc34(void);
 
 #ifdef __cplusplus

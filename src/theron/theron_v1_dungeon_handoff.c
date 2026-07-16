@@ -139,6 +139,53 @@ Theron_V1Track02Variant theron_v1_track02_variant_from_md5(
     return THERON_V1_TRACK02_VARIANT_NONE;
 }
 
+int theron_v1_track02_raw_cue_admit(
+    const Theron_V1Track02RawCueAdmissionFacts *facts,
+    Theron_V1Track02RawCueAdmissionReceipt *out_receipt) {
+    Theron_V1Track02RawCueAdmissionReceipt receipt = {0};
+    Theron_V1Track02Variant variant;
+    uint32_t cue_index01_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!facts || !out_receipt || !facts->runtime_admission ||
+        !facts->runtime_admission->attached ||
+        !facts->runtime_admission->admitted ||
+        !facts->cue_track02_index01_observed ||
+        !facts->raw_bin_present || !facts->raw_track02 ||
+        !facts->track02_md5 ||
+        facts->raw_track02_bytes % THERON_V1_TRACK02_RAW_SECTOR_BYTES != 0u) {
+        return 0;
+    }
+
+    variant = theron_v1_track02_variant_from_md5(facts->track02_md5);
+    if (variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
+        cue_index01_sector = TQR_JP_CUE_INDEX01_RAW_SECTOR;
+    } else if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
+        cue_index01_sector = TQR_US_CUE_INDEX01_RAW_SECTOR;
+    } else {
+        return 0;
+    }
+
+    if (facts->cue_track02_index01_raw_sector != cue_index01_sector ||
+        !theron_v1_track02_raw_bytes_match_md5(
+            facts->raw_track02, facts->raw_track02_bytes, facts->track02_md5)) {
+        return 0;
+    }
+
+    receipt.admitted = 1;
+    receipt.raw_bin_admitted = 1;
+    receipt.cue_index01_admitted = 1;
+    receipt.iso_image_blocked = 1;
+    receipt.no_fallback = 1;
+    receipt.raw_track02_variant = variant;
+    receipt.cue_track02_index01_raw_sector = cue_index01_sector;
+    receipt.raw_track02_bytes = facts->raw_track02_bytes;
+    receipt.track02_md5 = facts->track02_md5;
+    receipt.status = "raw_track02_bin_cue_admitted_iso_blocked_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_dungeon_handoff_select_initial_level(
     const Theron_V1DungeonHandoffFacts *facts,
     Theron_V1DungeonHandoffReceipt *out_receipt) {

@@ -5,6 +5,12 @@
 #include "dm2_v1_asset_loader.h"
 #include <stddef.h>
 
+#define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
+#define DM2_V1_GRAPHICSSET_SCENE_FLAGS_PRESENT_MASK    (1u << 1)
+#define DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK \
+    (DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK | \
+     DM2_V1_GRAPHICSSET_SCENE_FLAGS_PRESENT_MASK)
+
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
 typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;

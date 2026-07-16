@@ -56,6 +56,16 @@ typedef struct {
 /* Returns a type-and-index THING, with cell bits cleared, or THING_NONE.
  * `party_map_index` must be a valid map index; map dimensions are inclusive
  * maxima, matching DUNGEON.C's `x <= Width`, `y <= Height` scan. */
+uint16_t F0165_DUNGEON_GetDiscardedThing(
+    DM1_CSB_F0165_DiscardState *state,
+    const DM1_CSB_F0165_DungeonOps *ops,
+    void *context,
+    uint16_t thing_type,
+    uint16_t map_count,
+    uint16_t party_map_index,
+    int16_t party_map_x,
+    int16_t party_map_y);
+
 uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
     DM1_CSB_F0165_DiscardState *state,
     const DM1_CSB_F0165_DungeonOps *ops,

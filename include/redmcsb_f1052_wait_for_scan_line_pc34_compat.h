@@ -14,6 +14,8 @@ extern "C" {
  */
 void redmcsb_f1052_wait_for_scan_line_pc34_compat(int16_t scan_line);
 
+void F1052_WaitForScanLine(int16_t scan_line);
+
 const char *redmcsb_f1052_wait_for_scan_line_source_evidence_pc34(void);
 
 #ifdef __cplusplus

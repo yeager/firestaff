@@ -29,3 +29,10 @@ bool F0470_MEMORY_FreeAtHeapBottom_PC34(
     bounds->available_heap_byte_count += released_byte_count;
     return true;
 }
+
+bool F0470_MEMORY_FreeAtHeapBottom(
+    ReDMCSBF0470MemoryHeapBoundsPc34Compat *bounds,
+    size_t byte_count)
+{
+    return F0470_MEMORY_FreeAtHeapBottom_PC34(bounds, byte_count);
+}

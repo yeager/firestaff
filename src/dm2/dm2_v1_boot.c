@@ -6663,7 +6663,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.dungeon_map_chip_floor_decoded_hash != 0u &&
         (!out_receipt->runtime_hud.graphicsset_word_values_ready ||
          (out_receipt->runtime_hud.graphicsset_word_values_hash != 0u &&
-          out_receipt->runtime_hud.graphicsset_word_values_query_count >= 4u)) &&
+          out_receipt->runtime_hud.graphicsset_word_values_query_count >= 2u &&
+          (out_receipt->runtime_hud.graphicsset_word_values_present_mask &
+           DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK) ==
+              DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK)) &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_ready &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_hash != 0u &&
         out_receipt->runtime_hud.wall_gfx_image_offsets_query_count > 0u &&

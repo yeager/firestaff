@@ -1683,6 +1683,8 @@ typedef struct {
      * plan chooses one complete source route and never mixes their surfaces. */
     int static_mns_source_pair_bound;
     int structure1b_selector_binding_proven;
+    int structure2_vdp1_palette_binding_proven;
+    int item_ibs_vdp1_command_proven;
     int bpk_material_route_bound;
     int uses_static_mns_material_route;
     int uses_bpk_material_route;

@@ -1,0 +1,12 @@
+/* Opt-in real-data DM1 TITLE -> ENTRANCE -> HoC recruit -> first tick gate.
+ * ReDMCSB TITLE.C F0437, ENTRANCE.C F0797/F0441, REVIVE.C F0280/F0282,
+ * GAMELOOP.C F0002. */
+#include "m11_game_view.h"
+#include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
+#include <stdio.h>
+#include <string.h>
+int main(int ac,char**av){M11_GameViewState s;M11_BootProbeReceipt b;M11_Dm1FloorItemHostPresentationReceipt f;unsigned char fb[320*200];const char*d=ac>1?av[1]:0;int palette;
+if(!d||!*d){puts("SKIP DM1 full launch gate: no data directory");return 0;}M11_GameView_Init(&s);if(!M11_GameView_StartDm1(&s,d)){puts("SKIP DM1 full launch gate: data unavailable");M11_GameView_Shutdown(&s);return 0;}palette=M11_GameView_GetPresentationSpecialPalette(&s);memset(fb,0,sizeof(fb));M11_GameView_Draw(&s,fb,320,200);M11_GameView_GetDm1FloorItemHostPresentationReceipt(&f);
+if(!M11_GameView_GetBootProbeReceipt(&s,&b)||!b.levelLoaded||palette<0||!b.dm1HoCLiveC127MaterialRequest||!s.candidateMirrorPanelActive){puts("SKIP DM1 full launch gate: no natural entrance/HoC candidate continuity");M11_GameView_Shutdown(&s);return 0;}
+if(f.valid||b.dm1HoCLiveF0115MaterialRequest||!M11_GameView_BeginMirrorCandidateReincarnateRename(&s)||!M11_GameView_ApplyMirrorCandidateRenameAscii(&s,'A')||!M11_GameView_ApplyMirrorCandidateRenameCommand(&s,DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT)){puts("FAIL DM1 full launch gate: HoC receipt continuity");M11_GameView_Shutdown(&s);return 1;}(void)M11_GameView_AdvanceIdleTick(&s);M11_GameView_Draw(&s,fb,320,200);M11_GameView_GetDm1FloorItemHostPresentationReceipt(&f);
+if(s.candidateMirrorPanelActive||s.candidateMirrorRenameActive||f.valid||!M11_GameView_GetBootProbeReceipt(&s,&b)||b.dm1HoCLiveF0115MaterialRequest){puts("FAIL DM1 full launch gate: HUD/tick receipt contamination");M11_GameView_Shutdown(&s);return 1;}puts("ok: DM1 title/entrance/palette/HoC/HUD receipt continuity");M11_GameView_Shutdown(&s);return 0;}

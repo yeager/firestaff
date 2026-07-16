@@ -21,6 +21,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_perform_move.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_projectile_pc34_compat.h"
@@ -45,6 +46,7 @@ typedef struct {
     int move_cooldown_ticks;
     /* Weather state (outdoor) */
     DM2_V1_WeatherState weather;
+    DM2_V1_WeatherTimerReceipt last_weather_timer_receipt;
     int time_of_day_minutes;  /* 0-1439 */
     /* Dungeon state */
     int dungeon_level;
@@ -130,6 +132,7 @@ static int g_dm2_last_fallback_projectile_count = 0;
 static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
+static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static int g_dm2_runtime_restore_in_progress = 0;
 
@@ -1764,10 +1767,9 @@ void dm2_v1_runtime_tick(void) {
         rt->move_cooldown_ticks--;
     }
 
-    /* Outdoor weather tick */
-    if (rt->outdoor && rt->tick_count % 182 == 0) {  /* ~10 sec */
-        dm2_v1_weather_next_state(&rt->weather);
-    }
+    (void)dm2_v1_weather_set_timer_weather(
+        &rt->weather, rt->outdoor, (uint32_t)rt->tick_count,
+        &rt->last_weather_timer_receipt);
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
@@ -2508,6 +2510,16 @@ int dm2_v1_runtime_can_move(void) {
     return (rt->move_cooldown_ticks == 0);
 }
 
+int dm2_v1_runtime_last_perform_move_receipt(
+    DM2_V1_PerformMoveReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_last_perform_move.valid) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_last_perform_move;
+    return 1;
+}
+
 /*
  * dm2_v1_runtime_move — attempt party movement in direction dir.
  * Returns 0 on success, -1 if blocked.
@@ -2517,6 +2529,8 @@ int dm2_v1_runtime_can_move(void) {
 int dm2_v1_runtime_move(int dir) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
+    DM2_V1_PerformMoveRequest move_request;
+    DM2_V1_PerformMoveReceipt move_receipt;
     int dx[] = {0, 1, 0, -1};  /* N E S W */
     int dy[] = {-1, 0, 1, 0};
     int nx, ny;
@@ -2525,12 +2539,25 @@ int dm2_v1_runtime_move(int dir) {
     if (!rt->boot || !rt->boot->dm2_state) return -1;
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
 
-    if (!dm2_v1_runtime_can_move()) return -1;
-
     /* Save pre-move position for smooth animation trigger */
     int old_x = gs->party_x;
     int old_y = gs->party_y;
     int old_dir = gs->party_dir;
+
+    if (!dm2_v1_runtime_can_move()) {
+        memset(&move_request, 0, sizeof(move_request));
+        move_request.runtime_ready = 1;
+        move_request.can_move = 0;
+        move_request.outdoor = rt->outdoor;
+        move_request.current_level = rt->dungeon_level;
+        move_request.from_x = old_x;
+        move_request.from_y = old_y;
+        move_request.from_dir = old_dir;
+        move_request.direction = dir;
+        (void)dm2_v1_DM2_PERFORM_MOVE_plan(&move_request,
+                                           &g_dm2_last_perform_move);
+        return -1;
+    }
 
     /* Detect turn-only (facing change, no movement) */
     int is_turn_only = (dir != old_dir);
@@ -2538,6 +2565,15 @@ int dm2_v1_runtime_move(int dir) {
 
     nx = gs->party_x + dx[dir & 3];
     ny = gs->party_y + dy[dir & 3];
+    memset(&move_request, 0, sizeof(move_request));
+    move_request.runtime_ready = 1;
+    move_request.can_move = 1;
+    move_request.outdoor = rt->outdoor;
+    move_request.current_level = rt->dungeon_level;
+    move_request.from_x = gs->party_x;
+    move_request.from_y = gs->party_y;
+    move_request.from_dir = old_dir;
+    move_request.direction = dir;
 
     /* Check dungeon collision if in dungeon mode.
      * Tile type is in lower 5 bits (0x1F) of raw tile.
@@ -2552,9 +2588,13 @@ int dm2_v1_runtime_move(int dir) {
         int raw = dm2_v1_dungeon_get_tile_raw(dd, rt->dungeon_level, nx, ny);
         if (raw < 0) {
             blocked = 1;
+            move_request.target_raw_valid = 0;
         } else {
             int tile_type = dm2_runtime_square_type_at(
                 dd, rt->dungeon_level, nx, ny, raw);
+            move_request.target_raw_valid = 1;
+            move_request.target_raw = raw;
+            move_request.target_square_type = tile_type;
             /* Impassable tile types: wall (0), pit (5), lava (11), inaccessible (13) */
             if (tile_type == 0 || tile_type == 5 || tile_type == 11 || tile_type == 13) {
                 blocked = 1;
@@ -2565,6 +2605,8 @@ int dm2_v1_runtime_move(int dir) {
                  * Source: dm2_v1_object_model.h DM2_DoorState enum.
                  *         SKULL.ASM T520 movement tile access. */
                 int door_state = raw & 0x0007;
+                move_request.target_is_door = 1;
+                move_request.target_door_state = door_state;
                 if (door_state != 0) {  /* not open */
                     blocked = 1;
                 }
@@ -2573,6 +2615,21 @@ int dm2_v1_runtime_move(int dir) {
              * 8=teleporter, 10=water, etc.) are passable. */
         }
     }
+    if (!rt->outdoor && !rt->boot->dungeon_data) {
+        /* Preserve the existing headless/no-data runtime path. Real dungeon
+         * launches still provide target_raw through dm2_v1_dungeon_load. */
+        move_request.target_raw_valid = 1;
+        move_request.target_square_type = 1;
+    }
+    if (rt->outdoor) {
+        move_request.target_raw_valid = 1;
+    }
+    if (!dm2_v1_DM2_PERFORM_MOVE_plan(&move_request, &move_receipt)) {
+        memset(&g_dm2_last_perform_move, 0, sizeof(g_dm2_last_perform_move));
+        return -1;
+    }
+    g_dm2_last_perform_move = move_receipt;
+    blocked = move_receipt.blocked;
 
     if (!blocked) {
         /* Fire smooth movement callback before updating state.
@@ -2726,6 +2783,16 @@ int dm2_v1_runtime_get_weather(void) {
 
 int dm2_v1_runtime_get_weather_intensity(void) {
     return g_dm2_runtime.weather.weather_intensity;
+}
+
+int dm2_v1_runtime_last_weather_timer_receipt(
+    DM2_V1_WeatherTimerReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.last_weather_timer_receipt.valid) {
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.last_weather_timer_receipt;
+    return 1;
 }
 
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {

@@ -14,6 +14,8 @@ extern "C" {
  */
 void *redmcsb_f1017_malloc_pc34_compat(size_t byte_count);
 
+void *F1017_Malloc(size_t byte_count);
+
 const char *redmcsb_f1017_malloc_source_evidence_pc34(void);
 
 #ifdef __cplusplus

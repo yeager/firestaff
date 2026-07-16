@@ -157,6 +157,7 @@ int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
+int F0142_DUNGEON_GetProjectileAspect(int subtype);
 int dm1_v1_projectile_subtype_to_aspect(int subtype);
 int dm1_v1_projectile_renderable_pc34(int projectileCount,
                                       int graphicIndex);

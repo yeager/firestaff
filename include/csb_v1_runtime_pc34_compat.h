@@ -841,6 +841,12 @@ int csb_v1_runtime_group_record_creature_cell(
     int size,
     int creature_index);
 
+/* ReDMCSB GROUP.C F0195: materialize C04 groups on the current map in the
+ * runtime active-group table. Returns the number newly activated, or -1 when
+ * the current dungeon data cannot be traversed safely. */
+int csb_v1_runtime_f0195_group_add_all_active_groups(
+    CSB_V1_RuntimeProfile *profile);
+
 int csb_v1_runtime_group_overlay_info(
     const CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,

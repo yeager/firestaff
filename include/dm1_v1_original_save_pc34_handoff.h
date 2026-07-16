@@ -23,6 +23,7 @@ typedef enum {
 
 #define DM1_ORIGINAL_SAVE_PC34_HANDOFF_ACTIVE_GROUP_REPORT_CAP \
     GAMEWORLD_CREATURE_AI_CAPACITY
+#define DM1_ORIGINAL_SAVE_PC34_ACTIVE_GROUP_PACKED_LANE_COUNT 4
 
 typedef struct {
     int group_thing_index;
@@ -193,6 +194,18 @@ int dm1_v1_original_save_pc34_handoff_file(
 int dm1_v1_original_save_pc34_handoff_apply_active_groups(
     DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world);
+
+/* ReDMCSB DUNGEON.C F0145/F0147 unpack the two-bit ACTIVE_GROUP cell and
+ * direction lanes. Lane 0 is the first creature lane consumed by GROUP.C
+ * active-group runtime state; lanes 1..3 preserve the remaining packed
+ * creature slots for original-save/runtime handoff. */
+int F0145_DUNGEON_GetGroupCells(int packedCells, int creatureLane);
+int F0147_DUNGEON_GetGroupDirections(int packedDirections, int creatureLane);
+int dm1_v1_original_save_pc34_unpack_active_group_lanes(
+    int packedCells,
+    int packedDirections,
+    int outCells[DM1_ORIGINAL_SAVE_PC34_ACTIVE_GROUP_PACKED_LANE_COUNT],
+    int outDirections[DM1_ORIGINAL_SAVE_PC34_ACTIVE_GROUP_PACKED_LANE_COUNT]);
 
 int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     const DM1OriginalSavePC34HandoffReport *report,

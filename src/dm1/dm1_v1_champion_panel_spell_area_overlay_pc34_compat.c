@@ -376,3 +376,67 @@ int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     *out_plan = plan;
     return 1;
 }
+
+int dm1_v1_champion_panel_spell_area_cast_result_refresh_pc34(
+    const DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 *input,
+    const DM1_SpellF0412RuntimeReceipt *f0412_receipt,
+    DM1_V1_ChampionPanelSpellAreaCastResultRefreshPc34 *out_refresh)
+{
+    DM1_V1_ChampionPanelSpellAreaCastResultRefreshPc34 refresh;
+    DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 adjusted;
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 *plan;
+    int caster;
+
+    if (!input || !f0412_receipt || !out_refresh) return 0;
+    if (input->requested_caster_index < 0 ||
+        input->requested_caster_index >= DM1_V1_CPSAO_CHAMPION_COUNT_PC34) {
+        return 0;
+    }
+    if (input->party_champion_count < 0 ||
+        input->party_champion_count > DM1_V1_CPSAO_CHAMPION_COUNT_PC34) {
+        return 0;
+    }
+
+    memset(&refresh, 0, sizeof(refresh));
+    refresh.valid = 1;
+    refresh.consumed_f0412_receipt = 1;
+    refresh.cast_result = f0412_receipt->castResult;
+    refresh.failure_type = f0412_receipt->failureType;
+    refresh.symbols_cleared_from_f0412 = f0412_receipt->symbolsCleared ? 1 : 0;
+    refresh.retained_symbols_for_needs_hand_item =
+        f0412_receipt->symbolsCleared ? 0 : 1;
+
+    adjusted = *input;
+    caster = adjusted.requested_caster_index;
+    adjusted.previous_caster_index = caster;
+    if (f0412_receipt->symbolsCleared) {
+        adjusted.symbol_step = 0u;
+        adjusted.champions[caster].symbols[0] = '\0';
+    }
+
+    plan = &refresh.overlay_plan;
+    memset(plan, 0, sizeof(*plan));
+    plan->valid = 1;
+    plan->reject_reason = DM1_V1_CPSAO_REJECT_NONE_PC34;
+    plan->post_caster_index = caster;
+    plan->new_caster_symbol_step = (int)adjusted.symbol_step;
+
+    if (f0412_receipt->symbolsCleared) {
+        refresh.redrew_available_symbols = 1;
+        refresh.redrew_champion_symbols = 1;
+        plan->drew_available_symbols = 1;
+        plan->drew_champion_symbols = 1;
+        fill_line2(adjusted.symbol_step, plan);
+        fill_line3(&adjusted.champions[caster], plan);
+    } else {
+        plan->new_caster_symbols_length =
+            safe_strlen4(adjusted.champions[caster].symbols);
+        memcpy(plan->new_caster_symbols,
+               adjusted.champions[caster].symbols,
+               (size_t)plan->new_caster_symbols_length);
+        plan->new_caster_symbols[plan->new_caster_symbols_length] = '\0';
+    }
+
+    *out_refresh = refresh;
+    return 1;
+}

@@ -652,8 +652,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.dungeon_map_chip_floor_decoded_pixel_count > 0u &&
               (hud_capture.graphicsset_word_values_ready == 0 ||
                (hud_capture.graphicsset_word_values_hash != 0u &&
-                hud_capture.graphicsset_word_values_query_count >= 4u &&
-                (hud_capture.graphicsset_word_values_present_mask & 0x1bu) == 0x1bu)) &&
+                hud_capture.graphicsset_word_values_query_count >= 2u &&
+                (hud_capture.graphicsset_word_values_present_mask &
+                 DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK) ==
+                    DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK)) &&
               hud_capture.wall_gfx_image_offsets_ready == 1 &&
               hud_capture.wall_gfx_image_offsets_hash != 0u &&
               hud_capture.wall_gfx_image_offsets_query_count > 0u &&

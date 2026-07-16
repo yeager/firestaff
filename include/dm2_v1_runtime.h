@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 
@@ -130,6 +131,8 @@ void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
 int  dm2_v1_runtime_can_move(void);
 int  dm2_v1_runtime_move(int direction);        /* 0=N 1=E 2=S 3=W, returns 0=ok -1=blocked */
+int  dm2_v1_runtime_last_perform_move_receipt(
+    DM2_V1_PerformMoveReceipt *out_receipt);
 int  dm2_v1_runtime_turn(int delta);            /* -1=left, +1=right, returns 0=ok -1=unbooted */
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
@@ -376,6 +379,8 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
+int dm2_v1_runtime_last_weather_timer_receipt(
+    DM2_V1_WeatherTimerReceipt *out_receipt);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,

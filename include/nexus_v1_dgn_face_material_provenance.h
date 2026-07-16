@@ -48,6 +48,15 @@ typedef struct {
     const Nexus_V1_DgnFaceMaterialBinding *bindings;
     int face_count;
     int material_selector_count;
+    /*
+     * Optional material-host route evidence from the BPK/DMDF boundary.
+     * These fields let Structure3 face admission consume a fail-closed
+     * material receipt without promoting PRS3 pixels or VDP1 draw commands.
+     */
+    int material_host_route_bound;
+    int material_host_route_prs3_blocked;
+    int material_host_route_pixel_promotion_blocked;
+    int material_host_route_decoder_promoted;
 } Nexus_V1_DgnFaceMaterialInput;
 
 typedef enum {
@@ -69,6 +78,24 @@ typedef struct {
     int selector_bindings_complete;
     int permits_fallback_visuals;
     int can_submit_raster_input;
+    int can_submit_textured_draw;
+    int textured_draw_blocked;
+    int static_texture_draw_blocked;
+    int animated_texture_draw_blocked;
+    int structure2_material_required;
+    int structure1g_material_required;
+    int structure2_pixel_semantics_required;
+    int structure1g_animation_semantics_required;
+    int material_host_route_bound;
+    int material_host_route_prs3_blocked;
+    int material_host_route_pixel_promotion_blocked;
+    int material_host_route_decoder_promoted;
+    int material_admission_blocked;
+    int structure3_texture_admission_blocked;
+    int material_bank_mutation_blocked;
+    int vdp1_command_required;
+    int vdp1_command_proven;
+    int vdp1_draw_list_blocked;
 } Nexus_V1_DgnFaceMaterialReceipt;
 
 /* Returns 1 only when a complete retail-DGN binding table is admissible. */

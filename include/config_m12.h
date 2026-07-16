@@ -138,6 +138,7 @@ typedef struct {
     /* UI scale (accessibility extra). Multiplier in percent for
      * HUD and menu text rendering. */
     int uiScale;                         /* 100, 150, 200 (default 100) */
+    char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY]; /* Optional UTF-8/CJK-capable UI font. */
 
     /* Quick resume gating. */
     int quickResumeEnabled;              /* 0 = off, 1 = on; default 1 */
@@ -165,6 +166,7 @@ typedef struct {
      * detected at startup, 0 otherwise. Read-only from config I/O
      * perspective (set by M12_AssetStatus_Scan at launch). */
     int v22_modern_assets_installed;
+    char artpackPath[M12_CONFIG_DATA_DIR_CAPACITY]; /* Optional .fsart artpack selected by launcher. */
 
     /* Cloud sync settings. */
     int cloudSyncEnabled;          /* 0 = off, 1 = on */
@@ -177,6 +179,7 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride);
 int M12_Config_Save(const M12_Config* config);
 const char* M12_Config_GetPath(const M12_Config* config);
 int M12_Config_GetAutoLanguageIndex(void);
+int M12_Config_FindDefaultUnicodeFontPath(char* out, size_t outSize);
 void M12_Config_SetLastSavePath(const char* path);
 
 /* Export/import settings as JSON.

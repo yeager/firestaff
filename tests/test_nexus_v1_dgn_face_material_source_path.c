@@ -82,11 +82,34 @@ int main(void)
     input.bindings = bindings;
     input.face_count = binding_count;
     input.material_selector_count = 256;
+    input.material_host_route_bound = 1;
+    input.material_host_route_prs3_blocked = 1;
+    input.material_host_route_pixel_promotion_blocked = 1;
+    input.material_host_route_decoder_promoted = 0;
     expect(nexus_v1_dgn_face_material_validate(&input, &receipt) == 1 &&
                receipt.color_selector_count == 1 &&
                receipt.static_selector_count == 1 &&
                receipt.animated_selector_count == 1 &&
-               receipt.can_submit_raster_input && !receipt.permits_fallback_visuals,
+               receipt.can_submit_raster_input &&
+               !receipt.can_submit_textured_draw &&
+               receipt.textured_draw_blocked &&
+               receipt.static_texture_draw_blocked &&
+               receipt.animated_texture_draw_blocked &&
+               receipt.structure2_material_required &&
+               receipt.structure1g_material_required &&
+               receipt.structure2_pixel_semantics_required &&
+               receipt.structure1g_animation_semantics_required &&
+               receipt.material_host_route_bound &&
+               receipt.material_host_route_prs3_blocked &&
+               receipt.material_host_route_pixel_promotion_blocked &&
+               !receipt.material_host_route_decoder_promoted &&
+               receipt.material_admission_blocked &&
+               receipt.structure3_texture_admission_blocked &&
+               receipt.material_bank_mutation_blocked &&
+               receipt.vdp1_command_required &&
+               !receipt.vdp1_command_proven &&
+               receipt.vdp1_draw_list_blocked &&
+               !receipt.permits_fallback_visuals,
            "the real-buffer binding table reaches only the no-fallback source boundary");
 
     ++dgn[67];

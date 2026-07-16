@@ -31,6 +31,13 @@ bool csb_v1_f0469_memory_free_at_heap_top_pc34_compat(
     return true;
 }
 
+bool F0469_MEMORY_FreeAtHeapTop(
+    CsbV1F0469MemoryHeapAccountingPc34Compat *heap,
+    size_t byte_count)
+{
+    return csb_v1_f0469_memory_free_at_heap_top_pc34_compat(heap, byte_count);
+}
+
 const char *csb_v1_f0469_memory_free_at_heap_top_source_evidence_pc34(void)
 {
     return "ReDMCSB MEMORY.C:100-108 F469_rzzz_MEMORY_FreeAtHeapTop: "

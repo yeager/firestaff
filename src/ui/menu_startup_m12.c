@@ -1,11 +1,12 @@
 #include "menu_startup_m12.h"
 #include "firestaff_l10n.h"
+#include "artpack_admission_m12.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 #include "firestaff_retroachievements.h"
 #include "menu_startup_a11y_m12.h"
 
-#define FIRESTAFF_VERSION_STRING "v3.0.72"
+#define FIRESTAFF_VERSION_STRING "v3.0.75"
 #include "firestaff_bestiary.h"
 #include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
@@ -137,6 +138,8 @@ enum {
     M12_SETTINGS_ROW_IMPORT,
     M12_SETTINGS_ROW_SYNC_NOW,
     M12_SETTINGS_ROW_SYNC_STATUS,
+    M12_SETTINGS_ROW_UNICODE_FONT,
+    M12_SETTINGS_ROW_ARTPACK,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -168,6 +171,10 @@ _Static_assert(M12_STARTUP_SETTINGS_ROW_EXPORT == M12_SETTINGS_ROW_EXPORT,
                "settings row contract: export");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_IMPORT == M12_SETTINGS_ROW_IMPORT,
                "settings row contract: import");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_UNICODE_FONT == M12_SETTINGS_ROW_UNICODE_FONT,
+               "settings row contract: unicode font");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_ARTPACK == M12_SETTINGS_ROW_ARTPACK,
+               "settings row contract: artpack");
 
 enum {
     M12_MUSEUM_CATEGORY_DM1 = 0,
@@ -324,6 +331,8 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId);
 static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
+static void m12_begin_unicode_font_browse(M12_StartupMenuState* state);
+static void m12_begin_artpack_browse(M12_StartupMenuState* state);
 static void m12_export_save_manifest_json(M12_StartupMenuState* state);
 static void m12_export_save_settings_action(M12_StartupMenuState* state);
 static void m12_export_save_browser_settings_action(M12_StartupMenuState* state);
@@ -366,7 +375,7 @@ static const M12_ResolutionSize g_resolutionSizes[M12_RES_COUNT] = {
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 /* UI language cycle.  Order = display order in the LANGUAGE row.
  * Codes are also used to resolve `po/startup-menu.<code>.po` at runtime.
- * Codes match the second column of the dm1.<lang>.po 19-language list.
+ * Codes match the second column of the dm1.<lang>.po locale list.
  *
  * Fallback behaviour (see m12_resolve_catalog_path):
  *   - localeIndex 0 (EN) and missing .po files fall through to the English
@@ -377,13 +386,13 @@ static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 static const char* g_languages[] = {
     _("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH"),
     _("CS"), _("DA"), _("ES"), _("FI"), _("HU"), _("IT"),
-    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR")
+    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR"), _("ID")
 };
 static const char* g_languageNames[] = {
     _("ENGLISH"), _("SVENSKA"), "FRANÇAIS", _("DEUTSCH"), "日本語", "简体中文",
     "ČEŠTINA", "DANSK", "ESPAÑOL", "SUOMI", "MAGYAR", "ITALIANO",
     "한국어", "NEDERLANDS", "NORSK BOKMÅL", "POLSKI", "PORTUGUÊS",
-    "РУССКИЙ", "TÜRKÇE"
+    "РУССКИЙ", "TÜRKÇE", "BAHASA INDONESIA"
 };
 enum { M12_UI_LANGUAGE_COUNT = (int)(sizeof(g_languages) / sizeof(g_languages[0])) };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
@@ -486,9 +495,20 @@ static FS_Language m12_fs_language_from_menu_index(int index) {
         case 16: return FS_LANG_PT;
         case 17: return FS_LANG_RU;
         case 18: return FS_LANG_TR;
+        case 19: return FS_LANG_ID;
         case 0:
         default: return FS_LANG_EN;
     }
+}
+
+static int m12_menu_index_from_fs_language(FS_Language language) {
+    int index;
+    for (index = 0; index < M12_UI_LANGUAGE_COUNT; ++index) {
+        if (m12_fs_language_from_menu_index(index) == language) {
+            return index;
+        }
+    }
+    return 0;
 }
 
 static void m12_sync_l10n_language(const M12_StartupMenuState* state) {
@@ -931,6 +951,33 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
     return &state->entries[index];
 }
 
+const char* M12_StartupMenu_GetUnicodeFontPath(const M12_StartupMenuState* state) {
+    return state ? state->settings.unicodeFontPath : "";
+}
+
+const char* M12_StartupMenu_GetArtpackPath(const M12_StartupMenuState* state) {
+    return state ? state->settings.artpackPath : "";
+}
+
+int M12_StartupMenu_SelectArtpackPath(M12_StartupMenuState* state,
+                                      const char* path,
+                                      M12_ArtpackAdmissionReceipt* outReceipt) {
+    M12_ArtpackAdmissionReceipt localReceipt;
+    M12_ArtpackAdmissionReceipt* receipt =
+        outReceipt ? outReceipt : &localReceipt;
+    if (!state) {
+        return 0;
+    }
+    if (!M12_ArtpackAdmission_Check(path, receipt)) {
+        return 0;
+    }
+    snprintf(state->settings.artpackPath,
+             sizeof(state->settings.artpackPath),
+             "%s",
+             path ? path : "");
+    return 1;
+}
+
 static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
                                        const char* gameId) {
     int i;
@@ -949,7 +996,7 @@ static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
 
 /* Language cycle accessors.  g_languages[] / g_languageNames[] are
  * file-local to this module; these getters expose just the count
- * and the per-index strings so probes can drive the 19-language
+ * and the per-index strings so probes can drive the 20-language
  * cycle from the production source of truth without hardcoding 19
  * (or the locale codes) inline. */
 int M12_StartupMenu_GetLanguageCount(void) {
@@ -994,34 +1041,59 @@ static int m12_clamp_index(int value, int count) {
     return value;
 }
 
-static const int* m12_visible_settings_rows_for_tab(int tab, int* outCount) {
+const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
     static const int gameRows[] = {
         M12_SETTINGS_ROW_LANGUAGE,
         M12_SETTINGS_ROW_DATA_DIR,
         M12_SETTINGS_ROW_DATA_STATUS,
-        M12_SETTINGS_ROW_SESSION_TIMER
+        M12_SETTINGS_ROW_SESSION_TIMER,
+        M12_SETTINGS_ROW_MINIMAP,
+        M12_SETTINGS_ROW_AUTOMAP,
+        M12_SETTINGS_ROW_COMBAT_LOG,
+        M12_SETTINGS_ROW_QUICK_RESUME,
+        M12_SETTINGS_ROW_SAVE_BROWSER,
+        M12_SETTINGS_ROW_EXPORT,
+        M12_SETTINGS_ROW_IMPORT
     };
     static const int graphicsRows[] = {
         M12_SETTINGS_ROW_GRAPHICS,
+        M12_SETTINGS_ROW_RENDERER_BACKEND,
         M12_SETTINGS_ROW_WINDOW_MODE,
+        M12_SETTINGS_ROW_ARTPACK,
+        M12_SETTINGS_ROW_SCALE_MODE,
+        M12_SETTINGS_ROW_DISPLAY_ASPECT,
+        M12_SETTINGS_ROW_INTEGER_SCALING,
+        M12_SETTINGS_ROW_SCALING_FILTER,
+        M12_SETTINGS_ROW_VSYNC,
+        M12_SETTINGS_ROW_VIEWPORT_STYLE,
         M12_SETTINGS_ROW_SMOOTH_TURN_PAN
     };
     static const int controlsRows[] = {
         M12_SETTINGS_ROW_INPUT_MODE,
         M12_SETTINGS_ROW_TOUCH_CONTROLS,
-        M12_SETTINGS_ROW_MOVEMENT_MODE
+        M12_SETTINGS_ROW_MOVEMENT_MODE,
+        M12_SETTINGS_ROW_DEBUG_OVERLAY,
+        M12_SETTINGS_ROW_DEVELOPER_GATES
     };
     static const int audioRows[] = {
         M12_SETTINGS_ROW_AUDIO_MASTER,
         M12_SETTINGS_ROW_AUDIO_MUSIC,
         M12_SETTINGS_ROW_AUDIO_SFX,
-        M12_SETTINGS_ROW_AUDIO_MUTED
+        M12_SETTINGS_ROW_AUDIO_MUTED,
+        M12_SETTINGS_ROW_SOUNDTRACK,
+        M12_SETTINGS_ROW_AMBIENT,
+        M12_SETTINGS_ROW_AMBIENT_VOLUME
     };
     static const int accessibilityRows[] = {
         M12_SETTINGS_ROW_FONT_SCALE,
         M12_SETTINGS_ROW_HIGH_CONTRAST,
         M12_SETTINGS_ROW_COLORBLIND_MODE,
-        M12_SETTINGS_ROW_AUTO_PAUSE
+        M12_SETTINGS_ROW_AUTO_PAUSE,
+        M12_SETTINGS_ROW_THEME,
+        M12_SETTINGS_ROW_BACKGROUND,
+        M12_SETTINGS_ROW_UI_SCALE,
+        M12_SETTINGS_ROW_UNICODE_FONT,
+        M12_SETTINGS_ROW_STREAMER_MODE
     };
     static const int onlineRows[] = {
         M12_SETTINGS_ROW_RETROACHIEVEMENTS,
@@ -1065,13 +1137,13 @@ static const int* m12_visible_settings_rows_for_tab(int tab, int* outCount) {
 
 static int m12_first_visible_settings_row_for_tab(int tab) {
     int count = 0;
-    const int* rows = m12_visible_settings_rows_for_tab(tab, &count);
+    const int* rows = M12_StartupMenu_GetSettingsRowsForTab(tab, &count);
     return (rows && count > 0) ? rows[0] : M12_SETTINGS_ROW_LANGUAGE;
 }
 
 static int m12_cycle_visible_settings_row(const M12_StartupMenuState* state, int row, int delta) {
     int count = 0;
-    const int* visibleRows = m12_visible_settings_rows_for_tab(
+    const int* visibleRows = M12_StartupMenu_GetSettingsRowsForTab(
         state ? state->settingsTabIndex : M12_SETTINGS_TAB_GAME, &count);
     int i;
     int selected = 0;
@@ -2290,6 +2362,110 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
     }
 }
 
+static void m12_unicode_font_dialog_callback(void* userdata,
+                                             const char* const* filelist,
+                                             int filter) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
+    (void)filter;
+    if (!state) {
+        return;
+    }
+    if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        snprintf(state->settings.unicodeFontPath,
+                 sizeof(state->settings.unicodeFontPath),
+                 "%s",
+                 filelist[0]);
+        m12_save_config(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "UI FONT SELECTED"),
+                                 m12_tr(state, "UTF-8 MENU TEXT WILL USE THIS FONT"),
+                                 m12_tr(state, "ESC RETURNS TO MENU"));
+    } else {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "UI FONT UNCHANGED"),
+                                 m12_tr(state, "NO FONT FILE SELECTED"),
+                                 m12_tr(state, "ESC RETURNS TO MENU"));
+    }
+}
+
+static void m12_artpack_dialog_callback(void* userdata,
+                                        const char* const* filelist,
+                                        int filter) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
+    M12_ArtpackAdmissionReceipt receipt;
+    (void)filter;
+    if (!state) {
+        return;
+    }
+    if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        if (!M12_StartupMenu_SelectArtpackPath(state, filelist[0], &receipt)) {
+            m12_set_buffered_message(state,
+                                     m12_tr(state, "ARTPACK REJECTED"),
+                                     M12_ArtpackAdmission_StatusName(receipt.status),
+                                     m12_tr(state, "NO FALLBACK GRAPHICS USED"));
+            return;
+        }
+        m12_save_config(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "ARTPACK SELECTED"),
+                                 m12_tr(state, "V2.2 GRAPHICS WILL USE THIS .FSART"),
+                                 m12_tr(state, "ESC RETURNS TO MENU"));
+    } else {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "ARTPACK UNCHANGED"),
+                                 m12_tr(state, "NO .FSART FILE SELECTED"),
+                                 m12_tr(state, "ESC RETURNS TO MENU"));
+    }
+}
+
+static void m12_begin_unicode_font_browse(M12_StartupMenuState* state) {
+    static const SDL_DialogFileFilter filters[] = {
+        {"Fonts", "ttf;otf;ttc"},
+        {"All files", "*"}
+    };
+    if (!state) {
+        return;
+    }
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "CHOOSE UI FONT"),
+                             m12_tr(state, "USE A UTF-8/CJK-CAPABLE FONT"),
+                             m12_tr(state, "TTF OTF TTC"));
+    SDL_ShowOpenFileDialog(m12_unicode_font_dialog_callback,
+                           state,
+                           NULL,
+                           filters,
+                           (int)(sizeof(filters) / sizeof(filters[0])),
+                           state->settings.unicodeFontPath[0]
+                               ? state->settings.unicodeFontPath
+                               : NULL,
+                           false);
+}
+
+static void m12_begin_artpack_browse(M12_StartupMenuState* state) {
+    static const SDL_DialogFileFilter filters[] = {
+        {"Firestaff artpacks", "fsart"},
+        {"All files", "*"}
+    };
+    if (!state) {
+        return;
+    }
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "CHOOSE ARTPACK"),
+                             m12_tr(state, "SELECT A .FSART FILE"),
+                             m12_tr(state, "V2.2 CUSTOM GRAPHICS"));
+    SDL_ShowOpenFileDialog(m12_artpack_dialog_callback,
+                           state,
+                           NULL,
+                           filters,
+                           (int)(sizeof(filters) / sizeof(filters[0])),
+                           state->settings.artpackPath[0]
+                               ? state->settings.artpackPath
+                               : NULL,
+                           false);
+}
+
 
 static int m12_is_valid_dm1_firestaff_quicksave_path(const char* path) {
     static const unsigned char quicksaveMagic[8] = {
@@ -2868,6 +3044,8 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.ambientEnabled = state->settings.ambientEnabled;
     config.ambientVolume = state->settings.ambientVolume;
     config.uiScale = state->settings.uiScale;
+    snprintf(config.unicodeFontPath, sizeof(config.unicodeFontPath), "%s",
+             state->settings.unicodeFontPath);
     config.streamerMode = state->settings.streamerMode;
     config.gameSpeedMultiplier = state->settings.gameSpeedMultiplier;
     config.controlSchemeIndex = state->settings.controlSchemeIndex;
@@ -2909,6 +3087,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     snprintf(config.customMusicPath, sizeof(config.customMusicPath), "%s", state->settings.customMusicPath);
     snprintf(config.customDungeonPath, sizeof(config.customDungeonPath), "%s", state->settings.customDungeonPath);
     snprintf(config.screenshotPath, sizeof(config.screenshotPath), "%s", state->settings.screenshotPath);
+    snprintf(config.artpackPath, sizeof(config.artpackPath), "%s", state->settings.artpackPath);
     config.windowWidth = state->settings.windowWidth;
     config.windowHeight = state->settings.windowHeight;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -3043,6 +3222,14 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     hasExplicitDataDirOverride =
         (dataDirOverride && dataDirOverride[0] != '\0') ? 1 : 0;
     M12_Config_Load(&config, dataDirOverride);
+    if (!config.languageExplicit) {
+        int systemLanguageIndex =
+            m12_menu_index_from_fs_language(fs_l10n_detect_system_language());
+        config.languageIndex = systemLanguageIndex;
+        for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+            config.gameLanguageIndex[gi] = systemLanguageIndex;
+        }
+    }
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     M12_UI_LANGUAGE_COUNT);
     m12_sync_l10n_language(state);
@@ -3133,6 +3320,19 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     if (config.uiScale <= 100) state->settings.uiScale = 100;
     else if (config.uiScale <= 150) state->settings.uiScale = 150;
     else state->settings.uiScale = 200;
+    snprintf(state->settings.unicodeFontPath, sizeof(state->settings.unicodeFontPath),
+             "%s", config.unicodeFontPath);
+    if (state->settings.unicodeFontPath[0] == '\0') {
+        if (M12_Config_FindDefaultUnicodeFontPath(
+            state->settings.unicodeFontPath,
+            sizeof(state->settings.unicodeFontPath))) {
+            snprintf(config.unicodeFontPath,
+                     sizeof(config.unicodeFontPath),
+                     "%s",
+                     state->settings.unicodeFontPath);
+            M12_Config_Save(&config);
+        }
+    }
     state->settings.streamerMode = config.streamerMode ? 1 : 0;
     state->settings.controlSchemeIndex = config.controlSchemeIndex;
     if (state->settings.controlSchemeIndex < 0 || state->settings.controlSchemeIndex > 1) {
@@ -3206,6 +3406,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     snprintf(state->settings.customMusicPath, sizeof(state->settings.customMusicPath), "%s", config.customMusicPath);
     snprintf(state->settings.customDungeonPath, sizeof(state->settings.customDungeonPath), "%s", config.customDungeonPath);
     snprintf(state->settings.screenshotPath, sizeof(state->settings.screenshotPath), "%s", config.screenshotPath);
+    snprintf(state->settings.artpackPath, sizeof(state->settings.artpackPath), "%s", config.artpackPath);
     state->settings.windowWidth = config.windowWidth > 0 ? config.windowWidth : 960;
     state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -3838,7 +4039,8 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
     return state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
 }
 
-static const char* m12_settings_label(const M12_StartupMenuState* state, int row) {
+const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
+                                             int row) {
     switch (row) {
         case M12_SETTINGS_ROW_LANGUAGE: return m12_text(state, M12_TEXT_LANGUAGE);
         case M12_SETTINGS_ROW_GRAPHICS: return m12_text(state, M12_TEXT_PRESENTATION_MODE);
@@ -3884,9 +4086,11 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_AMBIENT: return m12_tr(state, "AMBIENT SOUND");
         case M12_SETTINGS_ROW_AMBIENT_VOLUME: return m12_tr(state, "AMBIENT VOLUME");
         case M12_SETTINGS_ROW_UI_SCALE: return m12_tr(state, "UI SCALE");
+        case M12_SETTINGS_ROW_UNICODE_FONT: return m12_tr(state, "UI FONT");
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_tr(state, "CUSTOM MUSIC");
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
+        case M12_SETTINGS_ROW_ARTPACK: return m12_tr(state, "ARTPACK");
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_tr(state, "STREAMER MODE");
         case M12_SETTINGS_ROW_EXPORT:
             return (state && state->quickResumeAvailable &&
@@ -3898,7 +4102,8 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
     }
 }
 
-static const char* m12_settings_value(const M12_StartupMenuState* state, int row) {
+const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
+                                             int row) {
     switch (row) {
         case M12_SETTINGS_ROW_LANGUAGE: return m12_settings_value_language(state);
         case M12_SETTINGS_ROW_GRAPHICS: return m12_settings_value_graphics(state);
@@ -3956,9 +4161,11 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_AMBIENT: return m12_settings_value_ambient(state);
         case M12_SETTINGS_ROW_AMBIENT_VOLUME: return m12_settings_value_ambient_volume(state);
         case M12_SETTINGS_ROW_UI_SCALE: return m12_settings_value_ui_scale(state);
+        case M12_SETTINGS_ROW_UNICODE_FONT: return m12_settings_value_path_status(state, state ? state->settings.unicodeFontPath : NULL);
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH: return m12_settings_value_path_status(state, state ? state->settings.customMusicPath : NULL);
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
+        case M12_SETTINGS_ROW_ARTPACK: return m12_settings_value_path_status(state, state ? state->settings.artpackPath : NULL);
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_settings_value_streamer_mode(state);
         case M12_SETTINGS_ROW_EXPORT:
             return (state && state->quickResumeAvailable &&
@@ -3968,6 +4175,11 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "READ...");
         default: return "";
     }
+}
+
+const char* M12_StartupMenu_Translate(const M12_StartupMenuState* state,
+                                      const char* msgid) {
+    return m12_tr(state, msgid);
 }
 
 const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state) {
@@ -4597,6 +4809,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.uiScale = state->settings.uiScale < 150 ? 150 :
                                           state->settings.uiScale < 200 ? 200 : 100;
             }
+            break;
+        case M12_SETTINGS_ROW_UNICODE_FONT:
+            m12_begin_unicode_font_browse(state);
+            break;
+        case M12_SETTINGS_ROW_ARTPACK:
+            m12_begin_artpack_browse(state);
             break;
         case M12_SETTINGS_ROW_CUSTOM_MUSIC_PATH:
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH:
@@ -5490,6 +5708,101 @@ static void m12_draw_language_flag(unsigned char* framebuffer,
                           x + 1, y + 4, 16, 3, M12_COLOR_LIGHT_RED);
             m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x + 1, y + 7, 16, 4, M12_COLOR_YELLOW);
+            break;
+        case 4: /* Japan */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 3, 6, 6, M12_COLOR_LIGHT_RED);
+            break;
+        case 5: /* China */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 3, y + 3, 3, 3, M12_COLOR_YELLOW);
+            break;
+        case 6: /* Czechia */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 6, 16, 5, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 5, 10, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 7: /* Denmark */
+        case 14: /* Norway */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 1, 2, 10, M12_COLOR_WHITE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 5, 16, 2, M12_COLOR_WHITE);
+            if (idx == 14) {
+                m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 7, y + 1, 1, 10, M12_COLOR_LIGHT_BLUE);
+                m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x + 1, y + 6, 16, 1, M12_COLOR_LIGHT_BLUE);
+            }
+            break;
+        case 8: /* Spain */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_YELLOW);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 2, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 9, 16, 2, M12_COLOR_LIGHT_RED);
+            break;
+        case 9: /* Finland */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 1, 2, 10, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 5, 16, 2, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 10: /* Hungary */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 8, 16, 3, M12_COLOR_GREEN);
+            break;
+        case 11: /* Italy */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 5, 10, M12_COLOR_GREEN);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 12, y + 1, 5, 10, M12_COLOR_LIGHT_RED);
+            break;
+        case 12: /* Korea */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 3, 6, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 6, y + 6, 6, 3, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 13: /* Netherlands */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 3, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 8, 16, 3, M12_COLOR_LIGHT_BLUE);
+            break;
+        case 15: /* Poland */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 6, 16, 5, M12_COLOR_LIGHT_RED);
+            break;
+        case 16: /* Portugal */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 6, 10, M12_COLOR_GREEN);
+            break;
+        case 17: /* Russia */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 4, 16, 3, M12_COLOR_LIGHT_BLUE);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 7, 16, 4, M12_COLOR_LIGHT_RED);
+            break;
+        case 18: /* Turkey */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 10, M12_COLOR_LIGHT_RED);
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 7, y + 4, 4, 4, M12_COLOR_WHITE);
+            break;
+        case 19: /* Indonesia */
+            m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, 16, 5, M12_COLOR_LIGHT_RED);
             break;
         case 0:
         default: /* UK-ish English marker, bounded and recognisable */
@@ -6796,7 +7109,7 @@ static int m12_apply_nexus_startup_package(
     Nexus_V1_M12StartupPackageReceipt package;
     if (!receipt || !receipt->gameId ||
         strcmp(receipt->gameId, "nexus") != 0 ||
-        !nexus_v1_launcher_m12_startup_package_from_flags(
+        !nexus_v1_launcher_m12_startup_package_from_data_gate(
             receipt->supported,
             receipt->dataReady,
             receipt->versionReady,
@@ -7390,7 +7703,11 @@ int M12_StartupMenu_GetLaunchGate(
     } else if (!gate.versionReady) {
         gate.blockedLabel = "SELECTED VERSION NOT FOUND";
         gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);
-    } else if (!gate.fullStartGraphicsReady ||
+    /* Nexus obtains its full-start graphics/package receipt only after M11
+     * opens the verified Saturn runtime. Availability may permit that launch,
+     * but it must never be promoted to a capture-ready package in M12. */
+    } else if ((!gate.fullStartGraphicsReady &&
+                (!entry->gameId || strcmp(entry->gameId, "nexus") != 0)) ||
                (gate.boot.startupContractExpected &&
                 !gate.startupContractReady)) {
         gate.blockedLabel = "STARTUP PROOF MISSING";
@@ -7649,22 +7966,22 @@ static const char* m12_ext_settings_value_for_row(
         return "";
     }
     if (strcmp(row->label, "RetroAchievements") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RETROACHIEVEMENTS);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RETROACHIEVEMENTS);
     }
     if (strcmp(row->label, "RetroAchievements Hardcore") == 0 ||
         strcmp(row->label, "RA Hardcore") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_HARDCORE);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_HARDCORE);
     }
     if (strcmp(row->label, "RetroAchievements Username") == 0 ||
         strcmp(row->label, "RA Username") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_USERNAME);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_USERNAME);
     }
     if (strcmp(row->label, "RetroAchievements API Token") == 0 ||
         strcmp(row->label, "RA API Token") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_TOKEN);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_TOKEN);
     }
     if (strcmp(row->label, "RetroAchievements Endpoint") == 0) {
-        return m12_settings_value(state, M12_SETTINGS_ROW_RA_ENDPOINT);
+        return M12_StartupMenu_GetSettingsValue(state, M12_SETTINGS_ROW_RA_ENDPOINT);
     }
     return m12_tr(state, row->value);
 }
@@ -7872,8 +8189,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                                   framebufferWidth,
                                   framebufferHeight,
                                   rowY,
-                                  m12_settings_label(state, row),
-                                  m12_settings_value(state, row),
+                                  M12_StartupMenu_GetSettingsLabel(state, row),
+                                  M12_StartupMenu_GetSettingsValue(state, row),
                                   state->settingsSelectedIndex == row,
                                   state->settings.languageIndex,
                                   row == M12_SETTINGS_ROW_LANGUAGE);
@@ -9260,8 +9577,8 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                                          panelX + 10,
                                          rowY,
                                          framebufferWidth - margin - panelX - 20,
-                                         m12_settings_label(state, row),
-                                         m12_settings_value(state, row),
+                                         M12_StartupMenu_GetSettingsLabel(state, row),
+                                         M12_StartupMenu_GetSettingsValue(state, row),
                                          state->settingsSelectedIndex == row,
                                          state->settings.languageIndex,
                                          row == M12_SETTINGS_ROW_LANGUAGE);

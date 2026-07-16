@@ -127,6 +127,22 @@ int DM1_V1_ActionDamageRenderPlan_BuildPc34Compat(
     return 1;
 }
 
+int F0385_MENUS_DrawActionDamage(
+    int damage,
+    DM1_V1_ActionDamageRenderConsumerPc34Compat consumer,
+    void *context,
+    DM1_V1_ActionDamageRenderPlanPc34Compat *out_plan)
+{
+    if (!DM1_V1_ActionDamageRenderPlan_BuildPc34Compat(damage, out_plan)) {
+        return 0;
+    }
+    if (!consumer) {
+        return 1;
+    }
+    return DM1_V1_ActionDamageRenderPlan_ConsumePc34Compat(
+        out_plan, consumer, context);
+}
+
 int DM1_V1_ActionDamageRenderPlan_ConsumePc34Compat(
     const DM1_V1_ActionDamageRenderPlanPc34Compat *plan,
     DM1_V1_ActionDamageRenderConsumerPc34Compat consumer,

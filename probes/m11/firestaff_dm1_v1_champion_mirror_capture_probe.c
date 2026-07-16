@@ -64,7 +64,6 @@ enum {
     PORTRAIT_H = 29,
     PORTRAIT_WARM_THRESHOLD = 30,
     PORTRAIT_DETAIL_THRESHOLD = 30,
-    MIRROR_FRAME_BLACK_THRESHOLD = 180,
     C026_CHAMPION_PORTRAIT_COUNT = 24
 };
 
@@ -78,36 +77,37 @@ typedef struct MirrorCapture {
     int portraitRectNonzero;
     int portraitRectWarmCount;
     int portraitRectDetailCount;
-    int mirrorFrameBlackCount;
+    int mirrorBackingOpaquePixels;
+    int mirrorBackingMatchedPixels;
 } MirrorCapture;
 
 static MirrorCapture kCaptures[] = {
     /* Positive ordinals: front cell has C127 sensor with ordinal */
-    {"hall_start_north_ordinal_1_HALK",     1, 2, 0,  1, 0, 0, 0, 0, 0},
-    {"hall_start_east_wrong_wall_no_portrait", 1, 2, 1, -1, 0, 0, 0, 0, 0},
-    {"hall_leif_from_north_ordinal_4",      2, 1, 2,  4, 0, 0, 0, 0, 0},
-    {"hall_corridor_east_ordinal_18_SONJA", 1, 3, 1, 18, 0, 0, 0, 0, 0},
-    {"hall_zed_from_north_ordinal_10",      1, 3, 2, 10, 0, 0, 0, 0, 0},
-    {"hall_end_north_wrong_wall_no_portrait", 1, 5, 0, -1, 0, 0, 0, 0, 0},
-    {"hall_end_east_wrong_wall_no_portrait", 1, 5, 1, -1, 0, 0, 0, 0, 0},
-    {"hall_mophus_from_north_ordinal_15",   2, 4, 2, 15, 0, 0, 0, 0, 0},
-    {"hall_end_south_ordinal_13_WUUF",      1, 5, 2, 13, 0, 0, 0, 0, 0},
-    {"hall_deep_north_ordinal_21",          3,10, 0, 21, 0, 0, 0, 0, 0},
+    {"hall_start_north_ordinal_1_HALK",     7, 9, 0,  1, 0, 0, 0, 0, 0, 0},
+    {"hall_start_east_wrong_wall_no_portrait", 1, 2, 1, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_leif_from_north_ordinal_4",      10, 5, 2,  4, 0, 0, 0, 0, 0, 0},
+    {"hall_corridor_east_ordinal_18_SONJA", 9,13, 1, 18, 0, 0, 0, 0, 0, 0},
+    {"hall_zed_from_north_ordinal_10",      7,13, 2, 10, 0, 0, 0, 0, 0, 0},
+    {"hall_end_north_wrong_wall_no_portrait", 1, 5, 0, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_end_east_wrong_wall_no_portrait", 1, 5, 1, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_mophus_from_north_ordinal_15",   11,10, 2, 15, 0, 0, 0, 0, 0, 0},
+    {"hall_end_south_ordinal_13_WUUF",      7,16, 2, 13, 0, 0, 0, 0, 0, 0},
+    {"hall_deep_north_ordinal_21",          16,17,0, 21, 0, 0, 0, 0, 0, 0},
     /* Negative ordinals: corridor poses where no C127 sensor exists */
-    {"hall_start_west_no_portrait",         1, 2, 3, -1, 0, 0, 0, 0, 0},
-    {"hall_corridor_north_no_portrait",     1, 3, 0, -1, 0, 0, 0, 0, 0},
-    {"hall_corridor_north_no_portrait_2",   1, 4, 0, -1, 0, 0, 0, 0, 0},
+    {"hall_start_west_no_portrait",         1, 2, 3, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_corridor_north_no_portrait",     1, 3, 0, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_corridor_north_no_portrait_2",   1, 4, 0, -1, 0, 0, 0, 0, 0, 0},
     /* Z-order / no-floating poses: side walls that must NOT show a
      * champion portrait sprite floating over them. These mirror the
      * scenarios covered by firestaff_dm1_v1_champion_mirror_zorder_runtime_probe
      * but here we save visual evidence (PPMs) so the P1 ticket
      * 'champion Z-order/floating' has both probe + capture coverage. */
-    {"hall_d1c_front_route_blocked_1_N",    1, 3, 0, -1, 0, 0, 0, 0, 0},
-    {"hall_d1c_front_route_blocked_2_N",    1, 4, 0, -1, 0, 0, 0, 0, 0},
-    {"hall_d1c_front_route_blocked_east",   1, 4, 1, -1, 0, 0, 0, 0, 0},
-    {"hall_d1c_front_route_blocked_south",  1, 4, 2, -1, 0, 0, 0, 0, 0},
-    {"hall_side_no_floating_west_1",        1, 3, 3, -1, 0, 0, 0, 0, 0},
-    {"hall_side_no_floating_west_2",        1, 4, 3, -1, 0, 0, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_1_N",    1, 3, 0, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_2_N",    1, 4, 0, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_east",   1, 4, 1, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_south",  1, 4, 2, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_side_no_floating_west_1",        1, 3, 3, -1, 0, 0, 0, 0, 0, 0},
+    {"hall_side_no_floating_west_2",        1, 4, 3, -1, 0, 0, 0, 0, 0, 0},
 };
 
 static void ensure_output_dir(const char* outDir) {
@@ -248,32 +248,66 @@ static int portrait_rect_detail_count(const unsigned char* fb) {
     return count;
 }
 
-/*
- * Count black pixels in the source D1C champion mirror frame rectangle.
- * ReDMCSB DUNVIEW.C:3913-3928 draws the mirror wall ornament C346 at
- * coord-set 5, whose D1C destination in G0205 is (80,29)-(143,71).
- * The champion portrait box (96,35)-(127,63) sits inside that frame, so
- * it is excluded from the frame count. This catches the user-visible
- * "portrait floating in the air" regression that the older warm-pixel
- * portrait test could not see.
- */
-static int mirror_frame_black_count(const unsigned char* fb) {
-    int x, y;
-    int count = 0;
-    for (y = MIRROR_FRAME_Y; y < MIRROR_FRAME_Y + MIRROR_FRAME_H; ++y) {
-        for (x = MIRROR_FRAME_X; x < MIRROR_FRAME_X + MIRROR_FRAME_W; ++x) {
-            unsigned char idx;
+/* ReDMCSB DUNVIEW.C:3913-3928 blits C346 before C026.  Compare every
+ * C346 opaque output pixel outside the later C026 box with the decoded,
+ * hash-verified PC34 GRAPHICS.DAT asset. */
+static int mirror_backing_matches_c346(const M11_GameViewState* game,
+                                       int ordinal,
+                                       const unsigned char* fb,
+                                       int* outOpaque,
+                                       int* outMatched) {
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 front;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    const M11_AssetSlot* backing;
+    int dy;
+    int opaque = 0;
+    int matched = 0;
+    if (!game || !fb || !outOpaque || !outMatched || ordinal < 0 ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, ordinal, 346, 2, 2, &front) ||
+        !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&front, &render)) {
+        return 0;
+    }
+    backing = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                   (unsigned int)render.backingGraphicIndex);
+    if (!backing || !backing->loaded || !backing->pixels ||
+        backing->width == 0 || backing->height == 0) {
+        return 0;
+    }
+    for (dy = 0; dy < render.backingHeight; ++dy) {
+        int dx;
+        int sy = dy * (int)backing->height / render.backingHeight;
+        for (dx = 0; dx < render.backingWidth; ++dx) {
+            int sx = render.backingFlipHorizontal
+                ? ((render.backingWidth - 1 - dx) * (int)backing->width /
+                   render.backingWidth)
+                : (dx * (int)backing->width / render.backingWidth);
+            int x = render.backingDstX + dx;
+            int y = render.backingDstY + dy;
+            unsigned char expected =
+                backing->pixels[sy * (int)backing->width + sx];
+            unsigned char actual;
             if (x >= PORTRAIT_X && x < PORTRAIT_X + PORTRAIT_W &&
                 y >= PORTRAIT_Y && y < PORTRAIT_Y + PORTRAIT_H) {
                 continue;
             }
-            idx = M11_FB_DECODE_INDEX(fb[(VIEWPORT_Y + y) * FB_W + (VIEWPORT_X + x)]);
-            if (idx == 0) {
-                ++count;
+            if (expected == (unsigned char)render.backingTransparentColor) {
+                continue;
+            }
+            if (render.backingPaletteMapValid) {
+                expected = render.backingPaletteMap[expected & 0x0f];
+            }
+            actual = M11_FB_DECODE_INDEX(
+                fb[(VIEWPORT_Y + y) * FB_W + (VIEWPORT_X + x)]);
+            ++opaque;
+            if (actual == expected) {
+                ++matched;
             }
         }
     }
-    return count;
+    *outOpaque = opaque;
+    *outMatched = matched;
+    return opaque > 0;
 }
 
 static int capture_row_passes(const MirrorCapture* r) {
@@ -286,7 +320,8 @@ static int capture_row_passes(const MirrorCapture* r) {
     if (r->expectedOrdinal >= 0) {
         return (r->portraitRectWarmCount >= PORTRAIT_WARM_THRESHOLD ||
                 r->portraitRectDetailCount >= PORTRAIT_DETAIL_THRESHOLD) &&
-               r->mirrorFrameBlackCount >= MIRROR_FRAME_BLACK_THRESHOLD;
+               r->mirrorBackingOpaquePixels > 0 &&
+               r->mirrorBackingMatchedPixels == r->mirrorBackingOpaquePixels;
     }
     return r->portraitRectWarmCount < PORTRAIT_WARM_THRESHOLD;
 }
@@ -511,7 +546,8 @@ static int scan_all_hall_mirror_routes(M11_GameViewState* game) {
                 int ordinal;
                 int warm;
                 int detail;
-                int frameBlack;
+                int backingOpaque;
+                int backingMatched;
                 game->world.party.mapIndex = 0;
                 game->world.party.mapX = x;
                 game->world.party.mapY = y;
@@ -524,18 +560,27 @@ static int scan_all_hall_mirror_routes(M11_GameViewState* game) {
                 M11_GameView_Draw(game, framebuffer, FB_W, FB_H);
                 warm = portrait_rect_warm_count(framebuffer);
                 detail = portrait_rect_detail_count(framebuffer);
-                frameBlack = mirror_frame_black_count(framebuffer);
+                backingOpaque = 0;
+                backingMatched = 0;
+                if (!mirror_backing_matches_c346(game, ordinal, framebuffer,
+                                                 &backingOpaque,
+                                                 &backingMatched)) {
+                    backingOpaque = 0;
+                    backingMatched = 0;
+                }
                 ++routeCount;
-                printf("  route map=0 x=%d y=%d dir=%d ordinal=%d warm_count=%d detail_count=%d frame_black=%d %s\n",
-                       x, y, dir, ordinal, warm, detail, frameBlack,
+                printf("  route map=0 x=%d y=%d dir=%d ordinal=%d warm_count=%d detail_count=%d c346=%d/%d %s\n",
+                       x, y, dir, ordinal, warm, detail,
+                       backingMatched, backingOpaque,
                        (warm >= PORTRAIT_WARM_THRESHOLD ||
                                 detail >= PORTRAIT_DETAIL_THRESHOLD) &&
-                               frameBlack >= MIRROR_FRAME_BLACK_THRESHOLD
+                               backingOpaque > 0 &&
+                               backingMatched == backingOpaque
                            ? "PASS"
                            : "FAIL");
                 if ((warm < PORTRAIT_WARM_THRESHOLD &&
                      detail < PORTRAIT_DETAIL_THRESHOLD) ||
-                    frameBlack < MIRROR_FRAME_BLACK_THRESHOLD) {
+                    backingOpaque <= 0 || backingMatched != backingOpaque) {
                     ++failures;
                 }
                 if (ordinal >= 0 && ordinal < C026_CHAMPION_PORTRAIT_COUNT) {
@@ -603,11 +648,11 @@ static int write_manifest(const char* outDir,
     fprintf(js, "    \"REVIVE.C F0280 materializes candidate from sensorData\",\n");
     fprintf(js, "    \"COORD.C:1693-1722 PC34 viewport origin/224x136 dimensions\"\n");
     fprintf(js, "  ],\n");
-    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs. The portrait_rect_nonzero column is a coarse heuristic that scans the (96,35)-(128,64) D1C front-wall rectangle for any non-black pixel. The portrait_rect_warm_count column counts pixels with palette indices in {0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0E} (green/red/orange/peach/yellow/blue — the warm-color set used by many champion portrait sprites per ReDMCSB DUNVIEW.C:3913-3928). portrait_rect_detail_count counts pixels that differ from the dark-gray mirror backing, so black-cloaked or gray champions are still detected. mirror_frame_black_count counts black frame pixels in the D1C C346 wall ornament rectangle from ReDMCSB coord-set 5, excluding the C026 portrait box. Pass criterion: actual ordinal must equal expected ordinal, positive-ordinal poses must have portrait evidence (>= 30 warm pixels or >= 30 detail pixels) and >= 180 black frame pixels, and negative-ordinal poses must stay below the warm threshold. This is NOT pixel parity with original DM1 PC 3.4 — it is visual-evidence readiness for the 'champion mirrors not visible/floating' P1 bug ticket.\",\n");
+    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs. Every positive mirror pose compares C346 opaque pixels outside the later C026 portrait box against the decoded, hash-verified PC34 GRAPHICS.DAT asset after the source palette map. Pass criterion: actual ordinal must equal expected ordinal, positive-ordinal poses must have portrait evidence and an exact C346 match, and negative-ordinal poses must stay below the warm threshold.\",\n");
     fprintf(js, "  \"captures\": [\n");
 
     fprintf(md, "# DM1 V1 champion mirror visual capture\n\n");
-    fprintf(md, "Deterministic Firestaff runtime captures for every Hall of Champions pose with a known mirror ordinal plus the negative corridor poses. Each row records exact map/x/y/direction, the expected and actual front-mirror ordinals, whether the D1C front-wall portrait rectangle (96,35)-(128,64) contains any non-black pixels, whether the D1C C346 mirror frame is present, a full-frame PPM, and a source-geometry viewport crop PPM.\n\n");
+    fprintf(md, "Deterministic Firestaff runtime captures for every Hall of Champions pose with a known mirror ordinal plus the negative corridor poses. Each positive row compares C346 opaque pixels outside C026 against the decoded hash-verified PC34 asset after its source palette map.\n\n");
     fprintf(md, "## Source evidence\n\n");
     fprintf(md, "- DUNGEON.C:2573 — map sensor cell against view direction\n");
     fprintf(md, "- DUNGEON.C:2608-2612 — store C127 sensorData in G0289\n");
@@ -617,31 +662,31 @@ static int write_manifest(const char* outDir,
     fprintf(md, "- REVIVE.C F0280 — materializes candidate from sensorData\n");
     fprintf(md, "- COORD.C:1693-1722 — PC34 viewport origin/224x136 dimensions\n\n");
     fprintf(md, "## P1 bug status\n\n");
-    fprintf(md, "The original 'champion mirrors not visible/floating' P1 bug ticket is closed-by-evidence when every row has `actualOrdinal == expectedOrdinal`, every positive-ordinal pose has `portrait_rect_warm_count >= 30` and `mirror_frame_black_count >= 180`, and every negative-ordinal/no-floating pose stays below both thresholds. If a positive pose drops below the warm-pixel threshold, the portrait is missing; if it drops below the frame threshold, the portrait is not parented to the D1C mirror frame. If a negative pose crosses either threshold, a mirror/portrait is floating where only wall texture should be drawn.\n\n");
+    fprintf(md, "The mirror route passes when every positive row has portrait evidence and every C346 opaque pixel outside C026 exactly matches decoded original material; negative/no-floating rows stay below the portrait threshold.\n\n");
     fprintf(md, "## Captures\n\n");
-    fprintf(md, "| label | map | x | y | dir | expected | actual | portrait_rect_nonzero | portrait_rect_warm_count | portrait_rect_detail_count | mirror_frame_black_count | screenshot | viewport crop |\n");
-    fprintf(md, "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n");
+    fprintf(md, "| label | map | x | y | dir | expected | actual | portrait_rect_nonzero | portrait_rect_warm_count | portrait_rect_detail_count | C346 matched/opaque | screenshot | viewport crop |\n");
+    fprintf(md, "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |\n");
 
     for (i = 0; i < count; ++i) {
         const MirrorCapture* r = &rows[i];
         int pass = capture_row_passes(r);
         fprintf(js,
-                "    {\"label\":\"%s\",\"party\":{\"mapIndex\":0,\"mapX\":%d,\"mapY\":%d,\"direction\":%d},\"expectedOrdinal\":%d,\"actualOrdinal\":%d,\"portraitRectNonzero\":%d,\"portraitRectWarmCount\":%d,\"portraitRectDetailCount\":%d,\"mirrorFrameBlackCount\":%d,\"screenshot\":\"%s.ppm\",\"viewportCrop\":\"%s_viewport_224x136.ppm\",\"pass\":%s}%s\n",
+                "    {\"label\":\"%s\",\"party\":{\"mapIndex\":0,\"mapX\":%d,\"mapY\":%d,\"direction\":%d},\"expectedOrdinal\":%d,\"actualOrdinal\":%d,\"portraitRectNonzero\":%d,\"portraitRectWarmCount\":%d,\"portraitRectDetailCount\":%d,\"c346OpaquePixels\":%d,\"c346MatchedPixels\":%d,\"screenshot\":\"%s.ppm\",\"viewportCrop\":\"%s_viewport_224x136.ppm\",\"pass\":%s}%s\n",
                 r->label, r->mapX, r->mapY, r->direction,
                 r->expectedOrdinal, r->actualOrdinal,
                 r->portraitRectNonzero, r->portraitRectWarmCount,
                 r->portraitRectDetailCount,
-                r->mirrorFrameBlackCount,
+                r->mirrorBackingOpaquePixels, r->mirrorBackingMatchedPixels,
                 r->label, r->label,
                 pass ? "true" : "false",
                 i == count - 1 ? "" : ",");
         fprintf(md,
-                "| %s | 0 | %d | %d | %d | %d | %d | %d | %d | %d | %d | `%s.ppm` | `%s_viewport_224x136.ppm` |\n",
+                "| %s | 0 | %d | %d | %d | %d | %d | %d | %d | %d | %d | %d | `%s.ppm` | `%s_viewport_224x136.ppm` |\n",
                 r->label, r->mapX, r->mapY, r->direction,
                 r->expectedOrdinal, r->actualOrdinal,
                 r->portraitRectNonzero, r->portraitRectWarmCount,
                 r->portraitRectDetailCount,
-                r->mirrorFrameBlackCount,
+                r->mirrorBackingMatchedPixels, r->mirrorBackingOpaquePixels,
                 r->label, r->label);
     }
 
@@ -658,6 +703,7 @@ int main(int argc, char** argv) {
     const char* dataDir;
     const char* outDir;
     M12_StartupMenuState menu;
+    M12_StartupMenuInitOptions menuOptions;
     M11_GameViewState game;
     int i;
     int n = (int)(sizeof(kCaptures) / sizeof(kCaptures[0]));
@@ -677,7 +723,9 @@ int main(int argc, char** argv) {
 
     ensure_output_dir(outDir);
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    memset(&menuOptions, 0, sizeof(menuOptions));
+    menuOptions.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&menu, dataDir, NULL, &menuOptions);
     if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
         printf("SKIP dm1_v1_champion_mirror_capture_probe "
                "no hash-verified DM1 data under %s\n", dataDir);
@@ -713,7 +761,13 @@ int main(int argc, char** argv) {
         r->portraitRectNonzero = portrait_rect_nonzero(framebuffer);
         r->portraitRectWarmCount = portrait_rect_warm_count(framebuffer);
         r->portraitRectDetailCount = portrait_rect_detail_count(framebuffer);
-        r->mirrorFrameBlackCount = mirror_frame_black_count(framebuffer);
+        if (r->expectedOrdinal >= 0 &&
+            !mirror_backing_matches_c346(&game, r->actualOrdinal, framebuffer,
+                                         &r->mirrorBackingOpaquePixels,
+                                         &r->mirrorBackingMatchedPixels)) {
+            r->mirrorBackingOpaquePixels = 0;
+            r->mirrorBackingMatchedPixels = 0;
+        }
         if (!capture_row_passes(r)) {
             ++failures;
         }
@@ -724,13 +778,13 @@ int main(int argc, char** argv) {
                  "%s/%s_viewport_224x136.ppm", outDir, r->label);
         dump_vga_viewport_ppm(ppmViewportPath, framebuffer);
 
-        printf("  %s pose=(%d,%d,%d) expected=%d actual=%d portrait_rect=%s warm_count=%d detail_count=%d frame_black=%d %s -> %s.ppm\n",
+        printf("  %s pose=(%d,%d,%d) expected=%d actual=%d portrait_rect=%s warm_count=%d detail_count=%d c346=%d/%d %s -> %s.ppm\n",
                r->label, r->mapX, r->mapY, r->direction,
                r->expectedOrdinal, r->actualOrdinal,
                r->portraitRectNonzero ? "nonzero" : "empty",
                r->portraitRectWarmCount,
                r->portraitRectDetailCount,
-               r->mirrorFrameBlackCount,
+               r->mirrorBackingMatchedPixels, r->mirrorBackingOpaquePixels,
                capture_row_passes(r) ? "PASS" : "FAIL",
                r->label);
     }

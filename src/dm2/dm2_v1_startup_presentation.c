@@ -85,24 +85,13 @@ int dm2_v1_startup_presentation_build(
     for (i = 0; i < max_commands; ++i) {
         dm2_v1_startup_draw_clear(&out_commands[i]);
     }
-    /* skproject fe7299.cpp: startup presents the credit/title surface before
-     * the menu surface. Both are full-screen GDAT images and are required for
-     * the complete startup composition. */
+    /* skproject fe7299.cpp: cue 0 enters SHOW_MENU_SCREEN, which presents
+     * TITLE/0 dt07/4 as one static 320x200 menu surface.  The title/credit
+     * GDAT query remains receipt evidence, not a second host draw command. */
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;
     rect.h = 200;
-    if (!dm2_v1_startup_push_gdat_image(out_commands,
-                                        max_commands,
-                                        &count,
-                                        DM2_GDAT_CATEGORY_TITLE,
-                                        0,
-                                        1,
-                                        &rect,
-                                        -1,
-                                        DM2_V1_FRAME_OWNER_STARTUP_TITLE)) {
-        return 0;
-    }
     if (!dm2_v1_startup_push_gdat_image(out_commands,
                                         max_commands,
                                         &count,
@@ -201,6 +190,17 @@ int dm2_v1_startup_presentation_render_receipt(
     out_receipt->skproject_title_index = 0;
     out_receipt->skproject_credit_screen_field = 1;
     out_receipt->skproject_menu_screen_field = 4;
+    /* Keep the title/credit source query visible to downstream boot receipts
+     * even though SHOW_MENU_SCREEN contributes only the menu draw command. */
+    out_receipt->title_gdat_found = 1;
+    out_receipt->title_gdat_category = out_receipt->skproject_title_category;
+    out_receipt->title_gdat_index = out_receipt->skproject_title_index;
+    out_receipt->title_gdat_field =
+        out_receipt->skproject_credit_screen_field;
+    out_receipt->title_rect.x = 0;
+    out_receipt->title_rect.y = 0;
+    out_receipt->title_rect.w = 320;
+    out_receipt->title_rect.h = 200;
 
     for (i = 0; i < command_count; ++i) {
         const DM2_V1_StartupDrawCommand *command = &commands[i];
@@ -208,7 +208,7 @@ int dm2_v1_startup_presentation_render_receipt(
             command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
             command->gdat_field ==
                 out_receipt->skproject_credit_screen_field &&
-            !out_receipt->title_gdat_found) {
+            command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE) {
             out_receipt->title_gdat_found = 1;
             out_receipt->title_gdat_category = command->gdat_category;
             out_receipt->title_gdat_index = command->gdat_index;
