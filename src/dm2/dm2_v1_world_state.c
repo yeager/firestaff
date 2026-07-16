@@ -16,7 +16,9 @@
 
 #include "dm2_v1_world_state.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_new_game.h"
 #include "dm2_v1_world_model.h"
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -41,6 +43,84 @@ static uint32_t read_u32_le(const uint8_t *p)
          | ((uint32_t)p[1] << 8)
          | ((uint32_t)p[2] << 16)
          | ((uint32_t)p[3] << 24);
+}
+
+static int dm2_v1_world_state_has_slot_header(const uint8_t *data, size_t size)
+{
+    return data && size >= 42u && data[38] == 0xBEu && data[39] == 0xEFu &&
+           data[40] == 0xDEu && data[41] == 0xADu;
+}
+
+static void dm2_v1_world_state_apply_session(DM2_WorldState *state,
+                                             const DM2_V1_SessionState *session)
+{
+    uint8_t champion_count;
+
+    if (!state || !session) return;
+    champion_count = session->champion_count > DM2_MAX_CHAMPIONS
+                         ? DM2_MAX_CHAMPIONS : session->champion_count;
+    state->game_tick = session->game_tick > (uint32_t)INT_MAX
+                           ? INT_MAX : (int)session->game_tick;
+    state->timer_count = session->original_timer_count > DM2_MAX_TIMERS
+                             ? DM2_MAX_TIMERS : session->original_timer_count;
+    state->current_level = session->party_level < DM2_WORLD_STATE_MAX_LEVELS
+                               ? session->party_level : 0;
+    state->party.champion_count = champion_count;
+    state->party.leader_index = session->leader_index < champion_count
+                                    ? session->leader_index : 0;
+    state->party.party_gold = session->gold > (uint32_t)INT_MAX
+                                  ? INT_MAX : (int)session->gold;
+    memcpy(state->global_flags, session->original_global_flags,
+           DM2_GLOBAL_FLAGS_SIZE);
+
+    if (state->current_level < 30) {
+        state->weather_by_level[state->current_level].intensity =
+            session->rain_intensity;
+        state->weather_by_level[state->current_level].weather_type =
+            session->rain_intensity ? DM2_WEATHER_RAIN : DM2_WEATHER_CLEAR;
+    }
+    for (uint8_t i = 0u; i < champion_count; ++i) {
+        const DM2_ChampionRecord *source =
+            (const DM2_ChampionRecord *)session->champion_data[i];
+        DM2_ChampionState *target = &state->party.champions[i];
+
+        /* These are direct SKSave fields.  Do not infer absent class, level,
+         * or maximum-mana fields from a portrait or a current value. */
+        target->x = (int16_t)session->party_x;
+        target->y = (int16_t)session->party_y;
+        target->hp = (int16_t)source->cur_hp;
+        target->max_hp = (int16_t)source->max_hp;
+        target->mp = (int16_t)source->mana;
+        target->food = source->food;
+        target->water = source->water;
+        target->condition = source->cur_hp == 0u
+                                ? DM2_CHAMP_CONDITION_DEAD
+                                : DM2_CHAMP_CONDITION_HEALTHY;
+    }
+}
+
+static DM2_WorldState *dm2_v1_world_state_from_candidate(
+    const uint8_t *payload, size_t payload_size)
+{
+    DM2_V1_SaveCandidate candidate;
+    DM2_WorldState *state;
+
+    if (!payload || payload_size == 0u ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                             payload_size) != 0) {
+        return NULL;
+    }
+    state = calloc(1, sizeof(*state));
+    if (!state) return NULL;
+    state->raw_save = malloc(payload_size);
+    if (!state->raw_save) {
+        free(state);
+        return NULL;
+    }
+    memcpy(state->raw_save, payload, payload_size);
+    state->raw_save_size = payload_size;
+    dm2_v1_world_state_apply_session(state, &candidate.session);
+    return state;
 }
 
 /* ── World-state construction from dungeon ─────────────────────── */
@@ -169,16 +249,29 @@ uint8_t *dm2_v1_world_state_serialize(const DM2_WorldState *state, size_t *out_s
  */
 DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t size) {
     DM2_WorldState *state;
-    uint8_t slot_magic[4];
 
-    if (!data || size < 42) return NULL;
+    if (!data || size == 0u) return NULL;
 
-    /* Check slot validity markers */
-    slot_magic[0] = data[38]; slot_magic[1] = data[39];
-    slot_magic[2] = data[40]; slot_magic[3] = data[41];
-    if (!(slot_magic[0] == 0xBE && slot_magic[1] == 0xEF &&
-          slot_magic[2] == 0xDE && slot_magic[3] == 0xAD)) {
-        return NULL; /* Invalid save slot */
+    /* Firestaff's small minimap extension is intentionally distinguished
+     * from an original slot.  Every non-extension input goes through the
+     * full candidate parser before allocating/publishing a world state. */
+    if (!(size >= DM2_WORLD_STATE_STUB_SIZE +
+                  DM2_WORLD_STATE_EXPLORE_HEADER_SIZE &&
+          dm2_v1_world_state_has_slot_header(data, size) &&
+          memcmp(data + DM2_WORLD_STATE_STUB_SIZE,
+                 DM2_WORLD_STATE_EXPLORE_MAGIC, 4) == 0)) {
+        const uint8_t *payload = data;
+        size_t payload_size = size;
+
+        /* SKWIN validates the 42-byte slot envelope before loading its body.
+         * Keep that ordering: only strip a demonstrably valid envelope, then
+         * let the original-body parser validate all SUPPRESS sections. */
+        if (dm2_v1_world_state_has_slot_header(data, size)) {
+            if (size <= 42u) return NULL;
+            payload = data + 42u;
+            payload_size = size - 42u;
+        }
+        return dm2_v1_world_state_from_candidate(payload, payload_size);
     }
 
     state = calloc(1, sizeof(DM2_WorldState));
@@ -189,7 +282,8 @@ DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t siz
     memcpy(state->raw_save, data, size);
     state->raw_save_size = size;
 
-    /* Parse game state block (simplified — full parse deferred to Phase 3) */
+    /* Firestaff-private minimap extension.  It is never mistaken for an
+     * original save: original payloads use the candidate path above. */
     state->game_tick = 0;
     state->timer_count = 0;
     state->quest_count = 0;

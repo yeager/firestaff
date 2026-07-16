@@ -19,14 +19,12 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
-#include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
-#include "dm1_v1_event_timer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
@@ -61,22 +59,6 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
-static int csb_v1_runtime_replace_appended_expool_record_internal(
-    CSB_V1_RuntimeProfile *candidate,
-    uint32_t record_id,
-    const uint8_t *payload,
-    size_t payload_size);
-static int csb_v1_runtime_stage_csbwin_dsa_tracing(
-    CSB_V1_RuntimeProfile *candidate);
-static int csb_v1_runtime_stage_csbwin_global_variables(
-    CSB_V1_RuntimeProfile *candidate);
-static int csb_v1_runtime_stage_csbwin_overlay_palette(
-    CSB_V1_RuntimeProfile *candidate);
-static int csb_v1_runtime_write_csbwin_global_variables(
-    CSB_V1_RuntimeProfile *candidate);
-static int csb_v1_runtime_stage_csbwin_save_policy(
-    CSB_V1_RuntimeProfile *candidate);
-static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -126,28 +108,13 @@ static void csb_v1_runtime_trigger_remote_sensor_event(
     int target_x,
     int target_y,
     int target_cell);
-static void csb_v1_runtime_trigger_remote_sensor_event_after(
-    CSB_V1_RuntimeProfile *profile,
-    int level,
-    int sensor_effect,
-    int target_x,
-    int target_y,
-    int target_cell,
-    int delay);
 static void csb_v1_runtime_process_object_floor_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint16_t placed_thing,
     int level,
     int map_x,
-    int map_y,
-    int add_thing);
-static int csb_v1_runtime_rotate_wall_cell_sensors(
-    CSB_V1_DungeonData *dungeon,
-    int level,
-    int map_x,
-    int map_y,
-    int cell);
+    int map_y);
 static uint16_t csb_v1_runtime_csbwin_item16_group_thing(
     uint16_t monster_index);
 
@@ -1281,11 +1248,6 @@ static int csb_v1_runtime_apply_save_image(
         memset(profile->csbwin_appended_tail, 0,
                sizeof(profile->csbwin_appended_tail));
     }
-    if (csb_v1_runtime_stage_csbwin_global_variables(profile) != 0 ||
-        csb_v1_runtime_stage_csbwin_dsa_tracing(profile) != 0 ||
-        csb_v1_runtime_stage_csbwin_save_policy(profile) != 0) {
-        return -1;
-    }
     if (csb_v1_runtime_apply_active_group_state_from_save_image(
             profile,
             image) != 0) {
@@ -1321,7 +1283,7 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
     CSB_V1_SaveHeader header;
     uint16_t game_id;
 
-    if (!profile || !path || profile->csbwin_saves_disabled) return -1;
+    if (!profile || !path) return -1;
     game_id = csb_v1_runtime_effective_game_id(profile);
     csb_v1_runtime_capture_save_image(profile, &image);
     memset(&header, 0, sizeof(header));
@@ -2092,31 +2054,12 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
-static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
-    CSB_V1_RuntimeProfile *profile,
-    uint16_t event_index,
-    uint16_t queue_slot);
-static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
-    CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record,
-    uint16_t queue_slot);
-static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
-    CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record,
-    CSB_V1_CSBWin512TimerSummary *timer,
-    uint16_t timer_index,
-    uint16_t queue_slot);
 
 /* ── Internal tick helper ─────────────────────────────────────────────── */
 
 static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
 {
-    struct DM1_EventQueue_V1 queue_snapshot;
-    uint16_t source_queue_slots[DM1_DISPATCH_MAX_PER_TICK];
-    uint16_t source_event_indices[DM1_DISPATCH_MAX_PER_TICK];
     int dispatched;
-    int source_count = 0;
-    int i;
 
     /* Source: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
      * F0065_SOUND_ProcessPendingSound before F0261_TIMELINE_Process_CPSEF()
@@ -2124,48 +2067,12 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
      * 702-708 expires the first heap event when event_time <= G0313_ul_GameTime. */
     (void)csb_v1_audio_runtime_flush_pending(&profile->audio_runtime);
     profile->timeline_queue.gameTick = profile->game_time;
-    queue_snapshot = profile->timeline_queue;
-    while (source_count < DM1_DISPATCH_MAX_PER_TICK &&
-           dm1v1_event_is_first_expired(&queue_snapshot)) {
-        uint16_t event_index = queue_snapshot.timeline[0];
-        struct DM1_Event_V1 ignored;
-
-        source_event_indices[source_count] = event_index;
-        source_queue_slots[source_count++] = event_index < DM1_EVENT_MAX_COUNT
-            ? profile->csbwin_timeline_event_queue_slot[event_index]
-            : CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
-        if (!dm1v1_event_extract_first(&queue_snapshot, &ignored)) break;
-    }
-    for (i = 0; i < source_count; ++i) {
-        if (csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
-                profile, source_event_indices[i], source_queue_slots[i])) {
-            /* CSBWin owns TT_60/TT_61 before the shared M10 C60/C61 group
-             * dispatch can reinterpret timerObj8 as generic event payload. */
-            profile->timeline_queue.events[source_event_indices[i]].type =
-                DM1_EVENT_NONE;
-        }
-    }
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
     dispatched = dm1v1_event_process_tick(&profile->timeline_queue,
                                           &profile->last_timeline_dispatch);
     if (dispatched > 0) {
         profile->timeline_dispatch_count += (uint32_t)dispatched;
-        for (i = 0; i < dispatched && i < source_count; ++i) {
-            if (source_event_indices[i] < DM1_EVENT_MAX_COUNT) {
-                profile->csbwin_timeline_event_queue_slot[source_event_indices[i]] =
-                    CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
-            }
-            if (csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
-                    profile, &profile->last_timeline_dispatch.records[i],
-                    source_queue_slots[i])) {
-                /* Source-owned saved CSBWin timer functions can numerically
-                 * alias shared DM1 events. Their mutations belong exclusively
-                 * to the source-identity bridge below. */
-                profile->last_timeline_dispatch.records[i].eventType =
-                    DM1_EVENT_NONE;
-            }
-        }
         csb_v1_runtime_apply_timeline_dispatch_side_effects(profile);
     }
 
@@ -3268,32 +3175,6 @@ static int csb_v1_runtime_find_unused_group_record(
     return 0;
 }
 
-static int csb_v1_runtime_square_has_ordinary_object(
-    const CSB_V1_DungeonData *dungeon,
-    int level,
-    int map_x,
-    int map_y)
-{
-    int thing;
-    int guard;
-
-    if (!dungeon || !dungeon->raw_data) return 0;
-    thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
-    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
-         ++guard) {
-        const uint8_t *record;
-        int thing_type = -1;
-        int thing_size = 0;
-
-        record = csb_v1_dungeon_get_thing_record(
-            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
-        if (!record || thing_size < 2) return 0;
-        if (thing_type > 4 && thing_type < 14) return 1;
-        thing = (int)csb_v1_runtime_read_u16(record);
-    }
-    return 0;
-}
-
 static int csb_v1_runtime_creature_movement_ticks(int creature_type)
 {
     static const unsigned char movement_ticks[27] = {
@@ -3872,7 +3753,6 @@ static void csb_v1_runtime_schedule_move_group_event(
 }
 
 static int csb_v1_runtime_move_group_thing_to_square(
-    CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
     int old_level,
@@ -3892,7 +3772,7 @@ static int csb_v1_runtime_move_group_thing_to_square(
     int thing_size;
     int guard;
 
-    if (!profile || !dungeon ||
+    if (!dungeon ||
         (old_level == new_level && old_x == new_x && old_y == new_y)) {
         return 0;
     }
@@ -3905,13 +3785,6 @@ static int csb_v1_runtime_move_group_thing_to_square(
     if (csb_dungeon_move_thing_between_levels_default(
             group_thing, old_level, old_x, old_y,
             new_level, new_x, new_y) == 0) {
-        /* F0267 has unlinked and linked before each corresponding F0276
-         * pass.  The common helper excludes group_thing while it scans, so
-         * this post-move source pass observes the same occupancy state. */
-        csb_v1_runtime_process_object_floor_sensors_at(
-            profile, dungeon, group_thing, old_level, old_x, old_y, 0);
-        csb_v1_runtime_process_object_floor_sensors_at(
-            profile, dungeon, group_thing, new_level, new_x, new_y, 1);
         return 1;
     }
     /* Cross-map F0267 callers may use legacy decoded save layouts whose
@@ -3941,9 +3814,6 @@ static int csb_v1_runtime_move_group_thing_to_square(
             } else {
                 csb_v1_runtime_write_u16(source_first_ptr, next_thing);
             }
-            csb_v1_runtime_process_object_floor_sensors_at(
-                profile, dungeon, group_thing,
-                old_level, old_x, old_y, 0);
             dest_first_ptr = csb_v1_runtime_square_first_thing_ptr(
                 dungeon,
                 new_level,
@@ -3954,9 +3824,6 @@ static int csb_v1_runtime_move_group_thing_to_square(
                     group_record,
                     csb_v1_runtime_read_u16(dest_first_ptr));
                 csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
-                csb_v1_runtime_process_object_floor_sensors_at(
-                    profile, dungeon, group_thing,
-                    new_level, new_x, new_y, 1);
                 return 1;
             }
             dest_first_ptr = csb_v1_runtime_create_square_first_thing_ptr(
@@ -3981,9 +3848,6 @@ static int csb_v1_runtime_move_group_thing_to_square(
              * bounded by refusing insertion when no trailing THING_NONE slot
              * exists. */
             csb_v1_runtime_write_u16(group_record, 0xFFFEu);
-            csb_v1_runtime_process_object_floor_sensors_at(
-                profile, dungeon, group_thing,
-                new_level, new_x, new_y, 1);
             return 1;
         }
         previous_record = group_record;
@@ -4146,7 +4010,6 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
                 break;
             }
             if (!csb_v1_runtime_move_group_thing_to_square(
-                    profile,
                     dungeon,
                     group_thing,
                     current_map_index,
@@ -4245,7 +4108,6 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             break;
         }
         if (!csb_v1_runtime_move_group_thing_to_square(
-                profile,
                 dungeon,
                 group_thing,
                 current_map_index,
@@ -4552,7 +4414,6 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0,
                             0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
-                            profile,
                             dungeon,
                             group_thing,
                             record->mapIndex,
@@ -4646,7 +4507,6 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0,
                             0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
-                            profile,
                             dungeon,
                             group_thing,
                             record->mapIndex,
@@ -4830,7 +4690,6 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
         }
     }
     if (!csb_v1_runtime_move_group_thing_to_square(
-            profile,
             dungeon,
             group_thing,
             source_level,
@@ -5452,38 +5311,6 @@ static int csb_v1_runtime_append_thing_to_square_tail(
     return 0;
 }
 
-static int csb_v1_runtime_square_contains_thing(
-    CSB_V1_DungeonData *dungeon,
-    uint16_t target_thing,
-    int level,
-    int map_x,
-    int map_y)
-{
-    uint8_t *first_ptr;
-    uint8_t *record;
-    uint16_t thing;
-    int thing_type;
-    int thing_size;
-    int guard;
-
-    if (!dungeon || target_thing == 0xfffeu || target_thing == 0xffffu) {
-        return 0;
-    }
-    first_ptr = csb_v1_runtime_square_first_thing_ptr(
-        dungeon, level, map_x, map_y);
-    if (!first_ptr) return 0;
-    thing = csb_v1_runtime_read_u16(first_ptr);
-    for (guard = 0; guard < 128 && thing != 0xfffeu && thing != 0xffffu;
-         ++guard) {
-        if (thing == target_thing) return 1;
-        record = csb_v1_runtime_mutable_thing_record(
-            dungeon, thing, &thing_type, &thing_size);
-        if (!record || thing_size < 2) return 0;
-        thing = csb_v1_runtime_read_u16(record);
-    }
-    return 0;
-}
-
 static int csb_v1_runtime_unlink_thing_from_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t target_thing,
@@ -5754,9 +5581,6 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                         old_y)) {
                     break;
                 }
-                csb_v1_runtime_process_object_floor_sensors_at(
-                    profile, dungeon, *inout_thing,
-                    old_level, old_x, old_y, 0);
                 *inout_map_index = target_level;
                 *inout_map_x = target_x;
                 *inout_map_y = target_y;
@@ -5806,9 +5630,6 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                     *inout_map_y = old_y;
                     break;
                 }
-                csb_v1_runtime_process_object_floor_sensors_at(
-                    profile, dungeon, *inout_thing,
-                    old_level, old_x, old_y, 0);
                 *inout_thing = moved_thing;
             } else {
                 break;
@@ -5838,8 +5659,7 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 *inout_thing,
                 *inout_map_index,
                 *inout_map_x,
-                *inout_map_y,
-                1);
+                *inout_map_y);
             continue;
         }
         if ((raw_square & 0x08) == 0) break;
@@ -5872,9 +5692,6 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 *inout_map_y)) {
             break;
         }
-        csb_v1_runtime_process_object_floor_sensors_at(
-            profile, dungeon, *inout_thing,
-            *inout_map_index, *inout_map_x, *inout_map_y, 0);
         *inout_thing = result.thing;
         *inout_map_index = teleporter.target_map_index;
         *inout_map_x = teleporter.target_map_x;
@@ -5894,8 +5711,7 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             *inout_thing,
             *inout_map_index,
             *inout_map_x,
-            *inout_map_y,
-            1);
+            *inout_map_y);
         if (self_target) break;
     }
     /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
@@ -5903,10 +5719,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
      * teleporters, rotates object cells only for relative teleporters unless
      * the object came from the CM2 projectile-associated-object path, and
      * continues into open non-imaginary pits and non-projectile stairs in the
-     * same PC34 100-step chain. This CSB bridge dispatches bounded C004
-     * object floor sensors after each link and immediately after each source
-     * unlink, preserving F0276 AddThing ordering; buzz audio and broader
-     * floor sensor types remain separate runtime work. */
+     * same PC34 100-step chain. This CSB bridge also dispatches bounded C004
+     * object floor sensors after successful materialization/movement; buzz
+     * audio and broader floor sensor types remain separate runtime work. */
     return moved_count;
 }
 
@@ -5972,8 +5787,7 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
         placed_thing,
         map_index,
         map_x,
-        map_y,
-        1);
+        map_y);
     return csb_v1_runtime_apply_object_consequences_at_square(
                profile,
                dungeon,
@@ -6228,8 +6042,7 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
                 thing,
                 drop_level,
                 drop_x,
-                drop_y,
-                1);
+                drop_y);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
                 profile,
                 dungeon,
@@ -6327,8 +6140,7 @@ static void csb_v1_runtime_drop_group_slot_possessions(
                 dropped_thing,
                 drop_level,
                 drop_x,
-                drop_y,
-                1);
+                drop_y);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
                 profile,
                 dungeon,
@@ -6783,6 +6595,83 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
     state->last_move_time = moved
         ? profile->game_time
         : (profile->game_time >= 127u ? profile->game_time - 127u : 0u);
+}
+
+int csb_v1_runtime_f0195_group_add_all_active_groups(
+    CSB_V1_RuntimeProfile *profile)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int map_x;
+    int map_y;
+    int added = 0;
+
+    if (!profile || !profile->dungeon_handle) return -1;
+    dungeon = profile->dungeon_handle;
+    level = profile->current_level;
+    if (!dungeon->raw_data || level < 0 || level >= dungeon->level_count ||
+        dungeon->level_widths[level] <= 0 ||
+        dungeon->level_heights[level] <= 0) {
+        return -1;
+    }
+
+    /* ReDMCSB GROUP.C F0195 walks every square on the party map and adds
+     * each C04 group to ActiveGroups. The dungeon accessors preserve the
+     * native square-first-thing table and compact Next links. */
+    for (map_x = 0; map_x < dungeon->level_widths[level]; ++map_x) {
+        for (map_y = 0; map_y < dungeon->level_heights[level]; ++map_y) {
+            int thing = csb_v1_dungeon_get_first_thing(
+                dungeon, level, map_x, map_y);
+            int guard;
+
+            if (thing < 0 || thing == THING_NONE ||
+                thing == THING_ENDOFLIST) {
+                continue;
+            }
+            for (guard = 0;
+                 guard < 128 && thing != THING_NONE &&
+                     thing != THING_ENDOFLIST;
+                 ++guard) {
+                const uint8_t *record;
+                int thing_type = -1;
+                int record_size = 0;
+                int was_active;
+
+                record = csb_v1_dungeon_get_thing_record(
+                    dungeon,
+                    (uint16_t)thing,
+                    &thing_type,
+                    NULL,
+                    &record_size);
+                if (!record || record_size < 2) return -1;
+                if (thing_type == CSB_V1_THING_TYPE_GROUP) {
+                    if (record_size < 16) return -1;
+                    was_active = csb_v1_runtime_active_group_state_for_thing(
+                        profile, (uint16_t)thing) != NULL;
+                    csb_v1_runtime_sync_active_group_state_from_record(
+                        profile,
+                        (uint16_t)thing,
+                        record,
+                        level,
+                        map_x,
+                        map_y,
+                        0,
+                        0);
+                    if (!was_active &&
+                        csb_v1_runtime_active_group_state_for_thing(
+                            profile, (uint16_t)thing)) {
+                        ++added;
+                    }
+                }
+                thing = (int)csb_v1_runtime_read_u16(record);
+            }
+            if (guard == 128 && thing != THING_NONE &&
+                thing != THING_ENDOFLIST) {
+                return -1;
+            }
+        }
+    }
+    return added;
 }
 
 static void csb_v1_runtime_set_active_group_target(
@@ -8149,11 +8038,6 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return;
-    if (square_type != DM1_SQUARE_WALL) {
-        /* ReDMCSB MOVESENS.C F0272 lines 1201-1207 uses Remote.TargetCell
-         * only for wall targets; all other target squares use CELL_NORTHWEST. */
-        target_cell = 0;
-    }
 
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(
@@ -8233,112 +8117,24 @@ static int csb_v1_runtime_object_type_from_thing(
     return (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
 }
 
-static void csb_v1_runtime_add_skill_experience(
-    CSB_V1_Champion *champion,
-    int skill_index,
-    unsigned int experience)
-{
-    int base_skill;
-    unsigned int temporary_experience;
-
-    if (!champion || !champion->SkillExperienceValid ||
-        skill_index < 0 || skill_index >= CSB_V1_FULL_SKILL_COUNT ||
-        experience == 0u) {
-        return;
-    }
-
-    /* ReDMCSB CHAMPION.C F0304 lines 879-906 adds experience to the
-     * requested skill and, for a hidden skill, to its base skill as well.
-     * C08 steal is hidden ninja skill 8, whose base is C01 ninja. */
-    if (champion->SkillExperience[skill_index] <= UINT32_MAX - experience) {
-        champion->SkillExperience[skill_index] += experience;
-    }
-    temporary_experience = experience >> 3;
-    if (temporary_experience > 100u) temporary_experience = 100u;
-    if (champion->SkillTemporaryExperience[skill_index] < 32000) {
-        champion->SkillTemporaryExperience[skill_index] +=
-            (int16_t)temporary_experience;
-    }
-    if (skill_index < 4) return;
-
-    base_skill = (skill_index - 4) >> 2;
-    if (champion->SkillExperience[base_skill] <= UINT32_MAX - experience) {
-        champion->SkillExperience[base_skill] += experience;
-    }
-}
-
-static void csb_v1_runtime_add_party_steal_skill_experience(
-    CSB_V1_RuntimeProfile *profile,
-    int leader_only)
-{
-    int champion_count;
-    int champion_index;
-    unsigned int experience = 300u;
-
-    if (!profile || !profile->party_state_valid) return;
-    champion_count = profile->party_state.ChampionCount;
-    if (champion_count < 1) return;
-    if (champion_count > CSB_V1_MAX_CHAMPIONS) {
-        champion_count = CSB_V1_MAX_CHAMPIONS;
-    }
-    if (leader_only) {
-        champion_index = profile->leader_index;
-        if (champion_index >= 0 && champion_index < champion_count) {
-            CSB_V1_Champion *champion =
-                &profile->party_state.Champions[champion_index];
-
-            if (champion->CurrentHealth > 0) {
-                csb_v1_runtime_add_skill_experience(champion, 8, experience);
-            }
-        }
-        return;
-    }
-
-    /* ReDMCSB MOVESENS.C F0269 lines 1058-1077 divides by the party
-     * count before it skips dead champions.  F0276 invokes F0270 with
-     * CELL_ANY, so an object-triggered C10 effect always takes this path. */
-    experience /= (unsigned int)champion_count;
-    for (champion_index = 0;
-         champion_index < champion_count;
-         ++champion_index) {
-        CSB_V1_Champion *champion =
-            &profile->party_state.Champions[champion_index];
-
-        if (champion->CurrentHealth > 0) {
-            csb_v1_runtime_add_skill_experience(champion, 8, experience);
-        }
-    }
-}
-
 static void csb_v1_runtime_process_object_floor_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint16_t placed_thing,
     int level,
     int map_x,
-    int map_y,
-    int add_thing)
+    int map_y)
 {
     int first_thing;
     int thing;
-    int placed_thing_type;
     int object_type;
     int guard;
-    int pending_local_effect = DM1_EFFECT_NONE;
 
     if (!profile || !dungeon || !dungeon->raw_data) return;
     if (profile->dungeon_handle != dungeon) return;
     if (level < 0 || level >= dungeon->level_count) return;
-    if (!csb_v1_dungeon_get_thing_record(
-            dungeon,
-            placed_thing,
-            &placed_thing_type,
-            NULL,
-            NULL)) {
-        return;
-    }
     object_type = csb_v1_runtime_object_type_from_thing(dungeon, placed_thing);
-    if (placed_thing_type != 4 && object_type < 0) return;
+    if (object_type < 0) return;
 
     first_thing = csb_v1_dungeon_get_first_thing(
         dungeon,
@@ -8349,13 +8145,13 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         return;
     }
 
-    /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 unlinks before a removal,
-     * scans the resulting list, and links after an addition. C001 checks
-     * pre-link object/group/party occupancy; C004 checks the same-type
-     * guard; C001 admits a C04 group only when party, objects, and another
-     * group are absent; C002/C007 require party and another group absent.
-     * The caller performs that source ordering,
-     * and this scan excludes placed_thing for the equivalent post-link view. */
+    /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 classifies the moving
+     * THING, scans the square for matching object types before add, then
+     * lines 1691-1694 trigger C004 only when the sensor data matches
+     * F0032_OBJECT_GetType(P0590_T_Thing) and no same-type object is already
+     * present. Firestaff calls this after link, so the scan ignores the
+     * just-placed THING and treats any other same-type object as the source
+     * L0775_B_SquareContainsThingOfSameType guard. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -8368,13 +8164,9 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         int sensor_type;
         int sensor_data;
         int same_type_present = 0;
-        int other_object_present = 0;
-        int group_present = 0;
-        int party_on_square;
         int scan;
         int scan_guard;
         int sensor_effect;
-        int trigger;
         int target_cell;
         int target_x;
         int target_y;
@@ -8386,7 +8178,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             NULL,
             &thing_size);
         if (!record) break;
-        if (thing_type >= 4 && placed_thing_type != 4) break;
+        if (thing_type >= 4) break;
         if (thing_type != 3 || thing_size < 8) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
@@ -8397,13 +8189,8 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         target_word = csb_v1_runtime_read_u16(record + 6);
         sensor_type = (int)(type_data & 0x007Fu);
         sensor_data = (int)(type_data >> 7);
-        if ((placed_thing_type == 4 &&
-             sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-             sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE &&
-             sensor_type != DM1_SENSOR_FLOOR_CREATURE) ||
-            (placed_thing_type != 4 &&
-             sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-             sensor_type != DM1_SENSOR_FLOOR_OBJECT)) {
+        if (sensor_type != DM1_SENSOR_FLOOR_OBJECT ||
+            sensor_data != object_type) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
@@ -8420,104 +8207,41 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
                 NULL,
                 NULL);
             if (!scan_record) break;
-            if (scan_type == 4 && (uint16_t)scan != placed_thing) {
-                group_present = 1;
-            } else if ((uint16_t)scan != placed_thing &&
-                       scan_type > 4 && scan_type < 14) {
-                other_object_present = 1;
-                if (csb_v1_runtime_object_type_from_thing(
-                        dungeon, (uint16_t)scan) == object_type) {
-                    same_type_present = 1;
-                }
+            if ((uint16_t)scan != placed_thing &&
+                scan_type > 4 &&
+                scan_type < 14 &&
+                csb_v1_runtime_object_type_from_thing(
+                    dungeon,
+                    (uint16_t)scan) == object_type) {
+                same_type_present = 1;
+                break;
             }
             scan = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)scan);
         }
-        party_on_square = profile->champion_count > 0 &&
-            profile->current_level == level &&
-            profile->party_x == map_x && profile->party_y == map_y;
-        if ((placed_thing_type == 4 &&
-             ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-               (party_on_square || other_object_present || group_present)) ||
-              (sensor_type != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-               (party_on_square || group_present)))) ||
-            (placed_thing_type != 4 &&
-             ((sensor_type == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
-               (party_on_square || other_object_present || group_present)) ||
-              (sensor_type == DM1_SENSOR_FLOOR_OBJECT &&
-               (sensor_data != object_type || same_type_present))))) {
+        if (same_type_present) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
 
-        trigger = add_thing ? 1 : 0;
-        if ((flags_word >> 5) & 0x01u) {
-            trigger ^= 1;
-        }
         sensor_effect = (int)((flags_word >> 3) & 0x03u);
-        if (sensor_effect == DM1_EFFECT_HOLD) {
-            sensor_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
-        } else if (!trigger) {
+        if ((flags_word >> 5) & 0x01u) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
-        if ((flags_word >> 6) & 0x01u) {
-            CsbV1AudioRequest request;
-
-            memset(&request, 0, sizeof(request));
-            request.soundIndex = CSB_V1_SOUND_SWITCH;
-            request.mapX = (int16_t)map_x;
-            request.mapY = (int16_t)map_y;
-            request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-            request.volume = 64;
-            request.priority = 4u;
-            /* ReDMCSB MOVESENS.C F0276 lines 1770-1772 requests F0064's
-             * prioritized switch sound for every triggered Audible sensor. */
-            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
-                                                &request);
-        }
-        if ((flags_word >> 2) & 0x01u) {
-            uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
-                dungeon, (uint16_t)thing, NULL, NULL);
-
-            if (mutable_sensor) {
-                /* ReDMCSB MOVESENS.C F0272 lines 1191-1193 disables a
-                 * triggered OnceOnly sensor before it publishes the effect. */
-                csb_v1_runtime_write_u16(
-                    mutable_sensor + 2, (uint16_t)(type_data & 0xFF80u));
-            }
+        if (sensor_effect == DM1_EFFECT_HOLD) {
+            sensor_effect = DM1_EFFECT_SET;
         }
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
-        if ((flags_word >> 11) & 0x01u) {
-            int local_effect = (int)(target_word & 0x0FFFu);
-
-            if (local_effect == 10) {
-                /* ReDMCSB MOVESENS.C F0270 lines 1089-1093 immediately
-                 * routes C10 through F0269 instead of retaining it as a
-                 * later F0271 sensor-list rotation effect. */
-                csb_v1_runtime_add_party_steal_skill_experience(profile, 0);
-            } else {
-                /* ReDMCSB MOVESENS.C F0270/F0271 retains only the last
-                 * rotation effect while F0276 walks the source square. */
-                pending_local_effect = local_effect;
-            }
-        } else {
-            csb_v1_runtime_trigger_remote_sensor_event_after(
-                profile,
-                level,
-                sensor_effect,
-                target_x,
-                target_y,
-                target_cell,
-                (int)((flags_word >> 7) & 0x0Fu));
-        }
+        csb_v1_runtime_trigger_remote_sensor_event(
+            profile,
+            level,
+            sensor_effect,
+            target_x,
+            target_y,
+            target_cell);
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-    }
-    if (pending_local_effect == DM1_EFFECT_CLEAR ||
-        pending_local_effect == DM1_EFFECT_TOGGLE) {
-        (void)csb_v1_runtime_rotate_wall_cell_sensors(
-            dungeon, level, map_x, map_y, -1);
     }
 }
 
@@ -8695,9 +8419,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_size);
         if (!record || thing_size < 2) return 0;
         if (thing_type == 3 &&
-            (cell < 0 ||
-             csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
-                 (cell & 3))) {
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+                (cell & 3)) {
             first_sensor_thing = thing;
             first_sensor_record = record;
             break;
@@ -8719,9 +8442,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_size);
         if (!record || thing_size < 2) return 0;
         if (thing_type == 3 &&
-            (cell < 0 ||
-             csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
-                 (cell & 3))) {
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+                (cell & 3)) {
             last_sensor_record = record;
             break;
         }
@@ -8740,9 +8462,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_type,
             &thing_size);
         if (!record || thing_size < 2 || thing_type != 3) break;
-        if (cell < 0 ||
-            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
-                (cell & 3)) {
+        if (csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+            (cell & 3)) {
             last_sensor_record = record;
         }
         thing = csb_v1_runtime_read_u16(record);
@@ -11386,7 +11107,6 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     int level,
     int map_x,
     int map_y,
-    int party_square,
     int add_party,
     CSB_V1_InputCommandRuntimeResult *result)
 {
@@ -11413,8 +11133,8 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     /* ReDMCSB: MOVESENS.C F0267 lines 800-822 calls
      * F0276_SENSOR_ProcessThingAdditionOrRemoval when the party leaves and
      * enters a square.  F0276 lines 1658-1785 walks C03 sensor things until
-     * the first non-sensor, checks C001/C002/C003/C005/C008/C009 floor sensors for
-     * the party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
+     * the first non-sensor, checks floor sensor types C003/C005/C009 for the
+     * party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
      * the square-effect event.  This CSB runtime slice covers party floor
      * sensors, including C008 party-possession checks over imported champion
      * slots; object/group movement sensors remain separate runtime work. */
@@ -11459,28 +11179,6 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
 
         trigger = add_party ? 1 : 0;
         switch (sensor_type) {
-        case 1: /* C001_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT */
-            /* ReDMCSB MOVESENS.C F0276 lines 1678-1685 gates C001 for
-             * party movement on PartySquare, ordinary-object, and C04-group
-             * occupancy.  A turn invokes F0276 with PartySquare true, while
-             * a completed F0267 step reaches this branch with it false. */
-            trigger = (profile->champion_count > 0 && !party_square &&
-                       !csb_v1_runtime_square_has_group(
-                           dungeon, level, map_x, map_y) &&
-                       !csb_v1_runtime_square_has_ordinary_object(
-                           dungeon, level, map_x, map_y))
-                ? trigger : 0;
-            break;
-        case 2: /* C002_SENSOR_FLOOR_THERON_PARTY_CREATURE */
-            /* ReDMCSB MOVESENS.C F0276 lines 1686-1689 accepts the party
-             * only while it is moving onto a square without a C04 group.
-             * F0267 removes a destination group before this pass; retaining
-             * the occupancy guard covers direct/runtime callers as well. */
-            trigger = (profile->champion_count > 0 &&
-                       !csb_v1_runtime_square_has_group(
-                           dungeon, level, map_x, map_y))
-                ? trigger : 0;
-            break;
         case 3: /* C003_SENSOR_FLOOR_PARTY */
             if (profile->champion_count <= 0) {
                 trigger = 0;
@@ -11568,7 +11266,6 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
         profile->current_level,
         map_x,
         map_y,
-        0,
         add_party,
         result);
 }
@@ -11589,7 +11286,6 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
         result->old_party_x,
         result->old_party_y,
         0,
-        0,
         result);
     if (result->stair_transition_applied && result->movement_step_applied) {
         csb_v1_runtime_process_party_floor_sensors_at_level(
@@ -11597,7 +11293,6 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
             result->old_party_level,
             result->movement_destination_x,
             result->movement_destination_y,
-            0,
             0,
             result);
     }
@@ -11638,7 +11333,6 @@ static void csb_v1_runtime_apply_party_turn_floor_sensor_add_consequences(
         map_x,
         map_y,
         1,
-        1,
         result);
 }
 
@@ -11662,14 +11356,13 @@ static void csb_v1_runtime_mark_deferred_new_party_map_index(
     result->deferred_new_party_map_index = result->new_party_level;
 }
 
-static void csb_v1_runtime_trigger_remote_sensor_event_after(
+static void csb_v1_runtime_trigger_remote_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int level,
     int sensor_effect,
     int target_x,
     int target_y,
-    int target_cell,
-    int delay)
+    int target_cell)
 {
     CSB_V1_DungeonData *dungeon;
     struct DM1_Event_V1 event;
@@ -11691,35 +11384,15 @@ static void csb_v1_runtime_trigger_remote_sensor_event_after(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return;
-    if (square_type != DM1_SQUARE_WALL) {
-        /* ReDMCSB MOVESENS.C F0272 lines 1201-1207 uses Remote.TargetCell
-         * only for wall targets; all other target squares use CELL_NORTHWEST. */
-        target_cell = 0;
-    }
 
     memset(&event, 0, sizeof(event));
-    /* ReDMCSB MOVESENS.C F0272 lines 1194-1203 adds Remote.Value to
-     * G0313_ul_GameTime before F0268 queues the target square event. */
-    event.map_time = DM1_MAP_TIME_MAKE(
-        level, profile->game_time + (uint32_t)((delay > 0) ? delay : 0));
+    event.map_time = DM1_MAP_TIME_MAKE(level, profile->game_time);
     event.type = (uint8_t)event_type;
     event.b_mapX = (uint8_t)target_x;
     event.b_mapY = (uint8_t)target_y;
     event.c_cell = (uint8_t)target_cell;
     event.c_effect = (uint8_t)sensor_effect;
     (void)dm1v1_event_add(&profile->timeline_queue, &event);
-}
-
-static void csb_v1_runtime_trigger_remote_sensor_event(
-    CSB_V1_RuntimeProfile *profile,
-    int level,
-    int sensor_effect,
-    int target_x,
-    int target_y,
-    int target_cell)
-{
-    csb_v1_runtime_trigger_remote_sensor_event_after(
-        profile, level, sensor_effect, target_x, target_y, target_cell, 0);
 }
 
 static uint8_t *csb_v1_runtime_square_byte_ptr(
@@ -12545,7 +12218,6 @@ static void csb_v1_runtime_apply_door_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
 {
-    struct CombatAction_Compat party_damage;
     uint8_t *square;
     int square_type;
     int door_state;
@@ -12568,37 +12240,6 @@ static void csb_v1_runtime_apply_door_timeline_record(
         effect = (door_state == 0) ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
     }
     if (effect != DM1_EFFECT_SET && effect != DM1_EFFECT_CLEAR) return;
-
-    /* ReDMCSB TIMELINE.C F0241 lines 754-809: a closing door on the
-     * party square is forced back open, hurts the party through F0324,
-     * and advances its same animation event by one tick.  In particular,
-     * it must not progress to state 1 while the party is still in the
-     * doorway.  The original PC expression retains the historical
-     * torso/head wound-mask precedence bug, so this compatibility route
-     * keeps the effective torso|head mask rather than inventing a cleaner
-     * vertical-door substitute. */
-    if (effect == DM1_EFFECT_CLEAR &&
-        record->mapIndex == profile->current_level &&
-        record->mapX == profile->party_x &&
-        record->mapY == profile->party_y &&
-        profile->party_state_valid &&
-        profile->party_state.ChampionCount > 0) {
-        memset(&party_damage, 0, sizeof(party_damage));
-        party_damage.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
-        party_damage.attackTypeCode = COMBAT_ATTACK_SELF;
-        party_damage.rawAttackValue = 5;
-        party_damage.allowedWounds = COMBAT_WOUND_TORSO |
-                                    COMBAT_WOUND_HEAD;
-        *square = (uint8_t)((*square & (uint8_t)~0x07u) | 0u);
-        (void)csb_v1_runtime_apply_explosion_party_action(
-            profile, &party_damage, &(struct RngState_Compat){
-                0xC5B1241u ^ profile->game_time ^
-                ((uint32_t)(record->mapX & 0xff) << 8) ^
-                (uint32_t)(record->mapY & 0xff) });
-        csb_v1_runtime_schedule_door_animation_followup(
-            profile, record, effect);
-        return;
-    }
     if ((effect == DM1_EFFECT_SET && door_state == 0) ||
         (effect == DM1_EFFECT_CLEAR && door_state == 4)) {
         return;
@@ -13336,8 +12977,6 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
 {
     if (!profile) return;
     memset(profile, 0, sizeof(*profile));
-    memset(profile->csbwin_timeline_event_queue_slot, 0xff,
-           sizeof(profile->csbwin_timeline_event_queue_slot));
 
     profile->variant_id     = CSB_V1_VARIANT_UNKNOWN;
     profile->difficulty    = CSB_V1_DIFFICULTY_HARD; /* default: 3 champions */
@@ -13412,29 +13051,6 @@ int csb_v1_runtime_custom_background_skin_grid(
         return 0;
     }
 
-    /* CSBWin data.cpp:2053-2125 keeps SKIN_CACHE columns only for the
-     * currently loaded EXPPOOL source. A successful resume can replace that
-     * source before the next HUD draw, so retain the exact runtime tail
-     * receipt and discard every cached column/default on a tail boundary.
-     * This does not synthesize a skin: the following lookup still requires
-     * an original DB11 or verified appended EXPOOL record. */
-    if (!profile->csbwin_skin_cache_tail_receipt_valid ||
-        profile->csbwin_skin_cache_tail_valid !=
-            profile->csbwin_appended_tail_valid ||
-        profile->csbwin_skin_cache_tail_size !=
-            profile->csbwin_appended_tail_preserved_size ||
-        profile->csbwin_skin_cache_tail_fnv1a !=
-            profile->csbwin_appended_tail_fnv1a) {
-        csb_v1_skin_cache_init(&profile->skin_cache);
-        profile->csbwin_skin_cache_tail_receipt_valid = 1;
-        profile->csbwin_skin_cache_tail_valid =
-            profile->csbwin_appended_tail_valid;
-        profile->csbwin_skin_cache_tail_size =
-            profile->csbwin_appended_tail_preserved_size;
-        profile->csbwin_skin_cache_tail_fnv1a =
-            profile->csbwin_appended_tail_fnv1a;
-    }
-
     dungeon = profile->dungeon_handle;
     level = profile->current_level;
     if (level < 0 || level >= dungeon->level_count) {
@@ -13485,126 +13101,6 @@ int csb_v1_runtime_custom_background_skin_grid(
     if (out_loaded_level) *out_loaded_level = level;
     if (out_default_skin) *out_default_skin = (int)default_skin;
     return has_skin;
-}
-
-int csb_v1_runtime_set_csbwin_saved_skin(
-    CSB_V1_RuntimeProfile *profile,
-    int level,
-    int x,
-    int y,
-    uint8_t skin_num)
-{
-    CSB_V1_RuntimeProfile candidate;
-    uint8_t column[CSB_V1_SKIN_CACHE_COLUMN_BYTES];
-    uint32_t record_id;
-    int index;
-    int last_nonzero;
-    size_t source_write_size;
-
-    /* CSBWin DSA.cpp:3122-3135 decodes the five-bit x/y and six-bit level
-     * from SETSKIN's location word. data.cpp:2130-2167 then reads exactly
-     * one EDT_Skins DB11 record, changes one byte, trims zero suffixes, and
-     * writes it back through EXPOOL. Use that actual Read/Write contract:
-     * the replacement must be satisfied by the original save tail's exact
-     * DB11 free list. We deliberately do not call EXPOOL::enlarge or invent
-     * a new block when the source tail has no suitable free node. */
-    if (!profile || level < 0 || level >= CSB_V1_SKIN_CACHE_MAX_LEVELS ||
-        x < 0 || x >= 32 || y < 0 || y >= 32) {
-        return 0;
-    }
-    record_id = csb_v1_skin_cache_column_record_id(level, x);
-    index = 2 * y + (x & 1);
-    if (index < 0 || index >= CSB_V1_SKIN_CACHE_COLUMN_BYTES) return 0;
-
-    candidate = *profile;
-    memset(column, 0, sizeof(column));
-    {
-        const uint8_t *existing = NULL;
-        size_t existing_size = 0u;
-
-        if (csb_v1_runtime_locate_appended_expool_record_internal(
-                &candidate, record_id, &existing, &existing_size)) {
-            if (!existing || existing_size > sizeof(column)) return 0;
-            memcpy(column, existing, existing_size);
-            if ((size_t)index < existing_size && column[index] == skin_num) {
-                return 1;
-            }
-        } else if (skin_num == 0u) {
-            return 1;
-        }
-    }
-    column[index] = skin_num;
-    last_nonzero = (int)sizeof(column) - 1;
-    while (last_nonzero >= 0 && column[last_nonzero] == 0u) {
-        --last_nonzero;
-    }
-    if (last_nonzero < 0) {
-        if (!csb_v1_runtime_replace_appended_expool_record_internal(
-                &candidate, record_id, NULL, 0u)) {
-            return 0;
-        }
-    } else {
-        source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
-        if (!csb_v1_runtime_replace_appended_expool_record_internal(
-                &candidate, record_id, column, source_write_size)) {
-            return 0;
-        }
-    }
-    candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
-        candidate.csbwin_appended_tail,
-        candidate.csbwin_appended_tail_preserved_size);
-    /* Force the next HUD read through the newly authenticated source tail. */
-    csb_v1_skin_cache_init(&candidate.skin_cache);
-    candidate.csbwin_skin_cache_tail_receipt_valid = 0;
-    *profile = candidate;
-    return 1;
-}
-
-static int csb_v1_runtime_dsa_get_skin(void *user,
-                                        uint32_t location,
-                                        uint8_t *out_skin)
-{
-    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
-    uint8_t grid[32u * 32u];
-    int width = 0;
-    int height = 0;
-    int loaded_level = -1;
-    int level = (int)((location >> 10) & 63u);
-    int x = (int)((location >> 5) & 31u);
-    int y = (int)(location & 31u);
-
-    if (out_skin) *out_skin = 0u;
-    /* DSA.cpp:3114-3119 addresses the currently loaded SKIN_CACHE.  Do not
-     * manufacture a cross-level cache load: an original profile must already
-     * own that level and its verified DB11/EXPOOL source. */
-    if (!profile || !out_skin || !profile->dungeon_handle ||
-        level != profile->current_level) {
-        return 0;
-    }
-    (void)csb_v1_runtime_custom_background_skin_grid(
-        profile, grid, (int)sizeof(grid), &width, &height, &loaded_level,
-        NULL);
-    if (loaded_level != level || width <= 0 || height <= 0 ||
-        width > 32 || height > 32 || x >= width || y >= height) {
-        return 0;
-    }
-    *out_skin = grid[(size_t)y * (size_t)width + (size_t)x];
-    return 1;
-}
-
-static int csb_v1_runtime_dsa_set_skin(void *user,
-                                        uint32_t location,
-                                        uint8_t skin)
-{
-    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
-    int level = (int)((location >> 10) & 63u);
-    int x = (int)((location >> 5) & 31u);
-    int y = (int)(location & 31u);
-
-    if (!profile || level != profile->current_level) {
-        return 0;
-    }
-    return csb_v1_runtime_set_csbwin_saved_skin(profile, level, x, y, skin);
 }
 
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
@@ -13781,155 +13277,11 @@ const char *csb_v1_runtime_get_bonus_dungeon_path(
         : NULL;
 }
 
-static int csb_v1_runtime_event_is_before(
-    const struct DM1_Event_V1 *a, int index_a,
-    const struct DM1_Event_V1 *b, int index_b)
-{
-    uint32_t time_a = DM1_MAP_TIME_TIME(a->map_time);
-    uint32_t time_b = DM1_MAP_TIME_TIME(b->map_time);
-    uint16_t type_priority_a;
-    uint16_t type_priority_b;
-
-    if (time_a != time_b) return time_a < time_b;
-    type_priority_a = (uint16_t)((uint16_t)a->type << 8) | a->priority;
-    type_priority_b = (uint16_t)((uint16_t)b->type << 8) | b->priority;
-    if (type_priority_a != type_priority_b) {
-        return type_priority_a > type_priority_b;
-    }
-    return index_a <= index_b;
-}
-
-static void csb_v1_runtime_fix_unmerged_timer_placement(
-    struct DM1_EventQueue_V1 *queue, int timeline_index)
-{
-    int event_index;
-    int parent_index;
-    int child_index;
-    int half_index;
-    int moved_up = 0;
-
-    if (!queue || queue->eventCount <= 1) return;
-    event_index = queue->timeline[timeline_index];
-    while (timeline_index > 0) {
-        parent_index = (timeline_index - 1) >> 1;
-        if (!csb_v1_runtime_event_is_before(
-                &queue->events[event_index], event_index,
-                &queue->events[queue->timeline[parent_index]],
-                queue->timeline[parent_index])) {
-            break;
-        }
-        queue->timeline[timeline_index] = queue->timeline[parent_index];
-        timeline_index = parent_index;
-        moved_up = 1;
-    }
-    if (moved_up) {
-        queue->timeline[timeline_index] = (uint16_t)event_index;
-        return;
-    }
-    half_index = (queue->eventCount - 2) >> 1;
-    while (timeline_index <= half_index) {
-        child_index = (timeline_index << 1) + 1;
-        if (child_index + 1 < queue->eventCount &&
-            csb_v1_runtime_event_is_before(
-                &queue->events[queue->timeline[child_index + 1]],
-                queue->timeline[child_index + 1],
-                &queue->events[queue->timeline[child_index]],
-                queue->timeline[child_index])) {
-            ++child_index;
-        }
-        if (!csb_v1_runtime_event_is_before(
-                &queue->events[queue->timeline[child_index]],
-                queue->timeline[child_index], &queue->events[event_index],
-                event_index)) {
-            break;
-        }
-        queue->timeline[timeline_index] = queue->timeline[child_index];
-        timeline_index = child_index;
-    }
-    queue->timeline[timeline_index] = (uint16_t)event_index;
-}
-
-static int csb_v1_runtime_append_unmerged_map_timer_to_queue(
-    struct DM1_EventQueue_V1 *queue,
-    const struct DM1_Event_V1 *event)
-{
-    int index;
-    int position;
-
-    if (!queue || !event) return -1;
-    if (queue->eventCount >= queue->maxEvents) return -1;
-    index = queue->firstUnusedIndex;
-    if (index < 0 || index >= queue->maxEvents) return -1;
-
-    /* CSBWin Timer.cpp SetTimer's `deleteDuplicateTimers == 0` branch owns
-     * a distinct map TIMER even when the shared DM1 F0238 helper would merge
-     * it. Preserve that original slot and only reuse the common heap ordering
-     * primitive, not the common merge policy. */
-    queue->events[index] = *event;
-    do {
-        ++queue->firstUnusedIndex;
-    } while (queue->firstUnusedIndex < queue->maxEvents &&
-             queue->events[queue->firstUnusedIndex].type != DM1_EVENT_NONE);
-    position = queue->eventCount;
-    queue->timeline[position] = (uint16_t)index;
-    ++queue->eventCount;
-    csb_v1_runtime_fix_unmerged_timer_placement(queue, position);
-    return index;
-}
-
-static int csb_v1_runtime_append_unmerged_map_timer(
-    CSB_V1_RuntimeProfile *profile,
-    const struct DM1_Event_V1 *event)
-{
-    if (!profile) return -1;
-    return csb_v1_runtime_append_unmerged_map_timer_to_queue(
-        &profile->timeline_queue, event);
-}
-
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
                                       const struct DM1_Event_V1 *event)
 {
-    int i;
-
     if (!profile || !event) return -1;
     profile->timeline_queue.gameTick = profile->game_time;
-
-    /* CSBWin Timer.cpp GameTimers::SetTimer:967-1007 checks the restored
-     * EDBT_DeleteDuplicateTimers policy only for map timers C05..C10. A
-     * matching source timer retains its queue slot and receives the new
-     * action byte; TT_STONEROOM additionally requires the same position.
-     * Keep the comparison inside the live CSB timer owner, so a save policy
-     * never reaches a generic wrapper or a caller-built replacement queue. */
-    if (profile->csbwin_delete_duplicate_timers != 0u &&
-        event->type >= DM1_EVENT_CORRIDOR && event->type <= DM1_EVENT_DOOR) {
-        for (i = 0; i < profile->timeline_queue.eventCount; ++i) {
-            int event_index = profile->timeline_queue.timeline[i];
-            struct DM1_Event_V1 *existing;
-
-            if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
-                continue;
-            }
-            existing = &profile->timeline_queue.events[event_index];
-            if (existing->type < DM1_EVENT_CORRIDOR ||
-                existing->type > DM1_EVENT_DOOR ||
-                existing->map_time != event->map_time ||
-                existing->b_mapX != event->b_mapX ||
-                existing->b_mapY != event->b_mapY) {
-                continue;
-            }
-            if (existing->type == DM1_EVENT_WALL &&
-                existing->c_cell != event->c_cell) {
-                continue;
-            }
-            existing->c_effect = event->c_effect;
-            return event_index;
-        }
-    }
-    if (event->type >= DM1_EVENT_CORRIDOR &&
-        event->type <= DM1_EVENT_DOOR &&
-        profile->csbwin_delete_duplicate_timers == 0u) {
-        return csb_v1_runtime_append_unmerged_map_timer(profile, event);
-    }
     return dm1v1_event_add(&profile->timeline_queue, event);
 }
 
@@ -14593,23 +13945,21 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
     CSB_V1_RuntimeProfile *profile)
 {
     uint16_t item_index;
-    uint16_t staged_count = 0u;
-    CSB_V1_CSBWinRuntimeItem16 staged_items[
-        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
     int imported = 0;
 
     if (!profile || !profile->csbwin_body_runtime_summary_valid) {
         return -1;
     }
     if (profile->csbwin_item16_summary_count >
-            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
-        (profile->csbwin_item16_summary_total != 0u &&
-         profile->csbwin_item16_summary_total !=
-             profile->csbwin_item16_summary_count)) {
+        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
         return -1;
     }
 
-    memset(staged_items, 0, sizeof(staged_items));
+    memset(profile->csbwin_runtime_item16, 0,
+           sizeof(profile->csbwin_runtime_item16));
+    profile->csbwin_runtime_item16_count = 0u;
+    profile->csbwin_runtime_item16_total =
+        profile->csbwin_item16_summary_total;
 
     /* CSBWin CSB.h:2257-2280 defines ITEM16 as active-monster state:
      * word0 DB4 monster index, packed facings/positions, d.Time low byte,
@@ -14624,21 +13974,16 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
             &profile->csbwin_item16[item_index];
         CSB_V1_CSBWinRuntimeItem16 *dst;
 
-        /* SaveGame.cpp reads the complete MaxITEM16 stream before runtime
-         * ownership. An absent decoded record is corruption, while 0xffff is
-         * the source's explicit unused ITEM16 marker. */
-        if (!src->valid) {
-            return -1;
-        }
-        if (src->monster_index == 0xffffu) {
+        if (!src->valid || src->monster_index == 0xffffu) {
             continue;
         }
-        if (staged_count >=
+        if (profile->csbwin_runtime_item16_count >=
             CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
-            return -1;
+            break;
         }
 
-        dst = &staged_items[staged_count];
+        dst = &profile->csbwin_runtime_item16
+            [profile->csbwin_runtime_item16_count];
         memset(dst, 0, sizeof(*dst));
         dst->valid = 1;
         dst->monster_index = src->monster_index;
@@ -14659,18 +14004,10 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
         memcpy(dst->single_monster_status,
                src->single_monster_status,
                sizeof(dst->single_monster_status));
-        ++staged_count;
+        ++profile->csbwin_runtime_item16_count;
         ++imported;
     }
 
-    /* Do not publish a shortened CSBWin active-monster table. The source
-     * body is already checksum-authenticated; this second boundary keeps the
-     * decoded summary and live ownership transactionally aligned. */
-    memcpy(profile->csbwin_runtime_item16, staged_items,
-           sizeof(staged_items));
-    profile->csbwin_runtime_item16_count = staged_count;
-    profile->csbwin_runtime_item16_total =
-        profile->csbwin_item16_summary_total;
     return imported;
 }
 
@@ -14785,77 +14122,10 @@ int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
     return claimed;
 }
 
-static int csb_v1_runtime_csbwin_timer_is_before(
-    const CSB_V1_CSBWin512TimerSummary *a, uint16_t index_a,
-    const CSB_V1_CSBWin512TimerSummary *b, uint16_t index_b)
-{
-    const int a_is_parameter_message = a->function == 101u;
-    const int b_is_parameter_message = b->function == 101u;
-
-    if (a->time != b->time) return a->time < b->time;
-    /* CSBWin Timer.cpp TIMER::operator<:733-770 places parameter messages
-     * before every other same-time timer, then uses their byte-5 sequence. */
-    if (a_is_parameter_message != b_is_parameter_message) {
-        return a_is_parameter_message;
-    }
-    if (a->function != b->function) {
-        return a_is_parameter_message
-            ? a->function == 101u
-            : a->function > b->function;
-    }
-    if (a->ubyte5 != b->ubyte5) {
-        return a_is_parameter_message
-            ? a->ubyte5 < b->ubyte5
-            : a->ubyte5 > b->ubyte5;
-    }
-    if (a->sequence != b->sequence) return a->sequence < b->sequence;
-    return index_a <= index_b;
-}
-
-static int csb_v1_runtime_validate_csbwin_timer_heap(
-    const CSB_V1_RuntimeProfile *profile)
-{
-    uint16_t queue_index;
-
-    if (!profile) return 0;
-    for (queue_index = 0u;
-         queue_index < profile->csbwin_timer_queue_summary_count;
-         ++queue_index) {
-        const uint16_t timer_index = profile->csbwin_timer_queue[queue_index];
-        const CSB_V1_CSBWin512TimerSummary *timer;
-        uint16_t child;
-
-        if (timer_index >= profile->csbwin_timer_summary_count) return 0;
-        timer = &profile->csbwin_timers[timer_index];
-        if (!timer->valid || timer->function == DM1_EVENT_NONE) return 0;
-        for (child = (uint16_t)(queue_index * 2u + 1u);
-             child < profile->csbwin_timer_queue_summary_count &&
-             child <= (uint16_t)(queue_index * 2u + 2u);
-             ++child) {
-            const uint16_t child_timer_index = profile->csbwin_timer_queue[child];
-            const CSB_V1_CSBWin512TimerSummary *child_timer;
-
-            if (child_timer_index >= profile->csbwin_timer_summary_count) {
-                return 0;
-            }
-            child_timer = &profile->csbwin_timers[child_timer_index];
-            if (!child_timer->valid ||
-                child_timer->function == DM1_EVENT_NONE ||
-                csb_v1_runtime_csbwin_timer_is_before(
-                    child_timer, child_timer_index, timer, timer_index)) {
-                return 0;
-            }
-        }
-    }
-    return 1;
-}
-
 int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile)
 {
     uint16_t queue_index;
-    struct DM1_EventQueue_V1 staged_queue;
-    uint16_t staged_slots[DM1_EVENT_MAX_COUNT];
     int imported = 0;
 
     if (!profile || !profile->csbwin_body_runtime_summary_valid) {
@@ -14864,34 +14134,18 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     if (profile->csbwin_timer_queue_summary_count >
             CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
         profile->csbwin_timer_summary_count >
-            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
-        (profile->csbwin_timer_summary_total != 0u &&
-         profile->csbwin_timer_summary_total !=
-             profile->csbwin_timer_summary_count) ||
-        (profile->csbwin_timer_queue_summary_total != 0u &&
-         profile->csbwin_timer_queue_summary_total !=
-             profile->csbwin_timer_queue_summary_count)) {
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
         return -1;
     }
-    /* CSBWin Timer.cpp CheckTimers:884-906 rejects a saved queue if any
-     * child precedes its parent. Validate the complete source heap before
-     * staging so a malformed or reordered original-save queue cannot publish
-     * a partially rebuilt live timeline. */
-    if (!csb_v1_runtime_validate_csbwin_timer_heap(profile)) return -1;
 
     /* CSBWin Timer.cpp:728-772 orders timers by full m_time, then
      * timerFunction, then m_timerUByte5, then m_timerSequence when enabled.
      * The decoded CSBWin timer queue already captures the source order; this
      * handoff rebuilds Firestaff's timeline heap from that queue, preserving
-     * every serialized timer slot. Do not run a restored queue through
-     * GameTimers::SetTimer policy: CSBWin has already accepted these entries
-     * before SaveGame.cpp writes them. Unsupported side effects remain harmless
-     * dispatch records until their runtime handlers are implemented. */
-    dm1v1_event_queue_init(&staged_queue, profile->game_time);
-    for (queue_index = 0u; queue_index < DM1_EVENT_MAX_COUNT; ++queue_index) {
-        staged_slots[queue_index] =
-            CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
-    }
+     * m_time as Map_Time and m_timerUByte5 as the Type_Priority priority byte.
+     * Unsupported side effects remain harmless dispatch records until their
+     * runtime handlers are implemented. */
+    dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
     for (queue_index = 0u;
          queue_index < profile->csbwin_timer_queue_summary_count;
          ++queue_index) {
@@ -14900,18 +14154,14 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         struct DM1_Event_V1 event;
 
         if (timer_index >= profile->csbwin_timer_summary_count) {
-            return -1;
+            continue;
         }
         timer = &profile->csbwin_timers[timer_index];
         if (!timer->valid || timer->function == DM1_EVENT_NONE) {
-            return -1;
+            continue;
         }
 
         memset(&event, 0, sizeof(event));
-        /* CSBWin's serialized TIMER time word already carries the source
-         * level/time representation consumed by ProcessTimers. The decoded
-         * level field is a receipt for LoadLevel, not a replacement high byte
-         * for the original timer word. */
         event.map_time = timer->time;
         event.type = timer->function;
         event.priority = timer->ubyte5;
@@ -14919,37 +14169,11 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         event.b_mapY = timer->ubyte7;
         event.c_cell = timer->ubyte8;
         event.c_effect = timer->ubyte9;
-        {
-            int event_index = csb_v1_runtime_append_unmerged_map_timer_to_queue(
-                &staged_queue, &event);
-            if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
-                return -1;
-            }
-            staged_slots[event_index] = queue_index;
+        if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0) {
             ++imported;
         }
     }
-    profile->timeline_queue = staged_queue;
-    memcpy(profile->csbwin_timeline_event_queue_slot, staged_slots,
-           sizeof(staged_slots));
     return imported;
-}
-
-static void csb_v1_runtime_reset_csbwin_extended_metadata(
-    CSB_V1_RuntimeProfile *profile)
-{
-    if (!profile) return;
-    profile->csbwin_extended_game_info = NULL;
-    profile->csbwin_extended_game_info_size = 0u;
-    profile->csbwin_extended_game_info_fnv1a = 0u;
-    profile->csbwin_extended_features_valid = 0;
-    profile->csbwin_extended_features_version = 0u;
-    profile->csbwin_extended_features_flags = 0u;
-    profile->csbwin_extended_features_flags32 = 0u;
-    profile->csbwin_extended_cell_flag_array_size = 0u;
-    profile->csbwin_extended_level_index_present = 0;
-    memset(profile->csbwin_extended_level_dsa_index, 0xff,
-           sizeof(profile->csbwin_extended_level_dsa_index));
 }
 
 static void csb_v1_runtime_cleanup_csbwin_extended_state(
@@ -14958,64 +14182,11 @@ static void csb_v1_runtime_cleanup_csbwin_extended_state(
     if (!profile) return;
     csb_v1_chaos_cleanup(&profile->csbwin_extended_dsa_state);
     free(profile->csbwin_extended_game_info);
-    csb_v1_runtime_reset_csbwin_extended_metadata(profile);
-}
-
-static int csb_v1_runtime_csbwin_inventory_thing_is_null(uint16_t thing)
-{
-    /* RNnul is 0xffff in CSBWin. Older Firestaff summaries also used zero
-     * for an empty slot, so accept both representations at this boundary. */
-    return thing == 0u || thing == THING_NONE;
-}
-
-static int csb_v1_runtime_validate_csbwin_inventory_ownership(
-    const CSB_V1_CSBWin512BodyReport *summary)
-{
-    uint16_t champion_index;
-    uint16_t slot_index;
-
-    if (!summary || summary->num_character > CSB_V1_MAX_CHAMPIONS) {
-        return -1;
-    }
-
-    /* CSBWin SaveGame.cpp:1023-1032 removes the cursor RN's weight from
-     * d.CH16482[d.HandChar] before serializing GAMEBLOCK2. On restore,
-     * SaveGame.cpp:1802-1808 restores that same RN and CSBCode.cpp:6830-6865
-     * puts it back on the cursor owner. A non-null cursor RN without a
-     * declared saved champion owner is therefore not a usable save atom. */
-    if (!csb_v1_runtime_csbwin_inventory_thing_is_null(
-            summary->object_in_hand)) {
-        if (summary->hand_char >= summary->num_character ||
-            !summary->champions[summary->hand_char].valid ||
-            summary->object_in_hand == THING_ENDOFLIST) {
-            return -1;
-        }
-    }
-
-    /* CHARDESC::possessions is the source-owned C00..C29 inventory. Keep
-     * each raw RN intact here; its dungeon-record identity is resolved only
-     * after the matching original dungeon is live. This gate must not invent
-     * a separate object database from a save summary, but an end-of-list
-     * sentinel is never a serializable inventory object. */
-    for (champion_index = 0u;
-         champion_index < summary->num_character;
-         ++champion_index) {
-        const CSB_V1_CSBWin512ChampionSummary *champion =
-            &summary->champions[champion_index];
-
-        if (!champion->valid) return -1;
-        for (slot_index = 0u;
-             slot_index < CSB_V1_SLOT_COUNT;
-             ++slot_index) {
-            uint16_t thing = champion->possessions[slot_index];
-
-            if (csb_v1_runtime_csbwin_inventory_thing_is_null(thing)) {
-                continue;
-            }
-            if (thing == THING_ENDOFLIST) return -1;
-        }
-    }
-    return 0;
+    profile->csbwin_extended_game_info = NULL;
+    profile->csbwin_extended_game_info_size = 0u;
+    profile->csbwin_extended_game_info_fnv1a = 0u;
+    profile->csbwin_extended_features_valid = 0;
+    profile->csbwin_extended_level_index_present = 0;
 }
 
 static int csb_v1_runtime_stage_csbwin_resume_report(
@@ -15057,9 +14228,6 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
             summary->timer_summary_count) {
             return -1;
         }
-    }
-    if (csb_v1_runtime_validate_csbwin_inventory_ownership(summary) != 0) {
-        return -1;
     }
 
     /* CSBWin SaveGame.cpp:1768-1855 loads GAMEBLOCK2, ITEM16,
@@ -15149,21 +14317,16 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         return -1;
     }
-    if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_overlay_palette(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
-        csb_v1_dungeon_set_current_level(previous_dungeon_level);
-        return -1;
-    }
     /* A core-only report has no Extended Features preamble. CSBWin clears its
      * DSA/game-info/index owners before loading the save body. */
     csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
-    /* CSBWin SaveGame.cpp clears the whole Extended Features owner when a
-     * core-only resume has no preamble. Do not retain stale DSA flags/index
-     * metadata from the prior save merely because its action pointer was
-     * released transactionally below. */
-    csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
+    candidate.csbwin_extended_game_info = NULL;
+    candidate.csbwin_extended_game_info_size = 0u;
+    candidate.csbwin_extended_game_info_fnv1a = 0u;
+    candidate.csbwin_extended_features_valid = 0;
+    candidate.csbwin_extended_level_index_present = 0;
+    memset(candidate.csbwin_extended_level_dsa_index, 0xff,
+           sizeof(candidate.csbwin_extended_level_dsa_index));
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
     *profile = candidate;
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
@@ -15271,16 +14434,13 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         }
     } else {
         csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
-        csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
-    }
-    if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_overlay_palette(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
-        csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
-        csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
-        csb_v1_dungeon_set_current_level(previous_dungeon_level);
-        free(bytes);
-        return -1;
+        candidate.csbwin_extended_game_info = NULL;
+        candidate.csbwin_extended_game_info_size = 0u;
+        candidate.csbwin_extended_game_info_fnv1a = 0u;
+        candidate.csbwin_extended_features_valid = 0;
+        candidate.csbwin_extended_level_index_present = 0;
+        memset(candidate.csbwin_extended_level_dsa_index, 0xff,
+               sizeof(candidate.csbwin_extended_level_dsa_index));
     }
     free(bytes);
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
@@ -15323,13 +14483,8 @@ static int csb_v1_runtime_build_csbwin_core_summary(
     if (profile->csbwin_appended_tail_valid) {
         if (profile->csbwin_appended_tail_preserved_size >
                 CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-            profile->csbwin_appended_tail_truncated ||
             profile->csbwin_appended_tail_size !=
-                profile->csbwin_appended_tail_preserved_size ||
-            profile->csbwin_appended_tail_fnv1a !=
-                csb_v1_runtime_fnv1a32(
-                    profile->csbwin_appended_tail,
-                    profile->csbwin_appended_tail_preserved_size)) {
+                profile->csbwin_appended_tail_preserved_size) {
             return -1;
         }
         summary->appended_offset = 0u;
@@ -15494,11 +14649,7 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
         profile->csbwin_appended_tail_size !=
             profile->csbwin_appended_tail_preserved_size ||
         profile->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-        profile->csbwin_appended_tail_fnv1a !=
-            csb_v1_runtime_fnv1a32(
-                profile->csbwin_appended_tail,
-                profile->csbwin_appended_tail_preserved_size)) {
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
         return 0;
     }
 
@@ -15538,736 +14689,6 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     return 1;
 }
 
-static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes)
-{
-    return (uint32_t)bytes[0] |
-           ((uint32_t)bytes[1] << 8) |
-           ((uint32_t)bytes[2] << 16) |
-           ((uint32_t)bytes[3] << 24);
-}
-
-static void csb_v1_runtime_write_le32(uint8_t *bytes, uint32_t value)
-{
-    bytes[0] = (uint8_t)value;
-    bytes[1] = (uint8_t)(value >> 8);
-    bytes[2] = (uint8_t)(value >> 16);
-    bytes[3] = (uint8_t)(value >> 24);
-}
-
-static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size)
-{
-    uint32_t hash = 2166136261u;
-    size_t i;
-
-    for (i = 0u; i < size; ++i) {
-        hash ^= bytes[i];
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-/* Persist the one CSBWin DSA state store that has a complete source-owned
- * representation here: DSA::m_state (LocalState 1).  CSBWin DSA.cpp
- * ProcessDSATimer6 (lines 5315-5465) obtains a state through GetState(),
- * executes the exact selected action, then commits the final/forced state
- * through PutState().  SaveGame.cpp ReadDSAs/WriteDSAs (211-241, 775-790)
- * wraps that serialized DSA stream in data.cpp's RCS checksum.  Re-check the
- * whole stream before changing its two-byte m_state field so a stale, partial,
- * or caller-built receipt cannot become a saved runtime transition. */
-static int csb_v1_runtime_persist_csbwin_localstate1_dsa(
-    CSB_V1_RuntimeProfile *candidate,
-    const CSB_V1_CSBWinDSAFilterStackRunnerContext *before,
-    const CSB_V1_CSBWinDSAFilterStackRunnerContext *after)
-{
-    CSB_V1_CSBWinExtendedDSAReport report;
-    CSB_V1_CSBWinExtendedFeaturesReport features;
-    CSB_V1_CSBWinDSAImportedHeader *header;
-    size_t offset;
-    uint32_t final_state;
-    uint32_t dsa_ordinal;
-    int64_t relative_state;
-
-    if (!candidate || !before || !after ||
-        !candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size == 0u ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-        candidate->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
-            candidate->csbwin_appended_tail,
-            candidate->csbwin_appended_tail_preserved_size) ||
-        before->dsa_id < 0 || before->dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
-        before->state_index != after->state_index ||
-        before->action_ordinal != after->action_ordinal) {
-        return 0;
-    }
-    header = &candidate->csbwin_extended_dsa_state.imported_headers[
-        before->dsa_id];
-    if (!header->valid || header->local_state != 1u ||
-        header->persistent_state != before->state_index ||
-        header->state_slot_count == 0u) {
-        return 0;
-    }
-
-    if (after->transfer_execution_count != before->transfer_execution_count) {
-        if (after->transfer_execution_count !=
-                before->transfer_execution_count + 1 ||
-            after->last_transfer.final_state < 0) {
-            return 0;
-        }
-        final_state = (uint32_t)after->last_transfer.final_state;
-    } else {
-        if (after->execution_count != before->execution_count + 1) return 0;
-        if (after->last_execution.forced_state >= 0) {
-            final_state = (uint32_t)after->last_execution.forced_state;
-        } else {
-            relative_state = (int64_t)before->state_index +
-                (int64_t)after->last_execution.next_state;
-            if (relative_state < 0 || relative_state > UINT32_MAX) return 0;
-            final_state = (uint32_t)relative_state;
-        }
-    }
-    if (final_state >= header->state_slot_count || final_state > 0xffffu) {
-        return 0;
-    }
-
-    memset(&report, 0, sizeof(report));
-    memset(&features, 0, sizeof(features));
-    if (csb_v1_csbwin_512_inspect_extended_dsa_section(
-            candidate->csbwin_appended_tail,
-            candidate->csbwin_appended_tail_preserved_size, &report,
-            &features) != CSB_V1_CSBWIN_EXTENDED_OK || !report.valid ||
-        report.dsa_count == 0u ||
-        report.next_payload_offset >
-            candidate->csbwin_appended_tail_preserved_size) {
-        return 0;
-    }
-
-    offset = features.extension_payload_offset;
-    for (dsa_ordinal = 0u; dsa_ordinal < features.dsa_count; ++dsa_ordinal) {
-        uint32_t dsa_id;
-        uint32_t state_slots;
-        uint32_t non_empty_states;
-        uint32_t state_ordinal;
-
-        if (offset > report.dsa_payload_offset + report.dsa_payload_size ||
-            report.dsa_payload_offset + report.dsa_payload_size - offset <
-                100u) {
-            return 0;
-        }
-        dsa_id = csb_v1_runtime_read_le32(
-            candidate->csbwin_appended_tail + offset);
-        state_slots = csb_v1_runtime_read_le32(
-            candidate->csbwin_appended_tail + offset + 88u);
-        non_empty_states = csb_v1_runtime_read_le32(
-            candidate->csbwin_appended_tail + offset + 96u);
-        if (dsa_id == (uint32_t)before->dsa_id) {
-            if (((uint32_t)candidate->csbwin_appended_tail[offset + 84u] |
-                    ((uint32_t)candidate->csbwin_appended_tail[offset + 85u]
-                     << 8)) != header->persistent_state ||
-                candidate->csbwin_appended_tail[offset + 86u] != 1u ||
-                candidate->csbwin_appended_tail[offset + 87u] !=
-                    (uint8_t)header->group_id ||
-                state_slots != header->state_slot_count) {
-                return 0;
-            }
-            candidate->csbwin_appended_tail[offset + 84u] =
-                (uint8_t)final_state;
-            candidate->csbwin_appended_tail[offset + 85u] =
-                (uint8_t)(final_state >> 8);
-            /* CSBWin data.cpp RCS(ui8 *, i32):1818-1827. */
-            {
-                uint32_t checksum = 0xffffu;
-                size_t i;
-                for (i = 0u; i < report.dsa_payload_size; ++i) {
-                    checksum = checksum * 0xbb40e62du + 11u +
-                        candidate->csbwin_appended_tail[
-                            report.dsa_payload_offset + i];
-                }
-                csb_v1_runtime_write_le32(
-                    candidate->csbwin_appended_tail +
-                        report.dsa_payload_offset + report.dsa_payload_size,
-                    checksum);
-            }
-            candidate->csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
-                candidate->csbwin_appended_tail,
-                candidate->csbwin_appended_tail_preserved_size);
-            header->persistent_state = final_state;
-            return 1;
-        }
-
-        offset += 100u;
-        for (state_ordinal = 0u; state_ordinal < non_empty_states;
-             ++state_ordinal) {
-            uint32_t action_count;
-            uint32_t action_ordinal;
-
-            if (offset > report.dsa_payload_offset + report.dsa_payload_size ||
-                report.dsa_payload_offset + report.dsa_payload_size - offset <
-                    8u) {
-                return 0;
-            }
-            action_count = csb_v1_runtime_read_le32(
-                candidate->csbwin_appended_tail + offset + 4u);
-            offset += 8u;
-            for (action_ordinal = 0u; action_ordinal < action_count;
-                 ++action_ordinal) {
-                uint32_t words;
-                size_t byte_count;
-
-                if (offset > report.dsa_payload_offset + report.dsa_payload_size ||
-                    report.dsa_payload_offset + report.dsa_payload_size -
-                        offset < 8u) {
-                    return 0;
-                }
-                words = csb_v1_runtime_read_le32(
-                    candidate->csbwin_appended_tail + offset + 4u);
-                if ((size_t)words > (SIZE_MAX - 8u) / 2u) return 0;
-                byte_count = (size_t)words * 2u;
-                if (byte_count > report.dsa_payload_offset +
-                        report.dsa_payload_size - offset - 8u) {
-                    return 0;
-                }
-                offset += 8u + byte_count;
-            }
-        }
-    }
-    return 0;
-}
-
-/* CSBWin data.cpp EXPOOL::enlarge() lays a DB11 block out as equal-sized
- * nodes beginning at word 1.  The source assumes a trusted save buffer; the
- * runtime must prove that a saved free-list pointer still denotes one of
- * those nodes before using it.  In particular, a pointer into the DB11
- * header must never become an EXPOOL record or free-list link. */
-static int csb_v1_runtime_expool_node_is_valid(const uint8_t *bytes,
-                                               uint32_t total_words,
-                                               uint32_t node,
-                                               uint32_t size_words)
-{
-    uint32_t block_base;
-    uint32_t node_offset;
-    uint32_t stored_size;
-
-    if (!bytes || size_words < 2u || size_words > 31u ||
-        node >= total_words) {
-        return 0;
-    }
-    block_base = node & 0xffffffc0u;
-    node_offset = node & 0x3fu;
-    if (block_base >= total_words || node_offset == 0u ||
-        node_offset + size_words > 64u ||
-        node + size_words > total_words) {
-        return 0;
-    }
-    stored_size = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
-        ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
-    if (stored_size != size_words) {
-        return 0;
-    }
-    return ((node_offset - 1u) % size_words) == 0u;
-}
-
-/* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
- * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
- * a new save block and has no authenticated source-tail receipt here. The
- * source Read first unlinks the old node into its exact-size free list; Write
- * then consumes an exact free node for the replacement, or rejects. */
-static int csb_v1_runtime_replace_appended_expool_record_internal(
-    CSB_V1_RuntimeProfile *candidate,
-    uint32_t record_id,
-    const uint8_t *payload,
-    size_t payload_size)
-{
-    uint8_t *bytes;
-    uint32_t total_words;
-    uint32_t hash;
-    uint32_t hashi;
-    uint32_t bucket;
-    uint32_t prior = 0u;
-    uint32_t old_node = 0u;
-    uint32_t old_size_words = 0u;
-    uint32_t write_words;
-    int guard;
-
-    if (!candidate || !candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size == 0u ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        (candidate->csbwin_appended_tail_preserved_size & 3u) != 0u ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-        candidate->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
-            candidate->csbwin_appended_tail,
-            candidate->csbwin_appended_tail_preserved_size) ||
-        (payload_size != 0u && (!payload || (payload_size & 3u) != 0u))) {
-        return 0;
-    }
-
-    bytes = candidate->csbwin_appended_tail;
-    total_words = (uint32_t)(candidate->csbwin_appended_tail_preserved_size / 4u);
-    if (total_words < 64u) return 0;
-    hash = record_id * 0xbb40e62du;
-    hashi = 32u + (hash >> 27);
-    if (hashi >= total_words) return 0;
-    bucket = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
-    if ((bucket & 0x80000000u) != 0u) {
-        hashi = (bucket & 0x7fffffffu) + ((hash >> 21) & 0x3fu);
-        if (hashi >= total_words) return 0;
-        bucket = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
-    }
-
-    for (guard = 0; guard < (int)total_words && bucket != 0u; ++guard) {
-        uint32_t block_base;
-
-        if (bucket + 2u > total_words) return 0;
-        block_base = bucket & 0xffffffc0u;
-        if (block_base >= total_words) return 0;
-        old_size_words = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
-            ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
-        if (!csb_v1_runtime_expool_node_is_valid(
-                bytes, total_words, bucket, old_size_words)) {
-            return 0;
-        }
-        if (csb_v1_runtime_read_le32(bytes + (size_t)(bucket + 1u) * 4u) ==
-            record_id) {
-            old_node = bucket;
-            break;
-        }
-        prior = bucket;
-        bucket = csb_v1_runtime_read_le32(bytes + (size_t)bucket * 4u);
-    }
-    if (guard == (int)total_words) return 0;
-
-    /* EXPOOL::Read: unlink the old record and return its exact DB11 node to
-     * the size-specific free list. A missing record is valid for Write. */
-    if (old_node != 0u) {
-        uint32_t next = csb_v1_runtime_read_le32(
-            bytes + (size_t)old_node * 4u);
-        if (old_size_words + 2u >= total_words) return 0;
-        if (prior == 0u) {
-            csb_v1_runtime_write_le32(bytes + (size_t)hashi * 4u, next);
-        } else {
-            csb_v1_runtime_write_le32(bytes + (size_t)prior * 4u, next);
-        }
-        csb_v1_runtime_write_le32(bytes + (size_t)old_node * 4u,
-            csb_v1_runtime_read_le32(bytes + (size_t)old_size_words * 4u));
-        csb_v1_runtime_write_le32(bytes + (size_t)old_size_words * 4u,
-            old_node);
-    }
-
-    /* SetSkin returns after Read when the trimmed column is empty. */
-    if (payload_size == 0u) return old_node != 0u;
-    write_words = (uint32_t)(payload_size / 4u) + 2u;
-    if (write_words < 2u || write_words > 31u ||
-        write_words + 2u >= total_words) return 0;
-    bucket = csb_v1_runtime_read_le32(bytes + (size_t)write_words * 4u);
-    if (bucket == 0u || !csb_v1_runtime_expool_node_is_valid(
-            bytes, total_words, bucket, write_words)) {
-        return 0;
-    }
-    csb_v1_runtime_write_le32(bytes + (size_t)write_words * 4u,
-        csb_v1_runtime_read_le32(bytes + (size_t)bucket * 4u));
-    csb_v1_runtime_write_le32(bytes + (size_t)bucket * 4u,
-        csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u));
-    csb_v1_runtime_write_le32(bytes + (size_t)hashi * 4u, bucket);
-    csb_v1_runtime_write_le32(bytes + (size_t)(bucket + 1u) * 4u, record_id);
-    memcpy(bytes + (size_t)(bucket + 2u) * 4u, payload, payload_size);
-    return 1;
-}
-
-static int csb_v1_runtime_stage_csbwin_global_variables(
-    CSB_V1_RuntimeProfile *candidate)
-{
-    const uint32_t record_base = (5u << 24) | (4u << 16);
-    const uint32_t words_per_record = 16u;
-    const uint32_t record_count =
-        CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY / words_per_record;
-    uint32_t staged[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY] = { 0u };
-    uint32_t count = 0u;
-    uint32_t record_index;
-
-    if (!candidate) return -1;
-
-    /* CSBWin SaveGame.cpp ReadSavegame() reads record i as
-     * (EDT_Database << 24) | (EDBT_GlobalVariables << 16) | i, appending
-     * exactly sixteen ui32 values until EXPOOL::Locate first fails, then
-     * invokes DSAINDEX::ReadTracing. Keep the bounded Firestaff DSA bank
-     * source-sized and stage every word before publishing it. */
-    if (candidate->csbwin_appended_tail_valid &&
-        candidate->csbwin_appended_tail_size != 0u &&
-        (candidate->csbwin_appended_tail_truncated ||
-         candidate->csbwin_appended_tail_size !=
-             candidate->csbwin_appended_tail_preserved_size ||
-         candidate->csbwin_appended_tail_preserved_size >
-             CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-         candidate->csbwin_appended_tail_fnv1a !=
-             csb_v1_runtime_fnv1a32(
-                 candidate->csbwin_appended_tail,
-                 candidate->csbwin_appended_tail_preserved_size))) {
-        return -1;
-    }
-
-    for (record_index = 0u; record_index < record_count; ++record_index) {
-        const uint8_t *payload = NULL;
-        size_t payload_size = 0u;
-        uint32_t word;
-
-        if (!csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, record_base | record_index,
-                &payload, &payload_size)) {
-            break;
-        }
-        if (!payload || payload_size < words_per_record * sizeof(uint32_t)) {
-            return -1;
-        }
-        for (word = 0u; word < words_per_record; ++word) {
-            staged[count + word] = csb_v1_runtime_read_le32(
-                payload + word * sizeof(uint32_t));
-        }
-        count += words_per_record;
-    }
-    /* The runner's source-sized bounded bank can hold six complete records
-     * (96 values). Never silently drop a seventh source record merely because
-     * the 100-cell stack bridge has no partial-record representation. */
-    if (record_index == record_count &&
-        csb_v1_runtime_locate_appended_expool_record_internal(
-            candidate, record_base | record_index, NULL, NULL)) {
-        return -1;
-    }
-
-    memset(candidate->csbwin_global_variables, 0,
-           sizeof(candidate->csbwin_global_variables));
-    memcpy(candidate->csbwin_global_variables, staged,
-           count * sizeof(staged[0]));
-    candidate->csbwin_global_variable_count = (uint16_t)count;
-    candidate->csbwin_global_variables_valid = 1;
-    return 0;
-}
-
-static int csb_v1_runtime_stage_csbwin_overlay_palette(
-    CSB_V1_RuntimeProfile *candidate)
-{
-    enum {
-        CSBWIN_EDT_PALETTE = 7u,
-        CSBWIN_PALETTE_RECORD_COUNT = 24u,
-        CSBWIN_PALETTE_RECORD_BYTES = 64u
-    };
-    uint8_t staged[CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
-    uint32_t record_index;
-
-    if (!candidate) return -1;
-
-    /* CSBWin SaveGame.cpp:1948-1970 calls EXPOOL::Locate for every record
-     * before publishing overlayPaletteRed/Green/Blue. Firestaff is stricter
-     * at the host boundary: an incomplete or stale save-tail receipt has no
-     * palette surface, rather than reusing pixels from a prior save. */
-    if (!candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_size == 0u) {
-        candidate->csbwin_overlay_palette_valid = 0;
-        candidate->csbwin_overlay_palette_tail_fnv1a = 0u;
-        memset(candidate->csbwin_overlay_palette, 0,
-               sizeof(candidate->csbwin_overlay_palette));
-        return 0;
-    }
-    if (candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-        candidate->csbwin_appended_tail_fnv1a !=
-            csb_v1_runtime_fnv1a32(
-                candidate->csbwin_appended_tail,
-                candidate->csbwin_appended_tail_preserved_size)) {
-        return -1;
-    }
-
-    for (record_index = 0u;
-         record_index < CSBWIN_PALETTE_RECORD_COUNT;
-         ++record_index) {
-        const uint8_t *payload = NULL;
-        size_t payload_size = 0u;
-
-        if (!csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, (CSBWIN_EDT_PALETTE << 24) | record_index,
-                &payload, &payload_size) ||
-            !payload || payload_size < CSBWIN_PALETTE_RECORD_BYTES) {
-            /* SaveGame.cpp simply retains its current overlay when a save
-             * does not carry the entire 24-record bundle. Firestaff has no
-             * hidden fallback surface here: invalidate this profile's receipt
-             * and let the caller continue restoring other authentic records. */
-            candidate->csbwin_overlay_palette_valid = 0;
-            candidate->csbwin_overlay_palette_tail_fnv1a = 0u;
-            memset(candidate->csbwin_overlay_palette, 0,
-                   sizeof(candidate->csbwin_overlay_palette));
-            return 0;
-        }
-        memcpy(staged + (size_t)record_index * CSBWIN_PALETTE_RECORD_BYTES,
-               payload, CSBWIN_PALETTE_RECORD_BYTES);
-    }
-
-    memcpy(candidate->csbwin_overlay_palette, staged, sizeof(staged));
-    candidate->csbwin_overlay_palette_valid = 1;
-    candidate->csbwin_overlay_palette_tail_fnv1a =
-        candidate->csbwin_appended_tail_fnv1a;
-    return 0;
-}
-
-static int csb_v1_runtime_write_csbwin_global_variables(
-    CSB_V1_RuntimeProfile *candidate)
-{
-    const uint32_t record_base = (5u << 24) | (4u << 16);
-    const uint32_t words_per_record = 16u;
-    uint32_t record_count;
-    uint32_t record_index;
-
-    if (!candidate || !candidate->csbwin_global_variables_valid) return -1;
-    if (candidate->csbwin_global_variable_count == 0u) return 0;
-    if ((candidate->csbwin_global_variable_count % words_per_record) != 0u ||
-        candidate->csbwin_global_variable_count >
-            CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY ||
-        !candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size == 0u ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
-        return -1;
-    }
-
-    record_count = candidate->csbwin_global_variable_count / words_per_record;
-    for (record_index = 0u; record_index < record_count; ++record_index) {
-        const uint8_t *payload = NULL;
-        size_t payload_size = 0u;
-        size_t payload_offset;
-        uint32_t word;
-
-        if (!csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, record_base | record_index,
-                &payload, &payload_size) ||
-            !payload || payload_size < words_per_record * sizeof(uint32_t) ||
-            payload < candidate->csbwin_appended_tail) {
-            return -1;
-        }
-        payload_offset = (size_t)(payload - candidate->csbwin_appended_tail);
-        if (payload_offset > candidate->csbwin_appended_tail_preserved_size ||
-            payload_size > candidate->csbwin_appended_tail_preserved_size -
-                payload_offset) {
-            return -1;
-        }
-        for (word = 0u; word < words_per_record; ++word) {
-            csb_v1_runtime_write_le32(
-                candidate->csbwin_appended_tail + payload_offset +
-                    word * sizeof(uint32_t),
-                candidate->csbwin_global_variables[
-                    record_index * words_per_record + word]);
-        }
-    }
-    candidate->csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
-        candidate->csbwin_appended_tail,
-        candidate->csbwin_appended_tail_preserved_size);
-    return 0;
-}
-
-static int csb_v1_runtime_write_csbwin_overlay_palette(
-    CSB_V1_RuntimeProfile *candidate)
-{
-    enum {
-        CSBWIN_EDT_PALETTE = 7u,
-        CSBWIN_PALETTE_RECORD_COUNT = 24u,
-        CSBWIN_PALETTE_RECORD_BYTES = 64u
-    };
-    size_t payload_offsets[CSBWIN_PALETTE_RECORD_COUNT];
-    uint32_t record_index;
-
-    if (!candidate || !candidate->csbwin_overlay_palette_valid ||
-        !candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size == 0u ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-        candidate->csbwin_appended_tail_fnv1a !=
-            csb_v1_runtime_fnv1a32(candidate->csbwin_appended_tail,
-                                    candidate->csbwin_appended_tail_preserved_size)) {
-        return -1;
-    }
-
-    /* CSBWin SaveGame.cpp:1213-1224 discards each old EDT_Palette record and
-     * writes exactly sixteen words. Do not emulate EXPOOL::Write expansion:
-     * every target must already be a complete source-owned record. */
-    for (record_index = 0u;
-         record_index < CSBWIN_PALETTE_RECORD_COUNT;
-         ++record_index) {
-        const uint8_t *payload = NULL;
-        size_t payload_size = 0u;
-        size_t payload_offset;
-
-        if (!csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, (CSBWIN_EDT_PALETTE << 24) | record_index,
-                &payload, &payload_size) ||
-            !payload || payload_size < CSBWIN_PALETTE_RECORD_BYTES ||
-            payload < candidate->csbwin_appended_tail) {
-            return -1;
-        }
-        payload_offset = (size_t)(payload - candidate->csbwin_appended_tail);
-        if (payload_offset > candidate->csbwin_appended_tail_preserved_size ||
-            CSBWIN_PALETTE_RECORD_BYTES >
-                candidate->csbwin_appended_tail_preserved_size - payload_offset) {
-            return -1;
-        }
-        payload_offsets[record_index] = payload_offset;
-    }
-    /* Every lookup verifies the original tail receipt. Validate every target
-     * before changing the first byte, then commit the fixed source bundle. */
-    for (record_index = 0u;
-         record_index < CSBWIN_PALETTE_RECORD_COUNT;
-         ++record_index) {
-        memcpy(candidate->csbwin_appended_tail + payload_offsets[record_index],
-               candidate->csbwin_overlay_palette +
-                   (size_t)record_index * CSBWIN_PALETTE_RECORD_BYTES,
-               CSBWIN_PALETTE_RECORD_BYTES);
-    }
-    candidate->csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
-        candidate->csbwin_appended_tail,
-        candidate->csbwin_appended_tail_preserved_size);
-    candidate->csbwin_overlay_palette_tail_fnv1a =
-        candidate->csbwin_appended_tail_fnv1a;
-    return 0;
-}
-
-static int csb_v1_runtime_stage_csbwin_save_policy(
-    CSB_V1_RuntimeProfile *candidate)
-{
-    const uint32_t database_base = 5u << 24;
-    const uint32_t disable_saves_record = database_base | (5u << 16);
-    const uint32_t delete_duplicate_timers_record = database_base | (1u << 16);
-    const uint32_t runtime_signatures_record = database_base | (2u << 16);
-    const uint32_t debugging_record = database_base | (3u << 16);
-    const uint8_t *payload = NULL;
-    size_t payload_size = 0u;
-
-    if (!candidate) return -1;
-    candidate->csbwin_saves_disabled = 0;
-    candidate->csbwin_delete_duplicate_timers = 1u;
-    candidate->csbwin_debugging_data = 0u;
-    candidate->csbwin_csbgraphics_signature_data = 0u;
-    candidate->csbwin_graphics_signature_data = 0u;
-    candidate->csbwin_version_data = 0u;
-
-    /* CSBWin SaveGame.cpp:1972-2034 restores DisableSaves,
-     * DeleteDuplicateTimers, Debuging, and RuntimeFileSignatures after its
-     * palette records. These are exact DB11 records, not Firestaff settings;
-     * an absent record retains the source default while a short present record
-     * rejects the whole candidate before runtime state is published. */
-    if (!candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_size == 0u) {
-        return 0;
-    }
-    if (candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
-        candidate->csbwin_appended_tail_fnv1a !=
-            csb_v1_runtime_fnv1a32(
-                candidate->csbwin_appended_tail,
-                candidate->csbwin_appended_tail_preserved_size)) {
-        return -1;
-    }
-    if (csb_v1_runtime_locate_appended_expool_record_internal(
-            candidate, disable_saves_record, &payload, &payload_size)) {
-        if (!payload || payload_size == 0u) return -1;
-        candidate->csbwin_saves_disabled = 1;
-    }
-    if (csb_v1_runtime_locate_appended_expool_record_internal(
-            candidate, delete_duplicate_timers_record, &payload,
-            &payload_size)) {
-        if (!payload || payload_size < sizeof(uint32_t)) return -1;
-        candidate->csbwin_delete_duplicate_timers =
-            csb_v1_runtime_read_le32(payload);
-    }
-    if (csb_v1_runtime_locate_appended_expool_record_internal(
-            candidate, debugging_record, &payload, &payload_size)) {
-        if (!payload || payload_size < sizeof(uint32_t)) return -1;
-        candidate->csbwin_debugging_data = csb_v1_runtime_read_le32(payload);
-    }
-    if (candidate->csbwin_debugging_data == 0u) {
-        if (csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, runtime_signatures_record, &payload,
-                &payload_size)) {
-            if (!payload || payload_size < sizeof(uint32_t)) return -1;
-            candidate->csbwin_csbgraphics_signature_data =
-                csb_v1_runtime_read_le32(payload);
-        }
-        if (csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, runtime_signatures_record | 1u, &payload,
-                &payload_size)) {
-            if (!payload || payload_size < sizeof(uint32_t)) return -1;
-            candidate->csbwin_graphics_signature_data =
-                csb_v1_runtime_read_le32(payload);
-        }
-        if (csb_v1_runtime_locate_appended_expool_record_internal(
-                candidate, runtime_signatures_record | 2u, &payload,
-                &payload_size)) {
-            if (!payload || payload_size < sizeof(uint32_t)) return -1;
-            candidate->csbwin_version_data = csb_v1_runtime_read_le32(payload);
-        }
-    }
-    return 0;
-}
-
-static int csb_v1_runtime_stage_csbwin_dsa_tracing(
-    CSB_V1_RuntimeProfile *candidate)
-{
-    CSB_V1_CSBWin512BodyReport report;
-    int rc;
-
-    if (!candidate) return -1;
-    memset(&candidate->csbwin_dsa_tracing, 0,
-           sizeof(candidate->csbwin_dsa_tracing));
-    candidate->csbwin_dsa_tracing.valid = 1;
-    candidate->csbwin_dsa_tracing.record_id =
-        CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID;
-
-    /* CSBWin DSA.cpp DSAINDEX::ReadTracing lines 5553-5583 asks EXPOOL for
-     * this optional record only after its save body is available. A save
-     * without an appended database therefore has a valid absent bitmap. */
-    if (!candidate->csbwin_appended_tail_valid ||
-        candidate->csbwin_appended_tail_size == 0u) {
-        return 0;
-    }
-    if (candidate->csbwin_appended_tail_truncated ||
-        candidate->csbwin_appended_tail_size !=
-            candidate->csbwin_appended_tail_preserved_size ||
-        candidate->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
-        return -1;
-    }
-
-    memset(&report, 0, sizeof(report));
-    report.appended_size = candidate->csbwin_appended_tail_size;
-    report.appended_preserved_size =
-        candidate->csbwin_appended_tail_preserved_size;
-    report.appended_fnv1a = candidate->csbwin_appended_tail_fnv1a;
-    report.appended_truncated = candidate->csbwin_appended_tail_truncated;
-    if ((report.appended_size % CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES) == 0u) {
-        report.appended_expool_candidate = 1;
-        report.appended_expool_block_count = (uint16_t)(
-            report.appended_size / CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
-    }
-    memcpy(report.appended_preserved, candidate->csbwin_appended_tail,
-           report.appended_preserved_size);
-    rc = csb_v1_csbwin_512_inspect_appended_dsa_tracing(
-        &report, &candidate->csbwin_dsa_tracing);
-    return rc == CSB_V1_CSBWIN_512_OK ? 0 : -1;
-}
-
 int csb_v1_runtime_locate_csbwin_appended_expool_record(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t record_id,
@@ -16279,2597 +14700,6 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
         record_id,
         out_bytes,
         out_size);
-}
-
-int csb_v1_runtime_get_csbwin_dsa_tracing(
-    const CSB_V1_RuntimeProfile *profile,
-    CSB_V1_CSBWinDSATracingReport *out_report)
-{
-    if (!profile || !out_report || !profile->csbwin_dsa_tracing.valid) {
-        return -1;
-    }
-    *out_report = profile->csbwin_dsa_tracing;
-    return 0;
-}
-
-int csb_v1_runtime_restore_csbwin_expool_global_variables(
-    CSB_V1_RuntimeProfile *profile)
-{
-    CSB_V1_RuntimeProfile candidate;
-
-    if (!profile) return -1;
-    candidate = *profile;
-    if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0) {
-        return -1;
-    }
-    profile->csbwin_global_variables_valid =
-        candidate.csbwin_global_variables_valid;
-    profile->csbwin_global_variable_count =
-        candidate.csbwin_global_variable_count;
-    memcpy(profile->csbwin_global_variables,
-           candidate.csbwin_global_variables,
-           sizeof(profile->csbwin_global_variables));
-    return 0;
-}
-
-int csb_v1_runtime_restore_csbwin_expool_overlay_palette(
-    CSB_V1_RuntimeProfile *profile)
-{
-    CSB_V1_RuntimeProfile candidate;
-
-    if (!profile) return -1;
-    candidate = *profile;
-    if (csb_v1_runtime_stage_csbwin_overlay_palette(&candidate) != 0) {
-        return -1;
-    }
-    profile->csbwin_overlay_palette_valid =
-        candidate.csbwin_overlay_palette_valid;
-    profile->csbwin_overlay_palette_tail_fnv1a =
-        candidate.csbwin_overlay_palette_tail_fnv1a;
-    memcpy(profile->csbwin_overlay_palette,
-           candidate.csbwin_overlay_palette,
-           sizeof(profile->csbwin_overlay_palette));
-    return 0;
-}
-
-int csb_v1_runtime_get_csbwin_expool_overlay_palette(
-    const CSB_V1_RuntimeProfile *profile,
-    const uint8_t **out_palette,
-    size_t *out_size)
-{
-    if (out_palette) *out_palette = NULL;
-    if (out_size) *out_size = 0u;
-    if (!profile || !out_palette || !out_size ||
-        !profile->csbwin_overlay_palette_valid ||
-        !profile->csbwin_appended_tail_valid ||
-        profile->csbwin_appended_tail_truncated ||
-        profile->csbwin_overlay_palette_tail_fnv1a !=
-            profile->csbwin_appended_tail_fnv1a ||
-        profile->csbwin_appended_tail_size !=
-            profile->csbwin_appended_tail_preserved_size ||
-        profile->csbwin_appended_tail_fnv1a !=
-            csb_v1_runtime_fnv1a32(
-                profile->csbwin_appended_tail,
-                profile->csbwin_appended_tail_preserved_size)) {
-        return 0;
-    }
-    *out_palette = profile->csbwin_overlay_palette;
-    *out_size = sizeof(profile->csbwin_overlay_palette);
-    return 1;
-}
-
-int csb_v1_runtime_set_csbwin_expool_overlay_palette(
-    CSB_V1_RuntimeProfile *profile,
-    const uint8_t *palette,
-    size_t palette_size)
-{
-    CSB_V1_RuntimeProfile candidate;
-
-    if (!profile || !palette ||
-        palette_size != CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES) {
-        return -1;
-    }
-    candidate = *profile;
-    memcpy(candidate.csbwin_overlay_palette, palette,
-           sizeof(candidate.csbwin_overlay_palette));
-    candidate.csbwin_overlay_palette_valid = 1;
-    if (csb_v1_runtime_write_csbwin_overlay_palette(&candidate) != 0) {
-        return -1;
-    }
-    *profile = candidate;
-    return 0;
-}
-
-int csb_v1_runtime_csbwin_saves_disabled(
-    const CSB_V1_RuntimeProfile *profile)
-{
-    return profile && profile->csbwin_saves_disabled ? 1 : 0;
-}
-
-int csb_v1_runtime_restore_csbwin_save_policy(
-    CSB_V1_RuntimeProfile *profile)
-{
-    CSB_V1_RuntimeProfile candidate;
-
-    if (!profile) return -1;
-    candidate = *profile;
-    if (csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
-        return -1;
-    }
-    profile->csbwin_saves_disabled = candidate.csbwin_saves_disabled;
-    profile->csbwin_delete_duplicate_timers =
-        candidate.csbwin_delete_duplicate_timers;
-    profile->csbwin_debugging_data = candidate.csbwin_debugging_data;
-    profile->csbwin_csbgraphics_signature_data =
-        candidate.csbwin_csbgraphics_signature_data;
-    profile->csbwin_graphics_signature_data =
-        candidate.csbwin_graphics_signature_data;
-    profile->csbwin_version_data = candidate.csbwin_version_data;
-    return 0;
-}
-
-int csb_v1_runtime_get_csbwin_save_policy(
-    const CSB_V1_RuntimeProfile *profile,
-    uint32_t *out_delete_duplicate_timers,
-    uint32_t *out_debugging_data,
-    uint32_t *out_csbgraphics_signature,
-    uint32_t *out_graphics_signature,
-    uint32_t *out_version)
-{
-    if (!profile || !out_delete_duplicate_timers || !out_debugging_data ||
-        !out_csbgraphics_signature || !out_graphics_signature ||
-        !out_version) {
-        return -1;
-    }
-    *out_delete_duplicate_timers = profile->csbwin_delete_duplicate_timers;
-    *out_debugging_data = profile->csbwin_debugging_data;
-    *out_csbgraphics_signature = profile->csbwin_csbgraphics_signature_data;
-    *out_graphics_signature = profile->csbwin_graphics_signature_data;
-    *out_version = profile->csbwin_version_data;
-    return 0;
-}
-
-int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *location,
-    CSB_V1_RuntimeDSAFilterBinding *out_binding)
-{
-    const uint8_t *record;
-    CSB_V1_RuntimeDSAFilterBinding candidate;
-    uint16_t word2;
-    uint16_t mapped_dsa;
-    int type;
-    int index;
-    int size;
-    int i;
-
-    if (!profile || !dungeon || !location || !out_binding ||
-        !profile->csbwin_extended_features_valid ||
-        !profile->csbwin_extended_level_index_present ||
-        location->level < 0 || location->level >= 64 ||
-        location->actuator_thing == 0xffffu) {
-        return 0;
-    }
-
-    record = csb_v1_dungeon_get_thing_record(dungeon,
-        location->actuator_thing, &type, &index, &size);
-    (void)index;
-    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) {
-        return 0;
-    }
-    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
-        return 0;
-    }
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.location = *location;
-    candidate.dsa_selector = (uint8_t)((word2 >> 7) & 0x1fu);
-    mapped_dsa = profile->csbwin_extended_level_dsa_index[
-        location->level][candidate.dsa_selector];
-    if (mapped_dsa == 0xffffu || mapped_dsa >= CSB_V1_MAX_DSA_SCRIPTS) {
-        return 0;
-    }
-    candidate.dsa_id = (uint8_t)mapped_dsa;
-
-    /* ProcessDSATimer6 rejects an undefined DSA after the selector lookup.
-     * A real runtime binding is useful only when the staged authenticated
-     * extension actually owns at least one action for that absolute DSA. */
-    for (i = 0; i < profile->csbwin_extended_dsa_state.imported_action_count;
-         ++i) {
-        if (profile->csbwin_extended_dsa_state.imported_actions[i].dsa_id ==
-            candidate.dsa_id) {
-            *out_binding = candidate;
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    int timer_function,
-    int timer_position,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution candidate;
-    const CSB_V1_CSBWinDSAImportedHeader *header;
-    const CSB_V1_DSAImportedAction *action;
-    const uint8_t *record;
-    uint16_t word2;
-    int type;
-    int index;
-    int size;
-    int ordinal = 0;
-    int i;
-
-    if (!profile || !dungeon || !slave_location || !out_resolution ||
-        timer_function < 0 || timer_function > 2 ||
-        timer_position < 0 || timer_position > 3 ||
-        !profile->csbwin_extended_features_valid) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
-            profile, dungeon, slave_location, &candidate.slave)) {
-        return 0;
-    }
-    header = &profile->csbwin_extended_dsa_state.imported_headers[
-        candidate.slave.dsa_id];
-    if (!header->valid || header->state_slot_count == 0u) return 0;
-
-    /* CSBWin DSA.cpp FindMaster (534-547) supports only IsMaster(), which
-     * is exactly LocalState != 3. Its slave branch calls "not implemented"
-     * and returns the input object, so accepting it would invent ownership.
-     * The supported branch has the slave itself as the authenticated master. */
-    if (header->local_state == 3u) return 0;
-    candidate.master = candidate.slave;
-    candidate.master_location =
-        ((uint32_t)(slave_location->position & 3) << 16) |
-        ((uint32_t)(slave_location->level & 0x3f) << 10) |
-        ((uint32_t)(slave_location->x & 0x1f) << 5) |
-        (uint32_t)(slave_location->y & 0x1f);
-    candidate.input_column = (uint32_t)(3 * timer_position + timer_function);
-
-    record = csb_v1_dungeon_get_thing_record(dungeon,
-        slave_location->actuator_thing, &type, &index, &size);
-    (void)index;
-    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) return 0;
-    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
-
-    /* DSA.cpp GetState: LocalState 0 is DB3::DSAstate, while LocalState 1
-     * is serialized DSA::m_state. DB3::MakeBig (data.cpp:1319-1326) widens
-     * type-47 records before ParameterB may use its extra bits. The imported
-     * compact eight-byte DB3 gives us only word6, so accept LocalState 2
-     * strictly when its unrepresented high two bits are zero. That is the
-     * exact compact ParameterB value and never a guessed widened state. */
-    if (header->local_state == 0u) {
-        candidate.state_index = (uint32_t)((word2 >> 12) & 0x0fu);
-    } else if (header->local_state == 1u) {
-        candidate.state_index = header->persistent_state;
-    } else if (header->local_state == 2u) {
-        uint16_t parameter_b;
-
-        if (size < 8) return 0;
-        parameter_b = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
-        if ((parameter_b & 0xc000u) != 0u) return 0;
-        candidate.state_index = (uint32_t)parameter_b;
-    } else {
-        return 0;
-    }
-    if (candidate.state_index >= header->state_slot_count) return 0;
-
-    action = csb_v1_chaos_find_imported_action_column(
-        &profile->csbwin_extended_dsa_state, candidate.master.dsa_id,
-        candidate.state_index, candidate.input_column);
-    if (!action) return 0;
-    for (i = 0; i < profile->csbwin_extended_dsa_state.imported_action_count;
-         ++i) {
-        const CSB_V1_DSAImportedAction *item =
-            &profile->csbwin_extended_dsa_state.imported_actions[i];
-        if (item->dsa_id == candidate.master.dsa_id &&
-            item->state_index == candidate.state_index) {
-            if (item == action) {
-                candidate.action_ordinal = ordinal;
-                *out_resolution = candidate;
-                return 1;
-            }
-            ++ordinal;
-        }
-    }
-    return 0;
-}
-
-int csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin Timer.cpp ProcessTT_STONEROOM (lines 2180-2260) visits every
-     * type-47 actuator on the timer target square, then hands its raw action
-     * and position to DSA.cpp ProcessDSATimer6.  A restored summary is safe
-     * to use only when it is the original function-6 form and its target
-     * still names this concrete loaded-square actuator. */
-    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
-        !timer->valid || timer->truncated || timer->function != 6u ||
-        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-        profile, dungeon, slave_location, (int)timer->ubyte9,
-        (int)timer->ubyte8, out_resolution);
-}
-
-int csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin: Timer.cpp ProcessTT_FALSEWALL -> DSA.cpp ProcessDSATimer7. */
-    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
-        !timer->valid || timer->truncated || timer->function != 7u ||
-        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-        profile, dungeon, slave_location, (int)timer->ubyte9,
-        (int)timer->ubyte8, out_resolution);
-}
-
-int csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-    const CSB_V1_DSAImportedAction *action;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    /* CSBWin Timer.cpp::ProcessTT_FALSEWALL passes function-7 records to
-     * DSA.cpp::ProcessDSATimer7, which selects the same authenticated
-     * ProcessDSATimer6 action receipt.  Retain that exact selection rather
-     * than allowing a caller to substitute equivalent-looking DSA words. */
-    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
-        !out_action) {
-        return 0;
-    }
-    memset(&resolution, 0, sizeof(resolution));
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
-            profile, dungeon, slave_location, timer, &resolution)) {
-        return 0;
-    }
-    action = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
-        resolution.state_index, resolution.action_ordinal);
-    if (!action || action->column != resolution.input_column ||
-        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, &resolution.master, resolution.state_index,
-            resolution.action_ordinal, resolution.master_location,
-            &candidate)) {
-        return 0;
-    }
-    *out_runner = candidate;
-    *out_action = action;
-    return 1;
-}
-
-int csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-    const CSB_V1_DSAImportedAction *action;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
-        !out_action) {
-        return 0;
-    }
-    memset(&resolution, 0, sizeof(resolution));
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
-            profile, dungeon, slave_location, timer, &resolution)) {
-        return 0;
-    }
-    action = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
-        resolution.state_index, resolution.action_ordinal);
-    if (!action || action->column != resolution.input_column ||
-        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, &resolution.master, resolution.state_index,
-            resolution.action_ordinal, resolution.master_location,
-            &candidate)) {
-        return 0;
-    }
-    *out_runner = candidate;
-    *out_action = action;
-    return 1;
-}
-
-int csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin Timer.cpp ProcessTT_OPENROOM (1641-1711) visits target-square
-     * type-47 actuators and passes each unchanged normal timer to
-     * ProcessDSATimer5. DSA.cpp ProcessDSATimer5 is only the source wrapper
-     * around ProcessDSATimer6, therefore the same bounded resolver is the
-     * end-to-end owner of this saved route. */
-    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
-        !timer->valid || timer->truncated || timer->function != 5u ||
-        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-        profile, dungeon, slave_location, (int)timer->ubyte9,
-        (int)timer->ubyte8, out_resolution);
-}
-
-int csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-    const CSB_V1_DSAImportedAction *action;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
-        !out_action) {
-        return 0;
-    }
-    memset(&resolution, 0, sizeof(resolution));
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
-            profile, dungeon, slave_location, timer, &resolution)) {
-        return 0;
-    }
-    action = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
-        resolution.state_index, resolution.action_ordinal);
-    if (!action || action->column != resolution.input_column ||
-        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, &resolution.master, resolution.state_index,
-            resolution.action_ordinal, resolution.master_location,
-            &candidate)) {
-        return 0;
-    }
-    *out_runner = candidate;
-    *out_action = action;
-    return 1;
-}
-
-int csb_v1_runtime_resolve_csbwin_dessage_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin CSBCode.cpp:6435 routes TT_DESSAGE (102) to
-     * Timer.cpp::ProcessTT_OPENROOM. Its type-47 arm calls
-     * ProcessDSATimer5 unchanged, while the source skips non-DSA objects for
-     * DSA messages. The saved action/position/target fields therefore remain
-     * the sole admitted input to the existing ProcessDSATimer6 receipt. */
-    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
-        !timer->valid || timer->truncated || timer->function != 102u ||
-        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-        profile, dungeon, slave_location, (int)timer->ubyte9,
-        (int)timer->ubyte8, out_resolution);
-}
-
-int csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-    const CSB_V1_DSAImportedAction *action;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
-        !out_action) {
-        return 0;
-    }
-    memset(&resolution, 0, sizeof(resolution));
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_dessage_dsa_timer_action(
-            profile, dungeon, slave_location, timer, &resolution)) {
-        return 0;
-    }
-    action = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
-        resolution.state_index, resolution.action_ordinal);
-    if (!action || action->column != resolution.input_column ||
-        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, &resolution.master, resolution.state_index,
-            resolution.action_ordinal, resolution.master_location,
-            &candidate)) {
-        return 0;
-    }
-    *out_runner = candidate;
-    *out_action = action;
-    return 1;
-}
-
-int csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin Timer.cpp ProcessTT_DOOR (1509-1541) rejects the source's
-     * disabled action, then calls ActivateDSA. ActivateDSA (1453-1490)
-     * constructs the same action/position/level/target timer consumed by
-     * ProcessDSATimer5. The normal run initializes the 0/1/2 modifier map in
-     * CSBCode.cpp:6403-6405, so a restored raw 0/1/2 action is the only
-     * source-proven saved input accepted here. */
-    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
-        !timer->valid || timer->truncated || timer->function != 10u ||
-        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-        profile, dungeon, slave_location, (int)timer->ubyte9,
-        (int)timer->ubyte8, out_resolution);
-}
-
-int csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-    const CSB_V1_DSAImportedAction *action;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
-        !out_action) {
-        return 0;
-    }
-    memset(&resolution, 0, sizeof(resolution));
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
-            profile, dungeon, slave_location, timer, &resolution)) {
-        return 0;
-    }
-    action = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
-        resolution.state_index, resolution.action_ordinal);
-    if (!action || action->column != resolution.input_column ||
-        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, &resolution.master, resolution.state_index,
-            resolution.action_ordinal, resolution.master_location,
-            &candidate)) {
-        return 0;
-    }
-    *out_runner = candidate;
-    *out_action = action;
-    return 1;
-}
-
-static int csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    uint8_t source_function,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
-        !timer->valid || timer->truncated || timer->function != source_function ||
-        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-        profile, dungeon, slave_location, (int)timer->ubyte9,
-        (int)timer->ubyte8, out_resolution);
-}
-
-static int csb_v1_runtime_prepare_csbwin_activate_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    uint8_t source_function,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-    const CSB_V1_DSAImportedAction *action;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    if (!out_runner || !out_action) return 0;
-    memset(&resolution, 0, sizeof(resolution));
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
-            profile, dungeon, slave_location, timer, source_function,
-            &resolution)) {
-        return 0;
-    }
-    action = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
-        resolution.state_index, resolution.action_ordinal);
-    if (!action || action->column != resolution.input_column ||
-        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, &resolution.master, resolution.state_index,
-            resolution.action_ordinal, resolution.master_location,
-            &candidate)) {
-        return 0;
-    }
-    *out_runner = candidate;
-    *out_action = action;
-    return 1;
-}
-
-int csb_v1_runtime_resolve_csbwin_teleporter_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin Timer.cpp::ProcessTT_TELEPORTER lines 2343-2367 invokes
-     * ActivateDSA first. Its exact source input is function 8 and the normal
-     * per-tick timerTypeModifier 0/1/2 mapping. */
-    return csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
-        profile, dungeon, slave_location, timer, 8u, out_resolution);
-}
-
-int csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    return csb_v1_runtime_prepare_csbwin_activate_dsa_timer_stack_runner(
-        profile, dungeon, slave_location, timer, 8u, out_runner, out_action);
-}
-
-int csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
-{
-    /* CSBWin Timer.cpp::ProcessTT_PITROOM lines 2473-2508 has the identical
-     * pre-mutation ActivateDSA handoff, with saved function 9. */
-    return csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
-        profile, dungeon, slave_location, timer, 9u, out_resolution);
-}
-
-int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action)
-{
-    return csb_v1_runtime_prepare_csbwin_activate_dsa_timer_stack_runner(
-        profile, dungeon, slave_location, timer, 9u, out_runner, out_action);
-}
-
-int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer)
-{
-    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
-    const CSB_V1_DSAImportedAction *action = NULL;
-    int prepared = 0;
-
-    if (!profile || !dungeon || !slave_location || !timer) return 0;
-    memset(&runner, 0, sizeof(runner));
-
-    /* CSBWin Timer.cpp:1453-1491 constructs a new TIMER and a
-     * NEWDSAPARAMETERS object before ProcessDSATimer5.  The latter sets the
-     * source parameter count to zero.  These four saved timer kinds are the
-     * only routes here whose source parameter surface is fully proven.  The
-     * existing runner admits only authenticated pure-stack actions, so this
-     * does not commit a DSA master state, mutate a cell, or run an unbounded
-     * ProcessDSATimer6 program. */
-    switch (timer->function) {
-    case 102u: /* TT_DESSAGE -> ProcessTT_OPENROOM -> ProcessDSATimer5. */
-        prepared = csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 10u: /* TT_DOOR -> ActivateDSA -> ProcessDSATimer5. */
-        prepared = csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 8u: /* TT_TELEPORTER -> ActivateDSA -> ProcessDSATimer5. */
-        prepared = csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 9u: /* TT_PITROOM -> ActivateDSA -> ProcessDSATimer5. */
-        prepared = csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    default:
-        return 0;
-    }
-    if (!prepared || !action) return 0;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, NULL, 0, NULL);
-}
-
-static int csb_v1_runtime_csbwin_timer_matches_saved_slot(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_CSBWin512TimerSummary *timer)
-{
-    const CSB_V1_CSBWin512TimerSummary *saved;
-
-    if (!profile || !timer || timer->source_index >=
-            profile->csbwin_timer_summary_count ||
-        timer->source_index >= CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
-        return 0;
-    }
-    saved = &profile->csbwin_timers[timer->source_index];
-    return saved->valid && !saved->truncated &&
-        saved->source_index == timer->source_index &&
-        saved->time == timer->time && saved->function == timer->function &&
-        saved->ubyte5 == timer->ubyte5 && saved->ubyte6 == timer->ubyte6 &&
-        saved->ubyte7 == timer->ubyte7 && saved->ubyte8 == timer->ubyte8 &&
-        saved->ubyte9 == timer->ubyte9 && saved->sequence == timer->sequence &&
-        saved->level == timer->level;
-}
-
-int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer)
-{
-    CSB_V1_CSBWin512TimerSummary dispatched;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
-    const CSB_V1_DSAImportedAction *action = NULL;
-    const uint8_t *payload = NULL;
-    size_t payload_size = 0u;
-    uint32_t record_id;
-    int parameters[26];
-    size_t parameter_count;
-    size_t i;
-    int square_type;
-    int prepared;
-
-    /* CSBWin CSBCode.cpp ProcessTimers:6436-6454 gives a parameter message
-     * its allocated timer index, selects STONEROOM only for roomSTONE, and
-     * otherwise invokes OPENROOM. Timer.cpp's two handlers read the exact
-     * EDT_MessageParameters record before entering ProcessDSATimer[56]. */
-    if (!profile || !dungeon || !slave_location || !timer ||
-        !timer->valid || timer->truncated || timer->function != 101u ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y ||
-        !csb_v1_runtime_csbwin_timer_matches_saved_slot(profile, timer)) {
-        return 0;
-    }
-    record_id = (1u << 24) | timer->source_index;
-    if (!csb_v1_runtime_locate_appended_expool_record_internal(
-            profile, record_id, &payload, &payload_size) || !payload ||
-        (payload_size & 3u) != 0u || payload_size / 4u > 26u) {
-        return 0;
-    }
-    parameter_count = payload_size / 4u;
-    for (i = 0u; i < parameter_count; ++i) {
-        parameters[i] = (int)csb_v1_runtime_read_le32(payload + i * 4u);
-    }
-
-    square_type = csb_v1_dungeon_get_square_type(
-        dungeon, slave_location->level, slave_location->x,
-        slave_location->y);
-    if (square_type < 0) return 0;
-    dispatched = *timer;
-    /* Timer.cpp ProcessTT_STONEROOM changes the timer function after Read;
-     * ProcessTT_OPENROOM keeps 101. Both ProcessDSATimer paths consume the
-     * action/position bytes, so normalize only for Firestaff's exact receipt
-     * resolvers instead of admitting a caller-selected timer family. */
-    dispatched.function = square_type == 0 ? 6u : 5u;
-    memset(&runner, 0, sizeof(runner));
-    if (square_type == 0) {
-        prepared = csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, &dispatched, &runner, &action);
-    } else {
-        prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, &dispatched, &runner, &action);
-    }
-    if (!prepared || !action) return 0;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, parameters, (int)parameter_count, NULL);
-}
-
-int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    uint16_t queue_index)
-{
-    const CSB_V1_CSBWin512TimerSummary *timer;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
-    const CSB_V1_DSAImportedAction *action = NULL;
-    uint16_t timer_index;
-    int prepared;
-
-    /* SaveGame.cpp restores both serialized arrays before ProcessTimers
-     * consumes m_timerQueue. Do not allow a caller-built TIMER shape to
-     * stand in for either authenticated saved record. */
-    if (!profile || !dungeon || !slave_location ||
-        !profile->csbwin_body_runtime_summary_valid ||
-        profile->csbwin_timer_summary_total !=
-            profile->csbwin_timer_summary_count ||
-        profile->csbwin_timer_queue_summary_total !=
-            profile->csbwin_timer_queue_summary_count ||
-        profile->csbwin_timer_queue_summary_count !=
-            profile->csbwin_timer_summary_count ||
-        queue_index >= profile->csbwin_timer_queue_summary_count) {
-        return 0;
-    }
-    timer_index = profile->csbwin_timer_queue[queue_index];
-    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
-    timer = &profile->csbwin_timers[timer_index];
-    if (!timer->valid || timer->truncated ||
-        timer->source_index != timer_index ||
-        timer->level != (uint8_t)slave_location->level ||
-        timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
-        return 0;
-    }
-    memset(&runner, 0, sizeof(runner));
-    switch (timer->function) {
-    case 5u:
-        prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 6u:
-        prepared = csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 7u:
-        prepared = csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 8u:
-        /* CSBWin Timer.cpp ProcessTT_TELEPORTER enters ActivateDSA before
-         * changing the teleporter cell flag or wiggling occupants. */
-        prepared = csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 9u:
-        /* CSBWin Timer.cpp ProcessTT_PITROOM enters ActivateDSA before
-         * mutating the pit cell flag or wiggling occupants. */
-        prepared = csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 10u:
-        /* CSBWin Timer.cpp ProcessTT_DOOR enters ActivateDSA before it
-         * changes function to TT_1 and requeues a door timer. */
-        prepared = csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    case 102u:
-        /* CSBWin ProcessTimers routes TT_DESSAGE to ProcessTT_OPENROOM,
-         * which gives ProcessDSATimer5 a zero-parameter DSA message. */
-        prepared = csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, timer, &runner, &action);
-        break;
-    default:
-        return 0;
-    }
-    if (!prepared || !action) return 0;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, NULL, 0, NULL);
-}
-
-static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
-    CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record,
-    uint16_t queue_slot)
-{
-    const CSB_V1_DungeonData *dungeon;
-    CSB_V1_CSBWin512TimerSummary *timer;
-    uint16_t timer_index;
-    int thing;
-    int guard = 0;
-
-    /* CSBWin CSBCode.cpp ProcessTimers gets a TIMER from m_timerQueue, then
-     * Timer.cpp walks that exact square's objects. Keep the Firestaff bridge
-     * tied to the materialized queue slot and the dispatched event fields;
-     * no public API can provide a substitute TIMER or actuator location. */
-    if (!profile || !record || queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE ||
-        queue_slot >= profile->csbwin_timer_queue_summary_count ||
-        !profile->csbwin_body_runtime_summary_valid) {
-        return 0;
-    }
-    timer_index = profile->csbwin_timer_queue[queue_slot];
-    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
-    timer = &profile->csbwin_timers[timer_index];
-    if (timer->function == DM1_EVENT_WATCHDOG) {
-        struct DM1_Event_V1 next;
-        uint32_t next_time;
-        int event_index;
-
-        /* CSBWin CSBCode.cpp:6504 delegates TT_53 to Timer.cpp:2770-2782.
-         * SetWatchdogTimer creates a zero-payload level-zero TT_53 exactly
-         * 300 game ticks after the current d.Time. Retain the original
-         * TIMER summary and queue slot for the successor: a separately
-         * invented M10 C53 event would lose the original-save owner and
-         * could not round-trip through the CSBWin timer queue. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 &&
-            profile->game_time <= 0x00fffed3u) {
-            next_time = profile->game_time + 300u;
-            memset(&next, 0, sizeof(next));
-            next.map_time = DM1_MAP_TIME_MAKE(0u, next_time);
-            next.type = DM1_EVENT_WATCHDOG;
-            event_index = csb_v1_runtime_add_timeline_event(profile, &next);
-            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
-                /* Commit only after the successor has a live heap slot. */
-                timer->time = next_time;
-                timer->level = 0u;
-                timer->ubyte5 = 0u;
-                timer->ubyte6 = 0u;
-                timer->ubyte7 = 0u;
-                timer->ubyte8 = 0u;
-                timer->ubyte9 = 0u;
-                profile->csbwin_timeline_event_queue_slot[event_index] =
-                    queue_slot;
-            }
-        }
-        /* TT_53 aliases the M10 watchdog classification. A malformed saved
-         * timer cannot be allowed to enter a generic watchdog path. */
-        return 1;
-    }
-    if (timer->function == 13u) {
-        CSB_V1_Champion *champion;
-        int champion_index;
-        int maximum_health;
-
-        /* CSBWin CSBCode.cpp:6469 dispatches TT_ViAltar to Timer.cpp:
-         * 2663-2763. Retain only ProcessTT_ViAltar's final packedState()==0
-         * step, which calls Character.cpp:804-825 BringCharacterToLife.
-         * State 2 needs CreateCloud. State 1 can additionally retain the
-         * old-save DB10 branch when no EXPOOL tail is present: it owns the
-         * exact bones Thing, its DB10 value, and the +1 successor. The source
-         * stores packed position in timerUByte5 bits 2..3. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 &&
-            (timer->ubyte5 & 3u) == 1u && !profile->csbwin_appended_tail_valid &&
-            profile->dungeon_handle && timer->time < 0x00ffffffu) {
-            uint16_t bones_thing = (uint16_t)timer->ubyte8 |
-                ((uint16_t)timer->ubyte9 << 8);
-            uint16_t word2;
-            uint8_t *bones_record;
-            struct DM1_Event_V1 next;
-            int bones_type;
-            int bones_size;
-            int event_index;
-
-            /* CSBWin Timer.cpp:2692-2751 old-save arm uses DB10::value as
-             * its champion ordinal only after it finds this exact bones RN
-             * on the saved square and at the packed source position. */
-            bones_record = csb_v1_runtime_mutable_thing_record(
-                profile->dungeon_handle, bones_thing, &bones_type, &bones_size);
-            if (bones_record && bones_type == 10 && bones_size >= 4 &&
-                ((bones_thing >> 14) & 3u) == ((timer->ubyte5 >> 2) & 3u) &&
-                csb_v1_runtime_square_contains_thing(profile->dungeon_handle,
-                                                       bones_thing,
-                                                       timer->level,
-                                                       timer->ubyte6,
-                                                       timer->ubyte7)) {
-                word2 = csb_v1_runtime_read_u16(bones_record + 2);
-                champion_index = (int)((word2 >> 14) & 3u);
-                if ((word2 & 0x007fu) == 5u && profile->party_state_valid &&
-                    profile->champion_count > 0 &&
-                    profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
-                    profile->party_state.ChampionCount == profile->champion_count &&
-                    champion_index < profile->party_state.ChampionCount &&
-                    profile->party_state.Champions[champion_index].CurrentHealth ==
-                        0) {
-                    memset(&next, 0, sizeof(next));
-                    next.map_time = DM1_MAP_TIME_MAKE(timer->level,
-                                                       timer->time + 1u);
-                    next.type = timer->function;
-                    next.priority = (uint8_t)(champion_index << 2);
-                    next.b_mapX = timer->ubyte6;
-                    next.b_mapY = timer->ubyte7;
-                    next.c_cell = timer->ubyte8;
-                    next.c_effect = timer->ubyte9;
-                    event_index = csb_v1_runtime_add_timeline_event(profile,
-                                                                      &next);
-                    if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT &&
-                        csb_v1_runtime_unlink_thing_from_square(
-                            profile->dungeon_handle, bones_thing, timer->level,
-                            timer->ubyte6, timer->ubyte7)) {
-                        /* DB10::Clear sets both link=RNeof and word2=0. */
-                        csb_v1_runtime_write_u16(bones_record, 0xfffeu);
-                        csb_v1_runtime_write_u16(bones_record + 2, 0u);
-                        timer->time += 1u;
-                        timer->ubyte5 = (uint8_t)(champion_index << 2);
-                        profile->csbwin_timeline_event_queue_slot[event_index] =
-                            queue_slot;
-                    }
-                }
-            }
-            return 1;
-        }
-        champion_index = (int)((timer->ubyte5 >> 2) & 3u);
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 &&
-            (timer->ubyte5 & 3u) == 0u && profile->party_state_valid &&
-            profile->champion_count > 0 &&
-            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
-            profile->party_state.ChampionCount == profile->champion_count &&
-            champion_index < profile->party_state.ChampionCount) {
-            champion = &profile->party_state.Champions[champion_index];
-            maximum_health = champion->MaximumHealth;
-            if (champion->CurrentHealth == 0 && maximum_health > 0) {
-                maximum_health -= maximum_health / 64 + 1;
-                if (maximum_health < 25) maximum_health = 25;
-                champion->MaximumHealth = (int16_t)maximum_health;
-                champion->CurrentHealth = (int16_t)(maximum_health / 2);
-                champion->Direction = (uint8_t)(profile->party_dir & 3);
-                champion->Attributes &=
-                    ~(uint16_t)CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
-            }
-        }
-        /* TT_13 overlaps the generic M10 Vi Altar event. Even a malformed
-         * restored receipt remains source-owned and cannot enter that route. */
-        return 1;
-    }
-    if (timer->function == 65u) {
-        CSB_V1_DungeonData *saved_dungeon;
-        uint16_t generator_thing;
-        uint16_t first_disabled = 0xffffu;
-        int thing;
-        int guard = 0;
-
-        /* CSBWin CSBCode.cpp:6473-6475 dispatches TT_ReactivateGenerator
-         * to Timer.cpp:1788-1836. The original tries timerObj8 first, then
-         * keeps an explicit old-save fallback to the first type-zero DB3
-         * actuator on the saved square. ubyte8/ubyte9 are that preserved
-         * little-endian timerObj8 word, not generic cell/effect input. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && profile->dungeon_handle) {
-            saved_dungeon = profile->dungeon_handle;
-            generator_thing = (uint16_t)timer->ubyte8 |
-                ((uint16_t)timer->ubyte9 << 8);
-            thing = csb_v1_dungeon_get_first_thing(
-                saved_dungeon, record->mapIndex, record->mapX, record->mapY);
-            while (thing >= 0 && thing != 0xfffe && thing != 0xffff &&
-                   guard++ < 128) {
-                uint8_t *actuator;
-                int type;
-                int size;
-                uint16_t type_data;
-
-                actuator = csb_v1_runtime_mutable_thing_record(
-                    saved_dungeon, (uint16_t)thing, &type, &size);
-                if (!actuator) break;
-                if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4) {
-                    type_data = csb_v1_runtime_read_u16(actuator + 2);
-                    if ((type_data & 0x007fu) == 0u) {
-                        if (first_disabled == 0xffffu) {
-                            first_disabled = (uint16_t)thing;
-                        }
-                        if ((uint16_t)thing == generator_thing) {
-                            first_disabled = (uint16_t)thing;
-                            break;
-                        }
-                    }
-                }
-                thing = csb_v1_runtime_sensor_next_thing(
-                    saved_dungeon, (uint16_t)thing);
-            }
-            if (first_disabled != 0xffffu) {
-                uint8_t *actuator;
-                int type;
-                int size;
-                uint16_t type_data;
-
-                actuator = csb_v1_runtime_mutable_thing_record(
-                    saved_dungeon, first_disabled, &type, &size);
-                if (actuator && type == CSB_V1_THING_TYPE_ACTUATOR &&
-                    size >= 4) {
-                    type_data = csb_v1_runtime_read_u16(actuator + 2);
-                    if ((type_data & 0x007fu) == 0u) {
-                        /* Timer.cpp's actuatorTypeOR(6) preserves every
-                         * source bit except the disabled type-zero state. */
-                        csb_v1_runtime_write_u16(
-                            actuator + 2, (uint16_t)(type_data | 6u));
-                    }
-                }
-            }
-        }
-        /* C65 aliases generic M10 generator handling. Always consume an
-         * imported TT_65 here so malformed saved data cannot reach that
-         * broader first-disabled-sensor route without CSBWin identity proof. */
-        return 1;
-    }
-    if (timer->function == 79u) {
-        /* CSBWin CSBCode.cpp:6563 and Magic.cpp:1329-1339 expire TT_79 by
-         * removing exactly one active Magic Footprints effect. The complete
-         * source TIMER identity is still required even though its payload is
-         * unused: byte fields must not become a synthetic footprint route.
-         * The footprint-record cleanup/draw route has no restored owner, so
-         * this bridge owns only the saved counter decrement. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 &&
-            profile->csbwin_character_tail_magic_footprints_active > 0u) {
-            --profile->csbwin_character_tail_magic_footprints_active;
-        }
-        return 1;
-    }
-    if (timer->function == 78u) {
-        int16_t shield_delta;
-
-        /* CSBWin CSBCode.cpp:6560-6562 and Attack.cpp:1208-1227 expire
-         * TT_78 by subtracting its signed timerWord6 from FireShield. Keep
-         * the original little-endian word and full materialized queue/event
-         * identity together; malformed, negative, or underflowing records
-         * cannot create a replacement shield state. MarkAllPortraitsChanged
-         * remains unavailable without the source HUD owner. */
-        shield_delta = (int16_t)((uint16_t)timer->ubyte6 |
-            ((uint16_t)timer->ubyte7 << 8));
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && shield_delta > 0 &&
-            profile->csbwin_character_tail_fire_shield >= shield_delta) {
-            profile->csbwin_character_tail_fire_shield = (int16_t)(
-                profile->csbwin_character_tail_fire_shield - shield_delta);
-        }
-        return 1;
-    }
-    if (timer->function == 75u) {
-        uint16_t poison_attack;
-        int champion_index;
-
-        /* CSBWin CSBCode.cpp:6545-6555 dispatches TT_75 through
-         * PoisonCharacter; ReDMCSB TIMELINE.C F0261 lines 1991-1993 then
-         * decrements PoisonEventCount before CHAMPION.C F0322 applies the
-         * Attack damage and source +36 requeue. The restored TIMER owns its
-         * champion priority and little-endian Attack word. The runtime C75
-         * continuation currently retains only an 8-bit attack, so reject a
-         * wider saved word rather than truncate it into a synthetic chain. */
-        poison_attack = (uint16_t)timer->ubyte6 |
-            ((uint16_t)timer->ubyte7 << 8);
-        champion_index = (int)timer->ubyte5;
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && profile->party_state_valid &&
-            profile->champion_count > 0 &&
-            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
-            profile->party_state.ChampionCount == profile->champion_count &&
-            champion_index < profile->party_state.ChampionCount &&
-            poison_attack > 0u && poison_attack <= 0xffu &&
-            profile->party_state.Champions[champion_index].PoisonEventCount >
-                0u) {
-            --profile->party_state.Champions[champion_index].PoisonEventCount;
-            csb_v1_runtime_apply_poison_attack_to_champion(
-                profile, champion_index, (int)poison_attack);
-        }
-        /* C75 remains source-owned even when malformed, preventing a future
-         * generic event path from treating timerUByte9 as its Attack word. */
-        return 1;
-    }
-    if (timer->function == 77u) {
-        int16_t shield_delta;
-
-        /* CSBWin CSBCode.cpp:6556-6558 and ReDMCSB TIMELINE.C F0261 lines
-         * 1985-1989 expire C77 by subtracting B.Defense from SpellShield.
-         * The restored TIMER owns that little-endian signed word and the
-         * restored character tail owns the signed defense total. Require a
-         * complete queue/timer/event identity, a positive source defense, and
-         * a non-underflowing tail value; no source HUD redraw is inferred. */
-        shield_delta = (int16_t)((uint16_t)timer->ubyte6 |
-            ((uint16_t)timer->ubyte7 << 8));
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && shield_delta > 0 &&
-            profile->csbwin_character_tail_spell_shield >= shield_delta) {
-            profile->csbwin_character_tail_spell_shield = (int16_t)(
-                profile->csbwin_character_tail_spell_shield - shield_delta);
-        }
-        /* C77 remains source-owned even when malformed, preventing a future
-         * generic event path from bypassing saved CSBWin identity checks. */
-        return 1;
-    }
-    if (timer->function == 74u) {
-        int16_t shield_delta;
-
-        /* CSBWin CSBCode.cpp:6541-6543 and ReDMCSB TIMELINE.C F0261 lines
-         * 1975-1984 expire C74 by subtracting B.Defense from PartyShield.
-         * The restored TIMER owns that little-endian signed word and the
-         * restored character tail owns the signed defense total. Require a
-         * complete queue/timer/event identity, a positive source defense, and
-         * a non-underflowing tail value; no source HUD redraw is inferred. */
-        shield_delta = (int16_t)((uint16_t)timer->ubyte6 |
-            ((uint16_t)timer->ubyte7 << 8));
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && shield_delta > 0 &&
-            profile->csbwin_character_tail_party_shield >= shield_delta) {
-            profile->csbwin_character_tail_party_shield = (int16_t)(
-                profile->csbwin_character_tail_party_shield - shield_delta);
-        }
-        /* C74 remains source-owned even when malformed, preventing a future
-         * generic event path from bypassing saved CSBWin identity checks. */
-        return 1;
-    }
-    if (timer->function == 73u) {
-        /* CSBWin CSBCode.cpp:6540 and ReDMCSB TIMELINE.C F0261 lines
-         * 1972-1974 expire C73 by decrementing the party's Thieves' Eye
-         * count. The restored character tail owns that count. Require the
-         * complete queue/timer/event identity and a positive count so a stale
-         * or malformed saved timer cannot underflow runtime visibility state. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 &&
-            profile->csbwin_character_tail_see_thru_walls > 0u) {
-            --profile->csbwin_character_tail_see_thru_walls;
-        }
-        /* C73 remains source-owned even when malformed, preventing a future
-         * generic event path from bypassing saved CSBWin identity checks. */
-        return 1;
-    }
-    if (timer->function == 72u) {
-        CSB_V1_Champion *champion;
-        uint16_t shield_delta;
-
-        /* CSBWin CSBCode.cpp:6511-6538 and ReDMCSB TIMELINE.C F0261 lines
-         * 1966-1971 expire C72 from its champion priority and B.Defense
-         * word. The restored TIMER keeps that union as ubyte5 and little-
-         * endian ubyte6..7, while CHARDESC owns ShieldStrength. Do not admit
-         * a stale record, an absent champion, or an underflowing decrement;
-         * the latter cannot be proven as a live saved shield contribution.
-         * Source status-panel redraw remains blocked without its M11 owner. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && profile->party_state_valid &&
-            profile->champion_count > 0 &&
-            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
-            profile->party_state.ChampionCount == profile->champion_count &&
-            timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
-            timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
-            champion = &profile->party_state.Champions[timer->ubyte5];
-            shield_delta = (uint16_t)timer->ubyte6 |
-                ((uint16_t)timer->ubyte7 << 8);
-            if (shield_delta <= champion->ShieldStrength) {
-                champion->ShieldStrength =
-                    (uint16_t)(champion->ShieldStrength - shield_delta);
-            }
-        }
-        /* C72 is source-owned even if malformed, so generic timeline code
-         * cannot gain a future champion-shield mutation without this receipt. */
-        return 1;
-    }
-    if (timer->function == 71u) {
-        /* CSBWin CSBCode.cpp:6510 and ReDMCSB TIMELINE.C F0261 lines
-         * 1953-1965 expire C71 by decrementing the party invisibility count.
-         * This saved body already owns that exact count. Require a complete
-         * queue/timer/event identity and a positive count rather than allowing
-         * an untrusted or stale record to underflow it. The source redraw
-         * branch depends on an inventory-champion UI owner not present in this
-         * restored runtime profile, so no HUD work is inferred here. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 &&
-            profile->csbwin_character_tail_invisible > 0u) {
-            --profile->csbwin_character_tail_invisible;
-        }
-        /* Keep every restored function-71 receipt source-owned so it cannot
-         * acquire a future generic event path without saved identity checks. */
-        return 1;
-    }
-    if (timer->function == 24u) {
-        CSB_V1_DungeonData *saved_dungeon;
-        uint16_t timer_object;
-        uint8_t *object_record;
-        int object_size;
-
-        /* CSBWin CSBCode.cpp:6490-6502 removes timerObj8 from its saved
-         * square, then writes RNfree to its common record. Preserve that
-         * exact two-part ownership only when the complete timer receipt and
-         * original Thing chain both validate. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && profile->dungeon_handle) {
-            timer_object = (uint16_t)timer->ubyte8 |
-                ((uint16_t)timer->ubyte9 << 8);
-            if (timer_object == 0xfffeu || timer_object == 0xffffu) return 1;
-            saved_dungeon = profile->dungeon_handle;
-            object_record = csb_v1_runtime_mutable_thing_record(
-                saved_dungeon, timer_object, NULL, &object_size);
-            if (!object_record || object_size < 2) return 1;
-            if (csb_v1_runtime_unlink_thing_from_square(
-                    saved_dungeon, timer_object, record->mapIndex,
-                    record->mapX, record->mapY)) {
-                csb_v1_runtime_write_u16(object_record, 0xffffu);
-            }
-        }
-        /* TT_24 has no generic timeline equivalent with this object lifetime.
-         * Invalid receipts remain source-owned and cannot fall through. */
-        return 1;
-    }
-    if (timer->function == DM1_EVENT_CPSE) {
-        /* CSBWin CSBCode.cpp:6564-6569 documents TT_22 as a timer restored
-         * with a saved game whose original handler is intentionally a no-op.
-         * Consume it only when its imported TIMER and materialized event are
-         * still the same queue-owned record; C22 must not become a synthetic
-         * generic runtime action. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5) {
-            return 1;
-        }
-        return 0;
-    }
-    if (timer->function == 1u) {
-        uint8_t *square;
-        int square_type;
-        int door_state;
-        int next_door_state;
-        int thing;
-        int guard = 0;
-        int material_group_occupies = 0;
-        struct DM1_Event_V1 next;
-        int event_index;
-
-        /* CSBWin CSBCode.cpp:6429 dispatches TT_1 to Timer.cpp:1224-1341.
-         * Retain ProcessTT_1's collision-free state step and its exact
-         * +1-tick successor under the same saved TIMER/queue owner. Party
-         * damage, material-group damage, and QueueSound need source state
-         * not present in this profile, so those shapes remain fail-closed. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && timer->ubyte9 <= 1u) {
-            square = csb_v1_runtime_square_byte_ptr(
-                profile, record->mapIndex, record->mapX, record->mapY,
-                &square_type);
-            if (!square || square_type != 4) return 1;
-            door_state = *square & 0x07u;
-            if (door_state == 5) return 1;
-            if ((timer->ubyte9 == 0u && door_state == 0) ||
-                (timer->ubyte9 == 1u && door_state == 4)) {
-                return 1;
-            }
-
-            /* Timer.cpp probes the first group after its party route. A
-             * material group takes the damage/reaction path, which must not
-             * be replaced by a synthetic door animation. */
-            if (!profile->dungeon_handle) return 1;
-            if (timer->ubyte9 == 1u && door_state != 0 &&
-                profile->current_level == record->mapIndex &&
-                profile->party_x == record->mapX &&
-                profile->party_y == record->mapY) {
-                return 1;
-            }
-            thing = csb_v1_dungeon_get_first_thing(
-                profile->dungeon_handle, record->mapIndex, record->mapX,
-                record->mapY);
-            while (thing >= 0 && thing != 0xfffe && thing != 0xffff &&
-                   guard++ < 128) {
-                const uint8_t *thing_record;
-                int type;
-                int size;
-
-                thing_record = csb_v1_dungeon_get_thing_record(
-                    profile->dungeon_handle, (uint16_t)thing, &type, NULL,
-                    &size);
-                if (!thing_record || size < 2) return 1;
-                if (type == 4) {
-                    const struct CreatureBehaviorProfile_Compat *creature;
-
-                    if (size <= 4) return 1;
-                    creature = CREATURE_GetProfile_Compat((int)thing_record[4]);
-                    if (!creature) return 1;
-                    material_group_occupies =
-                        (creature->attributes & CREATURE_ATTR_MASK_NON_MATERIAL)
-                            == 0;
-                    break;
-                }
-                thing = csb_v1_runtime_sensor_next_thing(
-                    profile->dungeon_handle, (uint16_t)thing);
-            }
-            if (guard >= 128 || material_group_occupies) return 1;
-
-            next_door_state =
-                door_state + (timer->ubyte9 == 0u ? -1 : 1);
-            if ((timer->ubyte9 == 0u && next_door_state == 0) ||
-                (timer->ubyte9 == 1u && next_door_state == 4)) {
-                *square = (uint8_t)((*square & (uint8_t)~0x07u) |
-                                    (uint8_t)next_door_state);
-                return 1;
-            }
-            memset(&next, 0, sizeof(next));
-            next.map_time = DM1_MAP_TIME_MAKE(
-                timer->level, profile->game_time + 1u);
-            next.type = timer->function;
-            next.priority = timer->ubyte5;
-            next.b_mapX = timer->ubyte6;
-            next.b_mapY = timer->ubyte7;
-            next.c_cell = timer->ubyte8;
-            next.c_effect = timer->ubyte9;
-            event_index = csb_v1_runtime_add_timeline_event(profile, &next);
-            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
-                *square = (uint8_t)((*square & (uint8_t)~0x07u) |
-                                    (uint8_t)next_door_state);
-                timer->time = profile->game_time + 1u;
-                profile->csbwin_timeline_event_queue_slot[event_index] =
-                    queue_slot;
-            }
-        }
-        /* TT_1 aliases shared door animation. Invalid and collision-owned
-         * saved receipts must never reach that generic mutation path. */
-        return 1;
-    }
-    if (timer->function == 5u) {
-        uint8_t *text_record;
-        int thing;
-        int thing_type;
-        int thing_size;
-        uint16_t text_word;
-
-        /* CSBWin Timer.cpp::ProcessTT_OPENROOM:1641-1711 changes DB2::show
-         * with timerTypeModifier[0..2]. If a newly visible text is under the
-         * party, it also enters the unavailable QuePrintLines HUD path. Keep
-         * only a single authenticated DB2 target outside the party square;
-         * DSA and mixed lists retain no complete source mutation owner. */
-        if (!timer->valid || timer->truncated ||
-            timer->source_index != timer_index ||
-            record->eventType != timer->function ||
-            record->mapIndex != timer->level ||
-            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
-            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
-            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
-            !profile->dungeon_handle ||
-            (profile->party_x == timer->ubyte6 &&
-             profile->party_y == timer->ubyte7)) {
-            return 1;
-        }
-        thing = csb_v1_dungeon_get_first_thing(
-            profile->dungeon_handle, timer->level, timer->ubyte6,
-            timer->ubyte7);
-        if (thing < 0 || thing == 0xfffe || thing == 0xffff) return 1;
-        text_record = csb_v1_runtime_mutable_thing_record(
-            profile->dungeon_handle, (uint16_t)thing, &thing_type, &thing_size);
-        if (!text_record) return 1;
-        if (thing_type == CSB_THING_TYPE_TEXTSTRING) {
-            if (thing_size < 4 ||
-                csb_v1_runtime_read_u16(text_record) != 0xfffeu) {
-                return 1;
-            }
-            text_word = csb_v1_runtime_read_u16(text_record + 2);
-            if (timer->ubyte9 == 0u) text_word |= 0x0001u;
-            else if (timer->ubyte9 == 1u) text_word &= (uint16_t)~0x0001u;
-            else text_word ^= 0x0001u;
-            csb_v1_runtime_write_u16(text_record + 2, text_word);
-            return 1;
-        }
-    }
-    if (timer->function == 6u) {
-        uint8_t *text_record;
-        int thing;
-        int thing_type;
-        int thing_size;
-        uint16_t text_word;
-
-        /* CSBWin Timer.cpp::ProcessTT_STONEROOM:2118-2175 updates only the
-         * matching-position DB2::show bit before its actuator/endgame arms.
-         * Retain a sole DB2 target with the original position encoded in its
-         * Thing handle. Any DSA/mixed list needs separate ownership and must
-         * not acquire generic timeline behavior as a substitute. */
-        if (!timer->valid || timer->truncated ||
-            timer->source_index != timer_index ||
-            record->eventType != timer->function ||
-            record->mapIndex != timer->level ||
-            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
-            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
-            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
-            !profile->dungeon_handle) {
-            return 1;
-        }
-        thing = csb_v1_dungeon_get_first_thing(
-            profile->dungeon_handle, timer->level, timer->ubyte6,
-            timer->ubyte7);
-        if (thing < 0 || thing == 0xfffe || thing == 0xffff) return 1;
-        text_record = csb_v1_runtime_mutable_thing_record(
-            profile->dungeon_handle, (uint16_t)thing, &thing_type, &thing_size);
-        if (!text_record) return 1;
-        if (thing_type == CSB_THING_TYPE_TEXTSTRING) {
-            if (thing_size < 4 ||
-                ((uint16_t)thing >> 14) != timer->ubyte8 ||
-                csb_v1_runtime_read_u16(text_record) != 0xfffeu) {
-                return 1;
-            }
-            text_word = csb_v1_runtime_read_u16(text_record + 2);
-            if (timer->ubyte9 == 0u) text_word |= 0x0001u;
-            else if (timer->ubyte9 == 1u) text_word &= (uint16_t)~0x0001u;
-            else text_word ^= 0x0001u;
-            csb_v1_runtime_write_u16(text_record + 2, text_word);
-            return 1;
-        }
-    }
-    if (timer->function == 8u || timer->function == 9u) {
-        uint8_t *square;
-        int square_type;
-        int expected_square_type;
-        int thing;
-        int action;
-
-        /* CSBWin Timer.cpp::ProcessTT_TELEPORTER:2343-2367 and
-         * ProcessTT_PITROOM:2473-2505 run ActivateDSA, then update bit 3 and
-         * call WiggleEverything when a closed target opens. An empty Thing
-         * chain has neither a type-47 owner nor a party/monster/drawable Thing
-         * for WiggleEverything to move. Retain only that complete no-op-wiggle
-         * shape; a listed Thing falls through to the DSA receipt and remains
-         * mutation-blocked below. */
-        if (!timer->valid || timer->truncated ||
-            timer->source_index != timer_index ||
-            record->eventType != timer->function ||
-            record->mapIndex != timer->level ||
-            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
-            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
-            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
-            !profile->dungeon_handle) {
-            return 1;
-        }
-        expected_square_type = timer->function == 8u ? 5 : 2;
-        square = csb_v1_runtime_square_byte_ptr(
-            profile, timer->level, timer->ubyte6, timer->ubyte7, &square_type);
-        if (!square || square_type != expected_square_type) return 1;
-        thing = csb_v1_dungeon_get_first_thing(
-            profile->dungeon_handle, timer->level, timer->ubyte6,
-            timer->ubyte7);
-        if (thing < 0 || thing == 0xfffe || thing == 0xffff) {
-            /* The saved runtime profile has no independent party-level
-             * field. Block the ambiguous same-square shape rather than infer
-             * that CSBWin's party wiggle was a no-op. */
-            if (profile->party_x == timer->ubyte6 &&
-                profile->party_y == timer->ubyte7) {
-                return 1;
-            }
-            action = (int)timer->ubyte9;
-            if (action == 2) action = (*square & 0x08u) ? 1 : 0;
-            if (action == 0) *square |= 0x08u;
-            else *square &= (uint8_t)~0x08u;
-            return 1;
-        }
-    }
-    if (timer->function == 10u) {
-        uint8_t *square;
-        int square_type;
-        int door_state;
-        int door_action;
-        int thing;
-        int guard;
-        int has_dsa = 0;
-        struct DM1_Event_V1 next;
-        int event_index;
-
-        /* CSBWin Timer.cpp::ProcessTT_DOOR:1509-1540 calls ActivateDSA,
-         * then turns its same saved TIMER into TT_1. This bridge owns only
-         * the no-type-47 case, where no DSA can alter the action before the
-         * normal door-state guards. A DSA-bearing square remains with the
-         * existing authenticated pre-mutation path. */
-        if (!timer->valid || timer->truncated ||
-            timer->source_index != timer_index ||
-            record->eventType != timer->function ||
-            record->mapIndex != timer->level ||
-            record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
-            record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
-            record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
-            !profile->dungeon_handle) {
-            return 1;
-        }
-        thing = csb_v1_dungeon_get_first_thing(
-            profile->dungeon_handle, timer->level, timer->ubyte6, timer->ubyte7);
-        for (guard = 0; guard < 128 && thing >= 0 &&
-             thing != 0xfffe && thing != 0xffff;
-             ++guard) {
-            const uint8_t *thing_record;
-            int thing_type;
-            int thing_size;
-
-            thing_record = csb_v1_dungeon_get_thing_record(
-                profile->dungeon_handle, (uint16_t)thing, &thing_type, NULL,
-                &thing_size);
-            if (!thing_record || thing_size < 2) return 1;
-            if (thing_type == CSB_V1_THING_TYPE_ACTUATOR && thing_size >= 4 &&
-                (csb_v1_runtime_read_u16(thing_record + 2) & 0x007fu) ==
-                    CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
-                has_dsa = 1;
-                break;
-            }
-            thing = csb_v1_runtime_sensor_next_thing(
-                profile->dungeon_handle, (uint16_t)thing);
-        }
-        if (guard >= 128) return 1;
-        if (!has_dsa) {
-            /* ProcessTT_DOOR activates type-47 records before it reads the
-             * door square. Preserve that source order: a DSA may be owned by
-             * any square class, while the DSA-free TT_1 handoff requires a
-             * real door. */
-            square = csb_v1_runtime_square_byte_ptr(
-                profile, timer->level, timer->ubyte6, timer->ubyte7,
-                &square_type);
-            if (!square || square_type != 4) return 1;
-
-            door_state = *square & 0x07u;
-            if (door_state == 5) return 1;
-            door_action = (int)timer->ubyte9;
-            if (door_action == 2) door_action = door_state == 0 ? 1 : 0;
-            if ((door_action == 0 && door_state == 0) ||
-                (door_action == 1 && door_state == 4)) {
-                return 1;
-            }
-            memset(&next, 0, sizeof(next));
-            /* ProcessTT_DOOR calls SetTimer without changing Time. Firestaff
-             * retains that source time and queue owner; the next M11 tick sees
-             * the already-expired TT_1 receipt rather than inventing a new C10. */
-            next.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time);
-            next.type = 1u;
-            next.priority = timer->ubyte5;
-            next.b_mapX = timer->ubyte6;
-            next.b_mapY = timer->ubyte7;
-            next.c_cell = timer->ubyte8;
-            next.c_effect = (uint8_t)door_action;
-            event_index = csb_v1_runtime_add_timeline_event(profile, &next);
-            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
-                timer->function = 1u;
-                timer->ubyte9 = (uint8_t)door_action;
-                profile->csbwin_timeline_event_queue_slot[event_index] =
-                    queue_slot;
-            }
-            return 1;
-        }
-    }
-    if (timer->function == 12u) {
-        /* ReDMCSB TIMELINE.C F0254 lines 1614-1637 and CSBWin
-         * CSBCode.cpp:6468/Timer.cpp:2644-2664 consume TT_12 through its
-         * champion priority, first clearing HideDamageReceivedEventIndex.
-         * The source's two redraw branches depend on the live inventory
-         * champion ordinal, which this restored CSBWin profile does not own;
-         * do not infer it or fabricate a HUD redraw. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && profile->party_state_valid &&
-            profile->champion_count > 0 &&
-            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
-            profile->party_state.ChampionCount == profile->champion_count &&
-            timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
-            timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
-            profile->party_state.Champions[timer->ubyte5]
-                .HideDamageReceivedEventIndex = -1;
-        }
-        /* TT_12 aliases the shared hide-damage event. Keep every restored
-         * function-12 receipt out of any generic path, including malformed
-         * identities, until an exact inventory redraw surface is available. */
-        return 1;
-    }
-    if (timer->function == 11u) {
-        CSB_V1_Champion *champion;
-
-        /* ReDMCSB TIMELINE.C F0253 lines 1574-1612 and CSBWin
-         * CSBCode.cpp:6457-6466/Timer.cpp:2591-2642 own TT_11. Retain only
-         * the saved no-rearm, non-SHOOT receipt: F0253 clears the action
-         * lock, clears the stored action defense, and resets ActionIndex.
-         * Ammunition selection and CSBWin's TAG0115ee branch have no complete
-         * save-owned inventory handoff here, so they remain fail-closed. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && timer->ubyte6 == 0u &&
-            profile->party_state_valid &&
-            profile->champion_count > 0 &&
-            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
-            profile->party_state.ChampionCount == profile->champion_count &&
-            timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
-            timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
-            champion = &profile->party_state.Champions[timer->ubyte5];
-            if (champion->ActionIndex != 32u) { /* CSBWin atk_SHOOT. */
-                champion->EnableActionEventIndex = -1;
-                champion->Attributes &= (uint16_t)~0x0008u;
-                champion->CsbWinWord64 = 0;
-                champion->ActionIndex = CSB_V1_ACTION_NONE;
-            }
-        }
-        /* Function 11 aliases the shared action-enable event. A malformed
-         * restored TT_11 must not reach that generic path on a later pass. */
-        return 1;
-    }
-    if (timer->function == 2u) {
-        uint8_t *square;
-        int square_type;
-
-        /* CSBWin CSBCode.cpp:6431 dispatches TT_BASH_DOOR directly to
-         * Timer.cpp:1445-1451. Its function value aliases Firestaff's shared
-         * door-destruction timeline event, so consume every saved function-2
-         * receipt here even when it is malformed; otherwise the generic
-         * timeline path could mutate a door without saved CSBWin identity. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5) {
-            square = csb_v1_runtime_square_byte_ptr(
-                profile, record->mapIndex, record->mapX, record->mapY,
-                &square_type);
-            /* ProcessTT_BASH_DOOR sets the source door's low three cell bits
-             * to five. A restored receipt may alter only a loaded byte-map
-             * door square; all other target shapes fail closed. */
-            if (square && square_type == 4) {
-                F0243_TIMELINE_ProcessEvent2_DoorDestruction(square);
-            }
-        }
-        return 1;
-    }
-    if (timer->function == 7u) {
-        uint8_t *square;
-        int square_type;
-
-        /* CSBWin Timer.cpp:1343-1442 runs the saved DSA receipt before
-         * applying timerTypeModifier[0]'s unconditional falsewall SET.
-         * Keep only that complete bit update here; CLEAR/TOGGLE need the
-         * source party/nonmaterial-group deferral and successor ownership. */
-        if (timer->valid && !timer->truncated &&
-            timer->source_index == timer_index &&
-            record->eventType == timer->function &&
-            record->mapIndex == timer->level &&
-            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
-            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
-            record->aux0 == timer->ubyte5 && timer->ubyte9 == 0u &&
-            profile->dungeon_handle) {
-            square = csb_v1_runtime_square_byte_ptr(
-                profile, record->mapIndex, record->mapX, record->mapY,
-                &square_type);
-            if (!square || square_type < 0) return 0;
-            *square |= 0x04u;
-        }
-    }
-    if (!profile->dungeon_handle) return 0;
-    if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
-        ((timer->function < 5u || timer->function > 10u) &&
-         timer->function != 101u && timer->function != 102u) ||
-        record->eventType != timer->function ||
-        record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
-        record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
-        record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5) {
-        return 0;
-    }
-    dungeon = profile->dungeon_handle;
-    thing = csb_v1_dungeon_get_first_thing(
-        dungeon, record->mapIndex, record->mapX, record->mapY);
-    while (thing >= 0 && thing != 0xfffe && thing != 0xffff && guard++ < 1024) {
-        const uint8_t *thing_record;
-        int type;
-        int size;
-        CSB_V1_DSAFilterLocation location;
-
-        thing_record = csb_v1_dungeon_get_thing_record(
-            dungeon, (uint16_t)thing, &type, NULL, &size);
-        if (!thing_record || size < 2) {
-            return (timer->function == 5u || timer->function == 6u ||
-                    timer->function == 8u || timer->function == 9u) ? 1 : 0;
-        }
-        if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4 &&
-            (((uint16_t)thing_record[2] | ((uint16_t)thing_record[3] << 8)) &
-             0x007fu) == CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
-            memset(&location, 0, sizeof(location));
-            location.level = record->mapIndex;
-            location.x = record->mapX;
-            location.y = record->mapY;
-            location.position = (thing >> 14) & 3;
-            location.actuator_thing = (uint16_t)thing;
-            if (timer->function == 101u) {
-                (void)csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
-                    profile, dungeon, &location, timer);
-            } else {
-                (void)csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
-                    profile, dungeon, &location, queue_slot);
-            }
-        }
-        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-    }
-    if (timer->function == 7u &&
-        (timer->ubyte9 == 1u || timer->ubyte9 == 2u)) {
-        return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
-            profile, record, timer, timer_index, queue_slot);
-    }
-    if (timer->function == 5u || timer->function == 6u ||
-        timer->function == 8u || timer->function == 9u) {
-        /* A listed target can have DSA, HUD, or WiggleEverything ownership
-         * absent from this restored profile. Any pure-stack DSA receipt above
-         * may run, but it cannot fall through to M10's generic mutation. */
-        return 1;
-    }
-    return 0;
-}
-
-static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
-    CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record,
-    CSB_V1_CSBWin512TimerSummary *timer,
-    uint16_t timer_index,
-    uint16_t queue_slot)
-{
-    CSB_V1_DungeonData *dungeon;
-    uint8_t *square;
-    int square_type;
-    int thing;
-    int guard;
-    int defer = 0;
-    struct DM1_Event_V1 next;
-    int event_index;
-
-    /* CSBWin Timer.cpp ProcessTT_FALSEWALL:1343-1442 clears bit 0x04 only
-     * after DSA/portrait processing. With neither owner on the saved square,
-     * timerTypeModifier[1/2] remains the canonical CLEAR/TOGGLE mapping
-     * established by CSBCode.cpp ProcessTimers:6403-6405. */
-    if (!profile || !record || !timer || !profile->dungeon_handle ||
-        timer->function != 7u ||
-        (timer->ubyte9 != 1u && timer->ubyte9 != 2u) ||
-        !timer->valid || timer->truncated ||
-        timer->source_index != timer_index ||
-        record->eventType != timer->function ||
-        record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
-        record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
-        record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5) {
-        return 0;
-    }
-    dungeon = profile->dungeon_handle;
-    square = csb_v1_runtime_square_byte_ptr(
-        profile, record->mapIndex, record->mapX, record->mapY, &square_type);
-    if (!square || square_type < 0) return 0;
-
-    /* The source visits DSA type-47 and matching portrait type-127 objects
-     * before reading timerTypeModifier. Their effects are not represented by
-     * this cell-only bridge, so an exact clear is unavailable in that case. */
-    thing = csb_v1_dungeon_get_first_thing(
-        dungeon, record->mapIndex, record->mapX, record->mapY);
-    for (guard = 0; guard < 128 && thing != 0xfffe && thing != 0xffff;
-         ++guard) {
-        const uint8_t *thing_record;
-        int type;
-        int size;
-
-        thing_record = csb_v1_dungeon_get_thing_record(
-            dungeon, (uint16_t)thing, &type, NULL, &size);
-        if (!thing_record || size < 2) return 0;
-        if (type == CSB_V1_THING_TYPE_ACTUATOR && size >= 4) {
-            uint16_t actuator_data = (uint16_t)thing_record[2] |
-                ((uint16_t)thing_record[3] << 8);
-            uint16_t actuator_type = actuator_data & 0x007fu;
-
-            if (actuator_type == CSB_V1_DSA_FILTER_ACTUATOR_TYPE ||
-                (actuator_type == 127u &&
-                 ((uint16_t)thing >> 14) == timer->ubyte8)) {
-                return 0;
-            }
-        }
-        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-    }
-    if (guard >= 128) return 0;
-
-    /* ProcessTT_FALSEWALL resolves TOGGLE from the current bit before the
-     * CLEAR deferral branch. A closed falsewall therefore takes the exact
-     * unconditional SET arm; an open one shares the original CLEAR path. */
-    if (timer->ubyte9 == 2u && (*square & 0x04u) == 0u) {
-        *square |= 0x04u;
-        return 1;
-    }
-
-    if (profile->current_level == timer->level &&
-        profile->party_x == timer->ubyte6 && profile->party_y == timer->ubyte7) {
-        defer = 1;
-    } else {
-        thing = csb_v1_dungeon_get_first_thing(
-            dungeon, record->mapIndex, record->mapX, record->mapY);
-        for (guard = 0; guard < 128 && thing != 0xfffe && thing != 0xffff;
-             ++guard) {
-            const uint8_t *thing_record;
-            int type;
-            int size;
-
-            thing_record = csb_v1_dungeon_get_thing_record(
-                dungeon, (uint16_t)thing, &type, NULL, &size);
-            if (!thing_record || size < 2) return 0;
-            if (type == CSB_V1_THING_TYPE_GROUP) {
-                const struct CreatureBehaviorProfile_Compat *creature;
-
-                if (size < 16) return 0;
-                creature = CREATURE_GetProfile_Compat((int)thing_record[4]);
-                if (!creature) return 0;
-                defer = (creature->attributes &
-                         CREATURE_ATTR_MASK_NON_MATERIAL) != 0;
-                break;
-            }
-            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-        }
-        if (guard >= 128) return 0;
-    }
-    if (!defer) {
-        *square &= (uint8_t)~0x04u;
-        return 1;
-    }
-    if (timer->time >= 0x00ffffffu) return 0;
-    memset(&next, 0, sizeof(next));
-    next.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time + 1u);
-    next.type = timer->function;
-    next.priority = timer->ubyte5;
-    next.b_mapX = timer->ubyte6;
-    next.b_mapY = timer->ubyte7;
-    next.c_cell = timer->ubyte8;
-    next.c_effect = timer->ubyte9;
-    event_index = csb_v1_runtime_add_timeline_event(profile, &next);
-    if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
-    timer->time += 1u;
-    profile->csbwin_timeline_event_queue_slot[event_index] = queue_slot;
-    return 1;
-}
-
-static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
-    CSB_V1_RuntimeProfile *profile,
-    uint16_t event_index,
-    uint16_t queue_slot)
-{
-    const CSB_V1_DungeonData *dungeon;
-    const struct DM1_Event_V1 *event;
-    CSB_V1_CSBWin512TimerSummary *timer;
-    const uint8_t *group_record;
-    uint16_t timer_index;
-    uint16_t group_thing;
-    int thing_type;
-    int thing_size;
-    struct DM1_Event_V1 next;
-    int successor_index;
-
-    /* CSBWin CSBCode.cpp:6471-6472 dispatches the TIMER directly to
-     * Timer.cpp ProcessTimer60and61:2519-2584. This must run before M10
-     * classifies C60/C61 as a generic group move, because timerObj8 is a
-     * CSBWin Thing handle, not M10's cell/effect payload. */
-    if (!profile || event_index >= DM1_EVENT_MAX_COUNT ||
-        queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE ||
-        queue_slot >= profile->csbwin_timer_queue_summary_count ||
-        !profile->csbwin_body_runtime_summary_valid || !profile->dungeon_handle) {
-        return 0;
-    }
-    timer_index = profile->csbwin_timer_queue[queue_slot];
-    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
-    timer = &profile->csbwin_timers[timer_index];
-    event = &profile->timeline_queue.events[event_index];
-    if ((timer->function != 60u && timer->function != 61u) ||
-        !timer->valid || timer->truncated ||
-        timer->source_index != timer_index ||
-        event->type != timer->function ||
-        DM1_MAP_TIME_MAP(event->map_time) != timer->level ||
-        DM1_MAP_TIME_TIME(event->map_time) != timer->time ||
-        event->priority != timer->ubyte5 || event->b_mapX != timer->ubyte6 ||
-        event->b_mapY != timer->ubyte7 || event->c_cell != timer->ubyte8 ||
-        event->c_effect != timer->ubyte9) {
-        return 0;
-    }
-
-    /* ProcessTimer60and61 only reaches this deterministic requeue when the
-     * target is the party square and the exact DB4 object is not Lord Chaos.
-     * Moving the object, the sound branch, occupied-square detection, and
-     * Lord Chaos random detour require source state not retained here. */
-    if (profile->current_level != timer->level ||
-        profile->party_x != timer->ubyte6 || profile->party_y != timer->ubyte7) {
-        return 0;
-    }
-    dungeon = profile->dungeon_handle;
-    group_thing = (uint16_t)timer->ubyte8 | ((uint16_t)timer->ubyte9 << 8);
-    group_record = csb_v1_dungeon_get_thing_record(
-        dungeon, group_thing, &thing_type, NULL, &thing_size);
-    if (!group_record || thing_type != CSB_V1_THING_TYPE_GROUP ||
-        thing_size < 16 || group_record[4] == 0x17u ||
-        timer->time > 0x00fffffau) {
-        return 0;
-    }
-
-    memset(&next, 0, sizeof(next));
-    next.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time + 5u);
-    next.type = timer->function;
-    next.priority = timer->ubyte5;
-    next.b_mapX = timer->ubyte6;
-    next.b_mapY = timer->ubyte7;
-    next.c_cell = timer->ubyte8;
-    next.c_effect = timer->ubyte9;
-    successor_index = csb_v1_runtime_add_timeline_event(profile, &next);
-    if (successor_index < 0 || successor_index >= DM1_EVENT_MAX_COUNT) return 0;
-
-    /* Commit only after the source successor owns a live M10 queue slot. */
-    timer->time += 5u;
-    profile->csbwin_timeline_event_queue_slot[successor_index] = queue_slot;
-    return 1;
-}
-
-int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    CSB_V1_RuntimeDSAFilterBinding *out_binding,
-    uint32_t *out_state_index,
-    int *out_action_ordinal,
-    uint32_t *out_master_location)
-{
-    CSB_V1_DSAFilterLocation location;
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
-
-    if (!profile || !dungeon || !out_binding || !out_state_index ||
-        !out_action_ordinal || !out_master_location ||
-        !profile->csbwin_extended_features_valid) return 0;
-    memset(&location, 0, sizeof(location));
-    memset(&resolution, 0, sizeof(resolution));
-    if (!csb_v1_dungeon_resolve_dsa_filter_location(
-            dungeon, 0, 0, &location)) return 0;
-    /* Monster.cpp:1154-1166 builds timer function/position 0/0.  DSA.cpp
-     * ProcessDSATimer6 derives inputMsgType = 3 * position + function. */
-    if (!csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-            profile, dungeon, &location, 0, 0, &resolution)) return 0;
-    *out_binding = resolution.master;
-    *out_state_index = resolution.state_index;
-    *out_action_ordinal = resolution.action_ordinal;
-    *out_master_location = resolution.master_location;
-    return 1;
-}
-
-int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner)
-{
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-
-    if (!profile || !binding || !out_runner || action_ordinal < 0 ||
-        !profile->csbwin_extended_features_valid ||
-        !csb_v1_chaos_find_imported_action(
-            &profile->csbwin_extended_dsa_state, binding->dsa_id,
-            state_index, action_ordinal)) {
-        return 0;
-    }
-
-    /* CSBWin DSA.cpp:5366-5407 maps the slave selector through the loaded
-     * level index before Execute. The explicit action lookup above keeps this
-     * receipt tied to that authenticated owner rather than a caller bytecode
-     * buffer. */
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.programs = &profile->csbwin_extended_dsa_state;
-    candidate.dsa_id = binding->dsa_id;
-    candidate.state_index = state_index;
-    candidate.action_ordinal = action_ordinal;
-    candidate.master_location = master_location;
-    if (profile->csbwin_global_variables_valid) {
-        candidate.global_variable_count =
-            profile->csbwin_global_variable_count;
-        memcpy(candidate.global_variables, profile->csbwin_global_variables,
-               (size_t)candidate.global_variable_count *
-                   sizeof(candidate.global_variables[0]));
-    }
-    *out_runner = candidate;
-    return 1;
-}
-
-int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *runner,
-    const CSB_V1_DSAImportedAction *action,
-    int *parameters,
-    int parameter_count,
-    int flgs_inout[2])
-{
-    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
-    CSB_V1_RuntimeProfile profile_candidate;
-    const CSB_V1_DSAImportedAction *expected;
-    int staged_parameters[26];
-    int global_count;
-    int globals_changed;
-    int expool_changed;
-    int dsa_state_changed;
-    int i;
-
-    if (!profile || !runner || !action ||
-        (parameter_count > 0 && !parameters) || parameter_count < 0 ||
-        parameter_count > 26 ||
-        runner->programs != &profile->csbwin_extended_dsa_state ||
-        !profile->csbwin_extended_features_valid) {
-        return 0;
-    }
-    expected = csb_v1_chaos_find_imported_action(
-        &profile->csbwin_extended_dsa_state, runner->dsa_id,
-        runner->state_index, runner->action_ordinal);
-    if (expected != action) return 0;
-
-    global_count = profile->csbwin_global_variables_valid ?
-        (int)profile->csbwin_global_variable_count : 0;
-    if (global_count < 0 ||
-        global_count > CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY) {
-        return 0;
-    }
-
-    /* CSBWin DSA.cpp GLOBALFETCH/GLOBALSTORE address SaveGame.cpp's global
-     * bank. Rehydrate immediately before Execute so caller-provided runner
-     * bytes cannot become runtime state. */
-    candidate = *runner;
-    profile_candidate = *profile;
-    memset(candidate.global_variables, 0, sizeof(candidate.global_variables));
-    candidate.global_variable_count = global_count;
-    memcpy(candidate.global_variables, profile->csbwin_global_variables,
-           (size_t)global_count * sizeof(candidate.global_variables[0]));
-    /* CSBWin DSA.cpp:3107-3135 reaches the loaded SKIN_CACHE through the
-     * DSA stack.  Bind it to a profile candidate so an unsupported record,
-     * bad location, or later bytecode failure cannot publish an EXPOOL edit. */
-    candidate.get_skin = csb_v1_runtime_dsa_get_skin;
-    candidate.set_skin = csb_v1_runtime_dsa_set_skin;
-    candidate.skin_user = &profile_candidate;
-    for (i = 0; i < parameter_count; ++i) {
-        staged_parameters[i] = parameters[i];
-    }
-    if (!csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
-            action, staged_parameters, parameter_count, flgs_inout,
-            &candidate)) {
-        return 0;
-    }
-
-    /* CSBWin SaveGame.cpp writes changed GLOBALSTORE state through EXPOOL.
-     * A source-pure DSA action such as AMPERSAND2 NUMPARAM must not rewrite a
-     * save tail merely because it crossed the runtime boundary. */
-    globals_changed = memcmp(candidate.global_variables,
-                             profile->csbwin_global_variables,
-                             (size_t)global_count *
-                                 sizeof(candidate.global_variables[0])) != 0;
-    if (globals_changed) {
-        memcpy(profile_candidate.csbwin_global_variables,
-               candidate.global_variables,
-               (size_t)global_count * sizeof(candidate.global_variables[0]));
-        if (csb_v1_runtime_write_csbwin_global_variables(&profile_candidate) != 0) {
-            return 0;
-        }
-    }
-    dsa_state_changed = 0;
-    if (profile_candidate.csbwin_appended_tail_valid &&
-        profile_candidate.csbwin_appended_tail_preserved_size >=
-            sizeof(" Extended Features ") &&
-        memcmp(profile_candidate.csbwin_appended_tail,
-               " Extended Features ", sizeof(" Extended Features ")) == 0 &&
-        profile_candidate.csbwin_extended_dsa_state.imported_headers[
-            candidate.dsa_id].valid &&
-        profile_candidate.csbwin_extended_dsa_state.imported_headers[
-            candidate.dsa_id].local_state == 1u) {
-        if (!csb_v1_runtime_persist_csbwin_localstate1_dsa(
-                &profile_candidate, runner, &candidate)) {
-            return 0;
-        }
-        dsa_state_changed = 1;
-    }
-    expool_changed = profile_candidate.csbwin_appended_tail_fnv1a !=
-                         profile->csbwin_appended_tail_fnv1a ||
-        memcmp(profile_candidate.csbwin_appended_tail,
-               profile->csbwin_appended_tail,
-               sizeof(profile->csbwin_appended_tail)) != 0;
-    if (globals_changed) {
-        memcpy(profile->csbwin_global_variables,
-               profile_candidate.csbwin_global_variables,
-               sizeof(profile->csbwin_global_variables));
-    }
-    if (expool_changed) {
-        memcpy(profile->csbwin_appended_tail,
-               profile_candidate.csbwin_appended_tail,
-               sizeof(profile->csbwin_appended_tail));
-        profile->csbwin_appended_tail_fnv1a =
-            profile_candidate.csbwin_appended_tail_fnv1a;
-        profile->csbwin_skin_cache_tail_receipt_valid =
-            profile_candidate.csbwin_skin_cache_tail_receipt_valid;
-        profile->csbwin_skin_cache_tail_valid =
-            profile_candidate.csbwin_skin_cache_tail_valid;
-        profile->csbwin_skin_cache_tail_size =
-            profile_candidate.csbwin_skin_cache_tail_size;
-        profile->csbwin_skin_cache_tail_fnv1a =
-            profile_candidate.csbwin_skin_cache_tail_fnv1a;
-        profile->skin_cache = profile_candidate.skin_cache;
-    }
-    if (dsa_state_changed) {
-        profile->csbwin_extended_dsa_state.imported_headers[candidate.dsa_id]
-            .persistent_state =
-            profile_candidate.csbwin_extended_dsa_state.imported_headers[
-                candidate.dsa_id].persistent_state;
-    }
-    for (i = 0; i < parameter_count; ++i) {
-        parameters[i] = staged_parameters[i];
-    }
-    *runner = candidate;
-    return 1;
-}
-
-int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter)
-{
-    CSB_V1_RuntimeDSAFilterStackAdapter candidate;
-
-    if (!profile || !binding || !out_adapter) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    if (!csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-            profile, binding, state_index, action_ordinal, master_location,
-            &candidate.runner)) {
-        return 0;
-    }
-    /* CSBWin Monster.cpp:1134-1180 and 3222-3370 invoke ProcessDSAFilter
-     * through a function-shaped boundary. Keep its user data tied to the
-     * save/profile that authenticated the selected DSAAction. */
-    candidate.profile = profile;
-    *out_adapter = candidate;
-    return 1;
-}
-
-int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
-    const CSB_V1_DSAImportedAction *action,
-    int *parameters,
-    int parameter_count,
-    int flgs_inout[2],
-    void *user)
-{
-    CSB_V1_RuntimeDSAFilterStackAdapter *adapter =
-        (CSB_V1_RuntimeDSAFilterStackAdapter *)user;
-
-    if (!adapter || !adapter->profile) {
-        return 0;
-    }
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        adapter->profile, &adapter->runner, action, parameters,
-        parameter_count, flgs_inout);
-}
-
-static void csb_v1_runtime_init_csbwin_filter_candidate(
-    CSB_V1_DSAFilterRuntime *filter)
-{
-    int level;
-
-    memset(filter, 0, sizeof(*filter));
-    filter->attack_filter_dsa_id = -1;
-    filter->attack_filter_action = -1;
-    for (level = 0; level < (int)(sizeof(filter->movement_filter_dsa_id) /
-                                  sizeof(filter->movement_filter_dsa_id[0]));
-         ++level) {
-        filter->movement_filter_dsa_id[level] = -1;
-        filter->movement_filter_action[level] = -1;
-    }
-}
-
-int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    int loaded_level,
-    CSB_V1_DSAFilterRuntime *out_filter,
-    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter)
-{
-    CSB_V1_DSAFilterRuntime filter_candidate;
-    CSB_V1_RuntimeDSAFilterStackAdapter adapter_candidate;
-
-    if (!profile || !binding || !out_filter || !out_adapter ||
-        loaded_level < 0) {
-        return 0;
-    }
-
-    /* CSBWin Monster.cpp:1134-1180 resolves the selected type-47 filter,
-     * packs ATTACK_PARAMETERES, then calls ProcessDSAFilter. Install exactly
-     * that callback shape only after the save-owned action was authenticated.
-     * Staging both objects keeps a rejected binding from exposing a partial
-     * live filter. */
-    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
-    if (!csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
-            profile, binding, state_index, action_ordinal, master_location,
-            &adapter_candidate)) {
-        return 0;
-    }
-    csb_v1_runtime_init_csbwin_filter_candidate(&filter_candidate);
-    filter_candidate.programs = &profile->csbwin_extended_dsa_state;
-    filter_candidate.runner =
-        csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
-    filter_candidate.runner_user = &adapter_candidate;
-    filter_candidate.loaded_level = loaded_level;
-    filter_candidate.attack_filter_dsa_id = binding->dsa_id;
-    filter_candidate.attack_filter_state = state_index;
-    filter_candidate.attack_filter_action = action_ordinal;
-
-    *out_adapter = adapter_candidate;
-    /* runner_user must refer to the published adapter, never its staged copy. */
-    filter_candidate.runner_user = out_adapter;
-    *out_filter = filter_candidate;
-    return 1;
-}
-
-int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    int loaded_level,
-    CSB_V1_DSAFilterRuntime *out_filter,
-    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter)
-{
-    CSB_V1_DSAFilterRuntime filter_candidate;
-    CSB_V1_RuntimeDSAFilterStackAdapter adapter_candidate;
-    int filter_level;
-
-    if (!profile || !binding || !out_filter || !out_adapter ||
-        loaded_level < 0) {
-        return 0;
-    }
-    filter_level = binding->location.level;
-    if (filter_level < 0 || filter_level >=
-        (int)(sizeof(filter_candidate.movement_filter_dsa_id) /
-              sizeof(filter_candidate.movement_filter_dsa_id[0]))) {
-        return 0;
-    }
-
-    /* CSBWin Monster.cpp:3079-3176 resolves one type-47 movement filter for
-     * a loaded level, then 3222-3370 enters ProcessDSAFilter with its seven
-     * movement parameters. As with attacks, install nothing until the exact
-     * save-owned action has passed the existing authentication boundary. */
-    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
-    if (!csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
-            profile, binding, state_index, action_ordinal, master_location,
-            &adapter_candidate)) {
-        return 0;
-    }
-    csb_v1_runtime_init_csbwin_filter_candidate(&filter_candidate);
-    filter_candidate.programs = &profile->csbwin_extended_dsa_state;
-    filter_candidate.runner =
-        csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
-    filter_candidate.runner_user = &adapter_candidate;
-    filter_candidate.loaded_level = loaded_level;
-    filter_candidate.movement_filter_dsa_id[filter_level] = binding->dsa_id;
-    filter_candidate.movement_filter_state[filter_level] = state_index;
-    filter_candidate.movement_filter_action[filter_level] = action_ordinal;
-
-    *out_adapter = adapter_candidate;
-    filter_candidate.runner_user = out_adapter;
-    *out_filter = filter_candidate;
-    return 1;
-}
-
-int csb_v1_runtime_csbwin_movement_filter_stack_runner_callback(
-    const CSB_V1_DSAImportedAction *action,
-    int *parameters,
-    int parameter_count,
-    int flgs_inout[2],
-    void *user)
-{
-    CSB_V1_RuntimeDSAMovementFilterStackAdapter *adapter =
-        (CSB_V1_RuntimeDSAMovementFilterStackAdapter *)user;
-    int i;
-
-    if (!adapter || !adapter->profile || !action ||
-        adapter->runner_count < 1 || adapter->runner_count >
-            CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP) {
-        return 0;
-    }
-    for (i = 0; i < adapter->runner_count; ++i) {
-        CSB_V1_CSBWinDSAFilterStackRunnerContext *runner =
-            &adapter->runners[i];
-        const CSB_V1_DSAImportedAction *expected =
-            csb_v1_chaos_find_imported_action(
-                &adapter->profile->csbwin_extended_dsa_state,
-                runner->dsa_id, runner->state_index, runner->action_ordinal);
-
-        if (expected == action) {
-            return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-                adapter->profile, runner, action, parameters,
-                parameter_count, flgs_inout);
-        }
-    }
-    return 0;
-}
-
-int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime_multi(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAMovementFilterRequest *requests,
-    size_t request_count,
-    int loaded_level,
-    CSB_V1_DSAFilterRuntime *out_filter,
-    CSB_V1_RuntimeDSAMovementFilterStackAdapter *out_adapter)
-{
-    CSB_V1_DSAFilterRuntime filter_candidate;
-    CSB_V1_RuntimeDSAMovementFilterStackAdapter adapter_candidate;
-    const CSB_V1_DSAImportedAction *selected[
-        CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP];
-    size_t i;
-
-    if (!profile || !requests || request_count == 0u ||
-        request_count > CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP ||
-        loaded_level < 0 || !out_filter || !out_adapter) {
-        return 0;
-    }
-    csb_v1_runtime_init_csbwin_filter_candidate(&filter_candidate);
-    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
-    memset(selected, 0, sizeof(selected));
-    adapter_candidate.profile = profile;
-
-    /* CSBWin Monster.cpp:3079-3176 caches a separate source filter for each
-     * level. Stage every request before publishing so duplicate level slots,
-     * unauthenticated actions, or ambiguous action ownership cannot expose a
-     * partial callback surface. */
-    for (i = 0u; i < request_count; ++i) {
-        const CSB_V1_RuntimeDSAMovementFilterRequest *request = &requests[i];
-        CSB_V1_CSBWinDSAFilterStackRunnerContext *runner =
-            &adapter_candidate.runners[i];
-        const CSB_V1_DSAImportedAction *action;
-        int level = request->binding.location.level;
-        size_t prior;
-
-        if (level < 0 || level >=
-            CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP ||
-            filter_candidate.movement_filter_dsa_id[level] != -1 ||
-            !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-                profile, &request->binding, request->state_index,
-                request->action_ordinal, request->master_location, runner)) {
-            return 0;
-        }
-        action = csb_v1_chaos_find_imported_action(
-            &profile->csbwin_extended_dsa_state, runner->dsa_id,
-            runner->state_index, runner->action_ordinal);
-        if (!action) return 0;
-        for (prior = 0u; prior < i; ++prior) {
-            if (selected[prior] == action) return 0;
-        }
-        selected[i] = action;
-        filter_candidate.movement_filter_dsa_id[level] = request->binding.dsa_id;
-        filter_candidate.movement_filter_state[level] = request->state_index;
-        filter_candidate.movement_filter_action[level] = request->action_ordinal;
-    }
-
-    adapter_candidate.runner_count = (int)request_count;
-    filter_candidate.programs = &profile->csbwin_extended_dsa_state;
-    filter_candidate.runner =
-        csb_v1_runtime_csbwin_movement_filter_stack_runner_callback;
-    filter_candidate.runner_user = &adapter_candidate;
-    filter_candidate.loaded_level = loaded_level;
-    *out_adapter = adapter_candidate;
-    filter_candidate.runner_user = out_adapter;
-    *out_filter = filter_candidate;
-    return 1;
 }
 
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
@@ -18884,12 +14714,6 @@ int csb_v1_runtime_export_csbwin_core_save_to_memory(
         return -1;
     }
     *out_size = 0u;
-    /* CSBWin SaveGame.cpp:1972-1976 treats EDBT_DisableSaves as a save
-     * policy, not merely a UI hint. The native save route already enforces
-     * it; keep the interoperable core-export route equally closed. */
-    if (profile->csbwin_saves_disabled) {
-        return -1;
-    }
     memset(&summary, 0, sizeof(summary));
     if (csb_v1_runtime_build_csbwin_core_summary(profile, &summary) != 0) {
         return -1;
@@ -19015,11 +14839,7 @@ int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
     int i;
 
     if (!profile) return -1;
-    /* ReDMCSB CHAMPION.C F0284 always writes G0308_i_PartyDirection after
-     * its bounded champion loop.  A new PC34 game reaches its first input
-     * before a party has been imported, so ChampionCount may be zero here;
-     * that must still rotate the dungeon-facing party direction rather than
-     * rejecting the command behind Firestaff's party_state_valid marker. */
+    if (!profile->party_state_valid) return -1;
     if (target_dir < 0 || target_dir > 3) return -1;
 
     current_dir = profile->party_dir & 3;
@@ -19106,7 +14926,6 @@ int csb_v1_runtime_process_input_queue(
             local_result.old_party_level,
             local_result.old_party_x,
             local_result.old_party_y,
-            1,
             0,
             &local_result);
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
@@ -19132,7 +14951,6 @@ int csb_v1_runtime_process_input_queue(
             local_result.old_party_level,
             local_result.old_party_x,
             local_result.old_party_y,
-            1,
             0,
             &local_result);
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {

@@ -16,6 +16,8 @@ extern "C" {
 void redmcsb_f0450_floppy_force_media_change_detection_pc34_compat(
     uint16_t drive_type);
 
+void F0450_FLOPPY_ForceMediaChangeDetection(uint16_t drive_type);
+
 const char *redmcsb_f0450_floppy_force_media_change_detection_source_evidence_pc34(void);
 
 #ifdef __cplusplus

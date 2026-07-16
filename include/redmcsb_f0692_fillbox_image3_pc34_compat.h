@@ -27,6 +27,16 @@ int redmcsb_f0692_fillbox_image3_pc34_compat(
     const int16_t box[4],
     uint16_t color);
 
+int F0692_FillBox(
+    uint8_t *bitmap,
+    size_t bitmap_size,
+    size_t row_bytes,
+    size_t pixel_height,
+    const int16_t box[4],
+    uint16_t color);
+
+const char *redmcsb_f0692_fillbox_image3_pc34_compat_source_evidence(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -81,6 +81,12 @@ typedef int (*DM1_V1_ActionDamageRenderConsumerPc34Compat)(
 
 const char *DM1_V1_ActionDamageRenderPlan_SourceEvidencePc34Compat(void);
 
+int F0385_MENUS_DrawActionDamage(
+    int damage,
+    DM1_V1_ActionDamageRenderConsumerPc34Compat consumer,
+    void *context,
+    DM1_V1_ActionDamageRenderPlanPc34Compat *out_plan);
+
 int DM1_V1_ActionDamageRenderPlan_BuildPc34Compat(
     int damage,
     DM1_V1_ActionDamageRenderPlanPc34Compat *out_plan);

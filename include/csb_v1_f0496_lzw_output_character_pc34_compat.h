@@ -36,6 +36,10 @@ int csb_v1_f0496_lzw_output_character_pc34_compat(
     CsbV1F0496LzwDecoderStatePc34Compat *state,
     uint8_t character);
 
+int F0496_LZW_OutputCharacter(
+    CsbV1F0496LzwDecoderStatePc34Compat *state,
+    uint8_t character);
+
 /* Exact source locator retained for standalone provenance checks. */
 const char *csb_v1_f0496_lzw_output_character_pc34_compat_source_evidence(void);
 

@@ -12,6 +12,8 @@ extern "C" {
  */
 void redmcsb_f1055_post_f0380_command_process_queue_pc34_compat(void);
 
+void F1055_Post_F0380_COMMAND_ProcessQueue_CPSC(void);
+
 const char *redmcsb_f1055_post_f0380_command_process_queue_source_evidence_pc34(
     void);
 

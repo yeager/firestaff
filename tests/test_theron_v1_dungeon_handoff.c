@@ -72,6 +72,8 @@ int main(void) {
     Theron_V1DungeonHandoffFacts facts;
     Theron_V1RuntimeAdmissionReceipt admission = {1, 1};
     Theron_V1DungeonHandoffReceipt receipt;
+    Theron_V1Track02RawCueAdmissionFacts admission_facts;
+    Theron_V1Track02RawCueAdmissionReceipt admission_receipt;
     const char *real_track02_path;
     unsigned char *real_track02;
     size_t real_track02_bytes;
@@ -93,12 +95,40 @@ int main(void) {
     write_us_receipt_bytes(raw);
     facts = valid_facts(raw);
     facts.runtime_admission = &admission;
+    admission_facts.runtime_admission = &admission;
+    admission_facts.cue_track02_index01_observed = 1;
+    admission_facts.cue_track02_index01_raw_sector = 225u;
+    admission_facts.raw_bin_present = 1;
+    admission_facts.raw_track02 = raw;
+    admission_facts.raw_track02_bytes = RAW_BYTES;
+    admission_facts.track02_md5 = THERON_V1_TRACK02_MD5_US_BIN;
 
     /* Anchor-shaped test bytes are not original media and must never select. */
+    CHECK(!theron_v1_track02_raw_cue_admit(
+        &admission_facts, &admission_receipt));
+    CHECK(!admission_receipt.admitted);
+    CHECK(!admission_receipt.no_fallback);
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
     CHECK(!receipt.selected && !receipt.raw_track02_md5_verified);
     CHECK(receipt.header_width == 0u && receipt.header_height == 0u &&
           receipt.header_seed == 0u && receipt.header_identifier == 0u);
+
+    admission_facts.raw_track02_bytes = 2048u;
+    CHECK(!theron_v1_track02_raw_cue_admit(
+        &admission_facts, &admission_receipt));
+    admission_facts.raw_track02_bytes = RAW_BYTES;
+    admission_facts.cue_track02_index01_observed = 0;
+    CHECK(!theron_v1_track02_raw_cue_admit(
+        &admission_facts, &admission_receipt));
+    admission_facts.cue_track02_index01_observed = 1;
+    admission_facts.cue_track02_index01_raw_sector = 224u;
+    CHECK(!theron_v1_track02_raw_cue_admit(
+        &admission_facts, &admission_receipt));
+    admission_facts.cue_track02_index01_raw_sector = 225u;
+    admission_facts.raw_bin_present = 0;
+    CHECK(!theron_v1_track02_raw_cue_admit(
+        &admission_facts, &admission_receipt));
+    admission_facts.raw_bin_present = 1;
 
     facts.raw_track02_bytes = 0u;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
@@ -149,6 +179,24 @@ int main(void) {
             facts.track02_md5 = variant == THERON_V1_TRACK02_VARIANT_US_BIN ?
                 THERON_V1_TRACK02_MD5_US_BIN : THERON_V1_TRACK02_MD5_JP_BIN;
             facts.cue_track02_index01_raw_sector = cue_index01_sector;
+            admission_facts.raw_track02 = real_track02;
+            admission_facts.raw_track02_bytes = real_track02_bytes;
+            admission_facts.track02_md5 = facts.track02_md5;
+            admission_facts.cue_track02_index01_raw_sector = cue_index01_sector;
+            CHECK(theron_v1_track02_raw_cue_admit(
+                &admission_facts, &admission_receipt));
+            CHECK(admission_receipt.admitted);
+            CHECK(admission_receipt.raw_bin_admitted);
+            CHECK(admission_receipt.cue_index01_admitted);
+            CHECK(admission_receipt.iso_image_blocked);
+            CHECK(admission_receipt.no_fallback);
+            CHECK(admission_receipt.raw_track02_variant == variant);
+            CHECK(admission_receipt.cue_track02_index01_raw_sector ==
+                  cue_index01_sector);
+            CHECK(admission_receipt.raw_track02_bytes == real_track02_bytes);
+            CHECK(admission_receipt.track02_md5 == facts.track02_md5);
+            CHECK(strcmp(admission_receipt.status,
+                         "raw_track02_bin_cue_admitted_iso_blocked_no_fallback") == 0);
             CHECK(theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
             CHECK(receipt.raw_track02_variant == variant);
             CHECK(receipt.adjacent_boundary_opaque);

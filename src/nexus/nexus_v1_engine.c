@@ -1075,6 +1075,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     int static_mns_route_bound;
     int bpk_material_route_bound;
     int structure2_source_bound;
+    int item_ibs_authorized_count;
     int i;
 
     if (!engine || !engine->level_loaded ||
@@ -1127,6 +1128,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     memset(&plan->structure1a_structure3_topology_candidate_receipt, 0,
            sizeof(plan->structure1a_structure3_topology_candidate_receipt));
     plan->structure1a_structure3_topology_candidates_consumed = 0;
+    item_ibs_authorized_count = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -1176,6 +1178,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         engine->dgn_static_material_sources.canonical_pair_bound;
     plan->receipt.structure1b_selector_binding_proven =
         engine->dgn_static_material_sources.structure1b_selector_binding_proven;
+    plan->receipt.structure2_vdp1_palette_binding_proven = 0;
+    plan->receipt.item_ibs_vdp1_command_proven = 0;
     plan->receipt.bpk_material_route_bound = bpk_material_route_bound;
     if (!static_mns_route_bound &&
         engine->dgn_static_material_sources.canonical_pair_bound &&
@@ -1404,6 +1408,17 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
      * permission bit. */
     plan->receipt.structure2_source_materialization_bound =
         structure2_source_bound;
+    plan->receipt.structure2_vdp1_palette_binding_proven = 0;
+    for (i = 0; i < plan->structure1f_item_floor_material_receipt
+             .command_material_count; ++i) {
+        if (plan->structure1f_item_floor_materials[i].draw_authorized) {
+            ++item_ibs_authorized_count;
+        }
+    }
+    plan->receipt.item_ibs_vdp1_command_proven =
+        item_ibs_authorized_count ==
+            plan->structure1f_item_floor_material_receipt.command_material_count &&
+        item_ibs_authorized_count > 0;
     /* Static MNS takes precedence only after the selector is independently
      * proven. Otherwise the BPK route must carry every command itself. */
     plan->receipt.uses_static_mns_material_route = static_mns_route_bound;

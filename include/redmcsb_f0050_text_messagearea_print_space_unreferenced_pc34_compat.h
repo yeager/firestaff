@@ -24,6 +24,12 @@ bool F0050_TEXT_MESSAGEAREA_PrintSpace_Unreferenced_PC34(
     redmcsb_f0050_print_message_fn print_message,
     void *context);
 
+bool F0050_TEXT_MESSAGEAREA_PrintSpace_Unreferenced(
+    redmcsb_f0050_print_message_fn print_message,
+    void *context);
+
+const char *redmcsb_f0050_text_messagearea_print_space_source_evidence_pc34(void);
+
 #ifdef __cplusplus
 }
 #endif

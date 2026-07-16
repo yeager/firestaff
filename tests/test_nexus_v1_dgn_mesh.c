@@ -43,13 +43,31 @@ int main(void)
                mesh.animated_texture_face_count == 1 && mesh.color_fill_count == 1 &&
                mesh.faces[1].first_corner == 3 && mesh.faces[1].corner_count == 4 &&
                mesh.corner_vertex_indexes[5] == 3 && mesh.can_submit_geometry &&
-               !mesh.can_submit_textured_raster && !mesh.permits_fallback_visuals,
-           "parser-validated DGN triangles and quads retain their real face lanes");
+               !mesh.can_submit_textured_raster &&
+               mesh.textured_raster_blocked &&
+               mesh.static_texture_raster_blocked &&
+               mesh.animated_texture_raster_blocked &&
+               mesh.material_provenance_required &&
+               mesh.structure2_material_required &&
+               mesh.structure1g_material_required &&
+               mesh.structure2_pixel_semantics_required &&
+               mesh.structure1g_animation_semantics_required &&
+               mesh.material_bank_mutation_blocked &&
+               mesh.vdp1_provenance_required &&
+               mesh.vdp1_draw_list_blocked &&
+               !mesh.permits_fallback_visuals,
+           "parser-validated DGN geometry blocks textured raster without material/VDP1 proof");
 
     input.canonical_source_verified = 0;
     expect(!nexus_v1_dgn_mesh_build(&input, &mesh) &&
                mesh.status == NEXUS_V1_DGN_MESH_BLOCKED_SOURCE &&
-               !mesh.can_submit_geometry && !mesh.permits_fallback_visuals,
+               !mesh.can_submit_geometry &&
+               !mesh.textured_raster_blocked &&
+               !mesh.static_texture_raster_blocked &&
+               !mesh.animated_texture_raster_blocked &&
+               !mesh.material_bank_mutation_blocked &&
+               !mesh.vdp1_draw_list_blocked &&
+               !mesh.permits_fallback_visuals,
            "unverified source bytes cannot create a DGN mesh packet");
     input.canonical_source_verified = 1;
 
@@ -58,6 +76,35 @@ int main(void)
                mesh.status == NEXUS_V1_DGN_MESH_BLOCKED_TOPOLOGY,
            "invalid fixed-point vectors block mesh construction");
     input.fixed_point_vectors_valid = 1;
+
+    {
+        Nexus_V1_DgnMeshSourceFace color_face[] = {
+            {{0, 1, 2, 2}, 0x00U, 0x0000U}
+        };
+        input.faces = color_face;
+        input.face_count = 1;
+        expect(nexus_v1_dgn_mesh_build(&input, &mesh) &&
+                   mesh.status == NEXUS_V1_DGN_MESH_READY_GEOMETRY &&
+                   mesh.color_fill_count == 1 &&
+                   mesh.static_texture_face_count == 0 &&
+                   mesh.animated_texture_face_count == 0 &&
+                   mesh.can_submit_geometry &&
+                   !mesh.textured_raster_blocked &&
+                   !mesh.static_texture_raster_blocked &&
+                   !mesh.animated_texture_raster_blocked &&
+                   !mesh.material_provenance_required &&
+                   !mesh.structure2_material_required &&
+                   !mesh.structure1g_material_required &&
+                   !mesh.structure2_pixel_semantics_required &&
+                   !mesh.structure1g_animation_semantics_required &&
+                   !mesh.material_bank_mutation_blocked &&
+                   !mesh.vdp1_provenance_required &&
+                   !mesh.vdp1_draw_list_blocked &&
+                   !mesh.permits_fallback_visuals,
+               "color-only Structure3 geometry does not invent a textured raster blocker");
+        input.faces = faces;
+        input.face_count = 3;
+    }
 
     faces[2].vertex_index[2] = 4;
     expect(!nexus_v1_dgn_mesh_build(&input, &mesh) &&

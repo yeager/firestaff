@@ -686,6 +686,11 @@ static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
            index >= 0 && index < d->thing_type_counts[type];
 }
 
+static uint32_t dm2_arrange_hash_step(uint32_t hash, uint32_t value) {
+    hash ^= value;
+    return hash * 16777619u;
+}
+
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
     int total_records = 0;
     int level;
@@ -758,6 +763,122 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
             }
         }
     }
+    return 1;
+}
+
+int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
+    const uint8_t *dat,
+    int size,
+    DM2_V1_ArrangeDungeonReceipt *out) {
+    DM2_V1_DungeonData dungeon;
+    uint32_t dimension_hash = 2166136261u;
+    uint32_t style_hash = 2166136261u;
+    uint32_t arrangement_hash = 2166136261u;
+    int outdoor_count = 0;
+    int indoor_count = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&dungeon, 0, sizeof(dungeon));
+    if (!dat || size <= 0 ||
+        dm2_v1_dungeon_load(&dungeon, dat, size) != 0 ||
+        dungeon.level_count <= 0 ||
+        dungeon.level_count > DM2_V1_MAX_LEVELS ||
+        !dungeon.raw_data ||
+        dungeon.raw_size != size ||
+        dungeon.square_bytes <= 0 ||
+        dungeon.raw_map_data_base < 0) {
+        dm2_v1_dungeon_free(&dungeon);
+        return 0;
+    }
+
+    for (int level = 0; level < dungeon.level_count; ++level) {
+        int w = dungeon.level_widths[level];
+        int h = dungeon.level_heights[level];
+        int style = dm2_v1_dungeon_get_map_graphics_style(&dungeon, level);
+        int first_tile;
+        int last_tile;
+
+        if (w <= 0 || w > DM2_V1_MAX_MAP_SIZE ||
+            h <= 0 || h > DM2_V1_MAX_MAP_SIZE ||
+            dungeon.level_offsets[level] < 0 ||
+            style < 0 || style > 15) {
+            dm2_v1_dungeon_free(&dungeon);
+            return 0;
+        }
+        first_tile = dm2_v1_dungeon_get_tile_raw(&dungeon, level, 0, 0);
+        last_tile = dm2_v1_dungeon_get_tile_raw(&dungeon, level, w - 1, h - 1);
+        if (first_tile < 0 || last_tile < 0) {
+            dm2_v1_dungeon_free(&dungeon);
+            return 0;
+        }
+
+        if (dm2_v1_dungeon_is_outdoor(&dungeon, level))
+            ++outdoor_count;
+        else
+            ++indoor_count;
+
+        dimension_hash = dm2_arrange_hash_step(dimension_hash, (uint32_t)level);
+        dimension_hash = dm2_arrange_hash_step(dimension_hash, (uint32_t)w);
+        dimension_hash = dm2_arrange_hash_step(dimension_hash, (uint32_t)h);
+        dimension_hash = dm2_arrange_hash_step(
+            dimension_hash, (uint32_t)dungeon.level_offsets[level]);
+        dimension_hash = dm2_arrange_hash_step(
+            dimension_hash, (uint32_t)(first_tile & 0xffff));
+        dimension_hash = dm2_arrange_hash_step(
+            dimension_hash, (uint32_t)(last_tile & 0xffff));
+        style_hash = dm2_arrange_hash_step(style_hash, (uint32_t)level);
+        style_hash = dm2_arrange_hash_step(style_hash, (uint32_t)style);
+    }
+
+    arrangement_hash = dm2_arrange_hash_step(arrangement_hash,
+                                             (uint32_t)dungeon.level_count);
+    arrangement_hash = dm2_arrange_hash_step(arrangement_hash,
+                                             (uint32_t)dungeon.square_bytes);
+    arrangement_hash = dm2_arrange_hash_step(
+        arrangement_hash, (uint32_t)dungeon.raw_map_data_base);
+    arrangement_hash = dm2_arrange_hash_step(
+        arrangement_hash, (uint32_t)(dungeon.column_index_base < 0 ? 0xffffu :
+                                     (uint32_t)dungeon.column_index_base));
+    arrangement_hash = dm2_arrange_hash_step(
+        arrangement_hash, (uint32_t)(dungeon.square_first_thing_count < 0 ? 0u :
+                                     dungeon.square_first_thing_count));
+    arrangement_hash = dm2_arrange_hash_step(
+        arrangement_hash, (uint32_t)(dungeon.text_word_count < 0 ? 0u :
+                                     dungeon.text_word_count));
+    arrangement_hash = dm2_arrange_hash_step(
+        arrangement_hash, (uint32_t)(dungeon.record_graph_complete != 0));
+    arrangement_hash = dm2_arrange_hash_step(arrangement_hash,
+                                             dimension_hash);
+    arrangement_hash = dm2_arrange_hash_step(arrangement_hash, style_hash);
+    if (dimension_hash == 0u || style_hash == 0u ||
+        arrangement_hash == 0u || outdoor_count <= 0) {
+        dm2_v1_dungeon_free(&dungeon);
+        return 0;
+    }
+
+    out->valid = 1;
+    out->committed = 1;
+    out->incomplete = dungeon.record_graph_complete ? 0 : 1;
+    out->map_count = dungeon.level_count;
+    out->outdoor_map_count = outdoor_count;
+    out->indoor_map_count = indoor_count;
+    out->square_bytes = dungeon.square_bytes;
+    out->raw_map_data_base = dungeon.raw_map_data_base;
+    out->column_index_base = dungeon.column_index_base;
+    out->ground_stack_base = dungeon.square_first_thing_base;
+    out->ground_stack_count = dungeon.square_first_thing_count;
+    out->text_data_base = dungeon.text_data_base;
+    out->text_word_count = dungeon.text_word_count;
+    out->candidate_pool_base = dungeon.partial_map_boot.candidate_pool_base;
+    out->candidate_pool_end = dungeon.partial_map_boot.candidate_pool_end;
+    out->g1_extension_base = dungeon.g1_extension_base;
+    out->g1_extension_size = dungeon.g1_extension_size;
+    out->record_graph_complete = dungeon.record_graph_complete;
+    out->map_dimension_hash = dimension_hash;
+    out->map_graphics_style_hash = style_hash;
+    out->arrangement_hash = arrangement_hash;
+    dm2_v1_dungeon_free(&dungeon);
     return 1;
 }
 
@@ -1158,4 +1279,14 @@ const char *dm2_v1_dungeon_source_evidence(void) {
         "Fix: tile offset = DM2_TILE_DATA_START(492) + raw_map_data_byte_offset\n"
         "Fix: column-major tile offset formula (col*height+row)*2\n"
         "Asset: DM2 PC English DUNGEON.DAT 6caccd7875009e82fe2e28e7f6d6adc0\n";
+}
+
+const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void) {
+    return
+        "skproject SKULLWIN/c_map.cpp DM2_ARRANGE_DUNGEON arranges the "
+        "loaded dungeon maps before runtime use; Firestaff admits only the "
+        "dm2_v1_dungeon_load-proven map descriptors, byte/word square layout, "
+        "MapGraphicsStyle values, ground-stack/text table addresses, and "
+        "record-graph completion state. PC G1 partial graphs remain marked "
+        "incomplete instead of receiving fabricated c_record semantics.";
 }

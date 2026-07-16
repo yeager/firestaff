@@ -34,6 +34,16 @@ int f0683_copy_pixel_line_to_screen_with_transparency_flipped_horizontally_pc34_
     size_t pixel_count,
     uint8_t transparent_color);
 
+int F0683_CopyPixelLineToScreenWithTransparencyFlippedHorizontally(
+    const uint8_t *source,
+    size_t source_bytes,
+    size_t source_pixel_index,
+    uint8_t *destination,
+    size_t destination_bytes,
+    size_t destination_pixel_index,
+    size_t pixel_count,
+    uint8_t transparent_color);
+
 const char *f0683_copy_pixel_line_to_screen_with_transparency_flipped_horizontally_pc34_compat_source_evidence(void);
 
 #ifdef __cplusplus

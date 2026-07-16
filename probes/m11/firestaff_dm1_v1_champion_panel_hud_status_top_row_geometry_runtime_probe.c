@@ -283,14 +283,14 @@ static int check_slot_top_row_geometry(const M11_GameViewState* game,
                          M11_GameView_GetV1StatusBarZone(slot, stat,
                                                           &x, &y, &w, &h),
                          x, y, w, h,
-                         slotX + barX[stat], 4, 4, 25);
+                         slotX + barX[stat], 2, 4, 25);
         fillHeight = expected_fill_height(cur[stat], max[stat], 25);
         blankHeight = 25 - fillHeight;
         snprintf(label, sizeof(label), "slot%d stat%d value-zone blank top",
                  slot, stat);
         ok &= expect_int(label,
                          count_color(fb, PROBE_FB_W,
-                                     slotX + barX[stat], 4,
+                                     slotX + barX[stat], 2,
                                      4, blankHeight,
                                      M11_GameView_GetV1StatusBarBlankColor()),
                          4 * blankHeight);
@@ -298,7 +298,7 @@ static int check_slot_top_row_geometry(const M11_GameViewState* game,
                  slot, stat);
         ok &= expect_int(label,
                          count_color(fb, PROBE_FB_W,
-                                     slotX + barX[stat], 4 + blankHeight,
+                                     slotX + barX[stat], 2 + blankHeight,
                                      4, fillHeight,
                                      M11_GameView_GetV1ChampionBarColor(slot)),
                          4 * fillHeight);
@@ -359,7 +359,6 @@ static int check_invalid_guards(void) {
 
 int main(int argc, char** argv) {
     const char* dataDir;
-    M12_StartupMenuInitOptions menuOptions;
     M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
@@ -367,26 +366,22 @@ int main(int argc, char** argv) {
     int ok = 1;
 
     if (argc < 2) {
-        printf("SKIP dm1 champion-panel top-row probe: no DATA_DIR supplied\n");
-        return 0;
+        fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
+        return 2;
     }
     dataDir = argv[1];
 
-    memset(&menuOptions, 0, sizeof(menuOptions));
-    menuOptions.skipScreenshotGalleryScan = 1;
-    M12_StartupMenu_InitWithOptions(&menu, dataDir, "dm1", &menuOptions);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
-        printf("SKIP dm1 champion-panel top-row probe: DM1 data unavailable at %s\n",
-               dataDir);
+        fprintf(stderr, "FAIL could not open selected DM1 V1 game view from %s\n", dataDir);
         M11_GameView_Shutdown(&game);
-        return 0;
+        return 1;
     }
     if (!game.assetsAvailable) {
-        printf("SKIP dm1 champion-panel top-row probe: GRAPHICS.DAT unavailable at %s\n",
-               dataDir);
+        fprintf(stderr, "FAIL DM1 V1 GRAPHICS.DAT assets unavailable from %s\n", dataDir);
         M11_GameView_Shutdown(&game);
-        return 0;
+        return 1;
     }
 
     seed_party(&game);

@@ -1006,6 +1006,11 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->gdat_misty_map = ready ? misty_map : 0u;
     s->gdat_thunder_position = ready ? thunder_position : 0u;
     s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
+    if (!ready) {
+        s->gdat_scene_light_floor = 0u;
+        s->gdat_scene_light_search_depth = 0u;
+        s->gdat_scene_light_recompute_enabled = 0;
+    }
     s->dirty = 1;
 }
 
@@ -1016,6 +1021,297 @@ void dm2_v1_viewport_set_gdat_scene_material_plan(
     if (!s) return;
     s->gdat_scene_material_plan = plan && plan->valid ? plan : NULL;
     s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_scene_map_load_token(
+    DM2_V1_ViewportState *s, uint32_t source_map_load_token)
+{
+    if (!s) return;
+    s->gdat_scene_map_load_token = source_map_load_token;
+    s->dirty = 1;
+}
+
+static int dm2_v1_viewport_scene_bind_matches(
+    const DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return s && s->gdat_scene_control_ready &&
+        source_map_load_token != 0u &&
+        source_scene_control_hash != 0u &&
+        s->gdat_scene_map_load_token == source_map_load_token &&
+        s->gdat_scene_control_hash == source_scene_control_hash;
+}
+
+int dm2_v1_viewport_bind_static_graphicsset_scene_record(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+    if (!dm2_v1_viewport_scene_bind_matches(
+            s, source_map_load_token, source_scene_control_hash)) {
+        return 0;
+    }
+    scene = &s->gdat_static_scene_record;
+    memset(scene, 0, sizeof(*scene));
+    scene->valid = 1;
+    scene->map_load_token = source_map_load_token;
+    scene->scene_control_hash = source_scene_control_hash;
+    scene->graphicsset = (uint8_t)s->gdat_scene_material_index;
+    scene->scene_colorkey = s->gdat_scene_colorkey;
+    scene->scene_flags = s->gdat_scene_flags;
+    scene->ambient_light = s->gdat_ambient_light;
+    scene->highest_light_level = s->gdat_highest_light_level;
+    scene->ambient_darkness = s->gdat_ambient_darkness;
+    scene->material_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    scene->floor_field = DM2_GDAT_GFXSET_FLOOR;
+    scene->ceiling_field = DM2_GDAT_GFXSET_CEIL;
+    scene->door_frame_front_d1_field = DM2_GDAT_GFXSET_DOOR_FRAME_FRONT_D1;
+    scene->door_frame_d1c_field = DM2_GDAT_GFXSET_DOOR_FRAME_D1C;
+    scene->door_frame_d2c_field = DM2_GDAT_GFXSET_DOOR_FRAME_D2C;
+    s->dirty = 1;
+    return 1;
+}
+
+static int dm2_v1_viewport_bind_static_scene_flag(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash,
+    uint32_t *token_slot,
+    uint32_t *hash_slot,
+    int *owned_slot)
+{
+    if (!token_slot || !hash_slot || !owned_slot ||
+        !dm2_v1_viewport_scene_bind_matches(
+            s, source_map_load_token, source_scene_control_hash)) {
+        return 0;
+    }
+    *token_slot = source_map_load_token;
+    *hash_slot = source_scene_control_hash;
+    *owned_slot = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_light_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_light_map_load_token,
+        &s->gdat_static_light_scene_control_hash,
+        &s->gdat_static_light_control_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_ambient_light_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_ambient_light_map_load_token,
+        &s->gdat_static_ambient_light_scene_control_hash,
+        &s->gdat_static_ambient_light_control_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_ambient_darkness_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_ambient_darkness_map_load_token,
+        &s->gdat_static_ambient_darkness_scene_control_hash,
+        &s->gdat_static_ambient_darkness_control_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_flags_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_flags_map_load_token,
+        &s->gdat_static_scene_flags_scene_control_hash,
+        &s->gdat_static_scene_flags_control_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_colorkey_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_colorkey_map_load_token,
+        &s->gdat_static_scene_colorkey_scene_control_hash,
+        &s->gdat_static_scene_colorkey_control_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_floor_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_floor_material_map_load_token,
+        &s->gdat_static_scene_floor_material_scene_control_hash,
+        &s->gdat_static_scene_floor_material_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_ceiling_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_ceiling_material_map_load_token,
+        &s->gdat_static_scene_ceiling_material_scene_control_hash,
+        &s->gdat_static_scene_ceiling_material_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_door_frame_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_door_frame_material_map_load_token,
+        &s->gdat_static_scene_door_frame_material_scene_control_hash,
+        &s->gdat_static_scene_door_frame_material_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_door_frame_d1c_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_door_frame_d1c_material_map_load_token,
+        &s->gdat_static_scene_door_frame_d1c_material_scene_control_hash,
+        &s->gdat_static_scene_door_frame_d1c_material_owned);
+}
+
+int dm2_v1_viewport_bind_static_scene_door_frame_d2c_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    return dm2_v1_viewport_bind_static_scene_flag(
+        s, source_map_load_token, source_scene_control_hash,
+        &s->gdat_static_scene_door_frame_d2c_material_map_load_token,
+        &s->gdat_static_scene_door_frame_d2c_material_scene_control_hash,
+        &s->gdat_static_scene_door_frame_d2c_material_owned);
+}
+
+int dm2_v1_viewport_set_floor_gfx_viewport_ownership(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_FloorGfxViewportOwnershipReceipt *ownership)
+{
+    if (!s || !ownership || !ownership->valid || !ownership->viewport_owned ||
+        ownership->map_load_token != s->gdat_scene_map_load_token ||
+        ownership->gdat_category != DM2_GDAT_CATEGORY_FLOOR_GFX) {
+        return 0;
+    }
+    s->floor_gfx_viewport_ownership = *ownership;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_floor_gfx_render_plan_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportFloorGfxRenderPlanReceipt *out_receipt)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+    const DM2_V1_FloorGfxViewportOwnershipReceipt *floor;
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s || !s->gdat_scene_control_ready) return 0;
+    scene = &s->gdat_static_scene_record;
+    floor = &s->floor_gfx_viewport_ownership;
+    if (!scene->valid ||
+        scene->map_load_token != s->gdat_scene_map_load_token ||
+        scene->scene_control_hash != s->gdat_scene_control_hash ||
+        scene->graphicsset != (uint8_t)s->gdat_scene_material_index ||
+        !floor->valid || !floor->viewport_owned ||
+        floor->map_load_token != s->gdat_scene_map_load_token ||
+        floor->gdat_category != DM2_GDAT_CATEGORY_FLOOR_GFX) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->static_scene_control_owned = 1;
+    out_receipt->static_light_control_owned = 1;
+    out_receipt->static_ambient_light_control_owned = 1;
+    out_receipt->static_ambient_darkness_control_owned = 1;
+    out_receipt->static_scene_flags_control_owned = 1;
+    out_receipt->static_scene_colorkey_control_owned = 1;
+    out_receipt->static_scene_floor_material_owned = 1;
+    out_receipt->static_scene_ceiling_material_owned = 1;
+    out_receipt->static_scene_door_frame_material_owned = 1;
+    out_receipt->static_scene_door_frame_d1c_material_owned = 1;
+    out_receipt->static_scene_door_frame_d2c_material_owned = 1;
+    out_receipt->map_load_token = s->gdat_scene_map_load_token;
+    out_receipt->gdat_category = floor->gdat_category;
+    out_receipt->floor_ornate_source_index = floor->floor_ornate_source_index;
+    out_receipt->animated_frame_route = floor->animated_frame_route;
+    out_receipt->scene_control_hash = s->gdat_scene_control_hash;
+    out_receipt->scene_colorkey = s->gdat_scene_colorkey;
+    out_receipt->scene_flags = s->gdat_scene_flags;
+    out_receipt->outdoor_scene =
+        (s->gdat_scene_flags & DM2_V1_GDAT_SCENE_FLAG_OUTDOOR) != 0u;
+    out_receipt->scene_floor_material_category = scene->material_category;
+    out_receipt->scene_floor_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_floor_material_field = scene->floor_field;
+    out_receipt->scene_ceiling_material_category = scene->material_category;
+    out_receipt->scene_ceiling_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_ceiling_material_field = scene->ceiling_field;
+    out_receipt->scene_door_frame_material_category = scene->material_category;
+    out_receipt->scene_door_frame_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_door_frame_material_field =
+        scene->door_frame_front_d1_field;
+    out_receipt->scene_door_frame_d1c_material_category =
+        scene->material_category;
+    out_receipt->scene_door_frame_d1c_material_graphicsset =
+        scene->graphicsset;
+    out_receipt->scene_door_frame_d1c_material_field =
+        scene->door_frame_d1c_field;
+    out_receipt->scene_door_frame_d2c_material_category =
+        scene->material_category;
+    out_receipt->scene_door_frame_d2c_material_graphicsset =
+        scene->graphicsset;
+    out_receipt->scene_door_frame_d2c_material_field =
+        scene->door_frame_d2c_field;
+    out_receipt->ambient_light = s->gdat_ambient_light;
+    out_receipt->highest_light_level = s->gdat_highest_light_level;
+    out_receipt->ambient_darkness = s->gdat_ambient_darkness;
+    return 1;
+}
+
+void dm2_v1_viewport_scene_light_control(uint16_t highest_light_level,
+                                         uint16_t ambient_darkness,
+                                         uint8_t *out_light_floor,
+                                         uint8_t *out_search_depth,
+                                         int *out_recompute_enabled)
+{
+    uint16_t light_floor = highest_light_level;
+    uint16_t search_depth = ambient_darkness;
+    if (light_floor > 5u) light_floor = 5u;
+    if (search_depth > 8u) search_depth = 8u;
+    if (out_light_floor) *out_light_floor = (uint8_t)light_floor;
+    if (out_search_depth) *out_search_depth = (uint8_t)search_depth;
+    if (out_recompute_enabled) {
+        *out_recompute_enabled = (light_floor != 0u || search_depth != 0u) ? 1 : 0;
+    }
 }
 
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
@@ -1317,6 +1613,21 @@ int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square)
     int field = dm2_v1_viewport_door_frame_field_for_square(view_square);
     if (field < 0) return 0;
     return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
+}
+
+int dm2_v1_viewport_door_frame_graphic_index_for_graphicsset(
+    int graphicsset_index, int view_square)
+{
+    int field = dm2_v1_viewport_door_frame_field_for_square(view_square);
+    if (field < 0) return 0;
+    if (graphicsset_index == DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET) {
+        return dm2_v1_viewport_door_frame_graphic_index_for_square(view_square);
+    }
+    if (graphicsset_index < 0 || graphicsset_index > 0xff) {
+        return 0;
+    }
+    return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_GRAPHICSSET_BASE -
+        (graphicsset_index << 8) - field;
 }
 
 int dm2_v1_viewport_door_panel_field_for_square(int view_square)

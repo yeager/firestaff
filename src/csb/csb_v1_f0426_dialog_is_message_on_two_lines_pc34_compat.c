@@ -29,3 +29,14 @@ int csb_v1_f0426_dialog_is_message_on_two_lines_pc34_compat(
     strcpy(part2, &part1[splitPosition + 1U]);
     return 1;
 }
+
+int F0426_DIALOG_IsMessageOnTwoLines(
+    char *message,
+    char *part1,
+    char *part2)
+{
+    return csb_v1_f0426_dialog_is_message_on_two_lines_pc34_compat(
+        message,
+        part1,
+        part2);
+}

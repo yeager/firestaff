@@ -40,6 +40,7 @@
 
 #include "csb_v1_save_export_import_pc34_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 
 #include <stdio.h>
@@ -98,6 +99,39 @@ static void make_synthetic_party(CSB_V1_PartyState *party,
         for (s = 0; s < CSB_V1_SLOT_COUNT; ++s) {
             c->Slots[s] = (uint16_t)s;
         }
+    }
+}
+
+static const char *tmp_native_save_path(void)
+{
+    static char path[512];
+    const char *tmp = getenv("TMPDIR");
+    if (!tmp || !tmp[0]) tmp = ".";
+    snprintf(path, sizeof(path),
+             "%s/firestaff_csb_v1_hintload_f1910_%lu.fsav",
+             tmp, (unsigned long)CSB_V1_SAVE_MAGIC_CSB);
+    return path;
+}
+
+static void xor_save_words_like_f1913(uint8_t *bytes,
+                                      size_t byte_count,
+                                      uint16_t key_index)
+{
+    static const uint16_t keys[32] = {
+        0x0001, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
+        0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
+        0x1231, 0x0212, 0x3273, 0x2253, 0x52B4, 0x4295, 0x72F6, 0x62D7,
+        0x9349, 0x8368, 0xB3AB, 0xA38A, 0xD3CB, 0xC3EA, 0xF3FF, 0xE3DE
+    };
+    size_t i;
+
+    for (i = 0; i < byte_count; i += 2u) {
+        uint16_t word = (uint16_t)((uint16_t)bytes[i] |
+                                   ((uint16_t)bytes[i + 1u] << 8));
+        word = (uint16_t)(word ^
+            keys[((uint16_t)(key_index + (uint16_t)(i / 2u))) & 0x1Fu]);
+        bytes[i] = (uint8_t)(word & 0xFFu);
+        bytes[i + 1u] = (uint8_t)((word >> 8) & 0xFFu);
     }
 }
 
@@ -757,6 +791,82 @@ int main(void)
             CHECK(memcmp(read_buf, scratch, (size_t)envelope_len) == 0,
                   "atomic-write: rejected replacement preserves payload identity");
         }
+    }
+
+    /* ── HINTLOAD save-part wrappers ── */
+    {
+        const char *path = tmp_native_save_path();
+        uint8_t payload[24];
+        uint8_t loaded[24];
+        uint8_t loaded_part[8];
+        uint8_t obf_part[8];
+        uint8_t deobf_part[8];
+        CSB_V1_SaveHeader hdr;
+        CSB_V1_SaveHeader loaded_hdr;
+        uint16_t key_index;
+        int rc;
+        size_t i;
+
+        remove(path);
+        for (i = 0; i < sizeof(payload); ++i) {
+            payload[i] = (uint8_t)(0x30u + i);
+        }
+        rc = csb_v1_save_header_build(&hdr, CSB_V1_SAVE_MAGIC_CSB, 0x4321u,
+                                      0x12345678u, 4, 5, 6, 2, 3,
+                                      0x01020304u, 777u);
+        CHECK(rc == 0, "F1914 fixture header builds");
+        rc = csb_v1_save_game(path, payload, (int)sizeof(payload), &hdr);
+        CHECK(rc == CSB_V1_SAVE_OK, "F1910 fixture native save writes");
+
+        memset(&loaded_hdr, 0, sizeof(loaded_hdr));
+        rc = csb_v1_f1914_load_and_deobfuscate_saved_game_header(
+            path, &loaded_hdr);
+        CHECK(rc == CSB_V1_LOAD_OK, "F1914 loads and verifies native header");
+        CHECK(loaded_hdr.Magic == CSB_V1_SAVE_MAGIC_CSB &&
+              loaded_hdr.GameID == 0x4321u,
+              "F1914 returns header identity fields");
+
+        memset(loaded_part, 0, sizeof(loaded_part));
+        rc = csb_v1_f1910_load_saved_game_part(
+            path, (long)sizeof(CSB_V1_SaveHeader) + 4L,
+            loaded_part, (uint32_t)sizeof(loaded_part));
+        CHECK(rc == CSB_V1_LOAD_OK, "F1910 loads exact state part");
+        CHECK(memcmp(loaded_part, payload + 4, sizeof(loaded_part)) == 0,
+              "F1910 part bytes match save payload slice");
+
+        key_index = (uint16_t)csb_v1_save_header_get_key_index(
+            CSB_V1_SAVE_MAGIC_CSB);
+        memcpy(obf_part, payload + 8, sizeof(obf_part));
+        xor_save_words_like_f1913(obf_part, sizeof(obf_part), key_index);
+        rc = csb_v1_save_game(path, obf_part, (int)sizeof(obf_part), &hdr);
+        CHECK(rc == CSB_V1_SAVE_OK, "F1913 fixture obfuscated part writes");
+        memset(deobf_part, 0, sizeof(deobf_part));
+        rc = csb_v1_f1913_load_and_deobfuscate_saved_game_part(
+            path, (long)sizeof(CSB_V1_SaveHeader), deobf_part,
+            (uint32_t)sizeof(deobf_part), key_index);
+        CHECK(rc == CSB_V1_LOAD_OK, "F1913 loads and deobfuscates exact part");
+        CHECK(memcmp(deobf_part, payload + 8, sizeof(deobf_part)) == 0,
+              "F1913 deobfuscated bytes match original part");
+
+        memset(loaded, 0xA5, sizeof(loaded));
+        rc = csb_v1_load_game(path, loaded, (int)sizeof(obf_part), NULL);
+        CHECK(rc == CSB_V1_LOAD_OK,
+              "production load path uses F1914/F1910 bounded part route");
+        CHECK(memcmp(loaded, obf_part, sizeof(obf_part)) == 0 &&
+              loaded[sizeof(obf_part)] == 0xA5,
+              "production bounded load remains exact and non-overwriting");
+
+        rc = csb_v1_f1910_load_saved_game_part(
+            path, (long)sizeof(CSB_V1_SaveHeader), loaded_part, 99u);
+        CHECK(rc == CSB_V1_LOAD_ERR_UNREADABLE,
+              "F1910 rejects truncated part without success");
+        rc = csb_v1_f1913_load_and_deobfuscate_saved_game_part(
+            path, (long)sizeof(CSB_V1_SaveHeader), deobf_part, 7u,
+            key_index);
+        CHECK(rc == CSB_V1_LOAD_ERR_UNREADABLE,
+              "F1913 rejects odd-sized word part");
+
+        remove(path);
     }
 
     /* ── Source-evidence citation chain ── */

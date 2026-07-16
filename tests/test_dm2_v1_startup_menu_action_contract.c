@@ -414,17 +414,12 @@ int main(void)
         &menu,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    check(row_count == 2 &&
+    check(row_count == 1 &&
               commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
               commands[0].gdat_category == DM2_GDAT_CATEGORY_TITLE &&
               commands[0].gdat_index == 0 &&
-              commands[0].gdat_field == 1 &&
-              commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
-              commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-              commands[1].gdat_category == DM2_GDAT_CATEGORY_TITLE &&
-              commands[1].gdat_index == 0 &&
-              commands[1].gdat_field == 4 &&
-              commands[1].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU &&
+              commands[0].gdat_field == 4 &&
+              commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU &&
               dm2_v1_startup_presentation_render_receipt(
                   &menu, commands, row_count, 1, &render_receipt) &&
               render_receipt.valid &&
@@ -449,11 +444,11 @@ int main(void)
               render_receipt.title_rect.h == 200 &&
               render_receipt.menu_rect.w == 320 &&
               render_receipt.menu_rect.h == 200 &&
-              render_receipt.panel_rect.x == 78 &&
-              render_receipt.panel_rect.y == 50 &&
-              render_receipt.menu_text_count == 6 &&
-              render_receipt.selectable_text_count == 3 &&
-              render_receipt.selected_highlight_count == 1 &&
+              render_receipt.panel_rect.w == 0 &&
+              render_receipt.panel_rect.h == 0 &&
+              render_receipt.menu_text_count == 0 &&
+              render_receipt.selectable_text_count == 0 &&
+              render_receipt.selected_highlight_count == 0 &&
               render_receipt.hud_runtime_ready == 1 &&
               render_receipt.hud_overlay_suppressed == 1 &&
               render_receipt.title_backdrop_ready == 1 &&
@@ -461,7 +456,7 @@ int main(void)
               render_receipt.save_slot_menu_ready == 1 &&
               render_receipt.new_game_menu_ready == 1 &&
               render_receipt.full_start_graphics_ready == 1,
-          "startup presentation emits the complete SKProject title/menu GDAT pair");
+          "startup presentation emits SHOW_MENU_SCREEN and receipt title evidence");
     host_facts.startup_menu_active = 1;
     check(dm2_v1_startup_presentation_view_receipt_from_host_facts(
               &host_facts,
@@ -478,8 +473,8 @@ int main(void)
               view_receipt.render.skproject_menu_query_ready == 1 &&
               view_receipt.render.title_rect.w == 320 &&
               view_receipt.render.title_rect.h == 200 &&
-              view_receipt.render.selectable_text_count == 3 &&
-              view_receipt.render.selected_highlight_count == 1 &&
+              view_receipt.render.selectable_text_count == 0 &&
+              view_receipt.render.selected_highlight_count == 0 &&
               view_receipt.render.hud_overlay_suppressed == 1 &&
               view_receipt.render.title_backdrop_ready == 1 &&
               view_receipt.render.resume_menu_ready == 1 &&
@@ -522,9 +517,9 @@ int main(void)
               boot_host_view_receipt.title_cycle_remaining_ticks == 48 &&
               boot_host_view_receipt.exact_title_timing_ready == 1 &&
               boot_host_view_receipt.menu_row_count == 3 &&
-              boot_host_view_receipt.menu_text_count == 6 &&
-              boot_host_view_receipt.selectable_text_count == 3 &&
-              boot_host_view_receipt.selected_highlight_count == 1 &&
+              boot_host_view_receipt.menu_text_count == 0 &&
+              boot_host_view_receipt.selectable_text_count == 0 &&
+              boot_host_view_receipt.selected_highlight_count == 0 &&
               boot_host_view_receipt.menu_panel_ready == 1 &&
               boot_host_view_receipt.startup_menu_assets_ready == 1 &&
               boot_host_view_receipt.startup_hud_handoff_ready == 1 &&

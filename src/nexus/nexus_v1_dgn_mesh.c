@@ -82,6 +82,31 @@ int nexus_v1_dgn_mesh_build(const Nexus_V1_DgnMeshInput *input,
     out_mesh->can_submit_geometry = 1;
     /* Structure2/Structure1G payloads are not decoded texture surfaces yet. */
     out_mesh->can_submit_textured_raster = 0;
+    out_mesh->static_texture_raster_blocked =
+        out_mesh->static_texture_face_count > 0 ? 1 : 0;
+    out_mesh->animated_texture_raster_blocked =
+        out_mesh->animated_texture_face_count > 0 ? 1 : 0;
+    out_mesh->material_provenance_required =
+        (out_mesh->static_texture_face_count > 0 ||
+         out_mesh->animated_texture_face_count > 0)
+            ? 1
+            : 0;
+    out_mesh->structure2_material_required =
+        out_mesh->static_texture_raster_blocked;
+    out_mesh->structure1g_material_required =
+        out_mesh->animated_texture_raster_blocked;
+    out_mesh->structure2_pixel_semantics_required =
+        out_mesh->static_texture_raster_blocked;
+    out_mesh->structure1g_animation_semantics_required =
+        out_mesh->animated_texture_raster_blocked;
+    out_mesh->material_bank_mutation_blocked =
+        out_mesh->material_provenance_required;
+    out_mesh->vdp1_provenance_required =
+        out_mesh->material_provenance_required;
+    out_mesh->vdp1_draw_list_blocked =
+        out_mesh->vdp1_provenance_required;
+    out_mesh->textured_raster_blocked =
+        out_mesh->material_provenance_required;
     return 1;
 }
 

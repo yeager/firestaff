@@ -21,6 +21,13 @@ void redmcsb_f1033_hatch_box(
     int16_t color,
     int16_t screen_pixel_width);
 
+void F1033_HatchBox_Unreferenced(
+    redmcsb_f1033_hatch_box_primitive_fn hatch_box_primitive,
+    uint8_t *screen_bitmap,
+    int16_t *xyz,
+    int16_t color,
+    int16_t screen_pixel_width);
+
 const char *redmcsb_f1033_hatch_box_source_evidence(void);
 
 #ifdef __cplusplus

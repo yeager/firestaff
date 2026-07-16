@@ -94,6 +94,30 @@ typedef struct {
 } DM2_V1_G1PartialMapBootReceipt;
 
 typedef struct {
+    int valid;
+    int committed;
+    int incomplete;
+    int map_count;
+    int outdoor_map_count;
+    int indoor_map_count;
+    int square_bytes;
+    int raw_map_data_base;
+    int column_index_base;
+    int ground_stack_base;
+    int ground_stack_count;
+    int text_data_base;
+    int text_word_count;
+    int candidate_pool_base;
+    int candidate_pool_end;
+    int g1_extension_base;
+    int g1_extension_size;
+    int record_graph_complete;
+    uint32_t map_dimension_hash;
+    uint32_t map_graphics_style_hash;
+    uint32_t arrangement_hash;
+} DM2_V1_ArrangeDungeonReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -183,6 +207,13 @@ int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
  * promoted as a partial world. */
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
 int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d);
+/* Source-named DM2_ARRANGE_DUNGEON receipt.  This does not invent records or
+ * complete the PC G1 graph; it only admits the arranged map/dungeon layout
+ * already proven by dm2_v1_dungeon_load. */
+int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
+    const uint8_t *dat,
+    int size,
+    DM2_V1_ArrangeDungeonReceipt *out);
 /* Collect non-mutating PC G1 c_record provenance for the source-ordered pool
  * span. Record lookup/traversal is available only when record_graph_complete
  * is set by the independent bounded graph validator. */
@@ -191,4 +222,5 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
     DM2_V1_G1RecordPoolEvidence *out);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
+const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void);
 #endif

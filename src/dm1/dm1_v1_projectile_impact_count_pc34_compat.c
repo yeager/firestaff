@@ -1,6 +1,6 @@
 #include "dm1_v1_projectile_impact_count_pc34_compat.h"
 
-int F0218_PROJECTILE_GetImpactCount_Compat(
+int F0218_PROJECTILE_GetImpactCount(
     const struct ProjectileList_Compat *projectiles,
     int mapIndex,
     int mapX,
@@ -20,13 +20,24 @@ int F0218_PROJECTILE_GetImpactCount_Compat(
         const struct ProjectileInstance_Compat *projectile =
             &projectiles->entries[slot];
 
-        if (projectile->slotIndex < 0 || projectile->mapIndex != mapIndex ||
-            projectile->mapX != mapX || projectile->mapY != mapY ||
-            projectile->cell != cell) {
+        if (projectile->slotIndex < 0 || projectile->reserved3 == 0 ||
+            projectile->mapIndex != mapIndex || projectile->mapX != mapX ||
+            projectile->mapY != mapY || projectile->cell != cell) {
             continue;
         }
         ++count;
     }
 
     return count;
+}
+
+int F0218_PROJECTILE_GetImpactCount_Compat(
+    const struct ProjectileList_Compat *projectiles,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell)
+{
+    return F0218_PROJECTILE_GetImpactCount(
+        projectiles, mapIndex, mapX, mapY, cell);
 }

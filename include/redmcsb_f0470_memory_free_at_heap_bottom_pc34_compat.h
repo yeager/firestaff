@@ -28,4 +28,8 @@ bool F0470_MEMORY_FreeAtHeapBottom_PC34(
     ReDMCSBF0470MemoryHeapBoundsPc34Compat *bounds,
     size_t byte_count);
 
+bool F0470_MEMORY_FreeAtHeapBottom(
+    ReDMCSBF0470MemoryHeapBoundsPc34Compat *bounds,
+    size_t byte_count);
+
 #endif

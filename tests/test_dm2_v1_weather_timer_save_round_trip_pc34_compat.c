@@ -446,6 +446,52 @@ static void test_weather_seed_persists_via_gamestate_round_trip(void)
           "weather byte in gamestate survives round-trip");
 }
 
+/* ── Test 6: skproject weather timer transaction ──────────────────── */
+
+static void test_set_timer_weather_source_transaction(void)
+{
+    const uint32_t seed = 0x00002d2du;
+    const uint32_t expected_seed = dm2_v1_weather_advance_seed(seed);
+    const uint8_t expected_weather = (uint8_t)((expected_seed >> 8) & 0x3u);
+    DM2_V1_WeatherState state;
+    DM2_V1_WeatherTimerReceipt receipt;
+
+    dm2_v1_weather_init(&state);
+    dm2_v1_weather_set_seed(&state, seed);
+
+    CHECK(dm2_v1_weather_set_timer_weather(&state, 0,
+                                            DM2_WEATHER_TIMER_INTERVAL_TICKS,
+                                            &receipt) == 0,
+          "DM2_SET_TIMER_WEATHER rejects indoor transition");
+    CHECK(receipt.valid && receipt.source_set_timer_weather &&
+          !receipt.source_weather_3df7_0037 && !receipt.due &&
+          receipt.seed_before == seed && receipt.seed_after == seed,
+          "indoor weather timer receipt preserves source seed");
+
+    CHECK(dm2_v1_weather_set_timer_weather(
+              &state, 1, DM2_WEATHER_TIMER_INTERVAL_TICKS - 1u,
+              &receipt) == 0,
+          "DM2_SET_TIMER_WEATHER waits for exact interval tick");
+    CHECK(receipt.valid && receipt.outdoor && !receipt.due &&
+          receipt.interval_ticks == DM2_WEATHER_TIMER_INTERVAL_TICKS &&
+          receipt.seed_after == seed,
+          "pre-interval outdoor receipt is non-mutating");
+
+    CHECK(dm2_v1_weather_set_timer_weather(
+              &state, 1, DM2_WEATHER_TIMER_INTERVAL_TICKS,
+              &receipt) == 1,
+          "DM2_SET_TIMER_WEATHER dispatches weather_3df7_0037");
+    CHECK(receipt.valid && receipt.source_set_timer_weather &&
+          receipt.source_weather_3df7_0037 && receipt.due &&
+          receipt.seed_before == seed &&
+          receipt.seed_after == expected_seed &&
+          receipt.weather_after == expected_weather &&
+          receipt.intensity_after ==
+              (uint8_t)state.weather_intensity &&
+          receipt.transaction_hash != 0u,
+          "weather timer receipt binds skproject transition fields");
+}
+
 /* ── Test 6: source_evidence strings are non-empty and cite skload ──── */
 
 static void test_save_source_evidence_strings(void)
@@ -492,6 +538,9 @@ int main(void)
 
     printf("\n--- test_weather_seed_persists_via_gamestate_round_trip ---\n");
     test_weather_seed_persists_via_gamestate_round_trip();
+
+    printf("\n--- test_set_timer_weather_source_transaction ---\n");
+    test_set_timer_weather_source_transaction();
 
     printf("\n--- test_save_source_evidence_strings ---\n");
     test_save_source_evidence_strings();

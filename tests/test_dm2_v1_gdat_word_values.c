@@ -253,10 +253,65 @@ static void test_interface_palette_decoder_fixture(void)
     }
 }
 
+static void test_immediate_typed_entries_do_not_alias_raw_payloads(void)
+{
+    uint8_t raw_payload[4] = { 0xdeu, 0xadu, 0xbeu, 0xefu };
+    uint32_t offsets[1] = { 0u };
+    uint32_t sizes[1] = { sizeof(raw_payload) };
+    DM2_V1_GdatEntry entries[2];
+    DM2_V1_AssetLoader loader;
+    const uint8_t *raw;
+    size_t raw_size;
+    uint16_t value;
+
+    memset(&loader, 0, sizeof(loader));
+    memset(entries, 0, sizeof(entries));
+    loader.data = raw_payload;
+    loader.data_size = sizeof(raw_payload);
+    loader.loaded = 1;
+    loader.raw_data_count = 1;
+    loader.raw_offsets = offsets;
+    loader.raw_sizes = sizes;
+    loader.entries = entries;
+    loader.entry_count = 2;
+
+    entries[0].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
+    entries[0].cls2 = 7;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[0].cls4 = 1;
+    entries[0].data_index = 0x1234u;
+    entries[1].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    entries[1].cls2 = 2;
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
+    entries[1].cls4 = 0x22;
+    entries[1].data_index = 0x0042u;
+
+    raw_size = 99u;
+    raw = dm2_v1_asset_load_sized(
+        &loader, DM2_GDAT_CATEGORY_WEAPONS, 7, 1, &raw_size);
+    CHECK(raw == NULL && raw_size == 0u,
+          "dtWordValue immediate entry does not alias a raw payload slot");
+    CHECK(dm2_v1_asset_load_word_value(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 7, 1, &value) == 1 &&
+              value == 0x1234u,
+          "dtWordValue remains available through exact typed lookup");
+
+    raw_size = 99u;
+    raw = dm2_v1_asset_load_sized(
+        &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2, 0x22, &raw_size);
+    CHECK(raw == NULL && raw_size == 0u,
+          "dtImageOffset immediate entry does not alias a raw payload slot");
+    CHECK(dm2_v1_asset_load_image_offset(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2, 0x22, &value) == 1 &&
+              value == 0x0042u,
+          "dtImageOffset remains available through exact typed lookup");
+}
+
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
     test_interface_palette_decoder_fixture();
+    test_immediate_typed_entries_do_not_alias_raw_payloads();
     test_interface_palette_real_data();
     test_item_word_values_real_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

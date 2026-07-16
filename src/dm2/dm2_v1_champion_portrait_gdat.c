@@ -15,6 +15,8 @@ int dm2_v1_champion_portrait_gdat_route(
 {
     if (out_route) memset(out_route, 0, sizeof(*out_route));
     if (!input || !out_route || !input->hero_type_source_bound ||
+        input->hero_type !=
+            (uint8_t)DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE ||
         input->player_index >= DM2_V1_CHAMPION_PORTRAIT_PLAYER_COUNT) {
         return 0;
     }

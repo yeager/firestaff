@@ -999,6 +999,13 @@ int nexus_v1_dmdf_import_bpk_material_bank_host_route(
     out_receipt->blocked_truncated_uploads = upload.blocked_truncated_uploads;
     out_receipt->expected_upload_bytes = upload.expected_upload_bytes;
     out_receipt->extractable_upload_bytes = upload.extractable_upload_bytes;
+    out_receipt->prs3_evidence_only = upload.prs3_evidence_only;
+    out_receipt->prs3_decoder_promoted = upload.prs3_decoder_promoted;
+    out_receipt->prs3_decoded_pixels_emitted =
+        upload.prs3_decoded_pixels_emitted;
+    out_receipt->prs3_upload_blocked = upload.prs3_upload_blocked;
+    out_receipt->renderer_handoff_blocked =
+        upload.blocks_real_menu_surface_render;
     out_receipt->blocks_real_surface_render =
         upload.blocks_real_menu_surface_render;
     out_receipt->fallback_visuals_permitted =
@@ -1017,6 +1024,9 @@ int nexus_v1_dmdf_import_bpk_material_bank_host_route(
     if (upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED &&
         upload.route != NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED) {
         out_receipt->after_surface_count = before_surface_count;
+        out_receipt->material_pixel_promotion_blocked = 1;
+        out_receipt->material_promotion_blocked = 1;
+        out_receipt->material_bank_mutation_blocked = 1;
         return 0;
     }
 
@@ -1044,6 +1054,12 @@ int nexus_v1_dmdf_import_bpk_material_bank_host_route(
     }
     out_receipt->host_consumed_surfaces =
         (imported > 0 && out_receipt->imported_surface_count > 0) ? 1 : 0;
+    out_receipt->material_pixel_promotion_blocked =
+        out_receipt->host_consumed_surfaces ? 0 : 1;
+    out_receipt->material_promotion_blocked =
+        out_receipt->host_consumed_surfaces ? 0 : 1;
+    out_receipt->material_bank_mutation_blocked =
+        out_receipt->host_consumed_surfaces ? 0 : 1;
     return imported > 0;
 }
 
@@ -1261,6 +1277,12 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
         out_plan->header_minus_payload = UINT32_MAX;
     }
     out_plan->decode_blocked = 1;
+    out_plan->evidence_only = 1;
+    out_plan->renderer_handoff_blocked = 1;
+    out_plan->upload_blocked = 1;
+    out_plan->decoder_promoted = 0;
+    out_plan->decoded_pixels_emitted = 0U;
+    out_plan->fallback_visuals_permitted = 0;
     return NEXUS_V1_BPK_PRS3_STREAM_OK;
 }
 
@@ -1317,6 +1339,12 @@ int nexus_v1_bpk_archive_prs3_candidate_evidence_with_bit_order(
         row.mode = plan.mode;
         row.expected_output_bytes = plan.expected_output_bytes;
         row.body_size = plan.body_size;
+        row.runtime_decode_status = NEXUS_V1_BPK_DECODE_ERR_STREAM;
+        row.runtime_decode_blocked = 1;
+        row.evidence_only = 1;
+        row.renderer_handoff_blocked = 1;
+        row.decoded_pixels_emitted = 0U;
+        row.fallback_visuals_permitted = 0;
         ++out_summary->prs3_surfaces;
         if (plan.expected_output_bytes == 0U ||
             plan.expected_output_bytes > NEXUS_V1_BPK_PRS3_CANDIDATE_MAX_OUTPUT_BYTES) {
@@ -1350,6 +1378,10 @@ int nexus_v1_bpk_archive_prs3_candidate_evidence_with_bit_order(
         ++used;
     }
     out_summary->used = used;
+    out_summary->decoder_promoted = 0;
+    out_summary->renderer_handoff_blocked =
+        (out_summary->prs3_surfaces > 0U) ? 1 : 0;
+    out_summary->decoded_pixels_emitted = 0U;
     return 0;
 }
 
@@ -1479,6 +1511,12 @@ int nexus_v1_bpk_archive_prs3_framed_decode_evidence(
         row.mode = plan.mode;
         row.expected_output_bytes = plan.expected_output_bytes;
         row.directory_body_size = plan.body_size;
+        row.runtime_decode_status = NEXUS_V1_BPK_DECODE_ERR_STREAM;
+        row.runtime_decode_blocked = 1;
+        row.evidence_only = 1;
+        row.renderer_handoff_blocked = 1;
+        row.decoded_pixels_emitted = 0U;
+        row.fallback_visuals_permitted = 0;
         ++out_summary->prs3_surfaces;
 
         /* The BE word is an observed frame length. The known corpus closes
@@ -1530,6 +1568,10 @@ int nexus_v1_bpk_archive_prs3_framed_decode_evidence(
         ++used;
     }
     out_summary->used = used;
+    out_summary->decoder_promoted = 0;
+    out_summary->renderer_handoff_blocked =
+        (out_summary->prs3_surfaces > 0U) ? 1 : 0;
+    out_summary->decoded_pixels_emitted = 0U;
     return 0;
 }
 
@@ -1654,8 +1696,20 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                 row.body_size = plan.body_size;
                 row.header_first_u32 = plan.header_first_u32;
                 row.header_minus_payload = plan.header_minus_payload;
+                row.evidence_only = plan.evidence_only;
+                row.renderer_handoff_blocked =
+                    plan.renderer_handoff_blocked;
+                row.upload_blocked = plan.upload_blocked;
+                row.decoded_pixels_emitted = plan.decoded_pixels_emitted;
+                row.fallback_visuals_permitted =
+                    plan.fallback_visuals_permitted;
             } else {
                 row.header_minus_payload = UINT32_MAX;
+                row.evidence_only = 1;
+                row.renderer_handoff_blocked = 1;
+                row.upload_blocked = 1;
+                row.decoded_pixels_emitted = 0U;
+                row.fallback_visuals_permitted = 0;
             }
             expected = (uint64_t)prefix.width * (uint64_t)prefix.height;
             if (expected > UINT32_MAX) {
@@ -1667,6 +1721,11 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
              * permissive trial decoder into a real upload route. */
             row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
             row.decode_blocked = 1;
+            row.evidence_only = 1;
+            row.renderer_handoff_blocked = 1;
+            row.upload_blocked = 1;
+            row.decoded_pixels_emitted = 0U;
+            row.fallback_visuals_permitted = 0;
             row.expected_output_bytes = (uint32_t)expected;
             ++out_receipt->blocked_prs3_uploads;
             out_receipt->expected_upload_bytes += expected;
@@ -1707,15 +1766,25 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     } else if (out_receipt->blocked_truncated_uploads > 0U) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED;
+    } else if (out_receipt->truncated) {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY;
     } else if (out_receipt->ready_uploads > handoff.ready_stored_surfaces) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED;
     } else {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     }
     out_receipt->blocks_real_menu_surface_render =
-        (out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 ||
-         out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED)
+        (out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES ||
+         out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 ||
+         out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED ||
+         out_receipt->route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY)
             ? 1 : 0;
+    out_receipt->prs3_evidence_only =
+        (out_receipt->blocked_prs3_uploads > 0U) ? 1 : 0;
+    out_receipt->prs3_decoder_promoted = 0;
+    out_receipt->prs3_decoded_pixels_emitted = 0U;
+    out_receipt->prs3_upload_blocked =
+        (out_receipt->blocked_prs3_uploads > 0U) ? 1 : 0;
     /* MENU.BPK is a production startup dependency. A stored directory entry
      * is not permission to replace undecoded PRS3 menu media. */
     out_receipt->fallback_visuals_permitted = 0;
@@ -1732,6 +1801,8 @@ const char *nexus_v1_bpk_runtime_upload_route_name(
         return "blocked-truncated";
     case NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES: return "no-surfaces";
     case NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED: return "ready-decoded";
+    case NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY:
+        return "blocked-capacity";
     default: return "unknown";
     }
 }
@@ -1848,8 +1919,19 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
     }
     out_receipt->decode_blocked =
         (out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
-         out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED)
+         out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED ||
+         out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES)
             ? 1 : 0;
+    out_receipt->prs3_evidence_only =
+        (out_receipt->blocked_prs3_surfaces > 0U ||
+         out_receipt->prs3_stream_plans > 0U ||
+         out_receipt->prs3_decode_failures > 0U)
+            ? 1 : 0;
+    out_receipt->prs3_decoder_promoted = 0;
+    out_receipt->prs3_decoded_pixels_emitted = 0U;
+    out_receipt->renderer_handoff_blocked =
+        out_receipt->decode_blocked;
+    out_receipt->fallback_visuals_permitted = 0;
     return 0;
 }
 
@@ -2021,6 +2103,12 @@ int nexus_v1_bpk_archive_prs3_payload_evidence(
             row->header_first_u32 = header_first;
             row->header_first_readable = has_first;
             row->header_minus_payload = header_minus;
+            row->runtime_decode_status = NEXUS_V1_BPK_DECODE_ERR_STREAM;
+            row->runtime_decode_blocked = 1;
+            row->evidence_only = 1;
+            row->renderer_handoff_blocked = 1;
+            row->decoded_pixels_emitted = 0U;
+            row->fallback_visuals_permitted = 0;
             if (uncompressed_size > 0U) {
                 row->compression_ratio =
                     (double)payload_size / (double)uncompressed_size;
@@ -2074,6 +2162,9 @@ int nexus_v1_bpk_archive_prs3_payload_evidence(
     out_summary->min_compression_ratio = have_ratio ? min_ratio : 0.0;
     out_summary->max_compression_ratio = have_ratio ? max_ratio : 0.0;
     out_summary->truncated = (int)truncated;
+    out_summary->decoder_promoted = 0;
+    out_summary->renderer_handoff_blocked = (used > 0U) ? 1 : 0;
+    out_summary->decoded_pixels_emitted = 0U;
 
     /* Pass 2: bounded byte-frequency receipts for every row the caller
      * actually got back. Each sample is bounded to min(sample_size,

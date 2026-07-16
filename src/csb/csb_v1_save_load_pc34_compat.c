@@ -100,6 +100,7 @@ const char *csb_v1_save_source_evidence(void)
     return
         "CSBWin/SaveGame.cpp: save/load + DM1 import 2953 lines\n"
         "ReDMCSB LOADSAVE.C: F0435_STARTEND_LoadGame F0433_STARTEND_SaveGame\n"
+        "ReDMCSB HINTLOAD.C: F1910_LoadSavedGamePart F1913_LoadAndDeobfuscateSavedGamePart F1914_LoadAndDeobfuscateSavedGameHeader\n"
         "ReDMCSB SAVEHEAD.C: F0429_IsReadSaveHeaderSuccessful F0430_IsWriteObfuscatedSaveHeaderSuccessful\n"
         "ReDMCSB REQDISK.C: F0428_RequireGameDiskInDrive F0452_GetDiskTypeInDrive_CPSB\n"
         "ReDMCSB CEDTINC7.C: G3764_THAT_S_THE_CSB_UTILITY_DISK prompt\n"
@@ -373,6 +374,81 @@ int csb_v1_save_header_verify(const CSB_V1_SaveHeader *hdr,
     return 0;
 }
 
+/* ── HINTLOAD.C save-part load wrappers ─────────────────────────────── */
+/* F1910_LoadSavedGamePart: exact bounded part read. */
+int csb_v1_f1910_load_saved_game_part(const char *path,
+                                       long offset,
+                                       void *out_part,
+                                       uint32_t part_size)
+{
+    FILE *f;
+    size_t n;
+
+    if (!path || offset < 0) return CSB_V1_LOAD_ERR_UNREADABLE;
+    if (part_size > 0 && !out_part) return CSB_V1_LOAD_ERR_UNREADABLE;
+
+    f = fopen(path, "rb");
+    if (!f) return CSB_V1_LOAD_ERR_NOT_FOUND;
+    if (fseek(f, offset, SEEK_SET) != 0) {
+        fclose(f);
+        return CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+    n = part_size ? fread(out_part, 1, (size_t)part_size, f) : 0u;
+    fclose(f);
+
+    if (n != (size_t)part_size) return CSB_V1_LOAD_ERR_UNREADABLE;
+    return CSB_V1_LOAD_OK;
+}
+
+/* F1913_LoadAndDeobfuscateSavedGamePart: F1910 plus SAVEHEAD key XOR.
+ * Firestaff uses this only for even-sized save parts because the original
+ * deobfuscation table is word-indexed. */
+int csb_v1_f1913_load_and_deobfuscate_saved_game_part(
+    const char *path,
+    long offset,
+    void *out_part,
+    uint32_t part_size,
+    uint16_t key_index)
+{
+    uint8_t *bytes = (uint8_t *)out_part;
+    int rc;
+    uint32_t i;
+
+    if ((part_size & 1u) != 0u) return CSB_V1_LOAD_ERR_UNREADABLE;
+    rc = csb_v1_f1910_load_saved_game_part(path, offset, out_part, part_size);
+    if (rc != CSB_V1_LOAD_OK) return rc;
+
+    for (i = 0; i < part_size; i += 2u) {
+        uint16_t word = read_u16_le_save_header(bytes + i);
+        uint16_t key = g_obfuscation_keys[
+            (((int)key_index + (int)(i / 2u)) & 0x1F)];
+        word = (uint16_t)(word ^ key);
+        bytes[i] = (uint8_t)(word & 0xFFu);
+        bytes[i + 1u] = (uint8_t)((word >> 8) & 0xFFu);
+    }
+    return CSB_V1_LOAD_OK;
+}
+
+/* F1914_LoadAndDeobfuscateSavedGameHeader: header read/verification through
+ * the same SAVEHEAD.C F0429 checksum relation used by native load. */
+int csb_v1_f1914_load_and_deobfuscate_saved_game_header(
+    const char *path,
+    CSB_V1_SaveHeader *out_header)
+{
+    uint8_t raw[CSB_V1_SAVE_HEADER_SIZE];
+    int rc;
+
+    if (!out_header) return CSB_V1_LOAD_ERR_UNREADABLE;
+    rc = csb_v1_f1910_load_saved_game_part(
+        path, 0L, raw, (uint32_t)sizeof(raw));
+    if (rc != CSB_V1_LOAD_OK) return rc;
+    memcpy(out_header, raw, sizeof(*out_header));
+    if (csb_v1_save_header_verify(out_header, raw) != 0) {
+        return CSB_V1_LOAD_ERR_DAMAGED;
+    }
+    return CSB_V1_LOAD_OK;
+}
+
 /* ── Disk type detection ─────────────────────────────────────────────── */
 /* F0452_FLOPPY_GetDiskTypeInDrive_CPSB
  *
@@ -509,10 +585,8 @@ int csb_v1_load_game(const char *path,
                       void *state, int max_size,
                       CSB_V1_SaveHeader *out_header)
 {
-    FILE *f;
     uint8_t *buf = (uint8_t *)state;
     uint8_t *candidate_state = NULL;
-    size_t hdr_read, data_read;
     CSB_V1_SaveHeader tmp_hdr;
     int result;
 
@@ -520,43 +594,26 @@ int csb_v1_load_game(const char *path,
     if (!state && max_size != 0) return -1;
     if (state && max_size == 0) return -1;
 
-    f = fopen(path, "rb");
-    if (!f) return CSB_V1_LOAD_ERR_NOT_FOUND;
+    result = csb_v1_f1914_load_and_deobfuscate_saved_game_header(
+        path, &tmp_hdr);
+    if (result != CSB_V1_LOAD_OK) return result;
 
-    /* Read and verify save header */
-    hdr_read = fread(&tmp_hdr, 1, sizeof(tmp_hdr), f);
-    if (hdr_read != sizeof(tmp_hdr)) {
-        fclose(f);
-        return CSB_V1_LOAD_ERR_DAMAGED;
-    }
-
-    /* Verify header validity */
-    result = csb_v1_save_header_verify(&tmp_hdr, (const uint8_t *)&tmp_hdr);
-    if (result != 0) {
-        fclose(f);
-        return CSB_V1_LOAD_ERR_DAMAGED;
-    }
-
-    /* ReDMCSB LOADSAVE.C F0435 lines ~2665-2724 validates the header before
-     * it publishes GLOBAL_DATA into the live runtime. Keep the Firestaff
-     * bounded-prefix boundary equally transactional: a short or failed read
-     * must not leave a partly replaced caller state behind. */
+    /* ReDMCSB HINTLOAD.C F1914 validates the header before F1910 reads save
+     * parts, and LOADSAVE.C F0435 publishes them only after validation. Keep
+     * the Firestaff bounded-prefix boundary equally transactional: a short or
+     * failed read must not leave a partly replaced caller state behind. */
     if (max_size > 0) {
         candidate_state = (uint8_t *)malloc((size_t)max_size);
         if (!candidate_state) {
-            fclose(f);
             return CSB_V1_LOAD_ERR_UNREADABLE;
         }
-        data_read = fread(candidate_state, 1, (size_t)max_size, f);
-    } else {
-        data_read = 0;
-    }
-
-    fclose(f);
-
-    if ((int)data_read != max_size) {
-        free(candidate_state);
-        return CSB_V1_LOAD_ERR_UNREADABLE;
+        result = csb_v1_f1910_load_saved_game_part(
+            path, (long)sizeof(CSB_V1_SaveHeader), candidate_state,
+            (uint32_t)max_size);
+        if (result != CSB_V1_LOAD_OK) {
+            free(candidate_state);
+            return result;
+        }
     }
 
     if (max_size > 0) {

@@ -33,6 +33,11 @@ void F1007_AddMemoryChunk_PC34_Compat(
     int32_t byte_count,
     int16_t requirements);
 
+void F1007_AddMemoryChunk(
+    redmcsb_f1007_memory_chunk_pc34_compat *memory_chunk,
+    int32_t byte_count,
+    int16_t requirements);
+
 const char *redmcsb_f1007_add_memory_chunk_source_evidence(void);
 
 #ifdef __cplusplus

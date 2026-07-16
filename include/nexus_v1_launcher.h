@@ -298,6 +298,8 @@ typedef struct {
     int structure1_host_provenance_consumed;
     int dgn_static_material_source_consumed;
     int structure2_source_materialization_bound;
+    int structure2_vdp1_palette_binding_proven;
+    int item_ibs_vdp1_command_proven;
     int script_runtime_ready;
     int script_runtime_blocked;
     int level_loaded;
@@ -367,6 +369,8 @@ typedef struct {
     int dgn_wall_material_command_count;
     int dgn_material_semantics_complete;
     int structure2_source_materialization_bound;
+    int structure2_vdp1_palette_binding_proven;
+    int item_ibs_vdp1_command_proven;
     int dgn_static_material_source_consumed;
     int dgn_viewport_render_ready;
     int dgn_viewport_rasterized_command_count;
@@ -1060,6 +1064,11 @@ int nexus_v1_launcher_m12_startup_package_from_flags(
     int data_ready,
     int version_ready,
     Nexus_V1_M12StartupPackageReceipt *out_receipt);
+int nexus_v1_launcher_m12_startup_package_from_data_gate(
+    int supported,
+    int data_ready,
+    int version_ready,
+    Nexus_V1_M12StartupPackageReceipt *out_receipt);
 int nexus_v1_launcher_m12_startup_package_from_full_start_package(
     const Nexus_V1_StartupFullStartPackageReceipt *package,
     Nexus_V1_M12StartupPackageReceipt *out_receipt);
@@ -1207,6 +1216,8 @@ int nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
     Nexus_V1_StartupHostActionReceipt *out_receipt);
 const char *nexus_v1_launcher_startup_runtime_handoff_route_name(
     Nexus_V1_StartupRuntimeHandoffRoute route);
+const char *nexus_v1_launcher_dgn_visual_blocker_from_render_plan(
+    const Nexus_V1_DgnRenderPlanReceipt *render_plan);
 int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     const Nexus_V1_StartupRuntimeState *state,
     const Nexus_V1_StartupChampionExecution *execution,

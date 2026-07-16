@@ -184,6 +184,24 @@ static void mutate_slot0_for_repaint(M11_GameViewState* game) {
     game->actingChampionOrdinal = 1;
 }
 
+/* ReDMCSB CHAMDRAW.C F0622 / M026_CHAMPION_ICON_INDEX. */
+static int probe_M11_GameView_GetV1ChampionIconSourceIndex(
+    const M11_GameViewState* game,
+    int slot) {
+    const struct ChampionState_Compat* champion;
+    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
+        slot >= game->world.party.championCount) return -1;
+    champion = &game->world.party.champions[slot];
+    if (!champion->present) return -1;
+    return ((int)champion->direction -
+            ((int)game->world.party.direction & 3) + 4) & 3;
+}
+
+/* ReDMCSB DEFS.H C034_GRAPHIC_SLOT_BOX_WOUNDED. */
+static int probe_M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
+    return 34;
+}
+
 static int check_bar_after_repaint(const M11_GameViewState* game,
                                    const unsigned char* fb,
                                    int stat) {
@@ -357,7 +375,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    firstIconSource = M11_GameView_GetV1ChampionIconSourceIndex(&game, 0);
+    firstIconSource = probe_M11_GameView_GetV1ChampionIconSourceIndex(&game, 0);
     iconBefore = rect_stats(fb, PROBE_FB_W, iconX, iconY, iconW, iconH);
     handBefore[0] = rect_stats(fb, PROBE_FB_W,
                                handX[0], handY[0], handW[0], handH[0]);
@@ -367,7 +385,7 @@ int main(int argc, char** argv) {
     mutate_slot0_for_repaint(&game);
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
 
-    secondIconSource = M11_GameView_GetV1ChampionIconSourceIndex(&game, 0);
+    secondIconSource = probe_M11_GameView_GetV1ChampionIconSourceIndex(&game, 0);
     iconAfter = rect_stats(fb, PROBE_FB_W, iconX, iconY, iconW, iconH);
     handAfter[0] = rect_stats(fb, PROBE_FB_W,
                               handX[0], handY[0], handW[0], handH[0]);
@@ -387,7 +405,7 @@ int main(int argc, char** argv) {
     }
 
     ok &= check_slot_box_perimeter(&game, fb, 0,
-                                   M11_GameView_GetV1SlotBoxWoundedGraphicId());
+                                   probe_M11_GameView_GetV1SlotBoxWoundedGraphicId());
     ok &= check_slot_box_perimeter(&game, fb, 1,
                                    M11_GameView_GetV1SlotBoxActingHandGraphicId());
     ok &= expect_true("slot0 ready hand pixels repainted",

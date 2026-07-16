@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_graphics_data_open.h"
 #include "dm2_v1_weather.h"
 
 /* These are retained here while the weather receipt owns the historic
@@ -18,6 +19,7 @@ typedef struct {
     uint32_t metadata_hash;
 } DM2_V1_GdatImageMetadata;
 
+#ifndef DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED
 typedef struct {
     int valid;
     uint8_t weather;
@@ -26,6 +28,8 @@ typedef struct {
     uint32_t weather_seed;
     uint32_t state_hash;
 } DM2_V1_WeatherRestoredStateReceipt;
+#define DM2_V1_WEATHER_RESTORED_STATE_RECEIPT_DEFINED 1
+#endif
 
 const uint8_t *dm2_v1_asset_load_text_sized(
     const DM2_V1_AssetLoader *loader, int category, int index, int field,
@@ -177,6 +181,24 @@ typedef struct {
     DM2_V1_WeatherDestinationClip clips[2];
 } DM2_V1_WeatherRendererReceipt;
 
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t graphics_data_open_hash;
+    uint32_t weather_receipt_hash;
+    uint32_t command_mask;
+    uint32_t material_mask;
+    uint32_t command_text_hash;
+    uint32_t renderer_hash;
+    int source_text_ready;
+    int material_ready;
+    int renderer_ready;
+    int palette_required;
+    int blit_authorized;
+    int no_fallback_blit;
+    uint32_t admission_hash;
+} DM2_V1_WeatherRuntimeAdmissionReceipt;
+
 /* UPDATE_WEATHER selects these ENVIRONMENT fields.  They are source GDAT
  * addresses, not locally generated cloud or ground textures. */
 #define DM2_V1_ENVIRONMENT_SKY_CLOUDS_MEDIUM 0x40u
@@ -228,6 +250,11 @@ int dm2_v1_weather_gdat_renderer_receipt(
     const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count,
     const DM2_V1_WeatherDrawContext *context, const uint8_t *rect_table,
     size_t rect_table_size, DM2_V1_WeatherRendererReceipt *out);
+int dm2_v1_weather_runtime_admission_receipt(
+    const DM2_V1_GraphicsDataOpenReceipt *graphics_open,
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    DM2_V1_WeatherRuntimeAdmissionReceipt *out);
 int dm2_v1_weather_distant_environment_receipt(
     const DM2_V1_WeatherGdatReceipt *weather, uint8_t command,
     uint8_t slot_index, const uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES],

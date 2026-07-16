@@ -1,6 +1,67 @@
 
 # Unreleased
 
+# Firestaff v3.0.75
+
+Firestaff v3.0.75 packages current source-locked runtime work from `main`.
+
+## Highlights since v3.0.74
+
+- **DM1**: original title palette latching now occurs before the first zoom
+  VBlank, and source-lock runtime probe contracts cover title, hand slots and
+  mirror backing geometry.
+- **Theron's Quest**: authenticated Mednafen receipts preserve dynamic CD_READ
+  destination-RAM spans and VCE word order without claiming an unproven
+  bitmap/palette binding.
+- **Runtime safety**: incomplete original material provenance remains
+  fail-closed rather than rendering substitute data.
+
+## Verification
+
+- Focused DM1 probes and Theron loader-trace CTest checks passed locally.
+- GitHub Actions release packaging is dispatched for `v3.0.75`.
+
+# Firestaff v3.0.74
+
+Firestaff v3.0.74 packages the latest source-locked runtime work from `main`.
+
+## Highlights since v3.0.73
+
+- **DM1**: original PC34 timeline save events now retain and restore C11
+  action-enable, C20 sound, C25 explosion, and group-reaction records.
+- **CSB**: more CSBWin saved DSA timer routes are source-gated before runtime
+  dispatch, including doors, teleports, pits, messages, and false walls.
+- **DM2**: the original GDAT save/load dialogue now uses its source image,
+  local palette, rectangle, labels, and input state in M11.
+- **Nexus/Theron**: stricter fail-closed DGN and Track 02 route gates prevent
+  unproven data from becoming visible runtime content.
+
+## Verification
+
+- Focused DM1 original-save, CSB DSA, DM2 dialogue, and Nexus DGN tests passed
+  locally.
+- GitHub Actions builds and packages platform artifacts from the `v3.0.74` tag.
+
+# Firestaff v3.0.73
+
+Firestaff v3.0.73 packages the latest DM1 source-faithful runtime and startup
+work from `main`.
+
+## Highlights since v3.0.72
+
+- **DM1 runtime**: killed-all materialization now preserves source-owned fixed
+  drops, delayed thuds, raw group state, and off-map lifecycle behavior.
+- **DM1 visuals**: HoC/projectile and party-HUD real-data probes were expanded;
+  Thieves' Eye now consumes its original D1C wall material path.
+- **DM1 startup**: entrance switch audio, credits loop ownership, and source
+  door timing/geometry gained stricter ReDMCSB-backed coverage.
+
+## Verification
+
+- Focused DM1 spell, startup, F0190 runtime, real-data viewport, and HUD
+  checks passed locally.
+- GitHub Actions packages the platform artifacts from the `v3.0.73` tag.
+
 # Firestaff v3.0.72
 
 Firestaff v3.0.72 packages current `main` after broader startup ownership,

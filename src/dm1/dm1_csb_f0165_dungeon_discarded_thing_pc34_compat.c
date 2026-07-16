@@ -46,7 +46,7 @@ static int dm1_csb_f0165_discard_selected(
     return ops->discard_thing(context, action, thing, map_index, map_x, map_y);
 }
 
-uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
+uint16_t F0165_DUNGEON_GetDiscardedThing(
     DM1_CSB_F0165_DiscardState *state,
     const DM1_CSB_F0165_DungeonOps *ops,
     void *context,
@@ -117,4 +117,19 @@ uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
         } while (map_index == party_map_index);
         if (map_index == discard_start_map) map_index = party_map_index;
     }
+}
+
+uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
+    DM1_CSB_F0165_DiscardState *state,
+    const DM1_CSB_F0165_DungeonOps *ops,
+    void *context,
+    uint16_t thing_type,
+    uint16_t map_count,
+    uint16_t party_map_index,
+    int16_t party_map_x,
+    int16_t party_map_y)
+{
+    return F0165_DUNGEON_GetDiscardedThing(
+        state, ops, context, thing_type, map_count, party_map_index,
+        party_map_x, party_map_y);
 }

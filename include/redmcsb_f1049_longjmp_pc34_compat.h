@@ -13,6 +13,8 @@ extern "C" {
  */
 bool redmcsb_f1049_longjmp_pc34_compat(void);
 
+bool F1049_longjmp(void);
+
 const char *redmcsb_f1049_longjmp_source_evidence_pc34(void);
 
 #ifdef __cplusplus

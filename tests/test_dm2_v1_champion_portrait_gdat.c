@@ -19,13 +19,14 @@ static void test_direct_source_route(void)
 
     memset(&input, 0, sizeof(input));
     input.player_index = 2u;
-    input.hero_type = 0x4du;
+    input.hero_type = DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE;
     input.hero_type_source_bound = 1;
 
     CHECK(dm2_v1_champion_portrait_gdat_route(&input, &route) == 1,
           "save-bound HeroType resolves a portrait route");
     CHECK(route.category == DM2_GDAT_CATEGORY_CHAMPIONS &&
-          route.hero_type == 0x4du &&
+          route.hero_type ==
+              DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE &&
           route.field == DM2_V1_CHAMPION_PORTRAIT_GDAT_FIELD &&
           route.rectno == DM2_V1_CHAMPION_PORTRAIT_RECT_BASE + 2u,
           "route matches SKProject DRAW_CHAMPION_PICTURE arguments");
@@ -46,6 +47,13 @@ static void test_rejections_are_fail_closed(void)
           "rejected route leaves no drawable address");
 
     input.hero_type_source_bound = 1;
+    input.player_index = 1u;
+    CHECK(dm2_v1_champion_portrait_gdat_route(&input, &route) == 0,
+          "a non-255 save-bound HeroType cannot select a GDAT portrait");
+    CHECK(route.category == 0u && route.rectno == 0u,
+          "wrong HeroType rejection leaves no drawable address");
+
+    input.hero_type = DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE;
     input.player_index = DM2_V1_CHAMPION_PORTRAIT_PLAYER_COUNT;
     CHECK(dm2_v1_champion_portrait_gdat_route(&input, &route) == 0,
           "out-of-range player cannot select a portrait panel");
@@ -74,7 +82,7 @@ static void test_source_material_receipt(void)
 
     memset(&entry, 0, sizeof(entry));
     entry.cls1 = DM2_GDAT_CATEGORY_CHAMPIONS;
-    entry.cls2 = 0x4du;
+    entry.cls2 = DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE;
     entry.cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     entry.cls4 = DM2_V1_CHAMPION_PORTRAIT_GDAT_FIELD;
     memset(&loader, 0, sizeof(loader));
@@ -89,7 +97,7 @@ static void test_source_material_receipt(void)
 
     memset(&input, 0, sizeof(input));
     input.player_index = 3u;
-    input.hero_type = 0x4du;
+    input.hero_type = DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE;
     input.hero_type_source_bound = 1;
     CHECK(dm2_v1_champion_portrait_gdat_receipt(&loader, &input, &receipt) == 1,
           "typed CHAMPIONS IMG3 and local palette form one receipt");
@@ -103,7 +111,7 @@ static void test_source_material_receipt(void)
           receipt.decoded_pixels_hash != 0u && receipt.material_hash != 0u,
           "receipt retains the decoded image and exact local-palette evidence");
 
-    entry.cls2 = 0x4eu;
+    entry.cls2 = DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE - 1u;
     CHECK(dm2_v1_champion_portrait_gdat_receipt(&loader, &input, &receipt) == 0,
           "a different HeroType cannot borrow another champion portrait");
 }

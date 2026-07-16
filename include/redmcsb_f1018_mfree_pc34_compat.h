@@ -14,6 +14,8 @@ extern "C" {
  */
 bool redmcsb_f1018_mfree_pc34_compat(void);
 
+bool F1018_Mfree(void);
+
 const char *redmcsb_f1018_mfree_source_evidence_pc34(void);
 
 #ifdef __cplusplus

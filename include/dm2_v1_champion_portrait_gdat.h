@@ -12,12 +12,14 @@ extern "C" {
 /*
  * SKProject reference: SKWIN/SkWinCore.cpp::DRAW_CHAMPION_PICTURE
  * (0x2E62:061D) calls DRAW_ICON_PICT_ENTRY(CHAMPIONS, HeroType(), 0,
- * ..., player + 173, -1).  The HeroType byte is save-owned; a generated
- * Firestaff party has no source evidence for this lookup.
+ * ..., player + 173, -1).  The HeroType byte is save-owned. Current corpus
+ * evidence admits only original SKSave byte 255; generated Firestaff parties
+ * and renamed sessions have no source evidence for another lookup key.
  */
 #define DM2_V1_CHAMPION_PORTRAIT_GDAT_FIELD 0x00u
 #define DM2_V1_CHAMPION_PORTRAIT_RECT_BASE 173u
 #define DM2_V1_CHAMPION_PORTRAIT_PLAYER_COUNT 4u
+#define DM2_V1_CHAMPION_PORTRAIT_ORIGINAL_SKSAVE_HEROTYPE 255u
 
 typedef struct {
     uint8_t player_index;

@@ -26,7 +26,7 @@ F0010_MAIN_WriteSpacedWords	F	MAIN	ATARIST.H:11	src/nexus/nexus_v1_audio_receipt
 F010_aAA7_	F	Atari ST / PRIM ABI alias	ATARIST.H:11	src/nexus/nexus_v1_audio_receipt.c:42	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0018_MAIN_SetExceptionVectors	F	MAIN	ATARIST.H:12	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F018_aaat_	F	Atari ST / PRIM ABI alias	ATARIST.H:12	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0019_MAIN_DisplayErrorAndStop	F	MAIN	ATARIST.H:13	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0019_MAIN_DisplayErrorAndStop	F	MAIN	ATARIST.H:13	src/csb/redmcsb_f0019_main_display_error_and_stop_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	BASE.C:1117 PC34 route is also present in unbuilt src/shared/base_frontend_pc34.c:97; the glob-built adapter and focused strict C11 test preserve its message, digits, input wait, and endgame order.
 F019_aarz_	F	Atari ST / PRIM ABI alias	ATARIST.H:13	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0020_MAIN_BlitToViewport	F	MAIN	ATARIST.H:14	src/nexus/nexus_v1_audio_receipt.c:38	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F020_aAA5_	F	Atari ST / PRIM ABI alias	ATARIST.H:14	src/nexus/nexus_v1_audio_receipt.c:38	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -1444,9 +1444,9 @@ F1902_Post_F1901_CopyProtectionRoutine_CPSX	F	Post	HINT004.C:177	-	MISSING	No ex
 F1904_ApplyPaletteChangesToScreenArea	F	ApplyPaletteChangesToScreenArea	HINT004.C:185	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1908_Checksum_CPSX	F	Checksum	HINTHINT.C:304	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1909_CopyStringUntilCharacter	F	CopyStringUntilCharacter	HINTHINT.C:179	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1910_LoadSavedGamePart	F	LoadSavedGamePart	HINTLOAD.C:135	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1913_LoadAndDeobfuscateSavedGamePart	F	LoadAndDeobfuscateSavedGamePart	HINTLOAD.C:184	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1914_LoadAndDeobfuscateSavedGameHeader	F	LoadAndDeobfuscateSavedGameHeader	HINTLOAD.C:189	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1910_LoadSavedGamePart	F	LoadSavedGamePart	HINTLOAD.C:135	src/csb/csb_v1_save_load_pc34_compat.c:379	PC34_SOURCE_IMPLEMENTED	CSB-owned exact byte part reader sits on the native save load path and is covered by the focused save export/import unit.
+F1913_LoadAndDeobfuscateSavedGamePart	F	LoadAndDeobfuscateSavedGamePart	HINTLOAD.C:184	src/csb/csb_v1_save_load_pc34_compat.c:406	PC34_SOURCE_IMPLEMENTED	CSB-owned word-sized part reader uses the SAVEHEAD key table to deobfuscate after F1910 and is covered by the focused save export/import unit.
+F1914_LoadAndDeobfuscateSavedGameHeader	F	LoadAndDeobfuscateSavedGameHeader	HINTLOAD.C:189	src/csb/csb_v1_save_load_pc34_compat.c:434	PC34_SOURCE_IMPLEMENTED	CSB-owned 512-byte header loader validates through the SAVEHEAD.C F0429 checksum relation before production load reads any state part.
 F1915_UnloadGame	F	UnloadGame	HINTHTC.C:468	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1916_Pre_F1918_LoadGame_CPSX	F	Pre	HINTHTC.C:12	include/title_dat_loader_v1.h:11	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1918_LoadGame_CPSX	F	LoadGame	HINTHTC.C:149	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
@@ -1936,13 +1936,13 @@ F8092_ConvertScanCodeToASCII	F	ConvertScanCodeToASCII	IBMIO.C:683	-	MISSING	No e
 F8094_ProcessMouseMovement	F	ProcessMouseMovement	IBMIO.C:710	src/dm1/dm1_v1_input_poll_pc34_compat.c:390	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F8096_ProcessMouseState	F	ProcessMouseState	IBMIO.C:773	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8098_ProcessMouseStateHistory	F	ProcessMouseStateHistory	IBMIO.C:824	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8099_LockMouse	F	LockMouse	IBMIO.C:851	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8100_UnlockMouse	F	UnlockMouse	IBMIO.C:862	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8099_LockMouse	F	LockMouse	IBMIO.C:851	src/shared/redmcsb_f8099_mouse_state_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	IBMIO.C MEDIA701_I34E PC mouse lock-count increment is source-locked and tested.
+F8100_UnlockMouse	F	UnlockMouse	IBMIO.C:862	src/shared/redmcsb_f8099_mouse_state_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	IBMIO.C MEDIA701_I34E cursor resync when G8075_ == 1 then lock-count decrement is source-locked and tested.
 F8101_SetMouseHandler	F	SetMouseHandler	IBMIO.C:881	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8108_RegisterMousePointerBitmap	F	RegisterMousePointerBitmap	IBMIO.C:1131	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8109_SetMousePointer	F	SetMousePointer	IBMIO.C:1152	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8111_SetMousePointerCoordinates	F	SetMousePointerCoordinates	IBMIO.C:1190	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8112_GetMouseState	F	GetMouseState	IBMIO.C:1215	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8111_SetMousePointerCoordinates	F	SetMousePointerCoordinates	IBMIO.C:1190	src/shared/redmcsb_f8099_mouse_state_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	IBMIO.C MEDIA701_I34E state assignment, installed-cursor update, pointer redraw, and unlock sequence are source-locked and tested.
+F8112_GetMouseState	F	GetMouseState	IBMIO.C:1215	src/shared/redmcsb_f8099_mouse_state_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	IBMIO.C MEDIA701_I34E current X/Y and formatted-button-state copy is source-locked and tested.
 F8123_PlayAudioCDTrack	F	PlayAudioCDTrack	IBMIO.C:2080	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8124_IsSoundPlayComplete	F	IsSoundPlayComplete	IBMIO.C:2085	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8128_WaitSoundPlayComplete	F	WaitSoundPlayComplete	IBMIO.C:2146	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.

@@ -7,7 +7,7 @@ static const char s_source_evidence[] =
     "bounded state as the accumulated poison dose, without coupling this "
     "callable to M11_GameViewState.";
 
-void F0323_CHAMPION_Unpoison_Compat(
+void F0323_CHAMPION_Unpoison(
     DM1_V1_ChampionPoisonStatePc34Compat* poisonState)
 {
     if (!poisonState) {
@@ -15,6 +15,12 @@ void F0323_CHAMPION_Unpoison_Compat(
     }
 
     poisonState->poisonDose = 0;
+}
+
+void F0323_CHAMPION_Unpoison_Compat(
+    DM1_V1_ChampionPoisonStatePc34Compat* poisonState)
+{
+    F0323_CHAMPION_Unpoison(poisonState);
 }
 
 const char* F0323_CHAMPION_Unpoison_SourceEvidencePc34Compat(void)

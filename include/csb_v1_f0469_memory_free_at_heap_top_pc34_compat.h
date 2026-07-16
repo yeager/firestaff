@@ -26,6 +26,10 @@ bool csb_v1_f0469_memory_free_at_heap_top_pc34_compat(
     CsbV1F0469MemoryHeapAccountingPc34Compat *heap,
     size_t byte_count);
 
+bool F0469_MEMORY_FreeAtHeapTop(
+    CsbV1F0469MemoryHeapAccountingPc34Compat *heap,
+    size_t byte_count);
+
 const char *csb_v1_f0469_memory_free_at_heap_top_source_evidence_pc34(void);
 
 #ifdef __cplusplus

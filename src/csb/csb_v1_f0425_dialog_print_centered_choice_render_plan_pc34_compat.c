@@ -40,3 +40,18 @@ int csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat(
     }
     return -1;
 }
+
+int F0425_DIALOG_PrintCenteredChoice(
+    const char *text,
+    size_t text_capacity,
+    int center_x,
+    int text_y,
+    CsbV1F0425DialogPrintCenteredChoiceRenderPlanPc34Compat *out_plan)
+{
+    return csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat(
+        text,
+        text_capacity,
+        center_x,
+        text_y,
+        out_plan);
+}

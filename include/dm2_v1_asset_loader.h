@@ -77,6 +77,7 @@ typedef enum {
 
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
+    DM2_GDAT_ENTRY_TYPE_TEXT         = 0x05,
     DM2_GDAT_ENTRY_TYPE_RAW6         = 0x06,
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
@@ -90,6 +91,9 @@ typedef enum {
  * skproject/SKWIN/defines.h GRAPHICSSET and map-chip field identifiers. */
 #define DM2_GDAT_GFXSET_FLOOR 0x00
 #define DM2_GDAT_GFXSET_CEIL  0x01
+#define DM2_GDAT_GFXSET_DOOR_FRAME_FRONT_D1 0x06
+#define DM2_GDAT_GFXSET_DOOR_FRAME_D1C      0x07
+#define DM2_GDAT_GFXSET_DOOR_FRAME_D2C      0x09
 #define DM2_GDAT_IMG_MAP_CHIP 0xF9
 
 #define DM2_GDAT_GFXSET_SCENE_COLORKEY       0x64
@@ -165,6 +169,7 @@ typedef struct {
     uint32_t hash;
 } DM2_V1_InterfacePalette;
 
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -185,7 +190,9 @@ const uint8_t *dm2_v1_asset_load(const DM2_V1_AssetLoader *loader,
                                    int category, int index, int field);
 
 /* Load raw asset by (category, index, field), returning its byte size.
- * Source: skproject SKWIN/SkWinCore.cpp QUERY_GDAT_ENTRY_DATA_PTR */
+ * Immediate dtWordValue/dtImageOffset entries are intentionally excluded;
+ * use their exact typed APIs below. Source: skproject SKWIN/SkWinCore.cpp
+ * QUERY_GDAT_ENTRY_DATA_PTR */
 const uint8_t *dm2_v1_asset_load_sized(const DM2_V1_AssetLoader *loader,
                                         int category, int index, int field,
                                         size_t *out_size);
@@ -246,6 +253,7 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
                                         int category, int index, int field,
                                         int *out_width, int *out_height,
                                         DM2_ImageFormat *out_format);
+
 
 /* Get GDAT category count and index range for a category.
  * Returns number of entries in category.

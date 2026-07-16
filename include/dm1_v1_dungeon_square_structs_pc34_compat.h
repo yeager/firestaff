@@ -417,6 +417,47 @@ void dm1_get_relative_map_coords(int party_x, int party_y, int direction,
                                   int steps_forward, int steps_right,
                                   int *out_x, int *out_y);
 
+typedef struct {
+    int valid;
+    int x;
+    int y;
+} DM1_V1_DungeonF0150CoordinatesPc34;
+
+int dm1_v1_dungeon_f0150_update_map_coordinates_after_relative_movement_pc34(
+    int party_x,
+    int party_y,
+    int direction,
+    int steps_forward,
+    int steps_right,
+    DM1_V1_DungeonF0150CoordinatesPc34 *out);
+
+uint8_t dm1_v1_dungeon_f0151_get_square_pc34(
+    const uint8_t *column_major_squares,
+    int width,
+    int height,
+    int map_x,
+    int map_y);
+
+uint8_t dm1_v1_dungeon_f0152_get_relative_square_pc34(
+    const uint8_t *column_major_squares,
+    int width,
+    int height,
+    int party_x,
+    int party_y,
+    int direction,
+    int steps_forward,
+    int steps_right);
+
+int dm1_v1_dungeon_f0153_get_relative_square_type_pc34(
+    const uint8_t *column_major_squares,
+    int width,
+    int height,
+    int party_x,
+    int party_y,
+    int direction,
+    int steps_forward,
+    int steps_right);
+
 /*
  * dm1_compute_view_square_coords — Beräkna kartkoordinater för alla
  * 12 (eller 15 inkl D4) viewport-rutor givet partyposition och riktning.

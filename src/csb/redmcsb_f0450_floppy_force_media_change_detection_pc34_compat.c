@@ -6,6 +6,11 @@ void redmcsb_f0450_floppy_force_media_change_detection_pc34_compat(
     (void)drive_type;
 }
 
+void F0450_FLOPPY_ForceMediaChangeDetection(uint16_t drive_type)
+{
+    redmcsb_f0450_floppy_force_media_change_detection_pc34_compat(drive_type);
+}
+
 const char *redmcsb_f0450_floppy_force_media_change_detection_source_evidence_pc34(void)
 {
     return "ReDMCSB FLOPPY.C:606-620 (PC 3.4 MEDIA278 path) returns for "
