@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 `FIND_FREE_MEMENTI` receipt: mapped the skproject
+  next-free mement allocator to `dm2_v1_skproject_find_free_mementi()`.
+  The regression covers normal allocation, skipping already referenced
+  mement slots, exhaustion, and fallback recycle through the existing
+  `FREE_INDEXED_MEMENT` receipt path.
+
 - 2026-07-16 DM2 c_map/c_record scalar helper bundle: mapped
   `tile_to_ulong`, `tile_to_ubyte`, `mk_record`, `record_to_word`, and
   `record_to_long` to skproject-backed dungeon-loader helpers. The tests cover
