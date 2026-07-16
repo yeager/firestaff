@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject utility helper receipts: added bounded
+  `dm2_v1_skproject_abs()`, `dm2_v1_skproject_calc_square_distance()`,
+  `dm2_v1_skproject_calc_vector_dir()`,
+  `dm2_v1_skproject_compute_power_4_within()`,
+  `dm2_v1_skproject_fill_i16table()`, and
+  `dm2_v1_skproject_atimesb_rshiftc()` receipts for the SKULLWIN
+  `util.cpp` helper slice. The helpers preserve source scalar arithmetic,
+  diagonal direction tie breaking through caller-owned `DM2_RANDBIT` state,
+  caller-owned table writes, and unsigned-word multiply-before-shift behavior
+  without creating movement/pathfinding/HUD/GDAT consumers or synthetic
+  storage. Verification: strict direct C99 build/run of
+  `test_dm2_v1_skproject_core`.
+
+- 2026-07-16 DM2 skproject attribute/UI event receipts: added bounded
+  `dm2_v1_skproject_boost_attribute()` and
+  `dm2_v1_skproject_adjust_ui_event()` for skproject `BOOST_ATTRIBUTE`,
+  `DM2_ADJUST_UI_EVENT`, and `ADJUST_UI_EVENT`. The helpers preserve the
+  source champion-attribute decay loop and 10..220 clamp, champion hand-event
+  remapping, spell/leader triangle selection, cooldown cancellation, and
+  hand-activable gates over caller-supplied source-shaped state. They do not
+  fabricate champion state, UI events, or dispatch runtime commands.
+  Verification: focused Ninja target `test_dm2_v1_skproject_core`, focused
+  CTest `dm2_v1_skproject_core`, and `git diff --check`.
+
 - 2026-07-16 DM2 skproject coin-type count receipt: added
   `dm2_v1_skproject_count_by_coin_types()` for skproject
   `DM2_COUNT_BY_COIN_TYPES` / `COUNT_BY_COIN_TYPES`. The helper preserves the
@@ -20978,4 +21002,18 @@ percentage/counter loop, and reports Giggler melee as a steal action instead
 of creature damage. The existing source-locked steal-slot table remains the
 single table authority. Verification: `ctest --test-dir build-local-ninja -R
 '^(dm1_v1_creature_ai_behavior_source_lock|dm1_v1_steal_from_slot_indices_pc34_compat)$'
+--output-on-failure` passed.
+
+# ✅ 2026-07-16 DM1 TIMELINE F0233-F0239 heap primitives source mapping
+
+The DM1 event timer queue now closes the ReDMCSB `TIMELINE.C` heap primitive
+bundle `F0233`-`F0239`: initialization, F0234 time/type/priority/index
+ordering, F0235 live lookup, F0236 heap repair, F0237 deletion/reuse, F0238
+non-C00 admission plus F0652 square-event merge semantics, and F0239
+extract-first deletion. The implementation now rejects C00 events before
+capacity/heap mutation and matches C02 door-destruction cleanup against all
+same-map C01/C10 conflicts rather than same-time-only substitutes. Focused
+coverage verifies priority/address ties, wall-cell merge separation,
+door-destruction scope, and caller reschedule repair. Verification:
+`ctest --test-dir build-local-ninja -R '^dm1_v1_event_timer_source_lock$'
 --output-on-failure` passed.

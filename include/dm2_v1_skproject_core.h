@@ -43,6 +43,31 @@ typedef struct {
     int16_t final_y;
 } DM2_V1_SkprojectVectorWDirReceipt;
 
+typedef struct {
+    int valid;
+    int tied_axes;
+    int consumed_randbit;
+    int blocked_missing_random;
+    int16_t from_x;
+    int16_t from_y;
+    int16_t to_x;
+    int16_t to_y;
+    int16_t delta_x;
+    int16_t delta_y;
+    int16_t abs_delta_x;
+    int16_t abs_delta_y;
+    uint8_t randbit;
+    uint8_t dir;
+} DM2_V1_SkprojectVectorDirReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_table;
+    int16_t value;
+    uint16_t entries;
+    uint16_t written_entries;
+} DM2_V1_SkprojectFillI16TableReceipt;
+
 #define DM2_V1_SKPROJECT_CACHE_LIMIT 128
 #define DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT 256
 #define DM2_V1_SKPROJECT_MEMENT_BUFFER_BYTES 32
@@ -235,6 +260,62 @@ typedef struct {
     int16_t counts[DM2_V1_SKPROJECT_MONEY_ITEM_MAX];
 } DM2_V1_SkprojectCountByCoinTypesReceipt;
 
+typedef struct {
+    uint8_t current;
+    uint8_t maximum;
+} DM2_V1_SkprojectChampionAttribute;
+
+typedef struct {
+    int valid;
+    int blocked_missing_attribute;
+    uint8_t attribute_index;
+    uint8_t previous_current;
+    uint8_t maximum;
+    int16_t delta_input;
+    int16_t reduced_delta;
+    int16_t source_si;
+    uint8_t final_current;
+} DM2_V1_SkprojectBoostAttributeReceipt;
+
+typedef struct {
+    int16_t x;
+    int16_t y;
+    int16_t w;
+    int16_t h;
+} DM2_V1_SkprojectUiRect;
+
+typedef struct {
+    uint16_t event;
+    int16_t x;
+    int16_t y;
+    DM2_V1_SkprojectUiRect rect;
+} DM2_V1_SkprojectUiEvent;
+
+typedef struct {
+    uint8_t present;
+    uint8_t hand_cooldown[3];
+    uint8_t hand_activable[2];
+} DM2_V1_SkprojectUiChampionState;
+
+typedef struct {
+    int valid;
+    int untouched_non_adjustable_event;
+    uint16_t player_dir;
+    uint16_t input_event;
+    uint16_t output_event;
+    int16_t mapped_player;
+    uint8_t mapped_hand;
+    int16_t diagonal_w2;
+    int16_t diagonal_w3;
+    int selected_spell_triangle;
+    int blocked_missing_event;
+    int blocked_missing_party;
+    int blocked_no_player;
+    int blocked_hand_cooldown;
+    int blocked_hand_not_activable;
+    int blocked_leader_hand_cooldown;
+} DM2_V1_SkprojectAdjustUiEventReceipt;
+
 /* skproject SKWINSPX v4 SkWinCore::BETWEEN_VALUE clamps newv to
  * [minv,maxv]. SKWINSPX v5 exposes the same behavior as DM2_BETWEEN_VALUE. */
 int16_t dm2_v1_skproject_between_value(int16_t minv,
@@ -243,6 +324,18 @@ int16_t dm2_v1_skproject_between_value(int16_t minv,
 int16_t dm2_v1_skproject_dm2_between_value(int16_t minv,
                                            int16_t maxv,
                                            int16_t value);
+int16_t dm2_v1_skproject_abs(int16_t value);
+int16_t dm2_v1_skproject_calc_square_distance(int16_t from_x,
+                                               int16_t from_y,
+                                               int16_t to_x,
+                                               int16_t to_y);
+int dm2_v1_skproject_calc_vector_dir(
+    DM2_V1_SkprojectRandomData *randdat,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t to_x,
+    int16_t to_y,
+    DM2_V1_SkprojectVectorDirReceipt *out_receipt);
 
 void dm2_v1_skproject_temp_rect_ring_init(
     DM2_V1_SkprojectTempRectRing *ring);
@@ -272,6 +365,16 @@ int dm2_v1_skproject_calc_vector_w_dir(
     int16_t *x,
     int16_t *y,
     DM2_V1_SkprojectVectorWDirReceipt *out_receipt);
+int32_t dm2_v1_skproject_compute_power_4_within(int16_t mask,
+                                                int16_t ordinal);
+int dm2_v1_skproject_fill_i16table(
+    int16_t *table,
+    int16_t value,
+    uint16_t entries,
+    DM2_V1_SkprojectFillI16TableReceipt *out_receipt);
+int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
+                                         int8_t c,
+                                         int16_t b);
 
 void dm2_v1_skproject_cache_state_init(
     DM2_V1_SkprojectCacheState *state,
@@ -364,6 +467,18 @@ int dm2_v1_skproject_count_by_coin_types(
     uint16_t money_item_count,
     int16_t *out_counts,
     DM2_V1_SkprojectCountByCoinTypesReceipt *out_receipt);
+int dm2_v1_skproject_boost_attribute(
+    DM2_V1_SkprojectChampionAttribute *attributes,
+    uint8_t attribute_index,
+    int16_t delta,
+    DM2_V1_SkprojectBoostAttributeReceipt *out_receipt);
+int dm2_v1_skproject_adjust_ui_event(
+    DM2_V1_SkprojectUiEvent *event,
+    uint16_t player_dir,
+    const int16_t player_at_position[4],
+    const DM2_V1_SkprojectUiChampionState *champions,
+    uint16_t champion_count,
+    DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 

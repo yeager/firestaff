@@ -143,6 +143,51 @@ static void test_heap_ordering_by_type(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test 3b: Heap ordering — same time/type, higher priority then index
+ * ---------------------------------------------------------------- */
+static void test_heap_ordering_by_priority_and_index(void) {
+    struct DM1_EventQueue_V1 queue;
+    struct DM1_Event_V1 ev, out;
+    int lowPriorityIndex;
+    int firstEqualIndex;
+    int secondEqualIndex;
+
+    dm1v1_event_queue_init(&queue, 1000);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_MOVE_PROJECTILE;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 500);
+
+    ev.priority = 1;
+    lowPriorityIndex = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(lowPriorityIndex >= 0, "low-priority event added");
+
+    ev.priority = 7;
+    firstEqualIndex = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(firstEqualIndex >= 0, "first high-priority event added");
+    secondEqualIndex = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(secondEqualIndex >= 0, "second high-priority event added");
+
+    dm1v1_event_extract_first(&queue, &out);
+    TEST_ASSERT_INT_EQ(out.priority, 7, "higher priority comes first");
+    TEST_ASSERT_INT_EQ(dm1v1_event_get_timeline_index(&queue, firstEqualIndex),
+                       -1, "lower event-array index wins exact tie");
+
+    dm1v1_event_extract_first(&queue, &out);
+    TEST_ASSERT_INT_EQ(out.priority, 7, "same-priority peer comes second");
+    TEST_ASSERT_INT_EQ(dm1v1_event_get_timeline_index(&queue, secondEqualIndex),
+                       -1, "second exact-tie event is removed next");
+
+    dm1v1_event_extract_first(&queue, &out);
+    TEST_ASSERT_INT_EQ(out.priority, 1, "lower priority comes last");
+    TEST_ASSERT_INT_EQ(dm1v1_event_get_timeline_index(&queue, lowPriorityIndex),
+                       -1, "low-priority event was extracted");
+
+    tests_passed++;
+    printf("PASS: test_heap_ordering_by_priority_and_index\n");
+}
+
+/* ----------------------------------------------------------------
  *  Test 4: Door event merge
  * ---------------------------------------------------------------- */
 static void test_door_event_merge(void) {
@@ -172,6 +217,50 @@ static void test_door_event_merge(void) {
 
     tests_passed++;
     printf("PASS: test_door_event_merge\n");
+}
+
+/* ----------------------------------------------------------------
+ *  Test 4b: F0238 rejects C00 and preserves wall-cell separation
+ * ---------------------------------------------------------------- */
+static void test_f0238_none_reject_and_wall_cell_merge(void) {
+    struct DM1_EventQueue_V1 queue;
+    struct DM1_Event_V1 ev;
+    int idxCell0, idxCell1, idxCell0Merge;
+
+    dm1v1_event_queue_init(&queue, 0);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_NONE;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 25);
+    TEST_ASSERT_INT_EQ(dm1v1_event_add(&queue, &ev), -1,
+                       "F0238 rejects C00_EVENT_NONE");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 0,
+                       "C00 rejection does not mutate the heap");
+
+    ev.type = DM1_EVENT_WALL;
+    ev.b_mapX = 9;
+    ev.b_mapY = 2;
+    ev.c_cell = 0;
+    ev.c_effect = DM1_EFFECT_SET;
+    idxCell0 = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(idxCell0 >= 0, "first wall-cell event added");
+
+    ev.c_cell = 1;
+    idxCell1 = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(idxCell1 >= 0, "second wall-cell event added separately");
+    TEST_ASSERT(idxCell1 != idxCell0, "different wall cells do not merge");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 2, "two wall-cell events remain");
+
+    ev.c_cell = 0;
+    ev.c_effect = DM1_EFFECT_CLEAR;
+    idxCell0Merge = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT_INT_EQ(idxCell0Merge, idxCell0, "same wall cell merges");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 2, "merge does not add a new event");
+    TEST_ASSERT_INT_EQ(queue.events[idxCell0].c_effect, DM1_EFFECT_CLEAR,
+                       "same-cell wall merge updates effect");
+
+    tests_passed++;
+    printf("PASS: test_f0238_none_reject_and_wall_cell_merge\n");
 }
 
 /* ----------------------------------------------------------------
@@ -502,6 +591,105 @@ static void test_door_animation_merge(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test 11b: F0238 C02 deletes same-map door/animation at any time
+ * ---------------------------------------------------------------- */
+static void test_door_destruction_merge_scope(void) {
+    struct DM1_EventQueue_V1 queue;
+    struct DM1_Event_V1 ev;
+    int doorOtherMapSameTime;
+    int destruction;
+    int sameMapConflictCount = 0;
+
+    dm1v1_event_queue_init(&queue, 0);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_DOOR;
+    ev.map_time = DM1_MAP_TIME_MAKE(2, 100);
+    ev.b_mapX = 5;
+    ev.b_mapY = 6;
+    ev.c_effect = DM1_EFFECT_SET;
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "same-map door added");
+
+    ev.type = DM1_EVENT_DOOR_ANIMATION;
+    ev.map_time = DM1_MAP_TIME_MAKE(2, 75);
+    TEST_ASSERT(dm1v1_event_add(&queue, &ev) >= 0, "same-map animation added");
+
+    ev.type = DM1_EVENT_DOOR;
+    ev.map_time = DM1_MAP_TIME_MAKE(3, 75);
+    doorOtherMapSameTime = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(doorOtherMapSameTime >= 0, "other-map door added");
+
+    ev.type = DM1_EVENT_DOOR_DESTRUCTION;
+    ev.map_time = DM1_MAP_TIME_MAKE(2, 75);
+    destruction = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(destruction >= 0, "door-destruction event added");
+
+    for (int i = 0; i < queue.maxEvents; i++) {
+        if ((queue.events[i].type == DM1_EVENT_DOOR ||
+             queue.events[i].type == DM1_EVENT_DOOR_ANIMATION) &&
+            DM1_MAP_TIME_MAP(queue.events[i].map_time) == 2 &&
+            queue.events[i].b_mapX == 5 &&
+            queue.events[i].b_mapY == 6) {
+            sameMapConflictCount++;
+        }
+    }
+    TEST_ASSERT_INT_EQ(sameMapConflictCount, 0,
+                       "C02 removes all same-map door/animation conflicts");
+    TEST_ASSERT_INT_EQ(queue.events[doorOtherMapSameTime].type,
+                       DM1_EVENT_DOOR,
+                       "C02 retains other-map door");
+    TEST_ASSERT_INT_EQ(queue.eventCount, 2,
+                       "only other-map door and C02 event remain");
+
+    tests_passed++;
+    printf("PASS: test_door_destruction_merge_scope\n");
+}
+
+/* ----------------------------------------------------------------
+ *  Test 11c: F0235/F0236 reschedule an existing event in place
+ * ---------------------------------------------------------------- */
+static void test_get_index_and_fix_existing_placement(void) {
+    struct DM1_EventQueue_V1 queue;
+    struct DM1_Event_V1 ev, out;
+    int idxLate;
+    int idxEarly;
+
+    dm1v1_event_queue_init(&queue, 1000);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_LIGHT;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 300);
+    idxLate = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(idxLate >= 0, "late event added");
+
+    ev.map_time = DM1_MAP_TIME_MAKE(0, 100);
+    idxEarly = dm1v1_event_add(&queue, &ev);
+    TEST_ASSERT(idxEarly >= 0, "early event added");
+    TEST_ASSERT(dm1v1_event_get_timeline_index(&queue, idxLate) >= 0,
+                "F0235 finds live late event");
+
+    queue.events[idxLate].map_time = DM1_MAP_TIME_MAKE(0, 50);
+    TEST_ASSERT(dm1v1_event_fix_existing_placement(&queue, idxLate),
+                "F0236 fixes changed live event");
+
+    dm1v1_event_extract_first(&queue, &out);
+    TEST_ASSERT_INT_EQ(DM1_MAP_TIME_TIME(out.map_time), 50,
+                       "rescheduled event extracts first");
+
+    TEST_ASSERT(!dm1v1_event_fix_existing_placement(&queue, idxLate),
+                "F0236 wrapper rejects deleted event index");
+
+    dm1v1_event_extract_first(&queue, &out);
+    TEST_ASSERT_INT_EQ(DM1_MAP_TIME_TIME(out.map_time), 100,
+                       "remaining event keeps heap order");
+    TEST_ASSERT_INT_EQ(dm1v1_event_get_timeline_index(&queue, idxEarly),
+                       -1, "F0235 reports missing after extraction");
+
+    tests_passed++;
+    printf("PASS: test_get_index_and_fix_existing_placement\n");
+}
+
+/* ----------------------------------------------------------------
  *  Test 12: GROUP.C F0181 deletes C29..C41 at one current-map square
  * ---------------------------------------------------------------- */
 static void test_group_delete_events_f0181(void) {
@@ -553,7 +741,9 @@ int main(void) {
     test_init_and_basic_add();
     test_heap_ordering_by_time();
     test_heap_ordering_by_type();
+    test_heap_ordering_by_priority_and_index();
     test_door_event_merge();
+    test_f0238_none_reject_and_wall_cell_merge();
     test_delete_and_heap_integrity();
     test_tick_processing();
     test_f0265_move_group_event_shape();
@@ -562,6 +752,8 @@ int main(void) {
     test_tick_advancement();
     test_dispatch_classification();
     test_door_animation_merge();
+    test_door_destruction_merge_scope();
+    test_get_index_and_fix_existing_placement();
     test_group_delete_events_f0181();
 
     printf("\n=== Results: %d passed, %d failed ===\n",

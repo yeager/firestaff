@@ -37,6 +37,20 @@ int16_t dm2_v1_skproject_dm2_between_value(int16_t minv,
     return dm2_v1_skproject_between_value(minv, value, maxv);
 }
 
+int16_t dm2_v1_skproject_abs(int16_t value)
+{
+    return (value >= 0) ? value : (int16_t)-value;
+}
+
+int16_t dm2_v1_skproject_calc_square_distance(int16_t from_x,
+                                               int16_t from_y,
+                                               int16_t to_x,
+                                               int16_t to_y)
+{
+    return (int16_t)(dm2_v1_skproject_abs((int16_t)(from_x - to_x)) +
+                     dm2_v1_skproject_abs((int16_t)(from_y - to_y)));
+}
+
 void dm2_v1_skproject_temp_rect_ring_init(
     DM2_V1_SkprojectTempRectRing *ring)
 {
@@ -118,6 +132,57 @@ uint8_t dm2_v1_skproject_randdir(DM2_V1_SkprojectRandomData *randdat)
     return (uint8_t)(dm2_v1_skproject_rand(randdat) & 3u);
 }
 
+int dm2_v1_skproject_calc_vector_dir(
+    DM2_V1_SkprojectRandomData *randdat,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t to_x,
+    int16_t to_y,
+    DM2_V1_SkprojectVectorDirReceipt *out_receipt)
+{
+    DM2_V1_SkprojectVectorDirReceipt receipt;
+    int16_t abs_x;
+    int16_t abs_y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.from_x = from_x;
+    receipt.from_y = from_y;
+    receipt.to_x = to_x;
+    receipt.to_y = to_y;
+    receipt.delta_x = (int16_t)(from_x - to_x);
+    receipt.delta_y = (int16_t)(from_y - to_y);
+    abs_x = dm2_v1_skproject_abs(receipt.delta_x);
+    abs_y = dm2_v1_skproject_abs(receipt.delta_y);
+    receipt.abs_delta_x = abs_x;
+    receipt.abs_delta_y = abs_y;
+
+    if (abs_x == abs_y) {
+        receipt.tied_axes = 1;
+        if (!randdat) {
+            receipt.blocked_missing_random = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.randbit = (uint8_t)(dm2_v1_skproject_randbit(randdat) ? 1 : 0);
+        receipt.consumed_randbit = 1;
+        if (receipt.randbit == 0)
+            abs_y++;
+        else
+            abs_x++;
+        receipt.abs_delta_x = abs_x;
+        receipt.abs_delta_y = abs_y;
+    }
+
+    if (abs_x >= abs_y)
+        receipt.dir = (receipt.delta_x <= 0) ? 1u : 3u;
+    else
+        receipt.dir = (receipt.delta_y <= 0) ? 2u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_calc_vector_w_dir(
     int16_t dir,
     int16_t xx,
@@ -158,6 +223,59 @@ int dm2_v1_skproject_calc_vector_w_dir(
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+}
+
+int32_t dm2_v1_skproject_compute_power_4_within(int16_t mask,
+                                                int16_t ordinal)
+{
+    uint32_t result = 1u;
+    int16_t remaining = ordinal;
+
+    for (int16_t n = 0; n < 32; ++n) {
+        if ((result & (uint16_t)mask) != 0u) {
+            remaining = (int16_t)(remaining - 1);
+            if (remaining == 0)
+                return (int32_t)result;
+        }
+        result <<= 1;
+    }
+    return (int32_t)result;
+}
+
+int dm2_v1_skproject_fill_i16table(
+    int16_t *table,
+    int16_t value,
+    uint16_t entries,
+    DM2_V1_SkprojectFillI16TableReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFillI16TableReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.value = value;
+    receipt.entries = entries;
+    if (!table && entries != 0u) {
+        receipt.blocked_missing_table = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint16_t i = 0; i < entries; ++i)
+        table[i] = value;
+    receipt.written_entries = entries;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
+                                         int8_t c,
+                                         int16_t b)
+{
+    uint32_t product = (uint32_t)(uint16_t)a * (uint32_t)(uint16_t)b;
+    uint8_t shift = (uint8_t)c;
+
+    if (shift >= 32u) return 0;
+    return (int32_t)(product >> shift);
 }
 
 void dm2_v1_skproject_cache_state_init(
@@ -961,6 +1079,155 @@ int dm2_v1_skproject_count_by_coin_types(
     return 1;
 }
 
+int dm2_v1_skproject_boost_attribute(
+    DM2_V1_SkprojectChampionAttribute *attributes,
+    uint8_t attribute_index,
+    int16_t delta,
+    DM2_V1_SkprojectBoostAttributeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectBoostAttributeReceipt receipt;
+    DM2_V1_SkprojectChampionAttribute *attribute;
+    int16_t si;
+    int16_t reduced_delta;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.attribute_index = attribute_index;
+    receipt.delta_input = delta;
+    if (!attributes) {
+        receipt.blocked_missing_attribute = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    attribute = &attributes[attribute_index];
+    receipt.previous_current = attribute->current;
+    receipt.maximum = attribute->maximum;
+    si = (int16_t)((int)attribute->current + (int)delta -
+                   (int)attribute->maximum);
+    reduced_delta = delta;
+    receipt.source_si = si;
+    if ((si < 0) == (delta < 0)) {
+        int16_t remaining = si < 0 ? (int16_t)-si : si;
+
+        while (remaining > 20) {
+            reduced_delta = (int16_t)(reduced_delta - reduced_delta / 4);
+            remaining = (int16_t)(remaining - 20);
+        }
+    }
+    attribute->current = (uint8_t)dm2_v1_skproject_between_value(
+        10, (int16_t)((int)attribute->current + (int)reduced_delta), 220);
+    receipt.valid = 1;
+    receipt.reduced_delta = reduced_delta;
+    receipt.final_current = attribute->current;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_adjust_ui_event(
+    DM2_V1_SkprojectUiEvent *event,
+    uint16_t player_dir,
+    const int16_t player_at_position[4],
+    const DM2_V1_SkprojectUiChampionState *champions,
+    uint16_t champion_count,
+    DM2_V1_SkprojectAdjustUiEventReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAdjustUiEventReceipt receipt;
+    uint16_t idx;
+    int adjusted = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player_dir = (uint16_t)(player_dir & 3u);
+    if (!event) {
+        receipt.blocked_missing_event = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    idx = event->event;
+    receipt.input_event = idx;
+    receipt.output_event = idx;
+    receipt.mapped_player = -1;
+    if (!player_at_position || !champions) {
+        receipt.blocked_missing_party = 1;
+        event->event = 0u;
+        receipt.output_event = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (idx >= 116u && idx <= 123u) {
+        uint16_t slot = (uint16_t)(idx - 116u);
+        uint8_t hand = (uint8_t)(slot & 1u);
+        int16_t player = player_at_position[
+            (uint16_t)((receipt.player_dir + slot / 2u) & 3u)];
+
+        receipt.mapped_player = player;
+        receipt.mapped_hand = hand;
+        if (player < 0 || (uint16_t)player >= champion_count ||
+            !champions[player].present) {
+            receipt.blocked_no_player = 1;
+        } else if (champions[player].hand_cooldown[hand] != 0u) {
+            receipt.blocked_hand_cooldown = 1;
+        } else if (champions[player].hand_activable[hand] == 0u) {
+            receipt.blocked_hand_not_activable = 1;
+        } else {
+            idx = (uint16_t)(2u * (uint16_t)player + 116u + hand);
+            adjusted = 1;
+        }
+    } else if (idx >= 95u && idx <= 98u) {
+        int16_t player = player_at_position[
+            (uint16_t)((idx - 95u + receipt.player_dir) & 3u)];
+
+        receipt.mapped_player = player;
+        if (player < 0 || (uint16_t)player >= champion_count ||
+            !champions[player].present) {
+            receipt.blocked_no_player = 1;
+        } else {
+            int16_t w2;
+            int16_t w3;
+
+            if (idx > 96u)
+                w2 = (int16_t)(event->y - event->rect.y);
+            else
+                w2 = (int16_t)(event->rect.h + event->rect.y - 1 -
+                               event->y);
+            if (idx != 96u && idx != 97u)
+                w3 = (int16_t)(event->rect.x + event->rect.w - 1 -
+                               event->x);
+            else
+                w3 = (int16_t)(event->x - event->rect.x);
+            receipt.diagonal_w2 = w2;
+            receipt.diagonal_w3 = w3;
+            if (w3 > w2) {
+                if (champions[player].hand_cooldown[2] == 0u) {
+                    adjusted = 1;
+                } else {
+                    receipt.blocked_leader_hand_cooldown = 1;
+                }
+            } else {
+                idx = (uint16_t)(idx - 79u);
+                receipt.selected_spell_triangle = 1;
+                adjusted = 1;
+            }
+        }
+    } else {
+        receipt.valid = 1;
+        receipt.untouched_non_adjustable_event = 1;
+        receipt.output_event = idx;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (!adjusted)
+        idx = 0u;
+    event->event = idx;
+    receipt.valid = 1;
+    receipt.output_event = idx;
+    if (out_receipt) *out_receipt = receipt;
+    return adjusted ? 1 : 0;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -968,7 +1235,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKWINSPX/src/v5/skrect.cpp alloc_tmprect/alloc_origin_tmprect; "
            "SKWINSPX/src/v5/util.cpp DM2_BETWEEN_VALUE; "
            "SKULLWIN/c_random.cpp DM2_RAND16/DM2_RANDBIT/DM2_RANDDIR; "
-           "SKULLWIN/util.cpp DM2_CALC_VECTOR_W_DIR and "
+           "SKULLWIN/util.cpp DM2_ABS/DM2_CALC_SQUARE_DISTANCE/"
+           "DM2_CALC_VECTOR_DIR/DM2_CALC_VECTOR_W_DIR/"
+           "DM2_COMPUTE_POWER_4_WITHIN/DM2_FILL_I16TABLE/"
+           "DM2_ATIMESB_RSHIFTC and "
            "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR; "
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"
@@ -981,5 +1251,7 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "COUNT_BY_COIN_TYPES and "
            "SKULLWIN/c_item.cpp DM2_ADD_ITEM_CHARGE/DM2_GET_MAX_CHARGE/"
            "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT; "
-           "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES";
+           "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES; "
+           "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
+           "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT";
 }
