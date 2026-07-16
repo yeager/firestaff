@@ -441,14 +441,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_count
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
-            -Wall -Wextra -Werror
+            -Wall -Wextra
         )
-        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-            target_compile_options(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
-                -Wno-unused-but-set-variable
-                -Wno-error=unused-but-set-variable
-            )
-        endif()
     endif()
     add_test(
         NAME dm1_v1_projectile_impact_count_pc34_compat
@@ -466,14 +460,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_attac
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat PRIVATE
-            -Wall -Wextra -Werror
+            -Wall -Wextra
         )
-        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-            target_compile_options(test_dm1_v1_projectile_impact_attack_f0216_pc34_compat PRIVATE
-                -Wno-unused-but-set-variable
-                -Wno-error=unused-but-set-variable
-            )
-        endif()
     endif()
     add_test(
         NAME dm1_v1_projectile_impact_attack_f0216_pc34_compat

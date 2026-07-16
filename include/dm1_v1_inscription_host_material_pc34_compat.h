@@ -3,11 +3,33 @@
 
 #include "dm1_v1_inscription_font_pc34_compat.h"
 
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34 128
+
+struct DungeonThings_Compat;
+
+typedef DM1_V1_InscriptionLinePlanPc34
+    DM1_V1_InscriptionFrontWallLineDrawPlanPc34;
+
+static inline int DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
+    const unsigned char* glyphs,
+    int glyphCapacity,
+    int cursor,
+    int line,
+    int centerX,
+    int centerY,
+    DM1_V1_InscriptionFrontWallLineDrawPlanPc34* outPlan)
+{
+    (void)centerX;
+    (void)centerY;
+    return DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
+        glyphs, glyphCapacity, cursor, line, outPlan);
+}
 
 /* ReDMCSB DUNGEON.C F0168 + DUNVIEW.C F0107 material hand-off. The
  * decoded bytes are original TextString codes, never host text. */
