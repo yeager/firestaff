@@ -583,9 +583,13 @@ static void test_map_helpers(void)
     {
         DM2_V1_SkprojectArrowHighlightReceipt arrow;
         DM2_V1_SkprojectOtherLevelReceipt other_level;
+        DM2_V1_SkprojectMove12B4023FReceipt crush;
         DM2_V1_SkprojectLiftRequest lift;
         DM2_V1_SkprojectLiftReceipt lift_receipt;
         DM2_V1_SkprojectWallAlcoveReceipt alcove;
+        const int16_t direction_champions[4] = { 2, -1, 1, 1 };
+        const uint8_t hero_types[4] = { 10u, 11u, 12u, 13u };
+        const uint8_t wound_results[4] = { 0u, 1u, 1u, 0u };
 
         CHECK(dm2_v1_skproject_move_12b4_0092(
                   1u, 7u, -3, &arrow) == 1 &&
@@ -610,6 +614,42 @@ static void test_map_helpers(void)
                   other_level.locate_delta == -1 &&
                   other_level.final_party_dir == 3,
               "DM2_move_12b4_00af reverses locate delta for forward transition and masks rotation");
+
+        CHECK(dm2_v1_skproject_move_12b4_023f(
+                  40, 41, 1, 3, direction_champions, hero_types,
+                  wound_results, &crush) == 1 &&
+                  crush.valid &&
+                  crush.first_direction == 2u &&
+                  crush.second_direction == 3u &&
+                  crush.first_candidate == 1 &&
+                  crush.second_candidate == 1 &&
+                  crush.candidate_count == 1u &&
+                  crush.wound_attempts == 1u &&
+                  crush.wound_successes == 1u &&
+                  crush.noise_requests == 1u &&
+                  crush.wounded_champions[0] == 1 &&
+                  crush.noise_hero_types[0] == 11u,
+              "DM2_move_12b4_023f wounds the two source side candidates once when both directions resolve to the same champion");
+        CHECK(dm2_v1_skproject_move_12b4_023f(
+                  40, 41, 0, 0, direction_champions, hero_types,
+                  wound_results, &crush) == 1 &&
+                  crush.first_direction == 2u &&
+                  crush.second_direction == 3u &&
+                  crush.candidate_count == 1u &&
+                  crush.wounded_champions[0] == 1,
+              "DM2_move_12b4_023f uses `(arg1 + arg0 + 2/3) & 3` source directions");
+        CHECK(dm2_v1_skproject_move_12b4_023f(
+                  40, 41, 2, 3, direction_champions, hero_types,
+                  wound_results, &crush) == 1 &&
+                  crush.first_direction == 3u &&
+                  crush.second_direction == 0u &&
+                  crush.candidate_count == 2u &&
+                  crush.wound_attempts == 2u &&
+                  crush.wound_successes == 2u &&
+                  crush.wounded_champions[0] == 1 &&
+                  crush.wounded_champions[1] == 2 &&
+                  crush.noise_hero_types[1] == 12u,
+              "DM2_move_12b4_023f wounds both distinct champions and records hero-type sound requests");
 
         {
             DM2_V1_SkprojectAttackDoorReceipt door;

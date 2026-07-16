@@ -1,5 +1,6 @@
 #include "theron_v1_runtime_admission.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -215,6 +216,115 @@ static void build_object_table_route_receipt(
     out->blocked_for_missing_real_object_evidence = 1;
     out->fallback_visuals_allowed = 0;
     out->route_hash = route->object_table_route_hash;
+}
+
+static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
+{
+    FILE *file;
+    long length;
+    uint8_t *data;
+
+    if (out_data) {
+        *out_data = NULL;
+    }
+    if (out_size) {
+        *out_size = 0u;
+    }
+    if (!path || !path[0] || !out_data || !out_size) {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file) {
+        return 0;
+    }
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return 0;
+    }
+    length = ftell(file);
+    if (length <= 0) {
+        fclose(file);
+        return 0;
+    }
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    data = (uint8_t *)malloc((size_t)length);
+    if (!data) {
+        fclose(file);
+        return 0;
+    }
+    if (fread(data, 1u, (size_t)length, file) != (size_t)length) {
+        free(data);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *out_data = data;
+    *out_size = (size_t)length;
+    return 1;
+}
+
+static int probe_real_track02_capture_producer(
+    const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *base_consumer)
+{
+    const char *path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
+    uint8_t *data = NULL;
+    size_t size = 0u;
+    Theron_Track02LevelRouteReceipt level_route;
+    Theron_Track02ObjectTableRouteReceipt object_route;
+    Theron_V1RuntimeTrack02ConsumerSemanticReceipt consumer;
+    Theron_V1RuntimeTrack02RenderAssetProof proof;
+    int ok = 1;
+
+    if (!path || !path[0]) {
+        return 1;
+    }
+    if (!read_file(path, &data, &size)) {
+        return 0;
+    }
+    if (!theron_v1_track02_capture_level_route_receipt(
+            data, size, THERON_TRACK02_MD5_US_BIN, &level_route) ||
+        !theron_v1_track02_capture_object_table_route_receipt(
+            data, size, THERON_TRACK02_MD5_US_BIN, &object_route)) {
+        free(data);
+        return 0;
+    }
+    consumer = *base_consumer;
+    consumer.level_route_hash = level_route.route_hash;
+    consumer.object_table_route_hash = object_route.route_hash;
+    theron_v1_runtime_track02_render_asset_proof_init(&proof);
+    if (theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
+            &consumer,
+            data,
+            size,
+            THERON_TRACK02_MD5_US_BIN,
+            0x2a06a0u,
+            0,
+            &proof) ||
+        proof.valid) {
+        ok = 0;
+    }
+    if (theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
+            &consumer,
+            data,
+            size,
+            THERON_TRACK02_MD5_US_BIN,
+            0x2a06a0u,
+            1,
+            &proof) ||
+        proof.valid) {
+        ok = 0;
+    }
+    if (level_route.nonstartup_level_decode_ready ||
+        object_route.object_table_decode_ready ||
+        !level_route.blocked_for_missing_nonstartup_level_evidence ||
+        !object_route.blocked_for_missing_real_object_evidence) {
+        ok = 0;
+    }
+    free(data);
+    return ok;
 }
 
 int main(void)
@@ -628,6 +738,9 @@ int main(void)
     if (render_admission.valid ||
         render_admission.real_render_assets_admitted ||
         render_admission.fallback_visuals_allowed) {
+        return 1;
+    }
+    if (!probe_real_track02_capture_producer(&consumer_semantics)) {
         return 1;
     }
     theron_v1_runtime_track02_render_asset_proof_init(&render_proof);
