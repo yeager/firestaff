@@ -60,9 +60,24 @@ static int viewport_find_palette_index(const uint32_t palette[256],
 {
     int i;
     for (i = 0; i < 256; ++i) {
-        if (occupied[i] && palette[i] == rgba) return i;
+        if ((!occupied || occupied[i]) && palette[i] == rgba) return i;
     }
     return -1;
+}
+
+static void viewport_surface_palette_map(Nexus_Viewport *vp,
+                                         const Nexus_DMDFTextureSurface *surface,
+                                         uint8_t texel_map[256])
+{
+    int i;
+    if (!texel_map) return;
+    for (i = 0; i < 256; ++i) texel_map[i] = (uint8_t)i;
+    if (!vp || !surface || !surface->valid) return;
+    for (i = 0; i < 256; ++i) {
+        int mapped = viewport_find_palette_index(vp->fb.palette, NULL,
+                                                 surface->palette[i]);
+        if (mapped >= 0) texel_map[i] = (uint8_t)mapped;
+    }
 }
 
 static int viewport_sync_dgn_material_palette(
