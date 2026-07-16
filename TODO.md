@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 19, CSB 1, shared DM1/CSB 1565, DM2 1494; 3079 total open rows
+  DM1 19, CSB 1, shared DM1/CSB 1565, DM2 1490; 3075 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -75,6 +75,11 @@
     source-backed narrow receipts in `dm2_v1_skproject_core`. Remaining
     adjacent map work starts at `DM2_ARRANGE_DUNGEON` and broader live
     dungeon arrangement/global mutation.
+  - 2026-07-16 DM2 update: skproject move/alcove helper rows
+    `DM2_move_12b4_099e`, `DM2_move_12b4_0092`, `DM2_move_12b4_00af`,
+    and `DM2_0cee_317f` are now closed through source-backed narrow receipts.
+    Remaining adjacent work includes `DM2_PERFORM_MOVE`, `DM2_ATTACK_WALL`,
+    `DM2_ATTACK_DOOR`, and broader live movement mutation.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,

@@ -886,6 +886,146 @@ int dm2_v1_skproject_tmpmap_or_flag(
     return 1;
 }
 
+int dm2_v1_skproject_move_12b4_0092(
+    uint16_t active_v1e0534,
+    uint16_t arrow_panel,
+    int16_t highlight_param,
+    DM2_V1_SkprojectArrowHighlightReceipt *out_receipt)
+{
+    DM2_V1_SkprojectArrowHighlightReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.active_v1e0534 = active_v1e0534;
+    receipt.arrow_panel = arrow_panel;
+    receipt.highlight_param = highlight_param;
+    receipt.requested_highlight = active_v1e0534 != 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.requested_highlight;
+}
+
+int dm2_v1_skproject_move_12b4_00af(
+    int enter_forward,
+    int16_t source_map,
+    int16_t source_x,
+    int16_t source_y,
+    int16_t located_map,
+    int16_t located_x,
+    int16_t located_y,
+    int16_t query_rotation,
+    DM2_V1_SkprojectOtherLevelReceipt *out_receipt)
+{
+    DM2_V1_SkprojectOtherLevelReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.requested_drop_record = 1u;
+    receipt.source_map = source_map;
+    receipt.source_x = source_x;
+    receipt.source_y = source_y;
+    receipt.locate_delta = enter_forward ? -1 : 1;
+    receipt.located_map = located_map;
+    receipt.located_x = located_x;
+    receipt.located_y = located_y;
+    receipt.query_rotation = query_rotation;
+    receipt.final_party_dir = (int16_t)(query_rotation & 3);
+    receipt.requested_restore_source_map = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_move_12b4_099e(
+    const DM2_V1_SkprojectLiftRequest *request,
+    DM2_V1_SkprojectLiftReceipt *out_receipt)
+{
+    DM2_V1_SkprojectLiftReceipt receipt;
+    uint16_t hero_count;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!request) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (request->creature_weight > 0x00fdu) {
+        receipt.blocked_overweight_creature = 1u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    hero_count = request->hero_count;
+    if (hero_count > DM2_V1_SKPROJECT_PARTY_HERO_LIMIT)
+        hero_count = DM2_V1_SKPROJECT_PARTY_HERO_LIMIT;
+    for (uint16_t i = 0; i < hero_count; ++i) {
+        const DM2_V1_SkprojectLiftHero *hero = &request->heroes[i];
+        uint16_t strength;
+
+        receipt.checked_heroes++;
+        if (!hero->alive)
+            continue;
+        strength = hero->strength;
+        if (i == request->event_hero_index)
+            strength = (uint16_t)(strength + strength / 8u);
+        if (request->creature_weight <= 0x002du)
+            strength = (uint16_t)(strength + strength / 4u);
+        if ((hero->stamina_adjusted_strength != 0u ?
+             hero->stamina_adjusted_strength : strength) >=
+                request->creature_weight ||
+            request->rand16_values[i] == 0u) {
+            receipt.can_lift = 1u;
+            break;
+        }
+    }
+
+    for (uint16_t i = 0; i < hero_count; ++i) {
+        const DM2_V1_SkprojectLiftHero *hero = &request->heroes[i];
+        if (!hero->alive)
+            continue;
+        if (hero->cur_stamina > hero->max_stamina >> 4) {
+            uint16_t amount = 5u;
+            if (receipt.can_lift) {
+                uint16_t quarter = request->creature_weight / 4u;
+                amount = quarter > 5u ? quarter : 5u;
+            }
+            receipt.stamina_adjustments[i] = amount;
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.can_lift;
+}
+
+int dm2_v1_skproject_wall_ornate_alcove_data_index(
+    int ornate_alcove_from_record,
+    int16_t cls2,
+    uint16_t gdat_data_index,
+    DM2_V1_SkprojectWallAlcoveReceipt *out_receipt)
+{
+    DM2_V1_SkprojectWallAlcoveReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.ornate_alcove = ornate_alcove_from_record != 0;
+    if (!receipt.ornate_alcove) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (cls2 < 0 || cls2 > 0xff) {
+        receipt.cls2_missing = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.cls2 = (uint8_t)cls2;
+    receipt.data_index = gdat_data_index;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return gdat_data_index != 0u;
+}
+
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b)

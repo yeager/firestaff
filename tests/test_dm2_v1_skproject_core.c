@@ -497,6 +497,82 @@ static void test_map_helpers(void)
                   ec9.valid && ec9.returned_head == 3u,
               "DM2_map_2066_1ec9 returns append chain when existing head is end marker");
     }
+
+    {
+        DM2_V1_SkprojectArrowHighlightReceipt arrow;
+        DM2_V1_SkprojectOtherLevelReceipt other_level;
+        DM2_V1_SkprojectLiftRequest lift;
+        DM2_V1_SkprojectLiftReceipt lift_receipt;
+        DM2_V1_SkprojectWallAlcoveReceipt alcove;
+
+        CHECK(dm2_v1_skproject_move_12b4_0092(
+                  1u, 7u, -3, &arrow) == 1 &&
+                  arrow.valid && arrow.requested_highlight &&
+                  arrow.arrow_panel == 7u && arrow.highlight_param == -3,
+              "DM2_move_12b4_0092 requests arrow-panel highlight only while v1e0534 is active");
+        CHECK(dm2_v1_skproject_move_12b4_0092(
+                  0u, 7u, -3, &arrow) == 0 &&
+                  arrow.valid && !arrow.requested_highlight,
+              "DM2_move_12b4_0092 is a no-op when v1e0534 is clear");
+
+        CHECK(dm2_v1_skproject_move_12b4_00af(
+                  0, 3, 10, 11, 4, 12, 13, 2, &other_level) == 1 &&
+                  other_level.valid && other_level.requested_drop_record &&
+                  other_level.locate_delta == 1 &&
+                  other_level.located_map == 4 &&
+                  other_level.final_party_dir == 2 &&
+                  other_level.requested_restore_source_map,
+              "DM2_move_12b4_00af plans source drop, locate-other-level, rotation, and source-map restore");
+        CHECK(dm2_v1_skproject_move_12b4_00af(
+                  1, 3, 10, 11, 4, 12, 13, 7, &other_level) == 1 &&
+                  other_level.locate_delta == -1 &&
+                  other_level.final_party_dir == 3,
+              "DM2_move_12b4_00af reverses locate delta for forward transition and masks rotation");
+
+        memset(&lift, 0, sizeof(lift));
+        lift.creature_weight = 40u;
+        lift.event_hero_index = 1u;
+        lift.hero_count = 3u;
+        lift.heroes[0].alive = 1u;
+        lift.heroes[0].strength = 20u;
+        lift.heroes[0].stamina_adjusted_strength = 10u;
+        lift.heroes[0].max_stamina = 160u;
+        lift.heroes[0].cur_stamina = 80u;
+        lift.rand16_values[0] = 2u;
+        lift.heroes[1].alive = 1u;
+        lift.heroes[1].strength = 36u;
+        lift.heroes[1].max_stamina = 160u;
+        lift.heroes[1].cur_stamina = 80u;
+        lift.rand16_values[1] = 2u;
+        CHECK(dm2_v1_skproject_move_12b4_099e(
+                  &lift, &lift_receipt) == 1 &&
+                  lift_receipt.valid && lift_receipt.can_lift &&
+                  lift_receipt.checked_heroes == 2u &&
+                  lift_receipt.stamina_adjustments[0] == 10u &&
+                  lift_receipt.stamina_adjustments[1] == 10u,
+              "DM2_move_12b4_099e admits lift through adjusted event-hero strength and drains living stamina");
+        lift.creature_weight = 300u;
+        CHECK(dm2_v1_skproject_move_12b4_099e(
+                  &lift, &lift_receipt) == 0 &&
+                  lift_receipt.valid &&
+                  lift_receipt.blocked_overweight_creature,
+              "DM2_move_12b4_099e rejects creature weights above 0xfd");
+
+        CHECK(dm2_v1_skproject_wall_ornate_alcove_data_index(
+                  1, 0x12, 0x345u, &alcove) == 1 &&
+                  alcove.valid && alcove.ornate_alcove &&
+                  alcove.cls2 == 0x12u &&
+                  alcove.data_index == 0x345u,
+              "DM2_0cee_317f queries GDAT data index for ornate wall alcove cls2");
+        CHECK(dm2_v1_skproject_wall_ornate_alcove_data_index(
+                  1, -1, 0x345u, &alcove) == 0 &&
+                  alcove.cls2_missing,
+              "DM2_0cee_317f rejects missing cls2 before GDAT lookup");
+        CHECK(dm2_v1_skproject_wall_ornate_alcove_data_index(
+                  0, 0x12, 0x345u, &alcove) == 0 &&
+                  !alcove.valid && !alcove.ornate_alcove,
+              "DM2_0cee_317f returns zero for non-ornate wall records");
+    }
 }
 
 static void test_calc_vector_w_dir(void)
