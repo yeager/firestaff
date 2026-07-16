@@ -96,6 +96,54 @@ static void test_random_helpers(void)
           "DM2_RAND16 zero range returns zero");
 }
 
+static void test_calc_vector_w_dir(void)
+{
+    DM2_V1_SkprojectVectorWDirReceipt receipt;
+    int16_t x;
+    int16_t y;
+
+    x = 10;
+    y = 20;
+    CHECK(dm2_v1_skproject_calc_vector_w_dir(
+              0, 3, 2, &x, &y, &receipt) == 1 &&
+              x == 12 && y == 17 &&
+              receipt.valid && receipt.dir == 0u &&
+              receipt.forward_dx == 0 && receipt.forward_dy == -3 &&
+              receipt.side_dx == 2 && receipt.side_dy == 0 &&
+              receipt.initial_x == 10 && receipt.initial_y == 20,
+          "CALC_VECTOR_W_DIR dir north adds forward and right-hand side deltas");
+
+    x = 10;
+    y = 20;
+    CHECK(dm2_v1_skproject_calc_vector_w_dir(
+              1, -1, 4, &x, &y, &receipt) == 1 &&
+              x == 9 && y == 24 &&
+              receipt.forward_dx == -1 && receipt.forward_dy == 0 &&
+              receipt.side_dx == 0 && receipt.side_dy == 4,
+          "CALC_VECTOR_W_DIR dir east preserves signed source operands");
+
+    x = 10;
+    y = 20;
+    CHECK(dm2_v1_skproject_calc_vector_w_dir(
+              3, 5, -2, &x, &y, &receipt) == 1 &&
+              x == 5 && y == 22 &&
+              receipt.forward_dx == -5 && receipt.forward_dy == 0 &&
+              receipt.side_dx == 0 && receipt.side_dy == 2,
+          "CALC_VECTOR_W_DIR dir west wraps side direction to north");
+
+    x = -7;
+    y = 8;
+    CHECK(dm2_v1_skproject_calc_vector_w_dir(
+              5, 2, 3, &x, &y, &receipt) == 1 &&
+              x == -5 && y == 11 && receipt.dir == 1u,
+          "CALC_VECTOR_W_DIR masks direction like the source table index");
+
+    CHECK(dm2_v1_skproject_calc_vector_w_dir(
+              0, 1, 1, 0, &y, &receipt) == 0 &&
+              receipt.blocked_missing_output,
+          "CALC_VECTOR_W_DIR rejects missing output accumulator");
+}
+
 static void test_cache_hash_helpers(void)
 {
     DM2_V1_SkprojectCacheState state;
@@ -510,16 +558,101 @@ static void test_player_weight_helper(void)
           "CALC_PLAYER_WEIGHT skips overlay for non-selected player");
 }
 
+static void test_count_by_coin_types(void)
+{
+    DM2_V1_SkprojectItemValueRecord records[6];
+    DM2_V1_SkprojectItemValueWorld world;
+    DM2_V1_SkprojectCountByCoinTypesReceipt receipt;
+    uint16_t money_ids[DM2_V1_SKPROJECT_MONEY_ITEM_MAX] = {
+        0x10u, 0x20u, 0x20u, 0x30u, 0x40u,
+        0x50u, 0x60u, 0x70u, 0x80u, 0x90u
+    };
+    int16_t counts[DM2_V1_SKPROJECT_MONEY_ITEM_MAX];
+
+    memset(records, 0, sizeof(records));
+    for (uint16_t i = 0; i < DM2_V1_SKPROJECT_MONEY_ITEM_MAX; ++i)
+        counts[i] = -7;
+    world.records = records;
+    world.record_count = 6u;
+
+    records[0].object_id = 0x2400u;
+    records[0].contained_object_id = 0x2801u;
+    records[0].container_type = 0u;
+    records[0].is_moneybox = 1u;
+
+    records[1].object_id = 0x2801u;
+    records[1].w2 = (uint16_t)(2u << 14);
+    records[1].next_object_id = 0x2802u;
+    records[1].distinctive_item_type = 0x20u;
+    records[1].is_currency = 1u;
+
+    records[2].object_id = 0x2802u;
+    records[2].w2 = 0u;
+    records[2].next_object_id = 0x2803u;
+    records[2].distinctive_item_type = 0x10u;
+    records[2].is_currency = 1u;
+
+    records[3].object_id = 0x2803u;
+    records[3].w2 = (uint16_t)(3u << 14);
+    records[3].next_object_id = 0x1404u;
+    records[3].distinctive_item_type = 0x99u;
+    records[3].is_currency = 1u;
+
+    records[4].object_id = 0x1404u;
+    records[4].w2 = (uint16_t)(1u << 10);
+    records[4].next_object_id = 0x2805u;
+    records[4].distinctive_item_type = 0x30u;
+    records[4].is_currency = 1u;
+
+    records[5].object_id = 0x2805u;
+    records[5].w2 = (uint16_t)(1u << 14);
+    records[5].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+    records[5].distinctive_item_type = 0x30u;
+    records[5].is_currency = 0u;
+
+    CHECK(dm2_v1_skproject_count_by_coin_types(
+              &world, 0x2400u, money_ids,
+              DM2_V1_SKPROJECT_MONEY_ITEM_MAX, counts, &receipt) == 1 &&
+              receipt.valid && receipt.visited_records == 5u &&
+              receipt.currency_records == 3u &&
+              receipt.matched_currency_records == 3u &&
+              counts[0] == 1 && counts[1] == 3 && counts[2] == 3 &&
+              counts[3] == 0 && counts[9] == 0,
+          "COUNT_BY_COIN_TYPES zeroes ten slots and adds charge+1 by money type");
+
+    CHECK(dm2_v1_skproject_count_by_coin_types(
+              &world, 0x2400u, money_ids, 2u, counts, &receipt) == 1 &&
+              receipt.valid && receipt.money_item_count == 2u &&
+              counts[0] == 1 && counts[1] == 3 && counts[2] == 0,
+          "COUNT_BY_COIN_TYPES honors caller money table count after zeroing");
+
+    records[5].next_object_id = 0x2810u;
+    CHECK(dm2_v1_skproject_count_by_coin_types(
+              &world, 0x2400u, money_ids,
+              DM2_V1_SKPROJECT_MONEY_ITEM_MAX, counts, &receipt) == 0 &&
+              receipt.blocked_missing_record,
+          "COUNT_BY_COIN_TYPES rejects missing source-shaped chain record");
+    records[5].next_object_id = DM2_V1_SKPROJECT_MEMENT_NONE;
+
+    CHECK(dm2_v1_skproject_count_by_coin_types(
+              &world, 0x2400u, money_ids,
+              DM2_V1_SKPROJECT_MONEY_ITEM_MAX, 0, &receipt) == 0 &&
+              receipt.blocked_missing_output,
+          "COUNT_BY_COIN_TYPES rejects missing output counter table");
+}
+
 int main(void)
 {
     test_between_value();
     test_temp_rect_ring();
     test_random_helpers();
+    test_calc_vector_w_dir();
     test_cache_hash_helpers();
     test_picture_mement_helpers();
     test_item_charge_helpers();
     test_item_value_weight_helpers();
     test_player_weight_helper();
+    test_count_by_coin_types();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -529,6 +662,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_RAND16") != 0,
           "source evidence names c_random helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "CALC_VECTOR_W_DIR") != 0,
+          "source evidence names vector direction helper");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ADD_CACHE_HASH") != 0,
           "source evidence names cache hash helpers");
@@ -547,6 +683,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "CALC_PLAYER_WEIGHT") != 0,
           "source evidence names player weight helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "COUNT_BY_COIN_TYPES") != 0,
+          "source evidence names coin count helper");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

@@ -127,6 +127,72 @@ int DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
     return 1;
 }
 
+int DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+    const DM1EndgameF0224FluxcageActionInput* input,
+    DM1EndgameF0224FluxcageActionPlan* outPlan)
+{
+    static const int chaosDx[DM1_ENDGAME_F0224_ADJACENT_COUNT] = {
+        0, -1, 1, 0
+    };
+    static const int chaosDy[DM1_ENDGAME_F0224_ADJACENT_COUNT] = {
+        -1, 0, 0, 1
+    };
+    int i, j;
+    if (!input || !outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->checkedLordChaosAdjacentIndex = -1;
+    outPlan->lordChaosMapX = -1;
+    outPlan->lordChaosMapY = -1;
+    outPlan->valid = 1;
+    outPlan->sourceEvidence =
+        "ReDMCSB PROJEXPL.C F0224 lines 961-1034: square gate, C15 "
+        "fluxcage link, C24 remove event, adjacent Lord Chaos danger check";
+
+    if (input->squareType == DUNGEON_ELEMENT_WALL ||
+        input->squareType == DUNGEON_ELEMENT_STAIRS) {
+        outPlan->blockedWallOrStairs = 1;
+        return 1;
+    }
+    if (!input->hasUnusedExplosionThing ||
+        input->explosionThing == THING_NONE ||
+        input->explosionThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(input->explosionThing) != THING_TYPE_EXPLOSION) {
+        outPlan->blockedNoUnusedExplosionThing = 1;
+        return 1;
+    }
+
+    outPlan->createdFluxcage = 1;
+    outPlan->linkedExplosionThing = 1;
+    outPlan->explosionThing = input->explosionThing;
+    outPlan->explosionType = DM1_EXPLOSION_FLUXCAGE_TYPE;
+    outPlan->removeEventType = DM1_EVENT_REMOVE_FLUXCAGE;
+    outPlan->removeEventPriority = 0;
+    outPlan->removeEventGameTime = input->gameTime + 100u;
+    outPlan->removeEventMapIndex = input->mapIndex;
+    outPlan->removeEventMapX = input->mapX;
+    outPlan->removeEventMapY = input->mapY;
+    outPlan->removeEventSlotThing = input->explosionThing;
+
+    for (i = 0; i < DM1_ENDGAME_F0224_ADJACENT_COUNT; ++i) {
+        if (!input->lordChaosAdjacent[i]) continue;
+        outPlan->checkedLordChaosAdjacentIndex = i;
+        outPlan->lordChaosMapX = input->mapX + chaosDx[i];
+        outPlan->lordChaosMapY = input->mapY + chaosDy[i];
+        for (j = 0; j < DM1_ENDGAME_F0224_ADJACENT_COUNT; ++j) {
+            if (input->fluxcagesAroundAdjacentLordChaos[i][j]) {
+                outPlan->otherFluxcageCount++;
+            }
+        }
+        if (outPlan->otherFluxcageCount == 2) {
+            outPlan->scheduledDangerReaction = 1;
+            outPlan->reactionEventType =
+                DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE;
+        }
+        break;
+    }
+    return 1;
+}
+
 int DM1_Endgame_F0225_MoveLordChaosEscapePc34Compat(
     struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things,
     int mapIndex, int mapX, int mapY, struct RngState_Compat* rng,
@@ -569,6 +635,7 @@ const char* DM1_Endgame_System_GetSourceEvidence(void)
         "F0446_STARTEND_FuseSequence (Lord Chaos morph + victory); "
         "PROJEXPL.C F0222_IsLordChaosOnSquare (checks Type==C23), "
         "F0223_IsLordChaosAllowed (walkability check for escape), "
+        "F0224_FluxCageAction (wall/stairs no-op, C15 fluxcage, C24 remove event, C29 danger reaction), "
         "F0225_FuseAction (bounds check, explosion, fluxcage count, escape or fuse); "
         "MENU.C:1499-1504 C043_ACTION_FUSE dispatch; "
         "CHAMPION.C:771-774 Firestaff skill bonus (+1 base, +2 complete); "

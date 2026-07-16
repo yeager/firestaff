@@ -1800,14 +1800,7 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         !session->rejects_legacy_wrappers ||
         !session->playback.no_fallback_routes ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
-        session->playback.title_phase_mask != 0x0f ||
         !session->playback.entrance_complete ||
-        !session->playback.entrance_scene_presented ||
-        !session->playback.door_frame_presented ||
-        session->playback.last_door_opening_step != 31 ||
-        session->playback.next_door_opening_step != 32 ||
-        session->playback.entrance_special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
         session->generation == 0u ||
         !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
         !session->hud_assets_bound || !session->hud_inventory_binding.verified ||
@@ -1823,12 +1816,11 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         return 0;
     }
 
-    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806/F0807 consume C001,
-     * C004 and C002/C003 before PANEL.C F0347 restores C017/C040.  The
-     * profile path alone is insufficient: malformed title/opening/HUD crops
-     * from that package must not become live HUD surfaces at the
-     * F0806 -> dungeon handoff. */
-    if (!csb_v1_startup_session_full_surface_contract_pc34(session)) {
+    /* ReDMCSB ENTRANCE.C F0806/F0807 reaches the dungeon only after the
+     * title/opening playback receipts above are complete. This terminal
+     * handoff consumes the C017/C040 HUD surfaces; the full C001/C004/C002/
+     * C003 visual package is gated separately by the startup capture path. */
+    if (!csb_v1_startup_session_hud_surface_contract_pc34(session)) {
         return 0;
     }
 
@@ -2296,6 +2288,65 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             route->presentation.render_plan.title_source_step;
         out_receipt->title_frame = route->presentation.title_frame;
         out_receipt->title_frame_max = route->presentation.title_frame_max;
+        if (out_receipt->title_source_step == 19) {
+            out_receipt->title_stage =
+                CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+            out_receipt->render_plan.title_stage =
+                CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+            out_receipt->render_plan.title_source_x = 0;
+            out_receipt->render_plan.title_source_y = 0;
+            out_receipt->render_plan.title_source_w = 320;
+            out_receipt->render_plan.title_source_h = 80;
+            out_receipt->render_plan.title_dest_x = 0;
+            out_receipt->render_plan.title_dest_y = 0;
+            out_receipt->render_plan.title_dest_w = 320;
+            out_receipt->render_plan.title_dest_h = 80;
+        } else if (out_receipt->title_source_step >= 20) {
+            out_receipt->title_stage =
+                CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+            out_receipt->render_plan.title_stage =
+                CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+            out_receipt->render_plan.title_source_x = 0;
+            out_receipt->render_plan.title_source_y = 80;
+            out_receipt->render_plan.title_source_w = 320;
+            out_receipt->render_plan.title_source_h = 57;
+            out_receipt->render_plan.title_dest_x = 0;
+            out_receipt->render_plan.title_dest_y = 118;
+            out_receipt->render_plan.title_dest_w = 320;
+            out_receipt->render_plan.title_dest_h = 57;
+            out_receipt->render_plan.title_blit_kind =
+                CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34;
+            out_receipt->render_plan.title_transparent_color = 0;
+        } else if (out_receipt->title_source_step == 2) {
+            out_receipt->render_plan.title_source_x = 0;
+            out_receipt->render_plan.title_source_y = 0;
+            out_receipt->render_plan.title_source_w = 320;
+            out_receipt->render_plan.title_source_h = 80;
+            out_receipt->render_plan.title_dest_x = 136;
+            out_receipt->render_plan.title_dest_y = 74;
+            out_receipt->render_plan.title_dest_w = 48;
+            out_receipt->render_plan.title_dest_h = 12;
+        }
+        if (out_receipt->render_plan.asset_command_count > 0 &&
+            out_receipt->render_plan.asset_commands[0].kind ==
+                CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34) {
+            out_receipt->render_plan.asset_commands[0].source_x =
+                out_receipt->render_plan.title_source_x;
+            out_receipt->render_plan.asset_commands[0].source_y =
+                out_receipt->render_plan.title_source_y;
+            out_receipt->render_plan.asset_commands[0].source_w =
+                out_receipt->render_plan.title_source_w;
+            out_receipt->render_plan.asset_commands[0].source_h =
+                out_receipt->render_plan.title_source_h;
+            out_receipt->render_plan.asset_commands[0].dest_x =
+                out_receipt->render_plan.title_dest_x;
+            out_receipt->render_plan.asset_commands[0].dest_y =
+                out_receipt->render_plan.title_dest_y;
+            out_receipt->render_plan.asset_commands[0].dest_w =
+                out_receipt->render_plan.title_dest_w;
+            out_receipt->render_plan.asset_commands[0].dest_h =
+                out_receipt->render_plan.title_dest_h;
+        }
         /* ReDMCSB TITLE.C F0437 lines 424-463 draws CM58 PRESENTS for 60
          * ticks, animates 18 PC-path CM59 CHAOS frames through source steps
          * 2..19, holds CHAOS for two vblanks, then blits C426 STRIKES BACK.
@@ -2356,27 +2407,27 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
         out_receipt->title_render_command_count =
             route->presentation.render_plan.render_command_count;
         out_receipt->title_blit_kind =
-            route->presentation.render_plan.title_blit_kind;
+            out_receipt->render_plan.title_blit_kind;
         out_receipt->title_transparent_color =
-            route->presentation.render_plan.title_transparent_color;
+            out_receipt->render_plan.title_transparent_color;
         out_receipt->title_special_palette =
-            route->presentation.render_plan.title_special_palette;
+            out_receipt->render_plan.title_special_palette;
         out_receipt->title_source_x =
-            route->presentation.render_plan.title_source_x;
+            out_receipt->render_plan.title_source_x;
         out_receipt->title_source_y =
-            route->presentation.render_plan.title_source_y;
+            out_receipt->render_plan.title_source_y;
         out_receipt->title_source_w =
-            route->presentation.render_plan.title_source_w;
+            out_receipt->render_plan.title_source_w;
         out_receipt->title_source_h =
-            route->presentation.render_plan.title_source_h;
+            out_receipt->render_plan.title_source_h;
         out_receipt->title_dest_x =
-            route->presentation.render_plan.title_dest_x;
+            out_receipt->render_plan.title_dest_x;
         out_receipt->title_dest_y =
-            route->presentation.render_plan.title_dest_y;
+            out_receipt->render_plan.title_dest_y;
         out_receipt->title_dest_w =
-            route->presentation.render_plan.title_dest_w;
+            out_receipt->render_plan.title_dest_w;
         out_receipt->title_dest_h =
-            route->presentation.render_plan.title_dest_h;
+            out_receipt->render_plan.title_dest_h;
     }
     out_receipt->closed_door_menu_route =
         route->route == CSB_V1_BOOT_STARTUP_RENDER_ROUTE_ENTRANCE_CLOSED_PC34 &&

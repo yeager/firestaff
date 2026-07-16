@@ -36,6 +36,7 @@
 #include <stdint.h>
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 /* -- Endgame creature constants (DEFS.H) -- */
 #define DM1_CREATURE_LORD_CHAOS_ID          23  /* C23_CREATURE_LORD_CHAOS */
@@ -122,6 +123,55 @@ int DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
 int DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
     const struct DungeonDatState_Compat* dungeon,
     int mapIndex, int mapX, int mapY, int* outAllowed);
+
+enum {
+    DM1_ENDGAME_F0224_ADJACENT_NORTH = 0,
+    DM1_ENDGAME_F0224_ADJACENT_WEST = 1,
+    DM1_ENDGAME_F0224_ADJACENT_EAST = 2,
+    DM1_ENDGAME_F0224_ADJACENT_SOUTH = 3,
+    DM1_ENDGAME_F0224_ADJACENT_COUNT = 4
+};
+
+typedef struct DM1EndgameF0224FluxcageActionInput {
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int squareType;
+    uint32_t gameTime;
+    int hasUnusedExplosionThing;
+    unsigned short explosionThing;
+    int lordChaosAdjacent[DM1_ENDGAME_F0224_ADJACENT_COUNT];
+    int fluxcagesAroundAdjacentLordChaos[DM1_ENDGAME_F0224_ADJACENT_COUNT]
+                                         [DM1_ENDGAME_F0224_ADJACENT_COUNT];
+} DM1EndgameF0224FluxcageActionInput;
+
+typedef struct DM1EndgameF0224FluxcageActionPlan {
+    int valid;
+    int blockedWallOrStairs;
+    int blockedNoUnusedExplosionThing;
+    int createdFluxcage;
+    int linkedExplosionThing;
+    unsigned short explosionThing;
+    int explosionType;
+    int removeEventType;
+    int removeEventPriority;
+    uint32_t removeEventGameTime;
+    int removeEventMapIndex;
+    int removeEventMapX;
+    int removeEventMapY;
+    unsigned short removeEventSlotThing;
+    int checkedLordChaosAdjacentIndex;
+    int lordChaosMapX;
+    int lordChaosMapY;
+    int otherFluxcageCount;
+    int scheduledDangerReaction;
+    int reactionEventType;
+    const char* sourceEvidence;
+} DM1EndgameF0224FluxcageActionPlan;
+
+int DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat(
+    const DM1EndgameF0224FluxcageActionInput* input,
+    DM1EndgameF0224FluxcageActionPlan* outPlan);
 
 int DM1_Endgame_F0225_MoveLordChaosEscapePc34Compat(
     struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things,

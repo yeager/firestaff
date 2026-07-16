@@ -118,6 +118,48 @@ uint8_t dm2_v1_skproject_randdir(DM2_V1_SkprojectRandomData *randdat)
     return (uint8_t)(dm2_v1_skproject_rand(randdat) & 3u);
 }
 
+int dm2_v1_skproject_calc_vector_w_dir(
+    int16_t dir,
+    int16_t xx,
+    int16_t yy,
+    int16_t *x,
+    int16_t *y,
+    DM2_V1_SkprojectVectorWDirReceipt *out_receipt)
+{
+    static const int16_t x_delta[4] = { 0, 1, 0, -1 };
+    static const int16_t y_delta[4] = { -1, 0, 1, 0 };
+    DM2_V1_SkprojectVectorWDirReceipt receipt;
+    uint8_t idx;
+    uint8_t side_idx;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.dir = (uint8_t)((uint16_t)dir & 3u);
+    receipt.input_xx = xx;
+    receipt.input_yy = yy;
+    if (!x || !y) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    idx = receipt.dir;
+    side_idx = (uint8_t)((idx + 1u) & 3u);
+    receipt.initial_x = *x;
+    receipt.initial_y = *y;
+    receipt.forward_dx = (int16_t)(xx * x_delta[idx]);
+    receipt.forward_dy = (int16_t)(xx * y_delta[idx]);
+    receipt.side_dx = (int16_t)(yy * x_delta[side_idx]);
+    receipt.side_dy = (int16_t)(yy * y_delta[side_idx]);
+    *x = (int16_t)(*x + receipt.forward_dx + receipt.side_dx);
+    *y = (int16_t)(*y + receipt.forward_dy + receipt.side_dy);
+    receipt.final_x = *x;
+    receipt.final_y = *y;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 void dm2_v1_skproject_cache_state_init(
     DM2_V1_SkprojectCacheState *state,
     uint16_t cache_capacity,
@@ -841,6 +883,84 @@ int dm2_v1_skproject_calc_player_weight(
     return 1;
 }
 
+int dm2_v1_skproject_count_by_coin_types(
+    const DM2_V1_SkprojectItemValueWorld *world,
+    uint16_t moneybox_object_id,
+    const uint16_t *money_item_ids,
+    uint16_t money_item_count,
+    int16_t *out_counts,
+    DM2_V1_SkprojectCountByCoinTypesReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCountByCoinTypesReceipt receipt;
+    const DM2_V1_SkprojectItemValueRecord *moneybox;
+    uint16_t child;
+    uint16_t guard = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.moneybox_object_id = moneybox_object_id;
+    if (money_item_count > DM2_V1_SKPROJECT_MONEY_ITEM_MAX)
+        money_item_count = DM2_V1_SKPROJECT_MONEY_ITEM_MAX;
+    receipt.money_item_count = money_item_count;
+    if (!out_counts) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memset(out_counts, 0,
+           sizeof(out_counts[0]) * DM2_V1_SKPROJECT_MONEY_ITEM_MAX);
+    if (!world || !money_item_ids) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    moneybox = dm2_v1_skproject_find_item_record(world, moneybox_object_id);
+    if (!moneybox || dm2_v1_skproject_item_db_type(moneybox_object_id) != 9) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    child = moneybox->contained_object_id;
+    while (child != DM2_V1_SKPROJECT_MEMENT_NONE) {
+        const DM2_V1_SkprojectItemValueRecord *record;
+
+        if (++guard > DM2_V1_SKPROJECT_ITEM_VALUE_RECORD_LIMIT) {
+            receipt.blocked_recursion_limit = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        record = dm2_v1_skproject_find_item_record(world, child);
+        if (!record) {
+            receipt.blocked_missing_record = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.visited_records++;
+        if (dm2_v1_skproject_item_db_type(child) == 10 &&
+            record->is_currency) {
+            uint16_t w2 = record->w2;
+            uint16_t charge =
+                dm2_v1_skproject_add_item_charge(child, &w2, 0, 0);
+
+            receipt.currency_records++;
+            for (uint16_t i = 0; i < money_item_count; ++i) {
+                if (money_item_ids[i] == record->distinctive_item_type) {
+                    out_counts[i] =
+                        (int16_t)(out_counts[i] + (int16_t)(charge + 1u));
+                    receipt.counts[i] = out_counts[i];
+                    receipt.matched_currency_records++;
+                }
+            }
+        }
+        child = record->next_object_id;
+    }
+    receipt.valid = 1;
+    for (uint16_t i = 0; i < money_item_count; ++i)
+        receipt.counts[i] = out_counts[i];
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -848,6 +968,8 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKWINSPX/src/v5/skrect.cpp alloc_tmprect/alloc_origin_tmprect; "
            "SKWINSPX/src/v5/util.cpp DM2_BETWEEN_VALUE; "
            "SKULLWIN/c_random.cpp DM2_RAND16/DM2_RANDBIT/DM2_RANDDIR; "
+           "SKULLWIN/util.cpp DM2_CALC_VECTOR_W_DIR and "
+           "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR; "
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"
            "QUERY_MEMENT_BUFF_FROM_CACHE_INDEX/GET_TEMP_CACHE_HASH/"
@@ -855,7 +977,9 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "ALLOC_NEW_PICT/ALLOC_IMAGE_MEMENT/ALLOC_PICT_MEMENT/"
            "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT; "
            "SKWIN/SkWinCore.cpp ADD_ITEM_CHARGE/GET_MAX_CHARGE/"
-           "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT and "
+           "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
+           "COUNT_BY_COIN_TYPES and "
            "SKULLWIN/c_item.cpp DM2_ADD_ITEM_CHARGE/DM2_GET_MAX_CHARGE/"
-           "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT";
+           "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT; "
+           "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES";
 }

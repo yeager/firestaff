@@ -1,5 +1,64 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject coin-type count receipt: added
+  `dm2_v1_skproject_count_by_coin_types()` for skproject
+  `DM2_COUNT_BY_COIN_TYPES` / `COUNT_BY_COIN_TYPES`. The helper preserves the
+  source ten-counter zeroing, moneybox contained-record walk, miscellaneous
+  currency filter, distinctive item-type table match, and charge+1 count
+  accumulation over caller-supplied source-shaped records. It does not load or
+  fabricate item definitions, GDAT DBSPEC flags, or container contents.
+  Verification: strict direct C99 build/run of `test_dm2_v1_skproject_core`,
+  focused Ninja target `test_dm2_v1_skproject_core`, and focused CTest
+  `dm2_v1_skproject_core`, plus `git diff --check`.
+
+- 2026-07-16 Theron runtime Track 02 consumer-semantic bridge: added
+  `Theron_V1RuntimeTrack02ConsumerSemanticReceipt` and
+  `theron_v1_runtime_bind_track02_consumer_semantics()` so runtime admission
+  can consume the combined capture-consumer gap only when an already proven
+  original post-$3800 consumer semantic receipt agrees with the admitted US
+  raw Track 02 session and record. The gate rejects pre-opened gap receipts,
+  non-US variants, mismatched records, missing consumer checksums, incomplete
+  dungeon/object/bitmap/palette consumer proof, and fallback visuals. This is
+  a fail-closed bridge only; it does not create the real post-$3800 capture or
+  admit synthetic consumers. Verification: focused Ninja target, direct run
+  of `firestaff_theron_v1_runtime_admission_probe`, and focused CTest
+  `theron_v1_runtime_admission`.
+
+- 2026-07-16 DM1 GROUP F0224 audit repair: added
+  `DM1_Endgame_F0224_BuildFluxcageActionPlanPc34Compat` as the DM1-owned
+  source mapping for ReDMCSB `PROJEXPL.C F0224_GROUP_FluxCageAction`. The
+  plan preserves the wall/stairs no-op, unused C15 explosion Thing gate, C050
+  fluxcage creation, C24 remove-fluxcage event fields at `GameTime + 100`,
+  adjacent Lord Chaos scan order (north, west, east, south), and C29 danger
+  reaction when two other fluxcages are present. The callable audit and symbol
+  disposition rows now close F0224 as `VERIFIED_SOURCE_MAPPING`. Verification:
+  focused Ninja target `test_dm1_v1_endgame_system_pc34_compat` and focused
+  CTest `dm1_v1_endgame_system_source_lock`; no synthetic dungeon/save/art
+  data was added.
+
+- 2026-07-16 DM2 skproject movement vector receipt: added
+  `dm2_v1_skproject_calc_vector_w_dir()` for skproject
+  `DM2_CALC_VECTOR_W_DIR` / `CALC_VECTOR_W_DIR`. The helper preserves the
+  source additive accumulator contract over the X/Y direction tables,
+  signed forward/side operands, and direction wrap while staying below
+  collision, map mutation, movement timing, and runtime input dispatch.
+  Verification: strict direct C99 build/run of `test_dm2_v1_skproject_core`,
+  focused Ninja target `test_dm2_v1_skproject_core`, focused CTest
+  `dm2_v1_skproject_core`, and `git diff --check`.
+
+- 2026-07-16 Theron runtime Track 02 capture-consumer route-gap receipt:
+  added `Theron_V1RuntimeTrack02CaptureConsumerGapReceipt` and
+  `theron_v1_runtime_bind_track02_capture_consumer_gap()` so the admitted US
+  raw Track 02 FIFO/session/startup-anchor chain can consume the verified
+  non-startup level and object-table route evidence together without mixing
+  sessions or route hashes. The receipt preserves candidate masks/counts and
+  first opaque candidate hashes, but leaves capture-consumer readiness,
+  object-table decode/admission, non-startup level decode/admission, exact
+  level/object semantics, payload/visual semantics, and fallback visuals
+  closed. Verification: focused Ninja target, direct run of
+  `firestaff_theron_v1_runtime_admission_probe`, and focused CTest
+  `theron_v1_runtime_admission`.
+
 - 2026-07-16 Theron runtime object-table route-gap evidence receipt: added
   `Theron_V1RuntimeObjectTableRouteEvidenceReceipt` and
   `theron_v1_runtime_startup_level_anchor_bind_object_table_route_evidence()`
@@ -2044,8 +2103,9 @@
 - 2026-07-16 DM1 ReDMCSB F0222/F0223 source-lock: added focused coverage for
   raw C04 Lord Chaos lookup and Lord Chaos escape-square allow classification.
   The callable audit and symbol disposition rows now close F0222/F0223 as
-  `VERIFIED_SOURCE_MAPPING`; F0224 remains open for live Fluxcage runtime
-  capture.
+  `VERIFIED_SOURCE_MAPPING`; F0224 is now separately closed for the
+  source-owned Fluxcage action plan, while broader real-map/pixel capture
+  remains separate.
 
 - 2026-07-15 DM1 F0223: source walkability gate now accepts only corridor,
   teleporter, pit, and door target squares for Lord Chaos escape routing.
