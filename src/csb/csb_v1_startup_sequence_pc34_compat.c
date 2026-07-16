@@ -1576,6 +1576,13 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
 
+int csb_v1_startup_source_render_plan_from_state_pc34(
+    const CSB_V1_StartupRenderState_PC34 *state,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    return csb_v1_startup_build_render_plan_from_state_pc34(state, out_plan);
+}
+
 static int csb_v1_startup_build_render_plan_from_request_pc34(
     const CSB_V1_StartupRenderPlanRequest_PC34 *request,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)

@@ -129,6 +129,7 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     void *explosion_sprite_user;
     int runtime_explosion_sprite_drawn_count;
     int runtime_explosion_marker_drawn_count;
+    int real_graphics_session;
 
     /* The shared F0128/F0098 core asks its caller for the PC3.4-expanded
      * C079/C078 aperture.  CSB owns this bridge so a verified session never

@@ -443,6 +443,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_count
         target_compile_options(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
             -Wall -Wextra -Werror
         )
+        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            target_compile_options(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
+                -Wno-unused-but-set-variable
+            )
+        endif()
     endif()
     add_test(
         NAME dm1_v1_projectile_impact_count_pc34_compat
