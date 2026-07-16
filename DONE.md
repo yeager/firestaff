@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject square-chain traversal handoff: added
+  `dm2_v1_dungeon_walk_square_things()` as the loader-owned bounded route for
+  `GET_TILE_RECORD_LINK` + `GET_NEXT_RECORD_LINK` consumers. The object model
+  now uses that API instead of reading `GenericRecord::w0` locally, so
+  incomplete PC G1 record graphs inherit the existing traversal guard while
+  source-shaped chains still materialize objects. Verification: strict direct
+  C99 build/run of `test_dm2_v1_dungeon_loader_first_map_gate` passed 71/71;
+  strict direct C99 build/run of `probe_dm2_v1_object_model` passed 34/34 with
+  a build-only FTL decompressor stub because `src/shared/dungeon_decompressor_ftl.c`
+  is absent in the agent worktree.
+
 - 2026-07-16 DM1 GROUP/ACTION source-audit bundle: closed ReDMCSB `F0225`,
   `F0231`, and `F0232` plus their Atari ST ABI aliases against DM1-owned
   implementations. The bundle verifies Fuse/endgame gates, melee damage and
