@@ -21,21 +21,24 @@
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,
     raw-data length, raw-data loading, entry pointer/data-index/data-pointer/
-    data-length/data-buffer/loadable checks, plus existing image offset and
-    local-palette queries. Remaining DM2 querydb/gdatfile work is allocation,
-    graphics file I/O lifecycle, preserved-GFX cache behavior, image decode
-    buffer ownership, text/name formatting, and higher-level gameplay queries;
-    these receipts must not be used to fabricate images or promote missing
-    scalar entries into buffers.
+    data-length/data-buffer/loadable checks, `LOAD_ENT1`,
+    `LOAD_GDAT_ENTRIES`, `QUERY_NEXT_GDAT_ENTRY`, and the bounded GDAT sound
+    payload rows `DM2_47eb_00a4`/`DM2_482b_0684`, plus existing image offset
+    and local-palette queries. Remaining DM2 querydb/gdatfile work is
+    allocation, graphics file I/O lifecycle, preserved-GFX cache behavior,
+    `LOAD_GDAT_ENTRY_DATA_TO`, image extraction/decode ownership, text/name
+    formatting, `DM2_3D93B`, and higher-level gameplay queries; these
+    receipts must not be used to fabricate images or promote missing scalar
+    entries into buffers.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`
     `DM2_ALLOC_PICT_BUFF`, `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and
     `DM2_FREE_PICT_ENTRY` now have bounded source-named bitmap allocation/free
     receipts over row-byte, header-byte, pool, CPX raw-index, and
     preserved-GFX free-route accounting. Remaining adjacent work is real
     `GRAPHICS_DATA_OPEN`/`READ`/`CLOSE` file-handle lifecycle,
-    `LOAD_GDAT_ENTRIES` buffer population, `QUERY_NEXT_GDAT_ENTRY`, GDAT
-    image extraction/decode ownership, and renderer/HUD consumption of real
-    decoded data; these receipts still do not allocate CPX nodes, decoded
+    `LOAD_GDAT_ENTRY_DATA_TO`, GDAT image extraction/decode ownership, and
+    renderer/HUD consumption of real decoded data; these receipts still do
+    not allocate CPX nodes, decoded
     images, or fallback visuals.
   - 2026-07-16 DM2 update: skproject `BETWEEN_VALUE`,
     `DM2_BETWEEN_VALUE`, `ALLOC_TEMP_RECT`, and `ALLOC_TEMP_ORIGIN_RECT` are
@@ -9721,3 +9724,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     offsets; unknown MD5s and sector header/tail bytes reject. Remaining:
     capture the loader's later consumer reads/control decisions before any
     dungeon, object, bitmap, palette, or audio semantics can be assigned.
+  - Update: the render-asset admission receipt can now feed a dungeon-facing
+    real-data handoff receipt only when the same admitted US raw Track 02
+    session carries matching route hashes, payload/envelope/consumer checksums,
+    decoded level/object-table/bitmap/palette hashes, source-byte binding,
+    object-table layout proof, and bitmap/palette decode proof. The handoff
+    explicitly keeps dungeon drawing and fallback visuals closed and rejects
+    synthetic dungeon state, synthetic object layout, synthetic bitmap/palette
+    decode, hash drift, and fallback observation. Remaining: the positive
+    original capture/decoder producer that supplies these real proofs from
+    Track 02 without sidecar or generated visual data.

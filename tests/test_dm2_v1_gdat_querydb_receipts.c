@@ -20,22 +20,25 @@ static int failed;
 } while (0)
 
 static void fixture_loader(DM2_V1_AssetLoader *loader,
-                           uint8_t data[96],
-                           uint32_t raw_offsets[3],
-                           uint32_t raw_sizes[3],
-                           DM2_V1_GdatEntry entries[4])
+                           uint8_t data[128],
+                           uint32_t raw_offsets[4],
+                           uint32_t raw_sizes[4],
+                           DM2_V1_GdatEntry entries[5])
 {
     memset(loader, 0, sizeof(*loader));
-    memset(data, 0, 96u);
+    memset(data, 0, 128u);
     memcpy(data + 16u, "IMGRAW", 6u);
     memcpy(data + 32u, "TEXT", 4u);
     memcpy(data + 48u, "PAL0123456789ABC", 16u);
+    memcpy(data + 80u, "\x11\x22\x33\x44\x55\x66\x77\x88\x99\xaa", 10u);
     raw_offsets[0] = 16u;
     raw_offsets[1] = 32u;
     raw_offsets[2] = 48u;
+    raw_offsets[3] = 80u;
     raw_sizes[0] = 6u;
     raw_sizes[1] = 4u;
     raw_sizes[2] = 16u;
+    raw_sizes[3] = 10u;
     entries[0].cls1 = DM2_GDAT_CATEGORY_TITLE;
     entries[0].cls2 = 0u;
     entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
@@ -56,24 +59,29 @@ static void fixture_loader(DM2_V1_AssetLoader *loader,
     entries[3].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET;
     entries[3].cls4 = 0xfeu;
     entries[3].data_index = 0xfe02u;
+    entries[4].cls1 = DM2_GDAT_CATEGORY_MUSICS;
+    entries[4].cls2 = 1u;
+    entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_SOUND;
+    entries[4].cls4 = 2u;
+    entries[4].data_index = 3u;
     loader->data = data;
-    loader->data_size = 96u;
+    loader->data_size = 128u;
     loader->loaded = 1;
     loader->category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader->raw_data_count = 3u;
+    loader->raw_data_count = 4u;
     loader->raw_offsets = raw_offsets;
     loader->raw_sizes = raw_sizes;
     loader->entries = entries;
-    loader->entry_count = 4u;
+    loader->entry_count = 5u;
 }
 
 static void test_fixture_entry_queries(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[96];
-    uint32_t raw_offsets[3];
-    uint32_t raw_sizes[3];
-    DM2_V1_GdatEntry entries[4];
+    uint8_t data[128];
+    uint32_t raw_offsets[4];
+    uint32_t raw_sizes[4];
+    DM2_V1_GdatEntry entries[5];
     DM2_V1_GdatEntryQueryReceipt receipt;
     const uint8_t *ptr;
     size_t size = 0u;
@@ -131,6 +139,83 @@ static void test_fixture_entry_queries(void)
               DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 1, &size) == NULL &&
               size == 0u,
           "scalar GDAT entries are not exposed as synthetic buffers");
+}
+
+static void test_fixture_gdat_entry_iteration_and_sound(void)
+{
+    DM2_V1_AssetLoader loader;
+    uint8_t data[128];
+    uint8_t sample[4] = {0x00u, 0x7fu, 0x80u, 0xffu};
+    uint32_t raw_offsets[4];
+    uint32_t raw_sizes[4];
+    DM2_V1_GdatEntry entries[5];
+    DM2_V1_GdatLoadEntriesReceipt load_receipt;
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry_receipt;
+    DM2_V1_GdatSoundToggleReceipt toggle;
+    DM2_V1_GdatSoundEntryReceipt sound_receipt;
+
+    fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
+
+    CHECK(dm2_v1_load_gdat_entries_receipt(&loader, &load_receipt) &&
+              load_receipt.valid &&
+              load_receipt.entry_count == 5u &&
+              load_receipt.loadable_entry_count == 3u &&
+              load_receipt.scalar_entry_count == 2u &&
+              load_receipt.payload_bytes == 20u &&
+              load_receipt.allocated_bytes_with_length_words == 26u,
+          "LOAD_GDAT_ENTRIES receipt preloads only non-scalar raw payloads");
+
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = DM2_GDAT_CATEGORY_MESSAGES;
+    iterator.category_last = DM2_GDAT_CATEGORY_MUSICS;
+    iterator.index_filter = -1;
+    iterator.type_filter = -1;
+    iterator.field_filter = -1;
+    CHECK(dm2_v1_query_next_gdat_entry(&loader, &iterator, &entry_receipt) &&
+              entry_receipt.category == DM2_GDAT_CATEGORY_MESSAGES &&
+              entry_receipt.type == DM2_GDAT_ENTRY_TYPE_TEXT,
+          "QUERY_NEXT_GDAT_ENTRY walks the first filtered category hit");
+    CHECK(dm2_v1_query_next_gdat_entry(&loader, &iterator, &entry_receipt) &&
+              entry_receipt.category == DM2_GDAT_CATEGORY_MUSICS &&
+              entry_receipt.type == DM2_GDAT_ENTRY_TYPE_SOUND,
+          "QUERY_NEXT_GDAT_ENTRY resumes after the prior raw-table hit");
+    CHECK(!dm2_v1_query_next_gdat_entry(&loader, &iterator, &entry_receipt),
+          "QUERY_NEXT_GDAT_ENTRY stops at the filtered range boundary");
+
+    CHECK(dm2_v1_gdat_sound_toggle_payload(sample, 4u, 0u, 1u, &toggle) &&
+              toggle.accepted &&
+              toggle.flags_before == 1u &&
+              toggle.flags_after == 0u &&
+              toggle.toggled_bytes == 4u &&
+              sample[0] == 0x80u && sample[1] == 0xffu &&
+              sample[2] == 0x00u && sample[3] == 0x7fu,
+          "DM2_47eb_00a4 clears the pending flag and XORs sample high bits");
+    CHECK(!dm2_v1_gdat_sound_toggle_payload(sample, 4u, 1u, 1u, &toggle) &&
+              !toggle.accepted &&
+              toggle.payload_hash_before == toggle.payload_hash_after,
+          "DM2_47eb_00a4 rejects already-converted sample payloads");
+
+    CHECK(dm2_v1_gdat_sound_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_MUSICS, 1, 2,
+              0, 0, &sound_receipt) &&
+              sound_receipt.accepted &&
+              sound_receipt.data_index == 3u &&
+              sound_receipt.header_skip_bytes == 2u &&
+              sound_receipt.payload_offset == 82u &&
+              sound_receipt.payload_length == 8u,
+          "DM2_482b_0684 binds a sound row to dt02 after the short header");
+    CHECK(dm2_v1_gdat_sound_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_MUSICS, 1, 2,
+              0, 1, &sound_receipt) &&
+              sound_receipt.header_skip_bytes == 6u &&
+              sound_receipt.payload_offset == 86u &&
+              sound_receipt.payload_length == 4u,
+          "DM2_482b_0684 preserves the alternate six-byte sound header");
+    CHECK(!dm2_v1_gdat_sound_entry_receipt(
+              &loader, DM2_GDAT_CATEGORY_MUSICS, 1, 2,
+              7, 0, &sound_receipt),
+          "DM2_482b_0684 does not admit payloads rejected by SOUND7");
 }
 
 static void test_fixture_pict_allocation_receipts(void)
@@ -267,6 +352,10 @@ static void test_real_graphics_census(void)
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
+    DM2_V1_GdatEnt1Receipt ent1_receipt;
+    DM2_V1_GdatLoadEntriesReceipt load_entries_receipt;
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt iter_receipt;
     unsigned int loadable_count = 0u;
     unsigned int scalar_count = 0u;
     uint32_t receipt_hash = 2166136261u;
@@ -295,6 +384,37 @@ static void test_real_graphics_census(void)
         receipt_hash = (receipt_hash ^ receipt.receipt_hash) * 16777619u;
     }
 
+    CHECK(dm2_v1_load_ent1_receipt(&loader, &ent1_receipt) &&
+              ent1_receipt.valid &&
+              ent1_receipt.entry_count == loader.entry_count &&
+              ent1_receipt.ep_present[0] &&
+              ent1_receipt.ep_present[1] &&
+              ent1_receipt.ep_present[2] &&
+              ent1_receipt.ep_present[3] &&
+              ent1_receipt.ep_present[4] &&
+              ent1_receipt.receipt_hash != 0u,
+          "real GDAT LOAD_ENT1 receipt binds raw0 tag layout and entry count");
+    CHECK(dm2_v1_load_gdat_entries_receipt(&loader, &load_entries_receipt) &&
+              load_entries_receipt.valid &&
+              load_entries_receipt.entry_count == loader.entry_count &&
+              load_entries_receipt.loadable_entry_count > 100u &&
+              load_entries_receipt.payload_bytes > 100000u &&
+              load_entries_receipt.allocated_bytes_with_length_words >
+                  load_entries_receipt.payload_bytes,
+          "real GDAT LOAD_GDAT_ENTRIES receipt accounts raw payload preload bytes");
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+    iterator.category_last = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_PAL_IRGB;
+    iterator.field_filter = DM2_GDAT_INTERFACE_PALETTE_FIELD;
+    CHECK(dm2_v1_query_next_gdat_entry(&loader, &iterator, &iter_receipt) &&
+              iter_receipt.category == DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+              iter_receipt.type == DM2_GDAT_ENTRY_TYPE_PAL_IRGB &&
+              iter_receipt.field == DM2_GDAT_INTERFACE_PALETTE_FIELD &&
+              iter_receipt.loadable_raw,
+          "real GDAT QUERY_NEXT_GDAT_ENTRY finds the interface IRGB palette row");
+
     CHECK(loadable_count > 100u,
           "real GDAT exposes many loadable querydb raw entries");
     CHECK(scalar_count > 20u,
@@ -310,6 +430,7 @@ int main(void)
 {
     printf("DM2 V1 GDAT querydb receipts\n");
     test_fixture_entry_queries();
+    test_fixture_gdat_entry_iteration_and_sound();
     test_fixture_pict_allocation_receipts();
     test_real_graphics_census();
     printf("Results: %d passed, %d failed\n", passed, failed);

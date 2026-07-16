@@ -1,5 +1,35 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject GDAT ENT1/preload/sound receipts: added
+  source-named `c_gdatfile.cpp` receipts for `DM2_LOAD_ENT1`,
+  `DM2_LOAD_GDAT_ENTRIES`, `DM2_QUERY_NEXT_GDAT_ENTRY`, `DM2_47eb_00a4`,
+  and `DM2_482b_0684` over the parsed real ENT1/raw GDAT tables and
+  caller-owned sound payload bytes. The receipts preserve the ENT1
+  T/I/D/S/P/F/G map, raw0 hash, non-scalar preload byte accounting, filtered
+  iterator state, sound sample 0x80 XOR gate, dt02 sound payload span, and
+  SOUND7 rejection boundary without fabricating decoded images, CPX nodes, or
+  fallback buffers. Verification: focused Ninja target
+  `test_dm2_v1_gdat_querydb_receipts`, direct
+  `./build-local-ninja/test_dm2_v1_gdat_querydb_receipts` 34/34 including
+  real local DM2 `GRAPHICS.DAT`, focused CTest
+  `dm2_v1_gdat_querydb_receipts`, regenerated symbol backlog, and
+  `git diff --check`.
+
+- 2026-07-16 Theron runtime Track 02 dungeon handoff gate: added
+  `Theron_V1RuntimeTrack02DungeonHandoffProof`,
+  `Theron_V1RuntimeTrack02DungeonHandoffReceipt`, and
+  `theron_v1_runtime_bind_track02_dungeon_handoff()` so admitted real
+  Track 02 render assets can be handed to a dungeon-facing consumer only when
+  the same US raw session, route hashes, payload/envelope/consumer checksums,
+  decoded level/object-table/bitmap/palette hashes, source-byte binding, object
+  layout proof, and bitmap/palette decode proof all match. The receipt admits
+  real dungeon data/layout/decode handoff but keeps drawing and fallback
+  visuals closed, and rejects synthetic dungeon state, synthetic layouts,
+  synthetic bitmap/palette decodes, hash drift, and fallback observation.
+  Verification: focused Ninja target `firestaff_theron_v1_runtime_admission_probe`,
+  direct probe run, focused CTest `theron_v1_runtime_admission`, and
+  `git diff --check`.
+
 - 2026-07-16 Theron runtime Track 02 render-asset admission gate: added
   `Theron_V1RuntimeTrack02RenderAssetProof`,
   `Theron_V1RuntimeTrack02RenderAssetAdmissionReceipt`, and
