@@ -279,6 +279,92 @@ int dm2_v1_skproject_fill_i16table(
     return 1;
 }
 
+int dm2_v1_skproject_pt_in_rect(
+    const DM2_V1_SkprojectRect *rect,
+    int16_t point_x,
+    int16_t point_y,
+    DM2_V1_SkprojectPtInRectReceipt *out_receipt)
+{
+    DM2_V1_SkprojectPtInRectReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.point_x = point_x;
+    receipt.point_y = point_y;
+    if (!rect) {
+        receipt.blocked_missing_rect = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.rect = *rect;
+    receipt.result =
+        rect->x <= point_x &&
+        (int16_t)(rect->x + rect->w - 1) >= point_x &&
+        rect->y <= point_y &&
+        (int16_t)(rect->y + rect->h - 1) >= point_y;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+}
+
+int dm2_v1_skproject_offset_rect(
+    const DM2_V1_SkprojectRect *origin,
+    const DM2_V1_SkprojectRect *source,
+    DM2_V1_SkprojectRect *out_rect,
+    DM2_V1_SkprojectOffsetRectReceipt *out_receipt)
+{
+    DM2_V1_SkprojectOffsetRectReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!origin) receipt.blocked_missing_origin = 1;
+    if (!source) receipt.blocked_missing_source = 1;
+    if (!out_rect) receipt.blocked_missing_output = 1;
+    if (!origin || !source || !out_rect) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.origin = *origin;
+    receipt.source = *source;
+    out_rect->x = (int16_t)(source->x - origin->x);
+    out_rect->y = (int16_t)(source->y - origin->y);
+    out_rect->w = source->w;
+    out_rect->h = source->h;
+    receipt.output = *out_rect;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_ptr_advance(
+    uint32_t initial_offset,
+    int32_t delta,
+    uint32_t capacity,
+    uint32_t *out_offset,
+    DM2_V1_SkprojectPtrAdvanceReceipt *out_receipt)
+{
+    DM2_V1_SkprojectPtrAdvanceReceipt receipt;
+    int64_t final_offset = (int64_t)initial_offset + (int64_t)delta;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.initial_offset = initial_offset;
+    receipt.delta = delta;
+    if (final_offset < 0 || (uint64_t)final_offset > capacity) {
+        receipt.blocked_out_of_bounds = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.final_offset = (uint32_t)final_offset;
+    if (out_offset) *out_offset = receipt.final_offset;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_palettecolor_from_color(uint8_t color,
                                              uint8_t *out_palette)
 {
@@ -5569,7 +5655,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_CALC_VECTOR_DIR/DM2_CALC_VECTOR_W_DIR/"
            "DM2_COMPUTE_POWER_4_WITHIN/DM2_FILL_I16TABLE/"
            "DM2_ATIMESB_RSHIFTC and "
-           "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR/IS_NEGATIVE/"
+           "SKULLWIN/c_rect.cpp DM2_PT_IN_RECT; "
+           "SKULLWIN/c_buttons.cpp DM2_OFFSET_RECT; "
+           "SKWIN/SkWinCore.cpp CALC_VECTOR_W_DIR/PT_IN_RECT/"
+           "OFFSET_RECT/PTR_ADVANCE/IS_NEGATIVE/"
            "IS_CONTAINER_MAP/FIND_POUCH_OR_SCABBARD_POSSESSION_POS; "
            "SKWIN/SkWinCore.cpp FIND_ICI_FROM_CACHE_HASH/"
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"

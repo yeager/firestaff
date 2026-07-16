@@ -189,7 +189,7 @@ DM2_SETUP_MEMORYALLOCATION	SKULLWIN	SKULLWIN/c_alloc.cpp	299		MISSING
 DM2_DTOR_MEMORYALLOCATION	SKULLWIN	SKULLWIN/c_alloc.cpp	323		MISSING
 init	SKULLWIN	SKULLWIN/c_buttons.cpp	11	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 init_global_buttongroups	SKULLWIN	SKULLWIN/c_buttons.cpp	25		MISSING
-DM2_OFFSET_RECT	SKULLWIN	SKULLWIN/c_buttons.cpp	31		MISSING
+DM2_OFFSET_RECT	SKULLWIN	SKULLWIN/c_buttons.cpp	31	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_offset_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps c_buttons DM2_OFFSET_RECT by subtracting the button/origin rect x/y from the source rect and preserving width/height.
 DM2_ADJUST_BUTTONGROUP_RECTS	SKULLWIN	SKULLWIN/c_buttons.cpp	43		MISSING
 DM2_FILL_RECT_SUMMARY	SKULLWIN	SKULLWIN/c_buttons.cpp	116		MISSING
 init_clickrecttable	SKULLWIN	SKULLWIN/c_clickrect.cpp	31		MISSING
@@ -1400,7 +1400,7 @@ GET_TEMP_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	4771	include/dm2_v1_skproject_core
 ALLOC_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4786	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_temp_cache_index	VERIFIED_SOURCE_MAPPING
 _0b36_0d67	SKWIN	SKWIN/SkWinCore.cpp	4797		MISSING
 _0b36_0c52	SKWIN	SKWIN/SkWinCore.cpp	4894		MISSING
-OFFSET_RECT	SKWIN	SKWIN/SkWinCore.cpp	4916		MISSING
+OFFSET_RECT	SKWIN	SKWIN/SkWinCore.cpp	4916	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_offset_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN OFFSET_RECT with the same origin-relative x/y and unchanged cx/cy semantics as the sk3f6c route.
 FILL_RECT_SUMMARY	SKWIN	SKWIN/SkWinCore.cpp	4932		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_RECT_SUMMARY null-rect guard, offset rect, fill, and dirty-rect planning.
 _29ee_00a3	SKWIN	SKWIN/SkWinCore.cpp	4955		MISSING
 IS_MISSILE_VALID_TO_LAUNCHER	SKWIN	SKWIN/SkWinCore.cpp	4973		MISSING
@@ -1531,7 +1531,7 @@ _1031_014f	SKWIN	SKWIN/SkWinCore.cpp	12013		MISSING
 _1031_0184	SKWIN	SKWIN/SkWinCore.cpp	12022		MISSING
 _1031_01ba	SKWIN	SKWIN/SkWinCore.cpp	12042		MISSING
 _1031_027e	SKWIN	SKWIN/SkWinCore.cpp	12051		MISSING
-PT_IN_RECT	SKWIN	SKWIN/SkWinCore.cpp	12082		MISSING
+PT_IN_RECT	SKWIN	SKWIN/SkWinCore.cpp	12082	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_pt_in_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps inclusive x..x+w-1 and y..y+h-1 point-in-rect bounds with a missing-rect fail-closed receipt.
 _1031_01d5	SKWIN	SKWIN/SkWinCore.cpp	12096		MISSING
 _1031_0a88	SKWIN	SKWIN/SkWinCore.cpp	12132		MISSING
 _1031_024c	SKWIN	SKWIN/SkWinCore.cpp	12181		MISSING
@@ -1583,7 +1583,7 @@ SK_STRCPY	SKWIN	SKWIN/SkWinCore.cpp	14462	src/dm2/dm2_v1_skproject_core.c; inclu
 SK_STRCAT	SKWIN	SKWIN/SkWinCore.cpp	14467	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN strcat semantics with bounded Firestaff output receipt.
 DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds skill panel subpanel, blank panel, skill labels, attribute labels, and ability-value route.
 REFRESH_PLAYER_STAT_DISP	SKWIN	SKWIN/SkWinCore.cpp	14573		MISSING
-PTR_ADVANCE	SKWIN	SKWIN/SkWinCore.cpp	33667		MISSING
+PTR_ADVANCE	SKWIN	SKWIN/SkWinCore.cpp	33667	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_ptr_advance; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the COMPRESS_RECTS byte-cursor advance macro as a bounded offset delta receipt.
 WRITE_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33668		MISSING
 WRITE_WORD	SKWIN	SKWIN/SkWinCore.cpp	33669		MISSING
 READ_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33855		MISSING
