@@ -188,6 +188,7 @@ typedef struct {
     int projectile_marker_drawn_count;
     int explosion_sprite_drawn_count;
     int explosion_marker_drawn_count;
+    int real_asset_blocked_count;
 } CSB_V1_ViewportRuntimeDrawCounts;
 
 typedef struct {
