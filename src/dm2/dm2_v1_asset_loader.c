@@ -2243,6 +2243,178 @@ int dm2_v1_query_door_strength_receipt(
     return 1;
 }
 
+static int dm2_creatures_item_mask_base(uint8_t token, int is_creature,
+                                        int32_t *out_base)
+{
+    if (!out_base) return 0;
+    switch (token) {
+    case 'A': *out_base = 0x080; return 1;
+    case 'J': *out_base = 0x100; return 1;
+    case 'P': *out_base = 0x180; return 1;
+    case 'S': *out_base = 0x1fc; return 1;
+    case 'C': *out_base = is_creature ? 0 : 0x1e0; return 1;
+    case 'W': *out_base = 0; return 1;
+    default: return 0;
+    }
+}
+
+int dm2_v1_query_creatures_item_mask_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int creature_index,
+    int text_field_base,
+    int is_creature,
+    DM2_V1_CreaturesItemMaskReceipt *out_receipt)
+{
+    const uint8_t *text;
+    size_t text_size = 0u;
+    size_t text_length = 0u;
+    uint16_t number = 0u;
+    int have_number = 0;
+    int32_t range_start = -1;
+    int32_t item_base = -1;
+    uint16_t set_bits = 0u;
+    uint32_t text_hash = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || creature_index < 0 || creature_index > 0xff ||
+        text_field_base < 0 || text_field_base > 0xef) {
+        return 0;
+    }
+    text = dm2_v1_asset_load_text_sized(loader, DM2_GDAT_CATEGORY_CREATURES,
+                                        creature_index, text_field_base + 0x10,
+                                        &text_size);
+    if (!text || text_size == 0u || text[0] == 0u) return 0;
+    while (text_length < text_size && text[text_length]) ++text_length;
+    if (text_length == text_size) return 0;
+    text_hash = dm2_fnv1a_bytes(text, text_length + 1u);
+
+    for (size_t i = 0u; i <= text_length; ++i) {
+        uint8_t ch = text[i];
+        if (ch >= '0' && ch <= '9') {
+            if (number > 6552u) return 0;
+            number = (uint16_t)(number * 10u + (uint16_t)(ch - '0'));
+            have_number = 1;
+            continue;
+        }
+        if (ch == '-') {
+            if (!have_number) return 0;
+            range_start = number;
+            number = 0u;
+            have_number = 0;
+            continue;
+        }
+        if (have_number) {
+            int32_t start = range_start < 0 ? number : range_start;
+            int32_t end = number;
+            if (item_base < 0 || start > end) return 0;
+            for (int32_t bit = start; bit <= end; ++bit) {
+                int32_t absolute = bit + item_base;
+                if (absolute < 0 || absolute >= 512) return 0;
+                if ((out_receipt->mask[absolute / 8] &
+                     (uint8_t)(1u << (absolute & 7))) == 0u) {
+                    ++set_bits;
+                }
+                out_receipt->mask[absolute / 8] |=
+                    (uint8_t)(1u << (absolute & 7));
+            }
+            number = 0u;
+            have_number = 0;
+            range_start = -1;
+            item_base = -1;
+        }
+        if (ch == 0u) break;
+        if (!dm2_creatures_item_mask_base(ch, is_creature, &item_base))
+            return 0;
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->category = DM2_GDAT_CATEGORY_CREATURES;
+    out_receipt->index = (uint8_t)creature_index;
+    out_receipt->field = (uint8_t)(text_field_base + 0x10);
+    out_receipt->creature_route = is_creature ? 1u : 0u;
+    out_receipt->set_bits = set_bits;
+    out_receipt->text_hash = text_hash;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        ((uint32_t)out_receipt->field << 16) | (uint32_t)creature_index,
+        text_hash, set_bits, out_receipt->mask[0] ^ out_receipt->mask[63]);
+    return 1;
+}
+
+static uint16_t dm2_equip_slot_mask(int slot)
+{
+    static const uint16_t table1d2670[13] = {
+        0x0200u, 0x0100u, 0x0001u, 0x0004u, 0x0008u, 0x0010u, 0x0020u,
+        0x0040u, 0x0040u, 0x0040u, 0x0002u, 0x0020u, 0x0080u
+    };
+    if (slot < 0) return 0x0400u;
+    if (slot >= 13) return 0u;
+    return table1d2670[slot];
+}
+
+int dm2_v1_is_item_fit_for_equip_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int inventory_slot,
+    int only_body_part,
+    int active_hand_fit_result,
+    DM2_V1_ItemFitForEquipReceipt *out_receipt)
+{
+    uint16_t flags = 0u;
+    uint16_t mask = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (category < 0 || category > 0xff || index < 0 || index > 0xff ||
+        inventory_slot < -32768 || inventory_slot > 32767) {
+        return 0;
+    }
+    if (!dm2_v1_asset_load_word_value(loader, category, index, 0x04,
+                                      &flags)) {
+        return 0;
+    }
+
+    out_receipt->category = (uint8_t)category;
+    out_receipt->index = (uint8_t)index;
+    out_receipt->inventory_slot = (int16_t)inventory_slot;
+    out_receipt->only_body_part = only_body_part ? 1u : 0u;
+    out_receipt->equip_flags = flags;
+
+    if (only_body_part) {
+        if (inventory_slot >= 13) {
+            out_receipt->result = 0u;
+        } else {
+            mask = dm2_equip_slot_mask(inventory_slot);
+            out_receipt->result = (uint16_t)(flags & mask);
+        }
+    } else if (inventory_slot < 13 && inventory_slot > 1) {
+        mask = dm2_equip_slot_mask(inventory_slot);
+        out_receipt->result = (uint16_t)(flags & mask);
+    } else if (inventory_slot < 30 || inventory_slot >= 38) {
+        out_receipt->result = 1u;
+    } else {
+        if ((flags & 0x8000u) != 0u) {
+            out_receipt->result = 0u;
+        } else {
+            if (active_hand_fit_result < 0) return 0;
+            out_receipt->used_active_hand_result = 1u;
+            out_receipt->result = active_hand_fit_result == 0
+                                      ? 1u
+                                      : (uint16_t)(flags & 0x0040u);
+        }
+    }
+
+    out_receipt->accepted = 1u;
+    out_receipt->tested_mask = mask;
+    out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
+        ((uint32_t)(uint8_t)category << 16) | (uint32_t)(uint8_t)index,
+        flags, ((uint32_t)(uint16_t)inventory_slot << 16) |
+                   (uint32_t)out_receipt->result,
+        out_receipt->used_active_hand_result);
+    return 1;
+}
+
 int dm2_v1_gdat_alloc_pict_buff_receipt(
     uint16_t width,
     uint16_t height,

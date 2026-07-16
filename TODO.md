@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 6, shared DM1/CSB 1538, DM2 1483; 3027 total open rows
+  shared DM1/CSB 1537, DM2 1462; 2999 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -84,6 +84,11 @@
     arbitrary editor bitmap dimensions, and live bitmap blitter sequencing
     remain route-owned; the existing F0329 M11-owned mapping is not changed by
     this audit pass.
+  - 2026-07-16 DM2 querydb equipment update: `DM2_QUERY_CREATURES_ITEM_MASK`,
+    `QUERY_CREATURES_ITEM_MASK`, `DM2_IS_ITEM_FIT_FOR_EQUIP`, and
+    `IS_ITEM_FIT_FOR_EQUIP` are now closed through real parsed GDAT text/word
+    rows in the DM2 asset loader. The remaining querydb rows stay open until
+    they have source-backed code or explicit non-applicability evidence.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target

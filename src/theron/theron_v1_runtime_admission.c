@@ -66,6 +66,13 @@ void theron_v1_runtime_track02_render_asset_admission_init(
     }
 }
 
+void theron_v1_runtime_track02_original_data_binding_gap_init(
+    Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *out) {
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+}
+
 void theron_v1_runtime_track02_render_asset_proof_init(
     Theron_V1RuntimeTrack02RenderAssetProof *out) {
     if (out) {
@@ -1094,6 +1101,102 @@ int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
         &bitmap_atlas,
         &palette_window,
         out);
+}
+
+int theron_v1_runtime_track02_capture_original_data_binding_gap(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    size_t palette_raw_offset,
+    Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *out) {
+
+    Theron_Track02LevelRouteReceipt level_route;
+    Theron_Track02ObjectTableRouteReceipt object_route;
+    Theron_Track02NonstartupSectorReceipt sector_receipt;
+    Theron_Track02NonstartupContainerIndex container_index;
+    Theron_Track02PaletteWindowEvidence palette_window;
+    size_t anchor;
+
+    if (!out) {
+        return 0;
+    }
+    theron_v1_runtime_track02_original_data_binding_gap_init(out);
+    if (!track02_data || track02_size == 0u ||
+        !track02_md5 || track02_md5[0] == '\0') {
+        return 0;
+    }
+    (void)theron_v1_track02_capture_level_route_receipt(
+        track02_data, track02_size, track02_md5, &level_route);
+    if (level_route.signal_status != THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_track02_capture_object_table_route_receipt(
+            track02_data, track02_size, track02_md5, &object_route) ||
+        theron_v1_track02_capture_nonstartup_sector_receipt(
+            track02_data, track02_size, track02_md5, &sector_receipt) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        theron_v1_track02_build_nonstartup_container_index(
+            track02_data, track02_size, track02_md5, &container_index) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        theron_v1_track02_inspect_4bpp_palette_window(
+            track02_data, track02_size, track02_md5, palette_raw_offset,
+            &palette_window) != THERON_TRACK02_SIGNAL_OK) {
+        theron_v1_runtime_track02_original_data_binding_gap_init(out);
+        return 0;
+    }
+
+    out->valid = 1;
+    out->verified_track02_capture_consumed = 1;
+    out->fail_closed = 1;
+    out->variant = level_route.variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->level_route_hash = level_route.route_hash;
+    out->object_table_route_hash = object_route.route_hash;
+    out->nonstartup_sector_receipt_hash = sector_receipt.receipt_hash;
+    out->nonstartup_container_index_hash = container_index.index_hash;
+    out->palette_raw_offset = palette_window.raw_offset;
+    out->palette_user_data_offset = palette_window.user_data_offset;
+    out->palette_payload_checksum = palette_window.payload_checksum;
+    out->palette_decoded_checksum = palette_window.palette.checksum;
+    out->palette_format_valid = palette_window.format_valid;
+    out->palette_semantic_binding_verified =
+        palette_window.semantic_binding_verified;
+    out->palette_promotion_allowed = palette_window.promotion_allowed;
+    out->nonstartup_anchor_count = sector_receipt.anchor_count;
+    for (anchor = 0u; anchor < sector_receipt.anchor_count; ++anchor) {
+        out->nonstartup_window_count += sector_receipt.window_count[anchor];
+        if (out->first_nonstartup_byte_count == 0u &&
+            sector_receipt.window_count[anchor] > 0u) {
+            const Theron_Track02NonstartupSectorWindowReceipt *window =
+                &sector_receipt.windows[anchor][0];
+            out->first_nonstartup_entry_index =
+                window->descriptor_entry_index;
+            out->first_nonstartup_raw_offset = window->raw_offset;
+            out->first_nonstartup_user_data_offset =
+                window->user_data_offset;
+            out->first_nonstartup_byte_count = window->byte_count;
+            out->first_nonstartup_raw_hash = window->raw_span_hash;
+        }
+    }
+    out->indexed_container_count = container_index.container_count;
+    if (container_index.container_count > 0u) {
+        const Theron_Track02NonstartupContainer *container =
+            &container_index.containers[0];
+        out->first_container_entry_index =
+            container->descriptor_entry_index;
+        out->first_container_raw_offset = container->raw_offset;
+        out->first_container_user_data_byte_count =
+            container->user_data_byte_count;
+        out->first_container_user_data_hash = container->user_data_hash;
+        if (container->user_data_segment_count > 0u) {
+            out->first_container_user_data_offset =
+                container->user_data_segments[0].user_data_offset;
+        }
+    }
+    out->nonstartup_level_decode_ready =
+        level_route.nonstartup_level_decode_ready;
+    out->object_table_decode_ready = object_route.object_table_decode_ready;
+    out->render_asset_admission_allowed = 0;
+    out->fallback_visuals_allowed = 0;
+    return out->valid;
 }
 
 int theron_v1_runtime_bind_track02_render_asset_admission(

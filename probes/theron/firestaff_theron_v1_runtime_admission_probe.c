@@ -276,6 +276,7 @@ static int probe_real_track02_capture_producer(
     Theron_Track02ObjectTableRouteReceipt object_route;
     Theron_V1RuntimeTrack02ConsumerSemanticReceipt consumer;
     Theron_V1RuntimeTrack02RenderAssetProof proof;
+    Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt gap;
     int ok = 1;
 
     if (!path || !path[0]) {
@@ -284,10 +285,14 @@ static int probe_real_track02_capture_producer(
     if (!read_file(path, &data, &size)) {
         return 0;
     }
-    if (!theron_v1_track02_capture_level_route_receipt(
-            data, size, THERON_TRACK02_MD5_US_BIN, &level_route) ||
-        !theron_v1_track02_capture_object_table_route_receipt(
-            data, size, THERON_TRACK02_MD5_US_BIN, &object_route)) {
+    int level_ok = theron_v1_track02_capture_level_route_receipt(
+        data, size, THERON_TRACK02_MD5_US_BIN, &level_route);
+    int object_ok = theron_v1_track02_capture_object_table_route_receipt(
+        data, size, THERON_TRACK02_MD5_US_BIN, &object_route);
+    if (level_ok ||
+        level_route.signal_status != THERON_TRACK02_SIGNAL_OK ||
+        level_route.nonstartup_level_decode_ready ||
+        !object_ok) {
         free(data);
         return 0;
     }
@@ -321,6 +326,43 @@ static int probe_real_track02_capture_producer(
         object_route.object_table_decode_ready ||
         !level_route.blocked_for_missing_nonstartup_level_evidence ||
         !object_route.blocked_for_missing_real_object_evidence) {
+        ok = 0;
+    }
+    if (!theron_v1_runtime_track02_capture_original_data_binding_gap(
+            data,
+            size,
+            THERON_TRACK02_MD5_US_BIN,
+            0x2a06a0u,
+            &gap) ||
+        !gap.valid ||
+        !gap.verified_track02_capture_consumed ||
+        !gap.fail_closed ||
+        gap.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(gap.track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        gap.level_route_hash != level_route.route_hash ||
+        gap.object_table_route_hash != object_route.route_hash ||
+        gap.palette_raw_offset != 0x2a06a0u ||
+        gap.palette_user_data_offset == 0u ||
+        gap.palette_payload_checksum == 0u ||
+        gap.palette_decoded_checksum == 0u ||
+        !gap.palette_format_valid ||
+        gap.palette_semantic_binding_verified ||
+        gap.palette_promotion_allowed ||
+        gap.nonstartup_anchor_count != 3u ||
+        gap.nonstartup_window_count == 0u ||
+        gap.first_nonstartup_raw_offset == 0u ||
+        gap.first_nonstartup_user_data_offset == 0u ||
+        gap.first_nonstartup_byte_count == 0u ||
+        gap.first_nonstartup_raw_hash == 0u ||
+        gap.indexed_container_count == 0u ||
+        gap.first_container_raw_offset == 0u ||
+        gap.first_container_user_data_offset == 0u ||
+        gap.first_container_user_data_byte_count == 0u ||
+        gap.first_container_user_data_hash == 0u ||
+        gap.nonstartup_level_decode_ready ||
+        gap.object_table_decode_ready ||
+        gap.render_asset_admission_allowed ||
+        gap.fallback_visuals_allowed) {
         ok = 0;
     }
     free(data);
