@@ -1,6 +1,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include "theron_v1_boot.h"
+#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -467,7 +468,7 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !hucard_rom || !out_receipt ||
         !theron_v1_startup_runtime_has_verified_track02_request(
-            profile->graphics_md5)) {
+            hucard_rom, hucard_rom_size, profile->graphics_md5)) {
         return 0;
     }
     handoff = &profile->track02_initial_level_handoff;
@@ -705,7 +706,8 @@ int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
         md5_hex[0] == '\0' ||
         dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
         dungeon_id > THERON_DUNGEON_COUNT ||
-        !theron_v1_startup_runtime_has_verified_track02_request(md5_hex) ||
+        !theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom, hucard_rom_size, md5_hex) ||
         !theron_v1_startup_runtime_stage3_loader_ready(
             hucard_rom, hucard_rom_size, md5_hex)) {
         return 0;

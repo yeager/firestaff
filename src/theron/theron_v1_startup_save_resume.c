@@ -1195,24 +1195,36 @@ static int theron_v1_startup_continue_attach_track02_media(
     theron_v1_world_runtime_media_clear(world);
     if (!title || !stage || !soul_room || !forcefield ||
         !theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE, title->route_bit,
-            title->width, title->height, title->tile_count,
+            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE,
+            media_receipt->track02_md5, title->route_bit,
+            title->width, title->height,
+            title->first_raw_offset, title->last_raw_offset,
+            title->first_user_data_offset, title->tile_count,
             title->nonzero_pixel_count, title->checksum, title->pixels,
             (size_t)title->width * (size_t)title->height) ||
         !theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, stage->route_bit,
-            stage->width, stage->height, stage->tile_count,
+            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE,
+            media_receipt->track02_md5, stage->route_bit,
+            stage->width, stage->height,
+            stage->first_raw_offset, stage->last_raw_offset,
+            stage->first_user_data_offset, stage->tile_count,
             stage->nonzero_pixel_count, stage->checksum, stage->pixels,
             (size_t)stage->width * (size_t)stage->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_SOUL_ROOM,
-            soul_room->route_bit, soul_room->width, soul_room->height,
+            media_receipt->track02_md5, soul_room->route_bit,
+            soul_room->width, soul_room->height,
+            soul_room->first_raw_offset, soul_room->last_raw_offset,
+            soul_room->first_user_data_offset,
             soul_room->tile_count, soul_room->nonzero_pixel_count,
             soul_room->checksum, soul_room->pixels,
             (size_t)soul_room->width * (size_t)soul_room->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
-            forcefield->route_bit, forcefield->width, forcefield->height,
+            media_receipt->track02_md5, forcefield->route_bit,
+            forcefield->width, forcefield->height,
+            forcefield->first_raw_offset, forcefield->last_raw_offset,
+            forcefield->first_user_data_offset,
             forcefield->tile_count, forcefield->nonzero_pixel_count,
             forcefield->checksum, forcefield->pixels,
             (size_t)forcefield->width * (size_t)forcefield->height)) {
