@@ -979,6 +979,46 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int blocked_missing_text;
+    uint16_t length;
+} DM2_V1_SkprojectStrLenReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_haystack;
+    int blocked_missing_needle;
+    int needle_empty_returns_null;
+    int found;
+    uint16_t match_offset;
+} DM2_V1_SkprojectStrStrReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    int blocked_missing_input;
+    int blocked_capacity;
+    uint16_t copied_length;
+    uint16_t result_length;
+    uint32_t output_hash;
+} DM2_V1_SkprojectStrCopyCatReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    int blocked_capacity;
+    int32_t value;
+    uint16_t written_length;
+    char text[16];
+} DM2_V1_SkprojectLtoa10Receipt;
+
+typedef struct {
+    int valid;
+    uint8_t input;
+    uint8_t output;
+} DM2_V1_SkprojectScriptChrReceipt;
+
+typedef struct {
+    int valid;
     int blocked_missing_output;
     int blocked_missing_record;
     int blocked_recursion_limit;
@@ -2072,6 +2112,31 @@ int dm2_v1_skproject_fmt_num(
     uint16_t clean,
     uint16_t keta,
     DM2_V1_SkprojectFmtNumReceipt *out_receipt);
+int dm2_v1_skproject_sk_strlen(
+    const char *text,
+    DM2_V1_SkprojectStrLenReceipt *out_receipt);
+int dm2_v1_skproject_sk_strstr(
+    const char *haystack,
+    const char *needle,
+    DM2_V1_SkprojectStrStrReceipt *out_receipt);
+int dm2_v1_skproject_sk_strcpy(
+    char *dest,
+    uint16_t dest_capacity,
+    const char *source,
+    DM2_V1_SkprojectStrCopyCatReceipt *out_receipt);
+int dm2_v1_skproject_sk_strcat(
+    char *dest,
+    uint16_t dest_capacity,
+    const char *source,
+    DM2_V1_SkprojectStrCopyCatReceipt *out_receipt);
+int dm2_v1_skproject_ltoa10(
+    int32_t value,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectLtoa10Receipt *out_receipt);
+int dm2_v1_skproject_skchr_to_scriptchr(
+    uint8_t value,
+    DM2_V1_SkprojectScriptChrReceipt *out_receipt);
 int32_t dm2_v1_skproject_query_item_value(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t object_id,

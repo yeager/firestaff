@@ -1,6 +1,7 @@
 #include "dm2_v1_skproject_core.h"
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -3240,6 +3241,202 @@ int dm2_v1_skproject_fmt_num(
     return 1;
 }
 
+int dm2_v1_skproject_sk_strlen(
+    const char *text,
+    DM2_V1_SkprojectStrLenReceipt *out_receipt)
+{
+    DM2_V1_SkprojectStrLenReceipt receipt;
+    uint16_t len = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!text) {
+        receipt.blocked_missing_text = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    while (text[len] != '\0')
+        len++;
+    receipt.length = len;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sk_strstr(
+    const char *haystack,
+    const char *needle,
+    DM2_V1_SkprojectStrStrReceipt *out_receipt)
+{
+    DM2_V1_SkprojectStrStrReceipt receipt;
+    char first;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!haystack) {
+        receipt.blocked_missing_haystack = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!needle) {
+        receipt.blocked_missing_needle = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    first = needle[0];
+    if (first == '\0') {
+        receipt.needle_empty_returns_null = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint16_t i = 0u; haystack[i] != '\0'; ++i) {
+        if (haystack[i] == first) {
+            uint16_t h = (uint16_t)(i + 1u);
+            uint16_t n = 1u;
+            while (needle[n] != '\0' && haystack[h] == needle[n]) {
+                h++;
+                n++;
+            }
+            if (needle[n] == '\0') {
+                receipt.found = 1;
+                receipt.match_offset = i;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_skproject_sk_strcpy(
+    char *dest,
+    uint16_t dest_capacity,
+    const char *source,
+    DM2_V1_SkprojectStrCopyCatReceipt *out_receipt)
+{
+    DM2_V1_SkprojectStrCopyCatReceipt receipt;
+    size_t len;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dest) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!source) {
+        receipt.blocked_missing_input = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    len = strlen(source);
+    if (len + 1u > dest_capacity) {
+        receipt.blocked_capacity = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memcpy(dest, source, len + 1u);
+    receipt.copied_length = (uint16_t)len;
+    receipt.result_length = (uint16_t)len;
+    receipt.output_hash = dm2_v1_skproject_hash_bytes(dest, len + 1u);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_sk_strcat(
+    char *dest,
+    uint16_t dest_capacity,
+    const char *source,
+    DM2_V1_SkprojectStrCopyCatReceipt *out_receipt)
+{
+    DM2_V1_SkprojectStrCopyCatReceipt receipt;
+    size_t base_len;
+    size_t source_len;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dest) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!source) {
+        receipt.blocked_missing_input = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    base_len = strlen(dest);
+    source_len = strlen(source);
+    if (base_len + source_len + 1u > dest_capacity) {
+        receipt.blocked_capacity = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memcpy(dest + base_len, source, source_len + 1u);
+    receipt.copied_length = (uint16_t)source_len;
+    receipt.result_length = (uint16_t)(base_len + source_len);
+    receipt.output_hash = dm2_v1_skproject_hash_bytes(
+        dest, base_len + source_len + 1u);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_ltoa10(
+    int32_t value,
+    char *dest,
+    uint16_t dest_capacity,
+    DM2_V1_SkprojectLtoa10Receipt *out_receipt)
+{
+    DM2_V1_SkprojectLtoa10Receipt receipt;
+    char temp[16];
+    int written;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.value = value;
+    if (!dest) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    written = snprintf(temp, sizeof(temp), "%ld", (long)value);
+    if (written < 0 || (uint16_t)(written + 1) > dest_capacity) {
+        receipt.blocked_capacity = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memcpy(dest, temp, (size_t)written + 1u);
+    memcpy(receipt.text, temp, (size_t)written + 1u);
+    receipt.written_length = (uint16_t)written;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_skchr_to_scriptchr(
+    uint8_t value,
+    DM2_V1_SkprojectScriptChrReceipt *out_receipt)
+{
+    DM2_V1_SkprojectScriptChrReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input = value;
+    if (value >= (uint8_t)'A' && value <= (uint8_t)'Z')
+        receipt.output = (uint8_t)(value - (uint8_t)'A');
+    else
+        receipt.output = (value == (uint8_t)'.') ? 0x1bu : 0x1au;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 static int32_t dm2_v1_skproject_query_item_value_depth(
     const DM2_V1_SkprojectItemValueWorld *world,
     uint16_t object_id,
@@ -5143,13 +5340,15 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
            "COUNT_BY_COIN_TYPES/IS_CONTAINER_MONEYBOX/"
            "IS_CONTAINER_CHEST/IS_MISCITEM_CURRENCY/GET_ITEM_NAME/"
-           "GET_ITEM_ORDER_IN_CONTAINER/FMT_NUM/FILL_STR and "
+           "GET_ITEM_ORDER_IN_CONTAINER/FMT_NUM/FILL_STR/SK_STRLEN/"
+           "SK_STRSTR/SK_LTOA10/SK_STRCPY/SK_STRCAT and "
            "SKULLWIN/c_item.cpp DM2_ADD_ITEM_CHARGE/DM2_GET_MAX_CHARGE/"
            "DM2_QUERY_ITEM_VALUE/DM2_QUERY_ITEM_WEIGHT/DM2_GET_ITEM_NAME; "
            "SKULLWIN/c_querydb.cpp DM2_COUNT_BY_COIN_TYPES/"
            "DM2_IS_MISCITEM_CURRENCY/DM2_IS_CONTAINER_MONEYBOX/"
            "DM2_IS_CONTAINER_CHEST/DM2_GET_ITEM_ORDER_IN_CONTAINER; "
-           "SKULLWIN/c_str.cpp DM2_FMT_NUM/DM2_FILL_STR; "
+           "SKULLWIN/c_str.cpp DM2_SKCHR_TO_SCRIPTCHR/DM2_LTOA10/"
+           "DM2_FMT_NUM/DM2_FILL_STR; "
            "SKWIN/SkWinCore.cpp BOOST_ATTRIBUTE and ADJUST_UI_EVENT; "
            "SKULLWIN/c_input.cpp DM2_ADJUST_UI_EVENT; "
            "SKULLWIN/c_gui_draw.cpp DM2_DRAW_CHARSHEET_OPTION_ICON/"
