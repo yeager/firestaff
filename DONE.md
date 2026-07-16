@@ -1,5 +1,26 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 CHAMPION skill/stamina/load F0303-F0310 bundle: closed
+  source-backed ReDMCSB dispositions for `F0303_CHAMPION_GetSkillLevel`,
+  `F0304_CHAMPION_AddSkillExperience`, `F0305_CHAMPION_GetThrowingStaminaCost`,
+  `F0306_CHAMPION_GetStaminaAdjustedValue`,
+  `F0307_CHAMPION_GetStatisticAdjustedAttack`, `F0308_CHAMPION_IsLucky`,
+  `F0309_CHAMPION_GetMaximumLoad`, `F0310_CHAMPION_GetMovementTicks`, and
+  aliases `F303_AA09_`, `F304_apzz_`, `F307_fzzz_`, `F308_vzzz_`,
+  `F309_awzz_`, and `F310_AA08_`. The bundle binds existing DM1
+  skill-experience, throw/shoot stamina, champion-stat, and combat helpers to
+  ReDMCSB with honest narrow boundaries around live all-callers, object-weight
+  ownership, and broader RNG replay. Verification: focused Ninja targets
+  `test_dm1_v1_skill_experience_pc34_compat`,
+  `test_dm1_v1_throw_shoot_pc34_compat`,
+  `test_dm1_v1_f0306_stamina_pc34_compat`,
+  `test_dm1_v1_champion_stats_pc34_compat`, and
+  `test_dm1_v1_combat_pc34_compat_integration`; focused CTests
+  `dm1_v1_skill_experience_source_lock`, `dm1_v1_throw_shoot_pc34_compat`,
+  `dm1_v1_f0306_stamina_pc34_compat`,
+  `dm1_v1_champion_stats_load_source_lock`, and
+  `dm1_v1_combat_damage_source_lock`.
+
 - 2026-07-16 DM2 skproject movement admission symbols: mapped
   `DM2_12b4_0953` and `DM2_12b4_0881` from `SKULLWIN/c_move.cpp`. The
   implementation preserves facing extraction from record word `0x0e`,

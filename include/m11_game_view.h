@@ -1334,6 +1334,15 @@ int M11_GameView_ProbeF0328ThrowAttack(
     const M11_GameViewState* state,
     int championIndex,
     int baseAttack);
+int M11_GameView_ProbeF0352PotionEyeDescription(
+    const M11_GameViewState* state,
+    int championIndex,
+    unsigned int thingType,
+    unsigned int iconIndex,
+    unsigned int potionPower,
+    const char* objectName,
+    char* outText,
+    unsigned int outCapacity);
 
 /* Use the item in the active champion's hand slot (potions, flasks).
  * Returns 1 if an item was consumed/used. */
