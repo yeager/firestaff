@@ -169,6 +169,7 @@ typedef struct {
  * deliberately not promoted into this authenticated action surface. */
 #define CSB_V1_CSBWIN_DSA_STACK_CAPACITY 100
 #define CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY 100
+#define CSB_V1_CSBWIN_DSA_VARIABLE_COUNT 100
 
 /* CSBWin DSA.cpp:3107-3135 routes the two skin operators through the
  * currently loaded SKIN_CACHE.  The bytecode module deliberately owns no
@@ -468,6 +469,8 @@ typedef struct {
     uint16_t *loaded_bytecode;
     int loaded_bytecode_words;
     uint32_t loaded_bytecode_magic;
+    CSB_V1_CSBWinDSAImportedHeader
+        imported_headers[CSB_V1_MAX_DSA_SCRIPTS];
     CSB_V1_DSAImportedAction *imported_actions;
     int imported_action_count;
 } CSB_V1_ChaosMagicState;
