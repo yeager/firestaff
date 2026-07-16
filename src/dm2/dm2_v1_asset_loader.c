@@ -1308,6 +1308,157 @@ int dm2_v1_gdat_sound_entry_receipt(
     return 1;
 }
 
+static uint32_t dm2_gdat_file_receipt_hash(uint32_t a,
+                                           uint32_t b,
+                                           uint32_t c,
+                                           uint32_t d)
+{
+    uint32_t words[4];
+
+    words[0] = a;
+    words[1] = b;
+    words[2] = c;
+    words[3] = d;
+    return dm2_fnv1a_bytes((const uint8_t *)words, sizeof(words));
+}
+
+int dm2_v1_graphics_data_open_receipt(
+    DM2_V1_GraphicsDataFileState *state,
+    int primary_open_ok,
+    int16_t primary_handle,
+    int secondary_open_ok,
+    int16_t secondary_handle,
+    DM2_V1_GraphicsDataOpenReceipt *out_receipt)
+{
+    DM2_V1_GraphicsDataOpenReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    receipt.counter_before = state->file_open_counter;
+    state->file_open_counter++;
+    receipt.counter_after = state->file_open_counter;
+    if (state->file_open_counter == 1) {
+        if (!primary_open_ok) {
+            receipt.blocked_primary_open = 1u;
+            receipt.syserr_code = 0x29u;
+            *out_receipt = receipt;
+            return 0;
+        }
+        state->file_handle = primary_handle;
+        receipt.opened_primary = 1u;
+        if (!state->filetype1 && state->filetype2) {
+            if (!secondary_open_ok) {
+                receipt.blocked_secondary_open = 1u;
+                receipt.syserr_code = 0x1fu;
+                *out_receipt = receipt;
+                return 0;
+            }
+            state->xfile_handle = secondary_handle;
+            receipt.opened_secondary = 1u;
+        }
+    }
+    receipt.valid = 1u;
+    receipt.primary_handle = state->file_handle;
+    receipt.secondary_handle = state->xfile_handle;
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        (uint32_t)receipt.counter_before,
+        (uint32_t)receipt.counter_after,
+        (uint16_t)receipt.primary_handle,
+        (uint16_t)receipt.secondary_handle);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_graphics_data_close_receipt(
+    DM2_V1_GraphicsDataFileState *state,
+    DM2_V1_GraphicsDataCloseReceipt *out_receipt)
+{
+    DM2_V1_GraphicsDataCloseReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) return 0;
+    receipt.counter_before = state->file_open_counter;
+    if (state->file_open_counter <= 0) {
+        receipt.blocked_underflow = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    state->file_open_counter--;
+    receipt.counter_after = state->file_open_counter;
+    if (state->file_open_counter == 0) {
+        receipt.closed_primary = 1u;
+        if (!state->filetype1 && state->filetype2)
+            receipt.closed_secondary = 1u;
+    }
+    receipt.primary_handle = state->file_handle;
+    receipt.secondary_handle = state->xfile_handle;
+    receipt.valid = 1u;
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        (uint32_t)receipt.counter_before,
+        (uint32_t)receipt.counter_after,
+        (uint16_t)receipt.primary_handle,
+        (uint16_t)receipt.secondary_handle);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_graphics_data_read_receipt(
+    const DM2_V1_GraphicsDataFileState *state,
+    uint32_t offset,
+    uint32_t length,
+    DM2_V1_GraphicsDataReadReceipt *out_receipt)
+{
+    DM2_V1_GraphicsDataReadReceipt receipt;
+    uint32_t primary_len = length;
+    uint32_t secondary_len = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.request_offset = offset;
+    receipt.request_length = length;
+    if (!state) {
+        receipt.blocked_missing_state = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.primary_handle = state->file_handle;
+    receipt.secondary_handle = state->xfile_handle;
+    receipt.primary_offset = offset;
+    if (state->filetype2) {
+        int64_t secondary_offset = (int64_t)offset -
+                                   (int64_t)state->primary_file_size;
+
+        if (secondary_offset < 0) {
+            int64_t overlap = secondary_offset + (int64_t)length;
+
+            if (overlap > 0) {
+                secondary_len = (uint32_t)overlap;
+                receipt.secondary_offset = 0u;
+            }
+        } else {
+            secondary_len = length;
+            receipt.secondary_offset = (uint32_t)secondary_offset;
+        }
+        primary_len -= secondary_len;
+    }
+    receipt.primary_length = primary_len;
+    receipt.secondary_length = secondary_len;
+    receipt.uses_primary = primary_len != 0u;
+    receipt.uses_secondary = secondary_len != 0u;
+    receipt.crosses_secondary_split =
+        (receipt.uses_primary && receipt.uses_secondary) ? 1u : 0u;
+    receipt.valid = 1u;
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        offset, length, primary_len, secondary_len);
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_gdat_alloc_pict_buff_receipt(
     uint16_t width,
     uint16_t height,

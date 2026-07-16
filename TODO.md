@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 69, CSB 1, shared DM1/CSB 1589, DM2 1532; 3191 total open rows
+  DM1 69, CSB 1, shared DM1/CSB 1589, DM2 1529; 3188 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -17,6 +17,16 @@
     is intentionally empty except for its schema until each disposition has
     real source evidence. Keep rows in TODO until either Firestaff code maps
     them or a reviewed disposition row excludes them from the open queue.
+  - 2026-07-16 DM1 update: the next ReDMCSB callable-symbol bundle before
+    CHAMPION is closed through source-backed dispositions for `F0230`,
+    `F0252`-`F0258`, `F0260`, `F0262`, `F0263`, `F0266`, both `F0267`
+    rows, and `F0514`. The closures point at existing DM1 runtime/helper
+    code and focused tests. Narrow rows remain honest boundaries: F0253 is
+    closed only for the bounded C11/F0259 action-enable handoff, F0256 only
+    for the typed C53 original-save/runtime receipt with no copy-protection
+    side effect, F0258 only through the F0259 quiver movement planner, F0260
+    only at the HUD receipt boundary, and F0266/F0267 only for the currently
+    implemented movement/projectile route breadth.
   - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`/
     `c_querydb.cpp` raw GDAT query rows now have source-named Firestaff
     receipts over the parsed ENT1/raw tables for raw-data file position,
@@ -172,6 +182,13 @@
     Remaining adjacent work is live pixel blitting, palette/blitter ownership,
     dynamic `.Z`/0x01 substitutions, scrollbox screen mutation, and wiring
     these receipts to real runtime HUD/menu consumers without fallback visuals.
+  - 2026-07-16 DM2 graphics-data file lifecycle update: skproject
+    `DM2_GRAPHICS_DATA_OPEN`, `DM2_GRAPHICS_DATA_CLOSE`, and
+    `DM2_GRAPHICS_DATA_READ` now have bounded file-counter and split-read
+    receipts in `dm2_v1_asset_loader`. Remaining adjacent work is real OS
+    file-handle IO, seek/read failure propagation, and using these receipts in
+    full `LOAD_GDAT_RAW_DATA` / `LOAD_GDAT_ENTRY_DATA_TO` consumers without
+    synthetic buffers.
   - 2026-07-16 Theron update: the admitted US raw Track 02 FIFO/session
     handoff can now consume the bounded all-dungeon route into a startup-level
     anchor receipt. The receipt carries only the real Hall of Records anchor

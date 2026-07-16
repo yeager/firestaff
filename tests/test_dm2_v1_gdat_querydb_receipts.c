@@ -218,6 +218,94 @@ static void test_fixture_gdat_entry_iteration_and_sound(void)
           "DM2_482b_0684 does not admit payloads rejected by SOUND7");
 }
 
+static void test_graphics_data_file_lifecycle(void)
+{
+    DM2_V1_GraphicsDataFileState state;
+    DM2_V1_GraphicsDataOpenReceipt open_receipt;
+    DM2_V1_GraphicsDataCloseReceipt close_receipt;
+    DM2_V1_GraphicsDataReadReceipt read_receipt;
+
+    memset(&state, 0, sizeof(state));
+    state.filetype2 = 1u;
+    state.primary_file_size = 100u;
+
+    CHECK(dm2_v1_graphics_data_open_receipt(
+              &state, 1, 11, 1, 22, &open_receipt) &&
+              open_receipt.valid &&
+              open_receipt.opened_primary &&
+              open_receipt.opened_secondary &&
+              state.file_open_counter == 1 &&
+              state.file_handle == 11 &&
+              state.xfile_handle == 22,
+          "GRAPHICS_DATA_OPEN opens primary and secondary files at counter one");
+    CHECK(dm2_v1_graphics_data_open_receipt(
+              &state, 0, -1, 0, -1, &open_receipt) &&
+              open_receipt.valid &&
+              !open_receipt.opened_primary &&
+              !open_receipt.opened_secondary &&
+              state.file_open_counter == 2,
+          "GRAPHICS_DATA_OPEN nested calls only increment the open counter");
+
+    CHECK(dm2_v1_graphics_data_read_receipt(
+              &state, 90u, 30u, &read_receipt) &&
+              read_receipt.valid &&
+              read_receipt.uses_primary &&
+              read_receipt.uses_secondary &&
+              read_receipt.crosses_secondary_split &&
+              read_receipt.primary_offset == 90u &&
+              read_receipt.primary_length == 10u &&
+              read_receipt.secondary_offset == 0u &&
+              read_receipt.secondary_length == 20u,
+          "GRAPHICS_DATA_READ splits reads crossing the secondary file boundary");
+    CHECK(dm2_v1_graphics_data_read_receipt(
+              &state, 120u, 8u, &read_receipt) &&
+              !read_receipt.uses_primary &&
+              read_receipt.uses_secondary &&
+              read_receipt.secondary_offset == 20u &&
+              read_receipt.secondary_length == 8u,
+          "GRAPHICS_DATA_READ routes wholly secondary reads to xfilehandle");
+    CHECK(dm2_v1_graphics_data_read_receipt(
+              &state, 20u, 8u, &read_receipt) &&
+              read_receipt.uses_primary &&
+              !read_receipt.uses_secondary &&
+              read_receipt.primary_offset == 20u &&
+              read_receipt.primary_length == 8u,
+          "GRAPHICS_DATA_READ keeps primary-only reads on filehandle");
+
+    CHECK(dm2_v1_graphics_data_close_receipt(
+              &state, &close_receipt) &&
+              close_receipt.valid &&
+              !close_receipt.closed_primary &&
+              !close_receipt.closed_secondary &&
+              state.file_open_counter == 1,
+          "GRAPHICS_DATA_CLOSE nested close decrements without closing handles");
+    CHECK(dm2_v1_graphics_data_close_receipt(
+              &state, &close_receipt) &&
+              close_receipt.valid &&
+              close_receipt.closed_primary &&
+              close_receipt.closed_secondary &&
+              state.file_open_counter == 0,
+          "GRAPHICS_DATA_CLOSE final close closes primary and secondary handles");
+    CHECK(!dm2_v1_graphics_data_close_receipt(
+              &state, &close_receipt) &&
+              close_receipt.blocked_underflow,
+          "GRAPHICS_DATA_CLOSE rejects counter underflow");
+
+    memset(&state, 0, sizeof(state));
+    CHECK(!dm2_v1_graphics_data_open_receipt(
+              &state, 0, -1, 1, 22, &open_receipt) &&
+              open_receipt.blocked_primary_open &&
+              open_receipt.syserr_code == 0x29u,
+          "GRAPHICS_DATA_OPEN reports source sys error 0x29 for primary failure");
+    memset(&state, 0, sizeof(state));
+    state.filetype2 = 1u;
+    CHECK(!dm2_v1_graphics_data_open_receipt(
+              &state, 1, 11, 0, -1, &open_receipt) &&
+              open_receipt.blocked_secondary_open &&
+              open_receipt.syserr_code == 0x1fu,
+          "GRAPHICS_DATA_OPEN reports source sys error 0x1f for secondary failure");
+}
+
 static void test_fixture_pict_allocation_receipts(void)
 {
     DM2_V1_GdatPictAllocationReceipt alloc;
@@ -431,6 +519,7 @@ int main(void)
     printf("DM2 V1 GDAT querydb receipts\n");
     test_fixture_entry_queries();
     test_fixture_gdat_entry_iteration_and_sound();
+    test_graphics_data_file_lifecycle();
     test_fixture_pict_allocation_receipts();
     test_real_graphics_census();
     printf("Results: %d passed, %d failed\n", passed, failed);
