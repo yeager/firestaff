@@ -1,5 +1,26 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject c_gfx_str bundle: added bounded source-shaped
+  helpers for `DM2_QUERY_FONT`, `DM2_QUERY_STR_METRICS`, draw-plan receipts
+  for the `DM2_DRAW_*` text family, literal-only `DM2_FORMAT_SKSTR`,
+  encrypted literal `DM2_QUERY_GDAT_TEXT`, and hint-line wrapping. This closes
+  the text/glyph formulas without pretending to own live pixel blits, dynamic
+  substitutions, or scrollbox screen mutation. Verification: focused Ninja
+  target `test_dm2_v1_skproject_core`, focused CTest
+  `dm2_v1_skproject_core`, and symbol backlog recount.
+
+- 2026-07-16 DM1 TIMELINE square-event source bundle: closed ReDMCSB
+  `F0241`, `F0242`, `F0244`-`F0248`, `F0250`, `F0251`, and `F0259` against
+  existing DM1-owned M10 runtime surfaces, with `F0249` recorded as narrow
+  party/ordinary replay plus C14/C15 timeline relocation only. The focused
+  fixture now uses loaded dungeon state, raw C04 group backing for the C006
+  generator path, real weapon slots for F0259 planning, and C11 action-enabled
+  emissions rather than synthetic direct mutation. C04 group insertion/rotation
+  remains separate F0249/F0252/F0267 work. Verification: focused Ninja target
+  `test_dm1_v1_square_state_dispatch_pc34_compat`, focused CTest
+  `dm1_v1_square_state_dispatch_pc34_compat`, backlog recount, and
+  `git diff --check`.
+
 - 2026-07-16 DM2 skproject square-chain traversal handoff: added
   `dm2_v1_dungeon_walk_square_things()` as the loader-owned bounded route for
   `GET_TILE_RECORD_LINK` + `GET_NEXT_RECORD_LINK` consumers. The object model
