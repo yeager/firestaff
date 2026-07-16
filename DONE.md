@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject movement admission symbols: mapped
+  `DM2_12b4_0953` and `DM2_12b4_0881` from `SKULLWIN/c_move.cpp`. The
+  implementation preserves facing extraction from record word `0x0e`,
+  side-relative 5x5 creature offset, tile-type return codes,
+  blocked-destination gate, creature AI flag branching, and secondary creature
+  query routing. Full `DM2_PERFORM_MOVE` dungeon mutation remains open.
+  Verification: `cmake --build build-local-ninja --target
+  test_dm2_v1_skproject_core -j2` and `ctest --test-dir build-local-ninja
+  --output-on-failure -R '^dm2_v1_skproject_core$'` passed.
+
 - 2026-07-16 DM2 skproject sound queue symbol bundle: added source-backed
   receipt/runtime-state coverage for `DM2_SOUND1`-`DM2_SOUND9`,
   `DM2_PROCESS_SOUND`, and `DM2_QUERY_SND_ENTRY_INDEX`. The bundle models

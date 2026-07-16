@@ -412,6 +412,90 @@ int dm2_v1_skproject_xlat_palette(
     return 1;
 }
 
+int dm2_v1_skproject_move_side_offset(
+    uint16_t record_word_e,
+    int16_t direction_delta,
+    uint8_t creature_5x5_pos,
+    DM2_V1_SkprojectMoveSideOffsetReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMoveSideOffsetReceipt receipt;
+    uint8_t facing;
+    uint8_t relative_direction;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_word_e = record_word_e;
+    receipt.direction_delta = direction_delta;
+    receipt.creature_5x5_pos = creature_5x5_pos;
+
+    facing = (uint8_t)((record_word_e >> 8) & 3u);
+    relative_direction =
+        (uint8_t)((facing + (uint8_t)direction_delta) & 3u);
+    receipt.facing = facing;
+    receipt.relative_direction = relative_direction;
+    if (relative_direction == 1u || relative_direction == 3u) {
+        receipt.side_direction = 1;
+        receipt.creature_x_offset =
+            (int8_t)((int)(creature_5x5_pos % 5u) - 2);
+        receipt.side_offset_nonzero = receipt.creature_x_offset != 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.side_offset_nonzero;
+}
+
+int dm2_v1_skproject_move_admission(
+    const DM2_V1_SkprojectMoveAdmissionRequest *request,
+    DM2_V1_SkprojectMoveAdmissionReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMoveAdmissionReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.stored_creature = -1;
+    if (!request) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.current_tile_type =
+        (uint8_t)(((uint8_t)request->current_tile_value >> 5) & 0xffu);
+    receipt.destination_tile_type =
+        (uint8_t)(((uint8_t)request->destination_tile_value >> 5) & 0xffu);
+
+    if (receipt.current_tile_type == 3u && request->requested_move == 2u) {
+        receipt.result_code = 1u;
+    } else if (receipt.destination_tile_type == 3u) {
+        receipt.result_code = 2u;
+    } else if (request->destination_tile_blocked) {
+        receipt.result_code = 3u;
+    } else {
+        receipt.stored_creature = request->creature_at_destination;
+        if (request->creature_at_destination != -1) {
+            if ((request->creature_ai_flags & 0x8000u) == 0u) {
+                receipt.used_side_offset_test = 1;
+                receipt.result_code =
+                    request->side_offset_nonzero ? 5u : 4u;
+            }
+        } else {
+            receipt.used_secondary_query = 1;
+            if (request->secondary_query_creature == -1) {
+                receipt.result_code = 6u;
+            } else {
+                receipt.result_code =
+                    (request->secondary_query_ai_flags & 0x8000u) == 0u ?
+                        5u : 6u;
+            }
+        }
+    }
+
+    if (receipt.result_code == 0u)
+        receipt.result_code = 6u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.result_code;
+}
+
 int32_t dm2_v1_skproject_atimesb_rshiftc(int16_t a,
                                          int8_t c,
                                          int16_t b)
@@ -1698,5 +1782,9 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_DRAW_VP_RC_STR/DM2_DRAW_LOCAL_TEXT/DM2_FORMAT_SKSTR/"
            "DM2_QUERY_GDAT_TEXT/DM2_DRAW_TEXT_TO_BACKBUFF/"
            "DM2_gfxstr_3929_04e2/DM2_gfxstr_24a5_0732/"
-           "DM2_DISPLAY_HINT_TEXT/DM2_SCROLLBOX_MESSAGE";
+           "DM2_DISPLAY_HINT_TEXT/DM2_SCROLLBOX_MESSAGE; "
+           "SKULLWIN/c_gfx_pal.cpp color_to_palettecolor/"
+           "DM2_CONVERT_DRIVERPALETTE/DM2_SELECT_PALETTE_SET/"
+           "DM2_UPDATE_BLIT_PALETTE/DM2_xlat_palette; "
+           "SKULLWIN/c_move.cpp DM2_12b4_0953/DM2_12b4_0881";
 }
