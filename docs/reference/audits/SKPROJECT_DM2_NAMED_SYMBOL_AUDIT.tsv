@@ -658,7 +658,7 @@ DM2_image_0b36_1446	SKULLWIN	SKULLWIN/c_image.cpp	478		MISSING
 DEBUGBLIT	SKULLWIN	SKULLWIN/c_image.cpp	532		MISSING
 init	SKULLWIN	SKULLWIN/c_input.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_1031_03f2	SKULLWIN	SKULLWIN/c_input.cpp	55		MISSING
-DM2_ADJUST_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	112		MISSING
+DM2_ADJUST_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	112	include/dm2_v1_skproject_core.h:dm2_v1_skproject_adjust_ui_event	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves the c_input hand-action and spell/leader event adjustment rules over caller-supplied player-position, cooldown, and hand-activable state; it does not synthesize UI events or champion state.
 DM2_TRANSMIT_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	180		MISSING
 DM2_HANDLE_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	281		MISSING
 DM2_0b36_129a	SKULLWIN	SKULLWIN/c_input.cpp	523		MISSING
@@ -1203,14 +1203,14 @@ R_2F5DE	SKULLWIN	SKULLWIN/unref.cpp	93		MISSING
 R_3E39E	SKULLWIN	SKULLWIN/unref.cpp	118		MISSING
 DM2_TRANSFER_PLAYER	SKULLWIN	SKULLWIN/unref.cpp	124		MISSING
 DM2_1539	SKULLWIN	SKULLWIN/unref.cpp	166		MISSING
-DM2_ABS	SKULLWIN	SKULLWIN/util.cpp	9		MISSING
+DM2_ABS	SKULLWIN	SKULLWIN/util.cpp	9	src/dm2/dm2_v1_skproject_core.c:40	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves SKULLWIN util.cpp signed absolute-value return and is covered by focused utility tests.
 DM2_BETWEEN_VALUE	SKULLWIN	SKULLWIN/util.cpp	14	include/dm2_v1_skproject_core.h:33	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves v5 min/max/value clamp order and is covered by focused core helper test.
-DM2_CALC_SQUARE_DISTANCE	SKULLWIN	SKULLWIN/util.cpp	23		MISSING
-DM2_CALC_VECTOR_DIR	SKULLWIN	SKULLWIN/util.cpp	30		MISSING
+DM2_CALC_SQUARE_DISTANCE	SKULLWIN	SKULLWIN/util.cpp	23	src/dm2/dm2_v1_skproject_core.c:45	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves SKULLWIN util.cpp Manhattan square-distance sum over signed absolute x/y deltas and is covered by focused utility tests.
+DM2_CALC_VECTOR_DIR	SKULLWIN	SKULLWIN/util.cpp	30	src/dm2/dm2_v1_skproject_core.c:135	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves SKULLWIN util.cpp dominant-axis direction selection and DM2_RANDBIT tie break while failing closed if tied axes lack caller-owned random state.
 DM2_CALC_VECTOR_W_DIR	SKULLWIN	SKULLWIN/util.cpp	48	include/dm2_v1_skproject_core.h:252	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves additive source vector rotation using table1d27fc/table1d2804 and is covered by focused core helper test.
-DM2_COMPUTE_POWER_4_WITHIN	SKULLWIN	SKULLWIN/util.cpp	60		MISSING
-DM2_FILL_I16TABLE	SKULLWIN	SKULLWIN/util.cpp	78		MISSING
-DM2_ATIMESB_RSHIFTC	SKULLWIN	SKULLWIN/util.cpp	85		MISSING
+DM2_COMPUTE_POWER_4_WITHIN	SKULLWIN	SKULLWIN/util.cpp	60	src/dm2/dm2_v1_skproject_core.c:228	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves SKULLWIN util.cpp nth set-bit power scan over 32 shifts and returns shifted-out zero when the requested ordinal is absent.
+DM2_FILL_I16TABLE	SKULLWIN	SKULLWIN/util.cpp	78	src/dm2/dm2_v1_skproject_core.c:245	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves SKULLWIN util.cpp contiguous i16 table fill over caller-supplied storage and rejects missing required output.
+DM2_ATIMESB_RSHIFTC	SKULLWIN	SKULLWIN/util.cpp	85	src/dm2/dm2_v1_skproject_core.c:270	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves SKULLWIN util.cpp unsigned-word multiply before right shift and is covered by focused utility tests.
 DM2_WAIT_SCREEN_REFRESH	SKULLWIN	SKULLWIN/util.cpp	90		MISSING
 DM2_SLEEP_SEVERAL_TIME	SKULLWIN	SKULLWIN/util.cpp	114		MISSING
 DM2_MIN	SKULLWIN	SKULLWIN/util.cpp	120		MISSING
@@ -1408,7 +1408,7 @@ BETWEEN_VALUE	SKWIN	SKWIN/SkWinCore.cpp	4995	include/dm2_v1_skproject_core.h:30	
 RECALC_LIGHT_LEVEL	SKWIN	SKWIN/SkWinCore.cpp	5013		MISSING
 IS_ITEM_FIT_FOR_EQUIP	SKWIN	SKWIN/SkWinCore.cpp	5143		MISSING
 RETRIEVE_ITEM_BONUS	SKWIN	SKWIN/SkWinCore.cpp	5204		MISSING
-BOOST_ATTRIBUTE	SKWIN	SKWIN/SkWinCore.cpp	5249		MISSING
+BOOST_ATTRIBUTE	SKWIN	SKWIN/SkWinCore.cpp	5249	include/dm2_v1_skproject_core.h:dm2_v1_skproject_boost_attribute	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves the source attribute boost decay loop, current-minus-maximum delta test, and 10..220 clamp over caller-supplied champion attributes.
 PROCESS_ITEM_BONUS	SKWIN	SKWIN/SkWinCore.cpp	5277		MISSING
 REMOVE_POSSESSION	SKWIN	SKWIN/SkWinCore.cpp	5430		MISSING
 EQUIP_ITEM_TO_INVENTORY	SKWIN	SKWIN/SkWinCore.cpp	5475		MISSING
@@ -1538,7 +1538,7 @@ _1031_024c	SKWIN	SKWIN/SkWinCore.cpp	12181		MISSING
 _1031_030a	SKWIN	SKWIN/SkWinCore.cpp	12192		MISSING
 _1031_0c58	SKWIN	SKWIN/SkWinCore.cpp	12236		MISSING
 _1031_03f2	SKWIN	SKWIN/SkWinCore.cpp	12291		MISSING
-ADJUST_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12355		MISSING
+ADJUST_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12355	include/dm2_v1_skproject_core.h:dm2_v1_skproject_adjust_ui_event	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves hand-action remapping and spell/leader triangle selection over caller-supplied player-position, cooldown, and activable-hand state; it does not synthesize UI events or champion state.
 TRANSMIT_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12442		MISSING
 _1031_10c8	SKWIN	SKWIN/SkWinCore.cpp	12618		MISSING
 _0b36_129a	SKWIN	SKWIN/SkWinCore.cpp	12636		MISSING

@@ -96,6 +96,71 @@ static void test_random_helpers(void)
           "DM2_RAND16 zero range returns zero");
 }
 
+static void test_util_helpers(void)
+{
+    DM2_V1_SkprojectRandomData randdat;
+    DM2_V1_SkprojectVectorDirReceipt dir_receipt;
+    DM2_V1_SkprojectFillI16TableReceipt fill_receipt;
+    int16_t table[5] = { 1, 2, 3, 4, 5 };
+
+    CHECK(dm2_v1_skproject_abs(-12) == 12 &&
+              dm2_v1_skproject_abs(7) == 7,
+          "DM2_ABS returns source signed absolute value");
+    CHECK(dm2_v1_skproject_calc_square_distance(7, -3, 2, 5) == 13,
+          "DM2_CALC_SQUARE_DISTANCE sums absolute x/y deltas");
+
+    CHECK(dm2_v1_skproject_calc_vector_dir(
+              0, 10, 20, 4, 18, &dir_receipt) == 1 &&
+              dir_receipt.valid && dir_receipt.dir == 3u &&
+              !dir_receipt.consumed_randbit &&
+              dir_receipt.delta_x == 6 && dir_receipt.delta_y == 2,
+          "DM2_CALC_VECTOR_DIR chooses west/east axis without random on non-tie");
+    CHECK(dm2_v1_skproject_calc_vector_dir(
+              0, 4, 1, 4, 9, &dir_receipt) == 1 &&
+              dir_receipt.valid && dir_receipt.dir == 2u,
+          "DM2_CALC_VECTOR_DIR chooses north/south axis by y delta");
+
+    dm2_v1_skproject_random_init(&randdat);
+    CHECK(dm2_v1_skproject_calc_vector_dir(
+              &randdat, 5, 5, 1, 1, &dir_receipt) == 1 &&
+              dir_receipt.valid && dir_receipt.tied_axes &&
+              dir_receipt.consumed_randbit && dir_receipt.randbit == 0u &&
+              dir_receipt.abs_delta_x == 4 &&
+              dir_receipt.abs_delta_y == 5 &&
+              dir_receipt.dir == 0u,
+          "DM2_CALC_VECTOR_DIR consumes DM2_RANDBIT to break diagonal ties");
+    CHECK(dm2_v1_skproject_calc_vector_dir(
+              0, 5, 5, 1, 1, &dir_receipt) == 0 &&
+              dir_receipt.blocked_missing_random,
+          "DM2_CALC_VECTOR_DIR fails closed on tied axes without random state");
+
+    CHECK(dm2_v1_skproject_compute_power_4_within(0x2au, 1) == 0x02,
+          "DM2_COMPUTE_POWER_4_WITHIN returns first set power");
+    CHECK(dm2_v1_skproject_compute_power_4_within(0x2au, 3) == 0x20,
+          "DM2_COMPUTE_POWER_4_WITHIN returns requested set-bit ordinal");
+    CHECK(dm2_v1_skproject_compute_power_4_within(0x2au, 4) == 0,
+          "DM2_COMPUTE_POWER_4_WITHIN returns shifted-out zero when ordinal is absent");
+
+    CHECK(dm2_v1_skproject_fill_i16table(
+              table, -9, 5u, &fill_receipt) == 1 &&
+              fill_receipt.valid && fill_receipt.written_entries == 5u &&
+              table[0] == -9 && table[4] == -9,
+          "DM2_FILL_I16TABLE writes every source table entry");
+    CHECK(dm2_v1_skproject_fill_i16table(
+              0, 4, 0u, &fill_receipt) == 1 &&
+              fill_receipt.valid && fill_receipt.written_entries == 0u,
+          "DM2_FILL_I16TABLE accepts zero entries without a table");
+    CHECK(dm2_v1_skproject_fill_i16table(
+              0, 4, 1u, &fill_receipt) == 0 &&
+              fill_receipt.blocked_missing_table,
+          "DM2_FILL_I16TABLE rejects missing table when entries are required");
+
+    CHECK(dm2_v1_skproject_atimesb_rshiftc(300, 3, 7) == 262,
+          "DM2_ATIMESB_RSHIFTC multiplies unsigned 16-bit inputs before shift");
+    CHECK(dm2_v1_skproject_atimesb_rshiftc(-2, 4, 2) == 8191,
+          "DM2_ATIMESB_RSHIFTC preserves unsignedlong conversion of signed words");
+}
+
 static void test_calc_vector_w_dir(void)
 {
     DM2_V1_SkprojectVectorWDirReceipt receipt;
@@ -641,11 +706,124 @@ static void test_count_by_coin_types(void)
           "COUNT_BY_COIN_TYPES rejects missing output counter table");
 }
 
+static void test_boost_attribute(void)
+{
+    DM2_V1_SkprojectChampionAttribute attributes[4];
+    DM2_V1_SkprojectBoostAttributeReceipt receipt;
+
+    memset(attributes, 0, sizeof(attributes));
+    attributes[1].current = 100u;
+    attributes[1].maximum = 150u;
+    CHECK(dm2_v1_skproject_boost_attribute(
+              attributes, 1u, 100, &receipt) == 1 &&
+              receipt.valid && receipt.previous_current == 100u &&
+              receipt.maximum == 150u && receipt.source_si == 50 &&
+              receipt.reduced_delta == 57 &&
+              attributes[1].current == 157u,
+          "BOOST_ATTRIBUTE reduces large positive boosts by source 20-point buckets");
+
+    attributes[1].current = 100u;
+    attributes[1].maximum = 150u;
+    CHECK(dm2_v1_skproject_boost_attribute(
+              attributes, 1u, -80, &receipt) == 1 &&
+              receipt.valid && receipt.source_si == -130 &&
+              receipt.reduced_delta == -15 &&
+              attributes[1].current == 85u,
+          "BOOST_ATTRIBUTE reduces large negative boosts symmetrically");
+
+    attributes[2].current = 218u;
+    attributes[2].maximum = 20u;
+    CHECK(dm2_v1_skproject_boost_attribute(
+              attributes, 2u, 20, &receipt) == 1 &&
+              attributes[2].current == 220u,
+          "BOOST_ATTRIBUTE clamps boosted attribute to 220");
+
+    attributes[3].current = 12u;
+    attributes[3].maximum = 80u;
+    CHECK(dm2_v1_skproject_boost_attribute(
+              attributes, 3u, -20, &receipt) == 1 &&
+              attributes[3].current == 10u,
+          "BOOST_ATTRIBUTE clamps reduced attribute to 10");
+
+    CHECK(dm2_v1_skproject_boost_attribute(
+              0, 0u, 1, &receipt) == 0 &&
+              receipt.blocked_missing_attribute,
+          "BOOST_ATTRIBUTE rejects missing caller champion attributes");
+}
+
+static void test_adjust_ui_event(void)
+{
+    DM2_V1_SkprojectUiChampionState champions[4];
+    int16_t positions[4] = { 2, -1, 0, 1 };
+    DM2_V1_SkprojectUiEvent event;
+    DM2_V1_SkprojectAdjustUiEventReceipt receipt;
+
+    memset(champions, 0, sizeof(champions));
+    for (uint16_t i = 0; i < 4u; ++i) {
+        champions[i].present = 1u;
+        champions[i].hand_activable[0] = 1u;
+        champions[i].hand_activable[1] = 1u;
+    }
+
+    memset(&event, 0, sizeof(event));
+    event.event = 116u;
+    CHECK(dm2_v1_skproject_adjust_ui_event(
+              &event, 0u, positions, champions, 4u, &receipt) == 1 &&
+              event.event == 120u && receipt.mapped_player == 2 &&
+              receipt.mapped_hand == 0u,
+          "ADJUST_UI_EVENT maps champion hand event through player direction");
+
+    event.event = 117u;
+    champions[2].hand_cooldown[1] = 3u;
+    CHECK(dm2_v1_skproject_adjust_ui_event(
+              &event, 0u, positions, champions, 4u, &receipt) == 0 &&
+              event.event == 0u && receipt.blocked_hand_cooldown,
+          "ADJUST_UI_EVENT cancels hand event while hand cooldown is active");
+    champions[2].hand_cooldown[1] = 0u;
+
+    event.event = 95u;
+    event.x = 18;
+    event.y = 18;
+    event.rect.x = 10;
+    event.rect.y = 10;
+    event.rect.w = 20;
+    event.rect.h = 20;
+    CHECK(dm2_v1_skproject_adjust_ui_event(
+              &event, 0u, positions, champions, 4u, &receipt) == 1 &&
+              event.event == 16u && receipt.selected_spell_triangle &&
+              receipt.diagonal_w3 <= receipt.diagonal_w2,
+          "ADJUST_UI_EVENT converts spell/leader triangle click to spell event");
+
+    event.event = 95u;
+    event.x = 11;
+    event.y = 28;
+    CHECK(dm2_v1_skproject_adjust_ui_event(
+              &event, 0u, positions, champions, 4u, &receipt) == 1 &&
+              event.event == 95u && !receipt.selected_spell_triangle &&
+              receipt.diagonal_w3 > receipt.diagonal_w2,
+          "ADJUST_UI_EVENT keeps leader event when click falls outside spell triangle");
+
+    event.event = 95u;
+    champions[2].hand_cooldown[2] = 1u;
+    CHECK(dm2_v1_skproject_adjust_ui_event(
+              &event, 0u, positions, champions, 4u, &receipt) == 0 &&
+              event.event == 0u && receipt.blocked_leader_hand_cooldown,
+          "ADJUST_UI_EVENT cancels leader event when leader hand cooldown is active");
+    champions[2].hand_cooldown[2] = 0u;
+
+    event.event = 50u;
+    CHECK(dm2_v1_skproject_adjust_ui_event(
+              &event, 0u, positions, champions, 4u, &receipt) == 1 &&
+              event.event == 50u && receipt.untouched_non_adjustable_event,
+          "ADJUST_UI_EVENT leaves unrelated UI events untouched");
+}
+
 int main(void)
 {
     test_between_value();
     test_temp_rect_ring();
     test_random_helpers();
+    test_util_helpers();
     test_calc_vector_w_dir();
     test_cache_hash_helpers();
     test_picture_mement_helpers();
@@ -653,6 +831,8 @@ int main(void)
     test_item_value_weight_helpers();
     test_player_weight_helper();
     test_count_by_coin_types();
+    test_boost_attribute();
+    test_adjust_ui_event();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -662,6 +842,9 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_RAND16") != 0,
           "source evidence names c_random helpers");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_CALC_SQUARE_DISTANCE") != 0,
+          "source evidence names utility helpers");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "CALC_VECTOR_W_DIR") != 0,
           "source evidence names vector direction helper");
@@ -686,6 +869,12 @@ int main(void)
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "COUNT_BY_COIN_TYPES") != 0,
           "source evidence names coin count helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "BOOST_ATTRIBUTE") != 0,
+          "source evidence names attribute boost helper");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "ADJUST_UI_EVENT") != 0,
+          "source evidence names UI event adjustment helper");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

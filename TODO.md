@@ -143,6 +143,23 @@
     DBSPEC currency flags, distinctive item types, and moneybox/container
     chains; do not fabricate item definitions, GDAT flags, or container
     contents.
+  - 2026-07-16 DM2 attribute/UI update: skproject `BOOST_ATTRIBUTE`,
+    `DM2_ADJUST_UI_EVENT`, and `ADJUST_UI_EVENT` now have bounded
+    source-mapped helpers in `dm2_v1_skproject_core`. Remaining adjacent work
+    is wiring these receipts to real runtime champion state, menu/HUD input
+    events, and command dispatch; do not fabricate champion state, UI events,
+    hand action availability, or input routing.
+  - 2026-07-16 DM2 utility update: skproject `DM2_ABS`,
+    `DM2_CALC_SQUARE_DISTANCE`, `DM2_CALC_VECTOR_DIR`,
+    `DM2_COMPUTE_POWER_4_WITHIN`, `DM2_FILL_I16TABLE`, and
+    `DM2_ATIMESB_RSHIFTC` now have bounded source-mapped helpers in
+    `dm2_v1_skproject_core`. The receipts preserve signed absolute values,
+    Manhattan square distance, dominant-axis direction selection with
+    `DM2_RANDBIT` diagonal tie break, nth set-bit power scanning, caller-owned
+    i16 table fill, and unsigned-word multiply-before-shift behavior.
+    Remaining adjacent work is wiring utility consumers into real movement,
+    map, HUD, and GDAT paths without fabricating pathfinding, collision,
+    bitmask semantics, table storage, or runtime input.
   - 2026-07-16 Theron update: the admitted US raw Track 02 FIFO/session
     handoff can now consume the bounded all-dungeon route into a startup-level
     anchor receipt. The receipt carries only the real Hall of Records anchor
@@ -255,7 +272,18 @@
     `dm1_v1_endgame_system_source_lock` CTest; no synthetic dungeon/save/art
     data was added. Broader real-map Lord Chaos escape capture, M11
     action-stamina cleanup, and pixel evidence remain separate.
-  Prioritized backlog `F0185`-`F0208` and `F0224` rows are now disposed.
+  - 2026-07-16 update: stale timeline primitive rows `F0233`-`F0239` are
+    now closed against the DM1-owned event timer queue. The implementation
+    preserves ReDMCSB's C00 rejection, F0234 time/type/priority/index heap
+    ordering, F0235 live-index lookup, F0236 sift-up/sift-down repair,
+    F0237 delete/heap repair, F0238/F0652 square-event merge semantics
+    including wall-cell separation and C02 same-map door/animation cleanup,
+    and F0239 extract-then-delete flow. Verification used focused
+    `dm1_v1_event_timer_source_lock` coverage; no synthetic gameplay data was
+    added. The broader F0240/F0261 execution bodies remain separate backlog
+    work.
+  Prioritized backlog `F0185`-`F0208`, `F0224`, and `F0233`-`F0239` rows are
+  now disposed.
   Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token

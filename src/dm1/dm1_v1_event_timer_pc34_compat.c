@@ -314,9 +314,11 @@ int dm1v1_event_add(
     struct DM1_Event_V1 ev;
 
     if (!queue || !event) return -1;
-    if (queue->eventCount >= queue->maxEvents) return -1;
 
     ev = *event;
+    if (ev.type == DM1_EVENT_NONE) return -1;
+
+    if (queue->eventCount >= queue->maxEvents) return -1;
 
     /* --- Merge logic for corridor/wall/door square events (C05..C10) --- */
     /* BUG-029 fix: scan only active timeline entries, not all slots */
@@ -374,15 +376,12 @@ int dm1v1_event_add(
         }
     }
     /* --- Merge logic for DOOR_DESTRUCTION (C02) --- */
-    /* BUG-030 fix: also check event time, not just position */
     else if (ev.type == DM1_EVENT_DOOR_DESTRUCTION) {
-        for (int ti = 0; ti < queue->eventCount; ti++) {
-            i = queue->timeline[ti];
+        for (i = 0; i < queue->maxEvents; i++) {
             struct DM1_Event_V1* existing = &queue->events[i];
             if (ev.b_mapX == existing->b_mapX &&
                 ev.b_mapY == existing->b_mapY &&
-                DM1_MAP_TIME_MAP(ev.map_time) == DM1_MAP_TIME_MAP(existing->map_time) &&
-                DM1_MAP_TIME_TIME(ev.map_time) == DM1_MAP_TIME_TIME(existing->map_time)) {
+                DM1_MAP_TIME_MAP(ev.map_time) == DM1_MAP_TIME_MAP(existing->map_time)) {
                 if (existing->type == DM1_EVENT_DOOR_ANIMATION ||
                     existing->type == DM1_EVENT_DOOR) {
                     dm1v1_event_delete(queue, i);
