@@ -275,6 +275,44 @@ typedef struct {
 } DM2_V1_GdatPictFreeReceipt;
 
 typedef struct {
+    uint8_t accepted;
+    uint8_t pool;
+    uint8_t clean;
+    uint8_t deallocate;
+    uint32_t requested_bytes;
+    uint32_t aligned_bytes;
+    uint32_t receipt_hash;
+} DM2_V1_GdatBigpoolMemoryReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint16_t sound_entry_count;
+    uint16_t unique_raw_index_count;
+    uint16_t max_raw_length;
+    uint32_t scratch_allocation_bytes;
+    uint32_t receipt_hash;
+} DM2_V1_DballocSoundCensusReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t allowed;
+    uint8_t cls5_mask;
+    uint8_t active_mask;
+    uint16_t entry_ordinal;
+    uint32_t receipt_hash;
+} DM2_V1_DballocEntryFilterReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t requested_sound_cleanup;
+    uint8_t early_dealloc_when_locked;
+    uint16_t entry_count;
+    uint16_t descriptor_count;
+    uint32_t marker_allocation_bytes;
+    uint32_t receipt_hash;
+} DM2_V1_LoadDyn4AdmissionReceipt;
+
+typedef struct {
     uint8_t valid;
     uint8_t endian_swapped;
     uint8_t group_count;
@@ -571,6 +609,20 @@ typedef struct {
     uint8_t field;
 } DM2_V1_CurCmdstrContext;
 
+typedef struct {
+    uint8_t accepted;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t requested_order;
+    uint16_t enumerated_order;
+    uint16_t resolved_item_type;
+    int16_t money_item_index;
+    uint16_t text_length;
+    uint32_t text_hash;
+    uint32_t receipt_hash;
+} DM2_V1_ItemOrderInContainerReceipt;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -863,6 +915,13 @@ int dm2_v1_query_cur_cmdstr_entry_receipt(
     const DM2_V1_CurCmdstrContext *context,
     int key_index,
     DM2_V1_CmdstrEntryReceipt *out_receipt);
+int dm2_v1_get_item_order_in_container_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int container_index,
+    int requested_order,
+    const uint16_t *money_item_ids,
+    size_t money_item_count,
+    DM2_V1_ItemOrderInContainerReceipt *out_receipt);
 
 /* skproject c_gdatfile.cpp bitmap allocation/free receipts. These expose
  * only source byte accounting and route ownership; no decoded pixels,
@@ -888,6 +947,25 @@ int dm2_v1_gdat_free_pict_entry_receipt(
     int has_bigpool_struct_tail,
     int preserved_list_member,
     DM2_V1_GdatPictFreeReceipt *out_receipt);
+int dm2_v1_gdat_bigpool_memory_receipt(
+    uint32_t requested_bytes,
+    DM2_V1_GdatPictPool pool,
+    int clean,
+    int deallocate,
+    DM2_V1_GdatBigpoolMemoryReceipt *out_receipt);
+int dm2_v1_dballoc_3e74_24b8_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DballocSoundCensusReceipt *out_receipt);
+int dm2_v1_dballoc_3e74_2162_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t entry_ordinal,
+    uint8_t active_mask,
+    DM2_V1_DballocEntryFilterReceipt *out_receipt);
+int dm2_v1_load_dyn4_admission_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t descriptor_count,
+    int cache_locked,
+    DM2_V1_LoadDyn4AdmissionReceipt *out_receipt);
 
 /* Read a skproject dtWordValue field by exact category/index/field.
  * Returns 1 on success and 0 when the typed entry is absent. */

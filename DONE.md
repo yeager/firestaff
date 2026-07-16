@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 querydb real-text promotion: promoted
+  `DM2_QUERY_GDAT_ITEM_NAME`, `DM2_QUERY_CMDSTR_NAME`,
+  `DM2_QUERY_CMDSTR_ENTRY`, `DM2_QUERY_CUR_CMDSTR_ENTRY`, and SKWIN aliases to
+  verified source mappings over real GDAT `dtText`. The asset-loader test also
+  proves real CONTAINERS field-0x40 order parsing without fallback text.
+
 - 2026-07-16 DM2 string helper receipt bundle: mapped
   `DM2_SKCHR_TO_SCRIPTCHR`, `DM2_LTOA10`, `SK_STRLEN`, `SK_STRSTR`,
   `SK_LTOA10`, `SK_STRCPY`, and `SK_STRCAT` to skproject-backed receipts.

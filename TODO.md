@@ -103,6 +103,11 @@
     `DM2_LTOA10`, `SK_STRLEN`, `SK_STRSTR`, `SK_LTOA10`, `SK_STRCPY`,
     and `SK_STRCAT` now have skproject-backed receipts. Remaining adjacent
     work is broader command-string parsing and live consumers.
+  - 2026-07-16 DM2 querydb real-text promotion: command-string and item-name
+    receipts in `dm2_v1_asset_loader` are now promoted to verified mappings
+    over real GDAT `dtText`, and container order parsing has a real
+    CONTAINERS field-0x40 asset-loader test. Open count is unchanged because
+    the affected rows were already outside the MISSING/UNCERTAIN queue.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

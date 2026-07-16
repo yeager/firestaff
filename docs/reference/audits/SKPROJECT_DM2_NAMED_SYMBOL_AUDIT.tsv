@@ -762,11 +762,11 @@ DM2_QUERY_GDAT_ENTRY_DATA_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	157	include/dm2_v
 DM2_QUERY_GDAT_ENTRY_IF_LOADABLE	SKULLWIN	SKULLWIN/c_querydb.cpp	173	include/dm2_v1_asset_loader.h:297	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_PICT_OFFSET	SKULLWIN	SKULLWIN/c_querydb.cpp	187	include/dm2_v1_asset_loader.h:324	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_IMAGE_LOCALPAL	SKULLWIN	SKULLWIN/c_querydb.cpp	228	include/dm2_v1_asset_loader.h:354	VERIFIED_SOURCE_MAPPING
-DM2_QUERY_GDAT_ITEM_NAME	SKULLWIN	SKULLWIN/c_querydb.cpp	263	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_gdat_item_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+DM2_QUERY_GDAT_ITEM_NAME	SKULLWIN	SKULLWIN/c_querydb.cpp	263	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps real GDAT item-name dtText field 0x18 and copies the source name prefix without synthetic text.
 DM2_QUERY_CMDSTR_TEXT	SKULLWIN	SKULLWIN/c_querydb.cpp	274	include/dm2_v1_weather_gdat.h:204	UNCERTAIN
-DM2_QUERY_CMDSTR_NAME	SKULLWIN	SKULLWIN/c_querydb.cpp	320	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_cmdstr_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
-DM2_QUERY_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	344	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_cmdstr_entry_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
-DM2_QUERY_CUR_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	364	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_cur_cmdstr_entry_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+DM2_QUERY_CMDSTR_NAME	SKULLWIN	SKULLWIN/c_querydb.cpp	320	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps real command-string dtText name prefixes without synthetic text.
+DM2_QUERY_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	344	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps real command-string key lookup including repeated-key digit accumulation and signed values.
+DM2_QUERY_CUR_CMDSTR_ENTRY	SKULLWIN	SKULLWIN/c_querydb.cpp	364	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps current command-string context lookup over caller-owned GDAT category/index/field.
 DM2_QUERY_PICT_BITS	SKULLWIN	SKULLWIN/c_querydb.cpp	373	include/dm2_v1_asset_loader.h:dm2_v1_query_pict_bits_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt preserves the source route choice: mode bit 2 requires real GDAT image-entry data, mode bit 3 requires a caller-owned cached bitmap, and current-bitmap mode requires an existing bitmap; no substitute pixels are generated.
 DM2_QUERY_GDAT_IMAGE_METRICS	SKULLWIN	SKULLWIN/c_querydb.cpp	406	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_image_metrics_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt returns source IMG3 width/height from the selected real dtImage/default-image payload without decoding or fabricating pixels.
 DM2_QUERY_ORNATE_ANIM_FRAME	SKULLWIN	SKULLWIN/c_querydb.cpp	449	include/dm2_v1_asset_loader.h:dm2_v1_query_ornate_anim_frame_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
@@ -1463,7 +1463,7 @@ DRAW_SPELL_TO_BE_CAST	SKWIN	SKWIN/SkWinCore.cpp	8020		src/dm2/dm2_v1_skproject_c
 DRAW_SPELL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	8056		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 SK_STRSTR	SKWIN	SKWIN/SkWinCore.cpp	8099	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN substring search including the original null return for empty needle.
 QUERY_CMDSTR_TEXT	SKWIN	SKWIN/SkWinCore.cpp	8136		MISSING
-QUERY_CMDSTR_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	8187	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_cmdstr_entry_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+QUERY_CMDSTR_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	8187	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real command-string key lookup.
 GET_MISSILE_REF_OF_MINION	SKWIN	SKWIN/SkWinCore.cpp	8205		MISSING
 _2759_01fe	SKWIN	SKWIN/SkWinCore.cpp	8249		MISSING
 FIND_POUCH_OR_SCABBARD_POSSESSION_POS	SKWIN	SKWIN/SkWinCore.cpp	8337		MISSING
@@ -1480,7 +1480,7 @@ _443c_06b4	SKWIN	SKWIN/SkWinCore.cpp	8761		MISSING
 _443c_07d5	SKWIN	SKWIN/SkWinCore.cpp	8821		MISSING
 _1031_0541	SKWIN	SKWIN/SkWinCore.cpp	8860		MISSING
 _1031_0667	SKWIN	SKWIN/SkWinCore.cpp	8936		MISSING
-QUERY_CMDSTR_NAME	SKWIN	SKWIN/SkWinCore.cpp	8945	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_cmdstr_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+QUERY_CMDSTR_NAME	SKWIN	SKWIN/SkWinCore.cpp	8945	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real command-string name prefix extraction.
 DRAW_CMD_SLOT	SKWIN	SKWIN/SkWinCore.cpp	8973	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _29ee_0b2b	SKWIN	SKWIN/SkWinCore.cpp	9003		MISSING
 _29ee_1d03	SKWIN	SKWIN/SkWinCore.cpp	9018		MISSING
@@ -1562,7 +1562,7 @@ DRAW_FOOD_WATER_POISON_PANEL	SKWIN	SKWIN/SkWinCore.cpp	13214	src/dm2/dm2_v1_skpr
 DRAW_GUIDED_STR	SKWIN	SKWIN/SkWinCore.cpp	13258	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _24a5_0732	SKWIN	SKWIN/SkWinCore.cpp	13331		MISSING
 DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds scroll-object message text, scroll panel subpanel, static art, and centered line draw planning.
-QUERY_GDAT_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13434	src/dm2/dm2_v1_asset_loader.c:dm2_v1_query_gdat_item_name_receipt; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
+QUERY_GDAT_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13434	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real GDAT item-name dtText field 0x18.
 GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_NAME with cls1/cls2 lookup and champion-bones owner side effect.
 DRAW_ITEM_ICON	SKWIN	SKWIN/SkWinCore.cpp	13478	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN item icon route; runtime inventory panel remains an additional consumer.
 DRAW_CONTAINER_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13612	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
