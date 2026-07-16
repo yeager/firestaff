@@ -746,6 +746,16 @@ int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
     const char *track02_md5,
     Theron_V1RawLoaderTraceGamePayloadReceipt *out);
 
+/* Bounded file wrapper for one staged original consumer transcript.  The
+ * imported receipt is still byte provenance only: no object, level, bitmap,
+ * palette, or runtime visual semantics are inferred from the consumer. */
+int theron_v1_raw_loader_trace_import_game_owned_fifo_payload_file(
+    const char *path,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGamePayloadReceipt *out);
+
 /* Correlates an admitted game-RAM payload byte with the source-locked Hall of
  * Records initial envelope. It compares physical raw-sector coordinates, not
  * descriptor-relative record numbers, so Track 02 INDEX 01 offsets cannot be

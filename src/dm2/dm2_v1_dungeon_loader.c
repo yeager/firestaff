@@ -1188,6 +1188,275 @@ int dm2_v1_skproject_change_current_map_to(
     return 1;
 }
 
+static int dm2_v1_dungeon_total_columns(const DM2_V1_DungeonData *d) {
+    int total = 0;
+    if (!d) return 0;
+    for (int i = 0; i < d->level_count; ++i)
+        total += d->level_widths[i];
+    return total;
+}
+
+static int dm2_v1_dungeon_column_base_index(const DM2_V1_DungeonData *d,
+                                             int level) {
+    int column = 0;
+    if (!d || level < 0 || level >= d->level_count) return -1;
+    for (int i = 0; i < level; ++i)
+        column += d->level_widths[i];
+    return column;
+}
+
+static int dm2_v1_dungeon_byte_square_offset(const DM2_V1_DungeonData *d,
+                                              int level,
+                                              int x,
+                                              int y) {
+    if (!d || level < 0 || level >= d->level_count || x < 0 || y < 0 ||
+        x >= d->level_widths[level] || y >= d->level_heights[level] ||
+        d->square_bytes != 1) {
+        return -1;
+    }
+    return d->raw_map_data_base + d->level_offsets[level] +
+           x * d->level_heights[level] + y;
+}
+
+static int dm2_v1_dungeon_compute_object_index_for_square(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    int *out_object_index,
+    int *out_object_index_offset) {
+    int column_base;
+    int column_offset;
+    int square_column_offset;
+    int object_index;
+
+    if (out_object_index) *out_object_index = -1;
+    if (out_object_index_offset) *out_object_index_offset = -1;
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->column_index_base < 0 || d->square_first_thing_base < 0) {
+        return 0;
+    }
+    column_base = dm2_v1_dungeon_column_base_index(d, level);
+    square_column_offset = dm2_v1_dungeon_byte_square_offset(d, level, x, 0);
+    if (column_base < 0 || square_column_offset < 0) return 0;
+    column_offset = d->column_index_base + (column_base + x) * 2;
+    if (column_offset < 0 || column_offset + 1 >= d->raw_size)
+        return 0;
+    object_index = (int)RD16(d->raw_data + column_offset);
+    for (int row = 0; row < y; ++row) {
+        if ((d->raw_data[square_column_offset + row] & 0x10u) != 0u)
+            ++object_index;
+    }
+    if (object_index < 0 || object_index >= d->square_first_thing_count)
+        return 0;
+    if (d->square_first_thing_base + object_index * 2 + 1 >= d->raw_size)
+        return 0;
+    if (out_object_index) *out_object_index = object_index;
+    if (out_object_index_offset)
+        *out_object_index_offset =
+            d->square_first_thing_base + object_index * 2;
+    return 1;
+}
+
+int dm2_v1_skproject_append_record_to(
+    DM2_V1_DungeonData *d,
+    uint16_t record_to_append,
+    uint16_t *parent_link,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectAppendRecordReceipt *out) {
+    DM2_V1_SkprojectAppendRecordReceipt receipt;
+    uint8_t *append_record;
+    int append_type = -1;
+    int append_index = -1;
+    int append_size = 0;
+    int square_offset;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level = level;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.appended_object_id = record_to_append;
+    receipt.source_symbol = "APPEND_RECORD_TO";
+    receipt.source_line = 2544;
+
+    if (record_to_append == DM2_THING_END_MARKER ||
+        record_to_append == DM2_THING_NULL_MARKER) {
+        receipt.blocked_null_or_end_append = 1;
+        *out = receipt;
+        return 0;
+    }
+    append_record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+        d, record_to_append, &append_type, &append_index, &append_size);
+    receipt.appended_type = append_type;
+    receipt.appended_index = append_index;
+    receipt.appended_record_size = append_size;
+    if (!append_record || append_size < 2) {
+        receipt.blocked_missing_appended_record = 1;
+        *out = receipt;
+        return 0;
+    }
+    receipt.appended_previous_next = RD16(append_record);
+    append_record[0] = (uint8_t)(DM2_THING_END_MARKER & 0xffu);
+    append_record[1] = (uint8_t)(DM2_THING_END_MARKER >> 8);
+
+    if (x < 0) {
+        uint16_t current;
+        int steps = 0;
+        int max_steps = 0;
+
+        if (!parent_link || !d) {
+            receipt.blocked_invalid_parent = 1;
+            *out = receipt;
+            return 0;
+        }
+        for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type)
+            max_steps += d->thing_type_counts[type] +
+                         d->g1_extension_record_counts[type];
+        if (max_steps <= 0) max_steps = 1;
+        receipt.parent_link_route = 1;
+        receipt.parent_previous_link = *parent_link;
+        if (*parent_link == DM2_THING_END_MARKER) {
+            *parent_link = record_to_append;
+            receipt.parent_new_link = *parent_link;
+            receipt.valid = 1;
+            *out = receipt;
+            return 1;
+        }
+        current = *parent_link;
+        while (current != DM2_THING_END_MARKER) {
+            uint8_t *record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+                d, current, NULL, NULL, NULL);
+            uint16_t next;
+            if (!record || ++steps > max_steps) {
+                receipt.blocked_unbounded_graph = 1;
+                *out = receipt;
+                return 0;
+            }
+            next = RD16(record);
+            if (next == DM2_THING_END_MARKER) {
+                record[0] = (uint8_t)(record_to_append & 0xffu);
+                record[1] = (uint8_t)(record_to_append >> 8);
+                receipt.tail_object_id = current;
+                receipt.parent_new_link = *parent_link;
+                receipt.valid = 1;
+                *out = receipt;
+                return 1;
+            }
+            current = next;
+        }
+    }
+
+    square_offset = dm2_v1_dungeon_byte_square_offset(d, level, x, y);
+    if (!d || !d->raw_data || square_offset < 0 ||
+        d->square_first_thing_count <= 0) {
+        receipt.blocked_invalid_tile = 1;
+        *out = receipt;
+        return 0;
+    }
+
+    if ((d->raw_data[square_offset] & 0x10u) != 0u) {
+        int first = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+        uint16_t current = (uint16_t)first;
+        int steps = 0;
+        int max_steps = 0;
+
+        if (first < 0 || first == (int)DM2_THING_END_MARKER) {
+            receipt.blocked_invalid_tile = 1;
+            *out = receipt;
+            return 0;
+        }
+        for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type)
+            max_steps += d->thing_type_counts[type] +
+                         d->g1_extension_record_counts[type];
+        if (max_steps <= 0) max_steps = 1;
+        receipt.existing_tile_chain_route = 1;
+        receipt.parent_previous_link = (uint16_t)first;
+        while (current != DM2_THING_END_MARKER) {
+            uint8_t *record = (uint8_t *)dm2_v1_dungeon_get_thing_record(
+                d, current, NULL, NULL, NULL);
+            uint16_t next;
+            if (!record || ++steps > max_steps) {
+                receipt.blocked_unbounded_graph = 1;
+                *out = receipt;
+                return 0;
+            }
+            next = RD16(record);
+            if (next == DM2_THING_END_MARKER) {
+                record[0] = (uint8_t)(record_to_append & 0xffu);
+                record[1] = (uint8_t)(record_to_append >> 8);
+                receipt.tail_object_id = current;
+                receipt.parent_new_link = (uint16_t)first;
+                receipt.valid = 1;
+                *out = receipt;
+                return 1;
+            }
+            current = next;
+        }
+    } else {
+        int object_index = -1;
+        int object_index_offset = -1;
+        int column_base;
+        int total_columns;
+        int last_offset;
+
+        if (!dm2_v1_dungeon_compute_object_index_for_square(
+                d, level, x, y, &object_index, &object_index_offset)) {
+            receipt.blocked_invalid_tile = 1;
+            *out = receipt;
+            return 0;
+        }
+        last_offset = d->square_first_thing_base +
+                      (d->square_first_thing_count - 1) * 2;
+        if (last_offset < 0 || last_offset + 1 >= d->raw_size ||
+            RD16(d->raw_data + last_offset) != DM2_THING_NULL_MARKER) {
+            receipt.blocked_no_ground_stack_space = 1;
+            *out = receipt;
+            return 0;
+        }
+        memmove(d->raw_data + object_index_offset + 2,
+                d->raw_data + object_index_offset,
+                (size_t)(last_offset - object_index_offset));
+        d->raw_data[object_index_offset] =
+            (uint8_t)(record_to_append & 0xffu);
+        d->raw_data[object_index_offset + 1] =
+            (uint8_t)(record_to_append >> 8);
+        d->raw_data[square_offset] |= 0x10u;
+
+        column_base = dm2_v1_dungeon_column_base_index(d, level);
+        total_columns = dm2_v1_dungeon_total_columns(d);
+        for (int col = column_base + x + 1; col < total_columns; ++col) {
+            int offset = d->column_index_base + col * 2;
+            uint16_t value;
+            if (offset < 0 || offset + 1 >= d->raw_size) {
+                receipt.blocked_invalid_tile = 1;
+                *out = receipt;
+                return 0;
+            }
+            value = (uint16_t)(RD16(d->raw_data + offset) + 1u);
+            d->raw_data[offset] = (uint8_t)(value & 0xffu);
+            d->raw_data[offset + 1] = (uint8_t)(value >> 8);
+            receipt.incremented_column_offsets++;
+        }
+        receipt.empty_tile_insert_route = 1;
+        receipt.object_index = object_index;
+        receipt.object_index_offset = object_index_offset;
+        receipt.shifted_ground_stack_words =
+            d->square_first_thing_count - object_index - 1;
+        receipt.parent_new_link = record_to_append;
+        receipt.valid = 1;
+        *out = receipt;
+        return 1;
+    }
+
+    receipt.blocked_unbounded_graph = 1;
+    *out = receipt;
+    return 0;
+}
+
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,

@@ -857,6 +857,49 @@ static uint32_t dm2_gdat_entry_receipt_hash(
     return hash ? hash : 1u;
 }
 
+static uint32_t dm2_gdat_pict_receipt_hash(
+    uint32_t tag, uint16_t raw_index, uint16_t width, uint16_t height,
+    uint8_t bpp, uint8_t pool, uint32_t allocation_bytes,
+    uint32_t free_bytes)
+{
+    uint32_t hash = 2166136261u;
+
+    hash = (hash ^ tag) * 16777619u;
+    hash = (hash ^ raw_index) * 16777619u;
+    hash = (hash ^ width) * 16777619u;
+    hash = (hash ^ height) * 16777619u;
+    hash = (hash ^ (uint32_t)bpp) * 16777619u;
+    hash = (hash ^ (uint32_t)pool) * 16777619u;
+    hash = (hash ^ allocation_bytes) * 16777619u;
+    hash = (hash ^ free_bytes) * 16777619u;
+    return hash ? hash : 1u;
+}
+
+static int dm2_gdat_pict_row_bytes(uint16_t width,
+                                   uint16_t height,
+                                   uint8_t bpp,
+                                   uint16_t *out_row_bytes,
+                                   uint32_t *out_payload_bytes)
+{
+    uint32_t row_bytes;
+    uint32_t payload_bytes;
+
+    if (out_row_bytes) *out_row_bytes = 0u;
+    if (out_payload_bytes) *out_payload_bytes = 0u;
+    if (width == 0u || height == 0u || (bpp != 4u && bpp != 8u)) {
+        return 0;
+    }
+    row_bytes = bpp == 4u ? (uint32_t)(((width + 1u) & 0xfffeu) >> 1)
+                          : (uint32_t)width;
+    payload_bytes = row_bytes * (uint32_t)height;
+    if (row_bytes > 0xffffu || payload_bytes > 0xffffu) {
+        return 0;
+    }
+    if (out_row_bytes) *out_row_bytes = (uint16_t)row_bytes;
+    if (out_payload_bytes) *out_payload_bytes = payload_bytes;
+    return 1;
+}
+
 int dm2_v1_query_gdat_raw_data_file_pos(
     const DM2_V1_AssetLoader *loader,
     uint16_t raw_index,
@@ -1026,6 +1069,144 @@ int dm2_v1_query_gdat_entry_if_loadable(
         return 0;
     }
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_gdat_alloc_pict_buff_receipt(
+    uint16_t width,
+    uint16_t height,
+    uint8_t bpp,
+    DM2_V1_GdatPictPool pool,
+    DM2_V1_GdatPictAllocationReceipt *out_receipt)
+{
+    uint16_t row_bytes = 0u;
+    uint32_t payload_bytes = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (pool != DM2_V1_GDAT_PICT_POOL_FREE &&
+        pool != DM2_V1_GDAT_PICT_POOL_LOBIG) {
+        return 0;
+    }
+    if (!dm2_gdat_pict_row_bytes(width, height, bpp,
+                                 &row_bytes, &payload_bytes)) {
+        return 0;
+    }
+    /* skproject c_gdatfile.cpp::DM2_ALLOC_PICT_BUFF asks
+     * DM2_ALLOC_MEMORY_RAM for payload+6 bytes and returns the pointer six
+     * bytes after the source bitmap header. */
+    out_receipt->accepted = 1u;
+    out_receipt->bpp = bpp;
+    out_receipt->pool = (uint8_t)pool;
+    out_receipt->width = width;
+    out_receipt->height = height;
+    out_receipt->row_bytes = row_bytes;
+    out_receipt->payload_bytes = payload_bytes;
+    out_receipt->header_bytes = 6u;
+    out_receipt->allocation_bytes = payload_bytes + 6u;
+    out_receipt->free_bytes = payload_bytes + 6u;
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        0x50425546u, 0u, width, height, bpp, (uint8_t)pool,
+        out_receipt->allocation_bytes, out_receipt->free_bytes);
+    return 1;
+}
+
+int dm2_v1_gdat_alloc_new_bmp_receipt(
+    uint16_t raw_index,
+    uint16_t width,
+    uint16_t height,
+    uint8_t bpp,
+    DM2_V1_GdatPictAllocationReceipt *out_receipt)
+{
+    uint16_t row_bytes = 0u;
+    uint32_t payload_bytes = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_gdat_pict_row_bytes(width, height, bpp,
+                                 &row_bytes, &payload_bytes)) {
+        return 0;
+    }
+    /* skproject c_gdatfile.cpp::DM2_ALLOC_NEW_BMP computes the same 4bpp
+     * rounded row bytes, allocates only the payload from CPX heap for the
+     * GDAT raw index, then writes the six-byte bitmap header in front. */
+    out_receipt->accepted = 1u;
+    out_receipt->is_cpx_heap = 1u;
+    out_receipt->bpp = bpp;
+    out_receipt->pool = DM2_V1_GDAT_PICT_POOL_CPXHEAP;
+    out_receipt->raw_index = raw_index;
+    out_receipt->width = width;
+    out_receipt->height = height;
+    out_receipt->row_bytes = row_bytes;
+    out_receipt->payload_bytes = payload_bytes;
+    out_receipt->header_bytes = 6u;
+    out_receipt->allocation_bytes = payload_bytes;
+    out_receipt->free_bytes = payload_bytes + 14u + (bpp == 4u ? 16u : 0u);
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        0x4e424d50u, raw_index, width, height, bpp,
+        DM2_V1_GDAT_PICT_POOL_CPXHEAP, out_receipt->allocation_bytes,
+        out_receipt->free_bytes);
+    return 1;
+}
+
+int dm2_v1_gdat_free_pict_buff_receipt(
+    const DM2_V1_GdatPictAllocationReceipt *allocation,
+    DM2_V1_GdatPictFreeReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!allocation || !allocation->accepted || allocation->is_cpx_heap ||
+        allocation->header_bytes != 6u || allocation->free_bytes == 0u) {
+        return 0;
+    }
+    /* skproject c_gdatfile.cpp::DM2_FREE_PICT_BUFF recomputes row bytes from
+     * the bitmap header and frees payload+6 through the low bigpool route. */
+    out_receipt->accepted = 1u;
+    out_receipt->freed_pool = DM2_V1_GDAT_PICT_POOL_LOBIG;
+    out_receipt->width = allocation->width;
+    out_receipt->height = allocation->height;
+    out_receipt->row_bytes = allocation->row_bytes;
+    out_receipt->free_bytes = allocation->free_bytes;
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        0x46505546u, allocation->raw_index, allocation->width,
+        allocation->height, allocation->bpp, out_receipt->freed_pool, 0u,
+        out_receipt->free_bytes);
+    return 1;
+}
+
+int dm2_v1_gdat_free_pict_entry_receipt(
+    const DM2_V1_GdatPictAllocationReceipt *allocation,
+    int header_matches,
+    int has_bigpool_struct_tail,
+    int preserved_list_member,
+    DM2_V1_GdatPictFreeReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!allocation || !allocation->accepted || !allocation->is_cpx_heap ||
+        !header_matches || allocation->free_bytes == 0u) {
+        return 0;
+    }
+    /* skproject c_gdatfile.cpp::DM2_FREE_PICT_ENTRY first admits only a
+     * matching 14-byte preserved-GFX header. A bigpool tail takes the
+     * STRUCT_BEFORE route; otherwise the preserved list is unlinked before
+     * high/low pool byte release. */
+    out_receipt->accepted = 1u;
+    out_receipt->used_bigpool_struct_before =
+        has_bigpool_struct_tail ? 1u : 0u;
+    out_receipt->removed_from_preserved_list =
+        (!has_bigpool_struct_tail && preserved_list_member) ? 1u : 0u;
+    out_receipt->freed_pool = has_bigpool_struct_tail
+                                  ? DM2_V1_GDAT_PICT_POOL_CPXHEAP
+                                  : DM2_V1_GDAT_PICT_POOL_LOBIG;
+    out_receipt->width = allocation->width;
+    out_receipt->height = allocation->height;
+    out_receipt->row_bytes = allocation->row_bytes;
+    out_receipt->free_bytes = allocation->free_bytes;
+    out_receipt->receipt_hash = dm2_gdat_pict_receipt_hash(
+        0x4650454eu, allocation->raw_index, allocation->width,
+        allocation->height, allocation->bpp, out_receipt->freed_pool, 0u,
+        out_receipt->free_bytes);
     return 1;
 }
 

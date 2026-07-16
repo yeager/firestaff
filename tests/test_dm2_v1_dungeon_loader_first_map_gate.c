@@ -203,6 +203,95 @@ static size_t build_skproject_chained_door_fixture(uint8_t *buf, size_t cap)
     return raw_map_base + 4u;
 }
 
+static size_t build_skproject_append_existing_chain_fixture(uint8_t *buf,
+                                                            size_t cap)
+{
+    const int w = 2;
+    const int h = 2;
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + (size_t)w * 2u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t door0_base = thing_base;
+    const size_t door1_base = door0_base + 4u;
+    const size_t text_base = door1_base + 4u;
+    const size_t raw_map_base = text_base + 4u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+
+    buf[4] = 1;
+    put16le(buf + 10, 1);
+    put16le(buf + 12, 2);
+    put16le(buf + 16, 1);
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+
+    put16le(buf + column_base + 0, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x0800);
+
+    put16le(buf + door0_base, 0xfffe);
+    put16le(buf + door0_base + 2, 0x0801);
+    put16le(buf + door1_base, 0x0000);
+    put16le(buf + door1_base + 2, 0x0802);
+    put16le(buf + text_base, 0x0000);
+    put16le(buf + text_base + 2, 0x0000);
+
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
+static size_t build_skproject_append_empty_tile_fixture(uint8_t *buf,
+                                                        size_t cap)
+{
+    const int w = 2;
+    const int h = 2;
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + (size_t)w * 2u;
+    const size_t thing_base = sft_base + 4u;
+    const size_t door0_base = thing_base;
+    const size_t door1_base = door0_base + 4u;
+    const size_t raw_map_base = door1_base + 4u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+
+    buf[4] = 1;
+    put16le(buf + 10, 2);
+    put16le(buf + 12, 2);
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+
+    put16le(buf + column_base + 0, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x0000);
+    put16le(buf + sft_base + 2, 0xffff);
+
+    put16le(buf + door0_base, 0xfffe);
+    put16le(buf + door0_base + 2, 0x0801);
+    put16le(buf + door1_base, 0x0000);
+    put16le(buf + door1_base + 2, 0x0802);
+
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static size_t build_skproject_text_wall_gfx_fixture(uint8_t *buf, size_t cap)
 {
     size_t size = build_skproject_chained_door_fixture(buf, cap);
@@ -535,6 +624,77 @@ static void test_skproject_chained_first_thing_finds_door_record(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_append_record_to_existing_tile_chain(void)
+{
+    uint8_t dat[192];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SkprojectAppendRecordReceipt receipt;
+    size_t size =
+        build_skproject_append_existing_chain_fixture(dat, sizeof(dat));
+    int thing;
+
+    CHECK(size > 0, "append existing-chain fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts append existing-chain fixture");
+    CHECK(dm2_v1_skproject_append_record_to(
+              &dungeon, 0x0001, NULL, 0, 1, 0, &receipt) == 1,
+          "APPEND_RECORD_TO appends to an existing tile chain");
+    CHECK(receipt.valid && receipt.existing_tile_chain_route &&
+              receipt.tail_object_id == 0x0000 &&
+              receipt.appended_previous_next == 0x0000,
+          "APPEND_RECORD_TO receipt names the existing-chain tail route");
+    thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
+    CHECK(thing == 0x0800,
+          "APPEND_RECORD_TO preserves the tile root ObjectID");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0800) == 0x0000,
+          "APPEND_RECORD_TO leaves the text node linked to the original door");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0000) == 0x0001,
+          "APPEND_RECORD_TO links the old tail to the appended door");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0001) == 0xfffe,
+          "APPEND_RECORD_TO resets appended record w0 to OBJECT_END_MARKER");
+    CHECK(dm2_v1_skproject_append_record_to(
+              &dungeon, 0xffff, NULL, 0, 1, 0, &receipt) == 0 &&
+              receipt.blocked_null_or_end_append,
+          "APPEND_RECORD_TO rejects OBJECT_NULL append input");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
+static void test_skproject_append_record_to_empty_tile_inserts_root(void)
+{
+    uint8_t dat[192];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SkprojectAppendRecordReceipt receipt;
+    size_t size = build_skproject_append_empty_tile_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0, "append empty-tile fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts append empty-tile fixture");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) ==
+              -1,
+          "empty-tile fixture starts without a root ObjectID");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0) == 0x0000,
+          "empty-tile fixture starts with the second-column door root");
+    CHECK(dm2_v1_skproject_append_record_to(
+              &dungeon, 0x0001, NULL, 0, 0, 0, &receipt) == 1,
+          "APPEND_RECORD_TO inserts a new root into an empty tile");
+    CHECK(receipt.valid && receipt.empty_tile_insert_route &&
+              receipt.object_index == 0 &&
+              receipt.shifted_ground_stack_words == 1 &&
+              receipt.incremented_column_offsets == 1,
+          "APPEND_RECORD_TO receipt records ground-stack shift and column bump");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x30,
+          "APPEND_RECORD_TO sets tile bit 0x10 on the empty square");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) == 0x0001,
+          "APPEND_RECORD_TO installs appended ObjectID at the new root");
+    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0) == 0x0000,
+          "APPEND_RECORD_TO preserves later square root after column shift");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x0001) == 0xfffe,
+          "APPEND_RECORD_TO resets inserted record next link to end marker");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 static void test_skproject_text_wall_gfx_metadata(void)
 {
     uint8_t dat[160];
@@ -862,6 +1022,8 @@ int main(void)
     test_shifted_first_map_offset_rejected();
     test_skproject_layout_first_thing_and_door_record();
     test_skproject_chained_first_thing_finds_door_record();
+    test_skproject_append_record_to_existing_tile_chain();
+    test_skproject_append_record_to_empty_tile_inserts_root();
     test_skproject_text_wall_gfx_metadata();
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();

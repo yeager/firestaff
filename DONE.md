@@ -1,5 +1,73 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM1 F0139 creature allowed-on-map source gate: added a
+  source-named `F0139_DUNGEON_IsCreatureAllowedOnMap` helper that reads raw
+  C04 `GROUP.Type` via F0156-owned Thing data and scans only the target map's
+  loaded DUNGEON.DAT allowed-creature list. M10 F0267 group moves/generators
+  now consume it after newly generated groups publish their raw C04 record;
+  missing raw group data, non-group Things, invalid maps, and malformed
+  creature-count metadata fail closed. Verification:
+  `dm1_v1_f0139_creature_allowed_on_map_pc34_compat` passed. The broader
+  `m10_c006_generator_reenable_dispatch_pc34_compat` target builds but still
+  fails one C38 ACTIVE_GROUP aspect assertion in this already-dirty checkout.
+
+- 2026-07-16 DM2 skproject `APPEND_RECORD_TO` slice: added
+  `dm2_v1_skproject_append_record_to()` as a bounded source mutation receipt
+  over ObjectID chains. It rejects null/end markers, resets appended
+  `GenericRecord::w0` to `OBJECT_END_MARKER`, appends through parent links or
+  existing tile chains, and inserts into empty byte-square tiles with the
+  skproject ground-stack shift plus column-index bump. Verification: focused
+  Ninja/CTest `dm2_v1_dungeon_loader_first_map_gate`.
+
+- 2026-07-16 DM2 c_gdatfile bitmap allocation/free receipts: added
+  source-named bounded receipts for `DM2_ALLOC_PICT_BUFF`,
+  `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and `DM2_FREE_PICT_ENTRY`.
+  The receipts preserve skproject row-byte accounting for 4bpp and 8bpp
+  bitmaps, the six-byte bitmap header, CPX raw-index ownership, and the
+  preserved-GFX free split between struct-before and list-unlink routes while
+  still refusing to allocate decoded pixels, CPX nodes, or fallback visuals.
+  Verification: focused direct C11 build/run and CTest
+  `dm2_v1_gdat_querydb_receipts`.
+
+- 2026-07-16 CSB boot DSA/save-runtime handoff receipt: surfaced the strict
+  CSBWin DSA corpus gate on `CSB_V1_BootRuntimeSaveImportReceipt_PC34` so
+  boot/runtime callers can distinguish CSBGAME roster-loader readiness from
+  real DSA runtime-handoff readiness. Plain CSBGAME saves now remain
+  fail-closed for DSA handoff with `reject_dsa_corpus_no_extended_features`,
+  while CSBWin runtime import refuses paths unless the existing filename/loader
+  classifier marks them import-ready. Verification: focused Ninja build for
+  `test_csb_v1_boot_runtime_handoff` and
+  `test_csb_v1_csbwin_save_loader_boundary_pc34_compat`; the boundary test
+  passed, and the boot test improved from 439/18 to 440/17 with the remaining
+  failures in pre-existing startup/capture-route assertions.
+
+- 2026-07-16 Theron game-owned FIFO consumer corpus gate: added
+  `theron_v1_raw_loader_trace_import_game_owned_fifo_payload_file()` as the
+  bounded file wrapper for staged original Mednafen consumer transcripts. The
+  new `theron_v1_game_payload_trace_corpus` probe validates an explicit local
+  US raw Track 02 plus consumer trace, requiring the existing `$3840` ->
+  `$e009`/READ(6)/FIFO/main-RAM consumer chain to remain byte-faithful and to
+  reject mutated media before publishing only an opaque payload receipt. No
+  level, object, bitmap, palette, or visual semantics are promoted.
+  Verification: strict syntax checks for
+  `src/theron/theron_v1_raw_loader_trace.c` and
+  `probes/theron/firestaff_theron_v1_game_payload_trace_corpus_probe.c`,
+  focused Ninja target `firestaff_theron_v1_game_payload_trace_corpus_probe`,
+  focused CTest `theron_v1_game_payload_trace_corpus`, and
+  `git diff --check`.
+
+- 2026-07-16 Nexus DGN package/host material no-draw gate: tightened the
+  Structure2/Structure3 face-material provenance receipt so a canonical retail
+  DGN can prove source-bound selector/descriptor routing at the package/host
+  boundary without becoming drawable raster input. The receipt now reports
+  material semantics unproven, original Saturn capture required/unavailable,
+  no fallback visuals, and `can_submit_raster_input=0` even when the
+  Structure3 face selectors resolve through the same Structure2 descriptor
+  table. Verification: strict direct C99 build/run of
+  `test_nexus_v1_dgn_face_material_provenance`, focused Ninja target
+  `test_nexus_v1_dgn_face_material_provenance`, focused CTest
+  `nexus_v1_dgn_face_material_provenance`, and `git diff --check` passed.
+
 - 2026-07-16 CSBWin DSA/save-runtime corpus gate: added
   `csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt()` and the file
   wrapper beside the CSBWin save loader-boundary classifier. The receipt

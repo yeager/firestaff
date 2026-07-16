@@ -1239,6 +1239,13 @@ typedef struct CSB_V1_BootRuntimeSaveImportReceipt_PC34 {
     CSB_V1_CSBWinSaveShape csbwin_shape;
     CSB_V1_CSBWinSaveFileKind csbwin_file_kind;
     const char *csbwin_decision_label;
+    int csbwin_dsa_corpus_positive;
+    int csbwin_dsa_runtime_handoff_ready;
+    int csbwin_dsa_extended_tail_valid;
+    int csbwin_dsa_section_valid;
+    int csbwin_dsa_has_runtime_actions;
+    int csbwin_dsa_gameblock1_valid;
+    const char *csbwin_dsa_decision_label;
     int csbwin_runtime_load_attempted;
     int csbwin_runtime_load_succeeded;
     int csbwin_runtime_load_code;

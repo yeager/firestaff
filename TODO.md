@@ -27,6 +27,16 @@
     buffer ownership, text/name formatting, and higher-level gameplay queries;
     these receipts must not be used to fabricate images or promote missing
     scalar entries into buffers.
+  - 2026-07-16 DM2 update: skproject `c_gdatfile.cpp`
+    `DM2_ALLOC_PICT_BUFF`, `DM2_FREE_PICT_BUFF`, `DM2_ALLOC_NEW_BMP`, and
+    `DM2_FREE_PICT_ENTRY` now have bounded source-named bitmap allocation/free
+    receipts over row-byte, header-byte, pool, CPX raw-index, and
+    preserved-GFX free-route accounting. Remaining adjacent work is real
+    `GRAPHICS_DATA_OPEN`/`READ`/`CLOSE` file-handle lifecycle,
+    `LOAD_GDAT_ENTRIES` buffer population, `QUERY_NEXT_GDAT_ENTRY`, GDAT
+    image extraction/decode ownership, and renderer/HUD consumption of real
+    decoded data; these receipts still do not allocate CPX nodes, decoded
+    images, or fallback visuals.
   - 2026-07-16 DM2 update: skproject `BETWEEN_VALUE`,
     `DM2_BETWEEN_VALUE`, `ALLOC_TEMP_RECT`, and `ALLOC_TEMP_ORIGIN_RECT` are
     now source-mapped in `dm2_v1_skproject_core`. Remaining adjacent
@@ -68,6 +78,14 @@
     raw tile-map offset, and column-index offset. Remaining DM2 dungeon/runtime
     work is the original DB8/DB10 payload/layout proof and HUD/runtime
     material that consumes real GDAT/dungeon state without fallback visuals.
+  - 2026-07-16 DM2 c_record append update: skproject `DM2_APPEND_RECORD_TO`
+    / `APPEND_RECORD_TO` now has a bounded source mutation receipt in
+    `dm2_v1_dungeon_loader`. It rejects null/end append inputs, resets the
+    appended record's `w0` to `OBJECT_END_MARKER`, appends to parent links or
+    existing tile chains, and inserts into empty byte-square tiles by shifting
+    the ground-stack root list and bumping later column offsets. Remaining
+    adjacent work is `CUT_RECORD_FROM`, exact CPX/mement free-list ordering,
+    and using these mutations in broader real GDAT/HUD dungeon runtime.
 
 - 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
   `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
@@ -82,7 +100,16 @@
     map indices reject before either current or party state mutates. Covered
     by `dm1_v1_f0173_f0174_current_map_pc34_compat`; audit rows are closed as
     `VERIFIED_SOURCE_MAPPING`.
-  Remaining prioritized backlog symbols are `F0139`, `F0185`-`F0193`,
+  - 2026-07-16 update: `F0139` now has a DM1-owned source-named helper over
+    raw C04 `GROUP.Type` plus the target map's loaded
+    `CurrentMapAllowedCreatureTypes` bytes. The M10 F0267 group
+    move/generator route now consumes that helper after generated groups write
+    their raw C04 record; missing raw records and malformed map creature-count
+    metadata fail closed. Covered by
+    `dm1_v1_f0139_creature_allowed_on_map_pc34_compat`; the broader
+    `m10_c006_generator_reenable_dispatch_pc34_compat` target currently still
+    fails one C38 ACTIVE_GROUP aspect assertion in this dirty checkout.
+  Remaining prioritized backlog symbols are `F0185`-`F0193`,
   `F0208`, and `F0224`. Prefer the next
   coherent `GROUP` slice only when it can be bound to real runtime data or an
   existing source-shaped behavioral fixture; do not promote numeric-token
@@ -120,6 +147,14 @@
     fabricate a positive real save. Remaining CSB work is still real
     packaged title/HUD/door capture breadth and real local DSA-bearing corpus
     execution through the gate.
+  - 2026-07-16 update: the boot save/import receipt now carries that
+    CSBWin DSA corpus verdict into the runtime handoff surface, separately
+    from the older CSBGAME roster-loader readiness. A plain CSBGAME.DAT can
+    still be loader-ready, but it remains DSA-runtime-handoff blocked with
+    `reject_dsa_corpus_no_extended_features`; runtime import now refuses
+    staged CSBWin paths unless the filename/loader classifier says import is
+    ready. Remaining CSB work is positive operator-supplied DSA-bearing corpus
+    execution and real packaged title/HUD/door capture breadth.
   - 2026-07-16 update: `PANEL.C F0347_INVENTORY_DrawPanel` now has a
     CSB-owned HUD-panel receipt over the existing real C017/C040 startup
     panel blit. It proves only source-owned C017 plus optional C040 hashes
@@ -192,6 +227,14 @@
     opcode semantics, exact decoded output proof, palette/output ordering,
     and a reviewed host upload route; renderer and DGN material handoffs
     remain blocked with no fallback visuals.
+  - 2026-07-16 update: the DGN face/material package-host boundary now
+    distinguishes source-bound Structure2/Structure3 selector proof from
+    drawable material semantics. Even canonical retail DGN bytes with complete
+    selector/descriptor binding now report original Saturn capture required,
+    no material semantics proven, no fallback visuals, and no raster-input
+    submission. Remaining Nexus work is still real PRS3 decoded-output proof,
+    Saturn VDP1/material/palette capture, and the reviewed DGN/menu host
+    upload route before any visual handoff can open.
 
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
@@ -200,6 +243,14 @@
   real accepted v3 IRQ2 trace and raw Track02 corpus to an admitted runtime
   session; do not promote ISO-end bytes, Track 19 inventory, or generated
   fallback visuals as a substitute.
+  - 2026-07-16 update: game-owned FIFO payload consumer traces now have a
+    bounded file import/corpus gate. A staged local US raw Track 02 plus
+    original Mednafen consumer transcript must rehash, parse through the
+    `$3840` -> `$e009`/READ(6)/FIFO/main-RAM consumer chain, and reject
+    mutated media before it can publish an opaque byte receipt. Remaining
+    Theron work is still positive operator-supplied corpus breadth and runtime
+    wiring from that consumer receipt into startup/admission; the receipt does
+    not prove level, object, bitmap, palette, or visual semantics.
 
 - 2026-07-16 Theron Track02 post-envelope loader follow-up: the copied-code
   successor receipt now keeps the second TII source-window offset when mapping

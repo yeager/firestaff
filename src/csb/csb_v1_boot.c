@@ -6879,6 +6879,7 @@ int csb_v1_boot_runtime_save_import_receipt_pc34(
     CSB_V1_BootRuntimeSaveImportReceipt_PC34 *out_receipt)
 {
     CSB_V1_CSBWinSaveDiscoveryResult csbwin;
+    CSB_V1_CSBWinDSASaveCorpusReceipt csbwin_dsa;
     int csbwin_rc;
 
     if (!out_receipt) {
@@ -6889,9 +6890,11 @@ int csb_v1_boot_runtime_save_import_receipt_pc34(
     out_receipt->csbwin_file_kind = CSB_V1_CSBWIN_SAVE_FILE_NONE;
     out_receipt->csbwin_loader_code = CSB_SAVE_IMPORT_ERR_NULL;
     out_receipt->csbwin_decision_label = "no_csbwin_save_path";
+    out_receipt->csbwin_dsa_decision_label = "no_csbwin_save_path";
     out_receipt->source_evidence =
         "ReDMCSB LOADSAVE.C F0433/F0435; ENTRANCE.C F0806; "
-        "CSBWin CSBCode.cpp:421-422 csbgame.dat/csbgame.bak";
+        "CSBWin CSBCode.cpp:421-422 csbgame.dat/csbgame.bak; "
+        "CSBWin SaveGame.cpp:211-260/298-385 Extended Features DSA";
     if (!profile) {
         return 0;
     }
@@ -6951,6 +6954,26 @@ int csb_v1_boot_runtime_save_import_receipt_pc34(
         out_receipt->csbwin_shape = csbwin.shape;
         out_receipt->csbwin_decision_label =
             csb_v1_csbwin_save_loader_boundary_decision_name(&csbwin);
+        memset(&csbwin_dsa, 0, sizeof(csbwin_dsa));
+        (void)csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+            csbwin_save_path,
+            0u,
+            &csbwin_dsa);
+        out_receipt->csbwin_dsa_corpus_positive =
+            csbwin_dsa.corpus_positive ? 1 : 0;
+        out_receipt->csbwin_dsa_runtime_handoff_ready =
+            csbwin_dsa.runtime_handoff_ready ? 1 : 0;
+        out_receipt->csbwin_dsa_extended_tail_valid =
+            csbwin_dsa.extended_tail_valid ? 1 : 0;
+        out_receipt->csbwin_dsa_section_valid =
+            csbwin_dsa.dsa_section_valid ? 1 : 0;
+        out_receipt->csbwin_dsa_has_runtime_actions =
+            csbwin_dsa.dsa_has_runtime_actions ? 1 : 0;
+        out_receipt->csbwin_dsa_gameblock1_valid =
+            csbwin_dsa.gameblock1_valid ? 1 : 0;
+        out_receipt->csbwin_dsa_decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(
+                &csbwin_dsa);
     }
 
     /* LOADSAVE.C F0433/F0435 and the CSBWin CSBGAME filename surface are
@@ -6988,7 +7011,9 @@ int csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
         return 0;
     }
     out_receipt->csbwin_runtime_load_attempted =
-        out_receipt->runtime_ready && out_receipt->csbwin_path_present;
+        out_receipt->runtime_ready &&
+        out_receipt->csbwin_path_present &&
+        out_receipt->csbwin_should_attempt_import;
     if (!out_receipt->csbwin_runtime_load_attempted) {
         return 0;
     }

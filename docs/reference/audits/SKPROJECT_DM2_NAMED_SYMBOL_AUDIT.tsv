@@ -346,14 +346,14 @@ DM2_GRAPHICS_DATA_READ	SKULLWIN	SKULLWIN/c_gdatfile.cpp	399		MISSING
 DM2_QUERY_GDAT_RAW_DATA_FILE_POS	SKULLWIN	SKULLWIN/c_gdatfile.cpp	454	include/dm2_v1_asset_loader.h:257	VERIFIED_SOURCE_MAPPING
 DM2_LOAD_GDAT_RAW_DATA	SKULLWIN	SKULLWIN/c_gdatfile.cpp	470	include/dm2_v1_asset_loader.h:265	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRY_VALUE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	515		MISSING
-DM2_ALLOC_PICT_BUFF	SKULLWIN	SKULLWIN/c_gdatfile.cpp	529		MISSING
-DM2_FREE_PICT_BUFF	SKULLWIN	SKULLWIN/c_gdatfile.cpp	548		MISSING
-DM2_ALLOC_NEW_BMP	SKULLWIN	SKULLWIN/c_gdatfile.cpp	560		MISSING
+DM2_ALLOC_PICT_BUFF	SKULLWIN	SKULLWIN/c_gdatfile.cpp	529	include/dm2_v1_asset_loader.h:dm2_v1_gdat_alloc_pict_buff_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile bitmap allocation receipt preserves 4bpp even-width row bytes, 8bpp unrounded rows, the six-byte bitmap header, and source pool route without fabricating decoded pixels.
+DM2_FREE_PICT_BUFF	SKULLWIN	SKULLWIN/c_gdatfile.cpp	548	include/dm2_v1_asset_loader.h:dm2_v1_gdat_free_pict_buff_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile bitmap free receipt recomputes the source low-bigpool payload-plus-header byte count from the allocation receipt and rejects CPX-backed entries.
+DM2_ALLOC_NEW_BMP	SKULLWIN	SKULLWIN/c_gdatfile.cpp	560	include/dm2_v1_asset_loader.h:dm2_v1_gdat_alloc_new_bmp_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile CPX bitmap receipt records raw-index ownership, rounded payload-byte allocation, and header fields without allocating a CPX node or image buffer.
 R_2BAD4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	575		MISSING
 R_2D8AD	SKULLWIN	SKULLWIN/c_gdatfile.cpp	580		MISSING
 R_2D8BA	SKULLWIN	SKULLWIN/c_gdatfile.cpp	587		MISSING
 R_2D802	SKULLWIN	SKULLWIN/c_gdatfile.cpp	594		MISSING
-DM2_FREE_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	618		MISSING
+DM2_FREE_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	618	include/dm2_v1_asset_loader.h:dm2_v1_gdat_free_pict_entry_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile preserved-GFX free receipt admits only matching bitmap headers, records struct-before versus preserved-list unlink routes, and keeps free accounting source-bounded.
 DM2_LOAD_GDAT_ENTRY_DATA_TO	SKULLWIN	SKULLWIN/c_gdatfile.cpp	818		MISSING
 DM2_LOAD_GDAT_ENTRIES	SKULLWIN	SKULLWIN/c_gdatfile.cpp	823		MISSING
 DM2_47eb_00a4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	850		MISSING
@@ -860,7 +860,7 @@ record_to_word	SKULLWIN	SKULLWIN/c_record.cpp	42		MISSING
 record_to_long	SKULLWIN	SKULLWIN/c_record.cpp	43		MISSING
 DM2_GET_ADDRESS_OF_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	46	include/dm2_v1_world_model.h:257	UNCERTAIN
 DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
-DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	src/dm2/dm2_v1_dungeon_loader.c:721	UNCERTAIN
+DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for APPEND_RECORD_TO: reject end/null append inputs, reset appended GenericRecord::w0 to OBJECT_END_MARKER, append through a parent link or existing tile chain, and insert into an empty byte-square tile with ground-stack shift plus column-index bump.
 DM2_CUT_RECORD_FROM	SKULLWIN	SKULLWIN/c_record.cpp	121		MISSING
 DM2_GET_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	175		MISSING
 DM2_QUERY_CLS2_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	203		MISSING
@@ -1326,7 +1326,7 @@ IS_CONTAINER_CHEST	SKWIN	SKWIN/SkWinCore.cpp	2374		MISSING
 CALC_PLAYER_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2392		MISSING
 PROCEED_GLOBAL_EFFECT_TIMERS	SKWIN	SKWIN/SkWinCore.cpp	2426		MISSING
 _2066_1f37	SKWIN	SKWIN/SkWinCore.cpp	2512		MISSING
-APPEND_RECORD_TO	SKWIN	SKWIN/SkWinCore.cpp	2544		MISSING
+APPEND_RECORD_TO	SKWIN	SKWIN/SkWinCore.cpp	2544	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader maps SkWinCore::APPEND_RECORD_TO through source-shaped ObjectID mutation over bounded dungeon data, including parent-link, existing tile-chain, and empty-tile insertion routes.
 _2066_1ec9	SKWIN	SKWIN/SkWinCore.cpp	2664		MISSING
 GET_ADDRESS_OF_RECORDX4	SKWIN	SKWIN/SkWinCore.cpp	2692		MISSING
 GET_ADDRESS_OF_RECORD0	SKWIN	SKWIN/SkWinCore.cpp	2693		MISSING
@@ -1688,7 +1688,7 @@ fileOpen	SKWIN	SKWIN/fileset.cpp	79		MISSING
 fileTell	SKWIN	SKWIN/fileset.cpp	92		MISSING
 READ_1BIT	SKWIN	SKWIN/xxx.cpp	184		MISSING
 _47e1_0089	SKWIN	SKWIN/xxx.cpp	195		MISSING
-APPEND_RECORD_TO	SKWIN	SKWIN/xxx.cpp	202		MISSING
+APPEND_RECORD_TO	SKWIN	SKWIN/xxx.cpp	202	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader maps the xxx.cpp APPEND_RECORD_TO alias to the same bounded source mutation receipt used for SkWinCore and SKULLWIN c_record.
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	533		MISSING
 ADD_ITEM_CHARGE	SKWIN	SKWIN/xxx.cpp	544		MISSING
 MIN_VALUE	SKWIN	SKWIN/xxx.cpp	602		MISSING

@@ -1,6 +1,8 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "firestaff/dm1/v1/ordered_cells_to_attack_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     kObjectInfoFirstScroll = 0,
     kObjectInfoFirstContainer = 1,
@@ -276,6 +278,65 @@ int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
     return 1;
 }
 
+int dm1_v1_dungeon_is_creature_allowed_on_map_f0139_pc34(
+    const struct DungeonThings_Compat *things,
+    const struct DungeonDatState_Compat *dungeon,
+    unsigned short groupThing,
+    int mapIndex,
+    DM1_V1_F0139_CreatureAllowedOnMapReceipt_PC34 *outReceipt)
+{
+    DM1_V1_F0139_CreatureAllowedOnMapReceipt_PC34 receipt;
+    const struct DungeonMapDesc_Compat *map;
+    const unsigned char *raw;
+    int groupIndex;
+    int i;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.groupThing = groupThing;
+    receipt.groupIndex = -1;
+    receipt.mapIndex = mapIndex;
+    receipt.creatureType = -1;
+    receipt.matchedIndex = -1;
+    receipt.sourceLineStart = 1052;
+    receipt.sourceLineEnd = 1079;
+    receipt.sourceSymbol = "F0139_DUNGEON_IsCreatureAllowedOnMap";
+
+    if (!things || !dungeon || !dungeon->loaded || !dungeon->maps ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount ||
+        THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) {
+        if (outReceipt) *outReceipt = receipt;
+        return 0;
+    }
+
+    groupIndex = (int)THING_GET_INDEX(groupThing);
+    receipt.groupIndex = groupIndex;
+    raw = dm1_v1_dungeon_get_thing_data_pc34(things, groupThing);
+    if (!raw) {
+        if (outReceipt) *outReceipt = receipt;
+        return 0;
+    }
+
+    map = &dungeon->maps[mapIndex];
+    receipt.creatureType = (int)raw[4];
+    receipt.allowedCreatureTypeCount = (int)map->creatureTypeCount;
+    if (map->creatureTypeCount > sizeof(map->allowedCreatureTypes)) {
+        if (outReceipt) *outReceipt = receipt;
+        return 0;
+    }
+
+    receipt.valid = 1;
+    for (i = 0; i < (int)map->creatureTypeCount; ++i) {
+        if ((int)map->allowedCreatureTypes[i] == receipt.creatureType) {
+            receipt.matchedIndex = i;
+            if (outReceipt) *outReceipt = receipt;
+            return 1;
+        }
+    }
+
+    if (outReceipt) *outReceipt = receipt;
+    return 0;
+}
+
 unsigned short dm1_v1_group_get_thing_f0175_pc34(
     const struct DungeonDatState_Compat *dungeon,
     const struct DungeonThings_Compat *things,
@@ -516,5 +577,6 @@ const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void)
            "OBJECT.C:F0032_OBJECT_GetType:121-145; "
            "OBJECT.C:F0033_OBJECT_GetIconIndex:147-213; "
            "DUNGEON.C:G0237_as_Graphic559_ObjectInfo[180].Type; "
+           "DUNGEON.C:F0139_DUNGEON_IsCreatureAllowedOnMap:1052-1079; "
            "DUNGEON.C:F0145-F0148 active-group Cells/Directions overlay";
 }

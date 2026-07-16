@@ -74,10 +74,13 @@ typedef struct {
     int structure3_mesh_materials_bound;
     int structure2_descriptor_route_bound;
     int selector_bindings_complete;
+    int material_semantics_proven;
     int package_host_route_bound;
     int no_draw_only;
     int blocks_real_dgn_mesh_render;
     int permits_fallback_visuals;
+    int original_saturn_capture_required;
+    int original_saturn_capture_available;
     int can_submit_raster_input;
 } Nexus_V1_DgnFaceMaterialReceipt;
 

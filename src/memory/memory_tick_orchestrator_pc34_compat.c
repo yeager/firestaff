@@ -8876,23 +8876,26 @@ static int orch_is_group_creature_allowed_on_map_compat(
     const struct DungeonGroup_Compat* group,
     int mapIndex)
 {
-    const struct DungeonMapDesc_Compat* map;
-    int i;
+    unsigned short groupThing;
+    DM1_V1_F0139_CreatureAllowedOnMapReceipt_PC34 receipt;
+    int groupIndex;
 
-    if (!world || !world->dungeon || !group || !world->dungeon->maps) return 0;
-    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) return 0;
-    map = &world->dungeon->maps[mapIndex];
+    if (!world || !world->things || !world->dungeon || !group ||
+        !world->things->groups) {
+        return 0;
+    }
+    for (groupIndex = 0; groupIndex < world->things->groupCount; ++groupIndex) {
+        if (&world->things->groups[groupIndex] == group) break;
+    }
+    if (groupIndex >= world->things->groupCount) return 0;
+    groupThing = orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
 
     /* ReDMCSB DUNGEON.C:F0139:1050-1079 reads the group creature type and
      * scans the target map metadata creature list. MOVESENS.C:F0267:656-663
      * performs this check after teleporter/pit resolution even when the source
      * map X sentinel is CM1_MAPX_NOT_ON_A_SQUARE. */
-    for (i = 0; i < (int)map->creatureTypeCount && i < 16; ++i) {
-        if ((int)map->allowedCreatureTypes[i] == (int)group->creatureType) {
-            return 1;
-        }
-    }
-    return 0;
+    return dm1_v1_dungeon_is_creature_allowed_on_map_f0139_pc34(
+        world->things, world->dungeon, groupThing, mapIndex, &receipt);
 }
 
 static int orch_is_lord_chaos_allowed_square_compat(
@@ -9284,6 +9287,7 @@ static int orch_materialize_generated_group_compat(
     group->count = (unsigned char)(generator->spawnedCreatureCount & 0x03);
     group->direction = (unsigned char)(generator->spawnedDirection & 0x03);
     group->doNotDiscard = 0;
+    orch_write_raw_group_compat(world->things, groupIndex);
 
     /* ReDMCSB GROUP.C:F0185:543-545 keeps the initialized group slot
      * referenced by the deferred move event instead of linking it when
