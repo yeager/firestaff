@@ -703,7 +703,7 @@ tile_to_ulong	SKULLWIN	SKULLWIN/c_map.cpp	25		MISSING
 tile_to_ubyte	SKULLWIN	SKULLWIN/c_map.cpp	30		MISSING
 init	SKULLWIN	SKULLWIN/c_map.cpp	35	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_GET_OBJECT_INDEX_FROM_TILE	SKULLWIN	SKULLWIN/c_map.cpp	44	src/dm2/dm2_v1_dungeon_loader.c:859	UNCERTAIN
-DM2_GET_TILE_RECORD_LINK	SKULLWIN	SKULLWIN/c_map.cpp	61	src/dm2/dm2_v1_dungeon_loader.c:809	UNCERTAIN
+DM2_GET_TILE_RECORD_LINK	SKULLWIN	SKULLWIN/c_map.cpp	61	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
 DM2_GET_ADDRESS_OF_TILE_RECORD	SKULLWIN	SKULLWIN/c_map.cpp	69	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
 DM2_IS_TILE_PASSAGE	SKULLWIN	SKULLWIN/c_map.cpp	79	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_is_tile_passage	VERIFIED_SOURCE_MAPPING
 DM2_GET_TILE_VALUE	SKULLWIN	SKULLWIN/c_map.cpp	107	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_tile_value	VERIFIED_SOURCE_MAPPING
@@ -859,7 +859,7 @@ mk_record	SKULLWIN	SKULLWIN/c_record.cpp	41		MISSING
 record_to_word	SKULLWIN	SKULLWIN/c_record.cpp	42		MISSING
 record_to_long	SKULLWIN	SKULLWIN/c_record.cpp	43		MISSING
 DM2_GET_ADDRESS_OF_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	46	include/dm2_v1_world_model.h:257	UNCERTAIN
-DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeon_loader.c:810	UNCERTAIN
+DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	src/dm2/dm2_v1_dungeon_loader.c:721	UNCERTAIN
 DM2_CUT_RECORD_FROM	SKULLWIN	SKULLWIN/c_record.cpp	121		MISSING
 DM2_GET_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	175		MISSING
@@ -1347,11 +1347,11 @@ GET_ADDRESS_OF_RECORDE	SKWIN	SKWIN/SkWinCore.cpp	2707		MISSING
 GET_ADDRESS_OF_RECORDF	SKWIN	SKWIN/SkWinCore.cpp	2708		MISSING
 GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2709		MISSING
 GET_ADDRESS_OF_ACTU	SKWIN	SKWIN/SkWinCore.cpp	2711		MISSING
-GET_NEXT_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2718	src/dm2/dm2_v1_object_model.c:476	UNCERTAIN
+GET_NEXT_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2718	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 GET_ADDRESS_OF_DETACHED_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2734		MISSING
 GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2744	src/dm2/dm2_v1_runtime.c:329	UNCERTAIN
 CHANGE_CURRENT_MAP_TO	SKWIN	SKWIN/SkWinCore.cpp	2774	include/dm2_v1_dungeon_loader.h:408	UNCERTAIN
-GET_TILE_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2822	src/dm2/dm2_v1_object_model.c:353	UNCERTAIN
+GET_TILE_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2822	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
 GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839		MISSING
 IS_TILE_PASSAGE	SKWIN	SKWIN/SkWinCore.cpp	2846		MISSING
 GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874		MISSING
@@ -1737,10 +1737,10 @@ QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826		MISSING
 GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
 IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_is_tile_solid	VERIFIED_SOURCE_MAPPING
 GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	VERIFIED_SOURCE_MAPPING
-GET_TILE_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	3998	src/dm2/dm2_v1_object_model.c:353	UNCERTAIN
+GET_TILE_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	3998	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
 GET_OBJECT_INDEX_FROM_TILE	SKWIN	SKWIN/xxx.cpp	4008		MISSING
 GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/xxx.cpp	4027	src/dm2/dm2_v1_runtime.c:329	UNCERTAIN
-GET_NEXT_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	4033	src/dm2/dm2_v1_object_model.c:476	UNCERTAIN
+GET_NEXT_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	4033	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 CHANGE_CURRENT_MAP_TO	SKWIN	SKWIN/xxx.cpp	4039	include/dm2_v1_dungeon_loader.h:408	UNCERTAIN
 WRITE_1BIT	SKWIN	SKWIN/xxx.cpp	4079		MISSING
 SUPPRESS_WRITER	SKWIN	SKWIN/xxx.cpp	4088	include/dm2_v1_save_load.h:23	UNCERTAIN

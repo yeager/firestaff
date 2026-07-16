@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 skproject square-chain traversal handoff: added
+  `dm2_v1_dungeon_walk_square_things()` as the loader-owned bounded route for
+  `GET_TILE_RECORD_LINK` plus `GET_NEXT_RECORD_LINK` consumers. The object
+  model now uses that API instead of reading `GenericRecord::w0` locally, so
+  incomplete PC G1 record graphs inherit the existing traversal guard while
+  source-shaped chains still materialize objects. Verification: strict direct
+  and Ninja focused tests for chained skproject records plus guarded invalid
+  and cyclic G1 links.
+
 - 2026-07-16 DM1 GROUP.C F0180/F0183/F0184 active-state wrappers: added
   explicit source-named start-wandering and active-group add/remove helpers
   over decoded original C04 records. F0180 builds the C37 wander event at

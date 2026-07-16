@@ -201,19 +201,14 @@ static void dm2_v1_object_model_fill_record(DM2_ObjectRecord *r,
 
 static int dm2_v1_object_model_append_loader_record(DM2_ObjectModel *model,
                                                     int *rec_cap,
-                                                    const DM2_V1_DungeonData *d,
-                                                    uint16_t thing,
+                                                    int type,
                                                     int level,
                                                     int x,
-                                                    int y) {
-    int type = -1;
-    int index = -1;
-    int record_size = 0;
-    const uint8_t *record = dm2_v1_dungeon_get_thing_record(
-        d, thing, &type, &index, &record_size);
+                                                    int y,
+                                                    const uint8_t *record,
+                                                    int record_size) {
     DM2_ObjectRecord *new_recs;
 
-    (void)index;
     if (!model || !rec_cap || !record || type < 0) return 0;
     if (model->object_count >= *rec_cap) {
         int new_cap = (*rec_cap <= 0) ? 32 : (*rec_cap * 2);
@@ -235,6 +230,39 @@ static int dm2_v1_object_model_append_loader_record(DM2_ObjectModel *model,
     return 1;
 }
 
+typedef struct {
+    DM2_ObjectModel *model;
+    int *rec_cap;
+    uint8_t *visited;
+} DM2_ObjectModelLoaderWalk;
+
+static int dm2_v1_object_model_loader_visit(void *user,
+                                            uint16_t thing,
+                                            int type,
+                                            int index,
+                                            const uint8_t *record,
+                                            int record_size,
+                                            int level,
+                                            int x,
+                                            int y) {
+    DM2_ObjectModelLoaderWalk *ctx = (DM2_ObjectModelLoaderWalk *)user;
+    int append_result;
+
+    (void)thing;
+    if (!ctx || !ctx->model || !ctx->rec_cap || !ctx->visited)
+        return -1;
+    if (type < 0 || type >= DM2_THING_COUNT ||
+        index < 0 || index >= 1024 || record_size < 2) {
+        return -1;
+    }
+    if (ctx->visited[type * 1024 + index])
+        return 0;
+    ctx->visited[type * 1024 + index] = 1;
+    append_result = dm2_v1_object_model_append_loader_record(
+        ctx->model, ctx->rec_cap, type, level, x, y, record, record_size);
+    return append_result < 0 ? -1 : 0;
+}
+
 static int dm2_v1_object_model_load_via_loader(DM2_ObjectModel *model,
                                                const uint8_t *dungeon_raw,
                                                int dungeon_size,
@@ -242,7 +270,8 @@ static int dm2_v1_object_model_load_via_loader(DM2_ObjectModel *model,
     DM2_V1_DungeonData dungeon;
     int has_record_bases = 0;
     int rec_cap = 64;
-    uint8_t visited[16][1024];
+    uint8_t visited[16 * 1024];
+    DM2_ObjectModelLoaderWalk walk_ctx;
 
     if (dm2_v1_dungeon_load(&dungeon, dungeon_raw, dungeon_size) != 0)
         return -1;
@@ -264,6 +293,11 @@ static int dm2_v1_object_model_load_via_loader(DM2_ObjectModel *model,
             return 0;
         return 1;
     }
+    if (dungeon.square_bytes == 1 && dungeon.g1_extension_size > 0 &&
+        !dungeon.record_graph_complete) {
+        dm2_v1_dungeon_free(&dungeon);
+        return 0;
+    }
 
     model->objects = (DM2_ObjectRecord *)malloc(
         (size_t)rec_cap * sizeof(DM2_ObjectRecord));
@@ -272,45 +306,20 @@ static int dm2_v1_object_model_load_via_loader(DM2_ObjectModel *model,
         return -1;
     }
     memset(visited, 0, sizeof(visited));
+    walk_ctx.model = model;
+    walk_ctx.rec_cap = &rec_cap;
+    walk_ctx.visited = visited;
 
     for (int x = 0; x < dungeon.level_widths[level]; ++x) {
         for (int y = 0; y < dungeon.level_heights[level]; ++y) {
-            int thing = dm2_v1_dungeon_get_first_thing(&dungeon, level, x, y);
-            int guard = 0;
-            while (thing >= 0 && thing != 0xfffe && guard++ < 1024) {
-                int type = -1;
-                int index = -1;
-                int record_size = 0;
-                const uint8_t *record = dm2_v1_dungeon_get_thing_record(
-                    &dungeon,
-                    (uint16_t)thing,
-                    &type,
-                    &index,
-                    &record_size);
-                int append_result;
-                if (!record || type < 0 || type >= DM2_THING_COUNT ||
-                    index < 0 || index >= 1024 || record_size < 2) {
-                    break;
-                }
-                if (!visited[type][index]) {
-                    visited[type][index] = 1;
-                    append_result = dm2_v1_object_model_append_loader_record(
-                        model,
-                        &rec_cap,
-                        &dungeon,
-                        (uint16_t)thing,
-                        level,
-                        x,
-                        y);
-                    if (append_result < 0) {
-                        free(model->objects);
-                        model->objects = NULL;
-                        model->object_count = 0;
-                        dm2_v1_dungeon_free(&dungeon);
-                        return -1;
-                    }
-                }
-                thing = (int)rd16le(record);
+            if (dm2_v1_dungeon_walk_square_things(
+                    &dungeon, level, x, y, 1024,
+                    dm2_v1_object_model_loader_visit, &walk_ctx) < 0) {
+                free(model->objects);
+                model->objects = NULL;
+                model->object_count = 0;
+                dm2_v1_dungeon_free(&dungeon);
+                return -1;
             }
         }
     }
@@ -473,6 +482,6 @@ const char *dm2_v1_object_model_source_evidence(void) {
         "Source: docs/dm2_special_squares.md — door/teleporter/pit/ladder\n"
         "Source: SKWin.GDAT2.InternalCodes.txt — door strength, color keys, mirror flag\n"
         "Source: SkWinCore.cpp:847-852 — item DB types (dbWeapon=5, dbCloth=6, dbScroll=7, dbMisc=10)\n"
-        "Source: skproject SKWIN/SkWinCore.cpp GET_TILE_RECORD_LINK/GET_NEXT_RECORD_LINK — square chains through ObjectID w0\n"
+        "Source: skproject SKWIN/SkWinCore.cpp GET_TILE_RECORD_LINK/GET_NEXT_RECORD_LINK — loader-owned square chains through ObjectID w0\n"
         "Asset: DM2 PC English DUNGEON.DAT 6caccd7875009e82fe2e28e7f6d6adc0\n";
 }
