@@ -3,10 +3,15 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1296; 2833 total open rows
+  shared DM1/CSB 1537, DM2 1292; 2829 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
+  - 2026-07-16 DM2 cache/mement free update: `FREE_CACHE_INDEX`,
+    `FREE_INDEXED_MEMENT`, `FREE_TEMP_CACHE_INDEX`, and `FREE_PICT6` are now
+    closed through skproject-backed bounded receipts. Remaining adjacent work
+    is the broader CPX heap/mement chain owner, full `QUERY_RECT` codec, and
+    real GDAT image-buffer ownership.
   - 2026-07-16 DM2 cursor macro update: `WRITE_BYTE`, `WRITE_WORD`,
     `READ_BYTE`, and `READ_SBYTE` are now closed through skproject-backed
     bounded cursor receipts. Remaining adjacent work is the full

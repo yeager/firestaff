@@ -2776,6 +2776,7 @@ void dm2_v1_skproject_cache_state_init(
     state->next_free_mementi = mement_count != 0u ? 0u :
         DM2_V1_SKPROJECT_MEMENT_NONE;
     state->mement_allocation_count = 0u;
+    state->lowest_free_cache_index = DM2_V1_SKPROJECT_MEMENT_NONE;
     for (uint16_t i = 0; i < DM2_V1_SKPROJECT_CACHE_LIMIT; ++i)
         state->cache_to_mement[i] = DM2_V1_SKPROJECT_MEMENT_NONE;
     for (uint16_t i = 0; i < DM2_V1_SKPROJECT_RAW_MEMENT_LIMIT; ++i)
@@ -2990,6 +2991,149 @@ int dm2_v1_skproject_recycle_mementi(
         }
     }
     return 1;
+}
+
+int dm2_v1_skproject_free_cache_index(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t cache_index,
+    DM2_V1_SkprojectFreeCacheIndexReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFreeCacheIndexReceipt receipt;
+    uint16_t ici = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cache_index = cache_index;
+    if (!state) {
+        receipt.blocked_missing_state = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.previous_cache_count = state->cache_count;
+    receipt.previous_lowest_free_cache_index = state->lowest_free_cache_index;
+    if (cache_index >= state->cache_capacity) {
+        receipt.blocked_out_of_range = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (state->lowest_free_cache_index == DM2_V1_SKPROJECT_MEMENT_NONE ||
+        state->lowest_free_cache_index > cache_index)
+        state->lowest_free_cache_index = cache_index;
+    receipt.new_lowest_free_cache_index = state->lowest_free_cache_index;
+    receipt.cache_hash = state->hashes[cache_index];
+
+    if (dm2_v1_skproject_find_ici_from_cache_hash(
+            state, receipt.cache_hash, &ici) == 0 ||
+        ici >= state->cache_count ||
+        state->sorted_cache_indices[ici] != cache_index) {
+        receipt.blocked_hash_not_found = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    state->hashes[cache_index] = 0u;
+    state->cache_to_mement[cache_index] = DM2_V1_SKPROJECT_MEMENT_NONE;
+    for (uint16_t i = ici; i + 1u < state->cache_count; ++i)
+        state->sorted_cache_indices[i] = state->sorted_cache_indices[i + 1u];
+    if (state->cache_count != 0u)
+        state->sorted_cache_indices[state->cache_count - 1u] = 0u;
+    state->cache_count--;
+
+    receipt.ici = ici;
+    receipt.new_cache_count = state->cache_count;
+    receipt.cleared_hash = 1u;
+    receipt.removed_sorted_entry = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_free_indexed_mement(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t index,
+    int free_cache_immediately,
+    uint16_t *current_mementi,
+    DM2_V1_SkprojectFreeIndexedMementReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFreeIndexedMementReceipt receipt;
+    uint16_t plain_index = (uint16_t)(index & 0x7fffu);
+    uint16_t mementi;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.index = index;
+    receipt.plain_index = plain_index;
+    receipt.resolved_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+    if (!state) {
+        receipt.blocked_missing_state = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (current_mementi && *current_mementi == index) {
+        *current_mementi = DM2_V1_SKPROJECT_MEMENT_NONE;
+        receipt.cleared_current_mementi = 1u;
+    }
+
+    mementi = dm2_v1_skproject_query_mementi_from(state, index);
+    receipt.resolved_mementi = mementi;
+    if (mementi == DM2_V1_SKPROJECT_MEMENT_NONE) {
+        receipt.blocked_no_mement = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if ((index & 0x8000u) == 0u) {
+        if (plain_index < state->raw_count) {
+            state->raw_to_mement[plain_index] =
+                DM2_V1_SKPROJECT_MEMENT_NONE;
+            receipt.cleared_raw_slot = 1u;
+        }
+    } else {
+        receipt.used_cache_route = 1u;
+        if (plain_index < state->cache_capacity) {
+            state->cache_to_mement[plain_index] =
+                DM2_V1_SKPROJECT_MEMENT_NONE;
+            receipt.cleared_cache_slot = 1u;
+            if (free_cache_immediately) {
+                receipt.requested_free_cache_index = 1u;
+                dm2_v1_skproject_free_cache_index(
+                    state, plain_index, &receipt.free_cache);
+            }
+        }
+    }
+
+    receipt.requested_recycle_mementi = 1u;
+    dm2_v1_skproject_recycle_mementi(
+        state, mementi, DM2_V1_SKPROJECT_MEMENT_NONE, 0u,
+        &receipt.recycle);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_free_temp_cache_index(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t cache_index,
+    uint16_t *current_mementi,
+    DM2_V1_SkprojectFreeTempCacheIndexReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFreeTempCacheIndexReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cache_index = cache_index;
+    receipt.requested_temp_pin_clear = 1u;
+    receipt.requested_free_indexed_mement = 1u;
+    if (!state) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = dm2_v1_skproject_free_indexed_mement(
+        state, (uint16_t)(cache_index | 0x8000u), 1,
+        current_mementi, &receipt.indexed);
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
 }
 
 static int dm2_v1_skproject_mementi_is_referenced(
@@ -3254,6 +3398,31 @@ int dm2_v1_skproject_free_pict_mement(
         state->cache_to_mement[cache_index] =
             DM2_V1_SKPROJECT_MEMENT_NONE;
     }
+    return 1;
+}
+
+int dm2_v1_skproject_free_pict6(
+    uint8_t global_free_gate,
+    uint8_t allocation_flag,
+    uint32_t allocation_handle,
+    DM2_V1_SkprojectFreePict6Receipt *out_receipt)
+{
+    DM2_V1_SkprojectFreePict6Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.global_free_gate = global_free_gate ? 1u : 0u;
+    receipt.allocation_flag = allocation_flag;
+    receipt.allocation_handle = allocation_handle;
+    if (global_free_gate == 0u) {
+        if (allocation_flag == 1u)
+            receipt.requested_dealloc_upper = 1u;
+        else
+            receipt.requested_dealloc_lower = 1u;
+    }
+    receipt.requested_draw_icon_entry = 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
     return 1;
 }
 
@@ -5799,8 +5968,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "INSERT_CACHE_HASH_AT/QUERY_MEMENTI_FROM/ADD_CACHE_HASH/"
            "QUERY_MEMENT_BUFF_FROM_CACHE_INDEX/GET_TEMP_CACHE_HASH/"
            "ALLOC_TEMP_CACHE_INDEX/RECYCLE_MEMENTI/TEST_MEMENT/"
+           "FREE_CACHE_INDEX/FREE_INDEXED_MEMENT/FREE_TEMP_CACHE_INDEX/"
            "ALLOC_NEW_PICT/ALLOC_IMAGE_MEMENT/ALLOC_PICT_MEMENT/"
-           "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT; "
+           "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT/"
+           "FREE_PICT6; "
            "SKWIN/SkWinCore.cpp ADD_ITEM_CHARGE/GET_MAX_CHARGE/"
            "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
            "EQUIP_ITEM_TO_INVENTORY/"

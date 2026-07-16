@@ -800,6 +800,7 @@ typedef struct {
     uint16_t temp_hash_counter;
     uint16_t next_free_mementi;
     uint16_t mement_allocation_count;
+    uint16_t lowest_free_cache_index;
 } DM2_V1_SkprojectCacheState;
 
 typedef struct {
@@ -866,6 +867,47 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint16_t cache_index;
+    uint32_t cache_hash;
+    uint16_t ici;
+    uint16_t previous_cache_count;
+    uint16_t new_cache_count;
+    uint16_t previous_lowest_free_cache_index;
+    uint16_t new_lowest_free_cache_index;
+    uint8_t cleared_hash;
+    uint8_t removed_sorted_entry;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_out_of_range;
+    uint8_t blocked_hash_not_found;
+} DM2_V1_SkprojectFreeCacheIndexReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t index;
+    uint16_t plain_index;
+    uint16_t resolved_mementi;
+    uint8_t used_cache_route;
+    uint8_t cleared_raw_slot;
+    uint8_t cleared_cache_slot;
+    uint8_t requested_free_cache_index;
+    uint8_t requested_recycle_mementi;
+    uint8_t cleared_current_mementi;
+    uint8_t blocked_missing_state;
+    uint8_t blocked_no_mement;
+    DM2_V1_SkprojectFreeCacheIndexReceipt free_cache;
+    DM2_V1_SkprojectRecycleMementReceipt recycle;
+} DM2_V1_SkprojectFreeIndexedMementReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t cache_index;
+    uint8_t requested_temp_pin_clear;
+    uint8_t requested_free_indexed_mement;
+    DM2_V1_SkprojectFreeIndexedMementReceipt indexed;
+} DM2_V1_SkprojectFreeTempCacheIndexReceipt;
+
+typedef struct {
+    int valid;
     int recycled_fallback;
     int exhausted_after_allocation;
     uint16_t returned_mementi;
@@ -894,6 +936,16 @@ typedef struct {
     DM2_V1_SkprojectImageMementReceipt image;
     uint16_t cache_index;
 } DM2_V1_SkprojectPictMementReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t global_free_gate;
+    uint8_t allocation_flag;
+    uint8_t requested_dealloc_upper;
+    uint8_t requested_dealloc_lower;
+    uint8_t requested_draw_icon_entry;
+    uint32_t allocation_handle;
+} DM2_V1_SkprojectFreePict6Receipt;
 
 typedef struct {
     int valid;
@@ -2187,6 +2239,21 @@ int dm2_v1_skproject_recycle_mementi(
     uint16_t previous_w4,
     uint16_t yy,
     DM2_V1_SkprojectRecycleMementReceipt *out_receipt);
+int dm2_v1_skproject_free_cache_index(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t cache_index,
+    DM2_V1_SkprojectFreeCacheIndexReceipt *out_receipt);
+int dm2_v1_skproject_free_indexed_mement(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t index,
+    int free_cache_immediately,
+    uint16_t *current_mementi,
+    DM2_V1_SkprojectFreeIndexedMementReceipt *out_receipt);
+int dm2_v1_skproject_free_temp_cache_index(
+    DM2_V1_SkprojectCacheState *state,
+    uint16_t cache_index,
+    uint16_t *current_mementi,
+    DM2_V1_SkprojectFreeTempCacheIndexReceipt *out_receipt);
 uint16_t dm2_v1_skproject_find_free_mementi(
     DM2_V1_SkprojectCacheState *state,
     uint16_t fallback_mementi,
@@ -2221,6 +2288,11 @@ int dm2_v1_skproject_free_pict_mement(
     const DM2_V1_SkprojectImageMementRequest *image_request,
     uint16_t *pinned_entry,
     DM2_V1_SkprojectFreeImageMementReceipt *out_receipt);
+int dm2_v1_skproject_free_pict6(
+    uint8_t global_free_gate,
+    uint8_t allocation_flag,
+    uint32_t allocation_handle,
+    DM2_V1_SkprojectFreePict6Receipt *out_receipt);
 uint16_t dm2_v1_skproject_add_item_charge(
     uint16_t object_id,
     uint16_t *record_w2,
