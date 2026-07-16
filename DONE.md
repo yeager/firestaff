@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-16 DM2 c_map/c_record scalar helper bundle: mapped
+  `tile_to_ulong`, `tile_to_ubyte`, `mk_record`, `record_to_word`, and
+  `record_to_long` to skproject-backed dungeon-loader helpers. The tests cover
+  low-byte tile casts, full tile payload preservation, and signed object
+  sentinel round-trips.
+
 - 2026-07-16 DM2 querydb real-text promotion: promoted
   `DM2_QUERY_GDAT_ITEM_NAME`, `DM2_QUERY_CMDSTR_NAME`,
   `DM2_QUERY_CMDSTR_ENTRY`, `DM2_QUERY_CUR_CMDSTR_ENTRY`, and SKWIN aliases to

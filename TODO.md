@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  shared DM1/CSB 1537, DM2 1317; 2854 total open rows
+  shared DM1/CSB 1537, DM2 1312; 2849 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -108,6 +108,11 @@
     over real GDAT `dtText`, and container order parsing has a real
     CONTAINERS field-0x40 asset-loader test. Open count is unchanged because
     the affected rows were already outside the MISSING/UNCERTAIN queue.
+  - 2026-07-16 DM2 c_map/c_record scalar update: `tile_to_ulong`,
+    `tile_to_ubyte`, `mk_record`, `record_to_word`, and `record_to_long` now
+    have skproject-backed dungeon-loader receipts. Remaining adjacent work is
+    larger `DM2_ARRANGE_DUNGEON`, `DM2_PERFORM_MOVE`, and c_map runtime
+    mutation/rendering.
   - 2026-07-16 Theron update: original Track 02 trace-text facts can now be
     consumed fail-closed, but a real emulator/loader trace from actual
     original execution must still provide the required post-$3800 consumer

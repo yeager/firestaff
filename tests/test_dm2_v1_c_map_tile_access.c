@@ -162,6 +162,26 @@ static void test_skproject_3d93b_text_scan(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_scalar_helpers(void)
+{
+    CHECK(dm2_v1_skproject_tile_to_ulong(0xe010u) == 0xe010u,
+          "tile_to_ulong preserves the full t_tile payload");
+    CHECK(dm2_v1_skproject_tile_to_ubyte(0xe010u) == 0x10u,
+          "tile_to_ubyte preserves skproject's low-byte cast");
+    CHECK(dm2_v1_skproject_mk_record(-2) == 0xfffeu,
+          "mk_record preserves OBJECT_END_MARKER");
+    CHECK(dm2_v1_skproject_mk_record(-1) == 0xffffu,
+          "mk_record preserves OBJECT_NULL");
+    CHECK(dm2_v1_skproject_record_to_word(0xfffeu) == -2,
+          "record_to_word restores signed OBJECT_END_MARKER");
+    CHECK(dm2_v1_skproject_record_to_word(0xffffu) == -1,
+          "record_to_word restores signed OBJECT_NULL");
+    CHECK(dm2_v1_skproject_record_to_long(0x4001u) == 0x4001,
+          "record_to_long keeps positive DB/index records positive");
+    CHECK(dm2_v1_skproject_record_to_long(0xfffeu) == -2,
+          "record_to_long sign-extends sentinel records");
+}
+
 int main(void)
 {
     uint8_t raw[96];
@@ -261,6 +281,7 @@ int main(void)
               &dungeon, 0, 0, 0, &address_receipt) &&
               address_receipt.blocked_no_tile_record_link,
           "GET_ADDRESS_OF_TILE_RECORD receipt fails closed without a root");
+    test_skproject_scalar_helpers();
     CHECK(dm2_v1_dungeon_c_map_get_tile_value(&dungeon, 0, -1, 0) == 0x04,
           "GET_TILE_VALUE preserves west-edge passage sentinel");
     CHECK(dm2_v1_dungeon_c_map_get_tile_value(&dungeon, 0, 2, 0) == 0x01,

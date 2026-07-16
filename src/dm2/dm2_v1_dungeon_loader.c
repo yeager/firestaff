@@ -648,6 +648,31 @@ int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d,
     return RD16(d->raw_data + offset);
 }
 
+uint32_t dm2_v1_skproject_tile_to_ulong(uint16_t tile)
+{
+    return (uint32_t)tile;
+}
+
+uint8_t dm2_v1_skproject_tile_to_ubyte(uint16_t tile)
+{
+    return (uint8_t)tile;
+}
+
+uint16_t dm2_v1_skproject_mk_record(int16_t record)
+{
+    return (uint16_t)record;
+}
+
+int16_t dm2_v1_skproject_record_to_word(uint16_t record)
+{
+    return (int16_t)record;
+}
+
+int32_t dm2_v1_skproject_record_to_long(uint16_t record)
+{
+    return (int32_t)(int16_t)record;
+}
+
 static int dm2_v1_dungeon_c_map_dimension_ok(const DM2_V1_DungeonData *d,
                                              int level)
 {
