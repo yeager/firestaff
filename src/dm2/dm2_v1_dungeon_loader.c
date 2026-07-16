@@ -186,6 +186,9 @@ static int dm2_v1_g1_extension_record_offset(const DM2_V1_DungeonData *d,
     return 1;
 }
 
+static int dm2_v1_dungeon_record_list_traversal_allowed(
+    const DM2_V1_DungeonData *d);
+
 static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
                                   int level,
                                   int raw_size) {
@@ -1674,6 +1677,176 @@ int dm2_v1_skproject_cut_record_from(
     receipt.valid = 1;
     *out = receipt;
     return 1;
+}
+
+int dm2_v1_skproject_3d93b_text_scan(
+    DM2_V1_DungeonData *d,
+    int mode,
+    int countdown,
+    int target_low_byte,
+    int *out_y,
+    int *out_x,
+    DM2_V1_Skproject3D93BReceipt *out)
+{
+    DM2_V1_Skproject3D93BReceipt receipt;
+    int found_map = -1;
+    int found_x = 0;
+    int found_y = 0;
+    int count = 0;
+
+    if (out_y) *out_y = 0;
+    if (out_x) *out_x = 0;
+    if (!out) return mode == 5 ? -1 : 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mode = mode;
+    receipt.target_low_byte = target_low_byte & 0xff;
+    receipt.countdown_start = countdown;
+    receipt.countdown_remaining = countdown;
+    receipt.result_map = -1;
+    receipt.source_symbol = "DM2_3D93B";
+    receipt.source_line = 2108;
+
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) || !d->raw_data) {
+        receipt.blocked_incomplete_record_graph = 1;
+        receipt.return_value = mode == 5 ? -1 : 0;
+        *out = receipt;
+        return receipt.return_value;
+    }
+
+    for (int map = 0; map < d->level_count; ++map) {
+        int width = d->level_widths[map];
+        int height = d->level_heights[map];
+
+        if (width <= 0 || height <= 0) {
+            receipt.blocked_missing_record = 1;
+            receipt.return_value = mode == 5 ? -1 : 0;
+            *out = receipt;
+            return receipt.return_value;
+        }
+        ++receipt.maps_scanned;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+                int thing;
+
+                if (raw < 0) {
+                    receipt.blocked_missing_record = 1;
+                    receipt.return_value = mode == 5 ? -1 : 0;
+                    *out = receipt;
+                    return receipt.return_value;
+                }
+                ++receipt.squares_scanned;
+                if ((raw & 0x10) == 0) continue;
+                ++receipt.root_tiles_scanned;
+                thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+                if (thing < 0) {
+                    receipt.blocked_missing_record = 1;
+                    receipt.return_value = mode == 5 ? -1 : 0;
+                    *out = receipt;
+                    return receipt.return_value;
+                }
+                while (thing != (int)DM2_THING_END_MARKER) {
+                    int type = -1;
+                    int size = 0;
+                    int next;
+                    uint16_t next_type;
+                    const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                        d, (uint16_t)thing, &type, NULL, &size);
+
+                    if (!record || size < 2) {
+                        receipt.blocked_missing_record = 1;
+                        receipt.return_value = mode == 5 ? -1 : 0;
+                        *out = receipt;
+                        return receipt.return_value;
+                    }
+
+                    if (mode >= 2 && mode <= 5 && type == 2 && size >= 4) {
+                        uint16_t w2 = RD16(record + 2);
+                        if ((w2 & 0x0006u) == 0x0002u) {
+                            uint16_t shifted = (uint16_t)(w2 >> 3);
+                            int ext_usage = (int)((shifted >> 8) & 0x1fu);
+                            int low = (int)(shifted & 0xffu);
+                            ++receipt.text_records_scanned;
+
+                            if (ext_usage < 0x0f) {
+                                if (ext_usage == 0x0b &&
+                                    low == receipt.target_low_byte) {
+                                    ++receipt.matched_ext_usage_0b;
+                                    if (mode == 3) {
+                                        ++count;
+                                    } else {
+                                        --receipt.countdown_remaining;
+                                        if (receipt.countdown_remaining == 0) {
+                                            if (out_y) *out_y = y;
+                                            if (out_x) *out_x = x;
+                                            receipt.result_map = map;
+                                            receipt.result_y = y;
+                                            receipt.result_x = x;
+                                            receipt.return_value = map;
+                                            receipt.valid = 1;
+                                            *out = receipt;
+                                            return map;
+                                        }
+                                    }
+                                }
+                            } else if (ext_usage <= 0x0f) {
+                                if (mode == 4) {
+                                    uint8_t *mutable_record = (uint8_t *)record;
+                                    uint16_t cleared = (uint16_t)(w2 & ~1u);
+                                    mutable_record[2] =
+                                        (uint8_t)(cleared & 0xffu);
+                                    mutable_record[3] = (uint8_t)(cleared >> 8);
+                                    ++receipt.cleared_ext_usage_0f_visibility;
+                                } else if (mode == 5 && (w2 & 1u) != 0u) {
+                                    if (out_y) *out_y = y;
+                                    if (out_x) *out_x = x;
+                                    receipt.result_map = map;
+                                    receipt.result_y = y;
+                                    receipt.result_x = x;
+                                    receipt.return_value = map;
+                                    receipt.valid = 1;
+                                    *out = receipt;
+                                    return map;
+                                }
+                            } else if (ext_usage == 0x10 &&
+                                       low == receipt.target_low_byte) {
+                                ++receipt.matched_ext_usage_10;
+                                found_map = map;
+                                found_x = x;
+                                found_y = y;
+                            }
+                        }
+                    }
+
+                    next = dm2_v1_dungeon_get_next_thing(d, (uint16_t)thing);
+                    ++receipt.link_word_reads;
+                    if (next < 0) {
+                        receipt.blocked_missing_record = 1;
+                        receipt.return_value = mode == 5 ? -1 : 0;
+                        *out = receipt;
+                        return receipt.return_value;
+                    }
+                    if (next == (int)DM2_THING_END_MARKER) break;
+                    next_type = (uint16_t)((next >> 10) & 0x0fu);
+                    if (next_type > 3u) break;
+                    thing = next;
+                }
+            }
+        }
+    }
+
+    if (found_map >= 0) {
+        if (out_y) *out_y = found_y;
+        if (out_x) *out_x = found_x;
+    }
+    receipt.result_map = found_map;
+    receipt.result_x = found_x;
+    receipt.result_y = found_y;
+    receipt.return_value =
+        mode == 4 ? found_map : (mode == 5 ? -1 : count);
+    receipt.valid = 1;
+    *out = receipt;
+    return receipt.return_value;
 }
 
 const uint8_t *dm2_v1_dungeon_get_thing_record(

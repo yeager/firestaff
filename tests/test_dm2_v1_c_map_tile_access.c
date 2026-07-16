@@ -73,6 +73,95 @@ static size_t build_fixture(uint8_t *buf, size_t cap)
     return raw_map_base + 6u;
 }
 
+static size_t build_3d93b_fixture(uint8_t *buf, size_t cap)
+{
+    const size_t header_size = 44u;
+    const size_t map_desc_size = 16u;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t stack_base = column_base + 6u;
+    const size_t db2_base = stack_base + 8u;
+    const size_t raw_map_base = db2_base + 12u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 6u) return 0;
+    memset(buf, 0, cap);
+    buf[4] = 1;
+    put16le(buf + 10, 4);
+    put16le(buf + 16, 3);
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(((3u - 1u) << 6) | ((2u - 1u) << 11)));
+
+    put16le(buf + column_base, 0);
+    put16le(buf + column_base + 2u, 1);
+    put16le(buf + column_base + 4u, 3);
+    put16le(buf + stack_base, 0x0800);
+    put16le(buf + stack_base + 2u, 0x0801);
+    put16le(buf + stack_base + 4u, 0x0802);
+    put16le(buf + stack_base + 6u, 0xfffe);
+
+    put16le(buf + db2_base, 0xfffe);
+    put16le(buf + db2_base + 2u, (uint16_t)((0x0bu << 11) | (0x42u << 3) | 2u));
+    put16le(buf + db2_base + 4u, 0xfffe);
+    put16le(buf + db2_base + 6u, (uint16_t)((0x0fu << 11) | (0x22u << 3) | 3u));
+    put16le(buf + db2_base + 8u, 0xfffe);
+    put16le(buf + db2_base + 10u, (uint16_t)((0x10u << 11) | (0x77u << 3) | 2u));
+
+    buf[raw_map_base + 0u] = 0x10;
+    buf[raw_map_base + 1u] = 0x20;
+    buf[raw_map_base + 2u] = 0x10;
+    buf[raw_map_base + 3u] = 0x10;
+    buf[raw_map_base + 4u] = 0x10;
+    buf[raw_map_base + 5u] = 0x20;
+    return raw_map_base + 6u;
+}
+
+static void test_skproject_3d93b_text_scan(void)
+{
+    uint8_t raw[128];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_Skproject3D93BReceipt receipt;
+    size_t size = build_3d93b_fixture(raw, sizeof(raw));
+    int y = -1;
+    int x = -1;
+    const uint8_t *record;
+
+    CHECK(size == 92u, "DM2_3D93B fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, raw, (int)size) == 0,
+          "DM2_3D93B fixture loads as skproject byte-square data");
+    CHECK(dm2_v1_skproject_3d93b_text_scan(
+              &dungeon, 2, 1, 0x42, &y, &x, &receipt) == 0 &&
+              receipt.valid && receipt.result_map == 0 &&
+              x == 0 && y == 0 &&
+              receipt.matched_ext_usage_0b == 1 &&
+              strcmp(receipt.source_symbol, "DM2_3D93B") == 0,
+          "DM2_3D93B countdown mode returns the matching ext-0x0b text square");
+    CHECK(dm2_v1_skproject_3d93b_text_scan(
+              &dungeon, 3, 0, 0x42, &y, &x, &receipt) == 1 &&
+              receipt.valid && receipt.return_value == 1,
+          "DM2_3D93B count mode counts matching ext-0x0b text records");
+    CHECK(dm2_v1_skproject_3d93b_text_scan(
+              &dungeon, 5, 0, 0, &y, &x, &receipt) == 0 &&
+              receipt.valid && x == 1 && y == 0,
+          "DM2_3D93B visible ext-0x0f mode returns the visible text square");
+    CHECK(dm2_v1_skproject_3d93b_text_scan(
+              &dungeon, 4, 0, 0x77, &y, &x, &receipt) == 0 &&
+              receipt.valid && receipt.result_map == 0 &&
+              receipt.matched_ext_usage_10 == 1 &&
+              receipt.cleared_ext_usage_0f_visibility == 1,
+          "DM2_3D93B clear mode records ext-0x10 location and clears visibility");
+    record = dm2_v1_dungeon_get_thing_record(&dungeon, 0x0801, NULL, NULL, NULL);
+    CHECK(record && ((((uint16_t)record[2] | ((uint16_t)record[3] << 8)) & 1u) == 0),
+          "DM2_3D93B clear mode mutates only the source DB2 visibility bit");
+    CHECK(dm2_v1_skproject_3d93b_text_scan(
+              &dungeon, 5, 0, 0, &y, &x, &receipt) == -1 &&
+              receipt.valid && receipt.return_value == -1,
+          "DM2_3D93B visible mode fails closed after the bit is cleared");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     uint8_t raw[96];
@@ -188,6 +277,7 @@ int main(void)
               change_map_receipt.unchanged &&
               change_map_receipt.current_map == 0,
           "CHANGE_CURRENT_MAP_TO keeps same-map requests unchanged");
+    test_skproject_3d93b_text_scan();
     CHECK(dm2_v1_skproject_change_current_map_to(
               &dungeon, 0, -1, 4, 5, 0, 2, &change_map_receipt) == 0 &&
               change_map_receipt.blocked_negative_map,

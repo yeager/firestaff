@@ -89,9 +89,9 @@
     payload rows `DM2_47eb_00a4`/`DM2_482b_0684`, plus existing image offset
     and local-palette queries. Remaining DM2 querydb/gdatfile work is
     allocation, graphics file I/O lifecycle, preserved-GFX cache behavior,
-    image extraction/decode ownership, text/name formatting, `DM2_3D93B`, and
-    higher-level gameplay queries; these receipts must not be used to fabricate
-    images or promote missing scalar entries into buffers.
+    image extraction/decode ownership, text/name formatting, and higher-level
+    gameplay queries; these receipts must not be used to fabricate images or
+    promote missing scalar entries into buffers.
   - 2026-07-16 DM2 update: skproject `DM2_QUERY_GDAT_ENTRY_VALUE` and
     `DM2_LOAD_GDAT_ENTRY_DATA_TO` are now closed at the parsed-GDAT loader
     boundary. Firestaff extracts T/I/D/S/P/F/G values from ENT1 rows and

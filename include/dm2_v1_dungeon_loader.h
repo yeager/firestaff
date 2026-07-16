@@ -962,6 +962,30 @@ typedef struct {
 } DM2_V1_SkprojectCutRecordReceipt;
 
 typedef struct {
+    int valid;
+    int mode;
+    int target_low_byte;
+    int countdown_start;
+    int countdown_remaining;
+    int maps_scanned;
+    int squares_scanned;
+    int root_tiles_scanned;
+    int text_records_scanned;
+    int link_word_reads;
+    int matched_ext_usage_0b;
+    int matched_ext_usage_10;
+    int cleared_ext_usage_0f_visibility;
+    int result_map;
+    int result_x;
+    int result_y;
+    int return_value;
+    int blocked_incomplete_record_graph;
+    int blocked_missing_record;
+    const char *source_symbol;
+    int source_line;
+} DM2_V1_Skproject3D93BReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -1097,6 +1121,14 @@ int dm2_v1_skproject_cut_record_from(
     int x,
     int y,
     DM2_V1_SkprojectCutRecordReceipt *out);
+int dm2_v1_skproject_3d93b_text_scan(
+    DM2_V1_DungeonData *d,
+    int mode,
+    int countdown,
+    int target_low_byte,
+    int *out_y,
+    int *out_x,
+    DM2_V1_Skproject3D93BReceipt *out);
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
 int dm2_v1_dungeon_walk_square_things(
     const DM2_V1_DungeonData *d,
