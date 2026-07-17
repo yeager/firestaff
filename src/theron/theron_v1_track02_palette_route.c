@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "theron_v1_dungeon_handoff.h"
 #include "theron_v1_track02_palette_route.h"
@@ -53,6 +54,13 @@ int theron_v1_track02_palette_route_validate(
     receipt.accepted = 1;
     receipt.real_cd_verified = 1;
     receipt.render_allowed = 0;
+    receipt.track02_variant =
+        theron_v1_track02_variant_for_md5(facts->raw_track02_md5);
+    if (receipt.track02_variant == THERON_TRACK02_VARIANT_UNKNOWN) {
+        return 0;
+    }
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
+             facts->raw_track02_md5);
     receipt.vce_index_address = index_store->address;
     receipt.vce_low_address = low_store->address;
     receipt.vce_high_address = high_store->address;

@@ -12,9 +12,9 @@
 #define EXTENDED_HEADER_BYTES CSB_V1_CSBWIN_EXTENDED_FEATURES_BYTES
 #define DSA_OFFSET EXTENDED_HEADER_BYTES
 #define DSA_STATE_OFFSET (DSA_OFFSET + 84u)
-#define DSA_CHECKSUM_OFFSET (DSA_OFFSET + 122u)
+#define DSA_CHECKSUM_OFFSET (DSA_OFFSET + 130u)
 #define SAVE_BYTES (DSA_CHECKSUM_OFFSET + 4u)
-#define TRANSFER_DSA_CHECKSUM_OFFSET (DSA_OFFSET + 118u)
+#define TRANSFER_DSA_CHECKSUM_OFFSET (DSA_OFFSET + 126u)
 #define TRANSFER_SAVE_BYTES (TRANSFER_DSA_CHECKSUM_OFFSET + 4u)
 
 static int failures;
@@ -81,18 +81,18 @@ static void make_real_shape(uint8_t bytes[SAVE_BYTES])
     put_le32(bytes, 32u, form_checksum(header, sizeof(header)));
 
     put_le32(bytes, DSA_OFFSET, 7u);
-    put_le16(bytes, DSA_STATE_OFFSET, 1u);
-    bytes[DSA_OFFSET + 86u] = 1u;
-    bytes[DSA_OFFSET + 87u] = 0u;
-    put_le32(bytes, DSA_OFFSET + 88u, 4u);
-    put_le32(bytes, DSA_OFFSET + 96u, 1u);
-    put_le32(bytes, DSA_OFFSET + 100u, 1u);
+    put_le32(bytes, DSA_STATE_OFFSET, 1u);
+    put_le32(bytes, DSA_OFFSET + 88u, 1u);
+    put_le32(bytes, DSA_OFFSET + 92u, 0u);
+    put_le32(bytes, DSA_OFFSET + 96u, 4u);
     put_le32(bytes, DSA_OFFSET + 104u, 1u);
-    put_le32(bytes, DSA_OFFSET + 108u, 0u);
-    put_le32(bytes, DSA_OFFSET + 112u, 3u);
-    put_le16(bytes, DSA_OFFSET + 116u, 0x0686u);
-    put_le16(bytes, DSA_OFFSET + 118u, 2u);
-    put_le16(bytes, DSA_OFFSET + 120u, 0x068bu);
+    put_le32(bytes, DSA_OFFSET + 108u, 1u);
+    put_le32(bytes, DSA_OFFSET + 112u, 1u);
+    put_le32(bytes, DSA_OFFSET + 116u, 0u);
+    put_le32(bytes, DSA_OFFSET + 120u, 3u);
+    put_le16(bytes, DSA_OFFSET + 124u, 0x0686u);
+    put_le16(bytes, DSA_OFFSET + 126u, 2u);
+    put_le16(bytes, DSA_OFFSET + 128u, 0x068bu);
     put_le32(bytes, DSA_CHECKSUM_OFFSET,
              rcs_checksum(bytes + DSA_OFFSET, DSA_CHECKSUM_OFFSET - DSA_OFFSET));
 }
@@ -100,7 +100,7 @@ static void make_real_shape(uint8_t bytes[SAVE_BYTES])
 static void make_localstate2_shape(uint8_t bytes[SAVE_BYTES])
 {
     make_real_shape(bytes);
-    bytes[DSA_OFFSET + 86u] = 2u;
+    put_le32(bytes, DSA_OFFSET + 88u, 2u);
     put_le32(bytes, DSA_CHECKSUM_OFFSET,
              rcs_checksum(bytes + DSA_OFFSET,
                           DSA_CHECKSUM_OFFSET - DSA_OFFSET));
@@ -119,15 +119,16 @@ static void make_transfer_shape(uint8_t bytes[TRANSFER_SAVE_BYTES])
 
     /* One complete DSA::Read JUMP action returns state 2 through PutState. */
     put_le32(bytes, DSA_OFFSET, 7u);
-    put_le16(bytes, DSA_STATE_OFFSET, 1u);
-    bytes[DSA_OFFSET + 86u] = 1u;
-    put_le32(bytes, DSA_OFFSET + 88u, 4u);
-    put_le32(bytes, DSA_OFFSET + 96u, 1u);
-    put_le32(bytes, DSA_OFFSET + 100u, 1u);
+    put_le32(bytes, DSA_STATE_OFFSET, 1u);
+    put_le32(bytes, DSA_OFFSET + 88u, 1u);
+    put_le32(bytes, DSA_OFFSET + 92u, 0u);
+    put_le32(bytes, DSA_OFFSET + 96u, 4u);
     put_le32(bytes, DSA_OFFSET + 104u, 1u);
-    put_le32(bytes, DSA_OFFSET + 108u, 0u);
+    put_le32(bytes, DSA_OFFSET + 108u, 1u);
     put_le32(bytes, DSA_OFFSET + 112u, 1u);
-    put_le16(bytes, DSA_OFFSET + 116u, 0x208cu);
+    put_le32(bytes, DSA_OFFSET + 116u, 0u);
+    put_le32(bytes, DSA_OFFSET + 120u, 1u);
+    put_le16(bytes, DSA_OFFSET + 124u, 0x208cu);
     put_le32(bytes, TRANSFER_DSA_CHECKSUM_OFFSET,
              rcs_checksum(bytes + DSA_OFFSET,
                           TRANSFER_DSA_CHECKSUM_OFFSET - DSA_OFFSET));

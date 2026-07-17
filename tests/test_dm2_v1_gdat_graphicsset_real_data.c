@@ -294,6 +294,12 @@ int main(void)
                 !command_plan.valid || command_plan.command_hash == 0u ||
                 command_plan.commands[0].field != DM2_GDAT_GFXSET_FLOOR ||
                 command_plan.commands[1].field != DM2_GDAT_GFXSET_CEIL ||
+                !command_plan.commands[0].material_source_bytes ||
+                !command_plan.commands[1].material_source_bytes ||
+                !command_plan.commands[0].material_source_byte_count ||
+                !command_plan.commands[1].material_source_byte_count ||
+                !command_plan.commands[0].material_receipt_hash ||
+                !command_plan.commands[1].material_receipt_hash ||
                 !command_plan.commands[0].pixels || !command_plan.commands[1].pixels ||
                 command_plan.commands[0].palette_hash == 0u ||
                 command_plan.commands[1].palette_hash == 0u ||

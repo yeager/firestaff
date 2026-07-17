@@ -1933,6 +1933,169 @@ int dm2_v1_extract_gdat_image_receipt(
     return 1;
 }
 
+static int dm2_v1_gdat_gfx_material_from_entry(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_GdatEntry *entry,
+    int gfxalloc_done,
+    int used_gfx16_default,
+    DM2_V1_GdatGfxMaterialReceipt *out_receipt)
+{
+    DM2_V1_GdatGfxMaterialReceipt receipt;
+    size_t source_byte_count = 0u;
+    const uint8_t *source_bytes;
+    uint16_t raw_index;
+
+    if (!entry) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+    source_bytes = dm2_v1_load_gdat_raw_data(loader, raw_index,
+                                              &source_byte_count);
+    if (!source_bytes || source_byte_count == 0u ||
+        !dm2_v1_extract_gdat_image_receipt(loader, raw_index, gfxalloc_done,
+                                           0, NULL, 0u, &receipt.image) ||
+        !receipt.image.valid) {
+        return 0;
+    }
+    receipt.accepted = 1u;
+    receipt.used_gfx16_default = used_gfx16_default ? 1u : 0u;
+    receipt.gfxalloc_done = gfxalloc_done ? 1u : 0u;
+    receipt.selected_category = entry->cls1;
+    receipt.selected_index = entry->cls2;
+    receipt.selected_field = entry->cls4;
+    receipt.raw_index = raw_index;
+    receipt.source_bytes = source_bytes;
+    receipt.source_byte_count = source_byte_count;
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        receipt.image.receipt_hash,
+        ((uint32_t)receipt.selected_category << 16) |
+            ((uint32_t)receipt.selected_index << 8) |
+            receipt.selected_field,
+        raw_index,
+        receipt.used_gfx16_default);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_gdat_allocate_gfx256_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    int gfxalloc_done,
+    DM2_V1_GdatGfxMaterialReceipt *out_receipt)
+{
+    DM2_V1_GdatGfxMaterialReceipt receipt;
+    size_t source_byte_count = 0u;
+    const uint8_t *source_bytes;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    source_bytes = dm2_v1_load_gdat_raw_data(loader, raw_index,
+                                              &source_byte_count);
+    if (!source_bytes || source_byte_count == 0u ||
+        !dm2_v1_extract_gdat_image_receipt(loader, raw_index, gfxalloc_done,
+                                           0, NULL, 0u, &receipt.image) ||
+        !receipt.image.valid) {
+        return 0;
+    }
+    receipt.accepted = 1u;
+    receipt.gfxalloc_done = gfxalloc_done ? 1u : 0u;
+    receipt.raw_index = raw_index;
+    receipt.source_bytes = source_bytes;
+    receipt.source_byte_count = source_byte_count;
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        receipt.image.receipt_hash, raw_index, source_byte_count, 0u);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    DM2_V1_GdatGfxRawMaterialReceipt *out_receipt)
+{
+    DM2_V1_GdatGfxRawMaterialReceipt receipt;
+    size_t source_byte_count = 0u;
+    const uint8_t *source_bytes;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    source_bytes = dm2_v1_load_gdat_raw_data(loader, raw_index,
+                                              &source_byte_count);
+    if (!source_bytes || source_byte_count == 0u) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.accepted = 1u;
+    receipt.raw_index = raw_index;
+    receipt.source_bytes = source_bytes;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_hash = dm2_fnv1a_bytes(source_bytes, source_byte_count);
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        raw_index, source_byte_count, receipt.source_hash, 0x47584632u);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_gdat_image_raw_material_receipt(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    DM2_V1_GdatGfxRawMaterialReceipt *out_receipt)
+{
+    const DM2_V1_GdatEntry *entry;
+    DM2_V1_GdatGfxRawMaterialReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    entry = dm2_gdat_find_entry(loader, category, index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
+    if (!entry || !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+                      loader, (uint16_t)(entry->data_index & 0x7fffu),
+                      &receipt)) {
+        return 0;
+    }
+    receipt.receipt_hash = dm2_gdat_file_receipt_hash(
+        receipt.receipt_hash,
+        ((uint32_t)(uint8_t)category << 16) |
+            ((uint32_t)(uint8_t)index << 8) | (uint8_t)field,
+        receipt.raw_index, receipt.source_hash);
+    if (!receipt.receipt_hash) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_gdat_allocate_gfx16_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int gfxalloc_done,
+    DM2_V1_GdatGfxMaterialReceipt *out_receipt)
+{
+    const DM2_V1_GdatEntry *entry = NULL;
+    int used_default = 0;
+    uint16_t i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (loader && loader->entries) {
+        for (i = 0u; i < loader->entry_count; ++i) {
+            const DM2_V1_GdatEntry *candidate = &loader->entries[i];
+            if ((int)candidate->cls1 == category &&
+                (int)candidate->cls2 == index &&
+                candidate->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE &&
+                (int)candidate->cls4 == field &&
+                dm2_v1_gdat_gfx_material_from_entry(
+                    loader, candidate, gfxalloc_done, 0, out_receipt)) {
+                return 1;
+            }
+        }
+    }
+    if (!entry) {
+        entry = dm2_gdat_find_entry(loader, DM2_GDAT_CATEGORY_MISCELLANEOUS,
+                                    0xfe, DM2_GDAT_ENTRY_TYPE_IMAGE, 0xfe);
+        used_default = 1;
+    }
+    return dm2_v1_gdat_gfx_material_from_entry(loader, entry, gfxalloc_done,
+                                                used_default, out_receipt);
+}
+
 int dm2_v1_query_gdat_image_entry_buff_receipt(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -2169,6 +2332,8 @@ int dm2_v1_query_gdat_summary_image_receipt(
     DM2_V1_QueryGdatSummaryImageReceipt *out_receipt)
 {
     uint16_t data_index = 0u;
+    uint16_t graphicsset_offset = 0u;
+    uint16_t image_offset = 0u;
     uint32_t palette_hash = 0u;
     uint8_t palette16[16];
 
@@ -2197,6 +2362,24 @@ int dm2_v1_query_gdat_summary_image_receipt(
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
+    /* SKWIN c_querydb.cpp:1781-1817: SUMMARY_IMAGE applies the category/
+     * index dtImageOffset(0xfe) first, then the selected image-field offset.
+     * Each nonzero word is an exact signed-byte x/y pair; absence remains the
+     * source zero offset rather than a replacement placement. */
+    if (dm2_v1_asset_load_image_offset(loader, category, index, 0xfe,
+                                       &graphicsset_offset) &&
+        graphicsset_offset != 0u) {
+        out_receipt->metadata.query_offset_x =
+            (int8_t)(graphicsset_offset >> 8);
+        out_receipt->metadata.query_offset_y = (int8_t)graphicsset_offset;
+        out_receipt->metadata.graphicsset_offset_present = 1;
+    }
+    if (dm2_v1_asset_load_image_offset(loader, category, index, field,
+                                       &image_offset) && image_offset != 0u) {
+        out_receipt->metadata.query_offset_x += (int8_t)(image_offset >> 8);
+        out_receipt->metadata.query_offset_y += (int8_t)image_offset;
+        out_receipt->metadata.image_offset_present = 1;
+    }
     if (dm2_v1_asset_load_image_local_palette(
             loader, category, index, field, palette16, &palette_hash)) {
         out_receipt->colors = 16u;
@@ -2212,9 +2395,21 @@ int dm2_v1_query_gdat_summary_image_receipt(
 
     out_receipt->accepted = 1u;
     out_receipt->data_index = data_index;
+    out_receipt->graphicsset_offset_word = graphicsset_offset;
+    out_receipt->image_offset_word = image_offset;
+    out_receipt->offset_receipt_hash = dm2_gdat_file_receipt_hash(
+        graphicsset_offset, image_offset,
+        ((uint32_t)(uint16_t)out_receipt->metadata.query_offset_x << 16) |
+            (uint16_t)out_receipt->metadata.query_offset_y,
+        ((uint32_t)out_receipt->metadata.graphicsset_offset_present << 1) |
+            (uint32_t)out_receipt->metadata.image_offset_present);
+    if (!out_receipt->offset_receipt_hash) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
     out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
         data_index, out_receipt->metadata.metadata_hash,
-        palette_hash,
+        palette_hash ^ out_receipt->offset_receipt_hash,
         ((uint32_t)out_receipt->metadata.width << 16) |
             out_receipt->metadata.height);
     return 1;

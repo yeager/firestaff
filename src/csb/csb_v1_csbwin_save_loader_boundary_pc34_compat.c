@@ -153,6 +153,19 @@ static unsigned int read_le32_at(const uint8_t *bytes, size_t size, size_t off)
          | ((unsigned int)bytes[off + 3u] << 24);
 }
 
+static uint32_t csb_v1_csbwin_save_fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 static CSB_V1_CSBWinSaveShape classify_valid_xor512_shape(
     const uint8_t *bytes,
     size_t size,
@@ -579,7 +592,6 @@ int csb_v1_csbwin_save_loader_boundary_check(
             (!row->expect_accept && rc == row->expect_code) ? 1 : 0;
         return rc;
     }
-
     /* Normal path: feed the bytes through the existing loader. */
     rc = csb_v1_import_csb_save_buffer(&party, bytes, (long)size);
     out->loader_code    = rc;
@@ -894,6 +906,7 @@ int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
         return 0;
     }
+    out->save_bytes_fnv1a = csb_v1_csbwin_save_fnv1a32(bytes, size);
     if (!out->filename_candidate) {
         out->extended_result = CSB_V1_CSBWIN_EXTENDED_ABSENT;
         out->decision_label =
@@ -929,9 +942,27 @@ int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
     out->gameblock1_valid =
         (out->gameblock1_result == CSB_V1_CSBWIN_512_OK &&
          (out->gameblock1.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB ||
-          out->gameblock1.verdict == CSB_V1_CSBWIN_512_VERDICT_DM)) ? 1 : 0;
+         out->gameblock1.verdict == CSB_V1_CSBWIN_512_VERDICT_DM)) ? 1 : 0;
 
-    out->corpus_positive = out->gameblock1_valid ? 1 : 0;
+    if (!out->gameblock1_valid) {
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
+        return 0;
+    }
+    out->gameblock1_body_result = csb_v1_csbwin_512_verify_save_body(
+        bytes + gameblock_offset, size - gameblock_offset, 0u,
+        &out->gameblock1_body);
+    out->gameblock1_body_valid =
+        (out->gameblock1_body_result == CSB_V1_CSBWIN_512_OK &&
+         out->gameblock1_body.header_valid) ? 1 : 0;
+    if (out->gameblock1_body_valid) {
+        out->gameblock1_body_fnv1a = csb_v1_csbwin_save_fnv1a32(
+            bytes + gameblock_offset, size - gameblock_offset);
+    }
+
+    out->corpus_positive = out->gameblock1_valid &&
+        out->gameblock1_body_valid && out->save_bytes_fnv1a != 0u &&
+        out->gameblock1_body_fnv1a != 0u;
     out->runtime_handoff_ready = out->corpus_positive;
     out->decision_label =
         csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(out);
@@ -1073,6 +1104,9 @@ const char *csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(
     }
     if (!receipt->gameblock1_valid) {
         return "reject_dsa_corpus_missing_valid_gameblock1";
+    }
+    if (!receipt->gameblock1_body_valid) {
+        return "reject_dsa_corpus_missing_verified_gameblock_body";
     }
     if (receipt->corpus_positive && receipt->runtime_handoff_ready) {
         return "accept_dsa_save_runtime_corpus";

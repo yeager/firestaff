@@ -309,6 +309,7 @@ int nexus_v1_bpk_archive_inspect_prs3(const uint8_t *data,
 
     /* PRS3+0 is the magic (already verified by entry.has_prs3 == 1). */
     version = rd32_be(data + prs3_off + 4U);
+    out_info->prs3_version = version;
     out_info->prs3_version_matches = (version == NEXUS_V1_BPK_PRS3_VERSION);
 
     prs3_pixel_count = rd32_be(data + prs3_off + 8U);
@@ -1297,6 +1298,7 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     uint32_t stream_offset;
     uint32_t stream_size;
     uint64_t output_bytes;
+    uint64_t stream_offset64;
 
     if (!out_plan) return NEXUS_V1_BPK_PRS3_STREAM_ERR_NULL;
     memset(out_plan, 0, sizeof(*out_plan));
@@ -1318,8 +1320,13 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
         return NEXUS_V1_BPK_PRS3_STREAM_ERR_UNSUPPORTED_MODE;
     }
 
-    stream_offset = entry.offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES +
-                    NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+    stream_offset64 = (uint64_t)entry.offset +
+        NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+    if (entry.offset > data_size || entry.next_offset > data_size ||
+        stream_offset64 > UINT32_MAX || stream_offset64 > data_size) {
+        return NEXUS_V1_BPK_PRS3_STREAM_ERR_TRUNCATED;
+    }
+    stream_offset = (uint32_t)stream_offset64;
     if (stream_offset > entry.next_offset) {
         return NEXUS_V1_BPK_PRS3_STREAM_ERR_TRUNCATED;
     }
@@ -1345,6 +1352,9 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     out_plan->body_offset = stream_offset + 4U;
     out_plan->body_size = stream_size - 4U;
     out_plan->header_first_u32 = rd32_be(data + stream_offset);
+    out_plan->header_span_fnv1a64 = fnv1a64(data + stream_offset, 4U);
+    out_plan->body_span_fnv1a64 = fnv1a64(data + out_plan->body_offset,
+                                           out_plan->body_size);
     out_plan->header_first_readable = 1;
     if (out_plan->header_first_u32 >= stream_size) {
         out_plan->header_minus_payload =
@@ -1363,6 +1373,48 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     out_plan->decoded_pixels_emitted = 0U;
     out_plan->fallback_visuals_permitted = 0;
     return NEXUS_V1_BPK_PRS3_STREAM_OK;
+}
+
+int nexus_v1_bpk_archive_prs3_compression_descriptor(
+    const uint8_t *data, size_t data_size, uint32_t index,
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt *out_receipt)
+{
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_BpkPrs3Info prs3;
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt receipt;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    if (nexus_v1_bpk_archive_prs3_stream_plan(
+            data, data_size, index, &plan) != NEXUS_V1_BPK_PRS3_STREAM_OK ||
+        nexus_v1_bpk_archive_inspect_prs3(
+            data, data_size, index, &prs3) != 0 ||
+        !prs3.has_prs3 || !prs3.prs3_version_matches ||
+        !prs3.pixel_count_matches ||
+        prs3.prs3_pixel_count != plan.pixel_count ||
+        !plan.mode || !plan.bpp || !plan.pixel_count ||
+        !plan.expected_output_bytes || !plan.body_size ||
+        plan.body_offset > data_size ||
+        (size_t)plan.body_size > data_size - (size_t)plan.body_offset) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    receipt.valid = 1;
+    receipt.entry_index = plan.entry_index;
+    receipt.mode_flags = plan.mode;
+    receipt.declared_pixel_count = plan.pixel_count;
+    receipt.declared_output_bytes = plan.expected_output_bytes;
+    receipt.compressed_offset = plan.body_offset;
+    receipt.compressed_length = plan.body_size;
+    receipt.compressed_fnv1a64 = fnv1a64(
+        data + receipt.compressed_offset, receipt.compressed_length);
+    if (!receipt.compressed_fnv1a64) {
+        memset(&receipt, 0, sizeof(receipt));
+        *out_receipt = receipt;
+        return -1;
+    }
+    *out_receipt = receipt;
+    return 0;
 }
 
 const char *nexus_v1_bpk_prs3_stream_status_name(int status) {
@@ -2003,6 +2055,7 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+    out_receipt->first_prs3_entry_index = UINT32_MAX;
     out_receipt->capacity = row_capacity;
     out_receipt->fallback_visuals_permitted = 0;
     if (out_rows && row_capacity > 0U) {
@@ -2040,7 +2093,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             continue;
         }
         bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
-        if (bpp == 0U) continue;
+        if (bpp == 0U) {
+            if (entry.has_prs3) ++out_receipt->unknown_prs3_mode_entries;
+            continue;
+        }
         expected = (uint64_t)prefix.width * (uint64_t)prefix.height * bpp;
 
         memset(&row, 0, sizeof(row));
@@ -2052,10 +2108,29 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         row.bpp = bpp;
         row.payload_offset = entry.payload_offset;
         row.payload_size = entry.payload_size;
+        if ((size_t)entry.payload_offset > data_size ||
+            (size_t)entry.payload_size >
+                data_size - (size_t)entry.payload_offset) {
+            out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+            return -1;
+        }
+        row.payload_fnv1a64 = fnv1a64(
+            data + entry.payload_offset, (size_t)entry.payload_size);
 
         if (entry.has_prs3) {
             Nexus_V1_BpkPrs3StreamPlan plan;
+            Nexus_V1_BpkPrs3CompressionDescriptorReceipt compression;
+            Nexus_V1_BpkPrs3Info prs3;
             int rc;
+            if (nexus_v1_bpk_archive_inspect_prs3(
+                    data, data_size, i, &prs3) != 0) {
+                out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+                return -1;
+            }
+            row.prs3_version = prs3.prs3_version;
+            row.prs3_pixel_count = prs3.prs3_pixel_count;
+            row.prs3_header_valid = prs3.has_prs3 &&
+                prs3.prs3_version_matches && prs3.pixel_count_matches;
             rc = nexus_v1_bpk_archive_prs3_stream_plan(
                 data, data_size, i, &plan);
             if (rc == NEXUS_V1_BPK_PRS3_STREAM_OK) {
@@ -2072,6 +2147,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                 row.decoded_pixels_emitted = plan.decoded_pixels_emitted;
                 row.fallback_visuals_permitted =
                     plan.fallback_visuals_permitted;
+                if (nexus_v1_bpk_archive_prs3_compression_descriptor(
+                        data, data_size, i, &compression) == 0) {
+                    row.compression = compression;
+                }
             } else {
                 row.header_minus_payload = UINT32_MAX;
                 row.evidence_only = 1;
@@ -2096,6 +2175,24 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             row.decoded_pixels_emitted = 0U;
             row.fallback_visuals_permitted = 0;
             row.expected_output_bytes = (uint32_t)expected;
+            if (out_receipt->first_prs3_entry_index == UINT32_MAX &&
+                row.prs3_header_valid &&
+                row.compression.valid &&
+                row.stream_offset == row.payload_offset + 8U &&
+                row.stream_size >= 4U) {
+                out_receipt->first_prs3_entry_index = row.entry_index;
+                out_receipt->first_prs3_payload_offset = row.payload_offset;
+                out_receipt->first_prs3_payload_size = row.payload_size;
+                out_receipt->first_prs3_payload_fnv1a64 =
+                    row.payload_fnv1a64;
+                out_receipt->first_prs3_version = row.prs3_version;
+                out_receipt->first_prs3_pixel_count = row.prs3_pixel_count;
+                out_receipt->first_prs3_header_first_u32 =
+                    row.header_first_u32;
+                out_receipt->first_prs3_header_minus_payload =
+                    row.header_minus_payload;
+                out_receipt->first_prs3_compression = row.compression;
+            }
             ++out_receipt->blocked_prs3_uploads;
             out_receipt->expected_upload_bytes += expected;
         } else if ((uint64_t)entry.payload_size < expected) {

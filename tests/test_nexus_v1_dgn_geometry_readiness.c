@@ -1938,7 +1938,15 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                        (untextured_viewport.structure1f_source_packet.valid &&
                         untextured_viewport.structure1f_source_packet.no_draw_only &&
                         untextured_viewport.structure1f_source_packet
-                            .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size))) &&
+                            .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
+                        untextured_viewport.structure1f_source_packet.package_fnv1a64 ==
+                            fnv1a64(data, (size_t)size) &&
+                        untextured_viewport.structure1f_source_packet.descriptor_length > 0 &&
+                        untextured_viewport.structure1f_source_packet.descriptor_fnv1a64 != 0 &&
+                        untextured_viewport.structure1f_source_packet.descriptor_offset <=
+                            (uint32_t)size &&
+                        untextured_viewport.structure1f_source_packet.descriptor_length <=
+                            (uint32_t)size - untextured_viewport.structure1f_source_packet.descriptor_offset)) &&
                       untextured_viewport.last_dgn_render_receipt
                           .structure1c_source_scene_consumed &&
                       untextured_viewport.last_dgn_render_receipt

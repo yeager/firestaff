@@ -178,6 +178,9 @@ typedef struct {
     uint8_t destination_x;
     uint8_t destination_y;
     uint8_t destination_orientation;
+    uint32_t raw_record_offset;
+    uint32_t raw_record_length;
+    uint64_t raw_record_fnv1a64;
 } Nexus_V1_DgnStructure1FEntry;
 
 /* Only items, floor decorations, and floor sensors expose documented direct

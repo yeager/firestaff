@@ -30,6 +30,27 @@ static int dm2_weather_text_has_nul(const uint8_t *text, size_t size)
     return text && memchr(text, '\0', size) != NULL;
 }
 
+static int dm2_weather_source_raw_index(const DM2_V1_AssetLoader *loader,
+                                        const uint8_t *source_bytes,
+                                        size_t source_byte_count,
+                                        uint16_t *out_raw_index)
+{
+    uint16_t raw_index;
+
+    if (out_raw_index) *out_raw_index = 0u;
+    if (!loader || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || !source_bytes || !source_byte_count ||
+        !out_raw_index) return 0;
+    for (raw_index = 0u; raw_index < loader->raw_data_count; ++raw_index) {
+        if (loader->raw_sizes[raw_index] == source_byte_count &&
+            loader->data + loader->raw_offsets[raw_index] == source_bytes) {
+            *out_raw_index = raw_index;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_asset_load_image_metadata(
     const DM2_V1_AssetLoader *loader, int category, int index, int field,
     DM2_V1_GdatImageMetadata *out_metadata)
@@ -320,6 +341,8 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     int32_t fw = 0;
     uint32_t hash;
     uint8_t *pixels;
+    const uint8_t *image_source;
+    size_t image_source_size = 0u;
     int width = 0;
     int height = 0;
     DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
@@ -340,6 +363,32 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     out->image_present = dm2_weather_has_environment_image(
         loader, graphicsset, out->image_field);
     if (!out->image_present) return 0;
+    image_source = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
+        DM2_GDAT_ENTRY_TYPE_IMAGE, out->image_field, &image_source_size);
+    if (!image_source || image_source_size == 0u ||
+        image_source_size > UINT32_MAX ||
+        !dm2_weather_source_raw_index(loader, image_source,
+                                      image_source_size,
+                                      &out->image_raw_index)) {
+        return 0;
+    }
+    out->image_source_bytes = image_source;
+    out->image_source_byte_count = (uint32_t)image_source_size;
+    out->image_raw_hash = dm2_weather_hash_bytes(image_source,
+                                                  image_source_size);
+    {
+        DM2_V1_GdatGfxRawMaterialReceipt material;
+        if (out->image_raw_hash == 0u ||
+            !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+                loader, out->image_raw_index, &material) ||
+            material.source_bytes != image_source ||
+            material.source_byte_count != image_source_size ||
+            !material.receipt_hash) {
+            return 0;
+        }
+        out->image_material_receipt_hash = material.receipt_hash;
+    }
     out->query_metadata_valid = dm2_v1_asset_load_image_metadata(
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
         out->image_field, &out->query_metadata);
@@ -392,6 +441,12 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     hash ^= out->decoded_pixels_hash;
     hash *= 16777619u;
     hash ^= out->decoded_pixel_count;
+    hash *= 16777619u;
+    hash ^= out->image_raw_hash;
+    hash *= 16777619u;
+    hash ^= out->image_source_byte_count;
+    hash *= 16777619u;
+    hash ^= out->image_material_receipt_hash;
     hash *= 16777619u;
     out->material_hash = hash;
     out->material_valid = 1;
@@ -944,6 +999,83 @@ int dm2_v1_weather_gdat_renderer_receipt(
     return out->valid;
 }
 
+int dm2_v1_weather_gdat_outdoor_m11_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    const DM2_V1_SetTimerWeatherReceipt *timer_owner,
+    DM2_V1_OutdoorWeatherM11Receipt *out)
+{
+    uint32_t raw_hash = 2166136261u;
+    uint32_t receipt_hash = 2166136261u;
+    unsigned int i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!weather || !weather->valid || weather->receipt_hash == 0u ||
+        !renderer || !renderer->valid || renderer->renderer_hash == 0u ||
+        renderer->command_count == 0u || renderer->command_count > 2u ||
+        !timer_owner || !timer_owner->valid || !timer_owner->outdoor ||
+        !timer_owner->scheduled || timer_owner->receipt_hash == 0u) {
+        return 0;
+    }
+    for (i = 0u; i < renderer->command_count; ++i) {
+        const DM2_V1_WeatherDrawPlan *draw = &renderer->draws[i];
+        const DM2_V1_WeatherCommandReceipt *command;
+        unsigned int command_index;
+
+        if (!draw->valid || !dm2_weather_command_is_source_owned(
+                draw->image_field)) return 0;
+        command_index = (unsigned int)(draw->image_field -
+            DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+        if (command_index >= 6u) return 0;
+        command = &weather->commands[command_index];
+        if (command->command != draw->image_field || !command->material_valid ||
+            !command->raw_text || command->byte_count == 0u ||
+            command->raw_hash != dm2_weather_hash_bytes(command->raw_text,
+                                                         command->byte_count) ||
+            !command->image_source_bytes ||
+            command->image_source_byte_count == 0u ||
+            command->image_raw_hash != dm2_weather_hash_bytes(
+                command->image_source_bytes, command->image_source_byte_count) ||
+            command->image_material_receipt_hash == 0u ||
+            command->decoded_pixels_hash != draw->decoded_pixels_hash ||
+            command->decoded_pixel_count != draw->decoded_pixel_count ||
+            command->local_palette_hash != draw->local_palette_hash ||
+            command->material_hash != draw->material_hash) {
+            return 0;
+        }
+        raw_hash = dm2_weather_hash_step(raw_hash, command->raw_hash);
+        raw_hash = dm2_weather_hash_step(raw_hash, command->byte_count);
+        raw_hash = dm2_weather_hash_step(raw_hash, command->image_raw_hash);
+        raw_hash = dm2_weather_hash_step(raw_hash,
+                                         command->image_source_byte_count);
+        if (UINT32_MAX - out->raw_material_byte_count < command->byte_count ||
+            UINT32_MAX - out->raw_material_byte_count - command->byte_count <
+                command->image_source_byte_count) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->raw_material_byte_count += command->byte_count +
+            command->image_source_byte_count;
+        out->command_mask |= DM2_V1_WEATHER_COMMAND_MASK(command->command);
+    }
+    out->graphicsset = weather->graphicsset;
+    out->timer_owner_hash = timer_owner->receipt_hash;
+    out->weather_receipt_hash = weather->receipt_hash;
+    out->renderer_hash = renderer->renderer_hash;
+    out->raw_material_hash = raw_hash;
+    out->command_count = renderer->command_count;
+    receipt_hash = dm2_weather_hash_step(receipt_hash, out->timer_owner_hash);
+    receipt_hash = dm2_weather_hash_step(receipt_hash, out->weather_receipt_hash);
+    receipt_hash = dm2_weather_hash_step(receipt_hash, out->renderer_hash);
+    receipt_hash = dm2_weather_hash_step(receipt_hash, out->raw_material_hash);
+    receipt_hash = dm2_weather_hash_step(receipt_hash, out->raw_material_byte_count);
+    receipt_hash = dm2_weather_hash_step(receipt_hash, out->command_mask);
+    out->receipt_hash = receipt_hash;
+    out->valid = receipt_hash != 0u;
+    return out->valid;
+}
+
 int dm2_v1_weather_runtime_admission_receipt(
     const DM2_V1_GraphicsDataOpenReceipt *graphics_open,
     const DM2_V1_WeatherGdatReceipt *weather,
@@ -1241,6 +1373,11 @@ int dm2_v1_weather_gdat_command_receipt(
     out->raw_text = raw;
     out->byte_count = (uint32_t)size;
     out->raw_hash = dm2_weather_hash_bytes(raw, size);
+    if (!out->raw_hash || !dm2_weather_source_raw_index(loader, raw, size,
+                                                         &out->text_raw_index)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
     (void)dm2_weather_decode_material(loader, graphicsset, out);
     return 1;
 }

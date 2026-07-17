@@ -3,6 +3,7 @@
 
 #include "dm2_v1_asset_loader.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct DM2_V1_DoorRenderPlan DM2_V1_DoorRenderPlan;
@@ -68,9 +69,14 @@ typedef struct {
     uint16_t source_width;
     uint16_t source_height;
     uint8_t palette16[16];
+    /* GFX16 and GFX256 must resolve this exact immutable GDAT interval. */
+    uint16_t material_raw_index;
+    const uint8_t *material_source_bytes;
+    size_t material_source_byte_count;
     uint32_t raw_hash;
     uint32_t decoded_hash;
     uint32_t palette_hash;
+    uint32_t material_receipt_hash;
     uint32_t rect_table_hash;
     uint32_t rect_row_hash;
     uint32_t geometry_hash;

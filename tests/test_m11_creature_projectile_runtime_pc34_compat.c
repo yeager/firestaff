@@ -75,6 +75,7 @@ static void seed_projectile_runtime_state(M11_GameViewState* state,
     dungeon->tilesLoaded = 1;
 
     groups[0].creatureType = DM1_CREATURE_TYPE_RED_DRAGON;
+    groups[0].next = THING_ENDOFLIST;
     groups[0].cells = 0;
     groups[0].count = 0;
     groups[0].direction = 3; /* WEST, toward party at x=0. */
@@ -82,6 +83,7 @@ static void seed_projectile_runtime_state(M11_GameViewState* state,
     things->groups = groups;
     things->groupCount = 1;
     things->thingCounts[THING_TYPE_GROUP] = 1;
+    things->loaded = 1;
     squareFirstThings[0] = THING_ENDOFLIST;
     squareFirstThings[1] = THING_ENDOFLIST;
     squareFirstThings[2] = THING_ENDOFLIST;
@@ -105,6 +107,24 @@ static void seed_projectile_runtime_state(M11_GameViewState* state,
     state->world.party.champions[0].present = 1;
     state->world.party.champions[0].hp.current = 100;
     state->world.party.champions[0].hp.maximum = 100;
+}
+
+static void authenticate_group_c04(struct DungeonThings_Compat* things,
+                                   const struct DungeonGroup_Compat* group,
+                                   unsigned char rawGroup[16]) {
+    memset(rawGroup, 0, 16);
+    rawGroup[0] = (unsigned char)(group->next & 0xffu);
+    rawGroup[1] = (unsigned char)(group->next >> 8);
+    rawGroup[2] = (unsigned char)(group->slot & 0xffu);
+    rawGroup[3] = (unsigned char)(group->slot >> 8);
+    rawGroup[4] = group->creatureType;
+    rawGroup[5] = group->cells;
+    rawGroup[6] = (unsigned char)(group->health[0] & 0xffu);
+    rawGroup[7] = (unsigned char)(group->health[0] >> 8);
+    rawGroup[14] = (unsigned char)(group->behavior & 0x0fu);
+    rawGroup[14] |= (unsigned char)((group->count & 0x03u) << 5);
+    rawGroup[15] = (unsigned char)((group->direction & 0x03u) << 0);
+    things->rawThingData[THING_TYPE_GROUP] = rawGroup;
 }
 
 static void test_probe_inserts_creature_projectile_slot(void) {
@@ -150,9 +170,11 @@ static void test_live_idle_tick_inserts_creature_projectile(void) {
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
     unsigned short squareFirstThings[4];
+    unsigned char rawGroup[16];
 
     seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
                                   &things, groups, squareFirstThings);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
     state.world.gameTick = 27; /* AdvanceIdleTick moves to tick 28, then creature AI runs. */
 
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
@@ -162,6 +184,177 @@ static void test_live_idle_tick_inserts_creature_projectile(void) {
               "live creature tick inserted projectile");
     ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 1,
               "live creature tick projectile has first-move grace");
+}
+
+static void test_live_tick_rejects_c04_position_and_route_drift(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[4];
+    unsigned char rawGroup[16];
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
+                                  &things, groups, squareFirstThings);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    rawGroup[4] = (unsigned char)(groups[0].creatureType - 1u);
+    state.world.gameTick = 27;
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "C04-drift tick is handled without mutation");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "mutated C04 type cannot launch a projectile");
+    ASSERT_EQ(squareFirstThings[3], (THING_TYPE_GROUP << 10),
+              "mutated C04 leaves the authenticated source square unchanged");
+
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].groupMapIndex = 1;
+    state.world.creatureAI[0].groupMapX = 1;
+    state.world.creatureAI[0].groupMapY = 0;
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "position-drift tick is handled without mutation");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "wrong live group position cannot launch a projectile");
+
+    state.world.creatureAI[0].groupMapX = 2;
+    map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "blocked-route tick is handled");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "raw wall route blocks F0200 visibility and launch");
+    ASSERT_EQ(squareFirstThings[3], (THING_TYPE_GROUP << 10),
+              "blocked route leaves raw group chain in its source square");
+}
+
+static void test_live_tick_moves_authenticated_group_and_ai_position(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[4];
+    unsigned char rawGroup[16];
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
+                                  &things, groups, squareFirstThings);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].groupMapIndex = 1;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.gameTick = 11; /* M11's C24 profile moves on tick 12. */
+
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "authenticated C04 move tick is handled");
+    ASSERT_EQ(squareFirstThings[3], THING_ENDOFLIST,
+              "F0209 unlinks the group from its authenticated source square");
+    ASSERT_EQ(squareFirstThings[2], (THING_TYPE_GROUP << 10),
+              "F0209 links the group to the source-selected destination square");
+    ASSERT_EQ(state.world.creatureAI[0].groupMapX, 1,
+              "live active-group position follows the raw C04 movement");
+    ASSERT_EQ(state.world.creatureAI[0].groupMapY, 0,
+              "live active-group Y remains source-consistent after movement");
+}
+
+static void test_live_tick_uses_authenticated_door_info_for_sight(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonDoor_Compat door;
+    unsigned short squareFirstThings[4];
+    unsigned char rawGroup[16];
+    unsigned char rawDoor[4];
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
+                                  &things, groups, squareFirstThings);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    memset(&door, 0, sizeof(door));
+    memset(rawDoor, 0, sizeof(rawDoor));
+    door.next = THING_ENDOFLIST;
+    door.type = 0; /* Map.DoorSet0: portcullis G0254 entry. */
+    rawDoor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawDoor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    things.doors = &door;
+    things.doorCount = 1;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
+    things.rawThingData[THING_TYPE_DOOR] = rawDoor;
+    maps[1].doorSet0 = 0;
+    map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
+                                   DUNGEON_SQUARE_MASK_THING_LIST | 4u);
+    squareFirstThings[2] = (unsigned short)(THING_TYPE_DOOR << 10);
+    state.world.gameTick = 27;
+
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "portcullis LoS tick is handled");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "authenticated C00 portcullis admits F0200 sight and launch");
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
+                                  &things, groups, squareFirstThings);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    memset(&door, 0, sizeof(door));
+    memset(rawDoor, 0, sizeof(rawDoor));
+    door.next = THING_ENDOFLIST;
+    door.type = 0;
+    rawDoor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawDoor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawDoor[2] = 1; /* Raw C00 selects set1 while decoded owner claims set0. */
+    things.doors = &door;
+    things.doorCount = 1;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
+    things.rawThingData[THING_TYPE_DOOR] = rawDoor;
+    maps[1].doorSet0 = 0;
+    map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
+                                   DUNGEON_SQUARE_MASK_THING_LIST | 4u);
+    squareFirstThings[2] = (unsigned short)(THING_TYPE_DOOR << 10);
+    state.world.gameTick = 27;
+
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "drifted C00 LoS tick is handled");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "drifted C00 owner remains fail-closed for F0200 sight");
+}
+
+static void test_probe_rejects_unscheduled_creature_projectile(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[4];
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
+                                  &things, groups, squareFirstThings);
+    state.world.timeline.count = TIMELINE_QUEUE_CAPACITY;
+
+    ASSERT_EQ(M11_GameView_ProbeCreatureProjectileRuntimeLaunch(
+                  &state, (unsigned short)(THING_TYPE_GROUP << 10), 0, 2, 0),
+              0, "F0212 rejects when its first C48/C49 cannot be scheduled");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "F0212 queue rejection restores the newly allocated projectile slot");
+    ASSERT_EQ(state.world.projectiles.entries[0].slotIndex, -1,
+              "F0813 clears the rejected projectile slot identity");
+    ASSERT_EQ(state.world.timeline.count, TIMELINE_QUEUE_CAPACITY,
+              "F0212 queue rejection does not alter authenticated pending events");
 }
 
 
@@ -248,6 +441,10 @@ int main(void) {
 
     test_probe_inserts_creature_projectile_slot();
     test_live_idle_tick_inserts_creature_projectile();
+    test_live_tick_rejects_c04_position_and_route_drift();
+    test_live_tick_moves_authenticated_group_and_ai_position();
+    test_live_tick_uses_authenticated_door_info_for_sight();
+    test_probe_rejects_unscheduled_creature_projectile();
     test_black_flame_fireball_impact_heals_and_caps();
     test_first_move_grace_skips_source_square_impact();
 

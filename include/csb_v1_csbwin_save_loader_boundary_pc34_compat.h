@@ -209,13 +209,18 @@ typedef struct {
     int                       dsa_section_valid;
     int                       dsa_has_runtime_actions;
     int                       gameblock1_valid;
+    int                       gameblock1_body_valid;
     size_t                    gameblock1_offset;
+    uint32_t                  save_bytes_fnv1a;
+    uint32_t                  gameblock1_body_fnv1a;
     int                       extended_result;
     int                       gameblock1_result;
+    int                       gameblock1_body_result;
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_CSBWinExtendedDSAReport dsa;
     CSB_V1_CSBWinExtendedTailReport tail;
     CSB_V1_CSBWin512Report   gameblock1;
+    CSB_V1_CSBWin512BodyReport gameblock1_body;
     const char               *file_kind_label;
     const char               *decision_label;
 } CSB_V1_CSBWinDSASaveCorpusReceipt;
@@ -314,9 +319,10 @@ int csb_v1_csbwin_save_loader_boundary_classify_file(
 /* Strict corpus gate for CSBWin Extended Features DSA saves. This is the
  * positive counterpart to classify(): it refuses synthetic CSBGAME fixtures,
  * DSA-less saves, bad DSA checksums, non-CSBWin filenames, and tails that are
- * not followed by a valid CSBWin GAMEBLOCK1 header. A positive receipt means
- * the save bytes contain an authenticated CSBWin DSA section and the runtime
- * is allowed to consider DSA handoff; it still does not import mutable state. */
+ * not followed by a complete checksum-verified CSBWin GAMEBLOCK1 body. A
+ * positive receipt means the save bytes contain an authenticated CSBWin DSA
+ * section plus its original encoded runtime body; it still does not import
+ * mutable state or interpret a DSA opcode. */
 int csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
     const char *path_hint,
     const uint8_t *bytes,

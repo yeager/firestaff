@@ -3,6 +3,9 @@
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_viewport_renderer.h"
 
+
+
+
 #include <limits.h>
 #include <string.h>
 
@@ -467,6 +470,7 @@ static uint32_t command_plan_hash(
         hash = hash_u32(hash, command->raw_hash);
         hash = hash_u32(hash, command->decoded_hash);
         hash = hash_u32(hash, command->palette_hash);
+        hash = hash_u32(hash, command->material_receipt_hash);
         hash = hash_u32(hash, command->selection_hash);
         hash = hash_u32(hash, command->geometry_hash);
         hash = hash_u32(hash, command->palette_transform_hash);
@@ -635,6 +639,29 @@ static int load_door_local_palette(const DM2_V1_AssetLoader *loader,
     return 1;
 }
 
+static int source_raw_index(const DM2_V1_AssetLoader *loader,
+                            const uint8_t *source_bytes,
+                            size_t source_byte_count,
+                            uint16_t *out_raw_index)
+{
+    uint16_t raw_index;
+
+    if (out_raw_index) *out_raw_index = 0u;
+    if (!loader || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || !source_bytes || !source_byte_count ||
+        !out_raw_index) {
+        return 0;
+    }
+    for (raw_index = 0u; raw_index < loader->raw_data_count; ++raw_index) {
+        if (loader->raw_sizes[raw_index] == source_byte_count &&
+            loader->data + loader->raw_offsets[raw_index] == source_bytes) {
+            *out_raw_index = raw_index;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int add_material(const DM2_V1_AssetLoader *loader,
                         DM2_V1_GdatDoorOverlayM11CommandPlan *plan,
                         const DM2_V1_DoorRender *door, int kind,
@@ -645,6 +672,8 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     const uint8_t *raw;
     size_t raw_size = 0u;
     int width = 0, height = 0;
+    DM2_V1_GdatGfxRawMaterialReceipt gfx256_material;
+    uint16_t raw_index;
 
     if (kind == DM2_V1_GDAT_DOOR_BUTTON && door->button_source_kind != 1) return 1;
     if ((kind == DM2_V1_GDAT_DOOR_OVERLAY_ORNATE && !door->ornate_gdat_index) ||
@@ -687,6 +716,18 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                  command->palette16,
                                  &command->palette_hash) ||
         !command->palette_hash) return 0;
+    /* DRAW_DOOR's panel retry above is the only permitted fallback. Its
+     * selected source interval can be a non-dtImage GDAT row, so runtime
+     * binds the actual row through GFX256 rather than inventing a GFX16 tuple. */
+    if (!source_raw_index(loader, raw, raw_size, &raw_index) ||
+        !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+            loader, raw_index, &gfx256_material) ||
+        gfx256_material.source_bytes != raw ||
+        gfx256_material.source_byte_count != raw_size ||
+        gfx256_material.raw_index != raw_index ||
+        !gfx256_material.receipt_hash) {
+        return 0;
+    }
     command->gdat_index = gdat_index;
     command->view_square = (uint8_t)door->view_square;
     command->kind = (uint8_t)kind;
@@ -699,6 +740,9 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     command->door_state = door->door_state;
     command->door_open_pct = door->door_open_pct;
     command->movement_active = movement_active ? 1u : 0u;
+    command->material_raw_index = gfx256_material.raw_index;
+    command->material_source_bytes = gfx256_material.source_bytes;
+    command->material_source_byte_count = gfx256_material.source_byte_count;
     command->raw_hash = hash_bytes(2166136261u, raw, raw_size);
     command->decoded_hash = hash_bytes(2166136261u, command->pixels,
                                        (size_t)width * (size_t)height);
@@ -721,6 +765,7 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                        (uint32_t)door->door_ornate_gfx_index);
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)field);
+    command->material_receipt_hash = gfx256_material.receipt_hash;
     if (kind == DM2_V1_GDAT_DOOR_PANEL) {
         if (!bind_door_panel_geometry(loader, door, command,
                                       horizontal_part)) return 0;
@@ -764,7 +809,10 @@ static int add_material(const DM2_V1_AssetLoader *loader,
         command->selection_hash = hash_u32(command->selection_hash,
                                            command->mirror_flip);
     }
-    return command->raw_hash != 0u && command->decoded_hash != 0u &&
+    return command->material_source_bytes != NULL &&
+           command->material_source_byte_count != 0u &&
+           command->material_receipt_hash != 0u &&
+           command->raw_hash != 0u && command->decoded_hash != 0u &&
            command->selection_hash != 0u && ++plan->command_count;
 }
 

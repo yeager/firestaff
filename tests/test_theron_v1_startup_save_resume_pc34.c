@@ -4855,7 +4855,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.startup_level_blocked_anchor_count == 2 &&
                     receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     receipt.startup_level_anchor_status[1] ==
@@ -4872,7 +4872,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.level_route_hash != 0u &&
                     receipt.object_route_hash != 0u &&
                     receipt.route_hash != 0u,
-                "Theron Track02 receipt retains only the source-locked Hall of Records level and blocks unproved dungeon/object routes");
+                "Theron Track02 receipt retains Hall of Records and blocks the unbound object candidate");
     expect_true(theron_v1_track02_capture_object_table_route_receipt(
                     track02,
                     track02_size,
@@ -4889,12 +4889,12 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                      (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
                     (object_route_receipt.semantic_role_mask &
                      (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
-                    (object_route_receipt.semantic_role_mask &
-                     (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
+                    !(object_route_receipt.semantic_role_mask &
+                      (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
                     object_route_receipt.descriptor_table_semantic_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_mask == 0x07u &&
-                    object_route_receipt.object_table_role_mapped &&
+                    !object_route_receipt.object_table_role_mapped &&
                     object_route_receipt.object_table_candidate_count == 3u &&
                     object_route_receipt.object_table_candidate_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_candidate_entry_index[0] == 6u &&
@@ -4930,32 +4930,30 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.object_table_blocked_anchor_count == 3u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     object_route_receipt.object_table_anchor_binding_status[1] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     object_route_receipt.object_table_anchor_binding_status[2] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     object_route_receipt.object_table_declared_record_count[0] ==
-                        0x4241u &&
+                        0u &&
                     object_route_receipt.object_table_record_count[0] == 0u &&
                     object_route_receipt.object_table_required_byte_count[0] ==
-                        0x2120au &&
-                    object_route_receipt.object_table_overflow_count[0] ==
-                        0x4201u &&
+                        0u &&
+                    object_route_receipt.object_table_overflow_count[0] == 0u &&
                     object_route_receipt.object_table_first_bad_record_index[0] ==
-                        THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS &&
+                        0u &&
                     object_route_receipt.object_table_reject_reason[0] ==
-                        THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW &&
-                    object_route_receipt.object_table_record_hash[0] != 0u &&
+                        THERON_TRACK02_OBJECT_TABLE_REJECT_NONE &&
+                    object_route_receipt.object_table_record_hash[0] == 0u &&
                     !object_route_receipt.object_table_decode_ready &&
                     object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
                     object_route_receipt.route_hash != 0u,
-                "Theron Track02 object-table route receipt blocks fallback when real object evidence is missing");
+                "Theron Track02 object candidate remains opaque and blocks fallback");
 
-    /* Cross-anchor compact-row evidence is receipt-only.  These rows use the
-     * existing bounded fixture shape; consensus still does not assign any
-     * runtime object behavior or alter the no-fallback policy. */
+    /* Compact-looking rows are deliberately opaque. They must not create an
+     * object decoder or consensus route without source-owned binding. */
     for (size_t anchor = 0u; anchor < 3u; ++anchor) {
         uint8_t *objects = track02 + post_descriptor_candidate_offsets[anchor];
         wr16le_test(objects, 2u);
@@ -4979,36 +4977,37 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    object_route_receipt.object_table_decode_ready &&
-                    object_route_receipt.object_table_level_consensus_mask ==
-                        ((1u << 0) | (1u << 1)) &&
+                    !object_route_receipt.object_table_decode_ready &&
+                    object_route_receipt.object_table_level_consensus_mask == 0u &&
                     object_route_receipt
                             .object_table_level_consensus_anchor_masks[0] ==
-                        0x07u &&
+                        0u &&
                     object_route_receipt
                             .object_table_level_consensus_anchor_masks[1] ==
-                        0x07u &&
+                        0u &&
                     object_route_receipt
                             .object_table_level_consensus_record_counts[0] ==
-                        1u &&
+                        0u &&
                     object_route_receipt
                             .object_table_level_consensus_record_counts[1] ==
-                        1u &&
+                        0u &&
                     object_route_receipt
                             .object_table_level_consensus_first_record_indexes[0] ==
                         0u &&
                     object_route_receipt
                             .object_table_level_consensus_last_record_indexes[1] ==
-                        1u &&
+                        0u &&
                     object_route_receipt
-                            .object_table_level_consensus_position_hashes[0] != 0u &&
+                            .object_table_level_consensus_position_hashes[0] == 0u &&
                     object_route_receipt
-                            .object_table_level_consensus_position_hashes[1] != 0u &&
+                            .object_table_level_consensus_position_hashes[1] == 0u &&
                     object_route_receipt
-                            .object_table_level_consensus_record_hashes[0] != 0u &&
+                            .object_table_level_consensus_record_hashes[0] == 0u &&
                     object_route_receipt
-                            .object_table_level_consensus_record_hashes[1] != 0u,
-                "Theron Track02 compact object rows retain exact per-level cross-anchor evidence");
+                            .object_table_level_consensus_record_hashes[1] == 0u &&
+                    object_route_receipt.blocked_for_missing_real_object_evidence &&
+                    !object_route_receipt.fallback_visuals_allowed,
+                "Theron Track02 compact-looking rows remain opaque without promotion");
     {
         uint8_t *objects = track02 + post_descriptor_candidate_offsets[1];
         uint8_t first_row[THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES];
@@ -5026,17 +5025,16 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    (object_route_receipt.object_table_level_consensus_mask &
-                     ((1u << 0) | (1u << 1))) == 0u &&
+                    object_route_receipt.object_table_level_consensus_mask == 0u &&
                     object_route_receipt
                             .object_table_level_consensus_anchor_masks[0] ==
-                        0x05u &&
+                        0u &&
                     object_route_receipt
                             .object_table_level_consensus_anchor_masks[1] ==
-                        0x05u &&
-                    !object_route_receipt.blocked_for_missing_real_object_evidence &&
+                        0u &&
+                    object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed,
-                "Theron Track02 row consensus rejects reordered accepted rows without promotion");
+                "Theron Track02 reordered opaque rows remain blocked without promotion");
     {
         uint8_t *objects = track02 + post_descriptor_candidate_offsets[1];
         uint8_t first_row[THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES];
@@ -5055,14 +5053,16 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    (object_route_receipt.object_table_level_consensus_mask &
-                     (1u << 0)) == 0u &&
+                    object_route_receipt.object_table_level_consensus_mask == 0u &&
                     object_route_receipt
                             .object_table_level_consensus_anchor_masks[0] ==
-                        0x05u &&
-                    (object_route_receipt.object_table_level_consensus_mask &
-                     (1u << 1)) != 0u,
-                "Theron Track02 row consensus reports an accepted per-level anchor mismatch without promotion");
+                        0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[1] ==
+                        0u &&
+                    object_route_receipt.blocked_for_missing_real_object_evidence &&
+                    !object_route_receipt.fallback_visuals_allowed,
+                "Theron Track02 mutated opaque rows remain blocked without promotion");
 
     /* Restore the sparse fixture's deliberately malformed entry-6 prefix for
      * the following no-fallback/runtime receipt assertions. */
@@ -5236,7 +5236,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     runtime_result.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     runtime_result.startup_level_blocked_anchor_mask == 0x06u &&
                     runtime_result.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     runtime_result.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     runtime_result.startup_level_anchor_status[1] ==
@@ -5254,7 +5254,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     apply_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     apply_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     apply_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     apply_receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     apply_receipt.startup_level_anchor_status[1] ==
@@ -5282,7 +5282,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     state_receipt.runtime_nonstartup_level_blocked_anchor_mask == 0x07u &&
                     state_receipt.runtime_startup_level_blocked_anchor_mask == 0x06u &&
                     state_receipt.runtime_object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     state_receipt.runtime_startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     state_receipt.runtime_startup_level_anchor_raw_offsets[0] ==
@@ -5308,7 +5308,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     host_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     host_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     host_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
+                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
                     host_receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     host_receipt.startup_level_anchor_raw_offsets[0] ==

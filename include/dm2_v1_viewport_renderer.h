@@ -954,6 +954,31 @@ int dm2_v1_viewport_static_object_cell_for_map(int map_x,
                                                int party_y,
                                                int *out_cell,
                                                int *out_pass);
+
+/* Exact SKWIN/SkWinCore.cpp DRAW_ITEM selection for the first bounded
+ * floor-object family.  This describes source selection only: callers must
+ * still provide the expanded clipping rectangle and dtImageOffset receipt
+ * before pixels may be drawn. */
+typedef struct {
+    int source_cell;
+    int source_pass;
+    int position_5x5;
+    int clip_rect_id;
+    int y_distance;
+    int stretch_factor64;
+    int image_field;
+    int flip_mirror;
+    int slot_x_offset;
+    int slot_y_offset;
+} DM2_V1_StaticObjectSourcePlan;
+
+int dm2_v1_viewport_static_object_source_plan(int source_cell,
+                                              int source_pass,
+                                              int item_category,
+                                              int object_direction,
+                                              int container_open,
+                                              int draw_slot,
+                                              DM2_V1_StaticObjectSourcePlan *out);
 int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
     int possession_slot,
@@ -1098,6 +1123,11 @@ typedef struct {
     uint8_t source_static_object_admitted;
     uint8_t source_static_object_cell;
     int8_t source_static_object_pass;
+    uint16_t source_static_object_clip_rect_id;
+    uint32_t source_static_object_raw_gfx256_hash;
+    uint32_t source_static_object_raw_gfx256_receipt_hash;
+    uint32_t source_static_object_raw4_hash;
+    uint32_t source_static_object_raw4_receipt_hash;
 } DM2_ItemSprite;
 
 typedef struct {
@@ -1113,11 +1143,17 @@ typedef struct {
     uint16_t object_id;
     int map_x;
     int map_y;
+    int source_gdat_field;
     int source_g1_weapon;
     int source_g1_container;
     int source_static_object_admitted;
     int source_static_object_cell;
     int source_static_object_pass;
+    int source_static_object_clip_rect_id;
+    uint32_t source_static_object_raw_gfx256_hash;
+    uint32_t source_static_object_raw_gfx256_receipt_hash;
+    uint32_t source_static_object_raw4_hash;
+    uint32_t source_static_object_raw4_receipt_hash;
     int flip_mirror;
     int fallback_radius;
     uint8_t fallback_color;
@@ -1273,6 +1309,8 @@ typedef int (*DM2_V1_ViewportAssetPaletteFetch)(
     uint8_t out_palette16[16],
     uint32_t *out_hash);
 
+#include "dm2_v1_surface_snapshot.h"
+
 /* ── Viewport state ────────────────────────────────────────────── */
 typedef struct {
     /* View geometry */
@@ -1284,6 +1322,7 @@ typedef struct {
     /* Framebuffer output */
     uint8_t *framebuffer;      /* 320×200 pixel buffer */
     int      fb_stride;        /* bytes per row */
+    DM2_V1_ViewportSurfaceSnapshot surface_snapshot;
 
     /* View squares — populated by the world model (Phase 3) */
     DM2_ViewSquare squares[DM2_SQ_COUNT];
@@ -1583,6 +1622,10 @@ typedef struct {
     uint32_t g1_scene_item_material_pixel_hash;
     uint8_t g1_scene_item_material_palette16[16];
     uint32_t g1_scene_item_material_palette_hash;
+    uint32_t g1_scene_item_material_raw_gfx256_hash;
+    uint32_t g1_scene_item_material_raw_gfx256_receipt_hash;
+    uint32_t g1_scene_item_material_raw4_hash;
+    uint32_t g1_scene_item_material_raw4_receipt_hash;
     int g1_scene_item_material_consumed_count;
     /* A DB2/DB3 WALL_GFX field-1 image can be selected by
      * DRAW_DEFAULT_DOOR_BUTTON. Keep that exact decoded surface with the
@@ -1601,6 +1644,11 @@ typedef struct {
     uint32_t g1_scene_wall_button_material_pixel_hash;
     uint8_t g1_scene_wall_button_material_palette16[16];
     uint32_t g1_scene_wall_button_material_palette_hash;
+    uint16_t g1_scene_wall_button_material_raw_index;
+    const uint8_t *g1_scene_wall_button_material_raw_bytes;
+    size_t g1_scene_wall_button_material_raw_byte_count;
+    uint32_t g1_scene_wall_button_material_raw_hash;
+    uint32_t g1_scene_wall_button_material_receipt_hash;
     int g1_scene_wall_button_material_consumed_count;
     const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
     const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
@@ -1659,6 +1707,10 @@ typedef struct {
 
 /* ── Initialization ────────────────────────────────────────────── */
 void dm2_v1_viewport_init(DM2_V1_ViewportState *s, uint8_t *framebuffer, int stride);
+int dm2_v1_viewport_bind_surface(DM2_V1_ViewportState *s, uint8_t *framebuffer,
+                                 int stride);
+int dm2_v1_viewport_surface_snapshot(const DM2_V1_ViewportState *s,
+                                     DM2_V1_ViewportSurfaceSnapshot *out);
 void dm2_v1_viewport_set_party(DM2_V1_ViewportState *s, int dir, int x, int y);
 void dm2_v1_viewport_set_outdoor(DM2_V1_ViewportState *s, int is_outdoor);
 void dm2_v1_viewport_set_g1_first_map_runtime(
@@ -1886,12 +1938,22 @@ void dm2_v1_viewport_set_g1_scene_item_material_direct(
     const uint8_t *pixels, int width, int height, int stride,
     const uint8_t palette16[16], uint32_t palette_hash,
     uint32_t expected_pixel_hash);
+void dm2_v1_viewport_set_g1_scene_static_item_material_direct(
+    DM2_V1_ViewportState *s, int ready, int item_category, int item_type,
+    int gdat_index, uint16_t object_id, int map_x, int map_y,
+    const uint8_t *pixels, int width, int height, int stride,
+    const uint8_t palette16[16], uint32_t palette_hash,
+    uint32_t expected_pixel_hash, uint32_t raw_gfx256_hash,
+    uint32_t raw_gfx256_receipt_hash, uint32_t raw4_hash,
+    uint32_t raw4_receipt_hash);
 void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
     DM2_V1_ViewportState *s, int ready, int gdat_index,
     int wall_gfx_index, int field, int map_x, int map_y,
     uint16_t object_id, const uint8_t *pixels, int width, int height,
     int stride, const uint8_t palette16[16], uint32_t palette_hash,
-    uint32_t expected_pixel_hash);
+    uint32_t expected_pixel_hash, uint16_t raw_index,
+    const uint8_t *raw_bytes, size_t raw_byte_count, uint32_t raw_hash,
+    uint32_t raw_receipt_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,

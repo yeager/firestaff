@@ -1,0 +1,4 @@
+#include "nexus_v1_launcher.h"
+#include "nexus_v1_saturn_save_capture.h"
+#include <string.h>
+int main(void){Nexus_V1_Engine e;Nexus_V1_SaturnSaveCaptureReceipt s;Nexus_V1_LauncherSaturnCardBootBinding b;memset(&e,0,sizeof(e));memset(&s,0,sizeof(s));s.valid=1;s.status=NEXUS_V1_SATURN_SAVE_CAPTURE_ADMITTED_OPAQUE;s.opaque_only=s.title_route_bound=s.champion_route_bound=1;s.image_bytes=8192;s.image_fnv1a64=5;if(!nexus_v1_engine_set_saturn_save_capture_receipt(&e,4,&s)||!nexus_v1_launcher_bind_saturn_card_boot_route(&e,4,5,9,1,&b)||!b.valid)return 1;if(nexus_v1_launcher_bind_saturn_card_boot_route(&e,3,5,9,1,&b)||nexus_v1_launcher_bind_saturn_card_boot_route(&e,4,5,0,1,&b)||nexus_v1_launcher_bind_saturn_card_boot_route(&e,4,6,9,1,&b)||nexus_v1_launcher_bind_saturn_card_boot_route(&e,4,5,9,0,&b))return 1;return 0;}

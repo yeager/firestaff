@@ -195,6 +195,14 @@ struct PartyState_Compat {
     unsigned char pc34InactiveChampionRecords[CHAMPION_MAX_PARTY][319];
     int pc34PartyInfoBytesValid;
     unsigned char pc34PartyInfoBytes[128];
+
+    /* F0435 publishes these only after the authenticated C3/C4 snapshot
+     * reaches the runtime world. PoisonEventCount is a byte in C2, so F0802
+     * may preserve it only while its event/timeline owner is unchanged. */
+    int pc34PoisonEventCountReceiptValid;
+    unsigned char pc34OriginalPoisonEventCounts[CHAMPION_MAX_PARTY];
+    uint32_t pc34PoisonEventCountRuntimeEventCount;
+    uint32_t pc34PoisonEventCountTimelineFingerprint;
 };
 
 /*

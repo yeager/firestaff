@@ -1,5 +1,9 @@
 
 #include "nexus_v1_engine.h"
+#include "nexus_v1_dgn_multi_level_capture_adjudicator.h"
+#include "nexus_v1_saturn_save_capture.h"
+#include "nexus_v1_prs3_dgn_placement_adapter.h"
+#include "nexus_v1_structure1f_placement_binding.h"
 #include "asset_find_by_hash.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_squares.h"
@@ -257,38 +261,6 @@ const char *nexus_v1_known_file_md5(const char *name)
 }
 
 static int nexus_path_is_file(const char *path);
-
-static int asset_file_matches_md5(const char *path, const char *expected_md5)
-{
-    FILE *file;
-    uint8_t *bytes;
-    long size;
-    int ok;
-
-    if (!path || !expected_md5) return 0;
-    file = fopen(path, "rb");
-    if (!file) return 0;
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fclose(file);
-        return 0;
-    }
-    size = ftell(file);
-    if (size < 0 || fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes) {
-        fclose(file);
-        return 0;
-    }
-    ok = fread(bytes, 1U, (size_t)size, file) == (size_t)size &&
-         nexus_v1_dgn_bytes_match_canonical_md5(bytes, (int)size,
-                                                expected_md5);
-    free(bytes);
-    fclose(file);
-    return ok ? 1 : 0;
-}
 
 static uint64_t nexus_v1_dgn_bytes_fnv1a64(const uint8_t *data, int size)
 {
@@ -1157,6 +1129,7 @@ int nexus_v1_current_level_dgn_face_material_source_receipt(
 {
     Nexus_V1_DgnFaceMaterialBinding bindings[NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES];
     Nexus_V1_DgnFaceMaterialInput input;
+    Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
     char level_name[16];
     int binding_count = 0;
 
@@ -1177,6 +1150,14 @@ int nexus_v1_current_level_dgn_face_material_source_receipt(
             &engine->current_level, engine->current_level_dgn_data,
             engine->current_level_dgn_size, bindings,
             NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES, &binding_count) != 0) {
+        return 0;
+    }
+    if (nexus_v1_level_structure3_face_material_receipt(
+            &engine->current_level, &materials) != 0 ||
+        !materials.valid || !materials.face_receipt_valid ||
+        !materials.selector_bindings_complete ||
+        materials.textured_face_count != binding_count) {
+        out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE;
         return 0;
     }
     memset(&input, 0, sizeof(input));
@@ -1204,8 +1185,10 @@ void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
                                     int party_dir) {
     if (!engine) return;
     party_dir &= 3;
-    if (engine->game.current_level != level ||
-        engine->game.party_x != party_x || engine->game.party_y != party_y ||
+    if (engine->game.current_level != level) {
+        nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
+    } else if (engine->game.party_x != party_x ||
+               engine->game.party_y != party_y ||
         engine->game.party_dir != party_dir) {
         nexus_v1_invalidate_dgn_material_plan(engine);
     }
@@ -1213,6 +1196,288 @@ void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
     engine->game.party_x = party_x;
     engine->game.party_y = party_y;
     engine->game.party_dir = party_dir;
+}
+
+void nexus_v1_engine_clear_external_prs3_placement_receipt(
+    Nexus_V1_Engine *engine)
+{
+    if (!engine) return;
+    engine->external_prs3_placement_valid = 0;
+    engine->external_saturn_save_capture_valid = 0;
+    engine->external_saturn_save_card_fnv1a64 = 0U;
+    engine->external_saturn_save_route_epoch = 0U;
+    engine->external_prs3_placement_level = 0;
+    engine->external_prs3_placement_route_epoch = 0U;
+    engine->external_prs3_placement_dgn_fnv1a64 = 0U;
+    engine->external_prs3_placement_descriptor_index = 0U;
+    engine->external_prs3_placement_frame_sequence = 0U;
+    engine->external_prs3_placement_command_sequence = 0U;
+    engine->external_prs3_placement_descriptor_fnv1a64 = 0U;
+    engine->external_prs3_placement_trace_fnv1a64 = 0U;
+    engine->external_prs3_placement_trace_size = 0U;
+    engine->external_prs3_placement_header_fnv1a64 = 0U;
+    engine->external_prs3_placement_bitmap_fnv1a64 = 0U;
+    engine->external_prs3_placement_bitmap_offset = 0U;
+    engine->external_prs3_placement_bitmap_size = 0U;
+    engine->external_prs3_placement_palt_fnv1a64 = 0U;
+    engine->external_prs3_placement_palt_size = 0U;
+    engine->external_dgn_campaign_capture_ready = 0;
+    engine->external_dgn_campaign_capture_level = -1;
+    engine->external_dgn_campaign_capture_dgn_fnv1a64 = 0U;
+    engine->external_dgn_campaign_capture_trace_fnv1a64 = 0U;
+    engine->external_dgn_campaign_capture_trace_size = 0U;
+    engine->external_dgn_campaign_capture_frame_sequence = 0U;
+    engine->external_dgn_campaign_capture_command_sequence = 0U;
+    engine->external_structure1f_placement_valid = 0;
+    engine->external_structure1f_placement_dgn_fnv1a64 = 0U;
+    engine->external_structure1f_placement_descriptor_index = 0U;
+    engine->external_structure1f_placement_frame_sequence = 0U;
+    engine->external_structure1f_placement_command_sequence = 0U;
+    engine->external_structure1f_placement_descriptor_fnv1a64 = 0U;
+    nexus_v1_invalidate_dgn_material_plan(engine);
+}
+
+int nexus_v1_engine_set_saturn_save_capture_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    const Nexus_V1_SaturnSaveCaptureReceipt *receipt)
+{
+    if (!engine) return 0;
+    engine->external_saturn_save_capture_valid = 0;
+    engine->external_saturn_save_card_fnv1a64 = 0U;
+    engine->external_saturn_save_route_epoch = 0U;
+    if (!receipt || !route_epoch || route_epoch <= engine->external_saturn_save_last_route_epoch ||
+        !receipt->valid || receipt->status != NEXUS_V1_SATURN_SAVE_CAPTURE_ADMITTED_OPAQUE ||
+        !receipt->opaque_only || receipt->native_save_fallback_permitted ||
+        !receipt->title_route_bound || !receipt->champion_route_bound ||
+        receipt->image_bytes != NEXUS_V1_SATURN_SAVE_IMAGE_BYTES || !receipt->image_fnv1a64) return 0;
+    engine->external_saturn_save_capture_valid = 1;
+    engine->external_saturn_save_card_fnv1a64 = receipt->image_fnv1a64;
+    engine->external_saturn_save_route_epoch = route_epoch;
+    engine->external_saturn_save_last_route_epoch = route_epoch;
+    return 1;
+}
+int nexus_v1_engine_saturn_save_capture_ready(const Nexus_V1_Engine *engine,
+                                               uint64_t route_epoch, uint64_t card_fnv1a64)
+{ return engine && engine->external_saturn_save_capture_valid && route_epoch &&
+    route_epoch == engine->external_saturn_save_route_epoch && card_fnv1a64 &&
+    card_fnv1a64 == engine->external_saturn_save_card_fnv1a64; }
+
+int nexus_v1_engine_set_dgn_multi_level_capture_adjudication(
+    Nexus_V1_Engine *engine,
+    const struct Nexus_V1_DgnMultiLevelCaptureAdjudicationReceipt *receipt)
+{
+    const Nexus_V1_DgnMultiLevelCaptureCoverage *coverage;
+    if (!engine) return 0;
+    engine->external_dgn_campaign_capture_ready = 0;
+    engine->external_dgn_campaign_capture_level = -1;
+    engine->external_dgn_campaign_capture_dgn_fnv1a64 = 0U;
+    engine->external_dgn_campaign_capture_trace_fnv1a64 = 0U;
+    engine->external_dgn_campaign_capture_trace_size = 0U;
+    engine->external_dgn_campaign_capture_frame_sequence = 0U;
+    engine->external_dgn_campaign_capture_command_sequence = 0U;
+    if (!receipt || !receipt->valid || !receipt->opaque_original_capture_only ||
+        receipt->decoder_promoted || receipt->mesh_semantics_permitted ||
+        receipt->render_permitted || !engine->level_loaded ||
+        engine->game.current_level < 0 || engine->game.current_level >= 16) return 0;
+    coverage = &receipt->levels[engine->game.current_level];
+    if (!coverage->valid || !coverage->opaque_original_capture_covered ||
+        !coverage->dgn_fnv1a64 || !coverage->trace_fnv1a64 || !coverage->trace_size || !coverage->frame_sequence ||
+        !coverage->command_sequence ||
+        coverage->dgn_fnv1a64 != engine->current_level_structure2_source.loaded_dgn_fnv1a64 ||
+        !engine->external_prs3_placement_valid ||
+        engine->external_prs3_placement_level != engine->game.current_level ||
+        engine->external_prs3_placement_dgn_fnv1a64 != coverage->dgn_fnv1a64 ||
+        engine->external_prs3_placement_trace_fnv1a64 != coverage->trace_fnv1a64 ||
+        engine->external_prs3_placement_trace_size != coverage->trace_size ||
+        engine->external_prs3_placement_frame_sequence != coverage->frame_sequence ||
+        engine->external_prs3_placement_command_sequence != coverage->command_sequence) return 0;
+    engine->external_dgn_campaign_capture_ready = 1;
+    engine->external_dgn_campaign_capture_level = engine->game.current_level;
+    engine->external_dgn_campaign_capture_dgn_fnv1a64 = coverage->dgn_fnv1a64;
+    engine->external_dgn_campaign_capture_trace_fnv1a64 = coverage->trace_fnv1a64;
+    engine->external_dgn_campaign_capture_trace_size = coverage->trace_size;
+    engine->external_dgn_campaign_capture_frame_sequence = coverage->frame_sequence;
+    engine->external_dgn_campaign_capture_command_sequence = coverage->command_sequence;
+    return 1;
+}
+
+int nexus_v1_engine_current_level_dgn_capture_ready(const Nexus_V1_Engine *engine)
+{
+    return engine && engine->level_loaded && engine->external_dgn_campaign_capture_ready &&
+        engine->external_dgn_campaign_capture_level == engine->game.current_level &&
+        engine->external_dgn_campaign_capture_dgn_fnv1a64 &&
+        engine->external_dgn_campaign_capture_dgn_fnv1a64 ==
+            engine->current_level_structure2_source.loaded_dgn_fnv1a64 &&
+        engine->external_dgn_campaign_capture_trace_fnv1a64 &&
+        engine->external_dgn_campaign_capture_trace_size &&
+        engine->external_prs3_placement_valid &&
+        engine->external_prs3_placement_level == engine->game.current_level &&
+        engine->external_prs3_placement_dgn_fnv1a64 == engine->external_dgn_campaign_capture_dgn_fnv1a64 &&
+        engine->external_prs3_placement_trace_fnv1a64 == engine->external_dgn_campaign_capture_trace_fnv1a64 &&
+        engine->external_prs3_placement_trace_size == engine->external_dgn_campaign_capture_trace_size &&
+        engine->external_prs3_placement_frame_sequence == engine->external_dgn_campaign_capture_frame_sequence &&
+        engine->external_prs3_placement_command_sequence == engine->external_dgn_campaign_capture_command_sequence &&
+        engine->external_dgn_campaign_capture_frame_sequence &&
+        engine->external_dgn_campaign_capture_command_sequence;
+}
+
+int nexus_v1_engine_set_external_prs3_placement_receipt(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_Prs3DgnPlacementAdapterReceipt *receipt)
+{
+    if (!engine) return 0;
+
+    /* An attempted replacement is a new external route epoch.  Clear the
+     * prior immutable binding before validation so rejected candidate bytes
+     * cannot leave stale placement evidence eligible for material planning. */
+    nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
+
+    if (!receipt || !receipt->valid || !receipt->trace_bound ||
+        !receipt->dgn_source_bound || !receipt->descriptor_envelope_bound ||
+        !receipt->command_coordinates_bound || !receipt->no_draw_only ||
+        !receipt->blocks_real_dgn_mesh_render ||
+        receipt->fallback_visuals_permitted || !receipt->trace_fnv1a64 || !receipt->trace_size ||
+        !receipt->dgn_fnv1a64 || !engine->level_loaded ||
+        !receipt->dgn_placement_observed || !receipt->frame_sequence ||
+        !receipt->command_sequence || !receipt->descriptor_fnv1a64 ||
+        !receipt->prs3_header_span_fnv1a64 ||
+        !receipt->prs3_bitmap_candidate_fnv1a64 ||
+        !receipt->prs3_bitmap_candidate_size ||
+        !receipt->palt_candidate_fnv1a64 ||
+        receipt->palt_candidate_size != 512U ||
+        receipt->dgn_fnv1a64 !=
+            engine->current_level_structure2_source.loaded_dgn_fnv1a64)
+        return 0;
+    engine->external_prs3_placement_valid = 1;
+    engine->external_prs3_placement_level = engine->game.current_level;
+    engine->external_prs3_placement_dgn_fnv1a64 = receipt->dgn_fnv1a64;
+    engine->external_prs3_placement_descriptor_index = receipt->descriptor_index;
+    engine->external_prs3_placement_frame_sequence = receipt->frame_sequence;
+    engine->external_prs3_placement_command_sequence = receipt->command_sequence;
+    engine->external_prs3_placement_descriptor_fnv1a64 =
+        receipt->descriptor_fnv1a64;
+    engine->external_prs3_placement_trace_fnv1a64 = receipt->trace_fnv1a64;
+    engine->external_prs3_placement_trace_size = receipt->trace_size;
+    engine->external_prs3_placement_header_fnv1a64 =
+        receipt->prs3_header_span_fnv1a64;
+    engine->external_prs3_placement_bitmap_fnv1a64 =
+        receipt->prs3_bitmap_candidate_fnv1a64;
+    engine->external_prs3_placement_bitmap_offset =
+        receipt->prs3_bitmap_candidate_offset;
+    engine->external_prs3_placement_bitmap_size =
+        receipt->prs3_bitmap_candidate_size;
+    engine->external_prs3_placement_palt_fnv1a64 =
+        receipt->palt_candidate_fnv1a64;
+    engine->external_prs3_placement_palt_size = receipt->palt_candidate_size;
+    return 1;
+}
+
+int nexus_v1_engine_set_external_prs3_replay_placement_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t expected_trace_fnv1a64, uint64_t expected_dgn_fnv1a64,
+    uint64_t expected_bitmap_candidate_fnv1a64,
+    const Nexus_V1_Prs3DgnPlacementAdapterReceipt *receipt)
+{
+    uint64_t prior_epoch;
+    if (!engine) return 0;
+    prior_epoch = engine->external_prs3_replay_last_route_epoch;
+    if (!route_epoch || !receipt || route_epoch <= prior_epoch ||
+        receipt->trace_fnv1a64 != expected_trace_fnv1a64 ||
+        receipt->dgn_fnv1a64 != expected_dgn_fnv1a64 ||
+        receipt->prs3_bitmap_candidate_fnv1a64 !=
+            expected_bitmap_candidate_fnv1a64) {
+        nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
+        return 0;
+    }
+    if (!nexus_v1_engine_set_external_prs3_placement_receipt(engine, receipt))
+        return 0;
+    engine->external_prs3_placement_route_epoch = route_epoch;
+    engine->external_prs3_replay_last_route_epoch = route_epoch;
+    return 1;
+}
+
+int nexus_v1_engine_set_external_structure1f_placement_binding(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_Structure1FPlacementBindingReceipt *receipt)
+{
+    if (!engine) return 0;
+    engine->external_structure1f_placement_valid = 0;
+    engine->external_structure1f_placement_dgn_fnv1a64 = 0U;
+    engine->external_structure1f_placement_descriptor_index = 0U;
+    engine->external_structure1f_placement_frame_sequence = 0U;
+    engine->external_structure1f_placement_command_sequence = 0U;
+    engine->external_structure1f_placement_descriptor_fnv1a64 = 0U;
+    nexus_v1_invalidate_dgn_material_plan(engine);
+    if (!receipt || !receipt->valid || !receipt->placement_observed ||
+        !receipt->no_draw_only || !receipt->blocks_real_dgn_mesh_render ||
+        receipt->fallback_visuals_permitted || !receipt->dgn_fnv1a64 ||
+        !receipt->frame_sequence || !receipt->command_sequence ||
+        !receipt->descriptor_fnv1a64 || !engine->external_prs3_placement_valid ||
+        receipt->dgn_fnv1a64 != engine->external_prs3_placement_dgn_fnv1a64 ||
+        receipt->descriptor_index !=
+            engine->external_prs3_placement_descriptor_index ||
+        receipt->frame_sequence !=
+            engine->external_prs3_placement_frame_sequence ||
+        receipt->command_sequence !=
+            engine->external_prs3_placement_command_sequence ||
+        receipt->descriptor_fnv1a64 !=
+            engine->external_prs3_placement_descriptor_fnv1a64) {
+        return 0;
+    }
+    engine->external_structure1f_placement_valid = 1;
+    engine->external_structure1f_placement_dgn_fnv1a64 = receipt->dgn_fnv1a64;
+    engine->external_structure1f_placement_descriptor_index =
+        receipt->descriptor_index;
+    engine->external_structure1f_placement_frame_sequence =
+        receipt->frame_sequence;
+    engine->external_structure1f_placement_command_sequence =
+        receipt->command_sequence;
+    engine->external_structure1f_placement_descriptor_fnv1a64 =
+        receipt->descriptor_fnv1a64;
+    return 1;
+}
+
+int nexus_v1_current_external_structure1f_placement_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_ExternalStructure1FPlacementReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!engine || !engine->level_loaded ||
+        !engine->external_prs3_placement_valid ||
+        !engine->external_structure1f_placement_valid ||
+        engine->external_prs3_placement_level != engine->game.current_level ||
+        !engine->external_prs3_placement_dgn_fnv1a64 ||
+        !engine->external_prs3_placement_frame_sequence ||
+        !engine->external_prs3_placement_command_sequence ||
+        !engine->external_structure1f_placement_descriptor_fnv1a64 ||
+        engine->external_prs3_placement_dgn_fnv1a64 !=
+            engine->current_level_structure2_source.loaded_dgn_fnv1a64 ||
+        engine->external_structure1f_placement_dgn_fnv1a64 !=
+            engine->external_prs3_placement_dgn_fnv1a64 ||
+        engine->external_structure1f_placement_descriptor_index !=
+            engine->external_prs3_placement_descriptor_index ||
+        engine->external_structure1f_placement_frame_sequence !=
+            engine->external_prs3_placement_frame_sequence ||
+        engine->external_structure1f_placement_command_sequence !=
+            engine->external_prs3_placement_command_sequence ||
+        engine->external_structure1f_placement_descriptor_fnv1a64 !=
+            engine->external_prs3_placement_descriptor_fnv1a64) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->no_draw_only = 1;
+    out_receipt->blocks_real_dgn_mesh_render = 1;
+    out_receipt->dgn_fnv1a64 = engine->external_structure1f_placement_dgn_fnv1a64;
+    out_receipt->descriptor_index =
+        engine->external_structure1f_placement_descriptor_index;
+    out_receipt->frame_sequence =
+        engine->external_structure1f_placement_frame_sequence;
+    out_receipt->command_sequence =
+        engine->external_structure1f_placement_command_sequence;
+    out_receipt->descriptor_fnv1a64 =
+        engine->external_structure1f_placement_descriptor_fnv1a64;
+    return 1;
 }
 
 const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
@@ -1224,6 +1489,9 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     int structure2_source_bound;
     int item_ibs_authorized_count;
     int i;
+    Nexus_V1_DgnStructure2SourceReceipt structure2_source;
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt structure2_descriptors;
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget placement_target;
 
     if (!engine || !engine->level_loaded ||
         !engine->current_level.geometry_info.dmweb_container) return NULL;
@@ -1249,6 +1517,31 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     plan->structure2_source_level_index = -1;
     plan->structure2_source_canonical_hash_verified = 0;
     plan->structure2_source_envelope_valid = 0;
+    plan->external_prs3_placement_bound = 0;
+    plan->external_prs3_placement_trace_fnv1a64 = 0U;
+    plan->external_prs3_placement_header_fnv1a64 = 0U;
+    plan->external_prs3_placement_bitmap_fnv1a64 = 0U;
+    plan->external_prs3_placement_bitmap_offset = 0U;
+    plan->external_prs3_placement_bitmap_size = 0U;
+    plan->external_prs3_placement_palt_fnv1a64 = 0U;
+    plan->external_prs3_placement_palt_size = 0U;
+    plan->external_prs3_placement_dgn_fnv1a64 = 0U;
+    plan->external_prs3_placement_descriptor_index = 0U;
+    plan->external_prs3_placement_frame_sequence = 0U;
+    plan->external_prs3_placement_command_sequence = 0U;
+    plan->external_prs3_placement_route_epoch = 0U;
+    plan->external_prs3_placement_descriptor_target_bound = 0;
+    plan->external_prs3_placement_descriptor_fnv1a64 = 0U;
+    plan->external_prs3_placement_image_anchor_offset = 0U;
+    plan->external_prs3_placement_image_candidate_fnv1a64 = 0U;
+    plan->external_prs3_placement_palette_anchor_offset = 0U;
+    plan->external_prs3_placement_palette_candidate_fnv1a64 = 0U;
+    plan->external_structure1f_placement_bound = 0;
+    plan->external_structure1f_placement_dgn_fnv1a64 = 0U;
+    plan->external_structure1f_placement_descriptor_index = 0U;
+    plan->external_structure1f_placement_frame_sequence = 0U;
+    plan->external_structure1f_placement_command_sequence = 0U;
+    plan->external_structure1f_placement_descriptor_fnv1a64 = 0U;
     plan->structure2_floor_command_sources_consumed = 0;
     memset(plan->structure1f_item_command_bindings, 0,
            sizeof(plan->structure1f_item_command_bindings));
@@ -1303,25 +1596,129 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         engine->wall_bpk_host_route_valid &&
         engine->floor_bpk_host_route.host_consumed_surfaces &&
         engine->wall_bpk_host_route.host_consumed_surfaces;
+    memset(&structure2_source, 0, sizeof(structure2_source));
+    memset(&structure2_descriptors, 0, sizeof(structure2_descriptors));
+    (void)nexus_v1_current_level_structure2_source_receipt(
+        engine, &structure2_source);
+    (void)nexus_v1_current_level_structure2_descriptor_receipt(
+        engine, &structure2_descriptors);
     structure2_source_bound =
-        engine->current_level_structure2_source.level_index ==
-            engine->game.current_level &&
-        engine->current_level_structure2_source.canonical_hash_verified &&
-        engine->current_level_structure2_source
-            .structure2_payload_envelope_valid &&
-        engine->current_level_structure2_source.materialization_bound &&
-        nexus_v1_dgn_source_bytes_match(
-            &engine->current_level_structure2_source,
-            engine->current_level_dgn_data,
-            engine->current_level_dgn_size) &&
-        !engine->current_level_structure2_source.fallback_visuals_permitted;
-    if (engine->current_level_structure2_source.canonical_hash_verified) {
-        plan->structure2_source_level_index =
-            engine->current_level_structure2_source.level_index;
+        structure2_source.level_index == engine->game.current_level &&
+        structure2_source.canonical_hash_verified &&
+        structure2_source.structure2_payload_envelope_valid &&
+        structure2_source.materialization_bound &&
+        structure2_source.loaded_bytes_bound &&
+        !structure2_source.fallback_visuals_permitted;
+    structure2_source_bound = structure2_source_bound &&
+        engine->external_prs3_placement_valid &&
+        engine->external_prs3_placement_level == engine->game.current_level &&
+        engine->external_prs3_placement_dgn_fnv1a64 ==
+            structure2_source.loaded_dgn_fnv1a64 &&
+        engine->external_prs3_placement_trace_fnv1a64 != 0U &&
+        engine->external_prs3_placement_frame_sequence != 0U &&
+        engine->external_prs3_placement_command_sequence != 0U &&
+        structure2_descriptors.valid &&
+        structure2_descriptors.level_index == engine->game.current_level &&
+        structure2_descriptors.source_bytes_fnv1a64 ==
+            structure2_source.loaded_dgn_fnv1a64 &&
+        structure2_descriptors.descriptor_count > 0 &&
+        engine->external_prs3_placement_descriptor_index <
+            (uint32_t)structure2_descriptors.descriptor_count;
+    structure2_source_bound = structure2_source_bound &&
+        engine->external_prs3_placement_valid &&
+        engine->external_prs3_placement_level == engine->game.current_level &&
+        engine->external_prs3_placement_route_epoch != 0U &&
+        engine->external_prs3_placement_header_fnv1a64 != 0U &&
+        engine->external_prs3_placement_bitmap_fnv1a64 != 0U &&
+        engine->external_prs3_placement_bitmap_size != 0U &&
+        engine->external_prs3_placement_palt_fnv1a64 != 0U &&
+        engine->external_prs3_placement_palt_size == 512U;
+    memset(&placement_target, 0, sizeof(placement_target));
+    if (structure2_source_bound &&
+        (nexus_v1_engine_build_structure2_descriptor_capture_target(
+             engine, (int)engine->external_prs3_placement_descriptor_index,
+             &placement_target) != 1 ||
+         !placement_target.valid ||
+         placement_target.level_index != engine->game.current_level ||
+         placement_target.source_bytes_fnv1a64 !=
+             engine->external_prs3_placement_dgn_fnv1a64 ||
+         placement_target.descriptor_index !=
+             (int)engine->external_prs3_placement_descriptor_index ||
+         !placement_target.descriptor_bytes_fnv1a64 ||
+         placement_target.descriptor_bytes_fnv1a64 !=
+             engine->external_prs3_placement_descriptor_fnv1a64 ||
+         !placement_target.image_payload_candidate_bound ||
+         !placement_target.image_payload_candidate_fnv1a64 ||
+         !placement_target.no_draw_only ||
+         placement_target.fallback_visuals_permitted)) {
+        structure2_source_bound = 0;
+    }
+    plan->external_prs3_placement_bound = structure2_source_bound;
+    if (structure2_source_bound) {
+        plan->external_prs3_placement_trace_fnv1a64 =
+            engine->external_prs3_placement_trace_fnv1a64;
+        plan->external_prs3_placement_header_fnv1a64 =
+            engine->external_prs3_placement_header_fnv1a64;
+        plan->external_prs3_placement_bitmap_fnv1a64 =
+            engine->external_prs3_placement_bitmap_fnv1a64;
+        plan->external_prs3_placement_bitmap_offset =
+            engine->external_prs3_placement_bitmap_offset;
+        plan->external_prs3_placement_bitmap_size =
+            engine->external_prs3_placement_bitmap_size;
+        plan->external_prs3_placement_palt_fnv1a64 =
+            engine->external_prs3_placement_palt_fnv1a64;
+        plan->external_prs3_placement_palt_size =
+            engine->external_prs3_placement_palt_size;
+        plan->external_prs3_placement_dgn_fnv1a64 =
+            engine->external_prs3_placement_dgn_fnv1a64;
+        plan->external_prs3_placement_descriptor_index =
+            engine->external_prs3_placement_descriptor_index;
+        plan->external_prs3_placement_frame_sequence =
+            engine->external_prs3_placement_frame_sequence;
+        plan->external_prs3_placement_command_sequence =
+            engine->external_prs3_placement_command_sequence;
+        plan->external_prs3_placement_route_epoch =
+            engine->external_prs3_placement_route_epoch;
+        plan->external_prs3_placement_descriptor_target_bound = 1;
+        plan->external_prs3_placement_descriptor_fnv1a64 =
+            placement_target.descriptor_bytes_fnv1a64;
+        plan->external_prs3_placement_image_anchor_offset =
+            placement_target.image_payload_anchor_offset;
+        plan->external_prs3_placement_image_candidate_fnv1a64 =
+            placement_target.image_payload_candidate_fnv1a64;
+        plan->external_prs3_placement_palette_anchor_offset =
+            placement_target.palette_payload_anchor_offset;
+        plan->external_prs3_placement_palette_candidate_fnv1a64 =
+            placement_target.palette_payload_candidate_fnv1a64;
+        if (engine->external_structure1f_placement_valid &&
+            engine->external_structure1f_placement_dgn_fnv1a64 ==
+                plan->external_prs3_placement_dgn_fnv1a64 &&
+            engine->external_structure1f_placement_descriptor_index ==
+                plan->external_prs3_placement_descriptor_index &&
+            engine->external_structure1f_placement_frame_sequence ==
+                plan->external_prs3_placement_frame_sequence &&
+            engine->external_structure1f_placement_command_sequence ==
+                plan->external_prs3_placement_command_sequence &&
+            engine->external_structure1f_placement_descriptor_fnv1a64 ==
+                plan->external_prs3_placement_descriptor_fnv1a64) {
+            plan->external_structure1f_placement_bound = 1;
+            plan->external_structure1f_placement_dgn_fnv1a64 =
+                engine->external_structure1f_placement_dgn_fnv1a64;
+            plan->external_structure1f_placement_descriptor_index =
+                engine->external_structure1f_placement_descriptor_index;
+            plan->external_structure1f_placement_frame_sequence =
+                engine->external_structure1f_placement_frame_sequence;
+            plan->external_structure1f_placement_command_sequence =
+                engine->external_structure1f_placement_command_sequence;
+            plan->external_structure1f_placement_descriptor_fnv1a64 =
+                engine->external_structure1f_placement_descriptor_fnv1a64;
+        }
+    }
+    if (structure2_source.canonical_hash_verified) {
+        plan->structure2_source_level_index = structure2_source.level_index;
         plan->structure2_source_canonical_hash_verified = 1;
         plan->structure2_source_envelope_valid =
-            engine->current_level_structure2_source
-                .structure2_payload_envelope_valid;
+            structure2_source.structure2_payload_envelope_valid;
     }
     plan->receipt.structure2_source_materialization_bound =
         structure2_source_bound;
@@ -2045,6 +2442,16 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     engine->menu_bpk_decode_receipt_attempted = 0;
     engine->menu_bpk_upload_receipt_valid = 0;
     engine->menu_bpk_upload_row_count = 0;
+    engine->menu_bpk_package_fnv1a64 = 0U;
+    engine->menu_bpk_no_draw_host_valid = 0;
+    engine->menu_bpk_no_draw_host_route_epoch = 0U;
+    engine->menu_bpk_no_draw_host_package_fnv1a64 = 0U;
+    engine->menu_bpk_no_draw_host_entry_index = 0U;
+    engine->menu_bpk_no_draw_host_payload_offset = 0U;
+    engine->menu_bpk_no_draw_host_payload_size = 0U;
+    engine->menu_bpk_no_draw_host_payload_fnv1a64 = 0U;
+    memset(&engine->menu_bpk_no_draw_host_compression, 0,
+           sizeof(engine->menu_bpk_no_draw_host_compression));
     memset(&engine->menu_bpk_decode_receipt, 0,
            sizeof(engine->menu_bpk_decode_receipt));
     engine->menu_bpk_prs3_execution_evidence_valid = 0;
@@ -2071,6 +2478,12 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
 
     data = nexus_v1_read_file(engine, "MENU.BPK", &size);
     if (!data || size <= 0) {
+        free(data);
+        return;
+    }
+    engine->menu_bpk_package_fnv1a64 =
+        nexus_v1_dgn_bytes_fnv1a64(data, size);
+    if (!engine->menu_bpk_package_fnv1a64) {
         free(data);
         return;
     }
@@ -3459,6 +3872,13 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     Nexus_V1_DungeonStartReceipt dungeon_start;
 
     if (!engine || level < 0 || level > 15) return -1;
+    /* A reload may replace the same numeric level with fresh source bytes.
+     * Retained capture evidence is therefore never valid across this boundary. */
+    nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
+    engine->m11_direct_lev_dungeon_no_draw_valid = 0;
+    engine->m11_direct_lev_dungeon_route_epoch = 0U;
+    memset(&engine->m11_direct_lev_dungeon, 0,
+           sizeof(engine->m11_direct_lev_dungeon));
     snprintf(name, sizeof(name), "LEV%02d.DGN", level);
 
     data = nexus_v1_read_file(engine, name, &size);
@@ -3628,6 +4048,20 @@ int nexus_v1_current_level_structure2_source_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (!engine || !engine->level_loaded) return 0;
+    if (engine->current_level_structure2_source.level_index !=
+            engine->game.current_level ||
+        !engine->current_level_structure2_source.canonical_hash_verified ||
+        !engine->current_level_structure2_source.loaded_bytes_bound ||
+        !engine->current_level_structure2_source.materialization_bound ||
+        !engine->current_level_structure2_source
+            .structure2_payload_envelope_valid ||
+        engine->current_level_structure2_source.fallback_visuals_permitted ||
+        !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
+        !nexus_v1_dgn_source_bytes_match(
+            &engine->current_level_structure2_source,
+            engine->current_level_dgn_data, engine->current_level_dgn_size)) {
+        return 0;
+    }
     *out_receipt = engine->current_level_structure2_source;
     return 0;
 }
@@ -4297,6 +4731,11 @@ int nexus_v1_current_level_visit_structure2_payload_anchors(
             packet.source_byte_count = receipt.source_byte_count;
             packet.source_bytes_fnv1a64 = receipt.source_bytes_fnv1a64;
             packet.descriptor_index = descriptor_index;
+            packet.descriptor_offset = ((uint32_t)engine->current_level_dgn_data[0x14] << 8 | engine->current_level_dgn_data[0x15]) * NEXUS_DGN_BLOCK_SIZE + (uint32_t)descriptor_index * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+            packet.descriptor_length = NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+            packet.package_fnv1a64 = receipt.source_bytes_fnv1a64;
+            if (packet.descriptor_offset > (uint32_t)packet.source_byte_count || packet.descriptor_length > (uint32_t)packet.source_byte_count - packet.descriptor_offset) { *out_receipt = receipt; return 0; }
+            packet.descriptor_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data + packet.descriptor_offset, packet.descriptor_length);
             packet.palette_anchor = lane;
             packet.payload_anchor_offset = anchor;
             packet.next_anchor_offset = next_anchor;
@@ -4350,6 +4789,7 @@ static int nexus_v1_find_static_material_payload_anchor(
         packet->fallback_visuals_permitted ||
         !packet->blocks_real_dgn_mesh_render ||
         packet->descriptor_index != search->descriptor_index ||
+        !packet->package_fnv1a64 || packet->package_fnv1a64 != packet->source_bytes_fnv1a64 || !packet->descriptor_length || !packet->descriptor_fnv1a64 || packet->descriptor_offset > (uint32_t)packet->source_byte_count || packet->descriptor_length > (uint32_t)packet->source_byte_count - packet->descriptor_offset ||
         packet->candidate_byte_count == 0U ||
         packet->next_anchor_offset <= packet->payload_anchor_offset) {
         return -1;
@@ -4795,6 +5235,15 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
     out_packet->source_bytes_fnv1a64 = material_target.source_bytes_fnv1a64;
     out_packet->structure3_entry_index = structure3_entry_index;
     out_packet->face_ordinal = face_ordinal;
+    out_packet->face_offset = (uint32_t)material_target.face_byte_offset;
+    out_packet->face_length = 12U;
+    out_packet->face_fnv1a64 = material_target.face_bytes_fnv1a64;
+    out_packet->package_fnv1a64 = material_target.source_bytes_fnv1a64;
+    out_packet->descriptor_fnv1a64 = material_target.descriptor_target.descriptor_bytes_fnv1a64;
+    out_packet->image_offset = material_target.image_payload_byte_offset;
+    out_packet->image_length = material_target.image_payload_candidate_byte_count;
+    out_packet->palette_offset = material_target.palette_payload_byte_offset;
+    out_packet->palette_length = material_target.palette_payload_candidate_byte_count;
     out_packet->face = *face;
     out_packet->vertex_slot_count = slot_count;
     out_packet->vertices[0] = vertices[face->vertex_indexes[0]];
@@ -5884,6 +6333,16 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
         packet.source_bytes_fnv1a64 = receipt.source_bytes_fnv1a64;
         packet.entry_index = index;
         packet.entry = *entry;
+        packet.descriptor_offset = entry->raw_record_offset;
+        packet.descriptor_length = entry->raw_record_length;
+        packet.descriptor_fnv1a64 = entry->raw_record_fnv1a64;
+        packet.package_fnv1a64 = source->loaded_dgn_fnv1a64;
+        if (!packet.descriptor_length ||
+            packet.descriptor_offset > (uint32_t)engine->current_level_dgn_size ||
+            packet.descriptor_length > (uint32_t)engine->current_level_dgn_size - packet.descriptor_offset) {
+            *out_receipt = receipt;
+            return 0;
+        }
         packet.direct_coordinate_source = direct;
         packet.structure1a_owner_source = owned;
         packet.no_draw_only = 1;
@@ -6218,7 +6677,8 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
 {
     Nexus_V1_DgnStructure1FDirectMeshBindingReceipt receipt;
     Nexus_V1_DgnStructure3AttachmentReceipt attachment;
-    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    Nexus_V1_DgnStructure2SourceReceipt source_receipt;
+    const Nexus_V1_DgnStructure2SourceReceipt *source = &source_receipt;
     const Nexus_V1_DgnStructure1FEntry *entry;
 
     if (!out_receipt) return -1;
@@ -6232,13 +6692,14 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
         *out_receipt = receipt;
         return 0;
     }
-    source = &engine->current_level_structure2_source;
-    if (source->level_index != engine->game.current_level ||
+    memset(&source_receipt, 0, sizeof(source_receipt));
+    if (nexus_v1_current_level_structure2_source_receipt(
+            engine, &source_receipt) != 0 ||
+        source->level_index != engine->game.current_level ||
         !source->canonical_hash_verified || !source->materialization_bound ||
         !source->loaded_bytes_bound ||
-        source->loaded_dgn_size != engine->current_level_dgn_size ||
-        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
-                                         engine->current_level_dgn_size)) {
+        !source->structure2_payload_envelope_valid ||
+        source->fallback_visuals_permitted) {
         *out_receipt = receipt;
         return 0;
     }
@@ -7245,6 +7706,127 @@ int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     return 1;
 }
 
+int nexus_v1_engine_build_structure1f2_face_adjacency_transform_receipt(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt receipt;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0 ||
+        nexus_v1_current_level_lookup_structure1f_source_entry(
+            engine, structure1f_entry_index, &receipt.structure1f_source) != 1 ||
+        nexus_v1_engine_build_structure1f_transform_capture_target(
+            engine, structure1f_entry_index, &receipt.transform_target) != 1 ||
+        nexus_v1_current_level_structure2_source_receipt(
+            engine, &receipt.structure2_source) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!receipt.structure1f_source.valid ||
+        receipt.structure1f_source.entry_index != structure1f_entry_index ||
+        !receipt.structure1f_source.descriptor_length ||
+        !receipt.structure1f_source.descriptor_fnv1a64 ||
+        receipt.structure1f_source.package_fnv1a64 == 0U ||
+        receipt.structure1f_source.package_fnv1a64 !=
+            receipt.structure1f_source.source_bytes_fnv1a64 ||
+        receipt.structure1f_source.source_byte_count !=
+            engine->current_level_dgn_size ||
+        receipt.structure1f_source.descriptor_offset >
+            (uint32_t)engine->current_level_dgn_size ||
+        receipt.structure1f_source.descriptor_length >
+            (uint32_t)engine->current_level_dgn_size -
+                receipt.structure1f_source.descriptor_offset ||
+        nexus_v1_dgn_bytes_fnv1a64(
+            engine->current_level_dgn_data +
+                receipt.structure1f_source.descriptor_offset,
+            (int)receipt.structure1f_source.descriptor_length) !=
+            receipt.structure1f_source.descriptor_fnv1a64 ||
+        !receipt.transform_target.valid ||
+        !receipt.transform_target.geometry.source_geometry_bound ||
+        !receipt.transform_target.transform_table_source_bound ||
+        !receipt.transform_target.owner_transform_selector_source_bound ||
+        !receipt.transform_target.no_draw_only ||
+        receipt.transform_target.fallback_visuals_permitted ||
+        receipt.structure2_source.level_index != engine->game.current_level ||
+        !receipt.structure2_source.canonical_hash_verified ||
+        !receipt.structure2_source.materialization_bound ||
+        !receipt.structure2_source.loaded_bytes_bound ||
+        !receipt.structure2_source.structure2_payload_envelope_valid ||
+        receipt.structure2_source.loaded_dgn_size != engine->current_level_dgn_size ||
+        receipt.structure2_source.loaded_dgn_fnv1a64 !=
+            receipt.structure1f_source.package_fnv1a64 ||
+        receipt.transform_target.geometry.direct_mesh.structure1f_entry_index !=
+            structure1f_entry_index ||
+        receipt.transform_target.geometry.direct_mesh.structure3_model_index !=
+            receipt.transform_target.geometry.direct_mesh.face_target.candidate
+                .entry_index ||
+        receipt.transform_target.geometry.direct_mesh.face_ordinal !=
+            receipt.transform_target.geometry.direct_mesh.face_target.candidate
+                .face_ordinal) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.structure1f_record_source_bound = 1;
+    receipt.face_mesh_adjacency_bound = 1;
+    receipt.structure2_source_envelope_bound = 1;
+    receipt.owner_transform_selector_bound = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_engine_consume_structure1f2_face_adjacency_transform_no_draw(
+    const Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *receipt)
+{
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt current;
+
+    if (!receipt || !receipt->valid || !receipt->structure1f_record_source_bound ||
+        !receipt->face_mesh_adjacency_bound ||
+        !receipt->structure2_source_envelope_bound ||
+        !receipt->owner_transform_selector_bound ||
+        receipt->transform_semantics_proven || !receipt->no_draw_only ||
+        receipt->fallback_visuals_permitted ||
+        !receipt->blocks_real_dgn_mesh_render ||
+        !receipt->structure1f_source.no_draw_only ||
+        !receipt->transform_target.no_draw_only ||
+        !receipt->structure2_source.structure2_payload_envelope_valid ||
+        receipt->structure1f_source.source_byte_count <= 0 ||
+        receipt->structure1f_source.descriptor_offset >
+            (uint32_t)receipt->structure1f_source.source_byte_count ||
+        receipt->structure1f_source.descriptor_length >
+            (uint32_t)receipt->structure1f_source.source_byte_count -
+                receipt->structure1f_source.descriptor_offset) return 0;
+    memset(&current, 0, sizeof(current));
+    if (nexus_v1_engine_build_structure1f2_face_adjacency_transform_receipt(
+            engine, receipt->structure1f_source.entry_index, &current) != 1 ||
+        !current.valid ||
+        current.structure1f_source.package_fnv1a64 !=
+            receipt->structure1f_source.package_fnv1a64 ||
+        current.structure1f_source.descriptor_offset !=
+            receipt->structure1f_source.descriptor_offset ||
+        current.structure1f_source.descriptor_length !=
+            receipt->structure1f_source.descriptor_length ||
+        current.structure1f_source.descriptor_fnv1a64 !=
+            receipt->structure1f_source.descriptor_fnv1a64 ||
+        current.transform_target.geometry.direct_mesh.structure3_model_index !=
+            receipt->transform_target.geometry.direct_mesh.structure3_model_index ||
+        current.transform_target.geometry.direct_mesh.face_ordinal !=
+            receipt->transform_target.geometry.direct_mesh.face_ordinal ||
+        current.transform_target.geometry.direct_mesh.z_rotation !=
+            receipt->transform_target.geometry.direct_mesh.z_rotation ||
+        current.structure2_source.loaded_dgn_size !=
+            receipt->structure2_source.loaded_dgn_size ||
+        current.structure2_source.loaded_dgn_fnv1a64 !=
+            receipt->structure2_source.loaded_dgn_fnv1a64) return 0;
+    return 1;
+}
+
 int nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget *out_target)
@@ -7341,6 +7923,64 @@ int nexus_v1_current_level_aux_runtime_receipt(
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->level_aux_runtime_receipt;
     return 0;
+}
+
+int nexus_v1_current_level_aux_admission_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxAdmissionReceipt *out_receipt)
+{
+    const Nexus_V1_LevelAuxRuntimeReceipt *aux;
+    const Nexus_ScriptRuntimeReceipt *script;
+    const Nexus_SfxRuntimeReceipt *sound;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_LEVEL_AUX_ADMISSION_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->blocks_real_script_dispatch = 1;
+    out_receipt->blocks_real_sfx_playback = 1;
+    if (!engine || !engine->level_loaded) return 0;
+
+    aux = &engine->level_aux_runtime_receipt;
+    script = &engine->script_runtime_receipt;
+    sound = &engine->sfx_runtime_receipt;
+    out_receipt->level_index = aux->level_index;
+    out_receipt->canonical_sources_bound = aux->canonical_pair_bound &&
+        aux->slev.canonical_hash_verified && aux->sal.canonical_hash_verified &&
+        aux->map.canonical_hash_verified &&
+        aux->sound_driver.canonical_hash_verified &&
+        !aux->fallback_visuals_permitted;
+    if (aux->level_index < 0 || aux->level_index != script->level_index ||
+        aux->level_index != sound->level_index ||
+        !out_receipt->canonical_sources_bound) {
+        out_receipt->status = NEXUS_V1_LEVEL_AUX_ADMISSION_BLOCKED_SOURCE;
+        return 0;
+    }
+    out_receipt->slev_task_profile_bound =
+        script->status == NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
+        script->real_task_profile_supported && script->real_task_header_supported &&
+        !script->dispatch_enabled && script->blocks_real_script_dispatch &&
+        !script->fallback_visuals_permitted;
+    if (!out_receipt->slev_task_profile_bound) {
+        out_receipt->status = NEXUS_V1_LEVEL_AUX_ADMISSION_BLOCKED_SCRIPT;
+        return 0;
+    }
+    out_receipt->sal_map_profile_bound =
+        sound->status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+        sound->sal_loaded && sound->map_loaded &&
+        sound->sal_canonical_source_verified &&
+        sound->map_canonical_source_verified &&
+        !sound->sal_decode_supported && !sound->map_decode_supported;
+    out_receipt->sound_driver_bound = sound->sound_driver_canonical_source_verified;
+    if (!out_receipt->sal_map_profile_bound || !out_receipt->sound_driver_bound ||
+        sound->playback_enabled || !sound->blocks_real_sfx_playback ||
+        sound->fallback_visuals_permitted) {
+        out_receipt->status = NEXUS_V1_LEVEL_AUX_ADMISSION_BLOCKED_SOUND;
+        return 0;
+    }
+    out_receipt->status = NEXUS_V1_LEVEL_AUX_ADMISSION_READY_NO_RUNTIME;
+    out_receipt->no_runtime_only = 1;
+    return 1;
 }
 
 int nexus_v1_current_level_sound_route_receipt(
@@ -9009,6 +9649,738 @@ int nexus_v1_menu_bpk_upload_plan_rows(
                (size_t)count * sizeof(out_rows[0]));
     }
     return count;
+}
+
+int nexus_v1_engine_set_menu_bpk_no_draw_host_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t package_fnv1a64,
+    const Nexus_V1_BpkRuntimeUploadReceipt *upload,
+    const Nexus_V1_BpkRuntimeUploadRow *row)
+{
+    int row_matches_engine = 0;
+    int i;
+
+    if (!engine) return 0;
+    engine->menu_bpk_no_draw_host_valid = 0;
+    engine->menu_bpk_no_draw_host_route_epoch = 0U;
+    engine->menu_bpk_no_draw_host_package_fnv1a64 = 0U;
+    engine->menu_bpk_no_draw_host_entry_index = 0U;
+    engine->menu_bpk_no_draw_host_payload_offset = 0U;
+    engine->menu_bpk_no_draw_host_payload_size = 0U;
+    engine->menu_bpk_no_draw_host_payload_fnv1a64 = 0U;
+    if (!route_epoch || route_epoch <= engine->menu_bpk_no_draw_host_last_route_epoch ||
+        !package_fnv1a64 ||
+        package_fnv1a64 != engine->menu_bpk_package_fnv1a64 ||
+        !engine->menu_bpk_upload_receipt_valid || !upload || !row ||
+        upload->first_prs3_entry_index == UINT32_MAX ||
+        upload->unknown_prs3_mode_entries != 0U ||
+        !row->compression.valid || !upload->first_prs3_compression.valid ||
+        row->compression.entry_index != row->entry_index ||
+        row->compression.mode_flags != row->mode ||
+        row->compression.declared_pixel_count != row->prs3_pixel_count ||
+        row->compression.declared_output_bytes != row->expected_output_bytes ||
+        !row->compression.compressed_length ||
+        !row->compression.compressed_fnv1a64 ||
+        row->compression.decoder_promoted || row->compression.pixels_exposed ||
+        row->compression.fallback_visuals_permitted ||
+        !row->decode_blocked || !row->evidence_only ||
+        row->decoded_pixels_emitted != 0U || row->fallback_visuals_permitted) {
+        return 0;
+    }
+    if (upload->first_prs3_entry_index !=
+            engine->menu_bpk_upload_receipt.first_prs3_entry_index ||
+        upload->first_prs3_payload_fnv1a64 !=
+            engine->menu_bpk_upload_receipt.first_prs3_payload_fnv1a64 ||
+        memcmp(&upload->first_prs3_compression,
+               &engine->menu_bpk_upload_receipt.first_prs3_compression,
+               sizeof(upload->first_prs3_compression)) != 0) {
+        return 0;
+    }
+    for (i = 0; i < engine->menu_bpk_upload_row_count; ++i) {
+        const Nexus_V1_BpkRuntimeUploadRow *current =
+            &engine->menu_bpk_upload_rows[i];
+        if (current->entry_index == row->entry_index &&
+            current->payload_offset == row->payload_offset &&
+            current->payload_size == row->payload_size &&
+            current->payload_fnv1a64 == row->payload_fnv1a64 &&
+            current->prs3_version == row->prs3_version &&
+            current->header_first_u32 == row->header_first_u32 &&
+            current->header_minus_payload == row->header_minus_payload &&
+            memcmp(&current->compression, &row->compression,
+                   sizeof(row->compression)) == 0) {
+            row_matches_engine = 1;
+            break;
+        }
+    }
+    if (!row_matches_engine) return 0;
+    engine->menu_bpk_no_draw_host_last_route_epoch = route_epoch;
+    engine->menu_bpk_no_draw_host_valid = 1;
+    engine->menu_bpk_no_draw_host_route_epoch = route_epoch;
+    engine->menu_bpk_no_draw_host_package_fnv1a64 = package_fnv1a64;
+    engine->menu_bpk_no_draw_host_entry_index = row->entry_index;
+    engine->menu_bpk_no_draw_host_payload_offset = row->payload_offset;
+    engine->menu_bpk_no_draw_host_payload_size = row->payload_size;
+    engine->menu_bpk_no_draw_host_payload_fnv1a64 = row->payload_fnv1a64;
+    engine->menu_bpk_no_draw_host_compression = row->compression;
+    return 1;
+}
+
+static int nexus_v1_engine_menu_bpk_no_draw_host_row_is_current(
+    const Nexus_V1_Engine *engine)
+{
+    int index;
+
+    if (!engine || !engine->menu_bpk_upload_receipt_valid ||
+        engine->menu_bpk_upload_receipt.unknown_prs3_mode_entries != 0U ||
+        engine->menu_bpk_upload_row_count <= 0 ||
+        engine->menu_bpk_upload_row_count >
+            (int)NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS) return 0;
+    for (index = 0; index < engine->menu_bpk_upload_row_count; ++index) {
+        const Nexus_V1_BpkRuntimeUploadRow *row =
+            &engine->menu_bpk_upload_rows[index];
+        if (row->entry_index == engine->menu_bpk_no_draw_host_entry_index &&
+            row->payload_offset == engine->menu_bpk_no_draw_host_payload_offset &&
+            row->payload_size == engine->menu_bpk_no_draw_host_payload_size &&
+            row->payload_fnv1a64 == engine->menu_bpk_no_draw_host_payload_fnv1a64 &&
+            row->compression.valid &&
+            row->compression.declared_output_bytes ==
+                engine->menu_bpk_no_draw_host_compression.declared_output_bytes &&
+            memcmp(&row->compression,
+                   &engine->menu_bpk_no_draw_host_compression,
+                   sizeof(row->compression)) == 0) return 1;
+    }
+    return 0;
+}
+
+int nexus_v1_engine_menu_bpk_no_draw_host_ready(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t package_fnv1a64)
+{
+    return engine && engine->menu_bpk_no_draw_host_valid &&
+        engine->menu_bpk_no_draw_host_compression.valid &&
+        !engine->menu_bpk_no_draw_host_compression.decoder_promoted &&
+        !engine->menu_bpk_no_draw_host_compression.pixels_exposed &&
+        !engine->menu_bpk_no_draw_host_compression.fallback_visuals_permitted &&
+        route_epoch && route_epoch == engine->menu_bpk_no_draw_host_route_epoch &&
+        package_fnv1a64 &&
+        package_fnv1a64 == engine->menu_bpk_package_fnv1a64 &&
+        package_fnv1a64 == engine->menu_bpk_no_draw_host_package_fnv1a64 &&
+        nexus_v1_engine_menu_bpk_no_draw_host_row_is_current(engine);
+}
+
+static int nexus_v1_direct_lev_md5_is_valid(const char *md5)
+{
+    size_t i;
+    if (!md5 || strlen(md5) != 32U) return 0;
+    for (i = 0U; i < 32U; ++i) {
+        if (!((md5[i] >= '0' && md5[i] <= '9') ||
+              (md5[i] >= 'a' && md5[i] <= 'f'))) return 0;
+    }
+    return 1;
+}
+
+static int nexus_v1_engine_direct_lev_header_descriptor_is_current(
+    const Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnDirectLevHeaderDescriptorProvenance *provenance,
+    int level_index, uint64_t dgn_fnv1a64)
+{
+    Nexus_V1_DgnStructure1Layout layout;
+    uint64_t descriptor_offset;
+
+    if (!engine || !provenance || !provenance->valid ||
+        provenance->level_index != (uint32_t)level_index ||
+        !provenance->no_draw_only || provenance->fallback_visuals_permitted ||
+        !provenance->blocks_real_dgn_mesh_render ||
+        provenance->package_fnv1a64 != dgn_fnv1a64 ||
+        provenance->header_offset != 0U || provenance->header_length != 0x14U ||
+        !provenance->header_fnv1a64 || !provenance->descriptor_length ||
+        !provenance->descriptor_fnv1a64 || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size < NEXUS_DGN_BLOCK_SIZE ||
+        provenance->header_length > (uint32_t)engine->current_level_dgn_size ||
+        provenance->descriptor_offset > (uint32_t)engine->current_level_dgn_size ||
+        provenance->descriptor_length > (uint32_t)engine->current_level_dgn_size -
+            provenance->descriptor_offset ||
+        nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data,
+                                    (int)provenance->header_length) !=
+            provenance->header_fnv1a64 ||
+        nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data +
+                                        provenance->descriptor_offset,
+                                    (int)provenance->descriptor_length) !=
+            provenance->descriptor_fnv1a64 ||
+        nexus_v1_dgn_structure1_layout(&layout, engine->current_level_dgn_data,
+                                       engine->current_level_dgn_size) != 0 ||
+        !layout.valid || !layout.structure1f.valid ||
+        layout.structure1f.total_entry_count < 0 ||
+        provenance->descriptor_count !=
+            (uint32_t)layout.structure1f.total_entry_count) return 0;
+    descriptor_offset = (uint64_t)layout.structure1_offset +
+        (uint64_t)layout.structure1f.relative_offset;
+    return descriptor_offset == provenance->descriptor_offset &&
+        layout.structure1f.size == (int)provenance->descriptor_length;
+}
+
+static int nexus_v1_engine_build_m11_structure1f_descriptor_intake(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    uint64_t package_fnv1a64,
+    const Nexus_V1_DgnDirectLevHeaderDescriptorProvenance *header_descriptor,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *geometry,
+    Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt *out_receipt)
+{
+    Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt receipt;
+    Nexus_V1_DgnStructure1FSourcePacket current;
+    const Nexus_V1_DgnStructure1FDirectMeshBindingReceipt *direct_mesh;
+    uint64_t descriptor_end;
+    uint64_t table_end;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
+        !header_descriptor || !header_descriptor->valid ||
+        !geometry || !geometry->valid ||
+        !geometry->structure1f_record_source_bound ||
+        !geometry->face_mesh_adjacency_bound ||
+        !geometry->structure2_source_envelope_bound ||
+        !geometry->no_draw_only || geometry->fallback_visuals_permitted ||
+        !geometry->blocks_real_dgn_mesh_render ||
+        !nexus_v1_engine_direct_lev_header_descriptor_is_current(
+            engine, header_descriptor, level_index, package_fnv1a64) ||
+        !geometry->structure1f_source.valid ||
+        geometry->structure1f_source.level_index != level_index ||
+        geometry->structure1f_source.package_fnv1a64 != package_fnv1a64 ||
+        geometry->structure1f_source.entry_index < 0 ||
+        !geometry->structure1f_source.descriptor_length ||
+        !geometry->structure1f_source.descriptor_fnv1a64 ||
+        !geometry->structure2_source.loaded_bytes_bound ||
+        geometry->structure2_source.loaded_dgn_fnv1a64 != package_fnv1a64 ||
+        nexus_v1_current_level_lookup_structure1f_source_entry(
+            engine, geometry->structure1f_source.entry_index, &current) != 1 ||
+        !current.valid || current.package_fnv1a64 != package_fnv1a64 ||
+        current.descriptor_offset != geometry->structure1f_source.descriptor_offset ||
+        current.descriptor_length != geometry->structure1f_source.descriptor_length ||
+        current.descriptor_fnv1a64 != geometry->structure1f_source.descriptor_fnv1a64) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    descriptor_end = (uint64_t)current.descriptor_offset +
+        (uint64_t)current.descriptor_length;
+    table_end = (uint64_t)header_descriptor->descriptor_offset +
+        (uint64_t)header_descriptor->descriptor_length;
+    direct_mesh = &geometry->transform_target.geometry.direct_mesh;
+    if (current.descriptor_offset < header_descriptor->descriptor_offset ||
+        descriptor_end > table_end || !direct_mesh->valid ||
+        direct_mesh->structure1f_entry_index != current.entry_index ||
+        !direct_mesh->model_to_entry_proven || !direct_mesh->face_ordinal_proven ||
+        !direct_mesh->no_draw_only || direct_mesh->fallback_visuals_permitted ||
+        direct_mesh->source_bytes_fnv1a64 != package_fnv1a64) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.level_index = (uint32_t)level_index;
+    receipt.route_epoch = route_epoch;
+    receipt.package_fnv1a64 = package_fnv1a64;
+    receipt.structure1f_entry_index = current.entry_index;
+    receipt.descriptor_offset = current.descriptor_offset;
+    receipt.descriptor_length = current.descriptor_length;
+    receipt.descriptor_fnv1a64 = current.descriptor_fnv1a64;
+    receipt.structure3_model_index = direct_mesh->structure3_model_index;
+    receipt.face_ordinal = direct_mesh->face_ordinal;
+    receipt.face_mesh_reference_bound = 1;
+    receipt.material_reference_opaque = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int nexus_v1_engine_m11_structure1f_descriptor_matches(
+    const Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt *left,
+    const Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt *right)
+{
+    return left && right && left->valid && right->valid &&
+        left->level_index == right->level_index &&
+        left->route_epoch == right->route_epoch &&
+        left->package_fnv1a64 == right->package_fnv1a64 &&
+        left->structure1f_entry_index == right->structure1f_entry_index &&
+        left->descriptor_offset == right->descriptor_offset &&
+        left->descriptor_length == right->descriptor_length &&
+        left->descriptor_fnv1a64 == right->descriptor_fnv1a64 &&
+        left->structure3_model_index == right->structure3_model_index &&
+        left->face_ordinal == right->face_ordinal &&
+        left->face_mesh_reference_bound && right->face_mesh_reference_bound &&
+        left->material_reference_opaque && right->material_reference_opaque &&
+        left->no_draw_only && right->no_draw_only &&
+        !left->fallback_visuals_permitted &&
+        !right->fallback_visuals_permitted &&
+        left->blocks_real_dgn_mesh_render &&
+        right->blocks_real_dgn_mesh_render;
+}
+
+static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    uint64_t package_fnv1a64,
+    const Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt *structure1f,
+    Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt *out_receipt)
+{
+    Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt receipt;
+    Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget target;
+    const Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *material;
+    const Nexus_V1_DgnStructure2DescriptorCaptureTarget *descriptor;
+    uint64_t descriptor_end;
+    uint64_t face_end;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&target, 0, sizeof(target));
+    if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
+        !structure1f || !structure1f->valid ||
+        structure1f->level_index != (uint32_t)level_index ||
+        structure1f->route_epoch != route_epoch ||
+        structure1f->package_fnv1a64 != package_fnv1a64 ||
+        !structure1f->face_mesh_reference_bound ||
+        !structure1f->material_reference_opaque ||
+        !structure1f->no_draw_only ||
+        structure1f->fallback_visuals_permitted ||
+        !structure1f->blocks_real_dgn_mesh_render ||
+        nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
+            engine, structure1f->structure1f_entry_index, &target) != 1 ||
+        !target.valid || !target.direct_face_material_bound ||
+        !target.capture_producer_required || !target.original_saturn_capture_required ||
+        !target.no_draw_only || target.fallback_visuals_permitted ||
+        !target.blocks_real_dgn_mesh_render ||
+        target.direct_mesh.structure1f_entry_index !=
+            structure1f->structure1f_entry_index ||
+        target.direct_mesh.source_bytes_fnv1a64 != package_fnv1a64) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    material = &target.static_material;
+    descriptor = &material->descriptor_target;
+    if (!material->valid || !material->static_selector_descriptor_bound ||
+        !material->image_payload_anchor_bound ||
+        !material->image_payload_interval_bound ||
+        !material->capture_producer_required ||
+        !material->original_saturn_capture_required || !material->no_draw_only ||
+        material->fallback_visuals_permitted ||
+        material->level_index != level_index ||
+        material->source_bytes_fnv1a64 != package_fnv1a64 ||
+        material->structure3_entry_index != target.direct_mesh.structure3_model_index ||
+        material->face_ordinal != target.direct_mesh.face_ordinal ||
+        material->face_byte_offset < 0 || !material->face_bytes_fnv1a64 ||
+        !descriptor->valid || descriptor->level_index != level_index ||
+        descriptor->source_bytes_fnv1a64 != package_fnv1a64 ||
+        descriptor->descriptor_byte_offset < 0 ||
+        !descriptor->descriptor_bytes_fnv1a64 || !descriptor->no_draw_only ||
+        descriptor->fallback_visuals_permitted ||
+        !descriptor->image_payload_candidate_bound ||
+        !descriptor->image_payload_candidate_byte_count ||
+        !descriptor->image_payload_candidate_fnv1a64) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    face_end = (uint64_t)(uint32_t)material->face_byte_offset + 12U;
+    descriptor_end = (uint64_t)(uint32_t)descriptor->descriptor_byte_offset +
+        NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+    if (face_end > (uint64_t)engine->current_level_dgn_size ||
+        descriptor_end > (uint64_t)engine->current_level_dgn_size ||
+        nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data +
+                                        material->face_byte_offset,
+                                    12) != material->face_bytes_fnv1a64 ||
+        nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data +
+                                        descriptor->descriptor_byte_offset,
+                                    NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES) !=
+            descriptor->descriptor_bytes_fnv1a64) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.level_index = (uint32_t)level_index;
+    receipt.route_epoch = route_epoch;
+    receipt.package_fnv1a64 = package_fnv1a64;
+    receipt.structure1f_entry_index = structure1f->structure1f_entry_index;
+    receipt.structure3_entry_index = material->structure3_entry_index;
+    receipt.face_ordinal = material->face_ordinal;
+    receipt.face_offset = (uint32_t)material->face_byte_offset;
+    receipt.face_length = 12U;
+    receipt.face_fnv1a64 = material->face_bytes_fnv1a64;
+    receipt.structure2_descriptor_index = descriptor->descriptor_index;
+    receipt.descriptor_offset = (uint32_t)descriptor->descriptor_byte_offset;
+    receipt.descriptor_length = NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+    receipt.descriptor_fnv1a64 = descriptor->descriptor_bytes_fnv1a64;
+    receipt.image_candidate_offset = descriptor->image_payload_anchor_offset;
+    receipt.image_candidate_length = descriptor->image_payload_candidate_byte_count;
+    receipt.image_candidate_fnv1a64 = descriptor->image_payload_candidate_fnv1a64;
+    receipt.palette_candidate_offset = descriptor->palette_payload_anchor_offset;
+    receipt.palette_candidate_length = descriptor->palette_payload_candidate_byte_count;
+    receipt.palette_candidate_fnv1a64 = descriptor->palette_payload_candidate_fnv1a64;
+    receipt.face_descriptor_bound = 1;
+    receipt.candidates_opaque = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int nexus_v1_engine_m11_structure2_face_descriptor_matches(
+    const Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt *left,
+    const Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt *right)
+{
+    return left && right && left->valid && right->valid &&
+        left->level_index == right->level_index &&
+        left->route_epoch == right->route_epoch &&
+        left->package_fnv1a64 == right->package_fnv1a64 &&
+        left->structure1f_entry_index == right->structure1f_entry_index &&
+        left->structure3_entry_index == right->structure3_entry_index &&
+        left->face_ordinal == right->face_ordinal &&
+        left->face_offset == right->face_offset &&
+        left->face_length == right->face_length &&
+        left->face_fnv1a64 == right->face_fnv1a64 &&
+        left->structure2_descriptor_index == right->structure2_descriptor_index &&
+        left->descriptor_offset == right->descriptor_offset &&
+        left->descriptor_length == right->descriptor_length &&
+        left->descriptor_fnv1a64 == right->descriptor_fnv1a64 &&
+        left->image_candidate_offset == right->image_candidate_offset &&
+        left->image_candidate_length == right->image_candidate_length &&
+        left->image_candidate_fnv1a64 == right->image_candidate_fnv1a64 &&
+        left->palette_candidate_offset == right->palette_candidate_offset &&
+        left->palette_candidate_length == right->palette_candidate_length &&
+        left->palette_candidate_fnv1a64 == right->palette_candidate_fnv1a64 &&
+        left->face_descriptor_bound && right->face_descriptor_bound &&
+        left->candidates_opaque && right->candidates_opaque &&
+        left->no_draw_only && right->no_draw_only &&
+        !left->fallback_visuals_permitted &&
+        !right->fallback_visuals_permitted &&
+        left->blocks_real_dgn_mesh_render &&
+        right->blocks_real_dgn_mesh_render;
+}
+
+static int nexus_v1_engine_build_m11_structure3_topology_descriptor_intake(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    uint64_t package_fnv1a64,
+    const Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt *structure1f,
+    const Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt *face_descriptor,
+    Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt *out_receipt)
+{
+    Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt receipt;
+    Nexus_V1_DgnStructure3PackageGeometryPacket packet;
+    Nexus_V1_DgnStructure3MeshEntryReceipt mesh;
+    const Nexus_V1_Level *level;
+    const uint8_t *data;
+    uint32_t payload_offset;
+    uint32_t payload_size;
+    uint32_t entry_offset;
+    uint32_t vertex_offset;
+    uint32_t normal_offset;
+    uint32_t vertex_count;
+    uint32_t face_count;
+    uint32_t slot_count;
+    uint64_t vertex_table_offset;
+    uint64_t vertex_table_length;
+    uint64_t normal_row_offset;
+    uint64_t referenced_hash = UINT64_C(1469598103934665603);
+    uint32_t slot;
+    uint32_t byte;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&packet, 0, sizeof(packet));
+    memset(&mesh, 0, sizeof(mesh));
+    if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
+        !structure1f || !face_descriptor || !structure1f->valid ||
+        !face_descriptor->valid ||
+        structure1f->level_index != (uint32_t)level_index ||
+        face_descriptor->level_index != (uint32_t)level_index ||
+        structure1f->route_epoch != route_epoch ||
+        face_descriptor->route_epoch != route_epoch ||
+        structure1f->package_fnv1a64 != package_fnv1a64 ||
+        face_descriptor->package_fnv1a64 != package_fnv1a64 ||
+        structure1f->structure1f_entry_index !=
+            face_descriptor->structure1f_entry_index ||
+        !face_descriptor->face_descriptor_bound ||
+        !face_descriptor->candidates_opaque || !face_descriptor->no_draw_only ||
+        face_descriptor->fallback_visuals_permitted ||
+        !face_descriptor->blocks_real_dgn_mesh_render ||
+        !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
+        engine->current_level.structure3_payload.byte_offset < 0 ||
+        engine->current_level.structure3_payload.byte_size < 4 ||
+        !engine->current_level.structure3_directory.valid ||
+        !engine->current_level.structure3_entry_headers.valid ||
+        !engine->current_level.structure3_faces.valid ||
+        !engine->current_level.structure3_vectors.valid ||
+        !engine->current_level.structure3_face_normal_pairs.valid ||
+        nexus_v1_current_level_structure3_package_geometry_packet(
+            engine, face_descriptor->structure3_entry_index,
+            face_descriptor->face_ordinal, &packet) != 1 ||
+        !packet.valid || !packet.source_geometry_bound ||
+        packet.package_fnv1a64 != package_fnv1a64 ||
+        packet.face_offset != face_descriptor->face_offset ||
+        packet.face_length != face_descriptor->face_length ||
+        packet.face_fnv1a64 != face_descriptor->face_fnv1a64 ||
+        nexus_v1_current_level_extract_structure3_mesh_entry(
+            engine, (int)face_descriptor->structure3_entry_index, NULL, 0,
+            NULL, 0, NULL, 0, &mesh) != -1 ||
+        !mesh.source_identity_valid || mesh.vertex_count <= 0 ||
+        mesh.face_count <= 0 || mesh.normal_count < mesh.face_count ||
+        face_descriptor->face_ordinal >= (uint32_t)mesh.face_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    level = &engine->current_level;
+    data = engine->current_level_dgn_data;
+    payload_offset = (uint32_t)level->structure3_payload.byte_offset;
+    payload_size = (uint32_t)level->structure3_payload.byte_size;
+    if (payload_offset > (uint32_t)engine->current_level_dgn_size ||
+        payload_size > (uint32_t)engine->current_level_dgn_size - payload_offset ||
+        face_descriptor->structure3_entry_index >=
+            (uint32_t)level->structure3_directory.entry_count ||
+        payload_size < 8U ||
+        face_descriptor->structure3_entry_index >
+            (payload_size - 8U) / 4U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry_offset = nexus_v1_dgn_read_be32(
+        data + payload_offset + 4U +
+        face_descriptor->structure3_entry_index * 4U);
+    if (entry_offset > payload_size || payload_size - entry_offset < 40U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    vertex_count = (uint32_t)nexus_v1_dgn_read_be16(
+        data + payload_offset + entry_offset + 4U);
+    face_count = (uint32_t)nexus_v1_dgn_read_be16(
+        data + payload_offset + entry_offset + 6U);
+    vertex_offset = nexus_v1_dgn_read_be32(
+        data + payload_offset + entry_offset + 8U);
+    normal_offset = nexus_v1_dgn_read_be32(
+        data + payload_offset + entry_offset + 20U);
+    vertex_table_offset = (uint64_t)payload_offset + vertex_offset;
+    vertex_table_length = (uint64_t)vertex_count * 12U;
+    normal_row_offset = (uint64_t)payload_offset + normal_offset +
+        (uint64_t)face_descriptor->face_ordinal * 12U;
+    if (vertex_count != (uint32_t)mesh.vertex_count ||
+        face_count != (uint32_t)mesh.face_count ||
+        vertex_table_offset > (uint64_t)engine->current_level_dgn_size ||
+        vertex_table_length > (uint64_t)engine->current_level_dgn_size -
+            vertex_table_offset ||
+        normal_row_offset > (uint64_t)engine->current_level_dgn_size ||
+        12U > (uint64_t)engine->current_level_dgn_size - normal_row_offset) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    slot_count = packet.face.triangle ? 3U : 4U;
+    if (slot_count < 3U || slot_count > 4U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (slot = 0U; slot < slot_count; ++slot) {
+        uint64_t row_offset;
+        if (packet.face.vertex_indexes[slot] >= vertex_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        row_offset = vertex_table_offset +
+            (uint64_t)packet.face.vertex_indexes[slot] * 12U;
+        if (row_offset > (uint64_t)engine->current_level_dgn_size ||
+            12U > (uint64_t)engine->current_level_dgn_size - row_offset) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        for (byte = 0U; byte < 12U; ++byte) {
+            referenced_hash ^= data[row_offset + byte];
+            referenced_hash *= UINT64_C(1099511628211);
+        }
+    }
+    receipt.valid = 1;
+    receipt.level_index = (uint32_t)level_index;
+    receipt.route_epoch = route_epoch;
+    receipt.package_fnv1a64 = package_fnv1a64;
+    receipt.structure1f_entry_index = structure1f->structure1f_entry_index;
+    receipt.structure3_entry_index = face_descriptor->structure3_entry_index;
+    receipt.face_ordinal = face_descriptor->face_ordinal;
+    receipt.face_offset = face_descriptor->face_offset;
+    receipt.face_length = face_descriptor->face_length;
+    receipt.face_fnv1a64 = face_descriptor->face_fnv1a64;
+    receipt.vertex_table_offset = (uint32_t)vertex_table_offset;
+    receipt.vertex_table_length = (uint32_t)vertex_table_length;
+    receipt.vertex_table_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + vertex_table_offset, (int)vertex_table_length);
+    receipt.vertex_count = vertex_count;
+    receipt.face_vertex_index_count = slot_count;
+    receipt.referenced_vertex_rows_fnv1a64 = referenced_hash;
+    receipt.normal_offset = (uint32_t)normal_row_offset;
+    receipt.normal_length = 12U;
+    receipt.normal_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + normal_row_offset, 12);
+    receipt.topology_framing_bound = 1;
+    receipt.capture_required = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int nexus_v1_engine_m11_structure3_topology_descriptor_matches(
+    const Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt *left,
+    const Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt *right)
+{
+    return left && right && left->valid && right->valid &&
+        left->level_index == right->level_index &&
+        left->route_epoch == right->route_epoch &&
+        left->package_fnv1a64 == right->package_fnv1a64 &&
+        left->structure1f_entry_index == right->structure1f_entry_index &&
+        left->structure3_entry_index == right->structure3_entry_index &&
+        left->face_ordinal == right->face_ordinal &&
+        left->face_offset == right->face_offset &&
+        left->face_length == right->face_length &&
+        left->face_fnv1a64 == right->face_fnv1a64 &&
+        left->vertex_table_offset == right->vertex_table_offset &&
+        left->vertex_table_length == right->vertex_table_length &&
+        left->vertex_table_fnv1a64 == right->vertex_table_fnv1a64 &&
+        left->vertex_count == right->vertex_count &&
+        left->face_vertex_index_count == right->face_vertex_index_count &&
+        left->referenced_vertex_rows_fnv1a64 ==
+            right->referenced_vertex_rows_fnv1a64 &&
+        left->normal_offset == right->normal_offset &&
+        left->normal_length == right->normal_length &&
+        left->normal_fnv1a64 == right->normal_fnv1a64 &&
+        left->topology_framing_bound && right->topology_framing_bound &&
+        left->capture_required && right->capture_required &&
+        left->no_draw_only && right->no_draw_only &&
+        !left->fallback_visuals_permitted &&
+        !right->fallback_visuals_permitted &&
+        left->blocks_real_dgn_mesh_render &&
+        right->blocks_real_dgn_mesh_render;
+}
+
+int nexus_v1_engine_set_m11_direct_lev_dungeon_no_draw_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    const char *dgn_md5, uint64_t dgn_byte_count, uint64_t dgn_fnv1a64,
+    const Nexus_V1_DgnDirectLevHeaderDescriptorProvenance *header_descriptor,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *geometry)
+{
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt receipt;
+    Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt structure1f_descriptor;
+    Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt structure2_face_descriptor;
+    Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt topology_descriptor;
+
+    if (!engine) return 0;
+    memset(&engine->m11_direct_lev_dungeon, 0,
+           sizeof(engine->m11_direct_lev_dungeon));
+    engine->m11_direct_lev_dungeon_no_draw_valid = 0;
+    if (!route_epoch || route_epoch <=
+            engine->m11_direct_lev_dungeon_last_route_epoch ||
+        level_index < 0 || level_index != engine->game.current_level ||
+        !nexus_v1_direct_lev_md5_is_valid(dgn_md5) || !dgn_byte_count ||
+        !dgn_fnv1a64 || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0 ||
+        dgn_byte_count != (uint64_t)engine->current_level_dgn_size ||
+        dgn_fnv1a64 != nexus_v1_dgn_bytes_fnv1a64(
+            engine->current_level_dgn_data, engine->current_level_dgn_size) ||
+        engine->current_level_structure2_source.level_index != level_index ||
+        !engine->current_level_structure2_source.canonical_hash_verified ||
+        !engine->current_level_structure2_source.loaded_bytes_bound ||
+        !engine->current_level_structure2_source.materialization_bound ||
+        !engine->current_level_structure2_source.structure2_payload_envelope_valid ||
+        engine->current_level_structure2_source.loaded_dgn_size !=
+            engine->current_level_dgn_size ||
+        engine->current_level_structure2_source.loaded_dgn_fnv1a64 !=
+            dgn_fnv1a64 ||
+        !nexus_v1_engine_direct_lev_header_descriptor_is_current(
+            engine, header_descriptor, level_index, dgn_fnv1a64) ||
+        !geometry || !nexus_v1_engine_consume_structure1f2_face_adjacency_transform_no_draw(
+            engine, geometry) ||
+        geometry->structure1f_source.level_index != level_index ||
+        geometry->structure1f_source.source_byte_count !=
+            engine->current_level_dgn_size ||
+        geometry->structure1f_source.package_fnv1a64 != dgn_fnv1a64 ||
+        geometry->structure2_source.loaded_dgn_fnv1a64 != dgn_fnv1a64 ||
+        !nexus_v1_engine_build_m11_structure1f_descriptor_intake(
+            engine, route_epoch, level_index, dgn_fnv1a64, header_descriptor,
+            geometry, &structure1f_descriptor)) return 0;
+    if (!nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
+            engine, route_epoch, level_index, dgn_fnv1a64,
+            &structure1f_descriptor, &structure2_face_descriptor)) return 0;
+    if (!nexus_v1_engine_build_m11_structure3_topology_descriptor_intake(
+            engine, route_epoch, level_index, dgn_fnv1a64,
+            &structure1f_descriptor, &structure2_face_descriptor,
+            &topology_descriptor)) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.level_index = level_index;
+    receipt.route_epoch = route_epoch;
+    snprintf(receipt.dgn_md5, sizeof(receipt.dgn_md5), "%s", dgn_md5);
+    receipt.dgn_byte_count = dgn_byte_count;
+    receipt.dgn_fnv1a64 = dgn_fnv1a64;
+    receipt.header_descriptor = *header_descriptor;
+    receipt.structure1f_descriptor = structure1f_descriptor;
+    receipt.structure2_face_descriptor = structure2_face_descriptor;
+    receipt.structure3_topology_descriptor = topology_descriptor;
+    receipt.geometry = *geometry;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    engine->m11_direct_lev_dungeon = receipt;
+    engine->m11_direct_lev_dungeon_no_draw_valid = 1;
+    engine->m11_direct_lev_dungeon_route_epoch = route_epoch;
+    engine->m11_direct_lev_dungeon_last_route_epoch = route_epoch;
+    return 1;
+}
+
+int nexus_v1_engine_m11_direct_lev_dungeon_no_draw_ready(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    const char *dgn_md5, uint64_t dgn_byte_count, uint64_t dgn_fnv1a64,
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt *out_receipt)
+{
+    const Nexus_V1_DgnM11DirectLevNoDrawReceipt *receipt;
+    Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt current_descriptor;
+    Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt current_face_descriptor;
+    Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt current_topology_descriptor;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!engine || !engine->m11_direct_lev_dungeon_no_draw_valid ||
+        !route_epoch || route_epoch != engine->m11_direct_lev_dungeon_route_epoch ||
+        level_index < 0 || level_index != engine->game.current_level ||
+        !nexus_v1_direct_lev_md5_is_valid(dgn_md5) || !dgn_byte_count ||
+        !dgn_fnv1a64 || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+    receipt = &engine->m11_direct_lev_dungeon;
+    memset(&current_descriptor, 0, sizeof(current_descriptor));
+    memset(&current_face_descriptor, 0, sizeof(current_face_descriptor));
+    memset(&current_topology_descriptor, 0, sizeof(current_topology_descriptor));
+    if (!receipt->valid || !receipt->no_draw_only ||
+        receipt->fallback_visuals_permitted ||
+        !receipt->blocks_real_dgn_mesh_render ||
+        receipt->level_index != level_index ||
+        receipt->route_epoch != route_epoch ||
+        strcmp(receipt->dgn_md5, dgn_md5) != 0 ||
+        receipt->dgn_byte_count != dgn_byte_count ||
+        receipt->dgn_fnv1a64 != dgn_fnv1a64 ||
+        dgn_byte_count != (uint64_t)engine->current_level_dgn_size ||
+        dgn_fnv1a64 != nexus_v1_dgn_bytes_fnv1a64(
+            engine->current_level_dgn_data, engine->current_level_dgn_size) ||
+        !nexus_v1_engine_direct_lev_header_descriptor_is_current(
+            engine, &receipt->header_descriptor, level_index, dgn_fnv1a64) ||
+        !nexus_v1_engine_build_m11_structure1f_descriptor_intake(
+            engine, route_epoch, level_index, dgn_fnv1a64,
+            &receipt->header_descriptor, &receipt->geometry,
+            &current_descriptor) ||
+        !nexus_v1_engine_m11_structure1f_descriptor_matches(
+            &receipt->structure1f_descriptor, &current_descriptor) ||
+        !nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
+            engine, route_epoch, level_index, dgn_fnv1a64, &current_descriptor,
+            &current_face_descriptor) ||
+        !nexus_v1_engine_m11_structure2_face_descriptor_matches(
+            &receipt->structure2_face_descriptor, &current_face_descriptor) ||
+        !nexus_v1_engine_build_m11_structure3_topology_descriptor_intake(
+            engine, route_epoch, level_index, dgn_fnv1a64, &current_descriptor,
+            &current_face_descriptor, &current_topology_descriptor) ||
+        !nexus_v1_engine_m11_structure3_topology_descriptor_matches(
+            &receipt->structure3_topology_descriptor,
+            &current_topology_descriptor) ||
+        !nexus_v1_engine_consume_structure1f2_face_adjacency_transform_no_draw(
+            engine, &receipt->geometry)) return 0;
+    if (out_receipt) *out_receipt = *receipt;
+    return 1;
 }
 
 static Nexus_V1_MenuBpkRendererHandoffStatus

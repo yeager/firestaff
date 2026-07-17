@@ -261,6 +261,12 @@ static void run_real_launcher_handoff_if_available(void) {
     menu.launchRequested = 1;
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    if (!M12_AssetStatus_TheronCampaignMediaLaunchReady(&menu.assetStatus)) {
+        expect_true(intent.valid == 0,
+                    "path-only Theron availability does not create a launch intent");
+        expect_skip("no explicit verified Theron campaign-media scan for staged Track 02");
+        return;
+    }
     expect_true(intent.valid == 1,
                 "M12 Theron launch intent is valid with real staged data");
     expect_true(intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL,

@@ -18,11 +18,18 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_center_door_render_pc34_compat.h"
+#include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_fakewall_pc34_compat.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
@@ -69,6 +76,174 @@ static unsigned short pack_text3(int a, int b, int c) {
 
 static unsigned char square_for_test(int elementType, int attributes) {
     return (unsigned char)(((elementType & 0x07) << 5) | (attributes & 0x1f));
+}
+
+/* The retired M11 diagnostic wrappers were deliberately replaced by their
+ * source-locked DM1 owners.  Keep this broad integration test on those
+ * owners rather than reviving a second presentation API. */
+#define M11_GameView_ProbeViewportArtifactCounts test_viewport_artifact_counts
+#define M11_GameView_GetV1EndgameRestartBox test_endgame_restart_box
+#define M11_GameView_GetV1EndgameQuitBox test_endgame_quit_box
+#define M11_GameView_ProbeDm1PrimarySideWallMaxForward dm1_viewport_3d_primary_side_wall_max_forward_pc34
+#define M11_GameView_ProbeViewportCellClass test_viewport_cell_class
+#define M11_GameView_ProbeSideWallDrawEligibility test_side_wall_draw_eligibility
+#define M11_GameView_ProbeSideWallRuntimeBlit test_side_wall_runtime_blit
+#define M11_GameView_ProbeDm1D1CThievesEyeMaskBlit test_d1c_thieves_eye_mask_blit
+#define M11_GameView_ProbeDm1CenterDoorPanelBlit test_center_door_panel_blit
+#define M11_GameView_ProbeDm1SideDoorPanelBlit test_side_door_panel_blit
+#define M11_GameView_ProbeDm1WallOrnamentFlip test_wall_ornament_flip
+
+static int test_endgame_restart_box(int inner, int* x, int* y, int* w, int* h) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_restart_box_pc34(inner, &rect)) return 0;
+    if (x) *x = rect.x; if (y) *y = rect.y;
+    if (w) *w = rect.w; if (h) *h = rect.h;
+    return 1;
+}
+
+static int test_endgame_quit_box(int inner, int* x, int* y, int* w, int* h) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!dm1_v1_endgame_quit_box_pc34(inner, &rect)) return 0;
+    if (x) *x = rect.x; if (y) *y = rect.y;
+    if (w) *w = rect.w; if (h) *h = rect.h;
+    return 1;
+}
+
+static int test_viewport_cell_class(const M11_GameViewState* state, int forward,
+                                    int side, int* outX, int* outY,
+                                    unsigned char* outRaw, int* outElement,
+                                    int* outEffective, int* outWallLike, int* outOpen) {
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int16_t x = 0, y = 0;
+    int index;
+    unsigned char square;
+    if (!state || !state->active || !state->world.dungeon ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount ||
+        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tilesLoaded ||
+        !dm1_viewport_3d_resolve_relative_map_xy(state->world.party.direction,
+            forward, side, state->world.party.mapX, state->world.party.mapY, &x, &y)) return 0;
+    map = &state->world.dungeon->maps[state->world.party.mapIndex];
+    tiles = &state->world.dungeon->tiles[state->world.party.mapIndex];
+    if (x < 0 || y < 0 || x >= map->width || y >= map->height || !tiles->squareData) return 0;
+    index = (int)x * map->height + (int)y;
+    if (index < 0 || index >= tiles->squareCount) return 0;
+    square = tiles->squareData[index];
+    if (outX) *outX = x; if (outY) *outY = y;
+    if (outRaw) *outRaw = square;
+    if (outElement) *outElement = (square >> 5) & 7;
+    if (outEffective) *outEffective = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
+    if (outWallLike) *outWallLike = DM1_V1_Viewport_SquareIsWallLikePc34Compat(square);
+    if (outOpen) *outOpen = DM1_V1_Viewport_SquareIsOpenPc34Compat(square);
+    return 1;
+}
+
+static int test_viewport_artifact_counts(const M11_GameViewState* state, int forward,
+                                         int side, int* outX, int* outY, int* outElement,
+                                         int* outProjectiles, int* outExplosions,
+                                         int* outProjectileGraphic, int* outExplosionType) {
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 input;
+    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 decision;
+    int x = 0, y = 0, element = 0;
+    if (!test_viewport_cell_class(state, forward, side, &x, &y, NULL,
+            &element, NULL, NULL, NULL)) return 0;
+    memset(&input, 0, sizeof(input));
+    input.relativeForward = forward; input.relativeSide = side;
+    input.elementType = element; input.mapIndex = state->world.party.mapIndex;
+    input.mapX = x; input.mapY = y; input.partyDirection = state->world.party.direction;
+    input.liveProjectiles = &state->world.projectiles;
+    input.liveExplosions = &state->world.explosions;
+    input.suppressFluxcages = M11_GameView_GetEndgameDoNotDrawFluxcages(state);
+    input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+    if (!dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &decision)) return 0;
+    if (outX) *outX = x; if (outY) *outY = y; if (outElement) *outElement = element;
+    if (outProjectiles) *outProjectiles = decision.liveRenderableProjectileCount;
+    if (outExplosions) *outExplosions = decision.liveExplosionCount;
+    if (outProjectileGraphic) *outProjectileGraphic = decision.liveProjectileSubtype;
+    if (outExplosionType) *outExplosionType = decision.liveExplosionType;
+    return 1;
+}
+
+static int test_side_wall_draw_eligibility(const M11_GameViewState* state, int forward,
+                                           int side, int* outLaneClear, int* outDraws) {
+    int centerValid[3] = {0}, centerOpen[3] = {0}, centerDoor[3] = {0};
+    int leftOpen[3] = {0}, rightOpen[3] = {0}, depth, element, wallLike = 0;
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
+    if (!state || side == 0 || forward < 0) return 0;
+    for (depth = 0; depth < 3; ++depth) {
+        element = -1;
+        (void)test_viewport_cell_class(state, depth + 1, 0, NULL, NULL, NULL,
+            &element, NULL, NULL, &centerOpen[depth]);
+        centerValid[depth] = element >= 0;
+        centerDoor[depth] = element == DUNGEON_ELEMENT_DOOR;
+        (void)test_viewport_cell_class(state, depth + 1, -1, NULL, NULL, NULL,
+            NULL, NULL, NULL, &leftOpen[depth]);
+        (void)test_viewport_cell_class(state, depth + 1, 1, NULL, NULL, NULL,
+            NULL, NULL, NULL, &rightOpen[depth]);
+    }
+    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(centerValid, centerOpen,
+        centerDoor, leftOpen, rightOpen);
+    if (!test_viewport_cell_class(state, forward, side, NULL, NULL, NULL,
+            NULL, NULL, &wallLike, NULL)) return 0;
+    if (outLaneClear) *outLaneClear =
+        dm1_viewport_3d_side_lane_clear_from_visibility_pc34(&visibility, forward, side);
+    if (outDraws) *outDraws = wallLike;
+    return 1;
+}
+
+static int test_side_wall_runtime_blit(int forward, int side, int* outGraphic,
+                                       int* outX, int* outY, int* outW, int* outH) {
+    const DM1_ViewportWallDrawSpec* spec =
+        dm1_viewport_3d_get_side_wall_draw_spec_for_rel(forward, side);
+    if (!spec) return 0;
+    if (outGraphic) *outGraphic = 93 + (int)spec->native_wall;
+    if (outX) *outX = spec->runtime_dst_x; if (outY) *outY = spec->runtime_dst_y;
+    if (outW) *outW = spec->runtime_width; if (outH) *outH = spec->runtime_height;
+    return 1;
+}
+
+static int test_d1c_thieves_eye_mask_blit(int state, int* sx, int* sy, int* dx,
+                                           int* dy, int* width, int* height) {
+    DM1_CenterDoorBlitPc34 panels[2];
+    if (dm1_v1_center_door_panel_blits_for_cell_pc34(0, state, 1, panels) <= 0) return 0;
+    if (sx) *sx = panels[0].srcX; if (sy) *sy = panels[0].srcY;
+    if (dx) *dx = panels[0].dstX; if (dy) *dy = panels[0].dstY;
+    if (width) *width = panels[0].width; if (height) *height = panels[0].height;
+    return 1;
+}
+
+static int test_center_door_panel_blit(int depth, int state, int vertical, int index,
+                                       int* sx, int* sy, int* dx, int* dy, int* width, int* height) {
+    DM1_CenterDoorBlitPc34 panels[2];
+    int count = dm1_v1_center_door_panel_blits_for_cell_pc34(depth, state, vertical, panels);
+    if (index < 0) return count;
+    if (count <= 0 || index >= count) return 0;
+    if (sx) *sx = panels[index].srcX; if (sy) *sy = panels[index].srcY;
+    if (dx) *dx = panels[index].dstX; if (dy) *dy = panels[index].dstY;
+    if (width) *width = panels[index].width; if (height) *height = panels[index].height;
+    return 1;
+}
+
+static int test_side_door_panel_blit(int forward, int side, int state, int vertical, int index,
+                                     int* sx, int* sy, int* dx, int* dy, int* width, int* height) {
+    DM1_SideDoorRenderPlanPc34 plan;
+    DM1_SideDoorBlitPc34 panels[2];
+    int count;
+    if (!dm1_v1_side_door_render_plan_for_rel_pc34(forward, side, &plan)) return 0;
+    count = dm1_v1_side_door_panel_blits_for_draw_pc34(&plan, state, vertical, panels);
+    if (index < 0) return count;
+    if (count <= 0 || index >= count) return 0;
+    if (sx) *sx = panels[index].srcX; if (sy) *sy = panels[index].srcY;
+    if (dx) *dx = panels[index].dstX; if (dy) *dy = panels[index].dstY;
+    if (width) *width = panels[index].width; if (height) *height = panels[index].height;
+    return 1;
+}
+
+static int test_wall_ornament_flip(int viewWallIndex) {
+    return (viewWallIndex < 0 || viewWallIndex >= 13) ? -1 :
+        dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
 }
 
 static void mark_raw_object_slots_unused_for_test(unsigned char* raw, int count) {
@@ -2018,16 +2193,21 @@ static void test_throw_action_removes_action_hand_object(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeapon[4];
     unsigned short thrownThing;
     int expectedCommonStaminaCost;
 
     seed_state(&state, 100, 99);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeapon, 0, sizeof(rawWeapon));
     weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    rawWeapon[2] = 8;
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -2096,24 +2276,30 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW keeps the inner F0328/F0330 disable after the action tick decrements it");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "THROW has no F0407 disabled-action index when G0491 is zero");
-    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
-              "THROW stores C01 action-hand slot ordinal on the enable-action event");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0],
+              CHAMPION_SLOT_ACTION_HAND + 1,
+              "THROW stores C01's source 1-based slot ordinal on the enable-action event");
 }
 
 static void test_throw_full_projectile_list_still_accepts_f0328(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeapon[4];
     unsigned short thrownThing;
     int expectedCommonStaminaCost;
 
     seed_state(&state, 100, 99);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeapon, 0, sizeof(rawWeapon));
     weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    rawWeapon[2] = 8;
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -2163,24 +2349,32 @@ static void test_throw_full_projectile_list_still_accepts_f0328(void) {
               "full-list THROW keeps the inner F0328/F0330 disable");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "full-list THROW has no F0407 disabled-action overwrite");
-    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
-              "full-list THROW keeps the C01 action-hand enable slot");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0],
+              CHAMPION_SLOT_ACTION_HAND + 1,
+              "full-list THROW keeps C01's source 1-based enable slot");
 }
 
 static void test_throw_uses_post_f0304_throw_level_for_projectile(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonJunk_Compat junks[1];
+    unsigned char rawJunk[4];
     unsigned short thrownThing;
 
     seed_state(&state, 100, 70);
     memset(&things, 0, sizeof(things));
     memset(junks, 0, sizeof(junks));
+    memset(rawJunk, 0, sizeof(rawJunk));
     junks[0].next = THING_ENDOFLIST;
     junks[0].type = 0; /* ReDMCSB C00_JUNK_COMPASS, weight 1. */
     things.loaded = 1;
     things.junks = junks;
     things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunk;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    rawJunk[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawJunk[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawJunk[2] = 0; /* ReDMCSB C00_JUNK_COMPASS. */
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime =
         state.world.gameTick + 1;
@@ -2273,17 +2467,24 @@ static void test_throw_ven_potion_launches_removepotion_projectile(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonPotion_Compat potions[1];
+    unsigned char rawPotion[4];
     unsigned short thrownThing;
 
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
     memset(potions, 0, sizeof(potions));
+    memset(rawPotion, 0, sizeof(rawPotion));
     potions[0].next = THING_ENDOFLIST;
     potions[0].power = 0;
     potions[0].type = 3; /* ReDMCSB C03_POTION_VEN_POTION. */
     things.loaded = 1;
     things.potions = potions;
     things.potionCount = 1;
+    things.rawThingData[THING_TYPE_POTION] = rawPotion;
+    things.thingCounts[THING_TYPE_POTION] = 1;
+    rawPotion[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawPotion[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawPotion[3] = 3; /* ReDMCSB C03_POTION_VEN_POTION. */
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -2560,6 +2761,7 @@ static void test_throw_projectile_advances_after_scheduled_tick(void) {
     unsigned char squareData[12];
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeapon[4];
     unsigned short thrownThing;
     int i;
 
@@ -2570,6 +2772,7 @@ static void test_throw_projectile_advances_after_scheduled_tick(void) {
     memset(squareData, 0, sizeof(squareData));
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeapon, 0, sizeof(rawWeapon));
     for (i = 0; i < 12; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
     }
@@ -2578,6 +2781,9 @@ static void test_throw_projectile_advances_after_scheduled_tick(void) {
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    rawWeapon[2] = 8;
     state.world.things = &things;
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -4505,6 +4711,8 @@ static void test_projectile_champion_hit_can_kill_party(void) {
               "lethal projectile champion impact mirrors M10 party-dead flag");
     ASSERT_EQ(squareFirstThings[0], materializedThing,
               "F0215 materializes cross-cell champion-hit thrown weapon on impact square");
+    ASSERT_EQ(THING_GET_TYPE(squareFirstThings[0]), THING_TYPE_WEAPON,
+              "F0319 ignores structural zero slots before the F0215 weapon drop");
     ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
               "F0215 clears decoded thrown weapon next after champion impact");
     ASSERT_EQ(read_u16_le_for_test(rawWeaponData + 0), THING_ENDOFLIST,
@@ -4842,6 +5050,7 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeapon[4];
     unsigned short thrownThing;
     unsigned short actionHandThing;
     uint32_t tickBefore;
@@ -4849,10 +5058,14 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeapon, 0, sizeof(rawWeapon));
     weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    rawWeapon[2] = 8;
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -4920,6 +5133,7 @@ static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeapon[4];
     unsigned short thrownThing;
     unsigned short actionHandThing;
     uint32_t tickBefore;
@@ -4927,10 +5141,14 @@ static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeapon, 0, sizeof(rawWeapon));
     weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    rawWeapon[2] = 8;
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -4983,17 +5201,25 @@ static void test_leader_hand_throw_waterskin_uses_f0140_charge_weight(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonJunk_Compat junks[1];
+    unsigned char rawJunk[4];
     unsigned short thrownThing;
 
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
     memset(junks, 0, sizeof(junks));
+    memset(rawJunk, 0, sizeof(rawJunk));
     junks[0].next = THING_ENDOFLIST;
     junks[0].type = 1; /* ReDMCSB C01_JUNK_WATERSKIN. */
     junks[0].chargeCount = 3;
     things.loaded = 1;
     things.junks = junks;
     things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunk;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    rawJunk[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawJunk[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawJunk[2] = 1;
+    rawJunk[3] = 0xc0; /* C01 waterskin with raw ChargeCount 3. */
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -5023,13 +5249,18 @@ static void test_leader_hand_throw_container_uses_f0140_recursive_weight(void) {
     struct DungeonThings_Compat things;
     struct DungeonContainer_Compat containers[1];
     struct DungeonJunk_Compat junks[1];
+    unsigned char rawContainer[8];
+    unsigned char rawJunk[4];
     unsigned short chestThing;
     unsigned short waterskinThing;
+    int staminaBefore;
 
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
     memset(containers, 0, sizeof(containers));
     memset(junks, 0, sizeof(junks));
+    memset(rawContainer, 0, sizeof(rawContainer));
+    memset(rawJunk, 0, sizeof(rawJunk));
     waterskinThing = make_thing(THING_TYPE_JUNK, 0);
     chestThing = make_thing(THING_TYPE_CONTAINER, 0);
     junks[0].next = THING_ENDOFLIST;
@@ -5042,6 +5273,18 @@ static void test_leader_hand_throw_container_uses_f0140_recursive_weight(void) {
     things.containerCount = 1;
     things.junks = junks;
     things.junkCount = 1;
+    things.rawThingData[THING_TYPE_CONTAINER] = rawContainer;
+    things.thingCounts[THING_TYPE_CONTAINER] = 1;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunk;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    rawContainer[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawContainer[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawContainer[2] = (unsigned char)(waterskinThing & 0xffu);
+    rawContainer[3] = (unsigned char)(waterskinThing >> 8);
+    rawJunk[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawJunk[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawJunk[2] = 1;
+    rawJunk[3] = 0xc0; /* C01 waterskin with raw ChargeCount 3. */
     state.world.things = &things;
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
@@ -5063,6 +5306,24 @@ static void test_leader_hand_throw_container_uses_f0140_recursive_weight(void) {
               "leader-hand container throw includes recursive F0140 weight in F0312 strength");
     ASSERT_EQ(state.world.projectiles.entries[0].reserved1, chestThing,
               "leader-hand container throw preserves Thing identity on projectile");
+
+    /* F0140 reaches F0159 only through the raw CONTAINER.Slot chain.  Keep
+     * the decoded container intact and corrupt only that source chain: M11
+     * must not fall back to the decoded Slot or spend action state. */
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+              "leader hand accepts a second source container fixture");
+    rawContainer[2] = (unsigned char)(chestThing & 0xffu);
+    rawContainer[3] = (unsigned char)(chestThing >> 8);
+    staminaBefore = state.world.party.champions[0].stamina.current;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 120, 53, 1),
+              M11_GAME_INPUT_IGNORED,
+              "leader-hand cyclic source container rejects its action click");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "F0140 rejects cyclic raw F0159 chain before F0328 materialization");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, staminaBefore,
+              "rejected raw container leaves F0305 stamina untouched");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), chestThing,
+              "rejected raw container leaves leader-hand Thing ownership intact");
 }
 
 static void test_block_action_disables_champion_for_source_ticks(void) {
@@ -5296,6 +5557,8 @@ static void test_light_decrements_action_hand_charges(void) {
     DM1_ActionXpRoute route;
     int i;
     int guard;
+    int lightEventIndex = -1;
+    int enableActionEventIndex = -1;
 
     seed_state(&state, 100, 33);
     memset(&things, 0, sizeof(things));
@@ -5322,14 +5585,27 @@ static void test_light_decrements_action_hand_charges(void) {
               "LIGHT refreshes M11 dungeon palette through F0337");
     ASSERT_EQ(weapons[0].chargeCount, 2,
               "LIGHT decrements action-hand charges through F0405");
-    ASSERT_EQ(state.world.timeline.count, 1,
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_MAGIC_LIGHT_DECAY) {
+            lightEventIndex = i;
+        } else if (state.world.timeline.events[i].kind ==
+                   TIMELINE_EVENT_ENABLE_CHAMPION_ACTION) {
+            enableActionEventIndex = i;
+        }
+    }
+    ASSERT_EQ(lightEventIndex >= 0, 1,
               "LIGHT schedules F0404/C70 magical light decay");
-    ASSERT_EQ(state.world.timeline.events[0].kind,
+    ASSERT_EQ(enableActionEventIndex >= 0, 1,
+              "LIGHT retains the source G0491/F0330 action-enable receipt");
+    if (lightEventIndex < 0) return;
+    ASSERT_EQ(state.world.timeline.events[lightEventIndex].kind,
               TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
               "LIGHT decay uses the M10 F0257 event kind");
-    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 2533,
+    ASSERT_EQ((int)state.world.timeline.events[lightEventIndex].fireAtTick,
+              2533,
               "LIGHT schedules first decay at GameTime + 2500");
-    ASSERT_EQ(state.world.timeline.events[0].aux0, -2,
+    ASSERT_EQ(state.world.timeline.events[lightEventIndex].aux0, -2,
               "LIGHT stores negative light power for later removal");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[route.skillIndex].experience,
@@ -5546,6 +5822,9 @@ static void test_spit_action_launches_f0327_fireball_and_decrements_charges(void
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    int i;
+    int projectileMoveEventIndex = -1;
+    int enableActionEventIndex = -1;
 
     seed_state(&state, 100, 47);
     memset(&things, 0, sizeof(things));
@@ -5599,9 +5878,21 @@ static void test_spit_action_launches_f0327_fireball_and_decrements_charges(void
               "SPIT launch direction follows party/champion direction");
     ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 1,
               "SPIT schedules first-move grace like F0212 projectile create");
-    ASSERT_EQ(state.world.timeline.count, 1,
-              "SPIT schedules first projectile movement event");
-    ASSERT_EQ(state.world.timeline.events[0].kind,
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_PROJECTILE_MOVE) {
+            projectileMoveEventIndex = i;
+        } else if (state.world.timeline.events[i].kind ==
+                   TIMELINE_EVENT_ENABLE_CHAMPION_ACTION) {
+            enableActionEventIndex = i;
+        }
+    }
+    ASSERT_EQ(projectileMoveEventIndex >= 0, 1,
+              "SPIT schedules one F0212/C49 projectile movement event");
+    ASSERT_EQ(enableActionEventIndex >= 0, 1,
+              "SPIT retains its source G0491/F0330 C11 action receipt");
+    if (projectileMoveEventIndex < 0) return;
+    ASSERT_EQ(state.world.timeline.events[projectileMoveEventIndex].kind,
               TIMELINE_EVENT_PROJECTILE_MOVE,
               "SPIT first event is projectile movement");
 }
@@ -6646,8 +6937,9 @@ static void test_failed_practice_spell_awards_shifted_f0412_xp(void) {
 
     ASSERT_STR_EQ(state.inspectTitle, "SPELL FAILED",
                   "practice failure reports spell failure");
-    ASSERT_STR_EQ(state.inspectDetail, "NEEDS MORE PRACTICE",
-                  "practice failure reports source failure reason");
+    ASSERT_STR_EQ(state.inspectDetail,
+                  "HALK NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.",
+                  "practice failure retains F0410 champion and base-skill text");
     ASSERT_EQ(state.world.party.champions[0].mana.current, manaBefore,
               "practice failure does not spend spell mana");
     ASSERT_EQ(state.world.projectiles.count, 0,
@@ -7081,6 +7373,7 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[3];
+    unsigned char rawWeapons[3][4];
     unsigned char actions[3];
     unsigned short bowThing;
     unsigned short arrowThing;
@@ -7090,12 +7383,18 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
     seed_state(&state, 80, 29);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeapons, 0, sizeof(rawWeapons));
     weapons[0].type = 25; /* Bow: class 20, kinetic 50, shoot attack 50. */
     weapons[1].type = 27; /* Arrow: class 10, kinetic 10. */
     weapons[2].type = 27; /* Arrow: compatible quiver refill candidate. */
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 3;
+    things.rawThingData[THING_TYPE_WEAPON] = &rawWeapons[0][0];
+    things.thingCounts[THING_TYPE_WEAPON] = 3;
+    rawWeapons[0][2] = 25; /* F0158 source WEAPON.Type: bow. */
+    rawWeapons[1][2] = 27; /* F0158 source WEAPON.Type: arrow. */
+    rawWeapons[2][2] = 27; /* F0158 source WEAPON.Type: quiver arrow. */
     state.world.things = &things;
     state.world.party.direction = 1;
     state.world.party.champions[0].cell = 2;
@@ -7158,6 +7457,23 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
                   .inventory[CHAMPION_SLOT_QUIVER_1],
               THING_NONE,
               "SHOOT consumes the source-priority quiver slot during delayed refill");
+
+    /* F0158, rather than the decoded DungeonWeapon mirror, owns the G0238
+     * lookup.  Keep that mirror valid and corrupt only the loaded source
+     * Type: F0407 must fail closed without consuming the ready-hand arrow. */
+    state.actionDisabledTicks[0] = 0;
+    state.pendingShootReadyHandRefill[0] = 0u;
+    rawWeapons[0][2] = 0x7f;
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_SHOOT),
+              0,
+              "SHOOT rejects an unknown raw F0158 WEAPON.Type");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "rejected raw SHOOT leaves existing projectile ownership intact");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT],
+              quiverArrowThing,
+              "rejected raw SHOOT keeps ready-hand ammunition in place");
 }
 
 static void test_climb_down_failure_cancels_disable_but_keeps_xp(void) {

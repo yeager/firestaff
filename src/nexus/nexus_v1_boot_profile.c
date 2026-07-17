@@ -366,8 +366,29 @@ static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
                                                    Nexus_V1_Diagnostic *diags,
                                                    size_t *outIndex) {
     char matched[ASSET_PATH_MAX];
-    if (dir && md5 &&
-        asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8)) {
+    char canonical[ASSET_PATH_MAX];
+    FILE *file;
+    /* A staged canonical loose file wins deterministically.  Hash discovery
+     * is only the no-copy fallback and may retain a virtual ZIP/ISO path. */
+    if (dir && filename && snprintf(canonical, sizeof(canonical), "%s/%s",
+                                    dir, filename) > 0 &&
+        (file = fopen(canonical, "rb")) != NULL) {
+        fclose(file);
+        /* A second hash-addressed container candidate makes release identity
+         * ambiguous.  Do not let canonical naming hide mixed media. */
+        if (md5 && asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8) &&
+            strcmp(matched, canonical) != 0) {
+            if (*outIndex < (size_t)NEXUS_V1_DIAG_OK) return -1;
+            diags[*outIndex].code = NEXUS_V1_DIAG_MISSING_DM_BIN;
+            snprintf(diags[*outIndex].message, sizeof(diags[*outIndex].message),
+                     "Ambiguous Nexus asset: %s", filename);
+            (*outIndex)++;
+            return 1;
+        }
+        return 0;
+    }
+    if (dir && md5 && asset_find_by_md5(dir, md5, matched,
+                                        (int)sizeof(matched), 8)) {
         return 0;
     }
     return nexus_v1_boot_check_asset_file(dir, filename, okCode, diags, outIndex);

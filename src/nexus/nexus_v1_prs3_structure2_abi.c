@@ -51,6 +51,10 @@ static int bind_positive_vector(
     receipt->prs3_height = plan.height;
     receipt->prs3_bpp = plan.bpp;
     receipt->prs3_output_fnv1a64 = trace.output_prefix_fnv1a64;
+    receipt->prs3_header_span_fnv1a64 = plan.header_span_fnv1a64;
+    receipt->prs3_bitmap_candidate_fnv1a64 = plan.body_span_fnv1a64;
+    receipt->prs3_bitmap_candidate_offset = plan.body_offset;
+    receipt->prs3_bitmap_candidate_size = plan.body_size;
     receipt->prs3_input_read_bytes = trace.input_read_bytes;
     receipt->prs3_output_store_count = trace.output_store_count;
     receipt->prs3_zero_merge_count = trace.zero_merge_count;
@@ -80,6 +84,8 @@ static int bind_palt(
     receipt->palt_trailer_bound = 1;
     receipt->palt_entries_fnv1a64 = palt.entry_bytes_fnv1a64;
     receipt->palt_entries_are_be16 = 1;
+    receipt->palt_candidate_fnv1a64 = palt.entry_bytes_fnv1a64;
+    receipt->palt_candidate_size = palt.entry_bytes;
     return 1;
 }
 

@@ -231,6 +231,25 @@ typedef struct PortraitEvidence {
 static int g_pass = 0;
 static int g_fail = 0;
 
+static int probe_g0205_wall_ornament_zone(int coord_set,
+                                          int view_wall_index,
+                                          int* out_x,
+                                          int* out_y,
+                                          int* out_w,
+                                          int* out_h) {
+    DM1_WallOrnamentZoneBlitPc34 blit;
+    if (!out_x || !out_y || !out_w || !out_h ||
+        !dm1_v1_wall_ornament_zone_pc34(
+            coord_set, view_wall_index, &blit)) {
+        return 0;
+    }
+    *out_x = blit.dstX;
+    *out_y = blit.dstY;
+    *out_w = blit.width;
+    *out_h = blit.height;
+    return 1;
+}
+
 static void pass(const char* label) {
     printf("  PASS: %s\n", label);
     ++g_pass;
@@ -366,7 +385,7 @@ static void check_g0205_table_anchors(void) {
 
     /* coordSet=5 / viewWallIndex=12 is the D1C champion-mirror
      * frame route. */
-    ok = M11_GameView_GetDm1WallOrnamentZone(5, 12, &x, &y, &w, &h);
+    ok = probe_g0205_wall_ornament_zone(5, 12, &x, &y, &w, &h);
     if (!ok) {
         fail("M11_GameView_GetDm1WallOrnamentZone(5, 12) lookup failed");
         return;
@@ -377,7 +396,7 @@ static void check_g0205_table_anchors(void) {
     expect_int("D1C frame route coordSet=5/viewWallIndex=12 height", h, D1C_FRAME_H);
 
     /* coordSet=7 / viewWallIndex=12 is the D1C fullscreen variant. */
-    ok = M11_GameView_GetDm1WallOrnamentZone(7, 12, &x, &y, &w, &h);
+    ok = probe_g0205_wall_ornament_zone(7, 12, &x, &y, &w, &h);
     if (!ok) {
         fail("M11_GameView_GetDm1WallOrnamentZone(7, 12) lookup failed");
         return;
@@ -401,8 +420,8 @@ static void check_g0205_no_collision(void) {
     int sx = -1, sy = -1, sw = -1, sh = -1;
     int ok1, ok2;
 
-    ok1 = M11_GameView_GetDm1WallOrnamentZone(5, 12, &fx, &fy, &fw, &fh);
-    ok2 = M11_GameView_GetDm1WallOrnamentZone(7, 12, &sx, &sy, &sw, &sh);
+    ok1 = probe_g0205_wall_ornament_zone(5, 12, &fx, &fy, &fw, &fh);
+    ok2 = probe_g0205_wall_ornament_zone(7, 12, &sx, &sy, &sw, &sh);
     if (!ok1 || !ok2) {
         fail("G0205 lookup failed for no-collision check");
         return;
@@ -436,12 +455,12 @@ static void check_g0205_no_collision(void) {
      * invalid (coordSet, viewWallIndex) pair. */
     {
         int x2 = -1, y2 = -1, w2 = -1, h2 = -1;
-        if (!M11_GameView_GetDm1WallOrnamentZone(8, 12, &x2, &y2, &w2, &h2)) {
+        if (!probe_g0205_wall_ornament_zone(8, 12, &x2, &y2, &w2, &h2)) {
             pass("G0205 out-of-range coordSet=8 returns 0");
         } else {
             fail("G0205 out-of-range coordSet=8 should return 0");
         }
-        if (!M11_GameView_GetDm1WallOrnamentZone(5, 13, &x2, &y2, &w2, &h2)) {
+        if (!probe_g0205_wall_ornament_zone(5, 13, &x2, &y2, &w2, &h2)) {
             pass("G0205 out-of-range viewWallIndex=13 returns 0");
         } else {
             fail("G0205 out-of-range viewWallIndex=13 should return 0");

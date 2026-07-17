@@ -26,6 +26,27 @@ static uint32_t hash_u32(uint32_t hash, uint32_t value)
     return hash_bytes(hash, (const uint8_t *)&value, sizeof(value));
 }
 
+static int wall_source_raw_index(const DM2_V1_AssetLoader *loader,
+                                 const uint8_t *source_bytes,
+                                 size_t source_byte_count,
+                                 uint16_t *out_raw_index)
+{
+    uint16_t raw_index;
+
+    if (out_raw_index) *out_raw_index = 0u;
+    if (!loader || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || !source_bytes || !source_byte_count ||
+        !out_raw_index) return 0;
+    for (raw_index = 0u; raw_index < loader->raw_data_count; ++raw_index) {
+        if (loader->raw_sizes[raw_index] == source_byte_count &&
+            loader->data + loader->raw_offsets[raw_index] == source_bytes) {
+            *out_raw_index = raw_index;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 typedef struct {
     int x;
     int y;
@@ -371,6 +392,8 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
         int cell, mirror_flip;
         int offset_x, offset_y;
         int source_x, source_y;
+        uint16_t raw_index;
+        DM2_V1_GdatGfxRawMaterialReceipt material;
         DM2_V1_WallRawRect destination;
         DM2_V1_GdatImageMetadata metadata;
         if (field < DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) continue;
@@ -382,13 +405,24 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
         command->pixels = dm2_v1_asset_load_image_field(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
             &width, &height, NULL);
-        if (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0 ||
+        if (!raw || !raw_size || raw_size > UINT32_MAX || !command->pixels ||
+            width <= 0 || height <= 0 ||
             !load_graphicsset_wall_local_palette(
                 loader, graphicsset, field, command->palette16,
                 &command->palette_hash) || !command->palette_hash ||
             !dm2_v1_asset_load_image_metadata(
                 loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
                 &metadata)) goto fail;
+        if (!wall_source_raw_index(loader, raw, raw_size, &raw_index) ||
+            !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+                loader, raw_index, &material) || material.source_bytes != raw ||
+            material.source_byte_count != raw_size || !material.receipt_hash) {
+            goto fail;
+        }
+        command->material_raw_index = material.raw_index;
+        command->material_source_bytes = material.source_bytes;
+        command->material_source_byte_count = material.source_byte_count;
+        command->material_receipt_hash = material.receipt_hash;
         raw4 = dm2_v1_asset_load_typed_sized(
             loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
             DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw4_size);
@@ -455,14 +489,21 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
                                           command->rect_row_hash);
         command->geometry_hash = hash_u32(command->geometry_hash,
                                           command->metadata_hash);
+        command->geometry_hash = hash_u32(command->geometry_hash,
+                                          command->material_receipt_hash);
         if (!command->raw_hash || !command->decoded_hash ||
             !command->destination_width || !command->destination_height ||
             !command->rect_table_hash || !command->rect_row_hash ||
-            !command->metadata_hash || !command->geometry_hash) goto fail;
+            !command->metadata_hash || !command->geometry_hash ||
+            !command->material_source_bytes ||
+            command->material_source_byte_count != raw_size ||
+            !command->material_receipt_hash) goto fail;
         hash = hash_bytes(hash, (const uint8_t *)&command->raw_hash, sizeof(command->raw_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->decoded_hash,
                           sizeof(command->decoded_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash, sizeof(command->palette_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->material_receipt_hash,
+                          sizeof(command->material_receipt_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->geometry_hash,
                           sizeof(command->geometry_hash));
         ++candidate.command_count;

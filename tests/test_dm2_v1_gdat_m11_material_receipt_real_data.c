@@ -90,6 +90,12 @@ int main(void)
     }
     if (style < 0 || !scene.valid || !wall.valid || scene.command_hash == 0u ||
         scene.commands[0].raw_hash == 0u || scene.commands[1].raw_hash == 0u ||
+        !scene.commands[0].material_source_bytes ||
+        !scene.commands[1].material_source_bytes ||
+        scene.commands[0].material_source_byte_count == 0u ||
+        scene.commands[1].material_source_byte_count == 0u ||
+        scene.commands[0].material_receipt_hash == 0u ||
+        scene.commands[1].material_receipt_hash == 0u ||
         wall.command_hash == 0u) {
         fputs("FAIL: no complete canonical GDAT material family\n", stderr);
         dm2_v1_gdat_scene_m11_command_plan_free(&scene);

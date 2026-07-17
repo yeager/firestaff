@@ -41,12 +41,28 @@ static int require_text(const char *source, const char *needle)
     return 0;
 }
 
+static int contains_between(const char *begin, const char *end,
+                            const char *needle)
+{
+    size_t needle_length;
+    const char *cursor;
+
+    if (!begin || !end || end < begin || !needle) return 0;
+    needle_length = strlen(needle);
+    for (cursor = begin; cursor + needle_length <= end; ++cursor) {
+        if (memcmp(cursor, needle, needle_length) == 0) return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
     const char *path = FIRESTAFF_ROOT_PATH "/src/engine/m11_game_view.c";
     char *source = read_file(path);
     const char *late_route;
     const char *party_panel;
+    const char *spell_plan;
+    const char *spell_plan_end;
     int ok = 1;
 
     if (source == NULL) {
@@ -88,6 +104,29 @@ int main(void)
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34");
     ok &= require_text(source, "224, 50");
     ok &= require_text(source, "224, 62");
+
+    /* F0394 admits a panel through G0514, C009/C011 and M653 only.
+     * C077/C079 are F0387 action-subpanel material, so a legacy
+     * spellBuffer must never become substitute spell text in this path. */
+    spell_plan = strstr(
+        source,
+        "static int m11_build_dm1_spell_area_overlay_plan(\n"
+        "    const M11_GameViewState* state,\n"
+        "    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34* outPlan)\n{");
+    spell_plan_end = spell_plan
+        ? strstr(spell_plan, "static void m11_draw_v1_spell_area_overlay(")
+        : NULL;
+    if (!spell_plan || !spell_plan_end || spell_plan_end <= spell_plan ||
+        !contains_between(spell_plan, spell_plan_end,
+                          "active = state->dm1SpellCasting.magicCasterIndex") ||
+        !contains_between(spell_plan, spell_plan_end,
+                          "F0394 black clear") ||
+        contains_between(spell_plan, spell_plan_end, "state->spellBuffer") ||
+        contains_between(spell_plan, spell_plan_end, "C077") ||
+        contains_between(spell_plan, spell_plan_end, "C079")) {
+        fprintf(stderr, "spell plan accepts legacy or action-only material\n");
+        ok = 0;
+    }
 
     party_panel = strstr(source, "m11_draw_party_panel(state, framebuffer");
     late_route = party_panel ? strstr(party_panel,

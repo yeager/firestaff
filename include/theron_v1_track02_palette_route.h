@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_track02.h"
+
 /* This is deliberately separate from loader intake. It is the narrow
  * original-CD boundary for a future authenticated VCE write trace. */
 
@@ -44,6 +46,8 @@ typedef struct {
     int accepted;
     int real_cd_verified;
     int render_allowed;
+    Theron_Track02Variant track02_variant;
+    char track02_md5[33];
     uint16_t vce_index_address;
     uint16_t vce_low_address;
     uint16_t vce_high_address;

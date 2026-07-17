@@ -1,7 +1,9 @@
 #include "m11_game_view.h"
 
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
@@ -128,14 +130,23 @@ static int find_real_throwable_weapon(const struct DungeonThings_Compat* things,
                                       DM1_ProjectileMaterialResolutionPc34* outMaterial)
 {
     int index;
-    if (!things || !things->weapons || !outIndex || !outType || !outMaterial) {
+    if (!things || !outIndex || !outType || !outMaterial) {
         return 0;
     }
     for (index = 0; index < things->weaponCount; ++index) {
         DM1_WeaponInfo info;
         DM1_ProjectileMaterialResolutionPc34 material;
-        int weaponType = (int)things->weapons[index].type;
+        const unsigned char* raw = dm1_v1_dungeon_get_thing_data_pc34(
+            things, make_thing(THING_TYPE_WEAPON, index));
+        int objectWeight;
+        int weaponType;
         int aspectOrdinal;
+        if (!raw || !dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                        things, make_thing(THING_TYPE_WEAPON, index),
+                        &objectWeight)) {
+            continue;
+        }
+        weaponType = raw[2] & 0x7f;
         if (dm1_weapon_info_pc34(weaponType, &info) <= 0) continue;
         aspectOrdinal = (info.attributes >> 8) & 0x1f;
         if (aspectOrdinal <= 0) continue;
@@ -187,6 +198,7 @@ int main(void)
     int weaponIndex = -1;
     int weaponType = -1;
     unsigned short weaponThing;
+    unsigned char* rawWeapon;
 
     if (!dataDir) {
         puts("skip: local DM1 PC34 DUNGEON.DAT/GRAPHICS.DAT not available");
@@ -277,6 +289,23 @@ int main(void)
                 material.graphic_index,
                 receipt.objectAspectIndex,
                 material.aspect_index);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
+    /* F0142/F0115 may not revive the decoded WEAPON mirror after the raw
+     * F0156 source record drifts.  The projectile remains live, but its
+     * object material is fail-closed for this frame. */
+    rawWeapon = state.world.things->rawThingData[THING_TYPE_WEAPON] +
+        weaponIndex * 4;
+    rawWeapon[2] = 0x7f;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    memset(&receipt, 0, sizeof(receipt));
+    M11_GameView_GetDm1ProjectileHostPresentationReceipt(&receipt);
+    if (receipt.valid) {
+        fprintf(stderr,
+                "F0115 accepted a decoded thrown weapon after raw F0156 drift\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }

@@ -1126,9 +1126,13 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
     outReceipt->mapY = plan.mapY;
     outReceipt->cell = plan.cell;
     outReceipt->shouldUnlinkProjectileFromSquare = 1;
-    outReceipt->cleanupMapIndex = plan.mapIndex;
-    outReceipt->cleanupMapX = plan.mapX;
-    outReceipt->cleanupMapY = plan.mapY;
+    /* F0219 may commit a champion impact to its landing square before
+     * F0215 materializes Projectile.Slot there.  The C14 projectile thing
+     * itself still belongs to its stored source square until F0215 deletes
+     * it, so its unlink coordinates must not borrow the drop coordinates. */
+    outReceipt->cleanupMapIndex = projectile->mapIndex;
+    outReceipt->cleanupMapX = projectile->mapX;
+    outReceipt->cleanupMapY = projectile->mapY;
     outReceipt->projectileThing =
         (unsigned short)(((THING_TYPE_PROJECTILE << 10) |
                           (projectile->slotIndex & 0x03ff)) |

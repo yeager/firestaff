@@ -123,6 +123,10 @@ typedef struct {
      * under data_dir (skip-safe empty receipt). */
     int matched;
 
+    /* Metadata drift permanently invalidates this emission. Only a fresh
+     * scanner/profile emission may issue another startup identity. */
+    int invalidated;
+
     /* FNV-1a 64-bit hash folded over the metadata above + a
      * salt. 0 only for an empty (unmatched) receipt. 16-char hex
      * NUL-terminated string. */

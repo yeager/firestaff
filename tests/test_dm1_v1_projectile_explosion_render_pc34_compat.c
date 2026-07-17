@@ -11,6 +11,7 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -570,6 +571,7 @@ static void test_f0115_runtime_summary_from_world(void) {
     struct DungeonThings_Compat things;
     struct GameWorld_Compat world;
     unsigned char squareData[1] = { DUNGEON_SQUARE_MASK_THING_LIST };
+    unsigned short columnFirstThing[1] = { 0 };
     unsigned short squareFirstThings[1];
     unsigned char groupRaw[16];
     unsigned char weaponRaw[16];
@@ -594,6 +596,8 @@ static void test_f0115_runtime_summary_from_world(void) {
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = columnFirstThing;
+    dungeon.dungeonColumnCount = 1;
     squareFirstThings[0] = groupThing;
     groupRaw[0] = (unsigned char)(weaponThing & 0xffu);
     groupRaw[1] = (unsigned char)(weaponThing >> 8);

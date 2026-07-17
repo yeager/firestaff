@@ -94,6 +94,13 @@ static int bpk_intake_ready(
             receipt->prs3_first_width = plan.width;
             receipt->prs3_first_height = plan.height;
             receipt->prs3_first_bpp = plan.bpp;
+            receipt->prs3_first_header_span_fnv1a64 = plan.header_span_fnv1a64;
+            receipt->prs3_first_bitmap_candidate_fnv1a64 = plan.body_span_fnv1a64;
+            receipt->prs3_first_bitmap_candidate_byte_count = plan.body_size;
+            receipt->prs3_bitmap_candidate_bound = plan.header_span_fnv1a64 != 0U &&
+                plan.body_span_fnv1a64 != 0U && plan.body_size > 0U &&
+                plan.body_offset <= input->menu_bpk_size &&
+                plan.body_size <= input->menu_bpk_size - plan.body_offset;
             receipt->prs3_framing_bound =
                 plan.stream_size > 0U &&
                 plan.expected_output_bytes > 0U &&
@@ -106,11 +113,21 @@ static int bpk_intake_ready(
                 !plan.decoder_promoted &&
                 plan.decoded_pixels_emitted == 0U &&
                 !plan.fallback_visuals_permitted;
+            receipt->prs3_framing_bound = receipt->prs3_framing_bound &&
+                receipt->prs3_bitmap_candidate_bound;
             break;
         }
     }
     if (!receipt->prs3_framing_bound) {
         receipt->status = NEXUS_V1_PRS3_STRUCTURE2_INTAKE_BLOCKED_PRS3;
+        return 0;
+    }
+    receipt->palt_candidate_fnv1a64 = receipt->palt_trailer.entry_bytes_fnv1a64;
+    receipt->palt_candidate_byte_count = receipt->palt_trailer.entry_bytes;
+    receipt->palt_candidate_bound = receipt->palt_candidate_fnv1a64 != 0U &&
+        receipt->palt_candidate_byte_count == 512U;
+    if (!receipt->palt_candidate_bound) {
+        receipt->status = NEXUS_V1_PRS3_STRUCTURE2_INTAKE_BLOCKED_PALT;
         return 0;
     }
     return 1;

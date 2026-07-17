@@ -9,6 +9,7 @@
  */
 
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_inscription_host_material_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -176,6 +177,31 @@ static uint32_t hash_pixels(const unsigned char *pixels, int byteCount)
     return hash;
 }
 
+static int receipt_has_authenticated_source_span(
+    const M11_GameViewState *state,
+    const M11_Dm1InscriptionHostPresentationReceipt *receipt,
+    const M11_AssetSlot *font)
+{
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+
+    if (!state || !receipt || !font || !font->pixels || !receipt->valid ||
+        !dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            state->world.things, receipt->textStringIndex, &material)) {
+        return 0;
+    }
+    return receipt->textDataWordOffset == material.textDataWordOffset &&
+           receipt->textDataWordCount == material.textDataWordCount &&
+           receipt->textDataFNV1a == material.textDataFNV1a &&
+           receipt->glyphBytesFNV1a == material.glyphBytesFNV1a &&
+           receipt->fontPixelsFNV1a ==
+               hash_pixels(font->pixels, (int)font->width * (int)font->height) &&
+           receipt->glyphSourceWidth == DM1_V1_INSCRIPTION_GLYPH_WIDTH &&
+           receipt->glyphSourceHeight == DM1_V1_INSCRIPTION_GLYPH_HEIGHT &&
+           receipt->glyphScaleNumerator == 1 &&
+           receipt->glyphScaleDenominator == 1 &&
+           receipt->paletteMapValid == 0;
+}
+
 static int verify_c10_preserves_d1c_wall(
     const M11_GameViewState *state,
     const M11_Dm1InscriptionHostPresentationReceipt *receipt,
@@ -339,6 +365,7 @@ int main(void)
             draw_pose(&state, &inscriptions[i], withText);
             M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
             if (receipt.textStringIndex != textIndex ||
+                !receipt_has_authenticated_source_span(&state, &receipt, font) ||
                 !verify_c10_preserves_d1c_wall(&state, &receipt, font,
                                                 baseline, withText)) {
                 fprintf(stderr, "M648/C10 palette material mismatch at HoC transition %d/%d\n",

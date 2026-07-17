@@ -3,6 +3,66 @@
 
 #include <string.h>
 
+static uint32_t dm1_v1_inscription_fnv1a_bytes_pc34(
+    const unsigned char* bytes,
+    int byteCount)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (!bytes || byteCount <= 0) {
+        return 0u;
+    }
+    for (i = 0; i < byteCount; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int dm1_v1_inscription_packed_span_pc34(
+    const unsigned short* textData,
+    int textDataWordCount,
+    int textDataWordOffset,
+    int* outWordCount,
+    uint32_t* outFNV1a)
+{
+    int wordIndex;
+    int words = 0;
+    uint32_t hash = 2166136261u;
+
+    if (!textData || textDataWordOffset < 0 ||
+        textDataWordOffset >= textDataWordCount || !outWordCount ||
+        !outFNV1a) {
+        return 0;
+    }
+    for (wordIndex = textDataWordOffset;
+         wordIndex < textDataWordCount;
+         ++wordIndex) {
+        const unsigned short word = textData[wordIndex];
+        const int codes[3] = {
+            (word >> 10) & 0x1f,
+            (word >> 5) & 0x1f,
+            word & 0x1f
+        };
+        int i;
+
+        hash ^= (unsigned char)(word & 0xffu);
+        hash *= 16777619u;
+        hash ^= (unsigned char)(word >> 8);
+        hash *= 16777619u;
+        ++words;
+        for (i = 0; i < 3; ++i) {
+            if (codes[i] == 31) {
+                *outWordCount = words;
+                *outFNV1a = hash;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 int dm1_v1_inscription_get_visible_raw_text_offset_pc34(
     const struct DungeonThings_Compat* things,
     int textStringIndex,
@@ -96,6 +156,11 @@ static int dm1_v1_inscription_host_material_from_selected_offset_pc34(
             receipt.glyphBytes, (int)sizeof(receipt.glyphBytes))) {
         return 0;
     }
+    if (!dm1_v1_inscription_packed_span_pc34(
+            things->textData, things->textDataWordCount, textDataWordOffset,
+            &receipt.textDataWordCount, &receipt.textDataFNV1a)) {
+        return 0;
+    }
     while (receipt.glyphByteCount < (int)sizeof(receipt.glyphBytes) &&
            receipt.glyphBytes[receipt.glyphByteCount] != 0x81U) {
         ++receipt.glyphByteCount;
@@ -128,8 +193,14 @@ static int dm1_v1_inscription_host_material_from_selected_offset_pc34(
     }
     receipt.valid = 1;
     receipt.textStringIndex = textIndex;
+    receipt.textDataWordOffset = textDataWordOffset;
     receipt.fontGraphicIndex = DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34;
     receipt.transparentColor = DM1_V1_INSCRIPTION_TRANSPARENT_COLOR;
+    receipt.glyphBytesFNV1a = dm1_v1_inscription_fnv1a_bytes_pc34(
+        receipt.glyphBytes, receipt.glyphByteCount + 1);
+    if (receipt.glyphBytesFNV1a == 0u) {
+        return 0;
+    }
     *outReceipt = receipt;
     return 1;
 }

@@ -7,6 +7,47 @@ Living list. Update when things are completed or when new ideas appear.
 
 ## In progress / just completed
 
+### Theron's Quest Track 02
+
+- [x] Original host dungeon handoff is closed to the authenticated Track 02 route; level/object/bitmap/palette proof hashes and the route identity checksum survive host-consumer admission.
+- [x] Runtime level-bank selection admits only one raw-source-verified Track 02 identity across title, stage, Soul Room, and forcefield surfaces.
+- [x] Runtime level-bank selection also requires that its known Track 02 MD5 and the runtime media identity agree on the JP/US variant.
+- [x] An authenticated VCE store route can enter runtime only beside a matching raw-source bitmap surface; palette-to-bitmap semantics and rendering remain blocked.
+- [x] The authenticated CD capture can admit the matching Soul Room raw bitmap surface only when every source identity and raw-span receipt agrees; it does not authorize pixel or palette semantics.
+- [x] The capture-bound bitmap receipt and opaque initial loader record can share one runtime provenance consumer, while an original level/object consumer trace remains mandatory for semantic admission.
+- [x] A future original post-$3800 grammar receipt must match the runtime loader payload and bounded record windows before it can prepare, but not open, level/object decoding.
+- [x] The runtime loader record accepts only a known Track 02 identity and MODE1/2352 user-data-aligned source offset.
+- [x] Explicit CUE/ISO/BIN intake now MD5-authenticates a known Track 02 payload and retains only strict MODE1 sector/user-data-window provenance. Raw loader-trace preparation is supplied only by a known MODE1/2352 CUE at its source-locked `INDEX 01`; ISO and bare BIN intake remain non-trace routes, and no level/object, palette, or bitmap decoding is inferred.
+- [x] The authenticated US raw CUE's explicit `PREGAP 00:03:00` is retained as Track 02 LBA 225 while its separate BIN member's user-data window begins at its own `INDEX 01` header offset. The real `TQUS-Raw.cue` and known US MD5 pass this bounded provenance check without decoding content.
+- [x] An external capture-trace manifest can now bind only to matching authenticated raw-media, provenance, and loader-window receipts. Its consumer PCs and record windows are checked against the existing preparation receipt; it publishes opaque evidence only and keeps field, palette, bitmap, pixel, draw, and fallback routes closed.
+- [x] Runtime opaque-route readiness now requires that explicit manifest-bound evidence still exactly match the retained provenance and level/object preparation receipts. It exposes no payload or decoder permission, and all field, palette, bitmap, pixel, draw, and fallback routes remain closed.
+- [x] A local external-only capture launcher now verifies explicit emulator/media/MD5 inputs before writing a comment-only strict-manifest skeleton, and later validates an operator-filled manifest through the existing intake/binder/runtime path. It never launches an emulator, copies media, creates a trace, or decodes bytes.
+- [x] The external capture request is exposed through a local `--prepare` probe that safely skips without explicit inputs and delegates only to the strict no-launch skeleton path.
+- [x] A closed HuC6280 capture-event log can now feed the strict manifest only from the source-locked `$4090` CD-read event plus two preparation-matched opaque consumer windows. Unknown events, PCs, or windows reject; no payload or field semantics are decoded.
+- [x] The external runtime-validation route can generate that strict manifest only in memory from the HuC6280 log before the existing raw-media/provenance/admission chain; it does not consume a hand-edited manifest on this route.
+- [x] An external-only converter admits only a bounded instrumented Mednafen PCE export whose source path and MD5 are explicit, then copies its three observed HuC6280 rows into the strict event log. Unsupported debugger rows, changed MD5s, launching, media copies, and synthesized events are all rejected or absent.
+- [x] The external runtime handoff can now consume only that converted, source-attested event log after raw Track 02 media verification, then reuse the existing opaque manifest/runtime gate. It writes no log when the capture-media preflight is unavailable and still grants no decode or draw permission.
+- [x] A successful converted-trace runtime handoff retains the verified external export path and MD5 in its receipt; rejected or unavailable handoffs retain neither provenance field.
+- [x] A local `--convert` probe exposes the closed Mednafen-export conversion without launching an emulator or copying media; no arguments safely skip.
+- [x] The same local probe can inspect one explicit existing export without writing an event log, reporting only a stable MD5 after the closed grammar and regular-file checks pass.
+- [x] A local `--discover <capture-root>` path scans only direct regular files under one explicit non-symlink root and reports only exports that pass the same closed inspection; it writes no log and grants no admission.
+- [x] The Mednafen converter rejects an event-log output that names the source trace itself or resolves to the same file identity, preserving the MD5-attested capture against overwrite.
+- [x] Conversion also refuses to replace an existing event log and reports write/close failure as rejected, removing only its own partial new output.
+- [x] New event-log creation uses exclusive file creation after the fail-closed preflight, closing the check-to-write replacement race.
+- [x] The written strict event log is MD5-attested before conversion succeeds, and that digest follows only a successful converted-trace runtime handoff.
+- [x] The source export MD5 is checked again after the closed row read; a trace changed during conversion rejects before any event log is created.
+- [x] Only regular files may serve as external Mednafen trace sources; devices, FIFOs, and directories reject before hashing or parsing.
+- [x] The converted event-log MD5 is rechecked immediately before and after HuC6280 manifest/runtime consumption, rejecting a substituted log.
+- [x] HuC6280 event-log intake also admits regular files only, rejecting devices, FIFOs, and directories before event parsing.
+- [x] Symlinked Mednafen export and HuC6280 event-log paths reject, retaining direct source-path identity for MD5-bound evidence.
+- [x] A local `--bind` capture-evidence probe now requires both an authenticated raw Track 02 CUE/MD5 and an MD5-attested Mednafen export before it can write the strict event log; no-input safely skips and it never launches an emulator.
+- [ ] Decode additional dungeon/object fields only after an authenticated original consumer trace binds their format. Unknown Track 02 spans remain opaque, with no synthetic fallback.
+- [x] A strict `.srm` opaque admission now binds direct-file size, MD5, closed container form, admission version, and known Track 02 variant/MD5. It exposes no save semantics, decoded state, or fallback route.
+- [x] Runtime can retain that accepted SRM admission only as opaque provenance; missing receipt facts reject and save restore remains disabled.
+- [x] A local `--admit` SRM probe accepts only explicit path/MD5/size/version/Track 02 inputs and safely skips without a corpus; it never writes or decodes a save.
+- [x] A closed SRM corpus manifest can enumerate only direct declared opaque candidates across configured roots, rejecting duplicate/hash-conflict declarations and skipping a wholly absent corpus.
+- [x] A local SRM operator-attestation probe canonicalizes direct SRM/CUE paths and prints one Track 02-bound candidate row only after opaque verification; invalid version and nonregular paths reject.
+
 - [x] M10 Phase 1-12, dungeon data layer (complete)
 - [x] M10 Phase 13, combat system (complete, 45 invariants)
 - [x] M10 Phase 14, magic system (complete, 45 invariants)

@@ -192,6 +192,48 @@ int dm1_v1_inventory_source_slot_box_zone_pc34(
         outZone);
 }
 
+int dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+    int sourceSlotBoxIndex) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!dm1_v1_inventory_source_slot_box_zone_pc34(
+            sourceSlotBoxIndex, &zone)) {
+        return -1;
+    }
+    /* layout-696 C507 begins at source slot C00, represented by index 8. */
+    return sourceSlotBoxIndex - 8;
+}
+
+int dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+    int championSlot) {
+    const int sourceSlotBoxIndex = championSlot + 8;
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (championSlot < 0 ||
+        !dm1_v1_inventory_source_slot_box_zone_pc34(
+            sourceSlotBoxIndex, &zone)) {
+        return -1;
+    }
+    return sourceSlotBoxIndex;
+}
+
+int dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
+    int sourceSlotBoxIndex,
+    int* outX,
+    int* outY,
+    int* outW,
+    int* outH) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_inventory_source_slot_box_zone_pc34(
+            sourceSlotBoxIndex, &zone)) {
+        return 0;
+    }
+    *outX = zone.x;
+    *outY = zone.y;
+    *outW = zone.w;
+    *outH = zone.h;
+    return 1;
+}
+
 int dm1_v1_inventory_equipment_slot_zone_count_pc34(void) {
     return (int)(sizeof(kInventoryEquipmentSlotZones) /
                  sizeof(kInventoryEquipmentSlotZones[0]));

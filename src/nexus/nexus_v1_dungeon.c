@@ -2226,7 +2226,17 @@ static void nexus_v1_level_copy_structure1f_entries(
             const uint8_t *src = records + record * record_size;
             Nexus_V1_DgnStructure1FEntry *dst =
                 &level->structure1f_entries[output++];
+            const size_t raw_offset = (size_t)(src - data);
+            if (raw_offset > UINT32_MAX || record_size <= 0 ||
+                raw_offset > SIZE_MAX - (size_t)record_size) {
+                --output;
+                level->structure1f_entry_count = 0;
+                return;
+            }
             dst->family = (Nexus_V1_DgnStructure1FFamily)family;
+            dst->raw_record_offset = (uint32_t)raw_offset;
+            dst->raw_record_length = (uint32_t)record_size;
+            dst->raw_record_fnv1a64 = nexus_v1_fnv1a64(src, record_size);
             dst->tag = src[0];
             switch (family) {
             case NEXUS_V1_DGN_STRUCTURE1F_ITEMS:

@@ -129,6 +129,8 @@ static int viewport_consume_structure3_package_geometry(
     Nexus_Viewport *vp = (Nexus_Viewport *)context;
 
     if (!vp || !packet || !packet->valid ||
+        !packet->package_fnv1a64 || packet->package_fnv1a64 != packet->source_bytes_fnv1a64 || !packet->face_length || !packet->face_fnv1a64 || packet->face_offset > (uint32_t)packet->source_byte_count || packet->face_length > (uint32_t)packet->source_byte_count - packet->face_offset ||
+        !packet->descriptor_fnv1a64 || !packet->image_length || packet->image_offset > (uint32_t)packet->source_byte_count || packet->image_length > (uint32_t)packet->source_byte_count - packet->image_offset || (packet->palette_offset && (!packet->palette_length || packet->palette_offset > (uint32_t)packet->source_byte_count || packet->palette_length > (uint32_t)packet->source_byte_count - packet->palette_offset)) ||
         !packet->material_target.image_payload_interval_bound ||
         packet->material_target.image_payload_candidate_byte_count == 0U ||
         (packet->material_target.descriptor_target.descriptor
@@ -294,7 +296,11 @@ static int viewport_consume_structure1f_source(
 
     if (!vp || !packet || !packet->valid || !packet->no_draw_only ||
         packet->fallback_visuals_permitted ||
-        !packet->blocks_real_dgn_mesh_render) return -1;
+        !packet->blocks_real_dgn_mesh_render || !packet->package_fnv1a64 ||
+        packet->package_fnv1a64 != packet->source_bytes_fnv1a64 ||
+        !packet->descriptor_length || !packet->descriptor_fnv1a64 ||
+        packet->descriptor_offset > (uint32_t)packet->source_byte_count ||
+        packet->descriptor_length > (uint32_t)packet->source_byte_count - packet->descriptor_offset) return -1;
     if (!vp->structure1f_source_packet.valid)
         vp->structure1f_source_packet = *packet;
     return 0;
@@ -319,6 +325,53 @@ static void viewport_stage_structure1f_source_scene(
         !scene.blocks_real_dgn_mesh_render) return;
     vp->last_dgn_render_receipt.structure1f_source_scene_consumed = 1;
     vp->last_dgn_render_receipt.structure1f_source_scene = scene;
+}
+
+static void viewport_stage_structure1f2_face_adjacency_transform(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    int entry_index;
+
+    if (!vp || !engine) return;
+    memset(&vp->structure1f2_face_adjacency_transform, 0,
+           sizeof(vp->structure1f2_face_adjacency_transform));
+    for (entry_index = 0;
+         entry_index < engine->current_level.structure1f_entry_count;
+         ++entry_index) {
+        Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt receipt;
+
+        memset(&receipt, 0, sizeof(receipt));
+        if (nexus_v1_engine_build_structure1f2_face_adjacency_transform_receipt(
+                engine, entry_index, &receipt) != 1 || !receipt.valid ||
+            !nexus_v1_engine_consume_structure1f2_face_adjacency_transform_no_draw(
+                engine, &receipt)) continue;
+        vp->structure1f2_face_adjacency_transform = receipt;
+        vp->last_dgn_render_receipt
+            .structure1f2_face_adjacency_transform_consumed = 1;
+        vp->last_dgn_render_receipt.structure1f2_face_adjacency_transform =
+            receipt;
+        return;
+    }
+}
+
+static void viewport_stage_m11_direct_lev_dungeon_no_draw(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt receipt;
+
+    if (!vp || !engine) return;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!engine->m11_direct_lev_dungeon_no_draw_valid ||
+        !nexus_v1_engine_m11_direct_lev_dungeon_no_draw_ready(
+            engine, engine->m11_direct_lev_dungeon_route_epoch,
+            engine->m11_direct_lev_dungeon.level_index,
+            engine->m11_direct_lev_dungeon.dgn_md5,
+            engine->m11_direct_lev_dungeon.dgn_byte_count,
+            engine->m11_direct_lev_dungeon.dgn_fnv1a64, &receipt) ||
+        !receipt.no_draw_only || receipt.fallback_visuals_permitted ||
+        !receipt.blocks_real_dgn_mesh_render) return;
+    vp->last_dgn_render_receipt.m11_direct_lev_dungeon_no_draw_consumed = 1;
+    vp->last_dgn_render_receipt.m11_direct_lev_dungeon_no_draw = receipt;
 }
 
 static int viewport_consume_structure1c_source(
@@ -480,6 +533,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         viewport_stage_structure3_untextured_faces(vp, engine);
         viewport_stage_structure3_complete_source_scene(vp, engine);
         viewport_stage_structure1f_source_scene(vp, engine);
+        viewport_stage_structure1f2_face_adjacency_transform(vp, engine);
+        viewport_stage_m11_direct_lev_dungeon_no_draw(vp, engine);
         viewport_stage_structure1c_source_scene(vp, engine);
         viewport_stage_structure2_payload_anchors(vp, engine);
         /* Structure1B/MNS supplies an older host material path, but it has

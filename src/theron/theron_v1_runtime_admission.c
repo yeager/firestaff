@@ -4,6 +4,55 @@
 #include <string.h>
 #include <stdlib.h>
 
+static uint32_t theron_v1_runtime_track02_host_route_identity_checksum(
+    const char *identity) {
+    uint32_t checksum = 2166136261u;
+
+    if (!identity || identity[0] == '\0') return 0u;
+    while (*identity) {
+        checksum ^= (uint8_t)*identity++;
+        checksum *= 16777619u;
+    }
+    return checksum;
+}
+
+int theron_v1_runtime_bind_track02_capture_campaign_admission(
+    const Theron_StartupMediaStateReceipt *startup_media,
+    const Theron_V1Track02CaptureCampaignReceipt *campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt *dungeon_window,
+    Theron_V1RuntimeTrack02CaptureCampaignAdmissionReceipt *out) {
+    Theron_V1RuntimeTrack02CaptureCampaignAdmissionReceipt receipt = {0};
+
+    if (!out) return 0;
+    *out = receipt;
+    if (!startup_media || !campaign || !dungeon_window || !startup_media->startup_media_ready ||
+        campaign->track02_variant == THERON_TRACK02_VARIANT_UNKNOWN || !campaign->valid ||
+        !campaign->independent_bundles_verified || !campaign->shared_track02_provenance_verified ||
+        !campaign->shared_loader_provenance_verified || campaign->pixel_decode_allowed ||
+        campaign->level_object_semantics_allowed || campaign->render_allowed || campaign->fallback_visuals_allowed ||
+        dungeon_window->valid == 0 || !dungeon_window->opaque_route_ready ||
+        dungeon_window->level_field_decoder_allowed || dungeon_window->object_field_decoder_allowed ||
+        dungeon_window->bitmap_palette_admission_allowed || dungeon_window->pixel_decode_allowed ||
+        dungeon_window->dungeon_draw_allowed || dungeon_window->fallback_visuals_allowed ||
+        startup_media->track02_variant != (int)campaign->track02_variant ||
+        strcmp(startup_media->track02_md5, campaign->track02_md5) ||
+        dungeon_window->track02_variant != campaign->track02_variant ||
+        strcmp(dungeon_window->track02_md5, campaign->track02_md5) ||
+        dungeon_window->dungeon_record_window_checksum !=
+            campaign->route_destination_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]) return 0;
+    receipt.valid = 1;
+    receipt.startup_capture_ready = 1;
+    receipt.soul_room_capture_ready = 1;
+    receipt.dungeon_capture_ready = 1;
+    receipt.campaign_consumed = 1;
+    receipt.startup_media_consumed = 1;
+    receipt.dungeon_window_consumed = 1;
+    receipt.track02_variant = campaign->track02_variant;
+    snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", campaign->track02_md5);
+    *out = receipt;
+    return 1;
+}
+
 void theron_v1_runtime_admission_init(
     Theron_V1RuntimeAdmissionReceipt *out) {
     if (out) {
@@ -5607,10 +5656,8 @@ int theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
     theron_v1_runtime_track02_host_dungeon_consumer_proof_init(out);
     if (!handoff ||
         !original_host_route_identity ||
-        original_host_route_identity[0] == '\0' ||
-        strstr(original_host_route_identity, "placeholder") ||
-        strstr(original_host_route_identity, "synthetic") ||
-        strstr(original_host_route_identity, "fallback") ||
+        strcmp(original_host_route_identity,
+               THERON_V1_TRACK02_ORIGINAL_HOST_DUNGEON_ROUTE) != 0 ||
         !handoff->valid ||
         !handoff->render_asset_admission_consumed ||
         !handoff->dungeon_handoff_proof_consumed ||
@@ -5660,6 +5707,13 @@ int theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
     out->decoded_object_table_hash = handoff->decoded_object_table_hash;
     out->decoded_bitmap_hash = handoff->decoded_bitmap_hash;
     out->decoded_palette_hash = handoff->decoded_palette_hash;
+    out->original_host_route_identity_checksum =
+        theron_v1_runtime_track02_host_route_identity_checksum(
+            original_host_route_identity);
+    if (out->original_host_route_identity_checksum == 0u) {
+        theron_v1_runtime_track02_host_dungeon_consumer_proof_init(out);
+        return 0;
+    }
     out->original_host_route_bound = 1;
     out->level_grid_runtime_consumer_bound = 1;
     out->object_table_runtime_consumer_bound = 1;
@@ -5723,6 +5777,9 @@ int theron_v1_runtime_bind_track02_host_dungeon_consumer(
         proof->decoded_object_table_hash != handoff->decoded_object_table_hash ||
         proof->decoded_bitmap_hash != handoff->decoded_bitmap_hash ||
         proof->decoded_palette_hash != handoff->decoded_palette_hash ||
+        proof->original_host_route_identity_checksum !=
+            theron_v1_runtime_track02_host_route_identity_checksum(
+                THERON_V1_TRACK02_ORIGINAL_HOST_DUNGEON_ROUTE) ||
         !proof->original_host_route_bound ||
         !proof->level_grid_runtime_consumer_bound ||
         !proof->object_table_runtime_consumer_bound ||
@@ -5757,6 +5814,8 @@ int theron_v1_runtime_bind_track02_host_dungeon_consumer(
     out->decoded_object_table_hash = handoff->decoded_object_table_hash;
     out->decoded_bitmap_hash = handoff->decoded_bitmap_hash;
     out->decoded_palette_hash = handoff->decoded_palette_hash;
+    out->original_host_route_identity_checksum =
+        proof->original_host_route_identity_checksum;
     out->real_track02_dungeon_consumer_ready = 1;
     out->host_surface_upload_allowed = 1;
     out->host_capture_frame_required = 1;

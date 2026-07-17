@@ -3,6 +3,7 @@
 
 #include "dm2_v1_asset_loader.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define DM2_V1_GDAT_WALL_M11_COMMAND_MAX 12
@@ -17,6 +18,10 @@ typedef struct {
     uint32_t raw_hash;
     uint32_t decoded_hash;
     uint32_t palette_hash;
+    uint16_t material_raw_index;
+    const uint8_t *material_source_bytes;
+    size_t material_source_byte_count;
+    uint32_t material_receipt_hash;
     /* G0163's source crop and destination panel are part of the command,
      * rather than renderer-local defaults. */
     uint16_t source_x;

@@ -309,6 +309,9 @@ int main(void)
                     dm2_v1_viewport_wall_field_for_square(side_squares[side]) ||
                 !command->raw_hash || !command->decoded_hash ||
                 !command->palette_hash || !command->width || !command->height ||
+                !command->material_source_bytes ||
+                command->material_source_byte_count == 0u ||
+                !command->material_receipt_hash ||
                 !command->geometry_hash || field < 0x22 ||
                 command->rect_number != (uint16_t)(0x2be + source_cell) ||
                 !command->rect_table_hash || !command->rect_row_hash ||
@@ -389,6 +392,29 @@ int main(void)
              DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u) {
             fputs("FAIL: altered side-wall M11 destination did not fail closed\n",
                   stderr);
+            failures = 1;
+        }
+    }
+    {
+        DM2_V1_GdatWallM11CommandPlan malformed_plan = wall_plan;
+
+        malformed_plan.commands[0].material_receipt_hash = 0u;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, graphicsset, scene_plan.command_hash,
+            scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+            scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            scene_plan.ambient_darkness);
+        dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &malformed_plan);
+        mark_plan_walls_visible(&viewport, &malformed_plan);
+        dm2_v1_render_walls(&viewport);
+        if (viewport.asset_wall_drawn_count != 0 ||
+            viewport.last_dungeon_wall_material_consumed_mask != 0u ||
+            (viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u) {
+            fputs("FAIL: altered wall GFX256 receipt reached M11\n", stderr);
             failures = 1;
         }
     }

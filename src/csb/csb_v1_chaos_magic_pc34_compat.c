@@ -1180,6 +1180,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS 100
 
 typedef struct {
@@ -1195,6 +1196,7 @@ typedef struct {
 typedef struct {
     uint32_t location;
     int delay;
+    int expected_delay;
     /* GeneratorDelay@ only finds source DB3 actuator type six.  A stored
      * type-zero fallback must therefore not change a later fetch. */
     int has_generator;
@@ -1220,6 +1222,7 @@ typedef struct {
 
 typedef struct {
     uint16_t thing;
+    uint32_t expected_values[4];
     uint32_t values[4];
 } CSB_V1_CSBWinDSAPendingMissileWrite;
 
@@ -1260,6 +1263,16 @@ typedef struct {
     int32_t index;
     int32_t color;
 } CSB_V1_CSBWinDSAPendingDescriptionRequest;
+typedef struct {
+    uint32_t delay;
+    uint32_t action;
+    uint32_t target_location;
+    int message_route;
+} CSB_V1_CSBWinDSAPendingSwitchAction;
+typedef struct {
+    uint32_t source_location;
+    uint32_t destination_location;
+} CSB_V1_CSBWinDSAPendingTeleporterCopy;
 
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
@@ -1512,6 +1525,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             uint32_t missile_values[4] = {
                 UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX
             };
+            uint32_t source_missile_values[4];
             int pending = -1;
             int source_result;
             for (sv = 0; sv < *pending_missile_write_count; ++sv) {
@@ -1532,6 +1546,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                     return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
                 }
                 if (source_result == 0) break;
+                memcpy(source_missile_values, missile_values,
+                       sizeof(source_missile_values));
             }
             if (!csb_v1_csbwin_dsa_stack_pop(stack, depth,
                                               &missile_values[3]) ||
@@ -1542,13 +1558,17 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                 goto underflow;
             }
             if (pending < 0) {
-                if (!context->set_missile_info ||
+                if ((!context->commit_missile_info &&
+                     !context->set_missile_info) ||
                     *pending_missile_write_count >=
                         CSB_V1_CSBWIN_DSA_PENDING_MISSILE_WRITES) {
                     return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
                 }
                 pending = *pending_missile_write_count;
                 pending_missile_writes[pending].thing = (uint16_t)v;
+                memcpy(pending_missile_writes[pending].expected_values,
+                       source_missile_values,
+                       sizeof(source_missile_values));
                 ++*pending_missile_write_count;
             }
             memcpy(pending_missile_writes[pending].values, missile_values,
@@ -2552,7 +2572,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
          * and silently ignores stone/empty cells.  Query first to validate
          * the caller-owned chain, then defer its write until this complete
          * authenticated action is known-good. */
-        if (!context->get_generator_delay || !context->set_generator_delay ||
+        if (!context->get_generator_delay ||
+            (!context->commit_generator_delay &&
+             !context->set_generator_delay) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             *pending_generator_write_count >=
@@ -2564,6 +2586,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         /* DB3 disableTime is CSBWin's unsigned BITS8_15 field. */
         pending_generator_writes[*pending_generator_write_count].delay =
             (int)(uint8_t)w;
+        pending_generator_writes[*pending_generator_write_count].expected_delay = sv;
         pending_generator_writes[*pending_generator_write_count].has_generator =
             sv != -1;
         ++*pending_generator_write_count;
@@ -2901,7 +2924,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
          * Thing indices, accepts DB3 only, and copies exactly sizeof(DB3)-2
          * bytes. Keep the result action-local until every later source word
          * has been accepted; later COPY commands see the staged DB3 image. */
-        if (!context->get_actuator_payload || !context->set_actuator_payload ||
+        if (!context->get_actuator_payload ||
+            (!context->copy_actuator_payload &&
+             !context->set_actuator_payload) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -3099,6 +3124,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_sound_requests[CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS];
     CSB_V1_CSBWinDSAPendingDescriptionRequest pending_descriptions[
         CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
+    CSB_V1_CSBWinDSAPendingSwitchAction pending_switch_actions[
+        CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
+    CSB_V1_CSBWinDSAPendingTeleporterCopy pending_teleporter_copies[
+        CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -3119,6 +3148,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int discard_text_requested = 0;
     int adjust_skills_parameters_requested = 0;
     int pending_description_count = 0;
+    int pending_switch_action_count = 0;
+    int pending_teleporter_copy_count = 0;
     uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
     int staged_saves_disabled;
     uint32_t staged_random_state;
@@ -3166,9 +3197,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             uint32_t delay = 0u;
             uint32_t target_location = 0u;
             uint32_t target_low;
-            uint8_t event_type = 0u;
             uint32_t action_type;
-            int scheduled;
 
             /* CSBWin DSA.cpp:635-725 / Data.h DSAmessageCmd. MESSAGE and
              * MESSAGE32 schedule QueueDSASwitchAction with MorD='M';
@@ -3220,20 +3249,20 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 /* MSG_NULL consumes the same operands but exits before
                  * QueueDSASwitchAction in the source. */
             } else {
-                if (!context->queue_switch_action) {
+                if (!context->queue_switch_action ||
+                    pending_switch_action_count >=
+                        CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS) {
                     return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
                 }
                 action_type = message_type - 1u;
-                scheduled = context->queue_switch_action(
-                    context->dungeon_user, delay, action_type, target_location,
-                    opcode == CSB_V1_CSBWIN_DSACMD_DESSAGE32 ? 'D' : 'M',
-                    &event_type);
-                if (scheduled < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
-                if (scheduled > 0) {
-                    ++candidate.timer_scheduled_count;
-                    candidate.last_scheduled_event_type = event_type;
-                    candidate.last_scheduled_target_location = target_location;
-                }
+                pending_switch_actions[pending_switch_action_count].delay = delay;
+                pending_switch_actions[pending_switch_action_count].action =
+                    action_type;
+                pending_switch_actions[pending_switch_action_count]
+                    .target_location = target_location;
+                pending_switch_actions[pending_switch_action_count].message_route =
+                    opcode == CSB_V1_CSBWIN_DSACMD_DESSAGE32 ? 'D' : 'M';
+                ++pending_switch_action_count;
             }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER ||
                    opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32) {
@@ -3243,7 +3272,6 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             uint32_t destination_location = 0u;
             int thirty_two =
                 opcode == CSB_V1_CSBWIN_DSACMD_COPYTELEPORTER32;
-            int copied;
 
             /* CSBWin DSA.cpp:731-763 / Data.h DSAcopyTeleporterCmd. The
              * source copies the first DB1 teleporter and its CELLFLAG from
@@ -3266,19 +3294,15 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &destination_location)) {
                 return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
             }
-            if (!context->copy_teleporter) {
+            if (!context->copy_teleporter || pending_teleporter_copy_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             }
-            copied = context->copy_teleporter(
-                context->dungeon_user, source_location, destination_location);
-            if (copied < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
-            if (copied > 0) {
-                ++candidate.teleporter_copy_count;
-                candidate.last_teleporter_copy_source_location =
-                    source_location;
-                candidate.last_teleporter_copy_destination_location =
-                    destination_location;
-            }
+            pending_teleporter_copies[pending_teleporter_copy_count]
+                .source_location = source_location;
+            pending_teleporter_copies[pending_teleporter_copy_count]
+                .destination_location = destination_location;
+            ++pending_teleporter_copy_count;
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_LOAD) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             next_state = csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 11), 5);
@@ -3547,9 +3571,16 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         }
     }
     for (i = 0; i < pending_generator_write_count; ++i) {
-        if (!context->set_generator_delay(
-                context->dungeon_user, pending_generator_writes[i].location,
-                pending_generator_writes[i].delay)) {
+        if ((context->commit_generator_delay &&
+             !context->commit_generator_delay(
+                 context->dungeon_user, pending_generator_writes[i].location,
+                 pending_generator_writes[i].expected_delay,
+                 pending_generator_writes[i].delay)) ||
+            (!context->commit_generator_delay &&
+             (!context->set_generator_delay ||
+              !context->set_generator_delay(
+                  context->dungeon_user, pending_generator_writes[i].location,
+                  pending_generator_writes[i].delay)))) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -3579,12 +3610,26 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         }
     }
     for (i = 0; i < pending_missile_write_count; ++i) {
-        if (!context->set_missile_info ||
-            !context->set_missile_info(context->dungeon_user,
-                                       pending_missile_writes[i].thing,
-                                       pending_missile_writes[i].values)) {
+        if ((context->commit_missile_info &&
+             !context->commit_missile_info(
+                 context->dungeon_user, pending_missile_writes[i].thing,
+                 pending_missile_writes[i].expected_values,
+                 pending_missile_writes[i].values)) ||
+            (!context->commit_missile_info &&
+             (!context->set_missile_info ||
+              !context->set_missile_info(
+                  context->dungeon_user, pending_missile_writes[i].thing,
+                  pending_missile_writes[i].values)))) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.missile_info_store_count;
+        candidate.last_missile_info_thing = pending_missile_writes[i].thing;
+        memcpy(candidate.last_missile_info_before,
+               pending_missile_writes[i].expected_values,
+               sizeof(candidate.last_missile_info_before));
+        memcpy(candidate.last_missile_info_after,
+               pending_missile_writes[i].values,
+               sizeof(candidate.last_missile_info_after));
     }
     for (i = 0; i < pending_character_write_count; ++i) {
         if (!context->set_character_info ||
@@ -3625,10 +3670,17 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         }
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
-        if (!context->set_actuator_payload ||
-            context->set_actuator_payload(
-                context->dungeon_user, pending_actuator_copies[i].thing,
-                pending_actuator_copies[i].payload) <= 0) {
+        if ((context->copy_actuator_payload &&
+             context->copy_actuator_payload(
+                 context->dungeon_user,
+                 pending_actuator_copies[i].source_thing,
+                 pending_actuator_copies[i].thing,
+                 pending_actuator_copies[i].payload) <= 0) ||
+            (!context->copy_actuator_payload &&
+             (!context->set_actuator_payload ||
+              context->set_actuator_payload(
+                  context->dungeon_user, pending_actuator_copies[i].thing,
+                  pending_actuator_copies[i].payload) <= 0))) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         ++candidate.actuator_copy_count;
@@ -3657,6 +3709,45 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_descriptions[i].index,
                 pending_descriptions[i].color)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_switch_action_count; ++i) {
+        uint8_t event_type = 0u;
+        int scheduled;
+
+        if (!context->queue_switch_action) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        scheduled = context->queue_switch_action(
+            context->dungeon_user, pending_switch_actions[i].delay,
+            pending_switch_actions[i].action,
+            pending_switch_actions[i].target_location,
+            pending_switch_actions[i].message_route, &event_type);
+        if (scheduled < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        if (scheduled > 0) {
+            ++candidate.timer_scheduled_count;
+            candidate.last_scheduled_event_type = event_type;
+            candidate.last_scheduled_target_location =
+                pending_switch_actions[i].target_location;
+        }
+    }
+    for (i = 0; i < pending_teleporter_copy_count; ++i) {
+        int copied;
+
+        if (!context->copy_teleporter) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        copied = context->copy_teleporter(
+            context->dungeon_user,
+            pending_teleporter_copies[i].source_location,
+            pending_teleporter_copies[i].destination_location);
+        if (copied < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        if (copied > 0) {
+            ++candidate.teleporter_copy_count;
+            candidate.last_teleporter_copy_source_location =
+                pending_teleporter_copies[i].source_location;
+            candidate.last_teleporter_copy_destination_location =
+                pending_teleporter_copies[i].destination_location;
         }
     }
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
@@ -3811,6 +3902,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.excell_user = runner->excell_user;
     context.get_generator_delay = runner->get_generator_delay;
     context.set_generator_delay = runner->set_generator_delay;
+    context.commit_generator_delay = runner->commit_generator_delay;
     context.get_monster_info = runner->get_monster_info;
     context.set_monster_info = runner->set_monster_info;
     context.monster_invisible_enabled = runner->monster_invisible_enabled;
@@ -3824,6 +3916,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.normalize_object_property = runner->normalize_object_property;
     context.get_actuator_payload = runner->get_actuator_payload;
     context.set_actuator_payload = runner->set_actuator_payload;
+    context.copy_actuator_payload = runner->copy_actuator_payload;
     context.get_champion_possession = runner->get_champion_possession;
     context.get_monster_possession = runner->get_monster_possession;
     context.inspect_cells = runner->inspect_cells;
@@ -3832,6 +3925,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_level_multiplier = runner->get_level_multiplier;
     context.get_missile_info = runner->get_missile_info;
     context.set_missile_info = runner->set_missile_info;
+    context.commit_missile_info = runner->commit_missile_info;
     context.get_mastery = runner->get_mastery;
     context.get_party_info = runner->get_party_info;
     context.get_character_info = runner->get_character_info;

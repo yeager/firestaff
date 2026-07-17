@@ -89,6 +89,9 @@ int main(void)
     DM2_V1_EnvironmentWeatherReceipt environment;
     DM2_V1_RainfallParamReceipt rainfall;
     DM2_V1_SceneWeatherLightRuntimeReceipt chain;
+    DM2_V1_SetTimerWeatherReceipt timer_owner;
+    DM2_V1_WeatherRendererReceipt renderer;
+    DM2_V1_OutdoorWeatherM11Receipt outdoor_m11;
     int selected_level = -1;
     int selected_style = -1;
     int failures = 0;
@@ -164,6 +167,23 @@ int main(void)
             weather_admission.valid && weather_admission.source_text_ready &&
             weather_admission.no_fallback_blit,
         "weather runtime admission consumes GRAPHICS_DATA_OPEN and GDAT text");
+    memset(&timer_owner, 0, sizeof(timer_owner));
+    memset(&renderer, 0, sizeof(renderer));
+    memset(&outdoor_m11, 0, sizeof(outdoor_m11));
+    failures += !check(
+        dm2_v1_weather_set_timer_weather_receipt(1, 1u, &timer_owner) &&
+            timer_owner.valid && timer_owner.outdoor && timer_owner.scheduled &&
+            weather.commands[0].raw_text &&
+            weather.commands[0].byte_count != 0u &&
+            weather.commands[0].raw_hash != 0u &&
+            !dm2_v1_weather_gdat_outdoor_m11_receipt(
+                &weather, &renderer, &timer_owner, &outdoor_m11),
+        "outdoor M11 weather keeps real GDAT text closed without complete picture evidence");
+    timer_owner.outdoor = 0;
+    failures += !check(
+        !dm2_v1_weather_gdat_outdoor_m11_receipt(
+            &weather, &renderer, &timer_owner, &outdoor_m11),
+        "outdoor M11 weather rejects a non-outdoor timer owner");
     memset(&environment, 0, sizeof(environment));
     (void)dm2_v1_weather_gdat_environment_receipt(
         &loader, (uint8_t)selected_style,

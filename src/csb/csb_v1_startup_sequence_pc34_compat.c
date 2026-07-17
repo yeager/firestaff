@@ -11,13 +11,15 @@ enum {
      * through source steps 2..21, keeps the full CHAOS image through the
      * post-zoom hold, then blits STRIKES BACK before ENTRANCE.C. */
     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
-    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
+    /* TITLE.C F0437 holds the full-size CHAOS bitmap for two VBlanks before
+     * its C426 STRIKES BACK blit. */
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
     CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 = 101,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 28,
+    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 30,
     CSB_V1_GRAPHIC_TITLE_PC34 = 1,
     CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34 = 2,
     CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34 = 3,
@@ -201,8 +203,7 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
         return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     }
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
-                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
-                    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) {
+                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34) {
         return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     }
     return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
@@ -222,12 +223,8 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
                     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34) {
         return (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 2);
     }
-    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
-                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
-                    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) {
-        return (unsigned int)CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 + 1u;
-    }
-    return (unsigned int)CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 + 2u;
+    if (frame < CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) return 21u;
+    return 22u;
 }
 
 static void csb_v1_startup_clear_title_rect_pc34(
@@ -2914,7 +2911,7 @@ int csb_v1_startup_begin_door_opening_pc34(
         CSB_V1_STARTUP_STAGE_ENTRANCE_PRE_OPEN_DELAY_PC34;
     state->opening_delay_ticks =
         csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
-    state->opening_step = 1;
+    state->opening_step = 0;
     state->pending_command = pending_command;
     return 1;
 }

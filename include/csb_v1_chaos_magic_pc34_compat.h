@@ -243,6 +243,10 @@ typedef int (*CSB_V1_CSBWinDSAGetGeneratorDelayFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSASetGeneratorDelayFn)(void *user,
                                                     uint32_t location,
                                                     int delay);
+typedef int (*CSB_V1_CSBWinDSACommitGeneratorDelayFn)(void *user,
+                                                       uint32_t location,
+                                                       int expected_delay,
+                                                       int delay);
 /* CSBWin DSA.cpp STKOP_MonsterFetch reads one loaded DB4 record into its
  * eight-word source result. The runtime owns the decoded DB4 layout. */
 typedef int (*CSB_V1_CSBWinDSAGetMonsterInfoFn)(void *user,
@@ -295,6 +299,12 @@ typedef int (*CSB_V1_CSBWinDSAGetActuatorPayloadFn)(
     void *user, uint16_t thing, uint8_t out_payload[6]);
 typedef int (*CSB_V1_CSBWinDSASetActuatorPayloadFn)(
     void *user, uint16_t thing, const uint8_t payload[6]);
+/* CSBWin DSA.cpp STKOP_Copy commits one DB3 source/destination pair.  The
+ * runtime callback rechecks both source owners against the staged source
+ * bytes immediately before writing the destination. */
+typedef int (*CSB_V1_CSBWinDSACopyActuatorPayloadFn)(
+    void *user, uint16_t source_thing, uint16_t destination_thing,
+    const uint8_t source_payload[6]);
 typedef int (*CSB_V1_CSBWinDSANormalizeObjectPropertyFn)(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t input_value, uint32_t *out_value);
@@ -322,6 +332,9 @@ typedef int (*CSB_V1_CSBWinDSAGetMissileInfoFn)(
     void *user, uint16_t thing, uint32_t out_values[4]);
 typedef int (*CSB_V1_CSBWinDSASetMissileInfoFn)(
     void *user, uint16_t thing, const uint32_t values[4]);
+typedef int (*CSB_V1_CSBWinDSACommitMissileInfoFn)(
+    void *user, uint16_t thing, const uint32_t expected_values[4],
+    const uint32_t values[4]);
 /* DSA.cpp STKOP_Mastery delegates to the live CHARDESC/skill owner. */
 typedef int (*CSB_V1_CSBWinDSAGetMasteryFn)(
     void *user, uint32_t champion_index, uint32_t skill_index,
@@ -457,6 +470,7 @@ typedef struct {
     void *excell_user;
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
     CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
+    CSB_V1_CSBWinDSACommitGeneratorDelayFn commit_generator_delay;
     CSB_V1_CSBWinDSAGetMonsterInfoFn get_monster_info;
     CSB_V1_CSBWinDSASetMonsterInfoFn set_monster_info;
     int monster_invisible_enabled;
@@ -470,6 +484,7 @@ typedef struct {
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
     CSB_V1_CSBWinDSAGetActuatorPayloadFn get_actuator_payload;
     CSB_V1_CSBWinDSASetActuatorPayloadFn set_actuator_payload;
+    CSB_V1_CSBWinDSACopyActuatorPayloadFn copy_actuator_payload;
     CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
@@ -478,6 +493,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
     CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
+    CSB_V1_CSBWinDSACommitMissileInfoFn commit_missile_info;
     CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     CSB_V1_CSBWinDSAGetPartyInfoFn get_party_info;
     CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
@@ -649,6 +665,10 @@ typedef struct {
     uint16_t actuator_copy_count;
     uint16_t last_actuator_copy_source_thing;
     uint16_t last_actuator_copy_destination_thing;
+    uint16_t missile_info_store_count;
+    uint16_t last_missile_info_thing;
+    uint32_t last_missile_info_before[4];
+    uint32_t last_missile_info_after[4];
 } CSB_V1_CSBWinDSAStackExecution;
 
 CSB_V1_CSBWinDSAExecuteResult
@@ -773,6 +793,7 @@ typedef struct {
     void *excell_user;
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
     CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
+    CSB_V1_CSBWinDSACommitGeneratorDelayFn commit_generator_delay;
     CSB_V1_CSBWinDSAGetMonsterInfoFn get_monster_info;
     CSB_V1_CSBWinDSASetMonsterInfoFn set_monster_info;
     int monster_invisible_enabled;
@@ -786,6 +807,7 @@ typedef struct {
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
     CSB_V1_CSBWinDSAGetActuatorPayloadFn get_actuator_payload;
     CSB_V1_CSBWinDSASetActuatorPayloadFn set_actuator_payload;
+    CSB_V1_CSBWinDSACopyActuatorPayloadFn copy_actuator_payload;
     CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
@@ -794,6 +816,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
     CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
+    CSB_V1_CSBWinDSACommitMissileInfoFn commit_missile_info;
     CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     CSB_V1_CSBWinDSAGetPartyInfoFn get_party_info;
     CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;

@@ -2435,12 +2435,29 @@ int main(void) {
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD, 64u, 8u,
         0x00380010u, 0x0038002cu, 0x0037f020u, 8u, 512u,
         0x55556666u, media_pixels, 64u * 8u));
+    CHECK(!theron_v1_world_runtime_media_set_surface(
+        &world, THERON_RUNTIME_MEDIA_SURFACE_STAGE,
+        "00000000000000000000000000000000",
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, 64u, 8u,
+        0x00280010u, 0x0028002cu, 0x0027f020u, 8u, 512u,
+        0x33334444u, media_pixels, 64u * 8u));
     world.runtime_media.identity.ready = 1;
     world.runtime_media.identity.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     world.runtime_media.identity.bank_stride = 0x0400u;
     world.runtime_media.identity.checksum = 0x1234fedcu;
     CHECK(theron_v1_world_runtime_media_for_level(&world, 0, 0) ==
           &world.runtime_media.soul_room);
+    strcpy(world.runtime_media.stage.track02_md5,
+           "00000000000000000000000000000000");
+    CHECK(!theron_v1_world_runtime_media_select_level_bank(
+        &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
+        THERON_DUNGEON_1_HALL_OF_RECORDS, 1));
+    strcpy(world.runtime_media.stage.track02_md5, THERON_TRACK02_MD5_US_BIN);
+    world.runtime_media.identity.track02_variant = THERON_TRACK02_VARIANT_JP_BIN;
+    CHECK(!theron_v1_world_runtime_media_select_level_bank(
+        &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
+        THERON_DUNGEON_1_HALL_OF_RECORDS, 1));
+    world.runtime_media.identity.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     CHECK(theron_v1_runtime_bind_track02_m11_soul_room_consumption(
         &decode_vector, &world, 320, 200, 16, 24, 1, 1,
         &m11_consumption));

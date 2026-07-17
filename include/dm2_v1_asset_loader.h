@@ -215,6 +215,9 @@ typedef struct {
     uint8_t palette16[16];
     DM2_V1_GdatImageMetadata metadata;
     uint16_t data_index;
+    uint16_t graphicsset_offset_word;
+    uint16_t image_offset_word;
+    uint32_t offset_receipt_hash;
     uint32_t palette_hash;
     uint32_t receipt_hash;
 } DM2_V1_QueryGdatSummaryImageReceipt;
@@ -558,6 +561,32 @@ typedef struct {
     uint32_t decoded_pixel_hash;
     uint32_t receipt_hash;
 } DM2_V1_GdatImageExtractReceipt;
+
+/* Source-owned image material selected by SKULLWIN c_dballoc GFX routes.
+ * source_bytes aliases the loaded GRAPHICS.DAT buffer; callers must not treat
+ * it as an allocator-owned decoded or writable bitmap. */
+typedef struct {
+    uint8_t accepted;
+    uint8_t used_gfx16_default;
+    uint8_t gfxalloc_done;
+    uint8_t selected_category;
+    uint8_t selected_index;
+    uint8_t selected_field;
+    uint16_t raw_index;
+    const uint8_t *source_bytes;
+    size_t source_byte_count;
+    DM2_V1_GdatImageExtractReceipt image;
+    uint32_t receipt_hash;
+} DM2_V1_GdatGfxMaterialReceipt;
+
+typedef struct {
+    uint8_t accepted;
+    uint16_t raw_index;
+    const uint8_t *source_bytes;
+    size_t source_byte_count;
+    uint32_t source_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GdatGfxRawMaterialReceipt;
 
 typedef struct {
     uint8_t accepted;
@@ -911,6 +940,27 @@ int dm2_v1_extract_gdat_image_receipt(
     const DM2_V1_GdatUnderlayPair *underlays,
     size_t underlay_count,
     DM2_V1_GdatImageExtractReceipt *out_receipt);
+int dm2_v1_gdat_allocate_gfx256_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    int gfxalloc_done,
+    DM2_V1_GdatGfxMaterialReceipt *out_receipt);
+int dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t raw_index,
+    DM2_V1_GdatGfxRawMaterialReceipt *out_receipt);
+/* Exact GDAT image ownership: unlike the GFX16 allocator route, this never
+ * substitutes MISCELLANEOUS/FE/FE when the requested image is absent. */
+int dm2_v1_gdat_image_raw_material_receipt(
+    const DM2_V1_AssetLoader *loader, int category, int index, int field,
+    DM2_V1_GdatGfxRawMaterialReceipt *out_receipt);
+int dm2_v1_gdat_allocate_gfx16_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int gfxalloc_done,
+    DM2_V1_GdatGfxMaterialReceipt *out_receipt);
 int dm2_v1_query_gdat_image_entry_buff_receipt(
     const DM2_V1_AssetLoader *loader,
     int category,

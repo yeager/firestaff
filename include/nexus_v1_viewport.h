@@ -63,6 +63,11 @@ typedef struct {
         structure3_complete_source_scene;
     int structure1f_source_scene_consumed;
     Nexus_V1_DgnStructure1FSourceSceneReceipt structure1f_source_scene;
+    int structure1f2_face_adjacency_transform_consumed;
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt
+        structure1f2_face_adjacency_transform;
+    int m11_direct_lev_dungeon_no_draw_consumed;
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt m11_direct_lev_dungeon_no_draw;
     int structure1c_source_scene_consumed;
     Nexus_V1_DgnStructure1CSourceSceneReceipt structure1c_source_scene;
     int structure2_payload_anchor_scene_consumed;
@@ -166,6 +171,8 @@ typedef struct {
         structure3_animated_material_image;
     Nexus_V1_DgnStructure3UntexturedFacePacket structure3_untextured_face;
     Nexus_V1_DgnStructure1FSourcePacket structure1f_source_packet;
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt
+        structure1f2_face_adjacency_transform;
     Nexus_V1_DgnStructure1CSourcePacket structure1c_source_packet;
     Nexus_V1_DgnStructure2PayloadAnchorPacket structure2_payload_anchor_packet;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;

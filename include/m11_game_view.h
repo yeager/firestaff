@@ -32,11 +32,24 @@
 #include "dm1_v1_endgame_presentation_pc34_compat.h"
 #include "dialog_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_runtime_admission.h"
+#include "theron_v1_track02_campaign_media_discovery.h"
+#include "theron_v1_track02_loader_trace_replay_consistency.h"
+#include "theron_v1_track02_sector_record_admission.h"
+#include "theron_v1_track02_sector_record_corpus_discovery.h"
+#include "theron_v1_track02_level_object_descriptor_capture_intake.h"
+#include "theron_v1_track02_descriptor_bitmap_palette_capture_intake.h"
+#include "theron_v1_track02_dungeon_handoff_capture_plan_admission.h"
+#include "theron_v1_track02_live_loader_route_admission.h"
+#include "csb_v1_boot.h"
+#include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
+#include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,6 +84,126 @@ extern "C" {
 
 static inline int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
     return dm1_v1_graphic_champion_damage_small_pc34();
+}
+
+/* Geometry probes consume the same source-owned physical rectangles that
+ * F0387/F0394 blit.  Click zones remain separate C011/C013 facts. */
+static inline int M11_GameView_GetV1ActionAreaZone(
+    int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1ActionMenuGraphicZone(
+    int rows, int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_menu_graphic_rect_pc34(rows);
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1ActionResultZoneId(void) {
+    return dm1_v1_action_result_zone_id_pc34();
+}
+
+static inline int M11_GameView_GetV1ActionResultZone(
+    int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_result_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1ActionPassZoneId(void) {
+    return dm1_v1_action_pass_zone_id_pc34();
+}
+
+static inline int M11_GameView_GetV1ActionPassZone(
+    int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_pass_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1SpellAreaZoneId(void) {
+    return DM1_V1_SPELL_AREA_ZONE_ID_PC34;
+}
+
+static inline int M11_GameView_GetV1SpellAreaZone(
+    int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_graphic_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
+    return DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
+}
+
+static inline int M11_GameView_GetV1SpellAreaLinesGraphicId(void) {
+    return DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+}
+
+static inline int M11_GameView_GetV1SpellCasterPanelZoneId(void) {
+    return DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34;
+}
+
+static inline int M11_GameView_GetV1SpellCasterPanelZone(
+    int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_caster_panel_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1SpellCasterTabZoneId(void) {
+    return DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34;
+}
+
+static inline int M11_GameView_GetV1SpellCasterTabZone(
+    int *outX, int *outY, int *outW, int *outH) {
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_caster_tab_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
+    return rect.w > 0 && rect.h > 0;
+}
+
+static inline int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int index) {
+    return dm1_v1_spell_available_symbol_parent_zone_id_pc34(index);
+}
+
+static inline int M11_GameView_GetV1SpellAvailableSymbolZoneId(int index) {
+    return dm1_v1_spell_available_symbol_zone_id_pc34(index);
+}
+
+static inline int M11_GameView_GetV1SpellChampionSymbolZoneId(int index) {
+    return dm1_v1_spell_champion_symbol_zone_id_pc34(index);
+}
+
+static inline int M11_GameView_GetV1SpellCastZoneId(void) {
+    return DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34;
+}
+
+static inline int M11_GameView_GetV1SpellRecantZoneId(void) {
+    return DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34;
 }
 
 static inline int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
@@ -167,6 +300,10 @@ static inline int M11_GameView_GetV1OpenScrollPanelGraphicId(void) {
 
 static inline int M11_GameView_GetV1ChestSlotBoxZoneCount(void) {
     return dm1_v1_inventory_chest_slot_box_zone_count_pc34();
+}
+
+static inline int M11_GameView_GetV1ChestSlotBoxZoneId(int chestOrdinal) {
+    return dm1_v1_inventory_chest_slot_box_zone_id_pc34(chestOrdinal);
 }
 
 static inline int M11_GameView_GetV1ChestSlotBoxZone(
@@ -388,12 +525,22 @@ typedef struct {
     const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */
     const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
     const Theron_Track02StartupLoaderReceipt* theronTrack02LoaderReceipt;
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* theronCampaignMedia;
+    const Theron_V1Track02CaptureTargetPlan* theronCampaignMediaPlan;
+    uint32_t theronCampaignMediaScanEpoch;
+    const Theron_V1SrmCampaignReplayReceipt* theronSrmCampaignReplay;
+    const Theron_V1SrmLaunchDiscoveryReceipt* theronSrmLaunchDiscovery;
+    const Theron_V1Track02LaunchTraceIdentityReceipt* theronLaunchTraceIdentity;
+    const Theron_V1Track02TraceBundleReceipt* theronTraceBundle;
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* theronSectorRecordCorpus;
+    const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* theronDungeonCapturePlan;
     /* Optional authenticated Track 02 capture manifest. The Theron launch
      * consumes it before publishing its detached runtime receipt. */
     const char* theronTrack02CaptureManifestPath;
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
     const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
+    uint32_t csbSaveCandidateIdentity; /* M12-selected CSB save discovery identity. */
     int languageIndex;
     int rendererBackend;
     int presentationMode;
@@ -1094,6 +1241,83 @@ typedef struct {
         int startup_text_prompt_count;
         int startup_text_prompt_status;
         char startup_text_prompt[40];
+        /* External capture evidence may only publish route readiness. These
+         * flags never authorize a decoder, renderer, or fallback surface. */
+        int capture_campaign_admission_valid;
+        int capture_campaign_startup_ready;
+        int capture_campaign_soul_room_ready;
+        int capture_campaign_dungeon_ready;
+        int capture_campaign_track02_variant;
+        char capture_campaign_track02_md5[33];
+        char capture_campaign_trace_md5[33];
+        char capture_campaign_bundle_md5[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT][33];
+        uint32_t capture_campaign_dungeon_window_checksum;
+        /* Descriptor-selected later CD records are opaque provenance only.
+         * These fields cannot authorize a level/object decoder or draw. */
+        int sector_record_admission_valid;
+        int sector_record_dungeon_ready;
+        int sector_record_track02_variant;
+        char sector_record_track02_md5[33];
+        uint32_t sector_record_track02_record;
+        uint32_t sector_record_user_data_hash;
+        uint32_t sector_record_raw_sector_checksum;
+        uint32_t sector_record_campaign_layout_epoch;
+        uint32_t sector_record_media_scan_epoch;
+        Theron_V1Track02SectorRecordCorpusDiscoveryReceipt sector_record_corpus;
+        int sector_record_corpus_bound;
+        /* The first dungeon handoff may retain only descriptor-proven record
+         * provenance. This is not a decoded level/object world or draw gate. */
+        int first_dungeon_record_world_admission_valid;
+        int first_dungeon_level_object_opaque_ready;
+        int first_dungeon_record_track02_variant;
+        char first_dungeon_record_track02_md5[33];
+        uint32_t first_dungeon_stage3_record;
+        size_t first_dungeon_descriptor_ordinal;
+        uint16_t first_dungeon_descriptor_selector;
+        uint32_t first_dungeon_resolved_record;
+        uint32_t first_dungeon_record_user_data_hash;
+        uint32_t first_dungeon_raw_sector_checksum;
+        uint16_t first_dungeon_loader_caller_pc;
+        uint16_t first_dungeon_loader_return_pc;
+        uint32_t first_dungeon_campaign_layout_epoch;
+        uint32_t first_dungeon_media_scan_epoch;
+        /* Capture output identities may reach presentation only as a strict
+         * no-draw witness. They do not retain palette values or bitmap bytes. */
+        int first_dungeon_bitmap_palette_capture_bound;
+        int first_dungeon_bitmap_palette_presentation_no_draw;
+        uint32_t first_dungeon_bitmap_palette_plan_identity;
+        uint32_t first_dungeon_bitmap_palette_descriptor_record;
+        uint32_t first_dungeon_palette_output_identity;
+        uint32_t first_dungeon_bitmap_transfer_identity;
+        uint32_t first_dungeon_bitmap_destination_identity;
+        uint32_t first_dungeon_bitmap_palette_layout_epoch;
+        uint32_t first_dungeon_bitmap_palette_scan_epoch;
+        int dungeon_capture_plan_bound;
+        int dungeon_capture_required;
+        int dungeon_capture_resume_ready;
+        uint32_t dungeon_capture_plan_identity;
+        int live_loader_route_admission_valid;
+        int live_loader_soul_room_ready;
+        int live_loader_dungeon_ready;
+        uint32_t live_loader_route_epoch;
+        uint32_t live_loader_campaign_layout_epoch;
+        uint32_t campaign_media_scan_epoch;
+        uint32_t live_loader_media_scan_epoch;
+        uint32_t live_loader_capture_plan_identity;
+        uint32_t live_loader_final_track02_record;
+        size_t live_loader_final_raw_sector;
+        char live_loader_source_trace_md5[33];
+        char live_loader_event_log_md5[33];
+        Theron_V1SrmCampaignReplayReceipt srm_campaign_replay;
+        int srm_campaign_replay_bound;
+        size_t srm_campaign_replay_size_bound;
+        uint32_t srm_campaign_replay_fnv_bound;
+        Theron_V1SrmLaunchDiscoveryReceipt srm_launch_discovery;
+        int srm_launch_discovery_bound;
+        Theron_V1Track02LaunchTraceIdentityReceipt launch_trace_identity;
+        int launch_trace_identity_bound;
+        Theron_V1Track02TraceBundleReceipt trace_bundle;
+        int trace_bundle_bound;
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==
@@ -1109,6 +1333,26 @@ typedef struct {
      * not replay title/entrance media. */
     void *csbStartupRuntimeSession; /* CSB_V1_StartupRuntimeAssetSession_PC34* */
     void *csbStartupRuntimeAssetSession; /* legacy M11 spelling */
+    uint32_t csbStartupExpectedPackageIdentity;
+    /* Boot-owned release evidence is retained with the source session. M11
+     * may present title, entrance, or HUD material only while this receipt
+     * and its advancing capture lifecycle still name that same session. */
+    CSB_V1_StartupReleaseAppCaptureReceipt_PC34
+        csbStartupReleaseAppCaptureReceipt;
+    CSB_V1_StartupReleaseLifecycleReceipt_PC34
+        csbStartupReleaseLifecycleReceipt;
+    /* Ordinary CSB startup has no DSA requirement. A CSBWin DSA-save route
+     * opts in here and remains fail-closed unless this receipt stays current. */
+    CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34
+        csbDsaSaveRuntimeReceipt;
+    int csbDsaSaveRuntimeRouteRequired;
+    CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34
+        csbDsaRestoredTimerTransactionReceipt;
+    int csbDsaRestoredTimerTransactionRequired;
+    /* Direct native F0435 reloads retain this separate source receipt. */
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34
+        csbOriginalSaveRuntimeReceipt;
+    int csbOriginalSaveRuntimeReceiptRequired;
     int csbStartupTimelineRequired;
     int csbStartupLiveHudAuthorized;
     uint32_t csbStartupTerminalSourceTick;
@@ -1283,6 +1527,19 @@ int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
     int width,
     int height,
     int specialPalette);
+int M11_GameView_BindCSBDSASaveRuntimeHandoff(
+    M11_GameViewState *state,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *receipt);
+int M11_GameView_CommitCSBDSARestoredTimerOutcome(
+    M11_GameViewState *state,
+    const CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 *receipt);
+/* Executes one already-restored CSBWin TimerQueue slot through the source
+ * runtime. The caller supplies the source timer location and queue slot; M11
+ * neither selects a timer nor interprets a DSA program. */
+int M11_GameView_ExecuteCSBDSARestoredTimer(
+    M11_GameViewState *state,
+    const CSB_V1_DSAFilterLocation *location,
+    uint16_t queue_slot);
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);
@@ -1811,6 +2068,105 @@ int M11_GameView_GetTheronStartupLayout(
     M11_TheronStartupElement* elements,
     int maxElements);
 
+/* Binds externally authenticated Track 02 campaign evidence to the active
+ * M11 Theron host state. A failed bind clears all capture-ready flags. */
+int M11_GameView_TheronBindTrack02CaptureCampaignAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow);
+/* Rechecks the exact external campaign receipt that published capture
+ * readiness. Any changed trace, route bundle, or opaque dungeon window clears
+ * readiness; this remains a no-draw provenance gate. */
+int M11_GameView_TheronTrack02CaptureCampaignAdmissionCurrent(
+    M11_GameViewState* state,
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow);
+/* Extends capture-currentness to the live direct CUE/BIN/ISO receipt. The
+ * capture campaign stays opaque and is cleared on re-scan epoch, layout, plan,
+ * or launch-trace drift. */
+int M11_GameView_TheronTrack02CaptureCampaignAdmissionCurrentForDirectMedia(
+    M11_GameViewState* state,
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    uint32_t campaignMediaScanEpoch);
+
+/* Publishes a verified non-startup CD record as opaque no-draw readiness.
+ * A failed bind clears this independent receipt and leaves every draw path
+ * unchanged. */
+int M11_GameView_TheronBindTrack02SectorRecordAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordAdmissionReceipt* receipt);
+/* Accepts only a complete hash-first direct corpus discovery and delegates its
+ * opaque record receipt to the existing no-draw sector admission. */
+int M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* discovery);
+/* Consumes only a READY direct CUE/BIN + coalesced-trace descriptor intake;
+ * delegates its opaque descriptor to the existing corpus admission. */
+int M11_GameView_TheronBindTrack02LevelObjectDescriptorCaptureIntake(
+    M11_GameViewState* state,
+    const Theron_V1Track02LevelObjectDescriptorCaptureIntakeReceipt* receipt);
+/* Binds only a READY descriptor-chain bitmap/palette capture identity to the
+ * M11 presentation boundary. The resulting state is explicitly no-draw and
+ * cannot provide palette entries, bitmap bytes, or render permission. */
+int M11_GameView_TheronBindTrack02DescriptorBitmapPaletteCaptureIntake(
+    M11_GameViewState* state,
+    const Theron_V1Track02DescriptorBitmapPaletteCaptureIntakeReceipt* receipt);
+/* Returns current opaque presentation provenance only. A true result still
+ * means no-draw; it is not a renderer or decoder admission. */
+int M11_GameView_TheronTrack02DescriptorBitmapPalettePresentationNoDrawCurrent(
+    const M11_GameViewState* state);
+int M11_GameView_TheronBindTrack02DungeonCapturePlan(
+    M11_GameViewState* state,
+    const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* receipt);
+/* Rechecks an opaque later descriptor-selected CD record against the current
+ * direct layout and replay tail. It never exposes record bytes or semantics. */
+int M11_GameView_TheronTrack02SectorRecordAdmissionCurrentForDirectMedia(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordAdmissionReceipt* receipt,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    const Theron_V1Track02LoaderTraceReplayConsistencyReceipt* replay,
+    uint32_t campaignLayoutEpoch,
+    uint32_t campaignMediaScanEpoch);
+/* Binds one already observed descriptor-selected later record to the first
+ * live dungeon handoff. It is an opaque M11 world/level-object boundary only:
+ * missing corpus, media/trace/replay drift, or any semantic/draw flag clears
+ * it rather than constructing a level, object, or visual fallback. */
+int M11_GameView_TheronBindTrack02FirstDungeonWorldAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordAdmissionReceipt* receipt,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    const Theron_V1Track02LoaderTraceReplayConsistencyReceipt* replay,
+    uint32_t campaignLayoutEpoch,
+    uint32_t campaignMediaScanEpoch);
+
+/* Requires a current direct-only campaign layout and replay receipt plus Soul
+ * Room epoch 1 followed by dungeon-handoff epoch 2 from one source-trace and
+ * converted HuC6280 event-log identity. This is route readiness only and
+ * never enables draw. */
+int M11_GameView_TheronBindTrack02LiveLoaderRouteAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02LiveLoaderRouteAdmissionReceipt* receipt,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    const Theron_V1Track02LoaderTraceReplayConsistencyReceipt* replay,
+    uint32_t campaignLayoutEpoch,
+    uint32_t campaignMediaScanEpoch,
+    Theron_V1Track02LiveRouteKind route,
+    uint32_t epoch);
+int M11_GameView_TheronBindSrmCampaignReplayReceipt(
+    M11_GameViewState* state, const Theron_V1SrmCampaignReplayReceipt* receipt);
+int M11_GameView_TheronBindSrmLaunchDiscoveryReceipt(
+    M11_GameViewState* state, const Theron_V1SrmLaunchDiscoveryReceipt* receipt);
+
 /* Total derived-bitmap cache slots F460_xxxx_START_CalculateDerivedBitmap-
  * CacheSizes reserves for this creature (Front D3 + Front D2 always,
  * +2 for each pose with a dedicated bitmap, +3 per additional front). */
@@ -1841,12 +2197,20 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
+int M11_GameView_CsbF0282ChampionPanelGateActive(
+    const M11_GameViewState* state, int* out_front_ordinal,
+    int* out_candidate_ordinal, int* out_party_index);
 /* Probe compatibility adapter for the source-owned D1C champion-mirror
  * C346 wall-ornament destination.  Coordinates remain viewport-relative. */
 int M11_GameView_GetDm1WallOrnamentZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH);
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                         int* outX,
+                                         int* outY,
+                                         int* outW,
+                                         int* outH);
 /* Compatibility-only geometry and material adapters for legacy M11 probes.
  * They delegate to DM1 PC34 layout helpers and never alter runtime drawing. */
 int M11_GameView_GetV1StatusHandSlotBoxZone(int slot, int hand,
@@ -1858,6 +2222,12 @@ int M11_GameView_GetV1DamageNumberOriginPc34(int slot, int amount,
 int M11_GameView_GetV1ChampionIconZone(int slot,
                                        int* outX, int* outY,
                                        int* outW, int* outH);
+int M11_GameView_GetV1ActionIconCellZone(
+    int champion_slot, int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1ActionMenuRowZone(
+    int row, int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
+int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
 int M11_GameView_GetV1StatusHandSlotGraphic(
     const M11_GameViewState* state, int slot, int hand);
 /* Read-only M11 viewport inspection for HoC false-item regression probes. */
@@ -2262,6 +2632,10 @@ typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
     int transparentColor;
     int paletteMapValid;
     unsigned char paletteMap[16];
+    int textDataWordOffset;
+    int textDataWordCount;
+    unsigned int textDataFNV1a;
+    unsigned int glyphBytesFNV1a;
 } M11_Dm1UnreadableInscriptionHostPresentationReceipt;
 
 void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
@@ -2271,6 +2645,15 @@ void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
  * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
 int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
     M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
+/* Test-only F0107 consumer for a C127 mirror one tile away in D1L/D1R.
+ * It admits only the authenticated C346 backing and never draws C026. */
+int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
+    M11_GameViewState* state,
+    int relSide,
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
@@ -2287,6 +2670,16 @@ typedef struct M11_Dm1InscriptionHostPresentationReceipt {
     int glyphByteCount;
     int lineCount;
     unsigned char glyphBytes[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
+    int textDataWordOffset;
+    int textDataWordCount;
+    unsigned int textDataFNV1a;
+    unsigned int glyphBytesFNV1a;
+    unsigned int fontPixelsFNV1a;
+    int glyphSourceWidth;
+    int glyphSourceHeight;
+    int glyphScaleNumerator;
+    int glyphScaleDenominator;
+    int paletteMapValid;
     /* Final M11 viewport destinations after consuming the M10 F0168/F0107
      * material receipt.  Entries with glyphCount == 0 are unused. */
     int lineDestinationX[DM1_V1_INSCRIPTION_MAX_LINES];

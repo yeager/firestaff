@@ -92,6 +92,23 @@ static const uint16_t s_disable_action_attribute_mask =
     (uint16_t)(DM1_V1_CPDIS_MASK_ACTION_HAND_PC34 |
                DM1_V1_CPDIS_MASK_DISABLE_ACTION_PC34);
 
+int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+    int candidate_mirror_ordinal,
+    int candidate_mirror_panel_active,
+    int party_is_resting)
+{
+    return (candidate_mirror_ordinal != 0 ||
+            candidate_mirror_panel_active || party_is_resting) ? 1 : 0;
+}
+
+int dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+    int champion_present,
+    int champion_is_dead)
+{
+    if (!champion_present) return -1;
+    return champion_is_dead ? 0 : 4;
+}
+
 static const DM1_V1_ChampionPanelDisabledIconEvidencePc34Compat s_evidence = {
     /* contract_only */
     true,

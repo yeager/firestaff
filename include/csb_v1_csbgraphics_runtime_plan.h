@@ -37,6 +37,7 @@ extern "C" {
 #define CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_MAX_ENTRIES 20
 #define CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS 32
 #define CSB_V1_CSBGRAPHICS_STARTUP_PACKAGE_MAX_ASSETS 6
+#define CSB_V1_CSBGRAPHICS_PALETTE_BYTES 768
 
 typedef enum {
     CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK = 0,
@@ -46,7 +47,8 @@ typedef enum {
     CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_FULL = -4,
     CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_GEOMETRY = -5,
     CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_APPLY = -6,
-    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE = -7
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE = -7,
+    CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE = -8
 } CSB_V1_CSBGraphicsRuntimePlanResult;
 
 typedef enum {
@@ -86,11 +88,54 @@ typedef struct {
     int present;
 } CSB_V1_CSBGraphicsStartupPackageAsset;
 
+/* A palette is never inferred from an indexed bitmap. The caller must name
+ * the admitted CSBgraphics.dat source and an exact decoded 256xRGB payload.
+ * This receipt is value-only: there is no later mutation API for its bytes or
+ * provenance once admission succeeds. */
+typedef enum {
+    CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_NONE = 0,
+    CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_CSBGRAPHICS_DAT = 1
+} CSB_V1_CSBGraphicsPaletteSourceKind;
+
+typedef struct {
+    CSB_V1_CSBGraphicsPaletteSourceKind source_kind;
+    const char *source_path;
+    const char *source_md5;
+    uint32_t entry_index;
+    uint32_t decoded_fnv1a;
+} CSB_V1_CSBGraphicsPaletteSourceSpec;
+
+typedef struct {
+    int valid;
+    CSB_V1_CSBGraphicsPaletteSourceKind source_kind;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    CSB_V1_CSBGraphicsEntrySpan entry_span;
+    uint32_t decoded_fnv1a;
+    uint8_t decoded_bytes[CSB_V1_CSBGRAPHICS_PALETTE_BYTES];
+} CSB_V1_CSBGraphicsPaletteSourceReceipt;
+
+/* Image provenance is recorded at package admission from the same parsed
+ * CSBgraphics.dat cache that supplied the entry span. It deliberately records
+ * archive identity and bounds only; indexed pixels remain undecoded until a
+ * separately eligible surface consumer requests them. */
+typedef struct {
+    int valid;
+    CSB_V1_CSBGraphicsPaletteSourceKind source_kind;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    CSB_V1_CSBGraphicsEntrySpan entry_span;
+} CSB_V1_CSBGraphicsStartupImageSourceReceipt;
+
 typedef struct {
     int valid;
     int startup_ready;
     int door_pair_ready;
     int hud_ready;
+    int palette_material_complete;
+    CSB_V1_CSBGraphicsPaletteSourceReceipt palette_source;
+    CSB_V1_CSBGraphicsStartupImageSourceReceipt image_sources[
+        CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT];
     uint32_t asset_count;
     CSB_V1_CSBGraphicsStartupPackageAsset
         assets[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT];
@@ -159,6 +204,22 @@ int csb_v1_csbgraphics_runtime_plan_add_explicit_entry(
  * optional, but only their source-locked geometry is accepted. */
 void csb_v1_csbgraphics_startup_package_init(
     CSB_V1_CSBGraphicsStartupPackage *package);
+
+/* Admit a declared palette source for a validated startup package. The cache
+ * identity, entry span, exact 768-byte decode and declared FNV-1a digest must
+ * all agree. On every failure the package remains explicitly no-draw. */
+int csb_v1_csbgraphics_startup_package_admit_palette_source(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsPaletteSourceSpec *spec,
+    CSB_V1_CSBGraphicsStartupPackage *package);
+
+/* True only when the requested startup image has a complete cache-bound
+ * source receipt and the admitted palette receipt names that same source.
+ * Consumers use this as a no-draw gate before decoding title, door or HUD
+ * pixels. */
+int csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+    const CSB_V1_CSBGraphicsStartupPackage *package,
+    CSB_V1_CSBGraphicsStartupAssetRole role);
 int csb_v1_csbgraphics_runtime_plan_add_startup_package(
     const CSB_V1_CSBGraphicsDatRealCache *cache,
     const CSB_V1_CSBGraphicsStartupPackageSpec *specs,

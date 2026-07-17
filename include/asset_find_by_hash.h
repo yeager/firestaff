@@ -13,6 +13,10 @@
 
 #define ASSET_PATH_MAX 512
 
+/* Verify one ordinary file against an expected lowercase MD5 hex digest.
+ * Virtual archive paths are not accepted by this direct-file helper. */
+int asset_file_matches_md5(const char *path, const char *expectedMd5);
+
 /*
  * Search for a file matching the given MD5 hash.
  *

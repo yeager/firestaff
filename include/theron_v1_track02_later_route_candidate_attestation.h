@@ -1,0 +1,7 @@
+#ifndef THERON_V1_TRACK02_LATER_ROUTE_CANDIDATE_ATTESTATION_H
+#define THERON_V1_TRACK02_LATER_ROUTE_CANDIDATE_ATTESTATION_H
+#include "theron_v1_track02_later_route_candidate_campaign_index.h"
+/* External label is operator context only; it never becomes a runtime route. */
+int theron_v1_track02_later_route_candidate_attest(const Theron_V1Track02LaterRouteCandidateCampaignIndex *index,uint32_t record,uint32_t destination_identity,uint32_t epoch,Theron_V1Track02LaterRouteCandidateReceipt*out);
+int theron_v1_track02_later_route_candidate_attestation_import(const char *path,const Theron_V1Track02LaterRouteCandidateCampaignIndex *index,uint32_t epoch,Theron_V1Track02LaterRouteCandidateReceipt*out);
+#endif

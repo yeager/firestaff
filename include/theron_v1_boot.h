@@ -6,6 +6,7 @@
 #include "asset_status_m12.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_save_resume.h"
+#include "theron_v1_track02_campaign_media_discovery.h"
 #include "theron_v1_startup_flow.h"
 #include "theron/theron_v1_asset_loader.h"
 #include "theron_v1_capture_manifest.h"
@@ -294,9 +295,18 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
     Theron_StartupHostReceipt launch_host_receipt;
+    Theron_V1Track02CampaignMediaDiscoveryReceipt campaign_media_discovery;
+    int campaign_media_launchable;
     Theron_V1Irq2PreflightLauncherReceipt irq2_preflight_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
+
+/* Retains only a direct, plan-matching discovery receipt on a prepared launch.
+ * Virtual/container evidence is diagnostic-only and clears launchability. */
+int theron_v1_boot_startup_launch_bind_campaign_media(
+    Theron_V1_BootStartupLaunch *launch,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt *media,
+    const Theron_V1Track02CaptureTargetPlan *plan);
 
 /* Binds an explicit authenticated capture to this prepared launch. It never
  * accepts a receipt whose Track 02 variant differs from the boot profile. */
@@ -343,6 +353,8 @@ typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_StartupStateReceipt save_resume_state_receipt;
     Theron_StartupMediaStateReceipt startup_media_state_receipt;
     Theron_StartupHostReceipt launch_host_receipt;
+    Theron_V1Track02CampaignMediaDiscoveryReceipt campaign_media_discovery;
+    int campaign_media_launchable;
     char boot_asset_md5[33];
     char title[64];
     char source_id[32];
@@ -962,6 +974,16 @@ int theron_v1_boot_startup_launch_alloc(
     const char *verified_path,
     const char *verified_md5,
     const char *save_path,
+    Theron_V1_BootStartupLaunch *out_launch);
+
+/* Actual profile/launch entry for campaign media discovery. It launches only
+ * one complete direct authenticated candidate that binds the supplied plan. */
+int theron_v1_boot_startup_launch_alloc_from_campaign_media(
+    const char *data_dir,
+    const char *search_path,
+    const char *expected_track02_md5,
+    const char *save_path,
+    const Theron_V1Track02CaptureTargetPlan *plan,
     Theron_V1_BootStartupLaunch *out_launch);
 int theron_v1_boot_startup_launch_detach_runtime(
     Theron_V1_BootStartupLaunch *launch,

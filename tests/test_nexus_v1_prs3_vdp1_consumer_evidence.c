@@ -136,12 +136,20 @@ static void test_consumer_evidence_gate(void)
     Nexus_V1_Prs3Structure2AbiReceipt abi;
     Nexus_V1_Prs3Vdp1ConsumerEvidenceInput input;
     Nexus_V1_Prs3Vdp1ConsumerEvidenceReceipt receipt;
+    Nexus_V1_Prs3Vdp1CaptureReceipt trace;
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
 
     memset(&abi, 0, sizeof(abi));
     if (!load_real_abi(&abi)) return;
 
     memset(&input, 0, sizeof(input));
     input.abi = &abi;
+    input.prs3_header_span_fnv1a64 = abi.prs3_header_span_fnv1a64;
+    input.prs3_bitmap_candidate_fnv1a64 = abi.prs3_bitmap_candidate_fnv1a64;
+    input.prs3_bitmap_candidate_offset = abi.prs3_bitmap_candidate_offset;
+    input.prs3_bitmap_candidate_size = abi.prs3_bitmap_candidate_size;
+    input.palt_candidate_fnv1a64 = abi.palt_candidate_fnv1a64;
+    input.palt_candidate_size = abi.palt_candidate_size;
     input.retail_media_available = 1;
     input.saturn_emulator_available = 1;
 
@@ -217,11 +225,129 @@ static void test_consumer_evidence_gate(void)
           "complete lane set is still capture evidence only in this module");
     assert_no_submit(&receipt,
                      "VDP1 consumer gate never fabricates Structure2 submit");
+
+    input.prs3_bitmap_candidate_fnv1a64 = 0U;
+    CHECK(nexus_v1_prs3_vdp1_consumer_evidence_admit(&input, &receipt) == 1 &&
+              receipt.status == NEXUS_V1_PRS3_VDP1_CONSUMER_BLOCKED_TRACE &&
+              !receipt.candidate_spans_bound,
+          "missing PRS3 bitmap candidate witness blocks the consumer trace");
+    input.prs3_bitmap_candidate_fnv1a64 = UINT64_C(2);
+
+    memset(&trace, 0, sizeof(trace));
+    memset(&binding, 0, sizeof(binding));
+    trace.valid = 1;
+    trace.complete_capture = 1;
+    trace.schema_version = 3U;
+    trace.entry_index = abi.prs3_entry_index;
+    trace.stream_offset = abi.prs3_stream_offset;
+    trace.stream_size = abi.prs3_stream_size;
+    trace.expected_output_bytes = abi.prs3_expected_output_bytes;
+    binding.valid = 1;
+    binding.menu_bpk_matches = 1;
+    binding.dm_bin_matches = 1;
+    binding.entry_plan_matches = 1;
+    binding.payload_span_matches = 1;
+    binding.exact_vdp1_handoff_observed = 1;
+    binding.vdp1_texture_consumption_observed = 1;
+    binding.vdp1_command_consumption_observed = 1;
+    binding.palette_consumption_observed = 1;
+    CHECK(nexus_v1_prs3_vdp1_consumer_evidence_admit_capture_binding(
+              &abi, &trace, &binding, UINT64_C(0x123456789abcdef0), 4096U,
+              1, &receipt) == 1 &&
+              receipt.status ==
+                  NEXUS_V1_PRS3_VDP1_CONSUMER_BLOCKED_CONSUMER_SEMANTICS &&
+              receipt.trace_binds_dm_bin &&
+              receipt.trace_binds_menu_bpk_entry5 &&
+              receipt.trace_binds_lev00_structure2 &&
+              receipt.vdp1_command_observed &&
+              receipt.vdp1_texture_window_observed &&
+              receipt.be16_palette_application_observed &&
+              !receipt.structure2_descriptor_selection_observed &&
+              !receipt.texture_placement_observed,
+          "source-bound PRS3 trace reaches only the Structure2 semantic blocker");
+    assert_no_submit(&receipt,
+                     "bound PRS3 trace cannot invent Structure2 placement");
+
+    ++trace.stream_offset;
+    CHECK(nexus_v1_prs3_vdp1_consumer_evidence_admit_capture_binding(
+              &abi, &trace, &binding, UINT64_C(0x123456789abcdef0), 4096U,
+              1, &receipt) == 1 &&
+              receipt.status == NEXUS_V1_PRS3_VDP1_CONSUMER_BLOCKED_TRACE,
+          "PRS3 trace with a mismatched stream receipt is rejected");
+}
+
+static void test_capture_binding_contract(void)
+{
+    Nexus_V1_Prs3Structure2AbiReceipt abi;
+    Nexus_V1_Prs3Vdp1CaptureReceipt trace;
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
+    Nexus_V1_Prs3Vdp1ConsumerEvidenceReceipt receipt;
+
+    memset(&abi, 0, sizeof(abi));
+    abi.status = NEXUS_V1_PRS3_STRUCTURE2_ABI_READY_BLOCKED;
+    abi.decoder_output_to_structure2_bound = 1;
+    abi.positive_prs3_vector_bound = 1;
+    abi.palt_trailer_bound = 1;
+    abi.structure2_intake_bound = 1;
+    abi.prs3_entry_index = 5U;
+    abi.prs3_stream_offset = 1612U;
+    abi.prs3_stream_size = 552U;
+    abi.prs3_expected_output_bytes = 1674U;
+    abi.prs3_width = 54U;
+    abi.prs3_height = 31U;
+    abi.prs3_bpp = 1U;
+    abi.prs3_output_fnv1a64 = UINT64_C(0x14cacc01cee292aa);
+    abi.prs3_header_span_fnv1a64 = UINT64_C(0x11);
+    abi.prs3_bitmap_candidate_fnv1a64 = UINT64_C(0x22);
+    abi.prs3_bitmap_candidate_offset = abi.prs3_stream_offset + 4U;
+    abi.prs3_bitmap_candidate_size = abi.prs3_stream_size - 4U;
+    abi.palt_entries_fnv1a64 = UINT64_C(0x0ec4e98ca3a18f85);
+    abi.palt_entries_are_be16 = 1;
+    abi.palt_candidate_fnv1a64 = abi.palt_entries_fnv1a64;
+    abi.palt_candidate_size = 512U;
+    abi.structure2_descriptor_count = 82;
+    abi.structure2_image_anchor_count = 82;
+    abi.structure2_palette_anchor_count = 80;
+    abi.structure2_palette_absent_count = 2;
+    memset(&trace, 0, sizeof(trace));
+    trace.valid = 1;
+    trace.complete_capture = 1;
+    trace.schema_version = 3U;
+    trace.entry_index = abi.prs3_entry_index;
+    trace.stream_offset = abi.prs3_stream_offset;
+    trace.stream_size = abi.prs3_stream_size;
+    trace.expected_output_bytes = abi.prs3_expected_output_bytes;
+    memset(&binding, 0, sizeof(binding));
+    binding.valid = 1;
+    binding.menu_bpk_matches = 1;
+    binding.dm_bin_matches = 1;
+    binding.entry_plan_matches = 1;
+    binding.payload_span_matches = 1;
+    binding.exact_vdp1_handoff_observed = 1;
+    binding.vdp1_texture_consumption_observed = 1;
+    binding.vdp1_command_consumption_observed = 1;
+    binding.palette_consumption_observed = 1;
+
+    CHECK(nexus_v1_prs3_vdp1_consumer_evidence_admit_capture_binding(
+              &abi, &trace, &binding, UINT64_C(0x123456789abcdef0), 4096U,
+              1, &receipt) == 1 &&
+              receipt.status ==
+                  NEXUS_V1_PRS3_VDP1_CONSUMER_BLOCKED_CONSUMER_SEMANTICS,
+          "bound trace contract reaches only the no-draw descriptor blocker");
+    assert_no_submit(&receipt,
+                     "bound trace contract keeps pixels and palettes blocked");
+    binding.palette_consumption_observed = 0;
+    CHECK(nexus_v1_prs3_vdp1_consumer_evidence_admit_capture_binding(
+              &abi, &trace, &binding, UINT64_C(0x123456789abcdef0), 4096U,
+              1, &receipt) == 1 &&
+              receipt.status == NEXUS_V1_PRS3_VDP1_CONSUMER_BLOCKED_TRACE,
+          "missing parsed palette lane rejects the trace before admission");
 }
 
 int main(void)
 {
     test_consumer_evidence_gate();
+    test_capture_binding_contract();
     if (failures) {
         fprintf(stderr, "Nexus PRS3/VDP1 consumer evidence: %d failure(s)\n",
                 failures);

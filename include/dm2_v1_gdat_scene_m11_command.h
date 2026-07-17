@@ -4,6 +4,8 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
 
+#include <stddef.h>
+
 typedef struct {
     uint8_t field;
     uint8_t *pixels;
@@ -11,9 +13,13 @@ typedef struct {
     uint16_t height;
     DM2_ImageFormat format;
     uint8_t palette16[16];
+    uint16_t material_raw_index;
+    const uint8_t *material_source_bytes;
+    size_t material_source_byte_count;
     uint32_t raw_hash;
     uint32_t decoded_hash;
     uint32_t palette_hash;
+    uint32_t material_receipt_hash;
     uint32_t geometry_hash;
     /* QUERY_TEMP_PICST/_32cb_0804 may replace this IMG3 local palette only
      * with an authenticated c_light transaction.  When GRAPHICSSET dt07 is

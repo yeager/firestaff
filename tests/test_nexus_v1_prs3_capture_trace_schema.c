@@ -703,7 +703,9 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
     size_t menu_size = 0U, dm_bin_size = 0U;
     unsigned int index;
     char text[4096];
+    char v9_text[4096];
     char transfer_text[1024];
+    char *tail;
     uint32_t output_base = 0x06020000U;
 
     menu = read_asset(data_dir, "MENU.BPK", &menu_size);
@@ -795,6 +797,53 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            trace.dynamic_nonzero_byte_transfer_observed &&
            trace.dynamic_zero_source_merge_observed,
            "V8 binds real zero-side source bytes and merge without decoding");
+    tail = strstr(text, "decoder_returned_success=");
+    expect(tail != NULL, "V8 fixture has a completion tail for V9 extension");
+    if (tail) {
+        size_t prefix = (size_t)(tail - text);
+        memcpy(v9_text, text, prefix);
+        v9_text[prefix] = '\0';
+        v9_text[sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V") - 1U] = '9';
+        snprintf(v9_text + prefix, sizeof(v9_text) - prefix,
+                 "dgn_fnv1a64=7\ndgn_descriptor_index=0\n"
+                 "dgn_frame_sequence=40\ndgn_command_sequence=31\n"
+                 "dgn_command_xa=0\ndgn_command_ya=0\n"
+                 "dgn_command_xb=0\ndgn_command_yb=0\n"
+                 "dgn_command_xc=0\ndgn_command_yc=0\n"
+                 "dgn_command_xd=0\ndgn_command_yd=0\n%s", tail);
+        expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+                   v9_text, strlen(v9_text), &trace) &&
+                   trace.schema_version == 9U && trace.dgn_placement_observed &&
+                   trace.dgn_fnv1a64 == 7U && trace.dgn_frame_sequence == 40U &&
+                   trace.dgn_command_sequence == trace.vdp1_command_sequence,
+               "V9 requires an explicit DGN descriptor/frame/command observation");
+        memcpy(strstr(v9_text, "dgn_fnv1a64=7"), "dgn_fnv1a64=0", 15U);
+        expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+                   v9_text, strlen(v9_text), &trace),
+               "V9 rejects a missing DGN identity");
+        memcpy(v9_text, text, prefix);
+        v9_text[prefix] = '\0';
+        v9_text[sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V") - 1U] = '1';
+        v9_text[sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V")] = '0';
+        snprintf(v9_text + prefix + 1U, sizeof(v9_text) - prefix - 1U,
+                 "dgn_fnv1a64=7\ndgn_descriptor_index=0\n"
+                 "dgn_frame_sequence=40\ndgn_command_sequence=31\n"
+                 "dgn_command_xa=0\ndgn_command_ya=0\n"
+                 "dgn_command_xb=0\ndgn_command_yb=0\n"
+                 "dgn_command_xc=0\ndgn_command_yc=0\n"
+                 "dgn_command_xd=0\ndgn_command_yd=0\n"
+                 "dgn_descriptor_fnv1a64=9\n%s", tail);
+        expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+                   v9_text, strlen(v9_text), &trace) &&
+                   trace.schema_version == 10U &&
+                   trace.dgn_descriptor_fnv1a64 == 9U,
+               "V10 requires the observed DGN descriptor FNV");
+        memcpy(strstr(v9_text, "dgn_descriptor_fnv1a64=9"),
+               "dgn_descriptor_fnv1a64=0", 25U);
+        expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+                   v9_text, strlen(v9_text), &trace),
+               "V10 rejects a missing DGN descriptor FNV");
+    }
     expect(nexus_v1_prs3_decoder_readiness_bind_capture(
                &trace, menu, menu_size, dm_bin, dm_bin_size, &readiness) &&
            readiness.valid && readiness.capture_source_bound &&

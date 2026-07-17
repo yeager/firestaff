@@ -112,6 +112,43 @@ typedef struct {
     CSB_V1_CSBGraphicsIndex index;
 } CSB_V1_CSBGraphicsDatRealCache;
 
+#define CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES 768
+
+/* A candidate is a strictly sized indexed-archive payload, not a guessed
+ * palette interpretation. It is reported only after the declared 768 bytes
+ * decode exactly and an FNV identity is available. */
+typedef struct {
+    int valid;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    CSB_V1_CSBGraphicsEntrySpan entry_span;
+    uint32_t decoded_fnv1a;
+} CSB_V1_CSBGraphicsDatPaletteCandidate;
+
+typedef struct {
+    int valid;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    size_t candidate_count;
+    CSB_V1_CSBGraphicsDatPaletteCandidate *candidates;
+} CSB_V1_CSBGraphicsDatPaletteCandidateReport;
+
+typedef struct {
+    const char *source_path;
+    const char *source_md5;
+    uint32_t entry_index;
+    uint32_t decoded_fnv1a;
+} CSB_V1_CSBGraphicsDatPaletteAdmissionSpec;
+
+typedef struct {
+    int valid;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    CSB_V1_CSBGraphicsEntrySpan entry_span;
+    uint32_t decoded_fnv1a;
+    uint8_t decoded_bytes[CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES];
+} CSB_V1_CSBGraphicsDatPaletteSourceReceipt;
+
 void csb_v1_csbgraphics_dat_real_cache_init(
     CSB_V1_CSBGraphicsDatRealCache *cache);
 
@@ -139,6 +176,24 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
 int csb_v1_csbgraphics_dat_real_index(
     const CSB_V1_CSBGraphicsDatRealCache *cache,
     CSB_V1_CSBGraphicsIndex *out_index);
+
+/* Walk only exact 768-byte declared entries in a loaded, hash-admitted cache.
+ * Each returned candidate has passed a bounded decode and carries cache path,
+ * MD5, entry span and decoded FNV-1a. The caller releases report storage. */
+int csb_v1_csbgraphics_dat_real_scan_palette_candidates(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    CSB_V1_CSBGraphicsDatPaletteCandidateReport *out_report);
+void csb_v1_csbgraphics_dat_real_palette_candidate_report_free(
+    CSB_V1_CSBGraphicsDatPaletteCandidateReport *report);
+
+/* Produce a palette receipt only when a caller-declared path, MD5, entry and
+ * FNV identity exactly match a previously discovered candidate and a second
+ * bounded decode produces those bytes again. */
+int csb_v1_csbgraphics_dat_real_admit_palette_candidate(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsDatPaletteCandidate *candidate,
+    const CSB_V1_CSBGraphicsDatPaletteAdmissionSpec *spec,
+    CSB_V1_CSBGraphicsDatPaletteSourceReceipt *out_receipt);
 
 const char *csb_v1_csbgraphics_dat_real_result_name(int result);
 

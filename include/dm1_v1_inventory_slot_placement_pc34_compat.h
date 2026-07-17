@@ -198,6 +198,20 @@ int dm1_v1_inventory_source_slot_box_zone_pc34(
     int sourceSlotBoxIndex,
     DM1_V1_InventorySlotBoxZonePc34* outZone);
 
+/* CHAMPION.C F0302 accepts source slot boxes C00..C29 while Firestaff's
+ * champion inventory stores the same rows densely as 0..29.  layout-696
+ * places those boxes at C507..C536, represented here by 8..37. */
+int dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+    int sourceSlotBoxIndex);
+int dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+    int championSlot);
+int dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
+    int sourceSlotBoxIndex,
+    int* outX,
+    int* outY,
+    int* outW,
+    int* outH);
+
 int dm1_v1_inventory_equipment_slot_zone_count_pc34(void);
 int dm1_v1_inventory_equipment_slot_zone_id_pc34(int equipmentOrdinal);
 int dm1_v1_inventory_equipment_slot_zone_pc34(

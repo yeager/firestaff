@@ -278,6 +278,11 @@ int csb_v1_startup_real_receipt_recompute_hash(
         receipt->receipt_hash_hex[0] = '\0';
         return 1;
     }
+    if (receipt->invalidated) {
+        receipt->receipt_hash = 0u;
+        receipt->receipt_hash_hex[0] = '\0';
+        return 0;
+    }
     old_hash = receipt->receipt_hash;
     csb_v1_startup_real_copy(old_hex, sizeof(old_hex),
                              receipt->receipt_hash_hex);
@@ -286,8 +291,14 @@ int csb_v1_startup_real_receipt_recompute_hash(
         return receipt->receipt_hash != 0u &&
                receipt->receipt_hash_hex[0] != '\0';
     }
-    return old_hash == receipt->receipt_hash &&
-           strcmp(old_hex, receipt->receipt_hash_hex) == 0;
+    if (old_hash != receipt->receipt_hash ||
+        strcmp(old_hex, receipt->receipt_hash_hex) != 0) {
+        receipt->invalidated = 1;
+        receipt->receipt_hash = 0u;
+        receipt->receipt_hash_hex[0] = '\0';
+        return 0;
+    }
+    return 1;
 }
 
 static int csb_v1_startup_real_surface_matches_pc34(

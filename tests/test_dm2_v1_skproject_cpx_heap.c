@@ -108,17 +108,49 @@ static void test_exact_fit_and_rejections(void)
           "free accepts the exact heap span after exact-fit allocation");
 }
 
+static void test_skullwin_alloc_cpx1_reuses_size_sorted_blocks(void)
+{
+    const uint32_t amounts[] = { 40u, 100u, 70u };
+    DM2_V1_SkprojectCpxReuseList list;
+    DM2_V1_SkprojectCpxReuseReceipt receipt;
+
+    CHECK(dm2_v1_skproject_cpx_reuse_list_init(&list, amounts, 3u) == 1 &&
+              dm2_v1_skproject_cpx_reuse_list_is_descending(&list) &&
+              list.nodes[list.head].amount == 100u,
+          "CPX1 setup preserves SKULLWIN descending-size list order");
+    CHECK(dm2_v1_skproject_cpx_alloc_cpx1_receipt(&list, 70u, &receipt) == 1 &&
+              receipt.exact_match && !receipt.used_largest_block &&
+              receipt.allocated_amount == 70u && !receipt.retained_remainder,
+          "CPX1 reuses an exact-size free block");
+    CHECK(dm2_v1_skproject_cpx_alloc_cpx1_receipt(&list, 60u, &receipt) == 1 &&
+              receipt.used_largest_block && receipt.retained_remainder &&
+              receipt.allocated_amount == 60u && receipt.remainder_amount == 40u &&
+              dm2_v1_skproject_cpx_reuse_list_is_descending(&list),
+          "CPX1 splits the largest block only when the source remainder is at least 30");
+    CHECK(dm2_v1_skproject_cpx_alloc_cpx1_receipt(&list, 25u, &receipt) == 1 &&
+              receipt.used_largest_block && !receipt.retained_remainder &&
+              receipt.allocated_amount == 40u,
+          "CPX1 absorbs a remainder smaller than 30 bytes");
+    CHECK(dm2_v1_skproject_cpx_alloc_cpx1_receipt(NULL, 8u, &receipt) == 0 &&
+              receipt.rejected_null_state,
+          "CPX1 rejects absent allocator state without making a buffer");
+}
+
 int main(void)
 {
     test_lower_alloc_splits_from_low_address();
     test_free_inserts_ordered_and_coalesces();
     test_exact_fit_and_rejections();
+    test_skullwin_alloc_cpx1_reuses_size_sorted_blocks();
     CHECK(strstr(dm2_v1_skproject_cpx_heap_source_evidence(),
                  "ALLOC_LOWER_CPXHEAP") != 0,
           "source evidence names ALLOC_LOWER_CPXHEAP");
     CHECK(strstr(dm2_v1_skproject_cpx_heap_source_evidence(),
                  "DM2_ALLOC_CPX_LINK_NODE") != 0,
           "source evidence names c_dballoc CPX link helpers");
+    CHECK(strstr(dm2_v1_skproject_cpx_heap_source_evidence(),
+                 "DM2_ALLOC_CPX1") != 0,
+          "source evidence names the SKULLWIN CPX1 allocator");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

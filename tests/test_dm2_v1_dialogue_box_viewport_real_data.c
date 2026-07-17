@@ -15,6 +15,7 @@ int main(void)
     char graphics_path[1024];
     DM2_V1_BootProfile boot;
     DM2_V1_DialogueBoxHostCommand command;
+    DM2_V1_BootExpandedRectReceipt raw4_rect;
     DM2_V1_DialogueOpenPanelHostCommand open_panel;
     DM2_V1_DialogueSavePointerReceipt save_pointer;
     DM2_V1_DialogueSavePointerReceipt save_pointer_row_seven;
@@ -63,6 +64,14 @@ int main(void)
         return 1;
     }
     box_ok = dm2_v1_boot_dialogue_box_host_command(&boot, &command);
+    memset(&raw4_rect, 0, sizeof(raw4_rect));
+    if (box_ok && !dm2_v1_boot_query_expanded_rect_receipt(
+                      &boot, command.draw.expanded_rect_index, &raw4_rect)) {
+        fputs("FAIL: canonical RAW4 expanded-rect receipt was not admitted\n",
+              stderr);
+        dm2_v1_boot_cleanup(&boot);
+        return 1;
+    }
     open_ok = dm2_v1_boot_dialogue_open_panel_host_command(&boot, &open_panel);
     /* c_dialog.cpp::DM2_dialog_2066_398a expands RECT_451 and lays out ten
      * rows from its source-owned y + 4 baseline. First admit the canonical
@@ -75,6 +84,16 @@ int main(void)
         !dm2_v1_boot_interface_font_table(&boot, &font_rows, &font_hash)) {
         fprintf(stderr, "FAIL: canonical save/load dialogue command was not admitted (box=%d open=%d)\n",
                 box_ok, open_ok);
+        dm2_v1_boot_cleanup(&boot);
+        return 1;
+    }
+    if (!raw4_rect.valid ||
+        raw4_rect.rect_id != command.draw.expanded_rect_index ||
+        !raw4_rect.raw4_bytes || raw4_rect.raw4_byte_count == 0u ||
+        raw4_rect.raw4_hash == 0u || raw4_rect.receipt_hash == 0u ||
+        memcmp(&raw4_rect.rect, &command.rect, sizeof(command.rect)) != 0) {
+        fputs("FAIL: RAW4 receipt did not bind dialogue expanded rectangle\n",
+              stderr);
         dm2_v1_boot_cleanup(&boot);
         return 1;
     }

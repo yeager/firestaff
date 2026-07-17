@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "firestaff_theron_media_classify.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_campaign_media_discovery.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -105,6 +106,11 @@ typedef struct {
     M12_NexusBpkTrailerMetadata nexusBpkTrailer;
     FirestaffTheronMediaStatus theronMedia;
     Theron_Track02StartupLoaderReceipt theronTrack02LoaderReceipt;
+    /* Launcher-only Track 02 admission. Unlike the generic availability
+     * scan, this receipt never materializes archive members. */
+    Theron_V1Track02CampaignMediaDiscoveryReceipt theronCampaignMedia;
+    Theron_V1Track02CaptureTargetPlan theronCampaignMediaPlan;
+    int theronCampaignMediaLaunchReady;
     M12_AssetScanProgress scanProgress;
 } M12_AssetStatus;
 
@@ -120,6 +126,15 @@ void M12_AssetStatus_ScanGameWithOptions(
     const char* requestedDataDir,
     const char* gameId,
     const M12_AssetStatusScanOptions* options);
+/* Strict Theron launcher scan. It inspects only an explicit CUE/BIN/ISO
+ * input (or the existing hash-first Track 02 discovery under one directory),
+ * binds it to the supplied opaque capture plan, and never extracts or copies
+ * virtual/container media. Returns 1 only for a direct, launch-ready receipt. */
+int M12_AssetStatus_ScanTheronCampaignMedia(
+    M12_AssetStatus* status,
+    const char* requestedMediaPath,
+    const char* expectedTrack02Md5,
+    const Theron_V1Track02CaptureTargetPlan* plan);
 const M12_AssetScanProgress* M12_AssetStatus_GetScanProgress(
     const M12_AssetStatus* status);
 void M12_AssetStatus_RequestCancel(M12_AssetStatus* status);
@@ -154,6 +169,9 @@ const char* M12_AssetStatus_GetTheronLaunchMediaPath(
     const M12_AssetStatus* status);
 const Theron_Track02StartupLoaderReceipt*
 M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status);
+const Theron_V1Track02CampaignMediaDiscoveryReceipt*
+M12_AssetStatus_GetTheronCampaignMedia(const M12_AssetStatus* status);
+int M12_AssetStatus_TheronCampaignMediaLaunchReady(const M12_AssetStatus* status);
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and
  * valid (critical shape categories present), 0 otherwise.

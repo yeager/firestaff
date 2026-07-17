@@ -165,6 +165,9 @@ int main(void)
             command->decoded_hash == 0u || command->decoded_hash !=
                 dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
             command->raw_byte_count == 0u || command->palette_hash == 0u ||
+            !command->material_source_bytes ||
+            command->material_source_byte_count != command->raw_byte_count ||
+            command->material_receipt_hash == 0u ||
             command->destination.w <= 0 || command->destination.h <= 0) {
             ++failures;
         }

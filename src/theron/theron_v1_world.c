@@ -16,6 +16,7 @@
  */
 
 #include "theron_v1_world.h"
+#include "theron_v1_track02.h"
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -520,6 +521,36 @@ void theron_v1_world_runtime_media_invalidate_cache(Theron_V1_World *world) {
            sizeof(world->runtime_media.level_bank));
 }
 
+static int theron_v1_world_runtime_media_has_single_track02_source(
+    const Theron_V1_World *world) {
+    const Theron_RuntimeMediaSurface *const surfaces[] = {
+        &world->runtime_media.title,
+        &world->runtime_media.stage,
+        &world->runtime_media.soul_room,
+        &world->runtime_media.forcefield
+    };
+    const char *md5;
+    Theron_Track02Variant variant;
+    size_t i;
+
+    if (!world || !surfaces[0]->ready || !surfaces[0]->raw_source_verified ||
+        surfaces[0]->track02_md5[0] == '\0') {
+        return 0;
+    }
+    md5 = surfaces[0]->track02_md5;
+    variant = theron_v1_track02_variant_for_md5(md5);
+    if (variant == THERON_TRACK02_VARIANT_UNKNOWN) {
+        return 0;
+    }
+    for (i = 1u; i < sizeof(surfaces) / sizeof(surfaces[0]); ++i) {
+        if (!surfaces[i]->ready || !surfaces[i]->raw_source_verified ||
+            strcmp(surfaces[i]->track02_md5, md5) != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int theron_v1_world_runtime_media_set_surface(
     Theron_V1_World *world,
     Theron_RuntimeMediaSurfaceKind kind,
@@ -539,6 +570,8 @@ int theron_v1_world_runtime_media_set_surface(
     Theron_RuntimeMediaSurface *surface;
 
     if (!world || !pixels || !track02_md5 || strlen(track02_md5) != 32u ||
+        theron_v1_track02_variant_for_md5(track02_md5) ==
+            THERON_TRACK02_VARIANT_UNKNOWN ||
         route_bit == 0u || width == 0u ||
         height == 0u || width > THERON_RUNTIME_MEDIA_MAX_WIDTH ||
         height > THERON_RUNTIME_MEDIA_HEIGHT ||
@@ -559,6 +592,22 @@ int theron_v1_world_runtime_media_set_surface(
         surface = &world->runtime_media.forcefield;
     } else {
         return 0;
+    }
+    {
+        const Theron_RuntimeMediaSurface *const surfaces[] = {
+            &world->runtime_media.title,
+            &world->runtime_media.stage,
+            &world->runtime_media.soul_room,
+            &world->runtime_media.forcefield
+        };
+        size_t i;
+
+        for (i = 0u; i < sizeof(surfaces) / sizeof(surfaces[0]); ++i) {
+            if (surfaces[i] != surface && surfaces[i]->ready &&
+                strcmp(surfaces[i]->track02_md5, track02_md5) != 0) {
+                return 0;
+            }
+        }
     }
     memset(surface, 0, sizeof(*surface));
     surface->ready = 1;
@@ -635,7 +684,11 @@ int theron_v1_world_runtime_media_set_loader_record(
     Theron_RuntimeTrack02LoaderRecord *loader_record;
 
     if (!world || !track02_md5 || strlen(track02_md5) != 32u ||
+        theron_v1_track02_variant_for_md5(track02_md5) ==
+            THERON_TRACK02_VARIANT_UNKNOWN ||
         record == 0u || destination == 0u || raw_user_data_offset == 0u ||
+        raw_user_data_offset % THERON_TRACK02_RAW_SECTOR_BYTES !=
+            THERON_TRACK02_RAW_USER_DATA_OFFSET ||
         payload_bytes == 0u || payload_checksum == 0u ||
         level_envelope_offset >= payload_bytes || level_envelope_bytes == 0u ||
         level_envelope_bytes > payload_bytes - level_envelope_offset ||
@@ -678,7 +731,11 @@ int theron_v1_world_runtime_media_select_level_bank(
     Theron_RuntimeLevelBankSelection selection;
 
     if (!world || !world->runtime_media.restored ||
+        !theron_v1_world_runtime_media_has_single_track02_source(world) ||
         !world->runtime_media.identity.ready ||
+        world->runtime_media.identity.track02_variant !=
+            (int)theron_v1_track02_variant_for_md5(
+                world->runtime_media.title.track02_md5) ||
         dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON) {

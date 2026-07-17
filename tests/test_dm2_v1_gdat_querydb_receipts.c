@@ -521,6 +521,40 @@ static void test_graphics_structure_and_image_extract(void)
           "DM2_EXTRACT_GDAT_IMAGE records underlay overlay route without fabricated pixels");
 }
 
+static void test_gfx_material_ownership_routes(void)
+{
+    DM2_V1_AssetLoader loader;
+    uint8_t data[256];
+    uint32_t raw_offsets[8];
+    uint32_t raw_sizes[8];
+    DM2_V1_GdatEntry entries[9];
+    DM2_V1_GdatGfxMaterialReceipt material;
+
+    fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
+    CHECK(dm2_v1_gdat_allocate_gfx256_material_receipt(
+              &loader, 4u, 1, &material) && material.accepted &&
+              material.raw_index == 4u && material.source_bytes == data + 96u &&
+              material.source_byte_count == 28u && material.image.valid &&
+              material.image.decode_img3_underlay,
+          "DM2_ALLOCATE_GFX256 exposes only real loaded GDAT image material");
+    CHECK(dm2_v1_gdat_allocate_gfx16_material_receipt(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2,
+              DM2_GDAT_IMG_MAP_CHIP, 0, &material) && material.accepted &&
+              !material.used_gfx16_default && material.raw_index == 7u &&
+              material.source_bytes == data + 190u,
+          "DM2_ALLOCATE_GFX16 resolves the requested real GDAT image tuple");
+    CHECK(dm2_v1_gdat_allocate_gfx16_material_receipt(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 99, 1, 0, &material) &&
+              material.accepted && material.used_gfx16_default &&
+              material.selected_category == DM2_GDAT_CATEGORY_MISCELLANEOUS &&
+              material.raw_index == 6u && material.source_bytes == data + 150u,
+          "DM2_ALLOCATE_GFX16 uses only SKULLWIN's real default image route");
+    CHECK(!dm2_v1_gdat_allocate_gfx256_material_receipt(
+               &loader, 1u, 0, &material) && !material.accepted &&
+              material.source_bytes == NULL,
+          "GFX material route rejects non-image GDAT bytes without substitute art");
+}
+
 static void test_graphics_data_file_lifecycle(void)
 {
     DM2_V1_GraphicsDataFileState state;
@@ -1080,8 +1114,10 @@ static void test_real_graphics_census(void)
     DM2_V1_GdatLoadEntriesReceipt load_entries_receipt;
     DM2_V1_GdatEntryIterator iterator;
     DM2_V1_GdatEntryQueryReceipt iter_receipt;
+    DM2_V1_GdatGfxMaterialReceipt material;
     unsigned int loadable_count = 0u;
     unsigned int scalar_count = 0u;
+    unsigned int gfx_material_count = 0u;
     uint32_t receipt_hash = 2166136261u;
 
     memset(&loader, 0, sizeof(loader));
@@ -1106,6 +1142,29 @@ static void test_real_graphics_census(void)
         if (receipt.loadable_raw) ++loadable_count;
         else ++scalar_count;
         receipt_hash = (receipt_hash ^ receipt.receipt_hash) * 16777619u;
+    }
+
+    for (uint16_t i = 0u; i < loader.entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader.entries[i];
+        const uint8_t *source_bytes;
+        size_t source_byte_count = 0u;
+        if (entry->cls3 != DM2_GDAT_ENTRY_TYPE_IMAGE ||
+            !dm2_v1_gdat_allocate_gfx16_material_receipt(
+                &loader, entry->cls1, entry->cls2, entry->cls4, 1,
+                &material)) {
+            continue;
+        }
+        source_bytes = dm2_v1_load_gdat_raw_data(&loader, material.raw_index,
+                                                  &source_byte_count);
+        CHECK(material.accepted && !material.used_gfx16_default &&
+                  source_bytes == material.source_bytes &&
+                  source_byte_count == material.source_byte_count &&
+                  dm2_v1_gdat_allocate_gfx256_material_receipt(
+                      &loader, material.raw_index, 1, &material) &&
+                  material.accepted && material.source_bytes == source_bytes,
+              "real GDAT GFX16/GFX256 material routes retain loaded source bytes");
+        ++gfx_material_count;
+        break;
     }
 
     CHECK(dm2_v1_load_ent1_receipt(&loader, &ent1_receipt) &&
@@ -1145,6 +1204,8 @@ static void test_real_graphics_census(void)
           "real GDAT exposes scalar data-index entries without buffers");
     CHECK(receipt_hash != 0u,
           "real GDAT querydb census has nonzero receipt hash");
+    CHECK(gfx_material_count == 1u,
+          "real GDAT exposes a source-owned GFX16/GFX256 material route");
 
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
@@ -1156,6 +1217,7 @@ int main(void)
     test_fixture_entry_queries();
     test_fixture_gdat_entry_iteration_and_sound();
     test_graphics_structure_and_image_extract();
+    test_gfx_material_ownership_routes();
     test_graphics_data_file_lifecycle();
     test_fixture_pict_allocation_receipts();
     test_querydb_word_and_ornate_receipts();

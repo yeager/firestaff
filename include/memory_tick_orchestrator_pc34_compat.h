@@ -1,6 +1,18 @@
 #ifndef REDMCSB_MEMORY_TICK_ORCHESTRATOR_PC34_COMPAT_H
 #define REDMCSB_MEMORY_TICK_ORCHESTRATOR_PC34_COMPAT_H
 
+/* ReDMCSB F0433 C3 EVENT and C4 TIMELINE source receipts retained by a
+ * successfully loaded world. This aggregate also serves generic M10 code. */
+#define GAMEWORLD_PC34_ORIGINAL_EVENT_RECEIPT_CAPACITY 256u
+#define GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT 10u
+#define GAMEWORLD_PC34_ORIGINAL_C4_HEAP_ENTRY_BYTE_COUNT 2u
+#define GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP \
+    (GAMEWORLD_PC34_ORIGINAL_EVENT_RECEIPT_CAPACITY * \
+     GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT)
+#define GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP \
+    (GAMEWORLD_PC34_ORIGINAL_EVENT_RECEIPT_CAPACITY * \
+     GAMEWORLD_PC34_ORIGINAL_C4_HEAP_ENTRY_BYTE_COUNT)
+
 /*
  * Tick orchestrator & deterministic harness for ReDMCSB PC 3.4 —
  * Phase 20 of M10 (the integration milestone).
@@ -56,7 +68,8 @@
  *
  * ReDMCSB GAMELOOP.C:67-78 (F0003_MAIN_ProcessNewPartyMap): the full
  * behaviour of F0003 is not reproduced in v1 (see §1 "Out of
- * scope"); we toggle partyMapIndex only.  Map-transition
+ * scope"); the bounded DM1 F0194/F0195 active-group handoff is
+ * reproduced around the partyMapIndex update.  Map-transition
  * re-dispatch is bounded to 4 iterations per tick via
  * ORCH_MAX_MAP_TRANSITIONS_PER_TICK (see below).  See
  * GAMELOOP.C:67-78 for the original F0003 dispatch loop.
@@ -293,6 +306,16 @@ struct GameWorld_Compat {
     uint8_t                             pc34ActiveGroupHomeMapX[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapY[GAMEWORLD_CREATURE_AI_CAPACITY];
     int32_t                             pc34ActiveGroupSourceCount;
+    /* Published only after the F0435 candidate world has fully validated. */
+    int32_t                             pc34OriginalC3C4ReceiptValid;
+    uint32_t                            pc34OriginalC3RawEventByteCount;
+    uint32_t                            pc34OriginalC4RawHeapByteCount;
+    uint32_t                            pc34OriginalC3RawEventFingerprint;
+    uint32_t                            pc34OriginalC4RawHeapFingerprint;
+    uint32_t                            pc34OriginalC3C4RuntimeEventCount;
+    uint32_t                            pc34OriginalTimelineFingerprint;
+    uint8_t                             pc34OriginalC3RawEventBytes[GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP];
+    uint8_t                             pc34OriginalC4RawHeapBytes[GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP];
     int32_t                            candidateAttackInvulnerableEnabled;
     int32_t                            candidateAttackInvulnerableGroupIndex;
     int32_t                            candidateAttackInvulnerableCreatureIndex;

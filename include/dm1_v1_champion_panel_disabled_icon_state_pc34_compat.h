@@ -93,6 +93,19 @@ extern "C" {
 #define DM1_V1_CPDIS_GRAPHIC_FIRE_SHIELD_PC34    38
 #define DM1_V1_CPDIS_GRAPHIC_SPELL_SHIELD_PC34   39
 
+/* ACTIDRAW.C F0386 keeps the global hatch decision separate from each
+ * champion cell's backdrop fill.  These public predicates let M11 and its
+ * source-lock probe consume that same ownership without reaching into an
+ * M11-local renderer helper. */
+int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+    int candidate_mirror_ordinal,
+    int candidate_mirror_panel_active,
+    int party_is_resting);
+
+int dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
+    int champion_present,
+    int champion_is_dead);
+
 /* Per-champion action disabled-ticks record.  Mirrors the
  * Champion.Attributes MASK0x0008_DISABLE_ACTION bit plus the
  * G0491[actionIndex] lookup that F0330 consumes when applying the

@@ -599,7 +599,7 @@ static void test_f0172_front_wall_sensor_receipt(void)
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
-            2, -1, 5, 13,
+            1, -1, 10, 13,
             DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
             &projection) == 1 &&
             projection.valid == 1 &&
@@ -608,23 +608,50 @@ static void test_f0172_front_wall_sensor_receipt(void)
             projection.suppressChampionPortrait == 1 &&
             projection.suppressGenericWallOrnament == 0 &&
             projection.drawWallOrnamentBacking == 1 &&
-            projection.relForward == 2 &&
+            projection.relForward == 1 &&
             projection.relSide == -1 &&
-            projection.viewWallIndex == 5,
-        "side/depth C127 projection keeps real wall-ornament backing only",
+            projection.viewWallIndex == 10,
+        "D1L C127 projection keeps real wall-ornament backing only",
         "DUNVIEW.C F0107:3502-3938; DUNVIEW.C:3913-3928");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
-            3, 0, 3, 13, 7, &projection) == 1 &&
+            1, 1, 11, 13,
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
+            &projection) == 1 &&
+            projection.valid == 1 &&
+            projection.consumedC127WallFact == 1 &&
+            projection.drawChampionPortrait == 0 &&
+            projection.suppressChampionPortrait == 1 &&
+            projection.drawWallOrnamentBacking == 1 &&
+            projection.suppressGenericWallOrnament == 0,
+        "D1R C127 projection keeps real wall-ornament backing only",
+        "DUNVIEW.C F0107:3502-3938");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+            2, -1, 5, 13,
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
+            &projection) == 1 &&
             projection.valid == 1 &&
             projection.consumedC127WallFact == 1 &&
             projection.drawChampionPortrait == 0 &&
             projection.suppressChampionPortrait == 1 &&
             projection.drawWallOrnamentBacking == 0 &&
-            projection.suppressGenericWallOrnament == 0,
-        "C127 with a non-mirror ornament cannot synthesize distant mirror art",
-        "DUNVIEW.C F0107:3502-3938");
+            projection.suppressGenericWallOrnament == 1,
+        "D2 C127 projection cannot synthesize distant C346 mirror art",
+        "DUNVIEW.C F0107:3502-3938; DUNVIEW.C:3913-3928");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+            1, 0, 12, 13, 7, &projection) == 1 &&
+            projection.valid == 1 &&
+            projection.consumedC127WallFact == 1 &&
+            projection.drawChampionPortrait == 1 &&
+            projection.drawWallOrnamentBacking == 0 &&
+            projection.suppressGenericWallOrnament == 1,
+        "D1C owns C026 independently of generic C346 ornament lookup",
+        "DUNVIEW.C:3913-3928");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(

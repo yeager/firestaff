@@ -7,6 +7,7 @@
 #include "firestaff/dm1/v1/palette_entrance_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "vga_palette_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -5196,7 +5197,13 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
         media_receipt->entrance_vblank_ms ==
             ENTRANCE_Compat_GetVblankDelayMs() &&
         media_receipt->entrance_pre_open_delay_ms ==
-            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step);
+            ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step) &&
+        media_receipt->entrance_palette ==
+            VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+        media_receipt->entrance_palette_entry_count ==
+            DM1_V1_PALETTE_ENTRANCE_PC34_COMPAT_SIZE &&
+        media_receipt->entrance_palette_fingerprint ==
+            dm1_v1_startup_entrance_palette_fingerprint_pc34();
 }
 
 int dm1_v1_startup_entrance_render_audio_command_pc34(
@@ -5226,6 +5233,9 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     command.lower_level_audio_helper_owned = 1;
     command.source_step = source_step;
     command.present_entrance_palette = 1;
+    command.entrance_palette = media_receipt->entrance_palette;
+    command.entrance_palette_fingerprint =
+        media_receipt->entrance_palette_fingerprint;
     command.delay_ms =
         dm1_v1_startup_entrance_step_delay_ms_pc34(media_receipt,
                                                    entrance_event_kind,

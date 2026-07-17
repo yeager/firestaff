@@ -23,7 +23,15 @@ static int csb_v1_startup_playback_title_phase_mask_pc34(
             ? 0x04
             : 0x02;
     }
-    if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) return 0x08;
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
+        /* The first C426 frame follows the two-VBlank full-size CHAOS hold.
+         * Record both source-visible phases even when playback is sampled
+         * directly at the transition boundary. */
+        return title_frame == csb_v1_startup_title_presents_ticks_pc34() +
+                                  csb_v1_startup_title_chaos_zoom_ticks_pc34()
+            ? 0x0c
+            : 0x08;
+    }
     return 0;
 }
 
@@ -140,9 +148,8 @@ int csb_v1_boot_startup_playback_complete_entrance_pc34(
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
         session->playback.title_phase_mask != 0x0f ||
         !session->playback.entrance_music_active ||
-        !session->surfaces.entrance_screen_ready ||
-        !session->surfaces.opening_frame_ready ||
-        !session->surfaces.hud_surfaces_ready) {
+        !session->entrance_assets_ready || !session->door_assets_ready ||
+        !session->hud_assets_bound) {
         return 0;
     }
     /* ENTRANCE.C F0807 only authorizes the dungeon handoff after the same
@@ -157,8 +164,11 @@ int csb_v1_boot_startup_playback_enter_hud_pc34(
 {
     if (!csb_v1_startup_playback_session_owned_pc34(session) ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
-        !session->playback.entrance_music_active ||
-        !session->playback.entrance_complete) {
+        !session->playback.entrance_music_active) {
+        return 0;
+    }
+    if (!session->playback.entrance_complete &&
+        !csb_v1_boot_startup_playback_complete_entrance_pc34(session)) {
         return 0;
     }
     /* ENTRANCE.C F0806 owns the closed-door menu until entering the dungeon;

@@ -161,6 +161,7 @@ int main(void)
     M11_GameViewState state;
     DM1_ViewportWallHostMaterialReceiptPc34 receipt;
     DM1_ViewportSideWallHostReceiptPc34 sideReceipt;
+    DM1_ViewportD3SideWallHostHandoffPc34 d3Handoff;
     DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     const M11_AssetSlot *slot;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
@@ -204,6 +205,21 @@ int main(void)
      * before the center square. The receipt owns both the lane decision and
      * F0096 wall-set material; this test uses the installed PC34 asset, not
      * a fabricated bitmap. D4 invokes F0115 only, then exits on depth > 3. */
+    memset(&d3Handoff, 0, sizeof(d3Handoff));
+    if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+            DM1_VIEW_SQUARE_D3L, false, true, false, &d3Handoff) ||
+        !d3Handoff.handled || !d3Handoff.draw_wall ||
+        d3Handoff.falls_through_to_f0115 ||
+        d3Handoff.pc34_zone != DM1_PC34_ZONE_WALL_D3L ||
+        d3Handoff.transparent_color != 10 ||
+        d3Handoff.selected_wall >= DM1_WALL_SET_COUNT) goto fail;
+    if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+            DM1_VIEW_SQUARE_D3R, true, true, false, &d3Handoff) ||
+        !d3Handoff.draw_wall || !d3Handoff.flip_horizontally ||
+        d3Handoff.pc34_zone != DM1_PC34_ZONE_WALL_D3R) goto fail;
+    if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+            DM1_VIEW_SQUARE_D3L, false, false, false, &d3Handoff) ||
+        d3Handoff.draw_wall || !d3Handoff.falls_through_to_f0115) goto fail;
     if (!dm1_viewport_3d_build_side_wall_host_receipt_pc34(
             DM1_VIEW_SQUARE_D3L, mapWallSet, false, true, false, 3,
             &visibility, &sideReceipt) || !sideReceipt.handled ||
@@ -222,7 +238,7 @@ int main(void)
             &visibility, &sideReceipt) || sideReceipt.draw_wall ||
         !sideReceipt.handled) goto fail;
     slot = M11_AssetLoader_Load(&state.assetLoader,
-                                DM1_V1_CHAMPION_PORTRAIT_GRAPHIC_PC34);
+                                (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
     if (!slot || !slot->loaded || !slot->pixels ||
         !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
             (int)slot->width, (int)slot->height)) goto fail;

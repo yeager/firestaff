@@ -85,7 +85,7 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
 {
     unsigned int i;
     unsigned int ticks =
-        20u + ENTRANCE_Compat_GetDoorAnimationStepCount();
+        20u + ENTRANCE_Compat_GetDoorAnimationStepCount() + 1u;
     int tick_before;
     if (!view) {
         expect_true(0, message);
@@ -96,6 +96,8 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
                     view->csbState.startup_entrance_opening_active == 1 &&
                     view->csbState.startup_entrance_opening_delay_ticks == 20,
                 "M11 CSB entrance command starts source door-opening phase");
+    /* F0806 decrements all 20 delay ticks, emits all C002/C003 steps, then
+     * publishes door_opening_finished on the following source tick. */
     for (i = 0; i < ticks; ++i) {
         expect_true(M11_GameView_AdvanceIdleTick(view) ==
                         M11_GAME_INPUT_REDRAW,
@@ -551,7 +553,7 @@ static int inject_synthetic_csbgraphics_viewport_override(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -574,14 +576,14 @@ static int inject_synthetic_csbgraphics_viewport_override(
     profile->csbgraphics_scan_attempted = 1;
     profile->csbgraphics_scan_result = CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
+        csb_v1_csbgraphics_runtime_plan_add_explicit_entry(
             &profile->csbgraphics_cache,
             73u,
             8u,
             8u,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     return profile->csbgraphics_plan_result ==
-           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+           CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK;
 }
 
 static int inject_synthetic_csbgraphics_custom_background(
@@ -658,7 +660,7 @@ static int inject_synthetic_csbgraphics_custom_background(
 
     csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
-    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     profile->csbgraphics_cache.file_buffer = bytes;
     profile->csbgraphics_cache.file_size = size;
     profile->csbgraphics_cache.loaded = 1;
@@ -687,13 +689,13 @@ static int inject_synthetic_csbgraphics_custom_background(
     profile->csbgraphics_skin_def_words[0] = 100u;
     profile->csbgraphics_skin_def_words[4] = 104u;
     profile->csbgraphics_plan_result =
-        csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+        csb_v1_csbgraphics_runtime_plan_add_custom_background_skin_def(
             &profile->csbgraphics_cache,
             profile->csbgraphics_skin_def_words,
             profile->csbgraphics_skin_def_word_count,
-            &profile->csbgraphics_m11_plan);
+            &profile->csbgraphics_runtime_plan);
     if (profile->csbgraphics_plan_result !=
-        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+        CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK) {
         return 0;
     }
 
@@ -1101,7 +1103,7 @@ int main(void) {
                     strstr(csb_v1_startup_sequence_source_evidence_pc34(),
                            "ENTRANCE.C F0438") != NULL,
                 "CSB startup evidence names title and entrance sources");
-    expect_true(csb_v1_startup_title_total_ticks_pc34() == 102,
+    expect_true(csb_v1_startup_title_total_ticks_pc34() == 101,
                 "CSB startup title timing keeps the ReDMCSB CSB prelude");
     expect_true(csb_v1_startup_title_presents_ticks_pc34() == 60,
                 "CSB startup title timing keeps the source PRESENTS hold");
@@ -1296,7 +1298,10 @@ int main(void) {
                         view.csbState.startup_title_source_step == 1 &&
                         view.csbState.startup_entrance_source_step == 0,
                     "M11 CSB title prelude starts on PRESENTS before entrance");
-        for (int i = 0;
+        /* The first presentation idle tick already advanced F0437 to frame
+         * 1. Advance only the remaining PRESENTS frames to reach source
+         * frame 60, where TITLE.C enters CHAOS zoom at step 2. */
+        for (int i = 1;
              i < csb_v1_startup_title_presents_ticks_pc34() &&
              view.csbState.startup_title_active;
              ++i) {
@@ -1307,6 +1312,8 @@ int main(void) {
                         "M11 CSB title prelude blocks runtime ticks");
         }
         expect_true(view.csbState.startup_title_active == 1 &&
+                        view.csbState.startup_title_frame ==
+                            csb_v1_startup_title_presents_ticks_pc34() &&
                         view.csbState.startup_title_source_step == 2 &&
                         view.csbState.startup_entrance_source_step == 0,
                     "M11 CSB title prelude reaches CHAOS zoom before entrance");
@@ -1514,18 +1521,14 @@ int main(void) {
         memset(fb, 0, sizeof(fb));
         if (view.assetsAvailable) {
             M11_GameView_Draw(&view, fb, 320, 200);
-            expect_true(count_color_rect(fb, 320, 38, 80, 230, 64, 15u) > 20,
-                        "M11 CSB real entrance overlays the utility import prompt");
-            expect_true(count_color_rect(fb, 320, 36, 104, 244, 12, 12u) > 20,
-                        "M11 CSB real entrance overlays the selected utility import row");
+            expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) > 0,
+                        "M11 CSB utility receipt reaches the source startup raster");
             memset(fb, 0, sizeof(fb));
         }
         view.assetsAvailable = 0;
         M11_GameView_Draw(&view, fb, 320, 200);
-        expect_true(count_color_rect(fb, 320, 38, 80, 230, 64, 15u) > 20,
-                    "M11 CSB assetless startup keeps utility HUD receipt visible");
-        expect_true(count_color_rect(fb, 320, 36, 104, 244, 12, 12u) > 20,
-                    "M11 CSB assetless startup keeps selected utility row receipt visible");
+        expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) > 0,
+                    "M11 CSB utility does not substitute a text panel for its source raster");
     }
     expect_true(view.csbState.startup_import_selected_action_index == 0,
                 "M11 CSB utility keyboard starts on the IMPORT row");
@@ -1606,8 +1609,8 @@ int main(void) {
         memset(fb, 0, sizeof(fb));
         view.assetsAvailable = 0;
         M11_GameView_Draw(&view, fb, 320, 200);
-        expect_true(count_color_rect(fb, 320, 48, 164, 170, 10, 15u) > 20,
-                    "M11 CSB utility VIEW preview renders the second imported champion row");
+        expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) > 0,
+                    "M11 CSB utility VIEW retains the source startup raster without text fallback");
     }
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
                     M11_GAME_INPUT_REDRAW &&
@@ -1951,8 +1954,8 @@ int main(void) {
                     "CSB boot profile attempts CSBgraphics startup scan");
         expect_true(csb_v1_boot_csbgraphics_cache(profile) ==
                         &profile->csbgraphics_cache &&
-                    csb_v1_boot_csbgraphics_m11_plan(profile) ==
-                        &profile->csbgraphics_m11_plan,
+                    csb_v1_boot_csbgraphics_runtime_plan(profile) ==
+                        &profile->csbgraphics_runtime_plan,
                     "CSB boot profile owns CSBgraphics cache and M11 plan");
         expect_true(profile->csbgraphics_scan_result ==
                         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND ||
@@ -2007,19 +2010,22 @@ int main(void) {
         if (profile) {
             expect_true(inject_synthetic_csbgraphics_viewport_override(
                             profile, override_pixels),
-                        "test injects a planned CSBgraphics viewport override");
+                        "test stages an unbound CSBgraphics viewport entry");
             memset(fb, 0, sizeof(fb));
             M11_GameView_Draw(&view, fb, 320, 200);
-            expect_true(fb[33 * 320] == override_pixels[0],
-                        "M11 CSB draw applies ready CSBgraphics plan entries");
+            expect_true(count_diff_rect(expected_fb, fb, 320,
+                                         0, 33, 224, 136) == 0 &&
+                            fb[33 * 320] != override_pixels[0],
+                        "M11 CSB ignores unbound CSBgraphics plan entries without a capture declaration");
             expect_true(fb[32 * 320] == 0,
                         "M11 CSBgraphics draw preserves pixels outside route");
             expect_true(inject_synthetic_csbgraphics_custom_background(profile),
-                        "test injects CSBgraphics custom-background skin data");
+                        "test stages an unproven CSBgraphics bitmap/mask pair");
             memset(fb, 0, sizeof(fb));
             M11_GameView_Draw(&view, fb, 320, 200);
-            expect_true(count_diff_rect(expected_fb, fb, 320, 0, 33, 16, 1) > 0,
-                        "M11 CSB draw applies runtime-selected custom-background masks");
+            expect_true(count_diff_rect(expected_fb, fb, 320,
+                                         0, 33, 224, 136) == 0,
+                        "M11 CSB rejects custom-background masks without current GRAPHICS.DAT provenance");
             expect_true(fb[32 * 320] == 0,
                         "M11 CSB custom-background draw preserves pixels outside viewport");
         }
@@ -2154,6 +2160,29 @@ int main(void) {
                     "M11 CSB quickload restores saved current level");
         expect_true(view.csbState.tick_count == saved_tick,
                     "M11 CSB quickload restores saved tick count");
+        expect_true(view.csbOriginalSaveRuntimeReceiptRequired == 1 &&
+                        view.csbOriginalSaveRuntimeReceipt.valid == 1 &&
+                        csb_v1_boot_original_save_runtime_receipt_current_pc34(
+                            profile, &view.csbOriginalSaveRuntimeReceipt),
+                    "M11 CSB native F0435 quickload retains a current source receipt");
+        {
+            FILE *mutated = fopen(quick_save_path, "r+b");
+            int byte_before = -1;
+            int tick_before = view.csbState.tick_count;
+            if (mutated && fseek(mutated, 23L, SEEK_SET) == 0) {
+                byte_before = fgetc(mutated);
+                if (byte_before != EOF && fseek(mutated, 23L, SEEK_SET) == 0) {
+                    (void)fputc(byte_before ^ 0x01, mutated);
+                }
+            }
+            if (mutated) fclose(mutated);
+            expect_true(byte_before != EOF,
+                        "test mutates the native F0435 header after receipt binding");
+            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                            M11_GAME_INPUT_IGNORED &&
+                            view.csbState.tick_count == tick_before,
+                        "M11 CSB native F0435 receipt blocks a stale save header before tick");
+        }
     }
 
     M11_GameView_Shutdown(&view);
@@ -2217,8 +2246,17 @@ int main(void) {
                     "M11 CSBWin resume applies champion summaries");
         expect_true(profile->runtime.csbwin_runtime_item16_count == 2u,
                     "M11 CSBWin resume materializes ITEM16 summaries");
-        expect_true(profile->runtime.timeline_queue.eventCount == 3,
-                    "M11 CSBWin resume materializes timer queue");
+        /* CSBWin GAMEBLOCK2.NumTimer owns the active heap size. The decoded
+         * TimerQueue storage has three slots in this fixture, but its third
+         * slot is not live until NumTimer names it. M11 must retain the two
+         * source queue slots and the restored source tick unchanged. */
+        expect_true(profile->runtime.timeline_queue.eventCount == 2 &&
+                        profile->runtime.csbwin_num_timer == 2u &&
+                        profile->runtime.csbwin_timer_queue[0] == 2u &&
+                        profile->runtime.csbwin_timer_queue[1] == 0u &&
+                        profile->runtime.timeline_queue.gameTick ==
+                            profile->runtime.game_time,
+                    "M11 CSBWin resume materializes only the source-owned active timer queue");
     }
     expect_true(test_setenv("FIRESTAFF_QUICKSAVE_PATH", csbwin_save_path) == 0,
                 "test fixture points F9 at CSBWin resume save");

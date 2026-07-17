@@ -174,6 +174,7 @@ int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path) {
     char candidate_name[256];
     char candidate_path[768];
     char *last_slash;
+    int matches = 0;
 
     if (!reader || !cue_path) return -1;
     memset(reader, 0, sizeof(*reader));
@@ -206,14 +207,17 @@ int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path) {
         memset(&candidate, 0, sizeof(candidate));
         count = nexus_iso_open(&candidate, candidate_path);
         if (count > 0 && nexus_iso_is_nexus(&candidate)) {
-            fclose(cue);
+            if (++matches > 1) {
+                nexus_iso_close(&candidate);
+                nexus_iso_close(reader);
+                fclose(cue);
+                return -1;
+            }
             *reader = candidate;
-            return count;
-        }
-        nexus_iso_close(&candidate);
+        } else nexus_iso_close(&candidate);
     }
     fclose(cue);
-    return -1;
+    return matches == 1 ? reader->file_count : -1;
 }
 
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name) {

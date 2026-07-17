@@ -50,6 +50,10 @@ int dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
 #define SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT \
     (CHAMPION_MAX_PARTY * CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT)
 #define DM1_F0259_MOVE_TIMER_AUX4_PC34 0
+#define DM1_ORIGINAL_SAVE_PC34_C3_RECEIPT_BYTE_CAP \
+    (DM1_EVENT_MAX_COUNT * GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT)
+#define DM1_ORIGINAL_SAVE_PC34_C4_RECEIPT_BYTE_CAP \
+    (DM1_EVENT_MAX_COUNT * GAMEWORLD_PC34_ORIGINAL_C4_HEAP_ENTRY_BYTE_COUNT)
 
 typedef struct {
     int group_thing_index;
@@ -99,6 +103,17 @@ typedef struct {
     int original_event_maximum_count;
     int decoded_event_count;
     int decoded_timeline_index_count;
+    /* Authenticated F0433 C3/C4 plaintext from the validated part buffers.
+     * The world boundary publishes this only after full F0435 success. */
+    int c3_c4_receipt_valid;
+    uint32_t c3_raw_event_byte_count;
+    uint32_t c4_raw_heap_byte_count;
+    uint32_t c3_raw_event_fingerprint;
+    uint32_t c4_raw_heap_fingerprint;
+    uint32_t c3_c4_runtime_event_count;
+    uint32_t timeline_runtime_fingerprint;
+    uint8_t c3_raw_event_bytes[DM1_ORIGINAL_SAVE_PC34_C3_RECEIPT_BYTE_CAP];
+    uint8_t c4_raw_heap_bytes[DM1_ORIGINAL_SAVE_PC34_C4_RECEIPT_BYTE_CAP];
     int event_decode_truncated_count;
     /* C4 TIMELINE is a one-index-per-live-EVENT heap in the F0238/F0433
      * path. Retain the first duplicate relation so rejected external saves
@@ -137,6 +152,8 @@ typedef struct {
     int dungeon_tail_checksum_ok;
     int dungeon_tail_map_count;
     int dungeon_tail_column_count;
+    int dungeon_tail_column_table_valid;
+    uint32_t dungeon_tail_column_terminal_sft_count;
     int dungeon_tail_square_first_thing_count;
     int dungeon_tail_text_data_word_count;
     uint32_t dungeon_tail_thing_data_byte_count;
@@ -302,6 +319,11 @@ typedef struct {
     int step;
     uint32_t fire_at_tick;
 } DM1OriginalSavePC34ViAltarRebirthEventPlan;
+
+int dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
+    const struct DM1_Event_V1 *src,
+    int source_event_index,
+    DM1OriginalSavePC34ViAltarRebirthEventPlan *out_plan);
 
 #define DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP \
     DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP

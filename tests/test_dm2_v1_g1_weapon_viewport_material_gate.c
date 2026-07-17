@@ -125,12 +125,11 @@ int main(void)
         dm2_v1_viewport_set_asset_palette_provider(&viewport, NULL, NULL);
     }
     dm2_v1_render_items(&viewport);
-    CHECK("G1 DB5 item consumes direct exact WEAPONS/type/F9 material",
-          viewport.asset_item_drawn_count == 1 &&
-              viewport.g1_scene_item_material_consumed_count == 1 &&
-              viewport.last_item_render.gdat_index == expected_index &&
+    CHECK("G1 DB5 F9 map-chip receipt cannot impersonate DRAW_ITEM material",
+          viewport.asset_item_drawn_count == 0 &&
+              viewport.g1_scene_item_material_consumed_count == 0 &&
               (viewport.blocked_material_mask &
-               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) == 0u);
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0u);
 
     memset(framebuffer, 0x7e, sizeof(framebuffer));
     setup(&viewport, framebuffer, &receipt, &expected_index);
@@ -159,6 +158,7 @@ int main(void)
     {
         int cell = -1;
         int pass = -1;
+        DM2_V1_StaticObjectSourcePlan static_plan;
         CHECK("D1 center maps to exact static-object source pass",
               dm2_v1_viewport_static_object_cell_for_map(
                   10, 8, 0, 10, 10, &cell, &pass) == 1 &&
@@ -167,6 +167,31 @@ int main(void)
               dm2_v1_viewport_static_object_cell_for_map(
                   10, 9, 0, 10, 10, &cell, &pass) == 0 &&
                   cell == -1 && pass == -1);
+        CHECK("DRAW_ITEM DB5 D1 north derives F0 rect, scale and slot zero",
+              dm2_v1_viewport_static_object_source_plan(
+                  3, 17, 0x10, 0, 0, 0, &static_plan) == 1 &&
+                  static_plan.position_5x5 == 6 &&
+                  static_plan.clip_rect_id == (0x8000 | 5081) &&
+                  static_plan.y_distance == 1 &&
+                  static_plan.stretch_factor64 == 0x40 &&
+                  static_plan.image_field == 0 &&
+                  static_plan.flip_mirror == 0 &&
+                  static_plan.slot_x_offset == -3 &&
+                  static_plan.slot_y_offset == 2);
+        CHECK("DRAW_ITEM DB9 D2 east open derives F4 and mirror",
+              dm2_v1_viewport_static_object_source_plan(
+                  6, 14, 0x14, 1, 1, 15, &static_plan) == 1 &&
+                  static_plan.position_5x5 == 8 &&
+                  static_plan.clip_rect_id == (0x8000 | 5158) &&
+                  static_plan.y_distance == 2 &&
+                  static_plan.stretch_factor64 == 0x2b &&
+                  static_plan.image_field == 4 &&
+                  static_plan.flip_mirror == 1 &&
+                  static_plan.slot_x_offset == 3 &&
+                  static_plan.slot_y_offset == -3);
+        CHECK("unsupported static cell remains no-draw",
+              dm2_v1_viewport_static_object_source_plan(
+                  4, 16, 0x10, 0, 0, 0, &static_plan) == 0);
     }
     dm2_v1_render_items(&viewport);
     CHECK("changed decoded G1 DB5 pixels block their source material",

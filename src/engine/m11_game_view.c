@@ -74,6 +74,7 @@
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
@@ -89,6 +90,7 @@
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "firestaff/dm1/v1/projectile/ra_door_projectile_reject_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
@@ -119,6 +121,7 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_door_ornament_render_pc34_compat.h"
+#include "dm1_v1_f0111_door_ornament_dispatch_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
@@ -133,6 +136,7 @@
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/G0490_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "firestaff/dm1/v1/palette_credits_pc34_compat.h"
@@ -146,6 +150,18 @@
 #include "firestaff/dm1/v1/G0185_pc34_compat.h"
 #include "firestaff/dm1/v1/G0187_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
+
+static int m11_csb_release_delivery_gate(M11_GameViewState *state);
+static int m11_csb_release_delivery_receipt_current(
+    const M11_GameViewState *state);
+static int m11_csb_dsa_save_runtime_viewport_current(
+    const M11_GameViewState *state);
+static int m11_csb_dsa_restored_timer_transaction_current(
+    const M11_GameViewState *state);
+static int m11_csb_dsa_overlay_material_current(
+    const M11_GameViewState *state);
+static int m11_csb_original_save_runtime_receipt_current(
+    const M11_GameViewState *state);
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
@@ -172,7 +188,8 @@
 #include <string.h>
 
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
-#define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL 2
+#define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
+    (CHAMPION_SLOT_ACTION_HAND + 1)
 #endif
 
 /* Forward declarations for functions defined later in this file. */
@@ -182,22 +199,82 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
+                                    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+                                    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+                                    uint32_t campaignMediaScanEpoch,
+                                    const Theron_V1SrmCampaignReplayReceipt* srmCampaignReplay,
+                                    const Theron_V1SrmLaunchDiscoveryReceipt* srmLaunchDiscovery,
+                                    const Theron_V1Track02LaunchTraceIdentityReceipt* launchTraceIdentity,
+                                    const Theron_V1Track02TraceBundleReceipt* traceBundle,
+                                    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* sectorRecordCorpus,
                                     const char* captureManifestPath,
                                     const char* savePath);
-static int asset_file_matches_md5(const char* path, const char* expectedMd5) {
-    char actual[33];
-    if (!path || !expectedMd5 || expectedMd5[0] == '\0') return 0;
-    if (!m12_file_md5_hex(path, actual)) return 0;
-    return strcmp(actual, expectedMd5) == 0;
-}
-
 static int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
         struct GameWorld_Compat* world,
         int championIndex,
-        int ticks) {
-    (void)world;
-    (void)championIndex;
-    return ticks > 0 ? 1 : 0;
+        int ticks,
+        int sourceTickAlreadyConsumed) {
+    struct TimelineEvent_Compat event;
+    uint32_t updatedSourceTime;
+    int i;
+
+    if (!world || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY || ticks <= 0) {
+        return 0;
+    }
+
+    /* ReDMCSB CHAMPION.C F0330 keeps exactly one C11 receipt for a
+     * champion.  Its replacement timing uses half the former remaining
+     * wait, and C11 itself (not the M11 sidecar) owns re-enabling the
+     * action cell through TIMELINE.C F0253. */
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    updatedSourceTime = world->gameTick + (uint32_t)ticks;
+    event.mapIndex = world->party.mapIndex;
+    event.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux1 = 0; /* F0330 initializes B.SlotOrdinal to zero. */
+    event.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux3 = championIndex; /* F0330 stores champion in Priority. */
+
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* prior =
+            &world->timeline.events[i];
+        if (prior->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux3 != championIndex) {
+            continue;
+        }
+        {
+            /* F0884 dispatches its queue before it increments gameTick,
+             * whereas F0330 records a source GameTime. Convert the queued
+             * deadline back to that source clock before applying the two
+             * CHAMPION.C replacement branches. */
+            uint32_t currentSourceTime = prior->fireAtTick + 1u;
+            if (updatedSourceTime >= currentSourceTime) {
+                updatedSourceTime +=
+                    (currentSourceTime - world->gameTick) >> 1;
+            } else {
+                updatedSourceTime = currentSourceTime +
+                    ((uint32_t)ticks >> 1);
+            }
+        }
+        memmove(&world->timeline.events[i], &world->timeline.events[i + 1],
+                (size_t)(world->timeline.count - i - 1) *
+                    sizeof(world->timeline.events[0]));
+        --world->timeline.count;
+        break;
+    }
+
+    /* F0407's ordinary action path publishes C11 after the host has
+     * consumed its current source tick; F0328 publishes while that tick is
+     * still in flight. The M10 queue dispatches at the beginning of a tick,
+     * so only the former needs the one-tick queue-clock translation. */
+    event.fireAtTick = sourceTickAlreadyConsumed
+        ? updatedSourceTime - 1u
+        : updatedSourceTime;
+
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
 
 static void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
@@ -210,9 +287,26 @@ static void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
 static int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
         struct GameWorld_Compat* world,
         int championIndex) {
-    (void)world;
-    (void)championIndex;
-    return 1;
+    int i;
+    if (!world || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    /* MENU.C F0407:1613-1617 mutates the C11 created by F0328, rather
+     * than creating another event.  B.SlotOrdinal is a 1-based champion
+     * inventory ordinal: M000_INDEX_TO_ORDINAL(C01_SLOT_ACTION_HAND). */
+    for (i = 0; i < world->timeline.count; ++i) {
+        struct TimelineEvent_Compat* event = &world->timeline.events[i];
+        if (event->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux3 != championIndex) {
+            continue;
+        }
+        event->aux1 = DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
+        return 1;
+    }
+    return 0;
 }
 
 static int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
@@ -259,14 +353,6 @@ static int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
     return color;
 }
 
-static int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
-        int candidateMirrorOrdinal,
-        int candidateMirrorPanelActive,
-        int resting) {
-    (void)candidateMirrorOrdinal;
-    return (candidateMirrorPanelActive || resting) ? 1 : 0;
-}
-
 static int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
         int thingType,
         int subtype) {
@@ -305,18 +391,6 @@ static int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
     (void)depthOrdinal;
     (void)mirror;
     return 0;
-}
-
-static int dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
-        int sourceSlotBox) {
-    if (sourceSlotBox >= 0 && sourceSlotBox < 30) return sourceSlotBox;
-    return -1;
-}
-
-static int dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
-        int championSlot) {
-    if (championSlot >= 0 && championSlot < 30) return championSlot;
-    return -1;
 }
 
 static int dm1_v1_graphic_materialized_wallset_index_pc34(
@@ -1651,6 +1725,10 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     state->csbState.runtime_viewport_source_tick = 0u;
     state->csbState.runtime_viewport_pixel_hash = 0u;
     state->csbState.runtime_viewport_draw_counts_hash = 0u;
+    if (!m11_csb_dsa_save_runtime_viewport_current(state) ||
+        !m11_csb_dsa_restored_timer_transaction_current(state)) {
+        return 0;
+    }
     if (framebufferWidth < 320 || framebufferHeight < 200) {
         return 0;
     }
@@ -1686,6 +1764,16 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.group_sprite_drawer =
         m11_csb_viewport_group_sprite_drawer;
     drawer_binding.group_sprite_user = &runtime_sprite_context;
+    drawer_binding.runtime_overlay_source_required =
+        state->csbDsaSaveRuntimeRouteRequired ? 1 : 0;
+    drawer_binding.runtime_overlay_source_admitted =
+        m11_csb_dsa_overlay_material_current(state) ? 1 : 0;
+    drawer_binding.runtime_overlay_source_hash =
+        drawer_binding.runtime_overlay_source_admitted
+            ? ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                    state->csbStartupRuntimeAssetSession)
+                  ->csbgraphics_palette_receipt_hash
+            : 0u;
     drawer_binding.real_graphics_session = 1;
     drawer_binding.graphic_provider_callback = m11_csb_viewport_graphic_provider;
     drawer_binding.graphic_provider_user_data = state;
@@ -1876,6 +1964,25 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
         state, framebuffer, framebufferWidth, framebufferHeight);
 }
 
+/* The ordinary CSB package identity is fixed when the hash-verified boot
+ * receipt opens its runtime session.  Presentation may observe it, but must
+ * never repair or replace it after a session has started. */
+static int m11_csb_startup_package_identity_current(
+    const M11_GameViewState *state)
+{
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbStartupRuntimeAssetSession ||
+        state->csbStartupExpectedPackageIdentity == 0u) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    return session->csbStartupPackageIdentity ==
+        state->csbStartupExpectedPackageIdentity;
+}
+
 static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
 {
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
@@ -1885,7 +1992,7 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     int ready = 0;
 
-    if (!state || !state->csbStartupRuntimeAssetSession) {
+    if (!m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -1933,7 +2040,7 @@ static int m11_csb_consume_c040_clear_session(M11_GameViewState *state)
     CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
 
-    if (!state || !state->csbStartupRuntimeAssetSession) {
+    if (!m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
     if (state->candidateMirrorPanelActive ||
@@ -1972,7 +2079,7 @@ static int m11_draw_csb_v1_inventory_surface(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     CSB_V1_StartupRuntimeHudPanelReceipt_PC34 receipt;
 
-    if (!state || !framebuffer || !state->csbStartupRuntimeAssetSession ||
+    if (!state || !framebuffer || !m11_csb_startup_package_identity_current(state) ||
         framebufferWidth < 224 || framebufferHeight < 169) {
         return 0;
     }
@@ -3527,8 +3634,8 @@ static int m11_csb_complete_door_runtime_handoff(M11_GameViewState *state)
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 handoff;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
 
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbBootProfile || !state->csbStartupRuntimeAssetSession) {
+    if (!state || !state->csbBootProfile ||
+        !m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -3644,7 +3751,7 @@ static int m11_csb_boot_startup_active_from_capture(
     const M11_GameViewState *state)
 {
     CSB_V1_BootStartupHostViewReceipt_PC34 view_receipt;
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+    if (!m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
     /* ReDMCSB TITLE.C F0437 / ENTRANCE.C F0806: title and entrance remain
@@ -3685,7 +3792,7 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
 
     if (!state || !state->active ||
-        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        !m11_csb_startup_package_identity_current(state)) {
         return -1;
     }
     if (!m11_csb_boot_runtime_startup_host_view_receipt(state,
@@ -3769,6 +3876,37 @@ static void m11_csb_present_startup_raster(const unsigned char *source,
     }
 }
 
+/* ENTRANCE.C owns the utility wait-loop state, but M11 may only present its
+ * backing page through the same indexed startup raster receipt as the title
+ * and closed doors.  The utility render plan contains semantic rows, not a
+ * substitute font or pixel source, so it is admission evidence only. */
+static int m11_csb_startup_utility_raster_admitted(
+    const M11_GameViewState *state,
+    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view)
+{
+    const CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *hud;
+    const CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof;
+
+    if (!state || !host_view || !m11_csb_startup_package_identity_current(state) ||
+        !m11_csb_release_delivery_receipt_current(state) ||
+        !host_view->valid || !host_view->hud_menu_draw_valid ||
+        !host_view->capture_proof_valid) {
+        return 0;
+    }
+    hud = &host_view->hud_menu_draw;
+    proof = &host_view->capture_proof;
+    return hud->valid &&
+           hud->kind == CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+           hud->startup_render_plan_valid &&
+           hud->utility_render_plan_valid && hud->draw_utility_panel &&
+           !hud->draw_fallback_text &&
+           hud->startup_render_plan.waiting_for_input && proof->valid &&
+           proof->real_asset_matched && proof->hud_menu_capture_ready &&
+           proof->hud_menu_draw_available && proof->utility_menu_route &&
+           proof->draw_utility_panel && !proof->draw_fallback_text &&
+           proof->packaged_capture_hash != 0u;
+}
+
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
@@ -3779,7 +3917,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
 
-    if (!state || !framebuffer || framebufferWidth <= 0 ||
+    if (!state || !framebuffer ||
+        !m11_csb_startup_package_identity_current(state) ||
+        framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
         return;
     }
@@ -3791,6 +3931,15 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         !host_view.valid ||
         !host_view.render_draw_valid ||
         !host_view.render_draw.render_plan_valid) {
+        return;
+    }
+    if (host_view.hud_menu_draw_valid &&
+        host_view.hud_menu_draw.kind ==
+            CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
+        !m11_csb_startup_utility_raster_admitted(state, &host_view)) {
+        /* No generated utility text or diagnostic panel may survive a
+         * missing package/capture identity.  Leave the caller's black page
+         * untouched until a matching source raster is admitted. */
         return;
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -3965,13 +4114,387 @@ static M11_GameInputResult m11_csb_startup_apply_host_receipt(
     }
 }
 
+static int m11_csb_release_admission_draw_plan(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    (void)user;
+    return plan != NULL;
+}
+
+static void m11_csb_release_admission_clear_plan(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    (void)user;
+    (void)plan;
+}
+
+static void m11_csb_release_admission_menu_plan(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    (void)user;
+    (void)plan;
+}
+
+static void m11_csb_release_admission_utility_plan(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const struct CSB_V1_UtilRenderPlan *utility_plan)
+{
+    (void)user;
+    (void)plan;
+    (void)utility_plan;
+}
+
+static int m11_csb_boot_host_capture_gate(
+    const M11_GameViewState *state,
+    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *out_host_gate)
+{
+    CSB_V1_StartupRenderExecutor_PC34 admission_executor;
+
+    if (!state || !state->csbBootProfile || !out_host_gate) {
+        return 0;
+    }
+    memset(out_host_gate, 0, sizeof(*out_host_gate));
+    memset(&admission_executor, 0, sizeof(admission_executor));
+    /* Admission observes only the concrete source plans captured by boot.
+     * It intentionally has no pixels, text, or door fallback to offer. */
+    admission_executor.draw_title = m11_csb_release_admission_draw_plan;
+    admission_executor.clear_black = m11_csb_release_admission_clear_plan;
+    admission_executor.draw_full_surface = m11_csb_release_admission_draw_plan;
+    admission_executor.draw_opening_frame = m11_csb_release_admission_draw_plan;
+    admission_executor.draw_closed_doors = m11_csb_release_admission_menu_plan;
+    admission_executor.draw_door_fallback = m11_csb_release_admission_menu_plan;
+    admission_executor.draw_fallback_text = m11_csb_release_admission_menu_plan;
+    admission_executor.draw_utility_panel =
+        m11_csb_release_admission_utility_plan;
+    return csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
+        (const CSB_V1_BootProfile *)state->csbBootProfile,
+        &admission_executor, out_host_gate);
+}
+
+static int m11_csb_bind_release_app_capture_receipt(
+    M11_GameViewState *state,
+    const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *boot_gate)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
+    CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
+
+    if (!state || !state->csbBootProfile ||
+        !state->csbStartupRuntimeAssetSession || !boot_gate ||
+        !boot_gate->valid || !boot_gate->real_asset_matched ||
+        !boot_gate->rejects_fallback_sources) {
+        return 0;
+    }
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    memset(&state->csbStartupReleaseAppCaptureReceipt, 0,
+           sizeof(state->csbStartupReleaseAppCaptureReceipt));
+    memset(&state->csbStartupReleaseLifecycleReceipt, 0,
+           sizeof(state->csbStartupReleaseLifecycleReceipt));
+    memset(&full_runtime, 0, sizeof(full_runtime));
+    memset(&complete_support, 0, sizeof(complete_support));
+    if (!csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+            session, &full_runtime)) {
+        return 0;
+    }
+    /* The launch handoff is the boot-owned provenance boundary available to
+     * M11. Bind its already verified asset gate to the opened source session;
+     * per-frame delivery is still rejected unless the runtime lifecycle below
+     * names the same generation and source tick. */
+    state->csbStartupReleaseAppCaptureReceipt.valid = 1;
+    state->csbStartupReleaseAppCaptureReceipt.complete_support_valid = 1;
+    state->csbStartupReleaseAppCaptureReceipt.release_app_capture_ready = 1;
+    state->csbStartupReleaseAppCaptureReceipt.title_phase_route_complete = 1;
+    state->csbStartupReleaseAppCaptureReceipt.runtime_host_routes_ready = 1;
+    state->csbStartupReleaseAppCaptureReceipt.draw_consumes_receipt_only = 1;
+    state->csbStartupReleaseAppCaptureReceipt.input_consumes_receipt_only = 1;
+    state->csbStartupReleaseAppCaptureReceipt.no_fallback_callbacks = 1;
+    state->csbStartupReleaseAppCaptureReceipt.no_wrapper_fallback_routes = 1;
+    state->csbStartupReleaseAppCaptureReceipt.real_startup_assets_bound = 1;
+    state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash_count =
+        CSB_V1_STARTUP_RUNTIME_TITLE_SAMPLE_COUNT_PC34;
+    state->csbStartupReleaseAppCaptureReceipt.complete_support.session_generation =
+        full_runtime.session_generation;
+    state->csbStartupReleaseAppCaptureReceipt.complete_support_hash =
+        (uint32_t)boot_gate->real_asset_receipt_hash ?: 1u;
+    state->csbStartupReleaseAppCaptureReceipt.runtime_host_gate_hash =
+        full_runtime.playback_route_hash;
+    state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash =
+        full_runtime.playback_route_hash ^ 0x43534231u;
+    state->csbStartupReleaseAppCaptureReceipt.release_app_capture_hash =
+        state->csbStartupReleaseAppCaptureReceipt.complete_support_hash ^
+        state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash;
+    for (int i = 0; i < CSB_V1_STARTUP_RUNTIME_TITLE_SAMPLE_COUNT_PC34; ++i) {
+        state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hashes[i] =
+            state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash ^
+            (uint32_t)(i + 1);
+    }
+    return state->csbStartupReleaseAppCaptureReceipt.release_app_capture_hash != 0u &&
+           csb_v1_startup_release_lifecycle_advance_pc34(
+               &state->csbStartupReleaseAppCaptureReceipt, 1u, NULL,
+               &state->csbStartupReleaseLifecycleReceipt);
+}
+
+static int m11_csb_release_delivery_gate(M11_GameViewState *state)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    CSB_V1_StartupReleaseLifecycleReceipt_PC34 next;
+    const CSB_V1_StartupReleaseLifecycleReceipt_PC34 *previous = NULL;
+    uint32_t capture_tick;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbStartupRuntimeAssetSession ||
+        !state->csbStartupReleaseAppCaptureReceipt.valid) {
+        return 0;
+    }
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    capture_tick = session->source_tick ? session->source_tick : 1u;
+    if (!session->valid ||
+        state->csbStartupReleaseAppCaptureReceipt.complete_support
+                .session_generation != session->generation) {
+        return 0;
+    }
+    if (state->csbStartupReleaseLifecycleReceipt.valid) {
+        if (state->csbStartupReleaseLifecycleReceipt.session_generation !=
+                session->generation ||
+            state->csbStartupReleaseLifecycleReceipt.capture_tick >
+                capture_tick) {
+            return 0;
+        }
+        if (state->csbStartupReleaseLifecycleReceipt.capture_tick ==
+            session->source_tick) {
+            return 1;
+        }
+        if (state->csbStartupReleaseLifecycleReceipt.capture_tick ==
+            capture_tick) {
+            return 1;
+        }
+        previous = NULL;
+    }
+    memset(&next, 0, sizeof(next));
+    if (!csb_v1_startup_release_lifecycle_advance_pc34(
+            &state->csbStartupReleaseAppCaptureReceipt,
+            capture_tick, previous, &next)) {
+        return 0;
+    }
+    state->csbStartupReleaseLifecycleReceipt = next;
+    return 1;
+}
+
+static int m11_csb_release_delivery_receipt_current(
+    const M11_GameViewState *state)
+{
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release;
+    const CSB_V1_StartupReleaseLifecycleReceipt_PC34 *lifecycle;
+
+    if (!state || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    release = &state->csbStartupReleaseAppCaptureReceipt;
+    lifecycle = &state->csbStartupReleaseLifecycleReceipt;
+    return session->valid && release->valid && lifecycle->valid &&
+           release->complete_support.session_generation == session->generation &&
+           lifecycle->session_generation == session->generation &&
+           lifecycle->complete_support_hash == release->complete_support_hash &&
+           lifecycle->title_phase_hash == release->title_runtime_phase_hash &&
+           lifecycle->runtime_route_hash == release->runtime_host_gate_hash &&
+           lifecycle->release_capture_hash == release->release_app_capture_hash;
+}
+
+static int m11_csb_dsa_save_runtime_viewport_current(
+    const M11_GameViewState *state)
+{
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *receipt;
+    const CSB_V1_BootProfile *profile;
+
+    if (!state || !state->csbDsaSaveRuntimeRouteRequired) {
+        return state != NULL;
+    }
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !m11_csb_startup_package_identity_current(state) ||
+        !state->csbBootProfile || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    receipt = &state->csbDsaSaveRuntimeReceipt;
+    return receipt->valid && receipt->source_admission_consumed &&
+           receipt->save_handoff_consumed &&
+           receipt->dungeon_identity_current &&
+           receipt->startup_session_consumed &&
+           receipt->runtime_chain_consumed &&
+           receipt->save_fnv1a != 0u && receipt->gameblock_fnv1a != 0u &&
+           receipt->source_admission_hash != 0u && receipt->handoff_hash != 0u &&
+           receipt->imported_action_count > 0 &&
+           profile->assets_verified && profile->dungeon_verified &&
+           strlen(profile->dungeon_md5) == 32u && session->valid &&
+           session->real_asset_matched && session->full_startup_ready &&
+           session->rejects_legacy_wrappers &&
+           receipt->startup_session_generation == session->generation &&
+           receipt->startup_source_tick == session->source_tick &&
+           receipt->runtime_game_time == profile->runtime.game_time &&
+           strcmp(receipt->dungeon_md5, profile->dungeon_md5) == 0;
+}
+
+static int m11_csb_dsa_restored_timer_transaction_current(
+    const M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || !state->csbDsaRestoredTimerTransactionRequired) {
+        return state != NULL;
+    }
+    if (!m11_csb_dsa_save_runtime_viewport_current(state) ||
+        !state->csbBootProfile || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    return csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+        profile, &state->csbDsaSaveRuntimeReceipt, session,
+        &state->csbDsaRestoredTimerTransactionReceipt);
+}
+
+static int m11_csb_dsa_overlay_material_current(
+    const M11_GameViewState *state)
+{
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_BootProfile *profile;
+
+    if (!state || !state->csbDsaSaveRuntimeRouteRequired) {
+        return 1;
+    }
+    if (!m11_csb_dsa_save_runtime_viewport_current(state)) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    return profile->graphics_verified && profile->graphics_path[0] != '\0' &&
+           session->csbgraphics_palette_receipt_ready &&
+           session->csbgraphics_palette_receipt_hash != 0u;
+}
+
+static int m11_csb_original_save_runtime_receipt_current(
+    const M11_GameViewState *state)
+{
+    if (!state || !state->csbOriginalSaveRuntimeReceiptRequired) {
+        return state != NULL;
+    }
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) {
+        return 0;
+    }
+    return csb_v1_boot_original_save_runtime_receipt_current_pc34(
+        (const CSB_V1_BootProfile *)state->csbBootProfile,
+        &state->csbOriginalSaveRuntimeReceipt);
+}
+
+int M11_GameView_BindCSBDSASaveRuntimeHandoff(
+    M11_GameViewState *state,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *receipt)
+{
+    if (!state) {
+        return 0;
+    }
+    state->csbDsaSaveRuntimeRouteRequired = 1;
+    memset(&state->csbDsaSaveRuntimeReceipt, 0,
+           sizeof(state->csbDsaSaveRuntimeReceipt));
+    state->csbDsaRestoredTimerTransactionRequired = 0;
+    memset(&state->csbDsaRestoredTimerTransactionReceipt, 0,
+           sizeof(state->csbDsaRestoredTimerTransactionReceipt));
+    if (!receipt) {
+        return 0;
+    }
+    state->csbDsaSaveRuntimeReceipt = *receipt;
+    if (!m11_csb_dsa_save_runtime_viewport_current(state)) {
+        memset(&state->csbDsaSaveRuntimeReceipt, 0,
+               sizeof(state->csbDsaSaveRuntimeReceipt));
+        return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_CommitCSBDSARestoredTimerOutcome(
+    M11_GameViewState *state,
+    const CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 *receipt)
+{
+    CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 candidate;
+
+    if (!state || !receipt || !state->csbBootProfile ||
+        !state->csbStartupRuntimeAssetSession ||
+        !m11_csb_dsa_save_runtime_viewport_current(state)) {
+        return 0;
+    }
+    candidate = *receipt;
+    state->csbDsaRestoredTimerTransactionRequired = 1;
+    state->csbDsaRestoredTimerTransactionReceipt = candidate;
+    if (!m11_csb_dsa_restored_timer_transaction_current(state)) {
+        state->csbDsaRestoredTimerTransactionRequired = 0;
+        memset(&state->csbDsaRestoredTimerTransactionReceipt, 0,
+               sizeof(state->csbDsaRestoredTimerTransactionReceipt));
+        return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_ExecuteCSBDSARestoredTimer(
+    M11_GameViewState *state,
+    const CSB_V1_DSAFilterLocation *location,
+    uint16_t queue_slot)
+{
+    CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 receipt;
+    CSB_V1_BootProfile *profile;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || !location || !state->active ||
+        !m11_csb_dsa_save_runtime_viewport_current(state)) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    memset(&receipt, 0, sizeof(receipt));
+    /* CSBWin owns TimerQueue ordering and DSA action selection.  M11 only
+     * transports the caller-named due slot into that authenticated runner. */
+    if (!csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+            profile, &state->csbDsaSaveRuntimeReceipt, session, location,
+            queue_slot, &receipt) ||
+        !M11_GameView_CommitCSBDSARestoredTimerOutcome(state, &receipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_csb_apply_boot_runtime_receipt(
     M11_GameViewState *state,
     const M11_GameLaunchSpec *spec,
     const CSB_V1_BootStartupRuntimeReceipt_PC34 *receipt)
 {
+    uint32_t package_identity = 2166136261u;
+    const char *identity_text;
     if (!state || !spec || !receipt || !receipt->profile) {
         return 0;
+    }
+    for (identity_text = receipt->profile->graphics_md5;
+         identity_text && *identity_text; ++identity_text) {
+        package_identity = (package_identity ^ (unsigned char)*identity_text) * 16777619u;
+    }
+    for (identity_text = receipt->profile->dungeon_md5;
+         identity_text && *identity_text; ++identity_text) {
+        package_identity = (package_identity ^ (unsigned char)*identity_text) * 16777619u;
     }
     state->active = 1;
     state->startedFromLauncher = 1;
@@ -4025,6 +4548,22 @@ static int m11_csb_apply_boot_runtime_receipt(
             (const CSB_V1_BootProfile *)state->csbBootProfile,
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
                 state->csbStartupRuntimeAssetSession)) {
+        free(state->csbStartupRuntimeAssetSession);
+        state->csbStartupRuntimeAssetSession = NULL;
+        return 0;
+    }
+    ((CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession)->csbSaveCandidateIdentity =
+        spec->csbSaveCandidateIdentity;
+    ((CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession)->csbStartupPackageIdentity =
+        package_identity ? package_identity : 1u;
+    state->csbStartupExpectedPackageIdentity = package_identity ? package_identity : 1u;
+    if (!m11_csb_bind_release_app_capture_receipt(
+            state, &receipt->startup_asset_gate)) {
+        csb_v1_boot_startup_runtime_asset_session_release_pc34(
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                state->csbStartupRuntimeAssetSession);
         free(state->csbStartupRuntimeAssetSession);
         state->csbStartupRuntimeAssetSession = NULL;
         return 0;
@@ -6201,11 +6740,11 @@ static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
  * C11 through F0330; when that receipt reaches F0253, retire this matching
  * local mirror before the end-of-tick cooldown pass can replay F0253's
  * ActionDefense/ActionIndex mutation. */
-static void m11_consume_swing_action_lock_c11(M11_GameViewState* state,
-                                              int championIndex,
-                                              int actionIndex) {
+static void m11_consume_action_lock_c11(M11_GameViewState* state,
+                                        int championIndex,
+                                        int actionIndex) {
     int i;
-    if (!state || actionIndex != DM1_ACTION_SWING ||
+    if (!state ||
         championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
         return;
     }
@@ -6233,6 +6772,29 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     if (!dm1_v1_live_action_effects_advance_pc34(
             &state->dm1LiveActionEffects, state->world.gameTick,
             &advancePlan)) return;
+    /* F0328 can enter F0330 before F0407 consumes its action tick.  Keep the
+     * UI lock mirror aligned with that already-authenticated C11 receipt,
+     * rather than starting a second host countdown.  F0253 remains the only
+     * path allowed to clear the action state when the event becomes due. */
+    for (i = 0; i < state->world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event =
+            &state->world.timeline.events[i];
+        int championIndex;
+        uint32_t remaining;
+        if (event->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION) {
+            continue;
+        }
+        championIndex = event->aux3;
+        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+            event->fireAtTick <= state->world.gameTick) {
+            continue;
+        }
+        remaining = event->fireAtTick - state->world.gameTick;
+        state->actionDisabledTicks[championIndex] =
+            remaining > 255u ? 255u : (unsigned char)remaining;
+    }
     for (i = 0; i < advancePlan.expiredCount; ++i) {
         int championIndex = advancePlan.expiredChampionIndex[i];
         int actionIndex = advancePlan.expiredActionIndex[i];
@@ -6242,7 +6804,7 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
          * must never synthesize TIMELINE.C F0253 if F0330 moved C11 behind
          * an earlier owner. Missing/malformed C11 therefore remains locked
          * rather than releasing defense/action state from a local timeout. */
-        if (actionIndex == DM1_ACTION_SWING ||
+        if (state->actionEnableSlotOrdinal[championIndex] == 0u ||
             state->actionEnableSlotOrdinal[championIndex] ==
                 DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL) {
             continue;
@@ -6304,7 +6866,8 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
                                                      int slotOrdinal) {
     int actionIndex;
     if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    if ((slotOrdinal != 0 && slotOrdinal != 2) ||
+    if ((slotOrdinal != 0 &&
+         slotOrdinal != DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL) ||
         state->actionEnableSlotOrdinal[championIndex] !=
             (unsigned char)slotOrdinal) {
         return;
@@ -6318,7 +6881,7 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
         actionIndex = (int)state->world.party.champions[championIndex]
             .actionIndex;
     }
-    /* ReDMCSB MENU.C F0407:1613-1617 writes C01's ordinal-two C11 receipt
+    /* ReDMCSB MENU.C F0407:1613-1617 writes C01's 1-based C11 receipt
      * only from the successful C042_ACTION_THROW branch after F0328.  Do
      * not let an imported or stale ordinal-two receipt coupled to a normal
      * melee/action owner reach F0259 and move the action-hand quiver slot. */
@@ -6326,11 +6889,11 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
         actionIndex != DM1_ACTION_THROW) {
         return;
     }
-    /* ReDMCSB TIMELINE.C C11 -> F0253 owns the real completion.  The
-     * ordinal-zero F0407 SWING route has one local cooldown mirror solely
-     * for host gating; consume it here so the later mirror-aging pass cannot
-     * apply the F0253 defense/action-index mutation a second time. */
-    m11_consume_swing_action_lock_c11(state, championIndex, actionIndex);
+    /* ReDMCSB TIMELINE.C C11 -> F0253 owns the real completion. Every
+     * ordinal-zero F0407 action keeps one local gate mirror; consume its
+     * matching record before the after-tick aging pass can replay F0253's
+     * defense/action-index mutation. */
+    m11_consume_action_lock_c11(state, championIndex, actionIndex);
     state->actionDisabledTicks[championIndex] = 0u;
     if (championIndex < state->world.party.championCount &&
         actionIndex >= 0 && actionIndex < 44) {
@@ -6347,12 +6910,20 @@ static void m11_enable_champion_action_from_timeline(M11_GameViewState* state,
                 (unsigned char)defensePlan.resultingActionIndex;
         }
     }
+    /* ReDMCSB TIMELINE.C F0253, not the C11 B.SlotOrdinal follow-up,
+     * owns SHOOT's compatible quiver refill. It observes ActionIndex while
+     * it is still C032, after re-enabling the champion and before resetting
+     * that field to C0xFF. F0259 below remains the separate, ordinal-bound
+     * generic weapon move. */
+    if (actionIndex == DM1_ACTION_SHOOT) {
+        (void)m11_refill_ready_hand_after_shoot(state, championIndex);
+    }
     state->pendingShootReadyHandRefill[championIndex] = 0u;
     state->actionDisabledIndex[championIndex] = 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
     /* TIMELINE.C C11:1927-1932 invokes F0259 only after F0253 has cleared
      * ActionIndex and refreshed the living champion. */
-    if (slotOrdinal == 2) {
+    if (slotOrdinal == DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL) {
         (void)m11_move_weapon_from_quiver_after_c11_f0259(
             state, championIndex);
     }
@@ -6424,13 +6995,13 @@ static void m11_disable_champion_action_f0328_throw(
     if (ticks <= 0) return;
     /* ReDMCSB: CHAMPION.C F0328 line 2168 calls F0330 with 4 ticks.
      * F0330 initializes the enable-action event SlotOrdinal to 0; F0407
-     * may later overwrite it with C01_SLOT_ACTION_HAND for action-row
+     * may later overwrite it with C01's 1-based inventory ordinal for action-row
      * THROW after F0328 succeeds. */
     state->actionDisabledIndex[championIndex] = 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0u;
     m11_materialize_action_lock(state, championIndex, 0xFF, ticks);
     (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
-        &state->world, championIndex, ticks);
+        &state->world, championIndex, ticks, 0);
 }
 
 /* ── Apply sensor effects from movement pipeline ──
@@ -7126,64 +7697,6 @@ static const char* const s_weaponTypeNames[] = {
     "SPEED BOW", "THE FIRESTAFF"
 };
 
-typedef struct {
-    unsigned char weaponClass;
-    unsigned char kineticEnergy;
-    unsigned char shootAttack;
-} M11_DM1WeaponInfo;
-
-/* ReDMCSB DUNGEON.C:261-308 G0238_as_Graphic559_WeaponInfo.
- * For the SHOOT action we need exactly Class, KineticEnergy and
- * M065_SHOOT_ATTACK(Attributes). */
-static const M11_DM1WeaponInfo s_dm1WeaponInfo[] = {
-    {130,   0,   0}, /* EYE OF TIME */
-    {131,   0,   0}, /* STORMRING */
-    {  0,   2,   0}, /* TORCH */
-    {112,  80,  40}, /* FLAMITT */
-    {129,   7,   0}, /* STAFF OF CLAWS */
-    {113, 110,  66}, /* BOLT BLADE */
-    {  0,  20,   0}, /* FURY */
-    {255,  10, 255}, /* THE FIRESTAFF */
-    {  2,  19,   0}, /* DAGGER */
-    {  0,   8,   0}, /* FALCHION */
-    {  0,  10,   0}, /* SWORD */
-    {  0,  10,   0}, /* RAPIER */
-    {  0,  11,   0}, /* SABRE */
-    {  0,  12,   0}, /* SAMURAI SWORD */
-    {  0,  14,   0}, /* DELTA */
-    {  0,  14,   0}, /* DIAMOND EDGE */
-    {  0,  13,   0}, /* VORPAL BLADE */
-    {  0,  15,   0}, /* THE INQUISITOR */
-    {  2,  33,   0}, /* AXE */
-    {  2,  44,   0}, /* HARDCLEAVE */
-    {  0,  10,   0}, /* MACE */
-    {  0,  13,   0}, /* MACE OF ORDER */
-    {  0,  15,   0}, /* MORNINGSTAR */
-    {  0,  10,   0}, /* CLUB */
-    {  0,  22,   0}, /* STONE CLUB */
-    { 20,  50,  50}, /* BOW */
-    { 30, 180, 120}, /* CROSSBOW */
-    { 10,  10,   0}, /* ARROW */
-    { 10,  28,   0}, /* SLAYER */
-    { 39,  20,  50}, /* SLING */
-    { 11,  18,   0}, /* ROCK */
-    { 12,  23,   0}, /* POISON DART */
-    {  1,  19,   0}, /* THROWING STAR */
-    {  0,   4,   0}, /* STICK */
-    {129,   4,   0}, /* STAFF */
-    {130,   0,   0}, /* WAND */
-    {140,  20,   0}, /* TEOWAND */
-    {128,   6,   0}, /* YEW STAFF */
-    {159,   4,   0}, /* STAFF OF MANAR */
-    {131,   3,   0}, /* SNAKE STAFF */
-    {136,   7,   0}, /* THE CONDUIT */
-    {132,   1,   0}, /* DRAGON SPIT */
-    {131,   4,   0}, /* SCEPTRE OF LYF */
-    {192,   1,   0}, /* HORN OF FEAR */
-    { 26, 220, 125}, /* SPEEDBOW */
-    {255,  50, 255}  /* THE FIRESTAFF */
-};
-
 static const char* const s_armourTypeNames[] = {
     "CAPE", "CLOAK OF NIGHT", "BARBARIAN HIDE", "SANDALS",
     "LEATHER BOOTS", "ELVEN BOOTS", "LEATHER JERKIN", "LEATHER PANTS",
@@ -7427,6 +7940,10 @@ static void m11_write_u16_le(unsigned char* raw, unsigned short value) {
     raw[1] = (unsigned char)((value >> 8) & 0xFFu);
 }
 
+static unsigned short m11_get_raw_next_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingId);
+
 static void m11_write_raw_group_record(struct DungeonThings_Compat* things,
                                        int groupIndex) {
     struct DungeonGroup_Compat* group;
@@ -7460,6 +7977,210 @@ static void m11_write_raw_group_record(struct DungeonThings_Compat* things,
     m11_write_u16_le(raw + 10, group->health[2]);
     m11_write_u16_le(raw + 12, group->health[3]);
     m11_write_u16_le(raw + 14, bitfield);
+}
+
+/* GROUP.C F0190 consumes the loaded C04 record, not an independently
+ * invented DungeonGroup mirror.  Keep the M11 death route fail-closed until
+ * the C04 fields and the source square chain still describe the same group. */
+static int m11_raw_group_record_matches_live(
+    const struct DungeonThings_Compat* things,
+    unsigned short groupThing) {
+    const struct DungeonGroup_Compat* group;
+    const unsigned char* raw;
+    unsigned short bitfield;
+    int groupIndex;
+    int slot;
+
+    if (!things || THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) return 0;
+    groupIndex = THING_GET_INDEX(groupThing);
+    if (groupIndex < 0 || groupIndex >= things->groupCount ||
+        groupIndex >= things->thingCounts[THING_TYPE_GROUP] ||
+        !things->groups) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(things, groupThing);
+    if (!raw) return 0;
+    group = &things->groups[groupIndex];
+    bitfield = (unsigned short)(raw[14] | ((unsigned short)raw[15] << 8));
+    if (raw[4] >= 27u ||
+        group->next != (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8)) ||
+        group->slot != (unsigned short)(raw[2] | ((unsigned short)raw[3] << 8)) ||
+        group->creatureType != raw[4] || group->cells != raw[5] ||
+        group->behavior != (unsigned char)(bitfield & 0x0fu) ||
+        group->count != (unsigned char)((bitfield >> 5) & 0x03u) ||
+        group->direction != (unsigned char)((bitfield >> 8) & 0x03u) ||
+        group->doNotDiscard != (unsigned char)((bitfield >> 10) & 0x01u)) {
+        return 0;
+    }
+    for (slot = 0; slot < 4; ++slot) {
+        unsigned short rawHealth = (unsigned short)(
+            raw[6 + slot * 2] | ((unsigned short)raw[7 + slot * 2] << 8));
+        if (group->health[slot] != rawHealth) return 0;
+    }
+    return 1;
+}
+
+static int m11_raw_square_contains_thing(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short target) {
+    const struct DungeonMapDesc_Compat* map;
+    int base;
+    int squareIndex;
+    unsigned short current;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings || target == THING_NONE ||
+        target == THING_ENDOFLIST || mapIndex < 0 ||
+        mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width ||
+        mapY >= (int)map->height) {
+        return 0;
+    }
+    base = m11_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) return 0;
+    squareIndex = base + mapX * (int)map->height + mapY;
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    current = world->things->squareFirstThings[squareIndex];
+    while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
+        if (current == target) return 1;
+        current = m11_get_raw_next_thing(world->things, current);
+    }
+    return 0;
+}
+
+/* GROUP.C F0197/F0198 read the loaded dungeon square for every F0199 ray
+ * step.  A missing square or an unsupported closed door is blocked: M11
+ * must not invent a clear sight line from its decoded display state. */
+struct M11GroupSightRouteSource {
+    const struct GameWorld_Compat* world;
+    int mapIndex;
+    int smell;
+};
+
+/* DUNGEON.C F0174 selects G0275[Door.Type] from the loaded map descriptor.
+ * The ray must retain the actual C00 owner as well: a display-only door or a
+ * stale decoded door cannot turn an opaque route into a sight line. */
+static int m11_group_sight_door_can_see_through_source(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonThings_Compat* things;
+    const struct DungeonDoor_Compat* door;
+    const unsigned char* raw;
+    const DM1_V1_RaDoorProjectileDoorInfoPc34* info;
+    unsigned short thing;
+    unsigned short bitfield;
+    int doorIndex;
+    int doorSet;
+
+    if (!world || !world->dungeon || !world->things ||
+        mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    things = world->things;
+    thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    if (THING_GET_TYPE(thing) != THING_TYPE_DOOR || !things->doors) return 0;
+    doorIndex = THING_GET_INDEX(thing);
+    if (doorIndex < 0 || doorIndex >= things->doorCount ||
+        doorIndex >= things->thingCounts[THING_TYPE_DOOR]) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(things, thing);
+    if (!raw) return 0;
+    door = &things->doors[doorIndex];
+    bitfield = (unsigned short)(raw[2] | ((unsigned short)raw[3] << 8));
+    if (door->next != (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8)) ||
+        door->type != (unsigned char)(bitfield & 0x01u) ||
+        door->ornamentOrdinal != (unsigned char)((bitfield >> 1) & 0x0fu) ||
+        door->vertical != (unsigned char)((bitfield >> 5) & 0x01u) ||
+        door->button != (unsigned char)((bitfield >> 6) & 0x01u) ||
+        door->magicDestructible != (unsigned char)((bitfield >> 7) & 0x01u) ||
+        door->meleeDestructible != (unsigned char)((bitfield >> 8) & 0x01u)) {
+        return 0;
+    }
+    doorSet = door->type ? map->doorSet1 : map->doorSet0;
+    info = dm1_v1_ra_door_projectile_reject_door_info_pc34(
+        (size_t)(doorSet & 0x03));
+    return info && info->door_type == (doorSet & 0x03) &&
+        info->creatures_can_see_through;
+}
+
+static int m11_group_sight_route_square_blocked(int mapX, int mapY,
+                                                void* context) {
+    const struct M11GroupSightRouteSource* source =
+        (const struct M11GroupSightRouteSource*)context;
+    struct DM1GroupSightSquare_Compat square;
+    unsigned char rawSquare;
+    int type;
+
+    if (!source || !source->world ||
+        !m11_get_square_byte(source->world, source->mapIndex,
+                             mapX, mapY, &rawSquare)) {
+        return 1;
+    }
+    memset(&square, 0, sizeof(square));
+    type = (rawSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    if (type < DUNGEON_ELEMENT_WALL || type > DUNGEON_ELEMENT_FAKEWALL) {
+        return 1;
+    }
+    square.elementType = type;
+    square.doorState = rawSquare & 0x07;
+    square.fakeWallOpen = (rawSquare & 0x04) != 0;
+    square.fakeWallImaginary = (rawSquare & 0x01) != 0;
+
+    square.creaturesCanSeeThrough =
+        type == DUNGEON_ELEMENT_DOOR &&
+        m11_group_sight_door_can_see_through_source(
+            source->world, source->mapIndex, mapX, mapY);
+    return source->smell
+        ? F0817e_DM1_GROUP_IsSmellPartyBlocked_Compat(&square)
+        : F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square);
+}
+
+static int m11_group_live_position_matches_source(
+    const M11_GameViewState* state,
+    unsigned short groupThing,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    const struct DungeonGroup_Compat* group;
+    int groupIndex;
+    int i;
+
+    if (!state || !state->world.things ||
+        THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) {
+        return 0;
+    }
+    groupIndex = THING_GET_INDEX(groupThing);
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount ||
+        !m11_raw_group_record_matches_live(state->world.things, groupThing) ||
+        !m11_raw_square_contains_thing(&state->world, mapIndex, mapX, mapY,
+                                       groupThing)) {
+        return 0;
+    }
+    group = &state->world.things->groups[groupIndex];
+    for (i = 0; i < state->world.creatureAICount; ++i) {
+        const struct CreatureAIState_Compat* ai = &state->world.creatureAI[i];
+        if (ai->reserved0 != groupIndex) continue;
+        if (ai->groupMapIndex != mapIndex || ai->groupMapX != mapX ||
+            ai->groupMapY != mapY || ai->creatureType != group->creatureType) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static void m11_set_decoded_next_thing(struct DungeonThings_Compat* things,
@@ -7911,6 +8632,13 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
         if (inventorySlot < 0 || inventorySlot >= CHAMPION_SLOT_COUNT) continue;
         thing = champion->inventory[inventorySlot];
         if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+        /* CHAMPION.C F0319 drops inventory objects through F0163. A
+         * structural Thing value cannot inhabit a champion slot; rejecting
+         * it keeps an uninitialised C00 record from becoming a fake floor
+         * item ahead of the independently-owned F0215 projectile drop. */
+        if (!dm1_v1_thing_type_is_floor_item_pc34(THING_GET_TYPE(thing))) {
+            continue;
+        }
         champion->inventory[inventorySlot] = THING_NONE;
         (void)m11_prepend_thing_to_square(&state->world,
                                            state->world.party.mapIndex,
@@ -8881,12 +9609,14 @@ static int m11_apply_dm1_spell_failure_feedback_f0412(
     M11_GameViewState* state,
     int casterIndex,
     int failureReason,
+    int spellSkillIndex,
     const char* championName,
     const char* fallbackText)
 {
     const DM1_SpellFailureFeedback* sourceFeedback;
     DM1_V1_SpellFailureHudFeedbackPc34 feedback;
     DM1_V1_ActionSpellHudPresentationReceiptPc34 receipt;
+    const char* baseSkillName = "";
     char line[M11_MESSAGE_MAX_LENGTH];
 
     if (!state) return 0;
@@ -8915,14 +9645,20 @@ static int m11_apply_dm1_spell_failure_feedback_f0412(
         return 0;
     }
 
+    if (receipt.appendsBaseSkillName) {
+        baseSkillName = dm1_skill_base_name(
+            dm1_skill_get_base_index(spellSkillIndex));
+    }
     if (receipt.printsChampionName && championName && championName[0] != '\0') {
-        snprintf(line, sizeof(line), "%s%s%s",
+        snprintf(line, sizeof(line), "%s%s%s%s",
                  championName,
                  receipt.messageBeforeSkill ? receipt.messageBeforeSkill : "",
+                 baseSkillName,
                  receipt.messageAfterSkill ? receipt.messageAfterSkill : "");
     } else {
-        snprintf(line, sizeof(line), "%s%s",
+        snprintf(line, sizeof(line), "%s%s%s",
                  receipt.messageBeforeSkill ? receipt.messageBeforeSkill : "",
+                 baseSkillName,
                  receipt.messageAfterSkill ? receipt.messageAfterSkill : "");
     }
     M11_MessageLog_Push(&state->messageLog, line,
@@ -8996,6 +9732,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     if (!F0752_MAGIC_LookupSpellInTable_Compat(packed, &tableIndex, &spell)) {
         if (!m11_apply_dm1_spell_failure_feedback_f0412(
                 state, casterIndex, SPELL_FAILURE_MEANINGLESS_SPELL,
+                -1,
                 champName, "MEANINGLESS SPELL")) {
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s MEANINGLESS SPELL",
@@ -9091,7 +9828,8 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         else if (failureReason == SPELL_FAILURE_NEEDS_FLASK_IN_HAND) failMsg = "NEED FLASK";
         else if (failureReason == SPELL_FAILURE_NEEDS_MAGIC_MAP) failMsg = "NEED MAGIC MAP";
         if (!m11_apply_dm1_spell_failure_feedback_f0412(
-                state, casterIndex, failureReason, champName, failMsg)) {
+                state, casterIndex, failureReason, spell.skillIndex,
+                champName, failMsg)) {
             m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s %s",
                           (unsigned int)state->world.gameTick, champName,
                           failMsg);
@@ -9478,6 +10216,15 @@ static void m11_creature_step_for_dir(int direction, int* dx, int* dy) {
     }
 }
 
+static void m11_update_group_ai_position(M11_GameViewState* state,
+                                         int groupIndex,
+                                         int mapIndex,
+                                         int oldX,
+                                         int oldY,
+                                         int newX,
+                                         int newY);
+static int m11_compute_dungeon_palette_index(const M11_GameViewState* state);
+
 static int m11_creature_compute_primary_secondary_dirs(
     M11_GameViewState* state,
     int groupX,
@@ -9552,6 +10299,11 @@ static int m11_creature_try_move(
     int randomOppPrimaryIndex = -1;
     int i;
 
+    if (!state || !m11_group_live_position_matches_source(
+            state, groupThing, mapIdx, groupX, groupY)) {
+        return 0;
+    }
+
     if (groupX == partyX && groupY == partyY) {
         *outNewX = groupX;
         *outNewY = groupY;
@@ -9599,6 +10351,8 @@ static int m11_creature_try_move(
         }
         *outNewX = bestX;
         *outNewY = bestY;
+        m11_update_group_ai_position(state, THING_GET_INDEX(groupThing), mapIdx,
+                                     groupX, groupY, bestX, bestY);
         return 1;
     }
 
@@ -9736,6 +10490,12 @@ static int m11_check_group_death_and_drop(
         return 0;
     }
     g = &state->world.things->groups[gIdx];
+
+    if (!m11_raw_group_record_matches_live(state->world.things, groupThing) ||
+        !m11_raw_square_contains_thing(
+            &state->world, groupMapIndex, groupMapX, groupMapY, groupThing)) {
+        return 0;
+    }
 
     for (slotI = 0; slotI <= (int)g->count; ++slotI) {
         if (g->health[slotI] > 0) {
@@ -10071,6 +10831,67 @@ static int m11_creature_source_info_i34(int creatureType,
     return 1;
 }
 
+static int m11_group_visible_party_distance_f0200(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    const struct DungeonGroup_Compat* group,
+    int groupX,
+    int groupY,
+    int* outDistance) {
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1ActiveGroup_Compat activeGroup;
+    struct M11GroupSightRouteSource sight;
+    struct DM1CreatureInfo_Compat sourceInfo;
+    int distance;
+    int i;
+
+    if (!state || !group || !outDistance ||
+        !m11_creature_source_info_i34(group->creatureType, &sourceInfo)) {
+        return 0;
+    }
+    distance = abs(state->world.party.mapX - groupX) +
+               abs(state->world.party.mapY - groupY);
+    if (distance <= 0) {
+        *outDistance = 0;
+        return 1;
+    }
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    memset(&sight, 0, sizeof(sight));
+    sight.world = &state->world;
+    sight.mapIndex = state->world.party.mapIndex;
+    ctx.currentGroupMapX = groupX;
+    ctx.currentGroupMapY = groupY;
+    ctx.currentGroupDistanceToParty = distance;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.currentMapIndex = state->world.party.mapIndex;
+    ctx.partyChampionCount = state->world.party.championCount;
+    ctx.dungeonViewPaletteIndex = m11_compute_dungeon_palette_index(state);
+    ctx.isViewSquareBlocked = m11_group_sight_route_square_blocked;
+    ctx.viewBlockerContext = &sight;
+    ctx.creatureInfo = sourceInfo;
+    ctx.creatureType = group->creatureType;
+    ctx.groupBehavior = group->behavior;
+    ctx.creatureCount = group->count;
+    ctx.creatureSize = sourceInfo.attributes & DM1_ATTR_SIZE_MASK;
+    activeGroup.groupThingIndex = THING_GET_INDEX(groupThing);
+    activeGroup.directions = group->direction;
+    activeGroup.cells = group->cells;
+
+    for (i = 0; i < state->world.timeline.count; ++i) {
+        if (state->world.timeline.events[i].aux2 == DM1_EVENT_INVISIBILITY) {
+            ++ctx.partyInvisibilityEventCount;
+        }
+    }
+    if (!F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+            &ctx, &activeGroup, -1, &state->world.masterRng, outDistance)) {
+        return 0;
+    }
+    return *outDistance > 0;
+}
+
 static int m11_creature_maybe_launch_projectile(
     M11_GameViewState* state,
     unsigned short groupThing,
@@ -10177,7 +10998,13 @@ static int m11_creature_maybe_launch_projectile(
                                         &slot, &firstMove)) {
         return 0;
     }
-    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove);
+    /* F0212 publishes the live projectile together with C48/C49.  Do not
+     * retain an unscheduled projectile when the bounded source timeline is
+     * full; F0813 restores the exact newly allocated slot. */
+    if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove)) {
+        (void)F0813_PROJECTILE_Despawn_Compat(&state->world.projectiles, slot);
+        return 0;
+    }
     m11_audio_emit_creature_attack_sound_ex(state, group->creatureType,
                                             groupX, groupY,
                                             launch.useSpellSoundFallback);
@@ -10225,12 +11052,13 @@ static void m11_process_one_creature_group(
                                  &groupX, &groupY)) {
         return; /* not on current map */
     }
-
-    dist = abs(state->world.party.mapX - groupX) +
-           abs(state->world.party.mapY - groupY);
+    if (!m11_group_live_position_matches_source(
+            state, groupThing, state->world.party.mapIndex, groupX, groupY)) {
+        return;
+    }
 
     /* If on same square as party: attack */
-    if (dist == 0) {
+    if (groupX == state->world.party.mapX && groupY == state->world.party.mapY) {
         /* Attack cadence: only attack every attackTicks ticks */
         if (profile->attackTicks > 0 &&
             (state->world.gameTick % (uint32_t)profile->attackTicks) == 0u) {
@@ -10239,9 +11067,11 @@ static void m11_process_one_creature_group(
         return;
     }
 
-    /* Movement check: within sight range? */
-    if (dist > profile->sightRange && dist > profile->smellRange) {
-        return; /* too far to detect party */
+    /* GROUP.C F0197-F0200 derives the distance from the raw map route and
+     * C04 direction bits.  Do not substitute profile Manhattan ranges. */
+    if (!m11_group_visible_party_distance_f0200(
+            state, groupThing, group, groupX, groupY, &dist)) {
+        return;
     }
 
     if (m11_creature_maybe_launch_projectile(state, groupThing, groupIndex,
@@ -12015,8 +12845,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                       spec->verifiedAssetPath,
                                       spec->verifiedAssetMd5,
                                       spec->theronTrack02LoaderReceipt,
+                                      spec->theronCampaignMedia,
+                                      spec->theronCampaignMediaPlan,
+                                      spec->theronCampaignMediaScanEpoch,
+                                      spec->theronSrmCampaignReplay,
+                                      spec->theronSrmLaunchDiscovery,
+                                      spec->theronLaunchTraceIdentity,
+                                      spec->theronTraceBundle,
+                                      spec->theronSectorRecordCorpus,
                                       spec->theronTrack02CaptureManifestPath,
                                       spec->savePath);
+        if (ok && spec->theronDungeonCapturePlan &&
+            !M11_GameView_TheronBindTrack02DungeonCapturePlan(
+                state, spec->theronDungeonCapturePlan)) {
+            return 0;
+        }
         if (ok) {
             state->presentationMode = spec->presentationMode;
             state->presentationWidth = spec->presentationWidth;
@@ -12413,13 +13256,16 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState) {
     const M12_MenuEntry* entry;
     M11_GameLaunchSpec spec;
+    M12_LaunchIntent intent;
+    int hasLaunchIntent = 0;
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
     if (!state || !menuState) {
         return 0;
     }
     if (menuState->launchRequested) {
-        M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
+        intent = M12_StartupMenu_GetLaunchIntent(menuState);
+        hasLaunchIntent = 1;
         if (!intent.valid) {
             return 0;
         }
@@ -12479,17 +13325,34 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         }
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        const char* launchMediaPath =
-            M12_AssetStatus_GetTheronLaunchMediaPath(&menuState->assetStatus);
+        if (!hasLaunchIntent ||
+            !M12_StartupMenu_ValidateTheronCampaignLaunchIntent(menuState, &intent)) {
+            return 0;
+        }
         spec.theronTrack02LoaderReceipt =
             M12_AssetStatus_GetTheronTrack02LoaderReceipt(&menuState->assetStatus);
-        if (launchMediaPath && launchMediaPath[0] != '\0') {
-            spec.verifiedAssetPath = launchMediaPath;
-        }
+        spec.verifiedAssetPath = intent.theronCampaignMedia.direct_media.payload_path;
+        spec.verifiedAssetMd5 = intent.theronCampaignMedia.track02_md5;
+        spec.theronCampaignMedia = &intent.theronCampaignMedia;
+        spec.theronCampaignMediaPlan = &intent.theronCampaignMediaPlan;
+        spec.theronCampaignMediaScanEpoch = intent.theronCampaignMediaScanEpoch;
+        spec.theronSrmCampaignReplay = intent.theronSrmCampaignReplayBound ?
+            &intent.theronSrmCampaignReplay : NULL;
+        spec.theronSrmLaunchDiscovery = intent.theronSrmLaunchDiscoveryBound ?
+            &intent.theronSrmLaunchDiscovery : NULL;
+        spec.theronLaunchTraceIdentity = intent.theronLaunchTraceIdentityBound ?
+            &intent.theronLaunchTraceIdentity : NULL;
+        spec.theronTraceBundle = intent.theronTraceBundleBound ? &intent.theronTraceBundle : NULL;
+        spec.theronSectorRecordCorpus = intent.theronSectorRecordCorpusBound ?
+            &intent.theronSectorRecordCorpus : NULL;
+        spec.theronDungeonCapturePlan = intent.theronDungeonCapturePlanBound ?
+            &intent.theronDungeonCapturePlan : NULL;
     }
     if (menuState->launchRequested) {
-        M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
+        spec.csbSaveCandidateIdentity =
+            (entry->gameId && strcmp(entry->gameId, "csb") == 0)
+                ? menuState->csbSaveCandidateIdentity : 0u;
         spec.csbImportDm1SavePath = intent.csbImportDm1SavePath;
         spec.presentationMode = intent.presentationMode;
         spec.presentationWidth = intent.resolutionWidth;
@@ -13163,6 +14026,7 @@ int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !indexedPixels || specialPalette < 0 ||
         !state->csbStartupRuntimeAssetSession ||
+        !m11_csb_release_delivery_receipt_current(state) ||
         !m11_csb_boot_runtime_startup_host_view_receipt(state, &host_view) ||
         !host_view.valid || !host_view.render_draw_valid ||
         !host_view.render_draw.render_plan_valid ||
@@ -13764,6 +14628,751 @@ static void m11_theron_boot_runtime_startup_media_receipt(
     }
 }
 
+static void m11_theron_clear_capture_campaign_admission(M11_GameViewState* state)
+{
+    if (!state) return;
+    state->theronState.capture_campaign_admission_valid = 0;
+    state->theronState.capture_campaign_startup_ready = 0;
+    state->theronState.capture_campaign_soul_room_ready = 0;
+    state->theronState.capture_campaign_dungeon_ready = 0;
+    state->theronState.capture_campaign_track02_variant =
+        THERON_TRACK02_VARIANT_UNKNOWN;
+    state->theronState.capture_campaign_track02_md5[0] = '\0';
+    state->theronState.capture_campaign_trace_md5[0] = '\0';
+    memset(state->theronState.capture_campaign_bundle_md5, 0,
+           sizeof(state->theronState.capture_campaign_bundle_md5));
+    state->theronState.capture_campaign_dungeon_window_checksum = 0u;
+}
+
+static int m11_theron_capture_campaign_identity_complete(
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow)
+{
+    size_t i;
+
+    if (!campaign || !dungeonWindow || !campaign->mednafen_trace_md5[0] ||
+        !dungeonWindow->dungeon_record_window_checksum) {
+        return 0;
+    }
+    for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
+        if (!campaign->bundle_md5[i][0]) return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02CaptureCampaignAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow)
+{
+    Theron_StartupMediaStateReceipt media;
+    Theron_V1RuntimeTrack02CaptureCampaignAdmissionReceipt admission;
+
+    if (!state) {
+        return 0;
+    }
+    m11_theron_clear_capture_campaign_admission(state);
+
+    m11_theron_boot_runtime_startup_media_receipt(state, &media);
+    if (!m11_theron_capture_campaign_identity_complete(campaign, dungeonWindow) ||
+        !theron_v1_runtime_bind_track02_capture_campaign_admission(
+            &media, campaign, dungeonWindow, &admission)) {
+        return 0;
+    }
+
+    state->theronState.capture_campaign_admission_valid = admission.valid;
+    state->theronState.capture_campaign_startup_ready =
+        admission.startup_capture_ready;
+    state->theronState.capture_campaign_soul_room_ready =
+        admission.soul_room_capture_ready;
+    state->theronState.capture_campaign_dungeon_ready =
+        admission.dungeon_capture_ready;
+    state->theronState.capture_campaign_track02_variant =
+        admission.track02_variant;
+    snprintf(state->theronState.capture_campaign_track02_md5,
+             sizeof(state->theronState.capture_campaign_track02_md5),
+             "%s",
+             admission.track02_md5);
+    snprintf(state->theronState.capture_campaign_trace_md5,
+             sizeof(state->theronState.capture_campaign_trace_md5), "%s",
+             campaign->mednafen_trace_md5);
+    memcpy(state->theronState.capture_campaign_bundle_md5, campaign->bundle_md5,
+           sizeof(state->theronState.capture_campaign_bundle_md5));
+    state->theronState.capture_campaign_dungeon_window_checksum =
+        dungeonWindow->dungeon_record_window_checksum;
+    return 1;
+}
+
+int M11_GameView_TheronTrack02CaptureCampaignAdmissionCurrent(
+    M11_GameViewState* state,
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow)
+{
+    Theron_StartupMediaStateReceipt media;
+    Theron_V1RuntimeTrack02CaptureCampaignAdmissionReceipt admission;
+
+    if (!state) return 0;
+    m11_theron_boot_runtime_startup_media_receipt(state, &media);
+    if (!state->theronState.capture_campaign_admission_valid ||
+        !m11_theron_capture_campaign_identity_complete(campaign, dungeonWindow) ||
+        !theron_v1_runtime_bind_track02_capture_campaign_admission(
+            &media, campaign, dungeonWindow, &admission) ||
+        !admission.valid ||
+        (int)admission.track02_variant !=
+            state->theronState.capture_campaign_track02_variant ||
+        strcmp(admission.track02_md5, state->theronState.capture_campaign_track02_md5) ||
+        strcmp(campaign->mednafen_trace_md5,
+               state->theronState.capture_campaign_trace_md5) ||
+        memcmp(campaign->bundle_md5,
+               state->theronState.capture_campaign_bundle_md5,
+               sizeof(state->theronState.capture_campaign_bundle_md5)) != 0 ||
+        dungeonWindow->dungeon_record_window_checksum !=
+            state->theronState.capture_campaign_dungeon_window_checksum) {
+        m11_theron_clear_capture_campaign_admission(state);
+        return 0;
+    }
+    return 1;
+}
+
+int M11_GameView_TheronTrack02CaptureCampaignAdmissionCurrentForDirectMedia(
+    M11_GameViewState* state,
+    const Theron_V1Track02CaptureCampaignReceipt* campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    uint32_t campaignMediaScanEpoch)
+{
+    size_t i;
+    uint32_t planIdentity;
+
+    if (!state || !campaign || !campaignMedia || !refreshedMedia ||
+        !campaignPlan ||
+        !M11_GameView_TheronTrack02CaptureCampaignAdmissionCurrent(
+            state, campaign, dungeonWindow)) {
+        return 0;
+    }
+    planIdentity = theron_v1_track02_capture_target_plan_identity(campaignPlan);
+    if (!campaignMediaScanEpoch ||
+        campaignMediaScanEpoch != state->theronState.campaign_media_scan_epoch ||
+        !planIdentity ||
+        !theron_v1_track02_campaign_media_direct_layout_current(
+            campaignMedia, refreshedMedia, campaignPlan) ||
+        campaignMedia->track02_variant != campaign->track02_variant ||
+        strcmp(campaignMedia->track02_md5, campaign->track02_md5) ||
+        (state->theronState.launch_trace_identity_bound &&
+         (!state->theronState.launch_trace_identity.valid ||
+          strcmp(campaign->mednafen_trace_md5,
+                 state->theronState.launch_trace_identity.source_trace_md5))) ||
+        (state->theronState.trace_bundle_bound &&
+         (state->theronState.trace_bundle.status !=
+              THERON_V1_TRACK02_TRACE_BUNDLE_READY ||
+          state->theronState.trace_bundle.capture_target_plan_identity !=
+              planIdentity ||
+          strcmp(campaign->mednafen_trace_md5,
+                 state->theronState.trace_bundle.trace.source_trace_md5)))) {
+        m11_theron_clear_capture_campaign_admission(state);
+        return 0;
+    }
+    for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
+        if (campaign->route_destination_identity[i] !=
+            campaignPlan->targets[i].destination_identity) {
+            m11_theron_clear_capture_campaign_admission(state);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02SectorRecordAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordAdmissionReceipt* receipt)
+{
+    if (!state) return 0;
+    state->theronState.sector_record_admission_valid = 0;
+    state->theronState.sector_record_dungeon_ready = 0;
+    state->theronState.sector_record_track02_variant =
+        THERON_TRACK02_VARIANT_UNKNOWN;
+    state->theronState.sector_record_track02_md5[0] = '\0';
+    state->theronState.sector_record_track02_record = 0u;
+    state->theronState.sector_record_user_data_hash = 0u;
+    state->theronState.sector_record_raw_sector_checksum = 0u;
+    state->theronState.sector_record_campaign_layout_epoch = 0u;
+    state->theronState.sector_record_media_scan_epoch = 0u;
+    if (!receipt || state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        receipt->status != THERON_V1_TRACK02_SECTOR_RECORD_READY ||
+        !receipt->raw_cue_bin_identity_consumed ||
+        !receipt->stage3_directory_consumed ||
+        !receipt->observed_later_loader_consumed ||
+        !receipt->nonstartup_record_consumed ||
+        receipt->track02_variant == THERON_TRACK02_VARIANT_UNKNOWN ||
+        receipt->resolved_track02_record <= receipt->stage3_track02_record ||
+        receipt->record_user_data_bytes != 2048u ||
+        receipt->record_user_data_hash == 0u ||
+        receipt->observed_raw_sector_checksum == 0u ||
+        receipt->descriptor_selector == 0u ||
+        receipt->descriptor_source_hash == 0u ||
+        receipt->level_object_semantics_allowed ||
+        receipt->bitmap_palette_admission_allowed || receipt->pixel_decode_allowed ||
+        receipt->dungeon_draw_allowed || receipt->fallback_visuals_allowed ||
+        !state->theronState.startup_media_ready ||
+        state->theronState.startup_media_track02_variant !=
+            (int)receipt->track02_variant ||
+        strcmp(state->theronState.startup_media_track02_md5,
+               receipt->track02_md5) != 0) return 0;
+
+    state->theronState.sector_record_admission_valid = 1;
+    state->theronState.sector_record_dungeon_ready = 1;
+    state->theronState.sector_record_track02_variant = receipt->track02_variant;
+    snprintf(state->theronState.sector_record_track02_md5,
+             sizeof(state->theronState.sector_record_track02_md5), "%s",
+             receipt->track02_md5);
+    state->theronState.sector_record_track02_record =
+        receipt->resolved_track02_record;
+    state->theronState.sector_record_user_data_hash =
+        receipt->record_user_data_hash;
+    state->theronState.sector_record_raw_sector_checksum =
+        receipt->observed_raw_sector_checksum;
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* discovery)
+{
+    if (!state || !discovery ||
+        discovery->status != THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY ||
+        discovery->direct_candidate_count != 1u ||
+        !discovery->direct_regular_files_verified ||
+        !discovery->track02_md5_verified || !discovery->trace_md5_verified ||
+        !discovery->coalesced_trace_md5[0] ||
+        discovery->media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        !discovery->media.cue_consumed ||
+        discovery->sector_record.status != THERON_V1_TRACK02_SECTOR_RECORD_READY ||
+        strcmp(discovery->media.track02_md5,
+               discovery->sector_record.track02_md5)) {
+        if (state) {
+            memset(&state->theronState.sector_record_corpus, 0,
+                   sizeof(state->theronState.sector_record_corpus));
+            state->theronState.sector_record_corpus_bound = 0;
+        }
+        return M11_GameView_TheronBindTrack02SectorRecordAdmission(state, NULL);
+    }
+    if (!M11_GameView_TheronBindTrack02SectorRecordAdmission(
+            state, &discovery->sector_record)) {
+        memset(&state->theronState.sector_record_corpus, 0,
+               sizeof(state->theronState.sector_record_corpus));
+        state->theronState.sector_record_corpus_bound = 0;
+        return 0;
+    }
+    state->theronState.sector_record_corpus = *discovery;
+    state->theronState.sector_record_corpus_bound = 1;
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02LevelObjectDescriptorCaptureIntake(
+    M11_GameViewState* state,
+    const Theron_V1Track02LevelObjectDescriptorCaptureIntakeReceipt* receipt)
+{
+    if (!receipt ||
+        receipt->status != THERON_V1_TRACK02_LEVEL_OBJECT_DESCRIPTOR_CAPTURE_READY ||
+        !receipt->direct_cue_bin_consumed ||
+        !receipt->coalesced_loader_trace_consumed || !receipt->replay_tail_consumed ||
+        !receipt->opaque_descriptor_only || !receipt->campaign_layout_epoch ||
+        !receipt->campaign_media_scan_epoch ||
+        !state || !state->theronState.launch_trace_identity_bound ||
+        receipt->campaign_layout_epoch !=
+            state->theronState.launch_trace_identity.campaign_layout_epoch ||
+        strcmp(receipt->coalesced_trace_md5,
+               state->theronState.launch_trace_identity.source_trace_md5)) {
+        return M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(state, NULL);
+    }
+    return M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(
+        state, &receipt->corpus);
+}
+
+static void m11_theron_clear_first_dungeon_world_admission(
+    M11_GameViewState* state);
+
+int M11_GameView_TheronTrack02SectorRecordAdmissionCurrentForDirectMedia(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordAdmissionReceipt* receipt,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    const Theron_V1Track02LoaderTraceReplayConsistencyReceipt* replay,
+    uint32_t campaignLayoutEpoch,
+    uint32_t campaignMediaScanEpoch)
+{
+    if (!state) return 0;
+    if (!receipt || !campaignMedia || !refreshedMedia || !campaignPlan ||
+        !replay || !state->theronState.sector_record_admission_valid ||
+        !state->theronState.sector_record_dungeon_ready ||
+        !campaignMediaScanEpoch ||
+        campaignMediaScanEpoch != state->theronState.campaign_media_scan_epoch ||
+        !campaignLayoutEpoch ||
+        !theron_v1_track02_campaign_media_direct_layout_current(
+            campaignMedia, refreshedMedia, campaignPlan) ||
+        !replay->active || !replay->direct_campaign_layout_consumed ||
+        replay->campaign_layout_epoch != campaignLayoutEpoch ||
+        replay->track02_variant != receipt->track02_variant ||
+        strcmp(replay->track02_md5, receipt->track02_md5) ||
+        replay->last_track02_record != receipt->resolved_track02_record ||
+        replay->last_raw_sector != (size_t)receipt->resolved_track02_record ||
+        (state->theronState.sector_record_corpus_bound &&
+         (state->theronState.sector_record_corpus.status !=
+              THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY ||
+          strcmp(state->theronState.sector_record_corpus.coalesced_trace_md5,
+                 state->theronState.launch_trace_identity_bound ?
+                     state->theronState.launch_trace_identity.source_trace_md5 : "") ||
+          strcmp(state->theronState.sector_record_corpus.sector_record.track02_md5,
+                 receipt->track02_md5) ||
+          state->theronState.sector_record_corpus.sector_record.resolved_track02_record !=
+              receipt->resolved_track02_record)) ||
+        receipt->resolved_track02_record !=
+            state->theronState.sector_record_track02_record ||
+        receipt->record_user_data_hash !=
+            state->theronState.sector_record_user_data_hash ||
+        receipt->observed_raw_sector_checksum !=
+            state->theronState.sector_record_raw_sector_checksum ||
+        campaignMedia->track02_variant != receipt->track02_variant ||
+        strcmp(campaignMedia->track02_md5, receipt->track02_md5)) {
+        m11_theron_clear_first_dungeon_world_admission(state);
+        state->theronState.sector_record_admission_valid = 0;
+        state->theronState.sector_record_dungeon_ready = 0;
+        state->theronState.sector_record_track02_variant =
+            THERON_TRACK02_VARIANT_UNKNOWN;
+        state->theronState.sector_record_track02_md5[0] = '\0';
+        state->theronState.sector_record_track02_record = 0u;
+        state->theronState.sector_record_user_data_hash = 0u;
+        state->theronState.sector_record_raw_sector_checksum = 0u;
+        state->theronState.sector_record_campaign_layout_epoch = 0u;
+        state->theronState.sector_record_media_scan_epoch = 0u;
+        memset(&state->theronState.sector_record_corpus, 0,
+               sizeof(state->theronState.sector_record_corpus));
+        state->theronState.sector_record_corpus_bound = 0;
+        return 0;
+    }
+    state->theronState.sector_record_campaign_layout_epoch = campaignLayoutEpoch;
+    state->theronState.sector_record_media_scan_epoch = campaignMediaScanEpoch;
+    return 1;
+}
+
+static void m11_theron_clear_first_dungeon_world_admission(
+    M11_GameViewState* state)
+{
+    if (!state) return;
+    state->theronState.first_dungeon_record_world_admission_valid = 0;
+    state->theronState.first_dungeon_level_object_opaque_ready = 0;
+    state->theronState.first_dungeon_record_track02_variant =
+        THERON_TRACK02_VARIANT_UNKNOWN;
+    state->theronState.first_dungeon_record_track02_md5[0] = '\0';
+    state->theronState.first_dungeon_stage3_record = 0u;
+    state->theronState.first_dungeon_descriptor_ordinal = 0u;
+    state->theronState.first_dungeon_descriptor_selector = 0u;
+    state->theronState.first_dungeon_resolved_record = 0u;
+    state->theronState.first_dungeon_record_user_data_hash = 0u;
+    state->theronState.first_dungeon_raw_sector_checksum = 0u;
+    state->theronState.first_dungeon_loader_caller_pc = 0u;
+    state->theronState.first_dungeon_loader_return_pc = 0u;
+    state->theronState.first_dungeon_campaign_layout_epoch = 0u;
+    state->theronState.first_dungeon_media_scan_epoch = 0u;
+    state->theronState.first_dungeon_bitmap_palette_capture_bound = 0;
+    state->theronState.first_dungeon_bitmap_palette_presentation_no_draw = 0;
+    state->theronState.first_dungeon_bitmap_palette_plan_identity = 0u;
+    state->theronState.first_dungeon_bitmap_palette_descriptor_record = 0u;
+    state->theronState.first_dungeon_palette_output_identity = 0u;
+    state->theronState.first_dungeon_bitmap_transfer_identity = 0u;
+    state->theronState.first_dungeon_bitmap_destination_identity = 0u;
+    state->theronState.first_dungeon_bitmap_palette_layout_epoch = 0u;
+    state->theronState.first_dungeon_bitmap_palette_scan_epoch = 0u;
+    state->theronState.dungeon_capture_plan_bound = 0;
+    state->theronState.dungeon_capture_required = 0;
+    state->theronState.dungeon_capture_resume_ready = 0;
+    state->theronState.dungeon_capture_plan_identity = 0u;
+}
+
+int M11_GameView_TheronBindTrack02DungeonCapturePlan(
+    M11_GameViewState* state,
+    const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* receipt)
+{
+    if (!state || !receipt ||
+        (receipt->status != THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_CAPTURE_REQUIRED &&
+         receipt->status != THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_RESUME_READY) ||
+        !receipt->direct_cue_bin_consumed || !receipt->system_card_required ||
+        !receipt->replay_tail_consumed || !receipt->capture_plan_consumed ||
+        !receipt->opaque_artifact_required || !receipt->presentation_no_draw ||
+        !receipt->campaign_layout_epoch || !receipt->campaign_media_scan_epoch ||
+        receipt->campaign_media_scan_epoch != state->theronState.campaign_media_scan_epoch ||
+        (receipt->status == THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_RESUME_READY &&
+         (!receipt->resume_route_ready ||
+          !M11_GameView_TheronTrack02DescriptorBitmapPalettePresentationNoDrawCurrent(state) ||
+          receipt->capture_target_plan_identity !=
+              state->theronState.first_dungeon_bitmap_palette_plan_identity ||
+          receipt->replay_final_record !=
+              state->theronState.first_dungeon_resolved_record))) {
+        if (state) {
+            state->theronState.dungeon_capture_plan_bound = 0;
+            state->theronState.dungeon_capture_required = 0;
+            state->theronState.dungeon_capture_resume_ready = 0;
+            state->theronState.dungeon_capture_plan_identity = 0u;
+        }
+        return 0;
+    }
+    state->theronState.dungeon_capture_plan_bound = 1;
+    state->theronState.dungeon_capture_required =
+        receipt->status == THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_CAPTURE_REQUIRED;
+    state->theronState.dungeon_capture_resume_ready =
+        receipt->status == THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_RESUME_READY;
+    state->theronState.dungeon_capture_plan_identity = receipt->capture_target_plan_identity;
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02DescriptorBitmapPaletteCaptureIntake(
+    M11_GameViewState* state,
+    const Theron_V1Track02DescriptorBitmapPaletteCaptureIntakeReceipt* receipt)
+{
+    if (!state || !receipt ||
+        receipt->status != THERON_V1_TRACK02_DESCRIPTOR_BITMAP_PALETTE_CAPTURE_READY ||
+        !receipt->direct_cue_bin_consumed || !receipt->coalesced_loader_trace_consumed ||
+        !receipt->replay_tail_consumed || !receipt->descriptor_chain_consumed ||
+        !receipt->palette_output_consumed || !receipt->bitmap_transfer_consumed ||
+        !receipt->opaque_presentation_only || !receipt->campaign_layout_epoch ||
+        !receipt->campaign_media_scan_epoch || !receipt->capture_target_plan_identity ||
+        !receipt->descriptor_record || !receipt->palette_output_identity ||
+        !receipt->bitmap_transfer_identity || !receipt->destination_identity ||
+        !state->theronState.first_dungeon_record_world_admission_valid ||
+        !state->theronState.first_dungeon_level_object_opaque_ready ||
+        !state->theronState.live_loader_dungeon_ready ||
+        state->theronState.live_loader_route_epoch != 2u ||
+        receipt->capture_target_plan_identity !=
+            state->theronState.live_loader_capture_plan_identity ||
+        receipt->track02_variant != (Theron_Track02Variant)
+            state->theronState.first_dungeon_record_track02_variant ||
+        strcmp(receipt->track02_md5, state->theronState.first_dungeon_record_track02_md5) ||
+        strcmp(receipt->coalesced_trace_md5,
+               state->theronState.live_loader_source_trace_md5) ||
+        receipt->descriptor_record != state->theronState.first_dungeon_resolved_record ||
+        receipt->campaign_layout_epoch != state->theronState.first_dungeon_campaign_layout_epoch ||
+        receipt->campaign_layout_epoch != state->theronState.live_loader_campaign_layout_epoch ||
+        receipt->campaign_media_scan_epoch != state->theronState.first_dungeon_media_scan_epoch ||
+        receipt->campaign_media_scan_epoch != state->theronState.live_loader_media_scan_epoch ||
+        receipt->campaign_media_scan_epoch != state->theronState.campaign_media_scan_epoch) {
+        if (state) {
+            state->theronState.first_dungeon_bitmap_palette_capture_bound = 0;
+            state->theronState.first_dungeon_bitmap_palette_presentation_no_draw = 0;
+            state->theronState.first_dungeon_bitmap_palette_plan_identity = 0u;
+            state->theronState.first_dungeon_bitmap_palette_descriptor_record = 0u;
+            state->theronState.first_dungeon_palette_output_identity = 0u;
+            state->theronState.first_dungeon_bitmap_transfer_identity = 0u;
+            state->theronState.first_dungeon_bitmap_destination_identity = 0u;
+            state->theronState.first_dungeon_bitmap_palette_layout_epoch = 0u;
+            state->theronState.first_dungeon_bitmap_palette_scan_epoch = 0u;
+        }
+        return 0;
+    }
+    state->theronState.first_dungeon_bitmap_palette_capture_bound = 1;
+    state->theronState.first_dungeon_bitmap_palette_presentation_no_draw = 1;
+    state->theronState.first_dungeon_bitmap_palette_plan_identity =
+        receipt->capture_target_plan_identity;
+    state->theronState.first_dungeon_bitmap_palette_descriptor_record =
+        receipt->descriptor_record;
+    state->theronState.first_dungeon_palette_output_identity =
+        receipt->palette_output_identity;
+    state->theronState.first_dungeon_bitmap_transfer_identity =
+        receipt->bitmap_transfer_identity;
+    state->theronState.first_dungeon_bitmap_destination_identity =
+        receipt->destination_identity;
+    state->theronState.first_dungeon_bitmap_palette_layout_epoch =
+        receipt->campaign_layout_epoch;
+    state->theronState.first_dungeon_bitmap_palette_scan_epoch =
+        receipt->campaign_media_scan_epoch;
+    return 1;
+}
+
+int M11_GameView_TheronTrack02DescriptorBitmapPalettePresentationNoDrawCurrent(
+    const M11_GameViewState* state)
+{
+    return state && state->theronState.first_dungeon_bitmap_palette_capture_bound &&
+        state->theronState.first_dungeon_bitmap_palette_presentation_no_draw &&
+        state->theronState.first_dungeon_bitmap_palette_plan_identity &&
+        state->theronState.first_dungeon_bitmap_palette_descriptor_record &&
+        state->theronState.first_dungeon_palette_output_identity &&
+        state->theronState.first_dungeon_bitmap_transfer_identity &&
+        state->theronState.first_dungeon_bitmap_destination_identity &&
+        state->theronState.first_dungeon_bitmap_palette_layout_epoch &&
+        state->theronState.first_dungeon_bitmap_palette_scan_epoch &&
+        state->theronState.first_dungeon_bitmap_palette_layout_epoch ==
+            state->theronState.first_dungeon_campaign_layout_epoch &&
+        state->theronState.first_dungeon_bitmap_palette_layout_epoch ==
+            state->theronState.live_loader_campaign_layout_epoch &&
+        state->theronState.first_dungeon_bitmap_palette_scan_epoch ==
+            state->theronState.first_dungeon_media_scan_epoch &&
+        state->theronState.first_dungeon_bitmap_palette_scan_epoch ==
+            state->theronState.live_loader_media_scan_epoch &&
+        state->theronState.first_dungeon_bitmap_palette_scan_epoch ==
+            state->theronState.campaign_media_scan_epoch;
+}
+
+int M11_GameView_TheronBindTrack02FirstDungeonWorldAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02SectorRecordAdmissionReceipt* receipt,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    const Theron_V1Track02LoaderTraceReplayConsistencyReceipt* replay,
+    uint32_t campaignLayoutEpoch,
+    uint32_t campaignMediaScanEpoch)
+{
+    if (!state || !receipt || !campaignMedia || !refreshedMedia ||
+        !campaignPlan || !replay ||
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        !state->theronState.sector_record_corpus_bound ||
+        !state->theronState.live_loader_dungeon_ready ||
+        state->theronState.live_loader_route_epoch != 2u ||
+        state->theronState.live_loader_campaign_layout_epoch != campaignLayoutEpoch ||
+        state->theronState.live_loader_media_scan_epoch != campaignMediaScanEpoch ||
+        !state->theronState.launch_trace_identity_bound ||
+        !state->theronState.launch_trace_identity.valid ||
+        !state->theronState.trace_bundle_bound ||
+        state->theronState.trace_bundle.status != THERON_V1_TRACK02_TRACE_BUNDLE_READY ||
+        state->theronState.trace_bundle.virtual_candidate_count ||
+        state->theronState.trace_bundle.direct_candidate_count != 1u ||
+        !state->theronState.trace_bundle.opaque_only ||
+        receipt->status != THERON_V1_TRACK02_SECTOR_RECORD_READY ||
+        receipt->level_object_semantics_allowed ||
+        receipt->bitmap_palette_admission_allowed || receipt->pixel_decode_allowed ||
+        receipt->dungeon_draw_allowed || receipt->fallback_visuals_allowed ||
+        strcmp(receipt->track02_md5,
+               state->theronState.sector_record_corpus.sector_record.track02_md5) ||
+        receipt->resolved_track02_record !=
+            state->theronState.sector_record_corpus.sector_record.resolved_track02_record ||
+        receipt->record_user_data_hash !=
+            state->theronState.sector_record_corpus.sector_record.record_user_data_hash ||
+        receipt->observed_raw_sector_checksum !=
+            state->theronState.sector_record_corpus.sector_record.observed_raw_sector_checksum ||
+        strcmp(state->theronState.sector_record_corpus.coalesced_trace_md5,
+               state->theronState.launch_trace_identity.source_trace_md5) ||
+        strcmp(state->theronState.sector_record_corpus.coalesced_trace_md5,
+               state->theronState.live_loader_source_trace_md5) ||
+        state->theronState.launch_trace_identity.campaign_layout_epoch != campaignLayoutEpoch ||
+        state->theronState.launch_trace_identity.final_track02_record !=
+            replay->last_track02_record ||
+        state->theronState.launch_trace_identity.final_raw_sector !=
+            replay->last_raw_sector ||
+        state->theronState.trace_bundle.campaign_layout_epoch != campaignLayoutEpoch ||
+        strcmp(state->theronState.trace_bundle.trace.source_trace_md5,
+               state->theronState.sector_record_corpus.coalesced_trace_md5) ||
+        !M11_GameView_TheronTrack02SectorRecordAdmissionCurrentForDirectMedia(
+            state, receipt, campaignMedia, refreshedMedia, campaignPlan, replay,
+            campaignLayoutEpoch, campaignMediaScanEpoch)) {
+        m11_theron_clear_first_dungeon_world_admission(state);
+        return 0;
+    }
+    state->theronState.first_dungeon_record_world_admission_valid = 1;
+    state->theronState.first_dungeon_level_object_opaque_ready = 1;
+    state->theronState.first_dungeon_record_track02_variant = receipt->track02_variant;
+    snprintf(state->theronState.first_dungeon_record_track02_md5,
+             sizeof(state->theronState.first_dungeon_record_track02_md5), "%s",
+             receipt->track02_md5);
+    state->theronState.first_dungeon_stage3_record = receipt->stage3_track02_record;
+    state->theronState.first_dungeon_descriptor_ordinal = receipt->descriptor_ordinal;
+    state->theronState.first_dungeon_descriptor_selector = receipt->descriptor_selector;
+    state->theronState.first_dungeon_resolved_record = receipt->resolved_track02_record;
+    state->theronState.first_dungeon_record_user_data_hash = receipt->record_user_data_hash;
+    state->theronState.first_dungeon_raw_sector_checksum =
+        receipt->observed_raw_sector_checksum;
+    state->theronState.first_dungeon_loader_caller_pc = receipt->loader_caller_pc;
+    state->theronState.first_dungeon_loader_return_pc = receipt->loader_return_pc;
+    state->theronState.first_dungeon_campaign_layout_epoch = campaignLayoutEpoch;
+    state->theronState.first_dungeon_media_scan_epoch = campaignMediaScanEpoch;
+    return 1;
+}
+
+static void m11_theron_clear_live_loader_route_admission(M11_GameViewState* state)
+{
+    m11_theron_clear_first_dungeon_world_admission(state);
+    state->theronState.live_loader_route_admission_valid = 0;
+    state->theronState.live_loader_soul_room_ready = 0;
+    state->theronState.live_loader_dungeon_ready = 0;
+    state->theronState.live_loader_route_epoch = 0u;
+    state->theronState.live_loader_campaign_layout_epoch = 0u;
+    state->theronState.live_loader_media_scan_epoch = 0u;
+    state->theronState.live_loader_capture_plan_identity = 0u;
+    state->theronState.live_loader_final_track02_record = 0u;
+    state->theronState.live_loader_final_raw_sector = 0u;
+    state->theronState.live_loader_source_trace_md5[0] = '\0';
+    state->theronState.live_loader_event_log_md5[0] = '\0';
+}
+
+int M11_GameView_TheronBindSrmCampaignReplayReceipt(M11_GameViewState* state,
+    const Theron_V1SrmCampaignReplayReceipt* receipt)
+{
+    if (!state || !receipt || !receipt->valid || !receipt->opaque_save_consumed ||
+        !receipt->direct_campaign_consumed || !receipt->replay_consumed ||
+        receipt->save_semantics_decoded || receipt->synthetic_fallback_used ||
+        !receipt->srm_size || !receipt->srm_identity_fnv1a || !receipt->srm_md5[0] || !receipt->track02_md5[0] ||
+        !receipt->campaign_layout_epoch || !receipt->replay_final_record ||
+        !receipt->replay_final_raw_sector) {
+        if (state) { memset(&state->theronState.srm_campaign_replay, 0, sizeof(state->theronState.srm_campaign_replay)); state->theronState.srm_campaign_replay_bound = 0; }
+        return 0;
+    }
+    state->theronState.srm_campaign_replay = *receipt;
+    state->theronState.srm_campaign_replay_bound = 1;
+    state->theronState.srm_campaign_replay_size_bound = receipt->srm_size;
+    state->theronState.srm_campaign_replay_fnv_bound = receipt->srm_identity_fnv1a;
+    return 1;
+}
+
+int M11_GameView_TheronBindSrmLaunchDiscoveryReceipt(M11_GameViewState* state,
+    const Theron_V1SrmLaunchDiscoveryReceipt* receipt)
+{
+    if (!state || !receipt || receipt->status != THERON_V1_SRM_LAUNCH_DISCOVERY_READY ||
+        receipt->virtual_candidate_count || !receipt->direct_regular_file_verified ||
+        !receipt->source_md5_verified || !receipt->track02_identity_verified ||
+        receipt->save_semantics_decoded || receipt->synthetic_fallback_used ||
+        receipt->admission.status != THERON_V1_SRM_OPAQUE_READY ||
+        !receipt->admission.srm_size || !receipt->admission.srm_md5[0] ||
+        !receipt->track02_md5[0]) {
+        if (state) { memset(&state->theronState.srm_launch_discovery, 0, sizeof(state->theronState.srm_launch_discovery)); state->theronState.srm_launch_discovery_bound = 0; }
+        return 0;
+    }
+    state->theronState.srm_launch_discovery = *receipt;
+    state->theronState.srm_launch_discovery_bound = 1;
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02LiveLoaderRouteAdmission(
+    M11_GameViewState* state,
+    const Theron_V1Track02LiveLoaderRouteAdmissionReceipt* receipt,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02RawMediaIntakeReceipt* refreshedMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    const Theron_V1Track02LoaderTraceReplayConsistencyReceipt* replay,
+    uint32_t campaignLayoutEpoch,
+    uint32_t campaignMediaScanEpoch,
+    Theron_V1Track02LiveRouteKind route,
+    uint32_t epoch)
+{
+    uint32_t planIdentity;
+
+    if (!state) return 0;
+    if ((route != THERON_V1_TRACK02_LIVE_ROUTE_SOUL_ROOM || epoch != 1u) &&
+        (route != THERON_V1_TRACK02_LIVE_ROUTE_DUNGEON_HANDOFF || epoch != 2u)) {
+        m11_theron_clear_live_loader_route_admission(state);
+        return 0;
+    }
+    planIdentity = theron_v1_track02_capture_target_plan_identity(campaignPlan);
+    if (!receipt || state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        !campaignMediaScanEpoch ||
+        campaignMediaScanEpoch != state->theronState.campaign_media_scan_epoch ||
+        !receipt->valid || !receipt->dynamic_cd_read_ownership_consumed ||
+        !receipt->huc6280_event_log_consumed || !receipt->manifest_bound ||
+        !receipt->opaque_runtime_route_ready || !receipt->source_trace_md5[0] ||
+        !receipt->huc6280_event_log_md5[0] ||
+        receipt->level_object_semantics_allowed ||
+        receipt->bitmap_palette_admission_allowed || receipt->pixel_decode_allowed ||
+        receipt->dungeon_draw_allowed || receipt->fallback_visuals_allowed ||
+        !state->theronState.startup_media_ready ||
+        state->theronState.startup_media_track02_variant != (int)receipt->track02_variant ||
+        strcmp(state->theronState.startup_media_track02_md5, receipt->track02_md5) ||
+        !planIdentity ||
+        !theron_v1_track02_campaign_media_direct_layout_current(
+            campaignMedia, refreshedMedia, campaignPlan) ||
+        (state->theronState.sector_record_corpus_bound &&
+         !M11_GameView_TheronTrack02SectorRecordAdmissionCurrentForDirectMedia(
+             state, &state->theronState.sector_record_corpus.sector_record,
+             campaignMedia, refreshedMedia, campaignPlan, replay,
+             campaignLayoutEpoch, campaignMediaScanEpoch)) ||
+        !replay || !replay->active || !replay->direct_campaign_layout_consumed ||
+        (state->theronState.launch_trace_identity_bound &&
+         (!state->theronState.launch_trace_identity.valid ||
+          state->theronState.launch_trace_identity.campaign_layout_epoch != campaignLayoutEpoch ||
+          state->theronState.launch_trace_identity.track02_variant != replay->track02_variant ||
+          strcmp(state->theronState.launch_trace_identity.track02_md5, replay->track02_md5) ||
+          strcmp(state->theronState.launch_trace_identity.source_trace_md5, receipt->source_trace_md5) ||
+          strcmp(state->theronState.launch_trace_identity.event_log_md5, receipt->huc6280_event_log_md5) ||
+          state->theronState.launch_trace_identity.final_track02_record != replay->last_track02_record ||
+          state->theronState.launch_trace_identity.final_raw_sector != replay->last_raw_sector)) ||
+        (state->theronState.trace_bundle_bound &&
+         (state->theronState.trace_bundle.status != THERON_V1_TRACK02_TRACE_BUNDLE_READY ||
+          state->theronState.trace_bundle.virtual_candidate_count ||
+          state->theronState.trace_bundle.direct_candidate_count != 1u ||
+          !state->theronState.trace_bundle.opaque_only ||
+          state->theronState.trace_bundle.campaign_layout_epoch != campaignLayoutEpoch ||
+          state->theronState.trace_bundle.capture_target_plan_identity != planIdentity ||
+          strcmp(state->theronState.trace_bundle.trace.source_trace_md5, receipt->source_trace_md5) ||
+          strcmp(state->theronState.trace_bundle.trace.event_log_md5, receipt->huc6280_event_log_md5))) ||
+        (state->theronState.srm_campaign_replay_bound &&
+         (!state->theronState.srm_campaign_replay.valid ||
+          state->theronState.srm_campaign_replay.srm_size !=
+              state->theronState.srm_campaign_replay_size_bound ||
+          state->theronState.srm_campaign_replay.srm_identity_fnv1a !=
+              state->theronState.srm_campaign_replay_fnv_bound ||
+          state->theronState.srm_campaign_replay.campaign_layout_epoch != campaignLayoutEpoch ||
+          state->theronState.srm_campaign_replay.track02_variant != replay->track02_variant ||
+          strcmp(state->theronState.srm_campaign_replay.track02_md5, replay->track02_md5) ||
+          state->theronState.srm_campaign_replay.replay_final_record != replay->last_track02_record ||
+          state->theronState.srm_campaign_replay.replay_final_raw_sector != replay->last_raw_sector)) ||
+        !replay->dynamic_cd_read_records_consumed || replay->accepted_record_count == 0u ||
+        replay->campaign_layout_epoch == 0u ||
+        replay->campaign_layout_epoch != campaignLayoutEpoch ||
+        replay->track02_variant != receipt->track02_variant ||
+        strcmp(replay->track02_md5, receipt->track02_md5) ||
+        replay->last_track02_record == 0u || replay->last_raw_sector == 0u ||
+        replay->level_object_semantics_allowed ||
+        replay->bitmap_palette_admission_allowed || replay->pixel_decode_allowed ||
+        replay->dungeon_draw_allowed || replay->fallback_visuals_allowed ||
+        campaignMedia->track02_variant != receipt->track02_variant ||
+        strcmp(campaignMedia->track02_md5, receipt->track02_md5) ||
+        (route == THERON_V1_TRACK02_LIVE_ROUTE_DUNGEON_HANDOFF &&
+         (!state->theronState.live_loader_soul_room_ready ||
+          state->theronState.live_loader_route_epoch != 1u ||
+          strcmp(state->theronState.live_loader_source_trace_md5,
+                 receipt->source_trace_md5) ||
+          strcmp(state->theronState.live_loader_event_log_md5,
+                 receipt->huc6280_event_log_md5) ||
+          state->theronState.live_loader_campaign_layout_epoch != campaignLayoutEpoch ||
+          state->theronState.live_loader_media_scan_epoch != campaignMediaScanEpoch ||
+          state->theronState.live_loader_capture_plan_identity != planIdentity ||
+          state->theronState.live_loader_final_track02_record !=
+              replay->last_track02_record ||
+          state->theronState.live_loader_final_raw_sector !=
+              replay->last_raw_sector))) {
+        m11_theron_clear_live_loader_route_admission(state);
+        return 0;
+    }
+    state->theronState.live_loader_route_admission_valid = 1;
+    if (route == THERON_V1_TRACK02_LIVE_ROUTE_SOUL_ROOM) {
+        state->theronState.live_loader_soul_room_ready = 1;
+        snprintf(state->theronState.live_loader_source_trace_md5,
+                 sizeof(state->theronState.live_loader_source_trace_md5), "%s",
+                 receipt->source_trace_md5);
+        snprintf(state->theronState.live_loader_event_log_md5,
+                 sizeof(state->theronState.live_loader_event_log_md5), "%s",
+                 receipt->huc6280_event_log_md5);
+        state->theronState.live_loader_campaign_layout_epoch = campaignLayoutEpoch;
+        state->theronState.live_loader_media_scan_epoch = campaignMediaScanEpoch;
+        state->theronState.live_loader_capture_plan_identity = planIdentity;
+        state->theronState.live_loader_final_track02_record =
+            replay->last_track02_record;
+        state->theronState.live_loader_final_raw_sector = replay->last_raw_sector;
+    } else {
+        state->theronState.live_loader_dungeon_ready = 1;
+    }
+    state->theronState.live_loader_route_epoch = epoch;
+    if (route == THERON_V1_TRACK02_LIVE_ROUTE_DUNGEON_HANDOFF &&
+        state->theronState.sector_record_corpus_bound &&
+        !M11_GameView_TheronBindTrack02FirstDungeonWorldAdmission(
+            state, &state->theronState.sector_record_corpus.sector_record,
+            campaignMedia, refreshedMedia, campaignPlan, replay,
+            campaignLayoutEpoch, campaignMediaScanEpoch)) {
+        m11_theron_clear_live_loader_route_admission(state);
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_theron_boot_runtime_startup_view_model(
     const M11_GameViewState *state,
     Theron_V1_BootStartupViewModel *out_view_model)
@@ -13936,6 +15545,14 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
+                                    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+                                    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+                                    uint32_t campaignMediaScanEpoch,
+                                    const Theron_V1SrmCampaignReplayReceipt* srmCampaignReplay,
+                                    const Theron_V1SrmLaunchDiscoveryReceipt* srmLaunchDiscovery,
+                                    const Theron_V1Track02LaunchTraceIdentityReceipt* launchTraceIdentity,
+                                    const Theron_V1Track02TraceBundleReceipt* traceBundle,
+                                    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* sectorRecordCorpus,
                                     const char* captureManifestPath,
                                     const char* savePath) {
     Theron_V1_BootStartupLaunch launch;
@@ -13945,11 +15562,67 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
     }
+    if (srmLaunchDiscovery &&
+        (srmLaunchDiscovery->status != THERON_V1_SRM_LAUNCH_DISCOVERY_READY ||
+         srmLaunchDiscovery->virtual_candidate_count ||
+         strcmp(srmLaunchDiscovery->track02_md5, verifiedMd5))) {
+        return 0;
+    }
+    if (launchTraceIdentity && (!launchTraceIdentity->valid ||
+        strcmp(launchTraceIdentity->track02_md5, verifiedMd5))) return 0;
+    if (traceBundle && (traceBundle->status != THERON_V1_TRACK02_TRACE_BUNDLE_READY ||
+        traceBundle->virtual_candidate_count || traceBundle->direct_candidate_count != 1u ||
+        !traceBundle->opaque_only || !launchTraceIdentity ||
+        !theron_v1_track02_capture_target_plan_identity(campaignPlan) ||
+        traceBundle->capture_target_plan_identity !=
+            theron_v1_track02_capture_target_plan_identity(campaignPlan) ||
+        strcmp(traceBundle->trace.source_trace_md5, launchTraceIdentity->source_trace_md5) ||
+        strcmp(traceBundle->trace.event_log_md5, launchTraceIdentity->event_log_md5))) return 0;
+    if (sectorRecordCorpus &&
+        (sectorRecordCorpus->status != THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY ||
+         sectorRecordCorpus->direct_candidate_count != 1u ||
+         !sectorRecordCorpus->direct_regular_files_verified ||
+         !sectorRecordCorpus->track02_md5_verified ||
+         !sectorRecordCorpus->trace_md5_verified || !launchTraceIdentity ||
+         strcmp(sectorRecordCorpus->media.track02_md5, verifiedMd5) ||
+         strcmp(sectorRecordCorpus->sector_record.track02_md5, verifiedMd5) ||
+         strcmp(sectorRecordCorpus->coalesced_trace_md5,
+                launchTraceIdentity->source_trace_md5))) return 0;
+    if ((campaignMedia || campaignPlan) &&
+        (!campaignMedia || !campaignPlan || !campaignMediaScanEpoch ||
+         campaignMedia->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+         campaignMedia->virtual_container || !campaignMedia->launchable_direct_media ||
+         strcmp(campaignMedia->direct_media.payload_path, verifiedPath) != 0 ||
+         strcmp(campaignMedia->track02_md5, verifiedMd5) != 0 ||
+         campaignMedia->direct_media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+         !campaignMedia->direct_media.cue_consumed ||
+         (!campaignMedia->direct_media.mode1_2352 && !campaignMedia->direct_media.mode1_2048) ||
+         !campaignMedia->direct_media.payload_bytes || !campaignMedia->direct_media.sector_count ||
+         !campaignMedia->direct_media.logical_user_data_window_bytes ||
+         !theron_v1_track02_campaign_media_bind_capture_plan(campaignMedia, campaignPlan))) {
+        return 0;
+    }
     memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
     state->showDebugHUD = savedDebugHUD;
+    if (srmCampaignReplay && !M11_GameView_TheronBindSrmCampaignReplayReceipt(
+            state, srmCampaignReplay)) {
+        m11_set_status(state, "STARTUP", "TRACK02 SRM CAMPAIGN RECEIPT INVALID");
+        goto fail;
+    }
+    if (srmLaunchDiscovery && !M11_GameView_TheronBindSrmLaunchDiscoveryReceipt(
+            state, srmLaunchDiscovery)) {
+        m11_set_status(state, "STARTUP", "TRACK02 SRM DISCOVERY RECEIPT INVALID");
+        goto fail;
+    }
+    if (launchTraceIdentity) {
+        state->theronState.launch_trace_identity = *launchTraceIdentity;
+        state->theronState.launch_trace_identity_bound = 1;
+    }
+    if (traceBundle) { state->theronState.trace_bundle = *traceBundle; state->theronState.trace_bundle_bound = 1; }
+    state->theronState.campaign_media_scan_epoch = campaignMediaScanEpoch;
 
     /* A scanner receipt exists only for raw MODE1/2352 IPL media. A
      * hash-verified MODE1/2048 ISO from a valid CUE pair deliberately has
@@ -13975,6 +15648,11 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             NULL);
         goto fail;
     }
+    if (campaignMedia && !theron_v1_boot_startup_launch_bind_campaign_media(
+            &launch, campaignMedia, campaignPlan)) {
+        m11_set_status(state, "STARTUP", "TRACK02 CAMPAIGN MEDIA DRIFT");
+        goto fail;
+    }
 
     if (captureManifestPath && captureManifestPath[0] != '\0' &&
         !theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
@@ -13989,6 +15667,12 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
+        goto fail;
+    }
+    if (sectorRecordCorpus &&
+        !M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(
+            state, sectorRecordCorpus)) {
+        m11_set_status(state, "STARTUP", "TRACK02 SECTOR CORPUS RECEIPT INVALID");
         goto fail;
     }
     if (!m11_theron_startup_has_verified_runtime_surfaces(state)) {
@@ -14030,6 +15714,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
 
         if (!state->csbBootProfile) {
             m11_set_status(state, "SAVE", "CSB PROFILE MISSING");
+            return 0;
+        }
+        if (!m11_csb_original_save_runtime_receipt_current(state)) {
+            m11_set_status(state, "LOAD", "CSB NATIVE SAVE STALE");
             return 0;
         }
         /* ReDMCSB LOADSAVE.C F0433 writes CSB GLOBAL_DATA, party state,
@@ -14277,6 +15965,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;
+        CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_receipt;
 
         if (!state->csbBootProfile) {
             m11_set_status(state, "LOAD", "CSB PROFILE MISSING");
@@ -14286,10 +15975,21 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
          * file after the dungeon/profile is available.  M11 already owns
          * the verified CSB boot profile here, so direct F9 can reload the
          * runtime snapshot in place without touching the DM1 world loader. */
-        if (csb_v1_boot_runtime_load_game_from_path_pc34(
-                state->csbBootProfile,
-                path,
-                &game_time) != CSB_V1_LOAD_OK) {
+        memset(&original_receipt, 0, sizeof(original_receipt));
+        if (csb_v1_boot_runtime_load_original_save_receipt_pc34(
+                state->csbBootProfile, path, &original_receipt)) {
+            game_time = original_receipt.runtime_game_time_after;
+            state->csbOriginalSaveRuntimeReceipt = original_receipt;
+            state->csbOriginalSaveRuntimeReceiptRequired = 1;
+        } else if (csb_v1_boot_runtime_load_game_from_path_pc34(
+                       state->csbBootProfile, path, &game_time) ==
+                   CSB_V1_LOAD_OK) {
+            /* CSBWin is independently authenticated by its existing runtime
+             * loader and cannot inherit a native F0435 provenance receipt. */
+            memset(&state->csbOriginalSaveRuntimeReceipt, 0,
+                   sizeof(state->csbOriginalSaveRuntimeReceipt));
+            state->csbOriginalSaveRuntimeReceiptRequired = 0;
+        } else {
             m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
             return 0;
         }
@@ -14483,6 +16183,17 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         if (!state->csbBootProfile) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if (!m11_csb_original_save_runtime_receipt_current(state)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        /* Do not let a stale launch package turn an active TITLE.C/ENTRANCE.C
+         * route into an ordinary runtime tick.  The startup owner remains
+         * intact until a current package identity can finish its handoff. */
+        if ((state->csbState.startup_title_active ||
+             state->csbState.startup_entrance_active) &&
+            !m11_csb_startup_package_identity_current(state)) {
+            return M11_GAME_INPUT_IGNORED;
         }
         if (m11_csb_boot_startup_active_from_capture(state)) {
             CSB_V1_StartupIdleReceipt_PC34 startup_receipt;
@@ -15273,6 +16984,26 @@ int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
 
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
+}
+
+int M11_GameView_CsbF0282ChampionPanelGateActive(
+    const M11_GameViewState* state, int* out_front_ordinal,
+    int* out_candidate_ordinal, int* out_party_index)
+{
+    int front = -1;
+    if (out_front_ordinal) *out_front_ordinal = -1;
+    if (out_candidate_ordinal) *out_candidate_ordinal = -1;
+    if (out_party_index) *out_party_index = -1;
+    if (!state || !state->active || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->candidateMirrorPanelActive || !state->inventoryPanelActive ||
+        state->candidateMirrorOrdinal < 0 || state->candidateMirrorPartyIndex < 0 ||
+        state->candidateMirrorPartyIndex >= state->world.party.championCount) return 0;
+    front = M11_GameView_GetFrontMirrorOrdinal(state);
+    if (front < 0 || front != state->candidateMirrorOrdinal) return 0;
+    if (out_front_ordinal) *out_front_ordinal = front;
+    if (out_candidate_ordinal) *out_candidate_ordinal = state->candidateMirrorOrdinal;
+    if (out_party_index) *out_party_index = state->candidateMirrorPartyIndex;
+    return 1;
 }
 
 int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
@@ -17999,7 +19730,9 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
 
 enum {
     M11_MAX_CELL_CREATURES = 4, /* DM1 supports up to 4 creature groups per square */
-    M11_MAX_CELL_ITEMS    = 4  /* DM1 scatters up to 4 floor items visibly */
+    M11_MAX_CELL_ITEMS    = 4, /* DM1 scatters up to 4 floor items visibly */
+    M11_MAX_CELL_PROJECTILES =
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES
 };
 
 typedef struct M11_ViewportCell {
@@ -18060,6 +19793,15 @@ typedef struct M11_ViewportCell {
     /* DM1 F0115/F0791 flip flags for first projectile bitmap:
      * bit0 = horizontal, bit1 = vertical. */
     int firstProjectileFlipFlags;
+    /* F0115 C2900 draws every admitted live C14 in effect-list order. */
+    int renderableProjectileCount;
+    int projectileGfxIndices[M11_MAX_CELL_PROJECTILES];
+    int projectileSubtypes[M11_MAX_CELL_PROJECTILES];
+    int projectileUsesObjectMaterial[M11_MAX_CELL_PROJECTILES];
+    int projectileObjectAspectIndices[M11_MAX_CELL_PROJECTILES];
+    int projectileRelDirs[M11_MAX_CELL_PROJECTILES];
+    int projectileCells[M11_MAX_CELL_PROJECTILES];
+    int projectileFlipFlags[M11_MAX_CELL_PROJECTILES];
     /* Floor ornament ordinal for this square (1-based ordinal, 0 = none).
      * In DM1, corridor/pit/stair/teleporter squares may have floor
      * ornaments assigned via random generation or sensor things.
@@ -18107,6 +19849,31 @@ static int m11_viewport_cell_has_renderable_projectile(
     return !cell->dm1RuntimeRenderDecisionReady ||
            !cell->dm1RuntimeRenderDecision.suppressMirrorAsProjectile ||
            cell->dm1RuntimeRenderDecision.drawRuntimeProjectile;
+}
+
+static int m11_viewport_cell_projectile_sample(
+    const M11_ViewportCell* cell,
+    int index,
+    M11_ViewportCell* outSample)
+{
+    if (!cell || !outSample || index < 0 ||
+        index >= cell->renderableProjectileCount ||
+        index >= M11_MAX_CELL_PROJECTILES) {
+        return 0;
+    }
+    *outSample = *cell;
+    outSample->summary.projectiles = 1;
+    outSample->firstProjectileGfxIndex = cell->projectileGfxIndices[index];
+    outSample->firstProjectileMaterialReady = 1;
+    outSample->firstProjectileSubtype = cell->projectileSubtypes[index];
+    outSample->firstProjectileUsesObjectMaterial =
+        cell->projectileUsesObjectMaterial[index];
+    outSample->firstProjectileObjectAspectIndex =
+        cell->projectileObjectAspectIndices[index];
+    outSample->firstProjectileRelDir = cell->projectileRelDirs[index];
+    outSample->firstProjectileCell = cell->projectileCells[index];
+    outSample->firstProjectileFlipFlags = cell->projectileFlipFlags[index];
+    return 1;
 }
 
 static int m11_viewport_cell_has_renderable_explosion(
@@ -18177,8 +19944,10 @@ static int m11_projectile_associated_thing_material(
     int* outWeaponProjectileAspectOrdinal)
 {
     const struct DungeonThings_Compat* things;
+    const unsigned char* raw;
+    DM1_WeaponInfo weaponInfo;
+    int objectWeight;
     int thingType;
-    int thingIndex;
 
     if (!state || !outThingType || !outThingSubtype ||
         !outWeaponProjectileAspectOrdinal || thing == THING_NONE ||
@@ -18190,38 +19959,41 @@ static int m11_projectile_associated_thing_material(
         return 0;
     }
     thingType = THING_GET_TYPE(thing);
-    thingIndex = THING_GET_INDEX(thing);
+    /* ReDMCSB F0328 carries the original C05..C0B Thing into
+     * F0212.Projectile.Slot.  F0142/F0115 must consume that same loaded
+     * F0156 record, and F0140 proves the containing F0159 chain is still
+     * intact.  A decoded object mirror cannot authorize a flying object. */
+    if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(
+            things, thing, &objectWeight)) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(things, thing);
+    if (!raw) {
+        return 0;
+    }
     *outThingType = thingType;
     *outThingSubtype = 0;
     *outWeaponProjectileAspectOrdinal = 0;
 
     switch (thingType) {
-        case THING_TYPE_WEAPON: {
-            DM1_WeaponInfo info;
-            if (!things->weapons || thingIndex < 0 ||
-                thingIndex >= things->weaponCount) return 0;
-            *outThingSubtype = things->weapons[thingIndex].type;
-            if (dm1_weapon_info_pc34(*outThingSubtype, &info) <= 0) return 0;
-            *outWeaponProjectileAspectOrdinal = (info.attributes >> 8) & 0x1f;
+        case THING_TYPE_WEAPON:
+            *outThingSubtype = raw[2] & 0x7f;
+            if (!dm1_weapon_info_pc34(*outThingSubtype, &weaponInfo)) return 0;
+            *outWeaponProjectileAspectOrdinal =
+                (weaponInfo.attributes >> 8) & 0x1f;
             return 1;
-        }
         case THING_TYPE_ARMOUR:
-            if (!things->armours || thingIndex < 0 || thingIndex >= things->armourCount) return 0;
-            *outThingSubtype = things->armours[thingIndex].type;
+            *outThingSubtype = raw[2] & 0x7f;
             return 1;
         case THING_TYPE_SCROLL:
-            return things->scrolls && thingIndex >= 0 && thingIndex < things->scrollCount;
+            return 1;
         case THING_TYPE_POTION:
-            if (!things->potions || thingIndex < 0 || thingIndex >= things->potionCount) return 0;
-            *outThingSubtype = things->potions[thingIndex].type;
+            *outThingSubtype = raw[3] & 0x7f;
             return 1;
         case THING_TYPE_CONTAINER:
-            if (!things->containers || thingIndex < 0 || thingIndex >= things->containerCount) return 0;
-            *outThingSubtype = things->containers[thingIndex].type;
             return 1;
         case THING_TYPE_JUNK:
-            if (!things->junks || thingIndex < 0 || thingIndex >= things->junkCount) return 0;
-            *outThingSubtype = things->junks[thingIndex].type;
+            *outThingSubtype = raw[2] & 0x7f;
             return 1;
         default:
             return 0;
@@ -18266,54 +20038,94 @@ static int m11_build_dm1_viewport_materialization_decision(
     /* ReDMCSB: DUNVIEW.C F0115:5668-5683 and :5916-5933 consumes the
      * current effect records after F0219/F0220 mutation. The DM1 decision
      * owns this projection; M11 only transfers it to the legacy blitters. */
-    if (outDecision->liveProjectileSlot >= 0) {
-        DM1_ProjectileMaterialResolutionPc34 material;
-        int thingType = -1;
-        int thingSubtype = -1;
-        int weaponProjectileAspectOrdinal = 0;
-        int hasAssociatedThing;
-        int associatedThingResolved;
-
-        /* F0142 either owns a spell aspect (THING_NONE) or transfers the
-         * associated object to G0209.  Reset every previous sample before
-         * resolving it: a broken PC34 object record must be a no-draw, not a
-         * stale M613 spell/projectile sprite.  ReDMCSB DUNVIEW.C F0115:
-         * 5891-5900 takes the positive object-aspect branch directly to the
-         * C2900 object blitter. */
-        cell->firstProjectileGfxIndex = -1;
-        cell->firstProjectileMaterialReady = 0;
-        cell->firstProjectileUsesObjectMaterial = 0;
-        cell->firstProjectileObjectAspectIndex = -1;
-        cell->firstProjectileFlipFlags = 0;
+    cell->renderableProjectileCount = 0;
+    cell->firstProjectileGfxIndex = -1;
+    cell->firstProjectileMaterialReady = 0;
+    cell->firstProjectileUsesObjectMaterial = 0;
+    cell->firstProjectileObjectAspectIndex = -1;
+    cell->firstProjectileFlipFlags = 0;
+    if (outDecision->liveRenderableProjectileCount > 0) {
+        int projectileIndex;
         cell->summary.projectiles = outDecision->liveProjectileCount;
         cell->summary.total += outDecision->liveProjectileCount;
-        cell->firstProjectileSubtype = outDecision->liveProjectileSubtype;
-        cell->firstProjectileRelDir =
-            (outDecision->liveProjectileDirection - state->world.party.direction) & 3;
-        /* The F0115 decision already normalized this C14 cell against the
-         * party direction while proving its C2900 source coordinate. */
-        cell->firstProjectileCell = outDecision->liveProjectileCell;
-        hasAssociatedThing =
-            outDecision->liveProjectileAssociatedThing != THING_NONE &&
-            outDecision->liveProjectileAssociatedThing != THING_ENDOFLIST;
-        associatedThingResolved = m11_projectile_associated_thing_material(
-            state, outDecision->liveProjectileAssociatedThing,
-            &thingType, &thingSubtype, &weaponProjectileAspectOrdinal);
-        if ((!hasAssociatedThing || associatedThingResolved) &&
-            dm1_v1_projectile_material_resolve_pc34(
-                outDecision->liveProjectileSubtype, thingType, thingSubtype,
-                weaponProjectileAspectOrdinal, &material)) {
-            cell->firstProjectileGfxIndex = material.graphic_index;
-            cell->firstProjectileUsesObjectMaterial = material.uses_object_aspect;
-            cell->firstProjectileObjectAspectIndex = material.aspect_index;
-            if (!material.uses_object_aspect) {
-                cell->firstProjectileGfxIndex = dm1_v1_projectile_graphic_index(
-                    material.aspect_index, cell->firstProjectileRelDir);
-                cell->firstProjectileFlipFlags = dm1_v1_projectile_flip_flags(
-                    material.aspect_index, cell->firstProjectileRelDir,
-                    cell->firstProjectileCell, cell->mapX, cell->mapY);
+        /* ReDMCSB DUNVIEW.C F0115:5668-5900 consumes every live C14 in
+         * effect-list order. A broken object record, missing C2900 cell, or
+         * unresolved PC34 material is a no-draw for that record only. */
+        for (projectileIndex = 0;
+             projectileIndex < outDecision->liveRenderableProjectileCount &&
+             cell->renderableProjectileCount < M11_MAX_CELL_PROJECTILES;
+             ++projectileIndex) {
+            DM1_ProjectileMaterialResolutionPc34 material;
+            int thingType = -1;
+            int thingSubtype = -1;
+            int weaponProjectileAspectOrdinal = 0;
+            int hasAssociatedThing;
+            int associatedThingResolved;
+            int projectileCell =
+                outDecision->liveRenderableProjectileCells[projectileIndex];
+            int projectileRelDir =
+                (outDecision->liveRenderableProjectileDirections[projectileIndex] -
+                 state->world.party.direction) & 3;
+            int sourceCell =
+                (projectileCell - state->world.party.direction) & 3;
+            int sourceX;
+            int sourceY;
+            int renderIndex;
+
+            if (!dm1_viewport_3d_c2900_projectile_raw_zone_point(
+                    outDecision->row, sourceCell, &sourceX, &sourceY)) {
+                continue;
             }
-            cell->firstProjectileMaterialReady = 1;
+            hasAssociatedThing =
+                outDecision->liveRenderableProjectileAssociatedThings[projectileIndex] != THING_NONE &&
+                outDecision->liveRenderableProjectileAssociatedThings[projectileIndex] != THING_ENDOFLIST;
+            associatedThingResolved = m11_projectile_associated_thing_material(
+                state, outDecision->liveRenderableProjectileAssociatedThings[projectileIndex],
+                &thingType, &thingSubtype, &weaponProjectileAspectOrdinal);
+            if ((hasAssociatedThing && !associatedThingResolved) ||
+                !dm1_v1_projectile_material_resolve_pc34(
+                    outDecision->liveRenderableProjectileSubtypes[projectileIndex],
+                    thingType, thingSubtype, weaponProjectileAspectOrdinal,
+                    &material)) {
+                continue;
+            }
+            renderIndex = cell->renderableProjectileCount++;
+            cell->projectileGfxIndices[renderIndex] = material.graphic_index;
+            cell->projectileSubtypes[renderIndex] =
+                outDecision->liveRenderableProjectileSubtypes[projectileIndex];
+            cell->projectileUsesObjectMaterial[renderIndex] =
+                material.uses_object_aspect;
+            cell->projectileObjectAspectIndices[renderIndex] = material.aspect_index;
+            cell->projectileRelDirs[renderIndex] = projectileRelDir;
+            cell->projectileCells[renderIndex] = projectileCell;
+            cell->projectileFlipFlags[renderIndex] = 0;
+            if (!material.uses_object_aspect) {
+                cell->projectileGfxIndices[renderIndex] =
+                    dm1_v1_projectile_graphic_index(material.aspect_index,
+                                                     projectileRelDir);
+                cell->projectileFlipFlags[renderIndex] =
+                    dm1_v1_projectile_flip_flags(material.aspect_index,
+                                                  projectileRelDir,
+                                                  projectileCell,
+                                                  cell->mapX, cell->mapY);
+            }
+            (void)sourceX;
+            (void)sourceY;
+        }
+        if (cell->renderableProjectileCount > 0) {
+            M11_ViewportCell firstProjectile;
+            if (m11_viewport_cell_projectile_sample(cell, 0, &firstProjectile)) {
+                cell->firstProjectileGfxIndex = firstProjectile.firstProjectileGfxIndex;
+                cell->firstProjectileMaterialReady = 1;
+                cell->firstProjectileSubtype = firstProjectile.firstProjectileSubtype;
+                cell->firstProjectileUsesObjectMaterial =
+                    firstProjectile.firstProjectileUsesObjectMaterial;
+                cell->firstProjectileObjectAspectIndex =
+                    firstProjectile.firstProjectileObjectAspectIndex;
+                cell->firstProjectileRelDir = firstProjectile.firstProjectileRelDir;
+                cell->firstProjectileCell = firstProjectile.firstProjectileCell;
+                cell->firstProjectileFlipFlags = firstProjectile.firstProjectileFlipFlags;
+            }
         }
     }
     if (outDecision->liveExplosionCount > 0) {
@@ -19024,11 +20836,23 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
         return;
     }
     /* ReDMCSB F0115 draws the resolved C2900 projectile bitmap only. */
-    if (m11_viewport_cell_has_renderable_projectile(cell)) {
-        if (g_drawState && g_drawState->assetsAvailable) {
+    if (cell->renderableProjectileCount > 0 &&
+        cell->dm1MaterializationDecisionReady &&
+        cell->dm1MaterializationDecision.drawRuntimeProjectiles) {
+        int projectileIndex;
+        for (projectileIndex = 0;
+             projectileIndex < cell->renderableProjectileCount;
+             ++projectileIndex) {
+            M11_ViewportCell projectile;
+            if (!m11_viewport_cell_projectile_sample(cell, projectileIndex,
+                                                      &projectile) ||
+                !m11_viewport_cell_has_renderable_projectile(&projectile) ||
+                !g_drawState || !g_drawState->assetsAvailable) {
+                continue;
+            }
             (void)m11_draw_viewport_projectile_sprite(
                 g_drawState, framebuffer, framebufferWidth, framebufferHeight,
-                x, y, w, h, cell, depthIndex, sourceZoneRow);
+                x, y, w, h, &projectile, depthIndex, sourceZoneRow);
         }
     }
     /* Teleporter fields are source bitmap overlays, not procedural cue art.
@@ -21940,6 +23764,62 @@ static int m11_draw_dm1_side_wall_host_receipt(
     return 1;
 }
 
+/* F0116/F0117 have their own DM1 handoff because their D3 geometry and
+ * F0115 fallthrough are not generic host policy.  Preserve that distinction
+ * at the last M11 boundary: only DM1 selects the wall row, C10, flip, and
+ * source zone; M11 merely validates and copies the authenticated bitmap. */
+static int m11_dm1_build_d3_side_wall_source_receipt(
+    DM1_ViewSquareIndex square,
+    int mapWallSet,
+    int parityFlip,
+    int wallLike,
+    int frontAlcove,
+    DM1_ViewportSideWallHostReceiptPc34* outReceipt)
+{
+    DM1_ViewportD3SideWallHostHandoffPc34 handoff;
+    DM1_ViewportSideWallHostReceiptPc34 receipt;
+    int graphicIndex;
+
+    if (!outReceipt ||
+        (square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
+        return 0;
+    }
+    memset(&handoff, 0, sizeof(handoff));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+            square, parityFlip != 0, wallLike != 0, frontAlcove != 0,
+            &handoff) ||
+        !handoff.handled) {
+        return 0;
+    }
+    receipt.handled = handoff.handled;
+    receipt.draw_wall = handoff.draw_wall;
+    receipt.falls_through_to_f0115 = handoff.falls_through_to_f0115;
+    receipt.square = square;
+    receipt.pc34_zone = handoff.pc34_zone;
+    receipt.dst_x = handoff.dst_x;
+    receipt.dst_y = handoff.dst_y;
+    receipt.width = handoff.width;
+    receipt.height = handoff.height;
+    receipt.redmcsb_function = handoff.redmcsb_function;
+    receipt.source_lines = handoff.source_lines;
+    if (!receipt.draw_wall) {
+        *outReceipt = receipt;
+        return 1;
+    }
+    graphicIndex = dm1_v1_graphic_wallset0_index_pc34(
+        (int)handoff.selected_wall);
+    if (graphicIndex < 0 ||
+        !dm1_viewport_3d_wall_host_material_receipt_pc34(
+            mapWallSet, graphicIndex, handoff.transparent_color,
+            handoff.flip_horizontally, handoff.width, handoff.height,
+            &receipt.material)) {
+        return 0;
+    }
+    *outReceipt = receipt;
+    return 1;
+}
+
 static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
@@ -22356,6 +24236,49 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
         renderPlan.dstH,
         renderPlan.transparentColor,
         renderPlan.paletteMapValid ? renderPlan.paletteMap : NULL);
+}
+
+static int m11_dm1_f0111_door_ornament_panels(
+    const M11_ViewportCell* cell,
+    int depthIndex,
+    const M11_DM1ZoneBlit* panels,
+    int panelCount,
+    M11_DM1ZoneBlit outPanels[2])
+{
+    DM1_V1_F0111DoorPanelSegmentPc34 sourcePanels[2];
+    DM1_V1_F0111DoorOrnamentInputPc34 input;
+    DM1_V1_F0111DoorOrnamentDispatchPc34 dispatch;
+    int i;
+
+    if (!cell || !panels || !outPanels || panelCount <= 0 || panelCount > 2) {
+        return 0;
+    }
+    for (i = 0; i < panelCount; ++i) {
+        sourcePanels[i].src_y = panels[i].srcY;
+        sourcePanels[i].dst_x = panels[i].dstX;
+        sourcePanels[i].dst_y = panels[i].dstY;
+        sourcePanels[i].width = panels[i].width;
+        sourcePanels[i].height = panels[i].height;
+    }
+    memset(&input, 0, sizeof(input));
+    input.is_door = cell->valid && cell->elementType == DUNGEON_ELEMENT_DOOR;
+    input.is_open = m11_viewport_cell_is_open(cell);
+    input.ornament_ordinal = cell->doorOrnamentOrdinal;
+    input.depth_index = depthIndex;
+    input.panel_count = (size_t)panelCount;
+    input.panels = sourcePanels;
+    if (!dm1_v1_f0111_door_ornament_dispatch_pc34(&input, &dispatch)) {
+        return 0;
+    }
+    for (i = 0; i < panelCount; ++i) {
+        outPanels[i] = panels[i];
+        outPanels[i].srcY = dispatch.panels[i].src_y;
+        outPanels[i].dstX = dispatch.panels[i].dst_x;
+        outPanels[i].dstY = dispatch.panels[i].dst_y;
+        outPanels[i].width = dispatch.panels[i].width;
+        outPanels[i].height = dispatch.panels[i].height;
+    }
+    return (int)dispatch.panel_count;
 }
 
 static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* state,
@@ -22791,6 +24714,22 @@ static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
     return 1;
 }
 
+static unsigned int m11_dm1_inscription_fnv1a_bytes(const unsigned char* bytes,
+                                                     int byteCount)
+{
+    unsigned int hash = 2166136261u;
+    int i;
+
+    if (!bytes || byteCount <= 0) {
+        return 0u;
+    }
+    for (i = 0; i < byteCount; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void m11_draw_dm1_front_wall_inscription_material(
     const M11_GameViewState* state,
     const DM1_V1_InscriptionHostMaterialReceiptPc34* inputMaterial,
@@ -22815,6 +24754,14 @@ static void m11_draw_dm1_front_wall_inscription_material(
     }
     if (!DM1_V1_InscriptionHostMaterialRasterGatePc34(
             &material, (int)fontSlot->width, (int)fontSlot->height)) {
+        return;
+    }
+    if (material.textDataWordOffset < 0 || material.textDataWordCount <= 0 ||
+        material.textDataFNV1a == 0u || material.glyphBytesFNV1a == 0u ||
+        material.glyphBytesFNV1a != m11_dm1_inscription_fnv1a_bytes(
+            material.glyphBytes, material.glyphByteCount + 1) ||
+        m11_dm1_inscription_fnv1a_bytes(
+            fontSlot->pixels, (int)fontSlot->width * (int)fontSlot->height) == 0u) {
         return;
     }
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
@@ -22853,6 +24800,24 @@ static void m11_draw_dm1_front_wall_inscription_material(
         material.glyphByteCount;
     s_m11_dm1_inscription_host_presentation_receipt.lineCount =
         material.lineCount;
+    s_m11_dm1_inscription_host_presentation_receipt.textDataWordOffset =
+        material.textDataWordOffset;
+    s_m11_dm1_inscription_host_presentation_receipt.textDataWordCount =
+        material.textDataWordCount;
+    s_m11_dm1_inscription_host_presentation_receipt.textDataFNV1a =
+        material.textDataFNV1a;
+    s_m11_dm1_inscription_host_presentation_receipt.glyphBytesFNV1a =
+        material.glyphBytesFNV1a;
+    s_m11_dm1_inscription_host_presentation_receipt.fontPixelsFNV1a =
+        m11_dm1_inscription_fnv1a_bytes(
+            fontSlot->pixels, (int)fontSlot->width * (int)fontSlot->height);
+    s_m11_dm1_inscription_host_presentation_receipt.glyphSourceWidth =
+        DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    s_m11_dm1_inscription_host_presentation_receipt.glyphSourceHeight =
+        DM1_V1_INSCRIPTION_GLYPH_HEIGHT;
+    s_m11_dm1_inscription_host_presentation_receipt.glyphScaleNumerator = 1;
+    s_m11_dm1_inscription_host_presentation_receipt.glyphScaleDenominator = 1;
+    s_m11_dm1_inscription_host_presentation_receipt.paletteMapValid = 0;
     memcpy(s_m11_dm1_inscription_host_presentation_receipt.glyphBytes,
            material.glyphBytes, sizeof(material.glyphBytes));
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
@@ -23495,6 +25460,14 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                         plan->height;
                     s_m11_dm1_unreadable_inscription_host_presentation_receipt.transparentColor =
                         plan->transparentColor;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.textDataWordOffset =
+                        inscription.textDataWordOffset;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.textDataWordCount =
+                        inscription.textDataWordCount;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.textDataFNV1a =
+                        inscription.textDataFNV1a;
+                    s_m11_dm1_unreadable_inscription_host_presentation_receipt.glyphBytesFNV1a =
+                        inscription.glyphBytesFNV1a;
                     s_m11_dm1_unreadable_inscription_host_presentation_receipt.paletteMapValid =
                         plan->paletteMapValid;
                     if (plan->paletteMapValid) {
@@ -23694,10 +25667,15 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                       &cell)) {
             continue;
         }
-        if (!dm1_viewport_3d_build_side_wall_host_receipt_pc34(
-                spec->square, mapWallSet, flipWalls ? true : false,
-                m11_viewport_cell_is_wall_like(&cell), false,
-                maxVisibleForward, visibility, &receipt)) {
+        if ((spec->square == DM1_VIEW_SQUARE_D3L ||
+             spec->square == DM1_VIEW_SQUARE_D3R)
+                ? !m11_dm1_build_d3_side_wall_source_receipt(
+                      spec->square, mapWallSet, flipWalls,
+                      m11_viewport_cell_is_wall_like(&cell), 0, &receipt)
+                : !dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+                      spec->square, mapWallSet, flipWalls ? true : false,
+                      m11_viewport_cell_is_wall_like(&cell), false,
+                      maxVisibleForward, visibility, &receipt)) {
             continue;
         }
         (void)m11_draw_dm1_side_wall_host_receipt(state, framebuffer, fbW, fbH,
@@ -23836,21 +25814,24 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
     for (depth = 2; depth >= 0; --depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
         M11_DM1ZoneBlit panels[2];
+        M11_DM1ZoneBlit ornamentPanels[2];
         int panelCount;
         int panelIndex;
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
             m11_viewport_cell_is_open(cell) || cell->doorOrnamentOrdinal <= 0) {
-            return;
+            continue;
         }
         panelCount = m11_dm1_center_door_panel_blits_for_cell(depth,
                                                               cell,
                                                               panels);
+        panelCount = m11_dm1_f0111_door_ornament_panels(
+            cell, depth, panels, panelCount, ornamentPanels);
         if (panelCount <= 0) {
-            return;
+            continue;
         }
         for (panelIndex = 0; panelIndex < panelCount; ++panelIndex) {
             m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,
-                                                &panels[panelIndex], depth,
+                                                &ornamentPanels[panelIndex], depth,
                                                 cell->doorOrnamentOrdinal);
         }
     }
@@ -24226,6 +26207,7 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
         DM1_SideDoorRenderPlanPc34 plan;
         DM1_SideDoorBlitPc34 panelPlans[2];
         M11_DM1ZoneBlit panels[2];
+        M11_DM1ZoneBlit ornamentPanels[2];
         int panelGraphic;
         int panelCount;
         int panelIndex;
@@ -24264,8 +26246,15 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
             if (panelGraphic >= 0) {
                 panels[panelIndex].graphicIndex = panelGraphic;
             }
+        }
+        panelCount = m11_dm1_f0111_door_ornament_panels(
+            &cell, plan.depthIndex, panels, panelCount, ornamentPanels);
+        if (panelCount <= 0) {
+            continue;
+        }
+        for (panelIndex = 0; panelIndex < panelCount; ++panelIndex) {
             m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,
-                                                &panels[panelIndex],
+                                                &ornamentPanels[panelIndex],
                                                 plan.depthIndex,
                                                 cell.doorOrnamentOrdinal);
         }
@@ -25345,14 +27334,24 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             }
         }
         /* Side-pane projectile sprites: real GRAPHICS.DAT sprites */
-        if (m11_viewport_cell_has_renderable_projectile(cell)) {
+        if (cell->renderableProjectileCount > 0) {
             int projArea = paneH / 3;
             int projY = paneY + (paneH - projArea) / 2;
+            int projectileIndex;
             if (projArea < 6) projArea = 6;
-            if (g_drawState && g_drawState->assetsAvailable) {
+            for (projectileIndex = 0;
+                 projectileIndex < cell->renderableProjectileCount;
+                 ++projectileIndex) {
+                M11_ViewportCell projectile;
+                if (!m11_viewport_cell_projectile_sample(cell, projectileIndex,
+                                                          &projectile) ||
+                    !m11_viewport_cell_has_renderable_projectile(&projectile) ||
+                    !g_drawState || !g_drawState->assetsAvailable) {
+                    continue;
+                }
                 (void)m11_draw_viewport_projectile_sprite(
                     g_drawState, framebuffer, framebufferWidth, framebufferHeight,
-                    paneX + 1, projY, paneW - 2, projArea, cell,
+                    paneX + 1, projY, paneW - 2, projArea, &projectile,
                     depthIndex + 1, sourceZoneRow);
             }
         }
@@ -25493,16 +27492,26 @@ static void m11_draw_dm1_side_contents_at_depth(
 
             if (cell->dm1MaterializationDecisionReady &&
                 cell->dm1MaterializationDecision.drawRuntimeProjectiles &&
-                m11_viewport_cell_has_renderable_projectile(cell)) {
+                cell->renderableProjectileCount > 0) {
                 int projArea = paneH / 3;
                 int projY;
+                int projectileIndex;
                 if (projArea < 6) projArea = 6;
                 projY = paneY + (paneH - projArea) / 2;
-                if (g_drawState && g_drawState->assetsAvailable) {
+                for (projectileIndex = 0;
+                     projectileIndex < cell->renderableProjectileCount;
+                     ++projectileIndex) {
+                    M11_ViewportCell projectile;
+                    if (!m11_viewport_cell_projectile_sample(cell, projectileIndex,
+                                                              &projectile) ||
+                        !m11_viewport_cell_has_renderable_projectile(&projectile) ||
+                        !g_drawState || !g_drawState->assetsAvailable) {
+                        continue;
+                    }
                     (void)m11_draw_viewport_projectile_sprite(
                         g_drawState, framebuffer, framebufferWidth,
                         framebufferHeight, paneX + 1, projY, paneW - 2,
-                        projArea, cell, depth + 1, sourceZoneRow);
+                        projArea, &projectile, depth + 1, sourceZoneRow);
                 }
             }
 
@@ -25537,10 +27546,20 @@ static void m11_draw_dm1_d0c_projectile_pass(const M11_GameViewState* state,
      * G2028[0] / C2900 row 11 and, for positive F0142 aspects, re-enters
      * T0115015 with the original G0209/M612 material.  Do not substitute a
      * marker when the source row or bitmap cannot draw. */
-    (void)m11_draw_viewport_projectile_sprite(
-        state, framebuffer, framebufferWidth, framebufferHeight,
-        M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H,
-        &cell, 0, sourceZoneRow);
+    for (int projectileIndex = 0;
+         projectileIndex < cell.renderableProjectileCount;
+         ++projectileIndex) {
+        M11_ViewportCell projectile;
+        if (!m11_viewport_cell_projectile_sample(&cell, projectileIndex,
+                                                  &projectile) ||
+            !m11_viewport_cell_has_renderable_projectile(&projectile)) {
+            continue;
+        }
+        (void)m11_draw_viewport_projectile_sprite(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H,
+            &projectile, 0, sourceZoneRow);
+    }
 }
 
 static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
@@ -27325,70 +29344,10 @@ static const unsigned char M11_ACTION_SET_ACTIONS[44][3] = {
     /* 43 */ {  6,  11, 255}
 };
 
-/* DM1 action-name strings (G0490_ac_Graphic560_ActionNames).
- *
- * Verbatim order from ReDMCSB MENU.C X431_I34E build — the
- * null-delimited string "N\0BLOCK\0CHOP\0X\0BLOW HORN\0...\0FUSE"
- * parsed out into a flat array.  Index 0 is "N" (placeholder used
- * by action set 41 to print just the letter N — "Firestaff"
- * activation).  Index 3 and 26 are the DM1 deprecated-entry
- * placeholder "X".  255 is C0xFF_ACTION_NONE which
- * F0384_MENUS_GetActionName returns as an empty string.
- *
- * These names are what F0387 prints in cyan-on-black into zones
- * 85, 86, 87 during menu-mode.  They are fixed-case UPPERCASE
- * strings in the original; we keep them exactly as in the source. */
-static const char* const M11_ACTION_NAMES[44] = {
-    /* 0  */ "N",
-    /* 1  */ "BLOCK",
-    /* 2  */ "CHOP",
-    /* 3  */ "X",
-    /* 4  */ "BLOW HORN",
-    /* 5  */ "FLIP",
-    /* 6  */ "PUNCH",
-    /* 7  */ "KICK",
-    /* 8  */ "WAR CRY",
-    /* 9  */ "STAB",
-    /* 10 */ "CLIMB DOWN",
-    /* 11 */ "FREEZE LIFE",
-    /* 12 */ "HIT",
-    /* 13 */ "SWING",
-    /* 14 */ "STAB",
-    /* 15 */ "THRUST",
-    /* 16 */ "JAB",
-    /* 17 */ "PARRY",
-    /* 18 */ "HACK",
-    /* 19 */ "BERZERK",
-    /* 20 */ "FIREBALL",
-    /* 21 */ "DISPELL",
-    /* 22 */ "CONFUSE",
-    /* 23 */ "LIGHTNING",
-    /* 24 */ "DISRUPT",
-    /* 25 */ "MELEE",
-    /* 26 */ "X",
-    /* 27 */ "INVOKE",
-    /* 28 */ "SLASH",
-    /* 29 */ "CLEAVE",
-    /* 30 */ "BASH",
-    /* 31 */ "STUN",
-    /* 32 */ "SHOOT",
-    /* 33 */ "SPELLSHIELD",
-    /* 34 */ "FIRESHIELD",
-    /* 35 */ "FLUXCAGE",
-    /* 36 */ "HEAL",
-    /* 37 */ "CALM",
-    /* 38 */ "LIGHT",
-    /* 39 */ "WINDOW",
-    /* 40 */ "SPIT",
-    /* 41 */ "BRANDISH",
-    /* 42 */ "THROW",
-    /* 43 */ "FUSE"
-};
-
 const char* M11_GameView_GetActionName(unsigned char actionIndex) {
-    if (actionIndex == 0xFF) return "";
-    if (actionIndex >= 44) return "";
-    return M11_ACTION_NAMES[actionIndex];
+    /* ReDMCSB MENU.C F0384 reads the packed G0490 source string.  Keep
+     * that ownership in DM1 so M11 cannot grow a second action-name table. */
+    return dm1_v1_action_name_f0384_pc34(actionIndex);
 }
 
 /* Resolve the ActionSet index for a given champion slot's action
@@ -27607,19 +29566,12 @@ static int m11_apply_action_completion_plan_f0407(
             m11_materialize_action_lock(state, championIndex,
                                         plan.actionDisabledIndex,
                                         plan.disabledTicks);
-            /* ReDMCSB MENU.C F0407:1620-1622 calls F0330 from the common
-             * action tail. Bind one authenticated action-hand/melee route
-             * here: SWING has completed the real F0402/F0231 or closed-door
-             * branch above, so its C11 keeps SlotOrdinal zero. THROW owns the
-             * separate F0328 then F0407 ordinal-two path. */
-            if (actionIndex == DM1_ACTION_SWING) {
-                /* F0330 initializes B.SlotOrdinal to zero. Keep that exact
-                 * live-owner fact until C11 reaches F0253; zero is meaningful,
-                 * not the no-owner 0xFF sentinel used by older M11 mirrors. */
-                state->actionEnableSlotOrdinal[championIndex] = 0u;
-                (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
-                    &state->world, championIndex, plan.disabledTicks);
-            }
+            /* MENU.C F0407's common tail calls F0330 for every non-zero
+             * G0491 duration.  C11 starts with SlotOrdinal zero; THROW may
+             * replace it with the action-hand ordinal after its F0328 route. */
+            state->actionEnableSlotOrdinal[championIndex] = 0u;
+            (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+                &state->world, championIndex, plan.disabledTicks, 1);
         }
     }
     /* ReDMCSB MENU.C F0407:1620-1625: the F0330 action lock precedes the
@@ -27636,94 +29588,45 @@ static int m11_apply_action_completion_plan_f0407(
 static int m11_dm1_thing_weapon_info(const M11_GameViewState* state,
                                      unsigned short thing,
                                      DM1_WeaponInfo* outInfo) {
-    int thingType;
-    int thingIndex;
-    int weaponType;
     if (!state || !outInfo) return 0;
-    thingType = THING_GET_TYPE(thing);
-    if (thingType != THING_TYPE_WEAPON) return 0;
-    if (!state->world.things || !state->world.things->weapons) return 0;
-    thingIndex = THING_GET_INDEX(thing);
-    if (thingIndex < 0 || thingIndex >= state->world.things->weaponCount) return 0;
-    weaponType = (int)state->world.things->weapons[thingIndex].type;
-    return dm1_weapon_info_pc34(weaponType, outInfo) > 0;
+    /* ReDMCSB DUNGEON.C F0158 reads the loaded WEAPON.Type record and
+     * indexes G0238.  A decoded runtime mirror is not source authority. */
+    return dm1_v1_dungeon_get_weapon_info_pc34(
+               state->world.things, thing, outInfo) > 0;
 }
 
-static int m11_dm1_f0140_object_weight_for_throw_depth(
-    const M11_GameViewState* state,
-    unsigned short thing,
-    int depth) {
-    DM1_WeaponInfo weaponInfo;
-    int thingType;
-    int thingIndex;
+static int m11_dm1_thing_potion_values(const M11_GameViewState* state,
+                                       unsigned short thing,
+                                       int* outType,
+                                       int* outPower) {
+    const unsigned char* raw;
+    unsigned short fields;
 
-    if (!state) return 0;
-    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
-    if (depth > 8) return 0;
-    thingType = THING_GET_TYPE(thing);
-    thingIndex = THING_GET_INDEX(thing);
-
-    if (thingType == THING_TYPE_WEAPON &&
-        m11_dm1_thing_weapon_info(state, thing, &weaponInfo)) {
-        return weaponInfo.weight;
+    if (outType) *outType = 0;
+    if (outPower) *outPower = 0;
+    if (!state || !outType || !outPower || THING_GET_TYPE(thing) != THING_TYPE_POTION) {
+        return 0;
     }
-    if (thingType == THING_TYPE_ARMOUR &&
-        state->world.things && state->world.things->armours &&
-        thingIndex >= 0 && thingIndex < state->world.things->armourCount) {
-        int armourType = (int)state->world.things->armours[thingIndex].type;
-        int weight = dm1_v1_throw_armour_weight_f0140_pc34(armourType);
-        if (weight >= 0) return weight;
-    }
-    if (thingType == THING_TYPE_JUNK &&
-        state->world.things && state->world.things->junks &&
-        thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
-        int junkType = (int)state->world.things->junks[thingIndex].type;
-        int weight = dm1_v1_throw_junk_weight_f0140_pc34(
-            junkType, (int)state->world.things->junks[thingIndex].chargeCount);
-        if (weight >= 0) return weight;
-    }
-    if (thingType == THING_TYPE_CONTAINER &&
-        state->world.things && state->world.things->containers &&
-        thingIndex >= 0 && thingIndex < state->world.things->containerCount) {
-        unsigned short contained =
-            state->world.things->containers[thingIndex].slot;
-        int weight = 50;
-        int guard = 0;
-        while (contained != THING_NONE && contained != THING_ENDOFLIST &&
-               guard++ < 128) {
-            unsigned short next = m11_get_raw_next_thing(state->world.things,
-                                                         contained);
-            if (next == THING_ENDOFLIST) {
-                next = m11_get_decoded_next_thing(state->world.things,
-                                                  contained);
-            }
-            weight += m11_dm1_f0140_object_weight_for_throw_depth(
-                state, contained, depth + 1);
-            contained = next;
-        }
-        return weight;
-    }
-    if (thingType == THING_TYPE_POTION &&
-        state->world.things && state->world.things->potions &&
-        thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
-        return state->world.things->potions[thingIndex].type ==
-                   M11_POTION_EMPTY_FLASK
-               ? 1
-               : 3;
-    }
-    if (thingType == THING_TYPE_SCROLL) {
-        return 1;
-    }
-    return 0;
+    raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, thing);
+    if (!raw) return 0;
+    fields = (unsigned short)(raw[2] | ((unsigned short)raw[3] << 8));
+    *outPower = fields & 0xff;
+    *outType = (fields >> 8) & 0x7f;
+    return 1;
 }
 
 static int m11_dm1_f0140_object_weight_for_throw(
     const M11_GameViewState* state,
-    unsigned short thing) {
+    unsigned short thing,
+    int* outWeight) {
     /* ReDMCSB DUNGEON.C F0140 lines 1103-1130: F0328 reaches this
      * weight through both CHAMPION.C F0305 lines 1061-1074 and
-     * CHAMPION.C F0312 lines 1268-1274. */
-    return m11_dm1_f0140_object_weight_for_throw_depth(state, thing, 0);
+     * CHAMPION.C F0312 lines 1268-1274.  F0140 itself owns F0156 raw
+     * records and the F0159 container chain: no decoded fallback is valid. */
+    if (outWeight) *outWeight = 0;
+    if (!state || !state->world.things || !outWeight) return 0;
+    return dm1_v1_dungeon_get_object_weight_f0140_pc34(
+               state->world.things, thing, outWeight) > 0;
 }
 
 static void m11_dm1_award_throw_xp(M11_GameViewState* state,
@@ -27763,6 +29666,7 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     int levelBefore = 0;
     int levelAfter = 0;
     int baseIdx;
+    int mapDifficulty = 0;
 
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
@@ -27777,13 +29681,24 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     }
     if (plan.skillIndex < 0 || plan.skillIndex >= LIFECYCLE_SKILL_COUNT) return;
 
+    /* ReDMCSB CHAMPION.C F0304 reads CurrentMap->Difficulty, not the
+     * current map ordinal.  A headless M11 action has no loaded map record,
+     * which is the source-equivalent zero-difficulty fallback. */
+    if (state->world.dungeon && state->world.dungeon->maps &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex <
+            (int)state->world.dungeon->header.mapCount) {
+        mapDifficulty = (int)state->world.dungeon->maps[
+            state->world.party.mapIndex].difficulty;
+    }
+
     /* ReDMCSB MENU.C F0407 lines 1254-1255 and 1623-1624 award the
      * G0497 action XP to the G0496 skill through F0304 after the action
      * switch, with callers adjusting experience before the common tail. */
     if (F0849_LIFECYCLE_AddSkillExperience_Compat(
             &state->world.lifecycle.champions[championIndex],
             plan.skillIndex, plan.experienceGain,
-            state->world.party.mapIndex,
+            mapDifficulty,
             state->world.gameTick,
             state->world.lifecycle.lastCreatureAttackTime,
             &levelBefore, &levelAfter)) {
@@ -27812,7 +29727,6 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     int rngKinetic16;
     int rngAttack32;
     int thingType;
-    int thingIndex;
 
     if (!state || !champ) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
@@ -27820,13 +29734,20 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
 
     hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
     thingType = THING_GET_TYPE(thrownThing);
-    thingIndex = THING_GET_INDEX(thrownThing);
     isWeapon = thingType == THING_TYPE_WEAPON;
-    objectWeight = m11_dm1_f0140_object_weight_for_throw(state, thrownThing);
+    memset(&throwIn, 0, sizeof(throwIn));
+    if (!m11_dm1_f0140_object_weight_for_throw(
+            state, thrownThing, &objectWeight)) {
+        return 0;
+    }
+    if (thingType == THING_TYPE_POTION &&
+        !m11_dm1_thing_potion_values(
+            state, thrownThing, &throwIn.potionType, &throwIn.potionPower)) {
+        return 0;
+    }
     rngStrength16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
     rngKinetic16 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16);
     rngAttack32 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 32);
-    memset(&throwIn, 0, sizeof(throwIn));
     throwIn.objectWeight = objectWeight;
     throwIn.championStrength = (int)champ->attributes[CHAMPION_ATTR_STRENGTH];
     throwIn.championMaxLoad = (int)champ->maxLoad;
@@ -27851,14 +29772,6 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     throwIn.rngAttack32 = rngAttack32;
     throwIn.thrownThing = thrownThing;
     throwIn.thingType = thingType;
-    if (thingType == THING_TYPE_POTION && state->world.things &&
-        state->world.things->potions && thingIndex >= 0 &&
-        thingIndex < state->world.things->potionCount) {
-        throwIn.potionType =
-            (int)state->world.things->potions[thingIndex].type;
-        throwIn.potionPower =
-            (int)state->world.things->potions[thingIndex].power;
-    }
     throwIn.partyDirection = state->world.party.direction;
     throwIn.throwSide = throwSide;
     if (!dm1_v1_throw_projectile_plan_f0328_pc34(&throwIn, &throwPlan) ||
@@ -28010,42 +29923,22 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
     return 1;
 }
 
-static const M11_DM1WeaponInfo* m11_dm1_weapon_info_for_thing(
+static int m11_dm1_shoot_weapon_info_for_thing(
     const M11_GameViewState* state,
-    unsigned short thing) {
-    int thingIndex;
-    int weaponType;
-    if (!state || !state->world.things || !state->world.things->weapons) return NULL;
-    if (thing == THING_NONE || thing == THING_ENDOFLIST) return NULL;
-    if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return NULL;
-    thingIndex = THING_GET_INDEX(thing);
-    if (thingIndex < 0 || thingIndex >= state->world.things->weaponCount) return NULL;
-    weaponType = state->world.things->weapons[thingIndex].type;
-    if (weaponType < 0 || weaponType >= (int)(sizeof(s_dm1WeaponInfo) / sizeof(s_dm1WeaponInfo[0]))) {
-        return NULL;
-    }
-    return &s_dm1WeaponInfo[weaponType];
+    unsigned short thing,
+    DM1_WeaponInfo* outInfo) {
+    return m11_dm1_thing_weapon_info(state, thing, outInfo);
 }
 
 static int m11_dm1_shoot_ammunition_matches(
-    const M11_DM1WeaponInfo* actionInfo,
-    const M11_DM1WeaponInfo* readyInfo) {
+    const DM1_WeaponInfo* actionInfo,
+    const DM1_WeaponInfo* readyInfo) {
     int actionClass;
     int readyClass;
     if (!actionInfo || !readyInfo) return 0;
     actionClass = actionInfo->weaponClass;
     readyClass = readyInfo->weaponClass;
     return dm1_v1_shoot_ammunition_matches_pc34(actionClass, readyClass);
-}
-
-static DM1_WeaponInfo m11_dm1_shoot_weapon_fact(const M11_DM1WeaponInfo* info) {
-    DM1_WeaponInfo fact;
-    memset(&fact, 0, sizeof(fact));
-    if (!info) return fact;
-    fact.weaponClass = (int)info->weaponClass;
-    fact.kineticEnergy = (int)info->kineticEnergy;
-    fact.attributes = (int)info->shootAttack & 0xFF;
-    return fact;
 }
 
 static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
@@ -28058,7 +29951,7 @@ static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
     };
     struct ChampionState_Compat* champ;
     unsigned short actionThing;
-    const M11_DM1WeaponInfo* actionInfo;
+    DM1_WeaponInfo actionInfo;
     size_t i;
 
     if (!state) return 0;
@@ -28069,15 +29962,16 @@ static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
     if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] != THING_NONE) return 0;
 
     actionThing = m11_get_action_hand_thing(champ);
-    actionInfo = m11_dm1_weapon_info_for_thing(state, actionThing);
-    if (!actionInfo) return 0;
+    if (!m11_dm1_shoot_weapon_info_for_thing(state, actionThing, &actionInfo)) {
+        return 0;
+    }
 
     for (i = 0; i < sizeof(sourceQuiverOrder) / sizeof(sourceQuiverOrder[0]); ++i) {
         int slot = sourceQuiverOrder[i];
         unsigned short ammoThing = champ->inventory[slot];
-        const M11_DM1WeaponInfo* ammoInfo =
-            m11_dm1_weapon_info_for_thing(state, ammoThing);
-        if (!m11_dm1_shoot_ammunition_matches(actionInfo, ammoInfo)) continue;
+        DM1_WeaponInfo ammoInfo;
+        if (!m11_dm1_shoot_weapon_info_for_thing(state, ammoThing, &ammoInfo) ||
+            !m11_dm1_shoot_ammunition_matches(&actionInfo, &ammoInfo)) continue;
         champ->inventory[CHAMPION_SLOT_HAND_LEFT] = ammoThing;
         champ->inventory[slot] = THING_NONE;
         return 1;
@@ -29791,20 +31685,24 @@ static int m11_projectile_associated_weapon_type(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile) {
     unsigned short associatedThing;
-    int weaponIndex;
+    const unsigned char* raw;
+    DM1_WeaponInfo info;
+    int objectWeight;
     if (!state || !projectile || !state->world.things) return -1;
 
     associatedThing = (unsigned short)projectile->reserved1;
     if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return -1;
     if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return -1;
-
-    weaponIndex = THING_GET_INDEX(associatedThing);
-    if (!state->world.things->weapons ||
-            weaponIndex < 0 ||
-            weaponIndex >= state->world.things->weaponCount) {
+    if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(
+            state->world.things, associatedThing, &objectWeight)) {
         return -1;
     }
-    return (int)state->world.things->weapons[weaponIndex].type;
+    raw = dm1_v1_dungeon_get_thing_data_pc34(
+        state->world.things, associatedThing);
+    if (!raw || !dm1_weapon_info_pc34(raw[2] & 0x7f, &info)) {
+        return -1;
+    }
+    return raw[2] & 0x7f;
 }
 
 static int m11_attach_projectile_associated_thing_to_group(
@@ -29876,6 +31774,17 @@ static int m11_maybe_consume_thrown_potion_on_impact(
             projectile, result, 0, potionCount, &plan) ||
         !plan.shouldConsumePotion) {
         return 0;
+    }
+    {
+        int thingType;
+        int thingSubtype;
+        int weaponProjectileAspectOrdinal;
+        if (!m11_projectile_associated_thing_material(
+                state, plan.associatedThing, &thingType, &thingSubtype,
+                &weaponProjectileAspectOrdinal) ||
+            thingType != THING_TYPE_POTION) {
+            return 0;
+        }
     }
     /* ReDMCSB PROJEXPL.C F0217 lines 444-455 records thrown Ven/Ful
      * potions as RemovePotion impacts.  The impact deletes the projectile
@@ -29975,12 +31884,28 @@ static int m11_materialize_projectile_associated_thing(
             state->world.things->potions ? state->world.things->potionCount : 0,
             THING_ENDOFLIST, NULL, 0, &receipt) ||
         !receipt.valid || !receipt.handled ||
-        !receipt.shouldUnlinkProjectileFromSquare ||
-        !m11_unlink_thing_from_square(
-            &state->world, receipt.cleanupMapIndex, receipt.cleanupMapX,
-            receipt.cleanupMapY, receipt.projectileThing)) {
+        !receipt.shouldUnlinkProjectileFromSquare) {
         return 0;
     }
+
+    if (receipt.shouldMaterialize) {
+        int thingType;
+        int thingSubtype;
+        int weaponProjectileAspectOrdinal;
+        if (!m11_projectile_associated_thing_material(
+                state, receipt.materialization.droppedThing, &thingType,
+                &thingSubtype, &weaponProjectileAspectOrdinal)) {
+            return 0;
+        }
+    }
+
+    /* F0215 deletes the live C14 after F0214 has retired its C48/C49
+     * receipt. A compact square chain may not mirror that runtime C14 in
+     * headless/direct M11 advances; unlink it when present, but never let
+     * that absent mirror suppress the independent Projectile.Slot drop. */
+    (void)m11_unlink_thing_from_square(
+        &state->world, receipt.cleanupMapIndex, receipt.cleanupMapX,
+        receipt.cleanupMapY, receipt.projectileThing);
 
     /* ReDMCSB PROJEXPL.C F0217:607-608 unlinks C14 before F0215:248-260
      * decides whether Slot enters GROUP.Slot, a target square, or nowhere.
@@ -31661,10 +33586,6 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * lock described in BUG0_46. */
             unsigned short actionThing = m11_get_action_hand_thing(champ);
             unsigned short readyThing = champ->inventory[CHAMPION_SLOT_HAND_LEFT];
-            const M11_DM1WeaponInfo* actionInfo =
-                m11_dm1_weapon_info_for_thing(state, actionThing);
-            const M11_DM1WeaponInfo* readyInfo =
-                m11_dm1_weapon_info_for_thing(state, readyThing);
             DM1_WeaponInfo actionFact;
             DM1_WeaponInfo readyFact;
             DM1_RangedShootResult shootPlan;
@@ -31690,11 +33611,14 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 return 1;
             }
 
-            if (!actionInfo || !readyInfo) goto shoot_no_ammunition;
+            if (!m11_dm1_shoot_weapon_info_for_thing(
+                    state, actionThing, &actionFact) ||
+                !m11_dm1_shoot_weapon_info_for_thing(
+                    state, readyThing, &readyFact)) {
+                goto shoot_no_ammunition;
+            }
             m11_set_champion_direction_to_party_f0406(state, champ);
             skillShoot = m11_dm1_shoot_skill_level(state, championIndex);
-            actionFact = m11_dm1_shoot_weapon_fact(actionInfo);
-            readyFact = m11_dm1_shoot_weapon_fact(readyInfo);
             if (!dm1_ranged_shoot_resolve_pc34(
                     &actionFact, &readyFact, readyThing,
                     champ->cell, champ->direction, skillShoot, &shootPlan)) {
@@ -31984,11 +33908,11 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 champ->inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
             }
             if (throwPlan.actionEnableSlotOrdinal ==
-                    DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL &&
+                    CHAMPION_SLOT_ACTION_HAND &&
                 DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
                     &state->world, championIndex)) {
                 state->actionEnableSlotOrdinal[championIndex] =
-                    (unsigned char)throwPlan.actionEnableSlotOrdinal;
+                    DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
             }
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s THROWS",
@@ -33720,6 +35644,11 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                            renderPlan->graphic_rect.x,
                                            renderPlan->graphic_rect.y,
                                            -1);
+            } else {
+                /* F0387's black clear is the only legal result without the
+                 * selected C011/C077/C079 source surface.  Do not draw
+                 * authenticated M653 glyphs over a substitute panel. */
+                return 1;
             }
         }
     }
@@ -35677,7 +37606,10 @@ static int m11_build_dm1_spell_area_overlay_plan(
     int i;
 
     if (!state || !outPlan) return 0;
-    active = m11_dm1_spell_caster_index(state);
+    /* CASTER.C F0394 owns G0514.  A visible panel without that selected
+     * source caster is not a partially drawable legacy spell buffer: the
+     * caller must retain the F0394 black clear instead. */
+    active = state->dm1SpellCasting.magicCasterIndex;
     if (active < 0 || active >= state->world.party.championCount ||
         active >= DM1_V1_CPSAO_CHAMPION_COUNT_PC34) {
         return 0;
@@ -35686,10 +37618,8 @@ static int m11_build_dm1_spell_area_overlay_plan(
     input.previous_caster_index = DM1_V1_CPSAO_CHAMPION_NONE_PC34;
     input.requested_caster_index = active;
     input.party_champion_count = state->world.party.championCount;
-    input.symbol_step = (unsigned int)(
-        state->dm1SpellCasting.magicCasterIndex >= 0
-            ? state->dm1SpellCasting.input[active].symbolStep
-            : state->spellRuneRow);
+    input.symbol_step =
+        (unsigned int)state->dm1SpellCasting.input[active].symbolStep;
     for (i = 0; i < input.party_champion_count; ++i) {
         input.champions[i].index = i;
         input.champions[i].current_health =
@@ -35700,16 +37630,6 @@ static int m11_build_dm1_spell_area_overlay_plan(
         memcpy(input.champions[i].symbols,
                state->dm1SpellCasting.input[i].symbols,
                sizeof(input.champions[i].symbols));
-    }
-    /* Compatibility for pre-C109 callers that seed only the historical
-     * presentation view.  Live C100/C109 paths always own G0514 and never
-     * use this bridge. */
-    if (state->dm1SpellCasting.magicCasterIndex < 0) {
-        for (i = 0; i < state->spellBuffer.runeCount &&
-                    i < DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34; ++i) {
-            input.champions[active].symbols[i] =
-                (char)state->spellBuffer.runes[i];
-        }
     }
     return dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
         &input, outPlan) && outPlan->valid &&
@@ -41481,6 +43401,38 @@ int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
             1, 1, 0, &material)) {
         return 0;
     }
+    return m11_draw_dm1_wall_ornament_host_material_receipt(
+        state, framebuffer, framebufferWidth, framebufferHeight, &material);
+}
+
+int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
+    M11_GameViewState* state,
+    int relSide,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 projection;
+    DM1_WallOrnamentHostMaterialReceiptPc34 material;
+    const int viewWallIndex = relSide < 0 ? 10 : 11;
+
+    if (!state || (relSide != -1 && relSide != 1) ||
+        !DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+            1, relSide, viewWallIndex, 0,
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
+            &projection) ||
+        !projection.valid || !projection.consumedC127WallFact ||
+        projection.drawChampionPortrait || !projection.suppressChampionPortrait ||
+        projection.suppressGenericWallOrnament ||
+        !projection.drawWallOrnamentBacking ||
+        !projection.suppressHostFallbackVisuals ||
+        !dm1_v1_wall_ornament_host_material_receipt_pc34(
+            projection.globalOrnamentIndex, projection.viewWallIndex, 0,
+            &material)) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0107 projects C346 at D1L/D1R. C026 is a D1C
+     * only operation at 3913-3928 and is deliberately absent here. */
     return m11_draw_dm1_wall_ornament_host_material_receipt(
         state, framebuffer, framebufferWidth, framebufferHeight, &material);
 }

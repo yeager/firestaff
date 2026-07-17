@@ -299,14 +299,15 @@ int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
 {
     uint16_t *obf;
     uint16_t key_index;
-    uint16_t computed_checksum;
-    uint16_t deobf_last;
     int ki;
 
     if (!hdr || !raw_512) return -1;
 
     /* Copy raw header */
     memcpy(hdr, raw_512, sizeof(CSB_V1_SaveHeader));
+    if (csb_v1_save_header_verify(hdr, raw_512) != 0) {
+        return -1;
+    }
 
     key_index = (uint16_t)csb_v1_save_header_get_key_index(hdr->Magic);
     ki = (int)(key_index & 0x1F);
@@ -317,17 +318,9 @@ int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
     obf = hdr->ObfuscatedBlock;
     (void)obf; /* suppress unused-var warning — needed for pointer arithmetic below */
 
-    /* Deobfuscate the last word in-place, then compute checksum over
-     * the full deobfuscated block. */
-    deobf_last = obf[OBFUSC_WORD_COUNT - 1];
-    obf[OBFUSC_WORD_COUNT - 1] ^= g_obfuscation_keys[(ki + OBFUSC_WORD_COUNT - 1) & 0x1F];
-    computed_checksum = deobfusc_and_checksum(obf, OBFUSC_WORD_COUNT, key_index);
-
-    /* Verify: last word after deobfuscation should equal the sum of words 0-126.
-     * ReDMCSB F0429: sum of uint16_t[0..126] must equal uint16_t[127] before XOR. */
-    if (computed_checksum != deobf_last) {
-        return -1; /* corrupted */
-    }
+    /* The raw block was verified above. Deobfuscate it only for callers that
+     * need the decoded header representation. */
+    (void)deobfusc_and_checksum(obf, OBFUSC_WORD_COUNT, key_index);
 
     return 0; /* valid header */
 }

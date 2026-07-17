@@ -71,7 +71,7 @@ static void test_f0213_f0220_smoke_create_and_advance(void)
               &input, &list, &slot, &first_event) == 1 &&
               slot == 0 &&
               list.count == 1 &&
-              list.entries[0].active == 1 &&
+              list.entries[0].reserved0 == 1 &&
               list.entries[0].explosionType == C040_EXPLOSION_SMOKE &&
               list.entries[0].attack == 96 &&
               first_event.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&

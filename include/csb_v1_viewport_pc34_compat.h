@@ -5,7 +5,9 @@
 #include <stdint.h>
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_csbgraphics_dat_real_scan.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
@@ -33,6 +35,8 @@ typedef struct CSB_V1_ViewportRuntimeExplosionSpriteBlit
 #define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0111_DOOR 0x0004u
 #define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0115_THING 0x0008u
 #define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR 0x0010u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR 0x0020u
+#define CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR 0x0040u
 #define CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES \
     (CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0111_DOOR | \
      CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0115_THING | \
@@ -53,6 +57,34 @@ typedef struct {
     uint32_t d1_door_hash;
     uint32_t d1_thing_hash;
     uint32_t d2_door_hash;
+    /* F0489-selected native packed bytes and F0488-expanded indexed bytes
+     * have separate identities. The source payload hash remains above; these
+     * values are set only by a checked native-span decode receipt. */
+    uint32_t d2_door_decoded_hash;
+    /* The mandatory D2C F0111 route carries a value copy of the checked
+     * G0694 capture facts.  Do not accept the payload FNV on its own: that
+     * would let a caller relabel unrelated GRAPHICS.DAT bytes as D2C door
+     * material after the route receipt was produced. */
+    int d2_door_capture_valid;
+    int d2_door_capture_real_graphics_dat;
+    int d2_door_capture_no_synthetic_pixels;
+    int d2_door_capture_no_fallback_visuals;
+    int d2_door_capture_item_index;
+    size_t d2_door_capture_byte_count;
+    uint32_t d2_door_capture_payload_hash;
+    int d2_door_capture_width;
+    int d2_door_capture_height;
+    int d2_door_capture_zone;
+    int d2_door_capture_transparent_color;
+    /* The two far D3 side doors are an all-or-nothing G0693 pair.  They are
+     * optional for the original D0/D1/D2 first-frame receipt, but may enter
+     * the live draw plan only after the paired real-asset receipt agrees. */
+    uint32_t d3l2_door_hash;
+    uint32_t d3r2_door_hash;
+    uint32_t d3l2_door_decoded_hash;
+    uint32_t d3r2_door_decoded_hash;
+    CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34
+        d3_pair_real_asset_receipt;
     size_t source_item_count;
     const char *source_evidence;
 } CSB_V1_ViewportFirstFrameMaterialProof;
@@ -66,6 +98,11 @@ typedef struct {
     int real_graphics_session;
     int no_synthetic_pixels;
     int no_fallback_visuals;
+    uint32_t capture_identity_hash;
+    uint32_t d2_source_payload_hash;
+    uint32_t d2_decoded_hash;
+    uint32_t d3_source_payload_hash;
+    uint32_t d3_decoded_hash;
     const char *source_evidence;
 } CSB_V1_ViewportFirstFrameMaterializationReceipt;
 
@@ -75,16 +112,294 @@ typedef enum {
     CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0115_THING_PC34,
     CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34,
     CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0115_THING_PC34,
-    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34,
+    CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34
 } CSB_V1_ViewportRuntimeDrawRoutePc34;
 
-#define CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34 5
+#define CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_BASE_COUNT_PC34 5
+#define CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34 7
+
+typedef struct {
+    unsigned int route_bit;
+    const uint8_t *decoded_pixels;
+    size_t decoded_size;
+    uint32_t decoded_fnv1a;
+    int width;
+    int height;
+} CSB_V1_ViewportFirstFrameMaterialSpanPc34;
+
+typedef struct {
+    const uint8_t *decoded_palette;
+    size_t decoded_size;
+    uint32_t decoded_fnv1a;
+} CSB_V1_ViewportFirstFramePaletteSpanPc34;
+
+/* A caller may only name decoded D2/D3 pixels after an original-data capture
+ * has repeated both the compressed GRAPHICS.DAT identity and the palette
+ * identity. This intentionally has no decoder or palette substitute: the
+ * capture owner supplies already verified indexed spans. */
+typedef struct {
+    int valid;
+    int original_graphics_dat_capture;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    const char *source_path;
+    const char *source_md5;
+    const char *palette_source_path;
+    const char *palette_source_md5;
+    uint32_t palette_capture_fnv1a;
+    uint32_t capture_identity_hash;
+    int d2_item_index;
+    size_t d2_source_byte_count;
+    uint32_t d2_source_payload_hash;
+    const uint8_t *d2_decoded_pixels;
+    size_t d2_decoded_size;
+    uint32_t d2_decoded_fnv1a;
+    int d2_width;
+    int d2_height;
+    int d3_item_index;
+    size_t d3_source_byte_count;
+    uint32_t d3_source_payload_hash;
+    const uint8_t *d3_decoded_pixels;
+    size_t d3_decoded_size;
+    uint32_t d3_decoded_fnv1a;
+    int d3_width;
+    int d3_height;
+} CSB_V1_ViewportD2D3MaterialCaptureReceiptPc34;
+
+/* GRAPHICS.DAT's compressed/decompressed entry tables prove file layout, but
+ * do not by themselves establish that a DUNVIEW native-bitmap index (G0693
+ * or G0694) names a particular GRAPHICS.DAT entry. Keep that absence explicit
+ * so F0489/F0488 cannot turn an index coincidence into a draw source. */
+typedef struct {
+    int valid;
+    int original_graphics_dat_table;
+    int native_bitmap_mapping_proven;
+    int raster_blocked_without_mapping;
+    const char *source_path;
+    const char *source_md5;
+    uint32_t native_bitmap_index;
+    uint32_t graphics_entry_index;
+    uint32_t graphics_entry_count;
+    size_t table_span_bytes;
+    uint32_t table_span_fnv1a;
+} CSB_V1_ViewportGraphicsTableProvenancePc34;
+
+typedef struct {
+    int valid;
+    int original_graphics_dat_capture;
+    int f0489_native_bitmap_selected;
+    int f0488_expand_4bpp;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    const char *source_path;
+    const char *source_md5;
+    const char *palette_source_path;
+    const char *palette_source_md5;
+    uint32_t palette_capture_fnv1a;
+    uint32_t capture_identity_hash;
+    const CSB_V1_ViewportGraphicsTableProvenancePc34 *d2_table_provenance;
+    const CSB_V1_ViewportGraphicsTableProvenancePc34 *d3_table_provenance;
+    int d2_item_index;
+    uint32_t d2_source_payload_hash;
+    const uint8_t *d2_packed_pixels;
+    size_t d2_packed_size;
+    uint32_t d2_packed_fnv1a;
+    int d3_item_index;
+    uint32_t d3_source_payload_hash;
+    const uint8_t *d3_packed_pixels;
+    size_t d3_packed_size;
+    uint32_t d3_packed_fnv1a;
+} CSB_V1_ViewportD2D3NativePackedCapturePc34;
+
+typedef struct {
+    int valid;
+    const char *source_path;
+    const char *source_md5;
+    CSB_V1_ViewportFirstFramePaletteSpanPc34 palette;
+    CSB_V1_ViewportD2D3MaterialCaptureReceiptPc34 d2_d3_capture;
+    CSB_V1_ViewportFirstFrameMaterialSpanPc34 materials[
+        CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34];
+} CSB_V1_ViewportFirstFrameMaterialBytesPc34;
+
+/* ReDMCSB MEMORY.C F0489 selects the native packed bitmap and F0488 expands
+ * its 4bpp rows. This adapter accepts no GRAPHICS.DAT entry-number mapping;
+ * the caller must provide the already source-selected native span and exact
+ * palette/capture identity. */
+int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    const CSB_V1_ViewportFirstFramePaletteSpanPc34 *palette,
+    const CSB_V1_ViewportD2D3NativePackedCapturePc34 *packed_capture,
+    uint8_t *d2_decoded_pixels, size_t d2_decoded_capacity,
+    uint8_t *d3_decoded_pixels, size_t d3_decoded_capacity,
+    CSB_V1_ViewportD2D3MaterialCaptureReceiptPc34 *out_receipt);
+
+/* Reads only the original big-endian GRAPHICS.DAT signature and its bounded
+ * compressed/decompressed table span. No native-index to entry-index mapping
+ * is guessed here, so the returned receipt deliberately keeps raster blocked
+ * until source evidence supplies such a mapping. */
+int csb_v1_viewport_admit_graphics_table_provenance_pc34(
+    const uint8_t *table_bytes, size_t table_size,
+    const char *source_path, const char *source_md5,
+    uint32_t native_bitmap_index,
+    CSB_V1_ViewportGraphicsTableProvenancePc34 *out_receipt);
+
+typedef struct {
+    int valid;
+    int consumed_by_raster;
+    int rejected;
+    int command_count;
+    uint32_t combined_material_hash;
+    uint32_t raster_hash;
+} CSB_V1_ViewportFirstFrameRasterReceiptPc34;
+
+typedef enum {
+    CSB_V1_VIEWPORT_LIVE_SURFACE_WALL_PC34 = 0,
+    CSB_V1_VIEWPORT_LIVE_SURFACE_FLOOR_PC34,
+    CSB_V1_VIEWPORT_LIVE_SURFACE_DOOR_PC34
+} CSB_V1_ViewportLiveSurfaceKindPc34;
+
+#define CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34 3
+#define CSB_V1_VIEWPORT_OPERATOR_DECLARATION_MAX_FRAMES_PC34 32
+
+typedef struct {
+    CSB_V1_ViewportLiveSurfaceKindPc34 kind;
+    const uint8_t *decoded_pixels;
+    size_t decoded_size;
+    uint32_t decoded_fnv1a;
+    int width;
+    int height;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    int transparent_color;
+} CSB_V1_ViewportLiveSurfaceSpanPc34;
+
+typedef struct {
+    int valid;
+    unsigned int frame_number;
+    int door_state;
+    const char *source_path;
+    const char *source_md5;
+    CSB_V1_ViewportFirstFramePaletteSpanPc34 palette;
+    CSB_V1_ViewportLiveSurfaceSpanPc34 surfaces[
+        CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34];
+} CSB_V1_ViewportLiveFrameSourcePc34;
+
+typedef struct {
+    int valid;
+    unsigned int last_frame_number;
+    int last_door_state;
+    uint32_t source_identity_hash;
+    uint32_t palette_hash;
+} CSB_V1_ViewportLiveFrameProgressionPc34;
+
+typedef struct {
+    int valid;
+    int consumed_by_m11_render;
+    unsigned int frame_number;
+    int door_state;
+    uint32_t source_identity_hash;
+    uint32_t palette_hash;
+    uint32_t wall_hash;
+    uint32_t floor_hash;
+    uint32_t door_hash;
+} CSB_V1_ViewportLiveFrameReceiptPc34;
+
+typedef struct {
+    uint32_t entry_index;
+    int width;
+    int height;
+    uint32_t decoded_fnv1a;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    int transparent_color;
+} CSB_V1_ViewportLiveSurfaceDeclarationPc34;
+
+typedef struct {
+    unsigned int frame_number;
+    int door_state;
+    const char *source_path;
+    const char *source_md5;
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt;
+    CSB_V1_ViewportLiveSurfaceDeclarationPc34 surfaces[
+        CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34];
+} CSB_V1_ViewportLiveFrameDeclarationPc34;
+
+typedef struct {
+    int valid;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt;
+    uint8_t palette_bytes[CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES];
+    uint8_t *decoded_surface_bytes[CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34];
+    CSB_V1_ViewportLiveFrameSourcePc34 source;
+} CSB_V1_ViewportLiveFrameMaterialPc34;
+
+typedef struct {
+    unsigned int frame_number;
+    int door_state;
+    uint32_t wall_entry_index;
+    uint32_t floor_entry_index;
+    uint32_t door_entry_index;
+    const char *source_path;
+    const char *source_md5;
+} CSB_V1_ViewportLiveDungeonStatePc34;
+
+typedef struct {
+    int valid;
+    int invalidated_previous;
+    unsigned int frame_number;
+    int door_state;
+    uint32_t state_identity_hash;
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declaration;
+} CSB_V1_ViewportLiveDungeonSelectionPc34;
+
+typedef struct {
+    int valid;
+    int real_asset_matched;
+    int terminal_session_owned;
+    int viewport_frame_consumed;
+    int no_synthetic_surface;
+    uint32_t session_generation;
+    uint32_t source_tick;
+} CSB_V1_ViewportVerifiedDungeonIngressPc34;
+
+typedef struct {
+    int valid;
+    const char *source_path;
+    const char *source_md5;
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt;
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declarations;
+    size_t declaration_count;
+} CSB_V1_ViewportOperatorDeclarationCorpusPc34;
+
+typedef struct {
+    int valid;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt;
+    CSB_V1_ViewportLiveFrameDeclarationPc34
+        declarations[CSB_V1_VIEWPORT_OPERATOR_DECLARATION_MAX_FRAMES_PC34];
+    size_t declaration_count;
+} CSB_V1_ViewportOperatorDeclarationManifestPc34;
 
 typedef struct {
     CSB_V1_ViewportRuntimeDrawRoutePc34 route;
     unsigned int route_bit;
     uint32_t material_hash;
     uint32_t palette_hash;
+    /* Filled only by the checked GRAPHICS.DAT material-byte handoff. */
+    const uint8_t *decoded_pixels;
+    size_t decoded_size;
+    int decoded_width;
+    int decoded_height;
+    const uint8_t *decoded_palette;
+    size_t decoded_palette_size;
     int view_depth;
     int view_square;
     int draw_order;
@@ -220,8 +535,14 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     void *explosion_sprite_user;
     int runtime_explosion_sprite_drawn_count;
     int runtime_explosion_marker_drawn_count;
+    int runtime_overlay_source_required;
+    int runtime_overlay_source_admitted;
+    uint32_t runtime_overlay_source_hash;
     int real_graphics_session;
     const CSB_V1_ViewportFirstFrameMaterialProof *first_frame_material_proof;
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *first_frame_material_bytes;
+    const char *first_frame_material_source_path;
+    const char *first_frame_material_source_md5;
     int first_frame_material_consumed_count;
     int first_frame_material_blocked_count;
     uint32_t first_frame_material_hash;
@@ -230,6 +551,9 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int first_frame_draw_plan_command_count;
     uint32_t first_frame_draw_plan_hash;
     uint32_t first_frame_draw_plan_palette_hash;
+    int first_frame_material_raster_consumed_count;
+    int first_frame_material_raster_blocked_count;
+    uint32_t first_frame_material_raster_hash;
 
     /* The shared F0128/F0098 core asks its caller for the PC3.4-expanded
      * C079/C078 aperture.  CSB owns this bridge so a verified session never
@@ -271,8 +595,14 @@ typedef struct {
     void *projectile_sprite_user;
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
     void *explosion_sprite_user;
+    int runtime_overlay_source_required;
+    int runtime_overlay_source_admitted;
+    uint32_t runtime_overlay_source_hash;
     int real_graphics_session;
     const CSB_V1_ViewportFirstFrameMaterialProof *first_frame_material_proof;
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *first_frame_material_bytes;
+    const char *first_frame_material_source_path;
+    const char *first_frame_material_source_md5;
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
 } CSB_V1_ViewportRuntimeDrawerBinding;
@@ -298,6 +628,9 @@ typedef struct {
     int first_frame_draw_plan_command_count;
     uint32_t first_frame_draw_plan_hash;
     uint32_t first_frame_draw_plan_palette_hash;
+    int first_frame_material_raster_consumed_count;
+    int first_frame_material_raster_blocked_count;
+    uint32_t first_frame_material_raster_hash;
 } CSB_V1_ViewportRuntimeDrawCounts;
 
 typedef struct {
@@ -888,6 +1221,64 @@ int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
     int party_x,
     int party_y,
     CSB_V1_ViewportRuntimeDrawPlanPc34 *out_plan);
+int csb_v1_viewport_bind_first_frame_material_bytes_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    CSB_V1_ViewportRuntimeDrawPlanPc34 *plan,
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *bytes,
+    CSB_V1_ViewportFirstFrameMaterializationReceipt *out_receipt);
+int csb_v1_viewport_consume_first_frame_material_raster_pc34(
+    const CSB_V1_ViewportFirstFrameMaterializationReceipt *receipt,
+    const CSB_V1_ViewportRuntimeDrawPlanPc34 *plan,
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *bytes,
+    const char *expected_source_path,
+    const char *expected_source_md5,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_ViewportFirstFrameRasterReceiptPc34 *out_receipt);
+int csb_v1_viewport_admit_live_frame_progression_pc34(
+    CSB_V1_ViewportLiveFrameProgressionPc34 *progression,
+    const CSB_V1_ViewportFirstFrameMaterializationReceipt *base_receipt,
+    const CSB_V1_ViewportLiveFrameSourcePc34 *source,
+    const char *expected_source_path,
+    const char *expected_source_md5,
+    CSB_V1_ViewportLiveFrameReceiptPc34 *out_receipt);
+int csb_v1_viewport_consume_live_frame_raster_pc34(
+    const CSB_V1_ViewportLiveFrameReceiptPc34 *receipt,
+    const CSB_V1_ViewportLiveFrameSourcePc34 *source,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    uint32_t *out_raster_hash);
+int csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declaration,
+    CSB_V1_ViewportLiveFrameMaterialPc34 *out_material);
+void csb_v1_viewport_live_frame_material_free_pc34(
+    CSB_V1_ViewportLiveFrameMaterialPc34 *material);
+int csb_v1_viewport_select_live_dungeon_state_pc34(
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declarations,
+    size_t declaration_count,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *state,
+    const CSB_V1_ViewportLiveDungeonSelectionPc34 *previous,
+    CSB_V1_ViewportLiveDungeonSelectionPc34 *out_selection);
+int csb_v1_viewport_live_dungeon_state_from_verified_ingress_pc34(
+    const CSB_V1_ViewportVerifiedDungeonIngressPc34 *frame_receipt,
+    const uint8_t *dungeon_grid,
+    int dungeon_width,
+    int dungeon_height,
+    int square_x,
+    int square_y,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *explicit_material_identity,
+    CSB_V1_ViewportLiveDungeonStatePc34 *out_state);
+int csb_v1_viewport_admit_operator_declaration_corpus_pc34(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_ViewportOperatorDeclarationCorpusPc34 *corpus);
+int csb_v1_viewport_parse_operator_declaration_manifest_pc34(
+    const char *text,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt,
+    CSB_V1_ViewportOperatorDeclarationManifestPc34 *out_manifest);
 void csb_v1_viewport_set_first_frame_material_proof_pc34(
     CSB_V1_ViewportConfig *cfg,
     const CSB_V1_ViewportFirstFrameMaterialProof *proof);
