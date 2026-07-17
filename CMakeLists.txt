@@ -1853,7 +1853,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.83 LANGUAGES C)
+project(Firestaff VERSION 3.0.84 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -26398,6 +26398,12 @@ add_test(NAME nexus_v1_verify_prs3_material_capture_artifact
 add_test(NAME nexus_v1_mednafen_prs3_material_capture_launcher
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_prs3_material_capture_launcher.sh)
 add_test(NAME nexus_v1_verify_slev_sal_capture_artifact COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_verify_slev_sal_capture_artifact.sh)
+add_executable(test_nexus_v1_owner_material_capture_admission
+    tests/test_nexus_v1_owner_material_capture_admission.c)
+target_link_libraries(test_nexus_v1_owner_material_capture_admission PRIVATE firestaff_nexus)
+target_include_directories(test_nexus_v1_owner_material_capture_admission PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_owner_material_capture_admission
+    COMMAND test_nexus_v1_owner_material_capture_admission)
 add_test(
     NAME nexus_v1_mednafen_slev_sal_capture_launcher
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_slev_sal_capture_launcher.sh
