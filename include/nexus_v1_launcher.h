@@ -287,8 +287,17 @@ int nexus_v1_launcher_import_m11_slev_sal_capture(
     const uint8_t *capture_bytes, size_t capture_byte_count,
     Nexus_V1_LauncherM11SlevSalCaptureImportReceipt *out_receipt);
 typedef struct {
-    int valid, route_bound, task_bound, sal_bound, map_bound, sddrvs_bound;
-    int payload_bounds_bound, payload_hash_bound, payload_opaque, no_draw_only, no_op_only;
+    int valid;
+    int route_bound;
+    int task_bound;
+    int sal_bound;
+    int map_bound;
+    int sddrvs_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int payload_opaque;
+    int no_draw_only;
+    int no_op_only;
 } Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt;
 int nexus_v1_launcher_verify_m11_slev_sal_local_artifact(
     const Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt *route,

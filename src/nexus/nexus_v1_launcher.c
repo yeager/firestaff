@@ -1133,22 +1133,63 @@ int nexus_v1_launcher_import_m11_slev_sal_capture(
 
 int nexus_v1_launcher_verify_m11_slev_sal_local_artifact(
     const Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt *route,
-    const uint8_t *b, size_t n, Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt *out)
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt *out_receipt)
 {
-    Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt r; uint32_t o,l;
-    if (!out) return 0; memset(&r,0,sizeof(r)); r.no_draw_only=r.no_op_only=1;
+    Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt receipt;
+    uint32_t payload_offset;
+    uint32_t payload_length;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.no_op_only = 1;
     if (!route || !route->valid || !route->no_draw_only || !route->no_op_only ||
-        !route->commands_opaque || !route->audio_opaque || !b || n < NEXUS_V1_M11_SLEV_SAL_CAPTURE_HEADER_BYTES ||
-        memcmp(b,NEXUS_V1_M11_SLEV_SAL_CAPTURE_MAGIC,8U) || nexus_v1_launcher_capture_be32(b+8U)!=1U || nexus_v1_launcher_capture_be32(b+12U)!=96U) { *out=r; return 0; }
-    r.route_bound=nexus_v1_launcher_capture_be64(b+16U)==route->route_epoch && nexus_v1_launcher_capture_be64(b+24U)==route->package_fnv1a64 && nexus_v1_launcher_capture_be64(b+32U)==route->card_fnv1a64;
-    r.task_bound=nexus_v1_launcher_capture_be64(b+40U)==route->task_trace_fnv1a64 && nexus_v1_launcher_capture_be64(b+88U)==route->task.task_body.source_fnv1a64;
-    r.sal_bound=nexus_v1_launcher_capture_be64(b+48U)==route->sal_descriptor_fnv1a64;
-    r.map_bound=nexus_v1_launcher_capture_be64(b+56U)==route->map_table_fnv1a64;
-    r.sddrvs_bound=nexus_v1_launcher_capture_be64(b+64U)==route->sound_driver_fnv1a64;
-    o=nexus_v1_launcher_capture_be32(b+72U); l=nexus_v1_launcher_capture_be32(b+76U);
-    r.payload_bounds_bound=o==96U && l>0U && o<=n && l<=n-o && o+(size_t)l==n;
-    r.payload_hash_bound=r.payload_bounds_bound && nexus_v1_launcher_capture_be64(b+80U)==nexus_v1_launcher_capture_fnv1a64(b+o,l);
-    if(!r.route_bound||!r.task_bound||!r.sal_bound||!r.map_bound||!r.sddrvs_bound||!r.payload_hash_bound){*out=r;return 0;} r.valid=1;r.payload_opaque=1;*out=r;return 1;
+        !route->commands_opaque || !route->audio_opaque || !capture_bytes ||
+        capture_byte_count < NEXUS_V1_M11_SLEV_SAL_CAPTURE_HEADER_BYTES ||
+        memcmp(capture_bytes, NEXUS_V1_M11_SLEV_SAL_CAPTURE_MAGIC, 8U) != 0 ||
+        nexus_v1_launcher_capture_be32(capture_bytes + 8U) !=
+            NEXUS_V1_M11_SLEV_SAL_CAPTURE_VERSION ||
+        nexus_v1_launcher_capture_be32(capture_bytes + 12U) !=
+            NEXUS_V1_M11_SLEV_SAL_CAPTURE_HEADER_BYTES) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.route_bound =
+        nexus_v1_launcher_capture_be64(capture_bytes + 16U) == route->route_epoch &&
+        nexus_v1_launcher_capture_be64(capture_bytes + 24U) == route->package_fnv1a64 &&
+        nexus_v1_launcher_capture_be64(capture_bytes + 32U) == route->card_fnv1a64;
+    receipt.task_bound =
+        nexus_v1_launcher_capture_be64(capture_bytes + 40U) == route->task_trace_fnv1a64 &&
+        nexus_v1_launcher_capture_be64(capture_bytes + 88U) ==
+            route->task.task_body.source_fnv1a64;
+    receipt.sal_bound = nexus_v1_launcher_capture_be64(capture_bytes + 48U) ==
+        route->sal_descriptor_fnv1a64;
+    receipt.map_bound = nexus_v1_launcher_capture_be64(capture_bytes + 56U) ==
+        route->map_table_fnv1a64;
+    receipt.sddrvs_bound = nexus_v1_launcher_capture_be64(capture_bytes + 64U) ==
+        route->sound_driver_fnv1a64;
+    payload_offset = nexus_v1_launcher_capture_be32(capture_bytes + 72U);
+    payload_length = nexus_v1_launcher_capture_be32(capture_bytes + 76U);
+    receipt.payload_bounds_bound =
+        payload_offset == NEXUS_V1_M11_SLEV_SAL_CAPTURE_HEADER_BYTES &&
+        payload_length > 0U && payload_offset <= capture_byte_count &&
+        payload_length <= capture_byte_count - payload_offset &&
+        payload_offset + (size_t)payload_length == capture_byte_count;
+    receipt.payload_hash_bound = receipt.payload_bounds_bound &&
+        nexus_v1_launcher_capture_be64(capture_bytes + 80U) ==
+            nexus_v1_launcher_capture_fnv1a64(
+                capture_bytes + payload_offset, payload_length);
+    if (!receipt.route_bound || !receipt.task_bound || !receipt.sal_bound ||
+        !receipt.map_bound || !receipt.sddrvs_bound ||
+        !receipt.payload_hash_bound) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.payload_opaque = 1;
+    *out_receipt = receipt;
+    return 1;
 }
 
 int nexus_v1_launcher_admit_m12_m11_slev_sal_capture_required(
@@ -1198,6 +1239,7 @@ int nexus_v1_launcher_resume_m12_m11_slev_sal_capture(
     Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt *out_receipt)
 {
     Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt receipt;
+    Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt local_artifact;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
@@ -1218,7 +1260,10 @@ int nexus_v1_launcher_resume_m12_m11_slev_sal_capture(
         *out_receipt = receipt;
         return 0;
     }
-    if (!nexus_v1_launcher_import_m11_slev_sal_capture(
+    if (!nexus_v1_launcher_verify_m11_slev_sal_local_artifact(
+            &receipt.startup, capture_bytes, capture_byte_count,
+            &local_artifact) ||
+        !nexus_v1_launcher_import_m11_slev_sal_capture(
             engine, assets, &receipt.startup, capture_bytes, capture_byte_count,
             &receipt.capture)) {
         receipt.valid = 0;

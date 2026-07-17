@@ -1438,7 +1438,12 @@ int main(void)
                     sizeof(generator_delay_store_then_fetch[0])), parameters,
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 91u && generator_delay_stored == 91 &&
-              generator_delay_store_count == 1,
+              generator_delay_store_count == 1 &&
+              execution.generator_delay_store_count == 1u &&
+              execution.last_generator_delay_location == 0x0c82u &&
+              execution.last_generator_delay_before == 37 &&
+              execution.last_generator_delay_after == 91 &&
+              execution.last_generator_delay_has_generator,
           "GeneratorDelay! stages DB3 delay, exposes it to same-action fetch, and commits once");
     generator_delay_stored = -1;
     generator_delay_store_count = 0;
@@ -2091,7 +2096,15 @@ int main(void)
     check(run(&state, &action, excell_flags_store,
               (int)(sizeof(excell_flags_store) / sizeof(excell_flags_store[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
-              excell_flags_store_count == 1 && excell_flags_stored == 0x89u,
+              excell_flags_store_count == 1 && excell_flags_stored == 0x89u &&
+              execution.excell_store_count == 1u &&
+              execution.last_excell_store_location == 0x0c82u &&
+              execution.last_excell_store_before[0] == (1u << 2) &&
+              execution.last_excell_store_before[3] == (1u << 2) &&
+              execution.last_excell_store_before[7] == (1u << 2) &&
+              execution.last_excell_store_after[0] == (1u << 2) &&
+              execution.last_excell_store_after[3] == (1u << 2) &&
+              execution.last_excell_store_after[7] == (1u << 2),
           "ECF! commits the source flag byte only after complete execution");
     excell_flags_stored = 0u;
     excell_flags_store_count = 0;

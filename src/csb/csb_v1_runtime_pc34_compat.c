@@ -22100,6 +22100,30 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             missile_info_timer_position_after;
         execution_receipt.missile_info_timer_time = missile_info_timer_time;
     }
+    execution_receipt.excell_store_count =
+        candidate.last_execution.excell_store_count;
+    if (execution_receipt.excell_store_count != 0u) {
+        execution_receipt.last_excell_store_location =
+            candidate.last_execution.last_excell_store_location;
+        memcpy(execution_receipt.last_excell_store_before,
+               candidate.last_execution.last_excell_store_before,
+               sizeof(execution_receipt.last_excell_store_before));
+        memcpy(execution_receipt.last_excell_store_after,
+               candidate.last_execution.last_excell_store_after,
+               sizeof(execution_receipt.last_excell_store_after));
+    }
+    execution_receipt.generator_delay_store_count =
+        candidate.last_execution.generator_delay_store_count;
+    if (execution_receipt.generator_delay_store_count != 0u) {
+        execution_receipt.last_generator_delay_location =
+            candidate.last_execution.last_generator_delay_location;
+        execution_receipt.last_generator_delay_before =
+            candidate.last_execution.last_generator_delay_before;
+        execution_receipt.last_generator_delay_after =
+            candidate.last_execution.last_generator_delay_after;
+        execution_receipt.generator_delay_has_generator =
+            candidate.last_execution.last_generator_delay_has_generator;
+    }
     if (candidate.transfer_execution_count != runner->transfer_execution_count) {
         execution_receipt.transfer_count = candidate.last_transfer.transfer_count;
         execution_receipt.transfer_return_count =

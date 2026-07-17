@@ -1,9 +1,13 @@
-#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#if defined(_WIN32)
+#include <direct.h>
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 #include "asset_status_m12.h"
 #include "theron_v1_srm_operator_attestation.h"
@@ -11,15 +15,52 @@
 
 static int direct_regular_path(const char *path) {
     struct stat status;
+#if defined(_WIN32)
+    DWORD attributes;
+    if (!path || !path[0]) return 0;
+    attributes = GetFileAttributesA(path);
+    return attributes != INVALID_FILE_ATTRIBUTES &&
+        !(attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) &&
+        stat(path, &status) == 0 && S_ISREG(status.st_mode);
+#else
     struct stat link_status;
     return path && path[0] && lstat(path, &link_status) == 0 &&
         !S_ISLNK(link_status.st_mode) && stat(path, &status) == 0 &&
         S_ISREG(status.st_mode);
+#endif
 }
 
 static int path_exists(const char *path) {
+#if defined(_WIN32)
+    return path && path[0] && GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
+#else
     struct stat status;
     return path && path[0] && lstat(path, &status) == 0;
+#endif
+}
+
+static int canonical_path(const char *path, char *out, size_t capacity)
+{
+#if defined(_WIN32)
+    return path && out && capacity && _fullpath(out, path, capacity) != NULL;
+#else
+    return path && out && realpath(path, out) != NULL;
+#endif
+}
+
+static void manifest_parts(const char *path, char *root, size_t root_capacity,
+                           char *name, size_t name_capacity)
+{
+    const char *slash = strrchr(path, '/');
+    const char *backslash = strrchr(path, '\\');
+    const char *separator = backslash && (!slash || backslash > slash) ? backslash : slash;
+    if (!separator) {
+        snprintf(root, root_capacity, ".");
+        snprintf(name, name_capacity, "%s", path);
+        return;
+    }
+    snprintf(root, root_capacity, "%.*s", (int)(separator - path), path);
+    snprintf(name, name_capacity, "%s", separator + 1);
 }
 
 int theron_v1_srm_operator_attest(
@@ -59,8 +100,8 @@ int theron_v1_srm_operator_attest(
         return 1;
     }
     if (request->admission_format_version != THERON_V1_SRM_OPAQUE_ADMISSION_VERSION ||
-        !(resolved_srm = realpath(request->srm_path, srm_path)) ||
-        !(resolved_cue = realpath(request->track02_cue_path, cue_path)) ||
+        !(resolved_srm = canonical_path(request->srm_path, srm_path, sizeof(srm_path)) ? srm_path : NULL) ||
+        !(resolved_cue = canonical_path(request->track02_cue_path, cue_path, sizeof(cue_path)) ? cue_path : NULL) ||
         stat(resolved_srm, &srm_status) != 0 || srm_status.st_size < 3 ||
         !theron_v1_track02_raw_media_intake_discover(resolved_cue, &media) ||
         media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
@@ -84,10 +125,10 @@ int theron_v1_srm_operator_attest(
         *out = receipt;
         return 1;
     }
-    snprintf(root_path, sizeof(root_path), "%s", resolved_srm);
-    snprintf(name_path, sizeof(name_path), "%s", resolved_srm);
-    snprintf(receipt.manifest_root, sizeof(receipt.manifest_root), "%s", dirname(root_path));
-    snprintf(receipt.manifest_name, sizeof(receipt.manifest_name), "%s", basename(name_path));
+    manifest_parts(resolved_srm, root_path, sizeof(root_path), name_path,
+                   sizeof(name_path));
+    snprintf(receipt.manifest_root, sizeof(receipt.manifest_root), "%s", root_path);
+    snprintf(receipt.manifest_name, sizeof(receipt.manifest_name), "%s", name_path);
     receipt.status = THERON_V1_SRM_ATTEST_READY;
     receipt.srm_path_canonical = 1;
     receipt.track02_path_canonical = 1;

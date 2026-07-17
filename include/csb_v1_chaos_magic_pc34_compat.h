@@ -669,6 +669,15 @@ typedef struct {
     uint16_t last_missile_info_thing;
     uint32_t last_missile_info_before[4];
     uint32_t last_missile_info_after[4];
+    uint16_t excell_store_count;
+    uint32_t last_excell_store_location;
+    uint32_t last_excell_store_before[8];
+    uint32_t last_excell_store_after[8];
+    uint16_t generator_delay_store_count;
+    uint32_t last_generator_delay_location;
+    int32_t last_generator_delay_before;
+    int32_t last_generator_delay_after;
+    int last_generator_delay_has_generator;
 } CSB_V1_CSBWinDSAStackExecution;
 
 CSB_V1_CSBWinDSAExecuteResult

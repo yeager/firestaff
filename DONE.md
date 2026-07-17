@@ -854,6 +854,22 @@
   and returns CAPTURE_REQUIRED. Accept/stale rejection test PASS; full Ninja
   PASS; `git diff --check` PASS.
 
+- 2026-07-17 Theron later-route batch attestation import: added strict
+  metadata-only batch import against the current candidate index. It restores
+  only matched opaque candidates, deterministically deduplicates duplicates,
+  and rejects collision/unknown/epoch drift without mutating const input.
+  Batch test PASS, `ninja -C build-ninja firestaff` PASS, and `git diff --check`
+  PASS. No route ID, payload, or runtime promotion was added.
+
+- 2026-07-17 Theron SRM operator-attestation Windows portability: removed the
+  unconditional POSIX `lstat`/`S_ISLNK`/`realpath`/`libgen` dependency.
+  Windows now rejects directories and reparse points with Win32 attributes and
+  canonicalizes with `_fullpath`; POSIX keeps lstat symlink rejection. Shared
+  manifest root/name splitting is separator-neutral and remains fail-closed
+  regular-file-only. Verification: SRM no-input, bad-version, and nonregular
+  CTests PASS; full `ninja -C build-ninja firestaff` PASS; `git diff --check`
+  PASS.
+
 - 2026-07-17 Theron SRM opaque admission: added a separate strict `.srm`
   gate that requires a direct regular file, exact size and MD5, gzip/DEFLATE
   container form, admission-format version, and matching known Track 02
@@ -5549,6 +5565,15 @@
   rejects absent rows, palette drift and out-of-bounds geometry, and remains
   no-draw. Verification: `dm2_v1_gdat_wall_trim_receipt` passed; full
   `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 live `DRAW_WALL` trim M11 gate: binds the existing
+  `SKULLWIN/c_gui_vp.cpp:695-719` `QUERY_TEMP_PICST` command only when its
+  normal `0x40` scale, RAW4 `0x2be + cell`, movement offset, source flip,
+  recomputed raw/decoded/palette/RAW4 identity, M11 wall hash and atomic
+  owner snapshots agree. Positive admission passes; material and surface
+  drift reject without a write. The gate remains no-draw and creates no
+  synthetic blit. Verification: `dm2_v1_gdat_wall_trim_receipt` passed;
+  full `firestaff` built; and `git diff --check` passed.
 
 - ✅ 2026-07-17 DM2 `DRAW_PIT_ROOF` raw-material/transform M11 admission:
   `SKULLWIN/c_gui_vp.cpp:118-206` and `dm2data.cpp:814-816` now require the
@@ -26886,6 +26911,20 @@ DM2 --limit 20` now reports DM2 1099.
   `nexus_v1_mednafen_slev_sal_capture_launcher` PASS; full `firestaff` build
   PASS.
 
+- 2026-07-17 Nexus local `NXSLSC01` preflight closure: the operator artifact
+  verifier now independently binds the fixed V1 header, exact task/SAL/MAP/
+  SDDRVS/card/package/epoch route, source-task FNV, and exact end-bounded
+  opaque payload FNV before the M12/M11 resume path reaches the existing
+  importer. MAP or payload drift fails closed and leaves the route no-draw and
+  no-op. The paired Mednafen plan remains external-only and hash-bound to the
+  operator's BIOS and disc; no BIOS, disc, or capture payload is copied into
+  the repository. Verification: CTest
+  `nexus_v1_saturn_card_m11_no_draw_startup`,
+  `nexus_v1_verify_slev_sal_capture_artifact`, and
+  `nexus_v1_mednafen_slev_sal_capture_launcher` PASS (3/3); full `firestaff`
+  build PASS; `git diff --check` PASS. No retail capture, script dispatch,
+  audio codec/playback, decoder, or rendering is claimed.
+
 - 2026-07-17 Nexus M11 Structure3 topology-descriptor intake: the selected
   direct-LEV Structure1F route now rederives its documented Structure3b face
   framing, bounded entry-local vertex table, ordered referenced-vertex-row
@@ -27372,6 +27411,23 @@ DM2 --limit 20` now reports DM2 1099.
   `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
   build and `git diff --check` PASS.
 
+# CSBWin DSA GeneratorDelayStore DB3 runtime receipt (2026-07-17)
+
+- Extended the existing source-owned `STKOP_GeneratorDelayStore` transaction
+  with an atomic DB3 receipt: selected location, original delay, committed
+  delay, and whether CSBWin selected the type-6 generator instead of its
+  defined type-0 fallback. This data publishes only after the existing
+  re-read/compare commit succeeds. A saved dispatch retains its exact
+  TimerQueue/TIMER scope through the pre-existing restored-timer receipt; this
+  package adds no queue route, timer body, generator allocation, wrapper, or
+  synthetic save behavior. Verification:
+  `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_dsa_localstate1_save_handoff`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_queued_localstate2_timer`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
 # CSBWin DSA MissileInfoStore DB14/TIMER transaction (2026-07-17)
 
 - Tightened `STKOP_MissileInfoStore` (DSA.cpp:2824-2846) around its paired
@@ -27420,6 +27476,23 @@ DM2 --limit 20` now reports DM2 1099.
   `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
   build and `git diff --check` PASS.
 
+# CSBWin DSA StoreExCellFlg EXPOOL receipt (2026-07-17)
+
+- Extended the existing source-owned `STKOP_StoreExCellFlg` transaction with
+  a full EXPOOL before/after receipt. The opcode now requires the current
+  eight-word cell-flags owner before staging its source flag byte, and a
+  committed action records the packed location and all eight words before and
+  after replacement. Missing or stale EXPOOL data and later invalid opcode
+  bodies reject before any save-tail publication. Saved TIMER/queue scope
+  remains exclusively the existing restored-dispatch receipt; no allocator,
+  timer, queue, or generic interpreter was added. Verification:
+  `csb_v1_dsa_localstate1_save_handoff`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_dsa_queued_localstate2_timer`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
 # CSBWin DSA ModifyMessage timer-scope receipt (2026-07-17)
 
 - Bound `STKOP_ModifyMessage` (DSA.cpp:4931-4947) to the authenticated
@@ -27449,6 +27522,18 @@ DM2 --limit 20` now reports DM2 1099.
   `csb_v1_dsa_pure_control_pc34_compat`, and
   `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
   build and `git diff --check` PASS.
+
+# ✅ 2026-07-17 DM1 GROUP F0197 DoorInfo portcullis LoS receipt
+
+M11's F0197/F0200 route now admits a closed C3/C4 door only after the loaded
+square's first Thing is an authenticated C00 record whose raw next/link and
+full bitfield still equal the decoded Door. The raw C00 type selects the
+current map's `DoorSet0` or `DoorSet1`, then the existing ReDMCSB G0254
+DoorInfo row supplies `CREATURES_CAN_SEE_THROUGH`. Missing, wrong-type, or
+drifted C00 data remains opaque; no display-state inference or synthetic
+visibility is used. Verification: `m11_creature_projectile_runtime_source_lock`
+and the six-test F0190/LoS CTest group PASS; full `firestaff` Ninja build and
+`git diff --check` PASS.
 
 # ✅ 2026-07-17 DM1 GROUP F0190/F0197-F0200 live C04 LoS admission
 
