@@ -93,8 +93,11 @@
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_champion_needs_pc34_compat.h"
 
 struct DM1ActiveGroup_Compat;
+struct DM1GroupBehaviorContext_Compat;
+struct DM1GroupSmellDirectionPlan_Compat;
 
 /* ================================================================
  *  Commands (TickInput.command)
@@ -306,6 +309,12 @@ struct GameWorld_Compat {
     uint8_t                             pc34ActiveGroupHomeMapX[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapY[GAMEWORLD_CREATURE_AI_CAPACITY];
     int32_t                             pc34ActiveGroupSourceCount;
+    /* G0407 Party.Scents/ScentStrengths is runtime source state, not an
+     * inferred save tail.  F0201 may consume it only while this receipt's
+     * canonical FNV still matches the published source snapshot. */
+    DM1_V1_NeedsScentListPc34Compat     pc34PartyScentReceipt;
+    uint32_t                            pc34PartyScentReceiptFingerprint;
+    int32_t                             pc34PartyScentReceiptValid;
     /* Published only after the F0435 candidate world has fully validated. */
     int32_t                             pc34OriginalC3C4ReceiptValid;
     uint32_t                            pc34OriginalC3RawEventByteCount;
@@ -445,6 +454,7 @@ struct F0267ThingMoveResultPc34Compat {
     int finalMapY;
     int sourceUnlinked;
     int destinationLinked;
+    int timelineRelocationCount;
 };
 
 int F0267_MOVE_MoveThingOnLoadedChain_Compat(
@@ -511,6 +521,22 @@ int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
     const struct ProjectileInstance_Compat* projectile);
+
+/* Publish the already-materialized PC34 G0407 scent ring for F0201.  The
+ * caller must supply its canonical source fingerprint; malformed entries or
+ * a mismatch fail before replacing the prior receipt. */
+int F0890d_ORCH_PublishPartyScentReceipt_Compat(
+    struct GameWorld_Compat* world,
+    const DM1_V1_NeedsScentListPc34Compat* sourceScents,
+    uint32_t sourceFingerprint);
+
+/* ReDMCSB GROUP.C F0201 over M10's loaded DUNGEON and a still-authenticated
+ * G0407 receipt. Direct party smell remains available without a receipt;
+ * stored-scent fallback is absent unless the receipt is current. */
+int F0890e_ORCH_BuildGroupSmellDirectionPlan_Compat(
+    struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* context,
+    struct DM1GroupSmellDirectionPlan_Compat* outPlan);
 
 /* ================================================================
  *  Group D — Determinism + Hash (F0891-F0893)

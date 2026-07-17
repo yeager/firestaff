@@ -73,6 +73,8 @@ static int square_element(const M11_GameViewState* state, int x, int y) {
             DUNGEON_SQUARE_MASK_TYPE) >> 5;
 }
 
+static void clear_party(M11_GameViewState* state);
+
 static void draw_at(M11_GameViewState* state,
                     const HocMirrorPosePc34* pose,
                     unsigned char* framebuffer) {
@@ -145,6 +147,165 @@ static int find_two_mirrors(const M11_GameViewState* state,
         }
     }
     return 0;
+}
+
+/* Walk the original map-0 thing chains instead of maintaining a coordinate
+ * table.  DUNGEON.C selects the visible C127 wall cell from party direction;
+ * CLIKVIEW.C then receives the D1C hit point and MOVESENS.C dispatches F0280.
+ */
+static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
+                                                unsigned char* framebuffer) {
+    const struct DungeonMapDesc_Compat* map;
+    int viewportX;
+    int viewportY;
+    int viewportW;
+    int viewportH;
+    int ornamentX;
+    int ornamentY;
+    int ornamentW;
+    int ornamentH;
+    int sourceC127Count = 0;
+    int candidateCount = 0;
+    int selectedCount = 0;
+    int rejectedCount = 0;
+    int y;
+
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.dungeon->tiles ||
+        state->world.dungeon->header.mapCount <= 0 || !framebuffer) {
+        CHECK(0, "source C127 pointer sweep needs a loaded dungeon world");
+        return 0;
+    }
+    CHECK(M11_GameView_GetViewportRect(&viewportX, &viewportY,
+                                       &viewportW, &viewportH) == 1 &&
+          M11_GameView_GetD1CWallOrnamentZone(state, &ornamentX, &ornamentY,
+                                               &ornamentW, &ornamentH) == 1 &&
+          viewportW > 0 && viewportH > 0 && ornamentW > 0 && ornamentH > 0,
+          "source viewport and D1C mirror hit zones should be available");
+    if (failures) return 0;
+
+    map = &state->world.dungeon->maps[0];
+    for (y = 0; y < (int)map->height; ++y) {
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                state->world.dungeon, state->world.things, 0, x, y);
+            int safety = 0;
+            while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                   safety++ < 64) {
+                if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                    const int sensorIndex = (int)THING_GET_INDEX(thing);
+                    const int direction = ((int)THING_GET_CELL(thing) + 2) & 3;
+                    const int partyX = x - dx(direction);
+                    const int partyY = y - dy(direction);
+                    const int sourceOrdinal =
+                        sensorIndex >= 0 &&
+                        sensorIndex < state->world.things->sensorCount
+                            ? (int)state->world.things->sensors[sensorIndex]
+                                      .sensorData
+                            : -1;
+                    const int poseInBounds =
+                        partyX >= 0 && partyY >= 0 &&
+                        partyX < (int)map->width && partyY < (int)map->height;
+                    const int sourceWall = square_element(state, x, y) ==
+                                           DUNGEON_ELEMENT_WALL;
+                    const int sourceCandidate =
+                        poseInBounds && sourceWall &&
+                        square_element(state, partyX, partyY) ==
+                            DUNGEON_ELEMENT_CORRIDOR;
+
+                    if (sensorIndex < 0 ||
+                        sensorIndex >= state->world.things->sensorCount) {
+                        CHECK(0, "C127 thing must reference an in-range sensor");
+                    } else if (state->world.things->sensors[sensorIndex]
+                                   .sensorType ==
+                               DM1_SENSOR_WALL_CHAMPION_PORTRAIT) {
+                        M11_GameInputResult clickResult;
+                        M11_GameInputResult outsideClickResult;
+                        int outsideRejected;
+                        int frontOrdinal;
+                        ++sourceC127Count;
+                        state->world.party.mapIndex = 0;
+                        state->world.party.mapX = partyX;
+                        state->world.party.mapY = partyY;
+                        state->world.party.direction = direction;
+                        memset(framebuffer, 0,
+                               kFramebufferWidth * kFramebufferHeight);
+                        M11_GameView_Draw(state, framebuffer,
+                                          kFramebufferWidth, kFramebufferHeight);
+                        frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(state);
+                        outsideClickResult = M11_GameView_HandlePointer(
+                            state,
+                            viewportX + ornamentX + ornamentW,
+                            viewportY + ornamentY + ornamentH / 2,
+                            1);
+                        outsideRejected =
+                            outsideClickResult == M11_GAME_INPUT_IGNORED &&
+                            state->candidateMirrorPanelActive == 0 &&
+                            state->world.party.championCount == 0;
+                        clickResult = M11_GameView_HandlePointer(
+                            state,
+                            viewportX + ornamentX + ornamentW / 2,
+                            viewportY + ornamentY + ornamentH / 2,
+                            1);
+
+                        if (sourceCandidate) {
+                            ++candidateCount;
+                            CHECK(frontOrdinal == sourceOrdinal,
+                                  "visible wall C127 ordinal must come from source sensorData");
+                            CHECK(outsideRejected,
+                                  "point outside the source D1C hit zone must reject C127");
+                            CHECK(clickResult == M11_GAME_INPUT_REDRAW &&
+                                  state->candidateMirrorPanelActive == 1 &&
+                                  state->candidateMirrorOrdinal == sourceOrdinal &&
+                                  state->world.party.championCount == 1,
+                                  "each source-visible C127 D1C click must reach F0280");
+                            if (frontOrdinal == sourceOrdinal &&
+                                outsideRejected &&
+                                clickResult == M11_GAME_INPUT_REDRAW &&
+                                state->candidateMirrorPanelActive == 1 &&
+                                state->candidateMirrorOrdinal == sourceOrdinal &&
+                                state->world.party.championCount == 1) {
+                                ++selectedCount;
+                                ++rejectedCount;
+                            }
+                            CHECK(M11_GameView_CancelMirrorCandidate(state) == 1,
+                                  "each source C127 candidate must close through F0282");
+                            clear_party(state);
+                        } else {
+                            CHECK(frontOrdinal == -1 &&
+                                  outsideRejected &&
+                                  clickResult == M11_GAME_INPUT_IGNORED &&
+                                  state->candidateMirrorPanelActive == 0 &&
+                                  state->world.party.championCount == 0,
+                                  "non-candidate C127 placement must reject the D1C click");
+                            if (frontOrdinal == -1 &&
+                                outsideRejected &&
+                                clickResult == M11_GAME_INPUT_IGNORED &&
+                                state->candidateMirrorPanelActive == 0 &&
+                                state->world.party.championCount == 0) {
+                                ++rejectedCount;
+                            }
+                        }
+                    }
+                }
+                thing = F0512_DUNGEON_GetThingNext_Compat(
+                    state->world.things, thing);
+            }
+            CHECK(safety < 64, "C127 source thing chain must terminate");
+        }
+    }
+
+    CHECK(sourceC127Count > 0,
+          "real HoC map must retain original C127 sensor owners");
+    CHECK(candidateCount > 0 && selectedCount == candidateCount,
+          "every source-visible C127 candidate must reach F0280 by pointer click");
+    CHECK(rejectedCount > 0,
+          "source D1C route should retain a C127 rejection path");
+    printf("ok: source C127 pointer sweep candidates=%d selected=%d rejected=%d\n",
+           candidateCount, selectedCount, rejectedCount);
+    return sourceC127Count > 0 && candidateCount > 0 &&
+           selectedCount == candidateCount && rejectedCount > 0;
 }
 
 static int expect_recruited_portrait_matches_c026(M11_GameViewState* view,
@@ -282,6 +443,10 @@ int main(void) {
     if (failures) return 1;
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     clear_party(&state);
+
+    CHECK(sweep_all_source_c127_pointer_routes(&state, framebuffer),
+          "every source-owned HoC C127 candidate should reach F0280 by pointer");
+    if (failures) goto done_state;
 
     CHECK(find_two_mirrors(&state, &mirrorA, &mirrorB),
           "fixture should expose at least two original C127 mirrors");

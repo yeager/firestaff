@@ -1,0 +1,6 @@
+#ifndef FIRESTAFF_DM2_V1_GDAT_DRAW_PICST_TRACE_RECEIPT_H
+#define FIRESTAFF_DM2_V1_GDAT_DRAW_PICST_TRACE_RECEIPT_H
+#include "dm2_v1_gdat_materialization_handoff.h"
+typedef struct { int valid,no_draw; uint32_t handoff_hash,surface_generation,identity_hash; uint8_t query_picst_it_seen,destination_unproven; } DM2_V1_GdatDrawPicstTraceReceipt;
+int dm2_v1_gdat_draw_picst_trace_receipt_build(const DM2_V1_GdatMaterializationHandoff *,const DM2_V1_ViewportState *,DM2_V1_GdatDrawPicstTraceReceipt *);
+#endif

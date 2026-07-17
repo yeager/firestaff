@@ -22,15 +22,17 @@ md5_file() {
     fi
 }
 mapfile -t plan_rows < "$plan"
-[[ ${#plan_rows[@]} -eq 17 && ${plan_rows[0]} == THERON_TRACK02_DUNGEON_HANDOFF_CAPTURE_PLAN_V1 &&
-   ${plan_rows[1]} == route=dungeon_handoff && ${plan_rows[14]} == payload_policy=opaque_only &&
-   ${plan_rows[15]} == decoder_policy=forbidden && ${plan_rows[16]} == render_policy=no_draw ]] || {
+[[ ${#plan_rows[@]} -eq 18 && ${plan_rows[0]} == THERON_TRACK02_DUNGEON_HANDOFF_CAPTURE_PLAN_V1 &&
+   ${plan_rows[1]} == route=dungeon_handoff && ${plan_rows[15]} == payload_policy=opaque_only &&
+   ${plan_rows[16]} == decoder_policy=forbidden && ${plan_rows[17]} == render_policy=no_draw ]] || {
     printf '%s\n' 'REJECTED: capture-plan envelope is malformed' >&2; exit 1;
 }
 track02_md5=$(printf '%s\n' "${plan_rows[@]}" | sed -n 's/^track02_md5=//p')
+plan_trace_md5=$(printf '%s\n' "${plan_rows[@]}" | sed -n 's/^source_trace_md5=//p')
+plan_identity=$(printf '%s\n' "${plan_rows[@]}" | sed -n 's/^capture_target_plan_fnv1a=//p')
 artifact_path=$(printf '%s\n' "${plan_rows[@]}" | sed -n 's/^capture_artifact_path=//p')
-[[ $track02_md5 =~ ^[0-9a-f]{32}$ && $artifact_path == "$artifact" ]] || {
-    printf '%s\n' 'REJECTED: artifact path or Track 02 identity does not match the local plan' >&2; exit 1;
+[[ $track02_md5 =~ ^[0-9a-f]{32}$ && $plan_trace_md5 =~ ^[0-9a-f]{32}$ && $plan_identity =~ ^[1-9a-f][0-9a-f]*$ && $artifact_path == "$artifact" ]] || {
+    printf '%s\n' 'REJECTED: artifact path, Track 02 identity, or source trace identity does not match the local plan' >&2; exit 1;
 }
 mapfile -t rows < "$artifact"
 [[ ${#rows[@]} -eq 8 && ${rows[0]} == THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1 ]] || {
@@ -40,11 +42,11 @@ mapfile -t rows < "$artifact"
     printf '%s\n' 'REJECTED: artifact Track 02 MD5 drifts from plan' >&2; exit 1;
 }
 trace_md5=$(md5_file "$trace") || { printf '%s\n' 'REJECTED: md5 utility is required' >&2; exit 1; }
-[[ ${rows[2]} == "mednafen_trace_md5=$trace_md5" && ${rows[3]} == campaign_route=2 ]] || {
+[[ $trace_md5 == "$plan_trace_md5" && ${rows[2]} == "mednafen_trace_md5=$trace_md5" && ${rows[3]} == "capture_target_plan_fnv1a=$plan_identity" && ${rows[4]} == campaign_route=2 ]] || {
     printf '%s\n' 'REJECTED: artifact trace hash or dungeon route drifts from plan' >&2; exit 1;
 }
 for route in 0 1 2; do
-    row=${rows[$((route + 4))]}
+    row=${rows[$((route + 5))]}
     [[ $row == route=$route\ * && $row == *'loader_checksum='* &&
        $row == *'palette_identity='* && $row == *'bitmap_identity='* &&
        $row == *'destination_record='* && $row == *'destination_identity='* ]] || {

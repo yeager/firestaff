@@ -30,6 +30,102 @@
 #include <stddef.h>
 #include <string.h>
 
+static uint32_t dm2_door_gdat_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    return hash * 16777619u;
+}
+
+int dm2_v1_door_gdat_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t door_gfx_index,
+    uint8_t image_field,
+    DM2_V1_DoorGdatMaterialReceipt *out)
+{
+    uint16_t color_key;
+    uint8_t *pixels;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    size_t pixel_count;
+    uint32_t hash = 2166136261u;
+    int color_key_entry_enabled = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    /* SKWIN/SkWinCore.cpp DRAW_DOOR reads IMG_COLORKEY_1 and then exactly
+     * the caller-selected DOORS dtImage before QUERY_TEMP_PICST. */
+    if (!loader) return 0;
+    for (size_t i = 0u; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if (entry->cls1 == DM2_GDAT_CATEGORY_DOORS &&
+            entry->cls2 == door_gfx_index &&
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE &&
+            entry->cls4 == DM2_V1_DOOR_GDAT_COLORKEY_FIELD &&
+            entry->data_index != 0u) {
+            color_key_entry_enabled = 1;
+            break;
+        }
+    }
+    if (!color_key_entry_enabled ||
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                      door_gfx_index,
+                                      DM2_V1_DOOR_GDAT_COLORKEY_FIELD,
+                                      &color_key) ||
+        color_key > 0xffu ||
+        !dm2_v1_asset_load_image_metadata(loader, DM2_GDAT_CATEGORY_DOORS,
+                                          door_gfx_index, image_field,
+                                          &out->image_metadata) ||
+        out->image_metadata.bits_per_pixel != 4u ||
+        !dm2_v1_asset_load_image_local_palette(loader,
+                                               DM2_GDAT_CATEGORY_DOORS,
+                                               door_gfx_index, image_field,
+                                               out->local_palette16,
+                                               &out->local_palette_hash) ||
+        !out->local_palette_hash) return 0;
+
+    pixels = dm2_v1_asset_load_image_field(loader, DM2_GDAT_CATEGORY_DOORS,
+                                            door_gfx_index, image_field,
+                                            &width, &height, &format);
+    if (!pixels || width <= 0 || height <= 0 ||
+        width != (int)out->image_metadata.width ||
+        height != (int)out->image_metadata.height ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4)) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    pixel_count = (size_t)width * (size_t)height;
+    if (pixel_count == 0u || pixel_count > UINT32_MAX) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    for (size_t i = 0u; i < pixel_count; ++i)
+        hash = dm2_door_gdat_hash_step(hash, pixels[i]);
+    dm2_v1_asset_free_pixels(pixels);
+    if (!hash) return 0;
+
+    out->valid = 1;
+    out->door_gfx_index = door_gfx_index;
+    out->image_field = image_field;
+    out->color_key = color_key;
+    out->decoded_width = (uint16_t)width;
+    out->decoded_height = (uint16_t)height;
+    out->decoded_format = format;
+    out->decoded_pixel_count = (uint32_t)pixel_count;
+    out->decoded_pixels_hash = hash;
+    hash = dm2_door_gdat_hash_step(hash, out->image_metadata.metadata_hash);
+    hash = dm2_door_gdat_hash_step(hash, out->local_palette_hash);
+    hash = dm2_door_gdat_hash_step(hash, color_key);
+    hash = dm2_door_gdat_hash_step(hash, door_gfx_index);
+    hash = dm2_door_gdat_hash_step(hash, image_field);
+    if (!hash) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    out->material_hash = hash;
+    return 1;
+}
+
 /* ── Door Type Info Table ──────────────────────────────────────────── */
 /*
  * G0254_as_Graphic559_DoorInfo[4] — built-in DM2 door type definitions.

@@ -1185,6 +1185,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 
 typedef struct {
     uint32_t location;
+    uint8_t before;
     uint8_t skin;
 } CSB_V1_CSBWinDSAPendingSkinWrite;
 
@@ -1205,14 +1206,17 @@ typedef struct {
 
 typedef struct {
     uint16_t thing;
+    uint32_t before[8];
     uint32_t values[8];
     uint8_t write_mask;
 } CSB_V1_CSBWinDSAPendingMonsterWrite;
 
 typedef struct {
     uint32_t location;
+    uint32_t before[5];
     uint32_t values[5];
     uint8_t write_mask;
+    uint8_t false_pit;
 } CSB_V1_CSBWinDSAPendingCellWrite;
 
 typedef struct {
@@ -1876,6 +1880,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
         {
             uint32_t cell_values[5] = { 0u, 0u, 0u, 0u, 0u };
+            uint32_t cell_before[5];
             int pending = -1;
             int resolved;
             for (sv = 0; sv < *pending_cell_write_count; ++sv) {
@@ -1889,6 +1894,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                                                cell_values)) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             }
+            memcpy(cell_before, cell_values, sizeof(cell_before));
             if (!context->resolve_cell_store || !context->set_cell_info) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             }
@@ -1901,15 +1907,19 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                 memcpy(pending_cell_writes[pending].values, cell_values,
                        sizeof(cell_values));
                 pending_cell_writes[pending].write_mask |= 1u << 1;
+                pending_cell_writes[pending].false_pit = 1u;
             } else if (*pending_cell_write_count >=
                        CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             } else {
                 pending_cell_writes[*pending_cell_write_count].location = w;
+                memcpy(pending_cell_writes[*pending_cell_write_count].before,
+                       cell_before, sizeof(cell_before));
                 memcpy(pending_cell_writes[*pending_cell_write_count].values,
                        cell_values, sizeof(cell_values));
                 pending_cell_writes[*pending_cell_write_count].write_mask =
                     1u << 1;
+                pending_cell_writes[*pending_cell_write_count].false_pit = 1u;
                 ++*pending_cell_write_count;
             }
         }
@@ -2004,6 +2014,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         {
             uint32_t monster_values[8] = { 0u, UINT32_MAX, 0u, 0u,
                                            0u, 0u, 0u, 0u };
+            uint32_t monster_before[8];
             uint8_t write_mask = 0u;
             int pending = -1;
             uint32_t i;
@@ -2023,6 +2034,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             }
             if (monster_values[1] == UINT32_MAX) break;
+            memcpy(monster_before, monster_values, sizeof(monster_before));
             if (count > 2u) {
                 uint32_t hp_count = count - 2u;
                 if (hp_count > 4u) hp_count = 4u;
@@ -2065,6 +2077,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                 }
                 pending_monster_writes[*pending_monster_write_count].thing =
                     (uint16_t)w;
+                memcpy(pending_monster_writes[*pending_monster_write_count].before,
+                       monster_before, sizeof(monster_before));
                 memcpy(pending_monster_writes[*pending_monster_write_count].values,
                        monster_values, sizeof(monster_values));
                 pending_monster_writes[*pending_monster_write_count].write_mask =
@@ -2230,6 +2244,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         {
             uint32_t cell_values[5] = { 0u, 0u, 0u, 0u, 0u };
             uint32_t input_values[5] = { 0u, 0u, 0u, 0u, 0u };
+            uint32_t cell_before[5];
             uint8_t write_mask = 0u;
             int pending = -1;
             int resolved;
@@ -2246,6 +2261,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                                                cell_values)) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             }
+            memcpy(cell_before, cell_values, sizeof(cell_before));
             for (i = 0u; i < count && i < 5u; ++i) {
                 input_values[i] = variables[v + i];
             }
@@ -2323,6 +2339,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             } else {
                 pending_cell_writes[*pending_cell_write_count].location = w;
+                memcpy(pending_cell_writes[*pending_cell_write_count].before,
+                       cell_before, sizeof(cell_before));
                 memcpy(pending_cell_writes[*pending_cell_write_count].values,
                        cell_values, sizeof(cell_values));
                 pending_cell_writes[*pending_cell_write_count].write_mask =
@@ -3043,10 +3061,15 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                                                      (uint16_t)sv,
                                                      &old_talents);
             if (wing_result < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
-            if (wing_result > 0 && old_talents != w &&
-                context->set_wing_talents(context->wing_user,
-                                          (uint16_t)sv, w) < 0) {
-                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (wing_result > 0 && old_talents != w) {
+                if (context->set_wing_talents(context->wing_user,
+                                              (uint16_t)sv, w) < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                ++context->wing_talents_store_count;
+                context->last_wing_talents_fingerprint = (uint16_t)sv;
+                context->last_wing_talents_before = old_talents;
+                context->last_wing_talents_after = w;
             }
         } else if (sv >= 0 && sv < context->party_champion_count) {
             context->party_champion_talents[sv] = w;
@@ -3069,7 +3092,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
          * Retain the write locally until the complete authenticated action
          * has consumed every later word. GETSKIN below observes this exact
          * action-local state, as it would after CSBWin's immediate write. */
-        if (!context->set_skin ||
+        if (!context->get_skin || !context->set_skin ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             *pending_skin_write_count >=
@@ -3077,6 +3100,12 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         pending_skin_writes[*pending_skin_write_count].location = v;
+        if (!csb_v1_csbwin_dsa_pending_skin_lookup(
+                pending_skin_writes, *pending_skin_write_count, v, &skin) &&
+            !context->get_skin(context->skin_user, v, &skin)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_skin_writes[*pending_skin_write_count].before = skin;
         pending_skin_writes[*pending_skin_write_count].skin = (uint8_t)w;
         ++*pending_skin_write_count;
         break;
@@ -3185,6 +3214,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     }
     context_candidate = *context;
     memset(&candidate, 0, sizeof(candidate));
+    memset(pending_cell_writes, 0, sizeof(pending_cell_writes));
     candidate.forced_state = -1;
     staged_saves_disabled = context->saves_disabled ? 1 : 0;
     staged_random_state = context->random_state;
@@ -3568,6 +3598,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                                pending_skin_writes[i].skin)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.skin_store_count;
+        candidate.last_skin_store_location = pending_skin_writes[i].location;
+        candidate.last_skin_store_before = pending_skin_writes[i].before;
+        candidate.last_skin_store_after = pending_skin_writes[i].skin;
     }
     for (i = 0; i < pending_excell_write_count; ++i) {
         uint32_t after_words[8];
@@ -3625,6 +3659,16 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_monster_writes[i].write_mask)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.monster_store_count;
+        candidate.last_monster_store_thing = pending_monster_writes[i].thing;
+        candidate.last_monster_store_write_mask =
+            pending_monster_writes[i].write_mask;
+        memcpy(candidate.last_monster_store_before,
+               pending_monster_writes[i].before,
+               sizeof(candidate.last_monster_store_before));
+        memcpy(candidate.last_monster_store_after,
+               pending_monster_writes[i].values,
+               sizeof(candidate.last_monster_store_after));
     }
     for (i = 0; i < pending_cell_write_count; ++i) {
         if (!context->set_cell_info(
@@ -3633,8 +3677,34 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_cell_writes[i].write_mask)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.cell_store_count;
+        candidate.last_cell_store_location = pending_cell_writes[i].location;
+        candidate.last_cell_store_write_mask = pending_cell_writes[i].write_mask;
+        memcpy(candidate.last_cell_store_before, pending_cell_writes[i].before,
+               sizeof(candidate.last_cell_store_before));
+        memcpy(candidate.last_cell_store_after, pending_cell_writes[i].values,
+               sizeof(candidate.last_cell_store_after));
+        if (pending_cell_writes[i].false_pit) {
+            ++candidate.false_pit_count;
+            candidate.last_false_pit_location = pending_cell_writes[i].location;
+            memcpy(candidate.last_false_pit_before,
+                   pending_cell_writes[i].before,
+                   sizeof(candidate.last_false_pit_before));
+            memcpy(candidate.last_false_pit_after,
+                   pending_cell_writes[i].values,
+                   sizeof(candidate.last_false_pit_after));
+        }
     }
     for (i = 0; i < pending_object_property_write_count; ++i) {
+        uint32_t before = 0u;
+        uint32_t after = 0u;
+
+        if (!context->get_object_property ||
+            context->get_object_property(
+                context->dungeon_user, pending_object_property_writes[i].thing,
+                pending_object_property_writes[i].property, &before) != 1) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
         if (!context->set_object_property(
                 context->dungeon_user,
                 pending_object_property_writes[i].thing,
@@ -3642,6 +3712,18 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_object_property_writes[i].value)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        if (context->get_object_property(
+                context->dungeon_user, pending_object_property_writes[i].thing,
+                pending_object_property_writes[i].property, &after) != 1) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.object_property_store_count;
+        candidate.last_object_property_thing =
+            pending_object_property_writes[i].thing;
+        candidate.last_object_property_kind =
+            (uint8_t)pending_object_property_writes[i].property;
+        candidate.last_object_property_before = before;
+        candidate.last_object_property_after = after;
     }
     for (i = 0; i < pending_missile_write_count; ++i) {
         if ((context->commit_missile_info &&
@@ -3684,6 +3766,13 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_experience_writes[i].experience)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.experience_plus_count;
+        candidate.last_experience_character_selector =
+            pending_experience_writes[i].character_selector;
+        candidate.last_experience_skill_number =
+            pending_experience_writes[i].skill_number;
+        candidate.last_experience_amount =
+            pending_experience_writes[i].experience;
     }
     for (i = 0; i < pending_character_swap_count; ++i) {
         if (!context->commit_character_swap ||
@@ -3702,6 +3791,11 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_poison_writes[i].poison_value)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.cause_poison_count;
+        candidate.last_cause_poison_character_selector =
+            pending_poison_writes[i].character_selector;
+        candidate.last_cause_poison_attack =
+            pending_poison_writes[i].poison_value;
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
         if ((context->copy_actuator_payload &&
@@ -3767,8 +3861,20 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     }
     for (i = 0; i < pending_teleporter_copy_count; ++i) {
         int copied;
+        uint32_t source_before[5];
+        uint32_t destination_before[5];
+        uint32_t destination_after[5];
 
         if (!context->copy_teleporter) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (context->get_cell_info &&
+            (!context->get_cell_info(context->dungeon_user,
+                                     pending_teleporter_copies[i].source_location,
+                                     source_before) ||
+             !context->get_cell_info(context->dungeon_user,
+                                     pending_teleporter_copies[i].destination_location,
+                                     destination_before))) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         copied = context->copy_teleporter(
@@ -3777,11 +3883,25 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             pending_teleporter_copies[i].destination_location);
         if (copied < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         if (copied > 0) {
+            if (context->get_cell_info && !context->get_cell_info(
+                    context->dungeon_user,
+                    pending_teleporter_copies[i].destination_location,
+                    destination_after)) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
             ++candidate.teleporter_copy_count;
             candidate.last_teleporter_copy_source_location =
                 pending_teleporter_copies[i].source_location;
             candidate.last_teleporter_copy_destination_location =
                 pending_teleporter_copies[i].destination_location;
+            memcpy(candidate.last_teleporter_copy_source_before, source_before,
+                   sizeof(candidate.last_teleporter_copy_source_before));
+            memcpy(candidate.last_teleporter_copy_destination_before,
+                   destination_before,
+                   sizeof(candidate.last_teleporter_copy_destination_before));
+            memcpy(candidate.last_teleporter_copy_destination_after,
+                   destination_after,
+                   sizeof(candidate.last_teleporter_copy_destination_after));
         }
     }
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
@@ -3812,6 +3932,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     memcpy(context->party_champion_talents,
            context_candidate.party_champion_talents,
            sizeof(context->party_champion_talents));
+    candidate.wing_talents_store_count =
+        context_candidate.wing_talents_store_count;
+    candidate.last_wing_talents_fingerprint =
+        context_candidate.last_wing_talents_fingerprint;
+    candidate.last_wing_talents_before =
+        context_candidate.last_wing_talents_before;
+    candidate.last_wing_talents_after =
+        context_candidate.last_wing_talents_after;
     candidate.words_consumed = (uint16_t)cursor;
     candidate.stack_depth = (uint16_t)depth;
     *out_execution = candidate;
@@ -3998,6 +4126,11 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     if (runner->monster_move_inhibit_valid) {
         memcpy(runner->monster_move_inhibit, context.monster_move_inhibit,
                sizeof(runner->monster_move_inhibit));
+    }
+    if (runner->party_champions_valid) {
+        memcpy(runner->party_champion_talents,
+               context.party_champion_talents,
+               sizeof(runner->party_champion_talents));
     }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = (int)parameter_words[i];

@@ -977,8 +977,22 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     expected_opening_surface_count = 0;
-    if (!session || !plan ||
-        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+    if (!session || !plan) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0438 presents C004/C002/C003 with
+     * C28_ENTRANCE_CSB. F0807 releases that temporary palette before PANEL.C
+     * draws the first C017/C040 page. Reject before frame creation so a
+     * forged palette cannot mutate session presentation state. */
+    if ((plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+         (plan->special_palette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+          plan->title_special_palette != -1)) ||
+        (plan->title_stage == CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34 &&
+         (plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+          plan->special_palette != -1 || plan->title_special_palette != -1))) {
+        return 0;
+    }
+    if (!csb_v1_boot_startup_runtime_asset_session_frame_pc34(
             session, plan, source_tick, &receipt.frame)) {
         return 0;
     }

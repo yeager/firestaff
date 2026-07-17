@@ -465,6 +465,10 @@ typedef struct {
     CSB_V1_CSBWinDSASetWingTalentsFn set_wing_talents;
     CSB_V1_CSBWinDSAGetInfoFn get_dsa_info;
     void *wing_user;
+    uint16_t wing_talents_store_count;
+    uint16_t last_wing_talents_fingerprint;
+    uint32_t last_wing_talents_before;
+    uint32_t last_wing_talents_after;
     CSB_V1_CSBWinDSAGetExCellFlagsFn get_excell_flags;
     CSB_V1_CSBWinDSASetExCellFlagsFn set_excell_flags;
     void *excell_user;
@@ -662,9 +666,43 @@ typedef struct {
     uint16_t teleporter_copy_count;
     uint32_t last_teleporter_copy_source_location;
     uint32_t last_teleporter_copy_destination_location;
+    uint32_t last_teleporter_copy_source_before[5];
+    uint32_t last_teleporter_copy_destination_before[5];
+    uint32_t last_teleporter_copy_destination_after[5];
     uint16_t actuator_copy_count;
     uint16_t last_actuator_copy_source_thing;
     uint16_t last_actuator_copy_destination_thing;
+    uint16_t skin_store_count;
+    uint32_t last_skin_store_location;
+    uint8_t last_skin_store_before;
+    uint8_t last_skin_store_after;
+    uint16_t wing_talents_store_count;
+    uint16_t last_wing_talents_fingerprint;
+    uint32_t last_wing_talents_before;
+    uint32_t last_wing_talents_after;
+    uint16_t experience_plus_count;
+    int32_t last_experience_character_selector;
+    int32_t last_experience_skill_number;
+    int32_t last_experience_amount;
+    uint16_t monster_store_count;
+    uint16_t last_monster_store_thing;
+    uint8_t last_monster_store_write_mask;
+    uint32_t last_monster_store_before[8];
+    uint32_t last_monster_store_after[8];
+    uint16_t cell_store_count;
+    uint32_t last_cell_store_location;
+    uint8_t last_cell_store_write_mask;
+    uint32_t last_cell_store_before[5];
+    uint32_t last_cell_store_after[5];
+    uint16_t false_pit_count;
+    uint32_t last_false_pit_location;
+    uint32_t last_false_pit_before[5];
+    uint32_t last_false_pit_after[5];
+    uint16_t object_property_store_count;
+    uint16_t last_object_property_thing;
+    uint8_t last_object_property_kind;
+    uint32_t last_object_property_before;
+    uint32_t last_object_property_after;
     uint16_t missile_info_store_count;
     uint16_t last_missile_info_thing;
     uint32_t last_missile_info_before[4];
@@ -678,6 +716,13 @@ typedef struct {
     int32_t last_generator_delay_before;
     int32_t last_generator_delay_after;
     int last_generator_delay_has_generator;
+    /* DSA.cpp STKOP_CausePoison commits through the runtime-owned
+     * PoisonCharacter/DamageCharacter candidate after full bytecode
+     * acceptance.  The runner records only source operands here; the live
+     * runtime receipt binds them to CHARDESC and TT_75 state. */
+    uint16_t cause_poison_count;
+    int32_t last_cause_poison_character_selector;
+    int32_t last_cause_poison_attack;
 } CSB_V1_CSBWinDSAStackExecution;
 
 CSB_V1_CSBWinDSAExecuteResult

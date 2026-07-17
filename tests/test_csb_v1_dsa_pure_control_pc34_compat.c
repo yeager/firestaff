@@ -25,6 +25,9 @@ static int generator_delay_enabled;
 static int generator_delay_owner_valid;
 static int generator_delay_stored;
 static int generator_delay_store_count;
+static int skin_owner_enabled;
+static uint8_t skin_owner_value;
+static int skin_owner_store_count;
 static int monster_info_enabled;
 static int monster_info_store_count;
 static uint32_t monster_info_stored[8];
@@ -255,6 +258,23 @@ static int set_generator_delay(void *user, uint32_t location, int delay)
     if (!generator_delay_enabled || location != 0x0c82u) return 0;
     generator_delay_stored = delay;
     ++generator_delay_store_count;
+    return 1;
+}
+
+static int get_skin(void *user, uint32_t location, uint8_t *out_skin)
+{
+    (void)user;
+    if (!skin_owner_enabled || !out_skin || location != 0x0c82u) return 0;
+    *out_skin = skin_owner_value;
+    return 1;
+}
+
+static int set_skin(void *user, uint32_t location, uint8_t skin)
+{
+    (void)user;
+    if (!skin_owner_enabled || location != 0x0c82u) return 0;
+    skin_owner_value = skin;
+    ++skin_owner_store_count;
     return 1;
 }
 
@@ -741,6 +761,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
         context.set_generator_delay = set_generator_delay;
         context.commit_generator_delay = commit_generator_delay;
     }
+    if (skin_owner_enabled) {
+        context.get_skin = get_skin;
+        context.set_skin = set_skin;
+    }
     if (monster_info_enabled) {
         context.get_monster_info = get_monster_info;
         context.set_monster_info = set_monster_info;
@@ -992,6 +1016,12 @@ int main(void)
     };
     uint16_t generator_delay_store_then_bad[] = {
         0x0686u, 91u, 0x0686u, 0x0c82u, 0x088bu, 0x0000u
+    };
+    uint16_t skin_store[] = {
+        0x0686u, 42u, 0x0686u, 0x0c82u, 0x0115u
+    };
+    uint16_t skin_store_then_bad[] = {
+        0x0686u, 42u, 0x0686u, 0x0c82u, 0x0115u, 0x0000u
     };
     uint16_t monster_fetch[] = {
         0x0686u, 0x0123u, 0x0686u, 0u, 0x0686u, 8u, 0x0f0bu,
@@ -1464,6 +1494,34 @@ int main(void)
           "GeneratorDelay! rejects a stale DB3 owner before candidate publication");
     generator_delay_owner_valid = 1;
     generator_delay_enabled = 0;
+
+    skin_owner_enabled = 1;
+    skin_owner_value = 4u;
+    skin_owner_store_count = 0;
+    check(run(&state, &action, skin_store,
+              (int)(sizeof(skin_store) / sizeof(skin_store[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              skin_owner_store_count == 1 && skin_owner_value == 42u &&
+              execution.skin_store_count == 1u &&
+              execution.last_skin_store_location == 0x0c82u &&
+              execution.last_skin_store_before == 4u &&
+              execution.last_skin_store_after == 42u,
+          "SETSKIN commits a source-owned EXPOOL skin byte with its pre/post receipt");
+    skin_owner_value = 4u;
+    skin_owner_store_count = 0;
+    check(run(&state, &action, skin_store_then_bad,
+              (int)(sizeof(skin_store_then_bad) /
+                    sizeof(skin_store_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              skin_owner_store_count == 0 && skin_owner_value == 4u,
+          "SETSKIN rejects a later unsupported opcode before EXPOOL publication");
+    skin_owner_enabled = 0;
+    check(run(&state, &action, skin_store,
+              (int)(sizeof(skin_store) / sizeof(skin_store[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              skin_owner_store_count == 0 && skin_owner_value == 4u,
+          "SETSKIN rejects a missing authenticated EXPOOL owner before staging");
+
     monster_info_enabled = 1;
     parameters[0] = 77u;
     check(run(&state, &action, monster_fetch,

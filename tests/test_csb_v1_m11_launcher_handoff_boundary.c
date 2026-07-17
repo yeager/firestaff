@@ -365,8 +365,13 @@ static void make_empty_data_dir(char out[512]) {
 
 static const char* default_data_root(char fallback[512]) {
     const char* home = getenv("HOME");
+    struct stat st;
     if (!home || !home[0]) {
         return NULL;
+    }
+    snprintf(fallback, 512, "%s/.firestaff/data/csb", home);
+    if (stat(fallback, &st) == 0) {
+        return fallback;
     }
     snprintf(fallback, 512, "%s/.firestaff/data", home);
     return fallback;
@@ -627,7 +632,7 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.csbState.startup_entrance_source_step == 0,
                 "M11 CSB launcher title prelude starts on PRESENTS before entrance");
     for (int i = 0;
-         i < csb_v1_startup_title_presents_ticks_pc34() &&
+         i < csb_v1_startup_title_presents_ticks_pc34() - 1 &&
          view.csbState.startup_title_active;
          ++i) {
         int tick_before_loop = view.csbState.tick_count;
@@ -751,6 +756,9 @@ static void run_real_launcher_handoff_if_available(void) {
     }
     expect_true(view.csbState.startup_entrance_opening_delay_ticks == 0,
                 "M11 CSB launcher entrance leaves pre-open delay");
+    expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_opening_step == 1,
+                "M11 CSB launcher publishes the first C002/C003 door step after the source delay");
     memset(entrance_opening_frame, 0, sizeof(entrance_opening_frame));
     M11_GameView_Draw(&view, entrance_opening_frame, 320, 200);
     expect_true(count_changed_pixels(entrance_closed_frame,

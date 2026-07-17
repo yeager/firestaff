@@ -358,6 +358,51 @@ static void seed_state(M11_GameViewState* state,
     state->world.party.champions[0].name[3] = 'K';
 }
 
+static void attach_fluxcage_c15_source_fixture(
+    M11_GameViewState* state,
+    struct DungeonDatState_Compat* dungeon,
+    struct DungeonMapDesc_Compat maps[1],
+    struct DungeonMapTiles_Compat tiles[1],
+    unsigned char* squareData,
+    unsigned short* squareFirstThings,
+    struct DungeonThings_Compat* things,
+    struct DungeonExplosion_Compat* explosions,
+    unsigned char* rawExplosions,
+    int width,
+    int height)
+{
+    int i;
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(maps, 0, sizeof(*maps));
+    memset(tiles, 0, sizeof(*tiles));
+    memset(things, 0, sizeof(*things));
+    memset(explosions, 0, 2u * sizeof(*explosions));
+    memset(rawExplosions, 0xff, 8u);
+    for (i = 0; i < width * height; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    dungeon->header.mapCount = 1;
+    dungeon->maps = maps;
+    dungeon->tiles = tiles;
+    dungeon->tilesLoaded = 1;
+    maps[0].width = (unsigned char)width;
+    maps[0].height = (unsigned char)height;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = width * height;
+    things->loaded = 1;
+    things->squareFirstThings = squareFirstThings;
+    things->squareFirstThingCount = width * height;
+    things->explosions = explosions;
+    things->explosionCount = 2;
+    things->thingCounts[THING_TYPE_EXPLOSION] = 2;
+    things->rawThingData[THING_TYPE_EXPLOSION] = rawExplosions;
+    explosions[0].next = THING_NONE;
+    explosions[1].next = THING_NONE;
+    state->world.dungeon = dungeon;
+    state->world.things = things;
+}
+
 static void test_melee_action_row_uses_auto_target_and_action_index(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -7954,12 +7999,23 @@ static void test_action_stamina_underflow_clamps_and_damages(void) {
 
 static void test_fluxcage_schedules_f0224_remove_event(void) {
     M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    struct DungeonThings_Compat things;
+    struct DungeonExplosion_Compat sourceExplosions[2];
+    unsigned char rawExplosions[8];
     int removeIndex = -1;
     int slot = -1;
     int guard;
     int i;
 
     seed_state(&state, 100, 41);
+    attach_fluxcage_c15_source_fixture(
+        &state, &dungeon, maps, tiles, squareData, squareFirstThings, &things,
+        sourceExplosions, rawExplosions, 5, 5);
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
     state.world.party.mapX = 2;
@@ -8001,6 +8057,15 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
               "FLUXCAGE remove event stores target y");
     ASSERT_EQ(slot >= 0, 1,
               "FLUXCAGE remove event stores explosion slot");
+    ASSERT_EQ(state.world.timeline.events[removeIndex].aux2,
+              make_thing(THING_TYPE_EXPLOSION, 0),
+              "FLUXCAGE C24 stores its raw C15 Thing owner");
+    ASSERT_EQ(read_u16_le_for_test(rawExplosions), THING_ENDOFLIST,
+              "FLUXCAGE raw C15 Next is source end-of-list");
+    ASSERT_EQ(rawExplosions[2], (unsigned char)(C050_EXPLOSION_FLUXCAGE | 0x80),
+              "FLUXCAGE raw C15 writes C050 and Centered");
+    ASSERT_EQ(rawExplosions[3], 255,
+              "FLUXCAGE raw C15 writes source attack 255");
     ASSERT_EQ(state.world.explosions.entries[slot].explosionType,
               C050_EXPLOSION_FLUXCAGE,
               "FLUXCAGE explosion uses source explosion type");
@@ -8019,13 +8084,48 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
               "C24 remove-fluxcage event despawns the fluxcage");
 }
 
+static void test_fluxcage_rejects_missing_c15_source(void) {
+    M11_GameViewState state;
+    int i;
+
+    seed_state(&state, 100, 41);
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 2;
+    state.world.party.direction = 0;
+    state.world.party.champions[0].direction = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FLUXCAGE),
+              1, "FLUXCAGE retains the common action tail without raw C15 owner");
+    ASSERT_EQ(state.world.explosions.count, 0,
+              "FLUXCAGE rejects host-only explosion creation");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        ASSERT_EQ(state.world.timeline.events[i].kind !=
+                      TIMELINE_EVENT_REMOVE_FLUXCAGE,
+                  1, "FLUXCAGE rejection publishes no host C24 event");
+    }
+}
+
 static void test_fluxcage_uses_pref0406_champion_target_square(void) {
     M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    struct DungeonThings_Compat things;
+    struct DungeonExplosion_Compat sourceExplosions[2];
+    unsigned char rawExplosions[8];
     int removeIndex = -1;
     int slot = -1;
     int i;
 
     seed_state(&state, 100, 41);
+    attach_fluxcage_c15_source_fixture(
+        &state, &dungeon, maps, tiles, squareData, squareFirstThings, &things,
+        sourceExplosions, rawExplosions, 5, 5);
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
     state.world.party.mapX = 2;
@@ -8153,6 +8253,8 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     unsigned short squareFirstThings[25];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
+    struct DungeonExplosion_Compat sourceExplosions[2];
+    unsigned char rawExplosions[8];
     int dangerIndex = -1;
     int removeIndex = -1;
     int i;
@@ -8197,6 +8299,14 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     things.squareFirstThingCount = 25;
     things.groups = groups;
     things.groupCount = 1;
+    memset(sourceExplosions, 0, sizeof(sourceExplosions));
+    memset(rawExplosions, 0xff, sizeof(rawExplosions));
+    sourceExplosions[0].next = THING_NONE;
+    sourceExplosions[1].next = THING_NONE;
+    things.explosions = sourceExplosions;
+    things.explosionCount = 2;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 2;
+    things.rawThingData[THING_TYPE_EXPLOSION] = rawExplosions;
     state.world.things = &things;
     state.world.creatureAICount = 1;
     state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
@@ -9473,6 +9583,7 @@ int main(void) {
     test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
     test_fluxcage_schedules_f0224_remove_event();
+    test_fluxcage_rejects_missing_c15_source();
     test_fluxcage_uses_pref0406_champion_target_square();
     test_fluxcage_wall_target_keeps_f0407_tail_without_cage();
     test_fluxcage_third_cage_schedules_lord_chaos_danger();

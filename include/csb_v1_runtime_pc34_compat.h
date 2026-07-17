@@ -124,9 +124,50 @@ typedef struct {
     uint16_t teleporter_copy_count;
     uint32_t last_teleporter_copy_source_location;
     uint32_t last_teleporter_copy_destination_location;
+    uint32_t last_teleporter_copy_source_before[5];
+    uint32_t last_teleporter_copy_destination_before[5];
+    uint32_t last_teleporter_copy_destination_after[5];
     uint16_t actuator_copy_count;
     uint16_t last_actuator_copy_source_thing;
     uint16_t last_actuator_copy_destination_thing;
+    uint16_t skin_store_count;
+    uint32_t last_skin_store_location;
+    uint8_t last_skin_store_before;
+    uint8_t last_skin_store_after;
+    uint16_t wing_talents_store_count;
+    uint16_t last_wing_talents_fingerprint;
+    uint32_t last_wing_talents_before;
+    uint32_t last_wing_talents_after;
+    uint32_t wing_talents_tail_fnv1a_before;
+    uint32_t wing_talents_tail_fnv1a_after;
+    uint16_t experience_plus_count;
+    int32_t last_experience_character_selector;
+    int32_t last_experience_skill_number;
+    int32_t last_experience_basic_skill_number;
+    int32_t last_experience_amount;
+    uint32_t last_experience_selected_before;
+    uint32_t last_experience_selected_after;
+    uint32_t last_experience_basic_before;
+    uint32_t last_experience_basic_after;
+    uint16_t monster_store_count;
+    uint16_t last_monster_store_thing;
+    uint8_t last_monster_store_write_mask;
+    uint32_t last_monster_store_before[8];
+    uint32_t last_monster_store_after[8];
+    uint16_t cell_store_count;
+    uint32_t last_cell_store_location;
+    uint8_t last_cell_store_write_mask;
+    uint32_t last_cell_store_before[5];
+    uint32_t last_cell_store_after[5];
+    uint16_t false_pit_count;
+    uint32_t last_false_pit_location;
+    uint32_t last_false_pit_before[5];
+    uint32_t last_false_pit_after[5];
+    uint16_t object_property_store_count;
+    uint16_t last_object_property_thing;
+    uint8_t last_object_property_kind;
+    uint32_t last_object_property_before;
+    uint32_t last_object_property_after;
     uint16_t missile_info_store_count;
     uint16_t last_missile_info_thing;
     uint32_t last_missile_info_before[4];
@@ -142,20 +183,44 @@ typedef struct {
     uint32_t last_excell_store_location;
     uint32_t last_excell_store_before[8];
     uint32_t last_excell_store_after[8];
+    uint32_t excell_tail_fnv1a_before;
+    uint32_t excell_tail_fnv1a_after;
     uint16_t generator_delay_store_count;
     uint32_t last_generator_delay_location;
     int32_t last_generator_delay_before;
     int32_t last_generator_delay_after;
     int generator_delay_has_generator;
+    uint16_t cause_poison_count;
+    int32_t last_cause_poison_character_selector;
+    int32_t last_cause_poison_attack;
+    int16_t last_cause_poison_health_before;
+    int16_t last_cause_poison_health_after;
+    uint16_t last_cause_poison_dose_before;
+    uint16_t last_cause_poison_dose_after;
+    uint8_t last_cause_poison_event_count_before;
+    uint8_t last_cause_poison_event_count_after;
+    uint16_t last_cause_poison_timer_event_index;
+    uint16_t last_cause_poison_timer_attack;
+    uint32_t last_cause_poison_timer_time;
     uint8_t dsa_id;
     uint32_t state_index;
     uint32_t column;
     int action_ordinal;
     int globals_changed;
     int saves_disabled_changed;
+    int saves_disabled_before;
+    int saves_disabled_after;
     int random_state_changed;
+    uint32_t random_state_before;
+    uint32_t random_state_after;
     int text_message_changed;
+    CSB_V1_RuntimeTextMessageReceipt text_message_before;
+    CSB_V1_RuntimeTextMessageReceipt text_message_after;
     int party_talents_changed;
+    int party_talents_champion_count;
+    uint16_t party_talents_fingerprints[4];
+    uint32_t party_talents_before[4];
+    uint32_t party_talents_after[4];
     int party_skill_experience_changed;
     int timer_type_modifiers_valid;
     uint8_t timer_type_modifiers[3];
@@ -181,6 +246,25 @@ typedef struct {
     int dsa_state_changed;
     int dungeon_changed;
 } CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34;
+
+/* Read-only prerequisite for CSBWin Magic.cpp::AddToSkill when its proposed
+ * basic-skill mastery changes. The actual LevelUp random/stat/UI transaction
+ * remains unavailable; this receipt proves only the source-owned CHARDESC
+ * pair that a future complete owner must consume. */
+typedef struct {
+    int valid;
+    int levelup_required;
+    int32_t character_selector;
+    int32_t selected_skill_number;
+    int32_t basic_skill_number;
+    uint16_t increment_ui16;
+    uint32_t selected_before;
+    uint32_t selected_after;
+    uint32_t basic_before;
+    uint32_t basic_after;
+    int basic_mastery_before;
+    int basic_mastery_after;
+} CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34;
 
 #define CSB_V1_CSBWIN_DSA_STATE_STORAGE_DB3_DSASTATE 0u
 #define CSB_V1_CSBWIN_DSA_STATE_STORAGE_SAVED_M_STATE 1u
@@ -926,6 +1010,13 @@ int csb_v1_runtime_csbwin_dsa_runtime_chain_receipt_pc34(
 int csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 *out_receipt);
+int csb_v1_runtime_csbwin_dsa_levelup_prerequisite_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile, int32_t character_selector,
+    int32_t skill_number, int32_t experience,
+    CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34 *out_receipt);
+int csb_v1_runtime_csbwin_dsa_levelup_prerequisite_current_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34 *receipt);
 
 int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     const CSB_V1_RuntimeProfile *profile,

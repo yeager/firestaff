@@ -55,23 +55,42 @@ int theron_v1_track02_descriptor_bitmap_palette_capture_intake_admit(
         !artifact->bundle_md5_verified || !artifact->mednafen_trace_md5_verified ||
         !artifact->complete_route_set_consumed || !artifact->opaque_envelope_verified ||
         !artifact->opaque_runtime_ready ||
+        artifact->capture_target_plan_identity != plan_identity ||
         artifact->campaign_route != THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF ||
+        artifact->descriptor_selector !=
+            descriptor->corpus.sector_record.descriptor_selector ||
+        artifact->descriptor_ordinal !=
+            descriptor->corpus.sector_record.descriptor_ordinal ||
+        artifact->descriptor_source_hash !=
+            descriptor->corpus.sector_record.descriptor_source_hash ||
         artifact->track02_variant != descriptor->corpus.sector_record.track02_variant ||
         strcmp(artifact->track02_md5, descriptor->corpus.sector_record.track02_md5) ||
         strcmp(artifact->mednafen_trace_md5, descriptor->coalesced_trace_md5) ||
         target->route != THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF ||
         target->track02_variant != descriptor->corpus.sector_record.track02_variant ||
         strcmp(target->track02_md5, descriptor->corpus.sector_record.track02_md5) ||
-        !target->palette_output_identity || !target->bitmap_identity ||
+        !target->cd_read_record || !target->loader_output_checksum ||
+        !target->palette_output_identity ||
+        !target->bitmap_identity || !target->destination_bytes ||
         target->destination_record != descriptor->corpus.sector_record.resolved_track02_record ||
         artifact->cd_read_record[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
             target->cd_read_record ||
+        artifact->loader_output_raw_offset[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+            target->loader_output_raw_offset ||
+        artifact->loader_output_bytes[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+            target->loader_output_bytes ||
+        artifact->loader_output_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+            target->loader_output_checksum ||
         artifact->palette_output_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
             target->palette_output_identity ||
         artifact->bitmap_transfer_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
             target->bitmap_identity ||
         artifact->destination_record[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
             descriptor->corpus.sector_record.resolved_track02_record ||
+        artifact->destination_offset[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+            target->destination_offset ||
+        artifact->destination_bytes[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+            target->destination_bytes ||
         artifact->destination_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
             target->destination_identity ||
         artifact->pixel_decode_allowed || artifact->level_object_semantics_allowed ||
@@ -95,9 +114,21 @@ int theron_v1_track02_descriptor_bitmap_palette_capture_intake_admit(
     receipt.campaign_layout_epoch = campaign_layout_epoch;
     receipt.campaign_media_scan_epoch = campaign_media_scan_epoch;
     receipt.capture_target_plan_identity = plan_identity;
+    receipt.cd_read_record = target->cd_read_record;
+    receipt.descriptor_selector =
+        descriptor->corpus.sector_record.descriptor_selector;
+    receipt.descriptor_ordinal =
+        descriptor->corpus.sector_record.descriptor_ordinal;
+    receipt.descriptor_source_hash =
+        descriptor->corpus.sector_record.descriptor_source_hash;
     receipt.descriptor_record = descriptor->corpus.sector_record.resolved_track02_record;
+    receipt.loader_output_raw_offset = target->loader_output_raw_offset;
+    receipt.loader_output_bytes = target->loader_output_bytes;
+    receipt.loader_output_identity = target->loader_output_checksum;
     receipt.palette_output_identity = target->palette_output_identity;
     receipt.bitmap_transfer_identity = target->bitmap_identity;
+    receipt.destination_offset = target->destination_offset;
+    receipt.destination_bytes = target->destination_bytes;
     receipt.destination_identity = target->destination_identity;
     *out = receipt;
     return 1;

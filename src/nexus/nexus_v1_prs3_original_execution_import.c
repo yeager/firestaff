@@ -1,4 +1,5 @@
 #include "nexus_v1_prs3_original_execution_import.h"
+#include "firestaff_x68k_media_receipt.h"
 
 #include <string.h>
 
@@ -29,6 +30,7 @@ int nexus_v1_prs3_original_execution_evidence_import(
     const Nexus_V1_Prs3OriginalExecutionAuthentication *auth;
     Nexus_V1_Prs3OriginalExecutionEvidenceReceipt receipt;
     uint64_t export_fnv;
+    char export_sha256[65];
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt)); receipt.evidence_only = 1;
@@ -38,7 +40,12 @@ int nexus_v1_prs3_original_execution_evidence_import(
         !auth->independently_authenticated_original_saturn_execution ||
         !sha256_shape(auth->trace_export_sha256)) { *out_receipt = receipt; return 0; }
     export_fnv = fnv1a64(input->trace_export_bytes, input->trace_export_size);
-    if (export_fnv != auth->trace_export_fnv1a64 || trace->schema_version != 10U ||
+    if (firestaff_x68k_media_receipt_sha256_hex(input->trace_export_bytes,
+                                                 input->trace_export_size,
+                                                 export_sha256,
+                                                 sizeof(export_sha256)) != 0 ||
+        strcmp(export_sha256, auth->trace_export_sha256) != 0 ||
+        export_fnv != auth->trace_export_fnv1a64 || trace->schema_version != 10U ||
         !trace->valid || !trace->complete_capture || !trace->menu_bpk_fnv1a64 ||
         !trace->dm_bin_fnv1a64 || !trace->stream_size || !trace->expected_output_bytes ||
         trace->input_read_bytes != trace->stream_size ||
@@ -67,6 +74,8 @@ int nexus_v1_prs3_original_execution_evidence_import(
     receipt.output_write_bytes = trace->output_write_bytes; receipt.output_fnv1a64 = trace->output_fnv1a64;
     receipt.vdp1_texture_source_address = trace->vdp1_texture_source_address;
     receipt.vdp1_texture_source_bytes = trace->vdp1_texture_source_bytes;
+    receipt.last_output_write_sequence = trace->last_output_write_sequence;
+    receipt.vdp1_command_sequence = trace->vdp1_command_sequence;
     receipt.complete_sh2_input_reads_bound = receipt.complete_output_range_bound =
         receipt.subsequent_vdp1_source_command_bound = receipt.authenticated_original_execution_bound = 1;
     *out_receipt = receipt; return 1;

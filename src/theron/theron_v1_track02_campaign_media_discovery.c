@@ -79,6 +79,7 @@ int theron_v1_track02_campaign_media_discover(
         (variant = theron_v1_track02_variant_for_md5(expected_track02_md5)) ==
             THERON_TRACK02_VARIANT_UNKNOWN) {
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED;
+        receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
         *out = receipt;
         return 1;
     }
@@ -86,7 +87,28 @@ int theron_v1_track02_campaign_media_discover(
     snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
              expected_track02_md5);
     if (stat(search_path, &info) != 0) {
+        if ((ieq(extension(search_path), ".iso") ||
+             ieq(extension(search_path), ".bin")) &&
+            theron_v1_track02_raw_media_intake_discover(
+                search_path, &receipt.direct_media) &&
+            receipt.direct_media.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+            receipt.direct_media.variant == variant &&
+            !strcmp(receipt.direct_media.track02_md5, expected_track02_md5)) {
+            receipt.candidate_count = 1;
+            receipt.source = THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_LOOSE;
+            snprintf(receipt.candidate_path, sizeof(receipt.candidate_path), "%s",
+                     receipt.direct_media.payload_path);
+            receipt.exact_layout_bound = 1;
+            receipt.launchable_direct_media = 1;
+            receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
+            *out = receipt;
+            return 1;
+        }
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_UNAVAILABLE;
+        receipt.failure_reason = receipt.direct_media.failure_reason !=
+            THERON_V1_TRACK02_MEDIA_REASON_NONE
+            ? receipt.direct_media.failure_reason
+            : THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE;
         *out = receipt;
         return 1;
     }
@@ -105,6 +127,10 @@ int theron_v1_track02_campaign_media_discover(
             receipt.direct_media.variant != variant ||
             strcmp(receipt.direct_media.track02_md5, expected_track02_md5)) {
             receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED;
+            receipt.failure_reason = receipt.direct_media.failure_reason !=
+                THERON_V1_TRACK02_MEDIA_REASON_NONE
+                ? receipt.direct_media.failure_reason
+                : THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
             *out = receipt;
             return 1;
         }
@@ -118,6 +144,7 @@ int theron_v1_track02_campaign_media_discover(
         !asset_find_by_md5(search_path, expected_track02_md5, found,
                            (int)sizeof(found), max_depth)) {
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_UNAVAILABLE;
+        receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE;
         *out = receipt;
         return 1;
     }
@@ -134,6 +161,7 @@ int theron_v1_track02_campaign_media_discover(
     }
     if (receipt.ambiguous) {
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_AMBIGUOUS;
+        receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
         *out = receipt;
         return 1;
     }
@@ -158,9 +186,20 @@ int theron_v1_track02_campaign_media_discover(
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
     } else {
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED;
+        receipt.failure_reason = receipt.direct_media.failure_reason !=
+            THERON_V1_TRACK02_MEDIA_REASON_NONE
+            ? receipt.direct_media.failure_reason
+            : THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
     }
     *out = receipt;
     return 1;
+}
+
+const char *theron_v1_track02_campaign_media_failure_reason_id(
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt *receipt)
+{
+    return theron_v1_track02_media_failure_reason_id(
+        receipt ? receipt->failure_reason : THERON_V1_TRACK02_MEDIA_REASON_NONE);
 }
 
 int theron_v1_track02_campaign_media_bind_capture_plan(

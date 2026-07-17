@@ -1,0 +1,4 @@
+#include "dm2_v1_gdat_draw_temp_palette_surface_receipt.h"
+#include <stdio.h>
+#include <string.h>
+int main(void){DM2_V1_GdatB073InputReceipt b={0};DM2_V1_GdatWallTileDrawTempReceipt d={0};DM2_V1_GdatDrawTempPaletteSurfaceReceipt r;DM2_V1_ViewportState v;uint8_t fb[DM2_VP_WIDTH*DM2_VP_HEIGHT];b.valid=b.no_draw=d.valid=d.no_draw=1;b.identity_hash=1;d.identity_hash=2;dm2_v1_viewport_init(&v,fb,DM2_VP_WIDTH);int ok=dm2_v1_gdat_draw_temp_palette_surface_receipt_build(&b,&d,&v,&r)&&r.valid&&r.no_draw;++d.identity_hash;ok&=dm2_v1_gdat_draw_temp_palette_surface_receipt_build(&b,&d,&v,&r)&&r.draw_temp_hash==3;memset(&v.surface_snapshot,0,sizeof(v.surface_snapshot));ok&=!dm2_v1_gdat_draw_temp_palette_surface_receipt_build(&b,&d,&v,&r);printf("%s dm2_v1_gdat_draw_temp_palette_surface_receipt\n",ok?"PASS":"FAIL");return ok?0:1;}

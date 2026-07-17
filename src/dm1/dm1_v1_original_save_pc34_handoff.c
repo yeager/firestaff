@@ -1,5 +1,7 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 
+#include "dm1_v1_c15_layout_pc34_compat.h"
+
 #include "dm1_v1_resurrection_pc34_compat.h"
 
 #include "memory_door_action_pc34_compat.h"
@@ -14,18 +16,6 @@ static int read_original_pc34_file_bytes(
     const char *path,
     uint8_t **out_bytes,
     size_t *out_size);
-
-static uint32_t original_pc34_c15_fingerprint(const unsigned char *bytes,
-                                               size_t byte_count)
-{
-    uint32_t hash = 2166136261u;
-    size_t i;
-    for (i = 0; i < byte_count; ++i) {
-        hash ^= bytes[i];
-        hash *= 16777619u;
-    }
-    return hash;
-}
 
 static uint32_t original_pc34_timeline_runtime_fingerprint(
     const struct TimelineQueue_Compat *timeline)
@@ -1191,7 +1181,7 @@ static int import_original_pc34_events_part(
     }
     memcpy(out_report->c3_raw_event_bytes, part, part_size);
     out_report->c3_raw_event_byte_count = (uint32_t)part_size;
-    out_report->c3_raw_event_fingerprint = original_pc34_c15_fingerprint(
+    out_report->c3_raw_event_fingerprint = dm1_v1_c15_layout_fingerprint_pc34(
         part, part_size);
     for (i = 0; i < decode_count; ++i) {
         decode_original_pc34_event(
@@ -1232,7 +1222,7 @@ static int import_original_pc34_timeline_part(
     }
     memcpy(out_report->c4_raw_heap_bytes, part, part_size);
     out_report->c4_raw_heap_byte_count = (uint32_t)part_size;
-    out_report->c4_raw_heap_fingerprint = original_pc34_c15_fingerprint(
+    out_report->c4_raw_heap_fingerprint = dm1_v1_c15_layout_fingerprint_pc34(
         part, part_size);
     for (i = 0; i < decode_count; ++i) {
         out_report->timeline_indices[i] = read_u16_le(part + (size_t)i * 2u);
@@ -1866,7 +1856,7 @@ static int materialize_original_pc34_explosion_event(
     input.ownerKind = -1;
     input.ownerIndex = -1;
     input.creatorProjectileSlot = -1;
-    if (!F0821_EXPLOSION_Create_Compat(&input, &world->explosions,
+    if (!F0213_EXPLOSION_Create_Compat(&input, &world->explosions,
                                        &runtime_index, &first_event)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
@@ -1881,7 +1871,7 @@ static int materialize_original_pc34_explosion_event(
     out_event->aux0 = runtime_index;
     out_event->aux1 = source_explosion->type;
     out_event->aux2 = source_explosion->attack;
-    out_event->aux3 = (int)original_pc34_c15_fingerprint(
+    out_event->aux3 = (int)dm1_v1_c15_layout_fingerprint_pc34(
         world->things->rawThingData[THING_TYPE_EXPLOSION] +
             (size_t)source_index * s_thingDataByteCount[THING_TYPE_EXPLOSION],
         s_thingDataByteCount[THING_TYPE_EXPLOSION]);
@@ -1932,7 +1922,7 @@ static int materialize_original_pc34_remove_fluxcage_event(
     input.ownerKind = -1;
     input.ownerIndex = -1;
     input.creatorProjectileSlot = -1;
-    if (!F0821_EXPLOSION_Create_Compat(&input, &world->explosions,
+    if (!F0213_EXPLOSION_Create_Compat(&input, &world->explosions,
                                        &runtime_index, &first_event)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
@@ -4158,9 +4148,9 @@ static int publish_original_pc34_c3_c4_receipt(
         report->c4_raw_heap_byte_count != expected_c4_bytes ||
         expected_c3_bytes > sizeof(world->pc34OriginalC3RawEventBytes) ||
         expected_c4_bytes > sizeof(world->pc34OriginalC4RawHeapBytes) ||
-        report->c3_raw_event_fingerprint != original_pc34_c15_fingerprint(
+        report->c3_raw_event_fingerprint != dm1_v1_c15_layout_fingerprint_pc34(
             report->c3_raw_event_bytes, expected_c3_bytes) ||
-        report->c4_raw_heap_fingerprint != original_pc34_c15_fingerprint(
+        report->c4_raw_heap_fingerprint != dm1_v1_c15_layout_fingerprint_pc34(
             report->c4_raw_heap_bytes, expected_c4_bytes)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }

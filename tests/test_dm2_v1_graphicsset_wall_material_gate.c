@@ -8,7 +8,8 @@
 
 typedef struct {
     int expected_graphicsset;
-    int wall_fetches;
+    int asset_fetches;
+    int palette_fetches;
     int wrong_graphicsset_fetches;
 } FetchTrace;
 
@@ -37,7 +38,7 @@ static int fetch_wall(void *user,
             gdat_index, &graphicsset, &field)) {
         return -1;
     }
-    ++trace->wall_fetches;
+    ++trace->asset_fetches;
     if (graphicsset != trace->expected_graphicsset || field < 0x22) {
         ++trace->wrong_graphicsset_fetches;
     }
@@ -101,7 +102,8 @@ int main(void)
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_render_walls(&viewport);
     CHECK("source wall draw blocks before callback lookup without a G1 plan",
-          trace.fetches == 0 && viewport.asset_wall_drawn_count == 0 &&
+          trace.asset_fetches == 0 && trace.palette_fetches == 0 &&
+              viewport.asset_wall_drawn_count == 0 &&
               viewport.last_dungeon_wall_material_consumed_mask == 0u &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) != 0u);
@@ -119,7 +121,8 @@ int main(void)
           bind_source_wall_transaction(&viewport) == 1);
     dm2_v1_render_walls(&viewport);
     CHECK("callback-complete GDAT cannot replace a source-owned wall plan",
-          trace.fetches == 0 && viewport.asset_wall_drawn_count == 0 &&
+          trace.asset_fetches == 0 && trace.palette_fetches == 0 &&
+              viewport.asset_wall_drawn_count == 0 &&
               viewport.fallback_wall_drawn_count == 0 &&
               viewport.last_dungeon_wall_material_required_mask == 0u &&
               viewport.last_dungeon_wall_material_consumed_mask == 0u &&

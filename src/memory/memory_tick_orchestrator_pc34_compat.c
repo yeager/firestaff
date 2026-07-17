@@ -15,6 +15,9 @@
 
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_c15_layout_pc34_compat.h"
+#include "dm1_v1_c14_layout_pc34_compat.h"
+#include "dm1_v1_projectile_impact_count_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
@@ -28,6 +31,7 @@
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
@@ -3116,6 +3120,144 @@ static int orch_f0199_square_blocks_view_compat(
                world, mapIndex, mapX, mapY, squareByte);
 }
 
+/* GROUP.C F0198 differs from F0197 only at its blockers: doors and imaginary
+ * fake walls do not stop smell.  This reads the loaded raw square on every
+ * F0199 step; absent/unsupported data remains blocking. */
+static int orch_f0198_square_blocks_smell_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned char squareByte;
+    int squareType;
+
+    if (!orch_read_square_byte_compat(
+            world ? world->dungeon : NULL, mapIndex, mapX, mapY,
+            &squareByte)) {
+        return 1;
+    }
+    squareType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    return squareType == DUNGEON_ELEMENT_WALL ||
+           (squareType == DUNGEON_ELEMENT_FAKEWALL &&
+            !(squareByte & 0x04u) && !(squareByte & 0x01u));
+}
+
+static int orch_f0198_square_blocks_smell_callback_compat(
+    int mapX, int mapY, void* context)
+{
+    const struct GameWorld_Compat* world =
+        (const struct GameWorld_Compat*)context;
+    if (!world) return 1;
+    return orch_f0198_square_blocks_smell_compat(
+        world, world->party.mapIndex, mapX, mapY);
+}
+
+static uint32_t orch_party_scent_fingerprint_compat(
+    const DM1_V1_NeedsScentListPc34Compat* scents)
+{
+    uint32_t hash = 2166136261u;
+    uint16_t index;
+    if (!scents) return 0;
+#define ORCH_SCENT_FNV_BYTE(value) \
+    do { hash ^= (uint8_t)(value); hash *= 16777619u; } while (0)
+    ORCH_SCENT_FNV_BYTE(scents->count);
+    ORCH_SCENT_FNV_BYTE(scents->count >> 8);
+    ORCH_SCENT_FNV_BYTE(scents->firstScentIndex);
+    ORCH_SCENT_FNV_BYTE(scents->firstScentIndex >> 8);
+    ORCH_SCENT_FNV_BYTE(scents->lastScentIndex);
+    ORCH_SCENT_FNV_BYTE(scents->lastScentIndex >> 8);
+    for (index = 0; index < scents->count; ++index) {
+        const DM1_V1_NeedsScentPc34Compat* scent = &scents->entries[index];
+        ORCH_SCENT_FNV_BYTE(scent->mapX);
+        ORCH_SCENT_FNV_BYTE(scent->mapX >> 8);
+        ORCH_SCENT_FNV_BYTE(scent->mapY);
+        ORCH_SCENT_FNV_BYTE(scent->mapY >> 8);
+        ORCH_SCENT_FNV_BYTE(scent->mapIndex);
+        ORCH_SCENT_FNV_BYTE(scent->mapIndex >> 8);
+        ORCH_SCENT_FNV_BYTE(scent->strength);
+    }
+#undef ORCH_SCENT_FNV_BYTE
+    return hash;
+}
+
+int F0890d_ORCH_PublishPartyScentReceipt_Compat(
+    struct GameWorld_Compat* world,
+    const DM1_V1_NeedsScentListPc34Compat* sourceScents,
+    uint32_t sourceFingerprint)
+{
+    uint16_t index;
+
+    if (!world || !sourceScents || !world->dungeon ||
+        sourceScents->count == 0 ||
+        sourceScents->count > DM1_V1_NEEDS_SCENT_CAPACITY ||
+        sourceScents->firstScentIndex > sourceScents->count ||
+        sourceScents->lastScentIndex > sourceScents->count ||
+        sourceFingerprint == 0 ||
+        orch_party_scent_fingerprint_compat(sourceScents) != sourceFingerprint) {
+        return 0;
+    }
+    for (index = 0; index < sourceScents->count; ++index) {
+        const DM1_V1_NeedsScentPc34Compat* scent = &sourceScents->entries[index];
+        const struct DungeonMapDesc_Compat* map;
+        if (scent->strength == 0 ||
+            scent->mapIndex >= world->dungeon->header.mapCount) {
+            return 0;
+        }
+        map = &world->dungeon->maps[scent->mapIndex];
+        if (scent->mapX >= map->width || scent->mapY >= map->height) return 0;
+    }
+    world->pc34PartyScentReceipt = *sourceScents;
+    world->pc34PartyScentReceiptFingerprint = sourceFingerprint;
+    world->pc34PartyScentReceiptValid = 1;
+    return 1;
+}
+
+int F0890e_ORCH_BuildGroupSmellDirectionPlan_Compat(
+    struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* context,
+    struct DM1GroupSmellDirectionPlan_Compat* outPlan)
+{
+    struct DM1GroupBehaviorContext_Compat sourceContext;
+    struct DM1GroupScent_Compat scent;
+    const struct DM1GroupScent_Compat* scentPtr = NULL;
+    int scentOrdinal;
+
+    if (!world || !context || !outPlan || !world->dungeon ||
+        context->currentMapIndex != world->party.mapIndex ||
+        context->partyMapIndex != world->party.mapIndex) {
+        return 0;
+    }
+    memset(&sourceContext, 0, sizeof(sourceContext));
+    memset(&scent, 0, sizeof(scent));
+    sourceContext = *context;
+    sourceContext.isSmellSquareBlocked =
+        orch_f0198_square_blocks_smell_callback_compat;
+    sourceContext.smellBlockerContext = world;
+
+    if (world->pc34PartyScentReceiptValid &&
+        orch_party_scent_fingerprint_compat(&world->pc34PartyScentReceipt) ==
+            world->pc34PartyScentReceiptFingerprint) {
+        scentOrdinal = DM1_V1_Needs_GetScentOrdinalPc34Compat(
+            &world->pc34PartyScentReceipt,
+            (uint16_t)context->currentMapIndex,
+            (uint16_t)context->partyMapX,
+            (uint16_t)context->partyMapY);
+        if (scentOrdinal > 0 &&
+            scentOrdinal <= (int)world->pc34PartyScentReceipt.count) {
+            const DM1_V1_NeedsScentPc34Compat* entry =
+                &world->pc34PartyScentReceipt.entries[scentOrdinal - 1];
+            scent.present = 1;
+            scent.strength = entry->strength;
+            scent.mapX = entry->mapX;
+            scent.mapY = entry->mapY;
+            scentPtr = &scent;
+        }
+    }
+    return F0819c_DM1_GROUP_BuildSmelledPartyDirectionPlanWithRoute_Compat(
+        &sourceContext, scentPtr, &world->masterRng, outPlan);
+}
+
 /* ReDMCSB GROUP.C F0199 lines 1239-1320.  This is deliberately not a
  * generic Bresenham walk: equal-axis paths test both orthogonal corners,
  * while non-equal paths retain F0199's fixed-point tie behavior. */
@@ -3710,6 +3852,102 @@ static int orch_square_has_group_or_party_compat(
     return 0;
 }
 
+/* Materialize exactly the F0202 input record from the loaded DUNGEON square
+ * and its C00/C04/C15 chain.  A missing list owner, malformed chain, or an
+ * unsupported raw square leaves `available` clear; GROUP.C must not treat it
+ * as a walkable corridor. */
+static int orch_build_group_movement_facts_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct DM1GroupMovementFacts_Compat* outFacts)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char square;
+    unsigned short thing;
+    int squareType;
+    int sftIndex;
+    int safety = 0;
+
+    if (!outFacts) return 0;
+    memset(outFacts, 0, sizeof(*outFacts));
+    if (!world || !world->dungeon || !world->things ||
+        mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height ||
+        !orch_read_square_byte_compat(
+            world->dungeon, mapIndex, mapX, mapY, &square)) {
+        return 0;
+    }
+    squareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    if (squareType < DUNGEON_ELEMENT_WALL ||
+        squareType >= DUNGEON_ELEMENT_COUNT) {
+        return 0;
+    }
+
+    outFacts->available = 1;
+    outFacts->inBounds = 1;
+    outFacts->isWall = squareType == DUNGEON_ELEMENT_WALL;
+    outFacts->isStairs = squareType == DUNGEON_ELEMENT_STAIRS;
+    outFacts->isOpenPit = squareType == DUNGEON_ELEMENT_PIT &&
+        (square & 0x08u) && !(square & 0x01u);
+    outFacts->isImaginaryPit = squareType == DUNGEON_ELEMENT_PIT &&
+        (square & 0x01u);
+    outFacts->isFakeWall = squareType == DUNGEON_ELEMENT_FAKEWALL;
+    outFacts->isOpenFakeWall = outFacts->isFakeWall && (square & 0x04u);
+    outFacts->isImaginaryFakeWall = outFacts->isFakeWall &&
+        (square & 0x01u);
+    outFacts->doorBlocksCreature = squareType == DUNGEON_ELEMENT_DOOR &&
+        !F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+            world->dungeon, mapIndex, mapX, mapY,
+            MOVEMENT_PASS_CTX_CREATURE);
+    outFacts->occupiedByParty = world->party.mapIndex == mapIndex &&
+        world->party.mapX == mapX && world->party.mapY == mapY;
+
+    if (!(square & DUNGEON_SQUARE_MASK_THING_LIST)) return 1;
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount ||
+        !world->things->squareFirstThings) {
+        memset(outFacts, 0, sizeof(*outFacts));
+        return 0;
+    }
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (type == THING_TYPE_GROUP) {
+            if (index < 0 || index >= world->things->groupCount ||
+                !world->things->groups) goto malformed;
+            outFacts->occupiedByGroup = 1;
+        } else if (type == THING_TYPE_EXPLOSION) {
+            if (index < 0 || index >= world->things->explosionCount ||
+                !world->things->explosions) goto malformed;
+            if (world->things->explosions[index].type == C050_EXPLOSION_FLUXCAGE) {
+                outFacts->hasFluxcage = 1;
+            }
+        } else if (type < THING_TYPE_DOOR || type > THING_TYPE_EXPLOSION ||
+                   index < 0 || index >= world->things->thingCounts[type] ||
+                   !world->things->rawThingData[type]) {
+            goto malformed;
+        }
+        if (next == THING_NONE) goto malformed;
+        thing = next;
+    }
+    if (safety >= 64) goto malformed;
+    return 1;
+
+malformed:
+    memset(outFacts, 0, sizeof(*outFacts));
+    return 0;
+}
+
 static int orch_find_teleporter_on_square_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -4138,7 +4376,7 @@ static int orch_c13_apply_vi_altar_rebirth_compat(
         input.ownerKind = -1;
         input.ownerIndex = ev->aux4;
         input.creatorProjectileSlot = -1;
-        if (!F0821_EXPLOSION_Create_Compat(&input, &world->explosions,
+        if (!F0213_EXPLOSION_Create_Compat(&input, &world->explosions,
                                             &explosion_slot,
                                             &explosion_advance)) {
             return 0;
@@ -4217,6 +4455,10 @@ static int orch_c13_apply_vi_altar_rebirth_compat(
     return 1;
 }
 
+static int orch_write_raw_projectile_f0219_compat(
+    struct DungeonThings_Compat* things,
+    int projectileIndex);
+
 /* ReDMCSB PROJEXPL.C F0214:207-223 deletes exactly the Timeline record
  * named by the raw C14 PROJECTILE.EventIndex.  The old compat route swept
  * every C49 with the same host slot, which can discard a distinct queued
@@ -4263,6 +4505,9 @@ static int orch_delete_projectile_event_f0214_compat(
         if (candidate->eventIndex != 0xFFFFu &&
             candidate->eventIndex > (unsigned short)eventIndex) {
             --candidate->eventIndex;
+            if (!orch_write_raw_projectile_f0219_compat(world->things, i)) {
+                return 0;
+            }
         }
     }
     return 1;
@@ -4283,8 +4528,71 @@ static void orch_shift_projectile_event_indexes_after_pop_compat(
             &world->things->projectiles[i];
         if (projectile->eventIndex != 0xFFFFu && projectile->eventIndex > 0) {
             --projectile->eventIndex;
+            (void)orch_write_raw_projectile_f0219_compat(world->things, i);
         }
     }
+}
+
+/* ReDMCSB PROJEXPL.C F0219 owns one C14 record and one live projectile.
+ * A loaded raw record is authoritative: do not advance a diverged decoded
+ * mirror and then overwrite the original bytes with a synthetic state. */
+static int orch_validate_raw_projectile_f0219_compat(
+    const struct DungeonThings_Compat* things,
+    int projectileIndex)
+{
+    const struct DungeonProjectile_Compat* projectile;
+    const unsigned char* raw;
+    unsigned short value;
+
+    if (!things || !things->projectiles || projectileIndex < 0 ||
+        projectileIndex >= things->projectileCount) {
+        return 0;
+    }
+    raw = things->rawThingData[THING_TYPE_PROJECTILE];
+    if (!raw) return 1;
+    if (things->thingCounts[THING_TYPE_PROJECTILE] < things->projectileCount) {
+        return 0;
+    }
+    projectile = &things->projectiles[projectileIndex];
+    raw += (size_t)projectileIndex * 8u;
+    value = (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+    if (value != projectile->next) return 0;
+    value = (unsigned short)(raw[2] | ((unsigned short)raw[3] << 8));
+    if (value != projectile->slot || raw[4] != projectile->kineticEnergy ||
+        raw[5] != projectile->attack) {
+        return 0;
+    }
+    value = (unsigned short)(raw[6] | ((unsigned short)raw[7] << 8));
+    return value == projectile->eventIndex;
+}
+
+static int orch_write_raw_projectile_f0219_compat(
+    struct DungeonThings_Compat* things,
+    int projectileIndex)
+{
+    struct DungeonProjectile_Compat* projectile;
+    unsigned char* raw;
+
+    if (!things || !things->projectiles || projectileIndex < 0 ||
+        projectileIndex >= things->projectileCount) {
+        return 0;
+    }
+    projectile = &things->projectiles[projectileIndex];
+    raw = things->rawThingData[THING_TYPE_PROJECTILE];
+    if (!raw) return 1;
+    if (things->thingCounts[THING_TYPE_PROJECTILE] < things->projectileCount) {
+        return 0;
+    }
+    raw += (size_t)projectileIndex * 8u;
+    raw[0] = (unsigned char)(projectile->next & 0xffu);
+    raw[1] = (unsigned char)(projectile->next >> 8);
+    raw[2] = (unsigned char)(projectile->slot & 0xffu);
+    raw[3] = (unsigned char)(projectile->slot >> 8);
+    raw[4] = projectile->kineticEnergy;
+    raw[5] = projectile->attack;
+    raw[6] = (unsigned char)(projectile->eventIndex & 0xffu);
+    raw[7] = (unsigned char)(projectile->eventIndex >> 8);
+    return 1;
 }
 
 /* F0219 creates the next C48/C49, then stores its EventIndex in the same
@@ -4324,7 +4632,7 @@ static int orch_schedule_projectile_move_f0219_compat(
     }
     world->things->projectiles[projectileIndex].eventIndex =
         (unsigned short)insertIndex;
-    return 1;
+    return orch_write_raw_projectile_f0219_compat(world->things, projectileIndex);
 }
 
 static int orch_projectile_landing_cell_f0219_compat(
@@ -4557,6 +4865,19 @@ static int orch_process_group_projectile_impacts_on_square_compat(
     sftIndex = orch_square_first_thing_list_index_compat(world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 1;
 
+    /* F0209 calls F0218 before the deferred C38 cell write. A loaded C14
+     * chain is authoritative; do not compact a group from a host-only slot. */
+    {
+        int cell;
+        for (cell = 0; cell < 4; ++cell) {
+            int count;
+            if (ordinalInCell[cell] &&
+                !dm1_v1_f0218_count_authenticated_c14_at_cell_pc34(
+                    world->dungeon, world->things, &world->projectiles,
+                    mapIndex, mapX, mapY, cell, &count)) return 0;
+        }
+    }
+
     do {
         unsigned short thing = world->things->squareFirstThings[sftIndex];
         int safety = 0;
@@ -4738,6 +5059,15 @@ static int orch_build_projectile_digest_compat(
     }
 
     out->destSquareType = (destSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    if (world->things && world->things->loaded &&
+        (destSquare & DUNGEON_SQUARE_MASK_THING_LIST) &&
+        !dm1_v1_f0221_fluxcage_on_square_pc34(
+            world->dungeon, world->things, projectile->mapIndex, destX, destY,
+            &out->destHasFluxcage)) {
+        /* F0221 owns the C15 test before F0219 may classify the blocker.
+         * A malformed raw/decoded C15 chain cannot become a host fluxcage. */
+        return 0;
+    }
     if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
         int doorState = destSquare & 0x07;
         if (doorState == 0) {
@@ -4901,6 +5231,7 @@ static int orch_materialize_projectile_associated_thing_compat(
     int mapIndex;
     int mapX;
     int mapY;
+    int associatedIndex;
 
     if (!world || !projectile || associatedThingMovedToGroup) return 1;
     if (!world->things || !world->dungeon) return 1;
@@ -4920,37 +5251,61 @@ static int orch_materialize_projectile_associated_thing_compat(
             world->things->potionCount,
             world->things->squareFirstThings[sftIndex],
             NULL, 0, &receipt) ||
-        !receipt.valid || !receipt.handled || !receipt.shouldMaterialize) {
+        !receipt.valid || !receipt.handled) {
         return 1;
     }
 
-    if (receipt.mapIndex != mapIndex ||
-        receipt.mapX != mapX ||
-        receipt.mapY != mapY) {
-        sftIndex = orch_square_first_thing_list_index_compat(
-            world->dungeon, receipt.mapIndex, receipt.mapX, receipt.mapY);
-        if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
-            return 1;
+    /* PROJEXPL.C F0217 consumes a thrown potion before its F0215 tail.  The
+     * receipt carries that earlier ownership decision so the M10 consumer
+     * can update the same authenticated C05 record rather than merely hide
+     * it in M11.  Preflight before C14/chain mutation. */
+    if (receipt.shouldConsumePotion) {
+        associatedIndex = (int)THING_GET_INDEX(
+            receipt.materialization.associatedThing);
+        if (THING_GET_TYPE(receipt.materialization.associatedThing) !=
+                THING_TYPE_POTION ||
+            !world->things->potions || associatedIndex < 0 ||
+            associatedIndex >= world->things->potionCount) {
+            return 0;
+        }
+        if (world->things->projectiles &&
+            projectile->slotIndex >= 0 &&
+            projectile->slotIndex < world->things->projectileCount &&
+            (world->things->projectiles[projectile->slotIndex].slot & 0x3fffu) !=
+                (receipt.materialization.associatedThing & 0x3fffu)) {
+            return 0;
         }
     }
-    current = world->things->squareFirstThings[sftIndex];
-    while (current != THING_NONE &&
-           current != THING_ENDOFLIST &&
-           chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
-        chainThings[chainCount++] = current;
-        current = orch_next_thing_compat(world->things, current);
-    }
-    if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
-        chainThings[chainCount++] = current;
-    }
 
-    if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
-            projectile, tickResult, associatedThingMovedToGroup,
-            world->things->potionCount,
-            world->things->squareFirstThings[sftIndex],
-            chainThings, chainCount, &receipt) ||
-        !receipt.valid || !receipt.handled || !receipt.shouldMaterialize) {
-        return 1;
+    if (receipt.shouldMaterialize) {
+        if (receipt.mapIndex != mapIndex ||
+            receipt.mapX != mapX ||
+            receipt.mapY != mapY) {
+            sftIndex = orch_square_first_thing_list_index_compat(
+                world->dungeon, receipt.mapIndex, receipt.mapX, receipt.mapY);
+            if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+                return 1;
+            }
+        }
+        current = world->things->squareFirstThings[sftIndex];
+        while (current != THING_NONE &&
+               current != THING_ENDOFLIST &&
+               chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+            chainThings[chainCount++] = current;
+            current = orch_next_thing_compat(world->things, current);
+        }
+        if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+            chainThings[chainCount++] = current;
+        }
+
+        if (!dm1_v1_projectile_materialization_receipt_f0215_pc34(
+                projectile, tickResult, associatedThingMovedToGroup,
+                world->things->potionCount,
+                world->things->squareFirstThings[sftIndex],
+                chainThings, chainCount, &receipt) ||
+            !receipt.valid || !receipt.handled || !receipt.shouldMaterialize) {
+            return 1;
+        }
     }
 
     /* ReDMCSB PROJEXPL.C:F0215 lines 248-260 moves Projectile.Slot to
@@ -4968,6 +5323,11 @@ static int orch_materialize_projectile_associated_thing_compat(
         !orch_set_next_thing_compat(
             world->things, receipt.projectileThing,
             receipt.projectileNextAfterDelete)) {
+        return 0;
+    }
+    if (receipt.shouldConsumePotion && !orch_set_next_thing_compat(
+            world->things, receipt.materialization.associatedThing,
+            THING_NONE)) {
         return 0;
     }
     if (!receipt.shouldMaterialize) {
@@ -5102,13 +5462,97 @@ static int orch_projectile_associated_allowed_slots_compat(
     return (int)s_object_info_allowed_slots[objectInfoIndex];
 }
 
+static int orch_validate_f0217_thrown_potion_receipt_compat(
+    const struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile,
+    int projectileIndex,
+    const struct ProjectileTickResult_Compat* tickResult,
+    const struct ExplosionCreateInput_Compat* explosionIn,
+    int* outC15Cell)
+{
+    const struct DungeonProjectile_Compat* sourceProjectile;
+    const struct DungeonPotion_Compat* potion;
+    const unsigned char* rawPotion;
+    unsigned short potionThing;
+    unsigned short rawNext;
+    int potionIndex;
+
+    if (!world || !world->things || !projectile || !tickResult ||
+        !explosionIn || !outC15Cell ||
+        !(projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) ||
+        projectileIndex < 0 || projectileIndex >= world->things->projectileCount ||
+        !world->things->projectiles ||
+        tickResult->outExplosion.creatorProjectileSlot != projectile->slotIndex ||
+        projectile->slotIndex != projectileIndex ||
+        !orch_validate_raw_projectile_f0219_compat(world->things, projectileIndex)) {
+        return 0;
+    }
+
+    sourceProjectile = &world->things->projectiles[projectileIndex];
+    potionThing = sourceProjectile->slot;
+    if (potionThing != (unsigned short)projectile->reserved1 ||
+        potionThing == THING_NONE || THING_GET_TYPE(potionThing) != THING_TYPE_POTION) {
+        return 0;
+    }
+    potionIndex = THING_GET_INDEX(potionThing);
+    if (!world->things->potions ||
+        !world->things->rawThingData[THING_TYPE_POTION] ||
+        potionIndex < 0 || potionIndex >= world->things->potionCount ||
+        potionIndex >= world->things->thingCounts[THING_TYPE_POTION]) {
+        return 0;
+    }
+    potion = &world->things->potions[potionIndex];
+    rawPotion = world->things->rawThingData[THING_TYPE_POTION] +
+        (size_t)potionIndex * 4u;
+    rawNext = (unsigned short)(rawPotion[0] | ((unsigned short)rawPotion[1] << 8));
+    if (rawNext != potion->next || rawPotion[2] != potion->power ||
+        (rawPotion[3] & 0x7fu) != potion->type ||
+        ((rawPotion[3] >> 7) & 0x01u) != potion->doNotDiscard ||
+        projectile->associatedPotionPower != potion->power ||
+        explosionIn->attack != potion->power) {
+        return 0;
+    }
+
+    if (potion->type == DM1_POTION_VEN_PC34) {
+        if (projectile->projectileSubtype != PROJECTILE_SUBTYPE_POISON_CLOUD ||
+            explosionIn->explosionType != C007_EXPLOSION_POISON_CLOUD ||
+            explosionIn->centered != 1 ||
+            explosionIn->cell != EXPLOSION_CELL_CENTERED) {
+            return 0;
+        }
+        /* F0213 stores centered state in the C15 high bit; C.Slot remains
+         * a legal square cell rather than the runtime-only 0xFF sentinel. */
+        *outC15Cell = 0;
+        return 1;
+    }
+    if (potion->type == DM1_POTION_FUL_BOMB_PC34) {
+        if (projectile->projectileSubtype != PROJECTILE_SUBTYPE_FIREBALL ||
+            explosionIn->explosionType != C000_EXPLOSION_FIREBALL ||
+            explosionIn->centered != 0 || explosionIn->cell < 0 ||
+            explosionIn->cell > 3) {
+            return 0;
+        }
+        *outC15Cell = explosionIn->cell;
+        return 1;
+    }
+    return 0;
+}
+
 static int orch_materialize_projectile_tick_explosion_compat(
     struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile,
+    int projectileIndex,
     const struct ProjectileTickResult_Compat* tickResult)
 {
     struct ExplosionCreateInput_Compat explosionIn;
     struct TimelineEvent_Compat firstExplosionAdvance;
+    struct ExplosionList_Compat explosionsBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    DM1_C15PoolReservationPc34 reservation;
+    DM1_C15C25PublicationReceiptPc34 publication;
     int explosionSlot = -1;
+    int c15Cell;
+    int sourceOwnedPotion;
 
     if (!world || !tickResult || !tickResult->emittedExplosion) return 0;
 
@@ -5116,7 +5560,56 @@ static int orch_materialize_projectile_tick_explosion_compat(
             tickResult, (int)world->gameTick, &explosionIn)) {
         return 0;
     }
-    if (F0821_EXPLOSION_Create_Compat(
+
+    sourceOwnedPotion = projectile &&
+        (projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT);
+    if (sourceOwnedPotion) {
+        if (!orch_validate_f0217_thrown_potion_receipt_compat(
+                world, projectile, projectileIndex, tickResult, &explosionIn,
+                &c15Cell)) {
+            return 0;
+        }
+        /* F0213 creates the ordinary Ven/Ful C25 one tick after the impact.
+         * Publish its C15 owner first, then keep runtime and raw owners
+         * atomic if F0213 or C25 scheduling cannot complete. */
+        if (world->gameTick >= 0x00ffffffu ||
+            !dm1_v1_c15_pool_reserve_pc34(world->things, &reservation) ||
+            !dm1_v1_c15_c25_publish_pc34(
+                &reservation, world->dungeon, explosionIn.explosionType,
+                explosionIn.attack, explosionIn.centered, c15Cell,
+                explosionIn.mapIndex, explosionIn.mapX, explosionIn.mapY,
+                world->gameTick + 1u, 0, &publication)) {
+            return 0;
+        }
+        explosionsBefore = world->explosions;
+        timelineBefore = world->timeline;
+        explosionIn.cell = c15Cell;
+        if (!F0213_EXPLOSION_Create_Compat(
+                &explosionIn, &world->explosions, &explosionSlot,
+                &firstExplosionAdvance) ||
+            firstExplosionAdvance.fireAtTick != (publication.mapTime & 0x00ffffffu) ||
+            firstExplosionAdvance.mapIndex != (int)(publication.mapTime >> 24) ||
+            firstExplosionAdvance.mapX != publication.mapX ||
+            firstExplosionAdvance.mapY != publication.mapY ||
+            firstExplosionAdvance.cell != c15Cell) {
+            world->explosions = explosionsBefore;
+            world->timeline = timelineBefore;
+            (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+            return 0;
+        }
+        firstExplosionAdvance.aux3 = (int)publication.c15Fingerprint;
+        firstExplosionAdvance.aux4 = publication.priority;
+        if (!F0721_TIMELINE_Schedule_Compat(
+                &world->timeline, &firstExplosionAdvance)) {
+            world->explosions = explosionsBefore;
+            world->timeline = timelineBefore;
+            (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+            return 0;
+        }
+        return 1;
+    }
+
+    if (F0213_EXPLOSION_Create_Compat(
             &explosionIn, &world->explosions, &explosionSlot,
             &firstExplosionAdvance)) {
         (void)F0721_TIMELINE_Schedule_Compat(
@@ -5145,6 +5638,10 @@ static int orch_handle_projectile_move_event_compat(
     if (projectileIndex < 0 || projectileIndex >= PROJECTILE_LIST_CAPACITY) return 0;
     projectile = &world->projectiles.entries[projectileIndex];
     if (projectile->slotIndex < 0 || projectile->reserved3 == 0) return 1;
+    if (world->things && !orch_validate_raw_projectile_f0219_compat(
+            world->things, projectileIndex)) {
+        return 0;
+    }
     if (!orch_build_projectile_digest_compat(
             world, projectile, projectileIndex, &digest)) {
         return 0;
@@ -5157,7 +5654,7 @@ static int orch_handle_projectile_move_event_compat(
         orch_projectile_associated_allowed_slots_compat(
             world->things, (unsigned short)projectile->reserved1);
 
-    if (!F0811_PROJECTILE_Advance_Compat(
+    if (!F0219_PROJECTILE_ProcessEvents48To49_Compat(
             &projectileForAdvance, &digest, world->gameTick, &world->masterRng,
             &newState, &tickResult)) {
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
@@ -5180,7 +5677,7 @@ static int orch_handle_projectile_move_event_compat(
         }
         if (tickResult.emittedExplosion) {
             (void)orch_materialize_projectile_tick_explosion_compat(
-                world, &tickResult);
+                world, projectile, projectileIndex, &tickResult);
         }
         if (tickResult.emittedDoorDestructionEvent ||
             tickResult.emittedDoorToggleEvent) {
@@ -5237,7 +5734,7 @@ static int orch_handle_projectile_move_event_compat(
                         PROJECTILE_RESULT_HIT_OTHER_PROJECTILE,
                         world->gameTick, &world->masterRng, &peerImpact)) {
                     (void)orch_materialize_projectile_tick_explosion_compat(
-                        world, &peerImpact);
+                        world, other, otherIndex, &peerImpact);
                     if (peerImpact.emittedSoundRequest) {
                         emit(result, EMIT_SOUND_REQUEST,
                              peerImpact.emittedSoundCode,
@@ -5290,10 +5787,24 @@ static int orch_handle_projectile_move_event_compat(
          * by the DM1 flight relink receipt rather than by this M10 adapter. */
         *projectile = newState;
         projectile->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
+        if (!world->things || !world->things->projectiles ||
+            projectileIndex < 0 || projectileIndex >= world->things->projectileCount) {
+            return 0;
+        }
+        world->things->projectiles[projectileIndex].kineticEnergy =
+            (unsigned char)newState.kineticEnergy;
+        world->things->projectiles[projectileIndex].attack =
+            (unsigned char)newState.attack;
+        if (!orch_write_raw_projectile_f0219_compat(
+                world->things, projectileIndex)) {
+            return 0;
+        }
     }
     if (relinkReceipt.shouldScheduleNextMove) {
-        (void)orch_schedule_projectile_move_f0219_compat(
-            world, projectile->slotIndex, &tickResult.outNextTick);
+        if (!orch_schedule_projectile_move_f0219_compat(
+                world, projectile->slotIndex, &tickResult.outNextTick)) {
+            return 0;
+        }
     }
     return 1;
 }
@@ -5585,7 +6096,7 @@ static int orch_apply_projectile_group_action_compat(
             struct TimelineEvent_Compat advance;
             int slotIndex = -1;
             memset(&advance, 0, sizeof(advance));
-            if (F0821_EXPLOSION_Create_Compat(
+            if (F0213_EXPLOSION_Create_Compat(
                     &f0231ApplyPlan.smokeCreateInput, &world->explosions,
                     &slotIndex, &advance)) {
                 (void)F0721_TIMELINE_Schedule_Compat(
@@ -5818,7 +6329,7 @@ static int orch_handle_explosion_advance_event_compat(
     if (!orch_build_explosion_digest_compat(world, explosion, &digest)) {
         return 0;
     }
-    if (!F0822_EXPLOSION_Advance_Compat(
+    if (!F0220_EXPLOSION_ProcessEvent25_Compat(
             explosion, &digest, world->gameTick, &world->masterRng,
             &newState, &tickResult)) {
         F0824_EXPLOSION_Despawn_Compat(&world->explosions, explosionSlot);
@@ -6054,7 +6565,7 @@ static int orch_apply_door_group_damage_f0191_compat(
                     &smokeIn, &smokePlan) &&
                 smokePlan.valid && smokePlan.shouldCreate) {
                 memset(&advance, 0, sizeof(advance));
-                if (F0821_EXPLOSION_Create_Compat(
+                if (F0213_EXPLOSION_Create_Compat(
                         &smokePlan.createInput, &world->explosions,
                         &slotIndex, &advance)) {
                     (void)F0721_TIMELINE_Schedule_Compat(
@@ -6562,6 +7073,20 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     }
     result.destinationLinked = 1;
     result.moved = 1;
+    if (type == THING_TYPE_PROJECTILE || type == THING_TYPE_EXPLOSION) {
+        result.timelineRelocationCount =
+            DM1_V1_F0249_RelocateTimelineForMovedThingPc34Compat(
+                world->timeline.events, world->timeline.count, type,
+                THING_GET_INDEX(resolvedRequest.thing),
+                result.finalMapIndex, result.finalMapX, result.finalMapY,
+                THING_GET_CELL(result.finalThing));
+        if (result.timelineRelocationCount < 0) {
+            /* F0249 is a post-move event-coordinate repair only. A malformed
+             * timeline must not turn a successful source-list move into an
+             * invented event or mutate an unrelated queue entry. */
+            result.timelineRelocationCount = 0;
+        }
+    }
     if (outResult) *outResult = result;
     return 1;
 }
@@ -8002,17 +8527,59 @@ static int orch_apply_f0206_active_group_directions_compat(
     struct CreatureAIState_Compat* ai,
     struct DungeonGroup_Compat* group,
     struct DM1ActiveGroup_Compat* activeGroup,
+    int activeIndex,
     int direction,
     int creatureSize)
 {
-    (void)world;
-    (void)creatureSize;
-    if (!ai || !group || !activeGroup || direction < 0 || direction > 3) {
+    if (!world || !ai || !group || !activeGroup || activeIndex < 0 ||
+        direction < 0 || direction > 3) {
         return 0;
     }
-    group->direction = (unsigned char)direction;
-    activeGroup->directions = (unsigned char)direction;
-    ai->groupDirection = (unsigned char)direction;
+    if (!F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
+            activeGroup, direction, creatureSize, (int)group->count,
+            &world->masterRng)) {
+        return 0;
+    }
+    /* C04 holds its primary direction, while ACTIVE_GROUP retains all four
+     * F0205-packed creature directions between C29-C41 events. */
+    group->direction = (unsigned char)(activeGroup->directions & 0x03);
+    ai->groupDirection = group->direction;
+    if (activeIndex < world->pc34ActiveGroupSourceCount) {
+        world->pc34ActiveGroupDirections[activeIndex] =
+            (unsigned char)activeGroup->directions;
+    }
+    return 1;
+}
+
+static int orch_apply_f0205_creature_turn_retry_compat(
+    struct GameWorld_Compat* world, const struct TimelineEvent_Compat* ev,
+    struct CreatureAIState_Compat* ai, struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup, int activeIndex,
+    int creatureIndex, int direction, int creatureSize)
+{
+    struct DM1ActiveGroup_Compat staged;
+    struct RngState_Compat stagedRng;
+    struct TimelineEvent_Compat retry;
+
+    if (!world || !ev || !ai || !group || !activeGroup || activeIndex < 0 ||
+        creatureIndex < 0 || creatureIndex > (int)group->count ||
+        direction < 0 || direction > 3) return 0;
+    if (((activeGroup->directions >> (creatureIndex * 2)) & 3) == direction) return 0;
+    staged = *activeGroup;
+    stagedRng = world->masterRng;
+    if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+            &staged, direction, creatureIndex, creatureSize, (int)group->count,
+            &stagedRng)) return 0;
+    retry = *ev;
+    retry.fireAtTick = world->gameTick + 2u;
+    if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry)) return 0;
+    *activeGroup = staged;
+    world->masterRng = stagedRng;
+    group->direction = (unsigned char)(staged.directions & 3);
+    ai->groupDirection = group->direction;
+    if (activeIndex < world->pc34ActiveGroupSourceCount)
+        world->pc34ActiveGroupDirections[activeIndex] = (unsigned char)staged.directions;
+    orch_write_raw_group_compat(world->things, activeGroup->groupThingIndex);
     return 1;
 }
 
@@ -8055,7 +8622,12 @@ static int orch_apply_f0207_creature_attack_compat(
         DM1_CreatureProjectileCreateRequestPc34 request;
         struct ProjectileCreateInput_Compat input;
         struct TimelineEvent_Compat firstMove;
+        struct ProjectileList_Compat projectilesBefore;
+        struct TimelineQueue_Compat timelineBefore;
+        DM1_C14PoolReservationPc34 c14;
         int slot = -1;
+        int eventIndex = -1;
+        int i;
 
         memset(&request, 0, sizeof(request));
         request.creatureGroupIndex = ev->aux0;
@@ -8071,16 +8643,45 @@ static int orch_apply_f0207_creature_attack_compat(
         request.gameTick = (int)world->gameTick;
         memset(&input, 0, sizeof(input));
         memset(&firstMove, 0, sizeof(firstMove));
+        if (!world->things || !world->dungeon ||
+            !dm1_v1_c14_pool_reserve_pc34(world->things, &c14)) return 0;
+        projectilesBefore = world->projectiles;
+        timelineBefore = world->timeline;
         if (!dm1_v1_build_creature_projectile_create_input_pc34(&request, &input) ||
             !F0810_PROJECTILE_Create_Compat(
                 &input, &world->projectiles, &slot, &firstMove)) {
+            (void)dm1_v1_c14_pool_rollback_pc34(&c14);
+            return 0;
+        }
+        if (THING_GET_INDEX(c14.thing) != slot) {
+            world->projectiles = projectilesBefore;
+            (void)dm1_v1_c14_pool_rollback_pc34(&c14);
             return 0;
         }
         /* ReDMCSB PROJEXPL.C:F0212 links the projectile and its first C48/C49
          * movement event as one live handoff.  A queue rejection must not
          * leave a renderable C14-equivalent slot with no owner event. */
         if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
-            (void)F0813_PROJECTILE_Despawn_Compat(&world->projectiles, slot);
+            world->projectiles = projectilesBefore;
+            world->timeline = timelineBefore;
+            (void)dm1_v1_c14_pool_rollback_pc34(&c14);
+            return 0;
+        }
+        for (i = 0; i < world->timeline.count; ++i) {
+            if (world->timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+                world->timeline.events[i].aux0 == slot &&
+                world->timeline.events[i].fireAtTick == firstMove.fireAtTick) {
+                if (eventIndex >= 0) { eventIndex = -2; break; }
+                eventIndex = i;
+            }
+        }
+        if (eventIndex < 0 || !dm1_v1_c14_pool_initialize_and_link_pc34(
+                &c14, world->dungeon, (unsigned short)behavior->projectileThing,
+                input.kineticEnergy, input.attack, (unsigned short)eventIndex,
+                input.cell, input.mapIndex, input.mapX, input.mapY)) {
+            world->projectiles = projectilesBefore;
+            world->timeline = timelineBefore;
+            (void)dm1_v1_c14_pool_rollback_pc34(&c14);
             return 0;
         }
         emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex, slot, 1);
@@ -8227,6 +8828,17 @@ static int orch_handle_creature_reaction_event_compat(
     }
     ctx.distanceToVisibleParty = F0890c_ORCH_GetGroupVisibleDistance_Compat(
         world, &ctx, group);
+    if (ctx.distanceToVisibleParty == 0) {
+        struct DM1GroupSmellDirectionPlan_Compat smellPlan;
+
+        memset(&smellPlan, 0, sizeof(smellPlan));
+        if (F0890e_ORCH_BuildGroupSmellDirectionPlan_Compat(
+                world, &ctx, &smellPlan) && smellPlan.valid &&
+            (smellPlan.usedDirectPartyRoute || smellPlan.usedStoredScent)) {
+            ctx.smelledPartyDirectionOrdinal = smellPlan.directionOrdinal;
+            ctx.smelledPartySecondaryDirection = smellPlan.secondaryDirection;
+        }
+    }
     {
         static const int directionDeltaX[4] = { 0, 1, 0, -1 };
         static const int directionDeltaY[4] = { -1, 0, 1, 0 };
@@ -8238,12 +8850,20 @@ static int orch_handle_creature_reaction_event_compat(
         for (direction = 0; direction < 4; ++direction) {
             int destX = ev->mapX + directionDeltaX[direction];
             int destY = ev->mapY + directionDeltaY[direction];
-            ctx.groupMovementTestedDirs[direction] =
-                !F0707_MOVEMENT_IsSquarePassableForContext_Compat(
-                    world->dungeon, ev->mapIndex, destX, destY,
-                    MOVEMENT_PASS_CTX_CREATURE) ||
-                orch_square_has_group_or_party_compat(
-                    world, ev->mapIndex, destX, destY);
+
+            if (!orch_build_group_movement_facts_compat(
+                    world, ev->mapIndex, destX, destY,
+                    &ctx.groupMovementFacts[direction])) {
+                /* The pure F0202 owner retains `available == 0` and blocks
+                 * this direction.  Do not pre-mark it: F0203 owns G0384's
+                 * source-order tested-direction write. */
+                continue;
+            }
+            (void)orch_build_group_movement_facts_compat(
+                world, ev->mapIndex,
+                destX + directionDeltaX[direction],
+                destY + directionDeltaY[direction],
+                &ctx.archenemySecondStepMovementFacts[direction]);
         }
     }
     ctx.ticksSinceLastMove = (int)world->gameTick - ai->lastSeenPartyTick;
@@ -8254,13 +8874,29 @@ static int orch_handle_creature_reaction_event_compat(
 
     activeGroup.groupThingIndex = groupIndex;
     activeGroup.cells = group->cells;
-    activeGroup.directions = group->direction;
+    activeGroup.directions = activeIndex < world->pc34ActiveGroupSourceCount
+        ? world->pc34ActiveGroupDirections[activeIndex]
+        : group->direction;
     activeGroup.lastMoveTime = ai->lastSeenPartyTick;
     activeGroup.targetMapX = ai->lastSeenPartyMapX;
     activeGroup.targetMapY = ai->lastSeenPartyMapY;
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
     memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+
+    if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        int inAttackLine = ctx.currentGroupDistanceToParty > 0 &&
+            ctx.currentGroupDistanceToParty <= DM1_ATTACK_RANGE(ctx.creatureInfo.ranges) &&
+            (ctx.currentGroupMapX == ctx.partyMapX || ctx.currentGroupMapY == ctx.partyMapY);
+        if (inAttackLine && !(activeGroup.aspect[creatureIndex] & 0x80) &&
+            orch_apply_f0205_creature_turn_retry_compat(
+                world, ev, ai, group, &activeGroup, activeIndex, creatureIndex,
+                ctx.currentGroupPrimaryDirToParty, ctx.creatureSize)) {
+            return 1;
+        }
+    }
 
     /* ReDMCSB: PROJEXPL.C F0231 calls GROUP.C F0209 with
      * CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT unless the
@@ -8297,7 +8933,8 @@ static int orch_handle_creature_reaction_event_compat(
         }
         if (direction >= 0 &&
             !orch_apply_f0206_active_group_directions_compat(
-                world, ai, group, &activeGroup, direction, ctx.creatureSize)) {
+                world, ai, group, &activeGroup, activeIndex, direction,
+                ctx.creatureSize)) {
             return 0;
         }
     }
@@ -8973,7 +9610,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             struct TimelineEvent_Compat advance;
                             int slotIndex = -1;
                             memset(&advance, 0, sizeof(advance));
-                            if (F0821_EXPLOSION_Create_Compat(
+                            if (F0213_EXPLOSION_Create_Compat(
                                     &aftermathApplyPlan.smokeCreateInput,
                                     &world->explosions,
                                     &slotIndex,
@@ -9111,7 +9748,12 @@ cmd_attack_legacy_marker:
             DM1_SpellF0327ProjectileContextPc34 projectileContext;
             struct ProjectileCreateInput_Compat projectileInput;
             struct TimelineEvent_Compat firstMove;
+            struct ProjectileList_Compat projectilesBefore;
+            struct TimelineQueue_Compat timelineBefore;
+            DM1_C14PoolReservationPc34 c14;
             int projectileSlot = -1;
+            int eventIndex = -1;
+            int i;
 
             if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
                     world, champIdx, &dm1Stats) ||
@@ -9152,13 +9794,52 @@ cmd_attack_legacy_marker:
             projectileContext.gameTick = (int)world->gameTick;
 
             if (!dm1_v1_build_spell_projectile_create_input_f0327_pc34(
-                    &receipt, &projectileContext, &projectileInput) ||
-                !F0810_PROJECTILE_Create_Compat(
-                    &projectileInput, &world->projectiles,
-                    &projectileSlot, &firstMove)) {
+                    &receipt, &projectileContext, &projectileInput)) {
                 return 0;
             }
-            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove);
+            projectilesBefore = world->projectiles;
+            timelineBefore = world->timeline;
+            memset(&c14, 0, sizeof(c14));
+            /* A loaded DM1 source world must publish F0212's C14/C49 pair
+             * atomically.  The memory-only harness has no original C14 pool
+             * to authenticate, so it retains the existing isolated route. */
+            if (world->things && world->things->loaded &&
+                (!world->dungeon ||
+                 !dm1_v1_c14_pool_reserve_pc34(world->things, &c14))) {
+                return 0;
+            }
+            if (!F0810_PROJECTILE_Create_Compat(
+                    &projectileInput, &world->projectiles,
+                    &projectileSlot, &firstMove) ||
+                (c14.active && THING_GET_INDEX(c14.thing) != projectileSlot) ||
+                !F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+                world->projectiles = projectilesBefore;
+                world->timeline = timelineBefore;
+                if (c14.active) (void)dm1_v1_c14_pool_rollback_pc34(&c14);
+                return 0;
+            }
+            if (c14.active) {
+                for (i = 0; i < world->timeline.count; ++i) {
+                    if (world->timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+                        world->timeline.events[i].aux0 == projectileSlot &&
+                        world->timeline.events[i].fireAtTick == firstMove.fireAtTick) {
+                        if (eventIndex >= 0) { eventIndex = -2; break; }
+                        eventIndex = i;
+                    }
+                }
+                if (eventIndex < 0 || !dm1_v1_c14_pool_initialize_and_link_pc34(
+                        &c14, world->dungeon,
+                        (unsigned short)projectileInput.associatedThing,
+                        projectileInput.kineticEnergy, projectileInput.attack,
+                        (unsigned short)eventIndex, projectileInput.cell,
+                        projectileInput.mapIndex, projectileInput.mapX,
+                        projectileInput.mapY)) {
+                    world->projectiles = projectilesBefore;
+                    world->timeline = timelineBefore;
+                    (void)dm1_v1_c14_pool_rollback_pc34(&c14);
+                    return 0;
+                }
+            }
             break;
         }
         case C3_SPELL_KIND_OTHER_COMPAT: {

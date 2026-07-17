@@ -21,6 +21,7 @@ typedef struct {
     int presentation_no_draw;
     Theron_Track02Variant track02_variant;
     char track02_md5[33];
+    char source_trace_md5[33];
     uint32_t campaign_layout_epoch;
     uint32_t campaign_media_scan_epoch;
     uint32_t replay_final_record;

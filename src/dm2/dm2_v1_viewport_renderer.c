@@ -1603,6 +1603,59 @@ int dm2_v1_viewport_bind_static_scene_ceiling_material(
         &s->gdat_static_scene_ceiling_material_owned);
 }
 
+int dm2_v1_viewport_bind_static_scene_wall_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash,
+    int view_square)
+{
+    const int field = dm2_v1_viewport_wall_field_for_square(view_square);
+
+    if (field < 0 ||
+        !dm2_v1_viewport_bind_static_scene_flag(
+            s, source_map_load_token, source_scene_control_hash,
+            &s->gdat_static_scene_wall_material_map_load_token,
+            &s->gdat_static_scene_wall_material_scene_control_hash,
+            &s->gdat_static_scene_wall_material_owned)) {
+        return 0;
+    }
+    s->gdat_static_scene_wall_material_mask |=
+        (uint16_t)(1u << (unsigned)view_square);
+    s->gdat_static_scene_wall_material_view_square = (uint8_t)view_square;
+    s->gdat_static_scene_wall_material_field = (uint8_t)field;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_all_wall_materials(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    uint16_t mask = 0u;
+
+    if (!dm2_v1_viewport_scene_bind_matches(
+            s, source_map_load_token, source_scene_control_hash)) {
+        return 0;
+    }
+    for (int view_square = 0; view_square < DM2_SQ_COUNT; ++view_square) {
+        if (dm2_v1_viewport_wall_field_for_square(view_square) >= 0) {
+            mask |= (uint16_t)(1u << (unsigned)view_square);
+        }
+    }
+    if (!mask ||
+        !dm2_v1_viewport_bind_static_scene_flag(
+            s, source_map_load_token, source_scene_control_hash,
+            &s->gdat_static_scene_wall_material_map_load_token,
+            &s->gdat_static_scene_wall_material_scene_control_hash,
+            &s->gdat_static_scene_wall_material_owned)) {
+        return 0;
+    }
+    s->gdat_static_scene_wall_material_mask = mask;
+    s->gdat_static_scene_wall_material_view_square = 0u;
+    s->gdat_static_scene_wall_material_field = 0u;
+    return 1;
+}
+
 int dm2_v1_viewport_bind_static_scene_door_frame_material(
     DM2_V1_ViewportState *s,
     uint32_t source_map_load_token,
@@ -2262,12 +2315,10 @@ int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
 }
 
-int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
-                                           int *out_graphicsset_field,
-                                           int *out_rect_number,
-                                           int *out_mirror_flip,
-                                           int *out_offset_x,
-                                           int *out_offset_y)
+int dm2_v1_viewport_door_side_frame_source_for_movement(
+    int view_square, int side, int movement_active,
+    int *out_graphicsset_field, int *out_rect_number, int *out_mirror_flip,
+    int *out_offset_x, int *out_offset_y)
 {
     /* SKWIN/skval1.h: tlbGraphicsDoorSideFrames[14][2].  The active centre
      * cells are 0, 3, 6 and 11 (D0..D3) in DRAW_DOOR_FRAMES. */
@@ -2278,7 +2329,13 @@ int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
         { 0xffu, 0xffu }, { 0xffu, 0xffu }, { 0x0bu, 0x0cu },
         { 0x0du, 0x0eu }, { 0x0fu, 0x10u }
     };
+    static const uint8_t movement_cells[14] = {
+        0x00u, 0x02u, 0x01u, 0x03u, 0x05u, 0x04u, 0x06u,
+        0x08u, 0x07u, 0x0au, 0x09u, 0x0bu, 0x0du, 0x0cu
+    };
     int cell;
+    int material_cell;
+    int material_side;
     uint8_t field;
 
     if (!out_graphicsset_field || !out_rect_number || !out_mirror_flip ||
@@ -2290,7 +2347,11 @@ int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
     case DM2_SQ_D3C: cell = 11; break;
     default: return 0;
     }
-    field = side_frames[cell][side];
+    /* SKULLWIN c_gui_vp.cpp:2390-2404: v1e12d0 selects table1d6b2c[cell],
+     * then left reads table1d6ee1[row][1] and right reads [row][0]. */
+    material_cell = movement_active ? movement_cells[cell] : cell;
+    material_side = movement_active ? 1 - side : side;
+    field = side_frames[material_cell][material_side];
     if (field == 0xffu) return 0;
     *out_graphicsset_field = field;
     *out_rect_number = 5000 + cell * 25 + (side == 0 ? 10 : 14);
@@ -2300,6 +2361,18 @@ int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
     *out_offset_x = side == 0 ? -2 : 2;
     *out_offset_y = 4;
     return 1;
+}
+
+int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
+                                           int *out_graphicsset_field,
+                                           int *out_rect_number,
+                                           int *out_mirror_flip,
+                                           int *out_offset_x,
+                                           int *out_offset_y)
+{
+    return dm2_v1_viewport_door_side_frame_source_for_movement(
+        view_square, side, 0, out_graphicsset_field, out_rect_number,
+        out_mirror_flip, out_offset_x, out_offset_y);
 }
 
 int dm2_v1_viewport_door_panel_field_for_square(int view_square)
@@ -3036,9 +3109,9 @@ int dm2_v1_viewport_build_door_render_plan(
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
         for (int side = 0; side < 2; ++side) {
             int field, rect_number, mirror_flip, offset_x, offset_y;
-            if (dm2_v1_viewport_door_side_frame_source(
-                    square, side, &field, &rect_number, &mirror_flip,
-                    &offset_x, &offset_y)) {
+            if (dm2_v1_viewport_door_side_frame_source_for_movement(
+                    square, side, s->gdat_scene_movement_active, &field,
+                    &rect_number, &mirror_flip, &offset_x, &offset_y)) {
                 row->side_frame_graphicsset_field[side] = field;
                 row->side_frame_gdat_index[side] =
                     DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;

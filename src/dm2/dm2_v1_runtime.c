@@ -3413,6 +3413,9 @@ void dm2_v1_runtime_tick(void) {
         (void)dm2_v1_weather_3df7_0037_receipt(
             &rt->weather, &rt->set_timer_weather,
             &rt->weather_3df7_0037);
+        (void)dm2_v1_weather_timer_receipt_from_source_receipts(
+            &rt->set_timer_weather, &rt->weather_3df7_0037,
+            &rt->last_weather_timer_receipt);
     }
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);

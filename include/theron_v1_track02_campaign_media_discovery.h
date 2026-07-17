@@ -19,6 +19,7 @@ typedef enum {
 
 typedef struct {
     Theron_V1Track02CampaignMediaDiscoveryStatus status;
+    Theron_V1Track02MediaFailureReason failure_reason;
     Theron_V1Track02CampaignMediaSource source;
     int candidate_count;
     int ambiguous;
@@ -40,6 +41,10 @@ int theron_v1_track02_campaign_media_discover(
     const char *expected_track02_md5,
     int max_depth,
     Theron_V1Track02CampaignMediaDiscoveryReceipt *out);
+
+/* Stable diagnostic identifier for a discovery receipt. */
+const char *theron_v1_track02_campaign_media_failure_reason_id(
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt *receipt);
 
 /* Binds one unambiguous, exact-layout candidate to all three opaque capture
  * targets. This is identity-only and never grants decode or render access. */

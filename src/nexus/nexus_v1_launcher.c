@@ -533,6 +533,7 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
     Nexus_V1_StartupAssetHandoffReceipt *out_receipt)
 {
     Nexus_V1_MenuBpkRendererHandoffReceipt renderer_handoff;
+    Nexus_V1_LauncherPrs3StartupStateReceipt prs3_startup;
 
     nexus_v1_launcher_startup_asset_handoff_receipt_clear(out_receipt);
     if (!out_receipt || !assets) {
@@ -541,6 +542,7 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
 
     out_receipt->assets = *assets;
     memset(&renderer_handoff, 0, sizeof(renderer_handoff));
+    memset(&prs3_startup, 0, sizeof(prs3_startup));
     if (engine &&
         nexus_v1_menu_bpk_renderer_handoff_receipt(engine,
                                                    &renderer_handoff) == 0) {
@@ -550,6 +552,8 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
         out_receipt->menu_bpk_prs3_blocks_real_menu_route =
             renderer_handoff.status ==
             NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3;
+        (void)nexus_v1_launcher_prs3_startup_state(
+            &renderer_handoff, NULL, &prs3_startup);
     }
     out_receipt->title_asset_handoff_ready =
         engine && title_loaded && assets->title_route_ready;
@@ -598,7 +602,9 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
     } else if (out_receipt->menu_bpk_prs3_blocks_real_menu_route) {
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
         out_receipt->status_scope = "ASSETS";
-        out_receipt->status = "blocked-menu-bpk-prs3";
+        out_receipt->status = prs3_startup.status
+            ? prs3_startup.status
+            : "menu-bpk-prs3-capture-required";
     } else if (renderer_handoff.status ==
                NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE) {
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
@@ -1593,6 +1599,84 @@ int nexus_v1_launcher_resume_m12_m11_prs3_material_capture(
     *out_receipt = receipt; return 1;
 }
 
+int nexus_v1_launcher_prs3_startup_state(
+    const Nexus_V1_MenuBpkRendererHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *capture,
+    Nexus_V1_LauncherPrs3StartupStateReceipt *out_receipt)
+{
+    Nexus_V1_LauncherPrs3StartupStateReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.state = NEXUS_V1_LAUNCHER_PRS3_STARTUP_INVALID;
+    receipt.status = "menu-bpk-prs3-invalid";
+    if (!handoff) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (handoff->status != NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3) {
+        receipt.valid = receipt.scan_complete = receipt.startup_can_settle = 1;
+        receipt.state = NEXUS_V1_LAUNCHER_PRS3_STARTUP_NOT_REQUIRED;
+        receipt.status = "menu-bpk-prs3-not-required";
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.valid = receipt.scan_complete = receipt.startup_can_settle = 1;
+    receipt.no_draw_only = 1;
+    if (capture && capture->valid && !capture->capture_required &&
+        capture->capture_imported && capture->resume_ready &&
+        capture->operator_only && capture->no_draw_only &&
+        !capture->decoder_permitted && !capture->fallback_visuals_permitted &&
+        capture->capture.valid && capture->capture.payload_opaque &&
+        capture->capture.no_draw_only && !capture->capture.decoder_permitted &&
+        !capture->capture.fallback_visuals_permitted) {
+        receipt.state = NEXUS_V1_LAUNCHER_PRS3_STARTUP_CAPTURE_CONSUMED;
+        receipt.capture_consumed = 1;
+        receipt.status = "menu-bpk-prs3-capture-consumed";
+    } else {
+        receipt.state = NEXUS_V1_LAUNCHER_PRS3_STARTUP_CAPTURE_REQUIRED;
+        receipt.capture_required = 1;
+        receipt.status = "menu-bpk-prs3-capture-required";
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_launcher_m12_prs3_startup_transition(
+    const Nexus_V1_MenuBpkRendererHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *capture,
+    Nexus_V1_LauncherPrs3StartupAction action,
+    Nexus_V1_LauncherM12Prs3StartupTransitionReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12Prs3StartupTransitionReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (action != NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_PRESENT &&
+        action != NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_RETURN_TO_IDLE &&
+        action != NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_RESCAN) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_launcher_prs3_startup_state(handoff, capture,
+                                               &receipt.prs3)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = receipt.m12_handled = 1;
+    receipt.terminal = receipt.prs3.capture_required ||
+        receipt.prs3.capture_consumed;
+    receipt.return_to_idle = receipt.terminal &&
+        action == NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_RETURN_TO_IDLE;
+    receipt.rescan_complete = receipt.terminal &&
+        action == NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_RESCAN;
+    receipt.no_draw_only = receipt.prs3.no_draw_only;
+    receipt.status = receipt.prs3.status;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_launcher_admit_m11_structure2_face_capture_replay(
     Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
     const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
@@ -2128,6 +2212,510 @@ int nexus_v1_launcher_resume_m12_m11_vdp1_local_artifact(
         out_receipt);
 }
 
+static int nexus_v1_launcher_owner_material_target_matches(
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *left,
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *right)
+{
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *left_owner;
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *right_owner;
+    const Nexus_V1_DgnStructure2DescriptorCaptureTarget *left_descriptor;
+    const Nexus_V1_DgnStructure2DescriptorCaptureTarget *right_descriptor;
+
+    if (!left || !right || !left->valid || !right->valid) return 0;
+    left_owner = &left->owner_face_target;
+    right_owner = &right->owner_face_target;
+    left_descriptor = &left->material_target.descriptor_target;
+    right_descriptor = &right->material_target.descriptor_target;
+    return left->level_index == right->level_index &&
+        left->material_target.source_byte_count == right->material_target.source_byte_count &&
+        left->material_target.source_bytes_fnv1a64 == right->material_target.source_bytes_fnv1a64 &&
+        left_owner->owner_x == right_owner->owner_x &&
+        left_owner->owner_y == right_owner->owner_y &&
+        left_owner->structure1f_entry_index == right_owner->structure1f_entry_index &&
+        left_owner->structure1a_index == right_owner->structure1a_index &&
+        left_owner->face_target.candidate.entry_index ==
+            right_owner->face_target.candidate.entry_index &&
+        left_owner->face_target.candidate.face_ordinal ==
+            right_owner->face_target.candidate.face_ordinal &&
+        left_owner->face_target.candidate.face_row_fnv1a32 ==
+            right_owner->face_target.candidate.face_row_fnv1a32 &&
+        left_descriptor->descriptor_index == right_descriptor->descriptor_index &&
+        left_descriptor->descriptor_bytes_fnv1a64 == right_descriptor->descriptor_bytes_fnv1a64 &&
+        left_descriptor->image_payload_candidate_fnv1a64 ==
+            right_descriptor->image_payload_candidate_fnv1a64 &&
+        left_descriptor->palette_payload_candidate_fnv1a64 ==
+            right_descriptor->palette_payload_candidate_fnv1a64;
+}
+
+int nexus_v1_launcher_admit_m12_m11_owner_material_capture_required(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *bios_sha256, Nexus_V1_LauncherSaturnBiosRegion bios_region,
+    const char *disc_sha256,
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *target,
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt receipt;
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget current;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt target_route;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_required = 1;
+    receipt.operator_only = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&current, 0, sizeof(current));
+    memset(&target_route, 0, sizeof(target_route));
+    if (!nexus_v1_launcher_sha256_text_valid(bios_sha256) ||
+        !nexus_v1_launcher_sha256_text_valid(disc_sha256) ||
+        bios_region == NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_INVALID ||
+        bios_region > NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_EU || !target ||
+        nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+            engine, topology_candidate_index, structure3_entry_index,
+            structure3_face_ordinal, &current, &target_route) != 1 ||
+        !target_route.active_canonical_lev_bound || !target_route.target_built ||
+        !nexus_v1_launcher_owner_material_target_matches(target, &current)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.bios_region = bios_region;
+    memcpy(receipt.bios_sha256, bios_sha256, 64U);
+    receipt.bios_sha256[64] = '\0';
+    memcpy(receipt.disc_sha256, disc_sha256, 64U);
+    receipt.disc_sha256[64] = '\0';
+    receipt.topology_candidate_index = topology_candidate_index;
+    receipt.structure3_entry_index = structure3_entry_index;
+    receipt.structure3_face_ordinal = structure3_face_ordinal;
+    receipt.target = current;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_launcher_resume_m12_m11_owner_material_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt current;
+    Nexus_V1_OwnerMaterialCaptureAdmissionReceipt capture;
+
+    if (!out_receipt) return 0;
+    memset(&current, 0, sizeof(current));
+    current.capture_required = 1;
+    current.operator_only = 1;
+    current.no_draw_only = 1;
+    current.blocks_real_dgn_mesh_render = 1;
+    if (!route || !route->valid || !route->capture_required ||
+        route->capture_admitted || !route->operator_only ||
+        !route->no_draw_only || route->owner_mapping_proven ||
+        route->mesh_semantics_permitted || route->texture_semantics_permitted ||
+        route->decoder_permitted || route->fallback_visuals_permitted ||
+        !route->blocks_real_dgn_mesh_render ||
+        !nexus_v1_launcher_admit_m12_m11_owner_material_capture_required(
+            engine, route->topology_candidate_index,
+            route->structure3_entry_index, route->structure3_face_ordinal,
+            route->bios_sha256, route->bios_region, route->disc_sha256,
+            &route->target, &current) ||
+        !nexus_v1_owner_material_capture_admit(&current.target, capture_bytes,
+                                               capture_byte_count, &capture)) {
+        *out_receipt = current;
+        return 0;
+    }
+    current.capture = capture;
+    current.capture_required = 0;
+    current.capture_admitted = 1;
+    current.resume_ready = 1;
+    *out_receipt = current;
+    return 1;
+}
+
+int nexus_v1_launcher_import_m12_m11_owner_material_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt *out_trace_receipt,
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt current;
+    Nexus_V1_OwnerMaterialCaptureAdmissionReceipt capture;
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt trace;
+
+    if (!out_receipt || !out_trace_receipt) return 0;
+    memset(&current, 0, sizeof(current));
+    current.capture_required = 1;
+    current.operator_only = 1;
+    current.no_draw_only = 1;
+    current.blocks_real_dgn_mesh_render = 1;
+    memset(&trace, 0, sizeof(trace));
+    trace.status = NEXUS_V1_OWNER_MATERIAL_TRACE_MISSING;
+    trace.level_index = -1;
+    trace.descriptor_index = -1;
+    trace.no_draw_only = 1;
+    trace.blocks_real_dgn_mesh_render = 1;
+    if (!route || !route->valid || !route->capture_required ||
+        route->capture_admitted || !route->operator_only ||
+        !route->no_draw_only || route->owner_mapping_proven ||
+        route->mesh_semantics_permitted || route->texture_semantics_permitted ||
+        route->decoder_permitted || route->fallback_visuals_permitted ||
+        !route->blocks_real_dgn_mesh_render || !manifest_text ||
+        manifest_size == 0U || !raw_trace || raw_trace_size == 0U ||
+        !original_saturn_capture_verified ||
+        !nexus_v1_launcher_admit_m12_m11_owner_material_capture_required(
+            engine, route->topology_candidate_index,
+            route->structure3_entry_index, route->structure3_face_ordinal,
+            route->bios_sha256, route->bios_region, route->disc_sha256,
+            &route->target, &current) ||
+        !nexus_v1_owner_material_capture_admit(&current.target, capture_bytes,
+                                               capture_byte_count, &capture) ||
+        raw_trace_size != capture.raw_trace_byte_count ||
+        nexus_v1_launcher_capture_fnv1a64(raw_trace, raw_trace_size) !=
+            capture.raw_trace_fnv1a64 ||
+        nexus_v1_engine_admit_structure1a_structure3_material_capture_trace(
+            engine, current.topology_candidate_index,
+            current.structure3_entry_index, current.structure3_face_ordinal,
+            manifest_text, manifest_size, raw_trace, raw_trace_size,
+            original_saturn_capture_verified, &trace) != 1) {
+        *out_trace_receipt = trace;
+        *out_receipt = current;
+        return 0;
+    }
+    capture.original_saturn_capture_verified = 1;
+    current.capture = capture;
+    current.capture_required = 0;
+    current.capture_admitted = 1;
+    current.resume_ready = 1;
+    *out_trace_receipt = trace;
+    *out_receipt = current;
+    return 1;
+}
+
+int nexus_v1_launcher_export_m12_owner_material_capture_campaign_required(
+    uint32_t expected_witness_count, const char *bios_sha256,
+    Nexus_V1_LauncherSaturnBiosRegion bios_region, const char *disc_sha256,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_required = 1;
+    receipt.operator_only = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (expected_witness_count <
+            NEXUS_V1_OWNER_MATERIAL_CAPTURE_CAMPAIGN_MIN_WITNESSES ||
+        expected_witness_count >
+            NEXUS_V1_OWNER_MATERIAL_CAPTURE_CAMPAIGN_MAX_WITNESSES ||
+        !nexus_v1_launcher_sha256_text_valid(bios_sha256) ||
+        !nexus_v1_launcher_sha256_text_valid(disc_sha256) ||
+        bios_region == NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_INVALID ||
+        bios_region > NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_EU) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.bios_region = bios_region;
+    memcpy(receipt.bios_sha256, bios_sha256, 64U);
+    receipt.bios_sha256[64] = '\0';
+    memcpy(receipt.disc_sha256, disc_sha256, 64U);
+    receipt.disc_sha256[64] = '\0';
+    receipt.expected_witness_count = expected_witness_count;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_launcher_import_m12_owner_material_capture_campaign(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *route,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt current;
+    Nexus_V1_OwnerMaterialCaptureCampaignReceipt campaign;
+
+    if (!out_receipt) return 0;
+    memset(&current, 0, sizeof(current));
+    current.capture_required = 1;
+    current.operator_only = 1;
+    current.no_draw_only = 1;
+    current.blocks_real_dgn_mesh_render = 1;
+    memset(&campaign, 0, sizeof(campaign));
+    campaign.no_draw_only = 1;
+    campaign.blocks_real_dgn_mesh_render = 1;
+    if (!route || !route->valid || !route->capture_required ||
+        route->captures_imported || !route->operator_only ||
+        !route->no_draw_only || route->owner_mapping_proven ||
+        route->mesh_semantics_permitted || route->texture_semantics_permitted ||
+        route->decoder_permitted || route->fallback_visuals_permitted ||
+        !route->blocks_real_dgn_mesh_render || !campaign_input ||
+        campaign_input->witness_count != route->expected_witness_count ||
+        !nexus_v1_launcher_export_m12_owner_material_capture_campaign_required(
+            route->expected_witness_count, route->bios_sha256, route->bios_region,
+            route->disc_sha256, &current) ||
+        !nexus_v1_owner_material_capture_campaign_admit(campaign_input,
+                                                         &campaign)) {
+        *out_receipt = current;
+        return 0;
+    }
+    current.campaign = campaign;
+    current.capture_required = 0;
+    current.captures_imported = 1;
+    current.resume_ready = 1;
+    *out_receipt = current;
+    return 1;
+}
+
+int nexus_v1_launcher_import_m12_owner_material_capture_campaign_artifact(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *route,
+    const uint8_t *artifact_bytes, size_t artifact_byte_count,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    Nexus_V1_OwnerMaterialCaptureCampaignArtifactReceipt *out_artifact_receipt,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt imported;
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt required;
+    Nexus_V1_OwnerMaterialCaptureCampaignArtifactReceipt artifact;
+
+    if (!out_artifact_receipt || !out_receipt) return 0;
+    memset(&artifact, 0, sizeof(artifact));
+    artifact.no_draw_only = 1;
+    artifact.blocks_real_dgn_mesh_render = 1;
+    memset(&required, 0, sizeof(required));
+    required.capture_required = 1;
+    required.operator_only = 1;
+    required.no_draw_only = 1;
+    required.blocks_real_dgn_mesh_render = 1;
+    if (!nexus_v1_launcher_import_m12_owner_material_capture_campaign(
+            route, campaign_input, &imported) ||
+        !nexus_v1_owner_material_capture_campaign_artifact_admit(
+            &imported.campaign, artifact_bytes, artifact_byte_count, &artifact)) {
+        if (route) (void)nexus_v1_launcher_export_m12_owner_material_capture_campaign_required(
+            route->expected_witness_count, route->bios_sha256, route->bios_region,
+            route->disc_sha256, &required);
+        *out_artifact_receipt = artifact;
+        *out_receipt = required;
+        return 0;
+    }
+    *out_artifact_receipt = artifact;
+    *out_receipt = imported;
+    return 1;
+}
+
+int nexus_v1_launcher_admit_m12_owner_material_capture_witness_required(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *campaign_route,
+    uint32_t witness_index,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt receipt;
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt current;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_required = 1;
+    receipt.operator_only = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&current, 0, sizeof(current));
+    if (!campaign_route || !campaign_route->valid ||
+        !campaign_route->capture_required || campaign_route->captures_imported ||
+        !campaign_route->operator_only || !campaign_route->no_draw_only ||
+        campaign_route->decoder_permitted || campaign_route->fallback_visuals_permitted ||
+        !campaign_route->blocks_real_dgn_mesh_render ||
+        witness_index >= campaign_route->expected_witness_count ||
+        !nexus_v1_launcher_export_m12_owner_material_capture_campaign_required(
+            campaign_route->expected_witness_count, campaign_route->bios_sha256,
+            campaign_route->bios_region, campaign_route->disc_sha256, &current)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.witness_index = witness_index;
+    receipt.campaign_route = current;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_launcher_import_m12_owner_material_capture_witness(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt *route,
+    const uint8_t *campaign_artifact_bytes, size_t campaign_artifact_byte_count,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    const Nexus_V1_OwnerMaterialCaptureArtifactPreflightInput *witness_input,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt required;
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt campaign;
+    Nexus_V1_OwnerMaterialCaptureCampaignArtifactReceipt artifact;
+    Nexus_V1_OwnerMaterialCaptureArtifactPreflightInput preflight;
+    Nexus_V1_OwnerMaterialCaptureArtifactPreflightReceipt witness;
+
+    if (!out_receipt) return 0;
+    memset(&required, 0, sizeof(required));
+    required.capture_required = 1;
+    required.operator_only = 1;
+    required.no_draw_only = 1;
+    required.blocks_real_dgn_mesh_render = 1;
+    memset(&campaign, 0, sizeof(campaign));
+    memset(&artifact, 0, sizeof(artifact));
+    memset(&witness, 0, sizeof(witness));
+    witness.no_draw_only = 1;
+    witness.blocks_real_dgn_mesh_render = 1;
+    if (!route || !route->valid || !route->capture_required ||
+        route->capture_admitted || !route->operator_only || !route->no_draw_only ||
+        route->decoder_permitted || route->fallback_visuals_permitted ||
+        !route->blocks_real_dgn_mesh_render || !witness_input ||
+        witness_input->witness_index != route->witness_index ||
+        !nexus_v1_launcher_admit_m12_owner_material_capture_witness_required(
+            &route->campaign_route, route->witness_index, &required) ||
+        !nexus_v1_launcher_import_m12_owner_material_capture_campaign_artifact(
+            &route->campaign_route, campaign_artifact_bytes,
+            campaign_artifact_byte_count, campaign_input, &artifact, &campaign)) {
+        *out_receipt = required;
+        return 0;
+    }
+    preflight = *witness_input;
+    preflight.campaign = &campaign.campaign;
+    if (!nexus_v1_owner_material_capture_artifact_preflight(&preflight, &witness)) {
+        *out_receipt = required;
+        return 0;
+    }
+    required.capture_required = 0;
+    required.capture_admitted = 1;
+    required.resume_ready = 1;
+    required.campaign_route = campaign;
+    required.campaign_artifact = artifact;
+    required.witness = witness;
+    *out_receipt = required;
+    return 1;
+}
+
+int nexus_v1_launcher_admit_m12_owner_material_capture_multi_witness_required(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *campaign_route,
+    const uint32_t *witness_indices, uint32_t witness_count,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureMultiWitnessRouteReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM12OwnerMaterialCaptureMultiWitnessRouteReceipt receipt;
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt current;
+    uint32_t index;
+    uint32_t prior;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_required = 1;
+    receipt.operator_only = 1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&current, 0, sizeof(current));
+    if (!campaign_route || !witness_indices ||
+        witness_count < NEXUS_V1_OWNER_MATERIAL_CAPTURE_CAMPAIGN_MIN_WITNESSES ||
+        witness_count > campaign_route->expected_witness_count ||
+        !nexus_v1_launcher_export_m12_owner_material_capture_campaign_required(
+            campaign_route->expected_witness_count, campaign_route->bios_sha256,
+            campaign_route->bios_region, campaign_route->disc_sha256, &current)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (index = 0U; index < witness_count; ++index) {
+        if (witness_indices[index] >= current.expected_witness_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        for (prior = 0U; prior < index; ++prior) {
+            if (witness_indices[prior] == witness_indices[index]) {
+                *out_receipt = receipt;
+                return 0;
+            }
+        }
+        receipt.witness_indices[index] = witness_indices[index];
+    }
+    receipt.valid = 1;
+    receipt.witness_count = witness_count;
+    receipt.campaign_route = current;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_launcher_admit_m11_multi_witness_dungeon_capture_start(
+    const Nexus_V1_Engine *engine,
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureMultiWitnessRouteReceipt *route,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    Nexus_V1_LauncherM11MultiWitnessDungeonCaptureStartReceipt *out_receipt)
+{
+    Nexus_V1_LauncherM11MultiWitnessDungeonCaptureStartReceipt receipt;
+    Nexus_V1_OwnerMaterialCaptureCampaignReceipt campaign;
+    const Nexus_V1_OwnerMaterialCaptureCampaignWitness *witness;
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *target;
+    const Nexus_V1_DgnStructure2DescriptorCaptureTarget *descriptor;
+    uint32_t selected;
+    uint32_t index;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&campaign, 0, sizeof(campaign));
+    if (!engine || !route || !route->valid || !route->capture_required ||
+        route->captures_admitted || !route->operator_only ||
+        !route->no_draw_only || route->decoder_permitted ||
+        route->fallback_visuals_permitted || !route->blocks_real_dgn_mesh_render ||
+        !campaign_input || !nexus_v1_owner_material_capture_campaign_admit(
+            campaign_input, &campaign) ||
+        campaign.witness_count != route->campaign_route.expected_witness_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = (uint32_t)engine->game.current_level;
+    for (selected = 0U; selected < route->witness_count; ++selected) {
+        index = route->witness_indices[selected];
+        if (index >= campaign.witness_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        if (campaign.witnesses[index].level_index == receipt.level_index) {
+            witness = &campaign_input->witnesses[index];
+            target = witness->target;
+            if (!target || !target->valid || target->level_index !=
+                    engine->game.current_level || !target->owner_face_source_bound ||
+                !target->static_material_source_bound ||
+                !target->capture_producer_required ||
+                !target->original_saturn_capture_required || !target->no_draw_only ||
+                target->fallback_visuals_permitted ||
+                !target->blocks_real_dgn_mesh_render) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            descriptor = &target->material_target.descriptor_target;
+            if (target->material_target.source_bytes_fnv1a64 !=
+                    campaign.witnesses[index].source_fnv1a64 ||
+                descriptor->descriptor_bytes_fnv1a64 !=
+                    campaign.witnesses[index].descriptor_fnv1a64 ||
+                (uint64_t)target->owner_face_target.face_target.candidate
+                    .face_row_fnv1a32 != campaign.witnesses[index].face_row_fnv1a64) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            receipt.valid = 1;
+            receipt.selected_witness = 1;
+            receipt.capture_required = 1;
+            receipt.operator_only = 1;
+            receipt.witness_index = index;
+            receipt.source_fnv1a64 = campaign.witnesses[index].source_fnv1a64;
+            receipt.descriptor_fnv1a64 = campaign.witnesses[index].descriptor_fnv1a64;
+            receipt.face_row_fnv1a64 = campaign.witnesses[index].face_row_fnv1a64;
+            receipt.capture_target = *target;
+            receipt.capture_target_bound = 1;
+            *out_receipt = receipt;
+            return 1;
+        }
+    }
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_launcher_admit_m12_m11_structure3_topology_capture_required(
     Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
     const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
@@ -2644,8 +3232,9 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->startup_menu_asset_route = "blocked-menu-bpk";
     } else if (receipt->menu_bpk_upload_route ==
                NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3) {
-        receipt->real_menu_surface_blocker = "menu-bpk-prs3";
-        receipt->startup_menu_asset_route = "blocked-menu-bpk-prs3";
+        receipt->real_menu_surface_blocker = "menu-bpk-prs3-capture-required";
+        receipt->startup_menu_asset_route =
+            "menu-bpk-prs3-capture-required";
     } else if (receipt->menu_bpk_upload_route ==
                NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED) {
         receipt->real_menu_surface_blocker = "menu-bpk-truncated";

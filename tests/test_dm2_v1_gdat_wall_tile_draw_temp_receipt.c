@@ -1,0 +1,4 @@
+#include "dm2_v1_gdat_wall_tile_draw_temp_receipt.h"
+#include <stdio.h>
+#include <string.h>
+int main(void){DM2_V1_GdatWallTileOverlayReceipt a={0};DM2_V1_GdatWallTilePicstReceipt b={0};DM2_V1_GdatWallTileLoadableReceipt c={0};DM2_V1_GdatWallTileBranchSetReceipt s={0};DM2_V1_GdatWallTileDrawTempReceipt r;int ok;a.valid=a.no_draw=b.valid=b.no_draw=c.valid=c.no_draw=s.valid=s.no_draw=1;a.identity_hash=1;b.identity_hash=2;c.identity_hash=3;s.overlay_hash=1;s.picst_hash=2;s.loadable_hash=3;s.identity_hash=4;a.input.category=8;b.input.category=c.input.category=9;c.input.image_field=0x0f;a.input.scale_x=a.input.scale_y=b.input.scale_x=b.input.scale_y=c.input.scale_x=c.input.scale_y=0x40;ok=dm2_v1_gdat_wall_tile_draw_temp_receipt_build(&s,&a,&b,&c,&r)&&r.valid&&r.no_draw;++c.input.scale_x;ok&=!dm2_v1_gdat_wall_tile_draw_temp_receipt_build(&s,&a,&b,&c,&r);printf("%s dm2_v1_gdat_wall_tile_draw_temp_receipt\n",ok?"PASS":"FAIL");return ok?0:1;}

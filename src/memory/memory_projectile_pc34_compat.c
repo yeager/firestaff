@@ -1266,6 +1266,18 @@ RESOLVE:
     return 1;
 }
 
+int F0219_PROJECTILE_ProcessEvents48To49_Compat(
+    const struct ProjectileInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    uint32_t currentTick,
+    struct RngState_Compat* rng,
+    struct ProjectileInstance_Compat* outNewState,
+    struct ProjectileTickResult_Compat* outResult)
+{
+    return F0811_PROJECTILE_Advance_Compat(
+        in, digest, currentTick, rng, outNewState, outResult);
+}
+
 /* ==========================================================
  *  F0812 — spell effect → projectile bridge.
  * ========================================================== */
@@ -1686,6 +1698,30 @@ int F0822_EXPLOSION_Advance_Compat(
     outResult->newCurrentFrame = outNewState->currentFrame;
     if (outResult->despawn) outResult->newAttack = 0;
     return 1;
+}
+
+/* PROJEXPL.C F0213/F0220 have source-facing names at the DM1 boundary.
+ * The older F0821/F0822 names remain the bounded M10 implementation. */
+int F0213_EXPLOSION_Create_Compat(
+    const struct ExplosionCreateInput_Compat* in,
+    struct ExplosionList_Compat* list,
+    int* outSlotIndex,
+    struct TimelineEvent_Compat* outFirstAdvanceEvent)
+{
+    return F0821_EXPLOSION_Create_Compat(
+        in, list, outSlotIndex, outFirstAdvanceEvent);
+}
+
+int F0220_EXPLOSION_ProcessEvent25_Compat(
+    const struct ExplosionInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    uint32_t currentTick,
+    struct RngState_Compat* rng,
+    struct ExplosionInstance_Compat* outNewState,
+    struct ExplosionTickResult_Compat* outResult)
+{
+    return F0822_EXPLOSION_Advance_Compat(
+        in, digest, currentTick, rng, outNewState, outResult);
 }
 
 int F0824_EXPLOSION_Despawn_Compat(

@@ -1,0 +1,8 @@
+#ifndef FIRESTAFF_DM2_V1_GDAT_DOOR_SPLIT_M11_CONSUMER_H
+#define FIRESTAFF_DM2_V1_GDAT_DOOR_SPLIT_M11_CONSUMER_H
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
+#include "dm2_v1_runtime.h"
+typedef struct { int valid; uint8_t right_index,left_index,state; uint32_t door_hash,raw_hash,decoded_hash,palette_hash,composition_hash,surface_generation,identity_hash; } DM2_V1_GdatDoorSplitM11Receipt;
+int dm2_v1_gdat_door_split_m11_receipt_build(const DM2_V1_GdatDoorOverlayM11CommandPlan*,uint8_t,uint8_t,const DM2_V1_Dm2ViewportM11CompositionReceipt*,const DM2_V1_ViewportState*,DM2_V1_GdatDoorSplitM11Receipt*);
+int dm2_v1_gdat_door_split_m11_consume(const DM2_V1_GdatDoorSplitM11Receipt*,const DM2_V1_GdatDoorOverlayM11CommandPlan*,const DM2_V1_Dm2ViewportM11CompositionReceipt*,DM2_V1_ViewportState*);
+#endif

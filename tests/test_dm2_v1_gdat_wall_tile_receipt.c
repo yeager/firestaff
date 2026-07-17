@@ -1,0 +1,4 @@
+#include "dm2_v1_gdat_wall_tile_receipt.h"
+#include <stdio.h>
+#include <string.h>
+int main(void){DM2_V1_GdatWallM11CommandPlan w;DM2_V1_Dm2ViewportM11CompositionReceipt c;DM2_V1_GdatWallTileReceipt r;int ok=1;memset(&w,0,sizeof(w));memset(&c,0,sizeof(c));w.valid=1;w.command_count=1;w.command_hash=7;c.valid=c.no_draw=1;c.wall_command_hash=7;c.identity_hash=9;ok&=dm2_v1_gdat_wall_tile_receipt_build(0,&w,&c,&r)&&r.delegate_count==0&&r.no_draw;ok&=dm2_v1_gdat_wall_tile_receipt_build(1,&w,&c,&r)&&r.table_branch==2&&r.wall_orientation==-1;ok&=dm2_v1_gdat_wall_tile_receipt_build(4,&w,&c,&r)&&r.table_branch==3&&r.delegate_count==2;ok&=!dm2_v1_gdat_wall_tile_receipt_build(23,&w,&c,&r);++w.command_hash;ok&=!dm2_v1_gdat_wall_tile_receipt_build(1,&w,&c,&r);printf("%s dm2_v1_gdat_wall_tile_receipt\n",ok?"PASS":"FAIL");return ok?0:1;}

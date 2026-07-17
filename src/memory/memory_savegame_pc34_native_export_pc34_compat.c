@@ -68,6 +68,7 @@
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
+#include "dm1_v1_c15_layout_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"  /* F0770_SAVEGAME_CRC32_Compat */
 
 /* ==========================================================
@@ -167,18 +168,6 @@ static void write_u16_le(unsigned char* p, uint16_t v) {
 
 static uint16_t read_u16_le(const unsigned char* p) {
     return (uint16_t)(((uint16_t)p[0]) | ((uint16_t)p[1] << 8));
-}
-
-static uint32_t pc34_c15_fingerprint(const unsigned char* bytes,
-                                     size_t byte_count)
-{
-    uint32_t hash = 2166136261u;
-    size_t i;
-    for (i = 0; i < byte_count; ++i) {
-        hash ^= bytes[i];
-        hash *= 16777619u;
-    }
-    return hash;
 }
 
 static uint32_t pc34_timeline_runtime_fingerprint(
@@ -1435,7 +1424,7 @@ static int pc34_original_explosion_thing_for_runtime_event(
             if ((int)(source[2] & 0x7fu) == runtime->explosionType &&
                 (int)source[3] == runtime->attack &&
                 (int)((source[2] >> 7) & 0x01u) == runtime->centered &&
-                (uint32_t)event->aux3 == pc34_c15_fingerprint(
+                (uint32_t)event->aux3 == dm1_v1_c15_layout_fingerprint_pc34(
                     source,
                     s_thingDataByteCount[THING_TYPE_EXPLOSION])) {
                 if (++matches > 1) return 0;
@@ -2472,11 +2461,11 @@ static int export_pc34_core(
             cachedTimelineLen > sizeof(sourceReceiptWorld->pc34OriginalC4RawHeapBytes) ||
             eventCount > (int)(cachedEventsLen / PC34_EVENT_BYTE_COUNT) ||
             sourceReceiptWorld->pc34OriginalC3RawEventFingerprint !=
-                pc34_c15_fingerprint(
+                dm1_v1_c15_layout_fingerprint_pc34(
                     sourceReceiptWorld->pc34OriginalC3RawEventBytes,
                     cachedEventsLen) ||
             sourceReceiptWorld->pc34OriginalC4RawHeapFingerprint !=
-                pc34_c15_fingerprint(
+                dm1_v1_c15_layout_fingerprint_pc34(
                     sourceReceiptWorld->pc34OriginalC4RawHeapBytes,
                     cachedTimelineLen) ||
             sourceReceiptWorld->pc34OriginalC3C4RuntimeEventCount !=

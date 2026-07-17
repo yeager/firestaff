@@ -3067,6 +3067,11 @@ int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 int nexus_v1_menu_bpk_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxSourceReceipt *out_receipt);
+/* Returns the hash-bound direct/virtual source identity for WARNING.BIN.
+ * Callers still must revalidate the bytes they present. */
+int nexus_v1_warning_bin_source_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxSourceReceipt *out_receipt);
 /* Returns a source-bound DM.BIN/MENU.BPK loader receipt only. It never
  * supplies decoded pixels or opens a MENU.BPK render route. */
 int nexus_v1_menu_bpk_prs3_execution_evidence_receipt(

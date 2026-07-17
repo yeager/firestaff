@@ -213,6 +213,12 @@ int dm2_v1_viewport_door_side_frame_source(int view_square, int side,
                                            int *out_mirror_flip,
                                            int *out_offset_x,
                                            int *out_offset_y);
+/* DRAW_DOOR_FRAMES switches table1d6ee1 row/column when v1e12d0 is active,
+ * while QUERY_CREATURE_BLIT_RECTI retains the original cell's RAW4 rect. */
+int dm2_v1_viewport_door_side_frame_source_for_movement(
+    int view_square, int side, int movement_active,
+    int *out_graphicsset_field, int *out_rect_number, int *out_mirror_flip,
+    int *out_offset_x, int *out_offset_y);
 int dm2_v1_viewport_door_panel_field_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_record(int view_square,
@@ -1758,6 +1764,22 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t misty_map,
     uint16_t thunder_position,
     uint16_t ambient_darkness);
+/* Bind the current map-load identity before any static GRAPHICSSET controls
+ * can be retained by the viewport. */
+void dm2_v1_viewport_set_scene_map_load_token(
+    DM2_V1_ViewportState *s, uint32_t source_map_load_token);
+/* skproject UPDATE_GFXSET admits the selected GRAPHICSSET control record
+ * only under the current map-load token and its source control hash. */
+int dm2_v1_viewport_bind_static_graphicsset_scene_record(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
+/* skproject static light control is map-local and must repeat the same
+ * source GRAPHICSSET identity as the scene record. */
+int dm2_v1_viewport_bind_static_scene_light_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash);
 /* c_light.cpp's terminal result may enter a source-required dungeon frame
  * only when it names this exact UPDATE_GFXSET transaction.  It carries view
  * metadata only; no palette or pixel transform is implied by this bind. */

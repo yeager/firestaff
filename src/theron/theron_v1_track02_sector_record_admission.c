@@ -92,7 +92,22 @@ int theron_v1_track02_sector_record_admit_from_trace(
         coalesced.descriptor_selector == 0u ||
         coalesced.descriptor_source_raw_offset >= track_size ||
         coalesced.descriptor_source_hash == 0u ||
-        coalesced.descriptor_record_user_data_hash == 0u) {
+        coalesced.descriptor_record_user_data_hash == 0u ||
+        !coalesced.later_local_destination ||
+        !coalesced.later_destination_span_bytes ||
+        !coalesced.later_destination_span_checksum ||
+        !coalesced.later_destination_payload_bytes ||
+        !coalesced.later_destination_payload_checksum ||
+        !coalesced.later_caller_control_verified ||
+        coalesced.later_caller_opcode != 0x20u ||
+        coalesced.later_caller_target != 0xe009u ||
+        !coalesced.sector_count ||
+        coalesced.later_track02_record !=
+            ((uint32_t)coalesced.later_record_cl |
+             ((uint32_t)coalesced.later_record_dl << 8) |
+             ((uint32_t)coalesced.later_record_ch << 16)) ||
+        !coalesced.later_post_return_step_verified ||
+        coalesced.later_post_return_resume_pc != coalesced.return_pc) {
         receipt.status = THERON_V1_TRACK02_SECTOR_RECORD_REJECTED;
         goto done;
     }
@@ -123,6 +138,23 @@ int theron_v1_track02_sector_record_admit_from_trace(
     receipt.record_user_data_hash = coalesced.descriptor_record_user_data_hash;
     receipt.loader_caller_pc = coalesced.caller_pc;
     receipt.loader_return_pc = coalesced.return_pc;
+    receipt.loader_caller_opcode = coalesced.later_caller_opcode;
+    receipt.loader_caller_target = coalesced.later_caller_target;
+    receipt.loader_post_return_pc = coalesced.later_post_return_resume_pc;
+    receipt.loader_post_return_next_pc = coalesced.later_post_return_next_pc;
+    receipt.loader_record_cl = coalesced.later_record_cl;
+    receipt.loader_record_dl = coalesced.later_record_dl;
+    receipt.loader_record_ch = coalesced.later_record_ch;
+    receipt.loader_sector_count = coalesced.sector_count;
+    receipt.loader_observed_raw_sector_lba = coalesced.observed_raw_sector_lba;
+    receipt.loader_callsite_context_verified = 1;
+    receipt.loader_destination = coalesced.later_local_destination;
+    receipt.loader_destination_span_bytes = coalesced.later_destination_span_bytes;
+    receipt.loader_destination_span_checksum = coalesced.later_destination_span_checksum;
+    receipt.loader_destination_payload_bytes =
+        coalesced.later_destination_payload_bytes;
+    receipt.loader_destination_payload_checksum =
+        coalesced.later_destination_payload_checksum;
     receipt.observed_raw_sector_checksum = coalesced.observed_raw_sector_checksum;
     *out = receipt;
 

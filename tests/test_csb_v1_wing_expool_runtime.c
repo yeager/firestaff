@@ -119,8 +119,23 @@ int main(void)
 {
     uint8_t tail[character_records * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
     CSB_V1_RuntimeProfile profile;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+    CSB_V1_CSBWinDSACoreProgramReceipt core_receipt;
+    uint16_t store_excell_flags[] = {
+        0x0686u, 0x52u, 0x0686u, 0x0c82u, 0x0b4bu
+    };
+    uint16_t store_wing_talents[] = {
+        0x0686u, 0x55u, 0x0786u, 0x1234u, 1u, 0x01d5u
+    };
+    uint16_t store_wing_talents_then_bad[] = {
+        0x0686u, 0x66u, 0x0786u, 0x1234u, 1u, 0x01d5u, 0x0000u
+    };
     uint32_t talents = 0u;
     uint32_t flags[8];
+    uint32_t tail_fnv_before;
+    int dsa_run_result;
 
     build_wing_tail(tail, sizeof(tail), 0x1234u, 0x89abcdefu);
     prepare_profile(&profile, tail, sizeof(tail));
@@ -139,6 +154,57 @@ int main(void)
     check(csb_v1_runtime_read_csbwin_wing_talents(
               &profile, 0x9999u, &talents) == 0 && talents == 0u,
           "CSBWin reports an authenticated absent wing as source zero");
+
+    memset(&action, 0, sizeof(action));
+    memset(&runner, 0, sizeof(runner));
+    memset(&receipt, 0, sizeof(receipt));
+    action.dsa_id = 7u;
+    action.state_index = 1u;
+    action.column = 0u;
+    action.program_words = store_wing_talents;
+    action.program_word_count = (int)(sizeof(store_wing_talents) /
+                                      sizeof(store_wing_talents[0]));
+    profile.csbwin_extended_features_valid = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 0;
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = 7;
+    runner.state_index = 1u;
+    runner.action_ordinal = 0;
+    tail_fnv_before = profile.csbwin_appended_tail_fnv1a;
+    dsa_run_result = csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        &profile, &runner, &action, NULL, 0, NULL);
+    check(dsa_run_result == 1,
+          "CSBWin DSA TALENTS! accepts the verified wing action");
+    check(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+              &profile, &receipt) == 1 &&
+              receipt.wing_talents_store_count == 1u &&
+              receipt.last_wing_talents_fingerprint == 0x1234u &&
+              receipt.last_wing_talents_before == 0x10203040u &&
+              receipt.last_wing_talents_after == 0x55u &&
+              receipt.wing_talents_tail_fnv1a_before == tail_fnv_before &&
+              receipt.wing_talents_tail_fnv1a_after ==
+                  profile.csbwin_appended_tail_fnv1a &&
+              receipt.wing_talents_tail_fnv1a_before !=
+                  receipt.wing_talents_tail_fnv1a_after &&
+              csb_v1_runtime_read_csbwin_wing_talents(
+                  &profile, 0x1234u, &talents) == 1 && talents == 0x55u,
+          "CSBWin DSA TALENTS! commits one authenticated wing bundle receipt");
+    action.program_words = store_wing_talents_then_bad;
+    action.program_word_count = (int)(sizeof(store_wing_talents_then_bad) /
+                                      sizeof(store_wing_talents_then_bad[0]));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 0,
+          "CSBWin DSA TALENTS! rejects a later unknown opcode");
+    check(csb_v1_runtime_read_csbwin_wing_talents(
+              &profile, 0x1234u, &talents) == 1 && talents == 0x55u,
+          "CSBWin DSA TALENTS! rejects a later unknown opcode before wing publication");
+    profile.csbwin_appended_tail_fnv1a ^= 1u;
+    check(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+              &profile, &receipt) == 0,
+          "CSBWin DSA TALENTS! receipt expires when its wing tail identity drifts");
 
     prepare_profile(&profile, tail,
                     sizeof(tail) - CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
@@ -161,14 +227,56 @@ int main(void)
               flags[0] == (1u << 2) && flags[3] == (1u << 2) &&
               flags[7] == (1u << 2),
           "CSBWin reads one real-shaped eight-word EDT_ExtendedCellFlags record");
-    check(csb_v1_runtime_set_csbwin_extended_cell_flags(
-              &profile, 0x0c82u, 0x52u) == 1 &&
+    memset(&action, 0, sizeof(action));
+    memset(&runner, 0, sizeof(runner));
+    memset(&receipt, 0, sizeof(receipt));
+    action.dsa_id = 7u;
+    action.state_index = 1u;
+    action.column = 0u;
+    action.program_words = store_excell_flags;
+    action.program_word_count = (int)(sizeof(store_excell_flags) /
+                                      sizeof(store_excell_flags[0]));
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = 7;
+    runner.state_index = 1u;
+    runner.action_ordinal = 0;
+    tail_fnv_before = profile.csbwin_appended_tail_fnv1a;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &profile.csbwin_extended_dsa_state, 7, 1u, 0,
+              &core_receipt) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core_receipt.valid && core_receipt.requires_runtime_owner,
+          "CSBWin ECF! program is an admitted runtime-owned source action");
+    dsa_run_result = csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        &profile, &runner, &action, NULL, 0, NULL);
+    check(dsa_run_result == 1,
+          "CSBWin ECF! runtime accepts the verified source action");
+    check(dsa_run_result == 1 &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 &&
+              receipt.excell_store_count == 1u &&
+              receipt.last_excell_store_location == 0x0c82u &&
+              receipt.excell_tail_fnv1a_before == tail_fnv_before &&
+              receipt.excell_tail_fnv1a_after ==
+                  profile.csbwin_appended_tail_fnv1a &&
+              receipt.excell_tail_fnv1a_before !=
+                  receipt.excell_tail_fnv1a_after &&
               csb_v1_runtime_read_csbwin_extended_cell_flags(
                   &profile, 0x0c82u, flags) == 1 &&
               flags[0] == 0u && flags[1] == (1u << 2) &&
               flags[4] == (1u << 2) && flags[6] == (1u << 2),
-          "CSBWin ECF! rewrites all eight source words through DB11 free-list ownership");
+          "CSBWin DSA ECF! publishes EXPOOL words and exact tail FNV receipt atomically");
     profile.csbwin_appended_tail_fnv1a ^= 1u;
+    check(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+              &profile, &receipt) == 0,
+          "CSBWin DSA ECF! receipt expires when its EXPOOL tail identity drifts");
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 0 &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 0,
+          "CSBWin DSA ECF! rejects a mutated EXPOOL tail before receipt publication");
     check(csb_v1_runtime_read_csbwin_extended_cell_flags(
               &profile, 0x0c82u, flags) == -1,
           "CSBWin rejects an altered ExtendedCellFlags EXPOOL receipt");

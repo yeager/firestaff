@@ -13,12 +13,13 @@ layout_epoch=${THERON_DUNGEON_CAPTURE_LAYOUT_EPOCH:-}
 replay_record=${THERON_DUNGEON_CAPTURE_REPLAY_RECORD:-}
 replay_sector=${THERON_DUNGEON_CAPTURE_REPLAY_SECTOR:-}
 plan_identity=${THERON_DUNGEON_CAPTURE_PLAN_FNV1A:-}
+trace_md5=${THERON_DUNGEON_CAPTURE_TRACE_MD5:-}
 execute=${THERON_DUNGEON_CAPTURE_EXECUTE:-0}
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" ||
       -z "$capture_root" || -z "$layout_epoch" || -z "$replay_record" ||
-      -z "$replay_sector" || -z "$plan_identity" ]]; then
-    printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, THERON_DUNGEON_CAPTURE_ROOT, layout epoch, replay record/sector, and plan FNV1A are required'
+      -z "$replay_sector" || -z "$plan_identity" || -z "$trace_md5" ]]; then
+    printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, THERON_DUNGEON_CAPTURE_ROOT, layout epoch, replay record/sector, plan FNV1A, and source trace MD5 are required'
     exit 0
 fi
 if [[ ! -x "$mednafen_bin" || ! -f "$cue" || ! -f "$system_card" ||
@@ -84,6 +85,7 @@ trace_path="$root_abs/theron-track02-dungeon-handoff.mednafen.trace"
 descriptor_path="$root_abs/theron-track02-dungeon-handoff.descriptor.manifest"
 artifact_path="$root_abs/theron-track02-dungeon-handoff.capture-artifact"
 plan_path="$root_abs/theron-track02-dungeon-handoff.capture-plan"
+[[ $trace_md5 =~ ^[0-9a-f]{32}$ ]] || { printf '%s\n' 'FAIL: THERON_DUNGEON_CAPTURE_TRACE_MD5 must be an observed trace MD5' >&2; exit 1; }
 
 if [[ -e "$plan_path" || -e "$trace_path" || -e "$descriptor_path" || -e "$artifact_path" ]]; then
     printf '%s\n' 'FAIL: operator capture output path already exists; refusing to overwrite evidence' >&2
@@ -98,7 +100,7 @@ umask 077
     printf 'system_card_path=%s\nsystem_card_md5=%s\n' "$system_card_abs" "$system_card_md5"
     printf 'layout_epoch=%s\nreplay_final_record=%s\nreplay_final_raw_sector=%s\n' "$layout_epoch" "$replay_record" "$replay_sector"
     printf 'capture_target_plan_fnv1a=%s\n' "$plan_identity"
-    printf 'mednafen_trace_path=%s\ndescriptor_manifest_path=%s\ncapture_artifact_path=%s\n' "$trace_path" "$descriptor_path" "$artifact_path"
+    printf 'mednafen_trace_path=%s\nsource_trace_md5=%s\ndescriptor_manifest_path=%s\ncapture_artifact_path=%s\n' "$trace_path" "$trace_md5" "$descriptor_path" "$artifact_path"
     printf '%s\n' 'payload_policy=opaque_only'
     printf '%s\n' 'decoder_policy=forbidden'
     printf '%s\n' 'render_policy=no_draw'

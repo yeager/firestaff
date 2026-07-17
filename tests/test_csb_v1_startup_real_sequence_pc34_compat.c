@@ -97,6 +97,9 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 rejected_host;
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 title_snapshot;
+    CSB_V1_BootStartupRenderViewReceipt_PC34 title_view;
     CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 opening_capture;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
@@ -113,6 +116,9 @@ int main(void)
     memset(&opening_host, 0, sizeof(opening_host));
     memset(&credits_host, 0, sizeof(credits_host));
     memset(&hud_host, 0, sizeof(hud_host));
+    memset(&rejected_host, 0, sizeof(rejected_host));
+    memset(&title_snapshot, 0, sizeof(title_snapshot));
+    memset(&title_view, 0, sizeof(title_view));
     memset(&opening_capture, 0, sizeof(opening_capture));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&snapshot, 0, sizeof(snapshot));
@@ -170,14 +176,46 @@ int main(void)
               &session, 79, &plan, &audio_action) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               plan.title_source_step == 21 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               receipt_for_plan(&session, &plan, 3u, &chaos_hold_host),
           "real C001 CHAOS hold raster reaches host surface receipt");
+    title_snapshot.boot_profile = &profile;
+    title_snapshot.entrance_active = 1;
+    title_snapshot.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    title_snapshot.title_active = 1;
+    title_snapshot.title_frame = 79;
+    title_snapshot.title_source_step = 21;
+    check(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &title_snapshot, &title_view) && title_view.render_plan_valid &&
+              title_view.render_plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              title_view.render_plan.title_source_step == 21 &&
+              title_view.render_plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
+              title_view.render_plan.title_source_y == 0 &&
+              title_view.render_plan.title_source_h == 80,
+          "M11 render-view preserves the real frame-79 C001 CHAOS raster and palette");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, 80, &plan, &audio_action) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-              plan.title_source_step == 20 &&
+              plan.title_source_step == 21 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
               receipt_for_plan(&session, &plan, 4u, &strikes_host),
           "real C001 first STRIKES BACK raster reaches host surface receipt");
+    title_snapshot.title_frame = 80;
+    check(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &title_snapshot, &title_view) && title_view.render_plan_valid &&
+              title_view.render_plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              title_view.render_plan.title_source_step == 21 &&
+              title_view.render_plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
+              title_view.render_plan.title_source_y == 80 &&
+              title_view.render_plan.title_source_h == 57,
+          "M11 render-view admits only the real frame-80 C001 STRIKES raster and palette");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, csb_v1_startup_title_total_ticks_pc34(), &plan,
               &audio_action) &&
@@ -198,10 +236,16 @@ int main(void)
     check(render_plan_from_state(0, 0, 0, 1, 0, 31, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.title_special_palette == -1 &&
               receipt_for_plan(&session, &plan, 6u, &opening_host) &&
               opening_host.host_surface ==
-                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34,
-          "real C004+C002/C003 opening frame reaches host surface receipt");
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 &&
+              opening_host.raster.source_surface_count == 2,
+          "real C004+C003 final opening frame reaches host surface receipt with Entrance palette");
+    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
+    check(!receipt_for_plan(&session, &plan, 6u, &rejected_host),
+          "real F0438 opening raster rejects a title-palette relabel before presentation");
     check(csb_v1_boot_startup_door_opening_capture_from_session_pc34(
               &session, 100u, &opening_capture) && opening_capture.valid &&
               opening_capture.real_asset_matched &&
@@ -236,8 +280,14 @@ int main(void)
     check(receipt_for_plan(&session, &plan, 8u, &hud_host) &&
               hud_host.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 &&
-              hud_host.uses_c017_inventory && hud_host.uses_c040_resurrect,
-          "real C017/C040 HUD reaches terminal runtime host surface receipt");
+              hud_host.special_palette == -1 &&
+              hud_host.title_special_palette == -1 &&
+              hud_host.uses_c017_inventory && hud_host.uses_c040_resurrect &&
+              hud_host.raster.source_surface_count == 2,
+          "real first C017/C040 HUD frame reaches terminal runtime host surface with neutral palette");
+    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    check(!receipt_for_plan(&session, &plan, 8u, &rejected_host),
+          "first C017/C040 HUD raster rejects a retained Entrance palette before presentation");
 
     check(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
               &session, &full_runtime) &&
@@ -308,6 +358,7 @@ int main(void)
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&opening_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&credits_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&hud_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&rejected_host);
     csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
 
     printf("Summary: %s\n", failures ? "FAILED" : "PASSED");

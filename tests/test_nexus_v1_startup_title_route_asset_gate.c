@@ -69,8 +69,9 @@ static void check_asset_handoff_blocks_saturn_route_on_menu_prs3(void)
     runtime.startup_assets.real_menu_surface_route_ready = 0;
     runtime.startup_assets.real_menu_surface_route_blocked = 1;
     runtime.startup_assets.startup_menu_asset_route =
-        "blocked-menu-bpk-prs3";
-    runtime.startup_assets.real_menu_surface_blocker = "menu-bpk-prs3";
+        "menu-bpk-prs3-capture-required";
+    runtime.startup_assets.real_menu_surface_blocker =
+        "menu-bpk-prs3-capture-required";
 
     expect(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
                &runtime,
@@ -93,8 +94,8 @@ static void check_asset_handoff_blocks_saturn_route_on_menu_prs3(void)
     expect(handoff.blocks_main_menu_route,
            "PRS3-blocked MENU.BPK blocks the host main-menu route");
     expect(handoff.status &&
-               strcmp(handoff.status, "blocked-menu-bpk-prs3") == 0,
-           "asset handoff reports the PRS3 menu blocker");
+               strcmp(handoff.status, "menu-bpk-prs3-capture-required") == 0,
+           "asset handoff reports the PRS3 capture requirement");
 }
 
 int main(void)

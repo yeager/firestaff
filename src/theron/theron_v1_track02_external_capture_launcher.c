@@ -60,6 +60,51 @@ static int theron_v1_external_capture_prepare(
     return 1;
 }
 
+static int theron_v1_external_capture_prepare_handoff_plan(
+    const Theron_V1Track02ExternalCaptureRequest *request,
+    const Theron_V1Track02CaptureTargetPlan *plan,
+    uint32_t expected_identity,
+    Theron_V1Track02RawMediaIntakeReceipt *intake,
+    Theron_V1Track02ExternalCaptureReceipt *out)
+{
+    Theron_V1Track02ExternalCaptureReceipt receipt;
+    uint32_t identity;
+    size_t i;
+
+    if (!theron_v1_external_capture_prepare(request, intake, &receipt)) return 0;
+    if (receipt.status == THERON_V1_TRACK02_EXTERNAL_CAPTURE_UNAVAILABLE ||
+        receipt.status == THERON_V1_TRACK02_EXTERNAL_CAPTURE_REJECTED) {
+        *out = receipt;
+        return 1;
+    }
+    identity = theron_v1_track02_capture_target_plan_identity(plan);
+    if (!plan || !expected_identity || identity != expected_identity ||
+        !intake->cue_consumed || !intake->mode1_2352 ||
+        !intake->raw_trace_preparation_allowed) goto rejected;
+    for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
+        const Theron_V1Track02CaptureTarget *target = &plan->targets[i];
+        if (target->route != (Theron_V1Track02CaptureTargetRoute)i ||
+            target->track02_variant != intake->variant ||
+            strcmp(target->track02_md5, intake->track02_md5) ||
+            !target->cd_read_record || !target->loader_output_bytes ||
+            !target->loader_output_checksum || !target->palette_output_identity ||
+            !target->bitmap_transfer_capture_required || !target->bitmap_bytes ||
+            !target->bitmap_identity || !target->destination_record ||
+            !target->destination_bytes || !target->destination_identity ||
+            target->level_object_semantics_allowed || target->pixel_decode_allowed ||
+            target->render_allowed || target->fallback_visuals_allowed) goto rejected;
+    }
+    receipt.capture_target_plan_verified = 1;
+    receipt.positive_handoff_capture_required = 1;
+    receipt.capture_target_plan_identity = identity;
+    *out = receipt;
+    return 1;
+rejected:
+    receipt.status = THERON_V1_TRACK02_EXTERNAL_CAPTURE_REJECTED;
+    *out = receipt;
+    return 1;
+}
+
 int theron_v1_track02_external_capture_write_skeleton(
     const Theron_V1Track02ExternalCaptureRequest *request,
     Theron_V1Track02ExternalCaptureReceipt *out) {
@@ -212,6 +257,44 @@ int theron_v1_track02_external_capture_validate_mednafen_trace(
         snprintf(receipt.mednafen_event_log_md5,
                  sizeof(receipt.mednafen_event_log_md5), "%s",
                  conversion.event_log_md5);
+    }
+    *out = receipt;
+    return 1;
+}
+
+int theron_v1_track02_external_capture_validate_mednafen_handoff_plan(
+    const Theron_V1Track02ExternalCaptureRequest *request,
+    const Theron_V1Track02MednafenTraceConvertRequest *trace_request,
+    const Theron_V1Track02CaptureTargetPlan *plan,
+    uint32_t expected_capture_target_plan_identity,
+    const Theron_V1Track02ProvenanceRuntimeConsumerReceipt *provenance,
+    const Theron_V1Track02LevelObjectTracePreparationReceipt *preparation,
+    Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt *out_admission,
+    Theron_V1Track02ExternalCaptureReceipt *out)
+{
+    Theron_V1Track02RawMediaIntakeReceipt intake;
+    Theron_V1Track02ExternalCaptureReceipt receipt;
+
+    if (!out || !out_admission || !theron_v1_external_capture_prepare_handoff_plan(
+            request, plan, expected_capture_target_plan_identity, &intake, &receipt)) return 0;
+    memset(out_admission, 0, sizeof(*out_admission));
+    if (receipt.status == THERON_V1_TRACK02_EXTERNAL_CAPTURE_UNAVAILABLE ||
+        receipt.status == THERON_V1_TRACK02_EXTERNAL_CAPTURE_REJECTED) {
+        *out = receipt;
+        return 1;
+    }
+    if (!theron_v1_track02_external_capture_validate_mednafen_trace(
+            request, trace_request, provenance, preparation, out_admission, &receipt) ||
+        receipt.status != THERON_V1_TRACK02_EXTERNAL_CAPTURE_RUNTIME_READY ||
+        !receipt.mednafen_trace_source_verified ||
+        !receipt.mednafen_trace_source_md5[0] ||
+        strcmp(receipt.track02_md5, intake.track02_md5)) {
+        receipt.status = THERON_V1_TRACK02_EXTERNAL_CAPTURE_REJECTED;
+        memset(out_admission, 0, sizeof(*out_admission));
+    } else {
+        receipt.capture_target_plan_verified = 1;
+        receipt.positive_handoff_capture_required = 1;
+        receipt.capture_target_plan_identity = expected_capture_target_plan_identity;
     }
     *out = receipt;
     return 1;

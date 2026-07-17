@@ -187,6 +187,10 @@ static int csb_v1_runtime_dsa_prepare_experience_plus(
 static int csb_v1_runtime_dsa_add_experience_plus(
     void *user, int32_t character_selector, int32_t skill_number,
     int32_t experience);
+static int csb_v1_runtime_dsa_prepare_cause_poison(
+    void *user, int32_t character_selector, int32_t poison_value);
+static int csb_v1_runtime_dsa_commit_cause_poison(
+    void *user, int32_t character_selector, int32_t poison_value);
 static int csb_v1_runtime_dsa_get_mastery(
     void *user, uint32_t champion_index, uint32_t skill_index,
     uint32_t flags, uint32_t *out_mastery);
@@ -1430,6 +1434,14 @@ static int csb_v1_runtime_apply_save_image(
     profile->party_state.LeaderHandThing =
         csb_v1_runtime_normalize_leader_hand_thing(
             profile->party_state.LeaderHandThing);
+    /* The boot-owned CSBWin GAMEBLOCK2 summary is not serialized in the
+     * native image, but its live hand mirror must not diverge from the
+     * restored PARTY state after LOADSAVE.C F0435 ownership resumes. */
+    if (profile->csbwin_gameblock2_summary_valid &&
+        profile->party_state_valid) {
+        profile->csbwin_object_in_hand =
+            profile->party_state.LeaderHandThing;
+    }
     if (image->byte_size >=
         offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_header_byte22808) +
             sizeof(image->csbwin_header_byte22808)) {
@@ -5248,15 +5260,79 @@ static int csb_v1_runtime_csbwin_prepare_add_to_skill(
             (uint32_t)accumulated;
     }
 
-    if (csb_v1_runtime_csbwin_unadjusted_mastery(
-            champion->SkillExperience[basic_skill]) !=
-        csb_v1_runtime_csbwin_unadjusted_mastery(basic_experience)) {
-        return -1;
-    }
     *out_skill_experience = skill_experience;
     *out_basic_experience = basic_experience;
     *out_basic_skill = basic_skill;
+    if (csb_v1_runtime_csbwin_unadjusted_mastery(
+            champion->SkillExperience[basic_skill]) !=
+        csb_v1_runtime_csbwin_unadjusted_mastery(basic_experience)) {
+        return -2;
+    }
     return 1;
+}
+
+int csb_v1_runtime_csbwin_dsa_levelup_prerequisite_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile, int32_t character_selector,
+    int32_t skill_number, int32_t experience,
+    CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34 *out_receipt)
+{
+    CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34 receipt;
+    uint32_t selected_after = 0u;
+    uint32_t basic_after = 0u;
+    int basic_skill = -1;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    *out_receipt = receipt;
+    if (!profile || !profile->party_state_valid || character_selector < 0 ||
+        character_selector >= profile->party_state.ChampionCount ||
+        character_selector >= CSB_V1_MAX_CHAMPIONS || skill_number < 0 ||
+        skill_number >= CSB_V1_FULL_SKILL_COUNT ||
+        csb_v1_runtime_csbwin_prepare_add_to_skill(
+            profile, character_selector, skill_number, experience,
+            &selected_after, &basic_after, &basic_skill) != -2) {
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.levelup_required = 1;
+    receipt.character_selector = character_selector;
+    receipt.selected_skill_number = skill_number;
+    receipt.basic_skill_number = basic_skill;
+    receipt.increment_ui16 = (uint16_t)experience;
+    receipt.selected_before = profile->party_state.Champions[character_selector]
+        .SkillExperience[skill_number];
+    receipt.selected_after = selected_after;
+    receipt.basic_before = profile->party_state.Champions[character_selector]
+        .SkillExperience[basic_skill];
+    receipt.basic_after = basic_after;
+    receipt.basic_mastery_before = csb_v1_runtime_csbwin_unadjusted_mastery(
+        receipt.basic_before);
+    receipt.basic_mastery_after = csb_v1_runtime_csbwin_unadjusted_mastery(
+        receipt.basic_after);
+    *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_runtime_csbwin_dsa_levelup_prerequisite_current_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34 *receipt)
+{
+    CSB_V1_CSBWinDSALevelUpPrerequisiteReceipt_PC34 current;
+
+    if (!profile || !receipt || !receipt->valid || !receipt->levelup_required ||
+        !csb_v1_runtime_csbwin_dsa_levelup_prerequisite_receipt_pc34(
+            profile, receipt->character_selector,
+            receipt->selected_skill_number, receipt->increment_ui16,
+            &current)) {
+        return 0;
+    }
+    return current.basic_skill_number == receipt->basic_skill_number &&
+        current.selected_before == receipt->selected_before &&
+        current.selected_after == receipt->selected_after &&
+        current.basic_before == receipt->basic_before &&
+        current.basic_after == receipt->basic_after &&
+        current.basic_mastery_before == receipt->basic_mastery_before &&
+        current.basic_mastery_after == receipt->basic_mastery_after;
 }
 
 static int csb_v1_runtime_dsa_prepare_experience_plus(
@@ -5653,6 +5729,98 @@ static void csb_v1_runtime_apply_poison_attack_to_champion(
             champion_index,
             next_attack);
     }
+}
+
+/* CSBWin DSA.cpp STKOP_CausePoison delegates its two source words to
+ * CSBCode.cpp::PoisonCharacter.  This callback admits only the loaded party
+ * owner; the caller executes it against a profile candidate and publishes the
+ * party and C75 queue together after the complete DSA action succeeds. */
+static int csb_v1_runtime_dsa_prepare_cause_poison(
+    void *user, int32_t character_selector, int32_t poison_value)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_Champion *champion;
+
+    if (!profile || !profile->party_state_valid ||
+        profile->party_state.ChampionCount < 0 ||
+        profile->party_state.ChampionCount > CSB_V1_MAX_CHAMPIONS ||
+        poison_value <= 0 || poison_value > 0xffff) {
+        return -1;
+    }
+    if (character_selector < 0 ||
+        character_selector >= profile->party_state.ChampionCount) {
+        /* CSBWin's selected-character route has no target in this party. */
+        return 0;
+    }
+    champion = &profile->party_state.Champions[character_selector];
+    if (champion->CurrentHealth <= 0 ||
+        (champion->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) {
+        return 0;
+    }
+    if (poison_value > 1 && champion->PoisonEventCount == 255u) {
+        return -1;
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_commit_cause_poison(
+    void *user, int32_t character_selector, int32_t poison_value)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_Champion *champion;
+    uint8_t event_count_before;
+
+    if (csb_v1_runtime_dsa_prepare_cause_poison(
+            user, character_selector, poison_value) != 1) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[character_selector];
+    event_count_before = champion->PoisonEventCount;
+    csb_v1_runtime_apply_poison_attack_to_champion(
+        profile, character_selector, poison_value);
+
+    /* A live survivor with a positive continuation must own one concrete
+     * source C75.  A full queue cannot silently turn this into a partial
+     * damage-only publish because the enclosing profile candidate is dropped. */
+    if (champion->CurrentHealth > 0 && poison_value > 1 &&
+        champion->PoisonEventCount != (uint8_t)(event_count_before + 1u)) {
+        return 0;
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_find_cause_poison_event(
+    const CSB_V1_RuntimeProfile *profile, int champion_index,
+    uint16_t continuation_attack, uint16_t *out_event_index,
+    uint32_t *out_event_time)
+{
+    int ordinal;
+
+    if (!profile || !out_event_index || !out_event_time ||
+        champion_index < 0 || champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        continuation_attack == 0u ||
+        profile->timeline_queue.eventCount < 0 ||
+        profile->timeline_queue.eventCount > DM1_EVENT_MAX_COUNT) {
+        return 0;
+    }
+    for (ordinal = 0; ordinal < profile->timeline_queue.eventCount; ++ordinal) {
+        int event_index = profile->timeline_queue.timeline[ordinal];
+        const struct DM1_Event_V1 *event;
+
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+        event = &profile->timeline_queue.events[event_index];
+        if (event->type == DM1_EVENT_POISON_CHAMPION &&
+            event->priority == (uint8_t)champion_index &&
+            profile->csbwin_poison_event_attack_valid[event_index] &&
+            profile->csbwin_poison_event_attack[event_index] ==
+                continuation_attack) {
+            *out_event_index = (uint16_t)event_index;
+            *out_event_time = event->map_time;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void csb_v1_runtime_apply_poison_event_record(
@@ -6083,6 +6251,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                         &target_level)) {
                     break;
                 }
+                csb_v1_runtime_process_object_floor_sensors_at(
+                    profile, dungeon, *inout_thing, old_level, old_x, old_y,
+                    0);
                 if (!csb_v1_runtime_unlink_thing_from_square(
                         dungeon,
                         *inout_thing,
@@ -6135,6 +6306,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                                          (uint16_t)(cell << 14));
                 *inout_map_x += step_east[direction];
                 *inout_map_y += step_north[direction];
+                csb_v1_runtime_process_object_floor_sensors_at(
+                    profile, dungeon, *inout_thing, old_level, old_x, old_y,
+                    0);
                 if (!csb_v1_runtime_unlink_thing_from_square(
                         dungeon,
                         *inout_thing,
@@ -6201,6 +6375,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
         self_target = teleporter.target_map_index == *inout_map_index &&
                       teleporter.target_map_x == *inout_map_x &&
                       teleporter.target_map_y == *inout_map_y;
+        csb_v1_runtime_process_object_floor_sensors_at(
+            profile, dungeon, *inout_thing, *inout_map_index, *inout_map_x,
+            *inout_map_y, 0);
         if (!csb_v1_runtime_unlink_thing_from_square(
                 dungeon,
                 *inout_thing,
@@ -8547,6 +8724,7 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
     int target_x,
     int target_y,
     int target_cell,
+    int delay,
     CSB_V1_InputCommandRuntimeResult *result)
 {
     const CSB_V1_DungeonData *dungeon;
@@ -8554,6 +8732,7 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
     int raw_square;
     int square_type;
     int event_type;
+    uint32_t old_time;
 
     if (!profile || !result) return;
     dungeon = (profile->dungeon_handle)
@@ -8573,7 +8752,12 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return;
+    /* ReDMCSB MOVESENS.C F0272 passes Remote.TargetCell to F0268 only for
+     * wall targets. Every other target square is addressed at northwest. */
+    if (square_type != DM1_SQUARE_WALL) target_cell = 0;
 
+    old_time = profile->game_time;
+    if (delay > 0) profile->game_time += (uint32_t)delay;
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(
         level,
@@ -8587,6 +8771,7 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
         result->sensor_event_count++;
         result->sensor_last_event_type = event_type;
     }
+    profile->game_time = old_time;
 }
 
 static int csb_v1_runtime_queue_remote_square_event(
@@ -8671,6 +8856,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     int object_type;
     int placed_thing_type;
     int guard;
+    int pending_local_effect = DM1_EFFECT_NONE;
 
     if (!profile || !dungeon || !dungeon->raw_data ||
         dungeon->square_bytes != 1) {
@@ -8727,6 +8913,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
         int scan;
         int scan_guard;
         int sensor_effect;
+        int trigger;
         int target_cell;
         int target_x;
         int target_y;
@@ -8783,25 +8970,75 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             continue;
         }
 
+        /* MOVESENS.C F0276 evaluates the same C004 record on both sides of
+         * F0267's link mutation. Revert flips that add/remove observation;
+         * only HOLD has a result on either side. */
+        trigger = add_thing ? 1 : 0;
         sensor_effect = (int)((flags_word >> 3) & 0x03u);
         if ((flags_word >> 5) & 0x01u) {
-            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-            continue;
+            trigger ^= 1;
         }
         if (sensor_effect == DM1_EFFECT_HOLD) {
-            sensor_effect = DM1_EFFECT_SET;
+            sensor_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+        } else if (!trigger) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
         }
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
-        csb_v1_runtime_trigger_remote_sensor_event(
-            profile,
-            level,
-            sensor_effect,
-            target_x,
-            target_y,
-            target_cell);
+        if ((flags_word >> 6) & 0x01u) {
+            CsbV1AudioRequest request;
+
+            memset(&request, 0, sizeof(request));
+            request.soundIndex = CSB_V1_SOUND_SWITCH;
+            request.mapX = (int16_t)map_x;
+            request.mapY = (int16_t)map_y;
+            request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+            request.volume = 64;
+            request.priority = 4u;
+            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
+                                                &request);
+        }
+        if ((flags_word >> 2) & 0x01u) {
+            uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
+                dungeon, (uint16_t)thing, NULL, NULL);
+            if (mutable_sensor) {
+                csb_v1_runtime_write_u16(
+                    mutable_sensor + 2, (uint16_t)(type_data & 0xFF80u));
+            }
+        }
+        if ((flags_word >> 11) & 0x01u) {
+            int local_effect = (int)(target_word & 0x0FFFu);
+
+            if (local_effect == 10) {
+                csb_v1_runtime_add_party_steal_skill_experience(profile, 0);
+            } else {
+                pending_local_effect = local_effect;
+            }
+        } else {
+            /* MOVESENS.C F0276 keeps C004 timing in the sensor record: the
+             * packed delay schedules F0268 rather than applying a generic
+             * immediate remote effect. */
+            csb_v1_runtime_trigger_remote_sensor_event_after(
+                profile,
+                level,
+                sensor_effect,
+                target_x,
+                target_y,
+                target_cell,
+                (int)((flags_word >> 7) & 0x0Fu));
+        }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+    if (pending_local_effect == DM1_EFFECT_CLEAR ||
+        pending_local_effect == DM1_EFFECT_TOGGLE) {
+        (void)csb_v1_runtime_rotate_wall_cell_sensors(
+            dungeon,
+            level,
+            map_x,
+            map_y,
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(placed_thing));
     }
 }
 
@@ -9157,8 +9394,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_size);
         if (!record || thing_size < 2) return 0;
         if (thing_type == 3 &&
-            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
-                (cell & 3)) {
+            (cell < 0 || csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                             thing) == (cell & 3))) {
             first_sensor_thing = thing;
             first_sensor_record = record;
             break;
@@ -9180,8 +9417,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_size);
         if (!record || thing_size < 2) return 0;
         if (thing_type == 3 &&
-            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
-                (cell & 3)) {
+            (cell < 0 || csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                             thing) == (cell & 3))) {
             last_sensor_record = record;
             break;
         }
@@ -9200,8 +9437,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_type,
             &thing_size);
         if (!record || thing_size < 2 || thing_type != 3) break;
-        if (csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
-            (cell & 3)) {
+        if (cell < 0 || csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                            thing) == (cell & 3)) {
             last_sensor_record = record;
         }
         thing = csb_v1_runtime_read_u16(record);
@@ -11886,12 +12123,47 @@ static int csb_v1_runtime_party_has_possession_object_type(
             }
         }
     }
-    /* ReDMCSB MOVESENS.C F0274 lines 1271-1306 also checks the
-     * leader-hand object once after champion slots.  CSB runtime's
-     * current owned profile stores imported equipment slots but M11 owns
-     * the transient cursor/leader-hand object, so that cursor fallback
-     * remains part of the later full M11/CSB inventory handoff. */
+    /* ReDMCSB MOVESENS.C F0274 lines 1271-1306 checks G4055's leader-hand
+     * object once after the loaded CHARDESC slots.  The runtime owns that
+     * GAMEBLOCK2/party mirror as LeaderHandThing; a held C144 follows only
+     * its source CONTAINER.Slot chain, never an M11 inventory projection. */
+    {
+        uint16_t leader_hand = csb_v1_runtime_export_leader_hand_thing(profile);
+
+        if (leader_hand != THING_NONE && leader_hand != THING_ENDOFLIST) {
+            if (csb_v1_runtime_scan_thing_chain_for_object_type(
+                    dungeon, leader_hand, object_type)) {
+                return 1;
+            }
+            if (THING_GET_TYPE(leader_hand) == THING_TYPE_CONTAINER) {
+                uint16_t slots[8];
+                int count = csb_v1_runtime_read_container_slots(
+                    profile, leader_hand, slots);
+                int slot_index;
+
+                for (slot_index = 0; slot_index < count; ++slot_index) {
+                    if (csb_v1_runtime_scan_thing_chain_for_object_type(
+                            dungeon, slots[slot_index], object_type)) {
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
     return 0;
+}
+
+static int csb_v1_runtime_f0276_pc34_version_checker_passes(
+    int sensor_data)
+{
+    /* ReDMCSB MOVESENS.C F0276 C009 performs this PC34-only comparison
+     * directly against its compiled engine value.  It is not a caller- or
+     * save-provided version field: retaining it here prevents a restored
+     * profile from selecting a substitute engine mode. */
+    enum { CSB_V1_F0276_PC34_VERSION_CHECKER_MAX = 34 };
+
+    return sensor_data >= 0 &&
+        sensor_data <= CSB_V1_F0276_PC34_VERSION_CHECKER_MAX;
 }
 
 static void csb_v1_runtime_process_party_floor_sensors_at_level(
@@ -11907,6 +12179,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
     int thing;
     int guard;
     int party_square = 0;
+    int pending_local_effect = DM1_EFFECT_NONE;
 
     if (!profile || !result) return;
     dungeon = (profile->dungeon_handle)
@@ -11946,6 +12219,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         int target_x;
         int target_y;
         int target_cell;
+        int delay;
 
         record = csb_v1_dungeon_get_thing_record(
             dungeon,
@@ -12038,8 +12312,9 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
                     dungeon,
                     sensor_data);
             break;
-        case 9: /* C009_SENSOR_FLOOR_VERSION_CHECKER, PC34 engine <= 34 */
-            trigger = add_party && (sensor_data <= 34);
+        case 9: /* C009_SENSOR_FLOOR_VERSION_CHECKER */
+            trigger = add_party &&
+                csb_v1_runtime_f0276_pc34_version_checker_passes(sensor_data);
             break;
         default:
             trigger = 0;
@@ -12060,8 +12335,28 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         target_cell = (int)((target_word >> 4) & 0x03u);
         target_x = (int)((target_word >> 6) & 0x1Fu);
         target_y = (int)((target_word >> 11) & 0x1Fu);
+        delay = (int)((flags_word >> 7) & 0x0Fu);
         if ((flags_word >> 6) & 0x01u) {
+            CsbV1AudioRequest request;
+
+            memset(&request, 0, sizeof(request));
+            request.soundIndex = CSB_V1_SOUND_SWITCH;
+            request.mapX = (int16_t)map_x;
+            request.mapY = (int16_t)map_y;
+            request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+            request.volume = 64;
+            request.priority = 4u;
+            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
+                                                &request);
             result->sensor_audible_count++;
+        }
+        if ((flags_word >> 2) & 0x01u) {
+            uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
+                (CSB_V1_DungeonData *)dungeon, (uint16_t)thing, NULL, NULL);
+            if (mutable_sensor) {
+                csb_v1_runtime_write_u16(
+                    mutable_sensor + 2, (uint16_t)(type_data & 0xFF80u));
+            }
         }
         result->sensor_trigger_count++;
         result->sensor_last_type = sensor_type;
@@ -12070,16 +12365,32 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
         result->sensor_last_target_x = target_x;
         result->sensor_last_target_y = target_y;
         result->sensor_last_target_cell = target_cell;
-        csb_v1_runtime_trigger_floor_sensor_event(
-            profile,
-            level,
-            sensor_effect,
-            target_x,
-            target_y,
-            target_cell,
-            result);
+        if ((flags_word >> 11) & 0x01u) {
+            int local_effect = (int)(target_word & 0x0FFFu);
+
+            if (local_effect == 10) {
+                csb_v1_runtime_add_party_steal_skill_experience(profile, 0);
+            } else {
+                pending_local_effect = local_effect;
+            }
+        } else {
+            csb_v1_runtime_trigger_floor_sensor_event(
+                profile,
+                level,
+                sensor_effect,
+                target_x,
+                target_y,
+                target_cell,
+                delay,
+                result);
+        }
 
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+    if (pending_local_effect == DM1_EFFECT_CLEAR ||
+        pending_local_effect == DM1_EFFECT_TOGGLE) {
+        (void)csb_v1_runtime_rotate_wall_cell_sensors(
+            (CSB_V1_DungeonData *)dungeon, level, map_x, map_y, -1);
     }
 }
 
@@ -12214,6 +12525,9 @@ static void csb_v1_runtime_trigger_remote_sensor_event(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return;
+    /* F0272 preserves Remote.TargetCell only for wall targets before F0268.
+     * Fakewalls, doors, pits, and teleporters are always north-west. */
+    if (square_type != DM1_SQUARE_WALL) target_cell = 0;
 
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(level, profile->game_time);
@@ -14021,7 +14335,9 @@ int csb_v1_runtime_custom_background_skin_grid(
     int x;
     int y;
     int has_skin = 0;
+    int tail_receipt_valid;
     uint8_t default_skin;
+    uint32_t tail_fnv1a = 0u;
     CSB_V1_RuntimeSkinCacheLookupCtx lookup_ctx;
 
     if (out_width) *out_width = 0;
@@ -14043,6 +14359,35 @@ int csb_v1_runtime_custom_background_skin_grid(
     if (width <= 0 || height <= 0 ||
         width * height > out_cell_skin_capacity) {
         return 0;
+    }
+
+    /* A saved EDT_Skins column owns the cached bytes. Reuse it only while
+     * the exact admitted tail still matches; a missing, truncated, or
+     * altered tail must not leave a prior resume's custom background live. */
+    tail_receipt_valid = profile->csbwin_appended_tail_valid &&
+        !profile->csbwin_appended_tail_truncated &&
+        profile->csbwin_appended_tail_preserved_size > 0u &&
+        profile->csbwin_appended_tail_preserved_size <=
+            sizeof(profile->csbwin_appended_tail);
+    if (tail_receipt_valid) {
+        tail_fnv1a = csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size);
+        tail_receipt_valid = tail_fnv1a == profile->csbwin_appended_tail_fnv1a;
+    }
+    if (!profile->csbwin_skin_cache_tail_receipt_valid ||
+        profile->csbwin_skin_cache_tail_valid != tail_receipt_valid ||
+        profile->csbwin_skin_cache_tail_size !=
+            (tail_receipt_valid ? profile->csbwin_appended_tail_preserved_size : 0u) ||
+        profile->csbwin_skin_cache_tail_fnv1a !=
+            (tail_receipt_valid ? tail_fnv1a : 0u)) {
+        csb_v1_skin_cache_init(&profile->skin_cache);
+        profile->csbwin_skin_cache_tail_receipt_valid = 1;
+        profile->csbwin_skin_cache_tail_valid = tail_receipt_valid;
+        profile->csbwin_skin_cache_tail_size =
+            tail_receipt_valid ? profile->csbwin_appended_tail_preserved_size : 0u;
+        profile->csbwin_skin_cache_tail_fnv1a =
+            tail_receipt_valid ? tail_fnv1a : 0u;
     }
 
     memset(out_cell_skins, 0, (size_t)width * (size_t)height);
@@ -17378,7 +17723,7 @@ static int csb_v1_runtime_dsa_set_excell_flags(void *user,
                                                 uint32_t flags)
 {
     return csb_v1_runtime_set_csbwin_extended_cell_flags(
-        (CSB_V1_RuntimeProfile *)user, location, flags);
+        (CSB_V1_RuntimeProfile *)user, location, flags) == 1;
 }
 
 static int csb_v1_runtime_dsa_get_generator_delay(void *user,
@@ -19402,6 +19747,216 @@ static void csb_v1_runtime_invalidate_saved_timer_dsa_execution(
     profile->csbwin_last_saved_timer_dsa_action_ordinal = -1;
 }
 
+static int csb_v1_runtime_dsa_execution_receipt_current(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    const CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 *receipt;
+    uint32_t expected_tail_fnv1a;
+
+    if (!profile) return 0;
+    receipt = &profile->csbwin_last_dsa_execution_receipt;
+    if (!receipt->valid) return 0;
+    if (receipt->party_talents_changed) {
+        int i;
+        if (!profile->party_state_valid ||
+            receipt->party_talents_champion_count < 0 ||
+            receipt->party_talents_champion_count > profile->party_state.ChampionCount ||
+            receipt->party_talents_champion_count > CSB_V1_MAX_CHAMPIONS) {
+            return 0;
+        }
+        for (i = 0; i < receipt->party_talents_champion_count; ++i) {
+            if (profile->party_state.Champions[i].Fingerprint !=
+                    receipt->party_talents_fingerprints[i] ||
+                profile->party_state.Champions[i].Talents !=
+                    receipt->party_talents_after[i]) return 0;
+        }
+    }
+    if (receipt->cause_poison_count != 0u) {
+        const CSB_V1_Champion *champion;
+        uint16_t event_index = receipt->last_cause_poison_timer_event_index;
+
+        if (receipt->cause_poison_count != 1u ||
+            !profile->party_state_valid ||
+            receipt->last_cause_poison_character_selector < 0 ||
+            receipt->last_cause_poison_character_selector >=
+                profile->party_state.ChampionCount ||
+            receipt->last_cause_poison_character_selector >=
+                CSB_V1_MAX_CHAMPIONS ||
+            receipt->last_cause_poison_attack <= 0 ||
+            receipt->last_cause_poison_attack > 0xffff) {
+            return 0;
+        }
+        champion = &profile->party_state.Champions[
+            receipt->last_cause_poison_character_selector];
+        if (champion->CurrentHealth != receipt->last_cause_poison_health_after ||
+            champion->PoisonDose != receipt->last_cause_poison_dose_after ||
+            champion->PoisonEventCount !=
+                receipt->last_cause_poison_event_count_after) {
+            return 0;
+        }
+        if (event_index == DM1_EVENT_MAX_COUNT) {
+            if (receipt->last_cause_poison_timer_attack != 0u ||
+                receipt->last_cause_poison_timer_time != 0u) return 0;
+        } else {
+            const struct DM1_Event_V1 *event;
+
+            if (event_index >= DM1_EVENT_MAX_COUNT ||
+                !profile->csbwin_poison_event_attack_valid[event_index] ||
+                profile->csbwin_poison_event_attack[event_index] !=
+                    receipt->last_cause_poison_timer_attack) {
+                return 0;
+            }
+            event = &profile->timeline_queue.events[event_index];
+            if (event->type != DM1_EVENT_POISON_CHAMPION ||
+                event->priority != (uint8_t)
+                    receipt->last_cause_poison_character_selector ||
+                event->map_time != receipt->last_cause_poison_timer_time) {
+                return 0;
+            }
+        }
+    }
+    if (receipt->text_message_changed &&
+        memcmp(&profile->csbwin_text_message_receipt,
+               &receipt->text_message_after,
+               sizeof(receipt->text_message_after)) != 0) {
+        return 0;
+    }
+    if (receipt->saves_disabled_changed &&
+        (profile->csbwin_saves_disabled ? 1 : 0) !=
+            receipt->saves_disabled_after) {
+        return 0;
+    }
+    if (receipt->random_state_changed &&
+        (!profile->csbwin_gameblock2_summary_valid ||
+         profile->csbwin_random_seed != receipt->random_state_after)) {
+        return 0;
+    }
+    if (receipt->object_property_store_count != 0u) {
+        uint32_t value = 0u;
+
+        if (receipt->last_object_property_kind >
+                CSB_V1_CSBWIN_DSA_OBJECT_PROPERTY_SUBTYPE ||
+            csb_v1_runtime_dsa_get_object_property(
+                (void *)profile, receipt->last_object_property_thing,
+                (CSB_V1_CSBWinDSAObjectProperty)
+                    receipt->last_object_property_kind,
+                &value) != 1 || value != receipt->last_object_property_after) {
+            return 0;
+        }
+    }
+    if (receipt->teleporter_copy_count != 0u) {
+        uint32_t source_values[5];
+        uint32_t destination_values[5];
+
+        if (!csb_v1_runtime_dsa_get_cell_info(
+                (void *)profile,
+                receipt->last_teleporter_copy_source_location,
+                source_values) ||
+            !csb_v1_runtime_dsa_get_cell_info(
+                (void *)profile,
+                receipt->last_teleporter_copy_destination_location,
+                destination_values) ||
+            memcmp(source_values, receipt->last_teleporter_copy_source_before,
+                   sizeof(source_values)) != 0 ||
+            memcmp(destination_values,
+                   receipt->last_teleporter_copy_destination_after,
+                   sizeof(destination_values)) != 0) {
+            return 0;
+        }
+    }
+    if (receipt->cell_store_count != 0u) {
+        uint32_t cell_values[5];
+
+        if (receipt->last_cell_store_write_mask == 0u ||
+            !csb_v1_runtime_dsa_get_cell_info(
+                (void *)profile, receipt->last_cell_store_location,
+                cell_values) ||
+            memcmp(cell_values, receipt->last_cell_store_after,
+                   sizeof(cell_values)) != 0) {
+            return 0;
+        }
+    }
+    if (receipt->false_pit_count != 0u) {
+        if (receipt->false_pit_count != 1u || receipt->cell_store_count != 1u ||
+            receipt->last_false_pit_location !=
+                receipt->last_cell_store_location ||
+            receipt->last_false_pit_before[0] != 3u ||
+            receipt->last_false_pit_after[0] != 3u ||
+            receipt->last_cell_store_write_mask != (1u << 1) ||
+            memcmp(receipt->last_false_pit_before,
+                   receipt->last_cell_store_before,
+                   sizeof(receipt->last_false_pit_before)) != 0 ||
+            memcmp(receipt->last_false_pit_after,
+                   receipt->last_cell_store_after,
+                   sizeof(receipt->last_false_pit_after)) != 0 ||
+            ((receipt->last_false_pit_before[1] & ~1u) !=
+                 (receipt->last_false_pit_after[1] & ~1u)) ||
+            (receipt->last_false_pit_after[1] & 1u) > 1u ||
+            memcmp(receipt->last_false_pit_before + 2u,
+                   receipt->last_false_pit_after + 2u,
+                   3u * sizeof(uint32_t)) != 0) {
+            return 0;
+        }
+    }
+    if (receipt->monster_store_count != 0u) {
+        uint32_t monster_values[8];
+
+        if (receipt->last_monster_store_write_mask == 0u ||
+            !csb_v1_runtime_dsa_get_monster_info(
+                (void *)profile, receipt->last_monster_store_thing,
+                monster_values) ||
+            memcmp(monster_values, receipt->last_monster_store_after,
+                   sizeof(monster_values)) != 0) {
+            return 0;
+        }
+    }
+    if (receipt->experience_plus_count != 0u) {
+        int selector = receipt->last_experience_character_selector;
+        int skill = receipt->last_experience_skill_number;
+        int basic_skill = receipt->last_experience_basic_skill_number;
+
+        if (!profile->party_state_valid || selector < 0 ||
+            selector >= profile->party_state.ChampionCount ||
+            selector >= CSB_V1_MAX_CHAMPIONS || skill < 0 ||
+            skill >= CSB_V1_FULL_SKILL_COUNT || basic_skill < 0 ||
+            basic_skill >= CSB_V1_FULL_SKILL_COUNT ||
+            profile->party_state.Champions[selector].SkillExperience[skill] !=
+                receipt->last_experience_selected_after ||
+            profile->party_state.Champions[selector]
+                .SkillExperience[basic_skill] !=
+                receipt->last_experience_basic_after) {
+            return 0;
+        }
+    }
+
+    /* StoreExCellFlg writes the serialized EXPOOL tail.  Unlike the pure
+     * stack actions, its receipt remains source-owned only while the exact
+     * post-write tail is still present and matches its declared FNV. */
+    if (receipt->excell_store_count == 0u &&
+        receipt->wing_talents_store_count == 0u) {
+        return 1;
+    }
+    expected_tail_fnv1a = receipt->excell_store_count != 0u ?
+        receipt->excell_tail_fnv1a_after :
+        receipt->wing_talents_tail_fnv1a_after;
+    if (receipt->excell_store_count != 0u &&
+        receipt->wing_talents_store_count != 0u &&
+        receipt->excell_tail_fnv1a_after !=
+            receipt->wing_talents_tail_fnv1a_after) {
+        return 0;
+    }
+    return profile->csbwin_appended_tail_valid &&
+        !profile->csbwin_appended_tail_truncated &&
+        profile->csbwin_appended_tail_preserved_size > 0u &&
+        profile->csbwin_appended_tail_preserved_size <=
+            sizeof(profile->csbwin_appended_tail) &&
+        profile->csbwin_appended_tail_fnv1a ==
+            expected_tail_fnv1a &&
+        profile->csbwin_appended_tail_fnv1a == csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size);
+}
+
 int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -19525,6 +20080,10 @@ static void csb_v1_runtime_record_saved_timer_dsa_execution(
     int action_ordinal;
 
     if (!profile || !action) return;
+    if (!csb_v1_runtime_dsa_execution_receipt_current(profile)) {
+        csb_v1_runtime_invalidate_saved_timer_dsa_execution(profile);
+        return;
+    }
     for (action_ordinal = 0;
          action_ordinal < profile->csbwin_extended_dsa_state.imported_action_count;
          ++action_ordinal) {
@@ -19780,6 +20339,10 @@ int csb_v1_runtime_csbwin_dsa_runtime_chain_receipt_pc34(
         !csb_v1_runtime_csbwin_timer_pool_counts_valid(profile)) {
         return 0;
     }
+    if (profile->csbwin_last_saved_timer_dsa_valid &&
+        !csb_v1_runtime_dsa_execution_receipt_current(profile)) {
+        return 0;
+    }
     state = &profile->csbwin_extended_dsa_state;
     if (!state->imported_actions || state->imported_action_count <= 0) {
         return 0;
@@ -19905,7 +20468,7 @@ int csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 *out_receipt)
 {
     if (!profile || !out_receipt ||
-        !profile->csbwin_last_dsa_execution_receipt.valid) {
+        !csb_v1_runtime_dsa_execution_receipt_current(profile)) {
         return 0;
     }
     *out_receipt = profile->csbwin_last_dsa_execution_receipt;
@@ -21549,6 +22112,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.prepare_experience_plus =
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
+    candidate.prepare_cause_poison = csb_v1_runtime_dsa_prepare_cause_poison;
+    candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -21584,12 +22149,20 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int global_count;
     int globals_changed;
     int saves_disabled_changed;
+    int saves_disabled_before;
+    int saves_disabled_after;
     int expool_changed;
     int dsa_state_changed;
     int party_talents_changed;
+    uint32_t party_talents_before[4] = { 0u, 0u, 0u, 0u };
+    uint32_t party_talents_after[4] = { 0u, 0u, 0u, 0u };
     int party_skill_experience_changed;
     int random_state_changed;
+    uint32_t random_state_before;
+    uint32_t random_state_after;
     int text_message_changed;
+    CSB_V1_RuntimeTextMessageReceipt text_message_before;
+    CSB_V1_RuntimeTextMessageReceipt text_message_after;
     int dungeon_changed = 0;
     int saved_dsa_state_transition_valid = 0;
     uint8_t saved_dsa_state_storage_kind = 0u;
@@ -21606,6 +22179,39 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     uint8_t missile_info_timer_position_before = 0u;
     uint8_t missile_info_timer_position_after = 0u;
     uint32_t missile_info_timer_time = 0u;
+    uint32_t excell_tail_fnv1a_before = 0u;
+    uint32_t wing_talents_tail_fnv1a_before = 0u;
+    int experience_receipt_valid = 0;
+    int experience_selector = -1;
+    int experience_skill = -1;
+    int experience_basic_skill = -1;
+    uint32_t experience_selected_before = 0u;
+    uint32_t experience_selected_after = 0u;
+    uint32_t experience_basic_before = 0u;
+    uint32_t experience_basic_after = 0u;
+    int monster_store_receipt_valid = 0;
+    uint32_t monster_store_before[8];
+    uint32_t monster_store_after[8];
+    int cell_store_receipt_valid = 0;
+    int false_pit_receipt_valid = 0;
+    int cause_poison_receipt_valid = 0;
+    int cause_poison_selector = -1;
+    int cause_poison_attack = 0;
+    int16_t cause_poison_health_before = 0;
+    int16_t cause_poison_health_after = 0;
+    uint16_t cause_poison_dose_before = 0u;
+    uint16_t cause_poison_dose_after = 0u;
+    uint8_t cause_poison_event_count_before = 0u;
+    uint8_t cause_poison_event_count_after = 0u;
+    uint16_t cause_poison_timer_event_index = DM1_EVENT_MAX_COUNT;
+    uint16_t cause_poison_timer_attack = 0u;
+    uint32_t cause_poison_timer_time = 0u;
+    uint32_t cell_store_before[5];
+    uint32_t cell_store_after[5];
+    int teleporter_copy_receipt_valid = 0;
+    uint32_t teleporter_copy_source_before[5];
+    uint32_t teleporter_copy_destination_before[5];
+    uint32_t teleporter_copy_destination_after[5];
     int i;
 
     if (!profile || !runner || !action ||
@@ -21619,6 +22225,11 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         &profile->csbwin_extended_dsa_state, runner->dsa_id,
         runner->state_index, runner->action_ordinal);
     if (expected != action) return 0;
+    excell_tail_fnv1a_before = profile->csbwin_appended_tail_fnv1a;
+    wing_talents_tail_fnv1a_before = profile->csbwin_appended_tail_fnv1a;
+    random_state_before = profile->csbwin_random_seed;
+    saves_disabled_before = profile->csbwin_saves_disabled ? 1 : 0;
+    text_message_before = profile->csbwin_text_message_receipt;
     memset(&profile->csbwin_last_dsa_execution_receipt, 0,
            sizeof(profile->csbwin_last_dsa_execution_receipt));
     if (csb_v1_csbwin_dsa_verify_authenticated_core_program(
@@ -21735,6 +22346,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.prepare_experience_plus =
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
+    candidate.prepare_cause_poison = csb_v1_runtime_dsa_prepare_cause_poison;
+    candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;
@@ -21748,6 +22361,59 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             &candidate)) {
         free(dungeon_raw_candidate);
         return 0;
+    }
+
+    if (candidate.last_execution.cause_poison_count != 0u) {
+        const CSB_V1_Champion *before;
+        const CSB_V1_Champion *after;
+
+        /* The public receipt is deliberately one exact PoisonCharacter
+         * transaction.  A multi-target action needs an ordered source receipt
+         * for every affected CHARDESC/TIMER pair and remains closed here. */
+        if (candidate.last_execution.cause_poison_count != 1u) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        cause_poison_selector =
+            candidate.last_execution.last_cause_poison_character_selector;
+        cause_poison_attack = candidate.last_execution.last_cause_poison_attack;
+        if (cause_poison_selector < 0 ||
+            cause_poison_selector >= profile->party_state.ChampionCount ||
+            cause_poison_selector >= CSB_V1_MAX_CHAMPIONS ||
+            cause_poison_attack <= 0 || cause_poison_attack > 0xffff) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        before = &profile->party_state.Champions[cause_poison_selector];
+        after = &profile_candidate.party_state.Champions[cause_poison_selector];
+        if (before->CurrentHealth <= 0 ||
+            (before->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0 ||
+            after->CurrentHealth >= before->CurrentHealth) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        cause_poison_health_before = before->CurrentHealth;
+        cause_poison_health_after = after->CurrentHealth;
+        cause_poison_dose_before = before->PoisonDose;
+        cause_poison_dose_after = after->PoisonDose;
+        cause_poison_event_count_before = before->PoisonEventCount;
+        cause_poison_event_count_after = after->PoisonEventCount;
+        if (after->CurrentHealth > 0 && cause_poison_attack > 1) {
+            cause_poison_timer_attack = (uint16_t)(cause_poison_attack - 1);
+            if (after->PoisonEventCount !=
+                    (uint8_t)(before->PoisonEventCount + 1u) ||
+                !csb_v1_runtime_find_cause_poison_event(
+                    &profile_candidate, cause_poison_selector,
+                    cause_poison_timer_attack, &cause_poison_timer_event_index,
+                    &cause_poison_timer_time)) {
+                free(dungeon_raw_candidate);
+                return 0;
+            }
+        } else if (after->PoisonEventCount != before->PoisonEventCount) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        cause_poison_receipt_valid = 1;
     }
 
     /* CSBWin SaveGame.cpp writes changed GLOBALSTORE state through EXPOOL.
@@ -21768,19 +22434,24 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     }
     saves_disabled_changed = candidate.saves_disabled !=
         (profile->csbwin_saves_disabled ? 1 : 0);
+    saves_disabled_after = candidate.saves_disabled ? 1 : 0;
     if (saves_disabled_changed) {
         profile_candidate.csbwin_saves_disabled = candidate.saves_disabled;
     }
     random_state_changed = candidate.random_state_valid &&
         candidate.random_state != profile->csbwin_random_seed;
+    random_state_after = candidate.random_state;
     if (random_state_changed) {
         profile_candidate.csbwin_random_seed = candidate.random_state;
     }
     text_message_changed = memcmp(&profile_candidate.csbwin_text_message_receipt,
                                   &profile->csbwin_text_message_receipt,
                                   sizeof(profile->csbwin_text_message_receipt)) != 0;
+    text_message_after = profile_candidate.csbwin_text_message_receipt;
     party_talents_changed = 0;
     for (i = 0; i < candidate.party_champion_count; ++i) {
+        party_talents_before[i] = profile->party_state.Champions[i].Talents;
+        party_talents_after[i] = candidate.party_champion_talents[i];
         if (candidate.party_champion_talents[i] !=
             profile->party_state.Champions[i].Talents) {
             profile_candidate.party_state.Champions[i].Talents =
@@ -21895,6 +22566,182 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         memcmp(profile_candidate.csbwin_appended_tail,
                profile->csbwin_appended_tail,
                sizeof(profile->csbwin_appended_tail)) != 0;
+    if (candidate.last_execution.wing_talents_store_count != 0u) {
+        uint32_t before_talents = 0u;
+        uint32_t after_talents = 0u;
+
+        /* CHARDESC::SaveToWings rewrites the complete eight-record wing
+         * bundle. Prove the selected fingerprint and talent word on both
+         * sides before the candidate tail becomes live. */
+        if (!expool_changed ||
+            csb_v1_runtime_read_csbwin_wing_talents(
+                profile,
+                candidate.last_execution.last_wing_talents_fingerprint,
+                &before_talents) != 1 ||
+            before_talents != candidate.last_execution.last_wing_talents_before ||
+            csb_v1_runtime_read_csbwin_wing_talents(
+                &profile_candidate,
+                candidate.last_execution.last_wing_talents_fingerprint,
+                &after_talents) != 1 ||
+            after_talents != candidate.last_execution.last_wing_talents_after) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+    }
+    if (candidate.last_execution.experience_plus_count != 0u) {
+        int selector = candidate.last_execution.last_experience_character_selector;
+        int skill = candidate.last_execution.last_experience_skill_number;
+        int basic_skill;
+        uint32_t selected_after;
+        uint32_t basic_after;
+
+        /* Magic.cpp::AddToSkill writes one selected SKILL and, for a
+         * subskill, its source basic SKILL. Re-derive that exact candidate
+         * pair from the live CHARDESC image before publication. */
+        if (csb_v1_runtime_csbwin_prepare_add_to_skill(
+                profile, selector, skill,
+                candidate.last_execution.last_experience_amount,
+                &selected_after, &basic_after, &basic_skill) != 1 ||
+            selector < 0 || selector >= profile->party_state.ChampionCount ||
+            skill < 0 || skill >= CSB_V1_FULL_SKILL_COUNT || basic_skill < 0 ||
+            basic_skill >= CSB_V1_FULL_SKILL_COUNT ||
+            profile_candidate.party_state.Champions[selector]
+                .SkillExperience[skill] != selected_after ||
+            profile_candidate.party_state.Champions[selector]
+                .SkillExperience[basic_skill] != basic_after) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        experience_receipt_valid = 1;
+        experience_selector = selector;
+        experience_skill = skill;
+        experience_basic_skill = basic_skill;
+        experience_selected_before =
+            profile->party_state.Champions[selector].SkillExperience[skill];
+        experience_selected_after = selected_after;
+        experience_basic_before = profile->party_state.Champions[selector]
+            .SkillExperience[basic_skill];
+        experience_basic_after = basic_after;
+    }
+    if (candidate.last_execution.monster_store_count != 0u) {
+        uint32_t before_values[8];
+        uint32_t after_values[8];
+
+        /* DSA.cpp MonsterStore has one DB4 owner.  Compare the complete
+         * source image on both sides, not merely the selected write bits,
+         * before the cloned dungeon can become live. */
+        if (candidate.last_execution.last_monster_store_write_mask == 0u ||
+            !csb_v1_runtime_dsa_get_monster_info(
+                profile, candidate.last_execution.last_monster_store_thing,
+                before_values) ||
+            !csb_v1_runtime_dsa_get_monster_info(
+                &profile_candidate,
+                candidate.last_execution.last_monster_store_thing,
+                after_values) ||
+            memcmp(before_values,
+                   candidate.last_execution.last_monster_store_before,
+                   sizeof(before_values)) != 0 ||
+            memcmp(after_values,
+                   candidate.last_execution.last_monster_store_after,
+                   sizeof(after_values)) != 0) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        memcpy(monster_store_before, before_values,
+               sizeof(monster_store_before));
+        memcpy(monster_store_after, after_values,
+               sizeof(monster_store_after));
+        monster_store_receipt_valid = 1;
+    }
+    if (candidate.last_execution.cell_store_count != 0u) {
+        uint32_t before_values[5];
+        uint32_t after_values[5];
+
+        /* CellStore owns only one existing CELLFLAG plus the first source
+         * DB0/DB1 record. Re-read that full Cell@ image across the clone
+         * boundary before any raw Dungeon bytes are made live. */
+        if (candidate.last_execution.last_cell_store_write_mask == 0u ||
+            !csb_v1_runtime_dsa_get_cell_info(
+                profile, candidate.last_execution.last_cell_store_location,
+                before_values) ||
+            !csb_v1_runtime_dsa_get_cell_info(
+                &profile_candidate,
+                candidate.last_execution.last_cell_store_location,
+                after_values) ||
+            memcmp(before_values,
+                   candidate.last_execution.last_cell_store_before,
+                   sizeof(before_values)) != 0 ||
+            memcmp(after_values,
+                   candidate.last_execution.last_cell_store_after,
+                   sizeof(after_values)) != 0) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        memcpy(cell_store_before, before_values, sizeof(cell_store_before));
+        memcpy(cell_store_after, after_values, sizeof(cell_store_after));
+        cell_store_receipt_valid = 1;
+    }
+    if (candidate.last_execution.false_pit_count != 0u) {
+        if (!cell_store_receipt_valid ||
+            candidate.last_execution.false_pit_count != 1u ||
+            candidate.last_execution.cell_store_count != 1u ||
+            candidate.last_execution.last_false_pit_location !=
+                candidate.last_execution.last_cell_store_location ||
+            candidate.last_execution.last_false_pit_before[0] != 3u ||
+            candidate.last_execution.last_false_pit_after[0] != 3u ||
+            candidate.last_execution.last_cell_store_write_mask != (1u << 1) ||
+            memcmp(candidate.last_execution.last_false_pit_before,
+                   cell_store_before,
+                   sizeof(cell_store_before)) != 0 ||
+            memcmp(candidate.last_execution.last_false_pit_after,
+                   cell_store_after,
+                   sizeof(cell_store_after)) != 0 ||
+            ((cell_store_before[1] & ~1u) !=
+                 (cell_store_after[1] & ~1u)) ||
+            memcmp(cell_store_before + 2u, cell_store_after + 2u,
+                   3u * sizeof(uint32_t)) != 0) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        false_pit_receipt_valid = 1;
+    }
+    if (candidate.last_execution.teleporter_copy_count != 0u) {
+        uint32_t source_before[5];
+        uint32_t destination_before[5];
+        uint32_t destination_after[5];
+
+        if (!csb_v1_runtime_dsa_get_cell_info(
+                profile,
+                candidate.last_execution.last_teleporter_copy_source_location,
+                source_before) ||
+            !csb_v1_runtime_dsa_get_cell_info(
+                profile,
+                candidate.last_execution.last_teleporter_copy_destination_location,
+                destination_before) ||
+            !csb_v1_runtime_dsa_get_cell_info(
+                &profile_candidate,
+                candidate.last_execution.last_teleporter_copy_destination_location,
+                destination_after) ||
+            memcmp(source_before,
+                   candidate.last_execution.last_teleporter_copy_source_before,
+                   sizeof(source_before)) != 0 ||
+            memcmp(destination_before,
+                   candidate.last_execution.last_teleporter_copy_destination_before,
+                   sizeof(destination_before)) != 0 ||
+            memcmp(destination_after,
+                   candidate.last_execution.last_teleporter_copy_destination_after,
+                   sizeof(destination_after)) != 0) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        memcpy(teleporter_copy_source_before, source_before,
+               sizeof(teleporter_copy_source_before));
+        memcpy(teleporter_copy_destination_before, destination_before,
+               sizeof(teleporter_copy_destination_before));
+        memcpy(teleporter_copy_destination_after, destination_after,
+               sizeof(teleporter_copy_destination_after));
+        teleporter_copy_receipt_valid = 1;
+    }
     if (candidate.last_execution.missile_info_store_count != 0u) {
         const uint8_t *before_missile;
         const uint8_t *after_missile;
@@ -21986,6 +22833,18 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
                    sizeof(profile->party_state.Champions[i].SkillExperience));
         }
     }
+    if (cause_poison_receipt_valid) {
+        profile->party_state = profile_candidate.party_state;
+        profile->leader_index = profile_candidate.leader_index;
+        profile->game_over = profile_candidate.game_over;
+        profile->timeline_queue = profile_candidate.timeline_queue;
+        memcpy(profile->csbwin_poison_event_attack,
+               profile_candidate.csbwin_poison_event_attack,
+               sizeof(profile->csbwin_poison_event_attack));
+        memcpy(profile->csbwin_poison_event_attack_valid,
+               profile_candidate.csbwin_poison_event_attack_valid,
+               sizeof(profile->csbwin_poison_event_attack_valid));
+    }
     if (expool_changed) {
         memcpy(profile->csbwin_appended_tail,
                profile_candidate.csbwin_appended_tail,
@@ -22070,12 +22929,118 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.last_execution.last_teleporter_copy_source_location;
     execution_receipt.last_teleporter_copy_destination_location =
         candidate.last_execution.last_teleporter_copy_destination_location;
+    if (execution_receipt.teleporter_copy_count != 0u) {
+        if (!teleporter_copy_receipt_valid) return 0;
+        memcpy(execution_receipt.last_teleporter_copy_source_before,
+               teleporter_copy_source_before,
+               sizeof(execution_receipt.last_teleporter_copy_source_before));
+        memcpy(execution_receipt.last_teleporter_copy_destination_before,
+               teleporter_copy_destination_before,
+               sizeof(execution_receipt.last_teleporter_copy_destination_before));
+        memcpy(execution_receipt.last_teleporter_copy_destination_after,
+               teleporter_copy_destination_after,
+               sizeof(execution_receipt.last_teleporter_copy_destination_after));
+    }
     execution_receipt.actuator_copy_count =
         candidate.last_execution.actuator_copy_count;
     execution_receipt.last_actuator_copy_source_thing =
         candidate.last_execution.last_actuator_copy_source_thing;
     execution_receipt.last_actuator_copy_destination_thing =
         candidate.last_execution.last_actuator_copy_destination_thing;
+    execution_receipt.skin_store_count =
+        candidate.last_execution.skin_store_count;
+    if (execution_receipt.skin_store_count != 0u) {
+        execution_receipt.last_skin_store_location =
+            candidate.last_execution.last_skin_store_location;
+        execution_receipt.last_skin_store_before =
+            candidate.last_execution.last_skin_store_before;
+        execution_receipt.last_skin_store_after =
+            candidate.last_execution.last_skin_store_after;
+    }
+    execution_receipt.wing_talents_store_count =
+        candidate.last_execution.wing_talents_store_count;
+    if (execution_receipt.wing_talents_store_count != 0u) {
+        execution_receipt.last_wing_talents_fingerprint =
+            candidate.last_execution.last_wing_talents_fingerprint;
+        execution_receipt.last_wing_talents_before =
+            candidate.last_execution.last_wing_talents_before;
+        execution_receipt.last_wing_talents_after =
+            candidate.last_execution.last_wing_talents_after;
+        execution_receipt.wing_talents_tail_fnv1a_before =
+            wing_talents_tail_fnv1a_before;
+        execution_receipt.wing_talents_tail_fnv1a_after =
+            profile_candidate.csbwin_appended_tail_fnv1a;
+    }
+    execution_receipt.experience_plus_count =
+        candidate.last_execution.experience_plus_count;
+    if (execution_receipt.experience_plus_count != 0u) {
+        if (!experience_receipt_valid) return 0;
+        execution_receipt.last_experience_character_selector =
+            experience_selector;
+        execution_receipt.last_experience_skill_number = experience_skill;
+        execution_receipt.last_experience_basic_skill_number =
+            experience_basic_skill;
+        execution_receipt.last_experience_amount =
+            candidate.last_execution.last_experience_amount;
+        execution_receipt.last_experience_selected_before =
+            experience_selected_before;
+        execution_receipt.last_experience_selected_after =
+            experience_selected_after;
+        execution_receipt.last_experience_basic_before = experience_basic_before;
+        execution_receipt.last_experience_basic_after = experience_basic_after;
+    }
+    execution_receipt.monster_store_count =
+        candidate.last_execution.monster_store_count;
+    if (execution_receipt.monster_store_count != 0u) {
+        if (!monster_store_receipt_valid) return 0;
+        execution_receipt.last_monster_store_thing =
+            candidate.last_execution.last_monster_store_thing;
+        execution_receipt.last_monster_store_write_mask =
+            candidate.last_execution.last_monster_store_write_mask;
+        memcpy(execution_receipt.last_monster_store_before,
+               monster_store_before,
+               sizeof(execution_receipt.last_monster_store_before));
+        memcpy(execution_receipt.last_monster_store_after,
+               monster_store_after,
+               sizeof(execution_receipt.last_monster_store_after));
+    }
+    execution_receipt.cell_store_count =
+        candidate.last_execution.cell_store_count;
+    if (execution_receipt.cell_store_count != 0u) {
+        if (!cell_store_receipt_valid) return 0;
+        execution_receipt.last_cell_store_location =
+            candidate.last_execution.last_cell_store_location;
+        execution_receipt.last_cell_store_write_mask =
+            candidate.last_execution.last_cell_store_write_mask;
+        memcpy(execution_receipt.last_cell_store_before, cell_store_before,
+               sizeof(execution_receipt.last_cell_store_before));
+        memcpy(execution_receipt.last_cell_store_after, cell_store_after,
+               sizeof(execution_receipt.last_cell_store_after));
+    }
+    execution_receipt.false_pit_count = candidate.last_execution.false_pit_count;
+    if (execution_receipt.false_pit_count != 0u) {
+        if (!false_pit_receipt_valid) return 0;
+        execution_receipt.last_false_pit_location =
+            candidate.last_execution.last_false_pit_location;
+        memcpy(execution_receipt.last_false_pit_before,
+               candidate.last_execution.last_false_pit_before,
+               sizeof(execution_receipt.last_false_pit_before));
+        memcpy(execution_receipt.last_false_pit_after,
+               candidate.last_execution.last_false_pit_after,
+               sizeof(execution_receipt.last_false_pit_after));
+    }
+    execution_receipt.object_property_store_count =
+        candidate.last_execution.object_property_store_count;
+    if (execution_receipt.object_property_store_count != 0u) {
+        execution_receipt.last_object_property_thing =
+            candidate.last_execution.last_object_property_thing;
+        execution_receipt.last_object_property_kind =
+            candidate.last_execution.last_object_property_kind;
+        execution_receipt.last_object_property_before =
+            candidate.last_execution.last_object_property_before;
+        execution_receipt.last_object_property_after =
+            candidate.last_execution.last_object_property_after;
+    }
     execution_receipt.missile_info_store_count =
         candidate.last_execution.missile_info_store_count;
     execution_receipt.last_missile_info_thing =
@@ -22111,6 +23076,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         memcpy(execution_receipt.last_excell_store_after,
                candidate.last_execution.last_excell_store_after,
                sizeof(execution_receipt.last_excell_store_after));
+        execution_receipt.excell_tail_fnv1a_before =
+            excell_tail_fnv1a_before;
+        execution_receipt.excell_tail_fnv1a_after =
+            profile_candidate.csbwin_appended_tail_fnv1a;
     }
     execution_receipt.generator_delay_store_count =
         candidate.last_execution.generator_delay_store_count;
@@ -22123,6 +23092,32 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             candidate.last_execution.last_generator_delay_after;
         execution_receipt.generator_delay_has_generator =
             candidate.last_execution.last_generator_delay_has_generator;
+    }
+    execution_receipt.cause_poison_count =
+        candidate.last_execution.cause_poison_count;
+    if (execution_receipt.cause_poison_count != 0u) {
+        if (!cause_poison_receipt_valid) return 0;
+        execution_receipt.last_cause_poison_character_selector =
+            cause_poison_selector;
+        execution_receipt.last_cause_poison_attack = cause_poison_attack;
+        execution_receipt.last_cause_poison_health_before =
+            cause_poison_health_before;
+        execution_receipt.last_cause_poison_health_after =
+            cause_poison_health_after;
+        execution_receipt.last_cause_poison_dose_before =
+            cause_poison_dose_before;
+        execution_receipt.last_cause_poison_dose_after =
+            cause_poison_dose_after;
+        execution_receipt.last_cause_poison_event_count_before =
+            cause_poison_event_count_before;
+        execution_receipt.last_cause_poison_event_count_after =
+            cause_poison_event_count_after;
+        execution_receipt.last_cause_poison_timer_event_index =
+            cause_poison_timer_event_index;
+        execution_receipt.last_cause_poison_timer_attack =
+            cause_poison_timer_attack;
+        execution_receipt.last_cause_poison_timer_time =
+            cause_poison_timer_time;
     }
     if (candidate.transfer_execution_count != runner->transfer_execution_count) {
         execution_receipt.transfer_count = candidate.last_transfer.transfer_count;
@@ -22148,9 +23143,32 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     execution_receipt.action_ordinal = runner->action_ordinal;
     execution_receipt.globals_changed = globals_changed ? 1 : 0;
     execution_receipt.saves_disabled_changed = saves_disabled_changed ? 1 : 0;
+    if (execution_receipt.saves_disabled_changed) {
+        execution_receipt.saves_disabled_before = saves_disabled_before;
+        execution_receipt.saves_disabled_after = saves_disabled_after;
+    }
     execution_receipt.random_state_changed = random_state_changed ? 1 : 0;
+    if (execution_receipt.random_state_changed) {
+        execution_receipt.random_state_before = random_state_before;
+        execution_receipt.random_state_after = random_state_after;
+    }
     execution_receipt.text_message_changed = text_message_changed ? 1 : 0;
+    if (execution_receipt.text_message_changed) {
+        execution_receipt.text_message_before = text_message_before;
+        execution_receipt.text_message_after = text_message_after;
+    }
     execution_receipt.party_talents_changed = party_talents_changed ? 1 : 0;
+    if (execution_receipt.party_talents_changed) {
+        execution_receipt.party_talents_champion_count =
+            candidate.party_champion_count;
+        memcpy(execution_receipt.party_talents_fingerprints,
+               candidate.party_champion_fingerprints,
+               sizeof(execution_receipt.party_talents_fingerprints));
+        memcpy(execution_receipt.party_talents_before, party_talents_before,
+               sizeof(execution_receipt.party_talents_before));
+        memcpy(execution_receipt.party_talents_after, party_talents_after,
+               sizeof(execution_receipt.party_talents_after));
+    }
     execution_receipt.party_skill_experience_changed =
         party_skill_experience_changed ? 1 : 0;
     execution_receipt.expool_changed = expool_changed ? 1 : 0;
@@ -22750,6 +23768,22 @@ int csb_v1_runtime_process_input_queue(
                     }
                 }
                 csb_v1_runtime_apply_destination_chain(profile, &local_result);
+                if (local_result.movement_step_applied &&
+                    local_result.movement_destination_square_type ==
+                        DM1_SQUARE_STAIRS) {
+                    /* MOVESENS.C F0267 reaches F0276 for the entered C03
+                     * square before CLIKMENU.C F0366 hands that party to
+                     * F0364.  C005 must therefore see the source stair
+                     * square, not the post-transition level. */
+                    local_result.sensor_destination_add_checked = 1;
+                    csb_v1_runtime_process_party_floor_sensors_at_level(
+                        profile,
+                        local_result.old_party_level,
+                        local_result.movement_destination_x,
+                        local_result.movement_destination_y,
+                        1,
+                        &local_result);
+                }
                 csb_v1_runtime_apply_destination_stairs(profile, &local_result);
             }
             csb_v1_runtime_mark_deferred_new_party_map_index(&local_result);

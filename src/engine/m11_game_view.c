@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "theron_v1_track02_loader_output_record_admission.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -11,6 +12,7 @@
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
 #include "nexus_v1_viewport.h"
+#include "nexus_v1_warning_dgt2_m11_presentation.h"
 #include "nexus_v1_world.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_flow.h"
@@ -86,6 +88,7 @@
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
+#include "dm1_v1_c15_layout_pc34_compat.h"
 #include "dm1_v1_endgame_presentation_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
@@ -6713,6 +6716,9 @@ static int m11_inspect_front_cell(M11_GameViewState* state);
 static int m11_front_cell_has_attack_target(const M11_GameViewState* state);
 static int m11_front_cell_is_door(const M11_GameViewState* state);
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
+static int m11_front_mirror_click_wall_cell(const M11_GameViewState* state,
+                                            int mirrorOrdinal,
+                                            int* outWallCell);
 static int m11_front_cell_has_live_f0115_floor_item_request(
     const M11_GameViewState* state);
 static int m11_source_is_csb(const M11_GameViewState* state);
@@ -10283,17 +10289,18 @@ static int m11_creature_compute_primary_secondary_dirs(
 
 /* Move a creature one source-ordered cardinal step toward the party.
  * Returns 1 if moved. */
-static int m11_creature_try_move(
+static int m11_creature_try_move_with_directions(
     M11_GameViewState* state,
     unsigned short groupThing,
     int groupX,
     int groupY,
+    int primaryDir,
+    int secondaryDir,
     int* outNewX,
     int* outNewY) {
     int partyX = state->world.party.mapX;
     int partyY = state->world.party.mapY;
     int mapIdx = state->world.party.mapIndex;
-    int primaryDir, secondaryDir;
     int candidates[4];
     int candidateCount = 0;
     int randomOppPrimaryIndex = -1;
@@ -10309,14 +10316,6 @@ static int m11_creature_try_move(
         *outNewY = groupY;
         return 0;
     }
-    if (!m11_creature_compute_primary_secondary_dirs(
-            state, groupX, groupY, partyX, partyY,
-            &primaryDir, &secondaryDir)) {
-        *outNewX = groupX;
-        *outNewY = groupY;
-        return 0;
-    }
-
     candidates[candidateCount++] = primaryDir;
     if (secondaryDir != primaryDir) {
         candidates[candidateCount++] = secondaryDir;
@@ -10359,6 +10358,31 @@ static int m11_creature_try_move(
     *outNewX = groupX;
     *outNewY = groupY;
     return 0;
+}
+
+/* Visible-party movement has no precomputed direction plan.  F0201's
+ * smell route does, and calls the direction-taking form above so the F0228
+ * RNG draw is neither duplicated nor replaced by a display-derived vector. */
+static int m11_creature_try_move(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupX,
+    int groupY,
+    int* outNewX,
+    int* outNewY) {
+    int primaryDir;
+    int secondaryDir;
+
+    if (!state || !m11_creature_compute_primary_secondary_dirs(
+            state, groupX, groupY, state->world.party.mapX,
+            state->world.party.mapY, &primaryDir, &secondaryDir)) {
+        if (outNewX) *outNewX = groupX;
+        if (outNewY) *outNewY = groupY;
+        return 0;
+    }
+    return m11_creature_try_move_with_directions(
+        state, groupThing, groupX, groupY, primaryDir, secondaryDir,
+        outNewX, outNewY);
 }
 
 /* Check if all creatures in a group are dead.  If so, drop the group's
@@ -10892,6 +10916,66 @@ static int m11_group_visible_party_distance_f0200(
     return *outDistance > 0;
 }
 
+/* GROUP.C F0201 first asks F0199 to walk the loaded map with F0198's
+ * smell blocker.  The M11 state has no authenticated PC34 owner for a
+ * decoded scent-list entry, so this live form deliberately exposes only
+ * that direct-party branch.  F0819c receives NULL for the later stored-scent
+ * branch and therefore leaves it unavailable rather than inventing a trail. */
+static int m11_group_smell_party_direction_f0201(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    const struct DungeonGroup_Compat* group,
+    int groupX,
+    int groupY,
+    struct DM1GroupSmellDirectionPlan_Compat* outPlan) {
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct M11GroupSightRouteSource sight;
+    struct DM1CreatureInfo_Compat sourceInfo;
+    int primaryDir;
+    int secondaryDir;
+    int distance;
+
+    if (!state || !group || !outPlan ||
+        !m11_group_live_position_matches_source(
+            state, groupThing, state->world.party.mapIndex, groupX, groupY) ||
+        !m11_creature_source_info_i34(group->creatureType, &sourceInfo)) {
+        return 0;
+    }
+    distance = abs(state->world.party.mapX - groupX) +
+               abs(state->world.party.mapY - groupY);
+    if (distance <= 0 || !m11_creature_compute_primary_secondary_dirs(
+            state, groupX, groupY, state->world.party.mapX,
+            state->world.party.mapY, &primaryDir, &secondaryDir)) {
+        return 0;
+    }
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&sight, 0, sizeof(sight));
+    sight.world = &state->world;
+    sight.mapIndex = state->world.party.mapIndex;
+    sight.smell = 1;
+    ctx.currentGroupMapX = groupX;
+    ctx.currentGroupMapY = groupY;
+    ctx.currentGroupDistanceToParty = distance;
+    ctx.currentGroupPrimaryDirToParty = primaryDir;
+    ctx.currentGroupSecondaryDirToParty = secondaryDir;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.currentMapIndex = state->world.party.mapIndex;
+    ctx.isSmellSquareBlocked = m11_group_sight_route_square_blocked;
+    ctx.smellBlockerContext = &sight;
+    ctx.creatureInfo = sourceInfo;
+
+    if (!F0819c_DM1_GROUP_BuildSmelledPartyDirectionPlanWithRoute_Compat(
+            &ctx, NULL, &state->world.masterRng, outPlan) ||
+        !outPlan->valid || !outPlan->usedDirectPartyRoute ||
+        outPlan->usedStoredScent || outPlan->directionOrdinal == 0) {
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_creature_maybe_launch_projectile(
     M11_GameViewState* state,
     unsigned short groupThing,
@@ -11071,6 +11155,24 @@ static void m11_process_one_creature_group(
      * C04 direction bits.  Do not substitute profile Manhattan ranges. */
     if (!m11_group_visible_party_distance_f0200(
             state, groupThing, group, groupX, groupY, &dist)) {
+        struct DM1GroupSmellDirectionPlan_Compat smellPlan;
+        int newX;
+        int newY;
+
+        memset(&smellPlan, 0, sizeof(smellPlan));
+        if (!m11_group_smell_party_direction_f0201(
+                state, groupThing, group, groupX, groupY, &smellPlan) ||
+            (profile->movementTicks > 0 &&
+             (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u)) {
+            return;
+        }
+        if (m11_creature_try_move_with_directions(
+                state, groupThing, groupX, groupY,
+                smellPlan.primaryDirection, smellPlan.secondaryDirection,
+                &newX, &newY)) {
+            m11_audio_emit_creature_movement_sound(
+                state, group->creatureType, newX, newY);
+        }
         return;
     }
 
@@ -12856,6 +12958,30 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                       spec->theronTrack02CaptureManifestPath,
                                       spec->savePath);
         if (ok && spec->theronDungeonCapturePlan &&
+            (!spec->theronHandoffArtifactCorpus ||
+             !theron_v1_track02_handoff_artifact_corpus_matches_identity(
+                 spec->theronHandoffArtifactCorpus,
+                 spec->theronDungeonCapturePlan->track02_md5,
+                 spec->theronDungeonCapturePlan->source_trace_md5,
+                 spec->theronDungeonCapturePlan->capture_target_plan_identity))) {
+            return 0;
+        }
+        if (ok && spec->theronHandoffArtifactCorpus) {
+            state->theronState.handoff_artifact_corpus = *spec->theronHandoffArtifactCorpus;
+            state->theronState.handoff_artifact_corpus_bound = 1;
+            state->theronState.handoff_artifact_corpus_scan_epoch =
+                spec->theronCampaignMediaScanEpoch;
+        }
+        if (ok && spec->theronDungeonCapturePlan &&
+            (!spec->theronHandoffArtifactCorpus || !spec->theronSectorRecordCorpus ||
+             !M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+                 state, spec->theronHandoffArtifactCorpus,
+                 spec->theronSectorRecordCorpus, spec->theronCampaignMediaPlan,
+                 spec->theronLaunchTraceIdentity,
+                 spec->theronCampaignMediaScanEpoch))) {
+            return 0;
+        }
+        if (ok && spec->theronDungeonCapturePlan &&
             !M11_GameView_TheronBindTrack02DungeonCapturePlan(
                 state, spec->theronDungeonCapturePlan)) {
             return 0;
@@ -13326,7 +13452,9 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
         if (!hasLaunchIntent ||
-            !M12_StartupMenu_ValidateTheronCampaignLaunchIntent(menuState, &intent)) {
+            (!M12_StartupMenu_ValidateTheronCampaignLaunchIntent(menuState, &intent) &&
+             !M12_StartupMenu_ValidateTheronCampaignCaptureRequiredIntent(
+                 menuState, &intent))) {
             return 0;
         }
         spec.theronTrack02LoaderReceipt =
@@ -13347,6 +13475,8 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             &intent.theronSectorRecordCorpus : NULL;
         spec.theronDungeonCapturePlan = intent.theronDungeonCapturePlanBound ?
             &intent.theronDungeonCapturePlan : NULL;
+        spec.theronHandoffArtifactCorpus = intent.theronHandoffArtifactCorpusBound ?
+            &intent.theronHandoffArtifactCorpus : NULL;
     }
     if (menuState->launchRequested) {
         spec.savePath = intent.savePath;
@@ -14660,6 +14790,97 @@ static int m11_theron_capture_campaign_identity_complete(
     return 1;
 }
 
+static int m11_theron_startup_capture_media_current(
+    const Theron_V1Track02RawMediaIntakeReceipt *bound,
+    const Theron_V1Track02RawMediaIntakeReceipt *current)
+{
+    return bound && current &&
+        bound->status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+        current->status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+        bound->failure_reason == THERON_V1_TRACK02_MEDIA_REASON_NONE &&
+        current->failure_reason == THERON_V1_TRACK02_MEDIA_REASON_NONE &&
+        bound->cue_consumed == current->cue_consumed &&
+        bound->mode1_2352 == current->mode1_2352 &&
+        bound->mode1_2048 == current->mode1_2048 &&
+        bound->variant == current->variant &&
+        !strcmp(bound->track02_md5, current->track02_md5) &&
+        !strcmp(bound->payload_path, current->payload_path) &&
+        bound->cue_index01_sector == current->cue_index01_sector &&
+        bound->payload_bytes == current->payload_bytes &&
+        bound->sector_count == current->sector_count &&
+        bound->first_user_data_offset == current->first_user_data_offset &&
+        bound->logical_user_data_window_bytes ==
+            current->logical_user_data_window_bytes;
+}
+
+int M11_GameView_TheronBindTrack02StartupCaptureRequired(
+    M11_GameViewState* state,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    uint32_t campaignMediaScanEpoch)
+{
+    uint32_t plan_identity;
+    const Theron_V1Track02RawMediaIntakeReceipt* media;
+
+    if (!state || !campaignMedia || !campaignPlan || !campaignMediaScanEpoch ||
+        campaignMedia->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+        campaignMedia->ambiguous || campaignMedia->virtual_container ||
+        campaignMedia->no_media_extracted || !campaignMedia->exact_layout_bound ||
+        !campaignMedia->launchable_direct_media ||
+        !theron_v1_track02_campaign_media_bind_capture_plan(
+            campaignMedia, campaignPlan) ||
+        !(plan_identity = theron_v1_track02_capture_target_plan_identity(
+            campaignPlan))) {
+        return 0;
+    }
+    media = &campaignMedia->direct_media;
+    if (state->theronState.startup_capture_media_bound &&
+        state->theronState.dungeon_capture_required) {
+        if (state->theronState.dungeon_capture_plan_identity == plan_identity &&
+            m11_theron_startup_capture_media_current(
+                &state->theronState.startup_capture_media, media)) {
+            state->theronState.campaign_media_scan_epoch = campaignMediaScanEpoch;
+            m11_set_status(state, "STARTUP", "TRACK02 CAPTURE REQUIRED");
+            return 1;
+        }
+        state->theronState.dungeon_capture_required = 0;
+        state->theronState.dungeon_capture_resume_ready = 0;
+        state->theronState.dungeon_capture_plan_identity = 0u;
+        memset(&state->theronState.startup_capture_media, 0,
+               sizeof(state->theronState.startup_capture_media));
+        state->theronState.startup_capture_media_bound = 0;
+        return 0;
+    }
+    if (media->status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        media->failure_reason != THERON_V1_TRACK02_MEDIA_REASON_NONE ||
+        (!media->mode1_2352 && !media->mode1_2048) ||
+        (media->mode1_2352 && media->mode1_2048) || !media->payload_path[0] ||
+        !media->payload_bytes || !media->sector_count ||
+        !media->logical_user_data_window_bytes ||
+        media->variant != campaignMedia->track02_variant ||
+        strcmp(media->track02_md5, campaignMedia->track02_md5)) {
+        return 0;
+    }
+
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    state->theronState.dungeon_capture_required = 1;
+    state->theronState.dungeon_capture_resume_ready = 0;
+    state->theronState.dungeon_capture_plan_identity = plan_identity;
+    state->theronState.startup_capture_media = *media;
+    state->theronState.startup_capture_media_bound = 1;
+    state->theronState.campaign_media_scan_epoch = campaignMediaScanEpoch;
+    state->theronState.startup_media_ready = 1;
+    state->theronState.startup_media_track02_variant = media->variant;
+    state->theronState.startup_media_track02_size = media->payload_bytes;
+    snprintf(state->theronState.startup_media_track02_md5,
+             sizeof(state->theronState.startup_media_track02_md5), "%s",
+             media->track02_md5);
+    m11_set_status(state, "STARTUP", "TRACK02 CAPTURE REQUIRED");
+    return 1;
+}
+
 int M11_GameView_TheronBindTrack02CaptureCampaignAdmission(
     M11_GameViewState* state,
     const Theron_V1Track02CaptureCampaignReceipt* campaign,
@@ -14970,19 +15191,34 @@ static void m11_theron_clear_first_dungeon_world_admission(
     state->theronState.first_dungeon_stage3_record = 0u;
     state->theronState.first_dungeon_descriptor_ordinal = 0u;
     state->theronState.first_dungeon_descriptor_selector = 0u;
+    state->theronState.first_dungeon_descriptor_source_hash = 0u;
     state->theronState.first_dungeon_resolved_record = 0u;
     state->theronState.first_dungeon_record_user_data_hash = 0u;
     state->theronState.first_dungeon_raw_sector_checksum = 0u;
     state->theronState.first_dungeon_loader_caller_pc = 0u;
     state->theronState.first_dungeon_loader_return_pc = 0u;
+    state->theronState.first_dungeon_loader_caller_opcode = 0u;
+    state->theronState.first_dungeon_loader_caller_target = 0u;
+    state->theronState.first_dungeon_loader_post_return_pc = 0u;
+    state->theronState.first_dungeon_loader_post_return_next_pc = 0u;
+    state->theronState.first_dungeon_loader_record_cl = 0u;
+    state->theronState.first_dungeon_loader_record_dl = 0u;
+    state->theronState.first_dungeon_loader_record_ch = 0u;
+    state->theronState.first_dungeon_loader_sector_count = 0u;
     state->theronState.first_dungeon_campaign_layout_epoch = 0u;
     state->theronState.first_dungeon_media_scan_epoch = 0u;
     state->theronState.first_dungeon_bitmap_palette_capture_bound = 0;
     state->theronState.first_dungeon_bitmap_palette_presentation_no_draw = 0;
     state->theronState.first_dungeon_bitmap_palette_plan_identity = 0u;
+    state->theronState.first_dungeon_cd_read_record = 0u;
     state->theronState.first_dungeon_bitmap_palette_descriptor_record = 0u;
+    state->theronState.first_dungeon_loader_output_raw_offset = 0u;
+    state->theronState.first_dungeon_loader_output_bytes = 0u;
+    state->theronState.first_dungeon_loader_output_identity = 0u;
     state->theronState.first_dungeon_palette_output_identity = 0u;
     state->theronState.first_dungeon_bitmap_transfer_identity = 0u;
+    state->theronState.first_dungeon_destination_offset = 0u;
+    state->theronState.first_dungeon_destination_bytes = 0u;
     state->theronState.first_dungeon_bitmap_destination_identity = 0u;
     state->theronState.first_dungeon_bitmap_palette_layout_epoch = 0u;
     state->theronState.first_dungeon_bitmap_palette_scan_epoch = 0u;
@@ -14990,6 +15226,184 @@ static void m11_theron_clear_first_dungeon_world_admission(
     state->theronState.dungeon_capture_required = 0;
     state->theronState.dungeon_capture_resume_ready = 0;
     state->theronState.dungeon_capture_plan_identity = 0u;
+    memset(&state->theronState.startup_capture_media, 0,
+           sizeof(state->theronState.startup_capture_media));
+    state->theronState.startup_capture_media_bound = 0;
+    state->theronState.handoff_artifact_corpus_scan_epoch = 0u;
+    memset(&state->theronState.g8_fifo_capture_binding, 0,
+           sizeof(state->theronState.g8_fifo_capture_binding));
+    state->theronState.g8_fifo_capture_binding_bound = 0;
+    state->theronState.g8_fifo_capture_binding_scan_epoch = 0u;
+    state->theronState.handoff_loader_capture_bound = 0;
+    state->theronState.handoff_loader_capture_record = 0u;
+    state->theronState.handoff_loader_capture_destination = 0u;
+    state->theronState.handoff_loader_capture_caller_pc = 0u;
+    state->theronState.handoff_loader_capture_return_pc = 0u;
+    state->theronState.handoff_loader_capture_post_return_pc = 0u;
+    state->theronState.handoff_loader_capture_post_return_next_pc = 0u;
+    state->theronState.handoff_loader_capture_record_cl = 0u;
+    state->theronState.handoff_loader_capture_record_dl = 0u;
+    state->theronState.handoff_loader_capture_record_ch = 0u;
+    state->theronState.handoff_loader_capture_sector_count = 0u;
+    state->theronState.handoff_loader_capture_span_bytes = 0u;
+    state->theronState.handoff_loader_capture_span_checksum = 0u;
+    state->theronState.handoff_loader_capture_plan_identity = 0u;
+}
+
+int M11_GameView_TheronBindTrack02G8FifoSidecarCaptureRequired(
+    M11_GameViewState* state,
+    const Theron_V1Track02G8FifoSidecarReceipt* sidecar,
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* artifact_corpus,
+    uint32_t campaign_media_scan_epoch)
+{
+    Theron_V1Track02G8FifoCaptureBindingReceipt binding;
+
+    if (!state || !sidecar || !artifact_corpus ||
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        !campaign_media_scan_epoch ||
+        campaign_media_scan_epoch != state->theronState.campaign_media_scan_epoch ||
+        !state->theronState.launch_trace_identity_bound ||
+        !state->theronState.launch_trace_identity.valid ||
+        !state->theronState.handoff_artifact_corpus_bound ||
+        state->theronState.handoff_artifact_corpus_scan_epoch !=
+            campaign_media_scan_epoch ||
+        memcmp(&state->theronState.handoff_artifact_corpus, artifact_corpus,
+               sizeof(*artifact_corpus)) != 0 ||
+        !theron_v1_track02_handoff_artifact_corpus_matches_identity(
+            &state->theronState.handoff_artifact_corpus,
+            artifact_corpus->track02_md5,
+            state->theronState.launch_trace_identity.source_trace_md5,
+            artifact_corpus->capture_target_plan_identity) ||
+        !theron_v1_track02_g8_fifo_capture_binding_bind(
+            sidecar, &state->theronState.handoff_artifact_corpus,
+            state->theronState.launch_trace_identity.source_trace_md5,
+            campaign_media_scan_epoch, &binding) ||
+        !theron_v1_track02_g8_fifo_capture_binding_matches_lifecycle(
+            &binding, &state->theronState.handoff_artifact_corpus,
+            state->theronState.launch_trace_identity.source_trace_md5,
+            campaign_media_scan_epoch)) {
+        if (state) {
+            memset(&state->theronState.g8_fifo_capture_binding, 0,
+                   sizeof(state->theronState.g8_fifo_capture_binding));
+            state->theronState.g8_fifo_capture_binding_bound = 0;
+            state->theronState.g8_fifo_capture_binding_scan_epoch = 0u;
+        }
+        return 0;
+    }
+    state->theronState.g8_fifo_capture_binding = binding;
+    state->theronState.g8_fifo_capture_binding_bound = 1;
+    state->theronState.g8_fifo_capture_binding_scan_epoch =
+        campaign_media_scan_epoch;
+    return 1;
+}
+
+int M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+    M11_GameViewState* state,
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* artifact_corpus,
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* sector_corpus,
+    const Theron_V1Track02CaptureTargetPlan* plan,
+    const Theron_V1Track02LaunchTraceIdentityReceipt* trace_identity,
+    uint32_t campaign_media_scan_epoch)
+{
+    const Theron_V1Track02SectorRecordAdmissionReceipt *sector;
+    const Theron_V1_BootProfile *profile;
+    Theron_V1Track02LoaderOutputRecordAdmissionReceipt output_records;
+
+    if (!state || !artifact_corpus || !sector_corpus || !plan || !trace_identity ||
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        !campaign_media_scan_epoch ||
+        campaign_media_scan_epoch != state->theronState.campaign_media_scan_epoch ||
+        !state->theronState.sector_record_corpus_bound ||
+        !state->theronState.launch_trace_identity_bound ||
+        !trace_identity->valid ||
+        strcmp(trace_identity->source_trace_md5,
+               state->theronState.launch_trace_identity.source_trace_md5) ||
+        !theron_v1_track02_handoff_artifact_corpus_matches_sector_record(
+            artifact_corpus, sector_corpus, plan,
+            trace_identity->source_trace_md5)) {
+        if (state) {
+            state->theronState.handoff_loader_capture_bound = 0;
+            state->theronState.handoff_loader_capture_record = 0u;
+            state->theronState.handoff_loader_capture_destination = 0u;
+            state->theronState.handoff_loader_capture_caller_pc = 0u;
+            state->theronState.handoff_loader_capture_return_pc = 0u;
+            state->theronState.handoff_loader_capture_post_return_pc = 0u;
+            state->theronState.handoff_loader_capture_post_return_next_pc = 0u;
+            state->theronState.handoff_loader_capture_record_cl = 0u;
+            state->theronState.handoff_loader_capture_record_dl = 0u;
+            state->theronState.handoff_loader_capture_record_ch = 0u;
+            state->theronState.handoff_loader_capture_sector_count = 0u;
+            state->theronState.handoff_loader_capture_span_bytes = 0u;
+            state->theronState.handoff_loader_capture_span_checksum = 0u;
+            state->theronState.handoff_loader_capture_plan_identity = 0u;
+        }
+        return 0;
+    }
+    profile = (const Theron_V1_BootProfile *)state->theronBootProfile;
+    if (profile && profile->track02_initial_level_handoff.valid &&
+        !theron_v1_track02_loader_output_record_admit(
+            &profile->track02_initial_level_handoff, artifact_corpus,
+            sector_corpus, plan, trace_identity->source_trace_md5,
+            &output_records)) {
+        state->theronState.handoff_loader_capture_bound = 0;
+        return 0;
+    }
+    sector = &sector_corpus->sector_record;
+    if (sector->loader_caller_opcode != 0x20u ||
+        sector->loader_caller_target != 0xe009u ||
+        !sector->loader_caller_pc || !sector->loader_return_pc ||
+        !sector->loader_callsite_context_verified ||
+        !sector->loader_sector_count ||
+        sector->resolved_track02_record !=
+            ((uint32_t)sector->loader_record_cl |
+             ((uint32_t)sector->loader_record_dl << 8) |
+             ((uint32_t)sector->loader_record_ch << 16)) ||
+        sector->loader_post_return_pc != sector->loader_return_pc) {
+        state->theronState.handoff_loader_capture_bound = 0;
+        return 0;
+    }
+    if (state->theronState.first_dungeon_record_world_admission_valid &&
+        (sector->resolved_track02_record !=
+             state->theronState.first_dungeon_resolved_record ||
+         sector->loader_caller_pc !=
+             state->theronState.first_dungeon_loader_caller_pc ||
+         sector->loader_return_pc !=
+             state->theronState.first_dungeon_loader_return_pc ||
+         sector->loader_post_return_pc !=
+             state->theronState.first_dungeon_loader_post_return_pc ||
+         sector->loader_post_return_next_pc !=
+             state->theronState.first_dungeon_loader_post_return_next_pc ||
+         sector->loader_record_cl != state->theronState.first_dungeon_loader_record_cl ||
+         sector->loader_record_dl != state->theronState.first_dungeon_loader_record_dl ||
+         sector->loader_record_ch != state->theronState.first_dungeon_loader_record_ch ||
+         sector->loader_sector_count !=
+             state->theronState.first_dungeon_loader_sector_count)) {
+        state->theronState.handoff_loader_capture_bound = 0;
+        return 0;
+    }
+    state->theronState.handoff_loader_capture_bound = 1;
+    state->theronState.handoff_loader_capture_record =
+        sector->resolved_track02_record;
+    state->theronState.handoff_loader_capture_destination =
+        sector->loader_destination;
+    state->theronState.handoff_loader_capture_caller_pc = sector->loader_caller_pc;
+    state->theronState.handoff_loader_capture_return_pc = sector->loader_return_pc;
+    state->theronState.handoff_loader_capture_post_return_pc =
+        sector->loader_post_return_pc;
+    state->theronState.handoff_loader_capture_post_return_next_pc =
+        sector->loader_post_return_next_pc;
+    state->theronState.handoff_loader_capture_record_cl = sector->loader_record_cl;
+    state->theronState.handoff_loader_capture_record_dl = sector->loader_record_dl;
+    state->theronState.handoff_loader_capture_record_ch = sector->loader_record_ch;
+    state->theronState.handoff_loader_capture_sector_count =
+        sector->loader_sector_count;
+    state->theronState.handoff_loader_capture_span_bytes =
+        sector->loader_destination_span_bytes;
+    state->theronState.handoff_loader_capture_span_checksum =
+        sector->loader_destination_span_checksum;
+    state->theronState.handoff_loader_capture_plan_identity =
+        artifact_corpus->capture_target_plan_identity;
+    return 1;
 }
 
 int M11_GameView_TheronBindTrack02DungeonCapturePlan(
@@ -15006,6 +15420,78 @@ int M11_GameView_TheronBindTrack02DungeonCapturePlan(
         receipt->campaign_media_scan_epoch != state->theronState.campaign_media_scan_epoch ||
         (receipt->status == THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_RESUME_READY &&
          (!receipt->resume_route_ready ||
+          !state->theronState.handoff_artifact_corpus_bound ||
+          !state->theronState.handoff_loader_capture_bound ||
+          state->theronState.handoff_artifact_corpus_scan_epoch !=
+              state->theronState.campaign_media_scan_epoch ||
+          !theron_v1_track02_handoff_artifact_corpus_matches_identity(
+              &state->theronState.handoff_artifact_corpus, receipt->track02_md5,
+              receipt->source_trace_md5, receipt->capture_target_plan_identity) ||
+          state->theronState.handoff_artifact_corpus.artifact.campaign_route !=
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF ||
+          state->theronState.handoff_artifact_corpus.artifact.descriptor_selector !=
+              state->theronState.first_dungeon_descriptor_selector ||
+          state->theronState.handoff_artifact_corpus.artifact.descriptor_ordinal !=
+              state->theronState.first_dungeon_descriptor_ordinal ||
+          state->theronState.handoff_artifact_corpus.artifact.descriptor_source_hash !=
+              state->theronState.first_dungeon_descriptor_source_hash ||
+          state->theronState.handoff_artifact_corpus.artifact.destination_record[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              receipt->replay_final_record ||
+          state->theronState.handoff_artifact_corpus.artifact.cd_read_record[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_cd_read_record ||
+          state->theronState.handoff_loader_capture_record !=
+              state->theronState.first_dungeon_cd_read_record ||
+          !state->theronState.handoff_loader_capture_caller_pc ||
+          state->theronState.handoff_loader_capture_caller_pc !=
+              state->theronState.first_dungeon_loader_caller_pc ||
+          state->theronState.handoff_loader_capture_return_pc !=
+              state->theronState.first_dungeon_loader_return_pc ||
+          state->theronState.handoff_loader_capture_post_return_pc !=
+              state->theronState.handoff_loader_capture_return_pc ||
+          state->theronState.handoff_loader_capture_post_return_pc !=
+              state->theronState.first_dungeon_loader_post_return_pc ||
+          state->theronState.handoff_loader_capture_post_return_next_pc !=
+              state->theronState.first_dungeon_loader_post_return_next_pc ||
+          state->theronState.handoff_loader_capture_record_cl !=
+              state->theronState.first_dungeon_loader_record_cl ||
+          state->theronState.handoff_loader_capture_record_dl !=
+              state->theronState.first_dungeon_loader_record_dl ||
+          state->theronState.handoff_loader_capture_record_ch !=
+              state->theronState.first_dungeon_loader_record_ch ||
+          state->theronState.handoff_loader_capture_sector_count !=
+              state->theronState.first_dungeon_loader_sector_count ||
+          state->theronState.handoff_loader_capture_span_bytes !=
+              state->theronState.first_dungeon_loader_output_bytes ||
+          state->theronState.handoff_loader_capture_span_checksum !=
+              state->theronState.first_dungeon_loader_output_identity ||
+          state->theronState.handoff_loader_capture_plan_identity !=
+              receipt->capture_target_plan_identity ||
+          state->theronState.handoff_artifact_corpus.artifact.loader_output_raw_offset[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_loader_output_raw_offset ||
+          state->theronState.handoff_artifact_corpus.artifact.loader_output_bytes[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_loader_output_bytes ||
+          state->theronState.handoff_artifact_corpus.artifact.destination_offset[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_destination_offset ||
+          state->theronState.handoff_artifact_corpus.artifact.destination_bytes[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_destination_bytes ||
+          state->theronState.handoff_artifact_corpus.artifact.loader_output_identity[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_loader_output_identity ||
+          state->theronState.handoff_artifact_corpus.artifact.palette_output_identity[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_palette_output_identity ||
+          state->theronState.handoff_artifact_corpus.artifact.bitmap_transfer_identity[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_bitmap_transfer_identity ||
+          state->theronState.handoff_artifact_corpus.artifact.destination_identity[
+              THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] !=
+              state->theronState.first_dungeon_bitmap_destination_identity ||
           !M11_GameView_TheronTrack02DescriptorBitmapPalettePresentationNoDrawCurrent(state) ||
           receipt->capture_target_plan_identity !=
               state->theronState.first_dungeon_bitmap_palette_plan_identity ||
@@ -15039,8 +15525,12 @@ int M11_GameView_TheronBindTrack02DescriptorBitmapPaletteCaptureIntake(
         !receipt->palette_output_consumed || !receipt->bitmap_transfer_consumed ||
         !receipt->opaque_presentation_only || !receipt->campaign_layout_epoch ||
         !receipt->campaign_media_scan_epoch || !receipt->capture_target_plan_identity ||
-        !receipt->descriptor_record || !receipt->palette_output_identity ||
-        !receipt->bitmap_transfer_identity || !receipt->destination_identity ||
+        !receipt->cd_read_record || !receipt->descriptor_selector ||
+        !receipt->descriptor_record ||
+        !receipt->loader_output_bytes || !receipt->loader_output_identity ||
+        !receipt->palette_output_identity ||
+        !receipt->bitmap_transfer_identity || !receipt->destination_bytes ||
+        !receipt->destination_identity ||
         !state->theronState.first_dungeon_record_world_admission_valid ||
         !state->theronState.first_dungeon_level_object_opaque_ready ||
         !state->theronState.live_loader_dungeon_ready ||
@@ -15053,6 +15543,12 @@ int M11_GameView_TheronBindTrack02DescriptorBitmapPaletteCaptureIntake(
         strcmp(receipt->coalesced_trace_md5,
                state->theronState.live_loader_source_trace_md5) ||
         receipt->descriptor_record != state->theronState.first_dungeon_resolved_record ||
+        receipt->descriptor_selector !=
+            state->theronState.first_dungeon_descriptor_selector ||
+        receipt->descriptor_ordinal !=
+            state->theronState.first_dungeon_descriptor_ordinal ||
+        receipt->descriptor_source_hash !=
+            state->theronState.first_dungeon_descriptor_source_hash ||
         receipt->campaign_layout_epoch != state->theronState.first_dungeon_campaign_layout_epoch ||
         receipt->campaign_layout_epoch != state->theronState.live_loader_campaign_layout_epoch ||
         receipt->campaign_media_scan_epoch != state->theronState.first_dungeon_media_scan_epoch ||
@@ -15062,9 +15558,15 @@ int M11_GameView_TheronBindTrack02DescriptorBitmapPaletteCaptureIntake(
             state->theronState.first_dungeon_bitmap_palette_capture_bound = 0;
             state->theronState.first_dungeon_bitmap_palette_presentation_no_draw = 0;
             state->theronState.first_dungeon_bitmap_palette_plan_identity = 0u;
+            state->theronState.first_dungeon_cd_read_record = 0u;
             state->theronState.first_dungeon_bitmap_palette_descriptor_record = 0u;
+            state->theronState.first_dungeon_loader_output_raw_offset = 0u;
+            state->theronState.first_dungeon_loader_output_bytes = 0u;
+            state->theronState.first_dungeon_loader_output_identity = 0u;
             state->theronState.first_dungeon_palette_output_identity = 0u;
             state->theronState.first_dungeon_bitmap_transfer_identity = 0u;
+            state->theronState.first_dungeon_destination_offset = 0u;
+            state->theronState.first_dungeon_destination_bytes = 0u;
             state->theronState.first_dungeon_bitmap_destination_identity = 0u;
             state->theronState.first_dungeon_bitmap_palette_layout_epoch = 0u;
             state->theronState.first_dungeon_bitmap_palette_scan_epoch = 0u;
@@ -15075,12 +15577,21 @@ int M11_GameView_TheronBindTrack02DescriptorBitmapPaletteCaptureIntake(
     state->theronState.first_dungeon_bitmap_palette_presentation_no_draw = 1;
     state->theronState.first_dungeon_bitmap_palette_plan_identity =
         receipt->capture_target_plan_identity;
+    state->theronState.first_dungeon_cd_read_record = receipt->cd_read_record;
     state->theronState.first_dungeon_bitmap_palette_descriptor_record =
         receipt->descriptor_record;
+    state->theronState.first_dungeon_loader_output_raw_offset =
+        receipt->loader_output_raw_offset;
+    state->theronState.first_dungeon_loader_output_bytes =
+        receipt->loader_output_bytes;
+    state->theronState.first_dungeon_loader_output_identity =
+        receipt->loader_output_identity;
     state->theronState.first_dungeon_palette_output_identity =
         receipt->palette_output_identity;
     state->theronState.first_dungeon_bitmap_transfer_identity =
         receipt->bitmap_transfer_identity;
+    state->theronState.first_dungeon_destination_offset = receipt->destination_offset;
+    state->theronState.first_dungeon_destination_bytes = receipt->destination_bytes;
     state->theronState.first_dungeon_bitmap_destination_identity =
         receipt->destination_identity;
     state->theronState.first_dungeon_bitmap_palette_layout_epoch =
@@ -15096,9 +15607,13 @@ int M11_GameView_TheronTrack02DescriptorBitmapPalettePresentationNoDrawCurrent(
     return state && state->theronState.first_dungeon_bitmap_palette_capture_bound &&
         state->theronState.first_dungeon_bitmap_palette_presentation_no_draw &&
         state->theronState.first_dungeon_bitmap_palette_plan_identity &&
+        state->theronState.first_dungeon_cd_read_record &&
         state->theronState.first_dungeon_bitmap_palette_descriptor_record &&
+        state->theronState.first_dungeon_loader_output_bytes &&
+        state->theronState.first_dungeon_loader_output_identity &&
         state->theronState.first_dungeon_palette_output_identity &&
         state->theronState.first_dungeon_bitmap_transfer_identity &&
+        state->theronState.first_dungeon_destination_bytes &&
         state->theronState.first_dungeon_bitmap_destination_identity &&
         state->theronState.first_dungeon_bitmap_palette_layout_epoch &&
         state->theronState.first_dungeon_bitmap_palette_scan_epoch &&
@@ -15178,12 +15693,27 @@ int M11_GameView_TheronBindTrack02FirstDungeonWorldAdmission(
     state->theronState.first_dungeon_stage3_record = receipt->stage3_track02_record;
     state->theronState.first_dungeon_descriptor_ordinal = receipt->descriptor_ordinal;
     state->theronState.first_dungeon_descriptor_selector = receipt->descriptor_selector;
+    state->theronState.first_dungeon_descriptor_source_hash =
+        receipt->descriptor_source_hash;
     state->theronState.first_dungeon_resolved_record = receipt->resolved_track02_record;
     state->theronState.first_dungeon_record_user_data_hash = receipt->record_user_data_hash;
     state->theronState.first_dungeon_raw_sector_checksum =
         receipt->observed_raw_sector_checksum;
     state->theronState.first_dungeon_loader_caller_pc = receipt->loader_caller_pc;
     state->theronState.first_dungeon_loader_return_pc = receipt->loader_return_pc;
+    state->theronState.first_dungeon_loader_caller_opcode =
+        receipt->loader_caller_opcode;
+    state->theronState.first_dungeon_loader_caller_target =
+        receipt->loader_caller_target;
+    state->theronState.first_dungeon_loader_post_return_pc =
+        receipt->loader_post_return_pc;
+    state->theronState.first_dungeon_loader_post_return_next_pc =
+        receipt->loader_post_return_next_pc;
+    state->theronState.first_dungeon_loader_record_cl = receipt->loader_record_cl;
+    state->theronState.first_dungeon_loader_record_dl = receipt->loader_record_dl;
+    state->theronState.first_dungeon_loader_record_ch = receipt->loader_record_ch;
+    state->theronState.first_dungeon_loader_sector_count =
+        receipt->loader_sector_count;
     state->theronState.first_dungeon_campaign_layout_epoch = campaignLayoutEpoch;
     state->theronState.first_dungeon_media_scan_epoch = campaignMediaScanEpoch;
     return 1;
@@ -15595,12 +16125,28 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
          strcmp(campaignMedia->direct_media.payload_path, verifiedPath) != 0 ||
          strcmp(campaignMedia->track02_md5, verifiedMd5) != 0 ||
          campaignMedia->direct_media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
-         !campaignMedia->direct_media.cue_consumed ||
          (!campaignMedia->direct_media.mode1_2352 && !campaignMedia->direct_media.mode1_2048) ||
          !campaignMedia->direct_media.payload_bytes || !campaignMedia->direct_media.sector_count ||
          !campaignMedia->direct_media.logical_user_data_window_bytes ||
          !theron_v1_track02_campaign_media_bind_capture_plan(campaignMedia, campaignPlan))) {
         return 0;
+    }
+    if (campaignMedia && campaignPlan && !srmCampaignReplay &&
+        !srmLaunchDiscovery && !launchTraceIdentity && !traceBundle &&
+        !sectorRecordCorpus && (!captureManifestPath || !captureManifestPath[0])) {
+        savedDebugHUD = state->showDebugHUD;
+        M11_GameView_Shutdown(state);
+        M11_GameView_Init(state);
+        state->showDebugHUD = savedDebugHUD;
+        if (!M11_GameView_TheronBindTrack02StartupCaptureRequired(
+                state, campaignMedia, campaignPlan, campaignMediaScanEpoch)) {
+            return 0;
+        }
+        snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s", verifiedMd5);
+        snprintf(state->title, sizeof(state->title), "%s", "THERON'S QUEST");
+        snprintf(state->sourceId, sizeof(state->sourceId), "%s", "theron-track02");
+        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", verifiedPath);
+        return 1;
     }
     memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;
@@ -17385,6 +17931,7 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     struct ChampionState_Compat sourceRecord;
     const M11_AssetSlot* portraits;
     int previousPartyCount;
+    int wallCell = -1;
     char mirrorName[16];
     char mirrorTitle[32];
 
@@ -17397,7 +17944,10 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
         return 0;
     }
-    if (mirrorOrdinal < 0) return 0;
+    if (mirrorOrdinal < 0 ||
+        !m11_front_mirror_click_wall_cell(state, mirrorOrdinal, &wallCell)) {
+        return 0;
+    }
     m11_repair_dead_party_leader(state);
     if (!m11_party_has_pc34_candidate_layout(&state->world.party)) {
         m11_set_status(state, "MIRROR", "PARTY STATE INVALID");
@@ -17430,8 +17980,11 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     click.frontSquareInBounds = 1;
     click.sensorType = DM1_SENSOR_WALL_CHAMPION_PORTRAIT;
     click.sensorData = (uint16_t)mirrorOrdinal;
-    click.sensorCell = 0;
-    click.clickedWallCell = 0;
+    /* F0172's C127 receipt owns the source wall cell.  Do not replace it
+     * with the D1C host rectangle's cell: HoC sensors use their packed
+     * Thing cell, and F0280 admits only that same sensor/click pairing. */
+    click.sensorCell = wallCell;
+    click.clickedWallCell = wallCell;
     click.partyChampionCount = (uint16_t)previousPartyCount;
     routeReceipt =
         F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
@@ -18815,6 +19368,9 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         state->theronState.startup_phase == THERON_STARTUP_PHASE_IN_DUNGEON ||
         state->theronState.level_loaded) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (state->theronState.dungeon_capture_required) {
+        return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     if (!m11_theron_startup_has_verified_runtime_surfaces(state)) {
         m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
@@ -22464,6 +23020,24 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         return receipt.renderIndex;
     }
     return -1;
+}
+
+static int m11_front_mirror_click_wall_cell(const M11_GameViewState* state,
+                                            int mirrorOrdinal,
+                                            int* outWallCell)
+{
+    M11_ViewportCell frontCell;
+
+    if (outWallCell) *outWallCell = -1;
+    if (!state || !outWallCell || mirrorOrdinal < 0 ||
+        !m11_get_front_cell(state, &frontCell) ||
+        frontCell.championPortraitOrdinal != mirrorOrdinal ||
+        frontCell.championPortraitWallCell < 0 ||
+        frontCell.championPortraitWallCell > 3) {
+        return 0;
+    }
+    *outWallCell = frontCell.championPortraitWallCell;
+    return 1;
 }
 
 static int m11_get_front_cell(const M11_GameViewState* state, M11_ViewportCell* outCell) {
@@ -30331,12 +30905,14 @@ static int m11_fluxcage_present_on_square_f0224(M11_GameViewState* state,
                                                 int mapIndex,
                                                 int mapX,
                                                 int mapY) {
-    int count = 0;
-    if (!state) return 0;
-    (void)F0871_RUNTIME_CountFluxcagesOnSquare_Compat(&state->world.explosions,
-                                                      mapIndex, mapX, mapY,
-                                                      &count);
-    return (count > 0) ? 1 : 0;
+    int isFluxcage = 0;
+    if (!state || !state->world.dungeon || !state->world.things) return 0;
+    if (!dm1_v1_f0221_fluxcage_on_square_pc34(
+            state->world.dungeon, state->world.things, mapIndex, mapX, mapY,
+            &isFluxcage)) {
+        return 0;
+    }
+    return isFluxcage;
 }
 
 static int m11_lord_chaos_group_on_square_f0224(
@@ -30417,10 +30993,14 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
     struct ExplosionCreateInput_Compat eIn;
     struct TimelineEvent_Compat eFirst;
     struct TimelineEvent_Compat removeEvent;
+    struct ExplosionList_Compat explosionsBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    DM1_C15PoolReservationPc34 reservation;
     unsigned char square = 0;
+    int sourceFluxcage = 0;
     int squareType;
     int slot = -1;
-    if (!state) return 0;
+    if (!state || !state->world.dungeon || !state->world.things) return 0;
     if (m11_get_square_byte(&state->world, mapIndex, mapX, mapY, &square)) {
         squareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
         if (squareType == DUNGEON_ELEMENT_WALL ||
@@ -30442,8 +31022,25 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
     eIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
     eIn.ownerIndex = state->world.party.activeChampionIndex;
     eIn.creatorProjectileSlot = -1;
+    /* ReDMCSB PROJEXPL.C F0224 allocates C15 before publishing C24.  The
+     * runtime explosion is only a decoded consumer of that raw owner. */
+    if (!dm1_v1_c15_pool_reserve_pc34(state->world.things, &reservation) ||
+        !dm1_v1_c15_pool_initialize_and_link_pc34(
+            &reservation, state->world.dungeon, C050_EXPLOSION_FLUXCAGE,
+            255, 1, 0, mapIndex, mapX, mapY)) {
+        return 0;
+    }
+    if (!dm1_v1_f0221_fluxcage_on_square_pc34(
+            state->world.dungeon, state->world.things, mapIndex, mapX, mapY,
+            &sourceFluxcage) || !sourceFluxcage) {
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+        return 0;
+    }
+    explosionsBefore = state->world.explosions;
+    timelineBefore = state->world.timeline;
     if (!F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
                                        &slot, &eFirst)) {
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
         return 0;
     }
 
@@ -30458,8 +31055,11 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
     removeEvent.cell = EXPLOSION_CELL_CENTERED;
     removeEvent.aux0 = slot;
     removeEvent.aux1 = C050_EXPLOSION_FLUXCAGE;
+    removeEvent.aux2 = reservation.thing;
     if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &removeEvent)) {
-        (void)F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, slot);
+        state->world.explosions = explosionsBefore;
+        state->world.timeline = timelineBefore;
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
         return 0;
     }
     m11_schedule_fluxcage_danger_reaction_f0224(state, mapIndex, mapX, mapY);
@@ -36630,7 +37230,6 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
             snapshot.selected_row,
             state->dm2State.startup_title_animation_tick,
             &visual_capture_receipt) ||
-        !visual_capture_receipt.valid ||
         !visual_capture_receipt.title_menu_hud_visual_proof_ready ||
         !visual_capture_receipt.no_fallback_title_blit ||
         visual_capture_receipt.menu_command_count !=
@@ -36862,11 +37461,11 @@ static void m11_nexus_startup_exec_warning_background(
 {
     M11_NexusStartupDrawContext *context =
         (M11_NexusStartupDrawContext*)userdata;
-    Nexus_Framebuffer nexusFb;
-    const Nexus_TitleScreen *title;
-    int y;
-    int copyW;
-    int copyH;
+    Nexus_V1_LevelAuxSourceReceipt warning_source;
+    Nexus_V1_WarningDgt2M11PresentationReceipt warning_presentation;
+    uint8_t palette_rgb6[256][3];
+    uint8_t *warning_bytes;
+    int warning_size;
     if (!context || !context->framebuffer) {
         return;
     }
@@ -36874,49 +37473,26 @@ static void m11_nexus_startup_exec_warning_background(
         !command || command->kind != NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND) {
         return;
     }
-    title = context->state
-                ? (const Nexus_TitleScreen*)context->state->nexusTitleScreen
-                : NULL;
-    if (title && title->warning_loaded) {
-        nexus_fb_init(&nexusFb);
-        nexus_render_title(title,
-                           &nexusFb,
-                           context->state ? context->state->nexusState.title_frame
-                                          : 0);
-        copyW = context->framebufferWidth < NEXUS_FB_W
-                    ? context->framebufferWidth
-                    : NEXUS_FB_W;
-        copyH = context->framebufferHeight < NEXUS_FB_H
-                    ? context->framebufferHeight
-                    : NEXUS_FB_H;
-        for (y = 0; y < copyH; ++y) {
-            memcpy(&context->framebuffer[y * context->framebufferWidth],
-                   &nexusFb.color_buffer[y * NEXUS_FB_W],
-                   (size_t)copyW);
-        }
+    if (!context->state->nexusEngine ||
+        context->framebufferWidth != (int)NEXUS_V1_WARNING_M11_WIDTH ||
+        context->framebufferHeight != (int)NEXUS_V1_WARNING_M11_HEIGHT ||
+        nexus_v1_warning_bin_source_receipt(context->state->nexusEngine,
+                                            &warning_source) != 0 ||
+        !warning_source.canonical_hash_verified ||
+        !warning_source.exact_source_entry_observed) {
         return;
     }
-    if (context->state && context->state->nexusEngine) {
-        const Nexus_UI_Surface *warning =
-            &context->state->nexusEngine->ui.surfaces[NEXUS_SURFACE_WARNING];
-        if (warning->data && warning->w > 0 && warning->h > 0) {
-            nexus_ui_blit_surface(warning,
-                                  context->framebuffer,
-                                  context->framebufferWidth,
-                                  context->framebufferHeight,
-                                  0,
-                                  0);
-            return;
-        }
+    warning_size = 0;
+    warning_bytes = nexus_v1_read_file(context->state->nexusEngine,
+                                       "WARNING.BIN", &warning_size);
+    if (warning_bytes && warning_size > 0 &&
+        nexus_v1_warning_dgt2_m11_present(warning_bytes, (size_t)warning_size,
+            context->framebuffer,
+            (size_t)context->framebufferWidth * context->framebufferHeight,
+            palette_rgb6, &warning_presentation)) {
+        (void)M11_Render_SetIndexedPaletteRgb6(palette_rgb6);
     }
-    m11_fill_rect(context->framebuffer,
-                  context->framebufferWidth,
-                  context->framebufferHeight,
-                  0,
-                  0,
-                  context->framebufferWidth,
-                  context->framebufferHeight,
-                  M11_COLOR_BLACK);
+    free(warning_bytes);
 }
 
 static void m11_nexus_startup_exec_boot_title_frame(
@@ -41424,6 +42000,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         Theron_V1_Viewport* viewport =
             (Theron_V1_Viewport*)state->theronViewport;
         TrAssetBundle* assets = (TrAssetBundle*)state->theronAssets;
+        if (state->theronState.dungeon_capture_required) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 18, "TRACK02 CAPTURE REQUIRED", &g_text_title);
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
             m11_theron_draw_startup_screen(state,

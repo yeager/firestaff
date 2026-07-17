@@ -31,6 +31,8 @@ typedef struct {
     uint64_t output_fnv1a64;
     uint32_t vdp1_texture_source_address;
     uint32_t vdp1_texture_source_bytes;
+    uint64_t last_output_write_sequence;
+    uint64_t vdp1_command_sequence;
     int complete_sh2_input_reads_bound;
     int complete_output_range_bound;
     int subsequent_vdp1_source_command_bound;

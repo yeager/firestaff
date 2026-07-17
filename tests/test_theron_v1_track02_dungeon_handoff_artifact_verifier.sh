@@ -4,7 +4,7 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 script="$repo/scripts/verify_theron_track02_dungeon_handoff_artifact.sh"
 [[ -x "$script" ]] || { echo 'FAIL: artifact verifier is not executable' >&2; exit 1; }
 bash -n "$script"
-for fact in 'THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1' 'palette_identity=' 'bitmap_identity=' 'destination_identity=' 'never reads a payload window'; do
+for fact in 'THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1' 'capture_target_plan_fnv1a=' 'palette_identity=' 'bitmap_identity=' 'destination_identity=' 'never reads a payload window'; do
     grep -Fq "$fact" "$script" || { echo "FAIL: verifier lacks $fact" >&2; exit 1; }
 done
 [[ $("$script") == SKIP:* ]] || { echo 'FAIL: missing artifact inputs must skip safely' >&2; exit 1; }

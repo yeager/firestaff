@@ -19,6 +19,7 @@
 #include "theron_v1_track02_sector_record_corpus_discovery.h"
 #include "theron_v1_track02_level_object_descriptor_capture_intake.h"
 #include "theron_v1_track02_dungeon_handoff_capture_plan_admission.h"
+#include "theron_v1_track02_handoff_artifact_corpus.h"
 #include "theron_v1_track02_later_route_candidate_intake.h"
 #include "theron_v1_track02_later_route_candidate_campaign_index.h"
 
@@ -288,6 +289,8 @@ typedef struct {
     int theronTraceBundleBound;
     Theron_V1Track02SectorRecordCorpusDiscoveryReceipt theronSectorRecordCorpus;
     int theronSectorRecordCorpusBound;
+    Theron_V1Track02HandoffArtifactCorpusReceipt theronHandoffArtifactCorpus;
+    int theronHandoffArtifactCorpusBound;
     Theron_V1Track02DungeonCapturePlanAdmissionReceipt theronDungeonCapturePlan;
     int theronDungeonCapturePlanBound;
     Theron_V1Track02LaterRouteCandidateReceipt theronLaterRouteCandidate;
@@ -555,6 +558,8 @@ typedef struct M12_StartupMenuState {
     int theronTraceBundleBound;
     Theron_V1Track02SectorRecordCorpusDiscoveryReceipt theronSectorRecordCorpus;
     int theronSectorRecordCorpusBound;
+    Theron_V1Track02HandoffArtifactCorpusReceipt theronHandoffArtifactCorpus;
+    int theronHandoffArtifactCorpusBound;
     Theron_V1Track02DungeonCapturePlanAdmissionReceipt theronDungeonCapturePlan;
     int theronDungeonCapturePlanBound;
     Theron_V1Track02LaterRouteCandidateReceipt theronLaterRouteCandidate;
@@ -707,6 +712,12 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
 int M12_StartupMenu_ValidateTheronCampaignLaunchIntent(
     const M12_StartupMenuState* state,
     const M12_LaunchIntent* intent);
+/* Accepts a current direct Track 02 capture plan before the later original
+ * trace/artifact evidence exists. This is a no-draw capture-required launch,
+ * never a gameplay or graphics admission. */
+int M12_StartupMenu_ValidateTheronCampaignCaptureRequiredIntent(
+    const M12_StartupMenuState* state,
+    const M12_LaunchIntent* intent);
 int M12_StartupMenu_BindTheronSrmCampaignReplay(
     M12_StartupMenuState* state, const Theron_V1SrmCampaignReplayReceipt* receipt);
 int M12_StartupMenu_BindTheronSrmLaunchDiscovery(
@@ -723,6 +734,18 @@ int M12_StartupMenu_BindTheronLevelObjectDescriptorCaptureIntake(
 int M12_StartupMenu_BindTheronDungeonCapturePlan(
     M12_StartupMenuState* state,
     const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* receipt);
+int M12_StartupMenu_BindTheronHandoffArtifactCorpus(M12_StartupMenuState* state,
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* receipt);
+/* Operator-only direct-corpus ingress.  This is the only M12 path that reads
+ * an external handoff bundle: it rechecks the current direct campaign media,
+ * trace identity, and capture plan before retaining opaque no-draw evidence.
+ * A missing or invalid corpus clears any older handoff receipt. */
+int M12_StartupMenu_ImportTheronHandoffArtifactCorpus(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02ExternalCaptureReceipt* handoff,
+    const Theron_V1Track02HandoffArtifactCorpusCandidate* candidates,
+    unsigned int candidateCount,
+    Theron_V1Track02HandoffArtifactCorpusReceipt* outReceipt);
 int M12_StartupMenu_BindTheronLaterRouteCandidate(
     M12_StartupMenuState* state,
     const Theron_V1Track02LaterRouteCandidateReceipt* receipt);

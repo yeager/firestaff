@@ -1,0 +1,4 @@
+#include "dm2_v1_gdat_wall_b073_raw_intake.h"
+#include <stdio.h>
+#include <string.h>
+int main(void){DM2_V1_GdatB073InputReceipt b={0};DM2_V1_GdatWallM11CommandPlan w={0};DM2_V1_GdatWallB073RawIntake o;uint8_t p,r[2],g[2],l[2];b.valid=b.no_draw=1;b.identity_hash=1;b.input.palette_identity=3;b.input.raw7_identity=4;b.input.lookup_identity=5;b.input.traversal_identity=6;b.input.cache_owned=1;b.input.cache_allocation=0x100;w.valid=1;w.command_count=1;w.command_hash=2;w.commands[0].pixels=&p;w.commands[0].palette_hash=3;w.commands[0].raw_hash=w.commands[0].decoded_hash=w.commands[0].material_receipt_hash=1;int ok=dm2_v1_gdat_wall_b073_raw_intake_build(&b,&w,0,r,2,4,g,2,6,l,2,5,0x100,7,&o)&&o.valid&&o.no_draw&&o.raw7_bytes==r;ok&=!dm2_v1_gdat_wall_b073_raw_intake_build(&b,&w,0,r,2,4,g,2,6,l,2,8,0x100,7,&o);printf("%s dm2_v1_gdat_wall_b073_raw_intake\n",ok?"PASS":"FAIL");return ok?0:1;}

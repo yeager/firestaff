@@ -37,10 +37,16 @@ int main(void)
             "/definitely/not/a/theron-media-root",
             "f23601102138f87c33025877767ebf76", 2, &media) ||
         media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_UNAVAILABLE ||
+        media.failure_reason != THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE ||
+        strcmp(theron_v1_track02_campaign_media_failure_reason_id(&media),
+               "path_unavailable") ||
         media.candidate_count || media.no_media_extracted) return 1;
     if (!theron_v1_track02_campaign_media_discover(
             ".", "00000000000000000000000000000000", 1, &media) ||
-        media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED) return 2;
+        media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED ||
+        media.failure_reason != THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH ||
+        strcmp(theron_v1_track02_campaign_media_failure_reason_id(&media),
+               "expected_hash_mismatch")) return 2;
 
     fixture(&media, &plan);
     if (!theron_v1_track02_campaign_media_bind_capture_plan(&media, &plan)) return 3;

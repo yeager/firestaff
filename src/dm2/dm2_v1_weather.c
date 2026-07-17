@@ -172,6 +172,38 @@ int dm2_v1_weather_set_timer_weather(DM2_V1_WeatherState *state,
     return due ? 1 : 0;
 }
 
+int dm2_v1_weather_timer_receipt_from_source_receipts(
+    const DM2_V1_SetTimerWeatherReceipt *timer,
+    const DM2_V1_Weather3df70037Receipt *transition,
+    DM2_V1_WeatherTimerReceipt *out_receipt)
+{
+    DM2_V1_WeatherTimerReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!timer || !transition || !timer->valid || !timer->outdoor ||
+        !timer->due_now || !timer->scheduled || timer->receipt_hash == 0u ||
+        !transition->valid || !transition->transitioned ||
+        transition->source_receipt_hash != timer->receipt_hash) {
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_set_timer_weather = 1;
+    receipt.source_weather_3df7_0037 = 1;
+    receipt.outdoor = 1;
+    receipt.due = 1;
+    receipt.tick_count = timer->current_tick;
+    receipt.interval_ticks = DM2_WEATHER_TIMER_INTERVAL_TICKS;
+    receipt.weather_before = transition->previous_weather;
+    receipt.weather_after = transition->next_weather;
+    receipt.intensity_after = transition->next_intensity;
+    receipt.seed_before = transition->previous_seed;
+    receipt.seed_after = transition->next_seed;
+    dm2_v1_weather_mix_timer_receipt(&receipt);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes) {
     if (!state) return;
     if (minutes < 0) return;

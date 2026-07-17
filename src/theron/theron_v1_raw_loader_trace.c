@@ -2899,6 +2899,9 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->later_caller_opcode = (uint8_t)caller_opcode;
     out->later_caller_target = (uint16_t)caller_target;
     out->later_caller_control_verified = 1;
+    out->later_record_cl = (uint8_t)cl;
+    out->later_record_dl = (uint8_t)dl;
+    out->later_record_ch = (uint8_t)ch;
     out->sector_count = (uint8_t)read_count;
     out->observed_raw_sector_lba = (int)lba;
     out->observed_raw_sector_checksum = expected_sector_checksum;

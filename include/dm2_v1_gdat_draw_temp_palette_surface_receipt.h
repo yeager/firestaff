@@ -1,0 +1,8 @@
+#ifndef FIRESTAFF_DM2_V1_GDAT_DRAW_TEMP_PALETTE_SURFACE_RECEIPT_H
+#define FIRESTAFF_DM2_V1_GDAT_DRAW_TEMP_PALETTE_SURFACE_RECEIPT_H
+#include "dm2_v1_gdat_b073_input_receipt.h"
+#include "dm2_v1_gdat_wall_tile_draw_temp_receipt.h"
+#include "dm2_v1_viewport_renderer.h"
+typedef struct { int valid,no_draw; uint32_t b073_hash,draw_temp_hash,identity_hash; DM2_V1_ViewportSurfaceSnapshot surface; } DM2_V1_GdatDrawTempPaletteSurfaceReceipt;
+int dm2_v1_gdat_draw_temp_palette_surface_receipt_build(const DM2_V1_GdatB073InputReceipt *,const DM2_V1_GdatWallTileDrawTempReceipt *,const DM2_V1_ViewportState *,DM2_V1_GdatDrawTempPaletteSurfaceReceipt *);
+#endif

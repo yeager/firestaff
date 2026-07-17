@@ -36,6 +36,8 @@ typedef struct {
     int runtime_admission_consumed;
     int mednafen_trace_source_verified;
     int mednafen_event_log_verified;
+    int capture_target_plan_verified;
+    int positive_handoff_capture_required;
     Theron_Track02Variant track02_variant;
     char track02_md5[33];
     char emulator_path[THERON_V1_TRACK02_EXTERNAL_CAPTURE_PATH_CAPACITY];
@@ -44,6 +46,7 @@ typedef struct {
     char mednafen_trace_source_path[THERON_V1_TRACK02_EXTERNAL_CAPTURE_PATH_CAPACITY];
     char mednafen_trace_source_md5[33];
     char mednafen_event_log_md5[33];
+    uint32_t capture_target_plan_identity;
 } Theron_V1Track02ExternalCaptureReceipt;
 
 /* Verifies an explicit emulator path plus CUE/BIN media against the caller's
@@ -81,6 +84,21 @@ int theron_v1_track02_external_capture_validate_huc6280_log(
 int theron_v1_track02_external_capture_validate_mednafen_trace(
     const Theron_V1Track02ExternalCaptureRequest *request,
     const Theron_V1Track02MednafenTraceConvertRequest *trace_request,
+    const Theron_V1Track02ProvenanceRuntimeConsumerReceipt *provenance,
+    const Theron_V1Track02LevelObjectTracePreparationReceipt *preparation,
+    Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt *out_admission,
+    Theron_V1Track02ExternalCaptureReceipt *out);
+
+/* Handoff-only operator path. It first binds one direct MODE1/2352 CUE/BIN
+ * intake and one complete opaque capture plan to the requested plan FNV, then
+ * converts only the explicitly MD5-bound observed Mednafen trace. A ready
+ * receipt still names capture-required/no-draw evidence; it is not a decoder
+ * or presentation admission. */
+int theron_v1_track02_external_capture_validate_mednafen_handoff_plan(
+    const Theron_V1Track02ExternalCaptureRequest *request,
+    const Theron_V1Track02MednafenTraceConvertRequest *trace_request,
+    const Theron_V1Track02CaptureTargetPlan *plan,
+    uint32_t expected_capture_target_plan_identity,
     const Theron_V1Track02ProvenanceRuntimeConsumerReceipt *provenance,
     const Theron_V1Track02LevelObjectTracePreparationReceipt *preparation,
     Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt *out_admission,
