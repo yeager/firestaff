@@ -1191,6 +1191,7 @@ typedef struct {
 typedef struct {
     uint32_t location;
     uint32_t flags;
+    uint32_t before[8];
 } CSB_V1_CSBWinDSAPendingExCellWrite;
 
 typedef struct {
@@ -2432,7 +2433,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         /* CSBWin DSA.cpp:3298-3328 pops the location then the eight-bit
          * flag payload and delegates the DB11 transaction to EXPOOL::Write.
          * The caller-owned runtime candidate performs that full write. */
-        if (!context->set_excell_flags ||
+        if (!context->get_excell_flags || !context->set_excell_flags ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             *pending_excell_write_count >=
@@ -2441,6 +2442,11 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         pending_excell_writes[*pending_excell_write_count].location = v;
         pending_excell_writes[*pending_excell_write_count].flags = w;
+        if (context->get_excell_flags(context->excell_user, v,
+                                      pending_excell_writes[
+                                          *pending_excell_write_count].before) <= 0) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
         ++*pending_excell_write_count;
         break;
     case 46u: /* STKOP_ChPoss */
@@ -3564,11 +3570,30 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         }
     }
     for (i = 0; i < pending_excell_write_count; ++i) {
+        uint32_t after_words[8];
+        uint32_t flags = pending_excell_writes[i].flags;
+        unsigned int word;
+
         if (!context->set_excell_flags(
                 context->excell_user, pending_excell_writes[i].location,
                 pending_excell_writes[i].flags)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        for (word = 0u; word < 8u; ++word) {
+            const uint32_t mask = 1u <<
+                (pending_excell_writes[i].location & 31u);
+            after_words[word] = pending_excell_writes[i].before[word] & ~mask;
+            if ((flags & 1u) != 0u) after_words[word] |= mask;
+            flags >>= 1;
+        }
+        ++candidate.excell_store_count;
+        candidate.last_excell_store_location =
+            pending_excell_writes[i].location;
+        memcpy(candidate.last_excell_store_before,
+               pending_excell_writes[i].before,
+               sizeof(candidate.last_excell_store_before));
+        memcpy(candidate.last_excell_store_after, after_words,
+               sizeof(candidate.last_excell_store_after));
     }
     for (i = 0; i < pending_generator_write_count; ++i) {
         if ((context->commit_generator_delay &&
@@ -3583,6 +3608,15 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                   pending_generator_writes[i].delay)))) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.generator_delay_store_count;
+        candidate.last_generator_delay_location =
+            pending_generator_writes[i].location;
+        candidate.last_generator_delay_before =
+            pending_generator_writes[i].expected_delay;
+        candidate.last_generator_delay_after =
+            pending_generator_writes[i].delay;
+        candidate.last_generator_delay_has_generator =
+            pending_generator_writes[i].has_generator;
     }
     for (i = 0; i < pending_monster_write_count; ++i) {
         if (!context->set_monster_info(

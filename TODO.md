@@ -327,6 +327,13 @@
     missing ownership and a later unknown action reject without publication.
     This is strictly the existing type-6/type-0 CSBWin chain rule; it does not
     infer a generator, event, queue entry or timer behavior.
+  - 2026-07-17 update: a committed `STKOP_GeneratorDelayStore` receipt now
+    records its DB3 location, exact delay byte before/after, and whether the
+    source-selected owner was the type-6 generator rather than the defined
+    type-0 fallback. The existing restored-dispatch path may attach its saved
+    TimerQueue/TIMER scope only after this receipt completes. Missing/stale
+    DB3 ownership, queue scope, or an unsupported later action clears the
+    receipt; no generator, timer, queue entry, or replacement save is made.
   - 2026-07-17 update: `STKOP_MissileInfoStore` now carries the original
     DB14 range/damage and owning TIMER-direction snapshot to its commit
     callback. Candidate publication re-reads the same DB14/TIMER pair and
@@ -346,6 +353,13 @@
     position byte before/after the direction write. Any missing, duplicate,
     reordered, stale, or cross-profile TIMER owner rejects the whole DB14
     commit before Dungeon bytes or a runtime receipt publish.
+  - 2026-07-17 update: `STKOP_StoreExCellFlg` now requires the existing
+    authenticated eight-word EXPOOL cell-flags image before staging its
+    source flag byte. Its committed receipt retains location plus all eight
+    words before/after replacement; missing/stale EXPOOL ownership or a later
+    invalid opcode rejects before tail publication. The saved-timer scope is
+    still attached only by the existing verified restored-dispatch receipt;
+    no new timer, queue, or EXPOOL allocation path was added.
   - 2026-07-17 update: `STKOP_ModifyMessage` now publishes its clamped
     SET/CLEAR/TOGGLE operands only in the authenticated runtime execution
     receipt. A restored `ProcessTimers` path supplies the source 0/1/2 map
@@ -5975,6 +5989,16 @@ metadata. This remains metadata-only and cannot infer routes or payloads.
 2026-07-17 later-route operator attestation import: a direct regular external
 label may match only current record/destination/epoch candidate metadata and
 returns CAPTURE_REQUIRED only. It is not a route ID and cannot promote runtime.
+2026-07-17 later-route batch attestation import: a closed batch file now maps
+only record, destination identity, and epoch onto current opaque candidates.
+It restores metadata from the authoritative index, deduplicates deterministically,
+and rejects collisions, missing candidates, and epoch/replay drift. Output is
+CAPTURE_REQUIRED only with no route ID, payload, or promotion.
+2026-07-17 SRM operator attestation portability: the direct-file gate now uses
+Win32 file attributes to reject directories and reparse points, `_fullpath`
+for canonical paths, and separator-neutral manifest splitting on Windows;
+POSIX retains lstat symlink rejection. Both remain strict regular-file-only,
+fail-closed paths with no save-content interpretation.
 2026-07-14 complete-sector witness update: a selector-resolved later `$e009`
 record now needs one provenance-marked Mednafen SCSI sidecar row whose complete
 2352-byte sector and exact leading 32-byte span both match the hash-verified
@@ -13067,8 +13091,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   M12/M11 now exposes that route as capture-required until an operator imports
   an exact `NXSLSC01` receipt. The local Mednafen plan binds BIOS region/SHA-256,
   disc SHA-256, and every route FNV without copying media or producing a trace.
-  A stale task/SAL/MAP/driver/card/package/epoch identity rejects resume; an
-  accepted receipt still cannot dispatch commands, decode audio, or draw.
+  A local artifact preflight now independently requires the fixed header,
+  task/SAL/MAP/SDDRVS/card/package/epoch identities, and exact end-bounded
+  opaque payload FNV before M12/M11 can resume import. A stale or mutated
+  artifact rejects; an accepted receipt still cannot dispatch commands, decode
+  audio, play sound, or draw. A real retail `NXSLSC01` capture and original
+  command/driver semantics remain required.
 
 - Nexus cross-domain Saturn capture import remains evidence-only: one complete
   Mednafen campaign must bind the PRS3 placement, Structure1F target, SLEV
@@ -13298,6 +13326,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the complete branch is intentionally no-draw.
 
 - 2026-07-17 DM2 `TRIM_BLIT_RECT` wall-clip admission: `SKULLWIN/c_gui_vp.cpp:570-573,611-658` now has a DM2-owned no-draw receipt that binds the selected D1/D2 GRAPHICSSET trim word, recomputed authenticated wall material identity and current viewport-surface snapshot to the exact `(x,y,right,bottom)` clip margins. Missing trim rows, material/palette drift and invalid surface bounds reject. Applying this clip to a wall blit remains closed pending a source-owned live caller hand-off.
+  - 2026-07-17 live `DRAW_WALL` update: the receipt now binds one existing
+    `QUERY_TEMP_PICST` wall command to the same recomputed material hash,
+    M11 wall-composition identity and atomically identical owner snapshots.
+    Only the source's `0x40` normal scale, RAW4 `0x2be + cell`, movement
+    offset and source flip are recorded. This gate remains no-draw; it does
+    not introduce a second wall renderer.
 
 - 2026-07-17 DM2 pit-roof viewport admission: `c_gui_vp.cpp:118-206` now
   source-gates cells 1..8 on the exact roof flag, `LOCATE_OTHER_LEVEL`
@@ -13360,10 +13394,3 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     surface checks; there is no reload or re-decode. Every crop, scale,
     vertical/combined flip, changed source index, composition/surface drift,
     or incomplete receipt remains no-write.
-
-- 2026-07-17 DM1 GROUP LoS follow-up: M11 currently treats source C3/C4
-  doors as opaque while evaluating the authenticated F0197-F0200 route. The
-  compact M11 DUNGEON boundary does not yet retain the original DoorInfo
-  `ATTR_CREATURES_CAN_SEE_THROUGH` bit; add that authenticated receipt before
-  admitting its exceptional see-through case. Do not infer it from decoded
-  door state or render/mutate through an unknown door record.

@@ -179,6 +179,7 @@ int main(void)
     Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt task_sal;
     Nexus_V1_LauncherSlevTaskSalCaptureBinding task_sal_binding;
     Nexus_V1_LauncherM11SlevSalCaptureImportReceipt script_capture;
+    Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt script_capture_preflight;
     Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt script_capture_route;
     Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt script_capture_resume;
     uint8_t sal_bytes[] = { 'd','s','p','0','1','.','E','X', 1,2,3,4,5,6,7,8 };
@@ -295,6 +296,17 @@ int main(void)
     write_be64(capture_bytes, 80U,
                fnv1a64(opaque_capture_payload, sizeof(opaque_capture_payload)));
     write_be64(capture_bytes, 88U, task_sal.task.task_body.source_fnv1a64);
+    check(nexus_v1_launcher_verify_m11_slev_sal_local_artifact(
+              &task_sal, capture_bytes, sizeof(capture_bytes),
+              &script_capture_preflight) && script_capture_preflight.valid &&
+          script_capture_preflight.route_bound && script_capture_preflight.task_bound &&
+          script_capture_preflight.sal_bound && script_capture_preflight.map_bound &&
+          script_capture_preflight.sddrvs_bound &&
+          script_capture_preflight.payload_bounds_bound &&
+          script_capture_preflight.payload_hash_bound &&
+          script_capture_preflight.payload_opaque &&
+          script_capture_preflight.no_draw_only && script_capture_preflight.no_op_only,
+          "local NXSLSC01 preflight accepts only exact opaque route evidence");
     check(nexus_v1_launcher_import_m11_slev_sal_capture(
               &engine, &assets, &task_sal, capture_bytes, sizeof(capture_bytes),
               &script_capture) && script_capture.valid && script_capture.route_bound &&
@@ -337,6 +349,11 @@ int main(void)
           "M12/M11 rejects stale capture-route identities before resume");
     script_capture_route.startup.map_table_fnv1a64 ^= UINT64_C(1);
     capture_bytes[56U] ^= 1U;
+    check(!nexus_v1_launcher_verify_m11_slev_sal_local_artifact(
+              &task_sal, capture_bytes, sizeof(capture_bytes),
+              &script_capture_preflight) && !script_capture_preflight.valid &&
+          script_capture_preflight.no_draw_only && script_capture_preflight.no_op_only,
+          "local NXSLSC01 preflight rejects a drifted MAP identity");
     check(!nexus_v1_launcher_import_m11_slev_sal_capture(
               &engine, &assets, &task_sal, capture_bytes, sizeof(capture_bytes),
               &script_capture) && !script_capture.valid && script_capture.no_op_only,
