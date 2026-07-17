@@ -19,7 +19,7 @@
   "blocker": "unified original PC/I34E transcript incomplete; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
   "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "c857febe309b9a28531a7fe1eaa3e6a69069f439",
+  "head": "47a6b64a1e9573b050b469abfeb9faa39ef0811b",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -194,5 +194,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_UNIFIED_RUNTIME_TRANSCRIPT_INCOMPLETE",
-  "timestampUtc": "2026-07-16T19:11:57.191687+00:00"
+  "timestampUtc": "2026-07-17T03:09:58.243233+00:00"
 }

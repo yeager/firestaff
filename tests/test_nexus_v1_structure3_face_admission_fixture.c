@@ -4,6 +4,12 @@
 #include "nexus_v1_structure3_face_index_prefix_admission.h"
 #include "nexus_v1_structure3_first_region_row_admission.h"
 #include "nexus_v1_structure3_second_region_row_admission.h"
+#include "nexus_v1_structure3_third_region_row_admission.h"
+#include "nexus_v1_structure1f_wall_decoration_admission.h"
+#include "nexus_v1_structure1f_wall_decoration_structure3_row_admission.h"
+#include "nexus_v1_structure1f_alcove_admission.h"
+#include "nexus_v1_structure1f_alcove_structure3_row_admission.h"
+#include "nexus_v1_structure1f_payload_owner_admission.h"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -58,7 +64,7 @@ static int rewrite_identity(const char *path, const uint8_t *data, size_t size,
 
 int main(void)
 {
-    uint8_t data[128] = {0};
+    uint8_t data[192] = {0};
     char path[] = "/tmp/firestaff-nexus-s3-face-XXXXXX";
     Nexus_V1_LevCorpusDirectLevelIdentity identity;
     Nexus_V1_Structure3TargetAdmissionReceipt target;
@@ -71,6 +77,14 @@ int main(void)
     Nexus_V1_Structure3FaceIndexPrefixAdmissionReceipt index_prefix;
     Nexus_V1_Structure3FirstRegionRowAdmissionReceipt first_region_row;
     Nexus_V1_Structure3SecondRegionRowAdmissionReceipt second_region_row;
+    Nexus_V1_Structure3ThirdRegionRowAdmissionReceipt third_region_row;
+    Nexus_V1_Structure1FDirectoryAdmissionReceipt directory;
+    Nexus_V1_Structure1FWallDecorationAdmissionReceipt wall_decoration;
+    Nexus_V1_Structure1FWallDecorationStructure3RowAdmissionReceipt wall_row;
+    Nexus_V1_Structure1FAlcoveAdmissionReceipt alcove;
+    Nexus_V1_Structure1FAlcoveStructure3RowAdmissionReceipt alcove_row;
+    Nexus_V1_Structure1FPayloadOwnerAdmissionReceipt floor_payload;
+    Nexus_V1_Structure1FPayloadOwnerAdmissionReceipt sensor_payload;
     int fd = mkstemp(path);
     int result = 1;
 
@@ -87,6 +101,22 @@ int main(void)
     data[96] = 0x41U; data[97] = 0x7eU;
     write_be16(data + 98U, 0x00a5U);
     memset(data + 100U, 0xc3, 12U);
+    data[112U] = 0x21U;
+    data[113U] = 0U;
+    write_be16(data + 114U, 0x0042U);
+    memset(data + 116U, 0xd4, 8U);
+    data[124U] = 0x20U;
+    data[125U] = 0U;
+    write_be16(data + 126U, 0x0123U);
+    memset(data + 128U, 0xe5, 8U);
+    data[136U] = 0x11U;
+    data[137U] = 7U;
+    data[138U] = 9U;
+    memset(data + 139U, 0xf1, 9U);
+    data[148U] = 0x12U;
+    data[149U] = 3U;
+    data[150U] = 60U;
+    memset(data + 151U, 0xf2, 13U);
     CHECK(write(fd, data, sizeof(data)) == (ssize_t)sizeof(data));
     CHECK(close(fd) == 0); fd = -1;
     memset(&identity, 0, sizeof(identity));
@@ -100,6 +130,49 @@ int main(void)
     target.level_index = identity.level_index; target.package_fnv1a64 = identity.fnv1a64;
     target.target_length = 112U; target.target_fnv1a64 = fnv1a64(data, target.target_length);
     CHECK(nexus_v1_structure3_entry_admit(&identity, data, sizeof(data), &target, &entry));
+    memset(&directory, 0, sizeof(directory));
+    directory.valid = directory.direct_identity_bound = directory.parser_layout_bound = 1;
+    directory.family_directory_bound = directory.no_draw_only = 1;
+    directory.level_index = identity.level_index;
+    directory.package_fnv1a64 = identity.fnv1a64;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS].source_tag = 0x21U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS].record_offset = 112U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS].record_length = 12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS].record_count = 1U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS].record_size = 12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS].record_fnv1a64 =
+        fnv1a64(data + 112U, 12U);
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES].source_tag = 0x20U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES].record_offset = 124U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES].record_length = 12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES].record_count = 1U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES].record_size = 12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_ALCOVES].record_fnv1a64 =
+        fnv1a64(data + 124U, 12U);
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS].source_tag = 0x11U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS].record_offset = 136U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS].record_length = 12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS].record_count = 1U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS].record_size = 12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS].record_fnv1a64 =
+        fnv1a64(data + 136U, 12U);
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS].source_tag = 0x12U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS].record_offset = 148U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS].record_length = 16U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS].record_count = 1U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS].record_size = 16U;
+    directory.families[NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS].record_fnv1a64 =
+        fnv1a64(data + 148U, 16U);
+    CHECK(nexus_v1_structure1f_wall_decoration_admit(
+              &identity, data, sizeof(data), &directory, 0U, &wall_decoration));
+    CHECK(nexus_v1_structure1f_alcove_admit(
+              &identity, data, sizeof(data), &directory, 0U, &alcove));
+    CHECK(nexus_v1_structure1f_payload_owner_admit(
+              &identity, data, sizeof(data), &directory,
+              NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS, 0U, &floor_payload));
+    CHECK(nexus_v1_structure1f_payload_owner_admit(
+              &identity, data, sizeof(data), &directory,
+              NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS, 0U, &sensor_payload));
     CHECK(nexus_v1_structure3_face_admit(&identity, data, sizeof(data), &entry, 0U, &receipt));
     CHECK(nexus_v1_structure3_normal_admit(
               &identity, data, sizeof(data), &entry, &receipt, &normal));
@@ -115,6 +188,14 @@ int main(void)
               &identity, data, sizeof(data), &entry, 1U, &first_region_row));
     CHECK(nexus_v1_structure3_second_region_row_admit(
               &identity, data, sizeof(data), &entry, 0U, &second_region_row));
+    CHECK(nexus_v1_structure1f_wall_decoration_structure3_row_admit(
+              &identity, data, sizeof(data), &wall_decoration, &entry, &receipt,
+              &second_region_row, &wall_row));
+    CHECK(nexus_v1_structure1f_alcove_structure3_row_admit(
+              &identity, data, sizeof(data), &alcove, &entry, &receipt,
+              &second_region_row, &alcove_row));
+    CHECK(nexus_v1_structure3_third_region_row_admit(
+              &identity, data, sizeof(data), &entry, 0U, &third_region_row));
     CHECK(receipt.valid && receipt.vertex_indexes[0] == 0U && receipt.vertex_indexes[1] == 1U &&
           receipt.vertex_indexes[2] == 2U && receipt.vertex_indexes[3] == 2U &&
           receipt.raw_control == 0x41U && receipt.raw_auxiliary == 0x7eU &&
@@ -163,9 +244,63 @@ int main(void)
           !second_region_row.geometry_semantics_permitted &&
           !second_region_row.material_semantics_permitted &&
           !second_region_row.texture_semantics_permitted && !second_region_row.draw_permitted);
+    CHECK(wall_row.valid && wall_row.raw_selector == 0U &&
+          wall_row.structure1f_record_offset == 112U &&
+          wall_row.structure3_row_ordinal == 0U && wall_row.structure3_row_offset == 88U &&
+          !wall_row.face_semantics_permitted && !wall_row.topology_semantics_permitted &&
+          !wall_row.geometry_semantics_permitted && !wall_row.material_semantics_permitted &&
+          !wall_row.texture_semantics_permitted && !wall_row.draw_permitted);
+    wall_decoration.raw_face_selector = 1U;
+    CHECK(!nexus_v1_structure1f_wall_decoration_structure3_row_admit(
+              &identity, data, sizeof(data), &wall_decoration, &entry, &receipt,
+              &second_region_row, &wall_row) && !wall_row.valid);
+    wall_decoration.raw_face_selector = 0U;
+    CHECK(alcove_row.valid && alcove_row.raw_selector == 0U &&
+          alcove_row.structure1f_record_offset == 124U &&
+          alcove_row.structure3_row_ordinal == 0U && alcove_row.structure3_row_offset == 88U &&
+          !alcove_row.portal_semantics_permitted && !alcove_row.face_semantics_permitted &&
+          !alcove_row.topology_semantics_permitted && !alcove_row.geometry_semantics_permitted &&
+          !alcove_row.material_semantics_permitted && !alcove_row.texture_semantics_permitted &&
+          !alcove_row.draw_permitted);
+    alcove.raw_face_selector = 1U;
+    CHECK(!nexus_v1_structure1f_alcove_structure3_row_admit(
+              &identity, data, sizeof(data), &alcove, &entry, &receipt,
+              &second_region_row, &alcove_row) && !alcove_row.valid);
+    alcove.raw_face_selector = 0U;
+    CHECK(floor_payload.valid && floor_payload.source_tag == 0x11U &&
+          floor_payload.record_offset == 136U && floor_payload.payload_offset == 139U &&
+          floor_payload.payload_length == 9U &&
+          !memcmp(floor_payload.raw_payload, data + 139U, floor_payload.payload_length) &&
+          !floor_payload.structure3_relation_permitted && !floor_payload.object_semantics_permitted &&
+          !floor_payload.sensor_semantics_permitted && !floor_payload.placement_semantics_permitted &&
+          !floor_payload.geometry_semantics_permitted && !floor_payload.material_semantics_permitted &&
+          !floor_payload.texture_semantics_permitted && !floor_payload.draw_permitted);
+    CHECK(sensor_payload.valid && sensor_payload.source_tag == 0x12U &&
+          sensor_payload.record_offset == 148U && sensor_payload.payload_offset == 151U &&
+          sensor_payload.payload_length == 13U &&
+          !memcmp(sensor_payload.raw_payload, data + 151U, sensor_payload.payload_length) &&
+          !sensor_payload.structure3_relation_permitted && !sensor_payload.object_semantics_permitted &&
+          !sensor_payload.sensor_semantics_permitted && !sensor_payload.placement_semantics_permitted &&
+          !sensor_payload.geometry_semantics_permitted && !sensor_payload.material_semantics_permitted &&
+          !sensor_payload.texture_semantics_permitted && !sensor_payload.draw_permitted);
+    CHECK(!nexus_v1_structure1f_payload_owner_admit(
+              &identity, data, sizeof(data), &directory, 0U, 0U, &floor_payload) &&
+          !floor_payload.valid);
     CHECK(!nexus_v1_structure3_second_region_row_admit(
               &identity, data, sizeof(data), &entry, 1U, &second_region_row) &&
           !second_region_row.valid);
+    CHECK(third_region_row.valid && third_region_row.row_ordinal == 0U &&
+          third_region_row.row_offset == 100U &&
+          !memcmp(third_region_row.raw_bytes, data + 100U,
+                  sizeof(third_region_row.raw_bytes)) &&
+          !third_region_row.vector_semantics_permitted &&
+          !third_region_row.lighting_semantics_permitted &&
+          !third_region_row.geometry_semantics_permitted &&
+          !third_region_row.material_semantics_permitted &&
+          !third_region_row.texture_semantics_permitted && !third_region_row.draw_permitted);
+    CHECK(!nexus_v1_structure3_third_region_row_admit(
+              &identity, data, sizeof(data), &entry, 1U, &third_region_row) &&
+          !third_region_row.valid);
     CHECK(!nexus_v1_structure3_face_vertex_admit(
               &identity, data, sizeof(data), &entry, &receipt, 4U, &vertex) && !vertex.valid);
     CHECK(!nexus_v1_structure3_face_admit(&identity, data, sizeof(data), &entry, 1U, &receipt) &&

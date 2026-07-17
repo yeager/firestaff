@@ -4,6 +4,7 @@
 
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_c14_layout_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
 
 static int expect(int condition, const char* label)
@@ -459,6 +460,8 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
         struct TickResult_Compat result;
         struct TimelineEvent_Compat event;
         struct DungeonGroup_Compat* group;
+        unsigned char* rawGroup;
+        unsigned char* rawProjectile;
         int sawProjectileReaction = 0;
         int eventIndex;
 
@@ -466,6 +469,14 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
         world.things->projectiles = (struct DungeonProjectile_Compat*)calloc(
             1, sizeof(*world.things->projectiles));
         if (!world.things->projectiles) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+        rawGroup = (unsigned char*)calloc(16, 1);
+        rawProjectile = (unsigned char*)calloc(8, 1);
+        if (!rawGroup || !rawProjectile) {
+            free(rawGroup);
+            free(rawProjectile);
             F0883_WORLD_Free_Compat(&world);
             return 1;
         }
@@ -485,9 +496,27 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
         world.things->projectiles[0].slot = THING_ENDOFLIST;
         world.things->projectiles[0].attack = 255;
         world.things->projectiles[0].kineticEnergy = 255;
-        world.things->projectiles[0].eventIndex = 77;
+        /* F0209's F0218 pass admits only the loaded C04/C14 chain and its
+         * live C14 runtime projection.  Keep the C49 event index in the raw
+         * and decoded record so F0214 can remove it before F0190 mutates C04. */
+        world.things->projectiles[0].eventIndex = 0;
+        rawProjectile[0] = 0xff;
+        rawProjectile[1] = 0xff;
+        rawProjectile[2] = 0xff;
+        rawProjectile[3] = 0xff;
+        rawProjectile[4] = 255;
+        rawProjectile[5] = 255;
+        world.things->rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
         world.things->squareFirstThings[0] =
             (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+        authenticate_group_c04(world.things, group, rawGroup);
+        world.projectiles.entries[0].slotIndex = 0;
+        world.projectiles.entries[0].mapIndex = 0;
+        world.projectiles.entries[0].mapX = 1;
+        world.projectiles.entries[0].mapY = 1;
+        world.projectiles.entries[0].cell = 0;
+        world.projectiles.entries[0].reserved3 = 1;
+        world.projectiles.count = 1;
         world.creatureAI[0].stateKind = AI_STATE_ATTACK;
         world.creatureAI[0].creatureType = CREATURE_TYPE_SCREAMER;
         world.creatureAI[0].groupCells = group->cells;
@@ -1040,10 +1069,7 @@ int main(void)
     (void)&test_m10_c29_reaction_moves_group_through_f0267;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c39_to_c41_turn_their_own_packed_slots() != 0) return 1;
-    /* TODO(F0190/F0218): retain this C38 projectile-compaction regression.
-     * Its hand-written fixture has no authenticated C14/C04 impact chain, so
-     * it cannot reach the source aftermath without manufacturing records. */
-    (void)&test_m10_c38_checks_pending_projectile_before_cell_write;
+    if (test_m10_c38_checks_pending_projectile_before_cell_write() != 0) return 1;
     if (test_m10_f0219_keeps_original_c14_motion_fields_live() != 0) return 1;
     if (test_m10_f0221_uses_authenticated_c15_fluxcage() != 0) return 1;
     if (test_m10_f0219_rejects_drifted_raw_c14_before_mutation() != 0) return 1;

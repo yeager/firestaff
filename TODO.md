@@ -57,6 +57,13 @@
     artifact corpus, and capture plan, clearing capture-required evidence on
     any callsite, CDB, source-trace, corpus, plan, or lifecycle drift. This
     remains metadata-only and cannot claim a consumer, route, or bitmap.
+  - 2026-07-17 update: the verified `0x0b52` loader-output admission and the
+    G8 FIFO witness can now join one current live-handoff receipt only when
+    artifact-corpus plan identity, Track02 MD5, source-trace MD5, dynamic
+    CD_READ ownership, and scan epoch all agree. The two records remain
+    distinct opaque observations; bitmap/object, decode, draw, and fallback
+    permissions must all remain false. This is capture-required/no-draw
+    lifecycle metadata, not a G8 consumer, payload, route, or bitmap claim.
 
 - 2026-07-17 Theron Track 02 `0x0b52` multi-capture level-index/seed
   correlation blocker: the workspace contains one source-locked Stage-3
@@ -84,6 +91,13 @@
     current direct layout, capture plan, media scan epoch, and active replay
     tail. The resolved record must still be the replay's final record/raw
     sector and retain the same opaque user-data hash and observed sector
+  - 2026-07-17 update: the admitted later-record candidate can now join the
+    current dungeon-handoff plan target and opaque artifact corpus only when
+    its record/raw sector, destination identity, replay tail, Track02 MD5,
+    source-trace MD5, layout epoch, and plan identity agree. The retained
+    result is one capture-required/no-draw coordinate receipt; it assigns no
+    record family grammar, level/object semantics, bitmap/palette data, route,
+    pixel, draw, or fallback behavior.
     checksum, otherwise no-draw readiness clears. The outstanding blocker is
     unchanged: an original positive CUE/BIN plus observed loader trace, not
     guessed record or level semantics.
@@ -2517,6 +2531,15 @@
     palette rejects without updating session presentation metadata. The local
     PC34 sequence covers positive real indexed rasters and both reject paths;
     no synthetic door, HUD, frame, or palette was introduced.
+  - 2026-07-17 first-runtime HUD lifecycle update: PANEL.C's C017/C040 blit
+    consumer now requires the completed F0807 terminal timeline, so a resident
+    HUD image cannot be drawn while TITLE/Entrance still owns the session.
+    Conversely, the F0438 C002/C003 capture accepts only the live Entrance
+    stage with its complete C001 phase mask and rejects after HUD transition.
+    Runtime C017/C040 raster construction keeps the historical Entrance
+    palette receipt intact instead of overwriting it with the neutral HUD
+    selection. The local PC34 sequence proves the real C017 panel bytes and
+    both phase rejects; no wrapper panel or substitute door frame was added.
   - 2026-07-17 graphics-MD5 receipt update: startup receipt recomputation now
     clears both hash forms on graphics-proof drift before a session can reuse
     it. The focused regression mutates only graphics MD5. Dungeon drift and
@@ -5946,6 +5969,35 @@ effects remain blocked without a restored HUD owner.
     texture/palette behavior, culling, VDP1 state, or a draw route. The next
     boundary remains original Saturn execution/capture evidence for those
     behaviors; do not promote the attachment receipt into rendering.
+  - 2026-07-17 update: the parser now exposes source-bound opaque 12-byte
+    ordinal rows for all three counted Structure3 entry regions, plus
+    face-indexed first-region rows, source-order face-index sets,
+    same-ordinal third-region rows, and raw face prefix/tail slices. Each
+    admission rechecks the direct DGN identity, entry/region FNV, and row
+    bounds; it grants no coordinate, topology, normal, material, texture,
+    geometry, or draw semantics. The next concrete intake must be a separately
+    evidenced raw relation, while original Saturn evidence remains required
+    before any geometry or renderer promotion.
+  - 2026-07-17 update: a 0x21-tagged Structure1F wall-decoration record can
+    now join its already-admitted raw selector byte to one admitted Structure3
+    second-region row ordinal. The join rechecks direct identity, package and
+    retained record/entry/region/row FNV witnesses and rejects selector or
+    offset drift. It is an opaque equality witness only, not a face, owner,
+    topology, geometry, material, texture, placement, or draw relation.
+  - 2026-07-17 update: the equivalent 0x20 Structure1F alcove selector path
+    is now admitted against the same bounded Structure3 second-region row
+    ordinal. Its independent record FNV, source tag, selector byte, direct
+    identity, entry/region/row witnesses, and offset all fail closed. This is
+    not portal, face, owner, topology, geometry, material, texture, placement,
+    or draw evidence; floor-decoration and floor-sensor payload bytes remain
+    unlinked until a separate source-backed relation exists.
+  - 2026-07-17 update: Structure1F directory evidence now gives each 0x11
+    floor-decoration and 0x12 floor-sensor opaque payload tail a strict source
+    owner: family, tag, record ordinal/span/FNV, payload span/FNV, and direct
+    package identity. Other families reject, and the receipt cannot grant a
+    Structure3 relation or object, sensor, placement, geometry, material,
+    texture, or draw semantics. A future relation requires separate source
+    evidence rather than payload-byte inference.
 
 ## M12 Localization Completion (2026-07-12)
 
@@ -9097,6 +9149,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: the authoritative local DM1 PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair is scanner-verified. When the M11 DM1 viewport has original graphics loaded, its floor/ceiling path now accepts only the current map's exact floor-set bitmaps; it no longer substitutes set-0 art or procedural fills after a source-asset miss. Asset-free/headless rendering retains its explicit fallback only when no authoritative graphics session exists. Remaining real-data presentation work is broader exact bitmap coverage and runtime capture, not synthetic replacement art.
   - DM1-005 — ReDMCSB TIMELINE.C F0261_TIMELINE_Process_CPSEF, especially F0245/F0248/F0250/F0251/F0244: `TIMELINE_EVENT_SQUARE_STATE` now routes source C10 generic-door effects through F0244/F0241 and applies bounded C07 fakewall plus C08/C09 teleporter/pit bit-state SET/CLEAR/TOGGLE handlers. Opening C08/C09 now re-resolves party through the existing F0267 environment route before it snapshots and routes resident C04 plus ordinary C05..C15 Things through the live F0267 chain, so party, groups, and objects reach real teleporter/pit effects rather than waiting for a later move. F0249 moves C04 first and retains F0266's party-map projectile preflight before its existing C60/C61 destination/retry owner runs. Every admitted C04 teleporter hop now also applies F0262's original packed direction/cell rotation to the raw group and active-group state before the destination is linked. F0242 now defers C07 CLEAR for party or material-group occupancy without moving the group, then retries the same event. Moved C14 projectiles relocate only their C48/C49 runtime event and moved C15 explosions relocate only their C25 advance event; the original C24 Fluxcage omission is preserved. F0245 consumes every corridor TextString plus each live C006 generator in M10 list order, and a hidden-to-visible text on the party square enters M11 through the source F0168 message decode and message area. F0248 consumes same-cell wall TextStrings plus C005/C006 data/remote dispatch, C007/C009 F0167 materialized-object, C008/C010 explosion, and C014/C015 live-object launchers through real F0810/C25 projectile state, unfiltered C018 `gameWon`, C10 local Steal XP through F0269/F0270/F0304-shaped lifecycle mutation, and performs one source-ordered local sensor rotation after the batch. C11 now has both F0330 source production and F0259 delayed quiver-refill consumption. Remaining: source-backed `TIMELINE_EVENT_SPELL_TICK` ownership and real-data C04 teleporter runtime-capture breadth.
   - 2026-07-13 update: legacy `TIMELINE_EVENT_SPELL_TICK` now accepts only F0412/F0763's typed status receipts or a fully shaped native PC34 C71/C73/C74/C77/C78/C79 record, then enters the existing F0261 expiry branch. Unknown payloads remain no-ops; no generic host spell effect is synthesized. Remaining: real-data C04 teleporter runtime-capture breadth.
+  - 2026-07-17 update: F0249's F0267 runtime consumer now appends a moved C15
+    only through the loaded square chain, writes both decoded and raw C15
+    `Next`, and relocates its matching C25 event while retaining C24 unchanged.
+    The focused regression also pins a pre-existing destination tail. Remaining:
+    real-data C04 teleporter runtime-capture breadth.
   - DM1-007 — ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawThing and DRAWVIEW.C creature traversal: the unused `DM1_V1_CreatureRender_CollectPc34Compat()` stub has been retired; it accepted an untyped dungeon pointer yet had no production caller and could not truthfully collect M11's private world records. `dm1_creature_center_draw_plan()` and `dm1_creature_side_draw_plan()` remain the DM1-owned typed F0115 render-list receipts. M11 now consumes `summary_from_world` and the source-backed `world_candidates` receipt: compact SFT lookup and bounded next links use M10 F0511/F0512, typed C04 groups and floor items are decoded in DM1/M10, and HoC map-0 mirror payload filtering remains in the DM1 receipt. Creature and projectile host blits now publish their selected PC34 material only after the real path succeeds: C584+ plus G0221/G0222 for creatures, M613 or F0142 G0209/M612 for C2900 projectiles. F0111 center doors now likewise carry their source-owned frame/panel receipt through M11 and fail closed when a real PC34 blit fails. Remaining: wider real pixel/capture coverage, especially packaged Mac/release evidence.
   - 2026-07-13 update: `summary_from_world` owns the complete F0115 summary boundary for a map square, joining ReDMCSB DUNGEON.C F0160/F0161 static SFT traversal to the F0115 live projectile/explosion passes. `world_candidates` now provides the corresponding bounded C04 group and typed floor-item candidates to M11, with a regression over the installed PC34 `DUNGEON.DAT`; no synthetic dungeon fixture is used. The host regressions also load installed PC34 `GRAPHICS.DAT` and exercise Mummy D2 G0219/G0221/G0222, M613 graphic 454, and the F0142 weapon-0 G0209/M612 graphic-537 route. D0C now consumes the distinct original M636 explosion-pattern family (489..497) before the normal F0114 D1+ sprite route; Fluxcage remains on its source field path. Remaining DM1 renderer work is broader source pixel/capture evidence, not another M11 list adapter.
   - 2026-07-13 update: the F0107 side-wall ornament route now carries its G0194/G0205-selected PC34 material receipt through M11, including original graphic, C10 transparency, D2/D3 palette, and source flip. The real-asset regression draws the D3R-left alcove graphic 261. Remaining wall/HoC renderer work is broader real capture coverage, not a replacement ornament, font, or mirror path.
@@ -12683,6 +12740,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-09 CSB follow-up: host-view title/HUD/opening draw now consumes `render_draw`. 2026-07-11 update: release/app capture now also rejects any title, closed-door HUD, utility HUD, or door-opening route whose host consumer is not receipt-owned. 2026-07-11 update: CSB startup no longer exports raw request structs, request/render-state helper adapters, or the direct render-plan builder used only by inspection tests; those adapters are private to `csb_v1_startup_sequence_pc34_compat.c`, and tests use the CSB facts/receipt surface. 2026-07-11 update: full-runtime and complete-support receipts now prove one verified CSB session reaches PRESENTS/CHAOS/STRIKES, entrance/door, and HUD with a deterministic playback route hash. 2026-07-11 update: release/app capture now also aggregates closed-door HUD, utility HUD, and door-opening into one HUD/door capture hash and same-route gate. 2026-07-11 update: release/app capture now has a separate title-sequence capture gate/hash for PRESENTS, CHAOS zoom/hold, and STRIKES BACK, rejecting collapsed phase hashes and missing title packages. 2026-07-11 update: presented Mac/app capture now consumes both title-sequence and HUD/door aggregate receipts before accepting a captured real-asset frame. 2026-07-11 update: presented Mac/app capture now also requires release/app startup-wrapper cleanup readiness and a deterministic cleanup hash before accepting the real frame. 2026-07-11 update: presented Mac/app capture now rejects incomplete PRESENTS/CHAOS/STRIKES phase masks and HUD/door hashes collapsed into the title route. 2026-07-11 update: presented Mac/app capture now also requires the entrance credits route and rejects credits hashes collapsed into title/HUD/release routes. Remaining cleanup is adding manual Mac/app capture evidence.
 - 🔧 2026-07-14 CSB real title/HUD/door capture follow-up: the staged-data M12-to-M11 launcher test now verifies C426 STRIKES BACK source bytes at their original geometry and palette, in addition to PRESENTS, CHAOS, opening-door, C017, and C040 captures. The package terminal receipt and fixture-free package probe now also require both distinct `TITLE.C F0437` CHAOS zoom and full-size hold phases before C017/C040 may be accepted. Remaining work is manual Mac/app evidence and broader original-presentation comparison.
   - 2026-07-14 update: the same real-package M12-to-M11 route now records its actual 320x200 indexed presentation boundary for C001 PRESENTS, CHAOS, STRIKES BACK, the closed and first-opening C002/C003 door frames, and terminal C017 HUD. The production receipt admits every phase from one fully verified C001-C005/C017/C040 session, rather than incorrectly waiting for terminal HUD state before title or door capture. Each capture retains the post-draw framebuffer FNV receipt, with no synthetic surface route. Remaining work is still manual Mac/app evidence and original-capture comparison.
+  - 2026-07-17 update: M11 release capture now derives its four title-phase witnesses from the active verified C001 session at PRESENTS frame 0, CHAOS zoom frame 60, CHAOS hold frame 79, and STRIKES frame 80. The prior route-derived phase-hash wrapper is retired; missing, duplicate, legacy, non-title, palette-drift, or raster-drift witnesses reject before release presentation. Remaining work is manual Mac/app evidence and broader original-presentation comparison.
 
 - 🔧 2026-07-14 CSBWin real-package resume follow-up: the opt-in package
   handoff probe now fingerprints the supplied decoded `Dungeon.dat` before

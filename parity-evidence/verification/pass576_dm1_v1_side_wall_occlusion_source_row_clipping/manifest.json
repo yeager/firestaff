@@ -105,7 +105,7 @@
       "lines": "1-9999",
       "missing": [],
       "path": "/Users/bosse/Documents/Firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "6973c78851ba48508264290533e16e5bea8d30ed306a5fd2219d19568a62ee0b",
+      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -154,7 +154,7 @@
       "lines": "1-9999",
       "missing": [],
       "path": "/Users/bosse/Documents/Firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "6973c78851ba48508264290533e16e5bea8d30ed306a5fd2219d19568a62ee0b",
+      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -185,7 +185,7 @@
         "\"8144\""
       ],
       "path": "/Users/bosse/Documents/Firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "5619f2f126631b5b8de39f033fdb03ddea2a4ce316ac32660300de9d8f5ff58b",
+      "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
@@ -230,7 +230,7 @@
       "lines": "1-9999",
       "missing": [],
       "path": "/Users/bosse/Documents/Firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "5619f2f126631b5b8de39f033fdb03ddea2a4ce316ac32660300de9d8f5ff58b",
+      "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }

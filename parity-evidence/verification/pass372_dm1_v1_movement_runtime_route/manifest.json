@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Users/bosse/Documents/Firestaff/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUnable to find executable: /Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat\n3/4 Test  #822: dm1_v1_movement_pipeline_pc34_compat .......***Not Run   0.00 sec\n    Start 1065: dm1_v1_input_command_queue_source_lock\n4/4 Test #1065: dm1_v1_input_command_queue_source_lock .....   Passed    0.06 sec\n\n25% tests passed, 3 tests failed out of 4\n\nTotal Test time (real) =   0.09 sec\n\nThe following tests FAILED:\n\t523 - dm1_v1_input_command_queue_pc34_compat (Not Run)\n\t528 - dm1_v1_movement_command_core_pc34_compat (Not Run)\n\t822 - dm1_v1_movement_pipeline_pc34_compat (Not Run)\nErrors while running CTest",
+  "ctestTail": "Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUnable to find executable: /Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1080: dm1_v1_movement_pipeline_pc34_compat .......***Not Run   0.00 sec\n    Start 1324: dm1_v1_input_command_queue_source_lock\n4/4 Test #1324: dm1_v1_input_command_queue_source_lock .....   Passed    0.05 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.54 sec\n\nThe following tests FAILED:\n\t1080 - dm1_v1_movement_pipeline_pc34_compat (Not Run)\nErrors while running CTest",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -200,7 +200,7 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "c857febe309b9a28531a7fe1eaa3e6a69069f439",
+  "head": "47a6b64a1e9573b050b469abfeb9faa39ef0811b",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": null,
@@ -356,5 +356,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-07-16T19:11:52.237652+00:00"
+  "timestampUtc": "2026-07-17T03:07:49.168763+00:00"
 }

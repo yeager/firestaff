@@ -20,35 +20,35 @@
       ],
       "positions": [
         {
-          "line": 35889,
+          "line": 37957,
           "marker": "m11_draw_viewport_background(state"
         },
         {
-          "line": 35908,
+          "line": 37976,
           "marker": "m11_draw_dm1_floor_pits(state"
         },
         {
-          "line": 35918,
+          "line": 37986,
           "marker": "m11_draw_dm1_side_walls(state"
         },
         {
-          "line": 35922,
+          "line": 37990,
           "marker": "m11_draw_dm1_front_walls(state"
         },
         {
-          "line": 35923,
+          "line": 37991,
           "marker": "m11_draw_dm1_wall_ornaments(state"
         },
         {
-          "line": 35940,
+          "line": 38008,
           "marker": "m11_draw_dm1_center_doors(state"
         },
         {
-          "line": 36005,
+          "line": 38073,
           "marker": "m11_draw_dm1_deferred_explosion_pass(state"
         },
         {
-          "line": 36029,
+          "line": 38097,
           "marker": "if (state->showDebugHUD)"
         }
       ],
@@ -62,23 +62,23 @@
       ],
       "positions": [
         {
-          "line": 22492,
+          "line": 24551,
           "marker": "static void m11_draw_dm1_alcove_wall_items"
         },
         {
-          "line": 22513,
+          "line": 24572,
           "marker": "C0x0000_CELL_ORDER_ALCOVE"
         },
         {
-          "line": 22513,
+          "line": 24572,
           "marker": "C04_VIEW_CELL_ALCOVE"
         },
         {
-          "line": 22514,
+          "line": 24573,
           "marker": "M018_OPPOSITE(direction)"
         },
         {
-          "line": 22520,
+          "line": 24579,
           "marker": "cell->floorItemCells[ii] != alcoveCellRelativeToParty"
         }
       ],

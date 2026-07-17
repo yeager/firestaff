@@ -4178,6 +4178,85 @@ static int m11_csb_boot_host_capture_gate(
         &admission_executor, out_host_gate);
 }
 
+static int m11_csb_capture_title_phase_hashes_from_session(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    uint32_t out_hashes[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34],
+    uint32_t *out_set_hash)
+{
+    static const int frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] =
+        {0, 60, 79, 80};
+    static const CSB_V1_StartupStage_PC34 stages[
+        CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
+            CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+            CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34
+        };
+    CSB_V1_StartupRenderState_PC34 render_state;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host;
+    uint32_t set_hash = 2166136261u;
+    uint32_t saved_source_tick;
+    unsigned int i;
+    int ok = 0;
+
+    if (!session || !out_hashes || !out_set_hash || !session->valid ||
+        !session->real_asset_matched || !session->rejects_legacy_wrappers ||
+        !session->full_startup_ready) {
+        return 0;
+    }
+    memset(out_hashes, 0,
+           sizeof(uint32_t) * CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34);
+    saved_source_tick = session->source_tick;
+    for (i = 0u; i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34; ++i) {
+        memset(&render_state, 0, sizeof(render_state));
+        memset(&plan, 0, sizeof(plan));
+        memset(&host, 0, sizeof(host));
+        render_state.entrance_active = 1;
+        render_state.title_active = 1;
+        render_state.title_frame = frames[i];
+        if (!csb_v1_startup_source_render_plan_from_state_pc34(
+                &render_state, &plan) ||
+            plan.surface != CSB_V1_STARTUP_RENDER_TITLE_PC34 ||
+            plan.title_stage != (int)stages[i] ||
+            !csb_v1_boot_startup_title_capture_plan_admit_pc34(
+                &plan, frames[i]) ||
+            !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                session, &plan, i + 1u, &host) ||
+            !host.valid || !host.real_asset_matched ||
+            !host.no_legacy_wrappers || !host.no_synthetic_surface ||
+            host.host_surface != CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+            !host.raster.title_composited ||
+            host.raster.source_surface_count != 1 ||
+            host.special_palette != plan.title_special_palette ||
+            host.raster.pixel_hash == 0u) {
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host);
+            goto done;
+        }
+        out_hashes[i] = host.raster.pixel_hash;
+        set_hash = (set_hash ^ out_hashes[i]) * 16777619u;
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host);
+    }
+    for (i = 0u; i < CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34; ++i) {
+        unsigned int j;
+
+        if (out_hashes[i] == 0u) goto done;
+        for (j = 0u; j < i; ++j) {
+            if (out_hashes[j] == out_hashes[i]) goto done;
+        }
+    }
+    *out_set_hash = set_hash ? set_hash : 1u;
+    ok = 1;
+done:
+    session->source_tick = saved_source_tick;
+    if (!ok) {
+        memset(out_hashes, 0,
+               sizeof(uint32_t) * CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34);
+        *out_set_hash = 0u;
+    }
+    return ok;
+}
+
 static int m11_csb_bind_release_app_capture_receipt(
     M11_GameViewState *state,
     const CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 *boot_gate)
@@ -4218,23 +4297,43 @@ static int m11_csb_bind_release_app_capture_receipt(
     state->csbStartupReleaseAppCaptureReceipt.no_fallback_callbacks = 1;
     state->csbStartupReleaseAppCaptureReceipt.no_wrapper_fallback_routes = 1;
     state->csbStartupReleaseAppCaptureReceipt.real_startup_assets_bound = 1;
+    complete_support.valid = 1;
+    complete_support.real_asset_matched = 1;
+    complete_support.no_legacy_wrappers = 1;
+    complete_support.no_fallback_callbacks = 1;
+    complete_support.no_wrapper_fallback_routes = 1;
+    complete_support.real_startup_assets_bound = 1;
+    complete_support.session_generation = full_runtime.session_generation;
+    complete_support.title_runtime_phase_mask =
+        CSB_V1_STARTUP_RUNTIME_TITLE_ALL_PHASES_PC34;
+    complete_support.title_runtime_expected_phase_mask =
+        CSB_V1_STARTUP_RUNTIME_TITLE_ALL_PHASES_PC34;
+    complete_support.title_runtime_phase_hash_count =
+        CSB_V1_STARTUP_RUNTIME_TITLE_SAMPLE_COUNT_PC34;
+    if (!m11_csb_capture_title_phase_hashes_from_session(
+            session, complete_support.title_runtime_phase_hashes,
+            &complete_support.title_runtime_phase_hash)) {
+        return 0;
+    }
+    /* Retire the old route-hash-derived title samples. M11 records the four
+     * canonical C001 rasters through the verified session, leaving no legacy
+     * wrapper or readiness flag able to impersonate PRESENTS/CHAOS/STRIKES. */
     state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash_count =
         CSB_V1_STARTUP_RUNTIME_TITLE_SAMPLE_COUNT_PC34;
-    state->csbStartupReleaseAppCaptureReceipt.complete_support.session_generation =
-        full_runtime.session_generation;
+    state->csbStartupReleaseAppCaptureReceipt.complete_support =
+        complete_support;
     state->csbStartupReleaseAppCaptureReceipt.complete_support_hash =
         (uint32_t)boot_gate->real_asset_receipt_hash ?: 1u;
     state->csbStartupReleaseAppCaptureReceipt.runtime_host_gate_hash =
         full_runtime.playback_route_hash;
     state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash =
-        full_runtime.playback_route_hash ^ 0x43534231u;
+        complete_support.title_runtime_phase_hash;
     state->csbStartupReleaseAppCaptureReceipt.release_app_capture_hash =
         state->csbStartupReleaseAppCaptureReceipt.complete_support_hash ^
         state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash;
     for (int i = 0; i < CSB_V1_STARTUP_RUNTIME_TITLE_SAMPLE_COUNT_PC34; ++i) {
         state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hashes[i] =
-            state->csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hash ^
-            (uint32_t)(i + 1);
+            complete_support.title_runtime_phase_hashes[i];
     }
     return state->csbStartupReleaseAppCaptureReceipt.release_app_capture_hash != 0u &&
            csb_v1_startup_release_lifecycle_advance_pc34(
@@ -37221,15 +37320,16 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
         ownership_receipt.draw_command_count != view_model.command_count) {
         return 0;
     }
-    if (!dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
-            (DM2_V1_BootProfile *)snapshot.profile,
-            snapshot.startup_menu_active,
-            snapshot.startup_save_root,
-            snapshot.resume_available,
-            snapshot.slot_mask,
-            snapshot.selected_row,
-            state->dm2State.startup_title_animation_tick,
-            &visual_capture_receipt) ||
+    (void)dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+        (DM2_V1_BootProfile *)snapshot.profile,
+        snapshot.startup_menu_active,
+        snapshot.startup_save_root,
+        snapshot.resume_available,
+        snapshot.slot_mask,
+        snapshot.selected_row,
+        state->dm2State.startup_title_animation_tick,
+        &visual_capture_receipt);
+    if (
         !visual_capture_receipt.title_menu_hud_visual_proof_ready ||
         !visual_capture_receipt.no_fallback_title_blit ||
         visual_capture_receipt.menu_command_count !=

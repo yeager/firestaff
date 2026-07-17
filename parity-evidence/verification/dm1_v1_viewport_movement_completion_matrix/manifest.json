@@ -15,7 +15,26 @@
         "-j2"
       ],
       "outputTail": [
-        "gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop."
+        "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
+        "-- Found SDL3",
+        "-- Found zlib via bundled miniz - ZIP/gzip inflate paths enabled",
+        "-- Configuring done (0.4s)",
+        "-- Generating done (4.5s)",
+        "-- Build files have been written to: /Users/bosse/Documents/Firestaff/build",
+        "[100%] Built target firestaff_m10",
+        "[100%] Building C object CMakeFiles/test_dm1_v1_movement_command_core_pc34_compat.dir/tests/test_dm1_v1_movement_command_core_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
+        "[100%] Built target firestaff_m10",
+        "[100%] Building C object CMakeFiles/test_dm1_v1_command_movement_sensor_timing_pc34_compat.dir/tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[100%] Built target firestaff_m10",
+        "[100%] Building C object CMakeFiles/test_dm1_v1_movement_core_pc34_compat.dir/tests/test_dm1_v1_movement_core_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
+        "gmake: *** No rule to make target 'test_m11_v1_turning_presentation_pc34_compat'.  Stop."
       ],
       "passed": false,
       "returncode": 2
@@ -40,7 +59,26 @@
       "expectedStatus": null,
       "id": "prepare_required_build",
       "outputTail": [
-        "gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop."
+        "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
+        "-- Found SDL3",
+        "-- Found zlib via bundled miniz - ZIP/gzip inflate paths enabled",
+        "-- Configuring done (0.4s)",
+        "-- Generating done (4.5s)",
+        "-- Build files have been written to: /Users/bosse/Documents/Firestaff/build",
+        "[100%] Built target firestaff_m10",
+        "[100%] Building C object CMakeFiles/test_dm1_v1_movement_command_core_pc34_compat.dir/tests/test_dm1_v1_movement_command_core_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
+        "[100%] Built target firestaff_m10",
+        "[100%] Building C object CMakeFiles/test_dm1_v1_command_movement_sensor_timing_pc34_compat.dir/tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[100%] Built target firestaff_m10",
+        "[100%] Building C object CMakeFiles/test_dm1_v1_movement_core_pc34_compat.dir/tests/test_dm1_v1_movement_core_pc34_compat.c.o",
+        "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
+        "gmake: *** No rule to make target 'test_m11_v1_turning_presentation_pc34_compat'.  Stop."
       ],
       "passed": false,
       "returncode": 2,
@@ -134,10 +172,14 @@
       "expectedStatus": null,
       "id": "pass406_movement_legality_completion_gate",
       "outputTail": [
-        "FAIL pass406_dm1_v1_movement_legality_completion_gate: [Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_core_pc34_compat'"
+        "PASS pass406_dm1_v1_movement_legality_completion_gate",
+        "- ReDMCSB: CLIKMENU.C:180-351; MOVESENS.C:316-999; DUNGEON.C:1371-1421, 1423-1479",
+        "- Firestaff: memory_movement_pc34_compat.c:408-493, 714-846",
+        "- report: parity-evidence/pass406_dm1_v1_movement_legality_completion_gate.md",
+        "- manifest: parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json"
       ],
-      "passed": false,
-      "returncode": 1,
+      "passed": true,
+      "returncode": 0,
       "status": null
     },
     {
@@ -392,5 +434,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-07-16T19:11:49.742940+00:00"
+  "timestampUtc": "2026-07-17T03:06:56.314097+00:00"
 }

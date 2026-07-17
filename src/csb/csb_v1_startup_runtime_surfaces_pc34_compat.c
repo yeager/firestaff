@@ -748,6 +748,7 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupRuntimeHudPanelReceipt_PC34 receipt;
+    CSB_V1_StartupCompleteTimelineReceipt_PC34 timeline;
     int row;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -755,6 +756,7 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
     memset(&frame, 0, sizeof(frame));
     memset(&raster, 0, sizeof(raster));
     memset(&receipt, 0, sizeof(receipt));
+    memset(&timeline, 0, sizeof(timeline));
     /* After ENTRANCE.C F0807, PANEL.C F0347 receives the live C017/C040
      * session. A closed entrance surface plus DUNGEON_RUNTIME selects that
      * exact terminal frame without re-entering any entrance draw wrapper. */
@@ -766,6 +768,10 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
         destination_width < CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 ||
         destination_height < CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 +
             CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 ||
+        !csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
+            session, &timeline) ||
+        !timeline.valid || !timeline.terminal_f0807_complete ||
+        !timeline.hud_session_ready ||
         !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
             session, &plan, session->source_tick, &frame) ||
         !csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
@@ -908,17 +914,19 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     } else if (plan->surface != CSB_V1_STARTUP_RENDER_NONE_PC34 &&
                plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
         out_frame->entrance_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
-        session->playback.entrance_scene_presented = 1;
-        session->playback.entrance_special_palette = plan->special_palette;
-        if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
-            plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-            session->playback.door_frame_presented = 1;
-        }
-        if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-            plan->opening_door_step > 0) {
-            session->playback.last_door_opening_step = plan->opening_door_step;
-            session->playback.next_door_opening_step =
-                plan->opening_door_step + 1;
+        if (plan->title_stage != CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34) {
+            session->playback.entrance_scene_presented = 1;
+            session->playback.entrance_special_palette = plan->special_palette;
+            if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+                plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+                session->playback.door_frame_presented = 1;
+            }
+            if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+                plan->opening_door_step > 0) {
+                session->playback.last_door_opening_step = plan->opening_door_step;
+                session->playback.next_door_opening_step =
+                    plan->opening_door_step + 1;
+            }
         }
     }
     out_frame->frame_route_hash =
@@ -1155,6 +1163,9 @@ int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
     if (!session || !session->valid || !session->real_asset_matched ||
         !session->entrance_assets_ready || !session->door_assets_ready ||
         !session->rejects_legacy_wrappers ||
+        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
+        !session->playback.entrance_music_active ||
+        session->playback.title_phase_mask != 0x0f ||
         first_source_tick > UINT32_MAX -
             CSB_V1_STARTUP_DOOR_OPENING_CAPTURE_FRAME_COUNT_PC34 + 1u) {
         return 0;

@@ -16,7 +16,10 @@ int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
     if (!session || !out_receipt || !session->valid ||
         !session->real_asset_matched || !session->rejects_legacy_wrappers ||
         !session->playback.no_fallback_routes ||
-        session->playback.title_phase_mask != 0x0b ||
+        /* TITLE.C F0437's frame-80 STRIKES boundary publishes the completed
+         * four-bit C001 phase mask. F0807 may not expose C017/C040 until all
+         * of PRESENTS, CHAOS, hold, and STRIKES have been consumed. */
+        session->playback.title_phase_mask != 0x0f ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
         !session->playback.entrance_complete ||
         !session->playback.entrance_scene_presented ||

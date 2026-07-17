@@ -6,7 +6,7 @@
     "stderr": "probe executable missing",
     "stdout": ""
   },
-  "generated_at": "2026-07-16T19:11:52.434771+00:00",
+  "generated_at": "2026-07-17T03:09:24.984353+00:00",
   "honesty": "Evidence gate only; no complete collision parity or pixel parity is claimed.",
   "raw_frames": {
     "capture_count": 4,

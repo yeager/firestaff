@@ -1,8 +1,7 @@
 {
   "comparison": null,
   "errors": [
-    "missing image parity-evidence/verification/pass282_dm1_v2_original_pixel_capture/original_entry_viewport_224x136.png",
-    "missing image parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png"
+    "missing image parity-evidence/verification/pass282_dm1_v2_original_pixel_capture/original_entry_viewport_224x136.png"
   ],
   "exactBlocker": "Pass294 blocker: the remaining seam is not palette selection; it is the DUNVIEW.C wall-set/viewport-bitmap materialization path. ReDMCSB draws original floor/ceiling bitmaps into G0296_puc_Bitmap_Viewport at DUNVIEW.C:8337-8367, then visits D3/D2/D1/D0 squares through DUNVIEW.C:8490-8542 and uses wall-set bitmap draws for the blocking front wall at DUNVIEW.C:6699-6702 before returning at DUNVIEW.C:6720. Firestaff still exports a symbolic flat 224x136 renderer with only two colors, while the original crop contains six PC34 grayscale tones; mismatch remains unknown/unknown pixels. The next required implementation seam is original GRAPHICS.DAT-backed floor/ceiling/wall-set bitmap blitting/clipping for the same map=0 x=1 y=3 dir=2 route state, not another palette pass.",
   "firestaff": null,

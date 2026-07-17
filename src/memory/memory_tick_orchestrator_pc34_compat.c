@@ -6691,6 +6691,29 @@ static int orch_link_thing_to_square_tail_compat(
     }
 
     memset(&attachReceipt, 0, sizeof(attachReceipt));
+    /* ReDMCSB MOVESENS.C:F0267 keeps C15 in the ordinary square chain;
+     * TIMELINE.C:F0249 then updates only its C25 coordinate. C15 owns Next
+     * directly, so F0215's C14/C05 projectile-drop receipt must not admit it. */
+    if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION) {
+        if (!orch_set_next_thing_compat(
+                world->things, thing, THING_ENDOFLIST)) {
+            return 0;
+        }
+        orch_write_raw_next_compat(world->things, thing);
+        if (world->things->squareFirstThings[sftIndex] == THING_NONE ||
+            world->things->squareFirstThings[sftIndex] == THING_ENDOFLIST) {
+            world->things->squareFirstThings[sftIndex] = thing;
+            return 1;
+        }
+        if (current != THING_ENDOFLIST || chainCount < 2 ||
+            !orch_set_next_thing_compat(
+                world->things, chainThings[chainCount - 2], thing)) {
+            return 0;
+        }
+        orch_write_raw_next_compat(world->things, chainThings[chainCount - 2]);
+        return 1;
+    }
+
     if (!dm1_v1_projectile_square_attach_receipt_f0215_pc34(
             thing, world->things->squareFirstThings[sftIndex],
             chainThings, chainCount, &attachReceipt) ||
@@ -8389,6 +8412,10 @@ static int orch_link_existing_group_to_square_head_only_compat(
     return 1;
 }
 
+/* ReDMCSB TIMELINE.C F0249 moves the resident C04 before C05..C15 when a
+ * C08/C09 square opens. This narrow runtime owner consumes only an admitted
+ * loaded C04 and the existing F0267 teleporter resolver; blocked or
+ * disallowed destinations remain untouched for their C60/C61 owner. */
 static int orch_handle_creature_reaction_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,

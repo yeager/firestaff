@@ -257,6 +257,40 @@ static int frame_matches_source_rect(const unsigned char* frame,
     return 1;
 }
 
+static int title_capture_hash_matches_real_source(
+    const CSB_V1_StartupRuntimeAssetSession_PC34* session,
+    int title_frame,
+    unsigned int source_tick,
+    uint32_t expected_hash)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 candidate;
+    CSB_V1_StartupRenderState_PC34 state;
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host;
+    int matches;
+
+    if (!session || !expected_hash) return 0;
+    candidate = *session;
+    memset(&state, 0, sizeof(state));
+    memset(&plan, 0, sizeof(plan));
+    memset(&host, 0, sizeof(host));
+    state.entrance_active = 1;
+    state.title_active = 1;
+    state.title_frame = title_frame;
+    if (!csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan) ||
+        !csb_v1_boot_startup_title_capture_plan_admit_pc34(
+            &plan, title_frame) ||
+        !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+            &candidate, &plan, source_tick, &host)) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host);
+        return 0;
+    }
+    matches = host.valid && host.raster.title_composited &&
+        host.raster.pixel_hash == expected_hash;
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host);
+    return matches;
+}
+
 static void capture_csb_opening_sequence(M11_GameViewState *view) {
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     const CSB_V1_StartupRuntimeSurface_PC34 *left;
@@ -605,6 +639,29 @@ static void run_real_launcher_handoff_if_available(void) {
                         ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
                              view.csbStartupRuntimeAssetSession)->generation,
                 "M11 CSB title delivery owns the boot release capture receipt");
+    {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        uint32_t *hashes =
+            view.csbStartupReleaseAppCaptureReceipt.title_runtime_phase_hashes;
+        uint32_t saved_presents_hash = hashes[0];
+
+        expect_true(title_capture_hash_matches_real_source(
+                        session, 0, 1u, hashes[0]) &&
+                        title_capture_hash_matches_real_source(
+                        session, 60, 2u, hashes[1]) &&
+                        title_capture_hash_matches_real_source(
+                        session, 79, 3u, hashes[2]) &&
+                        title_capture_hash_matches_real_source(
+                        session, 80, 4u, hashes[3]),
+                    "M11 title lifecycle captures exact real C001 PRESENTS/CHAOS/STRIKES rasters");
+        hashes[0] ^= 1u;
+        expect_true(!title_capture_hash_matches_real_source(
+                        session, 0, 1u, hashes[0]),
+                    "M11 title lifecycle rejects a legacy wrapper-derived PRESENTS hash");
+        hashes[0] = saved_presents_hash;
+    }
     {
         const uint32_t saved_release_hash =
             view.csbStartupReleaseLifecycleReceipt.release_capture_hash;
