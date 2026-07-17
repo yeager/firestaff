@@ -2,8 +2,8 @@
   "artifactChecks": [
     {
       "expected": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
-      "observed": null,
-      "ok": false,
+      "observed": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
+      "ok": true,
       "path": "parity-evidence/verification/pass564_dm1_v1_original_movement_viewport_transcript_gate/manifest.json"
     },
     {
@@ -14,7 +14,7 @@
     },
     {
       "expected": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED",
-      "observed": null,
+      "observed": "FAIL_PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT",
       "ok": false,
       "path": "parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md"
     },

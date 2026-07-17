@@ -1,5 +1,87 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-17 Theron Track 02 later-record plan/corpus admission: bound the
+  opaque replay-tail later-record candidate to the validated dungeon-handoff
+  capture target and artifact corpus. Admission requires exact record/raw
+  sector and destination identity, Track02/source-trace hashes, replay tail,
+  layout epoch, and plan identity. The receipt is capture-required/no-draw
+  only and refuses record-format, object, bitmap, decode, draw, and fallback
+  semantics. Verification: Ninja built
+  `test_theron_v1_track02_later_route_candidate_plan_corpus_admission`,
+  `test_theron_v1_track02_later_route_candidate_intake`, and
+  `test_theron_v1_track02_later_route_candidate_campaign_index`; all three
+  focused CTests passed in `build-theron-trace-md5`. No commit/push.
+
+- 2026-07-17 Theron Track 02 live-handoff capture-required admission: joined
+  the verified `0x0b52` loader-output admission and immutable G8 FIFO capture
+  witness to the live dynamic CD_READ handoff only under matching artifact
+  corpus/plan identity, Track02 MD5, source-trace MD5, ownership record and
+  destination, and lifecycle scan epoch. The receipt preserves the two
+  records as separate no-draw observations and rejects bitmap/object, decode,
+  draw, and fallback permissions. Verification: Ninja built
+  `test_theron_v1_track02_live_handoff_capture_required_admission`,
+  `test_theron_v1_track02_g8_fifo_capture_binding`, and
+  `test_theron_v1_track02_loader_output_record_admission`; the three focused
+  CTests passed in `build-theron-trace-md5`, with scoped `git diff --check`
+  passing. No commit/push.
+
+# DM1 F0249/F0267 C15 runtime relocation (2026-07-17)
+
+- Completed the loaded C15 square-tail path used by ReDMCSB `MOVESENS.C
+  F0267` and `TIMELINE.C F0249`. A moved explosion now keeps its source-owned
+  decoded and raw `Next` synchronized while joining an existing destination
+  chain; F0249 moves only the matching C25 event and deliberately leaves C24
+  Fluxcage removal untouched. The regression covers C14 C48/C49 relocation,
+  C15 append raw/decoded linkage, C25 relocation, and the C24 rejection.
+  Verification: `dm1_v1_f0249_runtime_relocation_pc34_compat` and
+  `csb_v1_f0267_loaded_chain_pc34_compat` PASS; `firestaff` built in
+  `build/codex-dm1-f0205`.
+
+- 2026-07-17 Nexus Structure3 raw counted-region intake: added strict direct
+  first-, second-, and third-region ordinal-row admissions alongside the
+  existing entry, opaque tag, face row, face-indexed row/set, same-ordinal
+  third row, and face prefix/tail receipts. Every admission requires the direct-level identity,
+  package and retained entry/region FNV witnesses, and exact 12-byte bounds;
+  all retained bytes remain opaque. No coordinate, topology, normal, material,
+  texture, geometry, or draw semantics are granted. Verification:
+  `ninja -C build-nexus-codex test_nexus_v1_structure3_face_admission_fixture`
+  and the `nexus_v1_structure3_(target|entry|face)_admission_fixture` CTests
+  passed; scoped `git diff --check` passed.
+
+- 2026-07-17 Nexus Structure1F-to-Structure3 raw selector-row relation:
+  added a fail-closed admission joining an admitted 0x21 Structure1F
+  wall-decoration record's raw selector byte to an admitted Structure3
+  second-region row ordinal. It revalidates direct DGN identity, package and
+  retained Structure1F record/Structure3 entry-region-row FNV witnesses, and
+  exact offsets before retaining the equality. No face, owner, topology,
+  geometry, material, texture, placement, or draw semantics are granted.
+  Verification: `ninja -C build-nexus-codex
+  test_nexus_v1_structure3_face_admission_fixture` and the
+  `nexus_v1_structure3_(target|entry|face)_admission_fixture` CTests passed;
+  scoped `git diff --check` passed.
+
+- 2026-07-17 Nexus Structure1F alcove-to-Structure3 raw selector-row relation:
+  added the same strict, independent fail-closed join for an admitted 0x20
+  alcove record and an admitted Structure3 second-region row ordinal. Source
+  tag, raw selector, direct DGN identity, package, record, entry, region, row
+  FNV witnesses, and exact offsets must all still match. The receipt is only
+  raw equality: it grants no portal, face, owner, topology, geometry, material,
+  texture, placement, or draw semantics. Verification: `ninja -C
+  build-nexus-codex test_nexus_v1_structure3_face_admission_fixture` and the
+  `nexus_v1_structure3_(target|entry|face)_admission_fixture` CTests passed;
+  scoped `git diff --check` passed.
+
+- 2026-07-17 Nexus Structure1F direct-payload ownership admission: added a
+  strict directory-bound owner receipt for the opaque tails of 0x11
+  floor-decoration and 0x12 floor-sensor records. It retains only family/tag,
+  record and payload spans, FNV witnesses, and direct package identity; other
+  families reject. It explicitly does not permit a Structure3 relation or
+  object, sensor, placement, geometry, material, texture, or draw semantics.
+  Verification: `ninja -C build-nexus-codex
+  test_nexus_v1_structure3_face_admission_fixture` and the
+  `nexus_v1_structure3_(target|entry|face)_admission_fixture` CTests passed;
+  scoped `git diff --check` passed.
+
 - 2026-07-17 Theron Track 02 capture-required rescan continuity: direct
   ISO alias discovery now resolves the known materialized payload before
   campaign classification, and M11 retains capture-required only when a
@@ -29468,3 +29550,29 @@ build and `git diff --check` PASS.
   final C004+C003 image, the first C017+C040 raster, and both wrong-palette
   rejects. Verification in `build-csb-verify`: real startup sequence,
   terminal-handoff, M11 boundary, and M11 resume-gate tests PASS.
+
+# CSB first-runtime HUD and door-capture lifecycle (2026-07-17)
+
+- Bound the PANEL.C C017/C040 raster consumer to a completed F0807 terminal
+  session, and bound the F0438 C002/C003 opening capture to the preceding
+  live Entrance stage. A pre-F0807 panel request and post-HUD opening capture
+  now reject. Runtime HUD frame construction retains the recorded Entrance
+  palette fact while using the neutral C017/C040 palette, so the terminal
+  proof cannot be invalidated by its own consumer. The real local PC34
+  `GRAPHICS.DAT` sequence compares the emitted C017 bytes directly and
+  exercises both lifecycle rejects. Verification in `build-csb-verify`:
+  real startup sequence, terminal-handoff, M11 launcher boundary, and M11
+  resume-gate tests PASS.
+
+# CSB M11 real C001 phase-capture lifecycle (2026-07-17)
+
+- Replaced M11's route-derived title phase hashes with raster hashes captured
+  from the verified active C001 session: PRESENTS frame 0, CHAOS zoom frame
+  60, CHAOS hold frame 79, and STRIKES frame 80. Each source plan must pass
+  the existing title admission and produce one real, non-legacy title host
+  raster with the plan's palette; missing, duplicate, wrong-stage, or
+  synthetic witnesses reject before release presentation. The M11 boundary
+  regression compares every retained hash with the matching real source
+  raster and rejects a mutated legacy wrapper hash. Verification in
+  `build-csb-verify`: M11 launcher boundary, M11 resume gate, real startup
+  sequence, and terminal-handoff real-data tests PASS.

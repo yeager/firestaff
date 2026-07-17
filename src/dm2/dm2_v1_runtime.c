@@ -1042,6 +1042,23 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
             &ambient_darkness)) {
         return;
     }
+    /* c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT resolves the selected
+     * GRAPHICSSET's ceiling/floor IMG3 pair before its light and wall
+     * passes.  The control words above authenticate the map identity, but
+     * they do not materialize those source images.  Publish the matching
+     * plan here so every later receipt and consumer shares that exact GDAT
+     * transaction. */
+    if (!dm2_v1_boot_gdat_scene_m11_command_plan(
+            rt->boot,
+            rt->map_graphics_style,
+            &rt->gdat_scene_material_plan) ||
+        !rt->gdat_scene_material_plan.valid ||
+        rt->gdat_scene_material_plan.graphicsset !=
+            (uint8_t)rt->map_graphics_style) {
+        dm2_v1_gdat_scene_m11_command_plan_free(
+            &rt->gdat_scene_material_plan);
+        return;
+    }
     if (!dm2_v1_gdat_scene_light_m11_receipt(
             &rt->gdat_scene_material_plan, &rt->gdat_scene_light_receipt)) {
         dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);

@@ -1,6 +1,6 @@
 # Pass623 - DM1 V1 input capture readiness bridge
 
-Status: PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED
+Status: FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE
 
 This gate binds the Firestaff input script to movement queue dispatch and viewport crop rows, while keeping the original-side blocker explicit.
 
@@ -14,15 +14,15 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - PASS DRAWVIEW.C:709-858 f0097_presents_the_composed_viewport - promotable original crops must be sampled at or after the viewport-present boundary
 
 ## Firestaff route audit
-- PASS src/engine/m11_game_view.c:7539-7766 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
-- PASS src/engine/m11_game_view.c:7539-7766 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
+- FAIL src/engine/m11_game_view.c:7539-7766 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
+- FAIL src/engine/m11_game_view.c:7539-7766 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
 - PASS probes/m11/firestaff_m11_wall_collision_capture_probe.c:20-174,210-236 wall_collision_probe_emits_input_script_and_viewport_crops - the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper
 
 ## Canonical input/crop rows
-- PASS 01_start_south_1_3 inputs=[] commands=[] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 2} crop=01_start_south_1_3_viewport_224x136.ppm sha256=78d456343429aa09a96cd649e85d89c0b394bf6bd50f1f46aa681165ccc936aa
-- PASS 02_turn_right_west_1_3 inputs=['M12_MENU_INPUT_RIGHT'] commands=[2] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
-- PASS 03_blocked_west_wall_1_3 inputs=['M12_MENU_INPUT_UP'] commands=[3] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
-- PASS 04_forward_south_1_4 inputs=['M12_MENU_INPUT_LEFT', 'M12_MENU_INPUT_UP'] commands=[1, 3] tuple={'map': 0, 'x': 1, 'y': 4, 'direction': 2} crop=04_forward_south_1_4_viewport_224x136.ppm sha256=497e8745b44d1dbd423ae9174a4fd924678e2eac9b5ffe770a708099954d606a
+- PASS 01_start_south_1_3 inputs=[] commands=[] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 2} crop=01_start_south_1_3_viewport_224x136.ppm sha256=09bf9bfd0614dbed0c7848b7fa624018f1c6541781b6721c8de8e23e447de427
+- PASS 02_turn_right_west_1_3 inputs=['M12_MENU_INPUT_RIGHT'] commands=[2] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600
+- PASS 03_blocked_west_wall_1_3 inputs=['M12_MENU_INPUT_UP'] commands=[3] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600
+- PASS 04_forward_south_1_4 inputs=['M12_MENU_INPUT_LEFT', 'M12_MENU_INPUT_UP'] commands=[1, 3] tuple={'map': 0, 'x': 1, 'y': 4, 'direction': 2} crop=04_forward_south_1_4_viewport_224x136.ppm sha256=2cb0ba6d3a0388aea79673688353684465599f2e26c319ff479129f1fcd39048
 
 ## Required original transcript columns
 - routeLabel
@@ -38,10 +38,10 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - viewportCropSha256
 
 ## Consumed gates
-- PASS movement_queue_capture_closure observed=PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED
+- FAIL movement_queue_capture_closure observed=FAIL_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE
 - PASS pass564_original_transcript_gate observed=BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING
-- PASS pass608_same_viewport_blocker observed=BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
-- PASS pass622_viewport_wall_capture_closure_gap observed=BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED
+- FAIL pass608_same_viewport_blocker observed=None
+- FAIL pass622_viewport_wall_capture_closure_gap observed=FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP
 
 ## Decision
 
@@ -53,3 +53,10 @@ Firestaff now has an audited bridge from M12 input tokens to DM1 V1 command ids,
 - no movement, renderer, or input behavior is changed
 - no non-N2 source path is used
 - no push or release action
+
+## Problems
+- firestaff route audit failed: m11_input_maps_to_dm1_v1_commands
+- firestaff route audit failed: m11_records_movement_pipeline_capture_state
+- gate status drifted: movement_queue_capture_closure
+- gate status drifted: pass608_same_viewport_blocker
+- gate status drifted: pass622_viewport_wall_capture_closure_gap

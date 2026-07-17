@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
 Status: `FAIL`
-Generated: `2026-07-16T19:11:49.742940+00:00`
+Generated: `2026-07-17T03:06:56.314097+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -16,7 +16,14 @@ Generated: `2026-07-16T19:11:49.742940+00:00`
 
 ## Executable gates
 - `FAIL` `prepare_required_build` rc=`2`: configure/build movement targets required by chained gates
-  - gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop.
+  - [100%] Building C object CMakeFiles/test_dm1_v1_command_movement_sensor_timing_pc34_compat.dir/tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c.o
+  - [100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat
+  - [100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat
+  - [100%] Built target firestaff_m10
+  - [100%] Building C object CMakeFiles/test_dm1_v1_movement_core_pc34_compat.dir/tests/test_dm1_v1_movement_core_pc34_compat.c.o
+  - [100%] Linking C executable test_dm1_v1_movement_core_pc34_compat
+  - [100%] Built target test_dm1_v1_movement_core_pc34_compat
+  - gmake: *** No rule to make target 'test_m11_v1_turning_presentation_pc34_compat'.  Stop.
 - `PASS` `pass381_movement_viewport_walls_source_lock` rc=`0`: command queue -> movement/turn state -> viewport wall redraw and presentation source chain
 - `FAIL` `pass423_input_command_movement_pipeline_source_lock` rc=`1`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
   -     firestaff = [verify_firestaff(entry) for entry in FIRESTAFF_EVIDENCE]
@@ -29,8 +36,7 @@ Generated: `2026-07-16T19:11:49.742940+00:00`
   - AssertionError: src/dm1/dm1_v1_movement_command_core_pc34_compat.c missing 'outResult->groupReactionPartyAdjacentRequested = 1;'
 - `FAIL` `pass402_movement_cooldown_order` rc=`1`: cooldown ageing before F0380 and no same-tick post-decrement
   - missing end of M11_GameView_CastSpell: static void m11_apply_survival_drain
-- `FAIL` `pass406_movement_legality_completion_gate` rc=`1`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
-  - FAIL pass406_dm1_v1_movement_legality_completion_gate: [Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_core_pc34_compat'
+- `PASS` `pass406_movement_legality_completion_gate` rc=`0`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
 - `FAIL` `pass406_game_loop_redraw_cadence` rc=`1`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
   - FAIL pass406_dm1_v1_game_loop_redraw_cadence: [Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/build/test_m11_v1_turning_presentation_pc34_compat'
 - `PASS` `pass395_viewport_walls_source_runtime_lock` rc=`0`: wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract

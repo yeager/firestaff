@@ -10,7 +10,7 @@
         "direction": 2,
         "label": "01_start_south_1_3",
         "map": 0,
-        "sha": "78d456343429aa09a96cd649e85d89c0b394bf6bd50f1f46aa681165ccc936aa",
+        "sha": "09bf9bfd0614dbed0c7848b7fa624018f1c6541781b6721c8de8e23e447de427",
         "x": 1,
         "y": 3
       },
@@ -37,7 +37,7 @@
         "direction": 3,
         "label": "02_turn_right_west_1_3",
         "map": 0,
-        "sha": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "sha": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600",
         "x": 1,
         "y": 3
       },
@@ -64,7 +64,7 @@
         "direction": 3,
         "label": "03_blocked_west_wall_1_3",
         "map": 0,
-        "sha": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "sha": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600",
         "x": 1,
         "y": 3
       },
@@ -94,7 +94,7 @@
         "direction": 2,
         "label": "04_forward_south_1_4",
         "map": 0,
-        "sha": "497e8745b44d1dbd423ae9174a4fd924678e2eac9b5ffe770a708099954d606a",
+        "sha": "2cb0ba6d3a0388aea79673688353684465599f2e26c319ff479129f1fcd39048",
         "x": 1,
         "y": 4
       },
@@ -115,16 +115,32 @@
       "file": "src/engine/m11_game_view.c",
       "id": "m11_input_maps_to_dm1_v1_commands",
       "lines": "7539-7766",
-      "missing": [],
-      "ok": true
+      "missing": [
+        "case M12_MENU_INPUT_LEFT:",
+        "return DM1_V1_COMMAND_TURN_LEFT;",
+        "case M12_MENU_INPUT_RIGHT:",
+        "return DM1_V1_COMMAND_TURN_RIGHT;",
+        "case M12_MENU_INPUT_UP:",
+        "return DM1_V1_COMMAND_MOVE_FORWARD;",
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
+        "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("
+      ],
+      "ok": false
     },
     {
       "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_records_movement_pipeline_capture_state",
       "lines": "7539-7766",
-      "missing": [],
-      "ok": true
+      "missing": [
+        "state->world.gameTick++;",
+        "state->lastDm1V1MovementPipelineResult.core.turnApplied",
+        "state->lastDm1V1MovementPipelineResult.anyMovementOccurred",
+        "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
+        "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
+        "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"
+      ],
+      "ok": false
     },
     {
       "claim": "the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper",
@@ -139,8 +155,8 @@
     {
       "expected": "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED",
       "id": "movement_queue_capture_closure",
-      "observed": "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED",
-      "ok": true,
+      "observed": "FAIL_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE",
+      "ok": false,
       "path": "parity-evidence/verification/dm1_v1_movement_queue_capture_closure/manifest.json"
     },
     {
@@ -152,22 +168,18 @@
     },
     {
       "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
-      "firestaffStateCount": 6,
-      "firestaffViewportHashCount": 6,
       "id": "pass608_same_viewport_blocker",
-      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
-      "ok": true,
-      "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
-      "runtimeTranscriptOk": false,
-      "runtimeTranscriptProvided": false
+      "observed": null,
+      "ok": false,
+      "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json"
     },
     {
       "blocker": "missing original runtime transcript row paired to a Firestaff viewport frame for the same map/X/Y/direction/wall-door tuple",
       "expected": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
       "id": "pass622_viewport_wall_capture_closure_gap",
-      "manifestOk": true,
-      "observed": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
-      "ok": true,
+      "manifestOk": false,
+      "observed": "FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP",
+      "ok": false,
       "path": "parity-evidence/verification/pass622_dm1_v1_viewport_wall_capture_closure_gap/manifest.json"
     }
   ],
@@ -178,8 +190,14 @@
     "no non-N2 source path is used",
     "no push or release action"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "firestaff route audit failed: m11_input_maps_to_dm1_v1_commands",
+    "firestaff route audit failed: m11_records_movement_pipeline_capture_state",
+    "gate status drifted: movement_queue_capture_closure",
+    "gate status drifted: pass608_same_viewport_blocker",
+    "gate status drifted: pass622_viewport_wall_capture_closure_gap"
+  ],
   "redmcsbSourceAudit": [
     {
       "claim": "movement-arrow input resolves to the same C001..C006 command ids used by the Firestaff script rows",
@@ -253,6 +271,6 @@
   ],
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-  "timestampUtc": "2026-06-25T21:17:12.572004+00:00"
+  "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
+  "timestampUtc": "2026-07-17T03:10:02.310179+00:00"
 }

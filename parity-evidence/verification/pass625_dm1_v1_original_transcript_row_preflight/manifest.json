@@ -24,7 +24,7 @@
     {
       "expected": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
       "id": "pass623_input_capture_bridge",
-      "observed": null,
+      "observed": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
       "ok": false,
       "path": "parity-evidence/verification/pass623_dm1_v1_input_capture_readiness_bridge/manifest.json"
     }
@@ -120,7 +120,7 @@
     "gate status drifted: pass608_same_viewport_blocker",
     "gate status drifted: pass622_viewport_wall_capture_gap",
     "gate status drifted: pass623_input_capture_bridge",
-    "pass623 target row missing"
+    "target Firestaff viewport hash drifted"
   ],
   "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
   "sourceAudit": [
@@ -201,9 +201,35 @@
   "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
   "targetRowAudit": {
     "ok": false,
-    "pass623Row": {},
+    "pass623Row": {
+      "claim": "right input resolves to C002 turn-right and changes facing only",
+      "commandIds": [
+        2
+      ],
+      "inputTokens": [
+        "M12_MENU_INPUT_RIGHT"
+      ],
+      "label": "02_turn_right_west_1_3",
+      "observed": {
+        "crop": "02_turn_right_west_1_3_viewport_224x136.ppm",
+        "direction": 3,
+        "label": "02_turn_right_west_1_3",
+        "map": 0,
+        "sha": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600",
+        "x": 1,
+        "y": 3
+      },
+      "ok": true,
+      "postTuple": {
+        "direction": 3,
+        "map": 0,
+        "x": 1,
+        "y": 3
+      },
+      "problems": []
+    },
     "problems": [
-      "pass623 target row missing"
+      "target Firestaff viewport hash drifted"
     ],
     "target": {
       "f0128Tuple": {
@@ -231,7 +257,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-07-16T19:12:01.785362+00:00",
+  "timestampUtc": "2026-07-17T03:10:02.344711+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,

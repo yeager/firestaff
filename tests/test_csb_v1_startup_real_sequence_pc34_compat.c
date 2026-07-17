@@ -80,6 +80,27 @@ static int render_plan_from_state(
     return csb_v1_startup_source_render_plan_from_state_pc34(&state, plan);
 }
 
+static int panel_matches_source(
+    const unsigned char *framebuffer,
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface)
+{
+    int row;
+
+    if (!framebuffer || !surface || !surface->valid || !surface->pixels ||
+        surface->width != CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 ||
+        surface->height != CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34) {
+        return 0;
+    }
+    for (row = 0; row < surface->height; ++row) {
+        if (memcmp(framebuffer + (size_t)(33 + row) * 320u,
+                   surface->pixels + (size_t)row * (size_t)surface->width,
+                   (size_t)surface->width) != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main(void)
 {
     char default_data_dir[1024];
@@ -101,12 +122,14 @@ int main(void)
     CSB_V1_BootRuntimeStartupSnapshot_PC34 title_snapshot;
     CSB_V1_BootStartupRenderViewReceipt_PC34 title_view;
     CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 opening_capture;
+    CSB_V1_StartupRuntimeHudPanelReceipt_PC34 hud_panel;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package;
     CSB_V1_DungeonData dungeon;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 door_receipt;
+    unsigned char hud_panel_pixels[320 * 200];
 
     memset(&presents_host, 0, sizeof(presents_host));
     memset(&chaos_host, 0, sizeof(chaos_host));
@@ -120,6 +143,7 @@ int main(void)
     memset(&title_snapshot, 0, sizeof(title_snapshot));
     memset(&title_view, 0, sizeof(title_view));
     memset(&opening_capture, 0, sizeof(opening_capture));
+    memset(&hud_panel, 0, sizeof(hud_panel));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&snapshot, 0, sizeof(snapshot));
     printf("data_dir=%s\n", root ? root : "(none)");
@@ -146,6 +170,11 @@ int main(void)
     if (failures) return 1;
     check(csb_v1_startup_session_full_surface_contract_pc34(&session),
           "real session keeps C001 title, C004 entrance, C002/C003 doors and C017/C040 HUD");
+    memset(hud_panel_pixels, 0xa5, sizeof(hud_panel_pixels));
+    check(!csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
+              &session, 0, hud_panel_pixels, 320, 200, &hud_panel) &&
+              hud_panel_pixels[33u * 320u] == 0xa5,
+          "C017 HUD panel rejects before the F0807 terminal session");
 
     check(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) &&
               audio_action ==
@@ -288,6 +317,18 @@ int main(void)
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     check(!receipt_for_plan(&session, &plan, 8u, &rejected_host),
           "first C017/C040 HUD raster rejects a retained Entrance palette before presentation");
+    memset(hud_panel_pixels, 0, sizeof(hud_panel_pixels));
+    check(csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
+              &session, 0, hud_panel_pixels, 320, 200, &hud_panel) &&
+              hud_panel.valid && hud_panel.c017_presented &&
+              !hud_panel.c040_presented && hud_panel.no_synthetic_surface &&
+              panel_matches_source(hud_panel_pixels,
+                  &session.surfaces.surfaces[
+                      CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]),
+          "first live HUD consumes the real F0807 C017 panel raster");
+    check(!csb_v1_boot_startup_door_opening_capture_from_session_pc34(
+              &session, 200u, &opening_capture),
+          "F0438 door capture rejects after the F0807 HUD transition");
 
     check(csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
               &session, &full_runtime) &&

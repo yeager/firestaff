@@ -98,8 +98,12 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 
 ## Candidate transcript-like artifacts
 
+- parity-evidence/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.md size=1457
 - parity-evidence/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.md size=3446
+- parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md size=1125
+- parity-evidence/verification/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness/manifest.json size=8662
 - parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=9794
+- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=7285
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift size=6062
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/pass513_i34e_route_key_transcript_scaffold.json size=8229

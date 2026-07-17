@@ -128,6 +128,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_static_object_select
         src/dm2/dm2_v1_dungeon_loader.c)
     target_include_directories(test_dm2_v1_g1_static_object_selector PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_g1_static_object_selector PRIVATE
+        firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_static_object_selector PRIVATE
             -std=c11 -Wall -Wextra -Werror -pedantic -O2)
@@ -2154,7 +2156,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.85 LANGUAGES C)
+project(Firestaff VERSION 3.0.86 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -13346,7 +13348,6 @@ if(BUILD_TESTING)
     # csb_v1_chaos_trigger out-of-range script_id guard.
     add_executable(test_csb_v1_dsa_trigger_single_step_pc34_compat
         tests/test_csb_v1_dsa_trigger_single_step_pc34_compat.c
-        src/csb/csb_v1_chaos_magic_pc34_compat.c
     )
     target_include_directories(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -29310,6 +29311,13 @@ if(BUILD_TESTING AND THERON_SOURCES)
         target_compile_options(test_theron_v1_track02_later_route_candidate_intake PRIVATE -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME theron_v1_track02_later_route_candidate_intake COMMAND test_theron_v1_track02_later_route_candidate_intake)
+    add_executable(test_theron_v1_track02_later_route_candidate_plan_corpus_admission tests/test_theron_v1_track02_later_route_candidate_plan_corpus_admission.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_plan_corpus_admission PRIVATE firestaff_theron firestaff_m12)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_plan_corpus_admission PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_later_route_candidate_plan_corpus_admission PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_later_route_candidate_plan_corpus_admission COMMAND test_theron_v1_track02_later_route_candidate_plan_corpus_admission)
     add_executable(test_theron_v1_track02_later_route_candidate_manifest tests/test_theron_v1_track02_later_route_candidate_manifest.c)
     target_link_libraries(test_theron_v1_track02_later_route_candidate_manifest PRIVATE firestaff_theron)
     target_include_directories(test_theron_v1_track02_later_route_candidate_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -29568,6 +29576,22 @@ if(BUILD_TESTING AND THERON_SOURCES)
     endif()
     add_test(NAME theron_v1_track02_loader_output_record_admission
         COMMAND test_theron_v1_track02_loader_output_record_admission)
+
+    add_executable(test_theron_v1_track02_live_handoff_capture_required_admission
+        tests/test_theron_v1_track02_live_handoff_capture_required_admission.c
+    )
+    target_link_libraries(test_theron_v1_track02_live_handoff_capture_required_admission PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_live_handoff_capture_required_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_live_handoff_capture_required_admission PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_live_handoff_capture_required_admission
+        COMMAND test_theron_v1_track02_live_handoff_capture_required_admission)
 
     add_executable(test_theron_v1_track02_g8_fifo_sidecar
         tests/test_theron_v1_track02_g8_fifo_sidecar.c

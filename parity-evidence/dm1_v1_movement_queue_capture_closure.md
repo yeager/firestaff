@@ -16,9 +16,9 @@ Scope: command input -> queue -> movement dispatch capture/evidence closure. Thi
 
 ## Consumed evidence gates
 
-- FAIL `parity-evidence/verification/pass564_dm1_v1_original_movement_viewport_transcript_gate/manifest.json` status `None`
+- PASS `parity-evidence/verification/pass564_dm1_v1_original_movement_viewport_transcript_gate/manifest.json` status `BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING`
 - FAIL `parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json` status `None`
-- FAIL `parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md` status `None`
+- FAIL `parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md` status `FAIL_PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT`
 - FAIL `parity-evidence/verification/pass545_dm1_v1_movement_queue_sensor_consequences/manifest.json` status `None`
 - FAIL `parity-evidence/verification/pass559_dm1_v1_gated_movement_pending_click_queue_replay/manifest.json` status `None`
 

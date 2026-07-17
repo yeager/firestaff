@@ -122,7 +122,10 @@ int main(void) {
     squareData[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
     squareData[1] |= DUNGEON_SQUARE_MASK_THING_LIST;
     firstThings[0] = explosionThing;
-    firstThings[1] = THING_ENDOFLIST;
+    firstThings[1] = projectileThing;
+    projectile.next = THING_ENDOFLIST;
+    rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     explosion.next = THING_ENDOFLIST;
     rawExplosion[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawExplosion[1] = (unsigned char)(THING_ENDOFLIST >> 8);
@@ -147,8 +150,11 @@ int main(void) {
               &dungeon, &things, 0, 0, 0) == THING_ENDOFLIST &&
           explosion.next == THING_ENDOFLIST &&
           rawExplosion[0] == (unsigned char)(THING_ENDOFLIST & 0xffu) &&
-          rawExplosion[1] == (unsigned char)(THING_ENDOFLIST >> 8),
-          "C15 move keeps decoded and raw source-list ownership aligned");
+          rawExplosion[1] == (unsigned char)(THING_ENDOFLIST >> 8) &&
+          projectile.next == explosionThing &&
+          rawProjectile[0] == (unsigned char)(explosionThing & 0xffu) &&
+          rawProjectile[1] == (unsigned char)(explosionThing >> 8),
+          "C15 append keeps decoded and raw square-tail ownership aligned");
     CHECK(world.timeline.events[0].mapX == 1 &&
           world.timeline.events[0].mapY == 0 &&
           world.timeline.events[0].cell == 1 &&

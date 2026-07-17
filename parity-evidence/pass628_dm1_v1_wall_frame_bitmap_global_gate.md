@@ -1,6 +1,6 @@
 # Pass628 DM1 V1 wall-frame bitmap global gate
 
-Status: passed
+Status: failed
 
 The DM1 V1 wall/door-frame bitmap base pointer is source-locked to the PC34 G2107/G2110-G2120 offset model and remains null-guarded until assets are wired.
 
@@ -47,11 +47,8 @@ The DM1 V1 wall/door-frame bitmap base pointer is source-locked to the PC34 G210
 - PASS cmake-registration (CMakeLists.txt)
 
 ## Verification
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/Documents/Firestaff/build/ninja-dm2/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
-PASS drift.pass570.d2c_zone_left present in include/dm1_v1_viewport_3d_pc34_compat.h
-PASS drift.pass570.d2c_zone_right present in include/dm1_v1_viewport_3d_pc34_compat.h
-PASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h
 PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -65,10 +62,13 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
+FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/Documents/Firestaff/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py --check-only: rc=0
 ~~~
 PASS pass628 check-only
 ~~~
