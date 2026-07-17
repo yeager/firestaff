@@ -1,0 +1,6 @@
+#ifndef FIRESTAFF_DM2_V1_GDAT_WALL_TILE_DRAW_TEMP_RECEIPT_H
+#define FIRESTAFF_DM2_V1_GDAT_WALL_TILE_DRAW_TEMP_RECEIPT_H
+#include "dm2_v1_gdat_wall_tile_branch_set_receipt.h"
+typedef struct { int valid,no_draw; uint32_t branch_set_hash,transform_hash,identity_hash; } DM2_V1_GdatWallTileDrawTempReceipt;
+int dm2_v1_gdat_wall_tile_draw_temp_receipt_build(const DM2_V1_GdatWallTileBranchSetReceipt *,const DM2_V1_GdatWallTileOverlayReceipt *,const DM2_V1_GdatWallTilePicstReceipt *,const DM2_V1_GdatWallTileLoadableReceipt *,DM2_V1_GdatWallTileDrawTempReceipt *);
+#endif

@@ -199,6 +199,11 @@ typedef struct {
     uint8_t later_caller_opcode;
     uint16_t later_caller_target;
     int later_caller_control_verified;
+    /* The register bytes supplied by this exact caller to the System Card.
+     * They are retained as an opaque callsite/sector witness, not a route. */
+    uint8_t later_record_cl;
+    uint8_t later_record_dl;
+    uint8_t later_record_ch;
     uint8_t sector_count;
     int observed_raw_sector_lba;
     uint32_t observed_raw_sector_checksum;

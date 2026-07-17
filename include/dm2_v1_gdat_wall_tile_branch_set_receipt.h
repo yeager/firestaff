@@ -1,0 +1,8 @@
+#ifndef FIRESTAFF_DM2_V1_GDAT_WALL_TILE_BRANCH_SET_RECEIPT_H
+#define FIRESTAFF_DM2_V1_GDAT_WALL_TILE_BRANCH_SET_RECEIPT_H
+#include "dm2_v1_gdat_wall_tile_picst_receipt.h"
+#include "dm2_v1_gdat_wall_tile_loadable_receipt.h"
+#include "dm2_v1_gdat_wall_tile_overlay_receipt.h"
+typedef struct { int valid,no_draw; uint32_t overlay_hash,picst_hash,loadable_hash,identity_hash; } DM2_V1_GdatWallTileBranchSetReceipt;
+int dm2_v1_gdat_wall_tile_branch_set_receipt_build(const DM2_V1_GdatWallTileOverlayReceipt *,const DM2_V1_GdatWallTilePicstReceipt *,const DM2_V1_GdatWallTileLoadableReceipt *,DM2_V1_GdatWallTileBranchSetReceipt *);
+#endif

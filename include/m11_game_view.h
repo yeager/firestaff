@@ -47,6 +47,7 @@
 #include "theron_v1_track02_descriptor_bitmap_palette_capture_intake.h"
 #include "theron_v1_track02_dungeon_handoff_capture_plan_admission.h"
 #include "theron_v1_track02_live_loader_route_admission.h"
+#include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
 #include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
@@ -75,6 +76,12 @@ extern "C" {
     DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat
 #define M11_GameView_GetV1LeaderHandThing \
     DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat
+#define M11_GameView_GetV1LeaderHandObjectIconIndex \
+    DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat
+#define M11_GameView_GetV1LeaderHandObjectName \
+    DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat
+#define M11_GameView_GetV1InventorySlotIconIndex \
+    DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat
 #define M11_GameView_OpenV1ActionHandChest \
     DM1_V1_M11Runtime_OpenActionHandChestPc34Compat
 #define M11_GameView_GetV1OpenChestThing \
@@ -534,6 +541,7 @@ typedef struct {
     const Theron_V1Track02TraceBundleReceipt* theronTraceBundle;
     const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* theronSectorRecordCorpus;
     const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* theronDungeonCapturePlan;
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* theronHandoffArtifactCorpus;
     /* Optional authenticated Track 02 capture manifest. The Theron launch
      * consumes it before publishing its detached runtime receipt. */
     const char* theronTrack02CaptureManifestPath;
@@ -1274,11 +1282,20 @@ typedef struct {
         uint32_t first_dungeon_stage3_record;
         size_t first_dungeon_descriptor_ordinal;
         uint16_t first_dungeon_descriptor_selector;
+        uint32_t first_dungeon_descriptor_source_hash;
         uint32_t first_dungeon_resolved_record;
         uint32_t first_dungeon_record_user_data_hash;
         uint32_t first_dungeon_raw_sector_checksum;
         uint16_t first_dungeon_loader_caller_pc;
         uint16_t first_dungeon_loader_return_pc;
+        uint8_t first_dungeon_loader_caller_opcode;
+        uint16_t first_dungeon_loader_caller_target;
+        uint16_t first_dungeon_loader_post_return_pc;
+        uint16_t first_dungeon_loader_post_return_next_pc;
+        uint8_t first_dungeon_loader_record_cl;
+        uint8_t first_dungeon_loader_record_dl;
+        uint8_t first_dungeon_loader_record_ch;
+        uint8_t first_dungeon_loader_sector_count;
         uint32_t first_dungeon_campaign_layout_epoch;
         uint32_t first_dungeon_media_scan_epoch;
         /* Capture output identities may reach presentation only as a strict
@@ -1286,9 +1303,15 @@ typedef struct {
         int first_dungeon_bitmap_palette_capture_bound;
         int first_dungeon_bitmap_palette_presentation_no_draw;
         uint32_t first_dungeon_bitmap_palette_plan_identity;
+        uint32_t first_dungeon_cd_read_record;
         uint32_t first_dungeon_bitmap_palette_descriptor_record;
+        size_t first_dungeon_loader_output_raw_offset;
+        size_t first_dungeon_loader_output_bytes;
+        uint32_t first_dungeon_loader_output_identity;
         uint32_t first_dungeon_palette_output_identity;
         uint32_t first_dungeon_bitmap_transfer_identity;
+        size_t first_dungeon_destination_offset;
+        size_t first_dungeon_destination_bytes;
         uint32_t first_dungeon_bitmap_destination_identity;
         uint32_t first_dungeon_bitmap_palette_layout_epoch;
         uint32_t first_dungeon_bitmap_palette_scan_epoch;
@@ -1296,6 +1319,34 @@ typedef struct {
         int dungeon_capture_required;
         int dungeon_capture_resume_ready;
         uint32_t dungeon_capture_plan_identity;
+        /* Canonical direct-media receipt retained only while startup is
+         * capture-required/no-draw, so an unchanged rescan may advance epoch. */
+        Theron_V1Track02RawMediaIntakeReceipt startup_capture_media;
+        int startup_capture_media_bound;
+        Theron_V1Track02HandoffArtifactCorpusReceipt handoff_artifact_corpus;
+        int handoff_artifact_corpus_bound;
+        uint32_t handoff_artifact_corpus_scan_epoch;
+        /* Immutable G8 FIFO provenance. This is capture-required/no-draw
+         * metadata and is intentionally not a loader-output consumer input. */
+        Theron_V1Track02G8FifoCaptureBindingReceipt g8_fifo_capture_binding;
+        int g8_fifo_capture_binding_bound;
+        uint32_t g8_fifo_capture_binding_scan_epoch;
+        /* Original later $e009 output bound at launch. This remains opaque
+         * CD_READ/loader provenance and can never enable drawing. */
+        int handoff_loader_capture_bound;
+        uint32_t handoff_loader_capture_record;
+        uint16_t handoff_loader_capture_destination;
+        uint16_t handoff_loader_capture_caller_pc;
+        uint16_t handoff_loader_capture_return_pc;
+        uint16_t handoff_loader_capture_post_return_pc;
+        uint16_t handoff_loader_capture_post_return_next_pc;
+        uint8_t handoff_loader_capture_record_cl;
+        uint8_t handoff_loader_capture_record_dl;
+        uint8_t handoff_loader_capture_record_ch;
+        uint8_t handoff_loader_capture_sector_count;
+        size_t handoff_loader_capture_span_bytes;
+        uint32_t handoff_loader_capture_span_checksum;
+        uint32_t handoff_loader_capture_plan_identity;
         int live_loader_route_admission_valid;
         int live_loader_soul_room_ready;
         int live_loader_dungeon_ready;
@@ -2074,6 +2125,13 @@ int M11_GameView_TheronBindTrack02CaptureCampaignAdmission(
     M11_GameViewState* state,
     const Theron_V1Track02CaptureCampaignReceipt* campaign,
     const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt* dungeonWindow);
+/* Starts the no-draw capture-required lifecycle from one current direct
+ * ISO/BIN/CUE receipt and the existing opaque capture plan. */
+int M11_GameView_TheronBindTrack02StartupCaptureRequired(
+    M11_GameViewState* state,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaignMedia,
+    const Theron_V1Track02CaptureTargetPlan* campaignPlan,
+    uint32_t campaignMediaScanEpoch);
 /* Rechecks the exact external campaign receipt that published capture
  * readiness. Any changed trace, route bundle, or opaque dungeon window clears
  * readiness; this remains a no-draw provenance gate. */
@@ -2122,6 +2180,23 @@ int M11_GameView_TheronTrack02DescriptorBitmapPalettePresentationNoDrawCurrent(
 int M11_GameView_TheronBindTrack02DungeonCapturePlan(
     M11_GameViewState* state,
     const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* receipt);
+/* Joins the imported opaque artifact's dungeon row to the original
+ * descriptor-selected $e009 capture retained by the direct sector corpus.
+ * It is a live no-draw handoff gate, not a payload or rendering admission. */
+int M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+    M11_GameViewState* state,
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* artifact_corpus,
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* sector_corpus,
+    const Theron_V1Track02CaptureTargetPlan* plan,
+    const Theron_V1Track02LaunchTraceIdentityReceipt* trace_identity,
+    uint32_t campaign_media_scan_epoch);
+/* Binds an immutable G8 FIFO sidecar only as current capture-required/no-draw
+ * lifecycle provenance. It cannot promote a route or provide payload bytes. */
+int M11_GameView_TheronBindTrack02G8FifoSidecarCaptureRequired(
+    M11_GameViewState* state,
+    const Theron_V1Track02G8FifoSidecarReceipt* sidecar,
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* artifact_corpus,
+    uint32_t campaign_media_scan_epoch);
 /* Rechecks an opaque later descriptor-selected CD record against the current
  * direct layout and replay tail. It never exposes record bytes or semantics. */
 int M11_GameView_TheronTrack02SectorRecordAdmissionCurrentForDirectMedia(
@@ -2230,6 +2305,48 @@ int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
 int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
 int M11_GameView_GetV1StatusHandSlotGraphic(
     const M11_GameViewState* state, int slot, int hand);
+int M11_GameView_GetV1StatusNameColor(
+    const M11_GameViewState* state, int champion_slot);
+int M11_GameView_GetV1StatusNameClearColor(void);
+int M11_GameView_GetV1StatusBoxFillColor(void);
+int M11_GameView_GetV1StatusBoxZoneId(int champion_slot);
+int M11_GameView_GetV1StatusBoxZone(
+    int champion_slot, int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1StatusNameClearZoneId(int champion_slot);
+int M11_GameView_GetV1StatusNameTextZoneId(int champion_slot);
+int M11_GameView_GetV1StatusNameZone(
+    int champion_slot, int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1StatusNameTextZone(
+    int champion_slot, int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1StatusHandParentZoneId(int champion_slot);
+int M11_GameView_GetV1StatusHandZoneId(int champion_slot, int hand_index);
+int M11_GameView_GetV1StatusHandZone(
+    int champion_slot, int hand_index,
+    int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1StatusBarGraphZoneId(int champion_slot);
+int M11_GameView_GetV1StatusBarZoneId(int stat_index);
+int M11_GameView_GetV1StatusBarValueZoneId(
+    int champion_slot, int stat_index);
+int M11_GameView_GetV1StatusBarZone(
+    int champion_slot, int stat_index,
+    int* out_x, int* out_y, int* out_w, int* out_h);
+int M11_GameView_GetV1ChampionBarColor(int champion_slot);
+int M11_GameView_GetV1StatusBarBlankColor(void);
+int M11_GameView_GetV1StatusBoxBaseGraphic(
+    const M11_GameViewState* state, int champion_slot);
+int M11_GameView_GetV1DeadStatusBoxGraphicId(void);
+int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+    const M11_GameViewState *state,
+    int *out_object_sprite_count,
+    int *out_object_icon_count,
+    int *out_object_marker_count,
+    int *out_group_sprite_count,
+    int *out_group_marker_count,
+    int *out_projectile_sprite_count,
+    int *out_projectile_material_count,
+    int *out_projectile_marker_count,
+    int *out_explosion_sprite_count,
+    int *out_explosion_marker_count);
 /* Read-only M11 viewport inspection for HoC false-item regression probes. */
 int M11_GameView_ProbeViewportFloorItemCounts(
     const M11_GameViewState* state, int relForward, int relSide,

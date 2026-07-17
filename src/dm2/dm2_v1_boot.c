@@ -3753,7 +3753,7 @@ static int dm2_v1_boot_startup_composite_capture(
         out_receipt->composite_rect_count == 0 &&
         out_receipt->composite_text_zone_count == 0;
     ready =
-        out_receipt->composite_gdat_blit_count == 1 &&
+        out_receipt->composite_gdat_blit_count == 2 &&
         out_receipt->real_menu_screen_no_synthetic_overlay_ready &&
         out_receipt->composite_pixel_hash != 0u &&
         out_receipt->composite_pixel_count == 64000u &&
@@ -3768,8 +3768,8 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     const DM2_V1_BootRuntimeStartupSnapshot *base_snapshot,
     DM2_V1_BootStartupRealVisualCaptureReceipt *out_receipt)
 {
-    static const int k_title_ticks[] = {0};
-    static const int k_selected_rows[] = {0};
+    static const int k_title_ticks[] = {0, 12, 42};
+    static const int k_selected_rows[] = {0, 1, 2};
     uint32_t title_hashes[3];
     uint32_t menu_hashes[3];
     int title_hash_count = 0;
@@ -3902,7 +3902,7 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
                 sample_view.commands,
                 sample_view.command_count,
                 &sample_capture) &&
-                sample_capture.composite_gdat_blit_count == 1 &&
+                sample_capture.composite_gdat_blit_count == 2 &&
             sample_capture.composite_pixel_hash != 0u) {
             ++out_receipt->sampled_menu_composite_capture_count;
             out_receipt->sampled_menu_composite_hash =

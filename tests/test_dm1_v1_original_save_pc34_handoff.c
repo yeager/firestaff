@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_c15_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
@@ -4492,6 +4493,8 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     unsigned short column_sft_bases[3 * 32];
     unsigned char raw_explosion[4];
     struct DungeonExplosion_Compat explosions[1];
+    DM1_C15PoolReservationPc34 reservation;
+    DM1_C15C25PublicationReceiptPc34 receipt;
     struct SaveGame_Compat imported;
     struct PartyState_Compat imported_party;
     struct TimelineEvent_Compat event;
@@ -4541,14 +4544,9 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
         tiles[i].squareData = square_data[i];
         tiles[i].squareCount = 32 * 32;
     }
-    square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    first_things[0] = source_thing;
-    wr16le(raw_explosion + 0u, THING_ENDOFLIST);
-    raw_explosion[2] = 2u; /* lightning-bolt explosion type */
-    raw_explosion[3] = 77u;
-    explosions[0].next = THING_ENDOFLIST;
-    explosions[0].type = 2u;
-    explosions[0].attack = 77u;
+    first_things[0] = THING_NONE;
+    wr16le(raw_explosion + 0u, THING_NONE);
+    explosions[0].next = THING_NONE;
     things.squareFirstThings = first_things;
     things.squareFirstThingCount = 1;
     things.explosions = explosions;
@@ -4558,6 +4556,13 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     things.loaded = 1;
     start_world.dungeon = &dungeon;
     start_world.things = &things;
+    CHECK(dm1_v1_c15_pool_reserve_pc34(&things, &reservation) == 1 &&
+              dm1_v1_c15_c25_publish_pc34(
+                  &reservation, &dungeon, 2, 77, 0, 1, 2, 11, 12,
+                  123500u, 7, &receipt) == 1 &&
+              receipt.slot == source_thing &&
+              receipt.mapTime == DM1_MAP_TIME_MAKE(2, 123500u),
+          "C25 fixture publishes the exact source Location and Slot receipt");
     CHECK(F0511_DUNGEON_GetSquareFirstThing_Compat(
               &dungeon, &things, 2, 11, 12) == source_thing,
           "C25 fixture exposes its C15 owner through loaded G0280/SFT");
@@ -4597,8 +4602,9 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
           "C25 exports only with its source C15 fingerprint receipt");
     rc = dm1_v1_original_save_pc34_handoff_bytes(
         exported, (size_t)exported_written, &imported, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-              report.original_event_count == 1 &&
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C25 transaction export parses through F0435");
+    CHECK(report.original_event_count == 1 &&
               report.events[0].type == DM1_EVENT_EXPLOSION &&
               rd16le(&report.events[0].c_cell) == source_thing,
           "C25 source C15 Slot round-trips through F0433/F0435");
@@ -4607,6 +4613,14 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
               &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
               &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
           "C25 export rejects mutated source C15 bytes");
+    raw_explosion[3] ^= 1u;
+    event.aux3 ^= 1;
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event) &&
+              F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+                  &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+                  &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C25 export rejects a drifted C15 receipt fingerprint");
 }
 
 static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
@@ -6865,6 +6879,7 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
                                      2, 0, 0, 0, 0, 0,
                                      ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
     CHECK(rc == SAVEGAME_PC34_OK, "poison fixture builds");
+    memset(&world, 0, sizeof(world));
     memset(&imported, 0, sizeof(imported));
     memset(&imported_party, 0, sizeof(imported_party));
     memset(&report, 0, sizeof(report));

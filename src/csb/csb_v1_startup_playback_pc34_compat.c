@@ -44,6 +44,43 @@ static int csb_v1_startup_playback_session_owned_pc34(
         session->surfaces.opening_frame_ready;
 }
 
+int csb_v1_boot_startup_title_capture_plan_admit_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    int title_frame)
+{
+    if (!plan || plan->surface != CSB_V1_STARTUP_RENDER_TITLE_PC34 ||
+        plan->source_asset_id != 1 || title_frame < 0 ||
+        plan->title_source_step != (int)
+            csb_v1_startup_title_source_step_for_frame_pc34(
+                title_frame) ||
+        plan->title_stage != (int)csb_v1_startup_title_stage_for_frame_pc34(
+            title_frame)) {
+        return 0;
+    }
+    switch (plan->title_stage) {
+    case CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34:
+        return plan->title_source_step == 1 &&
+            plan->title_source_y == 137 && plan->title_source_w == 320 &&
+            plan->title_source_h == 16 && plan->title_dest_y == 90 &&
+            plan->title_blit_kind == CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34;
+    case CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34:
+        return plan->title_source_step >= 2 && plan->title_source_step <= 21 &&
+            plan->title_source_y == 0 && plan->title_source_w == 320 &&
+            plan->title_source_h == 80 && plan->title_dest_w > 0 &&
+            plan->title_dest_h > 0 &&
+            plan->title_blit_kind ==
+                CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34;
+    case CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34:
+        return plan->title_source_step >= 21 &&
+            plan->title_source_y == 80 && plan->title_source_w == 320 &&
+            plan->title_source_h == 57 && plan->title_dest_y == 118 &&
+            plan->title_blit_kind == CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 &&
+            plan->title_transparent_color == 0;
+    default:
+        return 0;
+    }
+}
+
 int csb_v1_boot_startup_playback_begin_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupAudioAction_PC34 *out_audio_action)
@@ -130,7 +167,9 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     if (!csb_v1_startup_source_render_plan_from_state_pc34(&render_state,
                                                             out_plan) ||
         out_plan->surface != CSB_V1_STARTUP_RENDER_TITLE_PC34 ||
-        out_plan->title_stage != title_stage) {
+        out_plan->title_stage != (int)title_stage ||
+        !csb_v1_boot_startup_title_capture_plan_admit_pc34(out_plan,
+                                                            title_frame)) {
         memset(out_plan, 0, sizeof(*out_plan));
         return 0;
     }

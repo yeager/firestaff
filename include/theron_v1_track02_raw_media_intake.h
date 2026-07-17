@@ -14,11 +14,26 @@ typedef enum {
     THERON_V1_TRACK02_MEDIA_INTAKE_READY
 } Theron_V1Track02MediaIntakeStatus;
 
+typedef enum {
+    THERON_V1_TRACK02_MEDIA_REASON_NONE = 0,
+    THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE,
+    THERON_V1_TRACK02_MEDIA_REASON_UNSUPPORTED_CONTAINER,
+    THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID,
+    THERON_V1_TRACK02_MEDIA_REASON_PAYLOAD_UNAVAILABLE,
+    THERON_V1_TRACK02_MEDIA_REASON_SECTOR_ALIGNMENT_INVALID,
+    THERON_V1_TRACK02_MEDIA_REASON_TRACK02_HASH_UNKNOWN,
+    THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH,
+    THERON_V1_TRACK02_MEDIA_REASON_CUE_INDEX_INVALID,
+    THERON_V1_TRACK02_MEDIA_REASON_USER_DATA_WINDOW_INVALID,
+    THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH
+} Theron_V1Track02MediaFailureReason;
+
 /* File-backed, hash-authenticated Track 02 container receipt. It exposes
  * only CUE/sector coordinates and never reads a level, object, bitmap, or
  * palette payload. */
 typedef struct {
     Theron_V1Track02MediaIntakeStatus status;
+    Theron_V1Track02MediaFailureReason failure_reason;
     int cue_consumed;
     int mode1_2352;
     int mode1_2048;
@@ -57,6 +72,21 @@ typedef struct {
 int theron_v1_track02_raw_media_intake_discover(
     const char *media_path,
     Theron_V1Track02RawMediaIntakeReceipt *out);
+
+const char *theron_v1_track02_media_failure_reason_id(
+    Theron_V1Track02MediaFailureReason reason);
+
+/* Validates a measured Track 02 hash and its container coordinates. This
+ * accepts no fabricated media bytes; callers must supply a real file hash. */
+Theron_V1Track02MediaFailureReason
+theron_v1_track02_raw_media_intake_validate_verified_layout(
+    const char *track02_md5,
+    int sector_bytes,
+    int cue_consumed,
+    uint32_t cue_index01_sector,
+    uint32_t payload_index01_sector,
+    size_t payload_bytes,
+    Theron_Track02Variant *out_variant);
 
 /* Narrows a READY raw MODE1/2352 CUE receipt into source coordinates for the
  * existing loader-trace preparation. ISO and bare BIN input remain discovered

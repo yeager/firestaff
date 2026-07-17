@@ -11179,6 +11179,66 @@ static void m12_theron_clear_trace_campaign_bindings(M12_StartupMenuState* state
     memset(&state->theronSectorRecordCorpus, 0,
            sizeof(state->theronSectorRecordCorpus));
     state->theronSectorRecordCorpusBound = 0;
+    memset(&state->theronHandoffArtifactCorpus, 0,
+           sizeof(state->theronHandoffArtifactCorpus));
+    state->theronHandoffArtifactCorpusBound = 0;
+    memset(&state->theronDungeonCapturePlan, 0,
+           sizeof(state->theronDungeonCapturePlan));
+    state->theronDungeonCapturePlanBound = 0;
+    memset(&state->theronLaterRouteCandidate, 0,
+           sizeof(state->theronLaterRouteCandidate));
+    state->theronLaterRouteCandidateBound = 0;
+    memset(&state->theronLaterRouteCandidateIndex, 0,
+           sizeof(state->theronLaterRouteCandidateIndex));
+    state->theronLaterRouteCandidateIndexBound = 0;
+}
+
+static int m12_theron_later_route_candidate_index_current(
+    const M12_StartupMenuState* state,
+    const Theron_V1Track02LaterRouteCandidateCampaignIndex* index)
+{
+    Theron_V1Track02LaterRouteCandidateCampaignIndex current;
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* media;
+
+    if (!state || !index || !state->theronLaunchTraceIdentityBound ||
+        !state->theronLaunchTraceIdentity.valid ||
+        !state->theronLaunchTraceIdentity.direct_campaign_consumed ||
+        !state->theronLaunchTraceIdentity.loader_trace_consumed ||
+        !state->theronLaunchTraceIdentity.event_log_consumed ||
+        !state->theronLaunchTraceIdentity.campaign_layout_epoch ||
+        !state->theronLaunchTraceIdentity.track02_md5[0]) {
+        return 0;
+    }
+    media = M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
+    if (!M12_AssetStatus_TheronCampaignMediaLaunchReady(&state->assetStatus) ||
+        !media || strcmp(state->theronLaunchTraceIdentity.track02_md5,
+                         media->track02_md5) != 0) {
+        return 0;
+    }
+    return theron_v1_track02_later_route_candidate_campaign_index_current(
+        index, state->theronLaunchTraceIdentity.campaign_layout_epoch, &current);
+}
+
+static int m12_theron_later_route_candidate_indexes_match(
+    const Theron_V1Track02LaterRouteCandidateCampaignIndex* left,
+    const Theron_V1Track02LaterRouteCandidateCampaignIndex* right)
+{
+    unsigned i;
+
+    if (!left || !right || left->count != right->count) return 0;
+    for (i = 0u; i < left->count; ++i) {
+        const Theron_V1Track02LaterRouteCandidateReceipt* a = &left->entries[i];
+        const Theron_V1Track02LaterRouteCandidateReceipt* b = &right->entries[i];
+        if (a->status != b->status ||
+            a->observed_trace_row_consumed != b->observed_trace_row_consumed ||
+            a->direct_media_consumed != b->direct_media_consumed ||
+            a->replay_tail_consumed != b->replay_tail_consumed ||
+            a->opaque_only != b->opaque_only || a->loader_pc != b->loader_pc ||
+            a->record != b->record || a->raw_sector != b->raw_sector ||
+            a->destination_identity != b->destination_identity ||
+            a->campaign_layout_epoch != b->campaign_layout_epoch) return 0;
+    }
+    return 1;
 }
 
 int M12_StartupMenu_ScanTheronCampaignMedia(
@@ -11220,6 +11280,7 @@ int M12_StartupMenu_ValidateTheronCampaignLaunchIntent(
     const Theron_V1Track02CampaignMediaDiscoveryReceipt* current;
     uint32_t current_plan_identity;
     uint32_t intent_plan_identity;
+    int candidate_index_valid;
     if (!state || !intent || !intent->valid || !intent->gameId ||
         strcmp(intent->gameId, "theron") != 0 || !intent->theronCampaignMediaBound ||
         !intent->theronCampaignMediaScanEpoch ||
@@ -11232,6 +11293,17 @@ int M12_StartupMenu_ValidateTheronCampaignLaunchIntent(
         &state->assetStatus.theronCampaignMediaPlan);
     intent_plan_identity = theron_v1_track02_capture_target_plan_identity(
         &intent->theronCampaignMediaPlan);
+    candidate_index_valid =
+        intent->theronLaterRouteCandidateIndexBound ==
+            state->theronLaterRouteCandidateIndexBound &&
+        (!intent->theronLaterRouteCandidateIndexBound ||
+         (m12_theron_later_route_candidate_index_current(
+              state, &state->theronLaterRouteCandidateIndex) &&
+          m12_theron_later_route_candidate_index_current(
+              state, &intent->theronLaterRouteCandidateIndex) &&
+          m12_theron_later_route_candidate_indexes_match(
+              &intent->theronLaterRouteCandidateIndex,
+              &state->theronLaterRouteCandidateIndex)));
     return m12_theron_campaign_media_identity_matches(&intent->theronCampaignMedia,
                                                        current) &&
         theron_v1_track02_campaign_media_bind_capture_plan(
@@ -11300,7 +11372,87 @@ int M12_StartupMenu_ValidateTheronCampaignLaunchIntent(
               state->theronSectorRecordCorpus.sector_record.observed_raw_sector_checksum &&
           (!state->theronLaunchTraceIdentityBound ||
            (!strcmp(intent->theronSectorRecordCorpus.coalesced_trace_md5,
-                    state->theronLaunchTraceIdentity.source_trace_md5)))));
+                    state->theronLaunchTraceIdentity.source_trace_md5))))) &&
+        intent->theronHandoffArtifactCorpusBound == state->theronHandoffArtifactCorpusBound &&
+        (!intent->theronHandoffArtifactCorpusBound ||
+         (intent->theronHandoffArtifactCorpus.status == THERON_V1_TRACK02_HANDOFF_ARTIFACT_CORPUS_READY &&
+          state->theronHandoffArtifactCorpus.status == THERON_V1_TRACK02_HANDOFF_ARTIFACT_CORPUS_READY &&
+          intent->theronHandoffArtifactCorpus.direct_candidate_count == 1u &&
+          state->theronHandoffArtifactCorpus.direct_candidate_count == 1u &&
+          intent->theronHandoffArtifactCorpus.no_draw_only &&
+          state->theronHandoffArtifactCorpus.no_draw_only &&
+          intent->theronHandoffArtifactCorpus.capture_target_plan_identity == current_plan_identity &&
+          state->theronHandoffArtifactCorpus.capture_target_plan_identity == current_plan_identity &&
+          intent->theronHandoffArtifactCorpus.artifact.descriptor_selector ==
+              state->theronHandoffArtifactCorpus.artifact.descriptor_selector &&
+          intent->theronHandoffArtifactCorpus.artifact.descriptor_ordinal ==
+              state->theronHandoffArtifactCorpus.artifact.descriptor_ordinal &&
+          intent->theronHandoffArtifactCorpus.artifact.descriptor_source_hash ==
+              state->theronHandoffArtifactCorpus.artifact.descriptor_source_hash &&
+          !strcmp(intent->theronHandoffArtifactCorpus.track02_md5, current->track02_md5) &&
+          !strcmp(state->theronHandoffArtifactCorpus.track02_md5, current->track02_md5) &&
+          ((!state->theronLaunchTraceIdentityBound ||
+            (!strcmp(intent->theronHandoffArtifactCorpus.source_trace_md5,
+                     state->theronLaunchTraceIdentity.source_trace_md5) &&
+             !strcmp(state->theronHandoffArtifactCorpus.source_trace_md5,
+                     state->theronLaunchTraceIdentity.source_trace_md5))) &&
+           theron_v1_track02_handoff_artifact_corpus_matches_plan(
+               &intent->theronHandoffArtifactCorpus,
+               &state->assetStatus.theronCampaignMediaPlan,
+               state->theronLaunchTraceIdentityBound ?
+                   state->theronLaunchTraceIdentity.source_trace_md5 : NULL) &&
+           theron_v1_track02_handoff_artifact_corpus_matches_plan(
+               &state->theronHandoffArtifactCorpus,
+               &state->assetStatus.theronCampaignMediaPlan,
+               state->theronLaunchTraceIdentityBound ?
+                   state->theronLaunchTraceIdentity.source_trace_md5 : NULL)))) &&
+        candidate_index_valid;
+}
+
+int M12_StartupMenu_ValidateTheronCampaignCaptureRequiredIntent(
+    const M12_StartupMenuState* state,
+    const M12_LaunchIntent* intent)
+{
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* current;
+
+    if (!state || !intent || !intent->valid || !intent->gameId ||
+        strcmp(intent->gameId, "theron") != 0 ||
+        !intent->theronCampaignMediaBound ||
+        !intent->theronCampaignMediaScanEpoch ||
+        intent->theronCampaignMediaScanEpoch != state->theronCampaignMediaScanEpoch ||
+        !M12_AssetStatus_TheronCampaignMediaLaunchReady(&state->assetStatus) ||
+        intent->theronSrmCampaignReplayBound ||
+        intent->theronSrmLaunchDiscoveryBound ||
+        intent->theronLaunchTraceIdentityBound ||
+        intent->theronTraceBundleBound ||
+        intent->theronSectorRecordCorpusBound ||
+        intent->theronDungeonCapturePlanBound ||
+        intent->theronHandoffArtifactCorpusBound ||
+        intent->theronLaterRouteCandidateBound ||
+        intent->theronLaterRouteCandidateIndexBound) {
+        return 0;
+    }
+    current = M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
+    if (intent->theronCampaignMedia.direct_media.status !=
+            THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        intent->theronCampaignMedia.direct_media.failure_reason !=
+            THERON_V1_TRACK02_MEDIA_REASON_NONE ||
+        (!intent->theronCampaignMedia.direct_media.mode1_2352 &&
+         !intent->theronCampaignMedia.direct_media.mode1_2048) ||
+        (intent->theronCampaignMedia.direct_media.mode1_2352 &&
+         intent->theronCampaignMedia.direct_media.mode1_2048) ||
+        !intent->theronCampaignMedia.direct_media.payload_path[0] ||
+        !intent->theronCampaignMedia.direct_media.payload_bytes ||
+        !intent->theronCampaignMedia.direct_media.sector_count ||
+        !intent->theronCampaignMedia.direct_media.logical_user_data_window_bytes) {
+        return 0;
+    }
+    return m12_theron_campaign_media_identity_matches(
+               &intent->theronCampaignMedia, current) &&
+        theron_v1_track02_campaign_media_bind_capture_plan(
+            &intent->theronCampaignMedia, &intent->theronCampaignMediaPlan) &&
+        theron_v1_track02_campaign_media_bind_capture_plan(
+            current, &state->assetStatus.theronCampaignMediaPlan);
 }
 
 int M12_StartupMenu_BindTheronSrmCampaignReplay(M12_StartupMenuState* state,
@@ -11478,6 +11630,83 @@ int M12_StartupMenu_BindTheronDungeonCapturePlan(
     return 1;
 }
 
+int M12_StartupMenu_BindTheronHandoffArtifactCorpus(M12_StartupMenuState* state,
+    const Theron_V1Track02HandoffArtifactCorpusReceipt* receipt)
+{
+    if (!state || !receipt || receipt->status != THERON_V1_TRACK02_HANDOFF_ARTIFACT_CORPUS_READY ||
+        receipt->direct_candidate_count != 1u || !receipt->direct_cue_bin_consumed ||
+        !receipt->source_trace_md5_verified || !receipt->capture_target_plan_consumed ||
+        !receipt->opaque_artifact_consumed || !receipt->capture_required_only || !receipt->no_draw_only ||
+        !receipt->artifact.descriptor_selector || !receipt->artifact.descriptor_source_hash ||
+        receipt->capture_target_plan_identity != theron_v1_track02_capture_target_plan_identity(&state->assetStatus.theronCampaignMediaPlan) ||
+        strcmp(receipt->track02_md5, state->assetStatus.theronCampaignMedia.track02_md5) ||
+        !theron_v1_track02_handoff_artifact_corpus_matches_plan(
+            receipt, &state->assetStatus.theronCampaignMediaPlan,
+            state->theronLaunchTraceIdentityBound ?
+                state->theronLaunchTraceIdentity.source_trace_md5 : NULL)) {
+        if (state) { memset(&state->theronHandoffArtifactCorpus, 0, sizeof(state->theronHandoffArtifactCorpus)); state->theronHandoffArtifactCorpusBound = 0; }
+        return 0;
+    }
+    state->theronHandoffArtifactCorpus = *receipt;
+    state->theronHandoffArtifactCorpusBound = 1;
+    return 1;
+}
+
+int M12_StartupMenu_ImportTheronHandoffArtifactCorpus(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02ExternalCaptureReceipt* handoff,
+    const Theron_V1Track02HandoffArtifactCorpusCandidate* candidates,
+    unsigned int candidateCount,
+    Theron_V1Track02HandoffArtifactCorpusReceipt* outReceipt)
+{
+    Theron_V1Track02HandoffArtifactCorpusReceipt receipt = {0};
+    uint32_t planIdentity;
+
+    if (!state) return 0;
+    planIdentity = theron_v1_track02_capture_target_plan_identity(
+        &state->assetStatus.theronCampaignMediaPlan);
+    if (!state->assetStatus.theronCampaignMediaLaunchReady ||
+        state->assetStatus.theronCampaignMedia.status !=
+            THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+        !state->assetStatus.theronCampaignMedia.launchable_direct_media ||
+        !state->assetStatus.theronCampaignMedia.exact_layout_bound ||
+        !state->theronCampaignMediaScanEpoch || !planIdentity ||
+        !state->theronLaunchTraceIdentityBound ||
+        !state->theronLaunchTraceIdentity.valid ||
+        !state->theronSectorRecordCorpusBound ||
+        !handoff ||
+        handoff->status != THERON_V1_TRACK02_EXTERNAL_CAPTURE_RUNTIME_READY ||
+        !handoff->raw_media_intake_verified ||
+        !handoff->mednafen_trace_source_verified ||
+        !handoff->capture_target_plan_verified ||
+        !handoff->positive_handoff_capture_required ||
+        handoff->capture_target_plan_identity != planIdentity ||
+        strcmp(handoff->track02_md5,
+               state->assetStatus.theronCampaignMedia.track02_md5) ||
+        strcmp(handoff->mednafen_trace_source_md5,
+               state->theronLaunchTraceIdentity.source_trace_md5) ||
+        !theron_v1_track02_handoff_artifact_corpus_import(
+            handoff, &state->assetStatus.theronCampaignMediaPlan,
+            candidates, candidateCount, &receipt) ||
+        !theron_v1_track02_handoff_artifact_corpus_matches_sector_record(
+            &receipt, &state->theronSectorRecordCorpus,
+            &state->assetStatus.theronCampaignMediaPlan,
+            state->theronLaunchTraceIdentity.source_trace_md5) ||
+        !M12_StartupMenu_BindTheronHandoffArtifactCorpus(state, &receipt)) {
+        if (receipt.status == THERON_V1_TRACK02_HANDOFF_ARTIFACT_CORPUS_UNAVAILABLE &&
+            (!handoff || candidateCount)) {
+            receipt.status = THERON_V1_TRACK02_HANDOFF_ARTIFACT_CORPUS_REJECTED;
+        }
+        memset(&state->theronHandoffArtifactCorpus, 0,
+               sizeof(state->theronHandoffArtifactCorpus));
+        state->theronHandoffArtifactCorpusBound = 0;
+        if (outReceipt) *outReceipt = receipt;
+        return 0;
+    }
+    if (outReceipt) *outReceipt = receipt;
+    return 1;
+}
+
 int M12_StartupMenu_BindTheronLaterRouteCandidate(
     M12_StartupMenuState* state,
     const Theron_V1Track02LaterRouteCandidateReceipt* receipt)
@@ -11501,7 +11730,7 @@ int M12_StartupMenu_BindTheronLaterRouteCandidate(
     state->theronLaterRouteCandidateBound = 1;
     return 1;
 }
-int M12_StartupMenu_BindTheronLaterRouteCandidateIndex(M12_StartupMenuState* state,const Theron_V1Track02LaterRouteCandidateCampaignIndex* index){if(!state||!index||!index->valid||!index->capture_required_only||!index->count||index->count>THERON_V1_TRACK02_LATER_ROUTE_CANDIDATE_MAX){if(state){memset(&state->theronLaterRouteCandidateIndex,0,sizeof(state->theronLaterRouteCandidateIndex));state->theronLaterRouteCandidateIndexBound=0;}return 0;}state->theronLaterRouteCandidateIndex=*index;state->theronLaterRouteCandidateIndexBound=1;return 1;}
+int M12_StartupMenu_BindTheronLaterRouteCandidateIndex(M12_StartupMenuState* state,const Theron_V1Track02LaterRouteCandidateCampaignIndex* index){if(!state||!m12_theron_later_route_candidate_index_current(state,index)){if(state){memset(&state->theronLaterRouteCandidateIndex,0,sizeof(state->theronLaterRouteCandidateIndex));state->theronLaterRouteCandidateIndexBound=0;}return 0;}state->theronLaterRouteCandidateIndex=*index;state->theronLaterRouteCandidateIndexBound=1;return 1;}
 
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
@@ -11599,8 +11828,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         intent.theronSectorRecordCorpusBound = state->theronSectorRecordCorpusBound;
         intent.theronDungeonCapturePlan = state->theronDungeonCapturePlan;
         intent.theronDungeonCapturePlanBound = state->theronDungeonCapturePlanBound;
+        intent.theronHandoffArtifactCorpus = state->theronHandoffArtifactCorpus;
+        intent.theronHandoffArtifactCorpusBound = state->theronHandoffArtifactCorpusBound;
         intent.theronLaterRouteCandidate = state->theronLaterRouteCandidate;
         intent.theronLaterRouteCandidateBound = state->theronLaterRouteCandidateBound;
+        intent.theronLaterRouteCandidateIndex = state->theronLaterRouteCandidateIndex;
+        intent.theronLaterRouteCandidateIndexBound =
+            state->theronLaterRouteCandidateIndexBound;
     }
     return intent;
 }

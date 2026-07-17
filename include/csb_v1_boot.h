@@ -1641,6 +1641,9 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     int title_frame,
     CSB_V1_StartupRenderPlan_PC34 *out_plan,
     CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+int csb_v1_boot_startup_title_capture_plan_admit_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    int title_frame);
 int csb_v1_boot_startup_playback_complete_entrance_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 int csb_v1_boot_startup_playback_enter_hud_pc34(

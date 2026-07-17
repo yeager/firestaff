@@ -28,9 +28,18 @@ typedef struct {
     uint32_t campaign_layout_epoch;
     uint32_t campaign_media_scan_epoch;
     uint32_t capture_target_plan_identity;
+    uint32_t cd_read_record;
+    uint16_t descriptor_selector;
+    size_t descriptor_ordinal;
+    uint32_t descriptor_source_hash;
     uint32_t descriptor_record;
+    size_t loader_output_raw_offset;
+    size_t loader_output_bytes;
+    uint32_t loader_output_identity;
     uint32_t palette_output_identity;
     uint32_t bitmap_transfer_identity;
+    size_t destination_offset;
+    size_t destination_bytes;
     uint32_t destination_identity;
 } Theron_V1Track02DescriptorBitmapPaletteCaptureIntakeReceipt;
 

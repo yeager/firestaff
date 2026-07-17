@@ -2552,7 +2552,8 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             out_receipt->render_plan.title_dest_y = 0;
             out_receipt->render_plan.title_dest_w = 320;
             out_receipt->render_plan.title_dest_h = 80;
-        } else if (out_receipt->title_source_step >= 20) {
+        } else if (out_receipt->title_stage ==
+                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
             out_receipt->title_stage =
                 CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
             out_receipt->render_plan.title_stage =
@@ -2577,6 +2578,11 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             out_receipt->render_plan.title_dest_y = 74;
             out_receipt->render_plan.title_dest_w = 48;
             out_receipt->render_plan.title_dest_h = 12;
+        }
+        if (!csb_v1_boot_startup_title_capture_plan_admit_pc34(
+                &out_receipt->render_plan, out_receipt->title_frame)) {
+            csb_v1_boot_startup_render_view_receipt_init_pc34(out_receipt);
+            return 0;
         }
         if (out_receipt->render_plan.asset_command_count > 0 &&
             out_receipt->render_plan.asset_commands[0].kind ==

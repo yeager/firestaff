@@ -23,6 +23,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_weather_gdat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,6 +111,12 @@ typedef struct {
     uint32_t decoded_pixels_hash;
     uint32_t material_hash;
 } DM2_V1_DoorGdatMaterialReceipt;
+
+int dm2_v1_door_gdat_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t door_gfx_index,
+    uint8_t image_field,
+    DM2_V1_DoorGdatMaterialReceipt *out);
 
 /* ── Door Mechanics API ─────────────────────────────────────────────── */
 

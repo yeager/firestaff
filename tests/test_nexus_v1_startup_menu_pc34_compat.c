@@ -2933,9 +2933,9 @@ int main(void)
                full_start_receipt.host_receipt.input_result ==
                    NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
                strcmp(full_start_receipt.startup_ui_blocker,
-                      "menu-bpk-prs3") == 0 &&
+                      "menu-bpk-prs3-capture-required") == 0 &&
                strcmp(full_start_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
+                      "menu-bpk-prs3-capture-required") == 0,
            "Nexus full-start receipt blocks save and champion menus on PRS3");
     expect(nexus_v1_launcher_startup_full_start_consumer_from_runtime_state(
                &synthetic_runtime_receipt,
@@ -2950,7 +2950,7 @@ int main(void)
                       "blocked-startup") == 0 &&
                full_start_consumer_receipt.presentation_valid == 0 &&
                strcmp(full_start_consumer_receipt.status,
-                      "blocked-menu-bpk-prs3") == 0,
+                      "menu-bpk-prs3-capture-required") == 0,
            "Nexus full-start consumer receipt blocks M11/M12 on PRS3");
     runtime_snapshot.runtime = runtime_state;
     expect(nexus_v1_launcher_startup_full_start_consumer_from_snapshot(
@@ -2986,7 +2986,7 @@ int main(void)
                full_start_package_receipt.first_capture_draw_kind ==
                    NEXUS_V1_STARTUP_DRAW_NONE &&
                strcmp(full_start_package_receipt.startup_ui_blocker,
-                      "menu-bpk-prs3") == 0,
+                      "menu-bpk-prs3-capture-required") == 0,
            "Nexus full-start package blocks startup capture proof on PRS3");
     memset(draw_commands, 0x7f, sizeof(draw_commands));
     expect(nexus_v1_launcher_startup_full_start_package_build_commands_from_snapshot(

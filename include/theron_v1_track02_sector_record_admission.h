@@ -37,6 +37,27 @@ typedef struct {
     uint32_t record_user_data_hash;
     uint16_t loader_caller_pc;
     uint16_t loader_return_pc;
+    /* Observed game-owned CALL $e009 and immediate post-return PC. These
+     * retain a control-flow witness only; they do not name a level or route. */
+    uint8_t loader_caller_opcode;
+    uint16_t loader_caller_target;
+    uint16_t loader_post_return_pc;
+    uint16_t loader_post_return_next_pc;
+    /* Disassembled System Card register arguments and CD observation for the
+     * exact callsite. They identify the observed loader branch only. */
+    uint8_t loader_record_cl;
+    uint8_t loader_record_dl;
+    uint8_t loader_record_ch;
+    uint8_t loader_sector_count;
+    int loader_observed_raw_sector_lba;
+    int loader_callsite_context_verified;
+    /* Observed $e009 transfer facts for the descriptor-selected later record.
+     * These are source trace coordinates/checksums, not payload semantics. */
+    uint16_t loader_destination;
+    size_t loader_destination_span_bytes;
+    uint32_t loader_destination_span_checksum;
+    size_t loader_destination_payload_bytes;
+    uint32_t loader_destination_payload_checksum;
     uint32_t observed_raw_sector_checksum;
     int level_object_semantics_allowed;
     int bitmap_palette_admission_allowed;

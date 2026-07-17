@@ -1,5 +1,76 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-17 Theron post-G7/G8 `0x73a` loader-envelope blocker rechecked:
+  disassembled game-RAM `1f1840` `JSR $e009`, the `ff/20/04` parameter thunk,
+  G8 READ(6) CDB `080012fb0100`, LBA `4859`, and raw Track02 record `0x73a`
+  are already source-verified. The authentic trace still contains no
+  FIFO-to-game-RAM destination/output witness or game-owned reader for that
+  record. It therefore cannot enter the M11 artifact/corpus output admission
+  without fabricating the missing envelope. Keep this candidate capture-only
+  and no-draw; the next admissible evidence is one original G8 output/consumer
+  chain, not a route, level/object, bitmap, palette, or record-format guess.
+  - 2026-07-17 update: the local G8 FIFO-output capture schema now requires
+    the exact sequence-4 callsite, G8 READ(6), and one ordered FIFO-origin
+    game-RAM output row while rejecting a consumer claim. The remaining
+    instrumentation gap is an original Mednafen run that emits this row for
+    G8; the schema fixture is metadata-only and is not corpus evidence.
+  - 2026-07-17 update: the local Mednafen patch now emits the opt-in G8 marker
+    only when `FIRESTAFF_THERON_G8_FIFO_OUTPUT_TRACE=1` and the existing
+    FIFO-origin hook observes generation 8/LBA 4859/dispatch 4. The operator
+    planner refuses missing binaries, CUE files, or an existing output path.
+    A real direct CUE/BIN run remains required; no trace row was generated.
+  - 2026-07-17 update: an immutable parsed G8 sidecar can now join only an
+    already-ready opaque artifact corpus and the current M11 source-trace MD5
+    under one media scan epoch. The receipt remains capture-required/no-draw,
+    retains no payload bytes, and clears on trace or epoch drift. This is not
+    an artifact import, loader-output consumer, route, or render promotion;
+    a real direct CUE/BIN G8 output/consumer capture remains required.
+  - 2026-07-17 update: M11 now binds the sidecar to the exact already
+    lifecycle-bound opaque artifact corpus, including its bundle identity and
+    capture-plan identity. A substitute corpus instance clears the receipt;
+    the result remains capture-required/no-draw and cannot enter the closed
+    loader-output consumer or any route/bitmap path.
+  - 2026-07-17 update: the G8 sidecar/binding now retains only the observed
+    FIFO row's offset, reader-PC, logical and physical destinations, writer
+    PCs, and byte value under a rechecked capture fingerprint. Address-window,
+    source-trace, lifecycle, corpus, plan, or retained-row drift rejects. This
+    remains opaque capture-required/no-draw data, not a consumer claim or a
+    basis for route, bitmap, palette, decoder, or render promotion.
+  - 2026-07-17 update: the verifier's exact one-row G8 capture now carries a
+    complete sequence/length/window identity: the observed FIFO sequence is
+    both bounds, capture length is one byte, and the source window is
+    `[source_offset, source_offset + 1)`. Its identity is rechecked through
+    the artifact/corpus/capture-plan and M11 capture-required binding. Any
+    sequence, length, window, source trace, lifecycle, corpus, or plan drift
+    rejects; the missing original output/consumer chain remains the next
+    admissible evidence.
+  - 2026-07-17 update: the exact capture file now has an explicit canonical
+    MD5, full-file FNV-1a, and one-row count bound into one file identity.
+    M11 rechecks that identity as capture-required lifecycle metadata beside
+    the current source-trace MD5, artifact corpus, and capture-plan identity.
+    File hash, FNV, row-count, source-trace, corpus, plan, or lifecycle drift
+    rejects; it does not make the row a consumer, route, or bitmap source.
+  - 2026-07-17 update: that canonical capture-file identity is now also bound
+    to the disassembled G8 sequence-4 dispatch (`3840`/`1f1840`, `20/ff/04`)
+    and exact READ(6) CDB `08 00 12 fb 01 00` for LBA `4859`, one sector.
+    M11 rechecks this capture-CDB identity with the current source trace,
+    artifact corpus, and capture plan, clearing capture-required evidence on
+    any callsite, CDB, source-trace, corpus, plan, or lifecycle drift. This
+    remains metadata-only and cannot claim a consumer, route, or bitmap.
+
+- 2026-07-17 Theron Track 02 `0x0b52` multi-capture level-index/seed
+  correlation blocker: the workspace contains one source-locked Stage-3
+  `0x0b52` envelope/loader chain, but no second independent original capture
+  that pairs a distinct or repeated header-level-index/seed with its following
+  observed `$e009` CD-read record and a game-owned level-route consumer.
+  Disassembly proves the read and its return to `$3800`, not a level-route
+  selector. Consequently no typed index/seed-to-route admission exists. The
+  next required evidence is at least two independently attested original
+  CUE/BIN plus coalesced Mednafen traces with the same authenticated layout,
+  header facts, subsequent record identity, and an observed route consumer.
+  Bitmap continuation bytes remain opaque; do not infer a level, object,
+  route, palette, pixel, or fallback visual from this single capture.
+
 - 2026-07-17 Theron Track 02 non-startup sector-record follow-up: a strict
   CUE/BIN transaction now rehashes the admitted raw member, accepts only the
   source-owned Stage-3 descriptor directory and a complete observed later
@@ -70,6 +141,31 @@
     operator-supplied original direct Track 02 and independently attested
     capture bundles; no route, bitmap, palette, object, or level semantics
     have been inferred.
+  - 2026-07-17 update: direct ISO, BIN, and CUE intake now accepts each known
+    Track 02 MD5 only with its matching verified sector layout. Startup scan
+    receipts retain a stable exact failure identifier for unavailable paths,
+    malformed CUE, missing payload, sector alignment, unknown hash,
+    hash/layout conflict, CUE INDEX 01 drift, and invalid user-data windows.
+    A CUE may also resolve the known `TQJP02.iso`/`TQUS02.iso` materialized
+    `End.iso` member name. These checks remain provenance-only: no media is
+    copied, no graphics are synthesized, and no consumer or render route is
+    promoted.
+  - 2026-07-17 update: a validated direct ISO/BIN/CUE receipt with its
+    existing identity-bound three-target plan may now enter M12 and M11 as
+    `TRACK02 CAPTURE REQUIRED` when no later trace/artifact receipt is bound.
+    M11 uses the established no-draw capture-required state and returns to
+    the launcher on input instead of attempting startup-atlas admission.
+    Plan/epoch/layout drift clears that state. This is not a game start,
+    decoder, bitmap, route, or render admission; original capture evidence
+    remains required before any later handoff can become ready.
+  - 2026-07-17 update: a capture-required rescan now advances M11's media
+    scan epoch only after the retained plan and canonical payload layout are
+    revalidated. The declared ISO alias path may change while its resolved
+    payload path, MD5, mode, CUE index, sector count, and user-data window
+    remain exact; payload or plan drift clears capture-required state. M11
+    presents the explicit `TRACK02 CAPTURE REQUIRED` no-draw status rather
+    than attempting a graphics startup route. No decoder, bitmap, route, or
+    synthetic media is introduced.
   - 2026-07-17 update: M11's observed Soul Room and dungeon-handoff loader
     sequence now rechecks that same fresh direct-only layout and its capture
     plan on every route bind. A stale CUE/index/sector/user-data receipt
@@ -360,6 +456,107 @@
     invalid opcode rejects before tail publication. The saved-timer scope is
     still attached only by the existing verified restored-dispatch receipt;
     no new timer, queue, or EXPOOL allocation path was added.
+  - 2026-07-17 update: runtime `STKOP_StoreExCellFlg` receipts now retain
+    the authenticated EXPOOL-tail FNV before and after the eight-word DB11
+    replacement. The callback accepts only its source success code, so a
+    failed write cannot be mistaken for a committed DSA mutation. A mutated
+    tail rejects before action/receipt publication; exact TimerQueue/TIMER
+    scope remains exclusively the existing restored-dispatch handoff.
+  - 2026-07-17 update: a `StoreExCellFlg` receipt can now reach the existing
+    restored TimerQueue/TIMER handoff only while its exact post-write EXPOOL
+    tail remains present, complete, and FNV-identical. Tail drift clears the
+    saved action handoff before scope publication and makes both the runtime
+    receipt getter and DSA chain receipt fail closed. This adds no queue,
+    timer, DB11 allocation, or inferred opcode route.
+  - 2026-07-17 update: high-bit `STKOP_TalentsStore` now carries the existing
+    `CHARDESC::SaveToWings` eight-record `EDT_Character` write into the
+    runtime receipt. The receipt binds the admitted fingerprint, talents word
+    before/after, and EXPOOL-tail FNV before/after; candidate publication
+    re-reads the full wing bundle on both sides. A missing wing remains the
+    source no-op, while a malformed/later unknown action or tail drift
+    publishes no wing receipt and cannot reach the restored timer handoff.
+    No character allocation, swap, generic save write, or queue behavior is
+    inferred.
+  - 2026-07-17 update: low-bit `STKOP_TalentsStore` now returns the completed
+    CSBWin stack-context party-talents image to its authenticated imported DSA
+    runner. The runtime therefore publishes a receipt only for the exact
+    `ReadDSAs()/DSA::Read` RCS-authenticated `(dsa,state,column,ordinal)`
+    action, binding champion count, fingerprints, and talents before/after.
+    Any party fingerprint or talents drift invalidates the receipt before the
+    restored TimerQueue/TIMER handoff can consume it. No synthetic action,
+    CHARDESC allocation, wing write, queue behavior, or general interpreter
+    was introduced.
+  - 2026-07-17 update: `STKOP_ExperiencePlus` now retains the source
+    `Magic.cpp::AddToSkill` selected-skill/basic-skill pair in the runtime
+    receipt. Candidate publication rederives the UI16 increment, cap and
+    no-LevelUp result from the live CHARDESC before committing both rows;
+    later selected/basic-skill drift makes the receipt and any restored
+    TimerQueue/TIMER consumption fail closed. LevelUp, random/stat/UI work,
+    generic XP writes and inferred timer behavior remain blocked.
+  - 2026-07-17 update: the same `AddToSkill` owner now exposes a read-only
+    LevelUp prerequisite receipt only when its proposed selected/basic-skill
+    pair crosses the source unadjusted-mastery boundary. It binds the UI16
+    increment, both CHARDESC rows before/after, and mastery before/after, and
+    expires on source-row drift. It executes no LevelUp code and publishes no
+    XP, stat, RNG, UI, save, or timer mutation; the complete original LevelUp
+    transaction remains the required next positive owner.
+  - 2026-07-17 update: `STKOP_MonsterStore` now binds CSBWin `DSA.cpp`'s
+    existing DB4 group-record owner to the runtime receipt. The action keeps
+    the complete eight-word group image before its first staged write and
+    re-reads the exact same Thing on both the original and candidate Dungeon
+    before publication. The receipt retains Thing, source write-mask, and
+    complete before/after images; later DB4 drift makes it unavailable to the
+    restored save/timer handoff. A later unknown word remains atomic and
+    publishes neither DB4 bytes nor a receipt. No group allocation, relink,
+    timer construction, queue behavior, generic interpreter, or LevelUp
+    behavior is inferred.
+  - 2026-07-17 update: `STKOP_CellStore` now binds CSBWin `DSA.cpp`'s
+    existing CELLFLAG and first DB0/DB1 owner to the runtime receipt. The
+    staged write retains the complete five-word `CellFetch` image before its
+    first write; candidate publication re-reads the same location on both
+    Dungeon images before exposing location, write-mask and full before/after
+    values. Later drift in an exposed CELLFLAG/DB0/DB1 field makes the receipt
+    unavailable to the restored save/timer handoff. A later unknown word
+    remains atomic. No cell, DB0/DB1 record, Thing link, timer, queue, or
+    generic cell semantics are constructed.
+  - 2026-07-17 update: `DSACMD_COPYTELEPORTER` now retains the full
+    source-cell, destination-cell-before and destination-cell-after `CellFetch`
+    images around the existing DB1/CELLFLAG copy owner. Runtime re-reads all
+    three images before candidate publication and rejects a later source or
+    destination drift. The copy remains bounded to existing source/destination
+    DB1 records and their CELLFLAG bytes; no teleporter, Thing link, timer or
+    queue is allocated or inferred.
+  - 2026-07-17 update: the existing `SetCurse`/`SetBroken`/`SetCharges`/
+    `SetPoisoned`/`SetSubType` DB5/DB6/DB8/DB10 property owner now publishes
+    an atomic Thing/property/value before/after receipt after its staged
+    commit. A later drift in the source-owned property field clears the
+    runtime/save receipt; unrelated record bits remain outside this bounded
+    property contract. Unknown properties and unsupported Thing types remain
+    fail-closed, with no generic object mutation route.
+  - 2026-07-17 update: `STKOP_Random` now carries the exact authenticated
+    `GAMEBLOCK2.RandomNumber` seed before/after through the runtime receipt.
+    Receipt currentness requires the same verified GAMEBLOCK2 owner and the
+    recorded post-action seed; seed drift fails closed. This adds no host RNG,
+    queue, timer, or random-dependent opcode semantics.
+  - 2026-07-17 update: `STKOP_DisableSaves` now records the exact existing
+    CSBWin save-policy value before/after its staged GAMEBLOCK2 handoff.
+    Receipt currentness rejects policy drift; no save operation, timer, queue,
+    fallback policy, or unrelated GAMEBLOCK2 state is inferred.
+  - 2026-07-17 update: `STKOP_DiscardText` now retains the source-owned
+    TT_OPENROOM DB2/F0168 text receipt before its authenticated clear and the
+    exact cleared receipt after it. A replacement or altered text receipt
+    makes runtime/save consumption fail closed. This remains one existing
+    message receipt only; no text queue, log, renderer fallback, or generated
+    text is opened.
+  - 2026-07-17 update: `AMPERSAND2/SETSKIN` now requires the current
+    source-owned `EDT_Skins` byte before staging a write. A completed action
+    publishes packed location and skin byte before/after only after the
+    existing EXPOOL/DB11 candidate accepts; a missing owner or later unknown
+    opcode publishes neither tail change nor receipt. HUD skin-cache bytes
+    now also revalidate the admitted tail FNV/size before consumption, so a
+    changed, truncated, or absent save tail clears stale skin data rather
+    than supplying a cache fallback. Exact saved TimerQueue/TIMER scope
+    remains the existing restored-dispatch attachment, not a new queue path.
   - 2026-07-17 update: `STKOP_ModifyMessage` now publishes its clamped
     SET/CLEAR/TOGGLE operands only in the authenticated runtime execution
     receipt. A restored `ProcessTimers` path supplies the source 0/1/2 map
@@ -1735,6 +1932,17 @@
     adjacent work is inscription/M648 redraw capture breadth and broader
     packaged PC/Mac capture, not synthetic mirror candidates or fallback HoC
     panels.
+  - 2026-07-17 DM1 HoC C127 click-cell closure: M11 now carries the exact
+    F0172-visible packed C127 wall cell into the F0280 selection receipt,
+    instead of substituting cell zero after the source-backed D1C hit test.
+    This keeps visible HoC mirrors selectable through their original raw
+    sensor/click pairing and rejects missing or mismatched front receipts.
+  - 2026-07-17 HoC pointer-sweep update: the real-data C127 runtime test now
+    walks every map-0 source sensor chain, derives each front pose from the
+    packed source wall cell, and clicks the M11-provided D1C zone. All 24
+    locally staged source candidates reject an adjacent out-of-zone click and
+    then reach the F0280 candidate panel through the positive click; no HoC
+    coordinate table, champion list, or fallback route participates.
   - 2026-07-16 DM1 HoC C160/C161/C162 panel-close redraw update: the focused
     M11 HoC close regression is now source-strict around F0128/F0107
     invalidation. After C160 closes C040, M11 proves a fresh GRAPHICS.DAT M648
@@ -2255,8 +2463,9 @@
     external-save corpus admission.
   - 2026-07-17 TITLE.C capture update: the source-step owner now transitions
     from PRESENTS frame 59/step 1 to CHAOS frame 60/step 2, retains the
-    source-owned full-CHAOS sample at frame 77/step 19, holds step 21 through
-    frame 99, and reaches STRIKES at frame 100/step 22. The visual/runtime
+    source-owned full-CHAOS sample at frame 77/step 19, holds the CHAOS plan
+    through frame 79/step 21, then presents STRIKES at frame 80/step 21; the
+    terminal frame 100 advances to step 22. The visual/runtime
     capture receipts consume those coherent frame/step pairs; they do not
     infer CHAOS from a stale frame or a wrapper route. Remaining handoff
     failures are separate title-presentation, entrance-input, and real-scan
@@ -2282,6 +2491,32 @@
     not claimed until the delay has elapsed. Pointer action, host-dispatch and
     post-input render receipts therefore retain one coherent source state.
     Remaining handoff work is limited to real-scan graphics/Dungeon MD5 drift.
+  - 2026-07-17 title-capture admission update: the signed render-view receipt
+    now admits C001 only when its `title_frame`, `title_source_step`,
+    `title_stage`, source rectangle, blit kind, and palette are the exact
+    TITLE.C F0437 plan. In particular, frame 79/step 21 remains CHAOS while
+    frame 80/step 21 is STRIKES; the prior frame-100/step-22 STRIKES claim was
+    a stale capture interpretation. A mismatched same-step phase is no-draw.
+    The M11 launcher boundary uses the real `data/csb` C001/C004/C002/C003
+    path and waits one source vblank after the F0806 pre-open delay before the
+    first door frame. No synthetic frame or palette is admitted.
+  - 2026-07-17 real-raster correction: the render-view adapter no longer
+    infers STRIKES from `title_source_step >= 20`. That stale shortcut changed
+    the real frame-78/79 CHAOS C001 crop into a STRIKES crop even though both
+    waves can carry steps 20/21. It now follows the signed TITLE.C F0437
+    stage, retaining the real CHAOS palette/0..79 crop through frame 79 and
+    selecting the 80..136 STRIKES crop only at frame 80. The local PC34
+    `GRAPHICS.DAT` runtime sequence verifies indexed raster admission and
+    palette ids for both boundary frames plus C004/C002/C003 Entrance; no
+    synthetic frame, palette, or fallback decoder was introduced.
+  - 2026-07-17 F0438/F0807 palette admission update: startup host-surface
+    admission now checks the source palette before it creates a session frame.
+    The final C004+C003 opening page requires `C28_ENTRANCE_CSB`; the first
+    PANEL.C C017/C040 runtime page requires the neutral palette after F0807
+    releases Entrance state. A relabelled title palette or retained Entrance
+    palette rejects without updating session presentation metadata. The local
+    PC34 sequence covers positive real indexed rasters and both reject paths;
+    no synthetic door, HUD, frame, or palette was introduced.
   - 2026-07-17 graphics-MD5 receipt update: startup receipt recomputation now
     clears both hash forms on graphics-proof drift before a session can reuse
     it. The focused regression mutates only graphics MD5. Dungeon drift and
@@ -3498,8 +3733,32 @@
     original-window capture and broader app-route parity; the local opt-in
     real-package launch probe still has broader real-data/hash failures.
 
-- 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
-  raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
+- 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live.
+  F0213/F0220 now own validated C15-to-C25 creation and live C25 advancement;
+  remaining endgame work is caller-specific harm-explosion transaction breadth,
+  not a fallback C15/C25 path.
+  - 2026-07-17 update: the F0217 Ven/Ful impact consumer now admits only a
+    byte-identical C14 Slot and C05 power/type record, publishes its C15/C25
+    owner before runtime F0213, and rolls C15/SFT/runtime/timeline state back
+    on drift, pool exhaustion, or schedule failure. Other projectile impact
+    families remain separate source-owned work; they do not inherit a
+    synthetic C15/C25 fallback.
+  - 2026-07-17 update: F0218's deferred C38 impact admission now walks the
+    loaded SFT C14 chain and requires raw/decoded/runtime identity per cell
+    before F0190 compaction. A missing or drifted C14 owner is a no-mutation
+    rejection, never a scan of host-only projectile slots.
+  - 2026-07-17 update: F0214 queue compaction now writes every shifted live
+    C14 `EventIndex` back to raw bytes before any later save/export boundary.
+  - 2026-07-17 update: loaded DM1 spell and creature F0212 callers now
+    publish the C14/C49 pair atomically through the verified transaction
+    boundary; missing C14 ownership, duplicate C49 ownership, or any publish
+    failure restores the runtime/timeline state. Remaining F0212 work is
+    caller breadth, not a synthetic projectile fallback.
+  - 2026-07-17 update: F0221 now supplies F0219's fluxcage blocker only from
+    the loaded destination SFT chain. Each C15 is raw/decoded-verified before
+    its C050 type can consume a projectile; a malformed C15 rejects before
+    any C14 or runtime mutation. Remaining F0221 work is broader caller
+    adoption, not a runtime-list substitute.
 
 - 2026-07-15 DM1 F0128 follow-up: F0115 now runs in source square order
   D3L/D3R/D3C, D2L/D2R/D2C, then D1L/D1R/D1C. Remaining viewport work is
@@ -3790,6 +4049,24 @@
   D0--D3 now reach the runtime door receipt; actual side-frame pixel blits
   remain blocked pending complete `QUERY_TEMP_PICST`/RAW4 geometry proof. No generic
   panel/frame fallback.
+  - 2026-07-17 update: `DRAW_DOOR_FRAMES`' bounded `yy & 1` roof-slit
+    `DRAW_DUNGEON_GRAPHIC` transaction now has an M11 consumer for only the
+    source table pairs `table1d6efd[3..8]` (`0x12..0x17`) and
+    `table1d6f0b[3..8]` (`0x2f2/0x2f1/0x2f3/0x2ef/0x2ee/0x2f0`). It requires
+    authenticated GRAPHICSSET raw/IMG3/PAL16, RAW4 table/row, scene key,
+    composition and live surface identities. The missing broader work remains
+    source-selected roof-slit flag delivery, stretch/light-palette execution,
+    centre-frame placement and unproven door transforms; no generic roof art,
+    inferred cell, scaling or fallback is permitted.
+  - 2026-07-17 update: the default D1C door-button route is now executable
+    only at the source identity scale `table1d6b71[1] == 0x40`, with
+    `DOOR_BUTTONS/0` field 0 or 5 and `table1d6ed3[3] + 0x79e == 0x7a1`.
+    Remaining button work is D0/D2/D3 scaling, custom WALL_GFX buttons and
+    source-selected live geometry delivery; none may borrow this D1C path.
+  - 2026-07-17 update: D2C's default button now consumes only the source
+    `0x2b` scale and `0x7a0` RAW4 row. D0/D3 and custom buttons remain closed.
+  - 2026-07-17 update: D0's default button now consumes only source scale
+    `0x60` and RAW4 `0x7a2`; D3 and every custom WALL_GFX route remain closed.
 
 - 2026-07-15 DM2 `DRAW_DOOR` follow-up: map `UseDoor0/UseDoor1` now gates
   the matching DB0 `DoorType` before a `DOORS` material plan can exist.
@@ -5934,6 +6211,172 @@ replay tail, plan FNV, layout epoch, and scan epoch to agree. Any mismatch
 clears it; no plan can create a trace, descriptor, palette, bitmap, decoder,
 or draw route. The remaining blocker is still an operator-produced observed
 artifact accepted by the existing strict chain.
+2026-07-17 dungeon-handoff source-trace binding: the strict local capture-plan
+grammar now requires a lowercase source-trace MD5 and carries it in the
+admission receipt. CAPTURE_REQUIRED can become RESUME_READY only when the
+already admitted opaque descriptor/palette/bitmap artifact reports the exact
+same coalesced trace MD5, in addition to the direct media, replay, plan, and
+epoch checks. The local verifier hashes the supplied trace and compares it to
+both plan and artifact. Missing, malformed, or divergent trace identity stays
+rejected or capture-required; no payload, level/object, palette, bitmap, or
+render semantics are introduced. The remaining blocker is an operator's real
+observed trace and matching artifact chain.
+2026-07-17 dungeon-handoff artifact-plan provenance: the capture-artifact
+importer now requires all three opaque envelope rows to share one known direct
+Track02 variant and MD5, then stamps the complete capture-plan identity into
+its receipt. Descriptor bitmap/palette admission requires that exact identity
+alongside the existing original media and coalesced trace checks. This keeps a
+mixed, stale, or plan-drifted artifact out of the positive handoff path; no
+positive local capture remains CAPTURE_REQUIRED/no-draw. No payload semantics,
+bitmap/palette decoding, or rendering has been added. The remaining blocker
+is still one complete original capture chain.
+2026-07-17 dungeon-handoff operator capture schema: the external artifact
+envelope now has a mandatory `capture_target_plan_fnv1a` row. The observed
+Mednafen trace stamper and direct-media campaign emitter write it only from a
+complete opaque capture plan; the importer and local handoff verifier require
+it to match the current plan together with the direct Track02 and trace MD5s.
+Wrong, missing, or stale plan evidence rejects before a receipt is published.
+This is metadata-only: without a positive original CUE/BIN, trace, descriptor,
+and artifact corpus the route remains CAPTURE_REQUIRED/no-draw, and no payload
+or graphics semantics are inferred.
+2026-07-17 dungeon-handoff operator launch receipt: a dedicated Mednafen
+handoff validator now binds the requested capture-plan FNV to one direct
+MODE1/2352 CUE/BIN intake before converting an explicitly MD5-bound observed
+loader trace. It requires the complete opaque plan's Track02, CD-read,
+loader-output, palette/bitmap identity, and destination record facts to agree
+with the original media, then retains only capture-required/no-draw receipt
+metadata. Bad plan identity, media, trace, or evidence clears the runtime
+admission. The remaining blocker is a real local CUE/BIN plus observed loader
+trace and later artifact corpus; no substitute media, decoded payload, or
+render route exists.
+2026-07-17 dungeon-handoff artifact-corpus import: one new strict operator
+corpus admission accepts exactly one direct bundle only after the current
+MD5-bound MODE1/2352 handoff receipt, source trace, and capture-plan FNV all
+revalidate. No candidates returns SKIP, while multiple, virtual, stale,
+cross-media, or altered candidates reject before the existing opaque importer
+runs. READY is still capture-required/no-draw metadata and has no payload or
+graphics semantics. The remaining blocker is a positive original corpus and
+then an explicit M12/M11 receipt consumer.
+2026-07-17 artifact-corpus host gate: M12 now carries only a current opaque
+no-draw artifact-corpus receipt through launch intent, and M11 requires its
+media, source-trace, and capture-plan identities before retaining
+RESUME_READY. Drift leaves the route capture-required/no-draw.
+2026-07-17 artifact-corpus intent identity: M12 now also rejects a stale or
+mixed corpus receipt before launch intent reaches M11, requiring the current
+single direct candidate, Track02 MD5, source trace MD5, no-draw policy, and
+capture-plan identity. M11 remains the second runtime check.
+2026-07-17 artifact-corpus rescan drift: a changed, rejected, or plan-drifted
+direct-media rescan now clears the artifact corpus and dungeon capture plan
+with the existing trace campaign state, preventing old no-draw evidence from
+crossing a new media epoch.
+2026-07-17 M11 active-session artifact-corpus epoch gate: M11 stamps the
+opaque corpus receipt with the direct campaign-media scan epoch at launch and
+refuses dungeon RESUME_READY whenever that bound epoch differs from the active
+session epoch. The route is cleared fail-closed and stays no-draw until a
+current capture-required or resume receipt is supplied; no payload, bitmap,
+palette, level, or object field is read. The remaining blocker is still a
+positive original artifact corpus.
+2026-07-17 artifact-corpus envelope continuity: M12 now rechecks every
+retained opaque start/Soul Room/dungeon envelope identity against the current
+capture plan before a launch intent is valid, and M11 repeats the dungeon
+palette/bitmap/destination identities before retaining RESUME_READY. Internal
+envelope drift clears the route fail-closed. The receipt remains metadata-only
+and no-draw; the remaining blocker is still a positive original artifact
+corpus, never inferred payload or graphics semantics.
+2026-07-17 dungeon loader-output continuity: the source-owned dungeon
+descriptor/palette/bitmap receipt now carries the existing capture-plan loader
+output identity. M11 retains it only as an opaque active-session witness and
+requires the imported artifact's matching row before RESUME_READY. Loader
+identity drift clears the route fail-closed/no-draw; no loader bytes, record
+grammar, bitmap layout, palette values, or decoder semantics are exposed.
+2026-07-17 dungeon CD-read scope continuity: the same receipt now retains the
+source-owned capture-plan CD-read record separately from its descriptor record.
+M11 requires the imported artifact's dungeon CD-read row to match this active
+session witness before RESUME_READY. A changed record scope clears the route
+fail-closed/no-draw; it remains a source coordinate only and establishes no
+record format, level/object route, bitmap layout, palette, decoder, or render
+meaning.
+2026-07-17 dungeon loader-span continuity: artifact import now retains the
+already verified loader raw offset and byte count for each capture-plan row.
+The dungeon receipt carries only its offset/length coordinates into M11, which
+requires the current artifact span before RESUME_READY. Offset or length drift
+clears fail-closed/no-draw; no loader bytes, payload grammar, bitmap layout,
+palette, decoder, or rendering semantics are retained or inferred.
+2026-07-17 dungeon destination-span continuity: artifact import now also
+retains the source-owned destination offset and byte count already verified
+against each capture-plan row. M11 requires the dungeon coordinates to match
+its active no-draw receipt before RESUME_READY. Offset or length drift clears
+fail-closed; neither destination bytes nor level/object grammar, bitmap
+layout, palette, decoder, or render semantics are read or inferred.
+2026-07-17 dungeon route-selector continuity: the strict artifact grammar's
+existing campaign-route selector is now required to name DUNGEON_HANDOFF
+through corpus validation, M12 launch intent, and M11 resume admission. A
+start or Soul Room selector cannot cross the positive dungeon handoff even
+when all other identities match. This is route provenance only: no record
+payload, level/object grammar, decoder, palette, bitmap, or draw meaning is
+assigned.
+2026-07-17 dungeon descriptor-selector continuity: the artifact envelope now
+requires a nonzero observed Stage-3 descriptor selector. Descriptor intake
+matches it to the existing source-backed sector-record receipt, M12 rejects
+intent drift, and M11 requires the same active-session selector before
+RESUME_READY. It remains an opaque loader record selector only; no level data,
+object layout, bitmap/palette format, decoder, or rendering meaning is added.
+2026-07-17 dungeon descriptor-ordinal continuity: the artifact envelope now
+also carries the exact observed Stage-3 descriptor ordinal, including zero
+when that is the authentic first-row coordinate. Intake matches it to the
+source-backed sector-record receipt, M12 rejects intent drift, and M11
+requires the active-session ordinal before RESUME_READY. It is record-location
+provenance only, with no level data, object format, decoder, palette, bitmap,
+or rendering semantics.
+2026-07-17 dungeon descriptor-source-hash continuity: the artifact envelope
+now requires the existing nonzero source hash for the observed Stage-3
+descriptor witness. Intake matches it to the source-backed sector-record
+receipt, M12 rejects intent drift, and M11 requires the active-session hash
+before RESUME_READY. It is opaque descriptor provenance only; no source bytes,
+level/object fields, decoder, palette, bitmap, or rendering semantics are
+retained or inferred.
+2026-07-17 positive handoff corpus ingress: M12 now has one operator-only
+import boundary that invokes the strict direct CUE/BIN plus observed-trace
+artifact-corpus importer before it can bind any handoff receipt. It requires
+the active direct campaign, current scan epoch, launch-trace MD5 and complete
+Stage-3 envelope identity to match, then sends only the ready opaque receipt
+through the existing launch intent to M11's dungeon RESUME_READY gate. Missing
+local media, missing corpus, virtual/altered bundle, or media/trace/plan drift
+atomically clears the prior receipt and remains capture-required/no-draw. The
+remaining blocker is one operator-supplied original MODE1/2352 CUE/BIN with
+its complete observed Mednafen trace and artifact bundle; no test fixture can
+substitute for that corpus, and no payload, level/object, bitmap, palette,
+decoder, rendering, or fallback semantics may be added meanwhile.
+2026-07-17 live dungeon loader-capture handoff: the selected Stage-3
+descriptor corpus now retains its observed later `$e009` destination, bounded
+span length, and span checksum. M12's real corpus import requires the
+artifact's dungeon CD_READ and loader-output row to match those exact
+original-trace facts, and M11 repeats that check at launch before publishing
+the opaque live dungeon-handoff witness. A changed capture checksum clears the
+witness and blocks RESUME_READY. This is still only source provenance: it does
+not inspect the transferred bytes as a level, object, bitmap, palette, or
+pixel. The next blocker is an original positive corpus for this direct path
+and then a separately observed runtime consumer that establishes what, if
+anything, the bounded output means; no decoder or fallback may bridge it.
+2026-07-17 strict loader-output record admission: the manifest-bound original
+`$e009` capture can now admit only the already disassembled `0x0b52` output:
+the record-local `0x114` level-envelope span and the directly adjacent opaque
+continuation retain exact offset, length, and checksum. The bitmap boundary is
+explicitly unproven and remains absent. M11 invokes this admission only while
+the original boot capture, imported artifact corpus, selected Stage-3 record,
+and current trace all agree. The spans grant no level/object semantics, pixels,
+rendering, or fallback. The blocker is an original `0x0b52` descriptor-selected
+corpus through this path plus an observed consumer for any further bitmap or
+object interpretation.
+2026-07-17 typed `0x0b52` envelope header admission: the same original
+loader-output receipt now verifies its disassembler-owned big-endian width,
+height, seed, header-level-index, and opaque extension directly against the
+manifest-bound envelope bytes. Those facts retain the existing exact
+record-local spans and checksums but do not select a dungeon/route or grant
+header-level-index semantics. Bitmap continuation remains explicitly unproven
+and opaque. Remaining work is a second independently observed original capture
+of this route and a game-owned consumer that can establish any identifier or
+continuation meaning; no decoder, renderer, or fallback is permitted.
 2026-07-17 local artifact-envelope verifier: the operator can now check a
 direct regular plan, Mednafen trace, and capture artifact before handing it to
 the existing importer. It requires the local plan's Track 02 MD5 and artifact
@@ -5994,6 +6437,19 @@ only record, destination identity, and epoch onto current opaque candidates.
 It restores metadata from the authoritative index, deduplicates deterministically,
 and rejects collisions, missing candidates, and epoch/replay drift. Output is
 CAPTURE_REQUIRED only with no route ID, payload, or promotion.
+2026-07-17 later-route M12 launch binding: candidate campaign indexes now need
+the current direct-media launch receipt and a valid current loader trace epoch
+before M12 retains or carries them in launch intent. A media rescan clears the
+index; trace epoch or entry drift rejects the intent. This still exposes only
+opaque CAPTURE_REQUIRED metadata, with no route ID, payload, decoder, drawing,
+or runtime promotion. Remaining work requires an independently observed trace
+that can authenticate a named later route without changing the fixed route table.
+2026-07-17 later-route receipt provenance: each newly admitted candidate now
+retains the exact direct Track02 MD5 and observed loader-trace MD5. Candidate
+manifest export must agree with those receipt fields, import restores them,
+and campaign-index construction rejects mixed media or trace identities. This
+remains opaque CAPTURE_REQUIRED metadata with no route ID, payload, decoder,
+rendering, or promotion.
 2026-07-17 SRM operator attestation portability: the direct-file gate now uses
 Win32 file attributes to reject directories and reparse points, `_fullpath`
 for canonical paths, and separator-neutral manifest splitting on Windows;
@@ -7665,6 +8121,65 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-12 verified C004 target-cell semantics: F0272 now retains Remote.TargetCell only for wall targets and normalizes all other target squares to source `CELL_NORTHWEST`. The dedicated C49 C004 fixture encodes cell three for a fakewall target and proves the queued F0268 event carries cell zero. C002/C007 object-adjacent cases and real-data proof remain open.
     - 2026-07-12 verified C004 Revert ordering: the existing `AddThing ^ RevertEffect` behavior is now locked through a live C49 associated-object → C05 chain. A non-HOLD Revert C004 ignores source materialization/addition and emits its SET only after source unlink for the teleporter move. C002/C007 object-adjacent cases and real-data proof remain open.
     - 2026-07-12 verified C004 LocalEffect: F0276 now routes local C004 effects through F0270/F0271 semantics. The final `CLEAR`/`TOGGLE` effect after a sensor pass rotates the full source sensor run, while no F0268 remote event is queued. The dedicated C49 fixture proves a two-sensor run rotates only after object materialization completes. Other local effects beyond C10 steal-skill XP remain open.
+    - 2026-07-17 verified C004 F0267/F0276 completion: the live ordinary-object
+      path now invokes the removal observation before each source unlink and
+      evaluates `AddThing ^ RevertEffect` for both sides of the move. A
+      matching C004 record performs its source Audible, OnceOnly, LocalEffect,
+      Remote.Value scheduling, and F0272 target-cell normalization through the
+      existing F0268 timeline consumer. The focused C49 regressions cover
+      audio, OnceOnly, delay, fakewall target-cell, Revert removal, and local
+      full-cell-run rotation. Broader C002/C007 object-adjacent families and
+      real-corpus route proof remain open.
+    - 2026-07-17 verified C005 stairs route: a party entering a loaded C03
+      stairs square now runs the source F0276 addition pass before F0364
+      changes map. The shared F0272 path retains OnceOnly raw writeback,
+      Remote.Value timing, Audible dispatch, local sensor rotation, and F0268
+      target normalization. A two-level raw-Dungeon fixture proves C005's
+      fakewall event remains on the source map at `gameTime + Value`; the same
+      C03 record on a corridor field rejects without raw, audio, or timeline
+      mutation. Broader C001/C002 party ownership and real-corpus route proof
+      remain separate work.
+    - 2026-07-17 verified C008 possession route: the existing F0276 C008
+      branch now completes ReDMCSB `MOVESENS.C F0274` ownership by scanning
+      the source-owned `LeaderHandThing` after live champion slots and, only
+      for a C144 container, its bounded original `CONTAINER.Slot` chain.
+      Missing or stale hand identities cannot publish F0272/F0268 effects or
+      mutate Dungeon bytes. The remaining party-sensor work is C001/C002
+      ownership breadth and real-corpus route proof, not an inventory wrapper.
+    - 2026-07-17 verified C009 PC34 version route: the party addition path
+      now uses one private F0276 source gate for the exact `Data <= 34`
+      ReDMCSB comparison before the existing F0272/F0268 path. The focused
+      regression proves `34` reaches F0261 and mutates the loaded fakewall
+      byte, while `35` emits no event and leaves raw Dungeon data unchanged.
+      2026-07-17 C010 is also closed on its separate F0248/F0247 path: only
+      a loaded C03 at the matching C06 cell may publish its two C15 lightning
+      projectiles and C49 records, and the existing native runtime-save image
+      is the sole save consumer. A changed cell identity rejects before either
+      raw OnceOnly writeback or projectile publication. Remaining
+      wall-launcher work starts with the other F0248 families.
+    - 2026-07-17 verified C011 wall-click route: ReDMCSB `MOVESENS.C F0275`
+      now owns the loaded C03 cell/type comparison, removal of the matching
+      C05 leader-hand object, same-cell sensor rotation, and F0272/F0268
+      publication. Native save/reload retains the pending F0268 event and
+      restores `PARTY.LeaderHandThing`; a boot-owned CSBWin GAMEBLOCK2 hand
+      mirror is synchronized from that restored party state. A mismatched
+      `Sensor.Data` leaves the hand, raw chain, and timeline unchanged. No
+      synthetic click queue or UI state participates in the route.
+    - 2026-07-17 verified C012 generator route: the same `MOVESENS.C F0275`
+      owner admits only an empty live `LeaderHandThing`, allocates its bounded
+      source C05 object through F0167, rotates the C03 cell, and publishes the
+      existing F0272/F0268 event. Native save/reload retains the generated
+      party hand, synchronizes the boot-owned CSBWin hand mirror, and keeps
+      the pending event. A nonempty hand rejects before allocation, raw write,
+      or timeline mutation.
+    - C013 blocker (2026-07-17): the production owner is the existing
+      `MOVESENS.C F0275` runtime-hand path, but its isolated C05 pickup still
+      depends on undisclosed process state beyond the public current-dungeon
+      singleton and current-level accessors. A standalone fixture that binds
+      both public accessors remains fail-closed while the established combined
+      CSB runtime test passes. Expose that remaining load-context fact from
+      production before claiming a separate C013 save route; do not replace it
+      with a synthetic dungeon or click queue.
     - 2026-07-12 verified C007 group route: live C04 movement now runs F0276 source/destination passes and recognizes C007 floor-creature sensors after a group is relinked. The bounded regression proves the source C04 -> destination C007 -> F0268 fakewall SET chain. Non-C04 C007 paths and real-data route proof remain open.
     - 2026-07-12 verified C002 party route: live `MOVE_FORWARD` now evaluates a C002 floor Theron/party/creature sensor after the party enters its destination square, requires a living party and no C04 group, then emits the normal F0272/F0268 event. The bounded regression proves C002 -> fakewall SET. Real-data route proof remains open.
     - 2026-07-12 verified C002 group route: the same F0276 branch now has a dedicated live C04 group-move regression. It proves C002 -> F0268 fakewall SET after relinking. Real-data route proof remains open.
@@ -7804,6 +8319,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       water/attribute/talent rules; publication waits for complete bytecode.
       A live runtime binding remains closed until one original owner can supply
       that full candidate and commit it transactionally.
+    - 2026-07-17 CharStore/SwapCharacter source blocker: the local
+      `csb_v1_csbwin_512_xor_pad_classify` owner proves the complete 800-byte
+      CHARDESC layout, while the authenticated tail owner proves exactly eight
+      100-byte `EDT_Character` Wings records. It does not retain the CSBWin
+      `DSA.cpp:4426-4529` 59-DSAVAR-to-CHARDESC field map, nor
+      `Character.cpp::SwapCharacter`'s outgoing-Wings record selection and
+      return-status table. Without both rules, a CharStore write or a swap
+      could overwrite the wrong full CHARDESC/Wings record despite having
+      valid bytes. The runtime callbacks therefore remain unbound and reject;
+      no synthetic roster, champion, portrait, or UI route is authorized.
     - 2026-07-15 experience update: authenticated `STKOP_ExperiencePlus`
       now retains CSBWin's `(character,skill,experience)` stack order and
       stages a source-owned `AddToSkill` candidate until full bytecode
@@ -7821,6 +8346,20 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       remains closed until one original owner supplies CHARDESC damage, status
       flags, selected-character UI state, poison count, and `TT_75` timer
       scheduling as one transaction.
+    - 2026-07-17 CausePoison runtime update: the imported single-target
+      `DSA.cpp:4348-4362` owner now reaches the live candidate through the
+      existing `CSBCode.cpp::PoisonCharacter` / `CHAMPION.C F0322` owner.
+      It publishes immediate CHARDESC health and poison-dose changes together
+      with the exact `PoisonEventCount` and source-owned `TT_75` continuation;
+      the execution receipt rechecks the party after-image and the concrete
+      live C75 slot before it can be consumed. Missing party ownership, a dead
+      or absent selector, invalid attack word, saturated event count, a full
+      timeline, or stale/mutated C75 material rejects atomically. Remaining
+      work is deliberately closed: no local imported source owner yet binds
+      the selected-character portrait/status flags, DamageCharFilter's
+      optional SpecialLocations callback, or ordered multi-target poison
+      programs into the same complete transaction, so those forms stay
+      fail-closed rather than synthesizing status/UI behavior.
     - 2026-07-15 text-discard update: authenticated `STKOP_DiscardText` now
       stages the source scrolling-text discard until bytecode acceptance. Text
       fetch/name/import and the original DSA text bank remain separate open
@@ -7945,6 +8484,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       no-op; missing raw dungeon ownership rejects. No pit layout, target,
       or cell data is constructed. Positive original DSA-bearing save-corpus
       proof remains required.
+    - 2026-07-17 receipt update: an imported `STKOP_FalsePit` action now
+      publishes a separate runtime receipt only for one exact roomPIT DB1
+      CELLFLAG bit-zero transition. The candidate must retain the complete
+      five-word cell image before/after, one write mask, and one location;
+      mixed CellStore writes, room-type drift, or post-publication DB1 drift
+      invalidate it before save/timer handoff. No pit, timer, queue, or
+      rendering behavior is synthesized.
     - 2026-07-15 missile-query update: `STKOP_MissileInfoFetch` now reads
       only a loaded DB14's flying Thing, range, damage, and its owning saved
       TIMER word8 direction. Invalid Things retain the four source `-1`
@@ -11663,7 +12209,67 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates.
 - 🔧 DMDF embedded BITMAP/palette/string runtime handoff remains open after the parser-level bounds gates: `nexus_v1_dmdf_parse_bitmap_block`, `nexus_v1_dmdf_scan_embedded_blocks`, and `nexus_v1_dmdf_estimate_raw_texture_payload` now cover bounded synthetic BITM/PLTB/STRB discovery plus optional real `.MNS` scan receipts (see DONE.md 2026-06-29 entry), but real VDP1 BITMAP decompression, per-cell palette/CLUT lookup from real `.MNS` payloads, texture upload, and runtime render binding are still needed before Nexus creature textures can be shown.
 - 🔧 2026-06-28 Nexus V1 save multi-slot round-trip follow-up: new `test_nexus_v1_save_multislot_roundtrip_pc34_compat` (CTest `nexus_v1_save_multislot_roundtrip_pc34_compat`) drives 4 distinct slots (0..3) with distinct per-slot world + champion state through `nexus_v1_save_full` / `nexus_v1_load_full` and verifies party_level/x/y/dir + world_tick + per-object (type, state, x, y, level, quantity, linked_id, flags) + per-event (type, level, x, y, arg0, arg1, fired, repeat) + per-active-timer (id, kind, level, remaining_ticks, interval_ticks, flags) + transition (pending, target, spawn_x, spawn_y) + per-champion stat blobs (name, primary_class, hp, max_hp, stamina, max_stamina, mana, max_mana, str, dex, wis, vit, anti_magic, anti_fire, fighter/ninja/priest/wizard level, food, water, alive, portrait_index, wounds, attributes, inventory[30]) + party[] indices round-trip per slot, plus manager slot cache + scan() + isolation + deletion + CRC tamper rejection (one-byte flip in the data section → `NEXUS_SAVE_ERR_CRC`) + foreign-magic rejection (`NEXUS_SAVE_ERR_UNKNOWN_VARIANT` + non-empty diagnostic). Source-lock: `src/nexus/nexus_v1_save_load.c` (NEXUS_SAVE_MAGIC='FNXS', CRC-32 over champion+world data sections) + `src/nexus/nexus_v1_world.c` (party + objects + events + active timers + transition + world_tick + state_hash) + `src/nexus/nexus_v1_champions.c` (CHPN magic, 270-byte champion blob) + ReDMCSB LOADSAVE.C F0433/F0434 lineage. Same family, disjoint scope: existing slot-0/party-x test still covers the single-field gate; this new test extends coverage to 4 slots + 30+ per-slot world/champion fields + cache/scan/isolation/deletion + CRC + unknown variant. Companion source-side fixes (also shipped this pass): (a) `nexus_v1_champion_pool_serialize_size` now matches the actual `wr32`-based 24-byte header (was claiming 22 with a `version(2)` that the serialize code does not write); (b) `champion_blob_size` now counts 25 int fields per champion (was 23, which under-counted by 8 bytes/champion and silently overflowed the 24-champion pool blob in older code paths); (c) `nexus_v1_world_serialize_size` now omits the bogus 4-byte object-count prefix (the actual serialize path reads the count once from the header); (d) `nexus_v1_load_full` and `nexus_v1_load_full_from_path` now allocate buffers via the new `nexus_v1_save_max_champion_pool_size` / `nexus_v1_save_max_world_size` helpers instead of asking the destination's serialize_size (which underestimates because the destination has not been loaded yet — the prior code only worked when the saved world happened to have no objects/events/timers). Remaining save-slot work: original Saturn 8 KB memory card format reverse-engineering (Firestaff-native only today), real-asset save compatibility artifacts, and broader per-game (DM1/CSB/DM2/Theron) save interoperability.
-- 🔧 2026-06-25 S2D Saturn-font section-table evidence: `firestaff_nexus_v1_saturn_font_scr_sections_probe` (see DONE.md 2026-06-25 entry) now walks the 32-entry SEGA SATURN SCR section table of `FONT256.S2D` via `nexus_v1_font_load_sections()` and confirms the four-populated real-on-disk layout (indices 0/2/4/6, contiguous chain at 0x0120+0x2010 / 0x2130+0x3c90 / 0x5dc0+0x0210 / 0x5fd0+0x01e4, 24,976 bytes of section data inside the 25,012-byte asset). **2026-06-28 section→glyph-range map + bounded runtime text-layout cursor landed:** new `nexus_v1_s2d_text_layout` module (`include/nexus_v1_s2d_text_layout.h`, `src/nexus/nexus_v1_s2d_text_layout.c`) builds a `Nexus_V1_S2D_SectionGlyphMap` from the parsed sections, routes glyph indices to the matching range, and exposes a layout cursor that walks ASCII strings via the existing `nexus_v1_font_draw_glyph_indexed()` (per-glyph advance by `char_width + letter_spacing_x`, `'\n'` breaks, `'\t'` steps, `max_chars` cap, `chars_skipped` for out-of-coverage). CTest `nexus_v1_s2d_runtime_text_layout` covered the synthetic SCR map invariants + layout cursor + real-asset `FONT256.S2D` skip-safe path that drives `"NEXUS"` through the real parser→map→layout chain 3 times and asserts bit-identical FNV-1a framebuffer hash. **2026-06-29 runtime framebuffer binding landed:** `Nexus_V1_ScreenTextRuntime` in `nexus_v1_text` now consumes the parsed sections + loaded font, builds the same section map once, draws ASCII through the S2D layout into `Nexus_Framebuffer.color_buffer`, and emits deterministic receipt/hash counters; the same CTest now covers stable framebuffer bytes across repeated draws. Remaining work is decoding which bytes inside each populated section hold the actual glyph payload (the flat 1bpp loader still owns that decode), supporting real Shift-JIS double-byte characters / proportional advance, and capturing an actual Nexus screen using the real font.
+- 🔧 2026-06-25 S2D Saturn-font section-table evidence: `firestaff_nexus_v1_saturn_font_scr_sections_probe` (see DONE.md 2026-06-25 entry) now walks the 32-entry SEGA SATURN SCR section table of `FONT256.S2D` via `nexus_v1_font_load_sections()` and confirms the four-populated real-on-disk layout (indices 0/2/4/6, contiguous chain at 0x0120+0x2010 / 0x2130+0x3c90 / 0x5dc0+0x0210 / 0x5fd0+0x01e4, 24,976 bytes of section data inside the 25,012-byte asset). **2026-06-28 section→glyph-range map + bounded runtime text-layout cursor landed:** new `nexus_v1_s2d_text_layout` module (`include/nexus_v1_s2d_text_layout.h`, `src/nexus/nexus_v1_s2d_text_layout.c`) builds a `Nexus_V1_S2D_SectionGlyphMap` from the parsed sections, routes glyph indices to the matching range, and exposes a layout cursor that walks ASCII strings via the existing `nexus_v1_font_draw_glyph_indexed()` (per-glyph advance by `char_width + letter_spacing_x`, `'\n'` breaks, `'\t'` steps, `max_chars` cap, `chars_skipped` for out-of-coverage). CTest `nexus_v1_s2d_runtime_text_layout` covered the synthetic SCR map invariants + layout cursor + real-asset `FONT256.S2D` skip-safe path that drives `"NEXUS"` through the real parser→map→layout chain 3 times and asserts bit-identical FNV-1a framebuffer hash. **2026-06-29 runtime framebuffer binding landed:** `Nexus_V1_ScreenTextRuntime` in `nexus_v1_text` now consumes the parsed sections + loaded font, builds the same section map once, draws ASCII through the S2D layout into `Nexus_Framebuffer.color_buffer`, and emits deterministic receipt/hash counters; the same CTest now covers stable framebuffer bytes across repeated draws. **2026-07-17 strict FONT256 admission landed:** `nexus_v1_font256_s2d_admit()` requires the canonical 25,012-byte SHA-256-attested file, exact SCR header facts, the four observed bounded spans, and raw FNV witnesses for the table and each section. It records no glyph layout, bit order, character map, pixels, or drawing permission. Remaining work is real glyph payload/encoding proof, Shift-JIS mapping and advance semantics, and independent Saturn screen evidence before any original-font rendering claim.
+
+- 🔧 2026-07-17 FONT256 first-section witness: the canonical SHA-256-attested
+  SCR admission now rechecks the first observed raw span at section-table
+  index 0, `[0x0120,0x0130)`, against the live source/table/section FNVs and
+  exposes it only as a capture-required witness. The observed bytes establish
+  no text header fields, glyph layout, palette record, bit order, character
+  encoding, pixel data, or draw route. No verified FONT256 palette path is
+  present in the local source/documentation; obtain an original Saturn trace
+  or independently reviewed format material before assigning any semantics.
+  The complete `[0x0120,0x2130)` first section now also has a one-span raw
+  iterator/capture receipt. It rechecks source, preamble, and whole-section
+  FNVs before exposing precisely that one bounded span; it deliberately emits
+  no inferred child records. A future text, glyph, palette, pixel, or draw
+  route must first prove its own subspan grammar from original evidence.
+  Directory/subrecord inventory is negative: after the 16-byte preamble, the
+  local canonical section is one monotonic BE16 ramp from `0x0000` through
+  `0x0ffe`. No local corpus evidence or reviewed S2D reference assigns it a
+  directory role or defines a following glyph/palette subrecord grammar.
+  Treat that observed ramp as opaque and capture-required, never as a glyph
+  table or pixel layout.
+
+- 🔧 2026-07-17 WARNING.BIN source-only follow-up: the canonical, directly
+  SHA-256-attested `RES*` resource 0 now has a no-draw receipt over existing
+  bounded DGT2 lookup facts. It retains raw DGT2, 512-byte CLUT, and pixel
+  span offsets/lengths/FNVs only. The receipt does not convert BGR555, decode
+  pixels, assign a palette, or authorize presentation; any later consumer must
+  bring independent original-Saturn semantics and route evidence.
+  The next receipt now binds the exact `RES*` declared size, 12-byte DGT2
+  descriptor table, ascending source offsets, selected resource-0 descriptor,
+  DGT2 header, and PP header to the same source FNV. It does not promote the
+  observed descriptor fields into colour, image, palette, or presentation
+  semantics; those remain separate original-Saturn evidence requirements.
+  Resource 0 now retains a source-bound PP header field receipt and exact raw
+  resource boundaries: PP header, 512-byte post-header prefix, declared body,
+  and the two trailing bytes before the next descriptor. Width/height remain
+  header values only; neither the prefix nor body is assigned CLUT, pixel,
+  colour, stride, or draw semantics without further original evidence.
+  - 2026-07-17 update: Sega Saturn/32X Graphic References ST-124-R1 section
+    6 now supplies the missing PP contract: a 256-word BGR555 CLUT follows the
+    six-byte PP header and a one-byte palette code follows for each image
+    pixel. The canonical resource-0 executor consequently accepts only the
+    admitted 240x96 body with stride 240, copies its exact index bytes and
+    original BGR555 words to caller-owned buffers, and invokes an explicit
+    presentation callback. It has no default presentation, host-RGBA
+    conversion, CLUT substitution, trailing-byte interpretation, or fallback.
+    Remaining evidence is an original Saturn display/VDP route if this asset
+    is to be connected to a live screen rather than an externally supplied
+    source-faithful presenter.
+  - 2026-07-17 update: resource 0 now reaches the real 320x200 M11 indexed
+    presentation surface. Each warning frame reopens the direct canonical
+    source, checks the engine's exact asset identity, then revalidates the
+    full PP receipt before it writes the top-left 240x96 index plane. The
+    host palette receives only the 256 BGR555 words in ST-124 order
+    `B4..B0/G4..G0/R4..R0`, expanded by exact bit replication to M11's RGB6
+    palette API. A changed source/body, noncanonical asset, wrong host size,
+    or any failed receipt leaves the already-cleared M11 frame unpresented;
+    title, generic UI surface, and solid-image substitutes are not used.
+    This does not prove a Saturn VDP display command, interlace, colour-DAC,
+    gamma, timing, or placement contract beyond the documented PP resource-0
+    bytes and the explicit M11 host surface.
 
 ### Nexus V2.0 / V2.1 / V2.2
 
@@ -12006,6 +12612,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the retail archive this is `MENU.BPK PRS3 TRACE REQUIRED`: the package is
     valid, but an authenticated SH-2/VDP1 capture and complete grammar remain
     required. No decode or substitute menu is enabled.
+  - 2026-07-17 startup-state update: the launcher now classifies this as the
+    terminal `menu-bpk-prs3-capture-required` state. M12 can return it to
+    idle or rescan it without waiting or drawing; a verified imported capture
+    is consumed as a separate terminal no-draw state. Decoder, pixel, palette,
+    and replacement-menu claims remain blocked.
   - 2026-07-15 resolver update: a Nexus data-dir resolution failure happened
     before the launcher receipt existed, leaving M11's outcome blank. It now
     publishes `NEXUS DATA ERROR`; this is distinct from the canonical PRS3
@@ -12510,7 +13121,76 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Structure1F -> Structure1A -> Structure3 face/normal ordinal attachment at
   the engine boundary. The remaining blocker is original Saturn evidence for
   transforms, materials, texture/palette decoding, VDP1 commands, and draw;
-  this receipt remains strictly no-draw with no fallback visuals.
+  this receipt remains strictly no-draw with no fallback visuals. The direct
+  LEV00--LEV15 corpus now also has a source-locked Structure1F directory
+  receipt: it rehashes each canonical direct file and requires the parser's
+  final Structure1F span, six count-derived fixed-size family spans, and their
+  `0x10/0x11/0x12/0x20/0x21/0x22` source tags to agree byte-for-byte. This
+  establishes record boundaries and raw identity only. The documented first
+  `0x10` family is now additionally typed only through its proven eight-byte
+  row contract: byte 1 is `x`, byte 2 is `y`, and `y * 64 + x` is a bounded
+  cell ordinal; bytes 3--7 stay opaque. Cross-level, package, row-tag, and
+  row-index drift reject. This still does not prove an item role, or which
+  family record is a visible face, mesh, transform, material, texture or host
+  placement, so no M11 face route is authorized yet.
+  The next cell-near family, `0x11`, has a source-locked twelve-byte typed raw
+  admission: bytes 1--2 are the documented direct coordinate pair and bytes
+  3--11 retain exact source order only. Its model/aspect, rotation, control,
+  extent, face, mesh, and transform relations remain unproved and no draw is
+  granted. The local LEV00--15 retail corpus is currently absent, so its
+  cross-level real-data probe remains skip-safe; only fixture-level span,
+  package, tag, index, and cross-level rejection is verified. Re-run the
+  direct corpus probe before promoting this item to DONE or binding it to an
+  M11 face/mesh route.
+  The same absence was confirmed by direct ordinary-file searches for
+  `LEV00.DGN` and `DM.BIN` under `/Users/bosse/.firestaff/data`,
+  `/Volumes/Extern-disk`, and the project tree, including visible symlinks;
+  there were no candidate bytes to hash or admit. The next direct-coordinate
+  `0x12` family now has the matching 16-byte typed raw gate: bytes 1--2 are
+  coordinates, bytes 3--15 stay opaque, and every control, destination,
+  model, face, mesh, material, transform, and draw claim is closed. Its
+  fixture verifies source hash, descriptor span, record index, and cross-level
+  rejection; it too remains outside DONE until a direct LEV00--15 probe is
+  genuinely positive.
+  The first Structure1A-bound candidate, `0x20`, now has a 12-byte typed raw
+  admission that retains only its parser-documented byte-1 face selector and
+  big-endian byte-2--3 Structure1A index, plus an opaque byte-4--11 tail.
+  Fixture coverage proves source hash, descriptor bounds, row-index and
+  cross-level rejection. It does not establish that the selector names a
+  Structure3 face or that the index locates an alcove, portal, owner, model,
+  mesh, transform, material, or draw target. Keep real DGN rendering blocked
+  until the missing direct corpus verifies this family across LEV00--15.
+  The related `0x21` wall-decoration family now has its own strict 12-byte
+  raw admission, independently requiring the parser directory's `0x21` tag,
+  exact span/FNV, byte-1 raw face selector, and big-endian byte-2--3
+  Structure1A index. Its raw tail remains uninterpreted. Fixture coverage
+  rejects cross-level identity reuse, row-index overflow, and descriptor-span
+  drift. It does not prove a wall, portal, face ordinal, owner, model, mesh,
+  transform, texture, material, or draw action, and remains outside DONE until
+  a direct LEV00--15 corpus probe passes.
+  Structure1A target intake is now parser-bound for those `0x20`/`0x21`
+  references: it reparses the same hash-verified DGN, requires the existing
+  header-counted 24-byte Structure1A table, rechecks the source row's tag,
+  span/FNV and big-endian index, then retains only the indexed target row's
+  offset/length/FNV. Fixture coverage exercises the full parser path plus
+  cross-level, out-of-range-index and source-FNV rejection. No Structure1A
+  target byte has face, mesh, material, transform, texture or draw semantics;
+  the missing LEV00--15 corpus still blocks real-data promotion to DONE.
+  The target row's first three bytes now have the narrowest positive typing:
+  byte 0 is retained as opaque kind, byte 1 as the documented Structure3 model
+  index, and byte 2 as an opaque rotation selector; bytes 3--23 remain an
+  exact raw tail. The field receipt requires the prior target-row FNV and
+  current source rehash, then rejects level or target-FNV drift. A model index
+  is not a parsed Structure3 mesh or face selection, and neither the kind nor
+  rotation byte has admitted behavior. Retail LEV evidence is still required
+  before any target relation can leave TODO or approach rendering.
+  The typed Structure3 model index now reaches a strict opaque directory target
+  admission. It requires the current package rehash plus an explicit FNV of
+  the counted, strictly increasing Structure3 directory before exposing one
+  selected entry span and its FNV. Fixture coverage proves valid selection and
+  rejects directory, directory-FNV, and package drift. The selected span is
+  not an entry grammar, mesh, face, texture, material, or draw contract; no
+  retail corpus result exists to promote it to DONE.
 
 - 🔧 2026-07-15 Nexus active DGN face/material selector route: active retail
   LEV sources now bind bounded Structure3 face topology to the documented
@@ -12695,34 +13375,32 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   C29..C41 events and scheduling C37 at GameTime + 1. Remaining work is the
   F0194/F0195 pair for later map and original-save transitions; do not retain
   an old active table or manufacture a missing C04 group/square chain.
-- 2026-07-15 DM1 GROUP F0197-F0199 follow-up: source-defined sight, smell,
-  and route primitives now require decoded square/door facts and a loaded-map
-  blocker callback. Remaining work is binding M10's live F0157/current-map
-  reader to those inputs; do not replace a missing callback with a clear map.
-- 2026-07-15 DM1 GROUP F0200 follow-up: the complete source sight decision
-  now consumes active directions, visibility range, invisibility, palette,
-  RNG, and F0197/F0199 route facts. Remaining work is to bind this live form
-  in M10; cross-map or callback-free requests must remain non-visible.
-- 2026-07-15 DM1 GROUP F0201 follow-up: the live direct-scent and stored
-  scent ordering now consumes the F0198/F0199 loaded-map route. Remaining
-  work is binding M10's party-scent table and current-map reader; no scent
-  record or callback may be substituted with guessed direction data.
-- 2026-07-15 DM1 GROUP F0202 follow-up: destination movement now rejects a
-  missing loaded M10 square/door/Thing snapshot rather than assuming a clear
-  square. Remaining work is routing every M10 movement owner through typed
-  destination facts and preserving source tested-direction state.
-- 2026-07-15 DM1 GROUP F0203 follow-up: the live direction scan now marks
-  source-tested directions before F0202. Remaining work is having M10 own and
-  retain that G0384 state across the complete C29-C41 behavior event, without
-  rebuilding it from guessed movement outcomes.
-- 2026-07-15 DM1 GROUP F0204 follow-up: source-defined archenemy double
-  movement now needs a first-step Fluxcage result plus real second-square
-  facts. Remaining work is connecting M10's two successive F0202 reads to
-  this helper; no unproved second square may allow an extra move.
-- 2026-07-15 DM1 GROUP F0205/F0206 follow-up: exact live direction updates
-  now require the original RNG state. Remaining work is to route all M10
-  C37-C41 turn owners through the RNG forms and retire calls to the legacy
-  direct-only helper where a source random turn may occur.
+- 2026-07-15 DM1 GROUP F0201 follow-up: M10 now consumes a bounded,
+  fingerprint-locked G0407 runtime scent receipt through the current loaded
+  map and F0198/F0199 route. The remaining gap is a raw PC34 save/import
+  owner for that opaque scent ring; no missing import record may be replaced
+  with a guessed direction or callback.
+- 2026-07-17 DM1 GROUP F0205/F0206 follow-up: M10 C37 now consumes the
+  source live-RNG direction form, retains the full authenticated
+  `ACTIVE_GROUP::Directions` byte, and writes only its low slot to raw C04.
+  C38-C41 now own their source line-of-attack F0205 turn and same-event
+  two-tick retry. C29/F0267 remains an explicit no-op without source-backed
+  physical-relink ownership. F0219 now owns the live C14/C48-C49 motion
+  receipt and rejects a drifted raw C14 mirror before mutation; remaining
+  projectile work is broader F0212/F0215 lifecycle coverage, not a fallback
+  motion path.
+- 2026-07-17 DM1 PROJEXPL F0215 follow-up: the verified C14 delete tail now
+  consumes the matching raw C05 potion record when the authenticated F0217
+  receipt requires it. The C15 owner now has a verified F0516-backed reserve,
+  source-layout initialization, F0514 SFT link and F0515/raw rollback
+  transaction for Type/Attack/Centered rows. Its C25 receipt now binds exact
+  MapTime/B.Location/C.Slot plus the live C15 FNV through F0802/F0435.
+  Remaining work is F0217 consumption of that authenticated handoff; do not
+  invent an explosion Thing for a runtime-only explosion slot.
+- 2026-07-17 DM1 PROJEXPL F0216 follow-up: C05..C0B C14-slot impact receipts
+  are source-locked through raw C14, F0140, F0158 and RNG. C15 explosion-slot
+  handling remains with the separate F0217/F0213 ownership chain; do not
+  substitute a runtime explosion subtype here.
 - 2026-07-15 DM1 GROUP F0207 follow-up: source-defined projectile selection
   no longer substitutes a fireball for BUG0_13's undefined C25/C26 Thing or
   an invented Trolin palette. Remaining work is live M10 F0212 consumption of
@@ -12942,6 +13620,40 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   BIOS, disc, MENU.BPK, DM.BIN, LEV00.DGN and one PRS3 replay identity. A
   local retail launch/capture must still provide an independently validated
   trace; no launcher path infers decoder, palette, or graphics semantics.
+  The PRS3 original-execution importer now also computes SHA-256 directly over
+  the supplied Mednafen export bytes and requires exact equality with the
+  external attestation, in addition to the existing FNV and V10 input/output/
+  VDP1 contract. A formatted but byte-mismatched hash fails closed. This binds
+  evidence provenance only; PRS3 grammar, decoder, pixels, palette, and draw
+  remain blocked pending positive retail captures.
+  A second PRS3 capture admission now binds opaque full output-range bytes and
+  a separate opaque VDP1 capture to that authenticated execution receipt by
+  exact byte count, FNV, and SHA-256. Both byte streams remain uninterpreted;
+  any hash drift rejects and no decoder or graphics path is enabled.
+  The same receipt now requires an externally attested command-order pair to
+  repeat the original trace's final output-write sequence and later VDP1
+  command sequence. Equal, reversed, missing, or drifted values fail closed;
+  this is ordering provenance only and does not interpret a VDP1 command.
+  The capture attestation now additionally repeats the exact MENU.BPK FNV,
+  DM.BIN FNV, and entry index from the original-execution receipt; mixed stream
+  identity rejects before any output or VDP1 evidence can be retained.
+  Source inventory confirms real MENU.BPK BPPK/BMPD/PRS3 prefix bytes and the
+  V10 execution-to-VDP1 handoff receipt, but no authenticated DM.BIN SH-2
+  command-writer byte range, instruction-offset map, command-state export
+  schema, or command-buffer source FNV is available here. Command state must
+  therefore remain capture-required: do not infer a source-to-command parser,
+  VDP1 word layout, decoder, palette, pixel, or render admission from the
+  current files.
+  - 2026-07-17 M11 presentation audit: the full-output admission is still an
+    opaque evidence receipt. It authenticates one complete output byte range,
+    its SHA-256/FNV, and later VDP1 command order, but deliberately publishes
+    no indexed-pixel declaration, width, height, stride, CLUT/palette span,
+    BGR/RGB ordering, transparency rule, or host placement. Both
+    `graphics_permitted` and `decoder_promoted` remain zero. Do not connect
+    this output to M11's indexed/palette surface, reuse WARNING.BIN's PP
+    contract, or synthesize a title/menu image. A future original trace must
+    attest all of those output-format facts before a byte-exact M11 consumer
+    can be added.
 
 - Nexus Structure1F multi-level capture remains no-draw: LEV00--LEV15 now
   require one exact package identity and per-level DGN, descriptor, mesh, and
@@ -13025,6 +13737,80 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   This is integrity evidence only; no capture payload, PRS3 mode, VDP1 command
   grammar, texture, palette, pixel, decoder, or draw semantics is retained or
   inferred. No retail material capture is admitted.
+  The atomic Structure1F/1A-owner, Structure3-face, and Structure2-material
+  capture path now has a separate fixed `NXS1OMC1` envelope preflight. It
+  requires the selected source FNV/size and level, owner and Structure1F/1A
+  coordinates, face row, descriptor and candidate FNVs, an exact bounded
+  opaque payload FNV, and a nonempty raw-trace witness before it can be an
+  opaque admission receipt. It does not establish the owner-to-entry map,
+  topology, source-read relation, VDP1 state, texels, palette, decoder, or
+  draw; a retail capture still must prove each such relation.
+  M12/M11 now exposes the same selected owner/material target as an
+  operator-only capture-required route. Resume rebuilds the active target and
+  compares level/source, Structure1F/1A owner, Structure3 face, and Structure2
+  descriptor/candidate identities before accepting `NXS1OMC1`; absent active
+  corpus, target drift, or any semantic-promotion flag leaves it no-draw.
+  `NXS1OMC1` now also has a strict import bridge: before the existing atomic
+  Structure1F/1A/Structure3/Structure2 trace admission runs, it rechecks the
+  live target, fixed artifact, raw-trace size/FNV witness, manifest, and an
+  external original-Saturn attestation. This preserves opaque evidence only.
+  A two-witness adjudication can now retain capture coverage only when two
+  separately admitted opaque receipts agree on the exact source, descriptor,
+  and face fingerprints while both their artifact and raw-trace FNVs differ.
+  Duplicate witnesses and any target drift reject. This remains integrity
+  coverage only: it proves no owner mapping, topology, VDP1 state, texture,
+  palette, decoder, or draw behavior.
+  A bounded campaign intake now aggregates two to sixteen already imported
+  `NXS1OMC1` witnesses across distinct dungeon levels. Every witness must
+  rebind its exact Structure1F/1A owner, Structure3 face, Structure2
+  descriptor, source FNV, opaque capture FNV, and raw-trace witness to an
+  admitted engine trace; duplicate level, source, capture, or trace identity
+  rejects. It stores coverage metadata only, not payload bytes or semantics.
+  M12 now has an operator-only export/import route for that campaign. The
+  exported capture-required receipt binds the locally supplied BIOS region and
+  BIOS/disc SHA-256 identities plus the exact witness count; import rebuilds
+  those values and accepts only the existing fully imported opaque campaign.
+  A missing, stale, partial, or count-drifted campaign remains capture-required
+  and no-draw. The launcher neither emits nor retains a capture payload.
+  The route now additionally requires a fixed `NXS1OMC2` campaign-index
+  artifact before resume. Its versioned header, bounded 56-byte rows, row-table
+  FNV, and every level/source/descriptor/face/capture/raw-trace identity must
+  repeat the admitted campaign in order. It stores identities only and rejects
+  truncated, malformed, hash-drifted, or cross-route rows without retaining
+  raw trace or capture payload bytes.
+  A selected campaign witness now has a second strict `NXS1OMC1` artifact
+  preflight before consumption: it revalidates the fixed capture envelope,
+  its opaque payload hash, the supplied raw-trace size/FNV, the selected DGN
+  level/Structure3 face/Structure2 descriptor row, and the already admitted
+  engine trace against the `NXS1OMC2` campaign row. Capture or trace drift
+  fails closed and no bytes are retained. This is provenance only, not a
+  payload decoder or a rendering promotion.
+  M12 now exposes a separate capture-required route for one selected campaign
+  witness. Its witness index must be within the hash-bound campaign export;
+  resume first reconstructs `NXS1OMC2` and then applies the `NXS1OMC1`
+  preflight to that exact Structure1F/Structure3/Structure2 row. Invalid,
+  stale, or out-of-range route selection remains no-draw and cannot promote a
+  decoder or renderer.
+  M12 can now select multiple distinct campaign witnesses at once, bounded by
+  the original exported witness count. Duplicate or out-of-range indices are
+  rejected before capture import; the selection retains only row identities and
+  remains capture-required/no-draw until every selected original artifact is
+  independently preflighted. It establishes no cross-level geometry, texture,
+  palette, VDP1, decoder, or draw semantic relation.
+  The active M11 dungeon route now consumes that selection only as a live
+  capture-required start receipt: it re-admits campaign identity, matches the
+  current dungeon level to a selected witness, and exposes source/face/
+  descriptor identity only for that route. An unselected or drifted live level
+  receives no capture route and remains no-draw.
+  Before that live receipt is exposed, it now rebinds and carries the selected
+  source-backed Structure1F/Structure3/Structure2 capture target plan. Its
+  level, source FNV, face-row FNV, and descriptor FNV must repeat the campaign
+  row exactly; target-plan drift fail-closes the start route. The copied plan is
+  capture provenance only, never geometry, texture, pixel, decoder, or draw
+  authorization.
+  No authentic direct-LEV corpus or independently reviewed artifact is present
+  here, so owner mapping, face/mesh semantics, VDP1, texture, palette, decoder,
+  and draw remain blocked.
   The MENU.BPK PRS3 material route now also accepts an external `NXSPRS3M`
   envelope only after its card/package/epoch, selected entry, bounded
   compressed-body span/FNV, and declared-output count exactly match the
@@ -13160,7 +13946,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   and palette meaning remain blocked pending original evidence.
 
 - Nexus Structure3 face spans are raw package provenance only; PRS3, palette,
-  pixel and texture semantics remain blocked.
+  pixel and texture semantics remain blocked. The direct-source admission now
+  also retains one hash-bound 40-byte entry header, its raw tag/count fields,
+  and the three count-bounded 12-byte intervals only when the already admitted
+  Structure3 target and ordinary source file still agree. This is framing, not
+  a geometry, normal, material, texture, transform, or draw claim. The local
+  retail LEV corpus is still absent, so positive corpus confirmation remains
+  pending.
 
 - Nexus Structure3 image/palette references are bounded source intervals only;
   codec and decoded surface admission remain blocked.
@@ -13332,6 +14124,190 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Only the source's `0x40` normal scale, RAW4 `0x2be + cell`, movement
     offset and source flip are recorded. This gate remains no-draw; it does
     not introduce a second wall renderer.
+
+- 2026-07-17 DM2 `DRAW_WALL_TILE` admission: `SKULLWIN/c_gui_vp.cpp:6703-6741`
+  and `dm2data.cpp:266-273,602-605` now bind every `table1d7012` cell branch
+  to the existing authenticated wall/M11 identity. The receipt records the
+  exact 0/1/2 delegated-call count and `table1d6afe` orientation; it remains
+  no-draw because `DM2_guivp_32cb_15b8` has separate unbound GDAT transforms.
+  - 2026-07-17 `32cb_15b8` input update: the first simple `QUERY_TEMP_PICST`
+    call at `c_gui_vp.cpp:6618-6628` now has a source-owned no-draw input
+    receipt for category 9 selector/image field, exact `0x40` scales, flip,
+    query parameters and RG71l alpha. Record layout and destination remain
+    explicitly unavailable.
+  - 2026-07-17 loadable `0x0f` update: the distinct `c_gui_vp.cpp:6651-6692`
+    category-9 `QUERY_GDAT_ENTRY_IF_LOADABLE` branch now binds its successful
+    `0x0f` selector, normal scales, transform inputs and RG71l alpha as a
+    no-draw receipt. Its destination is still not inferred.
+  - 2026-07-17 category-8 overlay update: `c_gui_vp.cpp:6322-6329` now has
+    its own no-draw QUERY_TEMP_PICST input receipt for selector/image field,
+    normal scales, flip, transform parameters and RG71l alpha.
+  - 2026-07-17 branch-set update: the three authenticated category-8/9
+    `32cb_15b8` input receipts now combine only when their independent
+    identities and the loadable `0x0f` field agree; the aggregate stays
+    no-draw and has no placement contract.
+  - 2026-07-17 DRAW_TEMP_PICST admission update: the aggregate now has a
+    no-draw consumption gate that rechecks every branch-set identity,
+    category, `0x0f` field and normal-scale transform before admitting the
+    source call. It carries no destination or pixel information.
+
+- 2026-07-17 DM2 `query_B073` input admission: `c_querydb.cpp:2506-2545`
+  now requires authentic palette, live light, alpha/mask, colors/cache,
+  RAW7, lookup and traversal identities in one no-draw receipt. No palette
+  buffer or pixel result is produced.
+  - 2026-07-17 B073/DRAW_TEMP_PICST surface update: authenticated B073 and
+    DRAW_TEMP_PICST receipts now bind to an owned viewport-surface snapshot
+    in one no-draw palette/surface receipt. No buffer is borrowed or written.
+  - 2026-07-17 original palette update: the next consumer may borrow only
+    original 16/256-byte palette storage when its bytes hash matches the
+    caller's authenticated identity and the B073/surface receipt remains
+    current. No transformed palette or pixel buffer is created.
+  - 2026-07-17 M11 palette-consumer update: borrowed original palette bytes
+    now bind to a current owner-surface generation in a no-draw M11 receipt,
+    with no transform, destination or pixel material.
+  - 2026-07-17 original material update: a later consumer may borrow only
+    original decoded GDAT storage with proven dimensions, stride, byte count
+    and byte hash paired to the current M11 palette consumer. No decoder or
+    render path is admitted.
+  - 2026-07-17 M11 material/palette pair update: original material and
+    original palette now admit only as a matching no-draw pair with current
+    owner generation and verified dimensions/stride. No render contract.
+  - 2026-07-17 live materialization update: the validated pair now has a
+    no-draw M11 handoff guarded by the same live owner generation. It carries
+    only borrowed bytes/layout, never a blit or destination.
+  - 2026-07-17 DRAW_PICST trace update: source handoff now reaches an exact
+    `QUERY_PICST_IT`/`DRAW_PICST` trace receipt, but missing source and
+    destination rectangles remain an explicit no-draw blocker.
+  - 2026-07-17 DRAW_PICST rect update: `query1 == -1` now admits only the
+    exact direct `srcx/srcy + imgdesc.x/y` source rectangle branch from
+    `c_image.cpp:240-296`; all QUERY_BLIT_RECT, flip and destination paths
+    remain no-draw.
+  - 2026-07-17 QUERY_BLIT_RECT trace update: `c_xrect.cpp:217-280` now
+    admits only an authenticated unsigned root rectangle node with
+    `query2 == -1`, `mode1 <= 8`, `mode2 == 0`, a present bitmap and its
+    captured source-rectangle identity. Signed, overridden, mode-9 and
+    chained nodes remain no-draw until their clip/destination semantics are
+    separately evidenced.
+  - 2026-07-17 QUERY_BLIT_RECT signed-root update: `c_xrect.cpp:228-276`
+    now records the exact signed-node `datax/datay + input-x/input-y`
+    transform for an authenticated unchained root. `crdecode`, final clip,
+    destination, overrides and every chained node remain no-draw.
+  - 2026-07-17 QUERY_BLIT_RECT mode-1 update: the signed-root receipt now
+    reaches the exact `crdecode(1, ...)` origin assignment in
+    `c_xrect.cpp:162-211,426-436`, guarded by current authenticated material
+    dimensions and surface generation. All other modes, clipping and final
+    destination bounds remain no-draw.
+  - 2026-07-17 QUERY_BLIT_RECT default-clip update: `c_xrect.cpp:239,438-470`
+    now admits the untouched `rc=[-10000,10000)` range only for a current
+    mode-1 receipt whose full material rectangle lies inside it. Global clip
+    override, chained terminal nodes and all surface-specific destinations
+    remain no-draw.
+  - 2026-07-17 QUERY_BLIT_RECT global-clip update: the explicit
+    `c_gui_vp.cpp:570-573` `TRIM_BLIT_RECT` transaction now provides the only
+    admitted `dm2rect1` override input for `c_xrect.cpp:438-439`, with active
+    flag, trim-call, material and surface identities. Intersecting that clip
+    with the destination rect and every final blit remains no-draw.
+  - 2026-07-17 QUERY_BLIT_RECT global-intersection update:
+    `c_xrect.cpp:446-470` now admits the exact `dx/dy` source-offset and
+    clipped destination-rectangle calculation for the authenticated mode-1
+    global-clip path. Missing overlap or any clip/material/surface identity
+    drift rejects; no blit is admitted.
+  - 2026-07-17 DRAW_PICST surface-address update: `c_image.cpp:293-335` and
+    `c_gfx_blit.cpp:604-656` now admit only the native 8-bit `gfxsys.dm2screen`
+    row-address path with packed original source stride, exact source/dest
+    offsets, no palette translation and no alpha mask. The receipt borrows
+    addresses only; all pixel writes and other surface formats remain no-draw.
+  - 2026-07-17 DRAW_PICST row-traversal update: the original material bytecount
+    now remains attached through the M11 handoff. `c_gfx_blit.cpp:604-656`
+    default `BLITMODE0` admits only forward rows with authenticated first/last
+    row offsets and exclusive source/destination bounds. Other modes and every
+    pixel operation remain no-draw.
+  - 2026-07-17 DRAW_PICST mask/palette update: `c_image.h:45-70` and
+    `c_gfx_blit.cpp:655-760` now admit only the masked translated `BLITMODE0`
+    input transaction with 256 authenticated palette bytes, exact alpha index,
+    original material bytecount and forward row bounds. Palette translation
+    and every pixel write remain no-draw.
+  - 2026-07-17 DRAW_PICST palette-index update: `c_gfx_blit.cpp:39-42,675-682`
+    now has a source-locked trace that records the exact ordering: compare raw
+    8-bit source index to alpha first, then use that same index in PAL256.
+    It does not dereference source/palette bytes or write pixels.
+  - 2026-07-17 DRAW_PICST palette-write update: source proof now fixes each
+    `t_palette` entry to one `c_pixel256` byte and PAL256 to 256 bytes. The
+    masked destination write order is carried as no-draw row metadata with
+    current surface identity; no conditional pixel write is executed.
+  - 2026-07-17 DRAW_PICST masked-consume update: the exact source++ / masked
+    write / destination++ order from `c_gfx_blit.cpp:675-682` is now a strict
+    no-draw receipt. It rejects mode, alpha, row and identity drift; actual
+    pixel consumption remains intentionally closed.
+  - 2026-07-17 DRAW_PICST native execution update: the fully authenticated
+    8-bit BLITMODE0/PAL256/mask branch now has its first source-backed pixel
+    consumer. It revalidates all receipts and owner generation before the
+    exact forward masked writes; every mismatch is no-write.
+  - 2026-07-17 DRAW_PICST M11 update: the native executor now enters only
+    through a DM2-owned M11 consumer that requires the exact live material
+    handoff buffer/palette and owner generation. No legacy renderer or
+    fallback path can reach this consumer.
+  - 2026-07-17 DRAW_WALL admission update: authentic GDAT wall commands now
+    enter a strict DRAW_PICST admission with their raw/decoded/palette/geometry
+    receipts, but remain no-draw because the source route owns PAL16 rather
+    than the proven native PAL256 executor contract.
+  - 2026-07-17 DRAW_WALL B073 update: PAL16 now binds to a strict PAL256 cache
+    output receipt only with complete RAW7, lookup, traversal and allocation
+    identities from `c_querydb.cpp:2506-2668`; no expansion or write occurs.
+  - 2026-07-17 DRAW_WALL B073 raw intake update: the wall route now carries
+    the actual borrowed RAW7 program, v1e020c group and v1e0210 lookup bytes
+    with sizes, identities and cache allocation. Interpretation remains closed.
+  - 2026-07-17 DRAW_WALL B073 contiguous RAW7 loader update: only the
+    original `INTERFACE_GENERAL/0/RAW7/2` record admitted by
+    `dm2_v1_asset_load_typed_sized()` may bind its contiguous bytes, exact
+    length and FNV identity to the wall PAL16/B073 cache allocation.
+  - 2026-07-17 DRAW_WALL B073 interpreter update: `c_gdatfile.cpp:1919-2003`
+    and `c_querydb.cpp:2506-2668` now source-bind RAW7's descriptor, interval,
+    output and lookup regions to a supplied owned PAL256 cache. The resulting
+    cache is attached to the wall `DRAW_PICST` output receipt, but remains
+    no-draw until the authentic U4-to-PAL256 blit consumer is proven.
+  - 2026-07-17 DRAW_WALL native M11 update: the proven normal, unflipped,
+    unmoved 0x40 U4-to-8 branch now consumes the authenticated B073 cache
+    using `c_gfx_blit.cpp:495-548` source order. Scaling, flip, movement,
+    clip, cache, surface and composition drift remain fail-closed.
+  - 2026-07-17 DRAW_WALL HFLIP M11 update: the separately proven BLITMODE1
+    branch now follows `blitline_48_mi/mima` reverse-X destination order.
+    Vertical/chained flips, movement and scale changes remain fail-closed.
+  - 2026-07-17 DRAW_DOOR panel M11 update: the stationary, closed, unflipped
+    and unscaled DOORS panel now consumes its exact IMG3 U4 bytes, local PAL16,
+    colour key, RAW4 rectangle and composition-owned surface. Opening,
+    movement and light-remap branches remain fail-closed.
+  - 2026-07-17 DRAW_DOOR split M11 update: only the source-proven horizontal
+    opening states 1..3 now consume the paired halves in the `DRAW_DOOR`
+    table order: right half (`base + state + 6`), then left half
+    (`base + state + 3`). Both halves require the same authenticated DOORS
+    material receipt and distinct RAW4 geometry rows, plus current composition
+    and owner surface identities. Vertical opening, movement, flip and every
+    incomplete table/material chain remain fail-closed.
+  - 2026-07-17 DRAW_DOOR vertical M11 update: the source-proven vertical
+    intermediate states 1..3 now retain the whole original DOORS image and
+    select exactly `tlbRectnoDoorPosition[cell] + state` before one forward
+    palette-mapped consume. The raw material, RAW4 table row, composition and
+    live surface must all still match; horizontal split, movement and flip
+    remain separate fail-closed routes.
+  - 2026-07-17 DRAW_DOOR_FRAMES right-jamb M11 update: the stationary
+    `QUERY_TEMP_PICST(1, 0x40, 0x40, ..., rect, 3)` route now admits the
+    authenticated GRAPHICSSET U4/PAL16 side-frame with reverse-X writes. Its
+    scene-owned colour key and current scene hash are required alongside RAW4
+    geometry, composition and surface identity. Left jamb, panel flips,
+    frame motion and every other transform remain fail-closed.
+  - 2026-07-17 DRAW_DOOR_FRAMES left-jamb M11 update: the matching stationary
+    `QUERY_TEMP_PICST(0, 0x40, 0x40, ..., rect, 4)` branch now consumes its
+    authenticated GRAPHICSSET U4/PAL16 material in forward-X order. Receipt
+    identity locks the jamb kind, RAW4 row, scene colour key/hash, composition
+    and live surface, so it cannot be used as the mirrored right route.
+    Frame motion, scaling and panel flips remain fail-closed.
+  - 2026-07-17 DRAW_DOOR_FRAMES movement M11 update: only the source's
+    `v1e12d0` branch may select `table1d6b2c[cell]` and its swapped
+    `table1d6ee1` jamb column, while preserving the original cell's RAW4
+    rectangle and normal jamb direction. The movement owner bit, selected
+    field, scene, composition and surface must all match; panel motion,
+    scaling and every unrelated transform remain fail-closed.
 
 - 2026-07-17 DM2 pit-roof viewport admission: `c_gui_vp.cpp:118-206` now
   source-gates cells 1..8 on the exact roof flag, `LOCATE_OTHER_LEVEL`

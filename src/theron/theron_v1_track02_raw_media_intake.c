@@ -36,6 +36,30 @@ static const char *theron_v1_track02_media_extension(const char *path) {
     return dot ? dot : "";
 }
 
+const char *theron_v1_track02_media_failure_reason_id(
+    Theron_V1Track02MediaFailureReason reason) {
+    switch (reason) {
+    case THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE: return "path_unavailable";
+    case THERON_V1_TRACK02_MEDIA_REASON_UNSUPPORTED_CONTAINER: return "unsupported_container";
+    case THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID: return "cue_layout_invalid";
+    case THERON_V1_TRACK02_MEDIA_REASON_PAYLOAD_UNAVAILABLE: return "payload_unavailable";
+    case THERON_V1_TRACK02_MEDIA_REASON_SECTOR_ALIGNMENT_INVALID: return "sector_alignment_invalid";
+    case THERON_V1_TRACK02_MEDIA_REASON_TRACK02_HASH_UNKNOWN: return "track02_hash_unknown";
+    case THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH: return "layout_hash_mismatch";
+    case THERON_V1_TRACK02_MEDIA_REASON_CUE_INDEX_INVALID: return "cue_index_invalid";
+    case THERON_V1_TRACK02_MEDIA_REASON_USER_DATA_WINDOW_INVALID: return "user_data_window_invalid";
+    case THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH: return "expected_hash_mismatch";
+    default: return "none";
+    }
+}
+
+static void theron_v1_track02_media_reject(
+    Theron_V1Track02RawMediaIntakeReceipt *receipt,
+    Theron_V1Track02MediaFailureReason reason) {
+    receipt->status = THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED;
+    receipt->failure_reason = reason;
+}
+
 static int theron_v1_track02_media_file_size(const char *path, size_t *out) {
     FILE *file;
     long size;
@@ -144,7 +168,8 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
         while (*p == ' ' || *p == '\t') ++p;
         if (theron_v1_track02_media_starts_with_i(p, "FILE ")) {
             char type[32];
-            if (sscanf(p, "FILE \"%511[^\"]\" %31s", member, type) != 2) {
+            if (sscanf(p, "FILE \"%511[^\"]\" %31s", member, type) != 2 &&
+                sscanf(p, "FILE %511s %31s", member, type) != 2) {
                 fclose(file);
                 return 0;
             }
@@ -201,11 +226,94 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
     return 1;
 }
 
+static int theron_v1_track02_media_resolve_track02_alias(
+    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY])
+{
+    static const struct { const char *declared; const char *materialized; } aliases[] = {
+        { "TQJP02.iso", "TQJP02End.iso" },
+        { "TQUS02.iso", "TQUS02End.iso" }
+    };
+    char *leaf;
+    size_t i;
+    FILE *file;
+
+    if (!payload_path || !payload_path[0]) return 0;
+    if ((file = fopen(payload_path, "rb")) != NULL) {
+        fclose(file);
+        return 1;
+    }
+    leaf = strrchr(payload_path, '/');
+    if (!leaf) leaf = strrchr(payload_path, '\\');
+    leaf = leaf ? leaf + 1 : payload_path;
+    for (i = 0u; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+        size_t remaining = THERON_V1_TRACK02_MEDIA_PATH_CAPACITY -
+            (size_t)(leaf - payload_path);
+        if (!theron_v1_track02_media_ieq(leaf, aliases[i].declared) ||
+            snprintf(leaf, remaining, "%s", aliases[i].materialized) >=
+                (int)remaining) continue;
+        if ((file = fopen(payload_path, "rb")) != NULL) {
+            fclose(file);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static uint32_t theron_v1_track02_expected_raw_index01(
     Theron_Track02Variant variant) {
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) return 224u;
     if (variant == THERON_TRACK02_VARIANT_US_BIN) return 225u;
     return 0u;
+}
+
+Theron_V1Track02MediaFailureReason
+theron_v1_track02_raw_media_intake_validate_verified_layout(
+    const char *track02_md5,
+    int sector_bytes,
+    int cue_consumed,
+    uint32_t cue_index01_sector,
+    uint32_t payload_index01_sector,
+    size_t payload_bytes,
+    Theron_Track02Variant *out_variant) {
+    Theron_Track02Variant variant;
+    size_t sector_count;
+    size_t first_user_data_offset;
+
+    if (out_variant) *out_variant = THERON_TRACK02_VARIANT_UNKNOWN;
+    if (!track02_md5 ||
+        (variant = theron_v1_track02_variant_for_md5(track02_md5)) ==
+            THERON_TRACK02_VARIANT_UNKNOWN) {
+        return THERON_V1_TRACK02_MEDIA_REASON_TRACK02_HASH_UNKNOWN;
+    }
+    if (sector_bytes != 2048 && sector_bytes != 2352) {
+        return THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH;
+    }
+    if (payload_bytes == 0u || payload_bytes % (size_t)sector_bytes != 0u) {
+        return THERON_V1_TRACK02_MEDIA_REASON_SECTOR_ALIGNMENT_INVALID;
+    }
+    if (((variant == THERON_TRACK02_VARIANT_JP_BIN ||
+          variant == THERON_TRACK02_VARIANT_US_BIN) && sector_bytes != 2352) ||
+        ((variant == THERON_TRACK02_VARIANT_US_ISO ||
+          variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) && sector_bytes != 2048)) {
+        return THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH;
+    }
+    if (cue_consumed && sector_bytes == 2352 &&
+        cue_index01_sector != theron_v1_track02_expected_raw_index01(variant)) {
+        return THERON_V1_TRACK02_MEDIA_REASON_CUE_INDEX_INVALID;
+    }
+    sector_count = payload_bytes / (size_t)sector_bytes;
+    if (payload_index01_sector >= sector_count) {
+        return THERON_V1_TRACK02_MEDIA_REASON_USER_DATA_WINDOW_INVALID;
+    }
+    first_user_data_offset = sector_bytes == 2352
+        ? (size_t)payload_index01_sector * 2352u + THERON_TRACK02_RAW_USER_DATA_OFFSET
+        : (size_t)payload_index01_sector * 2048u;
+    if (first_user_data_offset > payload_bytes ||
+        payload_bytes - first_user_data_offset < 2048u) {
+        return THERON_V1_TRACK02_MEDIA_REASON_USER_DATA_WINDOW_INVALID;
+    }
+    if (out_variant) *out_variant = variant;
+    return THERON_V1_TRACK02_MEDIA_REASON_NONE;
 }
 
 int theron_v1_track02_raw_media_intake_discover(
@@ -223,6 +331,7 @@ int theron_v1_track02_raw_media_intake_discover(
     *out = receipt;
     if (!media_path || !media_path[0]) {
         receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE;
+        receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE;
         *out = receipt;
         return 1;
     }
@@ -232,13 +341,15 @@ int theron_v1_track02_raw_media_intake_discover(
         receipt.cue_consumed = 1;
         if (!theron_v1_track02_media_file_size(media_path, &payload_bytes)) {
             receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE;
+            receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE;
             *out = receipt;
             return 1;
         }
         if (!theron_v1_track02_media_parse_cue(media_path, receipt.payload_path,
                                                 &sector_bytes, &index01_sector,
                                                 &payload_index01_sector)) {
-            receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED;
+            theron_v1_track02_media_reject(&receipt,
+                                            THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID);
             *out = receipt;
             return 1;
         }
@@ -253,33 +364,35 @@ int theron_v1_track02_raw_media_intake_discover(
         snprintf(receipt.payload_path, sizeof(receipt.payload_path), "%s",
                  media_path);
     } else {
-        receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED;
+        theron_v1_track02_media_reject(&receipt,
+                                        THERON_V1_TRACK02_MEDIA_REASON_UNSUPPORTED_CONTAINER);
         *out = receipt;
         return 1;
     }
+    (void)theron_v1_track02_media_resolve_track02_alias(receipt.payload_path);
     if (!theron_v1_track02_media_file_size(receipt.payload_path,
                                             &payload_bytes)) {
         receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE;
+        receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_PAYLOAD_UNAVAILABLE;
         *out = receipt;
         return 1;
     }
-    if (payload_bytes % (size_t)sector_bytes != 0u ||
-        !m12_file_md5_hex(receipt.payload_path, md5) ||
-        (variant = theron_v1_track02_variant_for_md5(md5)) ==
-            THERON_TRACK02_VARIANT_UNKNOWN ||
-        ((variant == THERON_TRACK02_VARIANT_JP_BIN ||
-          variant == THERON_TRACK02_VARIANT_US_BIN) && sector_bytes != 2352) ||
-        ((variant == THERON_TRACK02_VARIANT_US_ISO ||
-          variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) && sector_bytes != 2048)) {
-        receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED;
+    if (!m12_file_md5_hex(receipt.payload_path, md5)) {
+        theron_v1_track02_media_reject(&receipt,
+                                        THERON_V1_TRACK02_MEDIA_REASON_TRACK02_HASH_UNKNOWN);
         *out = receipt;
         return 1;
     }
-    if (receipt.cue_consumed && sector_bytes == 2352 &&
-        index01_sector != theron_v1_track02_expected_raw_index01(variant)) {
-        receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED;
-        *out = receipt;
-        return 1;
+    {
+        Theron_V1Track02MediaFailureReason reason =
+            theron_v1_track02_raw_media_intake_validate_verified_layout(
+                md5, sector_bytes, receipt.cue_consumed, index01_sector,
+                payload_index01_sector, payload_bytes, &variant);
+        if (reason != THERON_V1_TRACK02_MEDIA_REASON_NONE) {
+            theron_v1_track02_media_reject(&receipt, reason);
+            *out = receipt;
+            return 1;
+        }
     }
 
     receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_READY;
@@ -294,16 +407,9 @@ int theron_v1_track02_raw_media_intake_discover(
     receipt.sector_count = payload_bytes / (size_t)sector_bytes;
     receipt.first_user_data_offset = receipt.mode1_2352 ?
         (size_t)payload_index01_sector * 2352u + THERON_TRACK02_RAW_USER_DATA_OFFSET :
-        (size_t)index01_sector * 2048u;
-    if (receipt.first_user_data_offset > payload_bytes ||
-        payload_bytes - receipt.first_user_data_offset < 2048u ||
-        receipt.sector_count < (size_t)payload_index01_sector + 1u) {
-        receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED;
-        *out = receipt;
-        return 1;
-    }
+        (size_t)payload_index01_sector * 2048u;
     receipt.logical_user_data_window_bytes =
-        (receipt.sector_count - (size_t)index01_sector) * 2048u;
+        (receipt.sector_count - (size_t)payload_index01_sector) * 2048u;
     *out = receipt;
     return 1;
 }

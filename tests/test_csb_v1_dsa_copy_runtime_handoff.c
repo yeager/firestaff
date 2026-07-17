@@ -26,6 +26,74 @@ static void configure_action(CSB_V1_DSAImportedAction *action,
     action->program_word_count = word_count;
 }
 
+static void test_copyteleporter_runtime_receipt(void)
+{
+    uint8_t raw[96] = { 0 };
+    uint16_t words[] = { 0x0284u, 0u, 0x0020u };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    /* Two real byte-map teleporter squares: column starts at 60, map at 64,
+     * first-Thing table at 66, and two DB1 records at 70/76. */
+    raw[60] = 0u; raw[61] = 0u;
+    raw[62] = 1u; raw[63] = 0u;
+    raw[64] = 0xbcu;
+    raw[65] = 0xb0u;
+    raw[66] = 0u; raw[67] = 4u;
+    raw[68] = 1u; raw[69] = 4u;
+    raw[70] = 0xffu; raw[71] = 0xffu;
+    raw[76] = 0xffu; raw[77] = 0xffu;
+    raw[72] = 0x15u; raw[73] = 0x6cu;
+    raw[74] = 0x00u; raw[75] = 0x35u;
+    raw[78] = 0x00u; raw[79] = 0x00u;
+    raw[80] = 0x00u; raw[81] = 0x00u;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 2;
+    dungeon.level_heights[0] = 1;
+    dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[1] = 70;
+    dungeon.thing_type_counts[1] = 2;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, words,
+                     (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              raw[65] == raw[64] && memcmp(raw + 78, raw + 72, 4u) == 0 &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 &&
+              receipt.teleporter_copy_count == 1u &&
+              receipt.last_teleporter_copy_source_location == 0u &&
+              receipt.last_teleporter_copy_destination_location == 0x0020u &&
+              memcmp(receipt.last_teleporter_copy_source_before,
+                     receipt.last_teleporter_copy_destination_after,
+                     sizeof(receipt.last_teleporter_copy_source_before)) == 0,
+          "COPYTELEPORTER publishes source-owned DB1/CELLFLAG pre/post receipt");
+    raw[78] ^= 1u;
+    check(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+              &profile, &receipt) == 0,
+          "COPYTELEPORTER receipt rejects destination DB1 drift");
+}
+
 int main(void)
 {
     const uint16_t source = (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
@@ -48,6 +116,8 @@ int main(void)
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+
+    test_copyteleporter_runtime_receipt();
 
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.raw_data = raw;

@@ -399,6 +399,17 @@ int F0811_PROJECTILE_Advance_Compat(
     struct ProjectileInstance_Compat* outNewState,
     struct ProjectileTickResult_Compat* outResult);
 
+/* ReDMCSB PROJEXPL.C F0219 source boundary. The caller supplies the live
+ * C14-derived slot and loaded-square digest; invalid records do not create a
+ * replacement projectile or material. */
+int F0219_PROJECTILE_ProcessEvents48To49_Compat(
+    const struct ProjectileInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    uint32_t currentTick,
+    struct RngState_Compat* rng,
+    struct ProjectileInstance_Compat* outNewState,
+    struct ProjectileTickResult_Compat* outResult);
+
 int F0812_PROJECTILE_CreateFromSpellEffect_Compat(
     const struct SpellEffect_Compat* effect,
     int casterChampionIndex,
@@ -469,6 +480,23 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
 /* ==========================================================
  *  Group D — Explosion lifecycle (F0821 – F0824).
  * ========================================================== */
+
+/* ReDMCSB PROJEXPL.C source-named owners. These retain the existing M10
+ * bounded lifecycle contracts; callers must provide a real C15-derived
+ * create input and C25-derived advance event. */
+int F0213_EXPLOSION_Create_Compat(
+    const struct ExplosionCreateInput_Compat* in,
+    struct ExplosionList_Compat* list,
+    int* outSlotIndex,
+    struct TimelineEvent_Compat* outFirstAdvanceEvent);
+
+int F0220_EXPLOSION_ProcessEvent25_Compat(
+    const struct ExplosionInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    uint32_t currentTick,
+    struct RngState_Compat* rng,
+    struct ExplosionInstance_Compat* outNewState,
+    struct ExplosionTickResult_Compat* outResult);
 
 int F0821_EXPLOSION_Create_Compat(
     const struct ExplosionCreateInput_Compat* in,

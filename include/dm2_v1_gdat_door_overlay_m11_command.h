@@ -23,7 +23,10 @@ typedef enum {
     /* SKProject DRAW_DOOR_FRAMES resolves these independently of the
      * centre frame through GRAPHICSSET plus QUERY_CREATURE_BLIT_RECTI. */
     DM2_V1_GDAT_DOOR_SIDE_FRAME_LEFT = 6,
-    DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT = 7
+    DM2_V1_GDAT_DOOR_SIDE_FRAME_RIGHT = 7,
+    /* DRAW_DOOR_FRAMES' yy&1 ceiling slit is a separate GRAPHICSSET/RAW4
+     * DRAW_DUNGEON_GRAPHIC transaction. */
+    DM2_V1_GDAT_DOOR_ROOF_SLIT = 8
 } DM2_V1_GdatDoorOverlayKind;
 
 typedef struct {

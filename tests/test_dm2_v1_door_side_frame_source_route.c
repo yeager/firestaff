@@ -31,6 +31,20 @@ int main(void)
         return 1;
     }
     {
+        int field, rect, mirror, offset_x, offset_y;
+        if (!dm2_v1_viewport_door_side_frame_source_for_movement(
+                DM2_SQ_D1C, 0, 1, &field, &rect, &mirror, &offset_x,
+                &offset_y) || field != 0x08 || rect != 5085 || mirror != 0 ||
+            offset_x != -2 || offset_y != 4 ||
+            !dm2_v1_viewport_door_side_frame_source_for_movement(
+                DM2_SQ_D1C, 1, 1, &field, &rect, &mirror, &offset_x,
+                &offset_y) || field != 0x07 || rect != 5089 || mirror != 1 ||
+            offset_x != 2 || offset_y != 4) {
+            fputs("skproject moving side-frame table mismatch\n", stderr);
+            return 1;
+        }
+    }
+    {
         int a, b, c, d, e;
         if (dm2_v1_viewport_door_side_frame_source(DM2_SQ_D1L, 0,
                                                     &a, &b, &c, &d, &e)) {

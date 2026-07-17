@@ -229,6 +229,70 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     }
 }
 
+static void test_orch_source_spell_projectile_publishes_c14_c49_atomically(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonProjectile_Compat projectile;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    unsigned char rawProjectile[8] = { 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
+    unsigned char square[1] = { DUNGEON_ELEMENT_CORRIDOR << 5 };
+    unsigned short squareFirstThings[1] = { THING_NONE };
+    unsigned short columns[1] = { 0 };
+
+    init_world(&world, &things, weapons, junks);
+    memset(&projectile, 0, sizeof(projectile));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    things.loaded = 1;
+    things.projectiles = &projectile;
+    things.projectileCount = 1;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.dungeonColumnCount = 1;
+    map.width = map.height = 1;
+    tiles.squareData = square;
+    tiles.squareCount = 1;
+    world.dungeon = &dungeon;
+    make_spell_caster(&world, DM1_SKILL_IDX_AIR);
+    world.party.mapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.champions[0].cell = 1;
+    world.party.champions[0].direction = 1;
+    world.party.direction = 1;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 14;
+    input.reserved = 1;
+
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+    assert(world.projectiles.count == 1 && world.timeline.count == 1);
+    assert(projectile.next == THING_ENDOFLIST);
+    assert(projectile.slot == (unsigned short)world.projectiles.entries[0].reserved1);
+    assert(projectile.kineticEnergy == world.projectiles.entries[0].kineticEnergy);
+    assert(projectile.attack == world.projectiles.entries[0].attack);
+    assert(projectile.eventIndex == 0 && rawProjectile[6] == 0 && rawProjectile[7] == 0);
+    assert((square[0] & DUNGEON_SQUARE_MASK_THING_LIST) != 0);
+    assert(THING_GET_TYPE(squareFirstThings[0]) == THING_TYPE_PROJECTILE);
+    assert(THING_GET_CELL(squareFirstThings[0]) == (unsigned)world.projectiles.entries[0].cell);
+}
+
 static void test_orch_light_spell_uses_source_light_amount_and_party_map(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -7656,6 +7720,7 @@ int main(void) {
     test_orch_f0303_inventory_and_rest_query();
     test_orch_f0303_hidden_heal_query();
     test_orch_projectile_spell_uses_hidden_skill_query_value();
+    test_orch_source_spell_projectile_publishes_c14_c49_atomically();
     test_orch_light_spell_uses_source_light_amount_and_party_map();
     test_orch_darkness_spell_decays_back_to_zero_without_clamp();
     test_orch_magic_torch_spell_decays_back_to_zero();

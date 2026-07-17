@@ -275,7 +275,7 @@ int theron_v1_track02_mednafen_trace_stamp_handoff_envelope(
     const Theron_V1Track02CaptureTargetPlan *plan,
     const char *envelope_path, char out_envelope_md5[33])
 {
-    FILE *file; size_t i;
+    FILE *file = NULL; size_t i; uint32_t plan_identity;
     if (out_envelope_md5) out_envelope_md5[0] = '\0';
     if (!trace || !plan || !envelope_path || !envelope_path[0] ||
         trace->status != THERON_V1_TRACK02_MEDNAFEN_TRACE_CONVERTED ||
@@ -286,8 +286,10 @@ int theron_v1_track02_mednafen_trace_stamp_handoff_envelope(
         !plan->destination_record_consumed || plan->level_object_semantics_allowed ||
         plan->pixel_decode_allowed || plan->render_allowed || plan->fallback_visuals_allowed ||
         (file = fopen(envelope_path, "rb")) != NULL) { if (file) fclose(file); return 0; }
+    plan_identity = theron_v1_track02_capture_target_plan_identity(plan);
+    if (!plan_identity) return 0;
     file = fopen(envelope_path, "wb"); if (!file) return 0;
-    if (fprintf(file, "THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1\ntrack02_md5=%s\nmednafen_trace_md5=%s\ncampaign_route=2\n", plan->targets[0].track02_md5, trace->source_trace_md5) < 0) goto failed;
+    if (fprintf(file, "THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1\ntrack02_md5=%s\nmednafen_trace_md5=%s\ncapture_target_plan_fnv1a=%x\ncampaign_route=2\n", plan->targets[0].track02_md5, trace->source_trace_md5, plan_identity) < 0) goto failed;
     for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
         const Theron_V1Track02CaptureTarget *t = &plan->targets[i];
         if (t->route != (Theron_V1Track02CaptureTargetRoute)i || !t->cd_read_record ||

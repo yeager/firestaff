@@ -1,0 +1,3 @@
+#include "dm2_v1_gdat_wall_tile_overlay_receipt.h"
+#include <stdio.h>
+int main(void){DM2_V1_GdatWallTileOverlayInput i={8,2,3,0x40,0x40,0,1,2,3,0xfffe,0,7};DM2_V1_GdatWallTileOverlayReceipt r;int ok=dm2_v1_gdat_wall_tile_overlay_receipt_build(&i,&r)&&r.valid&&r.no_draw&&r.alpha_forced;i.category=9;ok&=!dm2_v1_gdat_wall_tile_overlay_receipt_build(&i,&r);i.category=8;i.alpha=1;ok&=!dm2_v1_gdat_wall_tile_overlay_receipt_build(&i,&r);i.alpha=0xfffe;i.active=1;ok&=dm2_v1_gdat_wall_tile_overlay_receipt_build(&i,&r)&&!r.alpha_forced;printf("%s dm2_v1_gdat_wall_tile_overlay_receipt\n",ok?"PASS":"FAIL");return ok?0:1;}

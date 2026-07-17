@@ -353,6 +353,12 @@ static int nexus_v1_level_aux_source_receipt(
     return 0;
 }
 
+int nexus_v1_warning_bin_source_receipt(
+    Nexus_V1_Engine *engine, Nexus_V1_LevelAuxSourceReceipt *out_receipt)
+{
+    return nexus_v1_level_aux_source_receipt(engine, "WARNING.BIN", out_receipt);
+}
+
 static int nexus_v1_structure2_source_receipt(
     Nexus_V1_Engine *engine, int level_index, const Nexus_V1_Level *level,
     const uint8_t *loaded_dgn_data, int loaded_dgn_size,

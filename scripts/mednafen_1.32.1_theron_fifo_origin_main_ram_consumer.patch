@@ -100,6 +100,9 @@
                                (unsigned long long)receipt->sequence, receipt->reader_pc,
                                logical_destination, physical_destination, writer_pc,
                                writer_physical_pc, stored_value);
++  if(getenv("FIRESTAFF_THERON_G8_FIFO_OUTPUT_TRACE") && receipt->generation == 8 &&
++     receipt->source_lba == 4859 && receipt->dispatch_sequence == 4)
++   TheronPCECDTraceFifoReceipt("g8_fifo_output_capture generation=8 source_lba=4859 dispatch_sequence=4\\n");
 +  if(TheronPCECDFifoOriginMainRAMCount < TheronPCECDFifoOriginMainRAMCapacity)
 +  {
 +   unsigned slot = (TheronPCECDFifoOriginMainRAMHead + TheronPCECDFifoOriginMainRAMCount) % TheronPCECDFifoOriginMainRAMCapacity;

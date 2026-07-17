@@ -42,6 +42,13 @@ int main(void) {
           !receipt.mednafen_trace_source_path[0] &&
           !receipt.mednafen_trace_source_md5[0] &&
           !receipt.mednafen_event_log_md5[0]);
+    CHECK(theron_v1_track02_external_capture_validate_mednafen_handoff_plan(
+        &request, &trace_request, NULL, 0u, &provenance, &preparation,
+        &admission, &receipt));
+    CHECK(receipt.status == THERON_V1_TRACK02_EXTERNAL_CAPTURE_REJECTED);
+    CHECK(!admission.valid && !receipt.capture_target_plan_verified &&
+          !receipt.positive_handoff_capture_required &&
+          !receipt.capture_target_plan_identity);
     CHECK(theron_v1_track02_external_capture_validate_huc6280_log(
         &request, "/tmp/firestaff-no-such-huc6280-capture.log", &provenance,
         &preparation, &admission, &receipt));

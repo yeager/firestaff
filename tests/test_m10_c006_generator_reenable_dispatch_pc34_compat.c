@@ -262,6 +262,8 @@ static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
     world.creatureAI[0].groupMapY = 1;
     world.creatureAI[0].groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
     world.creatureAI[0].lastSeenPartyTick = 0;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = 0;
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
 
     memset(&input, 0, sizeof(input));

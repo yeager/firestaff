@@ -1,0 +1,3 @@
+#include "dm2_v1_gdat_palette_m11_consumer.h"
+#include <stdio.h>
+int main(void){DM2_V1_GdatOriginalPaletteReceipt p={0};DM2_V1_GdatPaletteM11ConsumerReceipt r;DM2_V1_ViewportState v;uint8_t pal[16]={1},fb[DM2_VP_WIDTH*DM2_VP_HEIGHT];p.valid=p.no_draw=1;p.bytes=pal;p.byte_count=16;p.byte_hash=1;p.palette_surface_hash=2;p.identity_hash=3;dm2_v1_viewport_init(&v,fb,DM2_VP_WIDTH);int ok=dm2_v1_gdat_palette_m11_consumer_receipt_build(&p,&v,&r)&&r.valid&&r.no_draw&&r.palette_bytes==pal;++v.surface_snapshot.generation;ok&=dm2_v1_gdat_palette_m11_consumer_receipt_build(&p,&v,&r)&&r.surface_generation==v.surface_snapshot.generation;printf("%s dm2_v1_gdat_palette_m11_consumer\n",ok?"PASS":"FAIL");return ok?0:1;}

@@ -41,7 +41,8 @@ static int write_bundle(FILE *file, const Theron_V1Track02CaptureTargetPlan *pla
                         const char *trace_md5, unsigned int campaign_route)
 {
     size_t i;
-    if (fprintf(file, "THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1\ntrack02_md5=%s\nmednafen_trace_md5=%s\ncampaign_route=%u\n", plan->targets[0].track02_md5, trace_md5, campaign_route) < 0) return 0;
+    uint32_t plan_identity = theron_v1_track02_capture_target_plan_identity(plan);
+    if (!plan_identity || fprintf(file, "THERON_TRACK02_CAPTURE_ARTIFACT_BUNDLE_V1\ntrack02_md5=%s\nmednafen_trace_md5=%s\ncapture_target_plan_fnv1a=%x\ncampaign_route=%u\n", plan->targets[0].track02_md5, trace_md5, plan_identity, campaign_route) < 0) return 0;
     for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
         const Theron_V1Track02CaptureTarget *t = &plan->targets[i];
         if (fprintf(file, "route=%zu cd_record=%x loader_offset=%zx loader_bytes=%zu loader_checksum=%x palette_identity=%x bitmap_offset=%zx bitmap_bytes=%zu bitmap_identity=%x destination_record=%x destination_offset=%zx destination_bytes=%zu destination_identity=%x\n", i, t->cd_read_record, t->loader_output_raw_offset, t->loader_output_bytes, t->loader_output_checksum, t->palette_output_identity, t->bitmap_raw_offset, t->bitmap_bytes, t->bitmap_identity, t->destination_record, t->destination_offset, t->destination_bytes, t->destination_identity) < 0) return 0;

@@ -32,12 +32,21 @@ typedef struct {
     char track02_md5[33];
     char bundle_md5[33];
     char mednafen_trace_md5[33];
+    /* Stable identity of the complete opaque plan used during import. */
+    uint32_t capture_target_plan_identity;
     Theron_V1Track02CaptureTargetRoute campaign_route;
+    uint16_t descriptor_selector;
+    size_t descriptor_ordinal;
+    uint32_t descriptor_source_hash;
     uint32_t cd_read_record[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
+    size_t loader_output_raw_offset[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
+    size_t loader_output_bytes[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
     uint32_t loader_output_identity[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
     uint32_t palette_output_identity[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
     uint32_t bitmap_transfer_identity[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
     uint32_t destination_record[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
+    size_t destination_offset[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
+    size_t destination_bytes[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
     uint32_t destination_identity[THERON_V1_TRACK02_CAPTURE_TARGET_COUNT];
     int opaque_runtime_ready;
     int pixel_decode_allowed;

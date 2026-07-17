@@ -237,6 +237,8 @@ static void test_archenemy_approach_double_move(void) {
     rng = make_rng(42);
     ctx.isArchenemy = 1;
     ctx.creatureInfo.attributes |= DM1_ATTR_ARCHENEMY;
+    ctx.archenemySecondStepMovementFacts[1].available = 1;
+    ctx.archenemySecondStepMovementFacts[1].inBounds = 1;
     memset(&result, 0, sizeof(result));
     ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
     EXPECT_EQ(ok, 1, "archenemy_double: dispatch returns 1");
@@ -250,6 +252,18 @@ static void test_archenemy_approach_double_move(void) {
               "archenemy_double: Y unchanged for east double move");
     EXPECT_EQ(result.archenemyDoubleMove, 1,
               "archenemy_double: F0204 double-move flag set");
+
+    /* F0204 performs a second source F0202 read after the admitted first
+     * step. A blocked or absent second square retains the ordinary move. */
+    ctx.archenemySecondStepMovementFacts[1].isWall = 1;
+    rng = make_rng(42);
+    memset(&result, 0, sizeof(result));
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "archenemy_double_blocked: dispatch returns 1");
+    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 1,
+              "archenemy_double_blocked: second F0202 wall retains first step");
+    EXPECT_EQ(result.archenemyDoubleMove, 0,
+              "archenemy_double_blocked: no synthetic double-move flag");
 }
 
 /* =========================================================

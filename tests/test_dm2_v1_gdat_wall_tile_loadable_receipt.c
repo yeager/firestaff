@@ -1,0 +1,3 @@
+#include "dm2_v1_gdat_wall_tile_loadable_receipt.h"
+#include <stdio.h>
+int main(void){DM2_V1_GdatWallTileLoadableInput i={9,2,0x0f,0x40,0x40,0,1,2,3,0xfffe,1,0,7};DM2_V1_GdatWallTileLoadableReceipt r;int ok=dm2_v1_gdat_wall_tile_loadable_receipt_build(&i,&r)&&r.valid&&r.no_draw&&r.alpha_forced;i.loadable=0;ok&=!dm2_v1_gdat_wall_tile_loadable_receipt_build(&i,&r);i.loadable=1;i.image_field=0x0e;ok&=!dm2_v1_gdat_wall_tile_loadable_receipt_build(&i,&r);i.image_field=0x0f;i.active=1;ok&=dm2_v1_gdat_wall_tile_loadable_receipt_build(&i,&r)&&!r.alpha_forced;printf("%s dm2_v1_gdat_wall_tile_loadable_receipt\n",ok?"PASS":"FAIL");return ok?0:1;}

@@ -1,0 +1,6 @@
+#ifndef FIRESTAFF_DM2_V1_GDAT_WALL_DRAW_PICST_ADMISSION_H
+#define FIRESTAFF_DM2_V1_GDAT_WALL_DRAW_PICST_ADMISSION_H
+#include "dm2_v1_gdat_wall_m11_command.h"
+typedef struct { int valid,no_draw; uint8_t command_index; uint16_t palette_entries; uint32_t wall_command_hash,material_hash,identity_hash; } DM2_V1_GdatWallDrawPicstAdmission;
+int dm2_v1_gdat_wall_draw_picst_admission_build(const DM2_V1_GdatWallM11CommandPlan*,uint8_t,DM2_V1_GdatWallDrawPicstAdmission*);
+#endif

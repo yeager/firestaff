@@ -1,0 +1,3 @@
+#include "dm2_v1_gdat_materialization_handoff.h"
+#include <stdio.h>
+int main(void){DM2_V1_GdatMaterialPalettePairReceipt p={0};DM2_V1_GdatMaterializationHandoff r;DM2_V1_ViewportState v;uint8_t b[4]={0},pal[16]={0},fb[DM2_VP_WIDTH*DM2_VP_HEIGHT];dm2_v1_viewport_init(&v,fb,DM2_VP_WIDTH);p.valid=p.no_draw=1;p.identity_hash=1;p.material_bytes=b;p.palette_bytes=pal;p.width=p.height=p.stride=2;p.palette_byte_count=16;p.surface_generation=v.surface_snapshot.generation;int ok=dm2_v1_gdat_materialization_handoff_build(&p,&v,&r)&&r.valid&&r.no_draw&&r.material_bytes==b;++v.surface_snapshot.generation;ok&=!dm2_v1_gdat_materialization_handoff_build(&p,&v,&r);printf("%s dm2_v1_gdat_materialization_handoff\n",ok?"PASS":"FAIL");return ok?0:1;}

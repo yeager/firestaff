@@ -1633,7 +1633,6 @@ int dm1_v1_projectile_champion_action_plan_pc34(
     const struct CombatAction_Compat* action,
     int championPresent,
     DM1_ProjectileChampionImpactPlanPc34* outPlan) {
-    (void)projectile;
     if (!outPlan) return 0;
     memset(outPlan, 0, sizeof(*outPlan));
     outPlan->championIndex = -1;
@@ -1643,9 +1642,11 @@ int dm1_v1_projectile_champion_action_plan_pc34(
         return 0;
     }
 
-    /* ReDMCSB: PROJEXPL.C F0217 lines 510-558 resolves the champion in
-     * P0456_i_Cell, computes F0216 impact attack, calls F0321, then
-     * optionally calls F0322 poison. */
+    /* ReDMCSB: PROJEXPL.C F0217 computes F0216 before it publishes this
+     * damage action.  The action is therefore the authenticated impact
+     * receipt at this boundary; recomputing from a later projectile state
+     * loses the original attack after a C48/C49 transition. */
+    if (!projectile || action->rawAttackValue < 0) return 0;
     outPlan->handled = 1;
     outPlan->championIndex = action->defenderSlotOrCreatureIndex;
     outPlan->championPresent = championPresent ? 1 : 0;
@@ -1654,8 +1655,7 @@ int dm1_v1_projectile_champion_action_plan_pc34(
     outPlan->impactMapY = action->targetMapY;
     outPlan->impactCell = action->targetCell;
     outPlan->attackTypeCode = action->attackTypeCode;
-    outPlan->rawAttackValue = F0216_PROJECTILE_GetImpactAttack(projectile);
-    if (outPlan->rawAttackValue < 0) return 0;
+    outPlan->rawAttackValue = action->rawAttackValue;
     outPlan->allowedWounds = action->allowedWounds;
     return 1;
 }

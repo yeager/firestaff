@@ -980,6 +980,8 @@ int dm2_v1_runtime_last_set_timer_weather_receipt(
     DM2_V1_SetTimerWeatherReceipt *out_receipt);
 int dm2_v1_runtime_last_weather_3df7_0037_receipt(
     DM2_V1_Weather3df70037Receipt *out_receipt);
+int dm2_v1_runtime_last_weather_timer_receipt(
+    DM2_V1_WeatherTimerReceipt *out_receipt);
 /* Accepts only c_weather DistantEnvironment receipts that can be rebuilt
  * against the current source-owned MapGraphicsStyle/GDAT weather receipt.
  * A level or scene refresh clears them; no bound slot is no-draw. */

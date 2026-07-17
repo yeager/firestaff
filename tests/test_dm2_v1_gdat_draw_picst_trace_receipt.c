@@ -1,0 +1,3 @@
+#include "dm2_v1_gdat_draw_picst_trace_receipt.h"
+#include <stdio.h>
+int main(void){DM2_V1_GdatMaterializationHandoff h={0};DM2_V1_GdatDrawPicstTraceReceipt r;DM2_V1_ViewportState v;uint8_t m=0,p=0,fb[DM2_VP_WIDTH*DM2_VP_HEIGHT];dm2_v1_viewport_init(&v,fb,DM2_VP_WIDTH);h.valid=h.no_draw=1;h.identity_hash=1;h.material_bytes=&m;h.palette_bytes=&p;h.surface_generation=v.surface_snapshot.generation;int ok=dm2_v1_gdat_draw_picst_trace_receipt_build(&h,&v,&r)&&r.valid&&r.no_draw&&r.destination_unproven;++v.surface_snapshot.generation;ok&=!dm2_v1_gdat_draw_picst_trace_receipt_build(&h,&v,&r);printf("%s dm2_v1_gdat_draw_picst_trace_receipt\n",ok?"PASS":"FAIL");return ok?0:1;}

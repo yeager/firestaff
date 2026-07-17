@@ -5,6 +5,7 @@
  * helpers consumed by weather, wall ornaments, and HUD hand-action materials.
  */
 
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_weather_gdat.h"
 
 #include <stdint.h>
@@ -127,6 +128,14 @@ int main(void)
         free(graphics);
         printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
         return failed == 0 ? 0 : 1;
+    }
+
+    {
+        DM2_V1_GdatImageMetadata rejected;
+        CHECK(dm2_v1_asset_load_image_metadata(
+                  &loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0xff, 0xff,
+                  &rejected) == 0 && rejected.metadata_hash == 0u,
+              "missing typed image has no metadata fallback");
     }
 
     for (int entry = 2; entry <= 5; ++entry) {

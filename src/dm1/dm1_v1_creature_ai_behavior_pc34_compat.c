@@ -62,6 +62,10 @@ static void apply_archenemy_double_move_f0204(
     struct DM1BehaviorResult_Compat* result)
 {
     int direction;
+    int blockedByWall;
+    int blockedByDoor;
+    int blockedByParty;
+    int blockedByGroup;
 
     if (!ctx || !result || !ctx->isArchenemy ||
         result->actionKind != DM1_ACTION_MOVE) {
@@ -69,6 +73,13 @@ static void apply_archenemy_double_move_f0204(
     }
 
     direction = result->moveDirection & 3;
+    if (!F0812b_DM1_GROUP_IsArchenemyDoubleMovementPossible_Compat(
+            ctx, direction, ctx->groupMovementFacts[direction].hasFluxcage,
+            &ctx->archenemySecondStepMovementFacts[direction],
+            &blockedByWall, &blockedByDoor, &blockedByParty,
+            &blockedByGroup)) {
+        return;
+    }
     result->archenemyDoubleMove = 1;
     result->moveDestMapX += g_dx[direction];
     result->moveDestMapY += g_dy[direction];
@@ -733,8 +744,6 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
 {
     const struct DM1GroupMovementFacts_Compat* facts;
 
-    (void)allowImaginaryPitsAndFakeWalls; /* Caller pre-bakes into masks */
-
     if (!ctx || direction < 0 || direction > 3) return 0;
     if (outBlockedByWall)  *outBlockedByWall  = 0;
     if (outBlockedByDoor)  *outBlockedByDoor  = 0;
@@ -752,11 +761,36 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
         return 0;
     }
 
-    /* Party blocking (source: F0202 G0390 check) */
-    /* In the real engine this checks if dest == party pos.
-     * We use adjacency info from context. */
+    /* GROUP.C F0202 first rejects the source square's terrain.  The live
+     * owner supplies the decoded raw DUNGEON bits; this pure layer never
+     * promotes an absent or unsupported square into a clear one. */
+    if (!facts->inBounds || facts->isWall || facts->isStairs ||
+        facts->teleporterBlocksCreature ||
+        (facts->isOpenPit &&
+         !(allowImaginaryPitsAndFakeWalls && facts->isImaginaryPit)) ||
+        (facts->isFakeWall && !facts->isOpenFakeWall &&
+         !(allowImaginaryPitsAndFakeWalls && facts->isImaginaryFakeWall)) ||
+        (facts->hasFluxcage &&
+         (ctx->creatureInfo.attributes & DM1_ATTR_ARCHENEMY))) {
+        if (outBlockedByWall) *outBlockedByWall = 1;
+        return 0;
+    }
 
-    return 1; /* Movement is possible by default */
+    /* F0202 checks G0390's party occupancy before the door and C04 chain. */
+    if (facts->occupiedByParty) {
+        if (outBlockedByParty) *outBlockedByParty = 1;
+        return 0;
+    }
+    if (facts->doorBlocksCreature) {
+        if (outBlockedByDoor) *outBlockedByDoor = 1;
+        return 0;
+    }
+    if (facts->occupiedByGroup) {
+        if (outBlockedByGroup) *outBlockedByGroup = 1;
+        return 0;
+    }
+
+    return 1;
 }
 
 /* =========================================================================
@@ -884,7 +918,7 @@ int F0813_DM1_GROUP_PickSingleSquareMove_Compat(
     if (secondaryDir >= 0 && secondaryDir <= 3) {
         roll = F0732_COMBAT_RngRandom_Compat(rng, 2);
         if (F0811_DM1_GROUP_IsMovementPossible_Compat(
-                ctx, secondaryDir, allowFakeWalls && (roll == 0),
+                ctx, secondaryDir, allowFakeWalls && (roll != 0),
                 &bw, &bd, &bp, &bg)) {
             *outDirection = secondaryDir;
             return 1;
@@ -1308,6 +1342,14 @@ int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
     (void)creatureIndex; /* v1: uses group-level visibility from context */
 
     if (!ctx || !outDistance) return 0;
+
+    /* F0200 does not retain a visibility result across map ownership.  The
+     * source never walks a cross-map line, so a stale distance must not make
+     * a C04 group attack or approach the party after a map transition. */
+    if (ctx->currentMapIndex != ctx->partyMapIndex) {
+        *outDistance = 0;
+        return 1;
+    }
 
     /* Source: F0200 returns the pre-computed distance-to-visible-party.
      * The actual visibility walk (F0199/F0197/F0198) is done by the caller
@@ -1864,13 +1906,19 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
             }
 
             /* Can't see party — try smell */
-            F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
-                ctx, &smellDirOrd);
+            smellDirOrd = ctx->smelledPartyDirectionOrdinal;
+            if (smellDirOrd <= 0) {
+                F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
+                    ctx, &smellDirOrd);
+            }
             if (smellDirOrd > 0) {
                 /* Follow scent */
                 int primaryDir = smellDirOrd - 1; /* ordinal to index */
                 F0813_DM1_GROUP_PickSingleSquareMove_Compat(
-                    ctx, primaryDir, ctx->currentGroupSecondaryDirToParty,
+                    ctx, primaryDir,
+                    ctx->smelledPartyDirectionOrdinal > 0
+                        ? ctx->smelledPartySecondaryDirection
+                        : ctx->currentGroupSecondaryDirToParty,
                     0, rng, &dir);
                 if (dir >= 0) {
                     int halfMove = ctx->movementTicks >> 1;

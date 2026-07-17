@@ -25,6 +25,10 @@ static void fixture(Theron_V1Track02CaptureCampaignReceipt *campaign,
     snprintf(campaign->bundle_md5[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF], 33,
              "cccccccccccccccccccccccccccccccc");
     campaign->route_destination_identity[
+        THERON_V1_TRACK02_CAPTURE_TARGET_START] = 0x44000000u;
+    campaign->route_destination_identity[
+        THERON_V1_TRACK02_CAPTURE_TARGET_SOUL_ROOM] = 0x44000001u;
+    campaign->route_destination_identity[
         THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] = 0x7182u;
     window->valid = 1;
     window->opaque_route_ready = 1;
@@ -74,13 +78,33 @@ static void direct_media_fixture(
         plan->targets[i].track02_variant = media->track02_variant;
         snprintf(plan->targets[i].track02_md5,
                  sizeof(plan->targets[i].track02_md5), "%s", media->track02_md5);
+        plan->targets[i].cd_read_record = 0x500u + (uint32_t)i;
+        plan->targets[i].loader_output_raw_offset = 0x2000u + i * 0x100u;
+        plan->targets[i].loader_output_bytes = 0x20u;
+        plan->targets[i].loader_output_checksum = 0x11000000u + (uint32_t)i;
+        plan->targets[i].palette_output_identity = 0x22000000u + (uint32_t)i;
+        plan->targets[i].bitmap_identity = 0x33000000u + (uint32_t)i;
+        plan->targets[i].destination_record = 0x600u + (uint32_t)i;
+        plan->targets[i].destination_offset = 0x3000u + i * 0x100u;
+        plan->targets[i].destination_bytes = 0x80u;
+        plan->targets[i].destination_identity = 0x44000000u + (uint32_t)i;
     }
     plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
         .destination_identity = 0x7182u;
     plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
         .destination_record = 0x510u;
     plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
+        .destination_offset = 0x1c00u;
+    plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
+        .destination_bytes = 0x80u;
+    plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
         .cd_read_record = 0x510u;
+    plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
+        .loader_output_raw_offset = 0x2340u;
+    plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
+        .loader_output_bytes = 0x20u;
+    plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
+        .loader_output_checksum = 0x0d1e2f30u;
     plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
         .palette_output_identity = 0x1a2b3c4du;
     plan->targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]
@@ -332,10 +356,28 @@ int main(void)
              state.theronState.startup_media_track02_md5);
     sector.stage3_track02_record = 0x4e0u;
     sector.resolved_track02_record = 0x510u;
+    sector.descriptor_ordinal = 1u;
     sector.descriptor_selector = 0x30u;
     sector.descriptor_source_hash = 0x44556677u;
     sector.record_user_data_bytes = 2048u;
     sector.record_user_data_hash = 0x11223344u;
+    sector.loader_caller_pc = 0x4010u;
+    sector.loader_return_pc = 0x4013u;
+    sector.loader_caller_opcode = 0x20u;
+    sector.loader_caller_target = 0xe009u;
+    sector.loader_post_return_pc = 0x4013u;
+    sector.loader_post_return_next_pc = 0x4015u;
+    sector.loader_record_cl = 0x10u;
+    sector.loader_record_dl = 0x05u;
+    sector.loader_record_ch = 0x00u;
+    sector.loader_sector_count = 1u;
+    sector.loader_observed_raw_sector_lba = 0x980u;
+    sector.loader_callsite_context_verified = 1;
+    sector.loader_destination = 0x3800u;
+    sector.loader_destination_span_bytes = 0x20u;
+    sector.loader_destination_span_checksum = 0x0d1e2f30u;
+    sector.loader_destination_payload_bytes = 0x800u;
+    sector.loader_destination_payload_checksum = 0x11223344u;
     sector.observed_raw_sector_checksum = 0x55667788u;
 
     sector_discovery.status = THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY;
@@ -403,19 +445,40 @@ int main(void)
         artifact.opaque_runtime_ready = 1;
     artifact.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     artifact.campaign_route = THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF;
+    artifact.descriptor_selector = 0x30u;
+    artifact.descriptor_ordinal = 1u;
+    artifact.descriptor_source_hash = 0x44556677u;
     snprintf(artifact.track02_md5, sizeof(artifact.track02_md5), "%s",
              state.theronState.startup_media_track02_md5);
     snprintf(artifact.mednafen_trace_md5, sizeof(artifact.mednafen_trace_md5), "%s",
              state.theronState.launch_trace_identity.source_trace_md5);
-    artifact.cd_read_record[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] =
-        direct_plan.targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF].cd_read_record;
-    artifact.palette_output_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] =
-        direct_plan.targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF].palette_output_identity;
-    artifact.bitmap_transfer_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] =
-        direct_plan.targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF].bitmap_identity;
-    artifact.destination_record[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] = 0x510u;
-    artifact.destination_identity[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF] =
-        direct_plan.targets[THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF].destination_identity;
+    artifact.capture_target_plan_identity =
+        theron_v1_track02_capture_target_plan_identity(&direct_plan);
+    snprintf(artifact.bundle_md5, sizeof(artifact.bundle_md5),
+             "cccccccccccccccccccccccccccccccc");
+    for (size_t i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
+        artifact.cd_read_record[i] = direct_plan.targets[i].cd_read_record ?
+            direct_plan.targets[i].cd_read_record : 0x500u + (uint32_t)i;
+        artifact.loader_output_raw_offset[i] =
+            direct_plan.targets[i].loader_output_raw_offset;
+        artifact.loader_output_bytes[i] = direct_plan.targets[i].loader_output_bytes ?
+            direct_plan.targets[i].loader_output_bytes : 0x20u;
+        artifact.loader_output_identity[i] =
+            direct_plan.targets[i].loader_output_checksum ?
+            direct_plan.targets[i].loader_output_checksum : 0x10101010u + (uint32_t)i;
+        artifact.palette_output_identity[i] =
+            direct_plan.targets[i].palette_output_identity ?
+            direct_plan.targets[i].palette_output_identity : 0x20202020u + (uint32_t)i;
+        artifact.bitmap_transfer_identity[i] = direct_plan.targets[i].bitmap_identity ?
+            direct_plan.targets[i].bitmap_identity : 0x30303030u + (uint32_t)i;
+        artifact.destination_record[i] = direct_plan.targets[i].destination_record ?
+            direct_plan.targets[i].destination_record : 0x600u + (uint32_t)i;
+        artifact.destination_offset[i] = direct_plan.targets[i].destination_offset;
+        artifact.destination_bytes[i] = direct_plan.targets[i].destination_bytes ?
+            direct_plan.targets[i].destination_bytes : 0x40u;
+        artifact.destination_identity[i] = direct_plan.targets[i].destination_identity ?
+            direct_plan.targets[i].destination_identity : 0x40404040u + (uint32_t)i;
+    }
     if (!theron_v1_track02_descriptor_bitmap_palette_capture_intake_admit(
             &descriptor_intake, &direct_media, &direct_plan, &replay,
             &state.theronState.launch_trace_identity, &artifact, 7u, 3u,
@@ -435,14 +498,160 @@ int main(void)
     capture_plan.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     snprintf(capture_plan.track02_md5, sizeof(capture_plan.track02_md5), "%s",
              state.theronState.startup_media_track02_md5);
+    snprintf(capture_plan.source_trace_md5, sizeof(capture_plan.source_trace_md5), "%s",
+             state.theronState.launch_trace_identity.source_trace_md5);
     capture_plan.campaign_layout_epoch = 7u;
     capture_plan.campaign_media_scan_epoch = 3u;
     capture_plan.replay_final_record = 0x510u;
     capture_plan.capture_target_plan_identity =
         presentation_intake.capture_target_plan_identity;
+    state.theronState.handoff_artifact_corpus_bound = 1;
+    state.theronState.handoff_artifact_corpus_scan_epoch =
+        state.theronState.campaign_media_scan_epoch;
+    state.theronState.handoff_artifact_corpus.status =
+        THERON_V1_TRACK02_HANDOFF_ARTIFACT_CORPUS_READY;
+    state.theronState.handoff_artifact_corpus.supplied_candidate_count = 1u;
+    state.theronState.handoff_artifact_corpus.direct_candidate_count = 1u;
+    state.theronState.handoff_artifact_corpus.direct_cue_bin_consumed = 1;
+    state.theronState.handoff_artifact_corpus.source_trace_md5_verified = 1;
+    state.theronState.handoff_artifact_corpus.capture_target_plan_consumed = 1;
+    state.theronState.handoff_artifact_corpus.opaque_artifact_consumed = 1;
+    state.theronState.handoff_artifact_corpus.capture_required_only = 1;
+    state.theronState.handoff_artifact_corpus.no_draw_only = 1;
+    state.theronState.handoff_artifact_corpus.capture_target_plan_identity =
+        capture_plan.capture_target_plan_identity;
+    snprintf(state.theronState.handoff_artifact_corpus.track02_md5,
+             sizeof(state.theronState.handoff_artifact_corpus.track02_md5), "%s",
+             capture_plan.track02_md5);
+    snprintf(state.theronState.handoff_artifact_corpus.source_trace_md5,
+             sizeof(state.theronState.handoff_artifact_corpus.source_trace_md5), "%s",
+             state.theronState.launch_trace_identity.source_trace_md5);
+    state.theronState.handoff_artifact_corpus.artifact = artifact;
+    if (!M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u) ||
+        !state.theronState.handoff_loader_capture_bound ||
+        state.theronState.handoff_loader_capture_record != 0x510u ||
+        state.theronState.handoff_loader_capture_post_return_pc != 0x4013u ||
+        state.theronState.handoff_loader_capture_record_dl != 0x05u ||
+        state.theronState.handoff_loader_capture_post_return_next_pc != 0x4015u ||
+        state.theronState.handoff_loader_capture_span_bytes != 0x20u ||
+        state.theronState.handoff_loader_capture_span_checksum != 0x0d1e2f30u)
+        return 61;
+    sector_discovery.sector_record.loader_destination_span_checksum++;
+    if (M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u) ||
+        state.theronState.handoff_loader_capture_bound) return 62;
+    sector_discovery.sector_record.loader_destination_span_checksum--;
+    if (!M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u)) return 63;
+    sector_discovery.sector_record.loader_post_return_pc++;
+    if (M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u) ||
+        state.theronState.handoff_loader_capture_bound) return 64;
+    sector_discovery.sector_record.loader_post_return_pc--;
+    if (!M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u)) return 65;
+    sector_discovery.sector_record.loader_record_dl++;
+    if (M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u) ||
+        state.theronState.handoff_loader_capture_bound) return 66;
+    sector_discovery.sector_record.loader_record_dl--;
+    if (!M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u)) return 67;
+    sector_discovery.sector_record.loader_post_return_next_pc++;
+    if (M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u) ||
+        state.theronState.handoff_loader_capture_bound) return 68;
+    sector_discovery.sector_record.loader_post_return_next_pc--;
+    if (!M11_GameView_TheronBindTrack02HandoffLoaderCapture(
+            &state, &state.theronState.handoff_artifact_corpus,
+            &sector_discovery, &direct_plan,
+            &state.theronState.launch_trace_identity, 3u)) return 69;
     if (!M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
         !state.theronState.dungeon_capture_resume_ready ||
         state.theronState.dungeon_capture_required) return 48;
+    state.theronState.handoff_artifact_corpus_scan_epoch++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 50;
+    state.theronState.handoff_artifact_corpus_scan_epoch =
+        state.theronState.campaign_media_scan_epoch;
+    if (!M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        !state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 51;
+    state.theronState.handoff_artifact_corpus.artifact.campaign_route =
+        THERON_V1_TRACK02_CAPTURE_TARGET_SOUL_ROOM;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 57;
+    state.theronState.handoff_artifact_corpus.artifact.campaign_route =
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF;
+    state.theronState.handoff_artifact_corpus.artifact.descriptor_selector++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 58;
+    state.theronState.handoff_artifact_corpus.artifact.descriptor_selector--;
+    state.theronState.handoff_artifact_corpus.artifact.descriptor_ordinal++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 59;
+    state.theronState.handoff_artifact_corpus.artifact.descriptor_ordinal--;
+    state.theronState.handoff_artifact_corpus.artifact.descriptor_source_hash++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 60;
+    state.theronState.handoff_artifact_corpus.artifact.descriptor_source_hash--;
+    state.theronState.handoff_artifact_corpus.artifact.cd_read_record[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 54;
+    state.theronState.handoff_artifact_corpus.artifact.cd_read_record[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]--;
+    state.theronState.handoff_artifact_corpus.artifact.loader_output_identity[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 53;
+    state.theronState.handoff_artifact_corpus.artifact.loader_output_identity[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]--;
+    state.theronState.handoff_artifact_corpus.artifact.loader_output_bytes[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 55;
+    state.theronState.handoff_artifact_corpus.artifact.loader_output_bytes[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]--;
+    state.theronState.handoff_artifact_corpus.artifact.destination_bytes[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 56;
+    state.theronState.handoff_artifact_corpus.artifact.destination_bytes[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]--;
+    state.theronState.handoff_artifact_corpus.artifact.bitmap_transfer_identity[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]++;
+    if (M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||
+        state.theronState.dungeon_capture_resume_ready ||
+        state.theronState.dungeon_capture_required) return 52;
+    state.theronState.handoff_artifact_corpus.artifact.bitmap_transfer_identity[
+        THERON_V1_TRACK02_CAPTURE_TARGET_DUNGEON_HANDOFF]--;
     capture_plan.status = THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_CAPTURE_REQUIRED;
     capture_plan.resume_route_ready = 0;
     if (!M11_GameView_TheronBindTrack02DungeonCapturePlan(&state, &capture_plan) ||

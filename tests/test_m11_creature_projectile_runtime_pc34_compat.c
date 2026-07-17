@@ -127,6 +127,31 @@ static void authenticate_group_c04(struct DungeonThings_Compat* things,
     things->rawThingData[THING_TYPE_GROUP] = rawGroup;
 }
 
+static unsigned int scent_receipt_fingerprint(
+    const DM1_V1_NeedsScentListPc34Compat* scents) {
+    unsigned int hash = 2166136261u;
+    unsigned int i;
+#define SCENT_FNV_BYTE(value) do { hash ^= (unsigned char)(value); hash *= 16777619u; } while (0)
+    SCENT_FNV_BYTE(scents->count);
+    SCENT_FNV_BYTE(scents->count >> 8);
+    SCENT_FNV_BYTE(scents->firstScentIndex);
+    SCENT_FNV_BYTE(scents->firstScentIndex >> 8);
+    SCENT_FNV_BYTE(scents->lastScentIndex);
+    SCENT_FNV_BYTE(scents->lastScentIndex >> 8);
+    for (i = 0; i < scents->count; ++i) {
+        const DM1_V1_NeedsScentPc34Compat* scent = &scents->entries[i];
+        SCENT_FNV_BYTE(scent->mapX);
+        SCENT_FNV_BYTE(scent->mapX >> 8);
+        SCENT_FNV_BYTE(scent->mapY);
+        SCENT_FNV_BYTE(scent->mapY >> 8);
+        SCENT_FNV_BYTE(scent->mapIndex);
+        SCENT_FNV_BYTE(scent->mapIndex >> 8);
+        SCENT_FNV_BYTE(scent->strength);
+    }
+#undef SCENT_FNV_BYTE
+    return hash;
+}
+
 static void test_probe_inserts_creature_projectile_slot(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -265,6 +290,164 @@ static void test_live_tick_moves_authenticated_group_and_ai_position(void) {
               "live active-group position follows the raw C04 movement");
     ASSERT_EQ(state.world.creatureAI[0].groupMapY, 0,
               "live active-group Y remains source-consistent after movement");
+}
+
+static void test_live_tick_uses_f0201_direct_smell_route(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[4] = { 0, 0, 0, 0 };
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonDoor_Compat door;
+    unsigned short squareFirstThings[5] = { 0, 0, 0, 0, 0 };
+    unsigned char rawGroup[16];
+    unsigned char rawDoor[4];
+
+    /* A closed ordinary door is opaque to F0197/F0200, but F0198's smell
+     * predicate only blocks walls and real closed fake walls.  The group
+     * therefore smells the party through it and takes the still-passable
+     * first step at x=3 -> x=2. */
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    maps[1].width = 4;
+    tiles[1].squareCount = 4;
+    dungeon.header.squareFirstThingCount = 5;
+    things.squareFirstThingCount = 5;
+    map1Tiles[3] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    squareFirstThings[3] = THING_ENDOFLIST;
+    squareFirstThings[4] = (unsigned short)(THING_TYPE_GROUP << 10);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    memset(&door, 0, sizeof(door));
+    memset(rawDoor, 0, sizeof(rawDoor));
+    door.next = THING_ENDOFLIST;
+    rawDoor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawDoor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    things.doors = &door;
+    things.doorCount = 1;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
+    things.rawThingData[THING_TYPE_DOOR] = rawDoor;
+    map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
+                                   DUNGEON_SQUARE_MASK_THING_LIST | 4u);
+    squareFirstThings[2] = (unsigned short)(THING_TYPE_DOOR << 10);
+    state.world.gameTick = 11;
+
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "F0201 direct-smell tick is handled");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "opaque C00 blocks F0200 projectile sight");
+    ASSERT_EQ(squareFirstThings[4], THING_ENDOFLIST,
+              "F0201 unlinks group from the authenticated source square");
+    ASSERT_EQ(squareFirstThings[3], (THING_TYPE_GROUP << 10),
+              "F0198/F0199 direct smell route moves group one source step");
+
+    /* The direct route remains bound to raw C04 identity. */
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    maps[1].width = 4;
+    tiles[1].squareCount = 4;
+    dungeon.header.squareFirstThingCount = 5;
+    things.squareFirstThingCount = 5;
+    map1Tiles[3] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    squareFirstThings[3] = THING_ENDOFLIST;
+    squareFirstThings[4] = (unsigned short)(THING_TYPE_GROUP << 10);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    rawGroup[4] = (unsigned char)(groups[0].creatureType - 1u);
+    map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    state.world.gameTick = 11;
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "drifted C04 smell tick is handled");
+    ASSERT_EQ(squareFirstThings[4], (THING_TYPE_GROUP << 10),
+              "drifted C04 cannot materialize a smell movement");
+
+    /* A raw wall rejects the F0198/F0199 route before mutation; no decoded
+     * scent entry is consulted as a fallback. */
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    maps[1].width = 4;
+    tiles[1].squareCount = 4;
+    dungeon.header.squareFirstThingCount = 5;
+    things.squareFirstThingCount = 5;
+    map1Tiles[3] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    squareFirstThings[3] = THING_ENDOFLIST;
+    squareFirstThings[4] = (unsigned short)(THING_TYPE_GROUP << 10);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    state.world.gameTick = 11;
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "wall-blocked smell tick is handled");
+    ASSERT_EQ(squareFirstThings[4], (THING_TYPE_GROUP << 10),
+              "F0198 raw wall rejects F0201 movement without a scent fallback");
+}
+
+static void test_m10_f0201_stored_scent_receipt(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1];
+    unsigned char map1Tiles[3];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[4];
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1GroupSmellDirectionPlan_Compat plan;
+    DM1_V1_NeedsScentListPc34Compat scents;
+    unsigned int fingerprint;
+
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&plan, 0, sizeof(plan));
+    memset(&scents, 0, sizeof(scents));
+    ctx.currentMapIndex = 1;
+    ctx.currentGroupMapX = 2;
+    ctx.currentGroupMapY = 0;
+    ctx.currentGroupDistanceToParty = 2;
+    ctx.currentGroupPrimaryDirToParty = 3;
+    ctx.currentGroupSecondaryDirToParty = 0;
+    ctx.partyMapIndex = 1;
+    ctx.partyMapX = 0;
+    ctx.partyMapY = 0;
+    ctx.creatureInfo.ranges = 0x3645; /* C24 Red Dragon: smell 6. */
+    map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+
+    scents.count = 1;
+    scents.entries[0].mapIndex = 1;
+    scents.entries[0].mapX = 0;
+    scents.entries[0].mapY = 0;
+    scents.entries[0].strength = 30;
+    fingerprint = scent_receipt_fingerprint(&scents);
+    ASSERT_EQ(F0890d_ORCH_PublishPartyScentReceipt_Compat(
+                  &state.world, &scents, fingerprint), 1,
+              "M10 accepts bounded source G0407 scent receipt");
+    ASSERT_EQ(F0890e_ORCH_BuildGroupSmellDirectionPlan_Compat(
+                  &state.world, &ctx, &plan), 1,
+              "M10 F0201 resolves authenticated stored scent");
+    ASSERT_EQ(plan.usedDirectPartyRoute, 0,
+              "raw wall rejects the direct F0198/F0199 branch");
+    ASSERT_EQ(plan.usedStoredScent, 1,
+              "authenticated party-square scent is used after blocked route");
+    ASSERT_EQ(plan.directionOrdinal, 4,
+              "stored scent keeps source westward F0228 direction");
+
+    state.world.pc34PartyScentReceipt.entries[0].strength--;
+    memset(&plan, 0, sizeof(plan));
+    ASSERT_EQ(F0890e_ORCH_BuildGroupSmellDirectionPlan_Compat(
+                  &state.world, &ctx, &plan), 1,
+              "receipt drift is handled without synthetic direction");
+    ASSERT_EQ(plan.directionOrdinal, 0,
+              "mutated receipt cannot drive stored-scent movement");
+    ASSERT_EQ(plan.usedStoredScent, 0,
+              "mutated receipt remains fail-closed");
+
+    scents.entries[0].mapIndex = 7;
+    fingerprint = scent_receipt_fingerprint(&scents);
+    ASSERT_EQ(F0890d_ORCH_PublishPartyScentReceipt_Compat(
+                  &state.world, &scents, fingerprint), 0,
+              "out-of-map source scent is rejected before publication");
 }
 
 static void test_live_tick_uses_authenticated_door_info_for_sight(void) {
@@ -443,6 +626,8 @@ int main(void) {
     test_live_idle_tick_inserts_creature_projectile();
     test_live_tick_rejects_c04_position_and_route_drift();
     test_live_tick_moves_authenticated_group_and_ai_position();
+    test_live_tick_uses_f0201_direct_smell_route();
+    test_m10_f0201_stored_scent_receipt();
     test_live_tick_uses_authenticated_door_info_for_sight();
     test_probe_rejects_unscheduled_creature_projectile();
     test_black_flame_fireball_impact_heals_and_caps();

@@ -25,6 +25,10 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_lev_corpus_discovery.h"
 #include "nexus_v1_multi_level_capture_campaign_launcher.h"
+#include "nexus_v1_owner_material_capture_admission.h"
+#include "nexus_v1_owner_material_capture_campaign.h"
+#include "nexus_v1_owner_material_capture_campaign_artifact.h"
+#include "nexus_v1_owner_material_capture_artifact_preflight.h"
 #include "nexus_v1_sal_container_provenance.h"
 #include "nexus_v1_sndlev_map_provenance.h"
 #include "nexus_v1_slev_sal_asset_discovery.h"
@@ -165,6 +169,59 @@ int nexus_v1_launcher_resume_m12_m11_prs3_material_capture(
     const char *bios_sha256, const char *disc_sha256,
     const uint8_t *capture_bytes, size_t capture_byte_count,
     Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *out_receipt);
+
+/* Startup consumes PRS3 evidence as an operator-facing terminal state.  A
+ * missing trace settles the scan at capture-required; an imported witness is
+ * consumed without granting a decoder, pixels, or a MENU.BPK draw route. */
+typedef enum {
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_INVALID = 0,
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_NOT_REQUIRED = 1,
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_CAPTURE_REQUIRED = 2,
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_CAPTURE_CONSUMED = 3
+} Nexus_V1_LauncherPrs3StartupState;
+
+typedef struct {
+    Nexus_V1_LauncherPrs3StartupState state;
+    int valid;
+    int scan_complete;
+    int startup_can_settle;
+    int capture_required;
+    int capture_consumed;
+    int no_draw_only;
+    int decoder_permitted;
+    int synthetic_menu_image_permitted;
+    const char *status;
+} Nexus_V1_LauncherPrs3StartupStateReceipt;
+
+int nexus_v1_launcher_prs3_startup_state(
+    const Nexus_V1_MenuBpkRendererHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *capture,
+    Nexus_V1_LauncherPrs3StartupStateReceipt *out_receipt);
+
+typedef enum {
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_PRESENT = 0,
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_RETURN_TO_IDLE = 1,
+    NEXUS_V1_LAUNCHER_PRS3_STARTUP_ACTION_RESCAN = 2
+} Nexus_V1_LauncherPrs3StartupAction;
+
+typedef struct {
+    Nexus_V1_LauncherPrs3StartupStateReceipt prs3;
+    int valid;
+    int m12_handled;
+    int terminal;
+    int return_to_idle;
+    int rescan_complete;
+    int no_draw_only;
+    int decoder_permitted;
+    int synthetic_menu_image_permitted;
+    const char *status;
+} Nexus_V1_LauncherM12Prs3StartupTransitionReceipt;
+
+int nexus_v1_launcher_m12_prs3_startup_transition(
+    const Nexus_V1_MenuBpkRendererHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *capture,
+    Nexus_V1_LauncherPrs3StartupAction action,
+    Nexus_V1_LauncherM12Prs3StartupTransitionReceipt *out_receipt);
 
 /* Active-level SLEV/SAL/MAP/SDDRVS identities are launcher provenance only.
  * The accepted route continues to block script dispatch and SFX playback. */
@@ -574,6 +631,171 @@ int nexus_v1_launcher_resume_m12_m11_vdp1_local_artifact(
     const char *bios_sha256, const char *disc_sha256,
     const uint8_t *capture_bytes, size_t capture_byte_count,
     Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *out_receipt);
+
+/* Operator-only lifecycle for an atomic Structure1F/1A owner + Structure3
+ * face + Structure2 material observation. A successful resume retains only
+ * the NXS1OMC1 opaque receipt and never establishes owner mapping or draw. */
+typedef struct {
+    int valid;
+    int capture_required;
+    int capture_admitted;
+    int resume_ready;
+    int operator_only;
+    Nexus_V1_LauncherSaturnBiosRegion bios_region;
+    char bios_sha256[65];
+    char disc_sha256[65];
+    int topology_candidate_index;
+    uint32_t structure3_entry_index;
+    uint32_t structure3_face_ordinal;
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget target;
+    Nexus_V1_OwnerMaterialCaptureAdmissionReceipt capture;
+    int no_draw_only;
+    int owner_mapping_proven;
+    int mesh_semantics_permitted;
+    int texture_semantics_permitted;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt;
+
+int nexus_v1_launcher_admit_m12_m11_owner_material_capture_required(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *bios_sha256, Nexus_V1_LauncherSaturnBiosRegion bios_region,
+    const char *disc_sha256,
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *target,
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_owner_material_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *out_receipt);
+int nexus_v1_launcher_import_m12_m11_owner_material_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt *out_trace_receipt,
+    Nexus_V1_LauncherM12M11OwnerMaterialCaptureRouteReceipt *out_receipt);
+
+/* Operator-only M12 campaign routing for distinct already-imported NXS1OMC1
+ * witnesses. Export carries only hash-bound job metadata; import retains only
+ * campaign coverage and cannot enable any draw or decoder path. */
+typedef struct {
+    int valid;
+    int capture_required;
+    int captures_imported;
+    int resume_ready;
+    int operator_only;
+    Nexus_V1_LauncherSaturnBiosRegion bios_region;
+    char bios_sha256[65];
+    char disc_sha256[65];
+    uint32_t expected_witness_count;
+    Nexus_V1_OwnerMaterialCaptureCampaignReceipt campaign;
+    int no_draw_only;
+    int owner_mapping_proven;
+    int mesh_semantics_permitted;
+    int texture_semantics_permitted;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt;
+
+int nexus_v1_launcher_export_m12_owner_material_capture_campaign_required(
+    uint32_t expected_witness_count, const char *bios_sha256,
+    Nexus_V1_LauncherSaturnBiosRegion bios_region, const char *disc_sha256,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *out_receipt);
+int nexus_v1_launcher_import_m12_owner_material_capture_campaign(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *route,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *out_receipt);
+int nexus_v1_launcher_import_m12_owner_material_capture_campaign_artifact(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *route,
+    const uint8_t *artifact_bytes, size_t artifact_byte_count,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    Nexus_V1_OwnerMaterialCaptureCampaignArtifactReceipt *out_artifact_receipt,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *out_receipt);
+
+/* One route-selected Structure1F/Structure3/Structure2 witness. Admission
+ * remains opaque/no-draw after the campaign artifact and selected preflight
+ * both bind, and cannot be used as a rendering authorization. */
+typedef struct {
+    int valid;
+    int capture_required;
+    int capture_admitted;
+    int resume_ready;
+    int operator_only;
+    uint32_t witness_index;
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt campaign_route;
+    Nexus_V1_OwnerMaterialCaptureCampaignArtifactReceipt campaign_artifact;
+    Nexus_V1_OwnerMaterialCaptureArtifactPreflightReceipt witness;
+    int no_draw_only;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt;
+
+int nexus_v1_launcher_admit_m12_owner_material_capture_witness_required(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *campaign_route,
+    uint32_t witness_index,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt *out_receipt);
+int nexus_v1_launcher_import_m12_owner_material_capture_witness(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt *route,
+    const uint8_t *campaign_artifact_bytes, size_t campaign_artifact_byte_count,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    const Nexus_V1_OwnerMaterialCaptureArtifactPreflightInput *witness_input,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureWitnessRouteReceipt *out_receipt);
+
+/* A bounded selection of distinct campaign witnesses. The receipt retains
+ * selected row identities only and remains no-draw even after all witnesses
+ * have individually passed their external artifact preflight. */
+typedef struct {
+    int valid;
+    int capture_required;
+    int captures_admitted;
+    int resume_ready;
+    int operator_only;
+    uint32_t witness_count;
+    uint32_t witness_indices[NEXUS_V1_OWNER_MATERIAL_CAPTURE_CAMPAIGN_MAX_WITNESSES];
+    Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt campaign_route;
+    Nexus_V1_OwnerMaterialCaptureArtifactPreflightReceipt
+        witnesses[NEXUS_V1_OWNER_MATERIAL_CAPTURE_CAMPAIGN_MAX_WITNESSES];
+    int no_draw_only;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM12OwnerMaterialCaptureMultiWitnessRouteReceipt;
+
+int nexus_v1_launcher_admit_m12_owner_material_capture_multi_witness_required(
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureCampaignRouteReceipt *campaign_route,
+    const uint32_t *witness_indices, uint32_t witness_count,
+    Nexus_V1_LauncherM12OwnerMaterialCaptureMultiWitnessRouteReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int selected_witness;
+    int capture_required;
+    int operator_only;
+    uint32_t level_index;
+    uint32_t witness_index;
+    uint64_t source_fnv1a64;
+    uint64_t descriptor_fnv1a64;
+    uint64_t face_row_fnv1a64;
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget capture_target;
+    int capture_target_bound;
+    int no_draw_only;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11MultiWitnessDungeonCaptureStartReceipt;
+
+int nexus_v1_launcher_admit_m11_multi_witness_dungeon_capture_start(
+    const Nexus_V1_Engine *engine,
+    const Nexus_V1_LauncherM12OwnerMaterialCaptureMultiWitnessRouteReceipt *route,
+    const Nexus_V1_OwnerMaterialCaptureCampaignInput *campaign_input,
+    Nexus_V1_LauncherM11MultiWitnessDungeonCaptureStartReceipt *out_receipt);
 
 /* This follows the same M12/M11 capture-required lifecycle as NXSVDP1C, but
  * retains only the opaque Structure3 topology-capture contract. */

@@ -339,9 +339,18 @@ struct DM1GroupBehaviorContext_Compat {
     /* Movement testing results */
     int groupMovementTestedDirs[4];
     struct DM1GroupMovementFacts_Compat groupMovementFacts[4];
+    /* GROUP.C F0204 reads a second loaded destination only after F0202 has
+     * admitted the first square.  M10 publishes this separately so a double
+     * step cannot be inferred from the first result. */
+    struct DM1GroupMovementFacts_Compat archenemySecondStepMovementFacts[4];
 
     /* Distance to visible party (0 if not visible) */
     int distanceToVisibleParty;
+    /* Published by the live F0201 owner after it has read the loaded map and
+     * an authenticated G0407 scent receipt.  The pure dispatcher never
+     * fabricates this value. */
+    int smelledPartyDirectionOrdinal;
+    int smelledPartySecondaryDirection;
 
     /* Freeze life */
     int freezeLifeTicks;
