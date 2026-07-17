@@ -120,6 +120,10 @@ static void test_real_prs3_structure2_abi_gate(void)
               receipt.prs3_bpp == 1U &&
               receipt.prs3_output_fnv1a64 ==
                   UINT64_C(0x14cacc01cee292aa) &&
+              receipt.prs3_header_span_fnv1a64 != 0U &&
+              receipt.prs3_bitmap_candidate_fnv1a64 != 0U &&
+              receipt.prs3_bitmap_candidate_offset == 1616U &&
+              receipt.prs3_bitmap_candidate_size == 548U &&
               receipt.prs3_input_read_bytes == 514U &&
               receipt.prs3_output_store_count == 1674U &&
               receipt.prs3_zero_merge_count == 164U &&
@@ -128,7 +132,10 @@ static void test_real_prs3_structure2_abi_gate(void)
     CHECK(receipt.palt_trailer_bound &&
               receipt.palt_entries_are_be16 &&
               receipt.palt_entries_fnv1a64 ==
-                  UINT64_C(0x0ec4e98ca3a18f85),
+                  UINT64_C(0x0ec4e98ca3a18f85) &&
+              receipt.palt_candidate_fnv1a64 ==
+                  receipt.palt_entries_fnv1a64 &&
+              receipt.palt_candidate_size == 512U,
           "real PALT trailer is bound as raw source table only");
     CHECK(receipt.structure2_intake_bound &&
               receipt.structure2_descriptor_count == 82 &&

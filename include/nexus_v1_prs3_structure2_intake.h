@@ -42,6 +42,13 @@ typedef struct {
     uint32_t prs3_first_width;
     uint32_t prs3_first_height;
     uint32_t prs3_first_bpp;
+    uint64_t prs3_first_header_span_fnv1a64;
+    uint64_t prs3_first_bitmap_candidate_fnv1a64;
+    uint32_t prs3_first_bitmap_candidate_byte_count;
+    uint64_t palt_candidate_fnv1a64;
+    uint32_t palt_candidate_byte_count;
+    int prs3_bitmap_candidate_bound;
+    int palt_candidate_bound;
     int prs3_framing_bound;
     int prs3_decoder_required;
     int prs3_decoder_promoted;

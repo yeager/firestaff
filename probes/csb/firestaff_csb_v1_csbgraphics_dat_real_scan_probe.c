@@ -88,6 +88,7 @@ int main(int argc, char **argv)
     size_t i;
     CSB_V1_CSBGraphicsDatRealCache cache;
     CSB_V1_CSBGraphicsIndex index;
+    CSB_V1_CSBGraphicsDatPaletteCandidateReport palette_report;
     int rc;
 
     printf("=== CSB V1 CSBgraphics.dat real-asset scan probe ===\n\n");
@@ -210,6 +211,47 @@ int main(int argc, char **argv)
           "real-index helper round-trips the byte order");
     CHECK(index.payload_offset == cache.index.payload_offset,
           "real-index helper round-trips the payload offset");
+
+    /* Candidate discovery is diagnostic only. A 768-byte indexed payload is
+     * not promoted to a palette or draw route until its path/MD5/entry/FNV
+     * facts are explicitly admitted below. */
+    memset(&palette_report, 0, sizeof(palette_report));
+    rc = csb_v1_csbgraphics_dat_real_scan_palette_candidates(
+        &cache, &palette_report);
+    CHECK(rc == CSB_V1_CSBGRAPHICS_DAT_REAL_OK,
+          "palette candidate scan returns OK on the admitted cache");
+    CHECK(palette_report.valid,
+          "palette candidate report retains source identity");
+    printf("palette_candidates=%zu\n", palette_report.candidate_count);
+    for (i = 0u; i < palette_report.candidate_count; ++i) {
+        const CSB_V1_CSBGraphicsDatPaletteCandidate *candidate =
+            &palette_report.candidates[i];
+        printf("  palette[%zu] entry=%u offset=%llu compressed=%u fnv=%08x\n",
+               i, (unsigned)candidate->entry_span.entry_index,
+               (unsigned long long)candidate->entry_span.payload_offset,
+               (unsigned)candidate->entry_span.compressed_size,
+               (unsigned)candidate->decoded_fnv1a);
+    }
+    if (palette_report.candidate_count > 0u) {
+        CSB_V1_CSBGraphicsDatPaletteAdmissionSpec admission;
+        CSB_V1_CSBGraphicsDatPaletteSourceReceipt receipt;
+        const CSB_V1_CSBGraphicsDatPaletteCandidate *candidate =
+            &palette_report.candidates[0];
+
+        memset(&admission, 0, sizeof(admission));
+        admission.source_path = candidate->source_path;
+        admission.source_md5 = candidate->source_md5;
+        admission.entry_index = candidate->entry_span.entry_index;
+        admission.decoded_fnv1a = candidate->decoded_fnv1a;
+        rc = csb_v1_csbgraphics_dat_real_admit_palette_candidate(
+            &cache, candidate, &admission, &receipt);
+        CHECK(rc == CSB_V1_CSBGRAPHICS_DAT_REAL_OK && receipt.valid,
+              "exact declared palette candidate produces a source receipt");
+    } else {
+        printf("SKIP: no declared 768-byte palette candidates in this "
+               "hash-admitted CSBgraphics.dat.\n");
+    }
+    csb_v1_csbgraphics_dat_real_palette_candidate_report_free(&palette_report);
 
     /* Determinism: a second scan reuses the same path/MD5. */
     {

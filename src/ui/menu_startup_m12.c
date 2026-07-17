@@ -11138,6 +11138,371 @@ void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
     m12_free_data_dir_scan_job(job);
 }
 
+static int m12_theron_campaign_media_identity_matches(
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* left,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* right)
+{
+    if (!left || !right ||
+        left->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+        right->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+        left->ambiguous || right->ambiguous ||
+        left->virtual_container || right->virtual_container ||
+        left->no_media_extracted || right->no_media_extracted ||
+        !left->launchable_direct_media || !right->launchable_direct_media ||
+        !left->exact_layout_bound || !right->exact_layout_bound ||
+        left->track02_variant != right->track02_variant ||
+        strcmp(left->track02_md5, right->track02_md5) != 0 ||
+        strcmp(left->candidate_path, right->candidate_path) != 0 ||
+        strcmp(left->direct_media.payload_path, right->direct_media.payload_path) != 0 ||
+        strcmp(left->direct_media.track02_md5, right->direct_media.track02_md5) != 0 ||
+        left->direct_media.cue_consumed != right->direct_media.cue_consumed ||
+        left->direct_media.mode1_2352 != right->direct_media.mode1_2352 ||
+        left->direct_media.mode1_2048 != right->direct_media.mode1_2048 ||
+        left->direct_media.cue_index01_sector != right->direct_media.cue_index01_sector ||
+        left->direct_media.payload_bytes != right->direct_media.payload_bytes ||
+        left->direct_media.sector_count != right->direct_media.sector_count ||
+        left->direct_media.first_user_data_offset != right->direct_media.first_user_data_offset ||
+        left->direct_media.logical_user_data_window_bytes != right->direct_media.logical_user_data_window_bytes) {
+        return 0;
+    }
+    return 1;
+}
+
+static void m12_theron_clear_trace_campaign_bindings(M12_StartupMenuState* state)
+{
+    if (!state) return;
+    memset(&state->theronLaunchTraceIdentity, 0,
+           sizeof(state->theronLaunchTraceIdentity));
+    state->theronLaunchTraceIdentityBound = 0;
+    memset(&state->theronTraceBundle, 0, sizeof(state->theronTraceBundle));
+    state->theronTraceBundleBound = 0;
+    memset(&state->theronSectorRecordCorpus, 0,
+           sizeof(state->theronSectorRecordCorpus));
+    state->theronSectorRecordCorpusBound = 0;
+}
+
+int M12_StartupMenu_ScanTheronCampaignMedia(
+    M12_StartupMenuState* state,
+    const char* requestedMediaPath,
+    const char* expectedTrack02Md5,
+    const Theron_V1Track02CaptureTargetPlan* plan)
+{
+    Theron_V1Track02CampaignMediaDiscoveryReceipt previous_media;
+    uint32_t previous_plan_identity;
+    uint32_t current_plan_identity;
+    int launch_ready;
+
+    if (!state) return 0;
+    previous_media = state->assetStatus.theronCampaignMedia;
+    previous_plan_identity = theron_v1_track02_capture_target_plan_identity(
+        &state->assetStatus.theronCampaignMediaPlan);
+    launch_ready = M12_AssetStatus_ScanTheronCampaignMedia(
+        &state->assetStatus, requestedMediaPath, expectedTrack02Md5, plan);
+    ++state->theronCampaignMediaScanEpoch;
+    if (!state->theronCampaignMediaScanEpoch) {
+        state->theronCampaignMediaScanEpoch = 1u;
+    }
+    current_plan_identity = theron_v1_track02_capture_target_plan_identity(
+        &state->assetStatus.theronCampaignMediaPlan);
+    if (!launch_ready || !previous_plan_identity ||
+        !m12_theron_campaign_media_identity_matches(
+            &previous_media, &state->assetStatus.theronCampaignMedia) ||
+        previous_plan_identity != current_plan_identity) {
+        m12_theron_clear_trace_campaign_bindings(state);
+    }
+    return launch_ready;
+}
+
+int M12_StartupMenu_ValidateTheronCampaignLaunchIntent(
+    const M12_StartupMenuState* state,
+    const M12_LaunchIntent* intent)
+{
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* current;
+    uint32_t current_plan_identity;
+    uint32_t intent_plan_identity;
+    if (!state || !intent || !intent->valid || !intent->gameId ||
+        strcmp(intent->gameId, "theron") != 0 || !intent->theronCampaignMediaBound ||
+        !intent->theronCampaignMediaScanEpoch ||
+        intent->theronCampaignMediaScanEpoch != state->theronCampaignMediaScanEpoch ||
+        !M12_AssetStatus_TheronCampaignMediaLaunchReady(&state->assetStatus)) {
+        return 0;
+    }
+    current = M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
+    current_plan_identity = theron_v1_track02_capture_target_plan_identity(
+        &state->assetStatus.theronCampaignMediaPlan);
+    intent_plan_identity = theron_v1_track02_capture_target_plan_identity(
+        &intent->theronCampaignMediaPlan);
+    return m12_theron_campaign_media_identity_matches(&intent->theronCampaignMedia,
+                                                       current) &&
+        theron_v1_track02_campaign_media_bind_capture_plan(
+            &intent->theronCampaignMedia, &intent->theronCampaignMediaPlan) &&
+        theron_v1_track02_campaign_media_bind_capture_plan(
+            current, &state->assetStatus.theronCampaignMediaPlan) &&
+        intent->theronSrmCampaignReplayBound == state->theronSrmCampaignReplayBound &&
+        (!intent->theronSrmCampaignReplayBound ||
+         (intent->theronSrmCampaignReplay.valid && state->theronSrmCampaignReplay.valid &&
+          !strcmp(intent->theronSrmCampaignReplay.srm_md5, state->theronSrmCampaignReplay.srm_md5) &&
+          intent->theronSrmCampaignReplay.srm_size == state->theronSrmCampaignReplay.srm_size &&
+          intent->theronSrmCampaignReplay.srm_identity_fnv1a == state->theronSrmCampaignReplay.srm_identity_fnv1a &&
+          intent->theronSrmCampaignReplay.campaign_layout_epoch == state->theronSrmCampaignReplay.campaign_layout_epoch &&
+          intent->theronSrmCampaignReplay.replay_final_record == state->theronSrmCampaignReplay.replay_final_record &&
+          intent->theronSrmCampaignReplay.replay_final_raw_sector == state->theronSrmCampaignReplay.replay_final_raw_sector)) &&
+        intent->theronSrmLaunchDiscoveryBound == state->theronSrmLaunchDiscoveryBound &&
+        (!intent->theronSrmLaunchDiscoveryBound ||
+         (intent->theronSrmLaunchDiscovery.status == THERON_V1_SRM_LAUNCH_DISCOVERY_READY &&
+          state->theronSrmLaunchDiscovery.status == THERON_V1_SRM_LAUNCH_DISCOVERY_READY &&
+          intent->theronSrmLaunchDiscovery.direct_candidate_count == state->theronSrmLaunchDiscovery.direct_candidate_count &&
+          intent->theronSrmLaunchDiscovery.virtual_candidate_count == state->theronSrmLaunchDiscovery.virtual_candidate_count &&
+          !strcmp(intent->theronSrmLaunchDiscovery.admission.srm_md5, state->theronSrmLaunchDiscovery.admission.srm_md5) &&
+          intent->theronSrmLaunchDiscovery.admission.srm_size == state->theronSrmLaunchDiscovery.admission.srm_size &&
+          !strcmp(intent->theronSrmLaunchDiscovery.track02_md5, state->theronSrmLaunchDiscovery.track02_md5))) &&
+        intent->theronLaunchTraceIdentityBound == state->theronLaunchTraceIdentityBound &&
+        (!intent->theronLaunchTraceIdentityBound ||
+         (intent->theronLaunchTraceIdentity.valid && state->theronLaunchTraceIdentity.valid &&
+          !strcmp(intent->theronLaunchTraceIdentity.source_trace_md5, state->theronLaunchTraceIdentity.source_trace_md5) &&
+          !strcmp(intent->theronLaunchTraceIdentity.event_log_md5, state->theronLaunchTraceIdentity.event_log_md5) &&
+          intent->theronLaunchTraceIdentity.campaign_layout_epoch == state->theronLaunchTraceIdentity.campaign_layout_epoch &&
+          intent->theronLaunchTraceIdentity.final_track02_record == state->theronLaunchTraceIdentity.final_track02_record &&
+          intent->theronLaunchTraceIdentity.final_raw_sector == state->theronLaunchTraceIdentity.final_raw_sector)) &&
+        intent->theronTraceBundleBound == state->theronTraceBundleBound &&
+        (!intent->theronTraceBundleBound ||
+         (intent->theronTraceBundle.status == THERON_V1_TRACK02_TRACE_BUNDLE_READY &&
+          state->theronTraceBundle.status == THERON_V1_TRACK02_TRACE_BUNDLE_READY &&
+          !strcmp(intent->theronTraceBundle.trace.source_trace_md5, state->theronTraceBundle.trace.source_trace_md5) &&
+          !strcmp(intent->theronTraceBundle.trace.event_log_md5, state->theronTraceBundle.trace.event_log_md5) &&
+          intent->theronTraceBundle.campaign_layout_epoch == state->theronTraceBundle.campaign_layout_epoch &&
+          current_plan_identity && intent_plan_identity &&
+          intent->theronTraceBundle.capture_target_plan_identity == current_plan_identity &&
+          state->theronTraceBundle.capture_target_plan_identity == current_plan_identity)) &&
+        intent->theronSectorRecordCorpusBound == state->theronSectorRecordCorpusBound &&
+        (!intent->theronSectorRecordCorpusBound ||
+         (intent->theronSectorRecordCorpus.status == THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY &&
+          state->theronSectorRecordCorpus.status == THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY &&
+          intent->theronSectorRecordCorpus.direct_candidate_count == 1u &&
+          state->theronSectorRecordCorpus.direct_candidate_count == 1u &&
+          intent->theronSectorRecordCorpus.direct_regular_files_verified &&
+          state->theronSectorRecordCorpus.direct_regular_files_verified &&
+          intent->theronSectorRecordCorpus.track02_md5_verified &&
+          state->theronSectorRecordCorpus.track02_md5_verified &&
+          intent->theronSectorRecordCorpus.trace_md5_verified &&
+          state->theronSectorRecordCorpus.trace_md5_verified &&
+          !strcmp(intent->theronSectorRecordCorpus.coalesced_trace_md5,
+                  state->theronSectorRecordCorpus.coalesced_trace_md5) &&
+          !strcmp(intent->theronSectorRecordCorpus.media.track02_md5,
+                  current->track02_md5) &&
+          !strcmp(intent->theronSectorRecordCorpus.sector_record.track02_md5,
+                  current->track02_md5) &&
+          intent->theronSectorRecordCorpus.sector_record.resolved_track02_record ==
+              state->theronSectorRecordCorpus.sector_record.resolved_track02_record &&
+          intent->theronSectorRecordCorpus.sector_record.record_user_data_hash ==
+              state->theronSectorRecordCorpus.sector_record.record_user_data_hash &&
+          intent->theronSectorRecordCorpus.sector_record.observed_raw_sector_checksum ==
+              state->theronSectorRecordCorpus.sector_record.observed_raw_sector_checksum &&
+          (!state->theronLaunchTraceIdentityBound ||
+           (!strcmp(intent->theronSectorRecordCorpus.coalesced_trace_md5,
+                    state->theronLaunchTraceIdentity.source_trace_md5)))));
+}
+
+int M12_StartupMenu_BindTheronSrmCampaignReplay(M12_StartupMenuState* state,
+    const Theron_V1SrmCampaignReplayReceipt* receipt) {
+    if (!state || !receipt || !receipt->valid || !receipt->opaque_save_consumed ||
+        !receipt->direct_campaign_consumed || !receipt->replay_consumed ||
+        receipt->save_semantics_decoded || receipt->synthetic_fallback_used) {
+        if (state) { memset(&state->theronSrmCampaignReplay, 0, sizeof(state->theronSrmCampaignReplay)); state->theronSrmCampaignReplayBound = 0; }
+        return 0;
+    }
+    if (!receipt->srm_size || !receipt->srm_identity_fnv1a || !receipt->srm_md5[0] ||
+        !receipt->track02_md5[0] || !receipt->campaign_layout_epoch ||
+        !receipt->replay_final_record || !receipt->replay_final_raw_sector) {
+        memset(&state->theronSrmCampaignReplay, 0, sizeof(state->theronSrmCampaignReplay));
+        state->theronSrmCampaignReplayBound = 0;
+        return 0;
+    }
+    state->theronSrmCampaignReplay = *receipt;
+    state->theronSrmCampaignReplayBound = 1;
+    return 1;
+}
+
+int M12_StartupMenu_BindTheronSrmLaunchDiscovery(M12_StartupMenuState* state,
+    const Theron_V1SrmLaunchDiscoveryReceipt* receipt) {
+    if (!state || !receipt || receipt->status != THERON_V1_SRM_LAUNCH_DISCOVERY_READY ||
+        receipt->virtual_candidate_count || !receipt->direct_regular_file_verified ||
+        !receipt->source_md5_verified || !receipt->track02_identity_verified ||
+        receipt->save_semantics_decoded || receipt->synthetic_fallback_used ||
+        receipt->track02_variant != state->assetStatus.theronCampaignMedia.track02_variant ||
+        strcmp(receipt->track02_md5, state->assetStatus.theronCampaignMedia.track02_md5)) {
+        if (state) { memset(&state->theronSrmLaunchDiscovery, 0, sizeof(state->theronSrmLaunchDiscovery)); state->theronSrmLaunchDiscoveryBound = 0; }
+        return 0;
+    }
+    state->theronSrmLaunchDiscovery = *receipt;
+    state->theronSrmLaunchDiscoveryBound = 1;
+    return 1;
+}
+
+int M12_StartupMenu_BindTheronLaunchTraceIdentity(M12_StartupMenuState* state,
+    const Theron_V1Track02LaunchTraceIdentityReceipt* receipt) {
+    if (!state || !receipt || !receipt->valid || !receipt->direct_campaign_consumed ||
+        !receipt->loader_trace_consumed || !receipt->event_log_consumed ||
+        !receipt->source_trace_md5[0] || !receipt->event_log_md5[0] ||
+        !receipt->campaign_layout_epoch || !receipt->final_track02_record || !receipt->final_raw_sector ||
+        receipt->track02_variant != state->assetStatus.theronCampaignMedia.track02_variant ||
+        strcmp(receipt->track02_md5, state->assetStatus.theronCampaignMedia.track02_md5) ||
+        receipt->level_object_semantics_allowed || receipt->bitmap_palette_admission_allowed ||
+        receipt->pixel_decode_allowed || receipt->dungeon_draw_allowed || receipt->fallback_visuals_allowed) return 0;
+    state->theronLaunchTraceIdentity = *receipt;
+    state->theronLaunchTraceIdentityBound = 1;
+    return 1;
+}
+int M12_StartupMenu_BindTheronTraceBundle(M12_StartupMenuState* state, const Theron_V1Track02TraceBundleReceipt* receipt) {
+    if (!state || !receipt || receipt->status != THERON_V1_TRACK02_TRACE_BUNDLE_READY ||
+        receipt->virtual_candidate_count || receipt->direct_candidate_count != 1u || !receipt->opaque_only ||
+        !state->theronLaunchTraceIdentityBound ||
+        !theron_v1_track02_capture_target_plan_identity(&state->assetStatus.theronCampaignMediaPlan) ||
+        receipt->capture_target_plan_identity != theron_v1_track02_capture_target_plan_identity(&state->assetStatus.theronCampaignMediaPlan) ||
+        receipt->campaign_layout_epoch != state->theronLaunchTraceIdentity.campaign_layout_epoch ||
+        strcmp(receipt->trace.source_trace_md5, state->theronLaunchTraceIdentity.source_trace_md5) ||
+        strcmp(receipt->trace.event_log_md5, state->theronLaunchTraceIdentity.event_log_md5)) {
+        if (state) {
+            memset(&state->theronTraceBundle, 0, sizeof(state->theronTraceBundle));
+            state->theronTraceBundleBound = 0;
+        }
+        return 0;
+    }
+    state->theronTraceBundle = *receipt; state->theronTraceBundleBound = 1; return 1;
+}
+
+int M12_StartupMenu_BindTheronSectorRecordCorpusDiscovery(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* receipt)
+{
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* media;
+
+    if (!state || !receipt ||
+        receipt->status != THERON_V1_TRACK02_SECTOR_RECORD_CORPUS_READY ||
+        receipt->direct_candidate_count != 1u ||
+        !receipt->direct_regular_files_verified ||
+        !receipt->track02_md5_verified || !receipt->trace_md5_verified ||
+        !receipt->coalesced_trace_md5[0] ||
+        receipt->media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        !receipt->media.cue_consumed ||
+        receipt->sector_record.status != THERON_V1_TRACK02_SECTOR_RECORD_READY ||
+        !receipt->sector_record.raw_cue_bin_identity_consumed ||
+        !receipt->sector_record.stage3_directory_consumed ||
+        !receipt->sector_record.observed_later_loader_consumed ||
+        !receipt->sector_record.nonstartup_record_consumed ||
+        receipt->sector_record.level_object_semantics_allowed ||
+        receipt->sector_record.bitmap_palette_admission_allowed ||
+        receipt->sector_record.pixel_decode_allowed ||
+        receipt->sector_record.dungeon_draw_allowed ||
+        receipt->sector_record.fallback_visuals_allowed ||
+        !M12_AssetStatus_TheronCampaignMediaLaunchReady(&state->assetStatus)) {
+        if (state) {
+            memset(&state->theronSectorRecordCorpus, 0,
+                   sizeof(state->theronSectorRecordCorpus));
+            state->theronSectorRecordCorpusBound = 0;
+        }
+        return 0;
+    }
+    media = M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
+    if (!media || receipt->sector_record.track02_variant != media->track02_variant ||
+        strcmp(receipt->media.track02_md5, media->track02_md5) ||
+        strcmp(receipt->sector_record.track02_md5, media->track02_md5) ||
+        (state->theronLaunchTraceIdentityBound &&
+         (!state->theronLaunchTraceIdentity.valid ||
+          strcmp(receipt->coalesced_trace_md5,
+                 state->theronLaunchTraceIdentity.source_trace_md5)))) {
+        memset(&state->theronSectorRecordCorpus, 0,
+               sizeof(state->theronSectorRecordCorpus));
+        state->theronSectorRecordCorpusBound = 0;
+        return 0;
+    }
+    state->theronSectorRecordCorpus = *receipt;
+    state->theronSectorRecordCorpusBound = 1;
+    return 1;
+}
+
+int M12_StartupMenu_BindTheronLevelObjectDescriptorCaptureIntake(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02LevelObjectDescriptorCaptureIntakeReceipt* receipt)
+{
+    if (!state || !receipt ||
+        receipt->status != THERON_V1_TRACK02_LEVEL_OBJECT_DESCRIPTOR_CAPTURE_READY ||
+        !receipt->direct_cue_bin_consumed ||
+        !receipt->coalesced_loader_trace_consumed || !receipt->replay_tail_consumed ||
+        !receipt->opaque_descriptor_only || !receipt->campaign_layout_epoch ||
+        !receipt->campaign_media_scan_epoch ||
+        receipt->campaign_media_scan_epoch != state->theronCampaignMediaScanEpoch ||
+        !state->theronLaunchTraceIdentityBound ||
+        receipt->campaign_layout_epoch !=
+            state->theronLaunchTraceIdentity.campaign_layout_epoch ||
+        strcmp(receipt->coalesced_trace_md5,
+               state->theronLaunchTraceIdentity.source_trace_md5)) {
+        if (state) {
+            memset(&state->theronSectorRecordCorpus, 0,
+                   sizeof(state->theronSectorRecordCorpus));
+            state->theronSectorRecordCorpusBound = 0;
+        }
+        return 0;
+    }
+    return M12_StartupMenu_BindTheronSectorRecordCorpusDiscovery(
+        state, &receipt->corpus);
+}
+
+int M12_StartupMenu_BindTheronDungeonCapturePlan(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* receipt)
+{
+    if (!state || !receipt ||
+        (receipt->status != THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_CAPTURE_REQUIRED &&
+         receipt->status != THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_RESUME_READY) ||
+        !receipt->direct_cue_bin_consumed || !receipt->system_card_required ||
+        !receipt->replay_tail_consumed || !receipt->capture_plan_consumed ||
+        !receipt->opaque_artifact_required || !receipt->presentation_no_draw ||
+        !receipt->campaign_layout_epoch || !receipt->campaign_media_scan_epoch ||
+        receipt->campaign_media_scan_epoch != state->theronCampaignMediaScanEpoch ||
+        receipt->track02_variant != state->assetStatus.theronCampaignMedia.track02_variant ||
+        strcmp(receipt->track02_md5, state->assetStatus.theronCampaignMedia.track02_md5) ||
+        (receipt->status == THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_RESUME_READY &&
+         (!receipt->resume_route_ready || !state->theronLaunchTraceIdentityBound ||
+          receipt->campaign_layout_epoch !=
+              state->theronLaunchTraceIdentity.campaign_layout_epoch))) {
+        if (state) {
+            memset(&state->theronDungeonCapturePlan, 0,
+                   sizeof(state->theronDungeonCapturePlan));
+            state->theronDungeonCapturePlanBound = 0;
+        }
+        return 0;
+    }
+    state->theronDungeonCapturePlan = *receipt;
+    state->theronDungeonCapturePlanBound = 1;
+    return 1;
+}
+
+int M12_StartupMenu_BindTheronLaterRouteCandidate(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02LaterRouteCandidateReceipt* receipt)
+{
+    if (!state || !receipt ||
+        receipt->status != THERON_V1_TRACK02_LATER_ROUTE_CAPTURE_REQUIRED ||
+        !receipt->observed_trace_row_consumed || !receipt->direct_media_consumed ||
+        !receipt->replay_tail_consumed || !receipt->opaque_only ||
+        !receipt->loader_pc || !receipt->record ||
+        receipt->record != receipt->raw_sector || !receipt->destination_identity ||
+        !receipt->campaign_layout_epoch ||
+        !state->theronLaunchTraceIdentityBound ||
+        receipt->campaign_layout_epoch !=
+            state->theronLaunchTraceIdentity.campaign_layout_epoch) {
+        if (state) { memset(&state->theronLaterRouteCandidate, 0,
+                            sizeof(state->theronLaterRouteCandidate));
+                     state->theronLaterRouteCandidateBound = 0; }
+        return 0;
+    }
+    state->theronLaterRouteCandidate = *receipt;
+    state->theronLaterRouteCandidateBound = 1;
+    return 1;
+}
+int M12_StartupMenu_BindTheronLaterRouteCandidateIndex(M12_StartupMenuState* state,const Theron_V1Track02LaterRouteCandidateCampaignIndex* index){if(!state||!index||!index->valid||!index->capture_required_only||!index->count||index->count>THERON_V1_TRACK02_LATER_ROUTE_CANDIDATE_MAX){if(state){memset(&state->theronLaterRouteCandidateIndex,0,sizeof(state->theronLaterRouteCandidateIndex));state->theronLaterRouteCandidateIndexBound=0;}return 0;}state->theronLaterRouteCandidateIndex=*index;state->theronLaterRouteCandidateIndexBound=1;return 1;}
+
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
     M12_StartupLaunchGate gate;
@@ -11179,7 +11544,9 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         state->quickResumeSavePath[0] != '\0' &&
         state->quickResumeGameId[0] != '\0' &&
         intent.gameId &&
-        strcmp(state->quickResumeGameId, intent.gameId) == 0) {
+        strcmp(state->quickResumeGameId, intent.gameId) == 0 &&
+        (strcmp(intent.gameId, "csb") != 0 ||
+         state->csbSaveCandidateIdentity != 0u)) {
         intent.savePath = state->quickResumeSavePath;
     }
     if (state->csbImportDm1LaunchRequested &&
@@ -11208,7 +11575,60 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
                               &intent.resolutionWidth,
                               &intent.resolutionHeight);
     intent.valid = gate.canLaunch && version && version->matched ? 1 : 0;
+    if (intent.valid && intent.gameId && strcmp(intent.gameId, "theron") == 0) {
+        const Theron_V1Track02CampaignMediaDiscoveryReceipt* media =
+            M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
+        if (!M12_AssetStatus_TheronCampaignMediaLaunchReady(&state->assetStatus) ||
+            !m12_theron_campaign_media_identity_matches(media, media)) {
+            intent.valid = 0;
+            return intent;
+        }
+        intent.theronCampaignMedia = *media;
+        intent.theronCampaignMediaPlan = state->assetStatus.theronCampaignMediaPlan;
+        intent.theronCampaignMediaBound = 1;
+        intent.theronCampaignMediaScanEpoch = state->theronCampaignMediaScanEpoch;
+        intent.theronSrmCampaignReplay = state->theronSrmCampaignReplay;
+        intent.theronSrmCampaignReplayBound = state->theronSrmCampaignReplayBound;
+        intent.theronSrmLaunchDiscovery = state->theronSrmLaunchDiscovery;
+        intent.theronSrmLaunchDiscoveryBound = state->theronSrmLaunchDiscoveryBound;
+        intent.theronLaunchTraceIdentity = state->theronLaunchTraceIdentity;
+        intent.theronLaunchTraceIdentityBound = state->theronLaunchTraceIdentityBound;
+        intent.theronTraceBundle = state->theronTraceBundle;
+        intent.theronTraceBundleBound = state->theronTraceBundleBound;
+        intent.theronSectorRecordCorpus = state->theronSectorRecordCorpus;
+        intent.theronSectorRecordCorpusBound = state->theronSectorRecordCorpusBound;
+        intent.theronDungeonCapturePlan = state->theronDungeonCapturePlan;
+        intent.theronDungeonCapturePlanBound = state->theronDungeonCapturePlanBound;
+        intent.theronLaterRouteCandidate = state->theronLaterRouteCandidate;
+        intent.theronLaterRouteCandidateBound = state->theronLaterRouteCandidateBound;
+    }
     return intent;
+}
+
+void M12_StartupMenu_BindCSBSaveCandidateIdentity(
+    M12_StartupMenuState* state, uint32_t candidate_identity)
+{
+    if (!state) return;
+    state->csbSaveCandidateIdentity = candidate_identity;
+}
+
+int M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
+    M12_StartupMenuState* state,
+    const CSB_V1_CSBWinSaveCorpusDiscoveryReceipt_PC34* discovery)
+{
+    if (!state || !discovery || !discovery->valid ||
+        discovery->admitted_count != 1u ||
+        discovery->rejected_mixed_candidates ||
+        discovery->candidate.candidate_hash == 0u ||
+        !discovery->candidate.source_path[0] ||
+        !state->quickResumeSavePath[0] ||
+        strcmp(state->quickResumeGameId, "csb") != 0 ||
+        strcmp(state->quickResumeSavePath, discovery->candidate.source_path) != 0) {
+        if (state) state->csbSaveCandidateIdentity = 0u;
+        return 0;
+    }
+    state->csbSaveCandidateIdentity = discovery->candidate.candidate_hash;
+    return 1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

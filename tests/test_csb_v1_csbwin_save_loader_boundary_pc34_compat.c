@@ -594,10 +594,10 @@ int main(void)
         CHECK(s > 0u, "DSA corpus fixture built");
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             "/tmp/csbgame.dat", scratch, s, &receipt);
-        CHECK(rc == 1, "DSA corpus receipt returns positive admission");
-        CHECK(receipt.valid && receipt.corpus_positive &&
-                  receipt.runtime_handoff_ready,
-              "DSA corpus receipt marks runtime handoff ready");
+        CHECK(rc == 0, "header-only DSA fixture cannot enter runtime");
+        CHECK(receipt.valid && !receipt.corpus_positive &&
+                  !receipt.runtime_handoff_ready,
+              "DSA receipt keeps runtime handoff closed without save body");
         CHECK(receipt.extended_tail_valid && receipt.dsa_section_valid &&
                   receipt.dsa_has_runtime_actions,
               "DSA corpus receipt requires authenticated DSA actions");
@@ -609,13 +609,13 @@ int main(void)
                   receipt.tail.level_index_entry_count == 2u &&
                   receipt.tail.level_dsa_index[3][2] == 7u,
               "DSA corpus receipt preserves level-index proof");
-        CHECK(receipt.gameblock1_valid &&
+        CHECK(receipt.gameblock1_valid && !receipt.gameblock1_body_valid &&
                   receipt.gameblock1.verdict ==
                       CSB_V1_CSBWIN_512_VERDICT_CSB,
-              "DSA corpus receipt requires following GAMEBLOCK1 header");
+              "DSA receipt distinguishes a header from a verified body");
         CHECK(strcmp(receipt.decision_label,
-                     "accept_dsa_save_runtime_corpus") == 0,
-              "DSA corpus positive decision label");
+                     "reject_dsa_corpus_missing_verified_gameblock_body") == 0,
+              "DSA receipt rejects a missing verified GAMEBLOCK1 body");
 
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             "/tmp/not_a_save.bin", scratch, s, &receipt);
@@ -629,8 +629,8 @@ int main(void)
         s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             "/tmp/csbgame.dat", scratch, s, &receipt);
-        CHECK(rc == 1 && receipt.tail.game_info_offset > 0u,
-              "DSA corpus positive receipt exposes tail offsets for negatives");
+        CHECK(rc == 0 && receipt.tail.game_info_offset > 0u,
+              "DSA receipt exposes authenticated tail offsets for negatives");
         scratch[receipt.tail.game_info_offset + 5u + 1u] = 32u;
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             "/tmp/csbgame.dat", scratch, s, &receipt);
@@ -644,8 +644,8 @@ int main(void)
         s = build_dsa_corpus_fixture(scratch, sizeof(scratch));
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             "/tmp/csbgame.dat", scratch, s, &receipt);
-        CHECK(rc == 1 && receipt.dsa.next_payload_offset >= 4u,
-              "DSA corpus positive receipt exposes DSA checksum offset");
+        CHECK(rc == 0 && receipt.dsa.next_payload_offset >= 4u,
+              "DSA receipt exposes DSA checksum offset");
         scratch[receipt.dsa.next_payload_offset - 4u] ^= 0x01u;
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt(
             "/tmp/csbgame.dat", scratch, s, &receipt);
@@ -748,12 +748,13 @@ int main(void)
               "DSA corpus file fixture write succeeds");
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
             path, 0u, &dsa_receipt);
-        CHECK(rc == 1 && dsa_receipt.corpus_positive &&
-                  dsa_receipt.runtime_handoff_ready,
-              "DSA corpus file wrapper admits positive corpus");
+        CHECK(rc == 0 && !dsa_receipt.corpus_positive &&
+                  !dsa_receipt.runtime_handoff_ready &&
+                  dsa_receipt.save_bytes_fnv1a != 0u,
+              "DSA corpus file wrapper preserves bytes but blocks header-only data");
         CHECK(strcmp(dsa_receipt.decision_label,
-                     "accept_dsa_save_runtime_corpus") == 0,
-              "DSA corpus file wrapper decision label");
+                     "reject_dsa_corpus_missing_verified_gameblock_body") == 0,
+              "DSA corpus file wrapper body decision label");
         rc = csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
             path, s - 1u, &dsa_receipt);
         CHECK(rc == CSB_SAVE_IMPORT_ERR_TRUNCATED,

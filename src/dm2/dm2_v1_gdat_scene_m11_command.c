@@ -13,6 +13,27 @@ static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static int scene_source_raw_index(const DM2_V1_AssetLoader *loader,
+                                  const uint8_t *source_bytes,
+                                  size_t source_byte_count,
+                                  uint16_t *out_raw_index)
+{
+    uint16_t raw_index;
+
+    if (out_raw_index) *out_raw_index = 0u;
+    if (!loader || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || !source_bytes || !source_byte_count ||
+        !out_raw_index) return 0;
+    for (raw_index = 0u; raw_index < loader->raw_data_count; ++raw_index) {
+        if (loader->raw_sizes[raw_index] == source_byte_count &&
+            loader->data + loader->raw_offsets[raw_index] == source_bytes) {
+            *out_raw_index = raw_index;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static uint16_t read_le16(const uint8_t *bytes)
 {
     return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
@@ -505,6 +526,8 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
         const uint8_t *raw;
         size_t raw_size = 0u;
         int width = 0, height = 0;
+        DM2_V1_GdatGfxRawMaterialReceipt material;
+        uint16_t raw_index;
         command->field = fields[i];
         raw = dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
                                       graphicsset, fields[i], &raw_size);
@@ -518,16 +541,33 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
             !command->palette_hash) {
             dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0;
         }
+        if (!scene_source_raw_index(loader, raw, raw_size, &raw_index) ||
+            !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+                loader, raw_index, &material) ||
+            material.source_bytes != raw ||
+            material.source_byte_count != raw_size ||
+            !material.receipt_hash) {
+            dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0;
+        }
         command->width = (uint16_t)width; command->height = (uint16_t)height;
+        command->material_raw_index = material.raw_index;
+        command->material_source_bytes = material.source_bytes;
+        command->material_source_byte_count = material.source_byte_count;
+        command->material_receipt_hash = material.receipt_hash;
         command->raw_hash = hash_bytes(2166136261u, raw, raw_size);
         command->decoded_hash = dm2_v1_gdat_scene_m11_command_pixel_hash(command);
-        if (!command->raw_hash || !command->decoded_hash) {
+        if (!command->raw_hash || !command->decoded_hash ||
+            !command->material_source_bytes ||
+            !command->material_source_byte_count ||
+            !command->material_receipt_hash) {
             dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0;
         }
         hash = hash_bytes(hash, (const uint8_t *)&command->raw_hash, sizeof(command->raw_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->decoded_hash,
                           sizeof(command->decoded_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash, sizeof(command->palette_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->material_receipt_hash,
+                          sizeof(command->material_receipt_hash));
     }
     {
         const uint8_t *table;

@@ -1,0 +1,5 @@
+#ifndef THERON_V1_TRACK02_LATER_ROUTE_CANDIDATE_MANIFEST_IMPORT_H
+#define THERON_V1_TRACK02_LATER_ROUTE_CANDIDATE_MANIFEST_IMPORT_H
+#include "theron_v1_track02_later_route_candidate_intake.h"
+int theron_v1_track02_later_route_candidate_manifest_import(const char *path,const char *trace_md5,const Theron_V1Track02CampaignMediaDiscoveryReceipt *media,const Theron_V1Track02LoaderTraceReplayConsistencyReceipt *replay,uint32_t epoch,Theron_V1Track02LaterRouteCandidateReceipt*out);
+#endif

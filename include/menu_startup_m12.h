@@ -11,6 +11,16 @@
 #include "changelog_m12.h"
 #include "save_browser_m12.h"
 #include "artpack_admission_m12.h"
+#include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
+#include "theron_v1_srm_campaign_replay_receipt.h"
+#include "theron_v1_srm_launch_discovery.h"
+#include "theron_v1_track02_launch_trace_identity.h"
+#include "theron_v1_track02_trace_bundle_discovery.h"
+#include "theron_v1_track02_sector_record_corpus_discovery.h"
+#include "theron_v1_track02_level_object_descriptor_capture_intake.h"
+#include "theron_v1_track02_dungeon_handoff_capture_plan_admission.h"
+#include "theron_v1_track02_later_route_candidate_intake.h"
+#include "theron_v1_track02_later_route_candidate_campaign_index.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -262,6 +272,28 @@ typedef struct {
     int valid;
     const char* savePath;  /* Non-NULL when launching via quick resume */
     const char* csbImportDm1SavePath; /* Non-NULL when CSB utility-imports a DM1 save */
+    /* Theron carries a value copy of M12's direct campaign-media identity.
+     * It is deliberately absent for ordinary path-only availability. */
+    Theron_V1Track02CampaignMediaDiscoveryReceipt theronCampaignMedia;
+    Theron_V1Track02CaptureTargetPlan theronCampaignMediaPlan;
+    int theronCampaignMediaBound;
+    uint32_t theronCampaignMediaScanEpoch;
+    Theron_V1SrmCampaignReplayReceipt theronSrmCampaignReplay;
+    int theronSrmCampaignReplayBound;
+    Theron_V1SrmLaunchDiscoveryReceipt theronSrmLaunchDiscovery;
+    int theronSrmLaunchDiscoveryBound;
+    Theron_V1Track02LaunchTraceIdentityReceipt theronLaunchTraceIdentity;
+    int theronLaunchTraceIdentityBound;
+    Theron_V1Track02TraceBundleReceipt theronTraceBundle;
+    int theronTraceBundleBound;
+    Theron_V1Track02SectorRecordCorpusDiscoveryReceipt theronSectorRecordCorpus;
+    int theronSectorRecordCorpusBound;
+    Theron_V1Track02DungeonCapturePlanAdmissionReceipt theronDungeonCapturePlan;
+    int theronDungeonCapturePlanBound;
+    Theron_V1Track02LaterRouteCandidateReceipt theronLaterRouteCandidate;
+    int theronLaterRouteCandidateBound;
+    Theron_V1Track02LaterRouteCandidateCampaignIndex theronLaterRouteCandidateIndex;
+    int theronLaterRouteCandidateIndexBound;
 } M12_LaunchIntent;
 
 typedef struct {
@@ -512,6 +544,24 @@ typedef struct M12_StartupMenuState {
     int quickResumeLaunchRequested;
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
+    uint32_t csbSaveCandidateIdentity;
+    Theron_V1SrmCampaignReplayReceipt theronSrmCampaignReplay;
+    int theronSrmCampaignReplayBound;
+    Theron_V1SrmLaunchDiscoveryReceipt theronSrmLaunchDiscovery;
+    int theronSrmLaunchDiscoveryBound;
+    Theron_V1Track02LaunchTraceIdentityReceipt theronLaunchTraceIdentity;
+    int theronLaunchTraceIdentityBound;
+    Theron_V1Track02TraceBundleReceipt theronTraceBundle;
+    int theronTraceBundleBound;
+    Theron_V1Track02SectorRecordCorpusDiscoveryReceipt theronSectorRecordCorpus;
+    int theronSectorRecordCorpusBound;
+    Theron_V1Track02DungeonCapturePlanAdmissionReceipt theronDungeonCapturePlan;
+    int theronDungeonCapturePlanBound;
+    Theron_V1Track02LaterRouteCandidateReceipt theronLaterRouteCandidate;
+    int theronLaterRouteCandidateBound;
+    Theron_V1Track02LaterRouteCandidateCampaignIndex theronLaterRouteCandidateIndex;
+    int theronLaterRouteCandidateIndexBound;
+    uint32_t theronCampaignMediaScanEpoch;
     int csbImportDm1LaunchRequested;
     char csbImportDm1SavePath[256];
     int csbImportDm1ConfirmActive;
@@ -652,6 +702,43 @@ int M12_StartupMenu_ImportDM1PC34CorpusReceipt(
 const char* M12_StartupMenu_SaveBrowserFooterText(
     const M12_StartupMenuState* state);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
+/* Rechecks the copied Theron campaign-media identity against the current M12
+ * status immediately before launch. Virtual or stale path-only intents fail. */
+int M12_StartupMenu_ValidateTheronCampaignLaunchIntent(
+    const M12_StartupMenuState* state,
+    const M12_LaunchIntent* intent);
+int M12_StartupMenu_BindTheronSrmCampaignReplay(
+    M12_StartupMenuState* state, const Theron_V1SrmCampaignReplayReceipt* receipt);
+int M12_StartupMenu_BindTheronSrmLaunchDiscovery(
+    M12_StartupMenuState* state, const Theron_V1SrmLaunchDiscoveryReceipt* receipt);
+int M12_StartupMenu_BindTheronLaunchTraceIdentity(
+    M12_StartupMenuState* state, const Theron_V1Track02LaunchTraceIdentityReceipt* receipt);
+int M12_StartupMenu_BindTheronTraceBundle(M12_StartupMenuState* state, const Theron_V1Track02TraceBundleReceipt* receipt);
+int M12_StartupMenu_BindTheronSectorRecordCorpusDiscovery(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02SectorRecordCorpusDiscoveryReceipt* receipt);
+int M12_StartupMenu_BindTheronLevelObjectDescriptorCaptureIntake(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02LevelObjectDescriptorCaptureIntakeReceipt* receipt);
+int M12_StartupMenu_BindTheronDungeonCapturePlan(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02DungeonCapturePlanAdmissionReceipt* receipt);
+int M12_StartupMenu_BindTheronLaterRouteCandidate(
+    M12_StartupMenuState* state,
+    const Theron_V1Track02LaterRouteCandidateReceipt* receipt);
+int M12_StartupMenu_BindTheronLaterRouteCandidateIndex(M12_StartupMenuState* state,const Theron_V1Track02LaterRouteCandidateCampaignIndex* index);
+/* Re-scans only explicit direct Track 02 media. Any changed or rejected media
+ * layout/opaque capture plan clears the trace campaign bindings. */
+int M12_StartupMenu_ScanTheronCampaignMedia(
+    M12_StartupMenuState* state,
+    const char* requestedMediaPath,
+    const char* expectedTrack02Md5,
+    const Theron_V1Track02CaptureTargetPlan* plan);
+void M12_StartupMenu_BindCSBSaveCandidateIdentity(
+    M12_StartupMenuState* state, uint32_t candidate_identity);
+int M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
+    M12_StartupMenuState* state,
+    const CSB_V1_CSBWinSaveCorpusDiscoveryReceipt_PC34* discovery);
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 
 /* ── Language cycle accessors ───────────────────────────────────────

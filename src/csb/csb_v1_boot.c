@@ -161,6 +161,46 @@ static int csb_v1_boot_csbgraphics_has_m11_entry_pc34(
                &profile->csbgraphics_runtime_plan, entry_index) != NULL;
 }
 
+/* Viewport.cpp custom backgrounds consume a bitmap/mask pair from the same
+ * GRAPHICS.DAT session as the live dungeon frame.  A decoded plan alone is
+ * not enough: it must retain the profile's original path, hash and palette
+ * provenance before F0128 may receive any custom-background material. */
+static int csb_v1_boot_csbgraphics_viewport_material_current_pc34(
+    const CSB_V1_BootProfile *profile)
+{
+    if (!profile || !profile->assets_verified || !profile->graphics_verified ||
+        !profile->csbgraphics_cache.loaded ||
+        !profile->csbgraphics_runtime_plan.ready ||
+        !profile->graphics_path[0] || !profile->graphics_md5[0]) {
+        return 0;
+    }
+    return strcmp(profile->csbgraphics_cache.resolved_path,
+                  profile->graphics_path) == 0 &&
+           strcmp(profile->csbgraphics_cache.matched_md5,
+                  profile->graphics_md5) == 0 &&
+           csb_v1_boot_csbgraphics_palette_receipt_ready(profile);
+}
+
+int csb_v1_boot_csbgraphics_palette_receipt_ready(
+    const CSB_V1_BootProfile *profile)
+{
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *receipt;
+
+    if (!profile || !profile->csbgraphics_cache.loaded ||
+        !profile->csbgraphics_cache.resolved_path[0] ||
+        !profile->csbgraphics_cache.matched_md5[0]) {
+        return 0;
+    }
+    receipt = &profile->csbgraphics_palette_receipt;
+    return receipt->valid && receipt->decoded_fnv1a != 0u &&
+        receipt->entry_span.decompressed_size ==
+            CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES &&
+        strcmp(receipt->source_path,
+               profile->csbgraphics_cache.resolved_path) == 0 &&
+        strcmp(receipt->source_md5,
+               profile->csbgraphics_cache.matched_md5) == 0;
+}
+
 void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
 {
     CSB_V1_StartupAssetSelection_PC34 *selection;
@@ -169,6 +209,7 @@ void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
     int graphics_ready;
     int inventory_override;
     int resurrect_override;
+    int palette_ready;
 
     if (!profile) {
         return;
@@ -221,6 +262,7 @@ void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
         profile, CSB_V1_CSBGRAPHICS_HUD_INVENTORY);
     resurrect_override = csb_v1_boot_csbgraphics_has_m11_entry_pc34(
         profile, CSB_V1_CSBGRAPHICS_HUD_RESURRECT);
+    palette_ready = csb_v1_boot_csbgraphics_palette_receipt_ready(profile);
     selection->csbgraphics_available =
         inventory_override || resurrect_override;
     hud_path = selection->csbgraphics_available
@@ -232,7 +274,7 @@ void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
         inventory_override ? CSB_V1_CSBGRAPHICS_HUD_INVENTORY
                            : CSB_V1_GRAPHIC_HUD_INVENTORY,
         inventory_override ? hud_path : graphics_path,
-        inventory_override || graphics_ready);
+        inventory_override ? palette_ready : graphics_ready);
     csb_v1_boot_startup_asset_binding_set_pc34(
         selection, CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34,
         resurrect_override ? CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34
@@ -240,7 +282,7 @@ void csb_v1_boot_startup_assets_resolve_pc34(CSB_V1_BootProfile *profile)
         resurrect_override ? CSB_V1_CSBGRAPHICS_HUD_RESURRECT
                            : CSB_V1_GRAPHIC_HUD_RESURRECT,
         resurrect_override ? hud_path : graphics_path,
-        resurrect_override || graphics_ready);
+        resurrect_override ? palette_ready : graphics_ready);
 }
 
 const CSB_V1_StartupAssetBinding_PC34 *
@@ -987,6 +1029,9 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_plan_result =
         CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE;
+    profile->csbgraphics_palette_admission_attempted = 0;
+    profile->csbgraphics_palette_admission_result =
+        CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_skin_def_loaded = 0;
     profile->csbgraphics_skin_def_word_count = 0u;
     memset(profile->csbgraphics_skin_def_words, 0,
@@ -1012,6 +1057,11 @@ static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_plan_result =
         CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE;
+    profile->csbgraphics_palette_admission_attempted = 0;
+    profile->csbgraphics_palette_admission_result =
+        CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    memset(&profile->csbgraphics_palette_receipt, 0,
+           sizeof(profile->csbgraphics_palette_receipt));
     profile->csbgraphics_skin_def_loaded = 0;
     profile->csbgraphics_skin_def_word_count = 0u;
     memset(profile->csbgraphics_skin_def_words, 0,
@@ -1176,6 +1226,97 @@ int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
     return profile->csbgraphics_plan_result;
 }
 
+int csb_v1_boot_admit_csbgraphics_palette_candidate(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBGraphicsDatPaletteAdmissionSpec *spec)
+{
+    CSB_V1_CSBGraphicsDatPaletteCandidateReport report;
+    size_t i;
+    int rc;
+
+    if (!profile || !spec) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
+    }
+    profile->csbgraphics_palette_admission_attempted = 1;
+    profile->csbgraphics_palette_admission_result =
+        CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    memset(&profile->csbgraphics_palette_receipt, 0,
+           sizeof(profile->csbgraphics_palette_receipt));
+    memset(&report, 0, sizeof(report));
+    rc = csb_v1_csbgraphics_dat_real_scan_palette_candidates(
+        &profile->csbgraphics_cache, &report);
+    if (rc != CSB_V1_CSBGRAPHICS_DAT_REAL_OK) {
+        profile->csbgraphics_palette_admission_result = rc;
+        return rc;
+    }
+    for (i = 0u; i < report.candidate_count; ++i) {
+        rc = csb_v1_csbgraphics_dat_real_admit_palette_candidate(
+            &profile->csbgraphics_cache, &report.candidates[i], spec,
+            &profile->csbgraphics_palette_receipt);
+        if (rc == CSB_V1_CSBGRAPHICS_DAT_REAL_OK) {
+            profile->csbgraphics_palette_admission_result = rc;
+            csb_v1_csbgraphics_dat_real_palette_candidate_report_free(&report);
+            csb_v1_boot_startup_assets_resolve_pc34(profile);
+            return rc;
+        }
+    }
+    csb_v1_csbgraphics_dat_real_palette_candidate_report_free(&report);
+    csb_v1_boot_startup_assets_resolve_pc34(profile);
+    return profile->csbgraphics_palette_admission_result;
+}
+
+int csb_v1_boot_startup_csbgraphics_palette_readiness_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_BootStartupCSBGraphicsPaletteReadiness_PC34 *out_receipt)
+{
+    const CSB_V1_StartupAssetSelection_PC34 *assets;
+    int palette_ready;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!profile || !out_receipt) {
+        return 0;
+    }
+    assets = &profile->startup_assets;
+    palette_ready = csb_v1_boot_csbgraphics_palette_receipt_ready(profile);
+    out_receipt->cache_identity_ready = profile->csbgraphics_cache.loaded &&
+        profile->csbgraphics_cache.resolved_path[0] &&
+        profile->csbgraphics_cache.matched_md5[0];
+    out_receipt->palette_receipt_ready = palette_ready;
+    out_receipt->m11_no_draw_without_palette = palette_ready ? 0 : 1;
+    if (palette_ready) {
+        const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette =
+            &profile->csbgraphics_palette_receipt;
+        out_receipt->palette_entry_index = palette->entry_span.entry_index;
+        out_receipt->palette_decoded_fnv1a = palette->decoded_fnv1a;
+        snprintf(out_receipt->source_path, sizeof(out_receipt->source_path),
+                 "%s", palette->source_path);
+        snprintf(out_receipt->source_md5, sizeof(out_receipt->source_md5),
+                 "%s", palette->source_md5);
+    }
+    out_receipt->title_palette_ready = palette_ready &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_TITLE_PRESENTS_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_TITLE_STRIKES_BACK_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34;
+    out_receipt->door_palette_ready = palette_ready &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34;
+    out_receipt->hud_palette_ready = palette_ready &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34].verified &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34].verified &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        assets->bindings[CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34].source ==
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34;
+    return palette_ready;
+}
+
 const CSB_V1_CSBGraphicsRuntimePlan *
 csb_v1_boot_csbgraphics_runtime_plan(const CSB_V1_BootProfile *profile)
 {
@@ -1217,7 +1358,6 @@ int csb_v1_boot_render_viewport_frame_pc34(
     CSB_V1_ViewportConfig cfg;
     uint8_t dungeon_grid[32 * 32];
     uint8_t custom_background_cell_skins[32 * 32];
-    uint32_t i;
 
     if (out_counts) {
         csb_v1_viewport_runtime_draw_counts_reset(out_counts);
@@ -1245,12 +1385,14 @@ int csb_v1_boot_render_viewport_frame_pc34(
     if (drawer_binding) {
         csb_v1_viewport_apply_runtime_drawer_binding(&cfg, drawer_binding);
     }
-    cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_runtime_plan(profile);
-    cfg.csbgraphics_cache = csb_v1_boot_csbgraphics_cache(profile);
-    cfg.custom_background_skin_def_words =
-        csb_v1_boot_csbgraphics_skin_def_words(
-            profile,
-            &cfg.custom_background_skin_def_word_count);
+    if (csb_v1_boot_csbgraphics_viewport_material_current_pc34(profile)) {
+        cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_runtime_plan(profile);
+        cfg.csbgraphics_cache = csb_v1_boot_csbgraphics_cache(profile);
+        cfg.custom_background_skin_def_words =
+            csb_v1_boot_csbgraphics_skin_def_words(
+                profile,
+                &cfg.custom_background_skin_def_word_count);
+    }
 
     if (csb_v1_runtime_custom_background_skin_grid(
             &profile->runtime,
@@ -1274,36 +1416,112 @@ int csb_v1_boot_render_viewport_frame_pc34(
         csb_v1_viewport_runtime_draw_counts_from_config(&cfg, out_counts);
     }
 
-    if (profile->csbgraphics_runtime_plan.ready &&
-        profile->csbgraphics_cache.loaded) {
-        for (i = 0u; i < profile->csbgraphics_runtime_plan.planned_count; ++i) {
-            const CSB_V1_CSBGraphicsRuntimePlanEntry *entry =
-                &profile->csbgraphics_runtime_plan.entries[i];
-            CSB_V1_CSBGraphicsRuntimeBinding binding;
-
-            /* F0128 owns only the derived dungeon-art lanes. PANEL.C
-             * F0347/F0346 consumes C017/C040 when an inventory/mirror panel
-             * is actually active; applying either entry here would make an
-             * optional real HUD override overwrite every live viewport
-             * frame. Custom backgrounds are consumed at their source-ordered
-             * room hooks by csb_v1_viewport_render_frame(). */
-            if (entry->deferred_masked_composite ||
-                entry->route !=
-                    CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_VIEWPORT_DERIVED) {
-                continue;
-            }
-            (void)csb_v1_csbgraphics_runtime_plan_apply_entry(
-                &profile->csbgraphics_runtime_plan,
-                &profile->csbgraphics_cache,
-                entry->entry_index,
-                framebuffer,
-                framebuffer_width,
-                framebuffer_height,
-                framebuffer_width,
-                &binding);
-        }
-    }
+    /* CSBgraphics viewport-derived entries are no longer applied by a broad
+     * runtime-plan loop. Live wall/floor/door pixels must enter through the
+     * explicit declaration + verified-ingress route below; otherwise F0128
+     * remains no-draw for those override materials. */
     return 1;
+}
+
+static int csb_v1_boot_render_declared_live_material_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *first_receipt,
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declarations,
+    size_t declaration_count,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *explicit_identity,
+    int square_x, int square_y,
+    CSB_V1_ViewportLiveFrameProgressionPc34 *progression,
+    const CSB_V1_ViewportLiveDungeonSelectionPc34 *previous_selection,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    CSB_V1_ViewportLiveDungeonSelectionPc34 *out_selection)
+{
+    CSB_V1_ViewportVerifiedDungeonIngressPc34 ingress;
+    CSB_V1_ViewportLiveDungeonStatePc34 state;
+    CSB_V1_ViewportLiveFrameMaterialPc34 material;
+    CSB_V1_ViewportFirstFrameMaterializationReceipt base;
+    CSB_V1_ViewportLiveFrameReceiptPc34 receipt;
+    uint8_t dungeon_grid[32 * 32];
+
+    if (out_selection) memset(out_selection, 0, sizeof(*out_selection));
+    memset(&material, 0, sizeof(material));
+    memset(&base, 0, sizeof(base));
+    if (!profile || !profile->runtime.dungeon_handle || !progression ||
+        !framebuffer || !csb_v1_boot_project_verified_dungeon_ingress_pc34(
+            first_receipt, &ingress) ||
+        !csb_v1_viewport_build_dungeon_grid(profile->runtime.dungeon_handle,
+                                             profile->runtime.current_level,
+                                             dungeon_grid) ||
+        !csb_v1_viewport_live_dungeon_state_from_verified_ingress_pc34(
+            &ingress, dungeon_grid, 32, 32, square_x, square_y,
+            explicit_identity, &state) ||
+        !csb_v1_viewport_select_live_dungeon_state_pc34(
+            declarations, declaration_count, &state, previous_selection,
+            out_selection) ||
+        !csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+            &profile->csbgraphics_cache, out_selection->declaration, &material)) goto reject;
+    base.valid = base.consumed_by_m11_render = base.real_graphics_session = 1;
+    base.no_synthetic_pixels = base.no_fallback_visuals = 1;
+    if (!csb_v1_viewport_admit_live_frame_progression_pc34(
+            progression, &base, &material.source, material.source.source_path,
+            material.source.source_md5, &receipt) ||
+        !csb_v1_viewport_consume_live_frame_raster_pc34(
+            &receipt, &material.source, framebuffer, framebuffer_width,
+            framebuffer_height, NULL)) goto reject;
+    csb_v1_viewport_live_frame_material_free_pc34(&material);
+    return 1;
+reject:
+    csb_v1_viewport_live_frame_material_free_pc34(&material);
+    if (out_selection) memset(out_selection, 0, sizeof(*out_selection));
+    return 0;
+}
+
+static int csb_v1_boot_render_admitted_live_material_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *first_receipt,
+    const CSB_V1_ViewportOperatorDeclarationCorpusPc34 *corpus,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *explicit_identity,
+    int square_x, int square_y,
+    CSB_V1_ViewportLiveFrameProgressionPc34 *progression,
+    const CSB_V1_ViewportLiveDungeonSelectionPc34 *previous_selection,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    CSB_V1_ViewportLiveDungeonSelectionPc34 *out_selection)
+{
+    if (!profile || !csb_v1_viewport_admit_operator_declaration_corpus_pc34(
+            &profile->csbgraphics_cache, corpus)) {
+        if (out_selection) memset(out_selection, 0, sizeof(*out_selection));
+        return 0;
+    }
+    return csb_v1_boot_render_declared_live_material_pc34(
+        profile, first_receipt, corpus->declarations, corpus->declaration_count,
+        explicit_identity, square_x, square_y, progression, previous_selection,
+        framebuffer, framebuffer_width, framebuffer_height, out_selection);
+}
+
+int csb_v1_boot_render_manifest_live_material_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *first_receipt,
+    const CSB_V1_ViewportOperatorDeclarationManifestPc34 *manifest,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *explicit_identity,
+    int square_x, int square_y,
+    CSB_V1_ViewportLiveFrameProgressionPc34 *progression,
+    const CSB_V1_ViewportLiveDungeonSelectionPc34 *previous_selection,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    CSB_V1_ViewportLiveDungeonSelectionPc34 *out_selection)
+{
+    CSB_V1_ViewportOperatorDeclarationCorpusPc34 corpus;
+    if (out_selection) memset(out_selection, 0, sizeof(*out_selection));
+    if (!manifest || !manifest->valid) return 0;
+    memset(&corpus, 0, sizeof(corpus));
+    corpus.valid = 1;
+    corpus.source_path = manifest->source_path;
+    corpus.source_md5 = manifest->source_md5;
+    corpus.palette_receipt = manifest->palette_receipt;
+    corpus.declarations = manifest->declarations;
+    corpus.declaration_count = manifest->declaration_count;
+    return csb_v1_boot_render_admitted_live_material_pc34(
+        profile, first_receipt, &corpus, explicit_identity, square_x, square_y,
+        progression, previous_selection, framebuffer, framebuffer_width,
+        framebuffer_height, out_selection);
 }
 
 int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
@@ -1379,6 +1597,24 @@ int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
         receipt.draw_counts_hash != 0u;
     if (!receipt.valid) return 0;
     *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_boot_project_verified_dungeon_ingress_pc34(
+    const CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *receipt,
+    CSB_V1_ViewportVerifiedDungeonIngressPc34 *out_ingress)
+{
+    if (out_ingress) memset(out_ingress, 0, sizeof(*out_ingress));
+    if (!receipt || !out_ingress || !receipt->valid || !receipt->real_asset_matched ||
+        !receipt->terminal_session_owned || !receipt->viewport_frame_consumed ||
+        !receipt->no_synthetic_surface || receipt->session_generation == 0u) return 0;
+    out_ingress->valid = 1;
+    out_ingress->real_asset_matched = 1;
+    out_ingress->terminal_session_owned = 1;
+    out_ingress->viewport_frame_consumed = 1;
+    out_ingress->no_synthetic_surface = 1;
+    out_ingress->session_generation = receipt->session_generation;
+    out_ingress->source_tick = receipt->source_tick;
     return 1;
 }
 
@@ -1848,9 +2084,19 @@ int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
         return 0;
     }
     csb_v1_boot_startup_door_runtime_receipt_init_pc34(out_receipt);
-    if (!snapshot || !session || !snapshot->boot_profile ||
-        !csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
-            snapshot, &out_receipt->idle)) {
+    if (!snapshot || !session || !snapshot->boot_profile) {
+        return 0;
+    }
+
+    /* M11 consumes the idle receipt before requesting the F0806 handoff.
+     * Once that source receipt has dismissed entrance, advancing the opening
+     * state a second time would turn the terminal step back into an ordinary
+     * no-op frame. Treat the source-owned dismissal as the terminal proof. */
+    if (snapshot->entrance_dismissed) {
+        out_receipt->idle.finish_receipt_valid = 1;
+        out_receipt->idle.finish_receipt.entrance_dismissed = 1;
+    } else if (!csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
+                   snapshot, &out_receipt->idle)) {
         return 0;
     }
 
@@ -1865,6 +2111,14 @@ int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
 
     profile = snapshot->boot_profile;
     out_receipt->door_opening_finished = 1;
+    if (!session->playback.entrance_complete &&
+        !csb_v1_boot_startup_playback_complete_entrance_pc34(session)) {
+        out_receipt->route =
+            CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_RUNTIME_BLOCKED_PC34;
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "CSB ENTRANCE INCOMPLETE";
+        return 1;
+    }
     /* ReDMCSB ENTRANCE.C F0806 lines 857-889 and CSBWin CSBCode.cpp
      * lines 9515-9535 only return from the entrance after the door action.
      * C017/C040 must remain bound to the verified GRAPHICS.DAT that supplied
@@ -2379,7 +2633,7 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             const int hold_source_step =
                 (int)csb_v1_startup_title_source_step_for_frame_pc34(
                     csb_v1_startup_title_presents_ticks_pc34() +
-                    csb_v1_startup_title_chaos_zoom_ticks_pc34());
+                    csb_v1_startup_title_chaos_zoom_ticks_pc34() - 3);
             out_receipt->title_chaos_zoom_visible =
                 out_receipt->title_source_step < hold_source_step ? 1 : 0;
             out_receipt->title_chaos_hold_visible =
@@ -2387,17 +2641,18 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
             out_receipt->title_phase_tick =
                 out_receipt->title_chaos_zoom_visible
                     ? chaos_frame
-                    : chaos_frame - zoom_ticks;
+                    : out_receipt->title_source_step - hold_source_step;
             out_receipt->title_phase_tick_count =
                 out_receipt->title_chaos_zoom_visible
                     ? zoom_ticks
                     : csb_v1_startup_title_chaos_hold_ticks_pc34();
         } else if (out_receipt->title_strikes_back_visible) {
+            const int strikes_source_step =
+                (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                    csb_v1_startup_title_presents_ticks_pc34() +
+                    csb_v1_startup_title_chaos_zoom_ticks_pc34());
             out_receipt->title_phase_tick =
-                out_receipt->title_frame -
-                csb_v1_startup_title_presents_ticks_pc34() -
-                csb_v1_startup_title_chaos_zoom_ticks_pc34() -
-                csb_v1_startup_title_chaos_hold_ticks_pc34();
+                out_receipt->title_source_step - strikes_source_step;
             out_receipt->title_phase_tick_count =
                 csb_v1_startup_title_strikes_back_ticks_pc34();
         }
@@ -4230,7 +4485,7 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
         csb_v1_boot_startup_visual_title_sample_pc34(
             boot_profile,
             out_receipt->source_title_presents_ticks +
-                out_receipt->source_title_chaos_zoom_ticks,
+                out_receipt->source_title_chaos_zoom_ticks - 3,
             19,
             CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
             &out_receipt->title_sample_hashes[2]);
@@ -4238,7 +4493,7 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
         csb_v1_boot_startup_visual_title_sample_pc34(
             boot_profile,
             csb_v1_startup_title_total_ticks_pc34() - 1,
-            20,
+            22,
             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
             &out_receipt->title_sample_hashes[3]);
     out_receipt->title_sample_count =
@@ -4454,7 +4709,7 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
         1,
         2,
         19,
-        20
+        22
     };
     int title_frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t runtime_hash = 2166136261u;
@@ -4478,7 +4733,7 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     title_frames[1] = out_receipt->visual_sequence.source_title_presents_ticks;
     title_frames[2] =
         out_receipt->visual_sequence.source_title_presents_ticks +
-        out_receipt->visual_sequence.source_title_chaos_zoom_ticks;
+        out_receipt->visual_sequence.source_title_chaos_zoom_ticks - 3;
     title_frames[3] = csb_v1_startup_title_total_ticks_pc34() - 1;
 
     out_receipt->visual_sequence_valid = 1;
@@ -6865,6 +7120,114 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
     return result;
 }
 
+static uint32_t csb_v1_boot_original_save_fnv1a32(
+    const unsigned char *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash = (hash ^ bytes[i]) * 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+int csb_v1_boot_runtime_load_original_save_receipt_pc34(
+    CSB_V1_BootProfile *profile, const char *path,
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt)
+{
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 receipt;
+    unsigned char raw_header[512];
+    CSB_V1_SaveHeader header;
+    FILE *file;
+    uint32_t game_time = 0u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!profile || !path || !path[0] || !profile->assets_verified ||
+        !profile->dungeon_verified) return 0;
+    file = fopen(path, "rb");
+    if (!file || fread(raw_header, 1u, sizeof(raw_header), file) != sizeof(raw_header)) {
+        if (file) fclose(file);
+        return 0;
+    }
+    fclose(file);
+    if (csb_v1_save_header_read(&header, raw_header) != 0 ||
+        csb_v1_save_header_verify(&header, raw_header) != 0 ||
+        header.Magic != CSB_V1_SAVE_MAGIC_CSB) return 0;
+    receipt.boot_profile_ready = 1;
+    receipt.native_csb_header_valid = 1;
+    receipt.runtime_load_succeeded =
+        csb_v1_boot_runtime_load_game_from_path_pc34(profile, path, &game_time) ==
+        CSB_V1_LOAD_OK;
+    if (!receipt.runtime_load_succeeded) return 0;
+    receipt.runtime_dungeon_ready = profile->runtime.dungeon_handle != NULL;
+    receipt.runtime_party_ready = profile->runtime.champion_count >= 0;
+    receipt.runtime_current_level_after = profile->runtime.current_level;
+    receipt.runtime_champion_count_after = profile->runtime.champion_count;
+    receipt.runtime_game_time_after = game_time;
+    receipt.native_header_fnv1a =
+        csb_v1_boot_original_save_fnv1a32(raw_header, sizeof(raw_header));
+    memcpy(receipt.dungeon_md5, profile->dungeon_md5,
+           sizeof(receipt.dungeon_md5));
+    receipt.source_identity_hash =
+        csb_v1_boot_original_save_fnv1a32(
+            (const unsigned char *)receipt.dungeon_md5, 32u);
+    receipt.source_identity_hash =
+        (receipt.source_identity_hash ^ receipt.native_header_fnv1a) *
+        16777619u;
+    if (receipt.source_identity_hash == 0u) return 0;
+    snprintf(receipt.save_path, sizeof(receipt.save_path), "%s", path);
+    receipt.source_evidence = "ReDMCSB LOADSAVE.C F0435";
+    receipt.valid = receipt.runtime_dungeon_ready && receipt.runtime_party_ready &&
+        receipt.native_header_fnv1a != 0u && receipt.dungeon_md5[0] != '\0' &&
+        receipt.source_identity_hash != 0u;
+    if (!receipt.valid) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_boot_original_save_runtime_receipt_current_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *receipt)
+{
+    unsigned char raw_header[512];
+    CSB_V1_SaveHeader header;
+    FILE *file;
+    uint32_t source_identity_hash;
+
+    if (!profile || !receipt || !receipt->valid || !receipt->save_path[0] ||
+        !profile->assets_verified || !profile->dungeon_verified ||
+        !profile->dungeon_md5[0] ||
+        strcmp(profile->dungeon_md5, receipt->dungeon_md5) != 0 ||
+        receipt->native_header_fnv1a == 0u ||
+        receipt->source_identity_hash == 0u) {
+        return 0;
+    }
+    file = fopen(receipt->save_path, "rb");
+    if (!file || fread(raw_header, 1u, sizeof(raw_header), file) !=
+                     sizeof(raw_header)) {
+        if (file) fclose(file);
+        return 0;
+    }
+    fclose(file);
+    if (csb_v1_save_header_read(&header, raw_header) != 0 ||
+        csb_v1_save_header_verify(&header, raw_header) != 0 ||
+        header.Magic != CSB_V1_SAVE_MAGIC_CSB ||
+        csb_v1_boot_original_save_fnv1a32(raw_header, sizeof(raw_header)) !=
+            receipt->native_header_fnv1a) {
+        return 0;
+    }
+    source_identity_hash = csb_v1_boot_original_save_fnv1a32(
+        (const unsigned char *)receipt->dungeon_md5, 32u);
+    source_identity_hash =
+        (source_identity_hash ^ receipt->native_header_fnv1a) * 16777619u;
+    return source_identity_hash != 0u &&
+           source_identity_hash == receipt->source_identity_hash;
+}
+
 static void csb_v1_boot_copy_receipt_path_pc34(char *dst,
                                                size_t dst_size,
                                                const char *src)
@@ -6975,6 +7338,12 @@ int csb_v1_boot_runtime_save_import_receipt_pc34(
             csbwin_dsa.dsa_has_runtime_actions ? 1 : 0;
         out_receipt->csbwin_dsa_gameblock1_valid =
             csbwin_dsa.gameblock1_valid ? 1 : 0;
+        out_receipt->csbwin_dsa_gameblock1_body_valid =
+            csbwin_dsa.gameblock1_body_valid ? 1 : 0;
+        out_receipt->csbwin_dsa_save_bytes_fnv1a =
+            csbwin_dsa.save_bytes_fnv1a;
+        out_receipt->csbwin_dsa_gameblock1_body_fnv1a =
+            csbwin_dsa.gameblock1_body_fnv1a;
         out_receipt->csbwin_dsa_decision_label =
             csb_v1_csbwin_save_loader_boundary_dsa_corpus_decision_name(
                 &csbwin_dsa);
@@ -7086,6 +7455,12 @@ int csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
         save_import_receipt->csbwin_dsa_has_runtime_actions ? 1 : 0;
     out_receipt->gameblock1_valid =
         save_import_receipt->csbwin_dsa_gameblock1_valid ? 1 : 0;
+    out_receipt->gameblock1_body_valid =
+        save_import_receipt->csbwin_dsa_gameblock1_body_valid ? 1 : 0;
+    out_receipt->save_bytes_fnv1a =
+        save_import_receipt->csbwin_dsa_save_bytes_fnv1a;
+    out_receipt->gameblock1_body_fnv1a =
+        save_import_receipt->csbwin_dsa_gameblock1_body_fnv1a;
     out_receipt->runtime_party_loaded =
         save_import_receipt->runtime_party_loaded_after ? 1 : 0;
     out_receipt->runtime_import_source_after =
@@ -7106,6 +7481,9 @@ int csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
         out_receipt->dsa_section_valid &&
         out_receipt->dsa_has_runtime_actions &&
         out_receipt->gameblock1_valid &&
+        out_receipt->gameblock1_body_valid &&
+        out_receipt->save_bytes_fnv1a != 0u &&
+        out_receipt->gameblock1_body_fnv1a != 0u &&
         out_receipt->runtime_party_loaded &&
         out_receipt->runtime_import_source_after == CSB_SAVE_IMPORT_SOURCE &&
         out_receipt->runtime_champion_count_after > 0 &&
@@ -7386,6 +7764,29 @@ void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir
         csb_v1_boot_copy(profile->save_root, sizeof(profile->save_root),
                          csb_v1_runtime_save_dir());
     }
+}
+
+int csb_v1_boot_profile_from_startup_real_receipt_pc34(
+    const CSB_V1_StartupRealReceipt *receipt, CSB_V1_BootProfile *out_profile)
+{
+    CSB_V1_StartupRealReceipt proof;
+    if (!receipt || !out_profile || !receipt->matched ||
+        !receipt->assets_verified || !receipt->graphics_verified ||
+        !receipt->dungeon_verified || !receipt->asset_root[0] ||
+        !receipt->graphics_md5[0] || !receipt->dungeon_md5[0] ||
+        receipt->receipt_hash == 0u) return 0;
+    proof = *receipt;
+    if (!csb_v1_startup_real_receipt_recompute_hash(&proof)) return 0;
+    csb_v1_boot_profile_init(out_profile);
+    if (csb_v1_boot_scan_assets(out_profile, receipt->asset_root) != 0 ||
+        !out_profile->assets_verified || !out_profile->graphics_verified ||
+        !out_profile->dungeon_verified ||
+        strcmp(out_profile->graphics_md5, receipt->graphics_md5) != 0 ||
+        strcmp(out_profile->dungeon_md5, receipt->dungeon_md5) != 0) {
+        csb_v1_boot_cleanup(out_profile);
+        return 0;
+    }
+    return 1;
 }
 
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)

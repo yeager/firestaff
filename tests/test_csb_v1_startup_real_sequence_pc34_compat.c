@@ -97,6 +97,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
+    CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 opening_capture;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package;
@@ -112,6 +113,7 @@ int main(void)
     memset(&opening_host, 0, sizeof(opening_host));
     memset(&credits_host, 0, sizeof(credits_host));
     memset(&hud_host, 0, sizeof(hud_host));
+    memset(&opening_capture, 0, sizeof(opening_capture));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&snapshot, 0, sizeof(snapshot));
     printf("data_dir=%s\n", root ? root : "(none)");
@@ -165,17 +167,17 @@ int main(void)
               receipt_for_plan(&session, &plan, 2u, &chaos_host),
           "real C001 CHAOS zoom raster reaches host surface receipt");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
-              &session, 80, &plan, &audio_action) &&
+              &session, 79, &plan, &audio_action) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               plan.title_source_step == 21 &&
               receipt_for_plan(&session, &plan, 3u, &chaos_hold_host),
           "real C001 CHAOS hold raster reaches host surface receipt");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
-              &session, 100, &plan, &audio_action) &&
+              &session, 80, &plan, &audio_action) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-              plan.title_source_step == 22 &&
+              plan.title_source_step == 20 &&
               receipt_for_plan(&session, &plan, 4u, &strikes_host),
-          "real C001 STRIKES BACK raster reaches host surface receipt");
+          "real C001 first STRIKES BACK raster reaches host surface receipt");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, csb_v1_startup_title_total_ticks_pc34(), &plan,
               &audio_action) &&
@@ -200,6 +202,22 @@ int main(void)
               opening_host.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34,
           "real C004+C002/C003 opening frame reaches host surface receipt");
+    check(csb_v1_boot_startup_door_opening_capture_from_session_pc34(
+              &session, 100u, &opening_capture) && opening_capture.valid &&
+              opening_capture.real_asset_matched &&
+              opening_capture.no_legacy_wrappers &&
+              opening_capture.no_synthetic_surface &&
+              opening_capture.source_step_count == 31 &&
+              opening_capture.captured_frame_count == 31 &&
+              opening_capture.first_step == 1 && opening_capture.last_step == 31 &&
+              opening_capture.frame_route_hashes[0] != 0u &&
+              opening_capture.frame_route_hashes[30] != 0u &&
+              opening_capture.frame_route_hashes[0] !=
+                  opening_capture.frame_route_hashes[30] &&
+              opening_capture.raster_pixel_hashes[0] != 0u &&
+              opening_capture.raster_pixel_hashes[30] != 0u &&
+              opening_capture.capture_sequence_hash != 0u,
+          "real C004/C002/C003 session captures all 31 door-opening pages");
     check(render_plan_from_state(0, 0, 1, 0, 0, 0, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
               receipt_for_plan(&session, &plan, 7u, &credits_host) &&

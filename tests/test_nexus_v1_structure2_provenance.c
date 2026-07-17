@@ -1,0 +1,4 @@
+#include "nexus_v1_engine.h"
+#include <stdint.h>
+static uint64_t f(const uint8_t*p,uint32_t n){uint64_t h=1469598103934665603ULL;while(n--){h^=*p++;h*=1099511628211ULL;}return h;}
+int main(void){uint8_t raw[32]={0};Nexus_V1_DgnStructure2PayloadAnchorPacket p={0};p.valid=p.no_draw_only=p.blocks_real_dgn_mesh_render=1;p.source_byte_count=32;p.source_bytes_fnv1a64=f(raw,32);p.package_fnv1a64=p.source_bytes_fnv1a64;p.descriptor_offset=4;p.descriptor_length=16;p.descriptor_fnv1a64=f(raw+4,16);p.candidate_byte_count=1;p.next_anchor_offset=1;if(!p.package_fnv1a64||p.package_fnv1a64!=p.source_bytes_fnv1a64||!p.descriptor_length||!p.descriptor_fnv1a64||p.descriptor_offset>32||p.descriptor_length>32-p.descriptor_offset)return 1;p.package_fnv1a64++;if(p.package_fnv1a64==p.source_bytes_fnv1a64)return 1;p.package_fnv1a64=p.source_bytes_fnv1a64;p.descriptor_offset=31;p.descriptor_length=2;if(!(p.descriptor_length>32-p.descriptor_offset))return 1;return 0;}

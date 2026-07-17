@@ -11902,19 +11902,23 @@ int main(int argc, char** argv) {
                 dm1_v1_champion_panel_food_bar_zone_pc34();
             dm1_v1_champion_panel_food_water_bar_zone_pc34_t waterBar =
                 dm1_v1_champion_panel_water_bar_zone_pc34();
+            const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec*
+                foodWaterBlits =
+                    DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked();
             probe_record(&tally, "INV_GV_300AI",
                          dm1_v1_inventory_panel_zone_id_pc34() == 101 &&
                              dm1_v1_inventory_panel_zone_xywh_pc34(&invX, &invY, &invW, &invH) &&
                              invX == 80 && invY == 52 && invW == 144 && invH == 73 &&
-                             foodBar.zone_id == 103 &&
-                             foodBar.x == 113 && foodBar.y == 69 &&
-                             foodBar.w == 34 && foodBar.h == 6 &&
-                             foodBar.shadow_offset == 2 &&
-                             waterBar.zone_id == 104 &&
-                             waterBar.x == 113 && waterBar.y == 92 &&
-                             waterBar.w == 46 && waterBar.h == 6 &&
-                             waterBar.shadow_offset == 2,
-                         "inventory panel and food/water zones expose layout-696 C101/C103/C104 geometry");
+                             foodWaterBlits &&
+                             foodWaterBlits->blits[0].zoneId == DM1_ZONE_FOOD &&
+                             foodWaterBlits->blits[1].zoneId == DM1_ZONE_WATER &&
+                             foodBar.x == 112 && foodBar.y == 67 &&
+                             foodBar.w == 67 && foodBar.h == 5 &&
+                             foodBar.shadow_offset == 1 &&
+                             waterBar.x == 112 && waterBar.y == 90 &&
+                             waterBar.w == 67 && waterBar.h == 5 &&
+                             waterBar.shadow_offset == 1,
+                         "inventory panel C101, F0658 C500/C501 labels, and source bar geometry remain independently owned");
         }
 
         {

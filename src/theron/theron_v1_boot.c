@@ -5786,6 +5786,73 @@ void theron_v1_boot_runtime_release(
     }
 }
 
+int theron_v1_boot_startup_launch_bind_campaign_media(
+    Theron_V1_BootStartupLaunch *launch,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt *media,
+    const Theron_V1Track02CaptureTargetPlan *plan)
+{
+    if (!launch) {
+        return 0;
+    }
+    memset(&launch->campaign_media_discovery, 0,
+           sizeof(launch->campaign_media_discovery));
+    launch->campaign_media_launchable = 0;
+    if (!media) {
+        return 0;
+    }
+    launch->campaign_media_discovery = *media;
+    if (!launch->profile || media->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+        media->ambiguous || media->virtual_container || media->no_media_extracted ||
+        !media->launchable_direct_media || !media->exact_layout_bound ||
+        media->track02_variant == THERON_TRACK02_VARIANT_UNKNOWN ||
+        !media->candidate_path[0] || !media->direct_media.payload_path[0] ||
+        strcmp(launch->profile->graphics_md5, media->track02_md5) ||
+        !theron_v1_track02_campaign_media_bind_capture_plan(media, plan)) {
+        return 0;
+    }
+    launch->campaign_media_launchable = 1;
+    return 1;
+}
+
+int theron_v1_boot_startup_launch_alloc_from_campaign_media(
+    const char *data_dir,
+    const char *search_path,
+    const char *expected_track02_md5,
+    const char *save_path,
+    const Theron_V1Track02CaptureTargetPlan *plan,
+    Theron_V1_BootStartupLaunch *out_launch)
+{
+    Theron_V1Track02CampaignMediaDiscoveryReceipt media;
+
+    if (!out_launch) {
+        return 0;
+    }
+    memset(out_launch, 0, sizeof(*out_launch));
+    if (!theron_v1_track02_campaign_media_discover(search_path,
+                                                     expected_track02_md5,
+                                                     4, &media)) {
+        return 0;
+    }
+    out_launch->campaign_media_discovery = media;
+    if (media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+        media.virtual_container || !media.launchable_direct_media ||
+        !theron_v1_track02_campaign_media_bind_capture_plan(&media, plan) ||
+        !theron_v1_boot_startup_launch_alloc(data_dir, media.candidate_path,
+                                             expected_track02_md5, save_path,
+                                             out_launch)) {
+        out_launch->campaign_media_discovery = media;
+        out_launch->campaign_media_launchable = 0;
+        return 0;
+    }
+    if (!theron_v1_boot_startup_launch_bind_campaign_media(out_launch, &media,
+                                                            plan)) {
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->campaign_media_discovery = media;
+        return 0;
+    }
+    return 1;
+}
+
 int theron_v1_boot_startup_launch_alloc(
     const char *data_dir,
     const char *verified_path,
@@ -5922,6 +5989,8 @@ int theron_v1_boot_startup_launch_detach_runtime(
     out_receipt->startup_media_state_receipt =
         launch->startup_media_state_receipt;
     out_receipt->launch_host_receipt = launch->launch_host_receipt;
+    out_receipt->campaign_media_discovery = launch->campaign_media_discovery;
+    out_receipt->campaign_media_launchable = launch->campaign_media_launchable;
     snprintf(out_receipt->boot_asset_md5,
              sizeof(out_receipt->boot_asset_md5),
              "%s",

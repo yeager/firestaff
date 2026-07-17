@@ -127,6 +127,17 @@ typedef struct {
     uint16_t actuator_copy_count;
     uint16_t last_actuator_copy_source_thing;
     uint16_t last_actuator_copy_destination_thing;
+    uint16_t missile_info_store_count;
+    uint16_t last_missile_info_thing;
+    uint32_t last_missile_info_before[4];
+    uint32_t last_missile_info_after[4];
+    int missile_info_timer_owner_valid;
+    uint16_t missile_info_timer_index;
+    uint16_t missile_info_timer_queue_slot;
+    uint8_t missile_info_timer_function;
+    uint8_t missile_info_timer_position_before;
+    uint8_t missile_info_timer_position_after;
+    uint32_t missile_info_timer_time;
     uint8_t dsa_id;
     uint32_t state_index;
     uint32_t column;
@@ -137,10 +148,34 @@ typedef struct {
     int text_message_changed;
     int party_talents_changed;
     int party_skill_experience_changed;
+    int timer_type_modifiers_valid;
+    uint8_t timer_type_modifiers[3];
+    /* STKOP_ModifyMessage belongs to one authenticated ProcessTimers call.
+     * Preserve its exact saved TIMER owner with the transient map; neither
+     * field is a general queue or a serialized replacement timer. */
+    int saved_timer_scope_valid;
+    uint16_t saved_timer_queue_slot;
+    uint16_t saved_timer_index;
+    uint8_t saved_timer_function;
+    uint8_t saved_timer_action;
+    uint8_t saved_timer_position;
+    uint32_t saved_timer_time;
+    /* DSA.cpp PutState keeps LocalState=0 in DB3::DSAstate and LocalState=1
+     * in the authenticated Extended Features stream.  The transition is
+     * published only after the source owner and RCS-protected tail agree. */
+    int saved_dsa_state_transition_valid;
+    uint8_t saved_dsa_state_storage_kind;
+    uint32_t saved_dsa_state_before;
+    uint32_t saved_dsa_state_after;
+    uint32_t saved_dsa_state_tail_fnv1a;
     int expool_changed;
     int dsa_state_changed;
     int dungeon_changed;
 } CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34;
+
+#define CSB_V1_CSBWIN_DSA_STATE_STORAGE_DB3_DSASTATE 0u
+#define CSB_V1_CSBWIN_DSA_STATE_STORAGE_SAVED_M_STATE 1u
+#define CSB_V1_CSBWIN_DSA_STATE_STORAGE_DB3_PARAMETER_B 2u
 
 typedef struct {
     int valid;

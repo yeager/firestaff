@@ -84,6 +84,7 @@ typedef struct {
 
 typedef struct {
     int has_prs3;
+    uint32_t prs3_version; /* BE uint32 at PRS3+4 */
     int prs3_version_matches; /* 1 if PRS3+4..PRS3+8 == 0x00000001 */
     uint32_t prs3_pixel_count; /* BE uint32 at PRS3+8 */
     uint32_t prefix_pixels;    /* width * height from the 20-byte prefix */
@@ -519,6 +520,8 @@ typedef struct {
     uint32_t body_offset;         /* after leading stream-size word */
     uint32_t body_size;
     uint32_t header_first_u32;
+    uint64_t header_span_fnv1a64;
+    uint64_t body_span_fnv1a64;
     uint32_t header_minus_payload;
     int header_first_readable;
     int header_underflow;
@@ -531,6 +534,24 @@ typedef struct {
     uint32_t decoded_pixels_emitted;
     int fallback_visuals_permitted;
 } Nexus_V1_BpkPrs3StreamPlan;
+
+/* Source-bound PRS3 compression framing only. `mode_flags` is the observed
+ * prefix byte; it is not a codec claim. The compressed span starts after the
+ * leading stream word and remains opaque until original decoder evidence
+ * exists. */
+typedef struct {
+    int valid;
+    uint32_t entry_index;
+    uint8_t mode_flags;
+    uint32_t declared_pixel_count;
+    uint32_t declared_output_bytes;
+    uint32_t compressed_offset;
+    uint32_t compressed_length;
+    uint64_t compressed_fnv1a64;
+    int decoder_promoted;
+    int pixels_exposed;
+    int fallback_visuals_permitted;
+} Nexus_V1_BpkPrs3CompressionDescriptorReceipt;
 
 /* Bounded diagnostic evaluation of LSB-first and MSB-first traversals of one
  * literal/back-reference candidate against the declared byte target. This is
@@ -822,12 +843,17 @@ typedef struct {
     uint32_t expected_output_bytes;
     uint32_t payload_offset;
     uint32_t payload_size;
+    uint64_t payload_fnv1a64;
     uint32_t stream_offset;
     uint32_t stream_size;
     uint32_t body_offset;
     uint32_t body_size;
     uint32_t header_first_u32;
     uint32_t header_minus_payload;
+    uint32_t prs3_version;
+    uint32_t prs3_pixel_count;
+    int prs3_header_valid;
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt compression;
     int decode_blocked;
     int evidence_only;
     int renderer_handoff_blocked;
@@ -847,6 +873,16 @@ typedef struct {
     int directory_trailer_valid;
     uint32_t ready_uploads;
     uint32_t blocked_prs3_uploads;
+    uint32_t first_prs3_entry_index;
+    uint32_t first_prs3_payload_offset;
+    uint32_t first_prs3_payload_size;
+    uint64_t first_prs3_payload_fnv1a64;
+    uint32_t first_prs3_version;
+    uint32_t first_prs3_pixel_count;
+    uint32_t first_prs3_header_first_u32;
+    uint32_t first_prs3_header_minus_payload;
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt first_prs3_compression;
+    uint32_t unknown_prs3_mode_entries;
     uint32_t blocked_truncated_uploads;
     uint32_t planned_rows;
     uint32_t capacity;
@@ -889,6 +925,13 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     size_t data_size,
     uint32_t index,
     Nexus_V1_BpkPrs3StreamPlan *out_plan);
+
+/* Builds one strict, source-bounded descriptor for a recognized PRS3 entry.
+ * Unknown mode bytes, malformed headers, empty/overflowing spans, and any
+ * declaration mismatch fail closed. This does not decode compressed bytes. */
+int nexus_v1_bpk_archive_prs3_compression_descriptor(
+    const uint8_t *data, size_t data_size, uint32_t index,
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt *out_receipt);
 
 const char *nexus_v1_bpk_prs3_stream_status_name(int status);
 

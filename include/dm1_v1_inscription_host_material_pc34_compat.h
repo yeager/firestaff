@@ -3,6 +3,7 @@
 
 #include "dm1_v1_inscription_font_pc34_compat.h"
 
+#include <stdint.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -36,9 +37,15 @@ static inline int DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
 typedef struct DM1_V1_InscriptionHostMaterialReceiptPc34 {
     int valid;
     int textStringIndex;
+    /* Exact packed PC34 TEXTSTRING span selected by F0168 before its
+     * 5-bit decode.  The FNV is over little-endian source word bytes. */
+    int textDataWordOffset;
+    int textDataWordCount;
+    uint32_t textDataFNV1a;
     int fontGraphicIndex;
     int transparentColor;
     int glyphByteCount;
+    uint32_t glyphBytesFNV1a;
     int lineCount;
     unsigned char glyphBytes[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
     DM1_V1_InscriptionFrontWallLineDrawPlanPc34

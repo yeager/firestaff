@@ -625,9 +625,18 @@ int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
         return 1;
     }
 
-    if (globalOrnamentIndex ==
-        DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT) {
+    /* The C127 mirror's remaining F0107 projections are only the one-tile
+     * side-wall cases.  DUNVIEW.C reaches D1L/D1R before the D1C C346/C026
+     * overlay; a C127 fact sampled at another depth or view-wall index must
+     * not turn the same C346 source bytes into a distant mirror substitute. */
+    if (relForward == 1 &&
+        ((relSide == -1 && viewWallIndex == 10) ||
+         (relSide == 1 && viewWallIndex == 11)) &&
+        globalOrnamentIndex ==
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT) {
         receipt.drawWallOrnamentBacking = 1;
+    } else {
+        receipt.suppressGenericWallOrnament = 1;
     }
 
     *outReceipt = receipt;

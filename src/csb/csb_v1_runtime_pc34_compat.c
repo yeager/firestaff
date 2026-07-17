@@ -438,6 +438,36 @@ static int csb_v1_runtime_dsa_set_actuator_payload(
     return 1;
 }
 
+/* STKOP_Copy is a DB3-to-DB3 transaction.  Re-resolve both Things in the
+ * candidate dungeon and reject if the source image drifted after staging. */
+static int csb_v1_runtime_dsa_copy_actuator_payload(
+    void *user, uint16_t source_thing, uint16_t destination_thing,
+    const uint8_t source_payload[6])
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    const uint8_t *source;
+    uint8_t *destination;
+    int source_type;
+    int source_size;
+    int destination_type;
+    int destination_size;
+
+    if (!profile || !profile->dungeon_handle || !source_payload) return -1;
+    source = csb_v1_dungeon_get_thing_record(profile->dungeon_handle,
+                                              source_thing, &source_type,
+                                              NULL, &source_size);
+    destination = csb_v1_runtime_mutable_thing_record(
+        profile->dungeon_handle, destination_thing, &destination_type,
+        &destination_size);
+    if (!source || !destination) return -1;
+    if (source_type != CSB_V1_THING_TYPE_ACTUATOR ||
+        destination_type != CSB_V1_THING_TYPE_ACTUATOR) return 0;
+    if (source_size < 8 || destination_size < 8 ||
+        memcmp(source + 2, source_payload, 6u) != 0) return 0;
+    memcpy(destination + 2, source_payload, 6u);
+    return 1;
+}
+
 typedef struct {
     const CSB_V1_RuntimeProfile *profile;
     const CSB_V1_DungeonData *dungeon;
@@ -16254,6 +16284,72 @@ static int csb_v1_runtime_persist_csbwin_localstate2_dsa(
     return 1;
 }
 
+/* CSBWin DSA.cpp GetState/PutState:548-572 stores LocalState=0 in the
+ * type-47 DB3 actuator's DSAstate nibble (word2 bits 12..15).  The level
+ * selector and DSA stream have already been admitted by ProcessDSATimer6;
+ * re-check the complete RCS/FNV tail before touching the live dungeon byte. */
+static int csb_v1_runtime_persist_csbwin_localstate0_dsa(
+    CSB_V1_RuntimeProfile *candidate,
+    const CSB_V1_CSBWinDSAFilterStackRunnerContext *before,
+    const CSB_V1_CSBWinDSAFilterStackRunnerContext *after)
+{
+    CSB_V1_CSBWinDSAImportedHeader *header;
+    uint8_t *record;
+    uint16_t word2;
+    uint32_t final_state;
+    int64_t relative_state;
+    int type;
+    int size;
+
+    if (!candidate || !before || !after || !candidate->dungeon_handle ||
+        !before->dsa_slave_thing_valid ||
+        !csb_v1_runtime_has_verified_csbwin_extended_dsa_tail(candidate) ||
+        before->dsa_id < 0 || before->dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
+        before->action_ordinal != after->action_ordinal) {
+        return 0;
+    }
+    header = &candidate->csbwin_extended_dsa_state.imported_headers[
+        before->dsa_id];
+    if (!header->valid || header->local_state != 0u ||
+        header->state_slot_count == 0u) {
+        return 0;
+    }
+    if (after->transfer_execution_count != before->transfer_execution_count) {
+        if (after->transfer_execution_count !=
+                before->transfer_execution_count + 1 ||
+            after->last_transfer.final_state < 0) {
+            return 0;
+        }
+        final_state = (uint32_t)after->last_transfer.final_state;
+    } else {
+        if (after->execution_count != before->execution_count + 1) return 0;
+        if (after->last_execution.forced_state >= 0) {
+            final_state = (uint32_t)after->last_execution.forced_state;
+        } else {
+            relative_state = (int64_t)before->state_index +
+                (int64_t)after->last_execution.next_state;
+            if (relative_state < 0 || relative_state > UINT32_MAX) return 0;
+            final_state = (uint32_t)relative_state;
+        }
+    }
+    if (final_state >= header->state_slot_count || final_state > 0x0fu) {
+        return 0;
+    }
+    record = csb_v1_runtime_mutable_thing_record(candidate->dungeon_handle,
+        before->dsa_slave_thing, &type, &size);
+    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) return 0;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE ||
+        ((word2 >> 7) & 0x1fu) >= 32u ||
+        ((word2 >> 12) & 0x0fu) != before->state_index) {
+        return 0;
+    }
+    word2 = (uint16_t)((word2 & 0x0fffu) | (final_state << 12));
+    record[2] = (uint8_t)word2;
+    record[3] = (uint8_t)(word2 >> 8);
+    return 1;
+}
+
 /* Persist the one CSBWin DSA state store that has a complete source-owned
  * representation here: DSA::m_state (LocalState 1).  CSBWin DSA.cpp
  * ProcessDSATimer6 (lines 5315-5465) obtains a state through GetState(),
@@ -16347,23 +16443,24 @@ static int csb_v1_runtime_persist_csbwin_localstate1_dsa(
         dsa_id = csb_v1_runtime_read_le32(
             candidate->csbwin_appended_tail + offset);
         state_slots = csb_v1_runtime_read_le32(
-            candidate->csbwin_appended_tail + offset + 88u);
-        non_empty_states = csb_v1_runtime_read_le32(
             candidate->csbwin_appended_tail + offset + 96u);
+        non_empty_states = csb_v1_runtime_read_le32(
+            candidate->csbwin_appended_tail + offset + 104u);
         if (dsa_id == (uint32_t)before->dsa_id) {
-            if (((uint32_t)candidate->csbwin_appended_tail[offset + 84u] |
-                    ((uint32_t)candidate->csbwin_appended_tail[offset + 85u]
-                     << 8)) != header->persistent_state ||
-                candidate->csbwin_appended_tail[offset + 86u] != 1u ||
-                candidate->csbwin_appended_tail[offset + 87u] !=
-                    (uint8_t)header->group_id ||
+            if (csb_v1_runtime_read_le32(
+                    candidate->csbwin_appended_tail + offset + 84u) !=
+                    header->persistent_state ||
+                csb_v1_runtime_read_le32(
+                    candidate->csbwin_appended_tail + offset + 88u) != 1u ||
+                csb_v1_runtime_read_le32(
+                    candidate->csbwin_appended_tail + offset + 92u) !=
+                    header->group_id ||
                 state_slots != header->state_slot_count) {
                 return 0;
             }
-            candidate->csbwin_appended_tail[offset + 84u] =
-                (uint8_t)final_state;
-            candidate->csbwin_appended_tail[offset + 85u] =
-                (uint8_t)(final_state >> 8);
+            csb_v1_runtime_write_le32(
+                candidate->csbwin_appended_tail + offset + 84u,
+                final_state);
             /* CSBWin data.cpp RCS(ui8 *, i32):1818-1827. */
             {
                 uint32_t checksum = 0xffffu;
@@ -16385,7 +16482,7 @@ static int csb_v1_runtime_persist_csbwin_localstate1_dsa(
             return 1;
         }
 
-        offset += 100u;
+        offset += 108u;
         for (state_ordinal = 0u; state_ordinal < non_empty_states;
              ++state_ordinal) {
             uint32_t action_count;
@@ -17370,6 +17467,17 @@ static int csb_v1_runtime_dsa_set_generator_delay(void *user,
     return 1;
 }
 
+static int csb_v1_runtime_dsa_commit_generator_delay(
+    void *user, uint32_t location, int expected_delay, int delay)
+{
+    int current_delay = -1;
+
+    if (!csb_v1_runtime_dsa_get_generator_delay(user, location,
+                                                 &current_delay) ||
+        current_delay != expected_delay) return 0;
+    return csb_v1_runtime_dsa_set_generator_delay(user, location, delay);
+}
+
 static int csb_v1_runtime_dsa_get_monster_info(void *user,
                                                 uint16_t thing,
                                                 uint32_t out_values[8])
@@ -17949,6 +18057,20 @@ static int csb_v1_runtime_dsa_set_missile_info(
                               ((values[3] & 3u) << 2));
     event->c_cell = timer->ubyte8;
     return 1;
+}
+
+static int csb_v1_runtime_dsa_commit_missile_info(
+    void *user, uint16_t thing, const uint32_t expected_values[4],
+    const uint32_t values[4])
+{
+    uint32_t current_values[4];
+
+    if (!expected_values || !values ||
+        csb_v1_runtime_dsa_get_missile_info(user, thing, current_values) != 1 ||
+        memcmp(current_values, expected_values, sizeof(current_values)) != 0) {
+        return 0;
+    }
+    return csb_v1_runtime_dsa_set_missile_info(user, thing, values);
 }
 
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
@@ -19263,6 +19385,23 @@ static void csb_v1_runtime_record_saved_timer_dsa_execution(
     CSB_V1_RuntimeProfile *profile, uint16_t queue_slot,
     uint16_t timer_index, const CSB_V1_DSAImportedAction *action);
 
+static void csb_v1_runtime_invalidate_saved_timer_dsa_execution(
+    CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile) return;
+    memset(&profile->csbwin_last_dsa_execution_receipt, 0,
+           sizeof(profile->csbwin_last_dsa_execution_receipt));
+    profile->csbwin_last_saved_timer_dsa_valid = 0;
+    profile->csbwin_last_saved_timer_dsa_queue_slot =
+        CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    profile->csbwin_last_saved_timer_dsa_timer_index =
+        CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    profile->csbwin_last_saved_timer_dsa_id = 0xffu;
+    profile->csbwin_last_saved_timer_dsa_state_index = 0u;
+    profile->csbwin_last_saved_timer_dsa_column = 0u;
+    profile->csbwin_last_saved_timer_dsa_action_ordinal = -1;
+}
+
 int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -19274,7 +19413,9 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     uint16_t queue_slot;
     int prepared = 0;
 
-    if (!profile || !dungeon || !slave_location || !timer ||
+    if (!profile) return 0;
+    csb_v1_runtime_invalidate_saved_timer_dsa_execution(profile);
+    if (!dungeon || !slave_location || !timer ||
         !csb_v1_runtime_find_saved_timer_queue_slot(
             profile, timer, &queue_slot)) {
         return 0;
@@ -19308,8 +19449,17 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     default:
         return 0;
     }
-    if (!prepared || !action ||
-        !csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    if (!prepared || !action) {
+        return 0;
+    }
+    /* ProcessTimers owns this transient SET/CLEAR/TOGGLE map.  It starts
+     * with the source defaults for each restored dispatch; AMPERSAND2 may
+     * replace it only while this exact runner is active. */
+    runner.timer_type_modifiers_valid = 1;
+    runner.timer_type_modifiers[0] = 0u;
+    runner.timer_type_modifiers[1] = 1u;
+    runner.timer_type_modifiers[2] = 2u;
+    if (!csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             profile, &runner, action, NULL, 0, NULL)) {
         return 0;
     }
@@ -19394,6 +19544,41 @@ static void csb_v1_runtime_record_saved_timer_dsa_execution(
     profile->csbwin_last_saved_timer_dsa_state_index = action->state_index;
     profile->csbwin_last_saved_timer_dsa_column = action->column;
     profile->csbwin_last_saved_timer_dsa_action_ordinal = action_ordinal;
+
+    /* ModifyMessage is scoped to this ProcessTimers invocation.  Its map is
+     * useful only when the exact saved TIMER/queue/action triple still owns
+     * the just-completed execution receipt. */
+    if (profile->csbwin_last_dsa_execution_receipt.valid &&
+        profile->csbwin_last_dsa_execution_receipt.timer_type_modifiers_valid &&
+        queue_slot < profile->csbwin_timer_queue_summary_count &&
+        timer_index < profile->csbwin_timer_summary_count &&
+        profile->csbwin_timer_queue[queue_slot] == timer_index &&
+        profile->csbwin_timers[timer_index].valid &&
+        !profile->csbwin_timers[timer_index].truncated &&
+        profile->csbwin_timers[timer_index].source_index == timer_index &&
+        profile->csbwin_last_dsa_execution_receipt.dsa_id == action->dsa_id &&
+        profile->csbwin_last_dsa_execution_receipt.state_index ==
+            action->state_index &&
+        profile->csbwin_last_dsa_execution_receipt.column == action->column &&
+        profile->csbwin_last_dsa_execution_receipt.action_ordinal ==
+            action_ordinal) {
+        const CSB_V1_CSBWin512TimerSummary *timer =
+            &profile->csbwin_timers[timer_index];
+
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_scope_valid = 1;
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_queue_slot =
+            queue_slot;
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_index =
+            timer_index;
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_function =
+            timer->function;
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_action =
+            timer->ubyte9;
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_position =
+            timer->ubyte8;
+        profile->csbwin_last_dsa_execution_receipt.saved_timer_time =
+            timer->time;
+    }
 }
 
 int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
@@ -19418,7 +19603,9 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
      * its allocated timer index, selects STONEROOM only for roomSTONE, and
      * otherwise invokes OPENROOM. Timer.cpp's two handlers read the exact
      * EDT_MessageParameters record before entering ProcessDSATimer[56]. */
-    if (!profile || !dungeon || !slave_location || !timer ||
+    if (!profile) return 0;
+    csb_v1_runtime_invalidate_saved_timer_dsa_execution(profile);
+    if (!dungeon || !slave_location || !timer ||
         !timer->valid || timer->truncated || timer->function != 101u ||
         timer->level != (uint8_t)slave_location->level ||
         timer->ubyte6 != (uint8_t)slave_location->x ||
@@ -19455,8 +19642,14 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
         prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
             profile, dungeon, slave_location, &dispatched, &runner, &action);
     }
-    if (!prepared || !action ||
-        !csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    if (!prepared || !action) {
+        return 0;
+    }
+    runner.timer_type_modifiers_valid = 1;
+    runner.timer_type_modifiers[0] = 0u;
+    runner.timer_type_modifiers[1] = 1u;
+    runner.timer_type_modifiers[2] = 2u;
+    if (!csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             profile, &runner, action, parameters, (int)parameter_count, NULL)) {
         return 0;
     }
@@ -19485,7 +19678,9 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
     /* SaveGame.cpp restores both serialized arrays before ProcessTimers
      * consumes m_timerQueue. Do not allow a caller-built TIMER shape to
      * stand in for either authenticated saved record. */
-    if (!profile || !dungeon || !slave_location ||
+    if (!profile) return 0;
+    csb_v1_runtime_invalidate_saved_timer_dsa_execution(profile);
+    if (!dungeon || !slave_location ||
         !csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
         queue_index >= profile->csbwin_timer_queue_summary_count) {
         return 0;
@@ -19541,8 +19736,14 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
     default:
         return 0;
     }
-    if (!prepared || !action ||
-        !csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    if (!prepared || !action) {
+        return 0;
+    }
+    runner.timer_type_modifiers_valid = 1;
+    runner.timer_type_modifiers[0] = 0u;
+    runner.timer_type_modifiers[1] = 1u;
+    runner.timer_type_modifiers[2] = 2u;
+    if (!csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             profile, &runner, action, NULL, 0, NULL)) {
         return 0;
     }
@@ -21316,6 +21517,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.excell_user = (void *)profile;
     candidate.get_generator_delay = csb_v1_runtime_dsa_get_generator_delay;
     candidate.set_generator_delay = csb_v1_runtime_dsa_set_generator_delay;
+    candidate.commit_generator_delay = csb_v1_runtime_dsa_commit_generator_delay;
     candidate.get_monster_info = csb_v1_runtime_dsa_get_monster_info;
     candidate.set_monster_info = csb_v1_runtime_dsa_set_monster_info;
     candidate.get_champion_possession =
@@ -21327,6 +21529,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
     candidate.set_missile_info = csb_v1_runtime_dsa_set_missile_info;
+    candidate.commit_missile_info = csb_v1_runtime_dsa_commit_missile_info;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -21341,6 +21544,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
         csb_v1_runtime_dsa_normalize_object_property;
     candidate.get_actuator_payload = csb_v1_runtime_dsa_get_actuator_payload;
     candidate.set_actuator_payload = csb_v1_runtime_dsa_set_actuator_payload;
+    candidate.copy_actuator_payload =
+        csb_v1_runtime_dsa_copy_actuator_payload;
     candidate.prepare_experience_plus =
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
@@ -21386,6 +21591,21 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int random_state_changed;
     int text_message_changed;
     int dungeon_changed = 0;
+    int saved_dsa_state_transition_valid = 0;
+    uint8_t saved_dsa_state_storage_kind = 0u;
+    uint32_t saved_dsa_state_before = 0u;
+    uint32_t saved_dsa_state_after = 0u;
+    uint32_t saved_dsa_state_tail_fnv1a = 0u;
+    uint8_t *saved_dsa_state_record;
+    int saved_dsa_state_record_type;
+    int saved_dsa_state_record_size;
+    int missile_info_timer_owner_valid = 0;
+    uint16_t missile_info_timer_index = CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    uint16_t missile_info_timer_queue_slot = CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    uint8_t missile_info_timer_function = 0u;
+    uint8_t missile_info_timer_position_before = 0u;
+    uint8_t missile_info_timer_position_after = 0u;
+    uint32_t missile_info_timer_time = 0u;
     int i;
 
     if (!profile || !runner || !action ||
@@ -21483,6 +21703,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.excell_user = &profile_candidate;
     candidate.get_generator_delay = csb_v1_runtime_dsa_get_generator_delay;
     candidate.set_generator_delay = csb_v1_runtime_dsa_set_generator_delay;
+    candidate.commit_generator_delay = csb_v1_runtime_dsa_commit_generator_delay;
     candidate.get_monster_info = csb_v1_runtime_dsa_get_monster_info;
     candidate.set_monster_info = csb_v1_runtime_dsa_set_monster_info;
     candidate.get_champion_possession =
@@ -21494,6 +21715,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
     candidate.set_missile_info = csb_v1_runtime_dsa_set_missile_info;
+    candidate.commit_missile_info = csb_v1_runtime_dsa_commit_missile_info;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -21508,6 +21730,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         csb_v1_runtime_dsa_normalize_object_property;
     candidate.get_actuator_payload = csb_v1_runtime_dsa_get_actuator_payload;
     candidate.set_actuator_payload = csb_v1_runtime_dsa_set_actuator_payload;
+    candidate.copy_actuator_payload =
+        csb_v1_runtime_dsa_copy_actuator_payload;
     candidate.prepare_experience_plus =
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
@@ -21575,7 +21799,35 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         }
     }
     dsa_state_changed = 0;
-    if (profile_candidate.csbwin_appended_tail_valid &&
+    if (profile_candidate.csbwin_extended_dsa_state.imported_headers[
+            candidate.dsa_id].valid &&
+        profile_candidate.csbwin_extended_dsa_state.imported_headers[
+            candidate.dsa_id].local_state == 0u) {
+        saved_dsa_state_before = runner->state_index;
+        if (!csb_v1_runtime_persist_csbwin_localstate0_dsa(
+                &profile_candidate, runner, &candidate)) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        saved_dsa_state_record = csb_v1_runtime_mutable_thing_record(
+            profile_candidate.dungeon_handle, runner->dsa_slave_thing,
+            &saved_dsa_state_record_type, &saved_dsa_state_record_size);
+        if (!saved_dsa_state_record ||
+            saved_dsa_state_record_type != CSB_V1_THING_TYPE_ACTUATOR ||
+            saved_dsa_state_record_size < 4) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        dsa_state_changed = 1;
+        saved_dsa_state_after = (uint32_t)(
+            ((uint16_t)saved_dsa_state_record[2] |
+             ((uint16_t)saved_dsa_state_record[3] << 8)) >> 12) & 0x0fu;
+        saved_dsa_state_tail_fnv1a =
+            profile_candidate.csbwin_appended_tail_fnv1a;
+        saved_dsa_state_storage_kind =
+            CSB_V1_CSBWIN_DSA_STATE_STORAGE_DB3_DSASTATE;
+        saved_dsa_state_transition_valid = 1;
+    } else if (profile_candidate.csbwin_appended_tail_valid &&
         profile_candidate.csbwin_appended_tail_preserved_size >=
             sizeof(" Extended Features ") &&
         memcmp(profile_candidate.csbwin_appended_tail,
@@ -21584,12 +21836,20 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             candidate.dsa_id].valid &&
         profile_candidate.csbwin_extended_dsa_state.imported_headers[
             candidate.dsa_id].local_state == 1u) {
+        saved_dsa_state_before = runner->state_index;
         if (!csb_v1_runtime_persist_csbwin_localstate1_dsa(
                 &profile_candidate, runner, &candidate)) {
             free(dungeon_raw_candidate);
             return 0;
         }
         dsa_state_changed = 1;
+        saved_dsa_state_after = profile_candidate.csbwin_extended_dsa_state
+            .imported_headers[candidate.dsa_id].persistent_state;
+        saved_dsa_state_tail_fnv1a =
+            profile_candidate.csbwin_appended_tail_fnv1a;
+        saved_dsa_state_storage_kind =
+            CSB_V1_CSBWIN_DSA_STATE_STORAGE_SAVED_M_STATE;
+        saved_dsa_state_transition_valid = 1;
     } else if (profile_candidate.csbwin_extended_dsa_state.imported_headers[
                    candidate.dsa_id].valid &&
                profile_candidate.csbwin_extended_dsa_state.imported_headers[
@@ -21610,6 +21870,24 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
                 free(dungeon_raw_candidate);
                 return 0;
             }
+            saved_dsa_state_record = csb_v1_runtime_mutable_thing_record(
+                profile_candidate.dungeon_handle, runner->dsa_slave_thing,
+                &saved_dsa_state_record_type, &saved_dsa_state_record_size);
+            if (!saved_dsa_state_record ||
+                saved_dsa_state_record_type != CSB_V1_THING_TYPE_ACTUATOR ||
+                saved_dsa_state_record_size < 8) {
+                free(dungeon_raw_candidate);
+                return 0;
+            }
+            saved_dsa_state_before = runner->state_index;
+            saved_dsa_state_after = (uint32_t)(
+                ((uint16_t)saved_dsa_state_record[6] |
+                 ((uint16_t)saved_dsa_state_record[7] << 8)) & 0x3fffu);
+            saved_dsa_state_tail_fnv1a =
+                profile_candidate.csbwin_appended_tail_fnv1a;
+            saved_dsa_state_storage_kind =
+                CSB_V1_CSBWIN_DSA_STATE_STORAGE_DB3_PARAMETER_B;
+            saved_dsa_state_transition_valid = 1;
         }
     }
     expool_changed = profile_candidate.csbwin_appended_tail_fnv1a !=
@@ -21617,6 +21895,68 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         memcmp(profile_candidate.csbwin_appended_tail,
                profile->csbwin_appended_tail,
                sizeof(profile->csbwin_appended_tail)) != 0;
+    if (candidate.last_execution.missile_info_store_count != 0u) {
+        const uint8_t *before_missile;
+        const uint8_t *after_missile;
+        const CSB_V1_CSBWin512TimerSummary *before_timer;
+        const CSB_V1_CSBWin512TimerSummary *after_timer;
+        uint16_t candidate_missile_queue_slot;
+        int before_type;
+        int after_type;
+        int before_size;
+        int after_size;
+
+        before_missile = csb_v1_dungeon_get_thing_record(
+            profile->dungeon_handle,
+            candidate.last_execution.last_missile_info_thing,
+            &before_type, NULL, &before_size);
+        after_missile = csb_v1_dungeon_get_thing_record(
+            profile_candidate.dungeon_handle,
+            candidate.last_execution.last_missile_info_thing,
+            &after_type, NULL, &after_size);
+        if (!before_missile || !after_missile || before_type != 14 ||
+            after_type != 14 || before_size < 8 || after_size < 8 ||
+            csb_v1_runtime_read_u16(before_missile + 6) !=
+                csb_v1_runtime_read_u16(after_missile + 6)) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        missile_info_timer_index = csb_v1_runtime_read_u16(before_missile + 6);
+        if (missile_info_timer_index >= profile->csbwin_timer_summary_count ||
+            missile_info_timer_index >=
+                profile_candidate.csbwin_timer_summary_count ||
+            !csb_v1_runtime_find_saved_timer_queue_slot(
+                profile, &profile->csbwin_timers[missile_info_timer_index],
+                &missile_info_timer_queue_slot) ||
+            !csb_v1_runtime_find_saved_timer_queue_slot(
+                &profile_candidate,
+                &profile_candidate.csbwin_timers[missile_info_timer_index],
+                &candidate_missile_queue_slot) ||
+            candidate_missile_queue_slot != missile_info_timer_queue_slot) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        before_timer = &profile->csbwin_timers[missile_info_timer_index];
+        after_timer = &profile_candidate.csbwin_timers[missile_info_timer_index];
+        if (!before_timer->valid || !after_timer->valid ||
+            before_timer->truncated || after_timer->truncated ||
+            before_timer->source_index != missile_info_timer_index ||
+            after_timer->source_index != missile_info_timer_index ||
+            before_timer->function != after_timer->function ||
+            before_timer->time != after_timer->time ||
+            ((before_timer->ubyte8 >> 2) & 3u) !=
+                candidate.last_execution.last_missile_info_before[3] ||
+            ((after_timer->ubyte8 >> 2) & 3u) !=
+                candidate.last_execution.last_missile_info_after[3]) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        missile_info_timer_owner_valid = 1;
+        missile_info_timer_function = before_timer->function;
+        missile_info_timer_position_before = before_timer->ubyte8;
+        missile_info_timer_position_after = after_timer->ubyte8;
+        missile_info_timer_time = before_timer->time;
+    }
     if (globals_changed) {
         memcpy(profile->csbwin_global_variables,
                profile_candidate.csbwin_global_variables,
@@ -21696,6 +22036,23 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     execution_receipt.message_core = core_receipt.message_core ? 1 : 0;
     execution_receipt.dungeon_mutation_core =
         core_receipt.dungeon_mutation_core ? 1 : 0;
+    execution_receipt.timer_type_modifiers_valid =
+        candidate.timer_type_modifiers_valid ? 1 : 0;
+    if (execution_receipt.timer_type_modifiers_valid) {
+        memcpy(execution_receipt.timer_type_modifiers,
+               candidate.timer_type_modifiers,
+               sizeof(execution_receipt.timer_type_modifiers));
+    }
+    execution_receipt.saved_dsa_state_transition_valid =
+        saved_dsa_state_transition_valid;
+    if (execution_receipt.saved_dsa_state_transition_valid) {
+        execution_receipt.saved_dsa_state_storage_kind =
+            saved_dsa_state_storage_kind;
+        execution_receipt.saved_dsa_state_before = saved_dsa_state_before;
+        execution_receipt.saved_dsa_state_after = saved_dsa_state_after;
+        execution_receipt.saved_dsa_state_tail_fnv1a =
+            saved_dsa_state_tail_fnv1a;
+    }
     execution_receipt.rollback_guarded = 1;
     execution_receipt.parameter_count = parameter_count;
     execution_receipt.command_count = core_receipt.command_count;
@@ -21719,6 +22076,30 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.last_execution.last_actuator_copy_source_thing;
     execution_receipt.last_actuator_copy_destination_thing =
         candidate.last_execution.last_actuator_copy_destination_thing;
+    execution_receipt.missile_info_store_count =
+        candidate.last_execution.missile_info_store_count;
+    execution_receipt.last_missile_info_thing =
+        candidate.last_execution.last_missile_info_thing;
+    if (execution_receipt.missile_info_store_count != 0u) {
+        memcpy(execution_receipt.last_missile_info_before,
+               candidate.last_execution.last_missile_info_before,
+               sizeof(execution_receipt.last_missile_info_before));
+        memcpy(execution_receipt.last_missile_info_after,
+               candidate.last_execution.last_missile_info_after,
+               sizeof(execution_receipt.last_missile_info_after));
+        execution_receipt.missile_info_timer_owner_valid =
+            missile_info_timer_owner_valid;
+        execution_receipt.missile_info_timer_index = missile_info_timer_index;
+        execution_receipt.missile_info_timer_queue_slot =
+            missile_info_timer_queue_slot;
+        execution_receipt.missile_info_timer_function =
+            missile_info_timer_function;
+        execution_receipt.missile_info_timer_position_before =
+            missile_info_timer_position_before;
+        execution_receipt.missile_info_timer_position_after =
+            missile_info_timer_position_after;
+        execution_receipt.missile_info_timer_time = missile_info_timer_time;
+    }
     if (candidate.transfer_execution_count != runner->transfer_execution_count) {
         execution_receipt.transfer_count = candidate.last_transfer.transfer_count;
         execution_receipt.transfer_return_count =

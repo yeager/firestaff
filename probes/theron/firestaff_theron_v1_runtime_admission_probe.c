@@ -1908,7 +1908,7 @@ int main(void)
     }
     if (!theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
             &dungeon_handoff,
-            "theron-v1-original-host-route-track02-dungeon",
+            THERON_V1_TRACK02_ORIGINAL_HOST_DUNGEON_ROUTE,
             1, 1, 1, 1, 1,
             &host_consumer_proof)) {
         return 1;
@@ -1931,6 +1931,7 @@ int main(void)
             render_proof.decoded_bitmap_hash ||
         host_consumer_proof.decoded_palette_hash !=
             render_proof.decoded_palette_hash ||
+        host_consumer_proof.original_host_route_identity_checksum == 0u ||
         !host_consumer_proof.original_host_route_bound ||
         !host_consumer_proof.level_grid_runtime_consumer_bound ||
         !host_consumer_proof.object_table_runtime_consumer_bound ||
@@ -1977,6 +1978,8 @@ int main(void)
             render_proof.decoded_bitmap_hash ||
         host_consumer.decoded_palette_hash !=
             render_proof.decoded_palette_hash ||
+        host_consumer.original_host_route_identity_checksum !=
+            host_consumer_proof.original_host_route_identity_checksum ||
         !host_consumer.real_track02_dungeon_consumer_ready ||
         !host_consumer.host_surface_upload_allowed ||
         !host_consumer.host_capture_frame_required ||
@@ -2002,10 +2005,17 @@ int main(void)
     }
     if (theron_v1_runtime_track02_host_dungeon_consumer_proof_from_handoff(
             &dungeon_handoff,
-            "theron-v1-original-host-route-track02-dungeon",
+            THERON_V1_TRACK02_ORIGINAL_HOST_DUNGEON_ROUTE,
             1, 1, 1, 1, 0,
             &mutated_host_consumer_proof) ||
         mutated_host_consumer_proof.valid) {
+        return 1;
+    }
+    mutated_host_consumer_proof = host_consumer_proof;
+    mutated_host_consumer_proof.original_host_route_identity_checksum ^= 1u;
+    if (theron_v1_runtime_bind_track02_host_dungeon_consumer(
+            &dungeon_handoff, &mutated_host_consumer_proof, &host_consumer) ||
+        host_consumer.valid) {
         return 1;
     }
     mutated_host_consumer_proof = host_consumer_proof;

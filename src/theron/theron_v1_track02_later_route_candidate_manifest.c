@@ -1,0 +1,5 @@
+#include "theron_v1_track02_later_route_candidate_manifest.h"
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+int theron_v1_track02_later_route_candidate_manifest_write(const Theron_V1Track02LaterRouteCandidateReceipt*c,const char*t,const char*m,const char*p){struct stat s;FILE*f;if(!c||!t||!m||!p||!t[0]||strlen(t)!=32||!m[0]||strlen(m)!=32||c->status!=THERON_V1_TRACK02_LATER_ROUTE_CAPTURE_REQUIRED||!c->observed_trace_row_consumed||!c->direct_media_consumed||!c->replay_tail_consumed||!c->opaque_only||!c->loader_pc||!c->record||c->record!=c->raw_sector||!c->destination_identity||!c->campaign_layout_epoch||stat(p,&s)==0)return 0;f=fopen(p,"wb");if(!f)return 0;if(fprintf(f,"THERON_TRACK02_LATER_ROUTE_CANDIDATE_MANIFEST_V1\ntrack02_md5=%s\ntrace_md5=%s\nlayout_epoch=%u\nloader_pc=%x\nrecord=%x\nraw_sector=%x\ndestination_identity=%x\nstatus=capture_required\npayload_policy=opaque_only\n",m,t,c->campaign_layout_epoch,c->loader_pc,c->record,c->raw_sector,c->destination_identity)<0||fclose(f)!=0){remove(p);return 0;}return 1;}

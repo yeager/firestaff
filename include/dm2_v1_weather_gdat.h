@@ -77,6 +77,7 @@ typedef struct {
     const uint8_t *raw_text;
     uint32_t byte_count;
     uint32_t raw_hash;
+    uint16_t text_raw_index;
     int material_valid;
     uint16_t rect_number;
     uint8_t flip_mode;
@@ -88,6 +89,11 @@ typedef struct {
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
     int decoded_pixels_valid;
+    const uint8_t *image_source_bytes;
+    uint32_t image_source_byte_count;
+    uint32_t image_raw_hash;
+    uint16_t image_raw_index;
+    uint32_t image_material_receipt_hash;
     uint16_t decoded_width;
     uint16_t decoded_height;
     DM2_ImageFormat decoded_format;
@@ -193,6 +199,22 @@ typedef struct {
     DM2_V1_WeatherDrawPlan draws[2];
     DM2_V1_WeatherDestinationClip clips[2];
 } DM2_V1_WeatherRendererReceipt;
+
+/* Final M11 admission for a source-owned outdoor weather render.  This
+ * records immutable GRAPHICS.DAT dtText/dtImage identities and the live
+ * DM2_SET_TIMER_WEATHER owner; it owns no decoded buffer or fallback draw. */
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t timer_owner_hash;
+    uint32_t weather_receipt_hash;
+    uint32_t renderer_hash;
+    uint32_t raw_material_hash;
+    uint32_t raw_material_byte_count;
+    uint32_t command_mask;
+    unsigned int command_count;
+    uint32_t receipt_hash;
+} DM2_V1_OutdoorWeatherM11Receipt;
 
 typedef struct {
     int valid;
@@ -327,6 +349,11 @@ int dm2_v1_weather_gdat_renderer_receipt(
     const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count,
     const DM2_V1_WeatherDrawContext *context, const uint8_t *rect_table,
     size_t rect_table_size, DM2_V1_WeatherRendererReceipt *out);
+int dm2_v1_weather_gdat_outdoor_m11_receipt(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_WeatherRendererReceipt *renderer,
+    const DM2_V1_SetTimerWeatherReceipt *timer_owner,
+    DM2_V1_OutdoorWeatherM11Receipt *out);
 int dm2_v1_weather_runtime_admission_receipt(
     const DM2_V1_GraphicsDataOpenReceipt *graphics_open,
     const DM2_V1_WeatherGdatReceipt *weather,

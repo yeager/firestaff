@@ -29,6 +29,7 @@ int main(void) {
     s[n] = '\0'; fclose(f);
     char *action_menu;
     char *action_menu_end;
+    char *action_name_lookup;
     char *hud_font_gate;
     char *hud_font_gate_end;
 
@@ -43,8 +44,21 @@ int main(void) {
     if (!action_menu || !action_menu_end || action_menu_end <= action_menu ||
         !contains_between(action_menu, action_menu_end,
                           "slot && slot->loaded && slot->pixels") ||
+        !contains_between(action_menu, action_menu_end,
+                          "Do not draw") ||
+        !contains_between(action_menu, action_menu_end,
+                          "return 1;") ||
+        contains_between(action_menu, action_menu_end,
+                         "M11_ACTION_NAMES") ||
         contains_between(action_menu, action_menu_end,
                          "m11_blit_panel_asset_native(state,")) {
+        ok = 0;
+    }
+    action_name_lookup = strstr(s, "const char* M11_GameView_GetActionName(");
+    if (!action_name_lookup ||
+        !strstr(action_name_lookup,
+                "dm1_v1_action_name_f0384_pc34(actionIndex)") ||
+        strstr(action_name_lookup, "M11_ACTION_NAMES")) {
         ok = 0;
     }
     hud_font_gate = strstr(s, "static int m11_dm1_pc34_hud_font_is_source_bound(");

@@ -2379,6 +2379,75 @@ static int m12_publish_direct_theron_match(
     int versionIndex,
     const char* configuredDataDir);
 
+static void m12_publish_theron_campaign_media(
+    M12_AssetStatus* status,
+    const char* requestedMediaPath,
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* media,
+    const Theron_V1Track02CaptureTargetPlan* plan,
+    int launchReady) {
+    char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
+    int theronIndex = m12_game_index_from_id("theron");
+    int versionIndex;
+    int i;
+    size_t requiredIndex;
+
+    if (!status || !media || theronIndex < 0) return;
+    memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
+    status->theronCampaignMedia = *media;
+    status->theronCampaignMediaLaunchReady = launchReady ? 1 : 0;
+    if (launchReady && plan) {
+        status->theronCampaignMediaPlan = *plan;
+    }
+    if (requestedMediaPath && requestedMediaPath[0] != '\0') {
+        m12_copy_string(status->dataDir, sizeof(status->dataDir), requestedMediaPath);
+    }
+    if (media->candidate_path[0] &&
+        FSP_ParentDir(runtimeRoot, sizeof(runtimeRoot), media->candidate_path)) {
+        m12_copy_string(status->runtimeDataDirs[theronIndex],
+                        sizeof(status->runtimeDataDirs[theronIndex]), runtimeRoot);
+    }
+    if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
+        m12_copy_string(status->legacyFallbackDir, sizeof(status->legacyFallbackDir), legacyData);
+    }
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        if (i != theronIndex) {
+            m12_copy_string(status->runtimeDataDirs[i],
+                            sizeof(status->runtimeDataDirs[i]), status->dataDir);
+        }
+    }
+    m12_init_version_metadata(status);
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_init_required_file_metadata(status, i);
+    }
+    if (!launchReady || !media->direct_media.payload_path[0] ||
+        (versionIndex = m12_theron_version_index_for_md5(media->track02_md5)) < 0) {
+        return;
+    }
+    status->versions[theronIndex][versionIndex].matched = 1;
+    m12_copy_string(status->versions[theronIndex][versionIndex].matchedPath,
+                    sizeof(status->versions[theronIndex][versionIndex].matchedPath),
+                    media->direct_media.payload_path);
+    m12_copy_string(status->versions[theronIndex][versionIndex].matchedMd5,
+                    sizeof(status->versions[theronIndex][versionIndex].matchedMd5),
+                    media->track02_md5);
+    for (requiredIndex = 0U; requiredIndex < status->requiredFileCounts[theronIndex];
+         ++requiredIndex) {
+        M12_AssetRequiredFileStatus* required = &status->requiredFiles[theronIndex][requiredIndex];
+        if (required->roleId && strcmp(required->roleId, "track02") == 0) {
+            required->matched = 1;
+            m12_copy_string(required->matchedPath, sizeof(required->matchedPath),
+                            media->direct_media.payload_path);
+            m12_copy_string(required->matchedHash, sizeof(required->matchedHash),
+                            media->track02_md5);
+        }
+    }
+    status->originalFileCandidateFound = 1;
+    m12_apply_required_game_availability(status, theronIndex, 1);
+    m12_classify_theron_media_path(status, media->candidate_path);
+}
+
 static int m12_scan_direct_theron_request(M12_AssetStatus* status,
                                           const char* requestedDataDir,
                                           const char* configuredDataDir) {
@@ -3012,6 +3081,29 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
     M12_AssetStatus_ScanGameWithOptions(status, requestedDataDir, gameId, NULL);
 }
 
+int M12_AssetStatus_ScanTheronCampaignMedia(
+    M12_AssetStatus* status,
+    const char* requestedMediaPath,
+    const char* expectedTrack02Md5,
+    const Theron_V1Track02CaptureTargetPlan* plan) {
+    Theron_V1Track02CampaignMediaDiscoveryReceipt media;
+    int launchReady = 0;
+    if (!status) return 0;
+    memset(&media, 0, sizeof(media));
+    if (!theron_v1_track02_campaign_media_discover(requestedMediaPath,
+                                                     expectedTrack02Md5, 4,
+                                                     &media)) {
+        m12_publish_theron_campaign_media(status, requestedMediaPath, &media, plan, 0);
+        return 0;
+    }
+    launchReady = media.status == THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY &&
+        !media.ambiguous && !media.virtual_container && !media.no_media_extracted &&
+        media.launchable_direct_media && media.exact_layout_bound &&
+        theron_v1_track02_campaign_media_bind_capture_plan(&media, plan);
+    m12_publish_theron_campaign_media(status, requestedMediaPath, &media, plan, launchReady);
+    return launchReady;
+}
+
 void M12_AssetStatus_ScanGameWithOptions(
     M12_AssetStatus* status,
     const char* requestedDataDir,
@@ -3293,6 +3385,15 @@ const char* M12_AssetStatus_GetTheronLaunchMediaPath(
 const Theron_Track02StartupLoaderReceipt*
 M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status) {
     return status ? &status->theronTrack02LoaderReceipt : NULL;
+}
+
+const Theron_V1Track02CampaignMediaDiscoveryReceipt*
+M12_AssetStatus_GetTheronCampaignMedia(const M12_AssetStatus* status) {
+    return status ? &status->theronCampaignMedia : NULL;
+}
+
+int M12_AssetStatus_TheronCampaignMediaLaunchReady(const M12_AssetStatus* status) {
+    return status && status->theronCampaignMediaLaunchReady;
 }
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and

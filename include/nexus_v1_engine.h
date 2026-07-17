@@ -11,6 +11,9 @@
 #define NEXUS_ENGINE_FWD_FROM_HEADERS
 struct Nexus_V1_Engine;
 typedef struct Nexus_V1_Engine Nexus_V1_Engine;
+typedef struct Nexus_V1_Prs3DgnPlacementAdapterReceipt Nexus_V1_Prs3DgnPlacementAdapterReceipt;
+typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
+    Nexus_V1_Structure1FPlacementBindingReceipt;
 #endif
 
 /* ── Data source headers (order matters: low-level first) ──────────── */
@@ -30,6 +33,9 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_structure3_capture_manifest.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stddef.h>
+struct Nexus_V1_DgnMultiLevelCaptureAdjudicationReceipt;
+struct Nexus_V1_SaturnSaveCaptureReceipt;
 
 /* ── Constants ─────────────────────────────────────────────────────── */
 #define NEXUS_MAX_MODELS 64
@@ -229,6 +235,31 @@ typedef struct {
     int structure2_source_level_index;
     int structure2_source_canonical_hash_verified;
     int structure2_source_envelope_valid;
+    int external_prs3_placement_bound;
+    uint64_t external_prs3_placement_trace_fnv1a64;
+    uint64_t external_prs3_placement_header_fnv1a64;
+    uint64_t external_prs3_placement_bitmap_fnv1a64;
+    uint32_t external_prs3_placement_bitmap_offset;
+    uint32_t external_prs3_placement_bitmap_size;
+    uint64_t external_prs3_placement_palt_fnv1a64;
+    uint32_t external_prs3_placement_palt_size;
+    uint64_t external_prs3_placement_dgn_fnv1a64;
+    uint32_t external_prs3_placement_descriptor_index;
+    uint64_t external_prs3_placement_frame_sequence;
+    uint64_t external_prs3_placement_command_sequence;
+    uint64_t external_prs3_placement_route_epoch;
+    int external_prs3_placement_descriptor_target_bound;
+    uint64_t external_prs3_placement_descriptor_fnv1a64;
+    uint32_t external_prs3_placement_image_anchor_offset;
+    uint64_t external_prs3_placement_image_candidate_fnv1a64;
+    uint32_t external_prs3_placement_palette_anchor_offset;
+    uint64_t external_prs3_placement_palette_candidate_fnv1a64;
+    int external_structure1f_placement_bound;
+    uint64_t external_structure1f_placement_dgn_fnv1a64;
+    uint32_t external_structure1f_placement_descriptor_index;
+    uint64_t external_structure1f_placement_frame_sequence;
+    uint64_t external_structure1f_placement_command_sequence;
+    uint64_t external_structure1f_placement_descriptor_fnv1a64;
     int structure2_floor_command_sources_consumed;
     Nexus_V1_DgnStructure1FDirectFloorCommandSource
         structure1f_direct_floor_sources[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -312,6 +343,10 @@ typedef struct {
     int level_index;
     uint32_t entry_index;
     uint32_t face_ordinal;
+    uint32_t face_offset;
+    uint32_t face_length;
+    uint64_t face_fnv1a64;
+    uint64_t package_fnv1a64;
     Nexus_V1_DgnStructure3Face face;
     Nexus_V1_DgnStructure3Vector vertices[4];
     int vertex_slot_count;
@@ -756,6 +791,15 @@ typedef struct {
     uint64_t source_bytes_fnv1a64;
     uint32_t structure3_entry_index;
     uint32_t face_ordinal;
+    uint32_t face_offset;
+    uint32_t face_length;
+    uint64_t face_fnv1a64;
+    uint64_t package_fnv1a64;
+    uint64_t descriptor_fnv1a64;
+    uint32_t image_offset;
+    uint32_t image_length;
+    uint32_t palette_offset;
+    uint32_t palette_length;
     Nexus_V1_DgnStructure3Face face;
     Nexus_V1_DgnStructure3Vector vertices[4];
     int vertex_slot_count;
@@ -1018,6 +1062,10 @@ typedef struct {
     uint64_t source_bytes_fnv1a64;
     int entry_index;
     Nexus_V1_DgnStructure1FEntry entry;
+    uint32_t descriptor_offset;
+    uint32_t descriptor_length;
+    uint64_t descriptor_fnv1a64;
+    uint64_t package_fnv1a64;
     int direct_coordinate_source;
     int structure1a_owner_source;
     int no_draw_only;
@@ -1112,6 +1160,10 @@ typedef struct {
     int source_byte_count;
     uint64_t source_bytes_fnv1a64;
     int descriptor_index;
+    uint32_t descriptor_offset;
+    uint32_t descriptor_length;
+    uint64_t descriptor_fnv1a64;
+    uint64_t package_fnv1a64;
     int palette_anchor;
     uint32_t payload_anchor_offset;
     uint32_t next_anchor_offset;
@@ -1554,6 +1606,149 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget;
 
+/* One source-faithful dungeon face subject joining the parser-observed
+ * Structure1F row, its Structure1A owner/selector, the selected Structure3
+ * face, and the active bounded Structure2 source envelope. The receipt remains
+ * M11 inspection provenance only: it authorizes no transform, mesh, texture,
+ * palette, or drawing semantics. */
+typedef struct {
+    int valid;
+    Nexus_V1_DgnStructure1FSourcePacket structure1f_source;
+    Nexus_V1_DgnStructure1FTransformCaptureTarget transform_target;
+    Nexus_V1_DgnStructure2SourceReceipt structure2_source;
+    int structure1f_record_source_bound;
+    int face_mesh_adjacency_bound;
+    int structure2_source_envelope_bound;
+    int owner_transform_selector_bound;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt;
+
+/* Exact parser-observed DGN container and Structure1F descriptor envelope for
+ * one direct LEV route. The header and table remain opaque byte spans: this
+ * records bounds/counts/identity only and grants no geometry or draw claim. */
+typedef struct {
+    int valid;
+    uint32_t level_index;
+    uint32_t header_offset;
+    uint32_t header_length;
+    uint64_t header_fnv1a64;
+    uint32_t descriptor_offset;
+    uint32_t descriptor_length;
+    uint32_t descriptor_count;
+    uint64_t descriptor_fnv1a64;
+    uint64_t package_fnv1a64;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnDirectLevHeaderDescriptorProvenance;
+
+/* M11's selected parser-observed Structure1F row. The face and Structure2
+ * fields are a bounded source-reference join only: neither selects mesh or
+ * material semantics, and no pixel/palette/render path may consume it. */
+typedef struct {
+    int valid;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    int structure1f_entry_index;
+    uint32_t descriptor_offset;
+    uint32_t descriptor_length;
+    uint64_t descriptor_fnv1a64;
+    uint8_t structure3_model_index;
+    uint8_t face_ordinal;
+    int face_mesh_reference_bound;
+    int material_reference_opaque;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt;
+
+/* The selected Structure1F row's already source-bound static Structure3 face
+ * and Structure2 descriptor. Candidate image/palette intervals are opaque
+ * capture windows, never texture/pixel/palette semantics. */
+typedef struct {
+    int valid;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    int structure1f_entry_index;
+    uint32_t structure3_entry_index;
+    uint32_t face_ordinal;
+    uint32_t face_offset;
+    uint32_t face_length;
+    uint64_t face_fnv1a64;
+    int structure2_descriptor_index;
+    uint32_t descriptor_offset;
+    uint32_t descriptor_length;
+    uint64_t descriptor_fnv1a64;
+    uint32_t image_candidate_offset;
+    uint32_t image_candidate_length;
+    uint64_t image_candidate_fnv1a64;
+    uint32_t palette_candidate_offset;
+    uint32_t palette_candidate_length;
+    uint64_t palette_candidate_fnv1a64;
+    int face_descriptor_bound;
+    int candidates_opaque;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt;
+
+/* The parser-proven Structure3b topology framing for M11's selected direct
+ * Structure1F route. Face rows retain documented vertex-index incidence and
+ * the paired normal row as bounded source spans only. This is capture input,
+ * never a mesh, transform, material, or draw admission. */
+typedef struct {
+    int valid;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    int structure1f_entry_index;
+    uint32_t structure3_entry_index;
+    uint32_t face_ordinal;
+    uint32_t face_offset;
+    uint32_t face_length;
+    uint64_t face_fnv1a64;
+    uint32_t vertex_table_offset;
+    uint32_t vertex_table_length;
+    uint64_t vertex_table_fnv1a64;
+    uint32_t vertex_count;
+    uint32_t face_vertex_index_count;
+    uint64_t referenced_vertex_rows_fnv1a64;
+    uint32_t normal_offset;
+    uint32_t normal_length;
+    uint64_t normal_fnv1a64;
+    int topology_framing_bound;
+    int capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt;
+
+/* Engine-owned M11 dungeon admission for one direct, hash-verified LEV
+ * identity. The nested geometry receipt remains no-draw provenance only. */
+typedef struct {
+    int valid;
+    int level_index;
+    uint64_t route_epoch;
+    char dgn_md5[33];
+    uint64_t dgn_byte_count;
+    uint64_t dgn_fnv1a64;
+    Nexus_V1_DgnDirectLevHeaderDescriptorProvenance header_descriptor;
+    Nexus_V1_DgnM11Structure1FDescriptorIntakeReceipt structure1f_descriptor;
+    Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt
+        structure2_face_descriptor;
+    Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt
+        structure3_topology_descriptor;
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt geometry;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnM11DirectLevNoDrawReceipt;
+
 /* One direct Structure1F owner joined to its exact non-textured Structure3
  * face packet. The raw fill selector is kept opaque for capture correlation;
  * it is never promoted to a flat colour, palette entry, or draw command. */
@@ -1674,6 +1869,30 @@ typedef struct {
     int canonical_pair_bound;
     int fallback_visuals_permitted;
 } Nexus_V1_LevelAuxRuntimeReceipt;
+
+/* Joins the active level's hash-bound SLEV/SAL/MAP/SDDRVS sources with their
+ * bounded runtime profiles. It is deliberately a no-runtime boundary: task
+ * dispatch, SAL decode, playback, and fallback visuals remain unavailable. */
+typedef enum {
+    NEXUS_V1_LEVEL_AUX_ADMISSION_MISSING = 0,
+    NEXUS_V1_LEVEL_AUX_ADMISSION_BLOCKED_SOURCE = 1,
+    NEXUS_V1_LEVEL_AUX_ADMISSION_BLOCKED_SCRIPT = 2,
+    NEXUS_V1_LEVEL_AUX_ADMISSION_BLOCKED_SOUND = 3,
+    NEXUS_V1_LEVEL_AUX_ADMISSION_READY_NO_RUNTIME = 4
+} Nexus_V1_LevelAuxAdmissionStatus;
+
+typedef struct {
+    Nexus_V1_LevelAuxAdmissionStatus status;
+    int level_index;
+    int canonical_sources_bound;
+    int slev_task_profile_bound;
+    int sal_map_profile_bound;
+    int sound_driver_bound;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    int no_runtime_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelAuxAdmissionReceipt;
 
 /* Engine-owned handoff for one raw SNDLEV MAP selector. The selector remains
  * an opaque on-disk value: this only proves a unique, bounded SAL byte window
@@ -2192,6 +2411,40 @@ struct Nexus_V1_Engine {
     Nexus_V1_ItemIbsBank item_ibs_bank;
     Nexus_V1_ItemIbsRuntimeSourceReceipt item_ibs_runtime_source;
     Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;
+    int external_prs3_placement_valid;
+    int external_prs3_placement_level;
+    uint64_t external_prs3_placement_route_epoch;
+    uint64_t external_prs3_replay_last_route_epoch;
+    int external_saturn_save_capture_valid;
+    uint64_t external_saturn_save_card_fnv1a64;
+    uint64_t external_saturn_save_route_epoch;
+    uint64_t external_saturn_save_last_route_epoch;
+    int external_dgn_campaign_capture_ready;
+    int external_dgn_campaign_capture_level;
+    uint64_t external_dgn_campaign_capture_dgn_fnv1a64;
+    uint64_t external_dgn_campaign_capture_trace_fnv1a64;
+    uint32_t external_dgn_campaign_capture_trace_size;
+    uint64_t external_dgn_campaign_capture_frame_sequence;
+    uint64_t external_dgn_campaign_capture_command_sequence;
+    uint64_t external_prs3_placement_dgn_fnv1a64;
+    uint32_t external_prs3_placement_descriptor_index;
+    uint64_t external_prs3_placement_frame_sequence;
+    uint64_t external_prs3_placement_command_sequence;
+    uint64_t external_prs3_placement_descriptor_fnv1a64;
+    uint64_t external_prs3_placement_trace_fnv1a64;
+    uint32_t external_prs3_placement_trace_size;
+    uint64_t external_prs3_placement_header_fnv1a64;
+    uint64_t external_prs3_placement_bitmap_fnv1a64;
+    uint32_t external_prs3_placement_bitmap_offset;
+    uint32_t external_prs3_placement_bitmap_size;
+    uint64_t external_prs3_placement_palt_fnv1a64;
+    uint32_t external_prs3_placement_palt_size;
+    int external_structure1f_placement_valid;
+    uint64_t external_structure1f_placement_dgn_fnv1a64;
+    uint32_t external_structure1f_placement_descriptor_index;
+    uint64_t external_structure1f_placement_frame_sequence;
+    uint64_t external_structure1f_placement_command_sequence;
+    uint64_t external_structure1f_placement_descriptor_fnv1a64;
     Nexus_V1_DgnStaticMaterialSourceReceipt dgn_static_material_sources;
     int floor_mns_material_route_valid;
     int wall_mns_material_route_valid;
@@ -2229,6 +2482,7 @@ struct Nexus_V1_Engine {
     int ui_faces_expected;
     int ui_faces_fallback;
     Nexus_V1_LevelAuxSourceReceipt menu_bpk_source;
+    uint64_t menu_bpk_package_fnv1a64;
     int menu_bpk_prs3_execution_evidence_valid;
     Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt
         menu_bpk_prs3_execution_evidence;
@@ -2240,6 +2494,20 @@ struct Nexus_V1_Engine {
     Nexus_V1_BpkRuntimeUploadRow
         menu_bpk_upload_rows[NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS];
     int menu_bpk_upload_row_count;
+    int menu_bpk_no_draw_host_valid;
+    uint64_t menu_bpk_no_draw_host_route_epoch;
+    uint64_t menu_bpk_no_draw_host_last_route_epoch;
+    uint64_t menu_bpk_no_draw_host_package_fnv1a64;
+    uint32_t menu_bpk_no_draw_host_entry_index;
+    uint32_t menu_bpk_no_draw_host_payload_offset;
+    uint32_t menu_bpk_no_draw_host_payload_size;
+    uint64_t menu_bpk_no_draw_host_payload_fnv1a64;
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt
+        menu_bpk_no_draw_host_compression;
+    int m11_direct_lev_dungeon_no_draw_valid;
+    uint64_t m11_direct_lev_dungeon_route_epoch;
+    uint64_t m11_direct_lev_dungeon_last_route_epoch;
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt m11_direct_lev_dungeon;
     Nexus_V1_MenuBpkPaltTraceAdmissionReceipt menu_bpk_palt_trace_admission;
 
     /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
@@ -2610,6 +2878,12 @@ int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
 int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target);
+int nexus_v1_engine_build_structure1f2_face_adjacency_transform_receipt(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *out_receipt);
+int nexus_v1_engine_consume_structure1f2_face_adjacency_transform_no_draw(
+    const Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *receipt);
 /* Bind one direct Structure1F source owner to its exact non-textured face.
  * Textured faces remain outside this raw-fill route, and no flat fill or
  * substitute image is permitted. */
@@ -2641,6 +2915,9 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
+int nexus_v1_current_level_aux_admission_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_sound_route_receipt(
     const Nexus_V1_Engine *engine, int raw_map_selector,
     Nexus_V1_LevelSoundRouteReceipt *out_receipt);
@@ -2706,6 +2983,49 @@ int nexus_v1_dgn_static_material_source_receipt(
  * `engine` and remains valid until the next prepare/invalidate/shutdown. */
 const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     Nexus_V1_Engine *engine, int party_x, int party_y, int party_dir);
+int nexus_v1_engine_set_external_prs3_placement_receipt(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_Prs3DgnPlacementAdapterReceipt *receipt);
+int nexus_v1_engine_set_external_prs3_replay_placement_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t expected_trace_fnv1a64, uint64_t expected_dgn_fnv1a64,
+    uint64_t expected_bitmap_candidate_fnv1a64,
+    const Nexus_V1_Prs3DgnPlacementAdapterReceipt *receipt);
+int nexus_v1_engine_set_external_structure1f_placement_binding(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_Structure1FPlacementBindingReceipt *receipt);
+/* Read-only admission evidence for an externally observed Structure1F
+ * placement. This carries identity only; it never admits a material decoder
+ * or a draw route. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int blocks_real_dgn_mesh_render;
+    int fallback_visuals_permitted;
+    uint64_t dgn_fnv1a64;
+    uint32_t descriptor_index;
+    uint64_t frame_sequence;
+    uint64_t command_sequence;
+    uint64_t descriptor_fnv1a64;
+} Nexus_V1_ExternalStructure1FPlacementReceipt;
+int nexus_v1_current_external_structure1f_placement_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_ExternalStructure1FPlacementReceipt *out_receipt);
+/* External capture evidence is scoped to one loaded DGN route. It is never
+ * persisted in saves and must be cleared before a level reload or transition. */
+void nexus_v1_engine_clear_external_prs3_placement_receipt(
+    Nexus_V1_Engine *engine);
+int nexus_v1_engine_set_saturn_save_capture_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    const struct Nexus_V1_SaturnSaveCaptureReceipt *receipt);
+int nexus_v1_engine_saturn_save_capture_ready(const Nexus_V1_Engine *engine,
+                                               uint64_t route_epoch,
+                                               uint64_t card_fnv1a64);
+int nexus_v1_engine_set_dgn_multi_level_capture_adjudication(
+    Nexus_V1_Engine *engine,
+    const struct Nexus_V1_DgnMultiLevelCaptureAdjudicationReceipt *receipt);
+int nexus_v1_engine_current_level_dgn_capture_ready(
+    const Nexus_V1_Engine *engine);
 void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine);
 /* Commit a party pose originating from champion start, save resume or live
  * movement. Any pose change invalidates the viewport material plan before it
@@ -2762,6 +3082,23 @@ int nexus_v1_menu_bpk_upload_plan_rows(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeUploadRow *out_rows,
     int max_rows);
+int nexus_v1_engine_set_menu_bpk_no_draw_host_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t package_fnv1a64,
+    const Nexus_V1_BpkRuntimeUploadReceipt *upload,
+    const Nexus_V1_BpkRuntimeUploadRow *row);
+int nexus_v1_engine_menu_bpk_no_draw_host_ready(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t package_fnv1a64);
+int nexus_v1_engine_set_m11_direct_lev_dungeon_no_draw_receipt(
+    Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    const char *dgn_md5, uint64_t dgn_byte_count, uint64_t dgn_fnv1a64,
+    const Nexus_V1_DgnDirectLevHeaderDescriptorProvenance *header_descriptor,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *geometry);
+int nexus_v1_engine_m11_direct_lev_dungeon_no_draw_ready(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch, int level_index,
+    const char *dgn_md5, uint64_t dgn_byte_count, uint64_t dgn_fnv1a64,
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt *out_receipt);
 int nexus_v1_menu_bpk_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt);

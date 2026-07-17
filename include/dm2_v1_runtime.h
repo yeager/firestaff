@@ -1,5 +1,7 @@
 #ifndef FIRESTAFF_DM2_V1_RUNTIME_H
 #define FIRESTAFF_DM2_V1_RUNTIME_H
+
+#include "dm2_v1_surface_snapshot.h"
 /*
  * dm2_v1_runtime.h — DM2 V1 Runtime Mechanics Parity API
  *
@@ -32,7 +34,9 @@
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_g1_scene_runtime_bridge.h"
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
+#include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_weather.h"
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
@@ -528,6 +532,361 @@ typedef struct DM2_V1_RuntimeProjectileRenderReceipt {
 } DM2_V1_RuntimeProjectileRenderReceipt;
 int dm2_v1_runtime_last_projectile_render_receipt(
     DM2_V1_RuntimeProjectileRenderReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int no_draw;
+    DM2_V1_G1FlyingItemSourceReceipt source;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint32_t palette_hash;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+    uint32_t timer_receipt_hash;
+    uint32_t identity_hash;
+} DM2_V1_RuntimeFlyingItemReceipt;
+
+/* Source-owned DB14 viewport admission. This enriches an already complete
+ * timer/GDAT receipt with the SKWIN selector and table geometry, but remains
+ * explicitly incapable of supplying an image field or pixels. */
+typedef struct {
+    int valid;
+    int no_draw;
+    uint32_t session_identity;
+    uint32_t map_load_token;
+    uint32_t timer_receipt_hash;
+    uint32_t gdat_identity_hash;
+    uint32_t selector_identity_hash;
+    uint32_t geometry_identity_hash;
+    uint32_t identity_hash;
+} DM2_V1_RuntimeFlyingItemViewportEvidence;
+
+/* The decoded DB14 material cannot become a frame by itself. This plan joins
+ * it to the live timer/session/map and selector/table identities, while
+ * remaining explicitly no-draw until an original frame consumer is proven. */
+typedef struct {
+    int valid;
+    int no_draw;
+    uint32_t session_identity;
+    uint32_t map_load_token;
+    uint32_t timer_receipt_hash;
+    uint32_t selector_identity_hash;
+    uint32_t vb30_identity_hash;
+    uint32_t geometry_identity_hash;
+    uint32_t material_identity_hash;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint32_t decoded_pixels_hash;
+    uint32_t palette_hash;
+    uint32_t identity_hash;
+} DM2_V1_RuntimeFlyingItemDecodedMaterialPlan;
+
+/* c_gui_vp.cpp:4320-4417 orders PUT_DOWN_ITEM, creature summary, then
+ * DRAW_FLYING_ITEM. This DM2-owned M11-boundary receipt rechecks the actual
+ * indexed IMG3 bytes and local palette, but never exposes a framebuffer or
+ * invents the still-unproven destination transform. */
+typedef struct {
+    int valid;
+    int no_draw;
+    uint8_t source_order;
+    uint8_t follows_static_and_creature;
+    uint8_t indexed_bytes_consumed;
+    uint8_t orientation_unapplied;
+    uint16_t clip_rect_id;
+    uint8_t flip_flags;
+    uint16_t width;
+    uint16_t height;
+    DM2_ImageFormat format;
+    int16_t source_offset_x;
+    int16_t source_offset_y;
+    uint32_t offset_receipt_hash;
+    uint32_t delivery_identity_hash;
+    uint32_t decoded_material_identity_hash;
+    uint32_t indexed_pixels_hash;
+    uint32_t palette_hash;
+    uint32_t identity_hash;
+} DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt;
+
+typedef struct {
+    int valid;
+    int no_draw;
+    uint16_t clip_rect_id;
+    DM2_V1_InterfaceRect clip_rect;
+    int16_t source_offset_x;
+    int16_t source_offset_y;
+    uint8_t flip_flags;
+    uint8_t orientation_unapplied;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+    uint32_t offset_receipt_hash;
+    uint32_t consumer_identity_hash;
+    uint32_t identity_hash;
+} DM2_V1_Dm2FlyingItemDestinationReceipt;
+
+typedef struct {
+    int valid;
+    int no_draw;
+    uint16_t scale_x;
+    uint16_t scale_y;
+    uint8_t blitmode;
+    DM2_V1_InterfaceRect clip_rect;
+    int16_t source_offset_x;
+    int16_t source_offset_y;
+    uint32_t destination_identity_hash;
+    uint32_t material_identity_hash;
+    uint32_t identity_hash;
+} DM2_V1_Dm2FlyingItemPicstTransformReceipt;
+
+/* Separate M11 delivery plan for SKWIN DRAW_FLYING_ITEM. It transports source
+ * identities only; a later original pixel decoder must explicitly unlock any
+ * raster work. It never aliases the older projectile/map-chip plan. */
+typedef struct {
+    int valid;
+    int no_draw;
+    int pixel_decoder_ready;
+    int m11_delivery_ready;
+    uint16_t missile_object_id;
+    uint8_t category;
+    uint8_t item_type;
+    uint8_t image_field;
+    uint8_t flip_flags;
+    uint8_t cell_pos;
+    uint8_t position_5x5;
+    uint16_t clip_rect_id;
+    uint16_t stretch_factor64;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint32_t palette_hash;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+    uint32_t timer_receipt_hash;
+    uint32_t viewport_evidence_hash;
+    uint32_t viewport_session_identity;
+    uint32_t viewport_map_load_token;
+    uint32_t identity_hash;
+} DM2_V1_FlyingItemM11DeliveryPlan;
+
+/* Separate DB5/DB9 DRAW_STATIC_OBJECT delivery plan. It is intentionally a
+ * source receipt, not a decoded sprite or a map-chip/F9 compatibility path. */
+typedef struct {
+    int valid;
+    int no_draw;
+    int pixel_decoder_ready;
+    int m11_delivery_ready;
+    uint32_t session_identity;
+    uint16_t object_id;
+    uint8_t category;
+    uint8_t item_type;
+    uint8_t image_field;
+    uint8_t direction;
+    uint8_t container_open;
+    uint16_t image_offset;
+    int source_cell;
+    int source_pass;
+    int position_5x5;
+    uint16_t clip_rect_id;
+    int stretch_factor64;
+    int flip_mirror;
+    uint32_t selector_identity_hash;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint32_t palette_hash;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+    uint32_t identity_hash;
+} DM2_V1_StaticObjectM11DeliveryPlan;
+
+/* DM2-owned M11 composition gate.  This binds already-admitted GDAT plans
+ * into one source order, but deliberately cannot authorize pixel decoding or
+ * a framebuffer blit.  The caller supplies the active session/data epoch;
+ * every member receipt is folded into the immutable composition identity. */
+typedef struct {
+    int valid;
+    int no_draw;
+    int pixel_decoder_ready;
+    int m11_delivery_ready;
+    uint32_t session_identity;
+    uint32_t data_epoch;
+    uint32_t scene_command_hash;
+    uint32_t scene_light_receipt_hash;
+    uint32_t c_light_receipt_hash;
+    uint32_t wall_command_hash;
+    uint32_t door_command_hash;
+    uint32_t weather_receipt_hash;
+    uint32_t static_object_identity_hash;
+    uint32_t flying_item_identity_hash;
+    uint32_t ordered_member_hash;
+    uint32_t identity_hash;
+    DM2_V1_ViewportSurfaceSnapshot surface_before;
+    DM2_V1_ViewportSurfaceSnapshot surface_after;
+    uint32_t surface_generation_hash;
+} DM2_V1_Dm2ViewportM11CompositionReceipt;
+
+typedef struct {
+    int valid;
+    int no_draw;
+    DM2_V1_Dm2ViewportM11CompositionReceipt composition;
+    DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt flying_item_material;
+    uint32_t identity_hash;
+} DM2_V1_Dm2ViewportM11MaterialCompositionReceipt;
+
+/* Live-session owner for the source plans admitted by the DM2 composition
+ * gate.  These pointers borrow runtime-owned G1/GDAT receipts only for the
+ * call; no copy becomes a drawable surface. */
+typedef struct {
+    const DM2_V1_GdatSceneM11CommandPlan *scene;
+    const DM2_V1_GdatSceneLightM11Receipt *scene_light;
+    const DM2_V1_CLightM11Receipt *c_light;
+    const DM2_V1_GdatWallM11CommandPlan *wall;
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *door;
+    const DM2_V1_OutdoorWeatherM11Receipt *weather;
+    const DM2_V1_StaticObjectM11DeliveryPlan *static_object;
+    const DM2_V1_FlyingItemM11DeliveryPlan *flying_item;
+} DM2_V1_Dm2ViewportM11LivePlanSet;
+
+typedef struct {
+    int valid;
+    int no_draw;
+    uint8_t graphicsset;
+    uint8_t outdoor;
+    uint16_t level;
+    uint32_t session_identity;
+    uint32_t map_load_token;
+    DM2_V1_Dm2ViewportM11CompositionReceipt composition;
+} DM2_V1_Dm2ViewportM11LiveCompositionReceipt;
+
+uint32_t dm2_v1_runtime_dm2_viewport_session_identity(
+    const DM2_V1_SessionState *session);
+int dm2_v1_runtime_enumerate_dm2_viewport_m11_live_plans(
+    const DM2_V1_SessionState *session, uint8_t graphicsset,
+    const DM2_V1_Dm2ViewportM11LivePlanSet *plans,
+    DM2_V1_Dm2ViewportM11LiveCompositionReceipt *out_receipt,
+    const DM2_V1_ViewportState *owner);
+int dm2_v1_runtime_dm2_viewport_m11_live_composition_matches(
+    const DM2_V1_Dm2ViewportM11LiveCompositionReceipt *receipt,
+    const DM2_V1_SessionState *session, uint8_t graphicsset,
+    const DM2_V1_Dm2ViewportM11LivePlanSet *plans,
+    const DM2_V1_ViewportState *owner);
+
+int dm2_v1_runtime_build_dm2_viewport_m11_composition(
+    const DM2_V1_GdatSceneM11CommandPlan *scene,
+    const DM2_V1_GdatSceneLightM11Receipt *scene_light,
+    const DM2_V1_CLightM11Receipt *c_light,
+    const DM2_V1_GdatWallM11CommandPlan *wall,
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *door,
+    const DM2_V1_OutdoorWeatherM11Receipt *weather,
+    const DM2_V1_StaticObjectM11DeliveryPlan *static_object,
+    const DM2_V1_FlyingItemM11DeliveryPlan *flying_item,
+    uint32_t session_identity, uint32_t data_epoch,
+    DM2_V1_Dm2ViewportM11CompositionReceipt *out_receipt);
+int dm2_v1_runtime_dm2_viewport_m11_composition_matches(
+    const DM2_V1_Dm2ViewportM11CompositionReceipt *receipt,
+    const DM2_V1_GdatSceneM11CommandPlan *scene,
+    const DM2_V1_GdatSceneLightM11Receipt *scene_light,
+    const DM2_V1_CLightM11Receipt *c_light,
+    const DM2_V1_GdatWallM11CommandPlan *wall,
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *door,
+    const DM2_V1_OutdoorWeatherM11Receipt *weather,
+    const DM2_V1_StaticObjectM11DeliveryPlan *static_object,
+    const DM2_V1_FlyingItemM11DeliveryPlan *flying_item,
+    uint32_t session_identity, uint32_t data_epoch);
+
+int dm2_v1_runtime_last_flying_item_receipt(
+    DM2_V1_RuntimeFlyingItemReceipt *out_receipt);
+int dm2_v1_runtime_flying_item_viewport_evidence(
+    const DM2_V1_RuntimeFlyingItemReceipt *material,
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    const DM2_V1_G1FlyingItemGeometryReceipt *geometry,
+    uint32_t session_identity, uint32_t map_load_token,
+    DM2_V1_RuntimeFlyingItemViewportEvidence *out_evidence);
+int dm2_v1_runtime_flying_item_decoded_material_plan(
+    const DM2_V1_RuntimeFlyingItemReceipt *timer_receipt,
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    const DM2_V1_G1FlyingItemVb30Receipt *vb30,
+    const DM2_V1_G1FlyingItemGeometryReceipt *geometry,
+    const DM2_V1_G1FlyingItemDecodedMaterialReceipt *material,
+    uint32_t session_identity, uint32_t map_load_token,
+    DM2_V1_RuntimeFlyingItemDecodedMaterialPlan *out_plan);
+int dm2_v1_runtime_flying_item_decoded_material_plan_matches(
+    const DM2_V1_RuntimeFlyingItemDecodedMaterialPlan *plan,
+    const DM2_V1_RuntimeFlyingItemReceipt *timer_receipt,
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    const DM2_V1_G1FlyingItemVb30Receipt *vb30,
+    const DM2_V1_G1FlyingItemGeometryReceipt *geometry,
+    const DM2_V1_G1FlyingItemDecodedMaterialReceipt *material,
+    uint32_t session_identity, uint32_t map_load_token);
+int dm2_v1_runtime_consume_flying_item_decoded_material_for_m11(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_FlyingItemM11DeliveryPlan *delivery,
+    const DM2_V1_RuntimeFlyingItemDecodedMaterialPlan *plan,
+    const DM2_V1_G1FlyingItemDecodedMaterialReceipt *material,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt *out_receipt);
+int dm2_v1_runtime_flying_item_destination_receipt(
+    const DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt *consumer,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    const DM2_V1_BootExpandedRectReceipt *clip,
+    DM2_V1_Dm2FlyingItemDestinationReceipt *out_receipt);
+int dm2_v1_runtime_flying_item_picst_transform_receipt(
+    const DM2_V1_Dm2FlyingItemDestinationReceipt *destination,
+    const DM2_V1_G1FlyingItemDecodedMaterialReceipt *material,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    DM2_V1_Dm2FlyingItemPicstTransformReceipt *out_receipt);
+int dm2_v1_runtime_blit_flying_item_normal_scale_indexed(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt *consumer,
+    const DM2_V1_Dm2FlyingItemDestinationReceipt *destination,
+    const DM2_V1_Dm2FlyingItemPicstTransformReceipt *transform,
+    const DM2_V1_G1FlyingItemDecodedMaterialReceipt *material,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    int framebuffer_stride);
+int dm2_v1_runtime_build_dm2_viewport_m11_material_composition(
+    const DM2_V1_Dm2ViewportM11CompositionReceipt *composition,
+    const DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt *flying_item,
+    DM2_V1_Dm2ViewportM11MaterialCompositionReceipt *out_receipt);
+int dm2_v1_runtime_dm2_viewport_m11_material_composition_matches(
+    const DM2_V1_Dm2ViewportM11MaterialCompositionReceipt *receipt,
+    const DM2_V1_Dm2ViewportM11CompositionReceipt *composition,
+    const DM2_V1_Dm2FlyingItemM11MaterialConsumerReceipt *flying_item);
+int dm2_v1_runtime_last_static_object_m11_delivery_plans(
+    DM2_V1_StaticObjectM11DeliveryPlan *out_plans, int max_plans,
+    int *out_count);
+int dm2_v1_viewport_build_flying_item_m11_delivery_plan(
+    const DM2_V1_RuntimeFlyingItemReceipt *receipt,
+    DM2_V1_FlyingItemM11DeliveryPlan *out_plan);
+int dm2_v1_viewport_build_flying_item_m11_delivery_plan_from_viewport_evidence(
+    const DM2_V1_RuntimeFlyingItemReceipt *receipt,
+    const DM2_V1_RuntimeFlyingItemViewportEvidence *evidence,
+    DM2_V1_FlyingItemM11DeliveryPlan *out_plan);
+int dm2_v1_viewport_build_static_object_m11_delivery_plan(
+    const DM2_V1_G1StaticObjectMaterialReceipt *material,
+    const DM2_V1_StaticObjectSourcePlan *source_plan,
+    uint32_t session_identity,
+    DM2_V1_StaticObjectM11DeliveryPlan *out_plan);
+int dm2_v1_viewport_static_object_m11_delivery_plan_matches(
+    const DM2_V1_StaticObjectM11DeliveryPlan *plan,
+    const DM2_V1_G1StaticObjectMaterialReceipt *material,
+    const DM2_V1_StaticObjectSourcePlan *source_plan,
+    uint32_t session_identity);
+int dm2_v1_runtime_flying_item_timer_receipt(
+    const DM2_V1_G1DirectMissileReceipt *missile,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    const DM2_V1_G1MissileTimerReceipt *timer,
+    DM2_V1_RuntimeFlyingItemReceipt *out_receipt);
+int dm2_v1_runtime_flying_item_timer_from_session(
+    const DM2_V1_SessionState *session,
+    const DM2_V1_G1DirectMissileReceipt *missile,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    DM2_V1_RuntimeFlyingItemReceipt *out_receipt);
+int dm2_v1_runtime_admit_flying_item_material(
+    const DM2_V1_SessionState *session,
+    const DM2_V1_G1DirectMissileReceipt *missile,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    const DM2_V1_G1FlyingItemMaterialReceipt *material);
+int dm2_v1_runtime_flying_item_material_receipt(
+    const DM2_V1_RuntimeFlyingItemReceipt *timer_receipt,
+    const DM2_V1_G1FlyingItemMaterialReceipt *material,
+    DM2_V1_RuntimeFlyingItemReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_hud_portrait_count(void);
 int dm2_v1_runtime_last_fallback_hud_portrait_count(void);
 

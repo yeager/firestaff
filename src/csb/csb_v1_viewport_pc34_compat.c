@@ -28,6 +28,7 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 enum {
     CSB_V1_ORNAMENT_SLOT_RIGHT = 1, /* M551_RIGHT_WALL_ORNAMENT_ORDINAL */
@@ -204,6 +205,10 @@ static uint32_t csb_v1_viewport_mix_u32_pc34(uint32_t hash, uint32_t value)
 int csb_v1_viewport_first_frame_material_proof_valid_pc34(
     const CSB_V1_ViewportFirstFrameMaterialProof *proof)
 {
+    const unsigned int d3_routes =
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
+
     if (!proof || !proof->valid) {
         return 0;
     }
@@ -220,6 +225,52 @@ int csb_v1_viewport_first_frame_material_proof_valid_pc34(
     if (proof->source_item_count < 5u) {
         return 0;
     }
+    if (((proof->route_mask & d3_routes) != 0u) &&
+        ((proof->route_mask & d3_routes) != d3_routes ||
+         proof->d3l2_door_hash == 0u || proof->d3r2_door_hash == 0u)) {
+        return 0;
+    }
+    if ((proof->route_mask & d3_routes) == d3_routes &&
+        (!proof->d3_pair_real_asset_receipt.valid ||
+         !proof->d3_pair_real_asset_receipt.route_backed_by_real_graphics_dat ||
+         !proof->d3_pair_real_asset_receipt.source_graphics_dat_bound ||
+         !proof->d3_pair_real_asset_receipt.no_synthetic_pixels ||
+         !proof->d3_pair_real_asset_receipt.no_fallback_visuals ||
+         proof->d3_pair_real_asset_receipt.source_graphics_item_index != 693 ||
+         proof->d3_pair_real_asset_receipt.source_byte_count == 0u ||
+         proof->d3_pair_real_asset_receipt.source_payload_hash == 0u ||
+         proof->d3_pair_real_asset_receipt.source_payload_hash !=
+             proof->d3l2_door_hash ||
+         proof->d3_pair_real_asset_receipt.source_payload_hash !=
+             proof->d3r2_door_hash ||
+         proof->d3_pair_real_asset_receipt.d3l2_door_zone != 3700 ||
+         proof->d3_pair_real_asset_receipt.d3r2_door_zone != 3710 ||
+         proof->d3_pair_real_asset_receipt.transparent_color != 10 ||
+         proof->d3_pair_real_asset_receipt.native_bitmap_byte_width != 48 ||
+         proof->d3_pair_real_asset_receipt.native_bitmap_height != 41)) {
+        return 0;
+    }
+    if ((proof->route_mask & d3_routes) == 0u &&
+        (proof->d3l2_door_hash != 0u || proof->d3r2_door_hash != 0u)) {
+        return 0;
+    }
+    /* DUNVIEW.C F0121 reaches F0111 with G0694 at the mandatory D2C route.
+     * Keep the actual source receipt facts with the plan instead of treating
+     * an unscoped payload FNV as a graphic identity. */
+    if (!proof->d2_door_capture_valid ||
+        !proof->d2_door_capture_real_graphics_dat ||
+        !proof->d2_door_capture_no_synthetic_pixels ||
+        !proof->d2_door_capture_no_fallback_visuals ||
+        proof->d2_door_capture_item_index != 694 ||
+        proof->d2_door_capture_byte_count == 0u ||
+        proof->d2_door_capture_payload_hash == 0u ||
+        proof->d2_door_capture_payload_hash != proof->d2_door_hash ||
+        proof->d2_door_capture_width != 64 ||
+        proof->d2_door_capture_height != 61 ||
+        proof->d2_door_capture_zone != 3760 ||
+        proof->d2_door_capture_transparent_color != 10) {
+        return 0;
+    }
     return proof->shared_palette_hash != 0u &&
            proof->d0_door_hash != 0u &&
            proof->d0_thing_hash != 0u &&
@@ -234,6 +285,9 @@ int csb_v1_viewport_admit_first_frame_materialization_pc34(
     CSB_V1_ViewportFirstFrameMaterializationReceipt *out_receipt)
 {
     uint32_t hash = 2166136261u;
+    const unsigned int d3_routes =
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
 
     if (out_receipt) {
         memset(out_receipt, 0, sizeof(*out_receipt));
@@ -250,13 +304,18 @@ int csb_v1_viewport_admit_first_frame_materialization_pc34(
     hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d1_door_hash);
     hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d1_thing_hash);
     hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d2_door_hash);
+    if ((proof->route_mask & d3_routes) == d3_routes) {
+        hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d3l2_door_hash);
+        hash = csb_v1_viewport_mix_u32_pc34(hash, proof->d3r2_door_hash);
+    }
 
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->consumed_by_m11_render = 1;
         out_receipt->route_mask = proof->route_mask;
         out_receipt->combined_material_hash = hash;
-        out_receipt->required_route_count = 5;
+        out_receipt->required_route_count =
+            (proof->route_mask & d3_routes) == d3_routes ? 7 : 5;
         out_receipt->real_graphics_session = 1;
         out_receipt->no_synthetic_pixels = proof->no_synthetic_pixels;
         out_receipt->no_fallback_visuals = proof->no_fallback_visuals;
@@ -315,6 +374,11 @@ int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
     CSB_V1_ViewportRuntimeDrawPlanPc34 *out_plan)
 {
     uint32_t hash = 2166136261u;
+    const unsigned int d3_routes =
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
+    const int has_d3 = (proof && (proof->route_mask & d3_routes) == d3_routes);
+    int command_offset = has_d3 ? 2 : 0;
     int i;
 
     if (out_plan) {
@@ -330,36 +394,60 @@ int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
      * routes through indexed GRAPHICS.DAT materials selected by the same
      * viewport input state.  This is a command plan for M11 consumption, not
      * a fallback rasterizer. */
+    if (has_d3) {
+        /* F0128 reaches the D3L2/D3R2 pair before D2.  Both commands share
+         * G0693 but retain their separate source zones and clipped frames. */
+        csb_v1_viewport_runtime_draw_command_init_pc34(
+            &out_plan->commands[0],
+            CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34,
+            CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR,
+            proof->d3l2_door_decoded_hash ? proof->d3l2_door_decoded_hash :
+                proof->d3l2_door_hash,
+            proof->shared_palette_hash, 3, 14, 0x0218,
+            24, 28, 48, 40, CSB_V1_DOOR_TRANSPARENT_COLOR,
+            party_dir, party_x, party_y, 3, -2);
+        csb_v1_viewport_runtime_draw_command_init_pc34(
+            &out_plan->commands[1],
+            CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34,
+            CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR,
+            proof->d3r2_door_decoded_hash ? proof->d3r2_door_decoded_hash :
+                proof->d3r2_door_hash,
+            proof->shared_palette_hash, 3, 15, 0x0128,
+            88, 28, 48, 40, CSB_V1_DOOR_TRANSPARENT_COLOR,
+            party_dir, party_x, party_y, 3, 2);
+    }
     csb_v1_viewport_runtime_draw_command_init_pc34(
-        &out_plan->commands[0],
+        &out_plan->commands[0 + command_offset],
         CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34,
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR,
-        proof->d2_door_hash, proof->shared_palette_hash, 2, 10, 0x0111,
+        proof->d2_door_decoded_hash ? proof->d2_door_decoded_hash :
+            proof->d2_door_hash,
+        proof->shared_palette_hash, 2, 10, 0x0111,
         76, 47, 72, 74, CSB_V1_DOOR_TRANSPARENT_COLOR,
         party_dir, party_x, party_y, 2, 0);
     csb_v1_viewport_runtime_draw_command_init_pc34(
-        &out_plan->commands[1],
+        &out_plan->commands[1 + command_offset],
         CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34,
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0111_DOOR,
         proof->d1_door_hash, proof->shared_palette_hash, 1, 14, 0x0218,
         48, 33, 128, 102, CSB_V1_DOOR_TRANSPARENT_COLOR,
         party_dir, party_x, party_y, 1, 0);
     csb_v1_viewport_runtime_draw_command_init_pc34(
-        &out_plan->commands[2],
+        &out_plan->commands[2 + command_offset],
         CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0115_THING_PC34,
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0115_THING,
         proof->d1_thing_hash, proof->shared_palette_hash, 1, 14, 0x0349,
         40, 33, 144, 104, CSB_V1_F0115_TRANSPARENT_COLOR,
         party_dir, party_x, party_y, 1, 0);
     csb_v1_viewport_runtime_draw_command_init_pc34(
-        &out_plan->commands[3],
+        &out_plan->commands[3 + command_offset],
         CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0111_DOOR_PC34,
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0111_DOOR,
         proof->d0_door_hash, proof->shared_palette_hash, 0, 12, 0x0439,
         0, 33, 112, 136, CSB_V1_DOOR_TRANSPARENT_COLOR,
         party_dir, party_x, party_y, 0, -1);
     csb_v1_viewport_runtime_draw_command_init_pc34(
-        &out_plan->commands[4],
+        &out_plan->commands[4 + command_offset],
         CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D0_F0115_THING_PC34,
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0115_THING,
         proof->d0_thing_hash, proof->shared_palette_hash, 0, 13, 0x0615,
@@ -377,7 +465,8 @@ int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
     out_plan->input_bound = 1;
     out_plan->route_mask = proof->route_mask;
     out_plan->command_count =
-        CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34;
+        CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_BASE_COUNT_PC34 +
+        command_offset;
     out_plan->shared_palette_hash = proof->shared_palette_hash;
     out_plan->source_evidence = proof->source_evidence;
 
@@ -414,6 +503,861 @@ int csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
             hash, (uint32_t)(command->input_side + 4));
     }
     out_plan->plan_hash = hash ? hash : 1u;
+    return 1;
+}
+
+static uint32_t csb_v1_viewport_fnv1a_bytes_pc34(const uint8_t *bytes,
+                                                  size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint16_t csb_v1_viewport_read_be16_pc34(const uint8_t *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+static int csb_v1_viewport_md5_text_pc34(const char *text)
+{
+    size_t i;
+    if (!text || strlen(text) != 32u) return 0;
+    for (i = 0u; i < 32u; ++i) {
+        if (!((text[i] >= '0' && text[i] <= '9') ||
+              (text[i] >= 'a' && text[i] <= 'f') ||
+              (text[i] >= 'A' && text[i] <= 'F'))) return 0;
+    }
+    return 1;
+}
+
+int csb_v1_viewport_admit_graphics_table_provenance_pc34(
+    const uint8_t *table_bytes, size_t table_size,
+    const char *source_path, const char *source_md5,
+    uint32_t native_bitmap_index,
+    CSB_V1_ViewportGraphicsTableProvenancePc34 *out_receipt)
+{
+    uint16_t signature;
+    uint16_t entry_count;
+    size_t required_size;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!table_bytes || !out_receipt || !source_path || !source_path[0] ||
+        !csb_v1_viewport_md5_text_pc34(source_md5) ||
+        native_bitmap_index == 0u || table_size < 4u) return 0;
+    signature = csb_v1_viewport_read_be16_pc34(table_bytes);
+    entry_count = csb_v1_viewport_read_be16_pc34(table_bytes + 2u);
+    if (signature != 0x8001u || entry_count == 0u || entry_count > 2048u) {
+        return 0;
+    }
+    required_size = 4u + (size_t)entry_count * 4u;
+    if (table_size < required_size) return 0;
+    out_receipt->valid = 1;
+    out_receipt->original_graphics_dat_table = 1;
+    out_receipt->native_bitmap_mapping_proven = 0;
+    out_receipt->raster_blocked_without_mapping = 1;
+    out_receipt->source_path = source_path;
+    out_receipt->source_md5 = source_md5;
+    out_receipt->native_bitmap_index = native_bitmap_index;
+    out_receipt->graphics_entry_count = entry_count;
+    out_receipt->table_span_bytes = required_size;
+    out_receipt->table_span_fnv1a = csb_v1_viewport_fnv1a_bytes_pc34(
+        table_bytes, required_size);
+    return out_receipt->table_span_fnv1a != 0u;
+}
+
+static uint32_t csb_v1_viewport_proof_hash_for_route_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof, unsigned int route_bit)
+{
+    switch (route_bit) {
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0111_DOOR: return proof->d0_door_hash;
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D0_F0115_THING: return proof->d0_thing_hash;
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0111_DOOR: return proof->d1_door_hash;
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D1_F0115_THING: return proof->d1_thing_hash;
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR:
+        return proof->d2_door_decoded_hash ? proof->d2_door_decoded_hash :
+            proof->d2_door_hash;
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR:
+        return proof->d3l2_door_decoded_hash ? proof->d3l2_door_decoded_hash :
+            proof->d3l2_door_hash;
+    case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR:
+        return proof->d3r2_door_decoded_hash ? proof->d3r2_door_decoded_hash :
+            proof->d3r2_door_hash;
+    default: return 0u;
+    }
+}
+
+int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    const CSB_V1_ViewportFirstFramePaletteSpanPc34 *palette,
+    const CSB_V1_ViewportD2D3NativePackedCapturePc34 *packed_capture,
+    uint8_t *d2_decoded_pixels, size_t d2_decoded_capacity,
+    uint8_t *d3_decoded_pixels, size_t d3_decoded_capacity,
+    CSB_V1_ViewportD2D3MaterialCaptureReceiptPc34 *out_receipt)
+{
+    const size_t d2_packed_required = 32u * 61u;
+    const size_t d2_decoded_required = 64u * 61u;
+    const size_t d3_packed_required = 24u * 41u;
+    const size_t d3_decoded_required = 48u * 41u;
+    const unsigned int d3_routes =
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
+    int has_d3;
+    size_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!proof || !palette || !packed_capture || !out_receipt ||
+        !csb_v1_viewport_first_frame_material_proof_valid_pc34(proof) ||
+        !palette->decoded_palette || palette->decoded_size == 0u ||
+        !palette->decoded_fnv1a ||
+        palette->decoded_fnv1a != csb_v1_viewport_fnv1a_bytes_pc34(
+            palette->decoded_palette, palette->decoded_size) ||
+        !packed_capture->valid || !packed_capture->original_graphics_dat_capture ||
+        !packed_capture->f0489_native_bitmap_selected ||
+        !packed_capture->f0488_expand_4bpp ||
+        !packed_capture->no_synthetic_pixels ||
+        !packed_capture->no_fallback_visuals ||
+        !packed_capture->source_path || !packed_capture->source_path[0] ||
+        !csb_v1_viewport_md5_text_pc34(packed_capture->source_md5) ||
+        !packed_capture->palette_source_path ||
+        !packed_capture->palette_source_md5 ||
+        strcmp(packed_capture->source_path,
+               packed_capture->palette_source_path) != 0 ||
+        strcmp(packed_capture->source_md5,
+               packed_capture->palette_source_md5) != 0 ||
+        packed_capture->palette_capture_fnv1a != palette->decoded_fnv1a ||
+        packed_capture->capture_identity_hash == 0u ||
+        !packed_capture->d2_table_provenance ||
+        !packed_capture->d2_table_provenance->valid ||
+        !packed_capture->d2_table_provenance->original_graphics_dat_table ||
+        !packed_capture->d2_table_provenance->native_bitmap_mapping_proven ||
+        packed_capture->d2_table_provenance->raster_blocked_without_mapping ||
+        !packed_capture->d2_table_provenance->source_path ||
+        !packed_capture->d2_table_provenance->source_md5 ||
+        packed_capture->d2_table_provenance->native_bitmap_index != 694u ||
+        strcmp(packed_capture->d2_table_provenance->source_path,
+               packed_capture->source_path) != 0 ||
+        strcmp(packed_capture->d2_table_provenance->source_md5,
+               packed_capture->source_md5) != 0 ||
+        packed_capture->d2_item_index != 694 ||
+        packed_capture->d2_source_payload_hash != proof->d2_door_hash ||
+        !packed_capture->d2_packed_pixels ||
+        packed_capture->d2_packed_size != d2_packed_required ||
+        packed_capture->d2_packed_fnv1a == 0u ||
+        packed_capture->d2_packed_fnv1a != csb_v1_viewport_fnv1a_bytes_pc34(
+            packed_capture->d2_packed_pixels, packed_capture->d2_packed_size) ||
+        !d2_decoded_pixels || d2_decoded_capacity < d2_decoded_required) return 0;
+
+    has_d3 = (proof->route_mask & d3_routes) == d3_routes;
+    if (has_d3 &&
+        (!packed_capture->d3_table_provenance ||
+         !packed_capture->d3_table_provenance->valid ||
+         !packed_capture->d3_table_provenance->original_graphics_dat_table ||
+         !packed_capture->d3_table_provenance->native_bitmap_mapping_proven ||
+         packed_capture->d3_table_provenance->raster_blocked_without_mapping ||
+         !packed_capture->d3_table_provenance->source_path ||
+         !packed_capture->d3_table_provenance->source_md5 ||
+         packed_capture->d3_table_provenance->native_bitmap_index != 693u ||
+         strcmp(packed_capture->d3_table_provenance->source_path,
+                packed_capture->source_path) != 0 ||
+         strcmp(packed_capture->d3_table_provenance->source_md5,
+                packed_capture->source_md5) != 0 ||
+         packed_capture->d3_item_index != 693 ||
+         packed_capture->d3_source_payload_hash != proof->d3l2_door_hash ||
+         packed_capture->d3_source_payload_hash != proof->d3r2_door_hash ||
+         !packed_capture->d3_packed_pixels ||
+         packed_capture->d3_packed_size != d3_packed_required ||
+         packed_capture->d3_packed_fnv1a == 0u ||
+         packed_capture->d3_packed_fnv1a != csb_v1_viewport_fnv1a_bytes_pc34(
+             packed_capture->d3_packed_pixels, packed_capture->d3_packed_size) ||
+         !d3_decoded_pixels || d3_decoded_capacity < d3_decoded_required)) return 0;
+    if (!has_d3 && (packed_capture->d3_item_index != 0 ||
+                    packed_capture->d3_source_payload_hash != 0u ||
+                    packed_capture->d3_packed_pixels != NULL ||
+                    packed_capture->d3_packed_size != 0u ||
+                    packed_capture->d3_packed_fnv1a != 0u)) return 0;
+
+    for (i = 0u; i < d2_packed_required; ++i) {
+        d2_decoded_pixels[i * 2u] = packed_capture->d2_packed_pixels[i] >> 4;
+        d2_decoded_pixels[i * 2u + 1u] = packed_capture->d2_packed_pixels[i] & 0x0fu;
+    }
+    if (has_d3) {
+        for (i = 0u; i < d3_packed_required; ++i) {
+            d3_decoded_pixels[i * 2u] = packed_capture->d3_packed_pixels[i] >> 4;
+            d3_decoded_pixels[i * 2u + 1u] = packed_capture->d3_packed_pixels[i] & 0x0fu;
+        }
+    }
+    out_receipt->valid = 1;
+    out_receipt->original_graphics_dat_capture = 1;
+    out_receipt->no_synthetic_pixels = 1;
+    out_receipt->no_fallback_visuals = 1;
+    out_receipt->source_path = packed_capture->source_path;
+    out_receipt->source_md5 = packed_capture->source_md5;
+    out_receipt->palette_source_path = packed_capture->palette_source_path;
+    out_receipt->palette_source_md5 = packed_capture->palette_source_md5;
+    out_receipt->palette_capture_fnv1a = palette->decoded_fnv1a;
+    out_receipt->capture_identity_hash = packed_capture->capture_identity_hash;
+    out_receipt->d2_item_index = 694;
+    out_receipt->d2_source_byte_count = proof->d2_door_capture_byte_count;
+    out_receipt->d2_source_payload_hash = proof->d2_door_hash;
+    out_receipt->d2_decoded_pixels = d2_decoded_pixels;
+    out_receipt->d2_decoded_size = d2_decoded_required;
+    out_receipt->d2_decoded_fnv1a = csb_v1_viewport_fnv1a_bytes_pc34(
+        d2_decoded_pixels, d2_decoded_required);
+    out_receipt->d2_width = 64;
+    out_receipt->d2_height = 61;
+    if (has_d3) {
+        out_receipt->d3_item_index = 693;
+        out_receipt->d3_source_byte_count =
+            proof->d3_pair_real_asset_receipt.source_byte_count;
+        out_receipt->d3_source_payload_hash = proof->d3l2_door_hash;
+        out_receipt->d3_decoded_pixels = d3_decoded_pixels;
+        out_receipt->d3_decoded_size = d3_decoded_required;
+        out_receipt->d3_decoded_fnv1a = csb_v1_viewport_fnv1a_bytes_pc34(
+            d3_decoded_pixels, d3_decoded_required);
+        out_receipt->d3_width = 48;
+        out_receipt->d3_height = 41;
+    }
+    return 1;
+}
+
+static int csb_v1_viewport_d2_d3_capture_valid_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    const CSB_V1_ViewportRuntimeDrawPlanPc34 *plan,
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *bytes)
+{
+    const CSB_V1_ViewportD2D3MaterialCaptureReceiptPc34 *capture;
+    int has_d3;
+    int d2_command = -1;
+    int d3l2_command = -1;
+    int d3r2_command = -1;
+    int i;
+
+    if (!proof || !plan || !bytes) return 0;
+    capture = &bytes->d2_d3_capture;
+    if (!capture->valid || !capture->original_graphics_dat_capture ||
+        !capture->no_synthetic_pixels || !capture->no_fallback_visuals ||
+        !capture->source_path || !capture->source_md5 ||
+        !capture->palette_source_path || !capture->palette_source_md5 ||
+        strcmp(capture->source_path, bytes->source_path) != 0 ||
+        strcmp(capture->source_md5, bytes->source_md5) != 0 ||
+        strcmp(capture->palette_source_path, bytes->source_path) != 0 ||
+        strcmp(capture->palette_source_md5, bytes->source_md5) != 0 ||
+        capture->palette_capture_fnv1a == 0u ||
+        capture->palette_capture_fnv1a != proof->shared_palette_hash ||
+        capture->palette_capture_fnv1a != bytes->palette.decoded_fnv1a ||
+        capture->capture_identity_hash == 0u ||
+        capture->d2_item_index != 694 ||
+        capture->d2_source_byte_count != proof->d2_door_capture_byte_count ||
+        capture->d2_source_payload_hash != proof->d2_door_hash ||
+        !capture->d2_decoded_pixels || capture->d2_decoded_size == 0u ||
+        capture->d2_width != 64 || capture->d2_height != 61 ||
+        capture->d2_decoded_size != (size_t)capture->d2_width * capture->d2_height ||
+        capture->d2_decoded_fnv1a == 0u ||
+        capture->d2_decoded_fnv1a != csb_v1_viewport_fnv1a_bytes_pc34(
+            capture->d2_decoded_pixels, capture->d2_decoded_size)) return 0;
+
+    has_d3 = (proof->route_mask &
+              (CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
+               CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR)) != 0u;
+    if (has_d3 &&
+        (capture->d3_item_index != 693 ||
+         capture->d3_source_byte_count !=
+             proof->d3_pair_real_asset_receipt.source_byte_count ||
+         capture->d3_source_payload_hash != proof->d3l2_door_hash ||
+         capture->d3_source_payload_hash != proof->d3r2_door_hash ||
+         !capture->d3_decoded_pixels || capture->d3_decoded_size == 0u ||
+         capture->d3_width != 48 || capture->d3_height != 41 ||
+         capture->d3_decoded_size != (size_t)capture->d3_width * capture->d3_height ||
+         capture->d3_decoded_fnv1a == 0u ||
+         capture->d3_decoded_fnv1a != csb_v1_viewport_fnv1a_bytes_pc34(
+             capture->d3_decoded_pixels, capture->d3_decoded_size))) return 0;
+    if (!has_d3 && (capture->d3_item_index != 0 ||
+                    capture->d3_source_byte_count != 0u ||
+                    capture->d3_source_payload_hash != 0u ||
+                    capture->d3_decoded_pixels != NULL ||
+                    capture->d3_decoded_size != 0u ||
+                    capture->d3_decoded_fnv1a != 0u)) return 0;
+
+    for (i = 0; i < plan->command_count; ++i) {
+        switch (plan->commands[i].route_bit) {
+        case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR:
+            d2_command = i;
+            break;
+        case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR:
+            d3l2_command = i;
+            break;
+        case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR:
+            d3r2_command = i;
+            break;
+        default:
+            break;
+        }
+    }
+    if (d2_command < 0 ||
+        bytes->materials[d2_command].decoded_pixels != capture->d2_decoded_pixels ||
+        bytes->materials[d2_command].decoded_size != capture->d2_decoded_size ||
+        bytes->materials[d2_command].decoded_fnv1a != capture->d2_decoded_fnv1a ||
+        bytes->materials[d2_command].width != capture->d2_width ||
+        bytes->materials[d2_command].height != capture->d2_height) return 0;
+    if (has_d3 &&
+        (d3l2_command < 0 || d3r2_command < 0 ||
+         bytes->materials[d3l2_command].decoded_pixels != capture->d3_decoded_pixels ||
+         bytes->materials[d3r2_command].decoded_pixels != capture->d3_decoded_pixels ||
+         bytes->materials[d3l2_command].decoded_size != capture->d3_decoded_size ||
+         bytes->materials[d3r2_command].decoded_size != capture->d3_decoded_size ||
+         bytes->materials[d3l2_command].decoded_fnv1a != capture->d3_decoded_fnv1a ||
+         bytes->materials[d3r2_command].decoded_fnv1a != capture->d3_decoded_fnv1a ||
+         bytes->materials[d3l2_command].width != capture->d3_width ||
+         bytes->materials[d3r2_command].width != capture->d3_width ||
+         bytes->materials[d3l2_command].height != capture->d3_height ||
+         bytes->materials[d3r2_command].height != capture->d3_height)) return 0;
+    return 1;
+}
+
+int csb_v1_viewport_bind_first_frame_material_bytes_pc34(
+    const CSB_V1_ViewportFirstFrameMaterialProof *proof,
+    CSB_V1_ViewportRuntimeDrawPlanPc34 *plan,
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *bytes,
+    CSB_V1_ViewportFirstFrameMaterializationReceipt *out_receipt)
+{
+    int i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!proof || !plan || !bytes || !bytes->valid || !bytes->source_path ||
+        !bytes->source_path[0] || !csb_v1_viewport_md5_text_pc34(bytes->source_md5) ||
+        !csb_v1_viewport_first_frame_material_proof_valid_pc34(proof) ||
+        !plan->valid || !plan->real_graphics_session ||
+        !bytes->palette.decoded_palette || bytes->palette.decoded_size == 0u ||
+        bytes->palette.decoded_fnv1a != proof->shared_palette_hash ||
+        csb_v1_viewport_fnv1a_bytes_pc34(bytes->palette.decoded_palette,
+                                          bytes->palette.decoded_size) !=
+            proof->shared_palette_hash) return 0;
+    if (!csb_v1_viewport_d2_d3_capture_valid_pc34(proof, plan, bytes)) return 0;
+    for (i = 0; i < plan->command_count; ++i) {
+        const CSB_V1_ViewportFirstFrameMaterialSpanPc34 *span = &bytes->materials[i];
+        const CSB_V1_ViewportRuntimeDrawCommandPc34 *command = &plan->commands[i];
+        if (!span->decoded_pixels || span->decoded_size == 0u || span->width <= 0 ||
+            span->height <= 0 || (size_t)span->width * span->height != span->decoded_size ||
+            span->route_bit != command->route_bit ||
+            span->decoded_fnv1a != command->material_hash ||
+            span->decoded_fnv1a != csb_v1_viewport_proof_hash_for_route_pc34(
+                proof, command->route_bit) ||
+            csb_v1_viewport_fnv1a_bytes_pc34(span->decoded_pixels,
+                                              span->decoded_size) != span->decoded_fnv1a) return 0;
+    }
+    if (!csb_v1_viewport_admit_first_frame_materialization_pc34(proof, 1,
+                                                                 out_receipt)) return 0;
+    if (out_receipt) {
+        out_receipt->capture_identity_hash =
+            bytes->d2_d3_capture.capture_identity_hash;
+        out_receipt->d2_source_payload_hash =
+            bytes->d2_d3_capture.d2_source_payload_hash;
+        out_receipt->d2_decoded_hash = bytes->d2_d3_capture.d2_decoded_fnv1a;
+        out_receipt->d3_source_payload_hash =
+            bytes->d2_d3_capture.d3_source_payload_hash;
+        out_receipt->d3_decoded_hash = bytes->d2_d3_capture.d3_decoded_fnv1a;
+    }
+    for (i = 0; i < plan->command_count; ++i) {
+        CSB_V1_ViewportRuntimeDrawCommandPc34 *command = &plan->commands[i];
+        const CSB_V1_ViewportFirstFrameMaterialSpanPc34 *span = &bytes->materials[i];
+        command->decoded_pixels = span->decoded_pixels;
+        command->decoded_size = span->decoded_size;
+        command->decoded_width = span->width;
+        command->decoded_height = span->height;
+        command->decoded_palette = bytes->palette.decoded_palette;
+        command->decoded_palette_size = bytes->palette.decoded_size;
+    }
+    return 1;
+}
+
+int csb_v1_viewport_consume_first_frame_material_raster_pc34(
+    const CSB_V1_ViewportFirstFrameMaterializationReceipt *receipt,
+    const CSB_V1_ViewportRuntimeDrawPlanPc34 *plan,
+    const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *bytes,
+    const char *expected_source_path, const char *expected_source_md5,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    CSB_V1_ViewportFirstFrameRasterReceiptPc34 *out_receipt)
+{
+    uint32_t raster_hash;
+    int i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!receipt || !receipt->valid || !receipt->consumed_by_m11_render ||
+        !receipt->real_graphics_session || !receipt->no_synthetic_pixels ||
+        !receipt->no_fallback_visuals || !plan || !plan->valid ||
+        !plan->real_graphics_session || !plan->no_synthetic_pixels ||
+        !plan->no_fallback_visuals ||
+        (plan->command_count !=
+             CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_BASE_COUNT_PC34 &&
+         plan->command_count !=
+             CSB_V1_VIEWPORT_RUNTIME_FIRST_FRAME_DRAW_COMMAND_CAP_PC34) ||
+        receipt->required_route_count != plan->command_count ||
+        receipt->route_mask != plan->route_mask || !bytes || !bytes->valid ||
+        !bytes->source_path || !bytes->source_md5 || !expected_source_path ||
+        !expected_source_md5 || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 || strcmp(bytes->source_path, expected_source_path) != 0 ||
+        strcmp(bytes->source_md5, expected_source_md5) != 0 ||
+        !csb_v1_viewport_md5_text_pc34(expected_source_md5) ||
+        !bytes->d2_d3_capture.valid ||
+        !bytes->d2_d3_capture.no_synthetic_pixels ||
+        !bytes->d2_d3_capture.no_fallback_visuals ||
+        receipt->capture_identity_hash == 0u ||
+        receipt->capture_identity_hash !=
+            bytes->d2_d3_capture.capture_identity_hash ||
+        receipt->d2_source_payload_hash !=
+            bytes->d2_d3_capture.d2_source_payload_hash ||
+        receipt->d2_decoded_hash != bytes->d2_d3_capture.d2_decoded_fnv1a ||
+        receipt->d3_source_payload_hash !=
+            bytes->d2_d3_capture.d3_source_payload_hash ||
+        receipt->d3_decoded_hash != bytes->d2_d3_capture.d3_decoded_fnv1a) goto reject;
+    for (i = 0; i < plan->command_count; ++i) {
+        const CSB_V1_ViewportRuntimeDrawCommandPc34 *command = &plan->commands[i];
+        const CSB_V1_ViewportFirstFrameMaterialSpanPc34 *span = &bytes->materials[i];
+        int y;
+        if (!span->decoded_pixels || span->decoded_size == 0u ||
+            !bytes->palette.decoded_palette || bytes->palette.decoded_size == 0u ||
+            command->decoded_pixels != span->decoded_pixels ||
+            command->decoded_size != span->decoded_size ||
+            command->decoded_width != span->width ||
+            command->decoded_height != span->height ||
+            command->decoded_palette != bytes->palette.decoded_palette ||
+            command->decoded_palette_size != bytes->palette.decoded_size ||
+            command->material_hash != span->decoded_fnv1a ||
+            command->palette_hash != bytes->palette.decoded_fnv1a ||
+            csb_v1_viewport_fnv1a_bytes_pc34(span->decoded_pixels,
+                                              span->decoded_size) != span->decoded_fnv1a ||
+            csb_v1_viewport_fnv1a_bytes_pc34(bytes->palette.decoded_palette,
+                                              bytes->palette.decoded_size) !=
+                bytes->palette.decoded_fnv1a ||
+            command->clip_x < 0 || command->clip_y < 0 || command->clip_w <= 0 ||
+            command->clip_h <= 0 || command->clip_x + command->clip_w > framebuffer_width ||
+            command->clip_y + command->clip_h > framebuffer_height) goto reject;
+        for (y = 0; y < command->clip_h; ++y) {
+            int x;
+            int sy = (y * span->height) / command->clip_h;
+            for (x = 0; x < command->clip_w; ++x) {
+                int sx = (x * span->width) / command->clip_w;
+                uint8_t pixel = span->decoded_pixels[(size_t)sy * span->width + sx];
+                if (pixel != (uint8_t)command->transparent_color)
+                    framebuffer[(size_t)(command->clip_y + y) * framebuffer_width +
+                                command->clip_x + x] = pixel;
+            }
+        }
+    }
+    raster_hash = csb_v1_viewport_fnv1a_bytes_pc34(
+        framebuffer, (size_t)framebuffer_width * framebuffer_height);
+    if (out_receipt) {
+        out_receipt->valid = 1; out_receipt->consumed_by_raster = 1;
+        out_receipt->command_count = plan->command_count;
+        out_receipt->combined_material_hash = receipt->combined_material_hash;
+        out_receipt->raster_hash = raster_hash;
+    }
+    return 1;
+reject:
+    if (out_receipt) out_receipt->rejected = 1;
+    return 0;
+}
+
+static uint32_t csb_v1_viewport_live_source_identity_hash_pc34(
+    const char *path, const char *md5, uint32_t palette_hash)
+{
+    uint32_t hash;
+    if (!path || !md5) return 0u;
+    hash = csb_v1_viewport_fnv1a_bytes_pc34((const uint8_t *)path, strlen(path));
+    hash = csb_v1_viewport_mix_u32_pc34(hash, csb_v1_viewport_fnv1a_bytes_pc34(
+        (const uint8_t *)md5, strlen(md5)));
+    hash = csb_v1_viewport_mix_u32_pc34(hash, palette_hash);
+    return hash ? hash : 1u;
+}
+
+static int csb_v1_viewport_live_frame_source_valid_pc34(
+    const CSB_V1_ViewportLiveFrameSourcePc34 *source)
+{
+    int i;
+    if (!source || !source->valid || !source->source_path || !source->source_path[0] ||
+        !csb_v1_viewport_md5_text_pc34(source->source_md5) ||
+        source->door_state < 0 || source->door_state > 5 ||
+        !source->palette.decoded_palette || source->palette.decoded_size == 0u ||
+        !source->palette.decoded_fnv1a ||
+        csb_v1_viewport_fnv1a_bytes_pc34(source->palette.decoded_palette,
+                                          source->palette.decoded_size) !=
+            source->palette.decoded_fnv1a) return 0;
+    for (i = 0; i < CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34; ++i) {
+        const CSB_V1_ViewportLiveSurfaceSpanPc34 *surface = &source->surfaces[i];
+        if (surface->kind != (CSB_V1_ViewportLiveSurfaceKindPc34)i ||
+            !surface->decoded_pixels || surface->decoded_size == 0u ||
+            surface->width <= 0 || surface->height <= 0 ||
+            (size_t)surface->width * surface->height != surface->decoded_size ||
+            !surface->decoded_fnv1a || surface->clip_x < 0 || surface->clip_y < 0 ||
+            surface->clip_w <= 0 || surface->clip_h <= 0 ||
+            csb_v1_viewport_fnv1a_bytes_pc34(surface->decoded_pixels,
+                                              surface->decoded_size) !=
+                surface->decoded_fnv1a) return 0;
+    }
+    return 1;
+}
+
+int csb_v1_viewport_admit_live_frame_progression_pc34(
+    CSB_V1_ViewportLiveFrameProgressionPc34 *progression,
+    const CSB_V1_ViewportFirstFrameMaterializationReceipt *base_receipt,
+    const CSB_V1_ViewportLiveFrameSourcePc34 *source,
+    const char *expected_source_path, const char *expected_source_md5,
+    CSB_V1_ViewportLiveFrameReceiptPc34 *out_receipt)
+{
+    uint32_t identity;
+    int door_delta;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!progression || !expected_source_path || !expected_source_md5 ||
+        !csb_v1_viewport_live_frame_source_valid_pc34(source) ||
+        strcmp(source->source_path, expected_source_path) != 0 ||
+        strcmp(source->source_md5, expected_source_md5) != 0 ||
+        !csb_v1_viewport_md5_text_pc34(expected_source_md5)) return 0;
+    identity = csb_v1_viewport_live_source_identity_hash_pc34(
+        source->source_path, source->source_md5, source->palette.decoded_fnv1a);
+    if (!progression->valid) {
+        if (source->frame_number != 0u || !base_receipt || !base_receipt->valid ||
+            !base_receipt->consumed_by_m11_render || !base_receipt->real_graphics_session ||
+            !base_receipt->no_synthetic_pixels || !base_receipt->no_fallback_visuals) return 0;
+    } else {
+        door_delta = source->door_state - progression->last_door_state;
+        if (source->frame_number != progression->last_frame_number + 1u ||
+            progression->source_identity_hash != identity ||
+            progression->palette_hash != source->palette.decoded_fnv1a ||
+            door_delta < -1 || door_delta > 1) return 0;
+    }
+    progression->valid = 1;
+    progression->last_frame_number = source->frame_number;
+    progression->last_door_state = source->door_state;
+    progression->source_identity_hash = identity;
+    progression->palette_hash = source->palette.decoded_fnv1a;
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->consumed_by_m11_render = 1;
+        out_receipt->frame_number = source->frame_number;
+        out_receipt->door_state = source->door_state;
+        out_receipt->source_identity_hash = identity;
+        out_receipt->palette_hash = source->palette.decoded_fnv1a;
+        out_receipt->wall_hash = source->surfaces[0].decoded_fnv1a;
+        out_receipt->floor_hash = source->surfaces[1].decoded_fnv1a;
+        out_receipt->door_hash = source->surfaces[2].decoded_fnv1a;
+    }
+    return 1;
+}
+
+int csb_v1_viewport_consume_live_frame_raster_pc34(
+    const CSB_V1_ViewportLiveFrameReceiptPc34 *receipt,
+    const CSB_V1_ViewportLiveFrameSourcePc34 *source,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    uint32_t *out_raster_hash)
+{
+    int i;
+    if (out_raster_hash) *out_raster_hash = 0u;
+    if (!receipt || !receipt->valid || !receipt->consumed_by_m11_render ||
+        !csb_v1_viewport_live_frame_source_valid_pc34(source) || !framebuffer ||
+        framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        receipt->frame_number != source->frame_number ||
+        receipt->door_state != source->door_state ||
+        receipt->palette_hash != source->palette.decoded_fnv1a ||
+        receipt->source_identity_hash != csb_v1_viewport_live_source_identity_hash_pc34(
+            source->source_path, source->source_md5, source->palette.decoded_fnv1a)) return 0;
+    for (i = 0; i < CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34; ++i) {
+        const CSB_V1_ViewportLiveSurfaceSpanPc34 *surface = &source->surfaces[i];
+        uint32_t expected_hash = i == 0 ? receipt->wall_hash :
+            (i == 1 ? receipt->floor_hash : receipt->door_hash);
+        int y;
+        if (surface->decoded_fnv1a != expected_hash ||
+            surface->clip_x + surface->clip_w > framebuffer_width ||
+            surface->clip_y + surface->clip_h > framebuffer_height) return 0;
+        for (y = 0; y < surface->clip_h; ++y) {
+            int x;
+            int sy = (y * surface->height) / surface->clip_h;
+            for (x = 0; x < surface->clip_w; ++x) {
+                int sx = (x * surface->width) / surface->clip_w;
+                uint8_t pixel = surface->decoded_pixels[(size_t)sy * surface->width + sx];
+                if (pixel != (uint8_t)surface->transparent_color)
+                    framebuffer[(size_t)(surface->clip_y + y) * framebuffer_width +
+                                surface->clip_x + x] = pixel;
+            }
+        }
+    }
+    if (out_raster_hash) *out_raster_hash = csb_v1_viewport_fnv1a_bytes_pc34(
+        framebuffer, (size_t)framebuffer_width * framebuffer_height);
+    return 1;
+}
+
+void csb_v1_viewport_live_frame_material_free_pc34(
+    CSB_V1_ViewportLiveFrameMaterialPc34 *material)
+{
+    int i;
+    if (!material) return;
+    for (i = 0; i < CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34; ++i) {
+        free(material->decoded_surface_bytes[i]);
+    }
+    memset(material, 0, sizeof(*material));
+}
+
+int csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declaration,
+    CSB_V1_ViewportLiveFrameMaterialPc34 *out_material)
+{
+    int i;
+    if (out_material) csb_v1_viewport_live_frame_material_free_pc34(out_material);
+    if (!cache || !cache->loaded || !cache->file_buffer || !declaration ||
+        !out_material || !declaration->source_path || !declaration->source_md5 ||
+        !declaration->palette_receipt || !declaration->palette_receipt->valid ||
+        strcmp(declaration->source_path, cache->resolved_path) != 0 ||
+        strcmp(declaration->source_md5, cache->matched_md5) != 0 ||
+        strcmp(declaration->palette_receipt->source_path, cache->resolved_path) != 0 ||
+        strcmp(declaration->palette_receipt->source_md5, cache->matched_md5) != 0 ||
+        !csb_v1_viewport_md5_text_pc34(cache->matched_md5) ||
+        !declaration->palette_receipt->decoded_fnv1a ||
+        csb_v1_viewport_fnv1a_bytes_pc34(
+            declaration->palette_receipt->decoded_bytes,
+            sizeof(declaration->palette_receipt->decoded_bytes)) !=
+            declaration->palette_receipt->decoded_fnv1a) return 0;
+
+    memcpy(out_material->source_path, cache->resolved_path,
+           sizeof(out_material->source_path) - 1u);
+    memcpy(out_material->source_md5, cache->matched_md5,
+           sizeof(out_material->source_md5) - 1u);
+    memcpy(out_material->palette_bytes, declaration->palette_receipt->decoded_bytes,
+           sizeof(out_material->palette_bytes));
+    out_material->source.valid = 1;
+    out_material->source.frame_number = declaration->frame_number;
+    out_material->source.door_state = declaration->door_state;
+    out_material->source.source_path = out_material->source_path;
+    out_material->source.source_md5 = out_material->source_md5;
+    out_material->source.palette.decoded_palette = out_material->palette_bytes;
+    out_material->source.palette.decoded_size = sizeof(out_material->palette_bytes);
+    out_material->source.palette.decoded_fnv1a = declaration->palette_receipt->decoded_fnv1a;
+
+    for (i = 0; i < CSB_V1_VIEWPORT_LIVE_FRAME_SURFACE_COUNT_PC34; ++i) {
+        const CSB_V1_ViewportLiveSurfaceDeclarationPc34 *decl =
+            &declaration->surfaces[i];
+        CSB_V1_CSBGraphicsEntrySpan span;
+        CSB_V1_ViewportLiveSurfaceSpanPc34 *surface =
+            &out_material->source.surfaces[i];
+        size_t expected_size;
+        size_t written = 0u;
+        int rc;
+        if (decl->width <= 0 || decl->height <= 0 || decl->decoded_fnv1a == 0u ||
+            (size_t)decl->width > SIZE_MAX / (size_t)decl->height) goto reject;
+        expected_size = (size_t)decl->width * (size_t)decl->height;
+        rc = csb_v1_csbgraphics_dat_entry_span(cache->file_buffer, cache->file_size,
+                                                decl->entry_index, &span);
+        if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+            span.decompressed_size != expected_size || expected_size == 0u) goto reject;
+        out_material->decoded_surface_bytes[i] = (uint8_t *)malloc(expected_size);
+        if (!out_material->decoded_surface_bytes[i]) goto reject;
+        rc = csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer, cache->file_size,
+                                                 decl->entry_index,
+                                                 out_material->decoded_surface_bytes[i],
+                                                 expected_size, &written);
+        if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK || written != expected_size ||
+            csb_v1_viewport_fnv1a_bytes_pc34(out_material->decoded_surface_bytes[i],
+                                              written) != decl->decoded_fnv1a) goto reject;
+        surface->kind = (CSB_V1_ViewportLiveSurfaceKindPc34)i;
+        surface->decoded_pixels = out_material->decoded_surface_bytes[i];
+        surface->decoded_size = written;
+        surface->decoded_fnv1a = decl->decoded_fnv1a;
+        surface->width = decl->width;
+        surface->height = decl->height;
+        surface->clip_x = decl->clip_x;
+        surface->clip_y = decl->clip_y;
+        surface->clip_w = decl->clip_w;
+        surface->clip_h = decl->clip_h;
+        surface->transparent_color = decl->transparent_color;
+    }
+    if (!csb_v1_viewport_live_frame_source_valid_pc34(&out_material->source)) goto reject;
+    out_material->valid = 1;
+    return 1;
+reject:
+    csb_v1_viewport_live_frame_material_free_pc34(out_material);
+    return 0;
+}
+
+static uint32_t csb_v1_viewport_live_dungeon_state_hash_pc34(
+    const CSB_V1_ViewportLiveDungeonStatePc34 *state)
+{
+    uint32_t hash;
+    if (!state || !state->source_path || !state->source_md5) return 0u;
+    hash = csb_v1_viewport_live_source_identity_hash_pc34(
+        state->source_path, state->source_md5, 0u);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, state->frame_number);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, (uint32_t)state->door_state);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, state->wall_entry_index);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, state->floor_entry_index);
+    hash = csb_v1_viewport_mix_u32_pc34(hash, state->door_entry_index);
+    return hash ? hash : 1u;
+}
+
+int csb_v1_viewport_select_live_dungeon_state_pc34(
+    const CSB_V1_ViewportLiveFrameDeclarationPc34 *declarations,
+    size_t declaration_count,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *state,
+    const CSB_V1_ViewportLiveDungeonSelectionPc34 *previous,
+    CSB_V1_ViewportLiveDungeonSelectionPc34 *out_selection)
+{
+    uint32_t identity;
+    size_t i;
+
+    if (out_selection) memset(out_selection, 0, sizeof(*out_selection));
+    if (!declarations || declaration_count == 0u || !state || !out_selection ||
+        state->door_state < 0 || state->door_state > 5 || !state->source_path ||
+        !state->source_path[0] || !csb_v1_viewport_md5_text_pc34(state->source_md5)) return 0;
+    identity = csb_v1_viewport_live_dungeon_state_hash_pc34(state);
+    out_selection->invalidated_previous = previous && previous->valid &&
+        previous->state_identity_hash != identity;
+    for (i = 0u; i < declaration_count; ++i) {
+        const CSB_V1_ViewportLiveFrameDeclarationPc34 *decl = &declarations[i];
+        if (!decl->source_path || !decl->source_md5 || !decl->palette_receipt ||
+            !decl->palette_receipt->valid || decl->frame_number != state->frame_number ||
+            decl->door_state != state->door_state ||
+            decl->surfaces[CSB_V1_VIEWPORT_LIVE_SURFACE_WALL_PC34].entry_index !=
+                state->wall_entry_index ||
+            decl->surfaces[CSB_V1_VIEWPORT_LIVE_SURFACE_FLOOR_PC34].entry_index !=
+                state->floor_entry_index ||
+            decl->surfaces[CSB_V1_VIEWPORT_LIVE_SURFACE_DOOR_PC34].entry_index !=
+                state->door_entry_index ||
+            strcmp(decl->source_path, state->source_path) != 0 ||
+            strcmp(decl->source_md5, state->source_md5) != 0) continue;
+        out_selection->valid = 1;
+        out_selection->frame_number = state->frame_number;
+        out_selection->door_state = state->door_state;
+        out_selection->state_identity_hash = identity;
+        out_selection->declaration = decl;
+        return 1;
+    }
+    return 0;
+}
+
+int csb_v1_viewport_live_dungeon_state_from_verified_ingress_pc34(
+    const CSB_V1_ViewportVerifiedDungeonIngressPc34 *frame_receipt,
+    const uint8_t *dungeon_grid, int dungeon_width, int dungeon_height,
+    int square_x, int square_y,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *explicit_material_identity,
+    CSB_V1_ViewportLiveDungeonStatePc34 *out_state)
+{
+    CSB_V1_ViewportLiveDungeonStatePc34 state;
+    uint8_t raw_square;
+
+    if (out_state) memset(out_state, 0, sizeof(*out_state));
+    if (!frame_receipt || !dungeon_grid || dungeon_width <= 0 || dungeon_height <= 0 ||
+        square_x < 0 || square_y < 0 || square_x >= dungeon_width ||
+        square_y >= dungeon_height || !explicit_material_identity || !out_state ||
+        !frame_receipt->valid || !frame_receipt->real_asset_matched ||
+        !frame_receipt->terminal_session_owned || !frame_receipt->viewport_frame_consumed ||
+        !frame_receipt->no_synthetic_surface || frame_receipt->session_generation == 0u ||
+        !explicit_material_identity->source_path ||
+        !csb_v1_viewport_md5_text_pc34(explicit_material_identity->source_md5)) return 0;
+    raw_square = dungeon_grid[(size_t)square_y * (size_t)dungeon_width +
+                              (size_t)square_x];
+    if ((raw_square & 0x07u) > 5u) return 0;
+    state = *explicit_material_identity;
+    state.frame_number = frame_receipt->source_tick;
+    state.door_state = raw_square & 0x07u;
+    *out_state = state;
+    return 1;
+}
+
+int csb_v1_viewport_admit_operator_declaration_corpus_pc34(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_ViewportOperatorDeclarationCorpusPc34 *corpus)
+{
+    size_t i;
+    if (!cache || !cache->loaded || !cache->file_buffer || !corpus ||
+        !corpus->valid || !corpus->source_path || !corpus->source_md5 ||
+        !corpus->palette_receipt || !corpus->palette_receipt->valid ||
+        !corpus->declarations || corpus->declaration_count == 0u ||
+        strcmp(corpus->source_path, cache->resolved_path) != 0 ||
+        strcmp(corpus->source_md5, cache->matched_md5) != 0 ||
+        strcmp(corpus->palette_receipt->source_path, cache->resolved_path) != 0 ||
+        strcmp(corpus->palette_receipt->source_md5, cache->matched_md5) != 0 ||
+        !csb_v1_viewport_md5_text_pc34(cache->matched_md5)) return 0;
+    for (i = 0u; i < corpus->declaration_count; ++i) {
+        const CSB_V1_ViewportLiveFrameDeclarationPc34 *decl =
+            &corpus->declarations[i];
+        if (!decl->source_path || !decl->source_md5 ||
+            decl->palette_receipt != corpus->palette_receipt ||
+            strcmp(decl->source_path, corpus->source_path) != 0 ||
+            strcmp(decl->source_md5, corpus->source_md5) != 0 ||
+            decl->door_state < 0 || decl->door_state > 5) return 0;
+    }
+    return 1;
+}
+
+int csb_v1_viewport_parse_operator_declaration_manifest_pc34(
+    const char *text, const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt,
+    CSB_V1_ViewportOperatorDeclarationManifestPc34 *out_manifest)
+{
+    const char *cursor = text;
+    char line[1024];
+    int saw_source = 0;
+    if (out_manifest) memset(out_manifest, 0, sizeof(*out_manifest));
+    if (!text || !cache || !palette_receipt || !out_manifest) return 0;
+    while (*cursor) {
+        size_t n = 0u;
+        int consumed = 0;
+        while (cursor[n] && cursor[n] != '\n' && n + 1u < sizeof(line)) ++n;
+        if (cursor[n] && cursor[n] != '\n') return 0;
+        memcpy(line, cursor, n); line[n] = '\0';
+        cursor += cursor[n] == '\n' ? n + 1u : n;
+        if (!line[0] || line[0] == '#') continue;
+        if (!saw_source) {
+            char path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+            char md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+            char extra;
+            if (sscanf(line, "source %511s %32s %c", path, md5, &extra) != 2 ||
+                strcmp(path, cache->resolved_path) != 0 ||
+                strcmp(md5, cache->matched_md5) != 0) return 0;
+            snprintf(out_manifest->source_path, sizeof(out_manifest->source_path), "%s", path);
+            snprintf(out_manifest->source_md5, sizeof(out_manifest->source_md5), "%s", md5);
+            saw_source = 1;
+            continue;
+        }
+        if (out_manifest->declaration_count >= CSB_V1_VIEWPORT_OPERATOR_DECLARATION_MAX_FRAMES_PC34) return 0;
+        {
+            CSB_V1_ViewportLiveFrameDeclarationPc34 *d =
+                &out_manifest->declarations[out_manifest->declaration_count];
+            unsigned int f, e[3], h[3]; int door, w[3], ht[3], x[3], y[3], cw[3], ch[3], tr[3]; char extra;
+            size_t prior;
+            int got = sscanf(line,
+                "frame %u %d %u %d %d %u %d %d %d %d %d %u %d %d %u %d %d %d %d %d %u %d %d %u %d %d %d %d %d %c",
+                &f,&door,&e[0],&w[0],&ht[0],&h[0],&x[0],&y[0],&cw[0],&ch[0],&tr[0],
+                &e[1],&w[1],&ht[1],&h[1],&x[1],&y[1],&cw[1],&ch[1],&tr[1],
+                &e[2],&w[2],&ht[2],&h[2],&x[2],&y[2],&cw[2],&ch[2],&tr[2],&extra);
+            if (got != 29 || door < 0 || door > 5) return 0;
+            for (prior = 0u; prior < out_manifest->declaration_count; ++prior) {
+                if (out_manifest->declarations[prior].frame_number == f) return 0;
+            }
+            d->frame_number = f; d->door_state = door; d->source_path = out_manifest->source_path;
+            d->source_md5 = out_manifest->source_md5; d->palette_receipt = palette_receipt;
+            for (consumed = 0; consumed < 3; ++consumed) {
+                CSB_V1_ViewportLiveSurfaceDeclarationPc34 *s = &d->surfaces[consumed];
+                s->entry_index=e[consumed]; s->width=w[consumed]; s->height=ht[consumed]; s->decoded_fnv1a=h[consumed];
+                s->clip_x=x[consumed]; s->clip_y=y[consumed]; s->clip_w=cw[consumed]; s->clip_h=ch[consumed]; s->transparent_color=tr[consumed];
+            }
+            ++out_manifest->declaration_count;
+        }
+    }
+    if (!saw_source || out_manifest->declaration_count == 0u) return 0;
+    {
+        CSB_V1_ViewportOperatorDeclarationCorpusPc34 corpus;
+        memset(&corpus, 0, sizeof(corpus)); corpus.valid=1; corpus.source_path=out_manifest->source_path;
+        corpus.source_md5=out_manifest->source_md5; corpus.palette_receipt=palette_receipt;
+        corpus.declarations=out_manifest->declarations; corpus.declaration_count=out_manifest->declaration_count;
+        if (!csb_v1_viewport_admit_operator_declaration_corpus_pc34(cache, &corpus)) return 0;
+    }
+    out_manifest->valid = 1;
+    out_manifest->palette_receipt = palette_receipt;
     return 1;
 }
 
@@ -2027,6 +2971,11 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
     cfg->runtime_projectile_material_resolved_count = 0;
     cfg->runtime_projectile_material_icon_drawn_count = 0;
     cfg->runtime_projectile_marker_drawn_count = 0;
+    if (cfg->runtime_overlay_source_required &&
+        (!cfg->runtime_overlay_source_admitted ||
+         cfg->runtime_overlay_source_hash == 0u)) {
+        return;
+    }
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat *projectile =
             &cfg->runtime_projectiles->entries[i];
@@ -2115,6 +3064,11 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
     cfg->runtime_object_marker_drawn_count = 0;
     cfg->runtime_group_sprite_drawn_count = 0;
     cfg->runtime_group_marker_drawn_count = 0;
+    if (cfg->runtime_overlay_source_required &&
+        (!cfg->runtime_overlay_source_admitted ||
+         cfg->runtime_overlay_source_hash == 0u)) {
+        return;
+    }
 
     overlay_count = csb_v1_viewport_runtime_collect_thing_overlays(
         cfg->runtime_profile,
@@ -2246,6 +3200,13 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
     int i;
 
     if (!cfg || !cfg->runtime_explosions) return;
+    cfg->runtime_explosion_sprite_drawn_count = 0;
+    cfg->runtime_explosion_marker_drawn_count = 0;
+    if (cfg->runtime_overlay_source_required &&
+        (!cfg->runtime_overlay_source_admitted ||
+         cfg->runtime_overlay_source_hash == 0u)) {
+        return;
+    }
     for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
         const struct ExplosionInstance_Compat *explosion =
             &cfg->runtime_explosions->entries[i];
@@ -3161,8 +4122,14 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->projectile_sprite_user = NULL;
         cfg->explosion_sprite_drawer = NULL;
         cfg->explosion_sprite_user = NULL;
+        cfg->runtime_overlay_source_required = 0;
+        cfg->runtime_overlay_source_admitted = 0;
+        cfg->runtime_overlay_source_hash = 0u;
         cfg->real_graphics_session = 0;
         cfg->first_frame_material_proof = NULL;
+        cfg->first_frame_material_bytes = NULL;
+        cfg->first_frame_material_source_path = NULL;
+        cfg->first_frame_material_source_md5 = NULL;
         cfg->first_frame_material_consumed_count = 0;
         cfg->first_frame_material_blocked_count = 0;
         cfg->first_frame_material_hash = 0u;
@@ -3171,6 +4138,9 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->first_frame_draw_plan_command_count = 0;
         cfg->first_frame_draw_plan_hash = 0u;
         cfg->first_frame_draw_plan_palette_hash = 0u;
+        cfg->first_frame_material_raster_consumed_count = 0;
+        cfg->first_frame_material_raster_blocked_count = 0;
+        cfg->first_frame_material_raster_hash = 0u;
         cfg->graphic_provider_callback = NULL;
         cfg->graphic_provider_user_data = NULL;
         return;
@@ -3185,8 +4155,16 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->projectile_sprite_user = binding->projectile_sprite_user;
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
     cfg->explosion_sprite_user = binding->explosion_sprite_user;
+    cfg->runtime_overlay_source_required =
+        binding->runtime_overlay_source_required ? 1 : 0;
+    cfg->runtime_overlay_source_admitted =
+        binding->runtime_overlay_source_admitted ? 1 : 0;
+    cfg->runtime_overlay_source_hash = binding->runtime_overlay_source_hash;
     cfg->real_graphics_session = binding->real_graphics_session ? 1 : 0;
     cfg->first_frame_material_proof = binding->first_frame_material_proof;
+    cfg->first_frame_material_bytes = binding->first_frame_material_bytes;
+    cfg->first_frame_material_source_path = binding->first_frame_material_source_path;
+    cfg->first_frame_material_source_md5 = binding->first_frame_material_source_md5;
     cfg->first_frame_material_consumed_count = 0;
     cfg->first_frame_material_blocked_count = 0;
     cfg->first_frame_material_hash = 0u;
@@ -3195,6 +4173,9 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->first_frame_draw_plan_command_count = 0;
     cfg->first_frame_draw_plan_hash = 0u;
     cfg->first_frame_draw_plan_palette_hash = 0u;
+    cfg->first_frame_material_raster_consumed_count = 0;
+    cfg->first_frame_material_raster_blocked_count = 0;
+    cfg->first_frame_material_raster_hash = 0u;
     cfg->graphic_provider_callback = binding->graphic_provider_callback;
     cfg->graphic_provider_user_data = binding->graphic_provider_user_data;
 }
@@ -3256,6 +4237,12 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->first_frame_draw_plan_hash;
     counts->first_frame_draw_plan_palette_hash =
         cfg->first_frame_draw_plan_palette_hash;
+    counts->first_frame_material_raster_consumed_count =
+        cfg->first_frame_material_raster_consumed_count;
+    counts->first_frame_material_raster_blocked_count =
+        cfg->first_frame_material_raster_blocked_count;
+    counts->first_frame_material_raster_hash =
+        cfg->first_frame_material_raster_hash;
 }
 
 void csb_v1_viewport_set_first_frame_material_proof_pc34(
@@ -3913,6 +4900,27 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
             cfg->first_frame_draw_plan_hash = draw_plan.plan_hash;
             cfg->first_frame_draw_plan_palette_hash =
                 draw_plan.shared_palette_hash;
+            if (cfg->first_frame_material_bytes &&
+                csb_v1_viewport_bind_first_frame_material_bytes_pc34(
+                    cfg->first_frame_material_proof, &draw_plan,
+                    cfg->first_frame_material_bytes, &receipt) &&
+                csb_v1_viewport_consume_first_frame_material_raster_pc34(
+                    &receipt, &draw_plan, cfg->first_frame_material_bytes,
+                    cfg->first_frame_material_source_path,
+                    cfg->first_frame_material_source_md5,
+                    cfg->viewport_pixels, vp.viewport_stride, 200,
+                    NULL)) {
+                cfg->first_frame_material_raster_consumed_count = 1;
+                cfg->first_frame_material_raster_blocked_count = 0;
+                cfg->first_frame_material_raster_hash =
+                    csb_v1_viewport_fnv1a_bytes_pc34(
+                        cfg->viewport_pixels,
+                        (size_t)vp.viewport_stride * 200u);
+            } else {
+                cfg->first_frame_material_raster_consumed_count = 0;
+                cfg->first_frame_material_raster_blocked_count = 1;
+                cfg->first_frame_material_raster_hash = 0u;
+            }
         } else {
             cfg->first_frame_material_consumed_count = 0;
             cfg->first_frame_material_blocked_count = 1;
@@ -3922,6 +4930,9 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
             cfg->first_frame_draw_plan_command_count = 0;
             cfg->first_frame_draw_plan_hash = 0u;
             cfg->first_frame_draw_plan_palette_hash = 0u;
+            cfg->first_frame_material_raster_consumed_count = 0;
+            cfg->first_frame_material_raster_blocked_count = 1;
+            cfg->first_frame_material_raster_hash = 0u;
         }
     } else {
         cfg->first_frame_material_consumed_count = 0;
@@ -3932,6 +4943,9 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
         cfg->first_frame_draw_plan_command_count = 0;
         cfg->first_frame_draw_plan_hash = 0u;
         cfg->first_frame_draw_plan_palette_hash = 0u;
+        cfg->first_frame_material_raster_consumed_count = 0;
+        cfg->first_frame_material_raster_blocked_count = 0;
+        cfg->first_frame_material_raster_hash = 0u;
     }
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);

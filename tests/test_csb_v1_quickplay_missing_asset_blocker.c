@@ -90,6 +90,7 @@ static void seed_csb_quickplay_state(M12_StartupMenuState* state,
     snprintf(state->quickResumeGameId, sizeof(state->quickResumeGameId), "csb");
     snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
              "/tmp/firestaff-test-csb-quickplay/firestaff-csb-quicksave.sav");
+    M12_StartupMenu_BindCSBSaveCandidateIdentity(state, 0x6d2a9011u);
     state->view = M12_MENU_VIEW_MAIN;
 }
 
@@ -159,6 +160,17 @@ static void check_csb_quickplay_ready_return_clears_launch_latches(void) {
     CHECK(state.messageLine3 && strcmp(state.messageLine3, "") == 0);
 }
 
+static void check_csb_quickplay_rejects_path_only_intent(void) {
+    M12_StartupMenuState state;
+    M12_LaunchIntent intent;
+    seed_csb_quickplay_state(&state, 1, 1);
+    M12_StartupMenu_BindCSBSaveCandidateIdentity(&state, 0u);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    CHECK(intent.valid == 1);
+    CHECK(intent.savePath == NULL);
+}
+
 int main(void) {
     /*
      * CSB quickplay must use the same required-asset gate as normal launch:
@@ -170,6 +182,7 @@ int main(void) {
     check_csb_quickplay_blocks_missing_asset(1, 0, "DUNGEON.DAT");
     check_csb_quickplay_blocks_missing_asset(0, 1, "GRAPHICS.DAT");
     check_csb_quickplay_ready_return_clears_launch_latches();
+    check_csb_quickplay_rejects_path_only_intent();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

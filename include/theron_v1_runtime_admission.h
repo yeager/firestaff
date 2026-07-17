@@ -4,6 +4,39 @@
 #include "theron_v1_capture_config.h"
 #include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_track02_capture_campaign.h"
+#include "theron_v1_track02_capture_trace_runtime_admission.h"
+
+/* The only host-facing route currently backed by the authenticated US Track
+ * 02 dungeon handoff. Keep this closed rather than accepting arbitrary labels
+ * as provenance. */
+#define THERON_V1_TRACK02_ORIGINAL_HOST_DUNGEON_ROUTE \
+    "theron-v1-original-host-route-track02-dungeon"
+
+/* Capture readiness is deliberately distinct from the existing startup and
+ * drawing paths. A positive receipt exposes only that all three external
+ * observations remain source-consistent. */
+typedef struct {
+    int valid;
+    int startup_capture_ready;
+    int soul_room_capture_ready;
+    int dungeon_capture_ready;
+    int campaign_consumed;
+    int startup_media_consumed;
+    int dungeon_window_consumed;
+    Theron_Track02Variant track02_variant;
+    char track02_md5[33];
+    int level_object_semantics_allowed;
+    int pixel_decode_allowed;
+    int render_allowed;
+    int fallback_visuals_allowed;
+} Theron_V1RuntimeTrack02CaptureCampaignAdmissionReceipt;
+
+int theron_v1_runtime_bind_track02_capture_campaign_admission(
+    const Theron_StartupMediaStateReceipt *startup_media,
+    const Theron_V1Track02CaptureCampaignReceipt *campaign,
+    const Theron_V1Track02CaptureTraceRuntimeAdmissionReceipt *dungeon_window,
+    Theron_V1RuntimeTrack02CaptureCampaignAdmissionReceipt *out);
 
 typedef struct {
     int attached;
@@ -1254,6 +1287,7 @@ typedef struct {
     uint32_t decoded_object_table_hash;
     uint32_t decoded_bitmap_hash;
     uint32_t decoded_palette_hash;
+    uint32_t original_host_route_identity_checksum;
     int original_host_route_bound;
     int level_grid_runtime_consumer_bound;
     int object_table_runtime_consumer_bound;
@@ -1287,6 +1321,7 @@ typedef struct {
     uint32_t decoded_object_table_hash;
     uint32_t decoded_bitmap_hash;
     uint32_t decoded_palette_hash;
+    uint32_t original_host_route_identity_checksum;
     int real_track02_dungeon_consumer_ready;
     int host_surface_upload_allowed;
     int host_capture_frame_required;

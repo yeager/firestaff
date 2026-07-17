@@ -119,6 +119,24 @@ int dm1_v1_projectile_subtype_graphic_index(int subtype) {
     return DM1_GFX_FIRST_PROJECTILE + first;
 }
 
+static int dm1_v1_f0142_object_subtype_is_valid_pc34(
+    int associatedThingType,
+    int associatedThingSubtype)
+{
+    if (associatedThingSubtype < 0) {
+        return 0;
+    }
+    switch (associatedThingType) {
+        case THING_TYPE_WEAPON: return associatedThingSubtype <= 45;
+        case THING_TYPE_ARMOUR: return associatedThingSubtype <= 57;
+        case THING_TYPE_SCROLL: return associatedThingSubtype == 0;
+        case THING_TYPE_POTION: return associatedThingSubtype <= 20;
+        case THING_TYPE_CONTAINER: return associatedThingSubtype == 0;
+        case THING_TYPE_JUNK: return associatedThingSubtype <= 52;
+        default: return 0;
+    }
+}
+
 int dm1_v1_f0142_get_projectile_aspect_pc34(
     int projectileSubtype,
     int associatedThingType,
@@ -129,6 +147,14 @@ int dm1_v1_f0142_get_projectile_aspect_pc34(
 
     if (associatedThingType >= THING_TYPE_WEAPON &&
         associatedThingType <= THING_TYPE_JUNK) {
+        /* F0142 reads the authenticated C05..C0B record type directly.
+         * The generic inventory aspect helper intentionally normalizes UI
+         * slot values; a malformed projectile Slot must instead fail closed
+         * before it can borrow subtype-zero object material. */
+        if (!dm1_v1_f0142_object_subtype_is_valid_pc34(
+                associatedThingType, associatedThingSubtype)) {
+            return DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34;
+        }
         if (associatedThingType == THING_TYPE_WEAPON &&
             weaponProjectileAspectOrdinal > 0) {
             if (weaponProjectileAspectOrdinal > DM1_PROJECTILE_ASPECT_COUNT) {
@@ -808,17 +834,19 @@ int dm1_v1_f0115_runtime_summary_from_world_pc34(
     int count = 0;
     if (!outSummary) return 0;
     memset(outSummary, 0, sizeof(*outSummary));
-    if (!world || !world->dungeon || !world->things) return 0;
+    if (!world || !world->dungeon) return 0;
 
     /* ReDMCSB DUNVIEW.C F0115:4547-4581 walks the current square's SFT
      * chain before its live F0219/F0220 passes.  DUNGEON.C F0160/F0161
      * owns the compact SFT lookup and record-next decode, so this bridge
      * deliberately consumes the M10 APIs rather than M11 raw records. */
-    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        world->dungeon, world->things, mapIndex, mapX, mapY);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && count < 32) {
-        refs[count++] = thing;
-        thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
+    if (world->things) {
+        thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            world->dungeon, world->things, mapIndex, mapX, mapY);
+        while (thing != THING_NONE && thing != THING_ENDOFLIST && count < 32) {
+            refs[count++] = thing;
+            thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
+        }
     }
 
     memset(&input, 0, sizeof(input));

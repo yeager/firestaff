@@ -511,6 +511,7 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
 {
     CSB_V1_BootProfile p;
     CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_BootStartupCSBGraphicsPaletteReadiness_PC34 palette_readiness;
     const CSB_V1_StartupAssetBinding_PC34 *binding;
 
     prime_verified_profile(&p);
@@ -554,6 +555,9 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
     p.csbgraphics_cache.loaded = 1;
     snprintf(p.csbgraphics_cache.resolved_path,
              sizeof(p.csbgraphics_cache.resolved_path), "%s", "CSBgraphics.dat");
+    snprintf(p.csbgraphics_cache.matched_md5,
+             sizeof(p.csbgraphics_cache.matched_md5), "%s",
+             "00000000000000000000000000000000");
     p.csbgraphics_runtime_plan.ready = 1;
     p.csbgraphics_runtime_plan.planned_count = 2u;
     p.csbgraphics_runtime_plan.entries[0].entry_index = 17u;
@@ -562,14 +566,51 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
     binding = csb_v1_boot_startup_asset_binding_pc34(
         &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34);
     CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
-          binding->graphic_index == 17u && binding->verified == 1 &&
+          binding->graphic_index == 17u && binding->verified == 0 &&
           strcmp(binding->path, "CSBgraphics.dat") == 0,
-          "validated CSBgraphics inventory entry overrides the HUD source");
+          "CSBgraphics inventory stays no-draw without a palette receipt");
     binding = csb_v1_boot_startup_asset_binding_pc34(
         &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_RESURRECT_PC34);
     CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
-          binding->graphic_index == 40u && binding->verified == 1,
-          "validated CSBgraphics resurrection entry overrides the HUD source");
+          binding->graphic_index == 40u && binding->verified == 0,
+          "CSBgraphics resurrection stays no-draw without a palette receipt");
+    CHECK(csb_v1_boot_startup_csbgraphics_palette_readiness_pc34(
+              &p, &palette_readiness) == 0 &&
+          palette_readiness.m11_no_draw_without_palette == 1 &&
+          palette_readiness.hud_palette_ready == 0,
+          "boot palette readiness exposes M11 no-draw before admission");
+
+    p.csbgraphics_palette_receipt.valid = 1;
+    snprintf(p.csbgraphics_palette_receipt.source_path,
+             sizeof(p.csbgraphics_palette_receipt.source_path), "%s",
+             p.csbgraphics_cache.resolved_path);
+    snprintf(p.csbgraphics_palette_receipt.source_md5,
+             sizeof(p.csbgraphics_palette_receipt.source_md5), "%s",
+             p.csbgraphics_cache.matched_md5);
+    p.csbgraphics_palette_receipt.entry_span.entry_index = 41u;
+    p.csbgraphics_palette_receipt.entry_span.decompressed_size =
+        CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES;
+    p.csbgraphics_palette_receipt.decoded_fnv1a = 0x12345678u;
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    CHECK(csb_v1_boot_startup_csbgraphics_palette_readiness_pc34(
+              &p, &palette_readiness) == 1 &&
+          palette_readiness.palette_receipt_ready &&
+          palette_readiness.hud_palette_ready &&
+          !palette_readiness.title_palette_ready &&
+          !palette_readiness.door_palette_ready &&
+          palette_readiness.palette_entry_index == 41u &&
+          palette_readiness.palette_decoded_fnv1a == 0x12345678u,
+          "matching boot palette receipt reaches the CSBgraphics HUD readiness");
+    binding = csb_v1_boot_startup_asset_binding_pc34(
+        &p, CSB_V1_STARTUP_ASSET_ROLE_HUD_INVENTORY_PC34);
+    CHECK(binding && binding->verified == 1,
+          "matching palette receipt verifies the selected CSBgraphics HUD binding");
+    p.csbgraphics_palette_receipt.source_path[0] = 'x';
+    csb_v1_boot_startup_assets_resolve_pc34(&p);
+    CHECK(csb_v1_boot_startup_csbgraphics_palette_readiness_pc34(
+              &p, &palette_readiness) == 0 &&
+          palette_readiness.m11_no_draw_without_palette == 1,
+          "mismatched palette path closes the boot-to-runtime receipt");
 
     p.startup_assets.bindings[CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34].source =
         CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
@@ -627,6 +668,7 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     unsigned char credits_pixels[4] = {0};
     unsigned char inventory_pixels[4] = {0};
     unsigned char resurrect_pixels[4] = {0};
+    uint32_t original_hud_binding_hash;
 
     /* This is a decoded-session unit test: the loader is covered at the
      * GRAPHICS.DAT boundary elsewhere.  The frame resolver must never
@@ -685,6 +727,15 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
               frame.uses_verified_hud_bindings && frame.source_tick == 41u &&
               frame.session_generation == 9u,
           "asset session keeps PRESENTS, C017/C040 HUD, and door source surfaces stable");
+    original_hud_binding_hash = frame.hud_binding_hash;
+    session.hud_source_receipt_hash = 0x13579bdfu;
+    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+              &session, &plan, 41u, &frame) == 1 &&
+              frame.hud_source_receipt_hash == 0x13579bdfu &&
+              frame.hud_binding_hash != original_hud_binding_hash &&
+              frame.frame_route_hash != 0u,
+          "hash-admitted CSBgraphics HUD receipt reaches the live frame binding");
+    session.hud_source_receipt_hash = 0u;
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 42u, &frame) == 1 &&
@@ -976,6 +1027,53 @@ static void test_source_evidence(void)
           "boot source evidence cites LOADSAVE.C F0435");
 }
 
+static void test_verified_dungeon_ingress_projection(void)
+{
+    CSB_V1_FirstLiveDungeonFrameReceipt_PC34 receipt;
+    CSB_V1_ViewportVerifiedDungeonIngressPc34 ingress;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.real_asset_matched = 1;
+    receipt.terminal_session_owned = 1;
+    receipt.viewport_frame_consumed = 1;
+    receipt.no_synthetic_surface = 1;
+    receipt.session_generation = 7u;
+    receipt.source_tick = 42u;
+    CHECK(csb_v1_boot_project_verified_dungeon_ingress_pc34(&receipt, &ingress) == 1 &&
+              ingress.valid && ingress.session_generation == 7u &&
+              ingress.source_tick == 42u,
+          "verified first-live receipt projects only ingress facts");
+    receipt.no_synthetic_surface = 0;
+    CHECK(csb_v1_boot_project_verified_dungeon_ingress_pc34(&receipt, &ingress) == 0 &&
+              !ingress.valid,
+          "incomplete first-live receipt cannot project ingress facts");
+}
+
+static void test_declared_live_material_route_rejects_without_declaration(void)
+{
+    CSB_V1_BootProfile profile;
+    CSB_V1_FirstLiveDungeonFrameReceipt_PC34 receipt;
+    CSB_V1_ViewportLiveFrameProgressionPc34 progression;
+    CSB_V1_ViewportLiveDungeonSelectionPc34 selection;
+    CSB_V1_ViewportOperatorDeclarationManifestPc34 manifest;
+    uint8_t framebuffer[320 * 200];
+
+    memset(&profile, 0, sizeof(profile));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&progression, 0, sizeof(progression));
+    memset(&manifest, 0, sizeof(manifest));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    receipt.valid = receipt.real_asset_matched = receipt.terminal_session_owned = 1;
+    receipt.viewport_frame_consumed = receipt.no_synthetic_surface = 1;
+    receipt.session_generation = 1u;
+    selection.valid = 1;
+    CHECK(csb_v1_boot_render_manifest_live_material_pc34(
+              &profile, &receipt, &manifest, NULL, 0, 0, &progression, NULL,
+              framebuffer, 320, 200, &selection) == 0 && !selection.valid,
+          "boot manifest live material route clears stale selection without admitted manifest");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Title/Import Startup UI Gate ===\n\n");
@@ -996,6 +1094,8 @@ int main(void)
     test_verified_session_owns_swoosh_title_audio_and_hud_handoff();
     test_pointer_quit_row_uses_entrance_without_utility_overlay();
     test_pointer_load_row_stays_utility_when_overlay_active();
+    test_verified_dungeon_ingress_projection();
+    test_declared_live_material_route_rejects_without_declaration();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

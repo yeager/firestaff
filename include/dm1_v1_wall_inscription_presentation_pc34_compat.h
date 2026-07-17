@@ -15,6 +15,10 @@ typedef struct DM1_V1_WallInscriptionPresentationReceiptPc34 {
     int valid;
     int textStringIndex;
     int lineCount;
+    int textDataWordOffset;
+    int textDataWordCount;
+    uint32_t textDataFNV1a;
+    uint32_t glyphBytesFNV1a;
 } DM1_V1_WallInscriptionPresentationReceiptPc34;
 
 /* One F0128 viewport tuple's readable-M648 decision. F0128 rebuilds the

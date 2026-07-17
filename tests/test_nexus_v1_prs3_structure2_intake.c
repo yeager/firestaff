@@ -60,13 +60,6 @@ static int default_nexus_dir(char *out, size_t out_size)
     return snprintf(out, out_size, "%s/.firestaff/data/nexus", home) > 0;
 }
 
-static int find_hash_path(const char *data_dir, const char *md5,
-                          char *out_path, int out_size)
-{
-    if (!data_dir || !md5 || !out_path || out_size <= 0) return 0;
-    return asset_find_by_md5(data_dir, md5, out_path, out_size, 0);
-}
-
 static void test_real_menu_bpk_and_structure2_intake(void)
 {
     enum {
@@ -75,7 +68,6 @@ static void test_real_menu_bpk_and_structure2_intake(void)
     static const char menu_bpk_md5[] = "c2776768ff25287c79013a1452253ca0";
     static const char lev00_md5[] = "603ec9c531a92539babdda84ab09e78e";
     char data_dir[1024];
-    char found_path[ASSET_PATH_MAX];
     char menu_path[1024];
     char level_path[1024];
     uint8_t *menu = NULL;
@@ -87,12 +79,10 @@ static void test_real_menu_bpk_and_structure2_intake(void)
     Nexus_V1_Prs3Structure2IntakeReceipt receipt;
 
     if (!default_nexus_dir(data_dir, sizeof(data_dir)) ||
-        !find_hash_path(data_dir, menu_bpk_md5, found_path,
-                        (int)sizeof(found_path)) ||
-        !find_hash_path(data_dir, lev00_md5, found_path,
-                        (int)sizeof(found_path)) ||
         snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", data_dir) <= 0 ||
-        snprintf(level_path, sizeof(level_path), "%s/LEV00.DGN", data_dir) <= 0) {
+        snprintf(level_path, sizeof(level_path), "%s/LEV00.DGN", data_dir) <= 0 ||
+        !asset_file_matches_md5(menu_path, menu_bpk_md5) ||
+        !asset_file_matches_md5(level_path, lev00_md5)) {
         puts("SKIP: canonical Nexus MENU.BPK/LEV00.DGN corpus not present");
         return;
     }

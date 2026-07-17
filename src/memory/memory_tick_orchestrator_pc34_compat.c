@@ -141,6 +141,45 @@ static void emit(struct TickResult_Compat* r, uint8_t kind,
     e->payload[3] = d;
 }
 
+static int orch_schedule_enable_champion_action_c11_compat(
+    struct GameWorld_Compat* world, int champion_index, int ticks)
+{
+    struct TimelineEvent_Compat event;
+    int i;
+
+    if (!world || champion_index < 0 || champion_index >= CHAMPION_MAX_PARTY ||
+        ticks <= 0) {
+        return 0;
+    }
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    event.fireAtTick = world->gameTick + (uint32_t)ticks;
+    event.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux3 = champion_index;
+
+    /* CHAMPION.C F0330 retains one C11 per champion.  A second disable
+     * moves that receipt by its new duration plus half its remaining wait. */
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* prior = &world->timeline.events[i];
+        if (prior->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            prior->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            prior->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            prior->aux3 == champion_index) {
+            uint32_t remaining = prior->fireAtTick > world->gameTick
+                ? prior->fireAtTick - world->gameTick : 0u;
+            event.fireAtTick += remaining >> 1;
+            memmove(&world->timeline.events[i], &world->timeline.events[i + 1],
+                    (size_t)(world->timeline.count - i - 1) *
+                        sizeof(world->timeline.events[0]));
+            --world->timeline.count;
+            break;
+        }
+    }
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
+}
+
 struct OrchTeleporterBuzz_Compat {
     int mapIndex;
     int mapX;
@@ -7368,6 +7407,130 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
     return added;
 }
 
+/* ReDMCSB NEWMAP.C F0003 changes the party map between GROUP.C F0194 and
+ * F0195.  Both sides write source-owned state (C04 and the event heap), so
+ * stage the complete ownership boundary before publishing it to M10. */
+static int orch_transition_party_map_f0194_f0195_compat(
+    struct GameWorld_Compat* world,
+    int destinationMapIndex)
+{
+    struct GameWorld_Compat staged;
+    struct DungeonThings_Compat stagedThings;
+    struct DungeonGroup_Compat* stagedGroups = NULL;
+    struct DM1ActiveGroup_Compat activeGroups[DM1_PC34_ACTIVE_GROUP_CAPACITY];
+    int activeCount;
+    int i;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->dungeon->maps || !world->dungeon->tiles ||
+        !world->dungeon->tilesLoaded || !world->things->loaded ||
+        destinationMapIndex < 0 ||
+        destinationMapIndex >= (int)world->dungeon->header.mapCount ||
+        world->things->groupCount < 0 ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount > DM1_PC34_ACTIVE_GROUP_CAPACITY) {
+        return 0;
+    }
+
+    activeCount = world->creatureAICount;
+    if (activeCount > 0 && (!world->things->groups ||
+                            world->things->groupCount == 0)) {
+        return 0;
+    }
+    if (world->things->groupCount > 0) {
+        stagedGroups = (struct DungeonGroup_Compat*)malloc(
+            (size_t)world->things->groupCount * sizeof(*stagedGroups));
+        if (!stagedGroups) return 0;
+        memcpy(stagedGroups, world->things->groups,
+               (size_t)world->things->groupCount * sizeof(*stagedGroups));
+    }
+
+    staged = *world;
+    stagedThings = *world->things;
+    stagedThings.groups = stagedGroups;
+    staged.things = &stagedThings;
+    memset(activeGroups, 0, sizeof(activeGroups));
+    for (i = 0; i < DM1_PC34_ACTIVE_GROUP_CAPACITY; ++i) {
+        activeGroups[i].groupThingIndex = -1;
+    }
+
+    /* F0194's raw C04 index must be a resolved original group table index.
+     * Validate every live owner before F0184 gets an opportunity to write. */
+    for (i = 0; i < activeCount; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        if (ai->reserved0 < 0 || ai->reserved0 >= world->things->groupCount) {
+            free(stagedGroups);
+            return 0;
+        }
+        activeGroups[i].groupThingIndex = ai->reserved0;
+        activeGroups[i].directions =
+            i < world->pc34ActiveGroupSourceCount
+                ? world->pc34ActiveGroupDirections[i]
+                : (ai->groupDirection & 0x03);
+        activeGroups[i].cells = ai->groupCells;
+        activeGroups[i].lastMoveTime = ai->lastSeenPartyTick;
+        activeGroups[i].delayFleeingFromTarget = ai->fearCounter;
+        activeGroups[i].targetMapX = ai->lastSeenPartyMapX;
+        activeGroups[i].targetMapY = ai->lastSeenPartyMapY;
+        activeGroups[i].priorMapX = ai->groupMapX;
+        activeGroups[i].priorMapY = ai->groupMapY;
+        activeGroups[i].homeMapX = world->pc34ActiveGroupHomeMapX[i];
+        activeGroups[i].homeMapY = world->pc34ActiveGroupHomeMapY[i];
+        memcpy(activeGroups[i].aspect, ai->aspect, sizeof(ai->aspect));
+    }
+    if (activeCount > 0 &&
+        !F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
+            activeGroups, DM1_PC34_ACTIVE_GROUP_CAPACITY, &activeCount,
+            stagedThings.groups, stagedThings.groupCount)) {
+        free(stagedGroups);
+        return 0;
+    }
+    if (activeCount != 0) {
+        free(stagedGroups);
+        return 0;
+    }
+
+    for (i = 0; i < DM1_PC34_ACTIVE_GROUP_CAPACITY; ++i) {
+        memset(&staged.creatureAI[i], 0, sizeof(staged.creatureAI[i]));
+        staged.creatureAI[i].reserved0 = -1;
+    }
+    staged.creatureAICount = 0;
+    staged.pc34ActiveGroupSourceCount = 0;
+    memset(staged.pc34ActiveGroupDirections, 0,
+           sizeof(staged.pc34ActiveGroupDirections));
+    memset(staged.pc34ActiveGroupHomeMapX, 0,
+           sizeof(staged.pc34ActiveGroupHomeMapX));
+    memset(staged.pc34ActiveGroupHomeMapY, 0,
+           sizeof(staged.pc34ActiveGroupHomeMapY));
+    staged.partyMapIndex = destinationMapIndex;
+    staged.party.mapIndex = destinationMapIndex;
+    staged.newPartyMapIndex = -1;
+    if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(&staged) < 0) {
+        free(stagedGroups);
+        return 0;
+    }
+
+    if (world->things->groupCount > 0) {
+        memcpy(world->things->groups, stagedGroups,
+               (size_t)world->things->groupCount * sizeof(*stagedGroups));
+    }
+    free(stagedGroups);
+    world->partyMapIndex = staged.partyMapIndex;
+    world->party.mapIndex = staged.party.mapIndex;
+    world->newPartyMapIndex = staged.newPartyMapIndex;
+    memcpy(world->creatureAI, staged.creatureAI, sizeof(world->creatureAI));
+    world->creatureAICount = staged.creatureAICount;
+    memcpy(world->pc34ActiveGroupDirections, staged.pc34ActiveGroupDirections,
+           sizeof(world->pc34ActiveGroupDirections));
+    memcpy(world->pc34ActiveGroupHomeMapX, staged.pc34ActiveGroupHomeMapX,
+           sizeof(world->pc34ActiveGroupHomeMapX));
+    memcpy(world->pc34ActiveGroupHomeMapY, staged.pc34ActiveGroupHomeMapY,
+           sizeof(world->pc34ActiveGroupHomeMapY));
+    world->pc34ActiveGroupSourceCount = staged.pc34ActiveGroupSourceCount;
+    world->timeline = staged.timeline;
+    return 1;
+}
+
 static int orch_link_existing_group_to_square_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
@@ -7913,7 +8076,13 @@ static int orch_apply_f0207_creature_attack_compat(
                 &input, &world->projectiles, &slot, &firstMove)) {
             return 0;
         }
-        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove);
+        /* ReDMCSB PROJEXPL.C:F0212 links the projectile and its first C48/C49
+         * movement event as one live handoff.  A queue rejection must not
+         * leave a renderable C14-equivalent slot with no owner event. */
+        if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            (void)F0813_PROJECTILE_Despawn_Compat(&world->projectiles, slot);
+            return 0;
+        }
         emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex, slot, 1);
         return 1;
     }
@@ -9107,6 +9276,10 @@ cmd_attack_legacy_marker:
                  * cooldowns; spells do not bind a Graphic560 action index. */
                 emit(result, EMIT_ACTION_DISABLED, champIdx,
                      actionDisabledTicks, 0xFF, 0);
+                if (!orch_schedule_enable_champion_action_c11_compat(
+                        world, champIdx, actionDisabledTicks)) {
+                    return 0;
+                }
             }
         }
 
@@ -9475,6 +9648,17 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_SQUARE_STATE:
             (void)orch_dispatch_square_state_event_compat(world, &ev);
             break;
+        case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
+            /* ReDMCSB TIMELINE.C C11 calls F0253 using Priority and
+             * B.SlotOrdinal only.  The source importer keeps those fields
+             * in aux3/aux1 beside the explicit C11 receipt identity. */
+            if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+                ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+                ev.aux3 >= 0 && ev.aux3 < CHAMPION_MAX_PARTY &&
+                ev.aux1 >= 0 && ev.aux1 <= 0xff) {
+                emit(result, EMIT_ACTION_ENABLED, ev.aux3, ev.aux1, 0, 0);
+            }
+            break;
         case TIMELINE_EVENT_MOVE_TIMER:
         case TIMELINE_EVENT_SPELL_TICK:
             break;
@@ -9651,9 +9835,15 @@ int F0884_ORCH_AdvanceOneTick_Compat(
     mapTransitions = 0;
     do {
         if (world->newPartyMapIndex != -1) {
-            world->partyMapIndex = world->newPartyMapIndex;
-            world->party.mapIndex = world->newPartyMapIndex;
-            world->newPartyMapIndex = -1;
+            if (world->newPartyMapIndex == world->partyMapIndex) {
+                /* F0435 restores a current-map anchor, not a newly entered
+                 * map.  Its authenticated ACTIVE_GROUP/timeline state stays
+                 * intact until an actual F0003 handoff occurs. */
+                world->newPartyMapIndex = -1;
+            } else if (!orch_transition_party_map_f0194_f0195_compat(
+                           world, world->newPartyMapIndex)) {
+                return ORCH_FAIL;
+            }
             mapTransitions++;
         }
         F0887_ORCH_DispatchTimelineEvents_Compat(world, outResult);

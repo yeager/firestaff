@@ -313,6 +313,16 @@ static void capture_csb_opening_sequence(M11_GameViewState *view) {
                         "M11 CSB opening capture advances to the next source door step");
         }
     }
+    {
+        const uint32_t saved_expected = view->csbStartupExpectedPackageIdentity;
+
+        view->csbStartupExpectedPackageIdentity = 0u;
+        expect_true(M11_GameView_AdvanceIdleTick(view) == M11_GAME_INPUT_IGNORED &&
+                        view->csbState.startup_entrance_active == 1 &&
+                        view->csbState.startup_entrance_dismissed == 0,
+                    "M11 CSB door handoff rejects a missing launch-owned package identity");
+        view->csbStartupExpectedPackageIdentity = saved_expected;
+    }
     expect_true(M11_GameView_AdvanceIdleTick(view) == M11_GAME_INPUT_REDRAW &&
                     view->csbState.startup_entrance_active == 0 &&
                     view->csbState.startup_entrance_dismissed == 1,
@@ -405,6 +415,7 @@ static void run_real_launcher_handoff_if_available(void) {
     unsigned char framebuffer[320 * 200];
     unsigned char title_presents_frame[320 * 200];
     unsigned char title_chaos_frame[320 * 200];
+    unsigned char title_strikes_frame[320 * 200];
     unsigned char entrance_closed_frame[320 * 200];
     unsigned char entrance_opening_frame[320 * 200];
     unsigned char first_live_dungeon_frame[320 * 200];
@@ -444,6 +455,38 @@ static void run_real_launcher_handoff_if_available(void) {
     menu.selectedIndex = 1;
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
+    {
+        CSB_V1_CSBWinSaveCorpusDiscoveryReceipt_PC34 discovery;
+        memset(&discovery, 0, sizeof(discovery));
+        discovery.valid = 1;
+        discovery.admitted_count = 1u;
+        discovery.candidate.valid = 1;
+        discovery.candidate.candidate_hash = 0x9ac34e71u;
+        snprintf(discovery.candidate.source_path,
+                 sizeof(discovery.candidate.source_path), "%s", "csb-save");
+        snprintf(menu.quickResumeGameId, sizeof(menu.quickResumeGameId), "%s", "csb");
+        snprintf(menu.quickResumeSavePath, sizeof(menu.quickResumeSavePath), "%s", "csb-save");
+        expect_true(M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
+                        &menu, &discovery) == 1,
+                    "M12 accepts the current CSB discovery identity");
+        snprintf(discovery.candidate.source_path,
+                 sizeof(discovery.candidate.source_path), "%s", "stale-save");
+        expect_true(M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
+                        &menu, &discovery) == 0 &&
+                        menu.csbSaveCandidateIdentity == 0u,
+                    "M12 rejects stale CSB discovery identity");
+        expect_true(M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
+                        &menu, NULL) == 0 && menu.csbSaveCandidateIdentity == 0u,
+                    "M12 rejects missing CSB discovery identity");
+        snprintf(menu.quickResumeGameId, sizeof(menu.quickResumeGameId), "%s", "dm1");
+        expect_true(M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
+                        &menu, &discovery) == 0 &&
+                        menu.csbSaveCandidateIdentity == 0u,
+                    "M12 rejects non-CSB discovery identity route");
+        menu.quickResumeGameId[0] = '\0';
+        menu.quickResumeSavePath[0] = '\0';
+    }
+    M12_StartupMenu_BindCSBSaveCandidateIdentity(&menu, 0x9ac34e71u);
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
@@ -473,11 +516,23 @@ static void run_real_launcher_handoff_if_available(void) {
                         ->rejects_legacy_wrappers,
                 "M11 CSB launcher handoff owns source-session startup surfaces");
     expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                     view.csbStartupRuntimeAssetSession)
+                    ->csbSaveCandidateIdentity == 0x9ac34e71u,
+                "M11 CSB launcher preserves the M12 CSB candidate identity in its session");
+    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
                      view.csbStartupRuntimeAssetSession)->real_asset_matched &&
                     real_package.assets_verified &&
                     real_package.graphics_verified &&
                     real_package.dungeon_verified,
                 "M11 CSB launcher session is bound to the hash-verified PC34 package");
+    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                     view.csbStartupRuntimeAssetSession)->csbStartupPackageIdentity != 0u,
+                "M11 CSB ordinary hash-verified boot publishes a startup package identity");
+    expect_true(view.csbStartupExpectedPackageIdentity ==
+                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                         view.csbStartupRuntimeAssetSession)
+                        ->csbStartupPackageIdentity,
+                "M11 CSB title session retains the launch-owned package identity");
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_dismissed == 0,
                 "M11 CSB launcher handoff stops at startup title/entrance");
@@ -501,6 +556,33 @@ static void run_real_launcher_handoff_if_available(void) {
                         CSB_V1_BOOT_STARTUP_HUD_MENU_NONE_PC34,
                 "M11 CSB title prelude receipt has no HUD menu route");
 
+    {
+        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        const uint32_t saved_expected = view.csbStartupExpectedPackageIdentity;
+        const uint32_t saved_current = session->csbStartupPackageIdentity;
+
+        view.csbStartupExpectedPackageIdentity = 0u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0 &&
+                        M11_GameView_GetPresentationSpecialPalette(&view) < 0,
+                    "M11 CSB title rejects a missing launch-owned package identity");
+        view.csbStartupExpectedPackageIdentity = saved_expected ^ 1u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB title rejects a stale launch-owned package identity");
+        view.csbStartupExpectedPackageIdentity = saved_expected;
+        session->csbStartupPackageIdentity = saved_current ^ 1u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB title rejects a drifted current package identity");
+        session->csbStartupPackageIdentity = saved_current;
+    }
+
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
@@ -512,6 +594,24 @@ static void run_real_launcher_handoff_if_available(void) {
     record_presented_real_package_frame(
         &view, title_presents_frame,
         "M11 CSB launcher records the presented C001 PRESENTS package frame");
+    expect_true(view.csbStartupReleaseAppCaptureReceipt.valid &&
+                    view.csbStartupReleaseLifecycleReceipt.valid &&
+                    view.csbStartupReleaseLifecycleReceipt.session_generation ==
+                        ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                             view.csbStartupRuntimeAssetSession)->generation,
+                "M11 CSB title delivery owns the boot release capture receipt");
+    {
+        const uint32_t saved_release_hash =
+            view.csbStartupReleaseLifecycleReceipt.release_capture_hash;
+
+        view.csbStartupReleaseLifecycleReceipt.release_capture_hash ^= 1u;
+        expect_true(M11_GameView_CSBPresentedFrameMatchesCurrentSource(
+                        &view, title_presents_frame, 320, 200,
+                        M11_GameView_GetPresentationSpecialPalette(&view)) == 0,
+                    "M11 CSB rejects a title capture with stale release receipt identity");
+        view.csbStartupReleaseLifecycleReceipt.release_capture_hash =
+            saved_release_hash;
+    }
 
     tick_before = view.csbState.tick_count;
     entrance_frame_before = view.csbState.startup_entrance_frame;
@@ -710,6 +810,112 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.csbState.runtime_viewport_pixel_hash != 0u &&
                     view.csbState.runtime_viewport_draw_counts_hash != 0u,
                 "M11 CSB first F0128 dungeon frame consumes the terminal PC3.4 session receipt");
+    {
+        const uint32_t saved_expected = view.csbStartupExpectedPackageIdentity;
+
+        view.csbStartupExpectedPackageIdentity = 0u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB live HUD rejects a missing launch-owned package identity");
+        view.csbStartupExpectedPackageIdentity = saved_expected ^ 1u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB live HUD rejects a stale launch-owned package identity");
+        view.csbStartupExpectedPackageIdentity = saved_expected;
+    }
+    {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 dsa_receipt;
+        CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 timer_outcome;
+
+        /* Receipt-only lifecycle coverage: M11 names the existing source
+         * session and Dungeon.dat, but never provides DSA program bytes or
+         * invokes a DSA action. The admission test owns byte structure. */
+        memset(&dsa_receipt, 0, sizeof(dsa_receipt));
+        dsa_receipt.valid = 1;
+        dsa_receipt.source_admission_consumed = 1;
+        dsa_receipt.save_handoff_consumed = 1;
+        dsa_receipt.dungeon_identity_current = 1;
+        dsa_receipt.startup_session_consumed = 1;
+        dsa_receipt.runtime_chain_consumed = 1;
+        dsa_receipt.save_fnv1a = 0x41u;
+        dsa_receipt.gameblock_fnv1a = 0x42u;
+        dsa_receipt.source_admission_hash = 0x43u;
+        dsa_receipt.startup_session_generation = session->generation;
+        dsa_receipt.startup_source_tick = session->source_tick;
+        dsa_receipt.runtime_game_time = profile->runtime.game_time;
+        dsa_receipt.imported_action_count = 1;
+        dsa_receipt.handoff_hash = 0x44u;
+        snprintf(dsa_receipt.dungeon_md5, sizeof(dsa_receipt.dungeon_md5),
+                 "%s", profile->dungeon_md5);
+        expect_true(M11_GameView_BindCSBDSASaveRuntimeHandoff(
+                        &view, &dsa_receipt) == 1,
+                    "M11 CSB admits a complete receipt-bound DSA runtime route");
+        memset(&timer_outcome, 0, sizeof(timer_outcome));
+        timer_outcome.valid = 1;
+        timer_outcome.handoff_consumed = 1;
+        timer_outcome.session_current = 1;
+        timer_outcome.save_identity_current = 1;
+        timer_outcome.tick_order_current = 1;
+        timer_outcome.timer_record_consumed = 1;
+        timer_outcome.local_state_consumed = 1;
+        timer_outcome.opcode_body_admitted = 1;
+        timer_outcome.action_executed = 1;
+        timer_outcome.save_fnv1a = dsa_receipt.save_fnv1a;
+        timer_outcome.startup_session_generation = session->generation;
+        timer_outcome.startup_source_tick = session->source_tick;
+        timer_outcome.runtime_game_time = profile->runtime.game_time;
+        timer_outcome.bridge_hash = 1u;
+        expect_true(!M11_GameView_CommitCSBDSARestoredTimerOutcome(
+                        &view, &timer_outcome) &&
+                        !view.csbDsaRestoredTimerTransactionRequired,
+                    "M11 CSB rejects an unbacked timer outcome without mutating its route");
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(view.csbState.runtime_viewport_source_session_ready == 1,
+                    "M11 CSB preserves the live viewport for a current DSA receipt");
+        view.csbDsaSaveRuntimeReceipt.startup_source_tick ^= 1u;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(view.csbState.runtime_viewport_source_session_ready == 0 &&
+                        count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB rejects a stale DSA receipt before viewport delivery");
+        view.csbDsaSaveRuntimeReceipt.startup_source_tick = session->source_tick;
+        snprintf(dsa_receipt.dungeon_md5, sizeof(dsa_receipt.dungeon_md5),
+                 "%s", "00000000000000000000000000000000");
+        expect_true(M11_GameView_BindCSBDSASaveRuntimeHandoff(
+                        &view, &dsa_receipt) == 0,
+                    "M11 CSB rejects a mixed DSA/Dungeon receipt atomically");
+        dsa_receipt.startup_source_tick = session->source_tick;
+        snprintf(dsa_receipt.dungeon_md5, sizeof(dsa_receipt.dungeon_md5),
+                 "%s", profile->dungeon_md5);
+        expect_true(M11_GameView_BindCSBDSASaveRuntimeHandoff(
+                        &view, &dsa_receipt) == 1,
+                    "M11 CSB accepts the restored current DSA receipt");
+        expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
+                    "M11 CSB advances the source runtime through the boot tick boundary");
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(view.csbState.runtime_viewport_source_session_ready == 0 &&
+                        count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB rejects a pre-tick DSA receipt at the live runtime epoch");
+        dsa_receipt.runtime_game_time = profile->runtime.game_time;
+        expect_true(M11_GameView_BindCSBDSASaveRuntimeHandoff(
+                        &view, &dsa_receipt) == 1,
+                    "M11 CSB accepts a receipt rebound at the live runtime epoch");
+        /* This launcher fixture continues through non-DSA HUD interactions.
+         * End the opt-in DSA route here so those existing interactions retain
+         * their normal source-session contract. */
+        memset(&view.csbDsaSaveRuntimeReceipt, 0,
+               sizeof(view.csbDsaSaveRuntimeReceipt));
+        view.csbDsaSaveRuntimeRouteRequired = 0;
+    }
     /* F0806 releases C004/C002/C003 before F0128 begins the first live
      * dungeon pass. A caller-provided stale page must not survive above the
      * viewport after this source-owned transition. */

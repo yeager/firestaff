@@ -7,6 +7,7 @@
  */
 
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_inscription_host_material_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -134,6 +135,7 @@ static int find_and_verify_real_side_or_depth_pose(M11_GameViewState* state)
                                 M11_Dm1UnreadableInscriptionHostPresentationReceipt receipt;
                                 M11_Dm1UnreadableInscriptionHostPresentationReceipt turnedReceipt;
                                 DM1_WallOrnamentHostMaterialReceiptPc34 material;
+                                DM1_V1_InscriptionHostMaterialReceiptPc34 sourceMaterial;
                                 int turn;
                                 int foundDifferentTuple = 0;
                                 direction_vectors(direction, &fx, &fy, &rx, &ry);
@@ -160,6 +162,16 @@ static int find_and_verify_real_side_or_depth_pose(M11_GameViewState* state)
                                  * than assuming this candidate spec was last. */
                                 if (receipt.lineCount != decoded_line_count(state, textStringIndex) ||
                                     receipt.boxHeight <= 0 ||
+                                    !dm1_v1_inscription_host_material_from_selected_wall_pc34(
+                                        state->world.things, textStringIndex,
+                                        &sourceMaterial) ||
+                                    receipt.textDataWordOffset !=
+                                        sourceMaterial.textDataWordOffset ||
+                                    receipt.textDataWordCount !=
+                                        sourceMaterial.textDataWordCount ||
+                                    receipt.textDataFNV1a != sourceMaterial.textDataFNV1a ||
+                                    receipt.glyphBytesFNV1a !=
+                                        sourceMaterial.glyphBytesFNV1a ||
                                     !dm1_v1_wall_ornament_host_material_receipt_pc34(
                                         0, receipt.viewWallIndex, receipt.boxHeight, &material) ||
                                     receipt.graphicIndex != material.plan.graphicIndex ||

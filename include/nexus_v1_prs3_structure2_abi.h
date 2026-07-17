@@ -50,6 +50,10 @@ typedef struct {
     uint32_t prs3_height;
     uint32_t prs3_bpp;
     uint64_t prs3_output_fnv1a64;
+    uint64_t prs3_header_span_fnv1a64;
+    uint64_t prs3_bitmap_candidate_fnv1a64;
+    uint32_t prs3_bitmap_candidate_offset;
+    uint32_t prs3_bitmap_candidate_size;
     uint32_t prs3_input_read_bytes;
     uint32_t prs3_output_store_count;
     uint32_t prs3_zero_merge_count;
@@ -57,6 +61,8 @@ typedef struct {
     int palt_trailer_bound;
     uint64_t palt_entries_fnv1a64;
     int palt_entries_are_be16;
+    uint64_t palt_candidate_fnv1a64;
+    uint32_t palt_candidate_size;
     int structure2_intake_bound;
     int structure2_descriptor_count;
     int structure2_image_anchor_count;

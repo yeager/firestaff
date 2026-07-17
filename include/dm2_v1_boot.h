@@ -1675,6 +1675,38 @@ typedef struct {
     int h;
 } DM2_V1_InterfaceRect;
 
+typedef struct {
+    int valid;
+    uint16_t rect_id;
+    const uint8_t *raw4_bytes;
+    size_t raw4_byte_count;
+    uint32_t raw4_hash;
+    DM2_V1_InterfaceRect rect;
+    uint32_t receipt_hash;
+} DM2_V1_BootExpandedRectReceipt;
+
+/* Exact c_xrect.cpp QUERY_EXPANDED_RECT owner: the compressed RAW4 table is
+ * retained with the expanded result, so M11 consumers cannot substitute a
+ * host rectangle or a different interface table. */
+int dm2_v1_boot_query_expanded_rect_receipt(
+    const DM2_V1_BootProfile *profile, uint16_t rect_id,
+    DM2_V1_BootExpandedRectReceipt *out_receipt);
+
+int dm2_v1_boot_g1_static_object_material_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_G1StaticObjectMaterialSelector *selector,
+    uint16_t clip_rect_id, DM2_V1_G1StaticObjectMaterialReceipt *out_receipt);
+int dm2_v1_boot_g1_flying_item_material_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    DM2_V1_G1FlyingItemMaterialReceipt *out_receipt);
+int dm2_v1_boot_g1_static_weapon_selector(
+    const DM2_V1_BootProfile *profile, const DM2_V1_G1DirectWeaponRoot *root,
+    DM2_V1_G1StaticObjectMaterialSelector *out_selector);
+int dm2_v1_boot_g1_static_container_selector(
+    const DM2_V1_BootProfile *profile, const DM2_V1_G1DirectContainerRoot *root,
+    DM2_V1_G1StaticObjectMaterialSelector *out_selector);
+
 /* Source-owned host command for c_dialog.cpp::DM2_dialog_2066_3820.  The
  * panel image/palette come from DIALOG_BOXES/0x81/0 and its destination comes
  * from the original INTERFACE_GENERAL raw4 rectangle table. */
@@ -2066,6 +2098,11 @@ typedef struct {
     uint32_t animation_table_hash;
     uint32_t material_hash;
     uint32_t palette_hash;
+    uint16_t raw_material_index;
+    const uint8_t *raw_material_bytes;
+    uint32_t raw_material_byte_count;
+    uint32_t raw_material_hash;
+    uint32_t raw_material_receipt_hash;
     DM2_V1_BootViewportAssetEvidence image;
 } DM2_V1_BootDynamicCreatureMaterialReceipt;
 

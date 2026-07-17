@@ -223,6 +223,41 @@ static char lower_hex_char(char c)
     return c;
 }
 
+static int md5_hex_valid(const char *md5)
+{
+    size_t i;
+
+    if (!md5 || strlen(md5) != 32u) {
+        return 0;
+    }
+    for (i = 0u; i < 32u; ++i) {
+        if (!is_hex_char(md5[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t value = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        value ^= bytes[i];
+        value *= 16777619u;
+    }
+    return value;
+}
+
+static int cache_source_identity_complete(
+    const CSB_V1_CSBGraphicsDatRealCache *cache)
+{
+    return cache && cache->loaded && cache->file_buffer &&
+        cache->file_size > 0u && cache->resolved_path[0] &&
+        md5_hex_valid(cache->matched_md5);
+}
+
 static char *skip_spaces(char *p)
 {
     while (p && *p && is_space_char(*p)) {
@@ -615,5 +650,126 @@ int csb_v1_csbgraphics_dat_real_index(
         return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
     }
     *out_index = cache->index;
+    return CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
+}
+
+void csb_v1_csbgraphics_dat_real_palette_candidate_report_free(
+    CSB_V1_CSBGraphicsDatPaletteCandidateReport *report)
+{
+    if (!report) {
+        return;
+    }
+    free(report->candidates);
+    memset(report, 0, sizeof(*report));
+}
+
+int csb_v1_csbgraphics_dat_real_scan_palette_candidates(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    CSB_V1_CSBGraphicsDatPaletteCandidateReport *out_report)
+{
+    CSB_V1_CSBGraphicsDatPaletteCandidate *candidates;
+    uint32_t i;
+
+    if (out_report) {
+        memset(out_report, 0, sizeof(*out_report));
+    }
+    if (!cache_source_identity_complete(cache) || !out_report ||
+        cache->index.count == 0u) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
+    }
+    candidates = (CSB_V1_CSBGraphicsDatPaletteCandidate *)calloc(
+        cache->index.count, sizeof(*candidates));
+    if (!candidates) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
+    }
+    for (i = 0u; i < cache->index.count; ++i) {
+        CSB_V1_CSBGraphicsEntrySpan span;
+        uint8_t decoded[CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES];
+        size_t written = 0u;
+
+        if (csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                               cache->file_size, i,
+                                               &span) !=
+                CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+            span.compressed_size == 0u ||
+            span.decompressed_size != CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES ||
+            csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                                 cache->file_size, i,
+                                                 decoded, sizeof(decoded),
+                                                 &written) !=
+                CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+            written != sizeof(decoded)) {
+            continue;
+        }
+        candidates[out_report->candidate_count].valid = 1;
+        copy_string(candidates[out_report->candidate_count].source_path,
+                    sizeof(candidates[out_report->candidate_count].source_path),
+                    cache->resolved_path);
+        copy_string(candidates[out_report->candidate_count].source_md5,
+                    sizeof(candidates[out_report->candidate_count].source_md5),
+                    cache->matched_md5);
+        candidates[out_report->candidate_count].entry_span = span;
+        candidates[out_report->candidate_count].decoded_fnv1a =
+            fnv1a32(decoded, written);
+        ++out_report->candidate_count;
+    }
+    out_report->candidates = candidates;
+    copy_string(out_report->source_path, sizeof(out_report->source_path),
+                cache->resolved_path);
+    copy_string(out_report->source_md5, sizeof(out_report->source_md5),
+                cache->matched_md5);
+    out_report->valid = 1;
+    return CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
+}
+
+int csb_v1_csbgraphics_dat_real_admit_palette_candidate(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsDatPaletteCandidate *candidate,
+    const CSB_V1_CSBGraphicsDatPaletteAdmissionSpec *spec,
+    CSB_V1_CSBGraphicsDatPaletteSourceReceipt *out_receipt)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    size_t written = 0u;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!cache_source_identity_complete(cache) || !candidate || !candidate->valid ||
+        !spec || !out_receipt || !spec->source_path || !spec->source_md5 ||
+        spec->decoded_fnv1a == 0u ||
+        strcmp(spec->source_path, cache->resolved_path) != 0 ||
+        strcmp(spec->source_md5, cache->matched_md5) != 0 ||
+        strcmp(candidate->source_path, cache->resolved_path) != 0 ||
+        strcmp(candidate->source_md5, cache->matched_md5) != 0 ||
+        spec->entry_index != candidate->entry_span.entry_index ||
+        spec->decoded_fnv1a != candidate->decoded_fnv1a ||
+        csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                          cache->file_size,
+                                          spec->entry_index, &span) !=
+            CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        span.payload_offset != candidate->entry_span.payload_offset ||
+        span.compressed_size != candidate->entry_span.compressed_size ||
+        span.decompressed_size != CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
+    }
+    if (csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                             cache->file_size,
+                                             spec->entry_index,
+                                             out_receipt->decoded_bytes,
+                                             sizeof(out_receipt->decoded_bytes),
+                                             &written) !=
+            CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        written != sizeof(out_receipt->decoded_bytes) ||
+        fnv1a32(out_receipt->decoded_bytes, written) != spec->decoded_fnv1a) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_PARSE;
+    }
+    copy_string(out_receipt->source_path, sizeof(out_receipt->source_path),
+                cache->resolved_path);
+    copy_string(out_receipt->source_md5, sizeof(out_receipt->source_md5),
+                cache->matched_md5);
+    out_receipt->entry_span = span;
+    out_receipt->decoded_fnv1a = spec->decoded_fnv1a;
+    out_receipt->valid = 1;
     return CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
 }

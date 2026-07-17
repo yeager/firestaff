@@ -1115,6 +1115,9 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               original_save_receipt.runtime_dungeon_ready &&
               original_save_receipt.runtime_party_ready &&
               original_save_receipt.runtime_champion_count_after >= 0 &&
+              original_save_receipt.native_header_fnv1a != 0u &&
+              strcmp(original_save_receipt.dungeon_md5, p.dungeon_md5) == 0 &&
+              original_save_receipt.source_identity_hash != 0u &&
               strcmp(original_save_receipt.save_path, save_path) == 0 &&
               strstr(original_save_receipt.source_evidence,
                      "LOADSAVE.C F0435") != NULL,
@@ -1347,6 +1350,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
 static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
 {
     CSB_V1_StartupRealReceipt receipt;
+    CSB_V1_StartupRealReceipt reissue_source;
     const char *tmp_dir = "/tmp/firestaff-csb-v1-startup-real-receipt";
     const char *missing_dir = "/tmp/firestaff-csb-v1-startup-real-missing";
     char expected_hash[CSB_V1_STARTUP_REAL_HASH_HEX_CAP];
@@ -1415,6 +1419,35 @@ static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
     CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 1 &&
               strcmp(receipt.receipt_hash_hex, expected_hash) == 0,
           "startup real-asset receipt recompute validates packaged proof");
+    snprintf(receipt.graphics_md5, sizeof(receipt.graphics_md5), "%s",
+             "00000000000000000000000000000000");
+    CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 0 &&
+              receipt.receipt_hash == 0u,
+          "startup real-asset receipt rejects graphics MD5 drift before session publication");
+    snprintf(receipt.graphics_md5, sizeof(receipt.graphics_md5), "%s",
+             "61fbfd56887c94adc26888a9491c6611");
+    snprintf(receipt.dungeon_md5, sizeof(receipt.dungeon_md5), "%s",
+             "00000000000000000000000000000000");
+    CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 0 &&
+              receipt.receipt_hash == 0u,
+          "startup real-asset receipt rejects Dungeon MD5 drift before session publication");
+    snprintf(receipt.dungeon_md5, sizeof(receipt.dungeon_md5), "%s",
+             "6695d2acebce49f95db1d8f3a5c733de");
+    CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 0 &&
+              receipt.receipt_hash == 0u,
+          "startup real-asset receipt requires fresh admission after MD5 drift");
+    reissue_source = receipt;
+    CHECK(csb_v1_startup_real_receipt_from_profile_fields(
+              tmp_dir, reissue_source.graphics_path,
+              reissue_source.dungeon_path, reissue_source.graphics_md5,
+              reissue_source.dungeon_md5, reissue_source.graphics_size_bytes,
+              reissue_source.dungeon_size_bytes, reissue_source.variant_id,
+              reissue_source.graphics_kind, reissue_source.max_depth,
+              reissue_source.assets_verified,
+              reissue_source.graphics_verified,
+              reissue_source.dungeon_verified, &receipt) == 1 &&
+              receipt.receipt_hash != 0u && !receipt.invalidated,
+          "startup real-asset scanner owner reissues only the original verified MD5 pair");
     receipt.graphics_size_bytes++;
     CHECK(csb_v1_startup_real_receipt_recompute_hash(&receipt) == 0,
           "startup real-asset receipt detects changed packaged metadata");
@@ -2316,6 +2349,13 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 receipt;
     CSB_V1_DungeonData dummy_dungeon;
+    unsigned char title;
+    unsigned char presents;
+    unsigned char chaos;
+    unsigned char strikes;
+    unsigned char left_door;
+    unsigned char right_door;
+    unsigned char entrance;
     unsigned char inventory[224 * 136];
     unsigned char resurrect[144 * 73];
 
@@ -2353,9 +2393,46 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     session.rejects_legacy_wrappers = 1;
     session.generation = 1u;
     session.surfaces.valid = 1;
+    session.surfaces.real_asset_matched = 1;
     session.surfaces.title_regions_ready = 1;
     session.surfaces.opening_frame_ready = 1;
+    session.surfaces.entrance_screen_ready = 1;
     session.surfaces.hud_surfaces_ready = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &title, .width = 320,
+            .height = 153, .source_asset_id = 1, .transparent_color = -1,
+            .valid = 1 };
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &presents, .width = 320,
+            .height = 16, .source_asset_id = 1, .source_y = 137,
+            .transparent_color = -1, .valid = 1 };
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &chaos, .width = 320,
+            .height = 80, .source_asset_id = 1, .transparent_color = -1,
+            .valid = 1 };
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &strikes, .width = 320,
+            .height = 57, .source_asset_id = 1, .source_y = 80,
+            .transparent_color = 0, .valid = 1 };
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &left_door, .width = 105,
+            .height = 161, .source_asset_id = 2, .transparent_color = -1,
+            .valid = 1 };
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &right_door, .width = 128,
+            .height = 161, .source_asset_id = 3, .transparent_color = -1,
+            .valid = 1 };
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34] =
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &entrance, .width = 320,
+            .height = 200, .source_asset_id = 4, .transparent_color = -1,
+            .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
     session.surfaces.surfaces[
@@ -2395,6 +2472,7 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
              sizeof(session.hud_resurrect_binding.path), "%s",
              boot.graphics_path);
     session.playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session.playback.title_phase_mask = 0x0f;
     session.playback.entrance_music_active = 1;
     session.playback.entrance_complete = 1;
     session.playback.no_fallback_routes = 1;
@@ -2465,6 +2543,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
     TestStartupRenderProbe capture_render_probe;
     CSB_V1_StartupRenderPlan_PC34 receipt_title_plan;
     CSB_V1_StartupRenderPlan_PC34 receipt_closed_door_plan;
+    int visual_sequence_ok;
     int packaged_title_ok;
     int enter_menu_x = 244;
     int enter_menu_y = 45;
@@ -2485,9 +2564,10 @@ static void test_runtime_utility_startup_receipt_facades(void)
     boot.dungeon_verified = 1;
     boot.variant_id = CSB_V1_VARIANT_PC34_EN;
     boot.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
-    CHECK(csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
-              &boot,
-              &visual_sequence) == 1 &&
+    visual_sequence_ok =
+        csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
+            &boot, &visual_sequence);
+    CHECK(visual_sequence_ok &&
               visual_sequence.valid &&
               visual_sequence.real_asset_matched &&
               visual_sequence.sequence_capture_hash != 0u &&
@@ -2510,7 +2590,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               visual_sequence.no_fallback_text_routes &&
               visual_sequence.no_legacy_door_fallback_routes &&
               visual_sequence.source_title_presents_ticks == 60 &&
-              visual_sequence.source_title_chaos_zoom_ticks == 18 &&
+              visual_sequence.source_title_chaos_zoom_ticks == 20 &&
               visual_sequence.source_title_chaos_hold_ticks == 2 &&
               visual_sequence.source_title_strikes_back_ticks == 1 &&
               visual_sequence.source_door_pre_open_delay_ticks == 20 &&
@@ -3269,7 +3349,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
     CHECK(route_receipt.presentation.redmcsb_source_locked &&
               route_receipt.presentation.redmcsb_title_graphic_id == 1 &&
               route_receipt.presentation.redmcsb_presents_ticks == 60 &&
-              route_receipt.presentation.redmcsb_chaos_zoom_ticks == 18 &&
+              route_receipt.presentation.redmcsb_chaos_zoom_ticks == 20 &&
               route_receipt.presentation.redmcsb_chaos_hold_ticks == 2 &&
               route_receipt.presentation.redmcsb_strikes_back_ticks == 1 &&
               route_receipt.presentation.redmcsb_entrance_screen_graphic_id ==
@@ -3512,7 +3592,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               receipt_title_plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "boot startup host-view title draw consumes render-view receipt fields");
-    snapshot.title_frame = 78;
+    snapshot.title_frame = 77;
     snapshot.title_source_step = 19;
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
               &snapshot,
@@ -3532,7 +3612,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               view_receipt.title_source_h == 80,
           "boot startup render-view receipt exposes source CHAOS hold timing");
     snapshot.title_frame = 80;
-    snapshot.title_source_step = 20;
+    snapshot.title_source_step = 21;
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
               &snapshot,
               &view_receipt) == 1 &&

@@ -102,16 +102,32 @@ typedef struct CSB_V1_BootProfile {
     int csbgraphics_scan_attempted;
     int csbgraphics_scan_result;
     int csbgraphics_plan_result;
+    int csbgraphics_palette_admission_attempted;
+    int csbgraphics_palette_admission_result;
     int csbgraphics_skin_def_loaded;
     uint16_t csbgraphics_skin_def_words
         [CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS];
     size_t csbgraphics_skin_def_word_count;
     CSB_V1_CSBGraphicsDatRealCache csbgraphics_cache;
+    CSB_V1_CSBGraphicsDatPaletteSourceReceipt csbgraphics_palette_receipt;
     CSB_V1_CSBGraphicsRuntimePlan csbgraphics_runtime_plan;
     CSB_V1_StartupAssetSelection_PC34 startup_assets;
 
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
+
+typedef struct CSB_V1_BootStartupCSBGraphicsPaletteReadiness_PC34 {
+    int cache_identity_ready;
+    int palette_receipt_ready;
+    int title_palette_ready;
+    int door_palette_ready;
+    int hud_palette_ready;
+    int m11_no_draw_without_palette;
+    uint32_t palette_entry_index;
+    uint32_t palette_decoded_fnv1a;
+    char source_path[CSB_V1_CSBGRAPHICS_DAT_REAL_PATH_CAP];
+    char source_md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+} CSB_V1_BootStartupCSBGraphicsPaletteReadiness_PC34;
 
 /* ReDMCSB ENTRANCE.C F0806 releases the opening page before DUNVIEW.C F0128
  * builds the first runtime viewport. Bind that real viewport output to the
@@ -893,8 +909,13 @@ struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     int rejects_legacy_wrappers;
     uint32_t source_tick;
     uint32_t generation;
+    uint32_t csbSaveCandidateIdentity;
+    uint32_t csbStartupPackageIdentity;
     CSB_V1_StartupAssetBinding_PC34 hud_inventory_binding;
     CSB_V1_StartupAssetBinding_PC34 hud_resurrect_binding;
+    int csbgraphics_palette_receipt_ready;
+    uint32_t csbgraphics_palette_receipt_hash;
+    uint32_t hud_source_receipt_hash;
     CSB_V1_StartupRuntimeSurfaceSet_PC34 surfaces;
     CSB_V1_StartupPlaybackState_PC34 playback;
 };
@@ -1104,6 +1125,7 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     uint32_t frame_route_hash;
     uint32_t hud_inventory_pixel_hash;
     uint32_t hud_resurrect_pixel_hash;
+    uint32_t hud_source_receipt_hash;
     uint32_t hud_binding_hash;
     uint32_t source_tick;
     uint32_t session_generation;
@@ -1205,6 +1227,29 @@ typedef struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
 
+/* ENTRANCE.C F0438/F0807 presents all 31 C002/C003 door positions over C004.
+ * Keep the direct session capture as a concrete raster consumer so a host
+ * cannot replace the sequence with a single sampled page or a wrapper route. */
+#define CSB_V1_STARTUP_DOOR_OPENING_CAPTURE_FRAME_COUNT_PC34 31
+
+typedef struct CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 {
+    int valid;
+    int real_asset_matched;
+    int no_legacy_wrappers;
+    int no_synthetic_surface;
+    int source_step_count;
+    int captured_frame_count;
+    int first_step;
+    int last_step;
+    uint32_t session_generation;
+    uint32_t frame_route_hashes[
+        CSB_V1_STARTUP_DOOR_OPENING_CAPTURE_FRAME_COUNT_PC34];
+    uint32_t raster_pixel_hashes[
+        CSB_V1_STARTUP_DOOR_OPENING_CAPTURE_FRAME_COUNT_PC34];
+    uint32_t capture_sequence_hash;
+    const char *source_evidence;
+} CSB_V1_StartupDoorOpeningCaptureReceipt_PC34;
+
 /* PANEL.C F0347 first restores C017 at (0,33), then F0346 optionally
  * composites C040 at panel-relative (80,52) with transparency key 6. Keep
  * the resulting destination update in CSB so M11 never reads startup
@@ -1276,6 +1321,9 @@ typedef struct CSB_V1_BootRuntimeSaveImportReceipt_PC34 {
     int csbwin_dsa_section_valid;
     int csbwin_dsa_has_runtime_actions;
     int csbwin_dsa_gameblock1_valid;
+    int csbwin_dsa_gameblock1_body_valid;
+    uint32_t csbwin_dsa_save_bytes_fnv1a;
+    uint32_t csbwin_dsa_gameblock1_body_fnv1a;
     const char *csbwin_dsa_decision_label;
     int csbwin_runtime_load_attempted;
     int csbwin_runtime_load_succeeded;
@@ -1306,6 +1354,9 @@ typedef struct CSB_V1_BootRuntimeDSASaveHandoffReceipt_PC34 {
     int dsa_section_valid;
     int dsa_has_runtime_actions;
     int gameblock1_valid;
+    int gameblock1_body_valid;
+    uint32_t save_bytes_fnv1a;
+    uint32_t gameblock1_body_fnv1a;
     int runtime_party_loaded;
     int runtime_import_source_after;
     int runtime_champion_count_after;
@@ -1330,8 +1381,22 @@ typedef struct CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 {
     int runtime_current_level_after;
     int runtime_champion_count_after;
     uint32_t runtime_game_time_after;
+    uint32_t native_header_fnv1a;
+    char dungeon_md5[33];
+    uint32_t source_identity_hash;
     const char *source_evidence;
 } CSB_V1_BootOriginalSaveRuntimeReceipt_PC34;
+
+int csb_v1_boot_runtime_load_original_save_receipt_pc34(
+    CSB_V1_BootProfile *profile, const char *path,
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt);
+
+/* Re-read the native F0435 header and bind it to the still-current verified
+ * Dungeon.dat identity. This is observational: it never changes runtime
+ * state or resumes the save. */
+int csb_v1_boot_original_save_runtime_receipt_current_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *receipt);
 
 typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int valid;
@@ -1454,6 +1519,8 @@ void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt);
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
+int csb_v1_boot_profile_from_startup_real_receipt_pc34(
+    const CSB_V1_StartupRealReceipt *receipt, CSB_V1_BootProfile *out_profile);
 
 /* Resolve startup artwork from a verified CSB boot profile. Original
  * GRAPHICS.DAT supplies C001-C005; a validated CSBgraphics.dat may replace
@@ -1517,6 +1584,10 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     uint32_t source_tick,
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt);
+int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    uint32_t first_source_tick,
+    CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 *out_receipt);
 /* Verify that the framebuffer handed to M11 is the exact indexed raster
  * composed by the currently owned PC3.4 startup plan.  This closes the
  * title/entrance capture boundary: a valid session alone cannot promote a
@@ -1597,6 +1668,14 @@ int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile);
 void csb_v1_boot_reset_engine_version_to_dm1(void);
 int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
                                  const char *cache_dir);
+int csb_v1_boot_admit_csbgraphics_palette_candidate(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBGraphicsDatPaletteAdmissionSpec *spec);
+int csb_v1_boot_csbgraphics_palette_receipt_ready(
+    const CSB_V1_BootProfile *profile);
+int csb_v1_boot_startup_csbgraphics_palette_readiness_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_BootStartupCSBGraphicsPaletteReadiness_PC34 *out_receipt);
 const CSB_V1_CSBGraphicsRuntimePlan *
 csb_v1_boot_csbgraphics_runtime_plan(const CSB_V1_BootProfile *profile);
 const CSB_V1_CSBGraphicsDatRealCache *
@@ -1619,6 +1698,21 @@ int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
     int framebuffer_width,
     int framebuffer_height,
     CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *out_receipt);
+int csb_v1_boot_project_verified_dungeon_ingress_pc34(
+    const CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *receipt,
+    CSB_V1_ViewportVerifiedDungeonIngressPc34 *out_ingress);
+/* The boot-owner live material route accepts only a parser-admitted manifest;
+ * raw declaration arrays and corpus structs remain implementation details. */
+int csb_v1_boot_render_manifest_live_material_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FirstLiveDungeonFrameReceipt_PC34 *first_receipt,
+    const CSB_V1_ViewportOperatorDeclarationManifestPc34 *manifest,
+    const CSB_V1_ViewportLiveDungeonStatePc34 *explicit_identity,
+    int square_x, int square_y,
+    CSB_V1_ViewportLiveFrameProgressionPc34 *progression,
+    const CSB_V1_ViewportLiveDungeonSelectionPc34 *previous_selection,
+    uint8_t *framebuffer, int framebuffer_width, int framebuffer_height,
+    CSB_V1_ViewportLiveDungeonSelectionPc34 *out_selection);
 int csb_v1_boot_apply_startup_handoff_pc34(
     CSB_V1_BootProfile *profile,
     const char *save_path,

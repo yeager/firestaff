@@ -178,6 +178,24 @@ int main(int argc, char** argv) {
     ok &= expect_int("row click makes acting champion the leader",
                      game.world.party.activeChampionIndex, PROBE_TARGET_SLOT);
 
+    /* ReDMCSB MENU.C F0407 hands the non-zero G0491 delay to
+     * CHAMPION.C F0330.  The same action cell stays disabled until its C11
+     * receipt is dispatched by the normal idle loop. */
+    ok &= expect_true("row click publishes C11 action-enable receipt",
+                      game.world.timeline.count > 0);
+    ok &= expect_int("disabled same action cell is ignored before C11",
+                     click_action_cell(&game, PROBE_TARGET_SLOT),
+                     M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("disabled cell leaves action menu idle",
+                     (int)M11_GameView_GetActingChampionOrdinal(&game), 0);
+    while (game.actionDisabledTicks[PROBE_TARGET_SLOT] > 0) {
+        ok &= expect_int("idle tick dispatches action-enable ownership",
+                         M11_GameView_AdvanceIdleTick(&game),
+                         M11_GAME_INPUT_REDRAW);
+    }
+    ok &= expect_true("C11 receipt clears after its source delay",
+                      game.world.timeline.count == 0);
+
     ok &= expect_int("reactivate same action cell",
                      click_action_cell(&game, PROBE_TARGET_SLOT),
                      M11_GAME_INPUT_REDRAW);

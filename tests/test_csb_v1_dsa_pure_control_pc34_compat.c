@@ -22,6 +22,7 @@ static uint32_t last_party_talents[4];
 static int dsa_info_enabled;
 static int excell_flags_enabled;
 static int generator_delay_enabled;
+static int generator_delay_owner_valid;
 static int generator_delay_stored;
 static int generator_delay_store_count;
 static int monster_info_enabled;
@@ -48,6 +49,7 @@ static int random_state_enabled;
 static uint32_t random_state;
 static int level_multiplier_enabled;
 static int missile_info_enabled;
+static int missile_info_owner_valid;
 static int missile_info_store_count;
 static uint32_t missile_info_stored[4];
 static int mastery_enabled;
@@ -88,7 +90,18 @@ static int describe_count;
 static int32_t describe_location, describe_index, describe_color;
 static int actuator_copy_enabled;
 static int actuator_copy_store_count;
+static int actuator_copy_owner_valid;
 static uint8_t actuator_copy_payloads[3][6];
+static int switch_action_enabled;
+static int switch_action_count;
+static uint32_t switch_action_delay;
+static uint32_t switch_action_kind;
+static uint32_t switch_action_target;
+static int switch_action_route;
+static int teleporter_copy_enabled;
+static int teleporter_copy_count;
+static uint32_t teleporter_copy_source;
+static uint32_t teleporter_copy_destination;
 
 static int wing_talents_enabled;
 
@@ -110,6 +123,32 @@ static int has_wing_character(void *user, uint16_t fingerprint)
     (void)user;
     if (!wing_talents_enabled) return -1;
     return fingerprint == 1u ? 1 : 0;
+}
+
+static int queue_switch_action(void *user, uint32_t delay, uint32_t action,
+                               uint32_t target_location, int message_route,
+                               uint8_t *out_event_type)
+{
+    (void)user;
+    if (!switch_action_enabled) return -1;
+    ++switch_action_count;
+    switch_action_delay = delay;
+    switch_action_kind = action;
+    switch_action_target = target_location;
+    switch_action_route = message_route;
+    if (out_event_type) *out_event_type = 102u;
+    return 1;
+}
+
+static int copy_teleporter(void *user, uint32_t source_location,
+                           uint32_t destination_location)
+{
+    (void)user;
+    if (!teleporter_copy_enabled) return -1;
+    ++teleporter_copy_count;
+    teleporter_copy_source = source_location;
+    teleporter_copy_destination = destination_location;
+    return 1;
 }
 
 static int actuator_copy_index(uint16_t thing)
@@ -143,6 +182,27 @@ static int set_actuator_payload(void *user, uint16_t thing,
     index = actuator_copy_index(thing);
     if (index < 0) return 0;
     memcpy(actuator_copy_payloads[index], payload, 6u);
+    ++actuator_copy_store_count;
+    return 1;
+}
+
+static int copy_actuator_payload(void *user, uint16_t source_thing,
+                                 uint16_t destination_thing,
+                                 const uint8_t source_payload[6])
+{
+    int source_index;
+    int destination_index;
+
+    (void)user;
+    if (!actuator_copy_enabled || !actuator_copy_owner_valid ||
+        !source_payload) return -1;
+    source_index = actuator_copy_index(source_thing);
+    destination_index = actuator_copy_index(destination_thing);
+    if (source_index < 0 || destination_index < 0) return 0;
+    if (memcmp(actuator_copy_payloads[source_index], source_payload, 6u) != 0) {
+        return 0;
+    }
+    memcpy(actuator_copy_payloads[destination_index], source_payload, 6u);
     ++actuator_copy_store_count;
     return 1;
 }
@@ -193,6 +253,17 @@ static int set_generator_delay(void *user, uint32_t location, int delay)
 {
     (void)user;
     if (!generator_delay_enabled || location != 0x0c82u) return 0;
+    generator_delay_stored = delay;
+    ++generator_delay_store_count;
+    return 1;
+}
+
+static int commit_generator_delay(void *user, uint32_t location,
+                                  int expected_delay, int delay)
+{
+    (void)user;
+    if (!generator_delay_enabled || !generator_delay_owner_valid ||
+        location != 0x0c82u || expected_delay != 37) return 0;
     generator_delay_stored = delay;
     ++generator_delay_store_count;
     return 1;
@@ -381,6 +452,18 @@ static int set_missile_info(void *user, uint16_t thing,
     memcpy(missile_info_stored, values, sizeof(missile_info_stored));
     ++missile_info_store_count;
     return 1;
+}
+
+static int commit_missile_info(void *user, uint16_t thing,
+                               const uint32_t expected_values[4],
+                               const uint32_t values[4])
+{
+    static const uint32_t expected[4] = { 0x0123u, 55u, 44u, 3u };
+
+    (void)user;
+    if (!missile_info_owner_valid || !expected_values || !values ||
+        memcmp(expected_values, expected, sizeof(expected)) != 0) return 0;
+    return set_missile_info(user, thing, values);
 }
 
 static int get_mastery(void *user, uint32_t champion_index,
@@ -656,6 +739,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (generator_delay_enabled) {
         context.get_generator_delay = get_generator_delay;
         context.set_generator_delay = set_generator_delay;
+        context.commit_generator_delay = commit_generator_delay;
     }
     if (monster_info_enabled) {
         context.get_monster_info = get_monster_info;
@@ -674,6 +758,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (actuator_copy_enabled) {
         context.get_actuator_payload = get_actuator_payload;
         context.set_actuator_payload = set_actuator_payload;
+        context.copy_actuator_payload = copy_actuator_payload;
     }
     if (champion_possession_enabled) {
         context.get_champion_possession = get_champion_possession;
@@ -690,6 +775,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (missile_info_enabled) {
         context.get_missile_info = get_missile_info;
         context.set_missile_info = set_missile_info;
+        context.commit_missile_info = commit_missile_info;
     }
     if (mastery_enabled) context.get_mastery = get_mastery;
     if (party_info_enabled) context.get_party_info = get_party_info;
@@ -716,6 +802,8 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
         context.set_adjust_skills_parameters = set_adjust_skills_parameters;
     }
     if (describe_enabled) context.describe = describe;
+    if (switch_action_enabled) context.queue_switch_action = queue_switch_action;
+    if (teleporter_copy_enabled) context.copy_teleporter = copy_teleporter;
     context.monster_move_inhibit_valid = monster_move_inhibit_enabled;
     context.most_recent_interesting_object_valid =
         most_recent_interesting_object_enabled;
@@ -1178,6 +1266,12 @@ int main(void)
     uint16_t actuator_copy_then_bad[] = {
         0x0686u, 0x0123u, 0x0686u, 0x0456u, 0x130bu, 0x0000u
     };
+    uint16_t message[] = { 0x0b41u, 2u, 0u };
+    uint16_t message_then_bad[] = { 0x0b41u, 2u, 0u, 0x114bu };
+    uint16_t copy_teleporter[] = { 0x0284u, 0x0421u, 0x0842u };
+    uint16_t copy_teleporter_then_bad[] = {
+        0x0284u, 0x0421u, 0x0842u, 0x0000u
+    };
     uint16_t actuator_copy_non_db3[] = {
         0x0686u, 0x0aaau, 0x0686u, 0x0456u, 0x130bu
     };
@@ -1321,6 +1415,7 @@ int main(void)
     excell_flags_enabled = 0;
 
     generator_delay_enabled = 1;
+    generator_delay_owner_valid = 1;
     parameters[0] = 77u;
     check(run(&state, &action, generator_delay_fetch,
               (int)(sizeof(generator_delay_fetch) /
@@ -1353,6 +1448,16 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               generator_delay_store_count == 0,
           "GeneratorDelay! rejects a later unsupported source word without DB3 mutation");
+    generator_delay_stored = -1;
+    generator_delay_store_count = 0;
+    generator_delay_owner_valid = 0;
+    check(run(&state, &action, generator_delay_store_then_fetch,
+              (int)(sizeof(generator_delay_store_then_fetch) /
+                    sizeof(generator_delay_store_then_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              generator_delay_store_count == 0 && generator_delay_stored == -1,
+          "GeneratorDelay! rejects a stale DB3 owner before candidate publication");
+    generator_delay_owner_valid = 1;
     generator_delay_enabled = 0;
     monster_info_enabled = 1;
     parameters[0] = 77u;
@@ -1563,6 +1668,7 @@ int main(void)
     false_pit_enabled = 0;
     cell_info_enabled = 0;
     missile_info_enabled = 1;
+    missile_info_owner_valid = 1;
     memset(parameters, 0, sizeof(parameters));
     check(run(&state, &action, missile_info_fetch,
               (int)(sizeof(missile_info_fetch) /
@@ -1580,7 +1686,17 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               missile_info_store_count == 1 && missile_info_stored[0] == 0x0123u &&
               missile_info_stored[1] == 77u && missile_info_stored[2] == 66u &&
-              missile_info_stored[3] == 2u,
+              missile_info_stored[3] == 2u &&
+              execution.missile_info_store_count == 1u &&
+              execution.last_missile_info_thing == 0x014eu &&
+              execution.last_missile_info_before[0] == 0x0123u &&
+              execution.last_missile_info_before[1] == 55u &&
+              execution.last_missile_info_before[2] == 44u &&
+              execution.last_missile_info_before[3] == 3u &&
+              execution.last_missile_info_after[0] == 0x0123u &&
+              execution.last_missile_info_after[1] == 77u &&
+              execution.last_missile_info_after[2] == 66u &&
+              execution.last_missile_info_after[3] == 2u,
           "MISSILEINFO! commits DB14 range damage and timer direction together");
     missile_info_store_count = 0;
     check(run(&state, &action, missile_info_store_then_bad_opcode,
@@ -1589,6 +1705,15 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               missile_info_store_count == 0,
           "MISSILEINFO! remains staged after a later rejected opcode");
+    missile_info_store_count = 0;
+    missile_info_owner_valid = 0;
+    check(run(&state, &action, missile_info_store,
+              (int)(sizeof(missile_info_store) /
+                    sizeof(missile_info_store[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              missile_info_store_count == 0,
+          "MISSILEINFO! rejects stale DB14/TIMER ownership before mutation");
+    missile_info_owner_valid = 1;
     missile_info_enabled = 0;
     mastery_enabled = 1;
     memset(parameters, 0, sizeof(parameters));
@@ -1852,6 +1977,42 @@ int main(void)
               (int)(sizeof(sound) / sizeof(sound[0])), parameters,
               &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "SOUND remains closed without a CSB audio owner");
+
+    switch_action_enabled = 1;
+    switch_action_count = 0;
+    check(run(&state, &action, message,
+              (int)(sizeof(message) / sizeof(message[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              switch_action_count == 1 && switch_action_delay == 2u &&
+              switch_action_kind == 0u && switch_action_target == 0u &&
+              switch_action_route == 'M' &&
+              execution.timer_scheduled_count == 1u,
+          "MESSAGE commits its source QueueDSASwitchAction only after acceptance");
+    switch_action_count = 0;
+    check(run(&state, &action, message_then_bad,
+              (int)(sizeof(message_then_bad) / sizeof(message_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              switch_action_count == 0,
+          "MESSAGE does not queue a timer before a later rejected opcode");
+    switch_action_enabled = 0;
+
+    teleporter_copy_enabled = 1;
+    teleporter_copy_count = 0;
+    check(run(&state, &action, copy_teleporter,
+              (int)(sizeof(copy_teleporter) / sizeof(copy_teleporter[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              teleporter_copy_count == 1 && teleporter_copy_source == 0x0421u &&
+              teleporter_copy_destination == 0x0842u &&
+              execution.teleporter_copy_count == 1u,
+          "COPYTELEPORTER commits the original source and destination only after acceptance");
+    teleporter_copy_count = 0;
+    check(run(&state, &action, copy_teleporter_then_bad,
+              (int)(sizeof(copy_teleporter_then_bad) /
+                    sizeof(copy_teleporter_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              teleporter_copy_count == 0,
+          "COPYTELEPORTER does not mutate before a later rejected opcode");
+    teleporter_copy_enabled = 0;
 
     monster_move_inhibit_enabled = 1;
     check(run(&state, &action, monblk,
@@ -2206,6 +2367,7 @@ int main(void)
     memcpy(actuator_copy_payloads[1], "ghijkl", 6u);
     memcpy(actuator_copy_payloads[2], "mnopqr", 6u);
     actuator_copy_enabled = 1;
+    actuator_copy_owner_valid = 1;
     actuator_copy_store_count = 0;
     check(run(&state, &action, actuator_copy_chain,
               (int)(sizeof(actuator_copy_chain) /
@@ -2237,6 +2399,18 @@ int main(void)
               execution.actuator_copy_count == 0 &&
               memcmp(actuator_copy_payloads[1], "ghijkl", 6u) == 0,
           "COPY retains CSBWin's non-DB3 source no-op");
+    memcpy(actuator_copy_payloads[0], "ABCDEF", 6u);
+    memcpy(actuator_copy_payloads[1], "ghijkl", 6u);
+    actuator_copy_store_count = 0;
+    actuator_copy_owner_valid = 0;
+    check(run(&state, &action, actuator_copy_chain,
+              (int)(sizeof(actuator_copy_chain) /
+                    sizeof(actuator_copy_chain[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              actuator_copy_store_count == 0 &&
+              memcmp(actuator_copy_payloads[1], "ghijkl", 6u) == 0,
+          "COPY rejects a stale DB3 source/destination owner before mutation");
+    actuator_copy_owner_valid = 1;
     actuator_copy_enabled = 0;
 
     state.imported_actions = NULL;

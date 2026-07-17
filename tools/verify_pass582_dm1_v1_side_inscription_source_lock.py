@@ -11,6 +11,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 FIRE = ROOT / "src/engine/m11_game_view.c"
+FONT = ROOT / "include/dm1_v1_inscription_font_pc34_compat.h"
 CMAKE = ROOT / "CMakeLists.txt"
 
 
@@ -62,6 +63,7 @@ def main() -> int:
     dunview = RED / "DUNVIEW.C"
     dungeon = RED / "DUNGEON.C"
     fire = read(FIRE)
+    font = read(FONT)
     cmake = read(CMAKE)
 
     require_order(source_slice(dungeon, 2568, 2594), [
@@ -97,6 +99,12 @@ def main() -> int:
 
     height_fn = c_function(fire, "m11_dm1_unreadable_inscription_box_height")
     require_order(height_fn, [
+        ("delegates to the source-locked DM1 height table",
+         "DM1_V1_InscriptionUnreadableBoxHeightPc34("),
+    ], "Firestaff unreadable inscription height delegate")
+
+    height_table_fn = c_function(font, "DM1_V1_InscriptionUnreadableBoxHeightPc34")
+    require_order(height_table_fn, [
         ("D3 side row", "{5, 8, 13}"),
         ("D3 front row", "{7, 13, 20}"),
         ("D2 side row", "{5, 12, 19}"),
@@ -109,12 +117,12 @@ def main() -> int:
 
     wall_fn = c_function(fire, "m11_draw_dm1_wall_ornaments")
     require_order(wall_fn, [
-        ("inscription global index gate", "ornGlobalIdx == 0 && kWallOrnaments[i].viewWallIndex != 12"),
-        ("uses side/source projection flag", "kWallOrnaments[i].blit.width <= 16"),
-        ("counts decoded text lines", "m11_dm1_visible_wall_text_line_count(state, &cell)"),
-        ("clips unreadable side plaque", "blit.height = unreadableHeight;"),
-        ("then loads ornament bitmap", "M11_AssetLoader_Load"),
-        ("then draws clipped bitmap", "m11_blit_scaled_palette_map_maybe_flip"),
+        ("inscription global index gate", "if (ornGlobalIdx == 0) {"),
+        ("uses source side-projection fact", "spec.unreadableInscriptionCompactBox"),
+        ("counts decoded text lines", "inscription.lineCount"),
+        ("clips unreadable side plaque", "maxHeight = unreadableHeight;"),
+        ("requests source wall-ornament material", "dm1_v1_wall_ornament_host_material_receipt_pc34("),
+        ("draws the source material plan", "m11_draw_dm1_wall_ornament_host_material_receipt("),
     ], "Firestaff wall ornament side-inscription render path")
 
     require(cmake, "NAME pass582_dm1_v1_side_inscription_source_lock", "CMake pass582 registration")

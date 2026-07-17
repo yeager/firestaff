@@ -1,5 +1,1272 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-17 DM1 M11 GROUP.C F0190 killed-all source admission: the runtime
+  now requires an exact live/raw PC3.4 C04 `GROUP` match and proof that the
+  supplied source square's raw Thing chain owns that exact group before it
+  can execute F0188 drops, F0189 unlink, C29-C41 cleanup, ACTIVE_GROUP
+  retirement, or C040 afterplay. Unknown creature records, raw/decoded drift,
+  and an unowned LoS square fail closed without mutating the group, chain, or
+  active state. The fixed-possession fixtures now preserve authentic C04 slot
+  state and source cell bits. Verification: the five focused F0190/M11 CTests
+  passed, `firestaff` built with Ninja, and `git diff --check` passed.
+
+- 2026-07-17 DM1 F0328/F0215/F0142/F0115 raw thrown-object consumers:
+  M11 now revalidates every rendered or materialized `Projectile.Slot` through
+  raw PC3.4 F0156 data and F0140's F0159 container traversal. Weapon aspects,
+  potion type, armour/junk subtype, F0215 drops, poison consumption, and the
+  sharp-weapon aftermath all reject missing, altered, unknown, or cyclic raw
+  records instead of borrowing a decoded object mirror. The corpus render
+  probe selects a weapon only through the same raw admission and verifies an
+  F0156 type drift yields no F0115 receipt; it SKIPs when no admissible local
+  record exists. Verification: `m11_action_stamina_runtime_source_lock` and
+  `m11_dm1_throw_projectile_runtime_materialization_pc34` passed, `firestaff`
+  built with Ninja, and `git diff --check` passed.
+
+- 2026-07-17 DM1 DUNGEON F0140/F0159 M11 F0328 object-weight handoff:
+  M11's leader-hand and action-hand THROW paths now delegate weight admission
+  to the loaded PC3.4 F0156/F0159 raw record chain before F0328 advances
+  RNG, stamina, XP, or projectile materialization. Raw potion power/type are
+  retained as C/G-owned fields for the same launch receipt. Missing, unknown,
+  or cyclic raw chains fail closed even when a decoded mirror is populated.
+  Focused fixtures cover authentic junk, container, and potion records plus a
+  decoded-valid/raw-cyclic container rejection. Verification:
+  `dm1_v1_object_weight_f0140_pc34_compat` and
+  `m11_action_stamina_runtime_source_lock` passed, `firestaff` built with
+  Ninja, and `git diff --check` passed.
+
+- 2026-07-17 DM1 DUNGEON F0158 M11/F0312 weapon-fact handoff: M11 now
+  resolves THROW, SHOOT, and delayed F0259 quiver refill weapon facts through
+  ReDMCSB `DUNGEON.C F0158` over the loaded PC3.4 `WEAPON.Type` record and
+  G0238, instead of its duplicate decoded-table copy. Missing, malformed, or
+  out-of-range raw records fail closed before a projectile or inventory move;
+  valid raw facts retain the existing F0312/F0328 weight, strength, kinetic,
+  and class path. Focused fixtures now carry authentic four-byte weapon
+  records, and a contradictory decoded mirror with an invalid raw type is
+  explicitly rejected. Verification: `m11_action_stamina_runtime_source_lock`
+  passed, `firestaff` built with Ninja, and `git diff --check` passed.
+
+- 2026-07-17 DM1 M11 F0394 spell-panel source-caster admission: the live
+  spell renderer now accepts C009 (96x33), C011 (96x36), and verified M653
+  material only when F0394 has published a valid G0514 caster. It reads the
+  selected caster's authenticated `Symbols[]` and `SymbolStep` directly;
+  the old `spellBuffer` presentation bridge can no longer synthesize rune
+  text. Missing G0514, source pixels, or source font retains the complete
+  ReDMCSB black clear. C077/C079 remain F0387 action-panel assets and are
+  deliberately not admitted as spell material. Verification: five focused
+  spell/action CTests passed, `firestaff` built with Ninja, and `git diff
+  --check` passed.
+
+- 2026-07-17 DM1 M11 F0384/F0387 action-panel provenance: removed M11's
+  duplicate G0490 action-name table and delegated WAR CRY, KICK, STAB, and
+  every other label to DM1's ReDMCSB-locked F0384 lookup. Action labels now
+  render only after the selected C011/C077/C079 PC34 panel surface validates;
+  absent or malformed material retains F0387's black clear without synthetic
+  text. The M11 probe surface delegates to the physical C010/C009 source
+  rectangles, preserving M653's native 6x7 cells and disabled-state coverage.
+  Verification: 10 focused action-panel CTests passed, `firestaff` built,
+  and `git diff --check` passed.
+
+- 2026-07-17 DM1 HoC F0168/F0107 wall-inscription material provenance:
+  bound the selected original packed TextString words to the DM1 material
+  and M11 presentation receipts with bounded span and FNV-1a identities.
+  D1C accepts the authentic M648 8x8 font pixels only with matching source
+  glyph bytes, records native 1:1 scale, and performs no host palette remap.
+  D3/D2/D1 side and depth views retain the same source receipt while drawing
+  only ReDMCSB's unreadable ornament bitmap with its original C10 palette,
+  flip, and G0204 height. No font, texture, or palette fallback was added.
+  Verification: 14 focused inscription/material/source-lock CTests passed,
+  `firestaff` built, and `git diff --check` passed.
+
+- 2026-07-17 DM1 HoC C127 D1-only visibility routing: constrained the
+  ReDMCSB `DUNVIEW.C F0107` projection receipt to the three original one-tile
+  routes. D1L/D1R may consume authentic C346 only at view-wall indices 10/11;
+  D1C owns the C346/C026 overlay at index 12. A C127 fact at D2/D3 or an
+  incompatible wall index now suppresses the generic ornament instead of
+  repurposing C346 or C026. Verification:
+  `dm1_v1_champion_mirror_pc34_compat`,
+  `m11_dm1_hoc_mirror_side_depth_material_receipt`,
+  `m11_dm1_hoc_mirror_rotation_inscription_pc34`, and
+  `dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat` passed; `firestaff`
+  built; `git diff --check` passed.
+
+- 2026-07-17 DM1 TITLE/Entrance palette and timing receipt: bound the
+  ReDMCSB ENTRANCE.C palette identity, entry count, and fingerprint to the
+  startup timing receipt. Each M11 entrance presentation now consumes the
+  matching command-carried palette receipt rather than selecting a local
+  palette value; substituted or mutated palette receipts reject before
+  rendering. The TITLE.C cadence source gate was updated to lock the current
+  per-step source-command route. Verification: the nine focused title and
+  entrance CTests passed, `firestaff` built, and `git diff --check` passed.
+
+- 2026-07-17 DM1 HoC C127 side/depth material admission: added the M11
+  receipt consumer regression for ReDMCSB `DUNVIEW.C F0107` one-tile D1L
+  and D1R champion-mirror projections. It admits the authentic C346 backing
+  at view-wall indices 10/11, including the right-side source flip, and
+  refuses to publish C026 outside the dedicated D1C `3913-3928` route. The
+  PC34 graphics loader supplies the tested bytes; no portrait or bitmap
+  fallback is involved. Verification:
+  `m11_dm1_hoc_mirror_side_depth_material_receipt`,
+  `m11_dm1_side_wall_ornament_host_presentation_receipt`,
+  `m11_dm1_hoc_wall_material_receipt_pc34`, and
+  `dm1_v1_champion_mirror_pc34_compat` passed; `firestaff` built.
+
+- 2026-07-17 DM1 M11 F0111 door-ornament receipt consumption: M11 now
+  feeds center and side temporary door-panel segments through the existing
+  ReDMCSB `DUNVIEW.C F0111` receipt before applying authenticated ornament
+  material. Each visible depth is handled independently, so a missing/open
+  far door cannot suppress an eligible nearer door. The consumer preserves
+  source panel coordinates and rejects non-door, open, empty-ornament, and
+  malformed panel shapes through the DM1 receipt; it introduces no fallback
+  artwork. Verification: `dm1_v1_f0111_door_ornament_dispatch_pc34_compat`,
+  `m11_dm1_hoc_wall_material_receipt_pc34`, and
+  `dm1_v1_champion_mirror_pc34_compat` passed; `firestaff` built; `git diff
+  --check` passed.
+
+- 2026-07-17 DM1 F0207/F0212 creature-projectile publication: made the
+  creature-owned C14 slot and its first C48/C49 movement receipt atomic in
+  both the M10 C38/F0207 bridge and M11's remaining live consumer. A full
+  bounded timeline now rejects the launch and F0813 removes exactly the new
+  slot, preserving all pending source events rather than leaving an
+  unscheduled renderable projectile. The focused M11 runtime regression now
+  covers the admitted Red Dragon fireball and the full-queue rejection path.
+  Verification: `test_m11_creature_projectile_runtime_pc34_compat` passed
+  29/0; `memory_tick_orchestrator_f0303_skill_query_pc34_compat` passed;
+  `firestaff` built; `git diff --check` passed.
+
+- 2026-07-17 DM1 F0142/F0115 projectile material admission: restored the
+  strict source-record boundary for a carried C14 `Projectile.Slot`. F0142
+  now rejects an out-of-range C05..C0B subtype before the generic inventory
+  aspect helper can normalize it to subtype zero, so malformed projectile
+  data cannot borrow G0209/M612 object art. The F0115 world-summary fixture
+  now supplies its authentic one-column SFT descriptor and exercises the
+  M10 F0511/F0512 chain instead of relying on an incomplete world shape.
+  Verification: focused F0142, F0115, and viewport-materialization CTests
+  passed; `test_m11_action_stamina_runtime_pc34_compat` passed 1317/0;
+  `firestaff` built; `git diff --check` passed.
+
+- 2026-07-17 DM1 M11 F0253/F0259 SHOOT delayed quiver refill: restored the
+  source boundary in TIMELINE.C C11. F0253 now sees live C032 ActionIndex,
+  re-enables the champion and moves only compatible quiver ammunition into
+  an empty ready hand before clearing ActionIndex; C11's nonzero
+  SlotOrdinal F0259 move remains independent. This retains C12 then
+  C07-C09 source priority without turning unrelated C11 receipts into a
+  refill. Verification: `test_m11_action_stamina_runtime_pc34_compat`
+  reached 1317 passes with 0 failures; `firestaff` build and
+  `git diff --check` passed.
+
+- 2026-07-17 DM1 M11 F0412/F0410 spell-practice feedback: retained the
+  original spell skill through the F0412-to-HUD receipt boundary and insert
+  its ReDMCSB CHAMPION.C base class name between F0410's two source text
+  fragments. A failed Fireball practice cast now reports the authentic
+  champion-specific `HALK NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.` line,
+  while preserving the source shifted practice XP and normal rune clear.
+  Verification: `test_m11_action_stamina_runtime_pc34_compat` reached 1315
+  passes; `firestaff` build and `git diff --check` passed.
+
+- 2026-07-17 DM1 M11 F0407 WINDOW G0497 XP ownership: corrected the common
+  action XP tail to pass ReDMCSB CHAMPION.C F0304's
+  `CurrentMap->Difficulty`, rather than the unrelated party map ordinal.
+  Headless M11 dispatches now retain the source zero-difficulty fallback
+  until an authenticated dungeon-map descriptor is present, so C039 WINDOW
+  receives its G0497 award exactly once and without a synthetic multiplier.
+  Verification: `test_m11_action_stamina_runtime_pc34_compat` reached 1314
+  passes with all WINDOW assertions green; `firestaff` build and
+  `git diff --check` passed.
+
+- 2026-07-17 DM1 M11 F0253 action-enable and SPIT projectile-queue
+  ownership: completed the source C11 lifecycle for ordinary F0407 actions.
+  F0330 now translates source `GameTime` through M10's pre-increment queue
+  dispatch and preserves CHAMPION.C's two replacement-time branches; F0253
+  consumes the matching live gate before the aging pass, so it removes G0495
+  defense and resets ActionIndex exactly once. F0328 keeps its in-flight
+  action-tick timing separate. LIGHT retains both its G0491/C11 receipt and
+  F0404 C70 decay receipt. SPIT follows `MENU.C F0407 -> F0327 -> F0212`,
+  retaining one authentic C49 projectile-movement event alongside its C11,
+  rather than replacing either queue owner. Verification:
+  `test_m11_action_stamina_runtime_pc34_compat` reached 1312 passes; all
+  C11/F0253, C70, and SPIT assertions are green.
+
+- 2026-07-17 DM1 M11 F0215 thrown-weapon materialization and Thing-next
+  synchronization: separated F0215's stored C14 source-square cleanup from
+  its F0219-committed champion-impact drop square, while retaining the real
+  `Projectile.Slot` identity and cell bits. The M11 handoff now materializes
+  the slot even when a direct runtime advance has no compact C14 square-list
+  mirror, and writes the same end/tail link to decoded and raw PC34 object
+  records. F0319 rejects structural slot values before its inventory-drop
+  loop, preventing an unowned C00 entry from preceding the F0215 weapon.
+  Focused lifecycle coverage verifies empty-square and tail append paths,
+  raw/decoded `Thing.next`, cross-cell champion impact, and the structural
+  slot rejection. Verification: `test_m11_action_stamina_runtime_pc34_compat`
+  reached 1300 passes with all F0215 assertions green; `firestaff` build and
+  `git diff --check` passed.
+
+- 2026-07-17 DM1 M11 F0330/C11 action-cell reactivation: replaced the
+  placeholder M11 F0330 scheduler with the ReDMCSB `CHAMPION.C F0330`
+  one-C11-per-champion receipt, including its replacement-delay rule and
+  `TIMELINE.C F0253` ownership. The action-cell route now remains disabled
+  until its authenticated C11 dispatch, then permits same-cell reactivation
+  and the subsequent same-cell toggle through `MENU.C F0389/F0388`; no local
+  synthetic re-enable path was added. Verification passed:
+  `firestaff_dm1_v1_champion_panel_action_menu_routing_probe`,
+  `firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe` with
+  `/Users/bosse/.firestaff/data/dm1`,
+  `test_dm1_v1_f0330_c11_production_pc34_compat`,
+  `test_dm1_v1_inventory_slot_placement_pc34_compat` (156/156),
+  `test_m11_dm1_hoc_wall_material_receipt_pc34`, and
+  `firestaff_m11_chest_slot_zones_probe` (65/65).
+
+- 2026-07-17 Theron Track 02 M11 replay-consistency host admission: bound the
+  active opaque multi-record replay receipt into the live Soul Room/dungeon
+  route boundary. M11 requires current direct campaign layout, replay epoch,
+  media identity, and final record/raw-sector identity, retaining them at
+  Soul Room and rechecking them at dungeon handoff. Stale epochs and replay
+  invalidation from duplicate/reordered evidence clear both route flags. No
+  decoder, renderer, or fallback was added. Verification: CTest
+  `m11_theron_track02_capture_campaign_host`,
+  `theron_v1_track02_loader_trace_replay_consistency`, and
+  `theron_v1_track02_live_loader_route_admission` passed (3/3); full
+  `firestaff` build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 loader-trace replay consistency: added a
+  stateful opaque receipt for dynamic CD_READ ownership under one current
+  direct campaign-media layout epoch. It retains only media identity, ordered
+  record/sector provenance, count, and an order checksum. Duplicate,
+  reordered, stale-epoch, mixed-media, or layout-drifted records clear the
+  state. No payload, level/object, bitmap/palette, decode, draw, or fallback
+  semantics are admitted. Verification: CTest
+  `theron_v1_track02_loader_trace_replay_consistency`,
+  `theron_v1_track02_dynamic_cd_read_ownership`, and
+  `theron_v1_track02_live_loader_route_admission` passed (3/3); full
+  `firestaff` build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 live loader log reproducibility: propagated the
+  MD5 of the converted HuC6280 event log into the opaque live-route receipt
+  and made M11 retain and recheck it alongside the Mednafen source-trace MD5
+  across Soul Room epoch 1 and dungeon-handoff epoch 2. Missing or changed
+  log identity clears the entire route pair; direct campaign-layout checks and
+  all no-decode/no-draw flags remain required. Verification: CTest
+  `theron_v1_track02_live_loader_route_admission`,
+  `m11_theron_track02_capture_campaign_host`, and
+  `theron_v1_track02_campaign_media_discovery` passed (3/3); full
+  `firestaff` build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 M11 direct campaign-layout live-route gate:
+  extended the observed loader-route host boundary to require the retained
+  direct campaign receipt, a fresh raw-media receipt, and the opaque
+  three-route plan on every Soul Room/dungeon-handoff bind. Canonical paths,
+  MD5/variant, MODE1 facts, INDEX 01, sector/user-data layout, route order,
+  and trace identity must stay current; drift clears both live-route flags.
+  No graphics/object format, decode, render, or fallback permission was
+  added. Verification: CTest
+  `m11_theron_track02_capture_campaign_host` and
+  `theron_v1_track02_campaign_media_discovery` passed (2/2); full
+  `firestaff` build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 direct campaign-media layout lifecycle: added a
+  strict direct-only revalidation boundary between campaign discovery and a
+  refreshed raw-media intake. It requires the source-owned canonical CUE and
+  payload paths, variant/MD5, MODE1 facts, INDEX 01, payload bytes, sector
+  count, and raw/user-data windows to remain exact before a plan can be
+  reused. Ambiguous, virtual, extracted, non-launchable, stale, or mixed
+  evidence rejects; no media is copied and no decode, rendering, or fallback
+  path was added. Verification: CTest
+  `theron_v1_track02_campaign_media_discovery` and
+  `asset_status_theron_campaign_media_scan` passed (2/2); full `firestaff`
+  build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 M11 live route lifecycle: extended the observed
+  loader-route receipt with the stable source Mednafen-trace MD5 from the
+  converted trace receipt, then bound it to M11 as an opaque two-step route.
+  Soul Room is accepted only at epoch 1; dungeon handoff requires epoch 2 and
+  the same trace/media identity. Sequence, epoch, identity, or no-draw flag
+  drift clears both readiness flags. No graphics/object format, decode,
+  renderer, or fallback was added. Verification: CTest
+  `theron_v1_track02_live_loader_route_admission` and
+  `m11_theron_track02_capture_campaign_host` passed (2/2); full `firestaff`
+  build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 live loader-route admission: added a strict
+  runtime join requiring the register-normalized dynamic CD_READ ownership
+  receipt and the closed observed HuC6280 loader/dungeon/object event log.
+  It binds those facts through the existing manifest and opaque runtime
+  admission only when MD5, variant, loader record, `$3800` destination,
+  checksums, consumer PCs, and bounded windows all agree. Drift clears the
+  route; all level/object, bitmap/palette, decode, draw, and fallback flags
+  remain false. Verification: CTest
+  `theron_v1_track02_live_loader_route_admission`,
+  `theron_v1_track02_dynamic_cd_read_ownership`, and
+  `theron_v1_track02_huc6280_capture_event_log` passed (3/3); full
+  `firestaff` build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 dynamic HuC6280 CD_READ ownership: added a
+  strict normalized receipt over the existing hash-authenticated raw CUE/BIN
+  intake and original loader trace. It reconstructs the record only from the
+  observed CL/DL/CH bytes, requires the `$3800` transfer, exact raw sector and
+  MODE1 user-data coordinates, and retains the bounded destination/full-sector
+  checksums. Register, MD5, CUE-window, raw-offset, and payload-span drift
+  reject. The receipt grants no level/object, bitmap/palette, decode, draw, or
+  fallback permission. Verification: CTest
+  `theron_v1_track02_dynamic_cd_read_ownership`,
+  `theron_v1_track02_huc6280_capture_event_log`, and
+  `theron_v1_raw_loader_trace_ingest` passed (3/3); full `firestaff` build and
+  `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 non-startup sector-directory admission: added a
+  file-backed receipt which rechecks the identity-verified raw CUE/BIN MD5,
+  consumes the existing source-owned Stage-3 six-byte descriptor directory,
+  and accepts only a complete ordered coalesced Mednafen `$e009` observation
+  for a descriptor-resolved later record. The receipt carries exact physical
+  offsets, 2048-byte user-data bounds and hashes, with all level/object,
+  bitmap/palette, decode, draw and fallback permissions false. M11 publishes
+  that receipt only as identity-matched opaque dungeon readiness and clears it
+  on source or flag drift. Added no-input/missing-corpus tests and an explicit
+  read-only corpus probe. Verification: full `firestaff` build passed; CTest
+  `theron_v1_track02_sector_record_admission`,
+  `theron_v1_track02_sector_record_corpus_probe_no_inputs`,
+  `theron_v1_track02_sector_record_corpus_probe_missing_media`, and
+  `m11_theron_track02_capture_campaign_host` passed (4/4); `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 boot/runtime campaign transaction: retained the
+  already verified opaque capture plan alongside M12's campaign-media receipt,
+  copied both into launch intent, and bound both to the actual M11 Theron boot
+  after profile allocation. The boot runtime receipt preserves only the
+  launchable direct identity; payload-path/MD5 drift, virtual media, or a plan
+  mismatch abort before any Soul Room or dungeon capture route can be
+  published. No capture semantics, decoder, renderer, or fallback changed.
+  Verification: CTest `theron_v1_track02_campaign_media_launch`,
+  `theron_v1_campaign_launch_intent`, and
+  `theron_v1_m11_launcher_handoff_boundary` passed (3/3); full `firestaff`
+  build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 campaign-media launch intent: M12 launch intent
+  now carries a value copy of its verified direct campaign-media receipt, and
+  the M11 selected-menu boundary revalidates that copy against current M12
+  status before starting Theron. The payload path/MD5 is taken only from the
+  bound receipt; path-only availability, stale payload or MD5 identity,
+  virtual/container evidence, and missing bindings reject. Existing local
+  generic-media handoff coverage now skips safely until an explicit campaign
+  scan is supplied. Verification: CTest
+  `theron_v1_campaign_launch_intent`,
+  `theron_v1_m11_launcher_handoff_boundary`, and
+  `asset_status_theron_campaign_media_scan` passed (3/3); full `firestaff`
+  build and `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 M12 campaign-media launcher scan: added an
+  explicit Theron-only M12 entry that consumes the verified campaign-media
+  discovery plus opaque target plan and publishes launch readiness only for
+  one direct exact-layout candidate. Generic archive cache materialization is
+  not called; virtual/container hits, absent media, plan mismatch, and later
+  rejected rescans retain diagnostics while clearing availability/readiness.
+  Added M12 lifecycle coverage and corrected the campaign discovery/launch
+  CMake targets to link their existing M12 scanner dependencies. Verification:
+  CTest `asset_status_theron_campaign_media_scan`,
+  `theron_v1_track02_campaign_media_discovery`, and
+  `theron_v1_track02_campaign_media_launch` passed (3/3); full `firestaff`
+  build passed; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 campaign-media launch boundary: added the
+  profile/launch entry that consumes discovery receipts only after one direct,
+  exact-layout candidate matches every capture-plan target. The launch receipt
+  clears stale launchability before each bind; profile MD5 drift, ambiguous
+  variants, and virtual/container evidence retain diagnostics but cannot enter
+  the launch path. No archive extraction, decoder, renderer, or original-data
+  gate replacement was added. Verification: `firestaff_theron` rebuilt; CTest
+  `theron_v1_track02_campaign_media_discovery` and
+  `theron_v1_track02_campaign_media_launch` passed (2/2); `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 campaign-media discovery: added hash-first
+  discovery for explicit loose CUE/BIN/ISO paths and Firestaff scanner-backed
+  directory/container matches. Direct media still passes the strict raw intake;
+  virtual container matches retain only a hash/layout identity and are never
+  extracted or launchable. Known mixed Track 02 variants reject as ambiguous,
+  and all three capture-plan targets must match the selected identity with no
+  decoder/render/fallback permission. Verification: `firestaff_theron` rebuilt;
+  CTest `theron_v1_track02_campaign_media_discovery` passed; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 M11 capture-ready host boundary: M11 now
+  reconstructs its active startup-media receipt and consumes only a verified
+  capture-campaign admission to expose start, Soul Room, and dungeon readiness.
+  Every bind clears stale state first; absent evidence, media MD5 drift,
+  campaign destination drift, or a non-Theron host leave every route unready.
+  The boundary does not authorize a decoder, renderer, fallback visual, or
+  replace existing original-data gates. Verification: CTest
+  `theron_v1_runtime_track02_capture_campaign_admission` and
+  `m11_theron_track02_capture_campaign_host` passed (2/2); `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 Hall-of-Records receipt contract: aligned the
+  startup/save-resume regression fixture with the source-locked opaque entry-6
+  candidate. It retains bounded raw offsets, user-data provenance, hashes, and
+  no-fallback blocker evidence, but asserts no object-table semantic role,
+  field decoder, or cross-anchor row consensus. Reordering or mutating those
+  opaque bytes remains blocked. Verification: CTest
+  `theron_v1_startup_save_resume_pc34` and
+  `theron_v1_runtime_track02_capture_campaign_admission` passed (2/2);
+  `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 runtime capture-campaign boundary: added the
+  active startup/Soul Room/dungeon admission receipt that consumes only a
+  complete campaign, matching startup-media Track 02 identity, and the
+  manifest-bound opaque dungeon window. Lifecycle, campaign absence, media
+  drift, and destination-window drift fail closed; it grants no decode,
+  render, or fallback permission and does not alter startup selection.
+  Verification: `firestaff_theron` rebuilt and the exact runtime-boundary
+  fixture passed directly. The CMake test target remains blocked by unrelated
+  DM2 `missile_record` compile errors in `dm2_v1_dungeon_loader.c`;
+  `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 operator campaign emission: added a strict
+  operator-only emitter for three independently route-selected campaign
+  bundles. It requires an existing authenticated plan, raw CUE/Track 02 MD5,
+  and stable Mednafen-trace MD5, writes outputs exclusively, and reports their
+  hashes. Dry-run writes nothing; no emulator launch, media copy, synthetic
+  capture row, decoder, or renderer exists on this path. Verification:
+  focused Track 02 CTest passed 6/6 in 0.51 seconds; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 multi-bundle capture campaign: added a strict
+  campaign verifier for independent start, Soul Room, and dungeon-handoff
+  bundle admissions. It requires distinct bundle MD5s, shared Track 02 and
+  Mednafen provenance, and agreement on every opaque transfer, palette,
+  bitmap, and destination identity. Route reordering, bundle reuse, and
+  contradictory facts reject; the retained campaign receipt has no decoder or
+  render permissions. Verification: focused Track 02 CTest passed 5/5 in
+  0.47 seconds; local corpus discovery safely skipped with fewer than three
+  candidates; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 capture-artifact importer: added a strict
+  external bundle importer that rechecks direct regular Mednafen trace and
+  bundle files by stable MD5, then requires exactly the three ordered
+  multi-route plan identities. Partial, mixed, reordered, and hash-mismatched
+  inputs reject; the only successful output is an opaque runtime-admission
+  receipt with pixel, level/object, render, and fallback permissions false.
+  The bounded corpus probe safely skips without bundles. Verification: focused
+  Track 02 CTest passed 7/7 in 0.40 seconds; local artifact-corpus discovery
+  printed `SKIP`; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 multi-route capture-target planner: added a
+  strict capture-only plan for start, Soul Room, and dungeon-handoff routes.
+  It joins authenticated CUE/Track 02 provenance, the CD_READ/loader-output
+  chain, direct HuC6260 write identity, bitmap-transfer identity, and the
+  opaque destination record boundary. Fixture drift, empty spans, and any
+  decoder/draw/fallback flag reject; the planner never renders or assigns
+  pixel, palette, level, or object semantics. A bounded corpus probe finds
+  only direct CUE candidates and safely skips absent observations. Verification:
+  focused Track 02 CTest passed 7/7 in 0.48 seconds; the local corpus probe
+  found one authenticated US CUE and reported `SKIP`; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 live dungeon-handoff replay: added a strict
+  six-step validator binding one authenticated raw CUE/Track 02 identity to
+  the dynamic CD_READ receipt, loader-chain checksum, direct-VCE observation
+  identity, source-bound bitmap identity, and opaque destination record
+  boundary. Partial, reordered, or mutated evidence rejects; level/object
+  semantics, pixel decoding, rendering, and fallback remain false. The
+  external `--inspect` probe verifies only explicit media plus a dynamic trace
+  and safely skips when the real capture is absent. Verification: focused
+  CTest passed 5/5 in 0.49 seconds; authenticated local US CUE plus missing
+  trace printed `SKIP`; `git diff --check` passed.
+
+- 2026-07-17 Theron SRM operator attestation: added an external-only
+  `--attest` probe that requires explicit original SRM and CUE paths, known
+  Track 02 MD5, and admission version. It canonicalizes direct regular files,
+  computes the SRM MD5/size, validates opaque admission, and prints one closed
+  corpus-manifest row without writing, copying, inflating, or interpreting the
+  save. Verification: CTest no-input, bad-version, and nonregular-SRM cases
+  passed 3/3 in 0.27 seconds; the authenticated local US CUE plus missing SRM
+  safely skipped; `git diff --check` passed.
+
+- 2026-07-17 Theron SRM corpus manifest intake: added a closed root/candidate
+  manifest and scanner for direct `.srm` entries with declared MD5, size,
+  version, and Track 02 identity. Only opaque-admission-ready entries enter
+  the corpus receipt; source absence, source rejection, bad roots, duplicate
+  declarations, and hash conflicts are reported separately. It never creates
+  or decodes a save. Verification: `firestaff_theron` built successfully;
+  direct fixture verification covered discovery, hash conflict, and no-corpus
+  skip; `git diff --check` passed. Normal CTest linking remains blocked by the
+  unrelated M11 missing `CSB_V1_StartupRenderPlan_PC34.valid` field.
+
+- 2026-07-17 Theron SRM opaque admission probe: added an external-only
+  `--admit` entry point requiring explicit SRM path, MD5, exact size,
+  admission version, and Track 02 MD5. It reports only opaque readiness;
+  no-input and missing-corpus paths skip without writing or restoring a save.
+  Verification: compiled against the built Theron libraries; both skip paths
+  and `git diff --check` passed. Normal CTest linking remains blocked by the
+  unrelated M11 missing `CSB_V1_StartupRenderPlan_PC34.valid` field.
+
+- 2026-07-17 Theron SRM opaque runtime handoff: runtime now retains an
+  accepted SRM admission only as MD5, size, admission-version, and Track 02
+  identity. Any missing verified fact rejects; restore, body semantics, and
+  fallback remain false. Verification: `firestaff_theron` built successfully
+  and the exact linked opaque-admission fixture passed; `git diff --check`
+  passed. The normal CTest link is currently blocked by the unrelated missing
+  `CSB_V1_StartupRenderPlan_PC34.valid` field in M11.
+
+- 2026-07-17 Theron SRM campaign/replay receipt: an opaque SRM admission now
+  travels through the M12 launch intent into M11 only with its SRM MD5, size,
+  FNV-1a identity, direct Track 02 variant/MD5, campaign layout epoch, and
+  final replay record/sector. M12 rejects a stale intent; M11 snapshots the
+  SRM size/FNV at bind time and clears route readiness on stale epoch,
+  cross-media, replay-reorder, size, or FNV drift. The receipt is bound after
+  M11 initialization so startup cannot silently discard it. No save body,
+  level/object, pixel, palette, draw, or fallback semantics are admitted.
+  Verification: direct `test_m11_theron_track02_capture_campaign_host` and
+  `test_theron_v1_campaign_launch_intent` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron direct SRM launch discovery: M12 now retains an opaque
+  SRM launch receipt only when the hash-first corpus admission yields exactly
+  one direct regular candidate for the current direct Track 02 media. Virtual,
+  mixed, duplicate, rejected, and cross-Track02 candidates cannot launch;
+  virtual hits remain diagnostic-only. The receipt copies through the launch
+  intent and M11 validates and retains it as opaque source provenance. No save
+  body is copied, decoded, restored, or interpreted. Verification:
+  `test_theron_v1_srm_launch_discovery`,
+  `test_theron_v1_campaign_launch_intent`, and
+  `test_m11_theron_track02_capture_campaign_host` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron direct-media launch layout invalidation: the M12 Theron
+  launch intent now compares the complete direct raw-media layout identity,
+  not merely path and Track 02 MD5. CUE consumption, MODE1 form, INDEX 01,
+  payload length, sector count, and user-data window must match the current
+  campaign receipt; M11 also requires a ready direct CUE/MODE1 receipt with
+  nonempty bounded layout before startup. Layout drift rejects without reading
+  or decoding any loader, level/object, palette, bitmap, or pixel payload.
+  Verification: `test_theron_v1_campaign_launch_intent` and
+  `test_m11_theron_track02_capture_campaign_host` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron M12-to-M11 opaque launch trace identity: a direct-media
+  launch can now retain source-trace and HuC6280 event-log MD5 values with its
+  layout epoch and final replay record/sector. M11 compares that receipt at
+  Soul Room and dungeon-handoff admission and clears readiness on trace, media,
+  epoch, or final-record drift. It grants no decode, draw, or fallback route.
+  Verification: `test_m11_theron_track02_capture_campaign_host` and
+  `test_theron_v1_campaign_launch_intent` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron external trace-bundle discovery: hash-first selection now
+  admits exactly one existing Mednafen conversion receipt only when its source
+  trace and HuC6280 event-log MD5 values match the current opaque launch trace
+  identity. Virtual and ambiguous candidates reject. No trace payload is
+  decoded or rendered. Verification:
+  `test_theron_v1_track02_trace_bundle_discovery` PASS; full `firestaff` build
+  and `git diff --check` PASS.
+
+- 2026-07-17 Theron M12-to-M11 trace-bundle handoff: the selected opaque
+  direct trace bundle now travels with the Theron launch intent and M11 checks
+  its exact source-trace/event-log MD5 identity during live campaign route
+  admission. Virtual, ambiguous, non-opaque, or drifted bundles reject and
+  clear readiness. Verification: `test_theron_v1_track02_trace_bundle_discovery`
+  and full `cmake --build build-ninja --target firestaff -j1` PASS; `git diff
+  --check` PASS.
+
+- 2026-07-17 Theron trace-bundle epoch lifecycle: the opaque bundle receipt
+  now carries the launch-trace campaign layout epoch; M12 and M11 reject a
+  stale epoch before live route readiness. Verification:
+  `test_m11_theron_track02_capture_campaign_host` PASS; full `firestaff`
+  build and `git diff --check` PASS.
+
+- 2026-07-17 Theron trace-bundle invalidation lifecycle: M12 now clears a
+  previously bound opaque bundle whenever a replacement is virtual, ambiguous,
+  stale, or otherwise invalid. The focused launch-intent test covers valid to
+  virtual invalidation; M11 host coverage remains no-draw. Verification:
+  `test_theron_v1_campaign_launch_intent`,
+  `test_m11_theron_track02_capture_campaign_host`, full `firestaff` build,
+  and `git diff --check` PASS.
+
+- 2026-07-17 Theron live capture-target-plan lifecycle: M11 now retains an
+  FNV-1a identity over the opaque, direct-media-bound three-route capture
+  target plan at Soul Room and compares it before dungeon handoff. Any target
+  coordinate, transfer/output identity, route metadata, or no-draw-policy
+  drift clears both live readiness flags. No payload parsing, level/object
+  semantics, bitmap/palette decode, rendering, or fallback path was added.
+  Verification: `test_m11_theron_track02_capture_campaign_host` and
+  `test_theron_v1_campaign_launch_intent` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron external trace-bundle capture-plan binding: direct
+  Mednafen/HuC6280 trace-bundle selection now records the shared opaque
+  capture-target-plan FNV identity. M12 requires that identity to match both
+  its current plan and the copied launch intent; M11 verifies it at startup
+  and before live Soul Room/dungeon readiness. Stale route/output-plan drift
+  rejects and clears readiness. No trace payload, bitmap/palette, level, or
+  object format was decoded, and no renderer or fallback route was added.
+  Verification: `test_theron_v1_track02_trace_bundle_discovery`,
+  `test_theron_v1_campaign_launch_intent`, and
+  `test_m11_theron_track02_capture_campaign_host` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron M12 direct-media re-scan trace lifecycle: added the
+  menu-owned strict Track 02 scan wrapper. It retains existing launch-trace
+  and direct external trace-bundle bindings only when the refreshed direct
+  CUE/BIN/ISO layout and opaque capture-target-plan FNV are unchanged; a
+  missing, rejected, virtual, or drifted scan clears both bindings. The scan
+  never copies media or interprets trace payload, level/object, bitmap,
+  palette, or pixel semantics. Verification:
+  `test_theron_v1_campaign_launch_intent`,
+  `test_asset_status_theron_campaign_media_scan`, and
+  `test_m11_theron_track02_capture_campaign_host` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron M12-to-M11 direct-media re-scan epoch gate: each strict
+  direct Track 02 scan now advances an M12-owned epoch, which is copied into
+  the authenticated Theron launch intent and retained by M11 at boot. Live
+  Soul Room and dungeon-handoff admission require the current epoch and the
+  Soul Room epoch captured for the sequence; a later rescan, mismatched intent,
+  media-layout drift, or route-plan drift clears readiness. The receipt is
+  opaque and no-draw: it does not parse trace payloads or infer bitmap,
+  palette, level, or object semantics. Verification:
+  `test_theron_v1_campaign_launch_intent`,
+  `test_asset_status_theron_campaign_media_scan`, and
+  `test_m11_theron_track02_capture_campaign_host` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron capture-campaign receipt currentness: M11 now retains the
+  externally attested Mednafen trace MD5, the distinct start/Soul Room/dungeon
+  bundle MD5s, and the opaque dungeon-record window checksum when campaign
+  readiness is bound. The new currentness gate revalidates the normal runtime
+  admission and exact stored identities; trace, per-route bundle, media, or
+  dungeon-window drift clears every capture-ready flag. No payload is decoded,
+  and all level/object, bitmap/palette, pixel, render, and fallback flags stay
+  closed. Verification: `test_m11_theron_track02_capture_campaign_host` and
+  `test_theron_v1_runtime_track02_capture_campaign_admission` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron direct-media capture-campaign currentness: the M11
+  capture receipt can now be rechecked against the current direct CUE/BIN/ISO
+  campaign layout, its refreshed raw-media receipt, opaque capture-target-plan
+  identity and per-route destination identities, launch-trace identity, and
+  M12 media-scan epoch. A changed plan or stale scan epoch clears all capture
+  readiness before any route can use it. This remains provenance only: no
+  media or trace payload is decoded and no draw or fallback path is opened.
+  Verification: `test_m11_theron_track02_capture_campaign_host`,
+  `test_theron_v1_runtime_track02_capture_campaign_admission`, and
+  `test_asset_status_theron_campaign_media_scan` PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron later sector-record direct-media currentness: M11 now
+  retains the opaque later record's user-data hash and observed raw-sector
+  checksum, then rechecks it against the current direct CUE/BIN/ISO layout,
+  capture plan, media-scan epoch, and active loader-replay tail. The replay's
+  final record and raw sector must still name the descriptor-resolved record;
+  any mismatch clears the no-draw record readiness. No record bytes, level or
+  object fields, bitmap/palette data, or pixels are interpreted. Verification:
+  `test_m11_theron_track02_capture_campaign_host` PASS and
+  `test_theron_v1_track02_sector_record_admission` reports its intended
+  no-corpus SKIP; full `cmake --build build-ninja --target firestaff -j1` PASS;
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron Track 02 later-sector corpus discovery: added a
+  hash-first direct discovery receipt for explicit regular CUE plus coalesced
+  loader-trace pairs. It hashes the trace, delegates media verification and
+  later-sector selection to the existing strict CUE/trace admission, requires
+  exactly one READY pair, and exposes only the resulting opaque record receipt.
+  Missing files are UNAVAILABLE/SKIP; virtual, malformed, duplicate, or
+  non-admitted candidates are never promoted. M11 consumes a READY discovery
+  only through its existing no-draw sector admission bridge. No record payload,
+  level/object, bitmap/palette, or pixel semantics were added. Verification:
+  `test_theron_v1_track02_sector_record_corpus_discovery` PASS (no corpus),
+  `test_m11_theron_track02_capture_campaign_host` PASS, and the sector corpus
+  probe no-input/missing-input paths SKIP safely; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron later-sector corpus M12-to-M11 admission: the optional
+  hash-first direct CUE/coalesced-trace discovery receipt is now copied into a
+  validated Theron launch intent, passed through the real M11 boot transaction,
+  and retained only as opaque per-route provenance. A bound receipt must keep
+  its direct media MD5, coalesced trace MD5, record hash/checksum, media-scan
+  epoch, capture-plan layout, and replay tail current; trace, media, epoch, or
+  replay drift clears no-draw route readiness. No corpus remains unbound and
+  skip-safe, and no record bytes, level/object fields, bitmap/palette data, or
+  pixels are decoded. Verification:
+  `test_theron_v1_campaign_launch_intent`,
+  `test_m11_theron_track02_capture_campaign_host`, and
+  `test_theron_v1_track02_sector_record_corpus_discovery` PASS (the last
+  correctly reports no local corpus); full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron first dungeon opaque world/level-object admission: M11's
+  epoch-2 dungeon handoff now consumes a READY later-sector corpus only through
+  its original-observed descriptor fields: Stage-3 record, descriptor ordinal
+  and selector, loader caller/return PCs, resolved record and bounded hashes.
+  The receipt additionally requires the current direct media layout, coalesced
+  trace/trace bundle, loader-replay final record/sector, campaign layout epoch,
+  and media-scan epoch. No corpus is a strict unbound/SKIP path; any mismatch
+  clears the opaque admission and route readiness. It does not materialize a
+  world, decode level/object fields, or authorize bitmap/palette/pixel draw.
+  Verification: `test_m11_theron_track02_capture_campaign_host` PASS,
+  `test_theron_v1_campaign_launch_intent` PASS,
+  `test_theron_v1_track02_sector_record_corpus_discovery` PASS (no corpus),
+  full `cmake --build build-ninja --target firestaff -j1` PASS, and
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron level/object descriptor capture intake: a new strict
+  receipt accepts only the existing hash-first direct CUE/BIN plus coalesced
+  loader-trace corpus after its raw-media, resolved-record, replay-tail,
+  launch-trace, media-layout, layout-epoch, and scan-epoch facts agree. It
+  publishes only the original-observed opaque descriptor receipt, and M12/M11
+  adapters reuse the established sector-corpus launch and route boundary
+  rather than introducing payload access. Missing local corpus is
+  UNAVAILABLE/SKIP; malformed or drifted evidence clears admission. No
+  level/object decoding, bitmap/palette/pixel path, or fallback draw was
+  added. Verification:
+  `test_theron_v1_track02_level_object_descriptor_capture_intake` PASS (no
+  local corpus), `test_theron_v1_campaign_launch_intent` PASS,
+  `test_m11_theron_track02_capture_campaign_host` PASS, full
+  `cmake --build build-ninja --target firestaff -j1` PASS, and
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron descriptor bitmap/palette capture intake: added a strict
+  dungeon-handoff capture-artifact join above the ready descriptor chain. It
+  requires matching direct CUE/BIN layout, coalesced loader trace, replay
+  tail, launch-trace identity, descriptor-selected destination record, target
+  plan identity, and layout/scan epochs. M11 retains only opaque palette and
+  bitmap output identities behind a presentation no-draw witness; identity
+  drift clears that witness. No palette entries, bitmap bytes, image format,
+  level/object field, renderer, synthetic menu graphic, or fallback is
+  exposed. Verification:
+  `test_theron_v1_track02_descriptor_bitmap_palette_capture_intake` PASS (no
+  local capture), `test_m11_theron_track02_capture_campaign_host` PASS
+  (valid and artifact-drift lifecycle), full
+  `cmake --build build-ninja --target firestaff -j1` PASS, and
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron operator dungeon-handoff capture plan: added
+  `scripts/plan_theron_track02_dungeon_handoff_capture.sh`, an operator-local
+  plan for the original Mednafen run. It checks explicit executable/CUE/System
+  Card/output-root inputs, authenticates the direct raw Track 02 MD5, requires
+  the current layout epoch plus equal nonzero replay record/sector and plan
+  FNV, and refuses overwrite. Default mode writes only an opaque request with
+  paths for the real trace, descriptor manifest, and capture artifact; opt-in
+  mode delegates to the existing bounded live capture script. It never copies
+  media, invents trace/descriptor/palette/bitmap rows, decodes payloads, or
+  enables draw. Verification:
+  `theron_v1_track02_dungeon_handoff_capture_plan_script` CTest PASS, full
+  `cmake --build build-ninja --target firestaff -j1` PASS, and
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron dungeon-handoff capture-plan resume admission: added a
+  strict parser/receipt for the local V1 capture-plan grammar and wired it to
+  M12 launch intent plus M11 startup and presentation state. A validated plan
+  is explicitly `CAPTURE_REQUIRED`; it becomes `RESUME_READY` only after the
+  existing observed descriptor bitmap/palette artifact receipt agrees with the
+  direct CUE/BIN identity, System Card requirement, replay final coordinate,
+  plan FNV, layout epoch, and scan epoch. M11 keeps the route no-draw and
+  clears it on drift. Verification: capture-plan script and admission CTests
+  PASS, `test_m11_theron_track02_capture_campaign_host` PASS, full
+  `cmake --build build-ninja --target firestaff -j1` PASS, and
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron local dungeon-handoff artifact verifier: added
+  `scripts/verify_theron_track02_dungeon_handoff_artifact.sh`. It accepts only
+  direct regular plan/artifact/trace files, verifies the plan-selected artifact
+  path and Track 02 MD5, hashes the trace against the artifact envelope, and
+  requires complete start/Soul Room/dungeon descriptor, palette, bitmap, and
+  destination identity rows with route 2 selected. It is a preflight only:
+  no payload bytes are read, no decoder is invoked, and it cannot turn a file
+  into M12/M11 `RESUME_READY` without the existing importer and no-draw route
+  receipts. Verification: artifact-verifier, capture-plan, and admission
+  CTests PASS; full `cmake --build build-ninja --target firestaff -j1` PASS;
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron artifact importer envelope ingress: the importer now
+  rejects an artifact before candidate publication unless each ordered route
+  row has an exact, nonzero loader checksum, palette identity, bitmap identity,
+  destination record, and destination identity. Successful imports set the new
+  `opaque_envelope_verified` provenance bit; campaign verification and the
+  descriptor bitmap/palette M12/M11 ingress require it. Added importer
+  coverage for a zero dungeon bitmap identity, while campaign and host
+  lifecycle fixtures cover propagation. No payload parsing, image decoding,
+  draw, or fallback was introduced. Verification: importer, campaign, host,
+  corpus-probe, and local artifact-verifier CTests PASS; full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron Mednafen trace envelope stamp: the existing strict trace
+  converter can now write an importer-compatible, route-2 handoff envelope
+  only from a converted observed trace and a complete opaque capture plan. It
+  stamps the trace MD5 plus all three route identities and refuses zero or
+  existing outputs. It writes no payload or graphics data and remains subject
+  to the existing importer and M12/M11 no-draw receipts. Full
+  `cmake --build build-ninja --target firestaff -j1` PASS; `git diff --check`
+  PASS.
+
+- 2026-07-17 Theron later-route candidate intake: added a strict closed-row
+  intake for future observed dungeon loader candidates. It accepts only the
+  raw loader PC, equal nonzero record/raw-sector coordinate, and destination
+  identity after direct-media replay/layout agreement, then publishes only
+  opaque `CAPTURE_REQUIRED` evidence. It deliberately has no route ID,
+  level/object semantics, payload access, decoder, or draw state. Verification:
+  `test_theron_v1_track02_later_route_candidate_intake` PASS (no corpus), full
+  `cmake --build build-ninja --target firestaff -j1` PASS, and
+  `git diff --check` PASS.
+
+- 2026-07-17 Theron later-route candidate manifest/M12 binding: added a
+  non-overwriting metadata-only V1 operator manifest exporter and M12
+  capture-required binding. The manifest has no route ID or payload field and
+  exports only trace/media hashes, epoch, loader PC, record/raw-sector, and
+  destination identity from an opaque candidate. Export/rewrite/mismatched
+  sector fixtures reject; M12 cannot promote it to route-ready. Verification:
+  candidate intake and manifest tests PASS, `ninja -C build-ninja firestaff`
+  PASS, and `git diff --check` PASS.
+
+- 2026-07-17 Theron later-route candidate manifest import: added a strict
+  closed-grammar rehash admission for the operator metadata manifest. It
+  requires matching direct media/trace hashes, layout epoch, and active replay
+  record/raw-sector, then republishes only opaque `CAPTURE_REQUIRED` evidence.
+  Missing local corpus is unavailable; no route ID, payload, decoder, draw, or
+  route-ready state is present. Verification:
+  `test_theron_v1_track02_later_route_candidate_manifest_import` PASS (no
+  corpus), `ninja -C build-ninja firestaff` PASS, and `git diff --check` PASS.
+
+- 2026-07-17 Theron later-route candidate campaign index: added strict
+  deduplication for imported opaque candidates, rejecting same-record metadata
+  collisions and non-CAPTURE_REQUIRED entries. M12 binds the resulting index
+  only as capture-required metadata. Verification: dedup/collision/reject test
+  PASS, `ninja -C build-ninja firestaff` PASS, `git diff --check` PASS.
+
+- 2026-07-17 Theron later-route candidate stale pruning: added strict index
+  currentness that clears all candidates on layout-epoch drift. The focused
+  index test covers current and stale epochs alongside dedup/collision/reject;
+  no route ID, payload, or route-ready state was added. Verification:
+  `test_theron_v1_track02_later_route_candidate_campaign_index` PASS,
+  `ninja -C build-ninja firestaff` PASS, and `git diff --check` PASS.
+
+- 2026-07-17 Theron later-route operator attestation import: strict file
+  attestation accepts only a current opaque candidate record/destination/epoch
+  and returns CAPTURE_REQUIRED. Accept/stale rejection test PASS; full Ninja
+  PASS; `git diff --check` PASS.
+
+- 2026-07-17 Theron SRM opaque admission: added a separate strict `.srm`
+  gate that requires a direct regular file, exact size and MD5, gzip/DEFLATE
+  container form, admission-format version, and matching known Track 02
+  identity. It retains only opaque provenance and keeps save-body decoding and
+  fallback flags false. Fixture coverage rejects size, version, and variant
+  drift; the missing-corpus branch safely reports unavailable. Verification:
+  focused CMake build plus SRM classifier/corpus tests passed 3/3 in 0.60
+  seconds; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 capture-root discovery: added a bounded,
+  write-free `--discover <capture-root>` probe mode. It inspects at most 128
+  direct regular files from one non-symlink operator root and reports only a
+  strict, stable-MD5 Mednafen export; other files remain non-evidence. Both
+  local Theron roots safely found none. Verification: reconfigured focused
+  build and Track 02 CTest passed 10/10 in 0.44 seconds; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 direct-file evidence paths: MD5-bound Mednafen
+  export inspection and HuC6280 event-log intake now reject symlink paths, in
+  addition to their regular-file checks. The fixtures verify explicit
+  rejection without altering opaque record semantics. Verification: focused
+  CMake build and Track 02 CTest passed 6/6 in 0.49 seconds; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 Mednafen export inspection: added a write-free
+  `--inspect` path that accepts one explicit regular-file export only after its
+  closed HuC6280 grammar and stable before/after MD5 agree. It reports the
+  MD5 for later explicit conversion, writes no event log, and cannot open
+  runtime, decoding, or drawing. Verification: reconfigured focused build and
+  Track 02 CTest passed 9/9 in 0.28 seconds, including the explicit
+  missing-export CTest; missing export safely skipped; `git
+  diff --check` passed.
+
+- 2026-07-17 CSB title-to-terminal lifecycle binding: the source-owned
+  STRIKES lifecycle receipt now reaches a terminal receipt only when its
+  capture identity, PC34 title palette, session generation, and earlier source
+  tick still agree. A stale terminal tick rejects. Verification: focused
+  startup/boot/coupling CTests passed 3/3 in 0.53 seconds.
+
+- 2026-07-17 CSB title lifecycle receipt: F0437 startup coupling now tracks
+  source-owned PRESENTS, CHAOS zoom/hold, and STRIKES captures through strict
+  phase order, real PC34 palette identity, session generation, and monotonic
+  ticks. Stale, skipped, or palette-mismatched transitions invalidate the
+  receipt without opening a draw fallback. Verification: focused CTest passed
+  1/1 in 0.24 seconds; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 HuC6280 event-log file boundary: the strict
+  event-log parser now accepts regular files only, rejecting devices, FIFOs,
+  and directories before event parsing. It retains opaque loader/consumer
+  windows only and grants no semantic or draw permission. Verification:
+  focused CMake build and Track 02 CTest passed 4/4 in 0.59 seconds; the
+  authenticated-CUE/no-export probe printed `SKIP` and left no event log;
+  `git diff --check` passed.
+
+- 2026-07-17 CSB DSA runtime admission span guard: the immutable receipt now
+  proves the declared DSA payload fits completely before its recorded next
+  payload offset, in addition to checksum and source identity checks. A
+  length-crossing structural fixture rejects without interpreting DSA
+  semantics. Verification: focused DSA CTests passed 2/2 in 0.38 seconds;
+  `git diff --check` passed.
+
+- 2026-07-17 CSB local viewport declaration corpus admission: added a
+  skip-safe probe that accepts an operator-named manifest only after a
+  hash-admitted `CSBgraphics.dat` and exact 768-byte palette receipt agree.
+  The boot public API is manifest-only; raw declaration and corpus routes are
+  internal and no probe draw path is opened. Verification: CMake configure,
+  focused build, and manifest/boot/CSBgraphics CTests passed 3/3 in 0.51
+  seconds; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 capture-evidence unavailable path: the combined
+  raw-CUE/Mednafen probe now treats an absent external export as a safe skip,
+  while retaining rejection for malformed present evidence. With the local
+  authenticated US CUE and absent export it writes no log. Verification:
+  focused CMake build and CTest passed 3/3 in 0.26 seconds; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 capture-evidence probe: added a local no-launch
+  `--bind` entry point that requires both raw CUE/MD5 provenance and an
+  MD5-attested external Mednafen export before strict event-log creation.
+  It has no runtime-admission, decode, or media-copy path. Verification:
+  focused CMake build and Track 02 CTest passed 8/8 in 0.62 seconds; `git diff
+  --check` passed.
+
+- 2026-07-17 CSB viewport manifest receipt consistency: the operator manifest
+  now retains its validated palette-source receipt, matching parser and boot
+  admission ownership. Duplicate frame identities reject, and an invalid boot
+  manifest clears any stale selection before no-draw. Verification: focused
+  CSBgraphics runtime-plan and boot title/import gate CTests passed 2/2;
+  `git diff --check` passed. The full build reaches CSB successfully but is
+  currently blocked by the unrelated DM1 undefined
+  `TIMELINE_EVENT_ENABLE_CHAMPION_ACTION` test symbol.
+
+- 2026-07-17 Theron Track 02 converted-log handoff stability: the external
+  runtime handoff now rechecks the converter-attested event-log MD5 before and
+  after consuming the strict HuC6280 log, rejecting substitution. Verification:
+  focused CMake build and Track 02 CTest passed 7/7 in 0.60 seconds; `git diff
+  --check` passed.
+
+- 2026-07-17 Theron Track 02 Mednafen regular-file intake: the external
+  converter now rejects devices, FIFOs, and directories before any MD5 or row
+  parsing; the fixture covers `/dev/null` rejection. Verification: focused
+  CMake build and Track 02 CTest passed 7/7 in 0.51 seconds; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 Mednafen source-stability guard: the converter
+  now requires the external export MD5 to remain unchanged before and after
+  its closed row read, rejecting a modified trace before event-log creation.
+  Verification: focused CMake build and Track 02 CTest passed 7/7 in 0.50
+  seconds; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 converted-log MD5 provenance: the converter now
+  hashes the closed strict event log before reporting success, and the external
+  handoff receipt retains that digest only after full runtime admission. Hash
+  failure removes the new output and rejects. Verification: focused CMake
+  build and Track 02 CTest passed 7/7 in 0.53 seconds; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 capture-ingress verification update: the full
+  CMake target build and focused Track 02 CTest are green again, passing 7/7
+  in 0.78 seconds. The final raw-media test also accepts the authenticated
+  local `TQUS-Raw.cue` with its known US Track 02 MD5. `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 Mednafen exclusive output creation: after all
+  source checks, the converter now creates its event log exclusively so a
+  concurrent file cannot be replaced between preflight and write. Verification:
+  converter and fixture compiled with `-Wall -Wextra -Werror`, the isolated
+  focused test passed, and `git diff --check` passed. The regular CMake target
+  is presently blocked by an unrelated Nexus syntax error.
+
+- 2026-07-17 CSB boot-owned declared live material route: removed the generic
+  `VIEWPORT_DERIVED` plan loop from boot viewport rendering. A separate owner
+  route now requires verified ingress, a real dungeon-grid door state, exact
+  operator declaration selection, hash-admitted cache materialization, and a
+  live-frame receipt before it can raster pixels. Missing declarations reject
+  with no fallback. Verification: boot gate, viewport gate, CSBgraphics plan,
+  and related suite passed 6/6; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 Mednafen output integrity: conversion now
+  refuses to replace a pre-existing event log and treats write/close failure as
+  rejected, removing only its own partial new output. Fixture coverage verifies
+  an existing event log's MD5 remains unchanged. Verification: focused Track
+  02 CTest passed 4/4; `git diff --check` passed.
+
+- 2026-07-17 Theron Track 02 Mednafen source-write guard: the closed export
+  converter now rejects output paths that are identical to, or resolve to,
+  the authenticated source trace. Valid/rejected fixtures prove the source MD5
+  remains unchanged for direct and alias paths. Verification: focused Track 02
+  CTest passed 4/4; `git diff --check` passed.
+
+- 2026-07-17 CSB boot-to-viewport ingress projection: added the boot-owner
+  bridge from an accepted first-live-dungeon receipt to the standalone
+  viewport ingress receipt. It copies only verified session/tick/dungeon
+  ownership/no-synthetic facts, rejects incomplete boot state, and avoids a
+  boot/viewport include cycle. Verification: focused boot, declaration, and
+  multi-frame viewport tests plus the relevant CSB suite passed 5/5; `git diff
+  --check` passed.
+
+- 2026-07-17 Theron Track 02 converted-trace receipt provenance: successful
+  external runtime handoff now retains only the converter-verified Mednafen
+  export path and MD5. Rejected or unavailable paths expose neither field and
+  still leave decoder/draw permission closed. Verification: focused CMake
+  build and Track 02 CTest passed 4/4; `git diff --check` passed.
+
+- 2026-07-17 CSB viewport verified dungeon ingress: added a fail-closed
+  ingress projection that requires verified session, tick, dungeon ownership,
+  and no-synthetic-surface facts before reading the selected dungeon cell's
+  door low bits. It preserves the explicit operator wall/floor/door entry
+  triple unchanged, rejects invalid door-bit states, and never lets grid data
+  select entries. Verification: related CSB suite passed 5/5 and `git diff
+  --check` passed. A full workspace build reaches unrelated DM1 test failures
+  for an undefined `TIMELINE_EVENT_ENABLE_CHAMPION_ACTION`.
+
+- 2026-07-17 Theron Track 02 raw-CUE provenance: fixed strict intake for the
+  authenticated US raw CUE's explicit `PREGAP 00:03:00`. It preserves the
+  source-locked Track 02 LBA 225 while computing the MODE1 user-data offset
+  against the separate Track 02 BIN member's own `INDEX 01`, rather than
+  treating a disc-relative LBA as a file offset. The known US MD5 and CUE now
+  pass without inspecting any payload semantics. Verification: focused CMake
+  build plus Track 02 CTest passed 7/7 with `TQUS-Raw.cue`; `git diff --check`
+  passed.
+
+- 2026-07-17 CSB viewport live dungeon-state selection: added an exact
+  operator-declaration selector for the current frame, door state, entry
+  triple, and source identity. It invalidates a prior selection on every state
+  identity change and rejects an undeclared entry rather than selecting a
+  default material. Verification: focused state-selection plus multi-frame
+  raster tests and the relevant CSB suite passed 5/5; `git diff --check`
+  passed.
+
+- 2026-07-17 CSBgraphics viewport live-frame declaration adapter: the
+  hash-admitted CSBgraphics cache now decodes wall, floor and door spans only
+  when the caller explicitly supplies every entry index, dimensions, FNV,
+  clip, path/MD5 and admitted palette receipt. The adapter owns its decoded
+  buffers and rejects source mismatch, stale bytes, or geometry drift; it has
+  no default surface-to-entry mapping. Verification: focused declaration and
+  multi-frame tests plus the relevant CSB suite passed 5/5; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 Mednafen trace conversion: added an
+  external-only bounded adapter from a source-path/MD5-authenticated
+  `mednafen-pce-instrumented` export into the strict HuC6280 capture-event
+  log. It preserves only the observed loader CD-read and two opaque consumer
+  rows. Unsupported debugger rows and MD5 drift reject; the receipt records
+  no emulator launch, media copy, or synthesized event. Verification:
+  converter and fixture test compiled with `-Wall -Wextra -Werror`, then the
+  isolated targeted fixture passed against the existing M12 MD5 implementation
+  and Theron event-log parser; `git diff --check` passed. The CMake CTest
+  target is registered, but its normal build is currently blocked by an
+  unrelated Nexus header/source mismatch.
+
+- 2026-07-17 Theron Track 02 converted-trace handoff: the external capture
+  launcher now accepts the MD5-attested Mednafen conversion only after its
+  ordinary explicit raw-media preflight, then reuses the HuC6280-log manifest
+  and opaque runtime-admission chain. Absent media prevents any output-log
+  write; failed conversion or admission rejects with decoder and draw paths
+  still closed. Verification: the focused no-local-media launcher regression
+  passed, the converter valid/reject fixture passed, and `git diff --check`
+  passed. Normal CMake CTest remains blocked by the unrelated Nexus mismatch.
+
+- 2026-07-17 Theron Track 02 Mednafen conversion probe: added the local
+  `--convert <export> <md5> <event-log>` entry point for the closed converter.
+  It skips with no inputs and has no emulator-launch or media-copy operation.
+  Verification: CMake reconfiguration passed, the focused no-input probe
+  printed `SKIP`, and `git diff --check` passed. Normal CMake CTest remains
+  blocked by the unrelated Nexus mismatch.
+
+- 2026-07-17 CSB viewport live wall/floor/door progression: added a bounded
+  multi-frame raster admission for caller-supplied decoded GRAPHICS.DAT wall,
+  floor and door spans. It requires an accepted first-frame M11 receipt for
+  frame zero, then preserves path/MD5/palette identity and enforces contiguous
+  frames with one-state C0..C5 door transitions. Missing spans, altered FNV
+  bytes, source mismatch, skipped frames, and door-state jumps reject without
+  generating a surface. Verification: focused viewport materialization and
+  related CSB graphics/startup regression passed 5/5; `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 log-driven runtime handoff: the external capture
+  launcher can now validate a HuC6280 event log by generating the strict
+  manifest in memory and feeding it through existing raw-media intake,
+  provenance, manifest binding, and runtime admission. This route never reads
+  or writes the hand-edited manifest path and remains entirely opaque. Missing
+  local media/log input rejects or skips through the existing no-launch path.
+  Verification: `build-ninja` focused CTest passed 5/5 and `git diff --check`
+  passed.
+
+- 2026-07-17 Theron Track 02 HuC6280 capture-event log: added a strict,
+  ordered external log parser for the source-locked `$4090` CD-read event and
+  two opaque consumer windows. Only a log whose record, destination, byte
+  count, checksums, and consumer PCs match existing provenance/preparation can
+  emit the strict capture-manifest receipt. Unknown event labels, an unknown
+  loader PC, and window drift reject. No payload bytes or level/object/visual
+  semantics are decoded. Verification: `build-ninja` focused CTest passed
+  5/5, including no-input, unknown-event, and unknown-PC fixtures; `git diff
+  --check` passed.
+
+- 2026-07-16 CSB viewport material-byte handoff: first-frame D0/D1/D2
+  F0111/F0115 runtime commands now receive decoded indexed GRAPHICS.DAT pixel
+  spans and their shared palette span only after the existing material proof,
+  route hashes, exact span sizes, decoded FNV values, and source path/MD5 all
+  agree. The bounded raster consumer additionally requires the accepted M11
+  receipt and command-attached spans, and rejects absent, truncated, stale, or
+  source-mismatched bytes without a synthetic pixel or colour fallback.
+  The existing viewport runtime binding consumes that handoff into the live
+  raster only with the identical source identity; a changed MD5, absent bytes,
+  or failed receipt remains no-draw. Verification: focused viewport
+  materialization CTest passed, including structural raster-consumer,
+  runtime-binding, stale-source, and local-corpus-safe regressions; `git diff
+  --check` passed.
+
+- 2026-07-16 Theron Track 02 external capture probe: added an operator-facing
+  local executable with an explicit `--prepare <emulator> <cue-or-bin>
+  <expected-md5> <manifest>` contract. It safely skips without inputs and
+  delegates only to the strict no-launch capture-request helper; it neither
+  starts an emulator nor copies media, creates trace rows, or decodes bytes.
+  Verification: `build-ninja` focused CTest passed 5/5, including the
+  no-input probe case; `git diff --check` passed.
+
+- 2026-07-16 Theron Track 02 external capture launcher/probe: added a
+  local-only request helper that accepts explicit emulator, media, expected
+  MD5, and manifest paths. It verifies the source through strict intake before
+  writing a comment-only manifest skeleton, and can later pass an
+  operator-supplied completed manifest through the existing binder and runtime
+  admission. It has no process-launch, media-copy, synthetic-trace, or decode
+  path. Verification: `build-ninja` focused CTest passed 5/5, including
+  no-launch, missing-emulator, and rejected-admission coverage; `git diff
+  --check` passed.
+
+- 2026-07-16 Theron Track 02 capture-trace runtime admission: added the
+  runtime join for explicit manifest-bound opaque evidence, existing source
+  provenance, and level/object trace preparation. The route becomes ready
+  only after the Track 02 identity, loader record, consumer PCs, and exact
+  windows all agree; fixture-only evidence, altered PCs/windows, absent
+  manifest consumption, or pre-opened visual flags reject. Readiness retains
+  coordinates only and leaves level/object field decoding, bitmap/palette,
+  pixel decode, dungeon draw, and fallback visuals disabled. Verification:
+  `build-ninja` focused CTest passed 5/5 and `git diff --check` passed.
+
+- 2026-07-16 Theron Track 02 external capture-trace manifest binding: added a
+  bounded closed-schema parser and binder for operator-supplied trace text.
+  It can consume a manifest only after its MD5, raw CUE coordinates, runtime
+  provenance, loader receipt, consumer PCs, and exact level/object windows
+  agree with pre-existing authenticated receipts. Unknown or duplicate keys,
+  unknown variants, missing fields, and changed windows reject. The output is
+  opaque bounded evidence with all field, bitmap/palette, pixel, draw, and
+  fallback routes closed. Verification: direct strict C11 compile of the new
+  module/test and focused manifest probe passed, including malformed-manifest
+  rejection and safe local-media/manifest skip; `git diff --check` passed.
+  The ordinary CMake CTest target remains externally blocked by unrelated DM2
+  compile errors in `src/dm2/dm2_v1_runtime.c` (two missing-argument calls).
+
+- 2026-07-16 Theron Track 02 strict raw-media intake: added an explicit
+  CUE/ISO/BIN discoverer that MD5-authenticates the payload against the known
+  Track 02 variants, rejects unknown tracks, non-binary members, duplicate or
+  absent `INDEX 01`, unsupported modes, incompatible sector layouts, and raw
+  CUE index drift. It exposes only MODE1 sector and logical user-data-window
+  provenance. A narrow adapter supplies existing loader-trace preparation
+  only from an authenticated MODE1/2352 CUE at the source-locked JP/US index;
+  ISO and bare BIN remain non-trace routes. Missing local media returns a safe
+  unavailable receipt. No level/object, VCE, palette, or pixel decoding was
+  introduced. Verification: targeted CTest passed 5/5, with the local-media
+  branch reporting `SKIP (no local Track 02 media)`; `git diff --check` passed.
+
+- 2026-07-16 DM2 SKULLWIN bounded wall-ornament raw ownership:
+  `DRAW_DEFAULT_DOOR_BUTTON` now admits only the source-proven DB2 Text/DB3
+  Actuator `WALL_GFX/index/dtImage/1` path when its exact decoded pixels,
+  local palette, root ObjectID/cell, and raw `GRAPHICS.DAT` interval agree.
+  M11 retains the raw receipt and blocks absent or altered provenance; no
+  generic sprite, DM1 projection, or unproven ornament transform is used.
+  Source: skproject `SKULLWIN/c_gui_vp.cpp:1904`. Verification: focused
+  wall-button gate passed 11/11 and real `GRAPHICS.DAT` ornament receipt test
+  passed 14/14; `git diff --check` passed.
+
+- 2026-07-16 DM2 SKULLWIN wall GFX256 material ownership: `DM2_DRAW_WALL`
+  now binds every admitted GRAPHICSSET WALL_GFX image to its exact GFX256 raw
+  interval, local palette, source cell pass, RAW4 placement row, movement
+  offset, and mirror state before M11 presentation. Mismatched raw receipts
+  or unproved clipping block the complete wall pass, with no generic wall,
+  object, or DM1 fallback. Source: skproject `SKULLWIN/c_gui_vp.cpp:575`.
+  Verification: strict direct real-data wall-plan/M11 test passed, including
+  altered-receipt rejection; `git diff --check` passed.
+
+- 2026-07-16 DM2 SKULLWIN dynamic creature GFX256 material ownership:
+  `DM2_GET_CREATURE_ANIMATION_FRAME` now carries the exact FB/FC/FD-selected
+  `CREATURES` raw GDAT interval through a bounded GFX256 receipt alongside
+  the existing decoded image and local palette evidence. Its receipt hash is
+  part of the dynamic material identity consumed by the existing M11 creature
+  placement plan, which remains separate from DB4/F9 map-chip art. Source:
+  skproject `SKULLWIN/c_creature.cpp:3217`. Verification: strict direct
+  real-data dynamic-creature material test passed; `git diff --check` passed.
+
+- 2026-07-16 DM2 SKULLWIN outdoor weather M11 material ownership:
+  `DM2_DRAW_TEMP_PICST` now reaches M11 only through a final receipt that
+  joins exact ENVIRONMENT command text, GFX256 raw image material,
+  QUERY_TEMP_PICST decoded-pixel/local-palette identities, the renderer
+  transaction, and a live outdoor `DM2_SET_TIMER_WEATHER` owner. The runtime
+  binds no weather renderer when any link is absent. The canonical corpus
+  proves command text but not a complete weather image chain, so the tested
+  result is strict no-draw with no procedural or cached replacement. Source:
+  skproject `SKULLWIN/c_image.cpp:418` and `c_weather.cpp:22`. Verification:
+  strict direct real-data scene/weather/light test passed; `git diff --check`
+  passed.
+
+- 2026-07-16 DM2 SKULLWIN HUD GFX256 runtime ownership:
+  `DM2_LOAD_GDAT_INTERFACE_00_02` now carries each M11 HUD command's exact
+  `INTERFACE_GENERAL` or `CHAMPIONS` raw GDAT interval through a bounded
+  GFX256 receipt. The source-gated viewport validates that receipt together
+  with the existing decoded pixels and local palette before presentation; it
+  cannot use an absent receipt, fallback frame, or cache image. Source:
+  skproject `SKULLWIN/c_gdatfile.cpp:1922` and `c_gui_vp.cpp`. Verification:
+  strict direct real-data HUD command test passed; `git diff --check` passed.
+
+- 2026-07-16 DM2 SKULLWIN viewport scene GFX256 ownership:
+  `DM2_DISPLAY_VIEWPORT` floor and ceiling commands now retain the exact
+  active `GRAPHICSSET` raw intervals through bounded GFX256 receipts before
+  M11 presentation. The pre-existing source rect, decoded-pixel, local
+  palette, and scene/light contracts remain mandatory; this adds no cache
+  allocation, fallback plane buffer, or synthetic art. Source: skproject
+  `SKULLWIN/c_gui_vp.cpp:7325` and `c_dballoc.cpp:1112`. Verification:
+  strict direct real-data M11 material test passed; `git diff --check`
+  passed.
+
+- 2026-07-16 DM2 SKULLWIN GFX256 door-runtime ownership: `DRAW_DOOR_FRAMES`
+  material commands now retain the exact loaded GDAT raw interval selected by
+  the source door plan and require a bounded GFX256 raw-material receipt
+  before M11 admission. This covers panel, ornament, frame, side-frame, and
+  button routes without treating a non-`dtImage` door row as a GFX16 default.
+  Existing decoded-pixel and local-palette evidence remains required, while
+  CPX cache nodes, new pixel buffers, and fallback art remain absent. Source:
+  skproject `SKULLWIN/c_gui_vp.cpp:2333` and `c_dballoc.cpp:1112`.
+  Verification: direct real-data door-plan test passed; strict direct GDAT
+  querydb test passed 119/119; `git diff --check` passed.
+
+- 2026-07-16 DM2 SKULLWIN GFX16/GFX256 GDAT material ownership: added
+  source-named GFX16 tuple and GFX256 raw-index routes to the DM2 asset
+  loader. Each route exposes only the immutable bytes already owned by loaded
+  `GRAPHICS.DAT` plus the existing image-decode receipt. GFX16 uses the
+  source `MISCELLANEOUS/FE/FE` image only when its requested image tuple is
+  absent. Neither route allocates a CPX/cache node, decoded pixel buffer, or
+  fallback graphic. Source: skproject `SKULLWIN/c_dballoc.cpp:1112-1170`.
+  Verification: strict direct DM2 build/test passed 119/119, including local
+  real `GRAPHICS.DAT` pointer/length identity checks; the CMake target remains
+  blocked before DM2 link by unrelated CSB HUD-constant compile errors.
+
+- 2026-07-16 DM2 SKULLWIN CPX1 reusable-block family: implemented the
+  source-bounded `DM2_ALLOC_CPX_LINK_NODE`, `DM2_ALLOC_CPX_UNLINK_NODE`, and
+  `DM2_ALLOC_CPX1` metadata path in `dm2_v1_skproject_cpx_heap`. It keeps the
+  source descending-size ordering, chooses an exact reusable block before the
+  largest fallback, and retains a split only when the remainder is at least 30
+  bytes. The API accepts allocator metadata only and never creates decoded
+  GDAT pixels, CPX backing memory, or fallback art. Source: skproject
+  `SKULLWIN/c_dballoc.cpp:26-114`. Verification: focused CPX heap test passed.
+
 - 2026-07-16 Theron Track 02 level-1 draw blocker receipt: added a real-CUE
   M11 blocker receipt for the concrete fail-closed gap after level-1 stage
   media consumption. The receipt consumes the proven M11 level-consumption
@@ -436,6 +1703,256 @@
   `test_csb_v1_startup_entrance_pointer_pc34_compat`; direct
   `firestaff --game csb --boot-probe --boot-probe-frames 90 --duration 0`
   passed with `titleFrameMax=101`.
+
+- 2026-07-16 CSB/ReDMCSB live door-opening capture consumer: added a direct
+  session-owned capture of all 31 `ENTRANCE.C F0438/F0807` C004/C002/C003
+  opening pages. Every source step is rebuilt through the source render plan,
+  rasterized from the verified session, and bound into a distinct route hash;
+  stale/replayed pages, fallback surfaces, and legacy wrappers fail closed.
+  Verification: local verified PC34 media exercised all 31 pages in
+  `csb_v1_startup_real_sequence_pc34_compat`; focused CTest passed that test,
+  `csb_v1_boot_title_import_ui_gate_pc34_compat`, and
+  `csb_v1_startup_runtime_coupling_adapter_pc34_compat` (3/3).
+
+- 2026-07-16 CSBgraphics live HUD frame provenance: C017/C040 selected from
+  hash-admitted `CSBgraphics.dat` now carry an MD5/path/entry-pair receipt
+  from the verified session into the live HUD binding hash. The existing frame
+  route, host-raster, and presentation/capture hashes consequently distinguish
+  the same panel pixels from a different admitted cache. Original
+  `GRAPHICS.DAT` HUD frames retain their prior zero source receipt. No wrapper
+  or fallback panel can satisfy the route. Verification: CMake built
+  `test_csb_v1_boot_title_import_ui_gate_pc34_compat` and
+  `test_csb_v1_startup_runtime_coupling_adapter_pc34_compat`; focused CTest
+  passed 2/2 and `git diff --check` passed.
+
+- 2026-07-16 CSBgraphics palette-source admission: the startup package now
+  owns a value receipt for a declared `CSBgraphics.dat` palette source only
+  after source kind, resolved path, MD5, indexed payload span, exact 768-byte
+  LZW output and FNV-1a identity agree. Without that receipt its indexed
+  startup surfaces are explicitly no-draw; no palette is inferred from bitmap
+  data and no renderer was opened. The structural regression covers missing
+  source evidence, path/hash mismatches, truncated material and one admitted
+  fixture. Verification: built `test_csb_v1_csbgraphics_runtime_plan`, CTest
+  `csb_v1_csbgraphics_runtime_plan` PASS, and `git diff --check` passed.
+
+- 2026-07-16 CSBgraphics startup image/palette eligibility: title, entrance
+  door and HUD package entries now carry individual cache-derived image
+  receipts (source kind, path, MD5 and bounded index span). Surface decoding
+  is no-draw until that entry receipt and the admitted palette receipt have
+  the same source identity. The focused structural fixture proves incomplete
+  material stays closed, and title-image, door-span and HUD-palette mismatches
+  all reject decode; the complete door/HUD fixture remains bounded and
+  decodable. No palette pixels were guessed and no presentation path changed.
+  Verification: `csb_v1_csbgraphics_dat_classify_unit`,
+  `csb_v1_csbgraphics_runtime_binding`, and
+  `csb_v1_csbgraphics_runtime_plan` PASS (3/3); `git diff --check` passed.
+
+- 2026-07-16 CSBgraphics corpus palette-candidate scan: the hash-only local
+  `CSBgraphics.dat` cache can now report only exact declared 768-byte entries
+  that survive bounded LZW decode, with their source path, MD5, archive span
+  and FNV-1a identity. Candidate admission requires a second exact
+  path/MD5/entry/FNV declaration and decode before it emits a value
+  source-byte receipt. The real-data probe reports candidates when a
+  user-staged corpus is available and otherwise stays skip-safe; it does not
+  select a palette or open a runtime/UI route. Structural coverage proves the
+  single 768-byte fixture, bad-FNV rejection and receipt emission. Verification:
+  `csb_v1_csbgraphics_dat_classify_unit`,
+  `csb_v1_csbgraphics_runtime_binding`,
+  `csb_v1_csbgraphics_runtime_plan`,
+  `csb_v1_csbgraphics_dat_real_scan_manifest`, and
+  `csb_v1_csbgraphics_dat_real_scan` PASS (5/5); `git diff --check` passed.
+
+- 2026-07-16 CSBgraphics boot palette provenance: `CSB_V1_BootProfile` now
+  accepts a candidate only through the exact scanner admission and stores the
+  resulting path/MD5/span/FNV receipt. Startup readiness reports separate
+  title, door and HUD palette facts; CSBgraphics HUD bindings stay unverified
+  and M11 reports no-draw until that receipt matches the loaded cache. A
+  successful receipt is folded into the session HUD provenance hash. The new
+  local-corpus boot probe is skip-safe for absent material and exercises the
+  same admission when a hash-admitted 768-byte candidate is available. No
+  generic palette, guessed colors, fallback UI or renderer route was added.
+  Verification: `csb_v1_csbgraphics_palette_boot`,
+  `csb_v1_boot_title_import_ui_gate_pc34_compat`,
+  `csb_v1_csbgraphics_runtime_plan`, and
+  `csb_v1_csbgraphics_dat_real_scan` PASS (4/4); `git diff --check` passed.
+
+- 2026-07-16 CSBWin DSA/save runtime-body admission: tightened the strict DSA
+  corpus receipt so an authenticated Extended Features DSA tail and valid
+  GAMEBLOCK1 header no longer suffice. It now requires the complete
+  checksum-verified GAMEBLOCK1 body and carries full-save/body FNV identities
+  into the boot DSA handoff, which consumes all of those facts before it can
+  report runtime ownership. The data-free regression proves that a header-only
+  DSA fixture stays closed while retaining its authenticated tail evidence;
+  no synthetic DSA action or runtime state is promoted. Verification: built
+  `firestaff_m11`, CTest passed
+  `csb_v1_csbwin_save_loader_boundary_pc34_compat_unit` and
+  `csb_v1_dsa_save_runtime_admission_pc34_compat` (2/2), and
+  `git diff --check` passed.
+
+- 2026-07-16 CSBWin DSA immutable runtime admission: added a CSB-only receipt
+  that binds an already accepted DSA corpus's DSA/GAMEBLOCK offsets, lengths,
+  checksums, and FNV identities to the verified boot `Dungeon.dat` MD5. It
+  publishes no DSA program words or execution capability and rejects stale or
+  mixed save bytes before runtime consumption. Verification: built and ran
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` (1/1); its structural
+  fixture has no external corpus dependency, while absent user corpus keeps
+  the production admission route closed.
+
+- 2026-07-17 CSBWin DSA/save-to-runtime atomic handoff: extended the immutable
+  DSA source admission with a final receipt that accepts only matching
+  checksum-bound save/GAMEBLOCK identities, current verified `Dungeon.dat`
+  identity, complete source-owned startup-session generation, and an already
+  verified CSBWin DSA catalog/index/timer chain. It adds no DSA semantics or
+  fallback path. The structural regression covers a complete handoff plus
+  save-hash, session-generation, runtime-chain and Dungeon-MD5 mismatch
+  rejection. Verification: `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`,
+  `csb_v1_dsa_save_runtime_admission_pc34_compat`, and
+  `csb_v1_f0213_f0220_explosion_runtime_pc34_compat` PASS (3/3); `git diff
+  --check` passed. A subsequent full build cleared the Theron linkage but is
+  currently blocked by unrelated DM2 CoreMIDI and session-parser link errors.
+
+- 2026-07-17 CSBWin DSA/save M11 viewport delivery: added an explicit M11
+  binding for the completed immutable DSA/save runtime receipt. Only this
+  opt-in route checks the current verified `Dungeon.dat` MD5 and source-owned
+  session generation/tick before `F0128` can publish a viewport; stale or
+  mixed receipts clear the frame, while normal title, entrance and HUD routes
+  retain their established lifecycle. No DSA bytes, interpreter path or
+  fallback presentation was added. Verification: `build-ninja` target
+  `firestaff` passed; CTest passed
+  `csb_v1_m11_launcher_handoff_boundary`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_save_runtime_admission_pc34_compat` (3/3).
+
+- 2026-07-17 CSB DSA viewport runtime-epoch and material gate: the immutable
+  DSA/save handoff now carries the admitted runtime game-time epoch, and M11
+  compares it at the existing CSB tick boundary before publishing a DSA-owned
+  viewport. Its D1/D2/D3 projectile and explosion overlays require the same
+  current DSA route plus admitted CSBgraphics palette provenance; missing,
+  stale, mixed, or incomplete inputs produce no draw and no marker fallback.
+  The non-DSA title, entrance, and HUD lifecycle is unchanged. Verification:
+  `firestaff` built in `build-ninja`; CTest passed
+  `csb_v1_m11_launcher_handoff_boundary`,
+  `csb_v1_viewport_phase3_rendering`,
+  `csb_v1_dsa_save_runtime_admission_pc34_compat`, and
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` (4/4).
+
+- 2026-07-17 CSBWin DSA restored-timer execution admission: added a
+  source-bound bridge from the complete DSA/save handoff to the existing
+  TimerQueue action and Monster.cpp movement-filter runners. It requires the
+  current Dungeon identity, startup generation/tick, exact runtime game-time,
+  source queue slot/TIMER row, selected LocalState action, and the existing
+  authenticated core-program verifier before calling either runtime consumer.
+  Session/save/tick drift and unknown opcode bodies reject before execution;
+  level-one and level-two movement filters retain independent declared index
+  ownership. No DSA semantics or fallback path was added. Verification:
+  `firestaff` built in `build-ninja`; CTest passed
+  `csb_v1_dsa_admitted_restored_timer_bridge`,
+  `csb_v1_dsa_save_runtime_admission_pc34_compat`, and
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` (3/3).
+
+- 2026-07-17 CSB DSA M11 outcome transaction: M11 now commits a restored
+  timer outcome only after CSB revalidates its handoff/save identity, startup
+  session, runtime tick, bridge hash, TimerQueue execution identity, and the
+  runtime-owned last DSA execution receipt. The viewport transaction then
+  fails no-draw on outcome/session/tick drift. This retains the existing DSA
+  runners as the only execution owners; unbacked or unknown-opcode outcomes
+  cannot alter the M11 route. Verification: `firestaff` built in `build-ninja`;
+  CTest passed `csb_v1_m11_launcher_handoff_boundary`,
+  `csb_v1_dsa_admitted_restored_timer_bridge`, and
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` (3/3).
+
+- 2026-07-17 CSB DSA restored-world transaction: the source-bound timer
+  bridge now snapshots the live runtime profile and its raw Dungeon.dat
+  buffer before it calls the already admitted door/state/teleporter action
+  runner. A rejected runner or post-execution queue/action receipt restores
+  both snapshots, so no partial save/resume-visible mutation can commit.
+  Successful outcomes record only existing runtime mutation classes; unknown
+  opcode bodies remain blocked by the prior verifier. Verification: focused
+  M11/admission CTest passed 3/3 and `firestaff` was rebuilt in `build-ninja`.
+
+- 2026-07-17 CSB save candidate receipt: direct save files and virtual
+  container members now have one immutable, no-write admission receipt that
+  retains source path/kind, save FNV, declared save/Dungeon identities and the
+  already strict GAMEBLOCK/DSA admission. The boundary rejects FNV drift,
+  mixed GAMEBLOCK material and missing source, save-MD5 or Dungeon-MD5
+  identity; it neither extracts nor synthesizes save data. Verification:
+  `firestaff` built in `build-ninja`; CTest passed
+  `csb_v1_m11_launcher_handoff_boundary`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` (3/3).
+
+- 2026-07-17 CSB local save candidate discovery: bounded direct-file and
+  virtual-container byte views now feed the strict candidate receipt without
+  extraction, writes, or payload ownership. An empty local view set is a
+  skip, while multiple otherwise complete candidates reject as mixed rather
+  than selecting an arbitrary save. Verification: `firestaff` built in
+  `build-ninja`; CTest passed `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`
+  and `csb_v1_dsa_admitted_restored_timer_bridge` (2/2).
+
+- 2026-07-17 CSB M12 launch identity: CSB quick-resume now carries a
+  candidate-identity binding and `M12_StartupMenu_GetLaunchIntent` refuses
+  path/game-id-only CSB resume intents. This is a CSB-only gate; it does not
+  reinterpret or constrain unrelated game scans. Verification in isolated
+  `build-csb-verify`: `firestaff` built, and CTest passed
+  `csb_v1_launch_blocker_m12` plus
+  `csb_v1_m11_launcher_handoff_boundary` (2/2).
+
+- 2026-07-17 CSB discovery-to-M12 binding: M12 can now consume the
+  source-owned CSB discovery receipt directly. It accepts exactly one valid,
+  non-mixed candidate only when its source path matches the active CSB resume
+  path; absent, mixed, or stale evidence clears the launch identity. Isolated
+  verification in `build-csb-verify`: `firestaff` built, and CTest passed
+  `csb_v1_launch_blocker_m12` plus
+  `csb_v1_m11_launcher_handoff_boundary` (2/2).
+
+- 2026-07-17 CSB launch-session identity: the CSB candidate identity now
+  round-trips from the hash-verified M12 launch into M11's opened CSB startup
+  session without mutating source tick or generation. Lifecycle coverage
+  rejects stale, missing, and non-CSB discovery routes. Isolated
+  `build-csb-verify` built `firestaff`; CTest passed
+  `csb_v1_m11_launcher_handoff_boundary`.
+
+- 2026-07-17 CSB startup-profile/native-F0435 boundary: ordinary verified
+  graphics/Dungeon evidence now has a separate startup-package identity in
+  the CSB session, distinct from optional save/DSA identity. The new
+  source-owned real-receipt constructor rescans the named root and rejects
+  altered or missing proof before profile publication. Native F0435 admission
+  reads and verifies the structured 512-byte CSB header before it loads; the
+  focused package test is explicitly skip-safe without
+  `FIRESTAFF_CSB_DATA_DIR`. Verification in `build-csb-verify`:
+  `csb_v1_startup_package_identity_pc34` passed, `firestaff` built, and
+  `git diff --check` passed.
+
+- 2026-07-17 CSB launch-owned presentation package identity: M11 now keeps
+  the ordinary hash-verified graphics/Dungeon identity set at CSB boot and
+  compares it read-only with the live startup session before TITLE.C's
+  PRESENTS/CHAOS/STRIKES raster, entrance-door delivery, C017/C040 HUD, and
+  the final door-to-runtime handoff. Missing, stale, or drifted identity
+  clears the frame or rejects the handoff; an active startup cannot fall
+  through to a normal runtime tick. No tick, generation, wrapper, or fallback
+  state is repaired by the gate. The corpus-backed M12-to-M11 lifecycle test
+  covers valid title/HUD/door delivery plus missing and stale rejection.
+  Verification in `build-csb-verify`: CTest passed
+  `csb_v1_m11_launcher_handoff_boundary` and
+  `csb_v1_startup_package_identity_pc34` (2/2); `firestaff` built and
+  `git diff --check` passed. The latter target explicitly skips corpus-only
+  profile cases when `FIRESTAFF_CSB_DATA_DIR` is unset.
+
+- 2026-07-17 CSB restored DSA timer M11 ingress: added
+  `M11_GameView_ExecuteCSBDSARestoredTimer`, a caller-named location and
+  TimerQueue-slot bridge to the existing CSBWin authenticated restored-timer
+  runner. It requires the current checksum-bound save/GAMEBLOCK admission,
+  verified Dungeon MD5, source session generation/tick, boot-owned ordinary
+  package identity, wrapper-free session, and source queue ordering before
+  it publishes M11's immutable outcome receipt. M11 neither selects a timer
+  nor interprets a DSA body; stale sessions and missing queue slots reject
+  before the runner can mutate state. Structural CSBWin timer records cover
+  successful M11 commit, session drift, invalid queue-slot rejection, and
+  existing unknown-opcode rejection. Verification in `build-csb-verify`:
+  CTest passed `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` and
+  `csb_v1_dsa_admitted_restored_timer_bridge` (2/2); `firestaff` built and
+  `git diff --check` passed. A positive operator-supplied CSBWin corpus
+  remains intentionally required for corpus admission.
 
 - 2026-07-16 DM2 scene/light/weather runtime-chain receipts: added a
   source-backed DM2 weather chain that joins real `DUNGEON.DAT`
@@ -3931,27 +5448,537 @@
   Source: SKProject `c_gui_vp.cpp::DRAW_DEFAULT_DOOR_BUTTON`,
   `DRAW_DOOR_FRAMES`, and DB2/DB3 wall-decoration routes.
 
-- ✅ 2026-07-15 DM2 direct DB5/DB9 F9 M11 material handoff: a source-admitted
-  static-object cell now carries its already decoded WEAPONS/CONTAINERS F9
+- ✅ 2026-07-15 DM2 direct DB5/DB9 F9 M11 material handoff: a bounded
+  `DRAW_MAP_CHIP` receipt carries its already decoded WEAPONS/CONTAINERS F9
   pixels, IMG3 local palette, ObjectID, coordinate, category/type and pixel
   hash directly into the viewport. The renderer consumes that exact receipt
   and does not re-query the mutable GDAT provider during the frame. A changed
-  material identity fails closed. Source: SKProject `c_gui_vp.cpp`
-  `DM2_DRAW_STATIC_OBJECT`/`DM2_DRAW_PUT_DOWN_ITEM` and
-  `c_map.cpp::QUERY_DUNGEON_MAP_CHIP_PICT`. Verification: DB5 gate 6/6,
+  material identity fails closed. It does not grant a static-object blit:
+  later source recovery established F9 is not `DRAW_ITEM` art. Source:
+  SKProject `c_map.cpp::QUERY_DUNGEON_MAP_CHIP_PICT`. Verification: DB5 gate 6/6,
   DB9 gate 3/3, boot smoke 88/88, save/load 26/26.
 
+- ✅ 2026-07-17 DM2 DB14 normal-scale original-pixel consumer: the strict
+  `QUERY_PICST_IT` `0x40`/neutral-mode branch re-decodes and hashes original
+  indexed IMG3 bytes, verifies its local palette and RAW4 clip, and copies
+  only native-size zero-offset pixels. Flip, crop, scaling, and other modes
+  fail closed. Verification: `dm2_v1_g1_flying_item_source_receipt`, full
+  `firestaff` build, and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 HUD SUMMARY_IMAGE M11 no-draw receipt: the existing HUD
+  plan now admits the exact `QUERY_GDAT_SUMMARY_IMAGE(1,vb_144,field)` tuple
+  only when decoded GDAT pixels, local palette, and RAW4 destination identity
+  are present. Tuple mismatch, palette loss, and stale destination reject.
+  Verification: `dm2_v1_gdat_hud_summary_m11_receipt` passed; `git diff
+  --check` passed.
+
+- ✅ 2026-07-17 DM2 HUD QUERY_PICST_IT transform receipt: the bounded
+  `c_gui_draw.cpp:926-942` scale branch now carries `0x1f/0x2f` X and `0x35`
+  Y only for source values `0..0x28`, tied to the verified SUMMARY_IMAGE
+  decoded pixels, palette, and destination identity. Unsupported values reject
+  and the receipt remains `no_draw`. Verification:
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 HUD SUMMARY_IMAGE indexed-pixel M11 consumer: the exact
+  `c_gui_draw.cpp:926-942` branch now uses `c_image.cpp:106-200` and
+  `c_gfx_blit.cpp:886-1063` fixed-point size/centre-sample semantics to copy
+  only authenticated U4 GDAT indices and their local palette into the native
+  M11 target. The receipt requires the exact tuple, decoded-pixel hash,
+  palette hash, raw GFX256 receipt, transform identity, and complete resolved
+  destination. Pixel, palette, receipt, destination, and unsupported-scale
+  drift reject; partial or unknown clipping remains no-draw. Verification:
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` raw-material/transform M11 admission:
+  `SKULLWIN/c_gui_vp.cpp:4806-4856` and `dm2data.cpp:776-800` now source-lock
+  cells 1..15 to their rect, field, mirror and open/closed state-word branch.
+  The no-draw receipt requires the corresponding GRAPHICSSET SUMMARY_IMAGE,
+  GFX256 raw receipt, U4 decoder bytes, and local palette; missing palette,
+  sentinel cells, cell 0, out-of-range light, and absent raw data reject.
+  Verification: `dm2_v1_gdat_pit_m11_receipt` and
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_STAIRS_FRONT` primary GDAT M11 material receipt:
+  `SKULLWIN/c_gui_vp.cpp:480-511` and `dm2data.cpp:289-310` now source-lock
+  the loadable primary branch to the exact `table1d6f9c/table1d6f5c` lane,
+  GRAPHICSSET SUMMARY_IMAGE/GFX256 bytes, decoded U4 buffer, local palette,
+  root RAW4 placement and current DM2 composition/surface snapshot. Cell,
+  state lane, loadability, RAW4, data epoch and rebound-surface drift reject
+  without a framebuffer write. `QUERY_TEMP_PICST` fallback and downstream
+  B073/`DRAW_PICST` transforms remain intentionally no-draw. Verification:
+  `dm2_v1_gdat_stairs_front_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_STAIRS_FRONT` `QUERY_TEMP_PICST` fallback
+  provenance: `SKULLWIN/c_gui_vp.cpp:514-527`, `c_querydb.cpp:2381-2465`
+  and `c_image.cpp:98-337` now source-lock the failed-primary-loadability
+  branch to its `table1d6f7c` GRAPHICSSET field, authentic SUMMARY_IMAGE/GFX256
+  U4 material, RAW4 root rectangle, M11 surface identity, normal `0x40`
+  scales, HFLIP mode, zero offsets, rect query and light alpha. Selector,
+  material and RAW4/M11 identity drift reject with no write. The live
+  B073/field-7 palette transaction is intentionally unadmitted, so this path
+  remains no-draw. Verification: `dm2_v1_gdat_stairs_front_m11_receipt`
+  passed; full `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_STAIRS_SIDE` primary GDAT M11 receipt:
+  source-locks `SKULLWIN/c_gui_vp.cpp:540-565` and `dm2data.cpp:275-287`
+  table lanes through original SUMMARY_IMAGE/GFX256 U4 bytes, local palette,
+  RAW4 root placement and current composition/surface owner. Invalid cell,
+  state, material and epoch inputs reject with no framebuffer write; the
+  unproven B073/`DRAW_PICST` stage remains no-draw. Verification:
+  `dm2_v1_gdat_stairs_side_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_STAIRS_SIDE` `DRAW_DUNGEON_GRAPHIC` transform
+  provenance: `SKULLWIN/c_gui_vp.cpp:540-565` and `c_image.cpp:450-475`
+  source-lock the primary side-stairs material to mode 0, default normal
+  scale and the non-special source-offset path. Material, RAW4 and M11
+  identity drift, plus either `0x2bc/0x2bd` special rect, reject before any
+  framebuffer write. The live B073 palette state remains unbound, so this is
+  deliberately no-draw. Verification:
+  `dm2_v1_gdat_stairs_side_transform_receipt` passed; full `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `TRIM_BLIT_RECT` source receipt: source-locks
+  `SKULLWIN/c_gui_vp.cpp:570-573,611-658` to the active D1/D2 trim word,
+  authenticated `DRAW_WALL` raw/decoded/palette/RAW4 command identity and
+  owner surface. It records the source rectangle's exact remaining margins,
+  rejects absent rows, palette drift and out-of-bounds geometry, and remains
+  no-draw. Verification: `dm2_v1_gdat_wall_trim_receipt` passed; full
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_ROOF` raw-material/transform M11 admission:
+  `SKULLWIN/c_gui_vp.cpp:118-206` and `dm2data.cpp:814-816` now require the
+  source's other-level/tile gate before cells 1..8 select their exact
+  GRAPHICSSET field, rect, mirror and light parameter. The no-draw M11 receipt
+  requires SUMMARY_IMAGE, GFX256 raw ownership, decoded U4 indices and a local
+  palette. Missing remote-tile bit, invalid cell/light, missing GDAT raw bytes
+  or palette reject. Verification: `dm2_v1_gdat_pit_roof_m11_receipt`,
+  `dm2_v1_gdat_pit_m11_receipt`, and
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF B073/RAW4 prerequisite receipt: the existing
+  no-draw PIT_ROOF material route now retains the authenticated c_light
+  transaction consumed by `DM2_query_B073` and the raw
+  INTERFACE_GENERAL/0/RAW4 `QUERY_BLIT_RECT` identity for `0x360..0x368`.
+  The only admitted geometry is the source's bounded root `mode1=1/mode2=0`
+  branch; palette/light identity and RAW4 table/row drift invalidate the
+  no-draw admission. Verification: `dm2_v1_gdat_pit_roof_m11_receipt`,
+  `dm2_v1_gdat_pit_m11_receipt`, and
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF alpha/blend material receipt: source-locked
+  `SKULLWIN/c_image.cpp:450-475` and `c_gfx_blit.cpp:370-549` bind the full
+  `DRAW_DUNGEON_GRAPHIC` alpha mask, its exact U4 low-nibble transparent index,
+  source palette, B073 identity, RAW4 destination identity, and the only
+  proven blit modes: normal and horizontal mirror. Mask drift and vertical or
+  combined modes reject. The receipt remains no-draw until the B073 palette
+  conversion and final destination composition are independently proven.
+  Verification: `dm2_v1_gdat_pit_roof_m11_receipt`,
+  `dm2_v1_gdat_pit_m11_receipt`, and
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF B073 RAW7 table receipt:
+  `SKULLWIN/c_gdatfile.cpp:1919-2003` is now represented by a strict
+  `INTERFACE_GENERAL/0/dt07/2` raw-layout receipt chained to the accepted
+  PIT_ROOF material and B073 receipt. It retains the exact count/length
+  program, both packed regions, trailing color lookup bytes, and raw identity;
+  missing dt07/2, malformed lengths, and valid data drift reject. It remains
+  no-draw because the per-color B073 traversal and destination composition are
+  not yet authenticated. Verification: `dm2_v1_gdat_pit_roof_m11_receipt`,
+  `dm2_v1_gdat_pit_m11_receipt`, and
+  `dm2_v1_gdat_hud_summary_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF B073 per-color traversal receipt:
+  `SKULLWIN/c_querydb.cpp:2506-2668` now has a source-locked, cache-free U4
+  palette traversal chained to the authentic RAW7 program. Each input palette
+  index must resolve through an in-bounds lookup, group, subindex and interval;
+  the source alpha-neighbour branch is retained and drift in either index or
+  alpha ownership rejects. The resulting palette hash remains no-draw pending
+  exact `QUERY_PICST_IT` destination composition. Verification:
+  `dm2_v1_gdat_pit_roof_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF QUERY_PICST_IT/DRAW_PICST destination receipt:
+  `SKULLWIN/c_image.cpp:98-410` now admits only normal `0x40` scale, zero
+  source crop, root RAW4 placement, B073 transformed palette, alpha order and
+  the source's horizontal mirror. Clip identity drift and unsupported scale or
+  flip reject. This remains no-draw because the destination bitmap ownership,
+  dimensions/resolution and final viewport clip supplied to `DRAW_PICST` are
+  not yet source-bound. Verification: `dm2_v1_gdat_pit_roof_m11_receipt`
+  passed; full `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF viewport surface-owner binding: the DM2 viewport
+  owner now publishes pointer, dimensions, stride, resolution and generation
+  atomically on bind/rebind. PIT_ROOF accepts only the matching current
+  generation and remains no-draw on stale or rebound surfaces. Verification:
+  `dm2_v1_gdat_pit_roof_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF no-draw composition-slot validation: the receipt
+  now rejects stale generation, rebound pointer, absent session/data epoch and
+  absent ordered composition identity before any possible surface consumption.
+  Full `firestaff` built and `git diff --check` passed; native draw remains
+  unavailable pending a source-owned M11 consume hook.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF authenticated material-buffer handoff: the
+  no-draw composition validator now requires the exact borrowed decoded U4
+  pointer, width, height, stride, pixel count, palette hash and material
+  identity captured from the accepted GDAT receipt. Pointer, dimension,
+  stride, pixel-count, palette and material-identity drift each reject before
+  any surface operation. Verification: `dm2_v1_gdat_pit_roof_m11_receipt`
+  passed; full `firestaff` built; and `git diff --check` passed. Native draw
+  remains blocked pending a source-owned ordered M11 consume hook with exact
+  `DRAW_PICST` execution evidence.
+
+- ✅ 2026-07-17 DM2 PIT_ROOF ordered `DRAW_PICST` consumer: the DM2-owned
+  consume hook now performs only the source-proven normal-scale U4-to-8bpp
+  masked rows from `SKULLWIN/c_image.cpp:229-337` and
+  `c_gfx_blit.cpp:345-549`. It directly borrows the authenticated decoded
+  handoff bytes, uses the B073-transformed palette, preserves the source
+  alpha index and supports only the proven normal/horizontal-mirror order.
+  Composition order, session/data identity, before/after surface snapshot,
+  RAW4 rectangle, destination clip, palette and buffer identity all validate
+  before any write. Regression coverage proves normal and mirrored pixels plus
+  no-write on order, source-byte and rebound-surface mismatch. Verification:
+  `dm2_v1_gdat_pit_roof_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` composition admission: source-locked
+  cells 1..15 from `SKULLWIN/c_gui_vp.cpp:234-292` now bind their accepted
+  GRAPHICSSET SUMMARY_IMAGE/GFX256 material, transform, session/data epoch,
+  and parent viewport-composition identity into one strict no-draw receipt.
+  Material, transform, parent order, session and epoch drift reject. The
+  receipt explicitly has no PIT_TILE draw slot: cell 0 flip and the per-cell
+  `QUERY_BLIT_RECT` placement/clip source facts remain required before any
+  indexed consumer can write. Verification: `dm2_v1_gdat_pit_m11_receipt`
+  passed; full `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` RAW4 placement receipt: the source's
+  `table1d6c70[cell] -> DRAW_DUNGEON_GRAPHIC -> QUERY_PICST_IT ->
+  QUERY_BLIT_RECT` chain is now represented for cells 1..15 by an exact
+  INTERFACE_GENERAL/0/RAW4 root-row receipt. It retains selected rectangle,
+  destination, full decoded extent and table/row identity, then binds that
+  receipt to the PIT material/composition admission. Missing RAW4, incomplete
+  table, row placement drift or material/composition drift reject. Chained
+  rectangle/crop/clip forms remain fail-closed, and no PIT pixel consumer is
+  authorized until source-owned order and buffer-handoff evidence exist.
+  Verification: `dm2_v1_gdat_pit_m11_receipt` passed; full `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` decoded-buffer handoff and M11 slot:
+  PIT_TILE now owns a separate borrowed U4 handoff receipt, independent of
+  PIT_ROOF identities. It binds exact decoded pointer, dimensions, stride,
+  pixel count, palette and material identity to the established DM2 viewport
+  before/after surface snapshot and ordered composition identity. Pointer and
+  rebound-surface drift reject with no write. The resulting M11 slot remains
+  explicitly no-draw because the source has not yet proved PIT_TILE's normal
+  `DRAW_PICST` row order. Verification: `dm2_v1_gdat_pit_m11_receipt` passed;
+  full `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` normal-row ordering receipt: cell 1's
+  source `blitmode=0` branch is now bound through the PIT-specific handoff,
+  RAW4 placement and generic composition slot to the exact normal
+  `DRAW_PICST` row order from `SKULLWIN/c_image.cpp:229-337` and
+  `c_gfx_blit.cpp:345-549` (top-to-bottom, left-to-right). RAW4 identity
+  drift rejects before any possible write. The receipt remains no-draw: the
+  source calls `DM2_query_B073` before those rows, and PIT has no authenticated
+  transformed palette transaction yet. Verification:
+  `dm2_v1_gdat_pit_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` B073 transformed-palette receipt: cell
+  1 now authenticates `DM2_query_B073`'s bounded RAW7 count/left/right/lookup
+  program against the accepted PIT material, RAW4 placement and normal-row
+  receipt. It retains the transformed 16-colour palette plus RAW7 and source
+  identities; RAW7 output or RAW4 drift rejects. It remains no-draw until the
+  source alpha transaction and final ordered buffer consumer are admitted.
+  Verification: `dm2_v1_gdat_pit_m11_receipt` passed; full `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-1 normal indexed consumer: the
+  source-proven normal branch now consumes only PIT's authenticated U4 handoff
+  through its own RAW7 B073 palette and low-nibble alpha transaction, in exact
+  top-to-bottom/left-to-right order into the current DM2 owner surface.
+  Composition order, material/RAW4/placement/normal/B073 identities and owner
+  snapshots validate before the first write; order drift produces no write.
+  Other cells, mirrors, crop and chained-clip forms remain blocked.
+  Verification: `dm2_v1_gdat_pit_m11_receipt` passed; full `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-3 normal indexed consumer: added a
+  separate source-locked admission for the normal `blitmode=0` cell-3 form.
+  It requires the exact GRAPHICSSET image field `0x6e`, RAW4 rect `0x35b`,
+  independent B073/RAW7 palette transaction, authenticated U4 handoff, and
+  ordered composition/surface identities before any row writes. Material or
+  RAW4 drift leaves the surface unchanged. Cell 2 and every mirrored, crop,
+  chained-clip, or other normal cell remain blocked. Verification:
+  `dm2_v1_gdat_pit_m11_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-4 normal indexed consumer: added an
+  independent source-locked normal `blitmode=0` admission requiring exact
+  GRAPHICSSET field `0x6f`, RAW4 rect `0x35a`, B073/RAW7 palette identity,
+  decoded U4 handoff, ordered composition, and current owner surface. The
+  consumer revalidates B073's complete identity before the first write, so
+  palette or RAW4 drift leaves the surface unchanged. Cell 2 and every other
+  mirrored, crop, chained-clip, or unproven normal form remain blocked.
+  Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-6 normal indexed consumer: added an
+  independent source-locked normal `blitmode=0` admission requiring exact
+  GRAPHICSSET field `0x71`, RAW4 rect `0x358`, B073/RAW7 palette identity,
+  decoded U4 handoff, ordered composition, and current owner surface.
+  Material-identity drift rejects before any surface write. Every mirrored,
+  crop, chained-clip, or other unproven normal form remains blocked.
+  Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-7 normal indexed consumer: added an
+  independent source-locked normal `blitmode=0` admission requiring exact
+  GRAPHICSSET field `0x72`, RAW4 rect `0x357`, B073/RAW7 palette identity,
+  decoded U4 handoff, ordered composition, and current owner surface. B073
+  palette-identity drift rejects before any surface write. Every mirrored,
+  crop, chained-clip, or other unproven normal form remains blocked.
+  Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-11 normal indexed consumer: added an
+  independent source-locked normal `blitmode=0` admission requiring exact
+  GRAPHICSSET field `0x76`, RAW4 rect `0x355`, B073/RAW7 palette identity,
+  decoded U4 handoff, ordered composition, and current owner surface. RAW4
+  identity drift rejects before any surface write. Every mirrored, crop,
+  chained-clip, or other unproven normal form remains blocked. Verification:
+  Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-12 normal indexed consumer: added an
+  independent source-locked normal `blitmode=0` admission requiring exact
+  GRAPHICSSET field `0x77`, RAW4 rect `0x354`, B073/RAW7 palette identity,
+  decoded U4 handoff, ordered composition, and current owner surface. B073
+  RAW7-identity drift rejects before any surface write. Every mirrored, crop,
+  chained-clip, or other unproven normal form remains blocked. Verification:
+  Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-14 normal indexed consumer: added an
+  independent source-locked normal `blitmode=0` admission requiring exact
+  GRAPHICSSET field `0x79`, RAW4 rect `0x352`, B073/RAW7 palette identity,
+  decoded U4 handoff, ordered composition, and current owner surface. Palette
+  identity drift rejects before any surface write. Every mirrored, crop,
+  chained-clip, or other unproven normal form remains blocked. Verification:
+  Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja `firestaff` built;
+  and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-2 HFLIP indexed consumer: added a
+  distinct source-locked reverse-X row path for the exact mirrored form:
+  GRAPHICSSET field `0x6c`, RAW4 rect `0x35f`, B073/RAW7 palette, decoded U4
+  handoff, ordered composition and owner surface all bind before writing.
+  The regression proves the source pixels are reversed per row and B073 drift
+  causes no write. Crop, chained clip, vertical flip and all other mirror
+  forms remain blocked. Verification: Ninja CTest
+  `dm2_v1_gdat_pit_m11_receipt` passed; Ninja `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-5 HFLIP indexed consumer: added an
+  independent source-locked reverse-X path requiring GRAPHICSSET field `0x6f`,
+  RAW4 rect `0x35c`, B073/RAW7 palette, decoded U4 handoff, ordered composition
+  and owner surface. The regression proves per-row source reversal and RAW4
+  drift no-write. Other mirrored, crop and chained-clip forms remain blocked.
+  Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-8 HFLIP indexed consumer: added an
+  independent source-locked reverse-X path requiring GRAPHICSSET field `0x72`,
+  RAW4 rect `0x359`, B073/RAW7 palette, decoded U4 handoff, ordered composition
+  and owner surface. The regression proves per-row source reversal and RAW7
+  drift no-write. Other mirrored, crop and chained-clip forms remain blocked.
+  Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-13 HFLIP indexed consumer: added an
+  independent source-locked reverse-X path requiring GRAPHICSSET field `0x77`,
+  RAW4 rect `0x356`, B073/RAW7 palette, decoded U4 handoff, ordered composition
+  and owner surface. The regression proves per-row reversal and palette drift
+  no-write. Other mirrored, crop and chained-clip forms remain blocked.
+  Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt` passed; Ninja
+  `firestaff` built; and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` cell-15 HFLIP indexed consumer: exact GRAPHICSSET `0x79`, RAW4 `0x353`, B073/RAW7, U4 reverse-X, ordered composition and owner surface; RAW4 drift writes nothing. Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt`, Ninja `firestaff`, and `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `DRAW_PIT_TILE` crop/chained-clip provenance intake: source-locked `c_gui_vp.cpp:251-291 -> c_image.cpp:229-260` receipt retains only `query1`/RAW4 identity and is explicitly no-draw because source-coordinate mutation and chained output are not authenticated. Verification: Ninja CTest `dm2_v1_gdat_pit_m11_receipt`, Ninja `firestaff`, and `git diff --check` passed.
+
 - ✅ 2026-07-15 DM2 source static-object cell gate: direct G1 DB5 weapon and
-  DB9 container map-chip rows now carry a `DM2_DRAW_STATIC_OBJECT` cell and
+  DB9 container map-chip rows retain a `DM2_DRAW_STATIC_OBJECT` candidate cell and
   `DM2_DRAW_DUNGEON_TILES` pass only when their live coordinate is one of the
   source-proven D1C/D2C centre cells (cells 3/6, passes 17/14). The previous
-  generic map-to-screen projection is no longer allowed to place real floor
-  object pixels at D0C, side, or deep cells without the original `DRAW_ITEM`
+  generic map-to-screen projection is no longer allowed to place F9 map-chip
+  pixels at D0C, side, deep, or centre cells without the original `DRAW_ITEM`
   geometry tables. The item render plan retains source pass order and blocks
   missing or altered admission receipts. Source: SKProject
   `c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES`, `DM2_DRAW_STATIC_OBJECT`, and
   `DM2_DRAW_PUT_DOWN_ITEM`; `dm2data.cpp::table1d7029`. Verification:
   DB5 gate 6/6, DB9 gate 3/3, boot smoke 88/88, save/load 26/26.
+
+- ✅ 2026-07-16 DM2 bounded `DRAW_STATIC_OBJECT` evidence gate: recovered
+  SKWIN's first DB5/DB9 `DRAW_STATIC_OBJECT -> DRAW_PUT_DOWN_ITEM -> DRAW_ITEM`
+  selection chain for D1C/D2C. The viewport now derives the exact 5x5
+  direction position, F0/F4 field selector, `QUERY_CREATURE_BLIT_RECTI` clip
+  key, distance stretch, 16-slot placement delta, and DB9 mirror rule. It also
+  closes the old false admission: F9 receipts belong to `DRAW_MAP_CHIP`, not
+  `DRAW_ITEM`, and cannot draw as static objects. The plan remains evidence
+  only until raw source receipts for visibility, expanded clipping, image
+  offset, and F0/F4 pixels/palette exist. Verification: focused DB5 and DB9
+  viewport gates.
+
+- ✅ 2026-07-17 DM2 static DB5/DB9 F0/F4 M11 frame-plan gate: bounded D1C/D2C
+  `DRAW_ITEM` rows now require their source cell/pass/clip plan plus exact
+  GFX256 raw receipt, local palette, RAW4 rect receipt, and matching M11
+  identity before a viewport blit. DB5 selects F0; DB9 selects F0/F4 from its
+  original opened bit. F9 `DRAW_MAP_CHIP`, changed receipt hashes, absent
+  receipt fields, and unsupported cells remain no-draw. Verification:
+  `dm2_v1_g1_static_m11_handoff_gate` passed 1/1 and `git diff --check`.
+
+- ✅ 2026-07-17 DM2 static-object M11 delivery lifecycle: DB5/F0 weapons and
+  DB9/F0/F4 containers now have a separate source-owned delivery plan built
+  from existing GFX256/IMG3/RAW4 receipts and the bounded source cell/pass/
+  clip plan. Session, selector/data, material, or rect drift invalidates the
+  plan. It is explicitly no-draw pending original pixel decoder proof, and
+  neither the earlier blit fixture nor F9/map-chip material can supply it.
+  Verification: `dm2_v1_static_object_m11_delivery_plan` and
+  `dm2_v1_g1_static_m11_handoff_gate` passed 2/2; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 source-owned M11 viewport composition receipt: the
+  DM2 receipt gate now combines complete GDAT scene/light, wall, door,
+  weather, DB5/DB9 static-object, and DB14 flying-item plans in a fixed
+  source-owned order under one nonzero session/data epoch. Each component's
+  identity is folded into the receipt; missing members, invalid door controls,
+  changed data/session epoch, and changed member identities fail closed. The
+  composition is metadata-only and explicitly no-draw until authentic
+  per-pixel decoder proof exists. `m11_game_view.c` is untouched. Verification:
+  `dm2_v1_dm2_viewport_m11_composition` passed 1/1; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 live viewport composition enumeration: the DM2-owned
+  receipt gate now derives a deterministic identity from the serialized valid
+  session and its G1 level/GRAPHICSSET/outdoor map token, then admits only a
+  matching complete GDAT plan set. Scene/light/wall/weather graphicsset
+  mismatch, absent members, session mutation, static-session mismatch, and
+  changed GDAT plan identity reject. The resulting receipt remains metadata
+  only and no-draw; neither CSB nor shared M11 files participate. Verification:
+  `dm2_v1_dm2_viewport_m11_live_enumeration`, composition, DB5/DB9 static,
+  and DB14 flying-item CTests passed 4/4; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 DB14 `Missile::missile_object` selector receipt:
+  `dm2_v1_g1_flying_item_selector_receipt` now follows SKproject
+  `c_gui_vp.cpp:3545-3770`, `c_record.cpp:203-279`, and
+  `dm2data.cpp:487` through the raw DB14 address, class1/class2 resolution,
+  byte+4 sentinel, and GDAT `(0x0d,class2,0x0b,1)` data-index query. The
+  isolated raw G1/GDAT fixture covers the positive spell-missile branch,
+  opaque non-0x0d `DM2_DRAW_ITEM` branch, sentinel rejection, and missing
+  GDAT index rejection. It remains selector evidence only: no draw plan or
+  pixel decoder was opened.
+
+- ✅ 2026-07-17 DM2 DB14 `vb30`/summary-image receipt: the exact bounded
+  branch from `SKULLWIN/c_gui_vp.cpp:3610-3745` now selects only `8`, `9`,
+  `10`, or `12` from source-owned query/timer/direction/table facts. The
+  TEMP_PICST tuple is then bound to `QUERY_GDAT_SUMMARY_IMAGE` as
+  `(class1,class2,vb30)` and requires authentic IMG3 metadata plus its local
+  palette. The focused raw G1/GDAT CTest covers every selection, invalid
+  state/direction/table rejection, TEMP_PICST blocking, and missing GDAT
+  index rejection. It remains no-draw and does not create decoded pixels or
+  a frame plan. Verification: `dm2_v1_g1_flying_item_source_receipt`,
+  `dm2_v1_flying_item_timer_receipt`, and `dm2_v1_flying_item_m11_frame_plan`
+  passed 3/3; `firestaff` built; `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 DB14 decoded-material no-draw plan: the verified
+  `(class1,class2,vb30)` SUMMARY_IMAGE tuple now requires matching raw GDAT
+  GFX256, IMG3 decoder output, and local-palette hashes. The decoder's bytes
+  are hashed then freed; no surface or renderer fallback is retained. The
+  DM2-owned runtime plan additionally binds session, map, timer, selector,
+  vb30, and table identities, rejecting every tested drift while remaining
+  `no_draw`. Verification: `dm2_v1_g1_flying_item_source_receipt`,
+  `dm2_v1_flying_item_timer_receipt`, and `dm2_v1_flying_item_m11_frame_plan`
+  passed 3/3; `firestaff` built; `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 DB14 M11 material-consumer composition: the DM2 receipt
+  gate now re-decodes the admitted indexed IMG3 bytes and rechecks their
+  hash, local palette, raw receipt, clip id, flip fact, session/map/timer
+  ownership, and the source order from `SKULLWIN/c_gui_vp.cpp:4320-4417`
+  (`PUT_DOWN_ITEM`, creature summary, then flying item). It exposes no pixel
+  buffer and remains `no_draw` because the original destination transform is
+  not yet proven. Verification: focused DB14 material, delivery-plan, and
+  composition CTests passed 3/3; full `firestaff` built; `git diff --check`
+  passed.
+
+- ✅ 2026-07-17 DM2 DB14 SUMMARY_IMAGE/RAW4 destination receipt:
+  `dtImageOffset(0xfe)` and the selected `dtImageOffset(vb30)` are retained
+  in source order as signed x/y evidence and joined only to the same
+  `QUERY_CREATURE_BLIT_RECTI`-selected RAW4 `QUERY_EXPANDED_RECT`. The focused
+  fixture covers offset arithmetic plus changed rect-id, empty clip, and flip
+  rejection. The receipt remains `no_draw`; it does not guess the final
+  QUERY_PICST_IT orientation or framebuffer transform. Verification:
+  `dm2_v1_g1_flying_item_source_receipt` passed; full `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 DB14 viewport/M11 evidence lifecycle: a complete
+  DB14 timer/GFX256/IMG3/RAW4 receipt may now enter the source-owned viewport
+  evidence boundary only with matching no-draw selector and geometry receipts,
+  session identity, and G1 map token. The extended M11 delivery builder checks
+  timer/GDAT identity before retaining that evidence identity. Image fields and
+  pixels remain unavailable, so this cannot draw. Verification: focused DB14
+  selector, timer, and M11-frame CTests passed 3/3; `firestaff` built; and
+  `git diff --check` passed.
+
+- ✅ 2026-07-17 DM2 `QUERY_CREATURE_BLIT_RECTI` source receipt: dungeon-loader
+  now models the SKWIN 5x5 rotation and exact `5000 + 25 * cell` RAW4 rect
+  identity, with all invalid cell/position/direction combinations rejected.
+  The DB14 `DRAW_FLYING_ITEM` receipt consumes the documented `dir=0` route
+  only; it remains no-draw until independent timer-owner and GDAT material
+  evidence is complete. Verification: `dm2_v1_g1_flying_item_source_receipt`
+  and `dm2_v1_flying_item_timer_receipt` passed 2/2; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 DB14 raw timer receipt: `DRAW_FLYING_ITEM` now accepts a
+  missile direction only through a bounded, caller-owned ten-byte
+  `DME.h::Timer` row. The row index must equal DB14 `w6`, its complete raw
+  bytes are hashed, and `Direction()` is decoded from `w8` bits 10--11.
+  Truncated/non-row-aligned tables, invalid indices, changed direction, and
+  mismatched DB14 owners reject. This still grants no draw or M11 handoff.
+  Verification: `dm2_v1_g1_flying_item_source_receipt` and
+  `dm2_v1_flying_item_timer_receipt` passed 2/2; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 DB14 saved-timer ownership bridge: the timer receipt can
+  now be assembled only from the verified session's original contiguous timer
+  table and its original count, never from the runtime heap or a synthetic
+  direction. DB14 `w6` outside that count rejects. The bridge retains no-draw
+  until a source-proven viewport selection and complete GDAT material receipt
+  are present. Verification: `dm2_v1_g1_flying_item_timer_receipt` and
+  `dm2_v1_g1_flying_item_source_receipt` passed 2/2; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 DB14 runtime material ownership: runtime now retains a
+  flying-item receipt only after the bounded saved-timer owner and every
+  GFX256/palette/RAW4 material identity agree. Any missing or altered identity
+  clears the retained receipt. It remains explicitly no-draw and does not
+  enter the legacy projectile/map-chip route or M11. Verification:
+  `dm2_v1_flying_item_timer_receipt` and
+  `dm2_v1_g1_flying_item_source_receipt` passed 2/2; `git diff --check`.
+
+- ✅ 2026-07-17 DM2 DB14 flying-item viewport/M11 delivery plan: a separate
+  `DRAW_FLYING_ITEM` plan now carries source cell/5x5/flip/RAW4 rect plus
+  GFX256 raw, IMG3 palette, RAW4, and saved-timer identities. Every missing or
+  drifted receipt rejects; F9/projectile/map-chip material has no entry point.
+  The accepted plan is deliberately `no_draw` with original pixel decoding
+  disabled, so M11 receives identity only rather than a synthetic frame.
+  Verification: `dm2_v1_flying_item_m11_frame_plan`,
+  `dm2_v1_flying_item_timer_receipt`, and
+  `dm2_v1_g1_flying_item_source_receipt` passed 3/3; `git diff --check`.
 - ✅ 2026-07-15 CSB live HUD ownership: moved the PC3.4 C017/C040 panel
   composition from M11 into CSB's source-owned `PANEL.C F0347/F0346` adapter.
   M11 now consumes only the completed terminal-session receipt; the real
@@ -24367,3 +26394,1127 @@ Verification: strict C11 syntax for `src/dm2/dm2_v1_anim_bootstrap.c` and
 src/dm2/dm2_v1_anim_bootstrap.c -o /tmp/test_dm2_v1_anim_bootstrap &&
 /tmp/test_dm2_v1_anim_bootstrap`; and `python3 tools/symbol_backlog.py --game
 DM2 --limit 20` now reports DM2 1099.
+- 2026-07-16 CSB startup runtime-consumption adapter: the source-named
+  ReDMCSB `F0437_STARTEND_DrawTitle`, `F0438_STARTEND_OpenEntranceDoors`,
+  `F0580_ENTRANCE_DrawDoorAnimationStep`, and `F0581_ENTRANCE_BlitDoors`
+  now have a CSB-owned consumption adapter that derives facts exclusively from
+  one generation-matched real PC3.4 startup session and complete-support
+  receipt. The adapter verifies the complete title route and four distinct
+  phase hashes, terminal C017/C040 HUD, the final 31-step entrance route,
+  receipt-only draw/input, and the absence of fallback callbacks or wrapper
+  routes before invoking the source gates.
+  Duplicate phase hashes and generation mismatches fail closed. The production
+  complete-support receipt also rejects duplicate or zero phase hashes.
+  Verification: `firestaff_m10` build and CTest
+  `csb_v1_startup_runtime_coupling_adapter_pc34_compat` PASS.
+
+- 2026-07-16 CSBgraphics HUD session binding: C017 and C040 selected by
+  CSBWin's `Graphics.cpp::LocateNthGraphic` plan now load from the
+  hash-admitted `CSBgraphics.dat` cache instead of being silently rejected by
+  the PC34 session loader. The binding requires the cache path and 32-character MD5
+  receipt, an existing HUD redraw plan entry, source C017/C040 geometry and a
+  complete LZW decode before either surface can enter the live session. The
+  session accepts an override HUD only when both panels have that ownership;
+  a partial override never falls back to a mixed source. Verification:
+  `firestaff_m10` build PASS.
+
+- 2026-07-16 CSB F0437/F0807 startup regression repair: `TITLE.C F0437` now
+  treats the first C426 STRIKES BACK presentation as the completion boundary
+  for its two-VBlank full-size CHAOS hold, so direct live-frame sampling keeps
+  the complete PRESENTS/CHAOS zoom/CHAOS hold/STRIKES mask. The F0807
+  entrance-to-HUD transition now consumes C004, C002/C003 and C017/C040 from
+  the same verified startup session through its asset-owned readiness facts,
+  rather than requiring an unrelated host presentation flag. No wrapper or
+  fallback surface is admitted. Verification: CTest
+  `csb_v1_boot_title_import_ui_gate_pc34_compat` PASS.
+
+- 2026-07-16 Theron Track 02 host dungeon-consumer binding: host admission is
+  closed to `theron-v1-original-host-route-track02-dungeon` and preserves an
+  FNV identity checksum alongside the authenticated level, object, bitmap, and
+  palette proof hashes. Alternate routes and checksum drift reject before a
+  host surface can be admitted; no unknown dungeon/object format was decoded
+  and fallback visuals remain prohibited. Verification: CTest
+  `theron_v1_runtime_admission` and `theron_v1_track02_loader_intake` PASS.
+
+- 2026-07-16 Theron Track 02 source-owned runtime media: level-bank selection
+  now requires title, stage, Soul Room, and forcefield indexed surfaces to be
+  raw-source-verified and to share one Track 02 MD5. Cross-disc replacement at
+  surface admission and MD5 drift before selection fail closed. This carries
+  real media provenance into runtime selection only; palette binding, level
+  geometry, object layout, and dungeon drawing remain unpromoted. Verification:
+  CTest `theron_v1_track02_loader_intake` and `theron_v1_runtime_admission`
+  PASS.
+
+- 2026-07-16 Theron Track 02 runtime-media variant binding: source-owned
+  level-bank selection now accepts only four raw-source surfaces sharing a
+  known Track 02 MD5 whose JP/US variant equals the live runtime-media identity.
+  Unknown MD5 labels and variant drift reject before selection. No palette
+  route, level geometry, object-table layout, or synthetic visual was promoted.
+  Verification: CTest `theron_v1_track02_loader_intake` and
+  `theron_v1_runtime_admission` PASS.
+
+- 2026-07-16 Theron Track 02 palette runtime admission: an authenticated
+  direct VCE index/low/high store receipt now carries its verified Track 02
+  MD5 and JP/US variant into a matching raw-source runtime bitmap surface.
+  Identity drift and render promotion reject. The admission records source
+  provenance only: palette-window-to-bitmap semantics, level geometry, object
+  layout, dungeon drawing, fallback visuals, and synthetic visuals remain
+  blocked. Verification: CTest `theron_v1_palette_runtime_admission` and
+  `theron_v1_track02_loader_intake` PASS.
+
+- ✅ 2026-07-17 Nexus Saturn 8 KiB memory-card opaque intake: added a strict
+  16 x 512-byte, FNV-provenance and title/champion-route admission boundary.
+  Mutated, short, unproven, fallback-enabled, or route-inactive images reject;
+  no proprietary save fields are decoded or promoted. Verification:
+  `nexus_v1_saturn_save_capture` PASS; the explicit real-file probe is
+  skip-safe without a local image.
+
+- ✅ 2026-07-17 Nexus operator-only Mednafen PRS3 replay manifest: the
+  external launcher now refuses identity drift across BIOS, disc, MENU.BPK,
+  DM.BIN, LEV00.DGN and replay FNV/epoch fields before launch, and writes one
+  immutable dry-run manifest without copying assets or generating a trace.
+  Verification: `nexus_v1_mednafen_capture_launcher` PASS.
+
+- ✅ 2026-07-17 Nexus Structure1F LEV00--15 capture-target corpus planner:
+  a strict fixture-matrix verifier now binds each level's package, DGN,
+  descriptor, mesh, and face candidate identities before emitting only
+  original-Saturn, no-draw trace targets. Cross-level, duplicate, missing, and
+  mutated identities reject. The external SHA-256 corpus probe is skip-safe
+  when local retail LEV files are absent. Verification:
+  `nexus_v1_structure1f_corpus_capture_plan` PASS.
+
+- ✅ 2026-07-17 Nexus SLEV00--15 task-body capture-target planner: every
+  row now cross-binds the existing source/header/literal receipt, raw-trace
+  identity, and ordered entry/task/callback observation to an opaque target
+  location. Unknown opaque opcode labels, unknown callback ownership, order
+  drift, and source or trace drift reject. No task dispatch or fallback script
+  behavior is enabled. Verification: `nexus_v1_slev_task_body_capture_plan`
+  PASS; the local SHA-256 corpus/trace probe is skip-safe.
+
+- ✅ 2026-07-17 Nexus SNDLEV/SAL capture-target planner: unique bounded MAP
+  selector routes now bind their SAL window, SDDRVS MD5, and ordered
+  selector-dispatch/SAL-read/driver-output raw-trace observations. Duplicate
+  or ambiguous routes, source/trace drift, and any decode or playback claim
+  reject. Verification: `nexus_v1_sal_capture_plan` PASS; the external
+  SHA-256 corpus probe is skip-safe.
+
+- ✅ 2026-07-17 Nexus Mednafen Saturn campaign import: a canonical, complete
+  external trace export now binds PRS3, Structure1F, SLEV, and SAL capture
+  evidence to one raw-trace FNV/length and SHA-256-labelled debugger export.
+  Partial, mixed, reordered, or semantically promoted evidence rejects.
+  Verification: `nexus_v1_saturn_capture_campaign_import` PASS; the external
+  probe is skip-safe without local retail traces.
+
+- ✅ 2026-07-17 Nexus PRS3 original-execution evidence import: a strict V10
+  receipt now requires explicit independent Saturn authentication, exact
+  MENU.BPK/DM.BIN stream binding, complete SH-2 input/output witnesses, and a
+  later VDP1 source command. Any partial range, fingerprint drift, ordering
+  drift, or unauthenticated export rejects. Verification:
+  `nexus_v1_prs3_original_execution_import` PASS; external input probe is
+  skip-safe.
+
+- ✅ 2026-07-17 Nexus PRS3 multi-capture adjudicator: authenticated complete
+  execution receipts from at least two distinct MENU.BPK modes now require
+  consistent opaque bit-order and termination observations, unique streams,
+  and matching complete I/O-to-VDP1 contracts before decoder review can be
+  considered. Contradiction rejects and decoder/render promotion remains zero.
+  Verification: `nexus_v1_prs3_multi_capture_adjudicator` PASS; external
+  multi-mode probe is skip-safe.
+
+- ✅ 2026-07-17 Nexus Structure3 face/texturing capture planner: exact DGN
+  face/mesh/descriptor provenance now joins Structure1F static material and
+  PRS3/VDP1 candidate evidence into a capture-only request. Descriptor, trace,
+  candidate, or face drift rejects; pixel/geometry inference and drawing stay
+  disabled. Verification: `nexus_v1_structure3_face_texturing_capture_plan`
+  PASS; external probe is skip-safe.
+
+- ✅ 2026-07-17 Nexus multi-level DGN capture adjudicator: all LEV00--15 now
+  require exact Structure1F/2/3 identity joins and unique opaque frame/command
+  coverage. Cross-level, descriptor, DGN, and ordering drift reject while
+  decoder, mesh semantics, and rendering remain disabled. Verification:
+  `nexus_v1_dgn_multi_level_capture_adjudicator` PASS; external probe is
+  skip-safe.
+
+- ✅ 2026-07-17 Nexus active multi-level DGN capture ingress: engine-owned
+  dungeon routing now retains only active-level opaque capture coverage after
+  a full adjudication receipt matches the loaded DGN FNV. Level or source drift
+  and promoted render claims clear it. Verification:
+  `nexus_v1_dgn_campaign_engine_ingress` PASS.
+
+- 2026-07-16 Theron Track 02 Soul Room capture-to-runtime admission: the
+  source-owned Soul Room runtime surface now accepts only a complete startup
+  media capture and authenticated CD-read trace that agree on MD5/variant,
+  offsets, checksum, route mask, atlas checksum, and runtime identity. The
+  admission proves byte provenance only; VCE relation, pixel decoding, level
+  geometry, object layout, dungeon drawing, fallback visuals, and synthetic
+  visuals remain blocked. Verification: CTest
+  `theron_v1_bitmap_capture_runtime_admission`,
+  `theron_v1_palette_runtime_admission`, and
+  `theron_v1_track02_loader_intake` PASS.
+
+- 2026-07-16 Theron Track 02 provenance runtime consumer: the capture-bound
+  Soul Room receipt now joins the runtime-owned opaque initial loader record
+  only when both retain one verified Track 02 identity. It carries the exact
+  payload, level-envelope, and post-envelope receipts forward while marking an
+  original level/object consumer trace as required. No level/object fields,
+  pixel or palette semantics, drawing, fallback visual, or synthetic visual is
+  admitted. Verification: CTest
+  `theron_v1_track02_provenance_runtime_consumer`,
+  `theron_v1_bitmap_capture_runtime_admission`,
+  `theron_v1_palette_runtime_admission`, and
+  `theron_v1_track02_loader_intake` PASS.
+
+- 2026-07-16 Theron Track 02 level/object trace preparation: a future
+  authenticated post-$3800 grammar receipt now has to match runtime's exact
+  loader record, checksums, consumer PCs, and bounded payload windows before
+  its windows can be retained. Both field decoders remain explicitly required;
+  no level/object fields, bitmap/palette semantics, runtime handoff, drawing,
+  fallback visual, or synthetic visual is admitted. Verification: CTest
+  `theron_v1_track02_level_object_trace_preparation`,
+  `theron_v1_track02_provenance_runtime_consumer`,
+  `theron_v1_bitmap_capture_runtime_admission`, and
+  `theron_v1_track02_loader_intake` PASS.
+
+- 2026-07-16 Theron Track 02 loader-record container gate: runtime now
+  accepts the opaque initial loader record only with a known Track 02 MD5 and
+  a MODE1/2352 user-data-aligned raw offset. Unknown identities and malformed
+  sector locations reject before provenance or trace preparation. This is
+  container ownership only; record grammar, level/object fields, pixels,
+  palettes, drawing, fallback visuals, and synthetic visuals remain blocked.
+  Verification: CTest `theron_v1_track02_provenance_runtime_consumer`,
+  `theron_v1_track02_level_object_trace_preparation`,
+  `theron_v1_bitmap_capture_runtime_admission`, and
+  `theron_v1_track02_loader_intake` PASS.
+
+- 2026-07-17 Nexus DGN campaign engine ingress: the active-level opaque
+  campaign receipt now binds exact PRS3 trace FNV and byte count to the active
+  placement ingress, alongside DGN and frame/command identity. Any level,
+  package, trace FNV, or trace-size drift makes it not capture-ready. This is
+  evidence-only; decoder, mesh, texturing, and rendering remain disabled.
+  Verification: CTest `nexus_v1_dgn_campaign_engine_ingress` and
+  `nexus_v1_dgn_multi_level_capture_adjudicator` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus operator-only multi-level capture campaign launcher:
+  deterministic LEV00--15 Mednafen job plans now require explicit operator
+  opt-in, staged retail paths, SHA-256-shaped identities, complete DGN/PRS3,
+  SLEV, and SAL plans. Missing retail assets skip safely; identity or target
+  drift rejects. The plan launches nothing and cannot generate evidence or
+  graphics. Verification: CTest
+  `nexus_v1_multi_level_capture_campaign_launcher` PASS; full `firestaff`
+  build PASS.
+
+- 2026-07-17 Nexus campaign retail asset hash gate: the operator-only planner
+  now reads each staged BIOS, disc/ISO/BIN/CUE member, MENU.BPK, and DM.BIN
+  directly and compares its actual SHA-256 before admitting jobs. Missing,
+  non-ordinary, malformed, or mismatched paths reject without extraction or
+  repository writes; absent retail assets remain skip-safe. Verification:
+  CTest `nexus_v1_multi_level_capture_campaign_launcher` PASS; full
+  `firestaff` build PASS.
+
+- 2026-07-17 Nexus ISO/BIN/CUE capture-member hash gate: ISO members are now
+  read through the existing Nexus ISO reader and SHA-256 checked in process.
+  Malformed CUE sheets, missing members, and multiple Nexus-valid data tracks
+  reject; the temporary fixture proves a valid `DM.BIN` member without any
+  extraction or copy. Verification: CTest
+  `nexus_v1_multi_level_capture_campaign_launcher` PASS; full `firestaff`
+  build PASS.
+
+- 2026-07-17 Nexus Saturn-card engine lifecycle: the engine now retains only
+  an admitted opaque 8 KiB card FNV and monotonically increasing startup route
+  epoch. Rejected or replaced receipts clear readiness; card or epoch drift
+  rejects consumption. No FNXS fallback or save semantics are admitted.
+  Verification: CTest `nexus_v1_saturn_save_capture_engine_lifecycle` PASS;
+  full `firestaff` build PASS.
+
+- 2026-07-17 Nexus M12/launcher Saturn-card startup gate: launch selection now
+  requires the engine's exact opaque card FNV and route epoch. Card/epoch
+  drift rejects, and the receipt explicitly keeps native FNXS usage off.
+  Verification: CTest `nexus_v1_launcher_saturn_card_startup` and
+  `nexus_v1_saturn_save_capture_engine_lifecycle` PASS; full `firestaff`
+  build PASS.
+
+- 2026-07-17 Nexus direct Saturn-card discovery: startup now scans direct
+  files for exactly one opaque 8 KiB card, binds its FNV identity through the
+  engine route epoch to the M12 launcher gate, and rejects none, multiple, or
+  epoch-drift candidates. No FNXS or save semantics are consumed.
+  Verification: CTest `nexus_v1_saturn_card_discovery_launch` PASS; full
+  `firestaff` build PASS.
+
+- 2026-07-17 Nexus virtual Saturn-card diagnostics: ZIP/ISO/BIN/CUE-style
+  virtual identities are retained only as payload-free diagnostics. Virtual
+  only candidates cannot launch; mixed direct/virtual candidates reject.
+  Verification: CTest `nexus_v1_saturn_card_discovery_launch` PASS; full
+  `firestaff` build PASS.
+
+- 2026-07-17 Nexus atomic Saturn-card boot binding: champion startup now
+  requires direct-card provenance, exact card FNV, nonzero package identity,
+  and current route epoch in one opaque receipt. Stale epoch, card/package
+  drift and virtual routing reject before startup. Verification: CTest
+  `nexus_v1_saturn_card_boot_binding` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus Structure1F raw provenance: parser-observed record offset,
+  length and FNV are retained with package identity and threaded into the
+  existing no-draw source packet. Package drift and out-of-bounds spans reject.
+  Verification: CTest `nexus_v1_structure1f_provenance` PASS; `firestaff_nexus`
+  build PASS.
+
+- 2026-07-17 Nexus Structure2 raw provenance: existing payload-anchor packets
+  now carry bounded descriptor offset/length/FNV and package identity; consumer
+  checks reject package drift and out-of-bounds spans. No codec, palette or
+  pixel decoding is admitted. Verification: CTest
+  `nexus_v1_structure2_provenance` PASS; `firestaff_nexus` and full
+  `firestaff` builds PASS.
+
+- 2026-07-17 Nexus Structure3 raw face provenance: package geometry packets
+  now retain bounded face offset/length/FNV and package identity; consumer
+  checks reject package drift and out-of-bounds spans. No PRS3, palette or
+  pixel decoder is admitted. Verification: CTest
+  `nexus_v1_structure3_provenance` PASS; `firestaff_nexus` and full
+  `firestaff` builds PASS.
+
+- 2026-07-17 Nexus Structure3 material-reference provenance: package geometry
+  packets now normalize descriptor FNV plus bounded image/palette offsets and
+  lengths from existing source targets. Consumer checks reject drift and
+  unbounded intervals; no PRS3/palette/pixel decoder is admitted. Verification:
+  CTest `nexus_v1_structure3_material_provenance` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus MENU.BPK launcher provenance gate: startup assets now retain
+  bounded archive/table metadata from the existing validated upload plan and
+  block the real menu route when it is absent or malformed. PRS3 decode remains
+  closed. Verification: CTest `nexus_v1_launcher_bpk_provenance_gate` PASS;
+  full `firestaff` build PASS.
+
+- 2026-07-17 Nexus MENU.BPK PRS3 no-draw presentation receipt: upload rows
+  now retain an FNV-1a value over their already bounded source payload, and the
+  validated receipt binds the selected entry index, offset, length, FNV, PRS3
+  version/pixel-count, and stream-header facts into the launcher/M11
+  presentation path. Hash drift, span overflow, header drift, non-PRS3 and any
+  draw-capable row reject; accepted evidence remains explicitly no-draw with no
+  decoder or emitted pixels. Verification: CTest
+  `nexus_v1_launcher_bpk_no_draw_presentation` and
+  `nexus_v1_launcher_bpk_provenance_gate` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus M11 MENU.BPK no-draw host lifecycle: the launcher now
+  admits the validated PRS3 presentation receipt only against the active
+  whole-package FNV and a monotonic route epoch, then carries it into the
+  actual full-start M11 host receipt as explicitly draw-disabled evidence.
+  Stale epochs, package drift and cross-entry presentation state reject; every
+  rejection clears prior host admission, while a later exact epoch may be
+  admitted again. PRS3 decode and rendering remain disabled. Verification:
+  CTest `nexus_v1_m11_bpk_no_draw_host` and
+  `nexus_v1_launcher_bpk_no_draw_presentation` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus PRS3 compression-descriptor provenance: each M11-eligible
+  MENU.BPK PRS3 row now carries the recognized raw mode byte, bounded opaque
+  post-header body offset/length/FNV, and header-declared pixel/output sizes.
+  The archive, launcher, and engine-owned host receipt compare the descriptor
+  exactly; unknown modes, malformed declarations, span overflow, and FNV
+  drift fail closed before M11. The receipt remains no-draw and explicitly
+  exposes neither a decoder nor pixels. Verification: CTest
+  `nexus_v1_launcher_bpk_no_draw_presentation` and
+  `nexus_v1_m11_bpk_no_draw_host` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus PRS3 per-entry M11 no-draw selection: the title/menu host
+  may now select any engine-owned verified PRS3 upload row rather than only
+  the archive's first anchor row. The archive anchor remains checked, while
+  the selected row's entry, payload, declared output, and opaque compressed
+  body descriptor must exactly match the engine cache. Body-FNV or declared
+  output drift clears the host route. No decoder, pixels, or draw promotion is
+  exposed. Verification: CTest `nexus_v1_launcher_bpk_no_draw_presentation`
+  and `nexus_v1_m11_bpk_no_draw_host` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus PRS3 transition-stable no-draw receipt: M11 host readiness
+  now re-finds its selected entry in the current engine upload cache and
+  rebuilds the complete presentation receipt before launcher or card-bound
+  startup consumption. A body-FNV, output declaration, entry, or payload
+  mismatch rejects stale row reuse even with the same package/card/epoch.
+  Focused host and card lifecycle tests retain draw-disabled, no-decoder, and
+  no-pixel invariants. Verification: CTest
+  `nexus_v1_launcher_bpk_no_draw_presentation`,
+  `nexus_v1_m11_bpk_no_draw_host`, and
+  `nexus_v1_saturn_card_m11_no_draw_startup` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus direct LEV source rehash admission: active DGN binding now
+  rechecks the selected ordinary `LEVxx.DGN` file's MD5, byte count, and
+  FNV-1a identity before it can feed the existing Structure1F/2/3 no-draw
+  chain or M11 admission. A post-discovery source mutation fails closed even
+  when the already loaded DGN buffer still matches the old receipt. No source
+  payload is retained, and no geometry, texture, decoder, or rendering claim
+  is added. Verification: CTest `nexus_v1_lev_corpus_discovery` and
+  `nexus_v1_saturn_card_m11_no_draw_startup` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus direct LEV header/Structure1F descriptor provenance: the
+  selected direct DGN route now derives its 20-byte container-header and
+  complete parser-counted Structure1F span directly from the bounded DGN
+  layout parser. M11 retains exact offsets, lengths, entry count, package FNV,
+  and raw span FNVs, tied to the existing direct-file rehash, card/package,
+  and route-epoch gates. Malformed pointers, source-size/package drift, and
+  stale saved descriptor FNVs reject before no-draw readiness. The spans stay
+  opaque: no mesh, texture, palette, pixel, decoder, or draw claim is added.
+  Verification: CTest `nexus_v1_lev_corpus_discovery` and
+  `nexus_v1_direct_static_material_capture` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus selected Structure1F M11 descriptor intake: direct-LEV
+  M11 admission now rebuilds the chosen parser-observed Structure1F record
+  and binds its entry index, bounded offset/length/FNV, route epoch, package
+  FNV, and raw Structure3 face/Structure2-envelope reference to the saved
+  no-draw receipt. Readiness rebuilds and compares that intake, so stale row
+  FNVs or offsets outside the parser-counted Structure1F table reject even if
+  card/package/epoch state otherwise matches. The face/mesh/material join is
+  opaque provenance only; it grants no mesh, texture, palette, pixel, decoder,
+  or rendering semantics. Verification: CTest
+  `nexus_v1_direct_static_material_capture` and
+  `nexus_v1_lev_corpus_discovery` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus Structure2/face descriptor M11 intake: a selected,
+  parser-bound static Structure1F row now also requires its exact Structure3
+  face and 20-byte Structure2 descriptor receipt at direct-LEV M11 admission.
+  The receipt binds face/descriptor offsets, lengths and FNVs, the bounded
+  image/palette candidate identities, DGN rehash/package identity, route
+  epoch, and the existing card/package launcher route. Readiness rebuilds and
+  compares the complete chain, rejecting stale Structure2 FNVs and face bounds
+  drift. Candidate intervals remain opaque capture windows: no texture, pixel,
+  palette, decoder, or draw promotion is granted. Verification: CTest
+  `nexus_v1_direct_static_material_capture` and
+  `nexus_v1_lev_corpus_discovery` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus M11 Structure2 face capture-replay intake: the admitted
+  direct-LEV Structure3 face/Structure2 descriptor chain can now emit a
+  payload-free, operator-only capture target and later consume an
+  original-Saturn replay observation without changing its source contract.
+  Target construction rehashes the ordinary LEV file and binds card, package,
+  epoch, DGN size/FNV, selected face/descriptor, and opaque candidate spans.
+  Replay intake rebuilds that target and accepts only matching trace, VDP1
+  command, texture-candidate and palette-candidate identities; candidate or
+  card drift rejects. The result remains no-draw with decoder, texture, pixel,
+  palette, and format semantics disabled. Verification: CTest
+  `nexus_v1_direct_static_material_capture` and
+  `nexus_v1_lev_corpus_discovery` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus external VDP1 capture-envelope admission: M11 can now
+  import a read-only original-Saturn VDP1 capture only through a fixed V1
+  envelope. The importer checks magic, version, exact header size, an
+  end-bounded opaque payload and its FNV, then rebuilds and matches the active
+  direct-LEV replay target: route epoch, package/card/DGN identities and size,
+  Structure3 face, Structure2 descriptor, and image/palette candidate FNVs.
+  Header, descriptor, payload-hash, or route drift rejects and produces only
+  the default no-draw receipt. The imported bytes are neither retained nor
+  decoded; VDP1 command, pixel, palette, texture, mesh, and rendering claims
+  remain disabled. Verification: CTest
+  `nexus_v1_direct_static_material_capture` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus local Mednafen VDP1 capture plan: added an operator-only
+  external launcher for the `NXSVDP1C` V1 capture envelope. It SHA-256
+  rechecks the selected local BIOS and original disc, selects the Mednafen
+  BIOS option only from an explicit `us`, `jp`, or `eu` region, and writes an
+  owner-only plan binding route epoch, package/card/DGN identities and size,
+  face/descriptor, and image/palette candidate FNVs. Dry-run never creates a
+  capture; `--launch` passes the same immutable route to a capture-capable
+  Mednafen through environment variables and fails unless that external
+  producer writes the V1 magic. BIOS, disc, and capture payload bytes are
+  never copied or committed, and no decoder/render permission is granted.
+  Verification: `nexus_v1_mednafen_vdp1_capture_launcher` PASS; full
+  `firestaff` build PASS.
+
+- 2026-07-17 Nexus M12/M11 VDP1 capture-required lifecycle: the local
+  BIOS/disc-bound plan is now consumed as an explicit launcher route rather
+  than an implicit missing asset. M12/M11 publishes `capture-required` with
+  no draw while the V1 envelope is absent, retaining the BIOS region and
+  SHA-256 identities plus the complete rehashed direct-LEV card/package/epoch,
+  DGN, face, descriptor and candidate target. Resumption rebuilds that target
+  and delegates to the strict V1 importer; a valid envelope yields only an
+  evidence-ready no-draw receipt, while card or route drift returns to the
+  capture-required state. No BIOS/disc/payload is retained, and decoder,
+  texture, palette, mesh, render, and fallback permissions remain false.
+  Verification: CTest `nexus_v1_direct_static_material_capture` and
+  `nexus_v1_mednafen_vdp1_capture_launcher` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus M11 SLEV task-body startup admission: a selected target
+  from the existing all-level SLEV task-body capture plan can now enter M11
+  only after its source-order original-trace fields match the active direct
+  SLEV identity and the pre-existing direct SAL/MAP/SDDRVS, card, package, and
+  epoch admission. Missing trace identity or a changed SLEV FNV rejects. The
+  receipt retains opaque entry/body/callback locations only and keeps script
+  dispatch, SFX playback, codec use, and fallback scripts disabled.
+  Verification: CTest `nexus_v1_saturn_card_m11_no_draw_startup` and
+  `nexus_v1_slev_task_body_capture_plan` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus M11 SLEV-to-SAL/SDDRVS no-op startup binding: M11 now
+  joins an admitted opaque SLEV task-body target to an existing bounded SAL
+  container receipt, SNDLEV MAP table receipt, and direct SDDRVS identity.
+  An explicit original-trace binding must repeat the task-trace, SAL
+  descriptor, MAP table, and driver FNVs alongside the active direct
+  SLEV/SAL/card/package/epoch route. Table or descriptor FNV drift rejects.
+  The result is deliberately no-op and no-draw: SLEV commands, MAP selectors,
+  SAL payloads, SDDRVS ABI, codec use, playback, script dispatch, and fallback
+  behavior remain disabled. Verification: CTest
+  `nexus_v1_saturn_card_m11_no_draw_startup`,
+  `nexus_v1_sal_container_provenance`, and
+  `nexus_v1_sndlev_map_provenance` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus external SLEV/SAL command-capture intake: M11 now accepts
+  an external `NXSLSC01` V1 envelope only after fixed magic/version/header,
+  exact end-bounded opaque payload and payload FNV, and a live match to the
+  admitted task-to-SAL no-op route. The header repeats route epoch,
+  package/card, SLEV task-trace and source FNV, SAL descriptor, MAP table, and
+  SDDRVS FNVs; a changed MAP identity or payload hash rejects. Imported bytes
+  are not retained or parsed, and dispatch, playback, codec use, selector/event
+  meaning, fallback scripts, and draw remain disabled. Verification: CTest
+  `nexus_v1_saturn_card_m11_no_draw_startup`,
+  `nexus_v1_slev_task_body_capture_plan`,
+  `nexus_v1_sal_container_provenance`, and
+  `nexus_v1_sndlev_map_provenance` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus M12/M11 `NXSLSC01` capture-required/resume route: the
+  existing no-op SLEV-to-SAL startup receipt can now enter an operator-only
+  capture-required state with explicit BIOS region/SHA-256 and disc SHA-256.
+  Resume re-admits the live direct SLEV/SAL/MAP/SDDRVS, card, package, and
+  epoch route before importing the fixed V1 capture envelope; task/MAP drift
+  invalidates the route. The local Mednafen plan emits only a hash-bound
+  manifest and launch environment for a capture-capable external producer. It
+  neither copies BIOS/disc bytes nor generates/retains payload data. Commands,
+  audio, decoder, playback, draw, and fallback remain disabled. Verification:
+  CTest `nexus_v1_saturn_card_m11_no_draw_startup`,
+  `nexus_v1_slev_task_body_capture_plan`, `nexus_v1_sal_container_provenance`,
+  `nexus_v1_sndlev_map_provenance`, and
+  `nexus_v1_mednafen_slev_sal_capture_launcher` PASS; full `firestaff` build
+  PASS.
+
+- 2026-07-17 Nexus M11 Structure3 topology-descriptor intake: the selected
+  direct-LEV Structure1F route now rederives its documented Structure3b face
+  framing, bounded entry-local vertex table, ordered referenced-vertex-row
+  fingerprint, and paired normal row before no-draw admission. The receipt is
+  bound to level, route epoch, package FNV, selected Structure1F row, exact
+  face span, and all derived offsets/lengths/FNVs; vertex-row drift and an
+  out-of-bounds vertex table reject. It is capture-required only and does not
+  promote mesh topology to a surface, winding, transform, material, texture,
+  palette, VDP1, decoder, or draw claim. Verification: focused
+  `nexus_v1_direct_static_material_capture` CTest is skip-safe without local
+  retail corpus; full `firestaff` build PASS.
+
+- 2026-07-17 Nexus `NXS3TOP1` external Structure3 topology-capture import:
+  the launcher now emits an immutable replay target only after it rehashes
+  the active direct LEV and rederives the admitted Structure1F/Structure3
+  face, vertex-table, referenced-vertex, and paired-normal provenance. The
+  importer accepts only the fixed V1 header, exact level/card/package/epoch
+  and span/FNV bindings, plus a bounded opaque payload with a matching FNV.
+  It retains no payload and remains capture-required/no-draw: it grants no
+  topology semantics, mesh, transform, texture, palette, VDP1, decoder, or
+  rendering claim. Verification: focused CTest
+  `nexus_v1_direct_static_material_capture` PASS (1/1); full `firestaff`
+  build PASS; `git diff --check` PASS. No retail topology capture is claimed.
+
+- 2026-07-17 Nexus operator-only `NXS3TOP1` Mednafen launch plan and
+  M12/M11 lifecycle: the local plan accepts only an executable plus ordinary
+  SHA-256-verified BIOS and original-disc files, a selected BIOS region, and
+  the exact rehashed direct-LEV/Structure1F/Structure3/card/package/epoch
+  topology target. It writes a deterministic external launch manifest, does
+  not copy or retain media or payload bytes, and requires explicit
+  `--operator-only --launch` before invoking Mednafen. The matching M12/M11
+  receipt remains capture-required/no-draw until `NXS3TOP1` is re-imported
+  through the existing bounded opaque importer; card-route drift rejects the
+  resume. No topology, mesh, pixel, palette, VDP1, decoder, or renderer claim
+  is promoted. Verification: CTest
+  `nexus_v1_direct_static_material_capture` and
+  `nexus_v1_mednafen_structure3_topology_capture_launcher` PASS (2/2); full
+  `firestaff` build PASS; `git diff --check` PASS.
+
+- 2026-07-17 Nexus `NXS3TOP1` local artifact verifier/import bridge: a
+  read-only local verifier now compares a plan's SHA-256 BIOS/disc identities
+  and all fixed V1 LEV/Structure1F/face/vertex/normal header metadata before
+  accepting an artifact for the live route. The engine-side preflight repeats
+  those BIOS, disc, LEV, face, vertex, normal, payload-bound, and payload-FNV
+  checks before delegating to the existing opaque importer; any drift retains
+  the capture-required/no-draw route. It retains no payload and promotes no
+  topology, mesh, pixel, palette, VDP1, decoder, or renderer semantics.
+  Verification: CTest `nexus_v1_direct_static_material_capture`,
+  `nexus_v1_mednafen_structure3_topology_capture_launcher`, and
+  `nexus_v1_verify_structure3_topology_capture_artifact` PASS (3/3); full
+  `firestaff` build PASS; `git diff --check` PASS. No retail artifact is
+  claimed.
+
+- 2026-07-17 Nexus `NXSVDP1C` Structure2/Structure3 material local artifact
+  verifier/import bridge: local verification now binds the existing Mednafen
+  plan's SHA-256 BIOS/disc identity to fixed V1 DGN/route, face, descriptor,
+  image/palette candidate, opaque payload, and nonempty trace/VDP1-command
+  witnesses. The M12/M11 bridge repeats those checks before it invokes the
+  existing opaque VDP1 importer; BIOS, card-route, or candidate drift retains
+  the capture-required/no-draw route. No payload is retained and no PRS3,
+  pixel, palette, VDP1 command, decoder, or rendering semantics are claimed.
+  Verification: CTest `nexus_v1_direct_static_material_capture`,
+  `nexus_v1_mednafen_vdp1_capture_launcher`,
+  `nexus_v1_verify_structure3_topology_capture_artifact`, and
+  `nexus_v1_verify_vdp1_capture_artifact` PASS (4/4); full `firestaff` build
+  PASS; `git diff --check` PASS. No retail material artifact is claimed.
+
+- 2026-07-17 Nexus `NXSPRS3M` MENU.BPK PRS3 material-capture preflight: the
+  new local verifier accepts only a fixed V1 envelope whose card, package,
+  epoch, selected entry, bounded compressed-body offset/length/FNV, and
+  declared-output byte count exactly match the existing M11 no-draw MENU.BPK
+  receipt. Payload bounds/FNV plus nonempty opaque trace witnesses are
+  required, but no payload is retained or decoded. Entry, body, output, and
+  card-route drift reject without promoting PRS3, Structure2 material, pixel,
+  palette, VDP1, decoder, or rendering behavior. Verification: CTest
+  `nexus_v1_prs3_material_local_artifact` and
+  `nexus_v1_verify_prs3_material_capture_artifact` PASS (2/2); full
+  `firestaff` build PASS; `git diff --check` PASS. No retail PRS3 artifact is
+  claimed.
+
+- 2026-07-17 Nexus operator-only `NXSPRS3M` Mednafen capture plan and
+  M12/M11 lifecycle: the local plan requires SHA-256-verified BIOS and disc,
+  then binds MENU.BPK package, card/epoch, entry, compressed body, and
+  declared-output metadata into a deterministic external manifest. M12/M11
+  publishes only a capture-required/no-draw receipt and resumes solely after
+  the existing local opaque-artifact preflight revalidates the same route.
+  No media or payload is retained, and no PRS3 decoder, pixels, palette,
+  Structure2 material semantics, or rendering is promoted. Verification:
+  CTest `nexus_v1_prs3_material_local_artifact`,
+  `nexus_v1_verify_prs3_material_capture_artifact`, and
+  `nexus_v1_mednafen_prs3_material_capture_launcher` PASS (3/3); full
+  `firestaff` build PASS; `git diff --check` PASS. No retail artifact claimed.
+
+- 2026-07-17 Nexus Saturn-card/M11 atomic champion-start binding: the direct
+  opaque 8 KiB card receipt and active M11 MENU.BPK PRS3 no-draw host receipt
+  now form one launcher-owned startup receipt. Both require the same package
+  FNV and route epoch; cross-package title/card state, stale host/card epochs
+  and card drift reject before the direct-card champion route is marked ready.
+  The card remains opaque and the M11 side remains draw-disabled with no PRS3
+  decoder. Verification: CTest `nexus_v1_saturn_card_m11_no_draw_startup`,
+  `nexus_v1_m11_bpk_no_draw_host`, and
+  `nexus_v1_launcher_saturn_card_startup` PASS; full `firestaff` build PASS.
+
+- 2026-07-17 DM1 original-save C-event handoff: C2 champion `ActionIndex`
+  and `PoisonEventCount` now round-trip through F0435/F0802/F0796 with PC34
+  byte-width validation. C25 explosion and C29 group-reaction exports are
+  source-receipt-only; malformed, synthetic, source-byte, and runtime-drift
+  states reject. The C05/C06/C07/C08/C09/C10 and C02 source-square fixtures
+  now isolate their target event with authenticated C70 queue peers.
+  Verification: `test_dm1_v1_original_save_pc34_handoff` PASS.
+
+- 2026-07-17 DM1 C2 PARTY_INFO Event71 ownership: F0435 imports byte 86
+  `Event71Count_Invisibility` into both runtime mirrors, and F0802 preserves
+  it as a range-checked source byte. The C71 regression proves authenticated
+  source materialization; `test_dm1_v1_original_save_pc34_handoff` PASS.
+
+- 2026-07-17 CSB F0435 native-save provenance: the original-save runtime
+  receipt retains the validated raw-header FNV-1a, active verified Dungeon.dat
+  MD5, and their composed source identity. A read-only verifier rereads the
+  native header and rejects FNV, Dungeon, or composed-identity drift without
+  loading or mutating runtime state. The door-to-HUD handoff fixture now also
+  declares the complete C001/C002/C003/C004/C017/C040 surface contract, so
+  the terminal pose reaches HUD only through the same full-session gate.
+  Verification: CTest `csb_v1_startup_package_identity_pc34` PASS (with
+  explicit absent-corpus SKIP); isolated `firestaff` build PASS; `git diff
+  --check` PASS.
+
+- 2026-07-17 CSB TITLE.C source-step capture: visual startup capture now uses
+  coherent title frame/source-step pairs: PRESENTS 59/1, CHAOS 60/2, full
+  CHAOS 77/19, held CHAOS 79/21, and STRIKES 100/22. The focused package
+  identity test locks those boundaries and verifies title capture through the
+  existing real-package receipt path. Verification: CTest
+  `csb_v1_startup_package_identity_pc34` PASS; `test_csb_v1_boot_runtime_handoff`
+  now passes the visual-sequence assertion (458 pass, 10 unrelated remaining);
+  full `firestaff` build and `git diff --check` PASS.
+
+- 2026-07-17 CSB TITLE.C presentation receipt: the boot route receipt and
+  focused package-capture regression now agree on the source-owned 20-tick
+  CHAOS zoom span. This removes the stale 18-tick expectation without opening
+  an inferred title, entrance, HUD, or door route. Verification: CTest
+  `csb_v1_startup_package_identity_pc34` PASS; handoff title-source-lock
+  assertion PASS (459 pass, 9 unrelated remaining); full `firestaff` build
+  and `git diff --check` PASS.
+
+- 2026-07-17 CSB TITLE.C CHAOS-hold receipt: the full CHAOS capture is bound
+  to frame 77/source step 19, and the hold tick is derived from that source
+  step rather than a stale frame offset. The focused package test verifies the
+  render-view hold classification and two-tick receipt span. Verification:
+  CTest `csb_v1_startup_package_identity_pc34` PASS; handoff CHAOS-hold
+  assertion PASS (460 pass, 8 unrelated remaining); full `firestaff` build
+  and `git diff --check` PASS.
+
+- 2026-07-17 CSB TITLE.C STRIKES receipt: the render-view receipt now binds
+  STRIKES to the source-owned frame 80/step 21 transition, with phase tick
+  derived from that source-step boundary. The focused package test covers the
+  resulting one-tick STRIKES receipt. Verification: CTest
+  `csb_v1_startup_package_identity_pc34` PASS; handoff STRIKES assertion PASS
+  (461 pass, 7 unrelated remaining); full `firestaff` build and `git diff
+  --check` PASS.
+
+- 2026-07-17 CSB ENTRANCE.C pointer handoff: `begin_door_opening` now
+  publishes source-owned pre-open delay as opening step 0, leaving C002/C003
+  frame ownership for the later animation state. The focused regression locks
+  that boundary; pointer action, host-input dispatch, post-input door render,
+  and redraw receipts all pass through the same state. Verification: CTest
+  `csb_v1_startup_package_identity_pc34` PASS; handoff pointer assertion PASS
+  (465 pass, 3 MD5-scan failures remaining); full `firestaff` build and `git
+  diff --check` PASS.
+
+- 2026-07-17 CSB startup graphics-MD5 receipt invalidation: a changed graphics
+  proof now atomically clears the retained startup receipt hash and hex form,
+  preventing stale package identity from reaching session admission. The
+  focused receipt regression covers this exact drift. Verification: CTest
+  `csb_v1_startup_package_identity_pc34` PASS; handoff graphics-MD5 assertion
+  PASS (three later Dungeon/re-admission assertions remain); full `firestaff`
+  build and `git diff --check` PASS.
+
+- 2026-07-17 CSB startup Dungeon/re-admission boundary: metadata drift now
+  marks a startup receipt emission invalidated, so restoring MD5 fields in
+  place cannot republish its identity. A separate scanner/profile snapshot is
+  required to issue the original verified pair anew. Focused coverage proves
+  Dungeon drift, rejected in-place repair, and fresh reissue; the full CSB
+  handoff fixture is green. Verification: CTest
+  `csb_v1_startup_package_identity_pc34` PASS; `test_csb_v1_boot_runtime_handoff`
+  PASS (469 assertions); full `firestaff` build and `git diff --check` PASS.
+# Nexus multi-level direct-LEV capture-plan gate (2026-07-17)
+
+- The operator-only multi-level capture launcher now requires a valid,
+  direct-file-only LEV00--LEV15 discovery receipt and exact per-level DGN FNV
+  agreement before emitting a capture job. The receipt retains identities
+  only; it does not materialize LEV payloads, decode graphics, or enable draw.
+  Focused launcher coverage and the full `firestaff` build are green.
+
+# Nexus direct SLEV/SAL no-runtime launch provenance (2026-07-17)
+
+- Nexus now discovers only direct, hash-verified `SLEV00`--`SLEV15`,
+  `SNDLEV` SAL/MAP, and `SDDRVS.TSK` files and retains path, size, MD5, and
+  FNV identity only. M11 accepts an active-level receipt only when those
+  identities match its current auxiliary sources and the active card/MENU.BPK
+  route epoch. Missing, mixed, stale, and cross-level inputs fail closed;
+  script dispatch and SFX playback remain blocked. Focused discovery and M11
+  lifecycle CTests plus the full `firestaff` build are green.
+
+# Nexus direct SDDRVS dungeon admission (2026-07-17)
+
+- M11 dungeon admission can now carry a direct, hash-verified `SDDRVS.TSK`
+  identity only when the existing direct-LEV, card, MENU.BPK package, route
+  epoch, and active level-aux receipts still agree. The driver file is
+  rehashed and FNV/size-checked at consumption, so missing or mutated bytes
+  invalidate the prior discovery receipt. This remains no-draw and
+  no-dispatch: it does not parse SDDRVS, execute scripts, decode audio, or
+  play sound. Focused stale/mutated/missing coverage and the full `firestaff`
+  build are green.
+
+# Nexus direct SAL/SLEV dungeon admission (2026-07-17)
+
+- M11 can now retain one no-draw dungeon receipt for a level-local direct
+  SLEV/SAL/MAP identity only when its direct LEV, card, MENU.BPK package,
+  epoch, and active auxiliary receipt agree. Every direct asset is rehashed
+  and checked against its stored size/FNV at consumption; missing, mutated,
+  and stale identities fail closed. The route still blocks script dispatch,
+  codec promotion, and SFX playback. Focused fixture coverage and the full
+  `firestaff` build are green.
+
+# Nexus direct SAL container provenance (2026-07-17)
+
+- Direct SAL consumption now accepts only the source-backed `dsp01.EX`
+  preamble, exact full-file FNV/size, and one bounded opaque payload interval
+  with its own FNV. M11 SAL/SLEV dungeon admission requires that receipt and
+  rejects malformed headers, source drift, and empty/out-of-bounds intervals.
+  No codec, sample format, decode, or playback is implied. Focused container
+  CTests, the full `firestaff` build, and `git diff --check` are green.
+
+# Nexus direct SNDLEV MAP table provenance (2026-07-17)
+
+- Direct MAP consumption now requires exact source FNV/size, its documented
+  24-byte opaque header, bounded 8-byte row table, and `ff ff` terminator.
+  M11's SAL/SLEV dungeon receipt requires this no-playback provenance beside
+  the direct SAL container receipt; malformed, unterminated, or drifted maps
+  fail closed. No selector/event meaning, codec, or playback was added.
+  Focused parser coverage, full `firestaff`, and `git diff --check` are green.
+
+# Nexus M11 SNDLEV MAP row no-playback route (2026-07-17)
+
+- M11 now admits a selected opaque MAP row only after it rehashes the direct
+  MAP source and exactly binds the row index, offset, fixed length, row FNV,
+  table FNV, level, package, card, and route epoch to the existing no-draw
+  dungeon receipt. Mutated/stale sources and rows outside the bounded table
+  reject. This does not interpret MAP selector/event bytes or permit codec
+  promotion, script dispatch, or audio playback. Focused MAP provenance
+  CTests and the full `firestaff` build are green.
+
+# CSB M11 F0435 F9 provenance (2026-07-17)
+
+- Native F9 reload now publishes an immutable F0435 header/Dungeon receipt
+  and rechecks it before each CSB runtime tick. A corrupted native-header
+  candidate is rejected rather than falling through to CSBWin; CSBWin stays
+  available only through its own classifier/import receipt. Verification:
+  corpus-backed `csb_v1_m11_f0435_f9_reload` PASS;
+  `csb_v1_boot_runtime_handoff` PASS (469 assertions); isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSB F0437 M11 title-prelude boundary (2026-07-17)
+
+- M11's first title presentation tick already owns frame 1. The resume gate
+  now advances only the remaining PRESENTS ticks before requiring F0437 frame
+  60/source step 2 for CHAOS zoom. The focused F9 provenance CTest remains
+  green, and the broad resume gate no longer reports the title-prelude or
+  CSBWin F9 failures; 15 independent entrance, utility, HUD, and timer
+  assertions remain.
+
+# CSB F0806 entrance door-finish boundary (2026-07-17)
+
+- The M11 resume helper now drives ReDMCSB's 20 delay ticks, all 31 C002/C003
+  door steps, and the final source tick that emits `door_opening_finished`.
+  Entrance dismissal and terminal HUD handoff now pass in the broad resume
+  gate. Isolated `firestaff` build and `git diff --check` pass; eight separate
+  utility-overlay, draw-plan, and CSBWin-timer assertions remain.
+
+# CSB M11 utility startup-raster capture admission (2026-07-17)
+
+- The ENTRANCE.C utility/HUD-menu render plan is now admission evidence only:
+  M11 presents the existing source-owned startup raster only while the
+  hash-verified startup package and release-capture identities match the
+  active session. Missing, stale, or mismatched package/capture receipts leave
+  the page no-draw; the old generated text/panel renderer remains unused.
+  `csb_v1_m11_utility_capture_admission` covers a real CSB boot plus DM1
+  utility route, current raster admission, stale capture rejection, package
+  mismatch rejection, and missing-capture rejection. Verification: focused
+  CTest PASS; `firestaff` build and `git diff --check` PASS. The broad resume
+  gate now has only the independent CSBgraphics-plan, custom-background-mask,
+  and CSBWin-timer assertions remaining.
+
+# CSB M11 CSBgraphics declaration capture boundary (2026-07-17)
+
+- The resume-gate viewport regression no longer treats a synthetic,
+  cache-replaced runtime-plan entry as presentation material. M11 retains the
+  direct source viewport when an entry lacks the operator-owned live-frame
+  declaration and verified capture identity; no broad plan loop, fallback
+  pixels, or generated surface is permitted. Positive structural coverage of
+  the declaration, palette, source path/MD5, frame/door identity, and raster
+  consumer remains in `csb_v1_csbgraphics_runtime_plan`. Verification:
+  focused CTest PASS; resume gate now has only the independent
+  custom-background-mask and CSBWin timer-queue failures; `firestaff` and
+  `git diff --check` PASS.
+
+# CSB M11 custom-background mask provenance (2026-07-17)
+
+- Boot now hands a CSBWin `pSkinDef` bitmap/mask plan to the F0128 viewport
+  only when its cache path and MD5 equal the profile's hash-verified
+  GRAPHICS.DAT and the palette-source receipt is current. A replaced cache,
+  missing palette evidence, or stale identity leaves the custom background
+  no-draw; M11 continues with the authenticated base viewport and does not
+  synthesize a raster. Regression coverage stages an unproven bitmap/mask pair
+  in the resume gate and requires no framebuffer change, while
+  `csb_v1_csbgraphics_runtime_plan` retains the focused declared-plan/mask
+  coverage. Verification: focused CTest PASS; resume gate now has only the
+  independent CSBWin timer-queue failure; `firestaff` and `git diff --check`
+  PASS.
+
+# CSBWin active timer-queue M11 handoff (2026-07-17)
+
+- M11 resume coverage now follows CSBWin `GAMEBLOCK2.NumTimer`, not the
+  serialized TimerQueue storage capacity. The verified fixture retains only
+  its two active queue slots in source order, with `timeline_queue.gameTick`
+  equal to the restored save tick; the third stored slot remains inactive.
+  `csb_v1_m11_csbwin_timer_queue_resume` verifies that atomic valid handoff
+  and rejects a checksum-corrupt queue before M11 publishes a session. The
+  full `csb_v1_m11_startup_resume_gate` is now green. Verification: both
+  focused CTests PASS; isolated `firestaff` build and `git diff --check`
+  PASS.
+
+# CSB D3L2/D3R2 G0693 runtime material-plan admission (2026-07-17)
+
+- The M11-bound first-frame material plan can now carry the real far-side
+  ReDMCSB `F0676/F0677` D3L2/D3R2 F0111 door pair when both routes share one
+  verified `GRAPHICS.DAT` G0693 payload receipt. The pair preserves the
+  source order ahead of D2, separate C3700/C3710 clips (24/88, 28, 48x40),
+  C10 transparency, path/hash provenance and distinct route identities. A
+  lone D3 route, zero side hash, source mismatch, or incomplete material
+  receipt remains no-draw and cannot perturb the established D0/D1/D2 plan.
+  Verification: `csb_v1_viewport_first_frame_materialization_pc34_compat`
+  and `csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat` PASS with the local
+  `GRAPHICS.DAT`; isolated `firestaff` build and `git diff --check` PASS.
+
+# CSB D2C G0694 first-frame capture admission (2026-07-17)
+
+- The required D2C `F0121 -> F0111` first-frame command now consumes a
+  value-owned receipt for original `GRAPHICS.DAT` G0694 rather than trusting
+  its payload FNV alone. Admission requires the real-graphics/no-synthetic/
+  no-fallback flags, G0694 item identity, nonempty source span and matching
+  FNV, plus ReDMCSB C3760, 64x61 and C10 route facts. Missing or mixed capture
+  evidence rejects the complete material plan and leaves the raster no-draw.
+  Verification: `csb_v1_viewport_first_frame_materialization_pc34_compat`,
+  `csb_v1_viewport_d2c_f0111_door_front_pc34_compat`, and
+  `csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat` PASS with the local
+  `GRAPHICS.DAT`; isolated `firestaff` build and `git diff --check` PASS.
+
+# CSB D2C/D3 decoded-span capture intake (2026-07-17)
+
+- First-frame material binding now requires a source-owned D2/D3 capture
+  receipt before any raster consumption. The receipt repeats one original
+  GRAPHICS.DAT path/MD5, exact palette capture FNV and nonzero capture
+  identity, then binds G0694's 64x61 decoded span to D2C and, when the far
+  pair is planned, one G0693 48x41 decoded span to both D3 routes. Every
+  span's pointer, length and FNV must equal both the receipt and the matching
+  plan command. Missing or mutated palette/source/span evidence rejects before
+  rasterization. This is provenance intake only: it creates no decoder,
+  palette, pixels or fallback image. Verification:
+  `csb_v1_viewport_first_frame_materialization_pc34_compat`,
+  `csb_v1_viewport_d2c_f0111_door_front_pc34_compat`, and
+  `csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat` PASS; isolated
+  `firestaff` build and `git diff --check` PASS.
+
+# CSB G0693/G0694 F0488 native-span expansion (2026-07-17)
+
+- Added the source-bounded F0489-to-F0488 viewport step for D2C/D3 door
+  material. A capture must identify original GRAPHICS.DAT and its palette by
+  matching path/MD5/FNV facts, retain the route receipt's raw G0694/G0693
+  payload identity and provide exactly 32x61 or 24x41 native packed bytes.
+  The adapter expands only the proven 4bpp high/low-nibble layout into 64x61
+  and 48x41 indexed spans, records distinct decoded FNVs and binds those to
+  the already admitted D2/D3 plan before rasterization. No direct mapping from
+  a G0693/G0694 native bitmap index to a GRAPHICS.DAT entry was assumed.
+  Truncated native spans, palette mutation, source drift and absent D3 data
+  reject; raster also rechecks the retained capture identity and decoded FNVs
+  so post-bind span mutation is no-draw. Verification:
+  `csb_v1_viewport_first_frame_materialization_pc34_compat`,
+  `csb_v1_viewport_d2c_f0111_door_front_pc34_compat`, and
+  `csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat` PASS; isolated
+  `firestaff` build and `git diff --check` PASS.
+
+# CSB G0693/G0694 GRAPHICS.DAT table-provenance gate (2026-07-17)
+
+- Reviewed the available ReDMCSB/CSBWin route evidence and did not find an
+  original table that equates F0489's native bitmap cache indices G0693/G0694
+  with a direct GRAPHICS.DAT entry number. The viewport now admits only the
+  bounded original big-endian `0x8001` header plus compressed/decompressed
+  entry-table span, records its FNV/path/MD5/native-index provenance, and
+  explicitly marks the native-to-entry mapping unproven. F0489/F0488 accepts
+  neither that receipt nor any inferred index, so it publishes no decoded
+  span and the D2/D3 raster remains no-draw. This preserves the already
+  source-attested decoded-span consumer while closing the unsupported native
+  decode path. Verification:
+  `csb_v1_viewport_first_frame_materialization_pc34_compat`,
+  `csb_v1_viewport_d2c_f0111_door_front_pc34_compat`, and
+  `csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat` PASS with the local
+  `GRAPHICS.DAT`; isolated `firestaff` build and `git diff --check` PASS.
+
+# CSBWin DSA restored-TIMER owner receipt (2026-07-17)
+
+- Tightened the existing checksum-bound DSA/save runtime handoff with an
+  immutable per-execution TIMER owner receipt. The receipt now binds the
+  original TimerQueue slot and TIMER index to the exact CSBWin Timer.cpp
+  function, saved action/position bytes, target location, concrete type-47
+  actuator location, and already authenticated DSA action. Currentness
+  rebuilds that owner selection under the existing save, Dungeon.dat, startup
+  session and runtime-tick handoff before M11 may commit the outcome. Any
+  function/action/slot/location/action-selection drift rejects without rerun
+  or mutation. Unknown opcode bodies remain blocked by the existing source
+  verifier; no wrapper, timer synthesis, or new DSA semantics were added.
+  Verification: `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA MESSAGE queue transaction (2026-07-17)
+
+- Tightened the source-proven `DSACMD_MESSAGE`, `MESSAGE32`, and
+  `DESSAGE32` execution family around CSBWin DSA.cpp's
+  `QueueDSASwitchAction` boundary. Decoded message operands now remain a
+  bounded pending request until the entire checksum-authenticated DSA action
+  accepts; only then can the existing runtime queue owner publish its source
+  timer event. A following unowned opcode leaves the queue unchanged. This
+  retains the original M/D route, delay, action and target operands without
+  inventing an event, target-room mapping, wrapper, or general interpreter.
+  Verification: `csb_v1_dsa_pure_control_pc34_compat` and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA COPYTELEPORTER transaction (2026-07-17)
+
+- Made source-proven `DSACMD_COPYTELEPORTER` and `COPYTELEPORTER32` atomic
+  with the rest of an authenticated DSA action. The exact decoded source and
+  destination location operands now remain pending until all later action
+  words accept, then invoke only the existing runtime DB1/CELLFLAG copy
+  owner. A later rejected or unowned opcode cannot leave a partial dungeon or
+  save-runtime mutation. Missing owner data, unknown actions and unsupported
+  opcode bodies remain closed; no teleporter, cell, link or event is created.
+  Verification: `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA DB3 COPY runtime transaction (2026-07-17)
+
+- Tightened source-proven `STKOP_Copy` (DSA.cpp:4696-4721) at the live
+  runtime boundary. A new optional owner callback receives the staged source
+  and destination Things together, re-resolves both as complete DB3 records,
+  and requires the current source bytes to equal the staged six-byte image
+  before writing the destination. The regular runtime path uses that callback
+  inside its existing candidate Dungeon/save transaction, so source drift,
+  wrong type, unavailable owner, or a later unknown opcode cannot publish a
+  partial mutation. Pure stack consumers retain the existing staged fallback;
+  no generic copy API, timer event, wrapper, or synthetic action was added.
+  Verification: `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA GeneratorDelayStore owner transaction (2026-07-17)
+
+- Tightened `STKOP_GeneratorDelayStore` (DSA.cpp:2876-2915) at its DB3
+  runtime boundary. Its pending request now retains the source
+  GeneratorDelay@ value, and the candidate runtime re-reads the same loaded
+  type-6 generator or source-defined type-0 fallback before committing the
+  byte-eight delay. A changed/missing owner or a following unknown opcode
+  leaves the candidate and live Dungeon unchanged. This reuses the existing
+  save/runtime candidate handoff only; it creates no generator, timer, queue
+  event, wrapper or inferred opcode behavior. Verification:
+  `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA MissileInfoStore DB14/TIMER transaction (2026-07-17)
+
+- Tightened `STKOP_MissileInfoStore` (DSA.cpp:2824-2846) around its paired
+  DB14 and TIMER ownership. The action now retains the original four-value
+  DB14/TIMER image before applying stack operands. Candidate commit re-reads
+  that exact image, then uses the existing strict runtime path that confirms
+  the serialized TIMER is valid and represented by exactly one active queue
+  event before updating DB14 and TIMER direction together. Stale/mixed DB14,
+  TIMER or queue evidence and later unknown actions remain non-mutating. No
+  missile, timer, event, wrapper or inferred opcode behavior was added.
+  Verification: `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA MissileInfoStore runtime receipt (2026-07-17)
+
+- Extended the source-owned `STKOP_MissileInfoStore` receipt after its
+  existing atomic DB14/TIMER commit. It now records the concrete DB14 Thing
+  and all four source words before and after mutation; a saved dispatch adds
+  the already strict unique TimerQueue/TIMER scope only after that receipt is
+  complete. The regression locks the original DB14 range/damage/direction
+  image, the committed image, and the fail-closed stale-owner behavior. No
+  generic missile, queue, timer, or opcode interpreter route was introduced.
+  Verification: `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_dsa_queued_localstate2_timer`,
+  `csb_v1_dsa_copy_runtime_handoff`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA DB14/TIMER owner receipt (2026-07-17)
+
+- Hardened `STKOP_MissileInfoStore` publication with its separate DB14-linked
+  TIMER owner. The candidate must preserve the DB14 timer index and one
+  identical serialized TimerQueue slot while revalidating TIMER function,
+  time, and the raw position byte before/after direction mutation. The
+  execution receipt now carries those facts alongside the existing DB14
+  Thing and four-word images. Missing, duplicate, reordered, stale, or mixed
+  owner data rejects before live Dungeon or receipt publication. This adds no
+  timer body, missile route, queue synthesis, or fallback opcode behavior.
+  Verification: `csb_v1_dsa_localstate1_save_handoff`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_dsa_queued_localstate2_timer`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA ModifyMessage timer-scope receipt (2026-07-17)
+
+- Bound `STKOP_ModifyMessage` (DSA.cpp:4931-4947) to the authenticated
+  runtime execution receipt. Its source-clamped SET/CLEAR/TOGGLE triplet is
+  now exposed only when the existing timer-scope runner has completed a
+  verified action; callers cannot fabricate the values through a generic
+  timer, queue, or save field. The triplet remains transient and does not
+  mutate a TIMER or serialize a replacement save. Verification:
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin DSA ModifyMessage saved-timer receipt (2026-07-17)
+
+- Connected the existing `STKOP_ModifyMessage` effect to the real restored
+  `ProcessTimers` handoff. Each admitted saved-timer dispatch starts with
+  CSBWin's source 0/1/2 SET/CLEAR/TOGGLE map; a completed DSA action may
+  publish its clamped map only alongside the revalidated queue slot, TIMER
+  index, function, action, position, time, and authenticated DSA identity.
+  Failed or stale queue input clears the transient execution receipt. This
+  remains an observational runtime receipt: it creates neither a queue nor a
+  serialized timer and does not infer any unknown opcode body. Verification:
+  `csb_v1_dsa_queued_localstate2_timer`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# ✅ 2026-07-17 DM1 GROUP F0190/F0197-F0200 live C04 LoS admission
+
+M11's live group tick now enters the ReDMCSB `GROUP.C` sight/movement path
+only after the raw C04 record still equals its decoded group, the loaded
+source Thing chain owns that exact group on the claimed square, and any live
+active-group AI position agrees. It runs F0200 through the existing F0197-
+F0199 loaded-DUNGEON route callback, preserving the source RNG order, before
+projectile or movement handling. A successful raw-chain move updates the
+matching active-group AI position atomically; C04 identity, AI-coordinate,
+or route-tile drift rejects before mutation or render. C3/C4 door records
+remain source-opaque until an authenticated DoorInfo see-through receipt is
+available. Verification: `dm1_v1_f0190_c040_m11_integration_audit`,
+`dm1_v1_f0190_moving_killed_all_tick_boundary_pc34_compat`,
+`dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat`,
+`dm1_v1_f0190_killed_all_runtime_cleanup_pc34_compat`,
+`m11_creature_fixed_possession_runtime_source_lock`, and
+`m11_creature_projectile_runtime_source_lock` PASS; `firestaff` Ninja build
+and `git diff --check` PASS.
+
+# CSBWin queued LocalState=1 save-transition receipt (2026-07-17)
+
+- Aligned the LocalState=1 save handoff with the imported CSBWin DSA record:
+  `m_state`, `m_localState`, `m_groupID`, and `m_stateCount` are four
+  source words, not the obsolete two-byte state plus byte flags layout. The
+  RCS-validated candidate now writes only the source `m_state` word and the
+  execution receipt records its before/after state and post-write tail FNV.
+  A queued restored timer adds its exact queue slot, TIMER index, time and
+  authenticated DSA action identity to that receipt. Corrupt RCS or stale
+  queue evidence publishes neither a state transition nor a receipt. No
+  generic state machine, queue, or synthesized save was added. Verification:
+  `csb_v1_dsa_localstate1_save_handoff`,
+  `csb_v1_dsa_queued_localstate2_timer`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin queued LocalState=0 DB3 state receipt (2026-07-17)
+
+- Added the source-owned `DSA.cpp::PutState` LocalState=0 path. It writes
+  only the selected type-47 DB3 actuator's `DSAstate` nibble in word2 after
+  revalidating the admitted Extended Features RCS/FNV tail, selected action,
+  and source actuator identity. The execution receipt identifies DB3 storage,
+  state before/after, tail FNV, and the existing exact saved queue/TIMER
+  scope. A corrupt tail rejects before either DB3 or receipt publication; no
+  generic state, queue, or fallback action was introduced. Verification:
+  `csb_v1_dsa_localstate1_save_handoff`,
+  `csb_v1_dsa_queued_localstate2_timer`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.
+
+# CSBWin queued LocalState=2 ParameterB receipt (2026-07-17)
+
+- Completed the existing compact `DSA.cpp::PutState` LocalState=2 path with
+  a source-bound runtime receipt. A committed type-47 DB3 `ParameterB` state
+  transition now records its storage kind, state before/after, authenticated
+  Extended Features tail FNV, and the exact restored TimerQueue/TIMER scope.
+  The regression proves compact state one to two and proves a corrupted DSA
+  RCS rejects before either DB3 or receipt publication. No widened ParameterB
+  record, generic state machine, queue, or fallback opcode was added.
+  Verification: `csb_v1_dsa_localstate1_save_handoff`,
+  `csb_v1_dsa_queued_localstate2_timer`,
+  `csb_v1_dsa_copy_runtime_handoff`,
+  `csb_v1_dsa_pure_control_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge` PASS; isolated `firestaff`
+  build and `git diff --check` PASS.

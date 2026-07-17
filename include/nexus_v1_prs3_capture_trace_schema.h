@@ -18,6 +18,8 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V6"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V7_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V7"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V8_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V8"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V9_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V9"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V10_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V10"
 #define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
@@ -341,6 +343,17 @@ typedef struct {
     uint32_t zero_observed_second_input_byte;
     uint32_t zero_observed_merged_control_value;
     int dynamic_zero_source_merge_observed;
+    /* V9 carries an observed DGN descriptor/placement record. V10 adds a
+     * raw descriptor witness. These fields
+     * are capture facts only; they do not assign VDP1 command semantics. */
+    uint64_t dgn_fnv1a64;
+    uint32_t dgn_descriptor_index;
+    uint64_t dgn_descriptor_fnv1a64;
+    uint64_t dgn_frame_sequence;
+    uint64_t dgn_command_sequence;
+    uint32_t dgn_command_xa, dgn_command_ya, dgn_command_xb, dgn_command_yb;
+    uint32_t dgn_command_xc, dgn_command_yc, dgn_command_xd, dgn_command_yd;
+    int dgn_placement_observed;
     int exact_vdp1_handoff_observed;
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;
@@ -361,6 +374,7 @@ typedef struct {
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;
     int palette_consumption_observed;
+    int dgn_placement_observed;
     int decoder_promoted;
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Vdp1CaptureBindingReceipt;

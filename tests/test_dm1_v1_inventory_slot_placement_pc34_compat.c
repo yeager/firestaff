@@ -489,6 +489,7 @@ static int test_probe(void)
 static int test_slotbox_zones(void)
 {
     DM1_V1_InventorySlotBoxZonePc34 zone;
+    int x = -1, y = -1, w = -1, h = -1;
     const char* coord =
         "ReDMCSB DATA.C layout-696 / DEFS.H C507..C544 slot boxes";
     int ok = 1;
@@ -520,6 +521,36 @@ static int test_slotbox_zones(void)
     ok &= expect_int("source high rejects",
                      dm1_v1_inventory_source_slot_box_zone_id_pc34(38),
                      0, coord);
+    ok &= expect_int("dense hand-left maps to C507 source box",
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(0),
+                     8, coord);
+    ok &= expect_int("dense backpack-17 maps to C536 source box",
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(29),
+                     37, coord);
+    ok &= expect_int("C507 source box maps to dense hand-left",
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(8),
+                     0, coord);
+    ok &= expect_int("C536 source box maps to dense backpack-17",
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(37),
+                     29, coord);
+    ok &= expect_int("dense negative rejects",
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(-1),
+                     -1, coord);
+    ok &= expect_int("source low rejects dense mapping",
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(7),
+                     -1, coord);
+    ok &= expect_int("source high rejects dense mapping",
+                     dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(38),
+                     -1, coord);
+    ok &= expect_true("C507 xywh adapter preserves source geometry",
+                      dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
+                          8, &x, &y, &w, &h) &&
+                          x == 6 && y == 53 && w == 16 && h == 16,
+                      coord);
+    ok &= expect_true("source xywh adapter rejects incomplete output",
+                      !dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
+                          8, 0, &y, &w, &h),
+                      coord);
 
     ok &= expect_int("equipment zone count",
                      dm1_v1_inventory_equipment_slot_zone_count_pc34(),

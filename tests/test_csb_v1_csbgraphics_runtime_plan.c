@@ -1,4 +1,5 @@
 #include "csb_v1_csbgraphics_runtime_plan.h"
+#include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
 
 #include <stdio.h>
@@ -22,6 +23,17 @@ static void check_int(const char *label, int actual, int expected)
 static void check_true(const char *label, int condition)
 {
     check_int(label, condition ? 1 : 0, 1);
+}
+
+static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t value = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        value ^= bytes[i];
+        value *= 16777619u;
+    }
+    return value;
 }
 
 static void write_be16(uint8_t *buf, size_t off, uint16_t value)
@@ -1506,11 +1518,13 @@ static void test_startup_package_hud_and_door_surfaces(void)
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY, 17u, 224u, 136u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_RESURRECT_PANEL, 40u, 144u, 73u }
     };
-    CompressedEntryFixture entries[6];
+    uint8_t palette[CSB_V1_CSBGRAPHICS_PALETTE_BYTES];
+    CompressedEntryFixture entries[7];
     CSB_V1_CSBGraphicsDatRealCache cache;
     CSB_V1_CSBGraphicsRuntimePlan plan;
     CSB_V1_CSBGraphicsStartupPackage package;
     CSB_V1_CSBGraphicsStartupDecodedSurface surface;
+    CSB_V1_CSBGraphicsPaletteSourceSpec palette_spec;
     size_t size = 0u;
     uint8_t *bytes;
 
@@ -1527,13 +1541,17 @@ static void test_startup_package_hud_and_door_surfaces(void)
     right_door[0] = 4u;
     inventory[0] = 5u;
     resurrect[0] = 6u;
+    for (size_t i = 0u; i < sizeof(palette); ++i) {
+        palette[i] = (uint8_t)i;
+    }
     entries[0] = (CompressedEntryFixture){ 1u, title, TITLE_PIXELS };
     entries[1] = (CompressedEntryFixture){ 2u, entrance, ENTRANCE_PIXELS };
     entries[2] = (CompressedEntryFixture){ 3u, left_door, LEFT_DOOR_PIXELS };
     entries[3] = (CompressedEntryFixture){ 4u, right_door, RIGHT_DOOR_PIXELS };
     entries[4] = (CompressedEntryFixture){ 17u, inventory, INVENTORY_PIXELS };
     entries[5] = (CompressedEntryFixture){ 40u, resurrect, RESURRECT_PIXELS };
-    bytes = build_csbgraphics_entries_compressed(entries, 6u, &size);
+    entries[6] = (CompressedEntryFixture){ 41u, palette, sizeof(palette) };
+    bytes = build_csbgraphics_entries_compressed(entries, 7u, &size);
     check_true("startup_package.fixture", bytes != NULL);
     if (!bytes) {
         free(title); free(entrance); free(left_door); free(right_door);
@@ -1554,6 +1572,167 @@ static void test_startup_package_hud_and_door_surfaces(void)
     check_true("startup_package.hud_startup_flag",
                plan.entries[0].needs_startup_redraw &&
                plan.entries[1].needs_startup_redraw);
+    check_int("startup_package.no_draw_without_palette",
+              csb_v1_csbgraphics_startup_package_decode_surface(
+                  &cache, &package,
+                  CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR,
+                  &surface),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_ARGUMENT);
+    check_true("startup_package.title_no_draw_without_palette",
+               !csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+                   &package, CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE));
+    check_true("startup_package.hud_no_draw_without_palette",
+               !csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+                   &package, CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY));
+    memset(&palette_spec, 0, sizeof(palette_spec));
+    palette_spec.source_kind = CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_CSBGRAPHICS_DAT;
+    palette_spec.source_path = "/wrong/CSBgraphics.dat";
+    palette_spec.source_md5 = cache.matched_md5;
+    palette_spec.entry_index = 41u;
+    palette_spec.decoded_fnv1a = fnv1a32(palette, sizeof(palette));
+    check_int("startup_package.reject_palette_path_mismatch",
+              csb_v1_csbgraphics_startup_package_admit_palette_source(
+                  &cache, &palette_spec, &package),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE);
+    check_true("startup_package.path_mismatch_no_draw",
+               !package.palette_material_complete);
+    palette_spec.source_path = cache.resolved_path;
+    palette_spec.source_md5 = "11111111111111111111111111111111";
+    check_int("startup_package.reject_palette_hash_mismatch",
+              csb_v1_csbgraphics_startup_package_admit_palette_source(
+                  &cache, &palette_spec, &package),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE);
+    palette_spec.source_md5 = cache.matched_md5;
+    palette_spec.source_kind = CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_NONE;
+    check_int("startup_package.reject_palette_missing_source_kind",
+              csb_v1_csbgraphics_startup_package_admit_palette_source(
+                  &cache, &palette_spec, &package),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE);
+    palette_spec.source_kind = CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_CSBGRAPHICS_DAT;
+    palette_spec.source_path = NULL;
+    check_int("startup_package.reject_palette_missing_path",
+              csb_v1_csbgraphics_startup_package_admit_palette_source(
+                  &cache, &palette_spec, &package),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE);
+    palette_spec.source_path = cache.resolved_path;
+    check_true("startup_package.palette_source_identity",
+               strcmp(palette_spec.source_path, cache.resolved_path) == 0 &&
+               strcmp(palette_spec.source_md5, cache.matched_md5) == 0 &&
+               palette_spec.decoded_fnv1a != 0u);
+    {
+        CSB_V1_CSBGraphicsEntrySpan palette_span;
+        uint8_t decoded_palette[CSB_V1_CSBGRAPHICS_PALETTE_BYTES];
+        size_t written = 0u;
+        check_int("startup_package.palette_span",
+                  csb_v1_csbgraphics_dat_entry_span(
+                      cache.file_buffer, cache.file_size, 41u, &palette_span),
+                  CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+        check_int("startup_package.palette_span_size",
+                  (int)palette_span.decompressed_size,
+                  CSB_V1_CSBGRAPHICS_PALETTE_BYTES);
+        check_int("startup_package.palette_decode",
+                  csb_v1_csbgraphics_dat_decode_entry(
+                      cache.file_buffer, cache.file_size, 41u, decoded_palette,
+                      sizeof(decoded_palette), &written),
+                  CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+        check_int("startup_package.palette_decoded_size", (int)written,
+                  CSB_V1_CSBGRAPHICS_PALETTE_BYTES);
+        /* Evidence binds the exact LZW-decoded bytes, not the fixture's
+         * pre-compression buffer. */
+        palette_spec.decoded_fnv1a = fnv1a32(decoded_palette, written);
+    }
+    {
+        CSB_V1_CSBGraphicsDatPaletteCandidateReport report;
+        CSB_V1_CSBGraphicsDatPaletteAdmissionSpec admission;
+        CSB_V1_CSBGraphicsDatPaletteSourceReceipt receipt;
+
+        memset(&report, 0, sizeof(report));
+        check_int("startup_package.palette_candidate_scan",
+                  csb_v1_csbgraphics_dat_real_scan_palette_candidates(
+                      &cache, &report),
+                  CSB_V1_CSBGRAPHICS_DAT_REAL_OK);
+        check_true("startup_package.palette_candidate_only_declared_768",
+                   report.valid && report.candidate_count == 1u &&
+                   report.candidates &&
+                   report.candidates[0].entry_span.entry_index == 41u &&
+                   report.candidates[0].decoded_fnv1a ==
+                       palette_spec.decoded_fnv1a);
+        memset(&admission, 0, sizeof(admission));
+        admission.source_path = cache.resolved_path;
+        admission.source_md5 = cache.matched_md5;
+        admission.entry_index = 41u;
+        admission.decoded_fnv1a = palette_spec.decoded_fnv1a ^ 1u;
+        check_int("startup_package.palette_candidate_reject_bad_fnv",
+                  csb_v1_csbgraphics_dat_real_admit_palette_candidate(
+                      &cache, &report.candidates[0], &admission, &receipt),
+                  CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT);
+        admission.decoded_fnv1a = palette_spec.decoded_fnv1a;
+        check_int("startup_package.palette_candidate_admit",
+                  csb_v1_csbgraphics_dat_real_admit_palette_candidate(
+                      &cache, &report.candidates[0], &admission, &receipt),
+                  CSB_V1_CSBGRAPHICS_DAT_REAL_OK);
+        check_true("startup_package.palette_candidate_receipt",
+                   receipt.valid && receipt.entry_span.entry_index == 41u &&
+                   receipt.decoded_fnv1a == palette_spec.decoded_fnv1a);
+        csb_v1_csbgraphics_dat_real_palette_candidate_report_free(&report);
+    }
+    {
+        size_t full_size = cache.file_size;
+        cache.file_size = full_size - 1u;
+        check_int("startup_package.reject_palette_truncated_source",
+                  csb_v1_csbgraphics_startup_package_admit_palette_source(
+                      &cache, &palette_spec, &package),
+                  CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE);
+        cache.file_size = full_size;
+    }
+    check_int("startup_package.admit_palette",
+              csb_v1_csbgraphics_startup_package_admit_palette_source(
+                  &cache, &palette_spec, &package),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK);
+    check_true("startup_package.palette_receipt", package.palette_material_complete &&
+               package.palette_source.valid &&
+               package.palette_source.entry_span.entry_index == 41u &&
+               package.palette_source.decoded_fnv1a == palette_spec.decoded_fnv1a);
+    check_true("startup_package.complete_title_eligible",
+               csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+                   &package, CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE));
+    check_true("startup_package.complete_door_eligible",
+               csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+                   &package, CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR));
+    check_true("startup_package.complete_hud_eligible",
+               csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+                   &package, CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY));
+    {
+        CSB_V1_CSBGraphicsStartupPackage mismatch = package;
+
+        mismatch.image_sources[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE]
+            .source_md5[0] = '1';
+        check_int("startup_package.title_source_mismatch_no_draw",
+                  csb_v1_csbgraphics_startup_package_decode_surface(
+                      &cache, &mismatch,
+                      CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE, &surface),
+                  CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_ARGUMENT);
+        mismatch = package;
+        mismatch.image_sources[CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR]
+            .entry_span.entry_index = 2u;
+        check_int("startup_package.door_source_mismatch_no_draw",
+                  csb_v1_csbgraphics_startup_package_decode_surface(
+                      &cache, &mismatch,
+                      CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR,
+                      &surface),
+                  CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_ARGUMENT);
+        mismatch = package;
+        mismatch.palette_source.source_path[0] = 'x';
+        check_int("startup_package.hud_palette_mismatch_no_draw",
+                  csb_v1_csbgraphics_startup_package_decode_surface(
+                      &cache, &mismatch,
+                      CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY,
+                      &surface),
+                  CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_ARGUMENT);
+    }
+    /* The structural title entry is intentionally checked at the provenance
+     * gate only. Its full image decode remains owned by the existing startup
+     * image path, not this palette-admission fixture. */
     check_int("startup_package.decode_door",
               csb_v1_csbgraphics_startup_package_decode_surface(
                   &cache, &package,
@@ -1563,6 +1742,15 @@ static void test_startup_package_hud_and_door_surfaces(void)
     check_true("startup_package.door_surface", surface.valid &&
                surface.width == 105u && surface.height == 161u &&
                surface.pixels && surface.pixels[0] == 3u);
+    csb_v1_csbgraphics_startup_decoded_surface_release(&surface);
+    check_int("startup_package.decode_hud",
+              csb_v1_csbgraphics_startup_package_decode_surface(
+                  &cache, &package,
+                  CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY, &surface),
+              CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK);
+    check_true("startup_package.hud_surface", surface.valid &&
+               surface.width == 224u && surface.height == 136u &&
+               surface.pixels && surface.pixels[0] == 5u);
     csb_v1_csbgraphics_startup_decoded_surface_release(&surface);
     {
         CSB_V1_CSBGraphicsStartupPackageSpec bad_specs[6];
@@ -1583,6 +1771,187 @@ static void test_startup_package_hud_and_door_surfaces(void)
     free(inventory); free(resurrect);
 }
 
+static void test_declared_live_frame_materialization(void)
+{
+    static const uint8_t wall[] = { 21u, 22u, 23u, 24u };
+    static const uint8_t floor[] = { 31u, 32u, 33u, 34u };
+    static const uint8_t door[] = { 41u, 42u, 43u, 44u };
+    const CompressedEntryFixture entries[] = {
+        { 2u, wall, sizeof(wall) }, { 4u, floor, sizeof(floor) },
+        { 6u, door, sizeof(door) }
+    };
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsDatPaletteSourceReceipt palette;
+    CSB_V1_ViewportLiveFrameDeclarationPc34 declaration;
+    CSB_V1_ViewportLiveFrameMaterialPc34 material;
+    CSB_V1_ViewportLiveFrameDeclarationPc34 frames[2];
+    CSB_V1_ViewportLiveDungeonStatePc34 state;
+    CSB_V1_ViewportLiveDungeonSelectionPc34 selection;
+    CSB_V1_ViewportLiveDungeonSelectionPc34 next_selection;
+    CSB_V1_ViewportVerifiedDungeonIngressPc34 ingress_receipt;
+    CSB_V1_ViewportOperatorDeclarationCorpusPc34 corpus;
+    CSB_V1_ViewportOperatorDeclarationManifestPc34 parsed_manifest;
+    char manifest_text[2048];
+    CSB_V1_ViewportLiveDungeonStatePc34 ingress_state;
+    uint8_t dungeon_grid[] = { 4u };
+    uint8_t *bytes;
+    size_t size = 0u;
+    int i;
+
+    bytes = build_csbgraphics_entries_compressed(entries, 3u, &size);
+    check_true("live_declaration.fixture", bytes != NULL);
+    if (!bytes) return;
+    cache_from_bytes(&cache, bytes, size);
+    memset(&palette, 0, sizeof(palette));
+    palette.valid = 1;
+    snprintf(palette.source_path, sizeof(palette.source_path), "%s", cache.resolved_path);
+    snprintf(palette.source_md5, sizeof(palette.source_md5), "%s", cache.matched_md5);
+    for (i = 0; i < CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES; ++i) {
+        palette.decoded_bytes[i] = (uint8_t)i;
+    }
+    palette.decoded_fnv1a = fnv1a32(palette.decoded_bytes,
+                                    sizeof(palette.decoded_bytes));
+    memset(&declaration, 0, sizeof(declaration));
+    declaration.frame_number = 0u;
+    declaration.door_state = 4;
+    declaration.source_path = cache.resolved_path;
+    declaration.source_md5 = cache.matched_md5;
+    declaration.palette_receipt = &palette;
+    for (i = 0; i < 3; ++i) {
+        declaration.surfaces[i].entry_index = entries[i].entry_index;
+        declaration.surfaces[i].width = 2;
+        declaration.surfaces[i].height = 2;
+        declaration.surfaces[i].decoded_fnv1a = fnv1a32(entries[i].decoded,
+                                                         entries[i].decoded_size);
+        declaration.surfaces[i].clip_x = i * 2;
+        declaration.surfaces[i].clip_y = 0;
+        declaration.surfaces[i].clip_w = 2;
+        declaration.surfaces[i].clip_h = 2;
+        declaration.surfaces[i].transparent_color = 10;
+    }
+    memset(&material, 0, sizeof(material));
+    check_int("live_declaration.accept",
+              csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+                  &cache, &declaration, &material), 1);
+    check_true("live_declaration.source_valid", material.valid &&
+               material.source.surfaces[0].decoded_pixels != NULL &&
+               material.source.surfaces[2].decoded_pixels != NULL);
+    csb_v1_viewport_live_frame_material_free_pc34(&material);
+    frames[0] = declaration;
+    frames[1] = declaration;
+    frames[1].frame_number = 1u;
+    frames[1].door_state = 3;
+    memset(&corpus, 0, sizeof(corpus));
+    corpus.valid = 1;
+    corpus.source_path = cache.resolved_path;
+    corpus.source_md5 = cache.matched_md5;
+    snprintf(manifest_text, sizeof(manifest_text),
+             "source %s %s\n"
+             "frame 0 4 2 2 2 %u 0 0 2 2 10 4 2 2 %u 2 0 2 2 10 6 2 2 %u 4 0 2 2 10\n"
+             "frame 1 3 2 2 2 %u 0 0 2 2 10 4 2 2 %u 2 0 2 2 10 6 2 2 %u 4 0 2 2 10\n",
+             cache.resolved_path, cache.matched_md5,
+             fnv1a32(wall, sizeof(wall)), fnv1a32(floor, sizeof(floor)),
+             fnv1a32(door, sizeof(door)), fnv1a32(wall, sizeof(wall)),
+             fnv1a32(floor, sizeof(floor)), fnv1a32(door, sizeof(door)));
+    check_int("live_manifest.accept",
+              csb_v1_viewport_parse_operator_declaration_manifest_pc34(
+                  manifest_text, &cache, &palette, &parsed_manifest), 1);
+    check_true("live_manifest.frames", parsed_manifest.valid &&
+               parsed_manifest.declaration_count == 2u);
+    snprintf(manifest_text, sizeof(manifest_text),
+             "source %s %s\n"
+             "frame 0 4 2 2 2 %u 0 0 2 2 10 4 2 2 %u 2 0 2 2 10 6 2 2 %u 4 0 2 2 10\n"
+             "frame 0 3 2 2 2 %u 0 0 2 2 10 4 2 2 %u 2 0 2 2 10 6 2 2 %u 4 0 2 2 10\n",
+             cache.resolved_path, cache.matched_md5,
+             fnv1a32(wall, sizeof(wall)), fnv1a32(floor, sizeof(floor)),
+             fnv1a32(door, sizeof(door)), fnv1a32(wall, sizeof(wall)),
+             fnv1a32(floor, sizeof(floor)), fnv1a32(door, sizeof(door)));
+    check_int("live_manifest.reject.duplicate_frame",
+              csb_v1_viewport_parse_operator_declaration_manifest_pc34(
+                  manifest_text, &cache, &palette, &parsed_manifest), 0);
+    manifest_text[0] = 'x';
+    check_int("live_manifest.reject.bad_source_row",
+              csb_v1_viewport_parse_operator_declaration_manifest_pc34(
+                  manifest_text, &cache, &palette, &parsed_manifest), 0);
+    corpus.palette_receipt = &palette;
+    corpus.declarations = frames;
+    corpus.declaration_count = 2u;
+    check_int("live_corpus.accept",
+              csb_v1_viewport_admit_operator_declaration_corpus_pc34(
+                  &cache, &corpus), 1);
+    corpus.source_md5 = "fedcba9876543210fedcba9876543210";
+    check_int("live_corpus.reject.source",
+              csb_v1_viewport_admit_operator_declaration_corpus_pc34(
+                  &cache, &corpus), 0);
+    corpus.source_md5 = cache.matched_md5;
+    memset(&state, 0, sizeof(state));
+    state.frame_number = 0u;
+    state.door_state = 4;
+    state.wall_entry_index = 2u;
+    state.floor_entry_index = 4u;
+    state.door_entry_index = 6u;
+    state.source_path = cache.resolved_path;
+    state.source_md5 = cache.matched_md5;
+    memset(&ingress_receipt, 0, sizeof(ingress_receipt));
+    ingress_receipt.valid = 1;
+    ingress_receipt.real_asset_matched = 1;
+    ingress_receipt.terminal_session_owned = 1;
+    ingress_receipt.viewport_frame_consumed = 1;
+    ingress_receipt.no_synthetic_surface = 1;
+    ingress_receipt.session_generation = 1u;
+    check_int("live_ingress.frame0",
+              csb_v1_viewport_live_dungeon_state_from_verified_ingress_pc34(
+                  &ingress_receipt, dungeon_grid, 1, 1, 0, 0, &state,
+                  &ingress_state), 1);
+    check_true("live_ingress.uses_real_door_low_bits",
+               ingress_state.frame_number == 0u && ingress_state.door_state == 4 &&
+               ingress_state.wall_entry_index == state.wall_entry_index);
+    state = ingress_state;
+    check_int("live_selection.frame0",
+              csb_v1_viewport_select_live_dungeon_state_pc34(
+                  frames, 2u, &state, NULL, &selection), 1);
+    state.frame_number = 1u;
+    state.door_state = 3;
+    ingress_receipt.source_tick = 1u;
+    dungeon_grid[0] = 3u;
+    check_int("live_ingress.frame1",
+              csb_v1_viewport_live_dungeon_state_from_verified_ingress_pc34(
+                  &ingress_receipt, dungeon_grid, 1, 1, 0, 0, &state,
+                  &ingress_state), 1);
+    state = ingress_state;
+    check_int("live_selection.frame1",
+              csb_v1_viewport_select_live_dungeon_state_pc34(
+                  frames, 2u, &state, &selection, &next_selection), 1);
+    check_true("live_selection.invalidates_previous",
+               next_selection.invalidated_previous);
+    dungeon_grid[0] = 7u;
+    check_int("live_ingress.reject.invalid_door_bits",
+              csb_v1_viewport_live_dungeon_state_from_verified_ingress_pc34(
+                  &ingress_receipt, dungeon_grid, 1, 1, 0, 0, &state,
+                  &ingress_state), 0);
+    state.door_entry_index = 7u;
+    check_int("live_selection.reject.unmapped_entry",
+              csb_v1_viewport_select_live_dungeon_state_pc34(
+                  frames, 2u, &state, &next_selection, &selection), 0);
+    declaration.surfaces[1].decoded_fnv1a ^= 1u;
+    check_int("live_declaration.reject.stale_floor",
+              csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+                  &cache, &declaration, &material), 0);
+    declaration.surfaces[1].decoded_fnv1a ^= 1u;
+    declaration.surfaces[2].width = 3;
+    check_int("live_declaration.reject.geometry",
+              csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+                  &cache, &declaration, &material), 0);
+    declaration.surfaces[2].width = 2;
+    declaration.source_md5 = "fedcba9876543210fedcba9876543210";
+    check_int("live_declaration.reject.source",
+              csb_v1_viewport_materialize_live_frame_from_csbgraphics_pc34(
+                  &cache, &declaration, &material), 0);
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+}
+
 int main(void)
 {
     test_build_known_c040_plan();
@@ -1598,6 +1967,7 @@ int main(void)
     test_viewport_render_selects_cell_skin_custom_background_layer();
     test_viewport_render_auto_room_slots_custom_background_layer();
     test_startup_package_hud_and_door_surfaces();
+    test_declared_live_frame_materialization();
     check_true("result_name",
                strcmp(csb_v1_csbgraphics_runtime_plan_result_name(
                           CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_GEOMETRY),

@@ -114,6 +114,53 @@ int main(void)
 
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
+            DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
+        seed_live_effects(&input, &projectiles, &explosions);
+        projectiles.count = 2;
+        projectiles.entries[1] = projectiles.entries[0];
+        projectiles.entries[1].slotIndex = 8;
+        projectiles.entries[1].projectileSubtype = 11;
+        projectiles.entries[1].cell = 1;
+        projectiles.entries[1].direction = 3;
+        projectiles.entries[1].reserved1 =
+            (int)((THING_TYPE_POTION << 10) | 6);
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
+              "same-square live projectile list builds");
+        CHECK(d1c.liveProjectileCount == 2 &&
+              d1c.liveRenderableProjectileCount == 2 &&
+              d1c.liveRenderableProjectileSlots[0] == 7 &&
+              d1c.liveRenderableProjectileSubtypes[0] == 10 &&
+              d1c.liveRenderableProjectileCells[0] == 3 &&
+              d1c.liveRenderableProjectileAssociatedThings[0] ==
+                  (unsigned short)((THING_TYPE_WEAPON << 10) | 12) &&
+              d1c.liveRenderableProjectileSlots[1] == 8 &&
+              d1c.liveRenderableProjectileSubtypes[1] == 11 &&
+              d1c.liveRenderableProjectileCells[1] == 1 &&
+              d1c.liveRenderableProjectileDirections[1] == 3 &&
+              d1c.liveRenderableProjectileAssociatedThings[1] ==
+                  (unsigned short)((THING_TYPE_POTION << 10) | 6),
+              "F0115 receipt retains every live C14 projectile in list order");
+    }
+
+    {
+        DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
+            DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
+        seed_live_effects(&input, &projectiles, &explosions);
+        input.relativeForward = 3; /* G2028 row 0: cells 0/1 are no-draw. */
+        projectiles.count = 2;
+        projectiles.entries[1] = projectiles.entries[0];
+        projectiles.entries[0].cell = 0;
+        projectiles.entries[1].slotIndex = 8;
+        projectiles.entries[1].cell = 3;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
+              "mixed C2900-cell projectile receipt builds");
+        CHECK(d1c.liveRenderableProjectileCount == 2 &&
+              d1c.projectileZone == 2903 && d1c.drawRuntimeProjectiles,
+              "a no-draw C2900 cell does not hide a later live projectile");
+    }
+
+    {
+        DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34);
         seed_live_effects(&input, &projectiles, &explosions);
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),

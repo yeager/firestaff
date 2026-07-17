@@ -1032,6 +1032,9 @@ static int m11_play_redmcsb_entrance_transition(
     M11_Render_SetV2PresentationActive(
         m11_dm1_v20_presentation_active(gameView));
     entrancePalette = mediaReceipt->entrance_palette;
+    if (entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE) {
+        return 0;
+    }
     if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
             entranceReceipt)) {
         return 0;
@@ -1073,7 +1076,7 @@ static int m11_play_redmcsb_entrance_transition(
         framebuffer,
         M11_FB_WIDTH,
         M11_FB_HEIGHT,
-        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+        entrancePalette);
 
     /* ReDMCSB ENTRANCE.C source-lock:
      * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
@@ -1147,11 +1150,17 @@ static int m11_play_redmcsb_entrance_transition(
         }
 
         if (command.present_entrance_palette) {
+            if (command.entrance_palette != entrancePalette ||
+                command.entrance_palette_fingerprint !=
+                    mediaReceipt->entrance_palette_fingerprint) {
+                free(dungeonFrame);
+                return 0;
+            }
             presentationStartedMs = SDL_GetTicks();
             M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+                                                        command.entrance_palette);
         }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);

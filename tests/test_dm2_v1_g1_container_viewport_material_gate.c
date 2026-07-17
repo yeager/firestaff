@@ -118,12 +118,11 @@ int main(void)
         dm2_v1_viewport_set_asset_palette_provider(&viewport, NULL, NULL);
     }
     dm2_v1_render_items(&viewport);
-    CHECK("G1 DB9 container consumes direct exact CONTAINERS/type/F9 material",
-          viewport.asset_item_drawn_count == 1 &&
-              viewport.g1_scene_item_material_consumed_count == 1 &&
-              viewport.last_item_render.gdat_index == expected_index &&
+    CHECK("G1 DB9 F9 map-chip receipt cannot impersonate DRAW_ITEM material",
+          viewport.asset_item_drawn_count == 0 &&
+              viewport.g1_scene_item_material_consumed_count == 0 &&
               (viewport.blocked_material_mask &
-               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) == 0u);
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0u);
 
     memset(framebuffer, 0x7e, sizeof(framebuffer));
     setup(&viewport, framebuffer, &receipt, &expected_index);

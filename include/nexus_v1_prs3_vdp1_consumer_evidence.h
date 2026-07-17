@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_prs3_structure2_abi.h"
 
 #define NEXUS_V1_PRS3_VDP1_CONSUMER_CAPTURE_TARGET_MAGIC \
@@ -35,6 +36,12 @@ typedef struct {
     int be16_palette_application_observed;
     int structure2_descriptor_selection_observed;
     int texture_placement_observed;
+    uint64_t prs3_header_span_fnv1a64;
+    uint64_t prs3_bitmap_candidate_fnv1a64;
+    uint32_t prs3_bitmap_candidate_offset;
+    uint32_t prs3_bitmap_candidate_size;
+    uint64_t palt_candidate_fnv1a64;
+    uint32_t palt_candidate_size;
 } Nexus_V1_Prs3Vdp1ConsumerEvidenceInput;
 
 typedef struct {
@@ -71,6 +78,13 @@ typedef struct {
     int be16_palette_application_observed;
     int structure2_descriptor_selection_observed;
     int texture_placement_observed;
+    int candidate_spans_bound;
+    uint64_t prs3_header_span_fnv1a64;
+    uint64_t prs3_bitmap_candidate_fnv1a64;
+    uint32_t prs3_bitmap_candidate_offset;
+    uint32_t prs3_bitmap_candidate_size;
+    uint64_t palt_candidate_fnv1a64;
+    uint32_t palt_candidate_size;
     int pixel_format_proven;
     int palette_application_proven;
     int descriptor_semantics_proven;
@@ -84,6 +98,18 @@ typedef struct {
 
 int nexus_v1_prs3_vdp1_consumer_evidence_admit(
     const Nexus_V1_Prs3Vdp1ConsumerEvidenceInput *input,
+    Nexus_V1_Prs3Vdp1ConsumerEvidenceReceipt *out_receipt);
+
+/* Consume a parsed, asset-bound PRS3/VDP1 trace without inventing Structure2
+ * placement or pixel semantics. A valid trace may reach only the existing
+ * no-draw consumer-semantic blocker until those lanes are independently
+ * observed. */
+int nexus_v1_prs3_vdp1_consumer_evidence_admit_capture_binding(
+    const Nexus_V1_Prs3Structure2AbiReceipt *abi,
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *trace,
+    const Nexus_V1_Prs3Vdp1CaptureBindingReceipt *binding,
+    uint64_t trace_fnv1a64, uint32_t trace_size,
+    int original_saturn_capture_authenticated,
     Nexus_V1_Prs3Vdp1ConsumerEvidenceReceipt *out_receipt);
 
 const char *nexus_v1_prs3_vdp1_consumer_evidence_status_name(

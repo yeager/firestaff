@@ -600,6 +600,16 @@ static void check_title_to_menu_boundary(void) {
     expect_i("DM1 entrance timing validator rejects too-fast pre-open",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
              0);
+    badMedia = media;
+    badMedia.entrance_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+    expect_i("DM1 entrance timing validator rejects title palette substitution",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
+    badMedia = media;
+    badMedia.entrance_palette_fingerprint ^= 1u;
+    expect_i("DM1 entrance timing validator rejects mutated palette bytes",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
     expect_i("DM1 entrance command builds closed-door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(
                  &media,
@@ -614,7 +624,10 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.source_timing_receipt_consumed &&
                  entranceCommand.lower_level_renderer_helper_owned &&
                  entranceCommand.lower_level_audio_helper_owned &&
-                 entranceCommand.present_entrance_palette,
+                 entranceCommand.present_entrance_palette &&
+                 entranceCommand.entrance_palette == media.entrance_palette &&
+                 entranceCommand.entrance_palette_fingerprint ==
+                     media.entrance_palette_fingerprint,
              1);
     expect_i("DM1 entrance command builds rattle door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(

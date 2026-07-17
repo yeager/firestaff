@@ -34,6 +34,35 @@ static void copy_text(char *dst, size_t dst_size, const char *src)
     snprintf(dst, dst_size, "%s", src ? src : "");
 }
 
+static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t value = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        value ^= bytes[i];
+        value *= 16777619u;
+    }
+    return value;
+}
+
+static int md5_hex_valid(const char *md5)
+{
+    size_t i;
+
+    if (!md5 || strlen(md5) != 32u) {
+        return 0;
+    }
+    for (i = 0u; i < 32u; ++i) {
+        if (!((md5[i] >= '0' && md5[i] <= '9') ||
+              (md5[i] >= 'a' && md5[i] <= 'f') ||
+              (md5[i] >= 'A' && md5[i] <= 'F'))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void csb_v1_csbgraphics_runtime_plan_init(
     CSB_V1_CSBGraphicsRuntimePlan *plan)
 {
@@ -243,6 +272,35 @@ static int cache_ready(const CSB_V1_CSBGraphicsDatRealCache *cache)
     return cache && cache->loaded && cache->file_buffer && cache->file_size > 0u;
 }
 
+static int cache_source_identity_complete(
+    const CSB_V1_CSBGraphicsDatRealCache *cache)
+{
+    return cache_ready(cache) && cache->resolved_path[0] &&
+        md5_hex_valid(cache->matched_md5);
+}
+
+static void startup_image_source_receipt_from_cache(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsEntrySpan *span,
+    CSB_V1_CSBGraphicsStartupImageSourceReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    if (!cache_source_identity_complete(cache) || !span ||
+        span->compressed_size == 0u || span->decompressed_size == 0u) {
+        return;
+    }
+    receipt->source_kind = CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_CSBGRAPHICS_DAT;
+    copy_text(receipt->source_path, sizeof(receipt->source_path),
+              cache->resolved_path);
+    copy_text(receipt->source_md5, sizeof(receipt->source_md5),
+              cache->matched_md5);
+    receipt->entry_span = *span;
+    receipt->valid = 1;
+}
+
 static void copy_cache_metadata(const CSB_V1_CSBGraphicsDatRealCache *cache,
                                 CSB_V1_CSBGraphicsRuntimePlan *plan);
 
@@ -297,6 +355,86 @@ void csb_v1_csbgraphics_startup_package_init(
     if (package) {
         memset(package, 0, sizeof(*package));
     }
+}
+
+int csb_v1_csbgraphics_startup_package_admit_palette_source(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsPaletteSourceSpec *spec,
+    CSB_V1_CSBGraphicsStartupPackage *package)
+{
+    CSB_V1_CSBGraphicsPaletteSourceReceipt receipt;
+    size_t written = 0u;
+    int rc;
+
+    if (package) {
+        package->palette_material_complete = 0;
+        memset(&package->palette_source, 0, sizeof(package->palette_source));
+    }
+    if (!cache_ready(cache) || !spec || !package || !package->valid ||
+        spec->source_kind != CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_CSBGRAPHICS_DAT ||
+        !spec->source_path || !spec->source_path[0] ||
+        !md5_hex_valid(spec->source_md5) || spec->decoded_fnv1a == 0u ||
+        strcmp(spec->source_path, cache->resolved_path) != 0 ||
+        strcmp(spec->source_md5, cache->matched_md5) != 0) {
+        return CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                           cache->file_size,
+                                           spec->entry_index,
+                                           &receipt.entry_span);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        receipt.entry_span.compressed_size == 0u ||
+        receipt.entry_span.decompressed_size != CSB_V1_CSBGRAPHICS_PALETTE_BYTES) {
+        return CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE;
+    }
+    rc = csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                             cache->file_size,
+                                             spec->entry_index,
+                                             receipt.decoded_bytes,
+                                             sizeof(receipt.decoded_bytes),
+                                             &written);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        written != sizeof(receipt.decoded_bytes) ||
+        fnv1a32(receipt.decoded_bytes, written) != spec->decoded_fnv1a) {
+        return CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_MATERIAL_INCOMPLETE;
+    }
+
+    receipt.valid = 1;
+    receipt.source_kind = spec->source_kind;
+    copy_text(receipt.source_path, sizeof(receipt.source_path), spec->source_path);
+    copy_text(receipt.source_md5, sizeof(receipt.source_md5), spec->source_md5);
+    receipt.decoded_fnv1a = spec->decoded_fnv1a;
+    package->palette_source = receipt;
+    package->palette_material_complete = 1;
+    return CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_OK;
+}
+
+int csb_v1_csbgraphics_startup_package_surface_draw_eligible(
+    const CSB_V1_CSBGraphicsStartupPackage *package,
+    CSB_V1_CSBGraphicsStartupAssetRole role)
+{
+    const CSB_V1_CSBGraphicsStartupPackageAsset *asset;
+    const CSB_V1_CSBGraphicsStartupImageSourceReceipt *image;
+    const CSB_V1_CSBGraphicsPaletteSourceReceipt *palette;
+
+    if (!package || !package->valid ||
+        role >= CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT ||
+        !package->palette_material_complete) {
+        return 0;
+    }
+    asset = &package->assets[role];
+    image = &package->image_sources[role];
+    palette = &package->palette_source;
+    return asset->present && image->valid && palette->valid &&
+        image->source_kind == CSB_V1_CSBGRAPHICS_PALETTE_SOURCE_CSBGRAPHICS_DAT &&
+        palette->source_kind == image->source_kind &&
+        image->entry_span.entry_index == asset->entry_index &&
+        image->entry_span.compressed_size != 0u &&
+        image->entry_span.decompressed_size == asset->decompressed_size &&
+        strcmp(image->source_path, palette->source_path) == 0 &&
+        strcmp(image->source_md5, palette->source_md5) == 0;
 }
 
 static int startup_package_add_hud_entry(
@@ -371,6 +509,8 @@ int csb_v1_csbgraphics_runtime_plan_add_startup_package(
         package->assets[spec->role].decompressed_size =
             (uint16_t)span.decompressed_size;
         package->assets[spec->role].present = 1;
+        startup_image_source_receipt_from_cache(
+            cache, &span, &package->image_sources[spec->role]);
         ++package->asset_count;
 
         if (route != CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_NONE) {
@@ -420,7 +560,9 @@ int csb_v1_csbgraphics_startup_package_decode_surface(
     if (out_surface) {
         memset(out_surface, 0, sizeof(*out_surface));
     }
-    if (!cache_ready(cache) || !package || !package->valid || !out_surface ||
+    if (!cache_ready(cache) || !package ||
+        !csb_v1_csbgraphics_startup_package_surface_draw_eligible(package, role) ||
+        !out_surface ||
         role >= CSB_V1_CSBGRAPHICS_STARTUP_ASSET_COUNT ||
         !package->assets[role].present) {
         return CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_ARGUMENT;

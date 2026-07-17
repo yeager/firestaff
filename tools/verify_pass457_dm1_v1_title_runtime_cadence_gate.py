@@ -56,19 +56,20 @@ def main() -> int:
         require(frontend_h, needle, label)
         require(frontend_c, needle, label)
 
-    require(main_loop, "SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));", "main loop uses runtime frame delay helper")
-    require(main_loop, "SDL_Delay(V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));", "main loop uses runtime final guard helper")
+    require(main_loop, "dm1_v1_startup_title_presentation_command_pc34", "main loop requests source-owned title presentation command")
+    require(main_loop, "command.pre_present_delay_ms", "main loop consumes source-owned per-step title delay")
+    require(main_loop, "command.source_timing_receipt_consumed", "main loop consumes title timing receipt")
     if "SDL_Delay((timing.postZoomVblankCount + timing.finalFadeGuardVblankCount) * 20U)" in main_loop:
         errors.append("main loop reverted to inline final guard arithmetic")
-    if "if (timing.vblankBeforeEachZoomStep)" in main_loop:
-        errors.append("main loop reverted to inline vblank delay branch")
+    if "SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));" in main_loop:
+        errors.append("main loop bypasses source-owned title presentation commands")
 
     for needle, label in [
         ("V1_TitleFrontend_GetSourceTimingEvidence", "C runtime cadence test loads source timing"),
         ("V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing)", "C runtime cadence test observes frame helper"),
         ("V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing)", "C runtime cadence test observes final guard helper"),
-        ("20u", "C runtime cadence test locks one-vblank frame delay"),
-        ("60u", "C runtime cadence test locks three-vblank final guard"),
+        ("dm1_v1_startup_title_vblank_tick_ms_pc34()", "C runtime cadence test locks source vblank tick"),
+        ("dm1_v1_startup_title_final_guard_vblanks_pc34()", "C runtime cadence test locks source final guard count"),
     ]:
         require(test_c, needle, label)
 

@@ -24,6 +24,10 @@ int dm1_v1_wall_inscription_presentation_from_world_pc34(
     receipt.valid = 1;
     receipt.textStringIndex = material.textStringIndex;
     receipt.lineCount = material.lineCount;
+    receipt.textDataWordOffset = material.textDataWordOffset;
+    receipt.textDataWordCount = material.textDataWordCount;
+    receipt.textDataFNV1a = material.textDataFNV1a;
+    receipt.glyphBytesFNV1a = material.glyphBytesFNV1a;
     *outReceipt = receipt;
     return 1;
 }
@@ -52,6 +56,10 @@ int dm1_v1_wall_inscription_presentation_from_selected_wall_pc34(
     receipt.valid = 1;
     receipt.textStringIndex = material.textStringIndex;
     receipt.lineCount = material.lineCount;
+    receipt.textDataWordOffset = material.textDataWordOffset;
+    receipt.textDataWordCount = material.textDataWordCount;
+    receipt.textDataFNV1a = material.textDataFNV1a;
+    receipt.glyphBytesFNV1a = material.glyphBytesFNV1a;
     *outReceipt = receipt;
     return 1;
 }

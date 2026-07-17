@@ -5,6 +5,237 @@ if(POLICY CMP0156)
     # those libraries are split into acyclic units.
     cmake_policy(SET CMP0156 OLD)
 endif()
+add_executable(test_csb_v1_startup_package_identity_pc34
+    tests/test_csb_v1_startup_package_identity_pc34.c)
+target_include_directories(test_csb_v1_startup_package_identity_pc34 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_startup_package_identity_pc34 PRIVATE firestaff_m11 firestaff_m10)
+add_test(NAME csb_v1_startup_package_identity_pc34
+         COMMAND test_csb_v1_startup_package_identity_pc34)
+
+add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
+    tests/test_nexus_v1_multi_level_capture_campaign_launcher.c
+    src/nexus/nexus_v1_multi_level_capture_campaign_launcher.c
+    src/nexus/nexus_v1_iso_reader.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_multi_level_capture_campaign_launcher PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_multi_level_capture_campaign_launcher
+    COMMAND test_nexus_v1_multi_level_capture_campaign_launcher)
+
+add_executable(test_nexus_v1_saturn_save_capture_engine_lifecycle
+    tests/test_nexus_v1_saturn_save_capture_engine_lifecycle.c
+    src/nexus/nexus_v1_saturn_save_capture.c
+    src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_saturn_save_capture_engine_lifecycle PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_saturn_save_capture_engine_lifecycle PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_saturn_save_capture_engine_lifecycle
+    COMMAND test_nexus_v1_saturn_save_capture_engine_lifecycle)
+add_executable(test_nexus_v1_launcher_saturn_card_startup
+    tests/test_nexus_v1_launcher_saturn_card_startup.c
+    src/nexus/nexus_v1_saturn_save_capture.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_launcher_saturn_card_startup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_launcher_saturn_card_startup PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_launcher_saturn_card_startup COMMAND test_nexus_v1_launcher_saturn_card_startup)
+add_executable(test_nexus_v1_saturn_card_discovery_launch tests/test_nexus_v1_saturn_card_discovery_launch.c src/nexus/nexus_v1_saturn_card_discovery.c src/nexus/nexus_v1_saturn_save_capture.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_saturn_card_discovery_launch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_saturn_card_discovery_launch PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_saturn_card_discovery_launch COMMAND test_nexus_v1_saturn_card_discovery_launch)
+add_executable(test_nexus_v1_saturn_card_boot_binding tests/test_nexus_v1_saturn_card_boot_binding.c src/nexus/nexus_v1_saturn_save_capture.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_saturn_card_boot_binding PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_saturn_card_boot_binding PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_saturn_card_boot_binding COMMAND test_nexus_v1_saturn_card_boot_binding)
+add_executable(test_nexus_v1_structure1f_provenance tests/test_nexus_v1_structure1f_provenance.c)
+target_include_directories(test_nexus_v1_structure1f_provenance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure1f_provenance COMMAND test_nexus_v1_structure1f_provenance)
+add_executable(test_nexus_v1_structure2_provenance tests/test_nexus_v1_structure2_provenance.c)
+target_include_directories(test_nexus_v1_structure2_provenance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure2_provenance COMMAND test_nexus_v1_structure2_provenance)
+add_executable(test_nexus_v1_structure3_provenance tests/test_nexus_v1_structure3_provenance.c)
+target_include_directories(test_nexus_v1_structure3_provenance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure3_provenance COMMAND test_nexus_v1_structure3_provenance)
+add_executable(test_nexus_v1_structure3_material_provenance tests/test_nexus_v1_structure3_material_provenance.c)
+target_include_directories(test_nexus_v1_structure3_material_provenance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure3_material_provenance COMMAND test_nexus_v1_structure3_material_provenance)
+add_executable(test_nexus_v1_lev_corpus_discovery
+    tests/test_nexus_v1_lev_corpus_discovery.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_lev_corpus_discovery PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_lev_corpus_discovery PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_lev_corpus_discovery COMMAND test_nexus_v1_lev_corpus_discovery)
+add_executable(test_nexus_v1_slev_sal_asset_discovery
+    tests/test_nexus_v1_slev_sal_asset_discovery.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_slev_sal_asset_discovery PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_slev_sal_asset_discovery PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_slev_sal_asset_discovery COMMAND test_nexus_v1_slev_sal_asset_discovery)
+add_executable(test_nexus_v1_sal_container_provenance
+    tests/test_nexus_v1_sal_container_provenance.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_sal_container_provenance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_sal_container_provenance PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_sal_container_provenance COMMAND test_nexus_v1_sal_container_provenance)
+add_executable(test_nexus_v1_sndlev_map_provenance tests/test_nexus_v1_sndlev_map_provenance.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_sndlev_map_provenance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_sndlev_map_provenance PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_sndlev_map_provenance COMMAND test_nexus_v1_sndlev_map_provenance)
+add_executable(test_nexus_v1_launcher_bpk_provenance_gate tests/test_nexus_v1_launcher_bpk_provenance_gate.c)
+target_include_directories(test_nexus_v1_launcher_bpk_provenance_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_launcher_bpk_provenance_gate COMMAND test_nexus_v1_launcher_bpk_provenance_gate)
+add_executable(test_nexus_v1_launcher_bpk_no_draw_presentation tests/test_nexus_v1_launcher_bpk_no_draw_presentation.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_launcher_bpk_no_draw_presentation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_launcher_bpk_no_draw_presentation PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_launcher_bpk_no_draw_presentation COMMAND test_nexus_v1_launcher_bpk_no_draw_presentation)
+add_executable(test_nexus_v1_m11_bpk_no_draw_host tests/test_nexus_v1_m11_bpk_no_draw_host.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_m11_bpk_no_draw_host PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_m11_bpk_no_draw_host PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_m11_bpk_no_draw_host COMMAND test_nexus_v1_m11_bpk_no_draw_host)
+add_executable(test_nexus_v1_saturn_card_m11_no_draw_startup tests/test_nexus_v1_saturn_card_m11_no_draw_startup.c src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_saturn_card_m11_no_draw_startup COMMAND test_nexus_v1_saturn_card_m11_no_draw_startup)
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_flying_item_timer_receipt.c")
+    add_executable(test_dm2_v1_flying_item_timer_receipt
+        tests/test_dm2_v1_flying_item_timer_receipt.c)
+    target_include_directories(test_dm2_v1_flying_item_timer_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_flying_item_timer_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_flying_item_timer_receipt COMMAND test_dm2_v1_flying_item_timer_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_flying_item_m11_frame_plan.c")
+    add_executable(test_dm2_v1_flying_item_m11_frame_plan
+        tests/test_dm2_v1_flying_item_m11_frame_plan.c)
+    target_include_directories(test_dm2_v1_flying_item_m11_frame_plan PRIVATE include)
+    target_link_libraries(test_dm2_v1_flying_item_m11_frame_plan PRIVATE firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_flying_item_m11_frame_plan
+             COMMAND test_dm2_v1_flying_item_m11_frame_plan)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_static_object_m11_delivery_plan.c")
+    add_executable(test_dm2_v1_static_object_m11_delivery_plan
+        tests/test_dm2_v1_static_object_m11_delivery_plan.c)
+    target_include_directories(test_dm2_v1_static_object_m11_delivery_plan PRIVATE include)
+    target_link_libraries(test_dm2_v1_static_object_m11_delivery_plan PRIVATE firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_static_object_m11_delivery_plan
+             COMMAND test_dm2_v1_static_object_m11_delivery_plan)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_static_object_selector.c")
+    add_executable(test_dm2_v1_g1_static_object_selector
+        tests/test_dm2_v1_g1_static_object_selector.c
+        src/dm2/dm2_v1_dungeon_loader.c)
+    target_include_directories(test_dm2_v1_g1_static_object_selector PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_static_object_selector PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_g1_static_object_selector
+             COMMAND test_dm2_v1_g1_static_object_selector)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_flying_item_source_receipt.c")
+    add_executable(test_dm2_v1_g1_flying_item_source_receipt
+        tests/test_dm2_v1_g1_flying_item_source_receipt.c)
+    target_include_directories(test_dm2_v1_g1_flying_item_source_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_flying_item_source_receipt PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    target_link_libraries(test_dm2_v1_g1_flying_item_source_receipt PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_g1_flying_item_source_receipt
+             COMMAND test_dm2_v1_g1_flying_item_source_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_hud_summary_m11_receipt.c")
+    add_executable(test_dm2_v1_gdat_hud_summary_m11_receipt
+        tests/test_dm2_v1_gdat_hud_summary_m11_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_hud_summary_m11_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_hud_summary_m11_receipt PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_gdat_hud_summary_m11_receipt
+             COMMAND test_dm2_v1_gdat_hud_summary_m11_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_pit_m11_receipt.c")
+    add_executable(test_dm2_v1_gdat_pit_m11_receipt
+        tests/test_dm2_v1_gdat_pit_m11_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_pit_m11_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_pit_m11_receipt PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_pit_m11_receipt PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_pit_m11_receipt
+             COMMAND test_dm2_v1_gdat_pit_m11_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_front_m11_receipt.c")
+    add_executable(test_dm2_v1_gdat_stairs_front_m11_receipt
+        tests/test_dm2_v1_gdat_stairs_front_m11_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_stairs_front_m11_receipt
+             COMMAND test_dm2_v1_gdat_stairs_front_m11_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_m11_receipt.c")
+    add_executable(test_dm2_v1_gdat_stairs_side_m11_receipt tests/test_dm2_v1_gdat_stairs_side_m11_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_stairs_side_m11_receipt COMMAND test_dm2_v1_gdat_stairs_side_m11_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_transform_receipt.c")
+    add_executable(test_dm2_v1_gdat_stairs_side_transform_receipt tests/test_dm2_v1_gdat_stairs_side_transform_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_stairs_side_transform_receipt COMMAND test_dm2_v1_gdat_stairs_side_transform_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_wall_trim_receipt.c")
+    add_executable(test_dm2_v1_gdat_wall_trim_receipt tests/test_dm2_v1_gdat_wall_trim_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_wall_trim_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_wall_trim_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_wall_trim_receipt PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_wall_trim_receipt COMMAND test_dm2_v1_gdat_wall_trim_receipt)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_pit_roof_m11_receipt.c")
+    add_executable(test_dm2_v1_gdat_pit_roof_m11_receipt
+        tests/test_dm2_v1_gdat_pit_roof_m11_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_pit_roof_m11_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_gdat_pit_roof_m11_receipt PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_pit_roof_m11_receipt PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_pit_roof_m11_receipt
+             COMMAND test_dm2_v1_gdat_pit_roof_m11_receipt)
+endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0182_group_stop_attacking_pc34_compat.c")
     add_executable(test_dm1_v1_f0182_group_stop_attacking_pc34_compat
@@ -1100,6 +1331,33 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_pro
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_retail_corpus.c")
+    add_executable(test_nexus_v1_dgn_face_material_retail_corpus
+        tests/test_nexus_v1_dgn_face_material_retail_corpus.c
+        src/nexus/nexus_v1_dgn_face_material_provenance.c
+        src/nexus/nexus_v1_dungeon.c
+        src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE
+            -std=c99 -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_face_material_retail_corpus
+        COMMAND test_nexus_v1_dgn_face_material_retail_corpus
+    )
+    set_tests_properties(nexus_v1_dgn_face_material_retail_corpus PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        SKIP_RETURN_CODE 77
+        LABELS "nexus;dgn;face;mesh;material;real-media"
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_runtime_materialization.c")
     add_executable(test_nexus_v1_dgn_runtime_materialization
         tests/test_nexus_v1_dgn_runtime_materialization.c
@@ -1264,6 +1522,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_consumer_ev
     add_executable(test_nexus_v1_prs3_vdp1_consumer_evidence
         tests/test_nexus_v1_prs3_vdp1_consumer_evidence.c
         src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_prs3_structure2_abi.c
         src/nexus/nexus_v1_prs3_sh2_subset_trace.c
         src/nexus/nexus_v1_prs3_structure2_intake.c
@@ -1928,6 +2187,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
     src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
+    src/dm1/dm1_v1_dungeon_weapon_info_pc34_compat.c
     src/dm1/dm1_v1_title_screen_pc34_compat.c
     src/dm1/dm1_v1_palette_font_pc34_compat.c
     src/dm1/dm1_v1_object_world_pc34_compat.c
@@ -4906,6 +5167,50 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+add_executable(firestaff_csb_v1_csbgraphics_palette_boot_probe
+    probes/csb/firestaff_csb_v1_csbgraphics_palette_boot_probe.c
+    src/csb/csb_v1_boot.c
+)
+target_include_directories(firestaff_csb_v1_csbgraphics_palette_boot_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbgraphics_palette_boot_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbgraphics_palette_boot_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v1_csbgraphics_palette_boot
+    COMMAND firestaff_csb_v1_csbgraphics_palette_boot_probe
+)
+set_tests_properties(csb_v1_csbgraphics_palette_boot PROPERTIES
+    LABELS "tier2;csb;csbwin_custom_resource;startup;real_data;skip_safe"
+)
+
+# CSB V1 operator-owned viewport declaration manifest admission. This probe
+# validates a local declaration corpus against the hash-admitted graphics
+# cache and an exact declared palette receipt. It does not render a frame.
+add_executable(firestaff_csb_v1_viewport_declaration_manifest_probe
+    probes/csb/firestaff_csb_v1_viewport_declaration_manifest_probe.c
+    src/csb/csb_v1_boot.c
+)
+target_include_directories(firestaff_csb_v1_viewport_declaration_manifest_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_viewport_declaration_manifest_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_viewport_declaration_manifest_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v1_viewport_declaration_manifest
+    COMMAND firestaff_csb_v1_viewport_declaration_manifest_probe
+)
+set_tests_properties(csb_v1_viewport_declaration_manifest PROPERTIES
+    LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe;viewport"
+    TIMEOUT 120
+)
+
 # CSB V1 CSBgraphics.dat shape + inventory walker probe
 # Real-asset CSBgraphics.dat -> on-disk shape classifier +
 # inventory walker. The probe first runs an off-target contract
@@ -6039,7 +6344,11 @@ if(BUILD_TESTING)
             src/shared/asset_find_by_hash.c
             src/shared/fs_portable_compat.c
         )
-        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE firestaff_v2 firestaff_nexus)
+        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
+            firestaff_v2
+            firestaff_nexus
+            firestaff_theron
+        )
         target_include_directories(test_asset_status_iso_cache_materialization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_compile_definitions(test_asset_status_iso_cache_materialization PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
         if(NOT MSVC)
@@ -6141,6 +6450,20 @@ if(BUILD_TESTING)
         add_test(
             NAME m11_dm1_side_wall_ornament_host_presentation_receipt
             COMMAND test_m11_dm1_side_wall_ornament_host_presentation_receipt
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_mirror_side_depth_material_receipt.c")
+        add_executable(test_m11_dm1_hoc_mirror_side_depth_material_receipt
+            tests/test_m11_dm1_hoc_mirror_side_depth_material_receipt.c)
+        target_link_libraries(test_m11_dm1_hoc_mirror_side_depth_material_receipt PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_hoc_mirror_side_depth_material_receipt PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_hoc_mirror_side_depth_material_receipt
+            COMMAND test_m11_dm1_hoc_mirror_side_depth_material_receipt
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
     endif()
@@ -9481,6 +9804,32 @@ if(BUILD_TESTING)
     add_test(NAME dm2_v1_frame_presentation_state
              COMMAND test_dm2_v1_frame_presentation_state)
 
+    add_executable(test_dm2_v1_dm2_viewport_m11_composition
+        tests/test_dm2_v1_dm2_viewport_m11_composition.c)
+    target_include_directories(test_dm2_v1_dm2_viewport_m11_composition PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_dm2_viewport_m11_composition
+        PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dm2_viewport_m11_composition PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_dm2_viewport_m11_composition
+             COMMAND test_dm2_v1_dm2_viewport_m11_composition)
+
+    add_executable(test_dm2_v1_dm2_viewport_m11_live_enumeration
+        tests/test_dm2_v1_dm2_viewport_m11_live_enumeration.c)
+    target_include_directories(test_dm2_v1_dm2_viewport_m11_live_enumeration PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_dm2_viewport_m11_live_enumeration
+        PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dm2_viewport_m11_live_enumeration PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_dm2_viewport_m11_live_enumeration
+             COMMAND test_dm2_v1_dm2_viewport_m11_live_enumeration)
+
     add_executable(test_dm2_v1_door_scene_control_gate
         tests/test_dm2_v1_door_scene_control_gate.c
     )
@@ -9749,6 +10098,55 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_m11_startup_resume_gate
         COMMAND test_csb_v1_m11_startup_resume_gate
+    )
+
+    add_executable(test_csb_v1_m11_f0435_f9_reload
+        tests/test_csb_v1_m11_f0435_f9_reload.c
+    )
+    target_include_directories(test_csb_v1_m11_f0435_f9_reload PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_m11_f0435_f9_reload
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_m11_f0435_f9_reload PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_m11_f0435_f9_reload
+        COMMAND test_csb_v1_m11_f0435_f9_reload
+    )
+
+    add_executable(test_csb_v1_m11_utility_capture_admission
+        tests/test_csb_v1_m11_utility_capture_admission.c
+    )
+    target_include_directories(test_csb_v1_m11_utility_capture_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_m11_utility_capture_admission
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_m11_utility_capture_admission PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_m11_utility_capture_admission
+        COMMAND test_csb_v1_m11_utility_capture_admission
+    )
+
+    add_executable(test_csb_v1_m11_csbwin_timer_queue_resume
+        tests/test_csb_v1_m11_csbwin_timer_queue_resume.c
+        tests/csbwin_resume_fixture.c
+    )
+    target_include_directories(test_csb_v1_m11_csbwin_timer_queue_resume PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_m11_csbwin_timer_queue_resume
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_m11_csbwin_timer_queue_resume PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_m11_csbwin_timer_queue_resume
+        COMMAND test_csb_v1_m11_csbwin_timer_queue_resume
     )
 
     add_executable(test_dm2_v1_dungeon_loader_first_map_gate
@@ -10243,6 +10641,15 @@ if(BUILD_TESTING)
         NAME dm2_v1_g1_weapon_viewport_material_gate
         COMMAND test_dm2_v1_g1_weapon_viewport_material_gate
     )
+
+    add_executable(test_dm2_v1_g1_static_m11_handoff_gate
+        tests/test_dm2_v1_g1_static_m11_handoff_gate.c)
+    target_include_directories(test_dm2_v1_g1_static_m11_handoff_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_g1_static_m11_handoff_gate PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_g1_static_m11_handoff_gate
+             COMMAND test_dm2_v1_g1_static_m11_handoff_gate)
 
     add_executable(test_dm2_v1_g1_container_viewport_material_gate
         tests/test_dm2_v1_g1_container_viewport_material_gate.c
@@ -11858,6 +12265,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_d2c_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
@@ -12516,6 +12924,21 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_dsa_localstate1_save_handoff
         COMMAND test_csb_v1_dsa_localstate1_save_handoff
+    )
+
+    add_executable(test_csb_v1_dsa_copy_runtime_handoff
+        tests/test_csb_v1_dsa_copy_runtime_handoff.c
+    )
+    target_include_directories(test_csb_v1_dsa_copy_runtime_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_dsa_copy_runtime_handoff PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dsa_copy_runtime_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_dsa_copy_runtime_handoff
+        COMMAND test_csb_v1_dsa_copy_runtime_handoff
     )
 
     # CSBWin DSA.cpp pure-control NOOP/EQUAL commands execute only against
@@ -25944,6 +26367,151 @@ if(NOT MSVC)
     )
 endif()
 
+add_test(
+    NAME nexus_v1_mednafen_capture_launcher
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_capture_launcher.sh
+)
+add_test(
+    NAME nexus_v1_mednafen_vdp1_capture_launcher
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_vdp1_capture_launcher.sh
+)
+add_test(
+    NAME nexus_v1_mednafen_structure3_topology_capture_launcher
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_structure3_topology_capture_launcher.sh
+)
+add_test(
+    NAME nexus_v1_verify_structure3_topology_capture_artifact
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_verify_structure3_topology_capture_artifact.sh
+)
+add_test(
+    NAME nexus_v1_verify_vdp1_capture_artifact
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_verify_vdp1_capture_artifact.sh
+)
+add_executable(test_nexus_v1_prs3_material_local_artifact
+    tests/test_nexus_v1_prs3_material_local_artifact.c
+    src/shared/asset_find_by_hash.c)
+target_link_libraries(test_nexus_v1_prs3_material_local_artifact PRIVATE firestaff_nexus)
+target_include_directories(test_nexus_v1_prs3_material_local_artifact PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_prs3_material_local_artifact COMMAND test_nexus_v1_prs3_material_local_artifact)
+add_test(NAME nexus_v1_verify_prs3_material_capture_artifact
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_verify_prs3_material_capture_artifact.sh)
+add_test(NAME nexus_v1_mednafen_prs3_material_capture_launcher
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_prs3_material_capture_launcher.sh)
+add_test(NAME nexus_v1_verify_slev_sal_capture_artifact COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_verify_slev_sal_capture_artifact.sh)
+add_test(
+    NAME nexus_v1_mednafen_slev_sal_capture_launcher
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_slev_sal_capture_launcher.sh
+)
+add_executable(test_nexus_v1_prs3_dgn_placement_adapter
+    tests/test_nexus_v1_prs3_dgn_placement_adapter.c
+    src/nexus/nexus_v1_prs3_dgn_placement_adapter.c)
+target_include_directories(test_nexus_v1_prs3_dgn_placement_adapter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_prs3_dgn_placement_adapter COMMAND test_nexus_v1_prs3_dgn_placement_adapter)
+add_executable(test_nexus_v1_saturn_save_capture
+    tests/test_nexus_v1_saturn_save_capture.c
+    src/nexus/nexus_v1_saturn_save_capture.c)
+target_include_directories(test_nexus_v1_saturn_save_capture PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_saturn_save_capture COMMAND test_nexus_v1_saturn_save_capture)
+add_test(NAME nexus_v1_saturn_save_capture_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_saturn_save_capture_real.sh)
+set_tests_properties(nexus_v1_saturn_save_capture_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn_save;real_data;skip_safe")
+add_executable(test_nexus_v1_prs3_vdp1_capture_replay
+    tests/test_nexus_v1_prs3_vdp1_capture_replay.c
+    src/nexus/nexus_v1_prs3_vdp1_capture_replay.c
+    src/nexus/nexus_v1_prs3_dgn_placement_adapter.c)
+target_include_directories(test_nexus_v1_prs3_vdp1_capture_replay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_prs3_vdp1_capture_replay COMMAND test_nexus_v1_prs3_vdp1_capture_replay)
+add_test(NAME nexus_v1_prs3_vdp1_capture_replay_local
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_capture_replay_local.sh)
+set_tests_properties(nexus_v1_prs3_vdp1_capture_replay_local PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;prs3;vdp1;real_data;skip_safe")
+add_executable(test_nexus_v1_prs3_placement_engine_ingress
+    tests/test_nexus_v1_prs3_placement_engine_ingress.c
+    src/shared/asset_find_by_hash.c)
+target_link_libraries(test_nexus_v1_prs3_placement_engine_ingress PRIVATE firestaff_nexus)
+target_include_directories(test_nexus_v1_prs3_placement_engine_ingress PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_prs3_placement_engine_ingress COMMAND test_nexus_v1_prs3_placement_engine_ingress)
+add_executable(test_nexus_v1_structure1f_placement_binding
+    tests/test_nexus_v1_structure1f_placement_binding.c
+    src/nexus/nexus_v1_structure1f_placement_binding.c)
+target_include_directories(test_nexus_v1_structure1f_placement_binding PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure1f_placement_binding COMMAND test_nexus_v1_structure1f_placement_binding)
+add_executable(test_nexus_v1_structure1f_corpus_capture_plan
+    tests/test_nexus_v1_structure1f_corpus_capture_plan.c
+    src/nexus/nexus_v1_structure1f_corpus_capture_plan.c)
+target_include_directories(test_nexus_v1_structure1f_corpus_capture_plan PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure1f_corpus_capture_plan COMMAND test_nexus_v1_structure1f_corpus_capture_plan)
+add_test(NAME nexus_v1_structure1f_corpus_capture_plan_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_structure1f_corpus_capture_plan_real.sh)
+set_tests_properties(nexus_v1_structure1f_corpus_capture_plan_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;dgn;structure1f;real_data;skip_safe")
+add_executable(test_nexus_v1_slev_task_body_capture_plan
+    tests/test_nexus_v1_slev_task_body_capture_plan.c
+    src/nexus/nexus_v1_slev_task_body_capture_plan.c)
+target_include_directories(test_nexus_v1_slev_task_body_capture_plan PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_slev_task_body_capture_plan COMMAND test_nexus_v1_slev_task_body_capture_plan)
+add_test(NAME nexus_v1_slev_task_body_capture_plan_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_slev_task_body_capture_plan_real.sh)
+set_tests_properties(nexus_v1_slev_task_body_capture_plan_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;slev;real_data;skip_safe")
+add_executable(test_nexus_v1_sal_capture_plan
+    tests/test_nexus_v1_sal_capture_plan.c
+    src/nexus/nexus_v1_sal_capture_plan.c)
+target_include_directories(test_nexus_v1_sal_capture_plan PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_sal_capture_plan COMMAND test_nexus_v1_sal_capture_plan)
+add_test(NAME nexus_v1_sal_capture_plan_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_sal_capture_plan_real.sh)
+set_tests_properties(nexus_v1_sal_capture_plan_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;sndlev;sal;real_data;skip_safe")
+add_executable(test_nexus_v1_saturn_capture_campaign_import
+    tests/test_nexus_v1_saturn_capture_campaign_import.c
+    src/nexus/nexus_v1_saturn_capture_campaign_import.c)
+target_include_directories(test_nexus_v1_saturn_capture_campaign_import PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_saturn_capture_campaign_import COMMAND test_nexus_v1_saturn_capture_campaign_import)
+add_test(NAME nexus_v1_saturn_capture_campaign_import_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_saturn_capture_campaign_import_real.sh)
+set_tests_properties(nexus_v1_saturn_capture_campaign_import_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;mednafen;real_data;skip_safe")
+add_executable(test_nexus_v1_prs3_original_execution_import
+    tests/test_nexus_v1_prs3_original_execution_import.c
+    src/nexus/nexus_v1_prs3_original_execution_import.c)
+target_include_directories(test_nexus_v1_prs3_original_execution_import PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_prs3_original_execution_import COMMAND test_nexus_v1_prs3_original_execution_import)
+add_test(NAME nexus_v1_prs3_original_execution_import_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_original_execution_import_real.sh)
+set_tests_properties(nexus_v1_prs3_original_execution_import_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;prs3;real_data;skip_safe")
+add_executable(test_nexus_v1_prs3_multi_capture_adjudicator
+    tests/test_nexus_v1_prs3_multi_capture_adjudicator.c
+    src/nexus/nexus_v1_prs3_multi_capture_adjudicator.c)
+target_include_directories(test_nexus_v1_prs3_multi_capture_adjudicator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_prs3_multi_capture_adjudicator COMMAND test_nexus_v1_prs3_multi_capture_adjudicator)
+add_test(NAME nexus_v1_prs3_multi_capture_adjudicator_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_multi_capture_adjudicator_real.sh)
+set_tests_properties(nexus_v1_prs3_multi_capture_adjudicator_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;prs3;real_data;skip_safe")
+add_executable(test_nexus_v1_structure3_face_texturing_capture_plan tests/test_nexus_v1_structure3_face_texturing_capture_plan.c src/nexus/nexus_v1_structure3_face_texturing_capture_plan.c)
+target_include_directories(test_nexus_v1_structure3_face_texturing_capture_plan PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_structure3_face_texturing_capture_plan COMMAND test_nexus_v1_structure3_face_texturing_capture_plan)
+add_test(NAME nexus_v1_structure3_face_texturing_capture_plan_real COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_structure3_face_texturing_capture_plan_real.sh)
+set_tests_properties(nexus_v1_structure3_face_texturing_capture_plan_real PROPERTIES SKIP_RETURN_CODE 77 LABELS "nexus;dgn;structure3;real_data;skip_safe")
+add_executable(test_nexus_v1_dgn_multi_level_capture_adjudicator tests/test_nexus_v1_dgn_multi_level_capture_adjudicator.c src/nexus/nexus_v1_dgn_multi_level_capture_adjudicator.c)
+target_include_directories(test_nexus_v1_dgn_multi_level_capture_adjudicator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_dgn_multi_level_capture_adjudicator COMMAND test_nexus_v1_dgn_multi_level_capture_adjudicator)
+add_test(NAME nexus_v1_dgn_multi_level_capture_adjudicator_real COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_multi_level_capture_adjudicator_real.sh)
+set_tests_properties(nexus_v1_dgn_multi_level_capture_adjudicator_real PROPERTIES SKIP_RETURN_CODE 77 LABELS "nexus;dgn;real_data;skip_safe")
+add_executable(test_nexus_v1_dgn_campaign_engine_ingress
+    tests/test_nexus_v1_dgn_campaign_engine_ingress.c
+    src/shared/asset_find_by_hash.c)
+target_link_libraries(test_nexus_v1_dgn_campaign_engine_ingress PRIVATE firestaff_nexus)
+target_include_directories(test_nexus_v1_dgn_campaign_engine_ingress PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_dgn_campaign_engine_ingress COMMAND test_nexus_v1_dgn_campaign_engine_ingress)
+set_tests_properties(nexus_v1_mednafen_capture_launcher PROPERTIES
+    LABELS "tier4;nexus;prs3;mednafen;skip_safe"
+)
+
 # Emits source-bound Structure3 face targets from canonical LEV bytes for an
 # external Saturn/VDP1 capture producer. The output is a no-draw request, not
 # a synthetic trace or material decoder.
@@ -26891,6 +27459,28 @@ set_tests_properties(nexus_v1_script_vm PROPERTIES
     LABELS "tier4;nexus;slev;script;runtime"
 )
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_level_aux_admission.c")
+    add_executable(test_nexus_v1_level_aux_admission
+        tests/test_nexus_v1_level_aux_admission.c
+    )
+    target_link_libraries(test_nexus_v1_level_aux_admission PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_level_aux_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_level_aux_admission PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(NAME nexus_v1_level_aux_admission
+             COMMAND test_nexus_v1_level_aux_admission)
+    set_tests_properties(nexus_v1_level_aux_admission PROPERTIES
+        LABELS "nexus;slev;sal;admission;no-runtime"
+    )
+endif()
+
 # ── Nexus V1 Phase 7 — Mechanics Parity Verification ─────────────────
 # Source-lock: src/nexus/nexus_v1_movement.c (CLIKMENU.C F0366, MOVESENS.C F0267),
 #              src/nexus/nexus_v1_squares.c (DUNGEON.C square dispatch),
@@ -27187,6 +27777,79 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_srm_classifier
         COMMAND test_theron_v1_srm_classifier_pc34
     )
+
+    add_executable(test_theron_v1_srm_opaque_admission
+        tests/test_theron_v1_srm_opaque_admission.c
+    )
+    target_link_libraries(test_theron_v1_srm_opaque_admission PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_srm_opaque_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_srm_opaque_admission PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_srm_opaque_admission
+        COMMAND test_theron_v1_srm_opaque_admission
+    )
+
+    add_executable(test_theron_v1_srm_corpus_manifest
+        tests/test_theron_v1_srm_corpus_manifest.c
+    )
+    target_link_libraries(test_theron_v1_srm_corpus_manifest PRIVATE firestaff_theron firestaff_m12)
+    target_include_directories(test_theron_v1_srm_corpus_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_srm_corpus_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_srm_corpus_manifest COMMAND test_theron_v1_srm_corpus_manifest)
+
+    add_executable(test_theron_v1_srm_launch_discovery
+        tests/test_theron_v1_srm_launch_discovery.c
+    )
+    target_link_libraries(test_theron_v1_srm_launch_discovery PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_srm_launch_discovery PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_srm_launch_discovery PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_srm_launch_discovery COMMAND test_theron_v1_srm_launch_discovery)
+
+    add_executable(firestaff_theron_v1_srm_opaque_probe
+        probes/theron/firestaff_theron_v1_srm_opaque_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_srm_opaque_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_srm_opaque_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_srm_opaque_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_srm_opaque_probe_no_inputs
+        COMMAND firestaff_theron_v1_srm_opaque_probe
+    )
+
+    add_executable(firestaff_theron_v1_srm_operator_attestation_probe
+        probes/theron/firestaff_theron_v1_srm_operator_attestation_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_srm_operator_attestation_probe PRIVATE firestaff_theron firestaff_m12)
+    target_include_directories(firestaff_theron_v1_srm_operator_attestation_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_srm_operator_attestation_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_srm_operator_attestation_probe_no_inputs
+        COMMAND firestaff_theron_v1_srm_operator_attestation_probe)
+    add_test(NAME theron_v1_srm_operator_attestation_probe_bad_version
+        COMMAND firestaff_theron_v1_srm_operator_attestation_probe --attest /missing.srm /missing.cue f23601102138f87c33025877767ebf76 2)
+    set_tests_properties(theron_v1_srm_operator_attestation_probe_bad_version PROPERTIES WILL_FAIL TRUE)
+    add_test(NAME theron_v1_srm_operator_attestation_probe_nonregular_srm
+        COMMAND firestaff_theron_v1_srm_operator_attestation_probe --attest /dev/null /missing.cue f23601102138f87c33025877767ebf76 1)
+    set_tests_properties(theron_v1_srm_operator_attestation_probe_nonregular_srm PROPERTIES WILL_FAIL TRUE)
 endif()
 
 # ── Theron V1 SRM body-decode envelope unit test ────────────────────
@@ -27535,6 +28198,748 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_loader_intake
         COMMAND test_theron_v1_track02_loader_intake
+    )
+
+    add_executable(test_theron_v1_palette_runtime_admission
+        tests/test_theron_v1_palette_runtime_admission.c
+    )
+    target_link_libraries(test_theron_v1_palette_runtime_admission PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_palette_runtime_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_palette_runtime_admission PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_palette_runtime_admission
+        COMMAND test_theron_v1_palette_runtime_admission
+    )
+
+    add_executable(test_theron_v1_bitmap_capture_runtime_admission
+        tests/test_theron_v1_bitmap_capture_runtime_admission.c
+    )
+    target_link_libraries(test_theron_v1_bitmap_capture_runtime_admission PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_bitmap_capture_runtime_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_bitmap_capture_runtime_admission PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_bitmap_capture_runtime_admission
+        COMMAND test_theron_v1_bitmap_capture_runtime_admission
+    )
+
+    add_executable(test_theron_v1_track02_provenance_runtime_consumer
+        tests/test_theron_v1_track02_provenance_runtime_consumer.c
+    )
+    target_link_libraries(test_theron_v1_track02_provenance_runtime_consumer PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_provenance_runtime_consumer PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_provenance_runtime_consumer PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_provenance_runtime_consumer
+        COMMAND test_theron_v1_track02_provenance_runtime_consumer
+    )
+
+    add_executable(test_theron_v1_track02_level_object_trace_preparation
+        tests/test_theron_v1_track02_level_object_trace_preparation.c
+    )
+    target_link_libraries(test_theron_v1_track02_level_object_trace_preparation PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_level_object_trace_preparation PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_level_object_trace_preparation PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_level_object_trace_preparation
+        COMMAND test_theron_v1_track02_level_object_trace_preparation
+    )
+
+    add_executable(test_theron_v1_track02_raw_media_intake
+        tests/test_theron_v1_track02_raw_media_intake.c
+    )
+    target_link_libraries(test_theron_v1_track02_raw_media_intake PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_raw_media_intake PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_raw_media_intake PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_raw_media_intake
+        COMMAND test_theron_v1_track02_raw_media_intake
+    )
+
+    add_executable(test_theron_v1_track02_capture_trace_manifest
+        tests/test_theron_v1_track02_capture_trace_manifest.c
+    )
+    target_link_libraries(test_theron_v1_track02_capture_trace_manifest PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_capture_trace_manifest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_capture_trace_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_trace_manifest
+        COMMAND test_theron_v1_track02_capture_trace_manifest
+    )
+
+    add_executable(test_theron_v1_track02_capture_trace_runtime_admission
+        tests/test_theron_v1_track02_capture_trace_runtime_admission.c
+    )
+    target_link_libraries(test_theron_v1_track02_capture_trace_runtime_admission PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_capture_trace_runtime_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_capture_trace_runtime_admission PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_trace_runtime_admission
+        COMMAND test_theron_v1_track02_capture_trace_runtime_admission
+    )
+
+    add_executable(test_theron_v1_track02_sector_record_admission
+        tests/test_theron_v1_track02_sector_record_admission.c
+    )
+    target_link_libraries(test_theron_v1_track02_sector_record_admission PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_sector_record_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_sector_record_admission PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_sector_record_admission
+        COMMAND test_theron_v1_track02_sector_record_admission
+    )
+
+    add_executable(test_theron_v1_track02_sector_record_corpus_discovery
+        tests/test_theron_v1_track02_sector_record_corpus_discovery.c
+    )
+    target_link_libraries(test_theron_v1_track02_sector_record_corpus_discovery PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_sector_record_corpus_discovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_sector_record_corpus_discovery PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_sector_record_corpus_discovery
+        COMMAND test_theron_v1_track02_sector_record_corpus_discovery
+    )
+
+    add_executable(test_theron_v1_track02_level_object_descriptor_capture_intake
+        tests/test_theron_v1_track02_level_object_descriptor_capture_intake.c
+    )
+    target_link_libraries(test_theron_v1_track02_level_object_descriptor_capture_intake PRIVATE
+        firestaff_theron firestaff_m11 firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_level_object_descriptor_capture_intake PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_theron_v1_track02_level_object_descriptor_capture_intake PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_level_object_descriptor_capture_intake
+        COMMAND test_theron_v1_track02_level_object_descriptor_capture_intake
+    )
+
+    add_executable(test_theron_v1_track02_descriptor_bitmap_palette_capture_intake
+        tests/test_theron_v1_track02_descriptor_bitmap_palette_capture_intake.c
+    )
+    target_link_libraries(test_theron_v1_track02_descriptor_bitmap_palette_capture_intake PRIVATE
+        firestaff_theron firestaff_m11 firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_descriptor_bitmap_palette_capture_intake PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_theron_v1_track02_descriptor_bitmap_palette_capture_intake PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_descriptor_bitmap_palette_capture_intake
+        COMMAND test_theron_v1_track02_descriptor_bitmap_palette_capture_intake
+    )
+
+    add_executable(test_theron_v1_track02_dynamic_cd_read_ownership
+        tests/test_theron_v1_track02_dynamic_cd_read_ownership.c
+    )
+    target_link_libraries(test_theron_v1_track02_dynamic_cd_read_ownership PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_dynamic_cd_read_ownership PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dynamic_cd_read_ownership PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_dynamic_cd_read_ownership
+        COMMAND test_theron_v1_track02_dynamic_cd_read_ownership
+    )
+
+    add_executable(test_theron_v1_track02_loader_trace_replay_consistency
+        tests/test_theron_v1_track02_loader_trace_replay_consistency.c
+    )
+    target_link_libraries(test_theron_v1_track02_loader_trace_replay_consistency PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_loader_trace_replay_consistency PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_loader_trace_replay_consistency PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_loader_trace_replay_consistency
+        COMMAND test_theron_v1_track02_loader_trace_replay_consistency
+    )
+
+    add_executable(test_theron_v1_track02_live_loader_route_admission
+        tests/test_theron_v1_track02_live_loader_route_admission.c
+    )
+    target_link_libraries(test_theron_v1_track02_live_loader_route_admission PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_live_loader_route_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_live_loader_route_admission PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_live_loader_route_admission
+        COMMAND test_theron_v1_track02_live_loader_route_admission
+    )
+
+    add_executable(firestaff_theron_v1_track02_sector_record_corpus_probe
+        probes/theron/firestaff_theron_v1_track02_sector_record_corpus_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_sector_record_corpus_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_track02_sector_record_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_sector_record_corpus_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_sector_record_corpus_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_sector_record_corpus_probe
+    )
+    add_test(
+        NAME theron_v1_track02_sector_record_corpus_probe_missing_media
+        COMMAND firestaff_theron_v1_track02_sector_record_corpus_probe --inspect
+                /tmp/firestaff-theron-missing-sector-record.cue
+                /tmp/firestaff-theron-missing-sector-record.trace
+    )
+
+    add_executable(test_theron_v1_track02_capture_target_plan
+        tests/test_theron_v1_track02_capture_target_plan.c
+    )
+    target_link_libraries(test_theron_v1_track02_capture_target_plan PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_capture_target_plan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_capture_target_plan PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_target_plan
+        COMMAND test_theron_v1_track02_capture_target_plan
+    )
+
+    add_executable(firestaff_theron_v1_track02_capture_target_corpus_probe
+        probes/theron/firestaff_theron_v1_track02_capture_target_corpus_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_capture_target_corpus_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_track02_capture_target_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_capture_target_corpus_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_target_corpus_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_capture_target_corpus_probe
+    )
+    add_test(
+        NAME theron_v1_track02_capture_target_corpus_probe_missing_root
+        COMMAND firestaff_theron_v1_track02_capture_target_corpus_probe --discover
+                /tmp/firestaff-theron-missing-capture-target-corpus
+    )
+
+    add_executable(test_theron_v1_track02_capture_artifact_importer
+        tests/test_theron_v1_track02_capture_artifact_importer.c
+    )
+    target_link_libraries(test_theron_v1_track02_capture_artifact_importer PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_capture_artifact_importer PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_capture_artifact_importer PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_artifact_importer
+        COMMAND test_theron_v1_track02_capture_artifact_importer
+    )
+
+    add_executable(firestaff_theron_v1_track02_capture_artifact_corpus_probe
+        probes/theron/firestaff_theron_v1_track02_capture_artifact_corpus_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_capture_artifact_corpus_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_capture_artifact_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_capture_artifact_corpus_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_artifact_corpus_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_capture_artifact_corpus_probe
+    )
+    add_test(
+        NAME theron_v1_track02_capture_artifact_corpus_probe_missing_root
+        COMMAND firestaff_theron_v1_track02_capture_artifact_corpus_probe --discover
+                /tmp/firestaff-theron-missing-capture-artifact-corpus
+    )
+
+    add_executable(test_theron_v1_track02_capture_campaign
+        tests/test_theron_v1_track02_capture_campaign.c
+    )
+    target_link_libraries(test_theron_v1_track02_capture_campaign PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_capture_campaign PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_capture_campaign PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_campaign
+        COMMAND test_theron_v1_track02_capture_campaign
+    )
+
+    add_executable(firestaff_theron_v1_track02_capture_campaign_corpus_probe
+        probes/theron/firestaff_theron_v1_track02_capture_campaign_corpus_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_capture_campaign_corpus_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_capture_campaign_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_capture_campaign_corpus_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_campaign_corpus_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_capture_campaign_corpus_probe
+    )
+    add_test(
+        NAME theron_v1_track02_capture_campaign_corpus_probe_missing_root
+        COMMAND firestaff_theron_v1_track02_capture_campaign_corpus_probe --discover
+                /tmp/firestaff-theron-missing-capture-campaign-corpus
+    )
+
+    add_executable(test_theron_v1_track02_campaign_bundle_emitter
+        tests/test_theron_v1_track02_campaign_bundle_emitter.c
+    )
+    target_link_libraries(test_theron_v1_track02_campaign_bundle_emitter PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_campaign_bundle_emitter PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_campaign_bundle_emitter PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_campaign_bundle_emitter
+        COMMAND test_theron_v1_track02_campaign_bundle_emitter
+    )
+    add_test(
+        NAME theron_v1_track02_dungeon_handoff_capture_plan_script
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_handoff_capture_plan_script.sh
+    )
+    add_test(
+        NAME theron_v1_track02_dungeon_handoff_artifact_verifier
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_handoff_artifact_verifier.sh
+    )
+    add_executable(test_theron_v1_track02_dungeon_handoff_capture_plan_admission
+        tests/test_theron_v1_track02_dungeon_handoff_capture_plan_admission.c
+    )
+    target_link_libraries(test_theron_v1_track02_dungeon_handoff_capture_plan_admission PRIVATE
+        firestaff_theron firestaff_m11 firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_dungeon_handoff_capture_plan_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dungeon_handoff_capture_plan_admission PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_dungeon_handoff_capture_plan_admission
+        COMMAND test_theron_v1_track02_dungeon_handoff_capture_plan_admission)
+    add_executable(test_theron_v1_track02_later_route_candidate_intake tests/test_theron_v1_track02_later_route_candidate_intake.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_intake PRIVATE firestaff_theron firestaff_m12)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_intake PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_later_route_candidate_intake PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_later_route_candidate_intake COMMAND test_theron_v1_track02_later_route_candidate_intake)
+    add_executable(test_theron_v1_track02_later_route_candidate_manifest tests/test_theron_v1_track02_later_route_candidate_manifest.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_manifest PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME theron_v1_track02_later_route_candidate_manifest COMMAND test_theron_v1_track02_later_route_candidate_manifest)
+    add_executable(test_theron_v1_track02_later_route_candidate_manifest_import tests/test_theron_v1_track02_later_route_candidate_manifest_import.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_manifest_import PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_manifest_import PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME theron_v1_track02_later_route_candidate_manifest_import COMMAND test_theron_v1_track02_later_route_candidate_manifest_import)
+    add_executable(test_theron_v1_track02_later_route_candidate_campaign_index tests/test_theron_v1_track02_later_route_candidate_campaign_index.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_campaign_index PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_campaign_index PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME theron_v1_track02_later_route_candidate_campaign_index COMMAND test_theron_v1_track02_later_route_candidate_campaign_index)
+    add_executable(test_theron_v1_track02_later_route_candidate_attestation tests/test_theron_v1_track02_later_route_candidate_attestation.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_attestation PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_attestation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME theron_v1_track02_later_route_candidate_attestation COMMAND test_theron_v1_track02_later_route_candidate_attestation)
+    add_executable(test_theron_v1_track02_later_route_candidate_batch_attestation tests/test_theron_v1_track02_later_route_candidate_batch_attestation.c)
+    target_link_libraries(test_theron_v1_track02_later_route_candidate_batch_attestation PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_track02_later_route_candidate_batch_attestation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME theron_v1_track02_later_route_candidate_batch_attestation COMMAND test_theron_v1_track02_later_route_candidate_batch_attestation)
+
+    add_executable(firestaff_theron_v1_track02_campaign_bundle_emit_probe
+        probes/theron/firestaff_theron_v1_track02_campaign_bundle_emit_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_campaign_bundle_emit_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_campaign_bundle_emit_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_campaign_bundle_emit_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_campaign_bundle_emit_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_campaign_bundle_emit_probe
+    )
+
+    add_executable(test_theron_v1_runtime_track02_capture_campaign_admission
+        tests/test_theron_v1_runtime_track02_capture_campaign_admission.c
+    )
+    target_link_libraries(test_theron_v1_runtime_track02_capture_campaign_admission PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_runtime_track02_capture_campaign_admission PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_runtime_track02_capture_campaign_admission PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_runtime_track02_capture_campaign_admission
+        COMMAND test_theron_v1_runtime_track02_capture_campaign_admission
+    )
+
+    add_executable(test_m11_theron_track02_capture_campaign_host
+        tests/test_m11_theron_track02_capture_campaign_host.c
+    )
+    target_link_libraries(test_m11_theron_track02_capture_campaign_host PRIVATE
+        firestaff_m11
+        firestaff_theron
+    )
+    target_include_directories(test_m11_theron_track02_capture_campaign_host PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_theron_track02_capture_campaign_host PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME m11_theron_track02_capture_campaign_host
+        COMMAND test_m11_theron_track02_capture_campaign_host
+    )
+
+    add_executable(test_theron_v1_track02_campaign_media_discovery
+        tests/test_theron_v1_track02_campaign_media_discovery.c
+    )
+
+    add_executable(test_theron_v1_track02_trace_bundle_discovery tests/test_theron_v1_track02_trace_bundle_discovery.c)
+    target_link_libraries(test_theron_v1_track02_trace_bundle_discovery PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_track02_trace_bundle_discovery PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_trace_bundle_discovery PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_trace_bundle_discovery COMMAND test_theron_v1_track02_trace_bundle_discovery)
+    target_link_libraries(test_theron_v1_track02_campaign_media_discovery PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_campaign_media_discovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_campaign_media_discovery PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_campaign_media_discovery
+        COMMAND test_theron_v1_track02_campaign_media_discovery
+    )
+
+    add_executable(test_theron_v1_track02_campaign_media_launch
+        tests/test_theron_v1_track02_campaign_media_launch.c
+    )
+    target_link_libraries(test_theron_v1_track02_campaign_media_launch PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_campaign_media_launch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_campaign_media_launch PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_campaign_media_launch
+        COMMAND test_theron_v1_track02_campaign_media_launch
+    )
+
+    add_executable(test_asset_status_theron_campaign_media_scan
+        tests/test_asset_status_theron_campaign_media_scan.c
+    )
+    target_link_libraries(test_asset_status_theron_campaign_media_scan PRIVATE
+        firestaff_m12
+    )
+    target_include_directories(test_asset_status_theron_campaign_media_scan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_theron_campaign_media_scan PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME asset_status_theron_campaign_media_scan
+        COMMAND test_asset_status_theron_campaign_media_scan
+    )
+
+    add_executable(test_theron_v1_campaign_launch_intent
+        tests/test_theron_v1_campaign_launch_intent.c
+    )
+    target_link_libraries(test_theron_v1_campaign_launch_intent PRIVATE
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_campaign_launch_intent PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_campaign_launch_intent PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_campaign_launch_intent
+        COMMAND test_theron_v1_campaign_launch_intent
+    )
+
+    add_executable(test_theron_v1_track02_live_dungeon_handoff_replay
+        tests/test_theron_v1_track02_live_dungeon_handoff_replay.c
+    )
+    target_link_libraries(test_theron_v1_track02_live_dungeon_handoff_replay PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_live_dungeon_handoff_replay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_live_dungeon_handoff_replay PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_live_dungeon_handoff_replay
+        COMMAND test_theron_v1_track02_live_dungeon_handoff_replay
+    )
+
+    add_executable(firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe
+        probes/theron/firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_live_dungeon_handoff_replay_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe
+    )
+    add_test(
+        NAME theron_v1_track02_live_dungeon_handoff_replay_probe_missing_media
+        COMMAND firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe --inspect
+                /tmp/firestaff-theron-missing-replay.cue
+                f23601102138f87c33025877767ebf76
+                /tmp/firestaff-theron-missing-replay.trace
+    )
+
+    add_executable(test_theron_v1_track02_external_capture_launcher
+        tests/test_theron_v1_track02_external_capture_launcher.c
+    )
+    target_link_libraries(test_theron_v1_track02_external_capture_launcher PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_external_capture_launcher PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_external_capture_launcher PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_external_capture_launcher
+        COMMAND test_theron_v1_track02_external_capture_launcher
+    )
+
+    add_executable(firestaff_theron_v1_track02_external_capture_probe
+        probes/theron/firestaff_theron_v1_track02_external_capture_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_external_capture_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_track02_external_capture_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_external_capture_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_external_capture_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_external_capture_probe
+    )
+
+    add_executable(firestaff_theron_v1_track02_mednafen_trace_probe
+        probes/theron/firestaff_theron_v1_track02_mednafen_trace_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_mednafen_trace_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_track02_mednafen_trace_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_mednafen_trace_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_mednafen_trace_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_mednafen_trace_probe
+    )
+    add_test(
+        NAME theron_v1_track02_mednafen_trace_probe_missing_export
+        COMMAND firestaff_theron_v1_track02_mednafen_trace_probe --inspect
+                /tmp/firestaff-theron-missing-mednafen-export
+    )
+    add_test(
+        NAME theron_v1_track02_mednafen_trace_probe_missing_root
+        COMMAND firestaff_theron_v1_track02_mednafen_trace_probe --discover
+                /tmp/firestaff-theron-missing-capture-root
+    )
+
+    add_executable(firestaff_theron_v1_track02_capture_evidence_probe
+        probes/theron/firestaff_theron_v1_track02_capture_evidence_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_capture_evidence_probe PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(firestaff_theron_v1_track02_capture_evidence_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_capture_evidence_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_capture_evidence_probe_no_inputs
+        COMMAND firestaff_theron_v1_track02_capture_evidence_probe
+    )
+
+    add_executable(test_theron_v1_track02_huc6280_capture_event_log
+        tests/test_theron_v1_track02_huc6280_capture_event_log.c
+    )
+    target_link_libraries(test_theron_v1_track02_huc6280_capture_event_log PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_huc6280_capture_event_log PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_huc6280_capture_event_log PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_huc6280_capture_event_log
+        COMMAND test_theron_v1_track02_huc6280_capture_event_log
+    )
+
+    add_executable(test_theron_v1_track02_mednafen_trace_converter
+        tests/test_theron_v1_track02_mednafen_trace_converter.c
+    )
+    target_link_libraries(test_theron_v1_track02_mednafen_trace_converter PRIVATE
+        firestaff_theron
+        firestaff_m12
+    )
+    target_include_directories(test_theron_v1_track02_mednafen_trace_converter PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_mednafen_trace_converter PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_mednafen_trace_converter
+        COMMAND test_theron_v1_track02_mednafen_trace_converter
     )
 
     add_executable(test_theron_v1_track02_cue_layout
@@ -34324,4 +35729,66 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0166_unused_thing_pc34
     endif()
     add_test(NAME csb_v1_f0166_unused_thing_pc34_compat
              COMMAND test_csb_v1_f0166_unused_thing_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_runtime_coupling_adapter_pc34_compat.c")
+    add_executable(test_csb_v1_startup_runtime_coupling_adapter_pc34_compat
+        tests/test_csb_v1_startup_runtime_coupling_adapter_pc34_compat.c
+        src/csb/csb_v1_startup_runtime_coupling_adapter_pc34_compat.c
+        src/csb/csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat.c)
+    target_include_directories(test_csb_v1_startup_runtime_coupling_adapter_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_startup_runtime_coupling_adapter_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_startup_runtime_coupling_adapter_pc34_compat
+             COMMAND test_csb_v1_startup_runtime_coupling_adapter_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dsa_save_runtime_admission_pc34_compat.c")
+    add_executable(test_csb_v1_dsa_save_runtime_admission_pc34_compat
+        tests/test_csb_v1_dsa_save_runtime_admission_pc34_compat.c)
+    target_include_directories(test_csb_v1_dsa_save_runtime_admission_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_dsa_save_runtime_admission_pc34_compat
+        PRIVATE firestaff_m11 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dsa_save_runtime_admission_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_dsa_save_runtime_admission_pc34_compat
+             COMMAND test_csb_v1_dsa_save_runtime_admission_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat.c")
+    add_executable(test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat
+        tests/test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat.c
+        src/csb/csb_v1_csbwin_dsa_runtime_admission_pc34_compat.c)
+    target_include_directories(test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_csbwin_dsa_runtime_admission_pc34_compat
+             COMMAND test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dsa_admitted_restored_timer_bridge.c")
+    add_executable(test_csb_v1_dsa_admitted_restored_timer_bridge
+        tests/test_csb_v1_dsa_admitted_restored_timer_bridge.c
+        src/csb/csb_v1_csbwin_dsa_runtime_admission_pc34_compat.c)
+    target_include_directories(test_csb_v1_dsa_admitted_restored_timer_bridge PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_dsa_admitted_restored_timer_bridge
+        PRIVATE firestaff_m11 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dsa_admitted_restored_timer_bridge PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_dsa_admitted_restored_timer_bridge
+             COMMAND test_csb_v1_dsa_admitted_restored_timer_bridge)
 endif()

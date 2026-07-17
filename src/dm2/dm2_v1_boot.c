@@ -5914,15 +5914,35 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
     DM2_V1_G1TextWallGfxRuntimeReceipt *out)
 {
     DM2_V1_BootGraphicsDat *gfx;
+    int i;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
+    if (!dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
         texts, dm2_v1_boot_g1_wall_gfx_scalar_read,
         dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out)) return 0;
+    for (i = 0; i < out->material_count; ++i) {
+        DM2_V1_GdatGfxRawMaterialReceipt raw;
+        DM2_V1_G1TextWallGfxMaterial *material = &out->materials[i];
+
+        if (!material->front_image_ready || !material->local_palette_hash ||
+            !dm2_v1_gdat_image_raw_material_receipt(
+                &gfx->loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                material->wall_gfx_index, 1, &raw) || !raw.accepted ||
+            raw.source_hash == 0u || raw.receipt_hash == 0u) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        material->raw_material_index = raw.raw_index;
+        material->raw_material_bytes = raw.source_bytes;
+        material->raw_material_byte_count = raw.source_byte_count;
+        material->raw_material_hash = raw.source_hash;
+        material->raw_material_receipt_hash = raw.receipt_hash;
+    }
+    return 1;
 }
 
 int dm2_v1_boot_g1_gdat_text_materials(
@@ -5946,16 +5966,36 @@ int dm2_v1_boot_g1_actuator_wall_gfx_materials(
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
 {
     DM2_V1_BootGraphicsDat *gfx;
+    int i;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
+    if (!dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
         (const DM2_V1_DungeonData *)profile->dungeon_data, map,
         dm2_v1_boot_g1_wall_gfx_scalar_read,
         dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out)) return 0;
+    for (i = 0; i < out->material_count; ++i) {
+        DM2_V1_GdatGfxRawMaterialReceipt raw;
+        DM2_V1_G1ActuatorWallGfxMaterial *material = &out->materials[i];
+
+        if (!material->front_image_ready || !material->local_palette_hash ||
+            !dm2_v1_gdat_image_raw_material_receipt(
+                &gfx->loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                material->wall_gfx_index, 1, &raw) || !raw.accepted ||
+            raw.source_hash == 0u || raw.receipt_hash == 0u) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        material->raw_material_index = raw.raw_index;
+        material->raw_material_bytes = raw.source_bytes;
+        material->raw_material_byte_count = raw.source_byte_count;
+        material->raw_material_hash = raw.source_hash;
+        material->raw_material_receipt_hash = raw.receipt_hash;
+    }
+    return 1;
 }
 
 int dm2_v1_boot_g1_creature_map_chip_materials(
@@ -6353,6 +6393,164 @@ static int dm2_v1_boot_query_blit_text_rect(
     if (dy > 0) { out->y = clip_y; out->h = text_height - dy < clip_h ? text_height - dy : clip_h; }
     else out->h = text_height < dy + clip_h ? text_height : dy + clip_h;
     return out->w > 0 && out->h > 0;
+}
+
+int dm2_v1_boot_query_expanded_rect_receipt(
+    const DM2_V1_BootProfile *profile, uint16_t rect_id,
+    DM2_V1_BootExpandedRectReceipt *out_receipt)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat || rect_id == 0u) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (!raw || raw_size < 4u ||
+        !dm2_v1_boot_expand_hud_rect(raw, raw_size, rect_id,
+                                     &out_receipt->rect) ||
+        out_receipt->rect.w <= 0 || out_receipt->rect.h <= 0) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    for (size_t i = 0u; i < raw_size; ++i)
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    out_receipt->rect_id = rect_id;
+    out_receipt->raw4_bytes = raw;
+    out_receipt->raw4_byte_count = raw_size;
+    out_receipt->raw4_hash = hash ? hash : 1u;
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, rect_id);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)out_receipt->rect.x);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)out_receipt->rect.y);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)out_receipt->rect.w);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)out_receipt->rect.h);
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int dm2_v1_boot_g1_static_object_material_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_G1StaticObjectMaterialSelector *selector,
+    uint16_t clip_rect_id, DM2_V1_G1StaticObjectMaterialReceipt *out_receipt)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_GdatGfxRawMaterialReceipt raw;
+    DM2_V1_BootExpandedRectReceipt rect;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat || !selector || !selector->valid ||
+        (selector->category != 0x10u && selector->category != 0x14u) ||
+        (selector->category == 0x10u && selector->image_field != 0u) ||
+        (selector->category == 0x14u && selector->image_field != 0u &&
+         selector->image_field != 4u) || clip_rect_id == 0u) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!dm2_v1_gdat_image_raw_material_receipt(
+            &gfx->loader, selector->category, selector->item_type,
+            selector->image_field, &raw) || !raw.accepted || !raw.source_bytes ||
+        !raw.source_byte_count || !raw.source_hash || !raw.receipt_hash ||
+        !dm2_v1_asset_load_image_local_palette(
+            &gfx->loader, selector->category, selector->item_type,
+            selector->image_field, out_receipt->local_palette16,
+            &out_receipt->local_palette_hash) || !out_receipt->local_palette_hash ||
+        !dm2_v1_boot_query_expanded_rect_receipt(profile, clip_rect_id, &rect)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->selector = *selector;
+    out_receipt->raw_gfx256_bytes = raw.source_bytes;
+    out_receipt->raw_gfx256_byte_count = raw.source_byte_count;
+    out_receipt->raw_gfx256_hash = raw.source_hash;
+    out_receipt->raw_gfx256_receipt_hash = raw.receipt_hash;
+    out_receipt->clip_rect_id = clip_rect_id;
+    out_receipt->raw4_hash = rect.raw4_hash;
+    out_receipt->raw4_receipt_hash = rect.receipt_hash;
+    return 1;
+}
+
+int dm2_v1_boot_g1_flying_item_material_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_G1FlyingItemSourceReceipt *source,
+    DM2_V1_G1FlyingItemMaterialReceipt *out_receipt)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_GdatGfxRawMaterialReceipt raw;
+    DM2_V1_BootExpandedRectReceipt rect;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* DRAW_FLYING_ITEM reaches QUERY_TEMP_PICST only with these fields. */
+    if (!profile || !profile->graphics_dat || !source || !source->valid ||
+        (source->category != 0x0du && source->category != 0x0eu) ||
+        (source->image_field != 8u && source->image_field != 9u &&
+         source->image_field != 10u && source->image_field != 12u) ||
+        source->clip_rect_id == 0u) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!dm2_v1_gdat_image_raw_material_receipt(
+            &gfx->loader, source->category, source->item_type,
+            source->image_field, &raw) || !raw.accepted || !raw.source_bytes ||
+        !raw.source_byte_count || !raw.source_hash || !raw.receipt_hash ||
+        !dm2_v1_asset_load_image_local_palette(
+            &gfx->loader, source->category, source->item_type,
+            source->image_field, out_receipt->local_palette16,
+            &out_receipt->local_palette_hash) || !out_receipt->local_palette_hash ||
+        !dm2_v1_boot_query_expanded_rect_receipt(
+            profile, source->clip_rect_id, &rect)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->source = *source;
+    out_receipt->raw_gfx256_bytes = raw.source_bytes;
+    out_receipt->raw_gfx256_byte_count = raw.source_byte_count;
+    out_receipt->raw_gfx256_hash = raw.source_hash;
+    out_receipt->raw_gfx256_receipt_hash = raw.receipt_hash;
+    out_receipt->clip_rect_id = source->clip_rect_id;
+    out_receipt->raw4_hash = rect.raw4_hash;
+    out_receipt->raw4_receipt_hash = rect.receipt_hash;
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, source->identity_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw.source_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw.receipt_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, out_receipt->local_palette_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, rect.raw4_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, rect.receipt_hash);
+    out_receipt->identity_hash = hash ? hash : 1u;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int dm2_v1_boot_g1_static_weapon_selector(
+    const DM2_V1_BootProfile *profile, const DM2_V1_G1DirectWeaponRoot *root,
+    DM2_V1_G1StaticObjectMaterialSelector *out_selector)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    uint16_t offset;
+    if (!profile || !profile->graphics_dat || !root) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!dm2_v1_asset_load_image_offset(&gfx->loader, 0x10, root->item_type,
+                                        0u, &offset)) return 0;
+    return dm2_v1_g1_static_object_material_selector(root, offset, out_selector);
+}
+
+int dm2_v1_boot_g1_static_container_selector(
+    const DM2_V1_BootProfile *profile, const DM2_V1_G1DirectContainerRoot *root,
+    DM2_V1_G1StaticObjectMaterialSelector *out_selector)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    uint16_t offset;
+    uint8_t field;
+    if (!profile || !profile->graphics_dat || !root) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    field = root->opened ? 4u : 0u;
+    if (!dm2_v1_asset_load_image_offset(&gfx->loader, 0x14, root->container_type,
+                                        field, &offset)) return 0;
+    return dm2_v1_g1_static_container_material_selector(root, offset, out_selector);
 }
 
 static int dm2_v1_boot_dialogue_text_width(const uint8_t *text, size_t size)
@@ -10149,6 +10347,8 @@ int dm2_v1_boot_dynamic_creature_material_receipt(
     const DM2_AIDefinition *ai;
     DM2_V1_CreatureAnimationGdatReceipt animation;
     uint8_t palette16[16];
+    const uint8_t *raw_material;
+    size_t raw_material_size = 0u;
     int gdat_index;
     uint32_t palette_hash = 0u;
 
@@ -10180,6 +10380,40 @@ int dm2_v1_boot_dynamic_creature_material_receipt(
         palette_hash == 0u) {
         return 0;
     }
+    raw_material = dm2_v1_asset_load_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+        animation.image_id, &raw_material_size);
+    if (!raw_material || raw_material_size == 0u ||
+        raw_material_size > UINT32_MAX) {
+        return 0;
+    }
+    for (uint16_t raw_index = 0u; raw_index < gfx->loader.raw_data_count;
+         ++raw_index) {
+        if (gfx->loader.raw_sizes[raw_index] == raw_material_size &&
+            gfx->loader.data + gfx->loader.raw_offsets[raw_index] ==
+                raw_material) {
+            DM2_V1_GdatGfxRawMaterialReceipt raw_receipt;
+
+            if (!dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
+                    &gfx->loader, raw_index, &raw_receipt) ||
+                raw_receipt.source_bytes != raw_material ||
+                raw_receipt.source_byte_count != raw_material_size ||
+                !raw_receipt.source_hash || !raw_receipt.receipt_hash) {
+                return 0;
+            }
+            candidate.raw_material_index = raw_receipt.raw_index;
+            candidate.raw_material_bytes = raw_receipt.source_bytes;
+            candidate.raw_material_byte_count = (uint32_t)raw_receipt.source_byte_count;
+            candidate.raw_material_hash = raw_receipt.source_hash;
+            candidate.raw_material_receipt_hash = raw_receipt.receipt_hash;
+            break;
+        }
+    }
+    if (!candidate.raw_material_bytes || candidate.raw_material_byte_count !=
+            candidate.image.raw_byte_count || !candidate.raw_material_hash ||
+        !candidate.raw_material_receipt_hash) {
+        return 0;
+    }
     candidate.creature_type = creature_type;
     candidate.command = command;
     candidate.previous_frame = previous_frame;
@@ -10195,6 +10429,8 @@ int dm2_v1_boot_dynamic_creature_material_receipt(
         candidate.material_hash, candidate.image.decoded_hash);
     candidate.material_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.material_hash, palette_hash);
+    candidate.material_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.material_hash, candidate.raw_material_receipt_hash);
     candidate.valid = candidate.material_hash != 0u;
     if (!candidate.valid) return 0;
     *out_receipt = candidate;

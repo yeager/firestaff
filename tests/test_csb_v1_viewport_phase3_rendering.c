@@ -639,6 +639,76 @@ static void test_runtime_projectile_and_explosion_overlays(void)
 
 }
 
+static void test_dsa_runtime_overlay_material_lifecycle(void)
+{
+    static const struct {
+        const char *name;
+        int map_y;
+    } cases[] = {
+        { "d1", 9 }, { "d2", 8 }, { "d3", 7 }
+    };
+    CSB_V1_ViewportConfig cfg;
+    struct ProjectileList_Compat projectiles;
+    struct ExplosionList_Compat explosions;
+    uint8_t framebuffer[320 * 200];
+    size_t i;
+
+    memset(&projectiles, 0, sizeof(projectiles));
+    memset(&explosions, 0, sizeof(explosions));
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = 320;
+    cfg.runtime_projectiles = &projectiles;
+    cfg.runtime_explosions = &explosions;
+    projectiles.count = 1;
+    projectiles.entries[0].slotIndex = 0;
+    projectiles.entries[0].reserved3 = 1;
+    projectiles.entries[0].mapIndex = 0;
+    projectiles.entries[0].mapX = 10;
+    projectiles.entries[0].cell = 2;
+    explosions.count = 1;
+    explosions.entries[0].slotIndex = 0;
+    explosions.entries[0].reserved0 = 1;
+    explosions.entries[0].mapIndex = 0;
+    explosions.entries[0].mapX = 10;
+    explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
+    explosions.entries[0].explosionType = C040_EXPLOSION_SMOKE;
+    explosions.entries[0].maxFrames = 4;
+    cfg.projectile_sprite_drawer = test_projectile_sprite_drawer;
+    cfg.explosion_sprite_drawer = test_explosion_sprite_drawer;
+    cfg.runtime_overlay_source_required = 1;
+
+    for (i = 0u; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        char id[96];
+        TestRuntimeSpritePlacementCapture capture;
+
+        memset(&capture, 0, sizeof(capture));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        projectiles.entries[0].mapY = cases[i].map_y;
+        explosions.entries[0].mapY = cases[i].map_y;
+        cfg.projectile_sprite_user = &capture;
+        cfg.explosion_sprite_user = &capture;
+        cfg.runtime_overlay_source_admitted = 0;
+        cfg.runtime_overlay_source_hash = 0u;
+        csb_v1_viewport_render_frame(&cfg, 0, 10, 10);
+        snprintf(id, sizeof(id), "dsa.overlay.%s.rejects_projectile", cases[i].name);
+        check_int(id, cfg.runtime_projectile_sprite_drawn_count, 0);
+        snprintf(id, sizeof(id), "dsa.overlay.%s.rejects_explosion", cases[i].name);
+        check_int(id, cfg.runtime_explosion_sprite_drawn_count, 0);
+        snprintf(id, sizeof(id), "dsa.overlay.%s.no_marker_fallback", cases[i].name);
+        check_int(id, cfg.runtime_projectile_marker_drawn_count +
+                      cfg.runtime_explosion_marker_drawn_count, 0);
+
+        cfg.runtime_overlay_source_admitted = 1;
+        cfg.runtime_overlay_source_hash = (uint32_t)(i + 1u);
+        csb_v1_viewport_render_frame(&cfg, 0, 10, 10);
+        snprintf(id, sizeof(id), "dsa.overlay.%s.admits_projectile", cases[i].name);
+        check_int(id, cfg.runtime_projectile_sprite_drawn_count, 1);
+        snprintf(id, sizeof(id), "dsa.overlay.%s.admits_explosion", cases[i].name);
+        check_int(id, cfg.runtime_explosion_sprite_drawn_count, 1);
+    }
+}
+
 static void test_csb_custom_background_slot_contracts(void)
 {
     static const struct {
@@ -3877,6 +3947,7 @@ int main(void)
     test_pc34_f0098_aperture_provider_binding();
     test_null_framebuffer_render_is_noop();
     test_runtime_projectile_and_explosion_overlays();
+    test_dsa_runtime_overlay_material_lifecycle();
     test_csb_custom_background_slot_contracts();
     test_csb_custom_background_bitmap_application_contracts();
     test_csb_only_draw_order_and_coordinates();

@@ -1189,6 +1189,18 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!text) return 0;
+    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V10_MAGIC) - 1U;
+    if (text_size > magic_size &&
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V10_MAGIC, magic_size) == 0 &&
+        text[magic_size] == '\n') {
+        receipt.schema_version = 10U;
+    } else {
+    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V9_MAGIC) - 1U;
+    if (text_size > magic_size &&
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V9_MAGIC, magic_size) == 0 &&
+        text[magic_size] == '\n') {
+        receipt.schema_version = 9U;
+    } else {
     magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V8_MAGIC) - 1U;
     if (text_size > magic_size &&
         memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V8_MAGIC, magic_size) == 0 &&
@@ -1237,6 +1249,8 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
             text[magic_size] != '\n') return 0;
         receipt.schema_version = 1U;
         }
+    }
+    }
     }
     }
     }
@@ -1346,6 +1360,22 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           !read_u32(&cursor, "zero_observed_second_input_byte=", &receipt.zero_observed_second_input_byte) ||
           !read_u32(&cursor, "zero_observed_merged_control_value=", &receipt.zero_observed_merged_control_value) ||
           !read_u32(&cursor, "dynamic_zero_source_merge_observed=", &dynamic_zero_source_merge_observed))) ||
+        (receipt.schema_version >= 9U &&
+         (!read_u64(&cursor, "dgn_fnv1a64=", &receipt.dgn_fnv1a64) ||
+          !read_u32(&cursor, "dgn_descriptor_index=", &receipt.dgn_descriptor_index) ||
+          !read_u64(&cursor, "dgn_frame_sequence=", &receipt.dgn_frame_sequence) ||
+          !read_u64(&cursor, "dgn_command_sequence=", &receipt.dgn_command_sequence) ||
+          !read_u32(&cursor, "dgn_command_xa=", &receipt.dgn_command_xa) ||
+          !read_u32(&cursor, "dgn_command_ya=", &receipt.dgn_command_ya) ||
+          !read_u32(&cursor, "dgn_command_xb=", &receipt.dgn_command_xb) ||
+          !read_u32(&cursor, "dgn_command_yb=", &receipt.dgn_command_yb) ||
+          !read_u32(&cursor, "dgn_command_xc=", &receipt.dgn_command_xc) ||
+          !read_u32(&cursor, "dgn_command_yc=", &receipt.dgn_command_yc) ||
+          !read_u32(&cursor, "dgn_command_xd=", &receipt.dgn_command_xd) ||
+          !read_u32(&cursor, "dgn_command_yd=", &receipt.dgn_command_yd))) ||
+        (receipt.schema_version >= 10U &&
+         !read_u64(&cursor, "dgn_descriptor_fnv1a64=",
+                   &receipt.dgn_descriptor_fnv1a64)) ||
         !read_u32(&cursor, "decoder_returned_success=", &decoder_returned_success) ||
         !read_u32(&cursor, "capture_complete=", &capture_complete) || *cursor != '\0') return 0;
     if (!receipt.menu_bpk_fnv1a64 || !receipt.dm_bin_fnv1a64 ||
@@ -1471,6 +1501,14 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
               (receipt.zero_observed_first_input_byte |
                ((receipt.zero_observed_second_input_byte << 4U) & 0x0f00U)) ||
           dynamic_zero_source_merge_observed != 1U)) ||
+        (receipt.schema_version >= 9U &&
+         (!receipt.dgn_fnv1a64 || !receipt.dgn_frame_sequence ||
+          receipt.dgn_command_sequence != receipt.vdp1_command_sequence ||
+          receipt.dgn_command_xa > 0xffffU || receipt.dgn_command_ya > 0xffffU ||
+          receipt.dgn_command_xb > 0xffffU || receipt.dgn_command_yb > 0xffffU ||
+          receipt.dgn_command_xc > 0xffffU || receipt.dgn_command_yc > 0xffffU ||
+          receipt.dgn_command_xd > 0xffffU || receipt.dgn_command_yd > 0xffffU)) ||
+        (receipt.schema_version >= 10U && !receipt.dgn_descriptor_fnv1a64) ||
         decoder_returned_success != 1U || capture_complete != 1U) return 0;
     receipt.valid = 1;
     receipt.complete_capture = 1;
@@ -1484,6 +1522,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     receipt.dynamic_control_operands_observed = receipt.schema_version >= 6U;
     receipt.dynamic_nonzero_byte_transfer_observed = receipt.schema_version >= 7U;
     receipt.dynamic_zero_source_merge_observed = receipt.schema_version >= 8U;
+    receipt.dgn_placement_observed = receipt.schema_version >= 9U;
     receipt.opcode_grammar_proven = 0;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;
@@ -1536,6 +1575,8 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
     receipt.palette_consumption_observed =
         receipt.exact_vdp1_handoff_observed &&
         trace->palette_consumption_observed;
+    receipt.dgn_placement_observed = receipt.exact_vdp1_handoff_observed &&
+        trace->dgn_placement_observed;
     if (trace->schema_version >= 4U) {
         int output_store_route_matches =
             nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(

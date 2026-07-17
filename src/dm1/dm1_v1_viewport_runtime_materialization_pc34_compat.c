@@ -124,6 +124,20 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveProjectileCount;
+            if (decision.liveRenderableProjectileCount <
+                DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES) {
+                int renderIndex = decision.liveRenderableProjectileCount++;
+                decision.liveRenderableProjectileSlots[renderIndex] =
+                    projectile->slotIndex;
+                decision.liveRenderableProjectileSubtypes[renderIndex] =
+                    projectile->projectileSubtype;
+                decision.liveRenderableProjectileCells[renderIndex] =
+                    projectile->cell;
+                decision.liveRenderableProjectileDirections[renderIndex] =
+                    projectile->direction;
+                decision.liveRenderableProjectileAssociatedThings[renderIndex] =
+                    (unsigned short)projectile->reserved1;
+            }
             if (decision.liveProjectileSlot < 0) {
                 decision.liveProjectileSlot = projectile->slotIndex;
                 decision.liveProjectileSubtype = projectile->projectileSubtype;
@@ -186,10 +200,26 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         decision.drawFloorItems = 1;
     }
     projectileCell = input->projectileCell;
-    if (decision.liveProjectileCount > 0) {
-        projectileCell = (decision.liveProjectileCell - input->partyDirection) & 3;
+    /* F0115 examines each live C14 record in effect-list order.  A record
+     * whose normalized cell has no C2900 source coordinate is a no-draw;
+     * it must not suppress a later record that does have original material. */
+    if (decision.liveRenderableProjectileCount > 0) {
+        int projectileIndex;
+        projectileCell = -1;
+        for (projectileIndex = 0;
+             projectileIndex < decision.liveRenderableProjectileCount;
+             ++projectileIndex) {
+            int candidateCell =
+                (decision.liveRenderableProjectileCells[projectileIndex] -
+                 input->partyDirection) & 3;
+            if (dm1_viewport_3d_c2900_projectile_raw_zone_point(
+                    decision.row, candidateCell, &projectileX, &projectileY)) {
+                projectileCell = candidateCell;
+                break;
+            }
+        }
     }
-    if (f0115Eligible &&
+    if (f0115Eligible && projectileCell >= 0 &&
         (input->projectileCount > 0 || decision.liveProjectileCount > 0) &&
         dm1_viewport_3d_c2900_projectile_raw_zone_point(
             decision.row, projectileCell, &projectileX, &projectileY)) {

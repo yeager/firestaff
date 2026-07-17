@@ -36,10 +36,12 @@
  */
 
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_world_model.h"
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -115,6 +117,9 @@ static uint32_t dm2_v1_wall_command_geometry_hash(
     hash = dm2_v1_wall_hash_bytes(hash,
                                   (const uint8_t *)&command->metadata_hash,
                                   sizeof(command->metadata_hash));
+    hash = dm2_v1_wall_hash_bytes(hash,
+                                  (const uint8_t *)&command->material_receipt_hash,
+                                  sizeof(command->material_receipt_hash));
     return hash;
 }
 
@@ -241,6 +246,65 @@ int dm2_v1_viewport_static_object_cell_for_map(
     if (pass < 0) return 0;
     if (out_cell) *out_cell = cell;
     if (out_pass) *out_pass = pass;
+    return 1;
+}
+
+int dm2_v1_viewport_static_object_source_plan(
+    int source_cell, int source_pass, int item_category,
+    int object_direction, int container_open, int draw_slot,
+    DM2_V1_StaticObjectSourcePlan *out)
+{
+    static const int y_distance_by_cell[7] = { 0, -1, -1, 1, -1, -1, 2 };
+    static const uint8_t position_5x5_by_direction[4] = { 6, 8, 18, 16 };
+    static const uint8_t stretch_by_distance[3][4] = {
+        { 0x60, 0x57, 0x4e, 0x47 },
+        { 0x40, 0x3a, 0x34, 0x2f },
+        { 0x2b, 0x27, 0x23, 0x1f }
+    };
+    static const int8_t slot_delta[8] = { 0, 1, 2, 3, 0, -3, -2, -1 };
+    static const uint8_t slot_axis[16][2] = {
+        { 2, 5 }, { 0, 6 }, { 5, 7 }, { 3, 0 },
+        { 7, 1 }, { 1, 2 }, { 6, 3 }, { 3, 3 },
+        { 5, 5 }, { 2, 6 }, { 7, 7 }, { 1, 0 },
+        { 3, 1 }, { 6, 2 }, { 1, 3 }, { 5, 3 }
+    };
+    int position_5x5;
+    int y_distance;
+    int vertical_row;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if ((source_cell != 3 && source_cell != 6) ||
+        source_pass != dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
+            source_cell) ||
+        (item_category != 0x10 && item_category != 0x14) ||
+        draw_slot < 0 || draw_slot >= 16) {
+        return 0;
+    }
+
+    position_5x5 = position_5x5_by_direction[object_direction & 3];
+    y_distance = y_distance_by_cell[source_cell];
+    vertical_row = 4 - position_5x5 / 5;
+    if (y_distance < 1 || y_distance > 2 || vertical_row < 1 ||
+        vertical_row > 3) {
+        return 0;
+    }
+
+    /* DRAW_STATIC_OBJECT filters by its 5x5 visibility mask before calling
+     * DRAW_PUT_DOWN_ITEM. Its mask is not yet carried by the runtime, so this
+     * plan is evidence only and never grants a draw by itself. */
+    out->source_cell = source_cell;
+    out->source_pass = source_pass;
+    out->position_5x5 = position_5x5;
+    out->clip_rect_id = 0x8000 | (5000 + source_cell * 25 + position_5x5);
+    out->y_distance = y_distance;
+    /* The source's RCJ(4, 1 + bp0a) indexes the four-byte row modulo 4. */
+    out->stretch_factor64 =
+        stretch_by_distance[y_distance][(1 + vertical_row) & 3];
+    out->image_field = (item_category == 0x14 && container_open) ? 4 : 0;
+    out->flip_mirror = item_category == 0x14 && position_5x5 % 5 > 2;
+    out->slot_y_offset = slot_delta[slot_axis[draw_slot][0]];
+    out->slot_x_offset = slot_delta[slot_axis[draw_slot][1]];
     return 1;
 }
 
@@ -899,6 +963,12 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     memset(s, 0, sizeof(*s));
     s->framebuffer = framebuffer;
     s->fb_stride   = fb_stride > 0 ? fb_stride : DM2_VP_WIDTH;
+    s->surface_snapshot.framebuffer = framebuffer;
+    s->surface_snapshot.width = DM2_VP_WIDTH;
+    s->surface_snapshot.height = DM2_VP_HEIGHT;
+    s->surface_snapshot.stride = (uint16_t)s->fb_stride;
+    s->surface_snapshot.resolution = 8u;
+    s->surface_snapshot.generation = 1u;
     s->party_dir    = 0;
     s->party_x      = 15;
     s->party_y      = 15;
@@ -928,6 +998,31 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
 
     /* wall_set arrays are static in this .c file, not in viewport state */
     (void)0; /* placeholder */
+}
+
+int dm2_v1_viewport_bind_surface(DM2_V1_ViewportState *s, uint8_t *framebuffer,
+                                 int stride)
+{
+    if (!s || !framebuffer || stride < DM2_VP_WIDTH) return 0;
+    s->framebuffer = framebuffer;
+    s->fb_stride = stride;
+    s->surface_snapshot.framebuffer = framebuffer;
+    s->surface_snapshot.width = DM2_VP_WIDTH;
+    s->surface_snapshot.height = DM2_VP_HEIGHT;
+    s->surface_snapshot.stride = (uint16_t)stride;
+    s->surface_snapshot.resolution = 8u;
+    ++s->surface_snapshot.generation;
+    if (!s->surface_snapshot.generation) ++s->surface_snapshot.generation;
+    return 1;
+}
+
+int dm2_v1_viewport_surface_snapshot(const DM2_V1_ViewportState *s,
+                                     DM2_V1_ViewportSurfaceSnapshot *out)
+{
+    if (!s || !out || !s->surface_snapshot.framebuffer ||
+        !s->surface_snapshot.generation) return 0;
+    *out = s->surface_snapshot;
+    return 1;
 }
 
 void dm2_v1_viewport_set_party(DM2_V1_ViewportState *s,
@@ -1822,6 +1917,10 @@ void dm2_v1_viewport_set_g1_scene_item_material_direct(
     memset(s->g1_scene_item_material_palette16, 0,
            sizeof(s->g1_scene_item_material_palette16));
     s->g1_scene_item_material_palette_hash = 0u;
+    s->g1_scene_item_material_raw_gfx256_hash = 0u;
+    s->g1_scene_item_material_raw_gfx256_receipt_hash = 0u;
+    s->g1_scene_item_material_raw4_hash = 0u;
+    s->g1_scene_item_material_raw4_receipt_hash = 0u;
     s->g1_scene_item_material_consumed_count = 0;
     if (!s->g1_scene_item_material_ready) return;
     s->g1_scene_item_material_pixel_hash =
@@ -1837,19 +1936,48 @@ void dm2_v1_viewport_set_g1_scene_item_material_direct(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_g1_scene_static_item_material_direct(
+    DM2_V1_ViewportState *s, int ready, int item_category, int item_type,
+    int gdat_index, uint16_t object_id, int map_x, int map_y,
+    const uint8_t *pixels, int width, int height, int stride,
+    const uint8_t palette16[16], uint32_t palette_hash,
+    uint32_t expected_pixel_hash, uint32_t raw_gfx256_hash,
+    uint32_t raw_gfx256_receipt_hash, uint32_t raw4_hash,
+    uint32_t raw4_receipt_hash)
+{
+    dm2_v1_viewport_set_g1_scene_item_material_direct(s, ready, item_category,
+        item_type, gdat_index, object_id, map_x, map_y, pixels, width, height,
+        stride, palette16, palette_hash, expected_pixel_hash);
+    if (!s || !s->g1_scene_item_material_ready || !raw_gfx256_hash ||
+        !raw_gfx256_receipt_hash || !raw4_hash || !raw4_receipt_hash) {
+        if (s) s->g1_scene_item_material_ready = 0;
+        return;
+    }
+    s->g1_scene_item_material_raw_gfx256_hash = raw_gfx256_hash;
+    s->g1_scene_item_material_raw_gfx256_receipt_hash = raw_gfx256_receipt_hash;
+    s->g1_scene_item_material_raw4_hash = raw4_hash;
+    s->g1_scene_item_material_raw4_receipt_hash = raw4_receipt_hash;
+}
+
 void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
     DM2_V1_ViewportState *s, int ready, int gdat_index,
     int wall_gfx_index, int field, int map_x, int map_y,
     uint16_t object_id, const uint8_t *pixels, int width, int height,
     int stride, const uint8_t palette16[16], uint32_t palette_hash,
-    uint32_t expected_pixel_hash)
+    uint32_t expected_pixel_hash, uint16_t raw_index,
+    const uint8_t *raw_bytes, size_t raw_byte_count, uint32_t raw_hash,
+    uint32_t raw_receipt_hash)
 {
     if (!s) return;
     s->g1_scene_wall_button_material_ready =
         ready && gdat_index != 0 && wall_gfx_index >= 0 &&
         wall_gfx_index <= 0xff && field == 1 && object_id != 0xfffeu &&
         pixels && width > 0 && height > 0 && stride >= width && palette16 &&
-        palette_hash != 0u && expected_pixel_hash != 0u;
+        palette_hash != 0u && expected_pixel_hash != 0u && raw_bytes &&
+        raw_byte_count != 0u && raw_byte_count <= (size_t)INT_MAX &&
+        raw_hash != 0u && raw_receipt_hash != 0u &&
+        dm2_v1_viewport_indexed_pixel_hash(raw_bytes, (int)raw_byte_count,
+                                           1, (int)raw_byte_count) == raw_hash;
     s->g1_scene_wall_button_material_gdat_index = gdat_index;
     s->g1_scene_wall_button_material_wall_gfx_index = wall_gfx_index;
     s->g1_scene_wall_button_material_field = field;
@@ -1864,6 +1992,11 @@ void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
     memset(s->g1_scene_wall_button_material_palette16, 0,
            sizeof(s->g1_scene_wall_button_material_palette16));
     s->g1_scene_wall_button_material_palette_hash = 0u;
+    s->g1_scene_wall_button_material_raw_index = 0u;
+    s->g1_scene_wall_button_material_raw_bytes = NULL;
+    s->g1_scene_wall_button_material_raw_byte_count = 0u;
+    s->g1_scene_wall_button_material_raw_hash = 0u;
+    s->g1_scene_wall_button_material_receipt_hash = 0u;
     s->g1_scene_wall_button_material_consumed_count = 0;
     if (!s->g1_scene_wall_button_material_ready) return;
     s->g1_scene_wall_button_material_pixel_hash =
@@ -1876,6 +2009,11 @@ void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
     memcpy(s->g1_scene_wall_button_material_palette16, palette16,
            sizeof(s->g1_scene_wall_button_material_palette16));
     s->g1_scene_wall_button_material_palette_hash = palette_hash;
+    s->g1_scene_wall_button_material_raw_index = raw_index;
+    s->g1_scene_wall_button_material_raw_bytes = raw_bytes;
+    s->g1_scene_wall_button_material_raw_byte_count = raw_byte_count;
+    s->g1_scene_wall_button_material_raw_hash = raw_hash;
+    s->g1_scene_wall_button_material_receipt_hash = raw_receipt_hash;
     s->dirty = 1;
 }
 
@@ -3821,12 +3959,18 @@ int dm2_v1_viewport_build_item_render_plan(
         row->object_id = src->object_id;
         row->map_x = src->map_x;
         row->map_y = src->map_y;
+        row->source_gdat_field = src->source_gdat_field;
         row->source_g1_weapon = src->source_g1_weapon;
         row->source_g1_container = src->source_g1_container;
         row->source_static_object_admitted =
             src->source_static_object_admitted;
         row->source_static_object_cell = src->source_static_object_cell;
         row->source_static_object_pass = src->source_static_object_pass;
+        row->source_static_object_clip_rect_id = src->source_static_object_clip_rect_id;
+        row->source_static_object_raw_gfx256_hash = src->source_static_object_raw_gfx256_hash;
+        row->source_static_object_raw_gfx256_receipt_hash = src->source_static_object_raw_gfx256_receipt_hash;
+        row->source_static_object_raw4_hash = src->source_static_object_raw4_hash;
+        row->source_static_object_raw4_receipt_hash = src->source_static_object_raw4_receipt_hash;
         row->fallback_radius = 4;
         row->fallback_color = 3;
     }
@@ -4821,10 +4965,14 @@ static int dm2_v1_wall_button_receipt_matches(
                 material->wall_gfx_index == (uint8_t)door->wall_button_index &&
                 (!s->source_materials_required ||
                  (material->front_image_ready &&
-                  material->front_image_width == (uint16_t)image_width &&
-                  material->front_image_height == (uint16_t)image_height &&
-                  material->local_palette_hash != 0u &&
-                  material->local_palette_hash ==
+                 material->front_image_width == (uint16_t)image_width &&
+                 material->front_image_height == (uint16_t)image_height &&
+                 material->local_palette_hash != 0u &&
+                 material->raw_material_bytes &&
+                 material->raw_material_byte_count != 0u &&
+                 material->raw_material_hash != 0u &&
+                 material->raw_material_receipt_hash != 0u &&
+                 material->local_palette_hash ==
                       s->active_asset_palette_hash))) {
                 return 1;
             }
@@ -4843,10 +4991,14 @@ static int dm2_v1_wall_button_receipt_matches(
                 material->wall_gfx_index == (uint8_t)door->wall_button_index &&
                 (!s->source_materials_required ||
                  (material->front_image_ready &&
-                  material->front_image_width == (uint16_t)image_width &&
-                  material->front_image_height == (uint16_t)image_height &&
-                  material->local_palette_hash != 0u &&
-                  material->local_palette_hash ==
+                 material->front_image_width == (uint16_t)image_width &&
+                 material->front_image_height == (uint16_t)image_height &&
+                 material->local_palette_hash != 0u &&
+                 material->raw_material_bytes &&
+                 material->raw_material_byte_count != 0u &&
+                 material->raw_material_hash != 0u &&
+                 material->raw_material_receipt_hash != 0u &&
+                 material->local_palette_hash ==
                       s->active_asset_palette_hash))) {
                 return 1;
             }
@@ -4948,6 +5100,9 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                         dm2_v1_viewport_wall_field_for_square(panel->view_square) ||
                     !command->pixels || !command->width || !command->height ||
                     !command->decoded_hash || !command->palette_hash ||
+                    !command->material_source_bytes ||
+                    command->material_source_byte_count == 0u ||
+                    !command->material_receipt_hash ||
                     !command->rect_table_hash || !command->rect_row_hash ||
                     !command->metadata_hash || !command->geometry_hash ||
                     command->movement_active !=
@@ -5832,6 +5987,10 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 s->g1_scene_wall_button_material_ready &&
                 s->g1_scene_wall_button_material_pixels &&
                 s->g1_scene_wall_button_material_pixel_hash != 0u &&
+                s->g1_scene_wall_button_material_raw_bytes &&
+                s->g1_scene_wall_button_material_raw_byte_count != 0u &&
+                s->g1_scene_wall_button_material_raw_hash != 0u &&
+                s->g1_scene_wall_button_material_receipt_hash != 0u &&
                 door->button_gdat_index ==
                     s->g1_scene_wall_button_material_gdat_index &&
                 door->wall_button_index ==
@@ -6207,7 +6366,32 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
              it->source_static_object_pass < 0 ||
              dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
                  it->source_static_object_cell) !=
-                 it->source_static_object_pass)) {
+                 it->source_static_object_pass ||
+             /* F9 is DRAW_MAP_CHIP material. DRAW_ITEM selects F0 for DB5
+              * and F0/F4 for DB9, and additionally needs the source 5x5
+              * visibility mask, slot ordinal, expanded clip rectangle and
+              * dtImageOffset. None is owned by this F9 receipt. */
+             it->source_gdat_field == 0xf9)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
+            continue;
+        }
+        if ((it->source_g1_weapon || it->source_g1_container) &&
+            it->source_gdat_field != 0xf9 &&
+            (!direct_g1_scene_material ||
+             it->source_static_object_clip_rect_id == 0 ||
+             it->source_static_object_raw_gfx256_hash == 0u ||
+             it->source_static_object_raw_gfx256_receipt_hash == 0u ||
+             it->source_static_object_raw4_hash == 0u ||
+             it->source_static_object_raw4_receipt_hash == 0u ||
+             it->source_static_object_raw_gfx256_hash !=
+                 s->g1_scene_item_material_raw_gfx256_hash ||
+             it->source_static_object_raw_gfx256_receipt_hash !=
+                 s->g1_scene_item_material_raw_gfx256_receipt_hash ||
+             it->source_static_object_raw4_hash !=
+                 s->g1_scene_item_material_raw4_hash ||
+             it->source_static_object_raw4_receipt_hash !=
+                 s->g1_scene_item_material_raw4_receipt_hash)) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
             continue;
@@ -6237,7 +6421,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                       &src_stride) == 0)) &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ItemAssetBlit blit;
-                if (it->source_g1_weapon &&
+                if (it->source_g1_weapon && it->source_gdat_field == 0xf9 &&
                     (!s->g1_weapon_map_chip_materials ||
                      !dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
                          s->g1_weapon_map_chip_materials,
@@ -6250,7 +6434,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
                     continue;
                 }
-                if (it->source_g1_container &&
+                if (it->source_g1_container && it->source_gdat_field == 0xf9 &&
                     (!s->g1_container_map_chip_materials ||
                      !dm2_v1_g1_container_map_chip_matches_decoded_instance(
                          s->g1_container_map_chip_materials,
@@ -6783,6 +6967,9 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
               command->destination.w == rect->w && command->destination.h == rect->h)) &&
             command->pixels && command->width > 0 && command->height > 0 &&
             command->palette_hash != 0u && command->decoded_hash != 0u &&
+            command->material_source_bytes &&
+            command->material_source_byte_count == command->raw_byte_count &&
+            command->material_receipt_hash != 0u &&
             command->decoded_hash ==
                 dm2_v1_gdat_hud_m11_command_pixel_hash(command) &&
             command->palette_hash ==
@@ -8113,6 +8300,160 @@ int dm2_v1_gfx_fetch(int gdat_index,
     if (out_h) *out_h = 0;
     if (out_stride) *out_stride = 0;
     return -1;
+}
+
+int dm2_v1_viewport_build_flying_item_m11_delivery_plan(
+    const DM2_V1_RuntimeFlyingItemReceipt *receipt,
+    DM2_V1_FlyingItemM11DeliveryPlan *out_plan)
+{
+    uint32_t hash = 2166136261u;
+    const DM2_V1_G1FlyingItemSourceReceipt *source;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!receipt || !receipt->valid || !receipt->no_draw ||
+        !receipt->raw_gfx256_hash || !receipt->raw_gfx256_receipt_hash ||
+        !receipt->palette_hash || !receipt->raw4_hash ||
+        !receipt->raw4_receipt_hash || !receipt->timer_receipt_hash ||
+        !receipt->identity_hash) return 0;
+    source = &receipt->source;
+    if (!source->valid || source->missile_object_id == 0xfffeu ||
+        (source->category != 0x0du && source->category != 0x0eu) ||
+        (source->image_field != 8u && source->image_field != 9u &&
+         source->image_field != 10u && source->image_field != 12u) ||
+        source->flip_flags > 3u || source->cell_pos > 22u ||
+        source->position_5x5 > 24u || !source->clip_rect_id ||
+        !source->stretch_factor64 || !source->identity_hash) return 0;
+    out_plan->missile_object_id = source->missile_object_id;
+    out_plan->category = source->category;
+    out_plan->item_type = source->item_type;
+    out_plan->image_field = source->image_field;
+    out_plan->flip_flags = source->flip_flags;
+    out_plan->cell_pos = source->cell_pos;
+    out_plan->position_5x5 = source->position_5x5;
+    out_plan->clip_rect_id = source->clip_rect_id;
+    out_plan->stretch_factor64 = source->stretch_factor64;
+    out_plan->raw_gfx256_hash = receipt->raw_gfx256_hash;
+    out_plan->raw_gfx256_receipt_hash = receipt->raw_gfx256_receipt_hash;
+    out_plan->palette_hash = receipt->palette_hash;
+    out_plan->raw4_hash = receipt->raw4_hash;
+    out_plan->raw4_receipt_hash = receipt->raw4_receipt_hash;
+    out_plan->timer_receipt_hash = receipt->timer_receipt_hash;
+    hash ^= source->identity_hash; hash *= 16777619u;
+    hash ^= receipt->raw_gfx256_hash; hash *= 16777619u;
+    hash ^= receipt->raw_gfx256_receipt_hash; hash *= 16777619u;
+    hash ^= receipt->palette_hash; hash *= 16777619u;
+    hash ^= receipt->raw4_hash; hash *= 16777619u;
+    hash ^= receipt->raw4_receipt_hash; hash *= 16777619u;
+    hash ^= receipt->timer_receipt_hash; hash *= 16777619u;
+    hash ^= receipt->identity_hash; hash *= 16777619u;
+    out_plan->identity_hash = hash ? hash : 1u;
+    /* Exact material delivery is complete, but no original pixel decode has
+     * been evidenced. M11 receives a no-draw plan only. */
+    out_plan->valid = 1;
+    out_plan->no_draw = 1;
+    out_plan->pixel_decoder_ready = 0;
+    out_plan->m11_delivery_ready = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_build_flying_item_m11_delivery_plan_from_viewport_evidence(
+    const DM2_V1_RuntimeFlyingItemReceipt *receipt,
+    const DM2_V1_RuntimeFlyingItemViewportEvidence *evidence,
+    DM2_V1_FlyingItemM11DeliveryPlan *out_plan)
+{
+    if (!evidence || !evidence->valid || !evidence->no_draw ||
+        !evidence->identity_hash || !evidence->session_identity ||
+        !evidence->map_load_token || !receipt ||
+        evidence->timer_receipt_hash != receipt->timer_receipt_hash ||
+        evidence->gdat_identity_hash != receipt->identity_hash ||
+        !dm2_v1_viewport_build_flying_item_m11_delivery_plan(receipt, out_plan)) return 0;
+    out_plan->viewport_evidence_hash = evidence->identity_hash;
+    out_plan->viewport_session_identity = evidence->session_identity;
+    out_plan->viewport_map_load_token = evidence->map_load_token;
+    return 1;
+}
+
+int dm2_v1_viewport_build_static_object_m11_delivery_plan(
+    const DM2_V1_G1StaticObjectMaterialReceipt *material,
+    const DM2_V1_StaticObjectSourcePlan *source_plan,
+    uint32_t session_identity,
+    DM2_V1_StaticObjectM11DeliveryPlan *out_plan)
+{
+    const DM2_V1_G1StaticObjectMaterialSelector *selector;
+    uint32_t hash = 2166136261u;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!material || !source_plan || !session_identity ||
+        !material->raw_gfx256_bytes || !material->raw_gfx256_byte_count ||
+        !material->raw_gfx256_hash || !material->raw_gfx256_receipt_hash ||
+        !material->local_palette_hash || !material->raw4_hash ||
+        !material->raw4_receipt_hash) return 0;
+    selector = &material->selector;
+    if (!selector->valid || !selector->object_id || !selector->identity_hash ||
+        (selector->category != 0x10u && selector->category != 0x14u) ||
+        (selector->category == 0x10u &&
+         (selector->image_field != 0u || selector->container_open)) ||
+        (selector->category == 0x14u &&
+         (selector->image_field != 0u && selector->image_field != 4u)) ||
+        selector->image_field == 0xf9u || source_plan->source_cell < 0 ||
+        source_plan->source_pass !=
+            dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
+                source_plan->source_cell) || source_plan->position_5x5 < 0 ||
+        source_plan->position_5x5 > 24 || source_plan->clip_rect_id == 0 ||
+        (uint16_t)(source_plan->clip_rect_id & 0x7fffu) !=
+            material->clip_rect_id || source_plan->image_field !=
+            selector->image_field || source_plan->stretch_factor64 <= 0) return 0;
+    out_plan->session_identity = session_identity;
+    out_plan->object_id = selector->object_id;
+    out_plan->category = selector->category;
+    out_plan->item_type = selector->item_type;
+    out_plan->image_field = selector->image_field;
+    out_plan->direction = selector->direction;
+    out_plan->container_open = selector->container_open;
+    out_plan->image_offset = selector->image_offset;
+    out_plan->source_cell = source_plan->source_cell;
+    out_plan->source_pass = source_plan->source_pass;
+    out_plan->position_5x5 = source_plan->position_5x5;
+    out_plan->clip_rect_id = material->clip_rect_id;
+    out_plan->stretch_factor64 = source_plan->stretch_factor64;
+    out_plan->flip_mirror = source_plan->flip_mirror;
+    out_plan->selector_identity_hash = selector->identity_hash;
+    out_plan->raw_gfx256_hash = material->raw_gfx256_hash;
+    out_plan->raw_gfx256_receipt_hash = material->raw_gfx256_receipt_hash;
+    out_plan->palette_hash = material->local_palette_hash;
+    out_plan->raw4_hash = material->raw4_hash;
+    out_plan->raw4_receipt_hash = material->raw4_receipt_hash;
+    hash ^= session_identity; hash *= 16777619u;
+    hash ^= selector->identity_hash; hash *= 16777619u;
+    hash ^= material->raw_gfx256_hash; hash *= 16777619u;
+    hash ^= material->raw_gfx256_receipt_hash; hash *= 16777619u;
+    hash ^= material->local_palette_hash; hash *= 16777619u;
+    hash ^= material->raw4_hash; hash *= 16777619u;
+    hash ^= material->raw4_receipt_hash; hash *= 16777619u;
+    hash ^= (uint32_t)source_plan->clip_rect_id; hash *= 16777619u;
+    hash ^= (uint32_t)source_plan->stretch_factor64; hash *= 16777619u;
+    out_plan->identity_hash = hash ? hash : 1u;
+    out_plan->valid = 1;
+    out_plan->no_draw = 1;
+    out_plan->pixel_decoder_ready = 0;
+    out_plan->m11_delivery_ready = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_static_object_m11_delivery_plan_matches(
+    const DM2_V1_StaticObjectM11DeliveryPlan *plan,
+    const DM2_V1_G1StaticObjectMaterialReceipt *material,
+    const DM2_V1_StaticObjectSourcePlan *source_plan,
+    uint32_t session_identity)
+{
+    DM2_V1_StaticObjectM11DeliveryPlan candidate;
+    return plan && plan->valid && plan->no_draw && plan->m11_delivery_ready &&
+        !plan->pixel_decoder_ready &&
+        dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            material, source_plan, session_identity, &candidate) &&
+        candidate.identity_hash == plan->identity_hash;
 }
 
 /* ── Source evidence ─────────────────────────────────────────────── */

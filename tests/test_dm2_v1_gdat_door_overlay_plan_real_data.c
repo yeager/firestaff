@@ -149,6 +149,9 @@ int main(void)
         !material_plan.commands[0].rect_row_hash ||
         !material_plan.commands[0].geometry_hash ||
         !material_plan.commands[0].decoded_hash ||
+        !material_plan.commands[0].material_source_bytes ||
+        !material_plan.commands[0].material_source_byte_count ||
+        !material_plan.commands[0].material_receipt_hash ||
         !material_plan.commands[0].selection_hash ||
         !dm2_v1_asset_load_word_value(
             &loader, DM2_GDAT_CATEGORY_DOORS, 0,

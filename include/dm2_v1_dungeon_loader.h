@@ -193,6 +193,11 @@ typedef struct {
     uint8_t front_image_format;
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
+    uint16_t raw_material_index;
+    const uint8_t *raw_material_bytes;
+    size_t raw_material_byte_count;
+    uint32_t raw_material_hash;
+    uint32_t raw_material_receipt_hash;
 } DM2_V1_G1TextWallGfxMaterial;
 
 typedef struct {
@@ -223,6 +228,11 @@ typedef struct {
     uint8_t front_image_format;
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
+    uint16_t raw_material_index;
+    const uint8_t *raw_material_bytes;
+    size_t raw_material_byte_count;
+    uint32_t raw_material_hash;
+    uint32_t raw_material_receipt_hash;
 } DM2_V1_G1ActuatorWallGfxMaterial;
 
 typedef struct {
@@ -323,6 +333,7 @@ typedef struct {
     DM2_V1_G1ContainerMapChipMaterial
         materials[DM2_V1_G1_CONTAINER_MAP_CHIP_MAX];
 } DM2_V1_G1ContainerMapChipRuntimeReceipt;
+
 
 /* Hashes one admitted DB4 -> CREATURES/type/F9 material together with the
  * original G1 owner fields. This is a receipt identity, not a replacement
@@ -600,6 +611,191 @@ typedef struct {
     DM2_V1_G1DirectContainerRoot
         containers[DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS];
 } DM2_V1_G1RuntimeMapContainerReceipt;
+
+/* Separate SKWIN DRAW_ITEM material selector. This intentionally does not
+ * reuse the F9 DRAW_MAP_CHIP receipts above. */
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    int x;
+    int y;
+    uint8_t category;
+    uint8_t item_type;
+    uint8_t image_field;
+    uint8_t direction;
+    uint8_t container_open;
+    uint16_t image_offset;
+    uint32_t identity_hash;
+} DM2_V1_G1StaticObjectMaterialSelector;
+
+typedef struct {
+    DM2_V1_G1StaticObjectMaterialSelector selector;
+    const uint8_t *raw_gfx256_bytes;
+    size_t raw_gfx256_byte_count;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
+    uint32_t decoded_pixel_hash;
+    uint16_t clip_rect_id;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+} DM2_V1_G1StaticObjectMaterialReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t missile_object_id;
+    uint8_t category;
+    uint8_t item_type;
+    uint8_t image_field;
+    uint8_t flip_flags;
+    uint8_t cell_pos;
+    uint8_t position_5x5;
+    uint16_t clip_rect_id;
+    uint16_t stretch_factor64;
+    uint32_t identity_hash;
+} DM2_V1_G1FlyingItemSourceReceipt;
+
+/* The DRAW_FLYING_ITEM image remains source-owned: this receipt ties the
+ * QUERY_TEMP_PICST selector to its exact GRAPHICS.DAT image, palette and
+ * QUERY_CREATURE_BLIT_RECTI/QUERY_EXPANDED_RECT placement evidence. */
+typedef struct {
+    int valid;
+    DM2_V1_G1FlyingItemSourceReceipt source;
+    const uint8_t *raw_gfx256_bytes;
+    size_t raw_gfx256_byte_count;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
+    uint16_t clip_rect_id;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+    uint32_t identity_hash;
+} DM2_V1_G1FlyingItemMaterialReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t object_id;
+    uint16_t missile_object;
+    uint8_t energy_remaining;
+    uint8_t energy_remaining2;
+    uint16_t timer_index;
+    uint32_t record_hash;
+} DM2_V1_G1DirectMissileReceipt;
+
+/* Source: SKULLWIN/c_gui_vp.cpp:3545-3770, c_record.cpp:203-279,
+ * dm2data.cpp:487.  This is selector evidence only; it never authorizes a
+ * pixel decode or viewport draw. */
+typedef struct {
+    int valid;
+    uint16_t missile_object_id;
+    uint16_t missile_object;
+    uint8_t class1;
+    uint8_t class2;
+    uint8_t record_byte4;
+    uint8_t branch_temp_picst;
+    uint16_t image_data_index;
+    uint32_t identity_hash;
+} DM2_V1_G1FlyingItemSelectorReceipt;
+
+/* Source: SKULLWIN/c_gui_vp.cpp:3458-3770; dm2data.cpp:602,644,659,889.
+ * Geometry/branch evidence only. image_field is intentionally unavailable. */
+typedef struct {
+    int valid;
+    int no_draw;
+    uint8_t view_position;
+    int8_t depth_band;
+    int8_t placement_x;
+    int8_t placement_y;
+    uint8_t temp_picst_eligible;
+    uint8_t draw_item_opaque;
+    uint8_t image_field_available;
+    uint32_t table_hash;
+    uint32_t identity_hash;
+} DM2_V1_G1FlyingItemGeometryReceipt;
+
+typedef struct {
+    uint8_t query_48ae_state;
+    uint8_t timer_direction;
+    uint8_t viewport_direction;
+    uint8_t direction_5x5;
+    /* c_gui_vp.cpp:3490-3503 reads these two bytes from the nine-byte
+     * viewport table row.  Their sum controls the state-zero 8/9 split. */
+    int8_t table_afe;
+    int8_t table_b43;
+    /* table1d6b15[view_position]; a negative value means the source view
+     * cell has no flying-item geometry. */
+    int8_t table_b15;
+} DM2_V1_G1FlyingItemVb30Inputs;
+
+typedef struct {
+    int valid;
+    uint8_t vb30;
+    uint8_t temp_picst_blocked;
+    uint32_t identity_hash;
+} DM2_V1_G1FlyingItemVb30Receipt;
+
+/* Source: SKULLWIN/c_gui_vp.cpp:3610-3770 and c_querydb.cpp:2381-2415.
+ * This joins the TEMP_PICST summary tuple to its exact raw IMG3 and decoded
+ * bytes.  It is evidence only: decoded pixels are freed before return and
+ * no renderer may use this receipt as a surface. */
+typedef struct {
+    int valid;
+    int no_draw;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t raw_index;
+    uint16_t width;
+    uint16_t height;
+    DM2_ImageFormat format;
+    int16_t source_offset_x;
+    int16_t source_offset_y;
+    uint32_t offset_receipt_hash;
+    uint32_t selector_identity_hash;
+    uint32_t vb30_identity_hash;
+    uint32_t geometry_identity_hash;
+    uint32_t summary_receipt_hash;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint32_t decoded_pixels_hash;
+    uint32_t palette_hash;
+    uint32_t identity_hash;
+} DM2_V1_G1FlyingItemDecodedMaterialReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t timer_index;
+    uint8_t timer_type;
+    uint8_t actor;
+    uint16_t value;
+    uint16_t action_word;
+    uint8_t direction;
+    uint32_t raw_timer_hash;
+} DM2_V1_G1MissileTimerReceipt;
+
+/* SKWIN/SkWinCore.cpp::QUERY_CREATURE_BLIT_RECTI. The returned id is the
+ * source RAW4 rectangle index; callers add QUERY_TEMP_PICST flags separately. */
+int dm2_v1_g1_query_creature_blit_recti(int cell_pos, int position_5x5,
+                                        int direction,
+                                        uint16_t *out_rect_id);
+int dm2_v1_g1_direct_missile_timer_receipt(const uint8_t *timer_table,
+                                           size_t timer_table_size,
+                                           uint16_t timer_index,
+                                           DM2_V1_G1MissileTimerReceipt *out);
+
+int dm2_v1_g1_flying_item_source_receipt(
+    uint16_t missile_object_id, int category, int item_type, int image_field,
+    int flip_flags, int cell_pos, int position_5x5, int stretch_factor64,
+    DM2_V1_G1FlyingItemSourceReceipt *out);
+
+int dm2_v1_g1_static_object_material_selector(
+    const DM2_V1_G1DirectWeaponRoot *weapon, uint16_t image_offset,
+    DM2_V1_G1StaticObjectMaterialSelector *out);
+int dm2_v1_g1_static_container_material_selector(
+    const DM2_V1_G1DirectContainerRoot *container, uint16_t image_offset,
+    DM2_V1_G1StaticObjectMaterialSelector *out);
 
 typedef struct {
     int x;
@@ -989,6 +1185,32 @@ typedef struct {
     int sky_texture_index;
     int weather_zone_count;
 } DM2_V1_DungeonData;
+
+int dm2_v1_g1_direct_missile_receipt(const DM2_V1_DungeonData *d,
+                                     uint16_t object_id,
+                                     DM2_V1_G1DirectMissileReceipt *out);
+int dm2_v1_g1_flying_item_selector_receipt(
+    const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
+    const DM2_V1_G1DirectMissileReceipt *missile,
+    DM2_V1_G1FlyingItemSelectorReceipt *out);
+int dm2_v1_g1_flying_item_geometry_receipt(
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    int view_position, DM2_V1_G1FlyingItemGeometryReceipt *out);
+int dm2_v1_g1_flying_item_vb30_receipt(
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    const DM2_V1_G1FlyingItemVb30Inputs *inputs,
+    DM2_V1_G1FlyingItemVb30Receipt *out);
+int dm2_v1_g1_flying_item_summary_image_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    const DM2_V1_G1FlyingItemVb30Receipt *vb30,
+    DM2_V1_QueryGdatSummaryImageReceipt *out);
+int dm2_v1_g1_flying_item_decoded_material_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_G1FlyingItemSelectorReceipt *selector,
+    const DM2_V1_G1FlyingItemVb30Receipt *vb30,
+    const DM2_V1_G1FlyingItemGeometryReceipt *geometry,
+    DM2_V1_G1FlyingItemDecodedMaterialReceipt *out);
 
 typedef int (*DM2_V1_DungeonThingVisitor)(
     void *user,

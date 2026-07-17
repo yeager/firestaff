@@ -144,6 +144,8 @@ int main(void)
                 if (dm2_v1_wall_ornament_material_receipt(
                         &loader, (uint8_t)index, (uint8_t)field,
                         &material)) {
+                    DM2_V1_GdatGfxRawMaterialReceipt raw;
+
                     ++material_count;
                     CHECK(material.valid && material.wall_gfx_index == index &&
                               material.image_field == field &&
@@ -155,6 +157,14 @@ int main(void)
                               material.material_hash != 0u,
                           "real DRAW_WALL_ORNATE selected-field material "
                           "consumes image/local palette");
+                    CHECK(dm2_v1_gdat_image_raw_material_receipt(
+                              &loader, DM2_GDAT_CATEGORY_WALL_GFX,
+                              (int)index, (int)field, &raw) &&
+                              raw.accepted && raw.source_bytes &&
+                              raw.source_byte_count != 0u &&
+                              raw.source_hash != 0u && raw.receipt_hash != 0u,
+                          "real DRAW_WALL_ORNATE material retains exact "
+                          "GFX raw bytes and receipt");
                     material_hash ^= material.material_hash;
                     material_hash *= 16777619u;
                 }

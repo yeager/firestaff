@@ -11,6 +11,7 @@ static int checks;
 static int passed;
 static int custom_button_fetches;
 static int wrong_sized_custom_button;
+static const uint8_t source_bytes[4] = { 0x44, 0x4d, 0x32, 0x00 };
 
 static uint32_t indexed_pixel_hash(const uint8_t *pixels, int width,
                                    int height, int stride)
@@ -107,6 +108,13 @@ int main(void)
     text_receipt.materials[0].front_image_width = 2;
     text_receipt.materials[0].front_image_height = 2;
     text_receipt.materials[0].local_palette_hash = 0x47443150u;
+    text_receipt.materials[0].raw_material_index = 0x123u;
+    text_receipt.materials[0].raw_material_bytes = source_bytes;
+    text_receipt.materials[0].raw_material_byte_count = sizeof(source_bytes);
+    text_receipt.materials[0].raw_material_hash =
+        indexed_pixel_hash(source_bytes, sizeof(source_bytes), 1,
+                           sizeof(source_bytes));
+    text_receipt.materials[0].raw_material_receipt_hash = 0x52454331u;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     setup_custom_button(&viewport, framebuffer);
@@ -175,7 +183,10 @@ int main(void)
             dm2_v1_viewport_wall_button_graphic_index(0x2a, 1),
             0x2a, 1, 6, 7, 0x8abcu, direct_pixels, 2, 2, 2,
             palette16, 0x47443150u,
-            indexed_pixel_hash(direct_pixels, 2, 2, 2));
+            indexed_pixel_hash(direct_pixels, 2, 2, 2), 0x123u,
+            source_bytes, sizeof(source_bytes),
+            indexed_pixel_hash(source_bytes, sizeof(source_bytes), 1,
+                               sizeof(source_bytes)), 0x52454331u);
         CHECK("direct G1 WALL_GFX receipt retains exact M11 source bytes",
               viewport.g1_scene_wall_button_material_ready &&
                   viewport.g1_scene_wall_button_material_pixels == direct_pixels &&
@@ -192,7 +203,10 @@ int main(void)
             dm2_v1_viewport_wall_button_graphic_index(0x2a, 1),
             0x2a, 1, 6, 7, 0x8abcu, direct_pixels, 2, 2, 2,
             palette16, 0x47443150u,
-            indexed_pixel_hash(direct_pixels, 2, 2, 2));
+            indexed_pixel_hash(direct_pixels, 2, 2, 2), 0x123u,
+            source_bytes, sizeof(source_bytes),
+            indexed_pixel_hash(source_bytes, sizeof(source_bytes), 1,
+                               sizeof(source_bytes)), 0x52454331u);
         custom_button_fetches = 0;
         dm2_v1_render_doors(&viewport);
         CHECK("direct G1 WALL_GFX bytes avoid a second provider lookup",
@@ -215,6 +229,21 @@ int main(void)
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
     text_receipt.materials[0].local_palette_hash = 0x47443150u;
+
+    text_receipt.materials[0].raw_material_receipt_hash = 0u;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    setup_custom_button(&viewport, framebuffer);
+    dm2_v1_viewport_set_level(&viewport, 5);
+    dm2_v1_viewport_set_g1_wall_gfx_materials(
+        &viewport, &text_receipt, NULL);
+    custom_button_fetches = 0;
+    dm2_v1_render_doors(&viewport);
+    CHECK("missing raw WALL_GFX receipt preserves no-draw",
+          custom_button_fetches == 1 &&
+              viewport.asset_door_button_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
+    text_receipt.materials[0].raw_material_receipt_hash = 0x52454331u;
 
     memset(&actuator_receipt, 0, sizeof(actuator_receipt));
     actuator_receipt.valid = 1;

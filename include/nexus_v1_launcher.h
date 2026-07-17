@@ -23,6 +23,12 @@
  */
 
 #include "nexus_v1_engine.h"
+#include "nexus_v1_lev_corpus_discovery.h"
+#include "nexus_v1_multi_level_capture_campaign_launcher.h"
+#include "nexus_v1_sal_container_provenance.h"
+#include "nexus_v1_sndlev_map_provenance.h"
+#include "nexus_v1_slev_sal_asset_discovery.h"
+#include "nexus_v1_slev_task_body_capture_plan.h"
 #include "firestaff_nexus_v1_boot_profile.h"
 #include "nexus_v1_light_runtime.h"
 #include "nexus_v1_startup_menu.h"
@@ -47,6 +53,674 @@ int nexus_v1_launcher_init(const char *data_dir);
  * Calls nexus_v1_load_level() on the singleton.
  * Returns 0 on success, -1 if launcher not init'd or level load failed. */
 int nexus_v1_launcher_load_level(int level);
+
+typedef struct {
+    int valid;
+    int opaque_saturn_card_only;
+    int native_fnxs_path_used;
+    uint64_t card_fnv1a64;
+    uint64_t route_epoch;
+} Nexus_V1_LauncherSaturnCardStartupReceipt;
+int nexus_v1_launcher_select_saturn_card_startup(
+    Nexus_V1_Engine *engine, uint64_t route_epoch, uint64_t card_fnv1a64,
+    Nexus_V1_LauncherSaturnCardStartupReceipt *out_receipt);
+typedef struct { int valid; int opaque_only; uint64_t card_fnv1a64; uint64_t package_fnv1a64; uint64_t route_epoch; } Nexus_V1_LauncherSaturnCardBootBinding;
+int nexus_v1_launcher_bind_saturn_card_boot_route(Nexus_V1_Engine *, uint64_t, uint64_t, uint64_t, int, Nexus_V1_LauncherSaturnCardBootBinding *);
+
+/* A selected MENU.BPK PRS3 entry is presentation evidence only. This receipt
+ * binds source bytes to M11 while keeping the route explicitly no-draw. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    uint32_t entry_index;
+    uint32_t payload_offset;
+    uint32_t payload_length;
+    uint64_t payload_fnv1a64;
+    uint32_t prs3_version;
+    uint32_t prs3_pixel_count;
+    uint32_t header_first_u32;
+    uint32_t header_minus_payload;
+    Nexus_V1_BpkPrs3CompressionDescriptorReceipt compression;
+} Nexus_V1_LauncherMenuBpkNoDrawPresentationReceipt;
+int nexus_v1_launcher_menu_bpk_no_draw_presentation_receipt(
+    const Nexus_V1_BpkRuntimeUploadReceipt *upload,
+    const Nexus_V1_BpkRuntimeUploadRow *row,
+    Nexus_V1_LauncherMenuBpkNoDrawPresentationReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int draw_disabled;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    Nexus_V1_LauncherMenuBpkNoDrawPresentationReceipt presentation;
+} Nexus_V1_LauncherM11MenuBpkNoDrawHostReceipt;
+int nexus_v1_launcher_admit_m11_menu_bpk_no_draw_host(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t package_fnv1a64,
+    const Nexus_V1_LauncherMenuBpkNoDrawPresentationReceipt *presentation,
+    Nexus_V1_LauncherM11MenuBpkNoDrawHostReceipt *out_receipt);
+int nexus_v1_launcher_consume_m11_menu_bpk_no_draw_host(
+    const Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t package_fnv1a64,
+    Nexus_V1_LauncherM11MenuBpkNoDrawHostReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int opaque_saturn_card_only;
+    int no_draw_only;
+    int draw_disabled;
+    uint64_t card_fnv1a64;
+    uint64_t package_fnv1a64;
+    uint64_t route_epoch;
+    Nexus_V1_LauncherSaturnCardBootBinding card;
+    Nexus_V1_LauncherM11MenuBpkNoDrawHostReceipt m11;
+} Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt;
+int nexus_v1_launcher_bind_saturn_card_m11_no_draw_startup(
+    Nexus_V1_Engine *engine, uint64_t route_epoch,
+    uint64_t card_fnv1a64, uint64_t package_fnv1a64,
+    int direct_card_selected,
+    Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt *out_receipt);
+
+/* External PRS3 material-capture envelope. The body is an opaque witness;
+ * declared output is structural metadata, not decoded output. */
+#define NEXUS_V1_M11_PRS3_MATERIAL_CAPTURE_MAGIC "NXSPRS3M"
+#define NEXUS_V1_M11_PRS3_MATERIAL_CAPTURE_VERSION 1U
+#define NEXUS_V1_M11_PRS3_MATERIAL_CAPTURE_HEADER_BYTES 96U
+
+typedef struct {
+    int valid;
+    uint64_t capture_fnv1a64;
+    uint64_t capture_byte_count;
+    int route_bound;
+    int entry_bound;
+    int body_bound;
+    int declared_output_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int payload_opaque;
+    int no_draw_only;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+} Nexus_V1_LauncherM11Prs3MaterialLocalArtifactReceipt;
+
+int nexus_v1_launcher_verify_m11_prs3_material_local_artifact(
+    const Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11Prs3MaterialLocalArtifactReceipt *out_receipt);
+
+typedef struct {
+    int valid, capture_required, capture_imported, resume_ready, operator_only;
+    char bios_sha256[65], disc_sha256[65];
+    Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt route;
+    Nexus_V1_LauncherM11Prs3MaterialLocalArtifactReceipt capture;
+    int no_draw_only, decoder_permitted, fallback_visuals_permitted;
+} Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt;
+int nexus_v1_launcher_admit_m12_m11_prs3_material_capture_required(
+    const Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt *route,
+    const char *bios_sha256, const char *disc_sha256,
+    Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_prs3_material_capture(
+    const Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *route,
+    const char *bios_sha256, const char *disc_sha256,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11Prs3MaterialCaptureRouteReceipt *out_receipt);
+
+/* Active-level SLEV/SAL/MAP/SDDRVS identities are launcher provenance only.
+ * The accepted route continues to block script dispatch and SFX playback. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t asset_corpus_fnv1a64;
+    Nexus_V1_LevelAuxAdmissionReceipt level_aux;
+    Nexus_V1_SlevSalDirectLevelIdentity assets;
+    Nexus_V1_SlevSalDirectIdentity sound_driver;
+    Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt startup;
+} Nexus_V1_LauncherM11SlevSalNoDrawReceipt;
+int nexus_v1_launcher_admit_m11_slev_sal_no_draw(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    Nexus_V1_LauncherM11SlevSalNoDrawReceipt *out_receipt);
+
+/* A reviewed SLEV task-body capture target may reach M11 only through the
+ * current direct SLEV/SAL/card/package route. The target is opaque evidence:
+ * no opcode, callback, dispatch, codec, or fallback-script meaning is added. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    Nexus_V1_SlevSalDirectIdentity slev;
+    Nexus_V1_SlevTaskBodyCaptureTarget task_body;
+    Nexus_V1_LauncherM11SlevSalNoDrawReceipt level_aux;
+} Nexus_V1_LauncherM11SlevTaskBodyNoDispatchReceipt;
+int nexus_v1_launcher_admit_m11_slev_task_body_no_dispatch(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_SlevTaskBodyCapturePlan *plan,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    Nexus_V1_LauncherM11SlevTaskBodyNoDispatchReceipt *out_receipt);
+
+/* This joins already parsed source receipts only. It does not inspect a SAL
+ * descriptor, a MAP row, an SDDRVS command, or a SLEV opcode. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int no_op_only;
+    int commands_opaque;
+    int audio_opaque;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    uint64_t task_trace_fnv1a64;
+    uint64_t sal_descriptor_fnv1a64;
+    uint64_t map_table_fnv1a64;
+    uint64_t sound_driver_fnv1a64;
+    Nexus_V1_LauncherM11SlevTaskBodyNoDispatchReceipt task;
+    Nexus_V1_SalContainerProvenanceReceipt sal_container;
+    Nexus_V1_SndlevMapProvenanceReceipt map_table;
+} Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt;
+
+typedef struct {
+    int original_saturn_trace_bound;
+    uint64_t task_trace_fnv1a64;
+    uint64_t sal_descriptor_fnv1a64;
+    uint64_t map_table_fnv1a64;
+    uint64_t sound_driver_fnv1a64;
+} Nexus_V1_LauncherSlevTaskSalCaptureBinding;
+int nexus_v1_launcher_admit_m11_slev_task_sal_no_op_startup(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_LauncherM11SlevTaskBodyNoDispatchReceipt *task,
+    const Nexus_V1_SalContainerProvenanceReceipt *sal_container,
+    const Nexus_V1_SndlevMapProvenanceReceipt *map_table,
+    const Nexus_V1_LauncherSlevTaskSalCaptureBinding *binding,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt *out_receipt);
+
+#define NEXUS_V1_M11_SLEV_SAL_CAPTURE_MAGIC "NXSLSC01"
+#define NEXUS_V1_M11_SLEV_SAL_CAPTURE_VERSION 1U
+#define NEXUS_V1_M11_SLEV_SAL_CAPTURE_HEADER_BYTES 96U
+
+/* External original-Saturn SLEV/SAL capture envelope. Its payload remains
+ * opaque command evidence and is never retained, dispatched, or played. */
+typedef struct {
+    int valid;
+    Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt route;
+    uint64_t capture_fnv1a64;
+    uint64_t capture_byte_count;
+    uint32_t payload_offset;
+    uint32_t payload_length;
+    uint64_t payload_fnv1a64;
+    int header_version_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int route_bound;
+    int no_draw_only;
+    int no_op_only;
+    int commands_opaque;
+    int audio_opaque;
+    int dispatch_permitted;
+    int playback_permitted;
+    int fallback_script_permitted;
+} Nexus_V1_LauncherM11SlevSalCaptureImportReceipt;
+int nexus_v1_launcher_import_m11_slev_sal_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11SlevSalCaptureImportReceipt *out_receipt);
+typedef struct {
+    int valid, route_bound, task_bound, sal_bound, map_bound, sddrvs_bound;
+    int payload_bounds_bound, payload_hash_bound, payload_opaque, no_draw_only, no_op_only;
+} Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt;
+int nexus_v1_launcher_verify_m11_slev_sal_local_artifact(
+    const Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11SlevSalLocalArtifactReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int capture_required;
+    int capture_imported;
+    int resume_ready;
+    int operator_only;
+    uint32_t bios_region;
+    char bios_sha256[65];
+    char disc_sha256[65];
+    Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt startup;
+    Nexus_V1_LauncherM11SlevSalCaptureImportReceipt capture;
+    int no_draw_only;
+    int no_op_only;
+    int commands_opaque;
+    int audio_opaque;
+    int dispatch_permitted;
+    int playback_permitted;
+} Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt;
+int nexus_v1_launcher_admit_m12_m11_slev_sal_capture_required(
+    const Nexus_V1_LauncherM11SlevTaskSalNoOpStartupReceipt *startup,
+    const char *bios_sha256, uint32_t bios_region, const char *disc_sha256,
+    Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_slev_sal_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt *out_receipt);
+
+/* Champion-to-dungeon handoff for a direct, verified LEV corpus row. This is
+ * M12/M11 route evidence only and remains explicitly no-draw. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int draw_disabled;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    uint32_t level_index;
+    Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt champion_startup;
+    Nexus_V1_DgnM11DirectLevNoDrawReceipt dungeon;
+} Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt;
+int nexus_v1_launcher_admit_direct_lev_m11_dungeon_handoff(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *geometry,
+    Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *out_receipt);
+
+/* One immutable, external-capture target for the selected M11 Structure3
+ * face/Structure2 descriptor route. It retains identities only, never a DGN
+ * payload, candidate bytes, VDP1 command, palette, texture, or decoded data. */
+typedef struct {
+    int valid;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    uint32_t level_index;
+    uint64_t dgn_fnv1a64;
+    uint64_t dgn_byte_count;
+    Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt face_descriptor;
+    int direct_source_rehashed;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int payload_materialized;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget;
+
+/* External evidence supplied by an operator-produced original Saturn capture.
+ * Lane identities are opaque observations, not texel, palette, or command
+ * decoding claims. `replay_sequence` is an explicit monotonic capture order. */
+typedef struct {
+    int original_saturn_capture_verified;
+    uint64_t replay_sequence;
+    uint64_t trace_fnv1a64;
+    uint64_t trace_byte_count;
+    uint64_t texture_candidate_fnv1a64;
+    uint64_t palette_candidate_fnv1a64;
+    uint64_t vdp1_command_fnv1a64;
+    uint64_t vdp1_command_byte_count;
+} Nexus_V1_LauncherM11Structure2FaceCaptureReplayEvidence;
+
+typedef struct {
+    int valid;
+    Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget target;
+    uint64_t trace_fnv1a64;
+    uint64_t trace_byte_count;
+    uint64_t vdp1_command_fnv1a64;
+    uint64_t vdp1_command_byte_count;
+    int texture_candidate_bound;
+    int palette_candidate_bound;
+    int vdp1_binding_observed;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure2FaceCaptureReplayReceipt;
+
+int nexus_v1_launcher_build_m11_structure2_face_capture_replay_target(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget *out_target);
+int nexus_v1_launcher_admit_m11_structure2_face_capture_replay(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget *target,
+    const Nexus_V1_LauncherM11Structure2FaceCaptureReplayEvidence *evidence,
+    Nexus_V1_LauncherM11Structure2FaceCaptureReplayReceipt *out_receipt);
+
+/* Read-only external original-Saturn VDP1 capture envelope. The opaque payload
+ * begins at byte 136; its bytes are never retained or interpreted here. */
+#define NEXUS_V1_M11_STRUCTURE2_FACE_VDP1_CAPTURE_MAGIC "NXSVDP1C"
+#define NEXUS_V1_M11_STRUCTURE2_FACE_VDP1_CAPTURE_VERSION 1U
+#define NEXUS_V1_M11_STRUCTURE2_FACE_VDP1_CAPTURE_HEADER_BYTES 136U
+
+typedef struct {
+    int valid;
+    Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget target;
+    uint64_t capture_fnv1a64;
+    uint64_t capture_byte_count;
+    uint32_t payload_offset;
+    uint32_t payload_length;
+    uint64_t payload_fnv1a64;
+    uint64_t trace_fnv1a64;
+    uint64_t trace_byte_count;
+    uint64_t vdp1_command_fnv1a64;
+    uint64_t vdp1_command_byte_count;
+    int header_version_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int target_bound;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure2FaceVdp1CaptureImportReceipt;
+
+int nexus_v1_launcher_import_m11_structure2_face_vdp1_capture(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget *target,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11Structure2FaceVdp1CaptureImportReceipt *out_receipt);
+
+/* One immutable replay target for the parser-observed Structure3b topology
+ * framing selected by M11. It names source spans only; external payloads are
+ * opaque evidence and cannot establish a mesh, transform, or draw route. */
+typedef struct {
+    int valid;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    uint32_t level_index;
+    uint64_t dgn_fnv1a64;
+    uint64_t dgn_byte_count;
+    Nexus_V1_DgnM11Structure3TopologyDescriptorIntakeReceipt topology;
+    int direct_source_rehashed;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int payload_materialized;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure3TopologyCaptureReplayTarget;
+
+#define NEXUS_V1_M11_STRUCTURE3_TOPOLOGY_CAPTURE_MAGIC "NXS3TOP1"
+#define NEXUS_V1_M11_STRUCTURE3_TOPOLOGY_CAPTURE_VERSION 1U
+#define NEXUS_V1_M11_STRUCTURE3_TOPOLOGY_CAPTURE_HEADER_BYTES 124U
+
+typedef struct {
+    int valid;
+    Nexus_V1_LauncherM11Structure3TopologyCaptureReplayTarget target;
+    uint64_t capture_fnv1a64;
+    uint64_t capture_byte_count;
+    uint32_t payload_offset;
+    uint32_t payload_length;
+    uint64_t payload_fnv1a64;
+    int header_version_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int target_bound;
+    int topology_opaque;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure3TopologyCaptureImportReceipt;
+
+int nexus_v1_launcher_build_m11_structure3_topology_capture_replay_target(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    Nexus_V1_LauncherM11Structure3TopologyCaptureReplayTarget *out_target);
+int nexus_v1_launcher_import_m11_structure3_topology_capture(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM11Structure3TopologyCaptureReplayTarget *target,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11Structure3TopologyCaptureImportReceipt *out_receipt);
+
+typedef enum {
+    NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_INVALID = 0,
+    NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_US = 1,
+    NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_JP = 2,
+    NEXUS_V1_LAUNCHER_SATURN_BIOS_REGION_EU = 3
+} Nexus_V1_LauncherSaturnBiosRegion;
+
+/* M12/M11 owns this route transition. A local capture plan is evidence of an
+ * external launch request only; without an imported V1 envelope it remains a
+ * visible capture-required, no-draw route. */
+typedef struct {
+    int valid;
+    int capture_required;
+    int capture_imported;
+    int resume_ready;
+    int operator_only;
+    Nexus_V1_LauncherSaturnBiosRegion bios_region;
+    char bios_sha256[65];
+    char disc_sha256[65];
+    Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget target;
+    Nexus_V1_LauncherM11Structure2FaceVdp1CaptureImportReceipt capture;
+    int no_draw_only;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt;
+
+int nexus_v1_launcher_admit_m12_m11_vdp1_capture_required(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const char *bios_sha256, Nexus_V1_LauncherSaturnBiosRegion bios_region,
+    const char *disc_sha256,
+    const Nexus_V1_LauncherM11Structure2FaceCaptureReplayTarget *target,
+    Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_vdp1_capture(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    uint64_t capture_fnv1a64;
+    uint64_t capture_byte_count;
+    int bios_bound;
+    int disc_bound;
+    int dgn_bound;
+    int face_bound;
+    int descriptor_bound;
+    int candidates_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int trace_command_bound;
+    int payload_opaque;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure2FaceVdp1LocalArtifactReceipt;
+
+int nexus_v1_launcher_verify_m11_structure2_face_vdp1_local_artifact(
+    const Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *route,
+    const char *bios_sha256, const char *disc_sha256,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11Structure2FaceVdp1LocalArtifactReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_vdp1_local_artifact(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *route,
+    const char *bios_sha256, const char *disc_sha256,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11Vdp1CaptureRouteReceipt *out_receipt);
+
+/* This follows the same M12/M11 capture-required lifecycle as NXSVDP1C, but
+ * retains only the opaque Structure3 topology-capture contract. */
+typedef struct {
+    int valid;
+    int capture_required;
+    int capture_imported;
+    int resume_ready;
+    int operator_only;
+    Nexus_V1_LauncherSaturnBiosRegion bios_region;
+    char bios_sha256[65];
+    char disc_sha256[65];
+    Nexus_V1_LauncherM11Structure3TopologyCaptureReplayTarget target;
+    Nexus_V1_LauncherM11Structure3TopologyCaptureImportReceipt capture;
+    int no_draw_only;
+    int decoder_permitted;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt;
+
+int nexus_v1_launcher_admit_m12_m11_structure3_topology_capture_required(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const char *bios_sha256, Nexus_V1_LauncherSaturnBiosRegion bios_region,
+    const char *disc_sha256,
+    const Nexus_V1_LauncherM11Structure3TopologyCaptureReplayTarget *target,
+    Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_structure3_topology_capture(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt *route,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt *out_receipt);
+
+/* Local artifact preflight is deliberately redundant with the opaque importer:
+ * it makes the operator-side BIOS/disc and topology contract explicit before
+ * the live route is allowed to attempt a resume. */
+typedef struct {
+    int valid;
+    uint64_t capture_fnv1a64;
+    uint64_t capture_byte_count;
+    int bios_bound;
+    int disc_bound;
+    int lev_bound;
+    int face_bound;
+    int vertex_bound;
+    int normal_bound;
+    int payload_bounds_bound;
+    int payload_hash_bound;
+    int topology_opaque;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_LauncherM11Structure3TopologyLocalArtifactReceipt;
+
+int nexus_v1_launcher_verify_m11_structure3_topology_local_artifact(
+    const Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt *route,
+    const char *bios_sha256, const char *disc_sha256,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM11Structure3TopologyLocalArtifactReceipt *out_receipt);
+int nexus_v1_launcher_resume_m12_m11_structure3_topology_local_artifact(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *handoff,
+    const Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt *route,
+    const char *bios_sha256, const char *disc_sha256,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    Nexus_V1_LauncherM12M11Structure3TopologyCaptureRouteReceipt *out_receipt);
+
+/* One direct SDDRVS identity may accompany a previously admitted direct-LEV
+ * dungeon receipt only while every M11/card/package/level identity still
+ * matches. It is script provenance only: parsing and dispatch remain blocked. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    Nexus_V1_SlevSalDirectIdentity sound_driver;
+    Nexus_V1_LauncherM11SlevSalNoDrawReceipt level_aux;
+    Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt dungeon;
+} Nexus_V1_LauncherM11SddrvsDungeonNoDrawReceipt;
+int nexus_v1_launcher_admit_m11_sddrvs_dungeon_no_draw(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *dungeon,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    Nexus_V1_LauncherM11SddrvsDungeonNoDrawReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    Nexus_V1_SlevSalDirectLevelIdentity assets;
+    Nexus_V1_SalContainerProvenanceReceipt sal_container;
+    Nexus_V1_SndlevMapProvenanceReceipt map_table;
+    Nexus_V1_LauncherM11SlevSalNoDrawReceipt level_aux;
+    Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt dungeon;
+} Nexus_V1_LauncherM11SlevSalDungeonNoDrawReceipt;
+int nexus_v1_launcher_admit_m11_slev_sal_dungeon_no_draw(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt *dungeon,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    Nexus_V1_LauncherM11SlevSalDungeonNoDrawReceipt *out_receipt);
+
+/* The selected SNDLEV row stays opaque. This joins its bounded identity to an
+ * already admitted M11 audio route; it never authorizes selector dispatch or
+ * playback. */
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int blocks_real_script_dispatch;
+    int blocks_real_sfx_playback;
+    uint32_t level_index;
+    uint32_t row_index;
+    uint64_t route_epoch;
+    uint64_t package_fnv1a64;
+    uint64_t card_fnv1a64;
+    uint64_t table_fnv1a64;
+    Nexus_V1_SndlevMapRowProvenanceReceipt row;
+    Nexus_V1_LauncherM11SlevSalDungeonNoDrawReceipt dungeon;
+} Nexus_V1_LauncherM11SndlevMapRowNoDrawReceipt;
+int nexus_v1_launcher_admit_m11_sndlev_map_row_no_draw(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_SlevSalAssetDiscoveryReceipt *assets,
+    const Nexus_V1_LauncherM11SlevSalDungeonNoDrawReceipt *dungeon,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    uint32_t level_index, uint32_t row_index,
+    Nexus_V1_LauncherM11SndlevMapRowNoDrawReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int no_draw_only;
+    int draw_disabled;
+    uint32_t level_index;
+    uint64_t route_epoch;
+    uint64_t dgn_fnv1a64;
+    Nexus_V1_LauncherDirectLevM11DungeonHandoffReceipt direct_lev;
+} Nexus_V1_LauncherMultiLevelM11DungeonHandoffReceipt;
+int nexus_v1_launcher_admit_multi_level_m11_dungeon_handoff(
+    Nexus_V1_Engine *engine, const Nexus_V1_LevCorpusDiscoveryReceipt *corpus,
+    const Nexus_V1_MultiLevelCaptureCampaignLaunchPlan *plan,
+    uint64_t route_epoch, uint64_t package_fnv1a64, uint64_t card_fnv1a64,
+    int direct_card_selected, uint32_t level_index,
+    const Nexus_V1_DgnStructure1F2FaceAdjacencyTransformReceipt *geometry,
+    Nexus_V1_LauncherMultiLevelM11DungeonHandoffReceipt *out_receipt);
 
 /* Get the current Nexus V1 engine singleton.
  * Returns NULL if launcher not initialized.
@@ -125,6 +799,12 @@ typedef struct {
     int faces_expected;
     int faces_fallback;
     int menu_bpk_upload_receipt_valid;
+    int menu_bpk_provenance_bounded;
+    uint32_t menu_bpk_provenance_archive_entries;
+    uint32_t menu_bpk_provenance_table_entries;
+    uint64_t menu_bpk_provenance_expected_bytes;
+    Nexus_V1_LauncherMenuBpkNoDrawPresentationReceipt
+        menu_bpk_no_draw_presentation;
     Nexus_V1_BpkRuntimeUploadRoute menu_bpk_upload_route;
     int menu_bpk_archive_entries;
     int menu_bpk_surface_entries;
@@ -285,6 +965,10 @@ typedef struct {
     Nexus_V1_Engine *engine;
     int champion_cursor;
     int champion_frame;
+    uint64_t launcher_route_epoch;
+    uint64_t menu_bpk_package_fnv1a64;
+    uint64_t saturn_card_fnv1a64;
+    int saturn_card_direct_selected;
 } Nexus_V1_StartupRuntimeState;
 
 typedef struct {
@@ -565,6 +1249,10 @@ typedef struct {
     int full_start_graphics_ready;
     int full_start_menu_ready;
     int m11_host_route_ready;
+    Nexus_V1_LauncherM11MenuBpkNoDrawHostReceipt
+        m11_menu_bpk_no_draw_host;
+    Nexus_V1_LauncherSaturnCardM11NoDrawStartupReceipt
+        saturn_card_m11_no_draw_startup;
     int fallback_visuals_permitted;
     const char *m11_host_route;
     const char *startup_ui_blocker;

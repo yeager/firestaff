@@ -30,6 +30,7 @@
 
 static int passed;
 static int failed;
+static uint32_t phase7_fnv1a32(const uint8_t *bytes, size_t size);
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \

@@ -22,6 +22,8 @@ typedef enum DM1_V1_ViewportRuntimeOriginPc34 {
 } DM1_V1_ViewportRuntimeOriginPc34;
 
 #define DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS 8
+#define DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES \
+    PROJECTILE_LIST_CAPACITY
 
 typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int relativeForward;
@@ -65,6 +67,20 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int liveProjectileCell;
     int liveProjectileDirection;
     unsigned short liveProjectileAssociatedThing;
+    /* F0115 consumes every live C14 projectile on the visible square in
+     * effect-list order.  The legacy scalar fields above retain the first
+     * record for callers that only need a summary. */
+    int liveRenderableProjectileCount;
+    int liveRenderableProjectileSlots[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
+    int liveRenderableProjectileSubtypes[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
+    int liveRenderableProjectileCells[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
+    int liveRenderableProjectileDirections[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
+    unsigned short liveRenderableProjectileAssociatedThings[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
     int liveExplosionCount;
     int liveExplosionSlot;
     int liveExplosionType;

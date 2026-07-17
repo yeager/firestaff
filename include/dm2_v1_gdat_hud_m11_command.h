@@ -6,6 +6,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_viewport_renderer.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 enum {
@@ -37,6 +38,10 @@ typedef struct DM2_V1_GdatHudM11Command {
     uint32_t decoded_hash;
     uint32_t raw_byte_count;
     uint32_t palette_hash;
+    uint16_t material_raw_index;
+    const uint8_t *material_source_bytes;
+    size_t material_source_byte_count;
+    uint32_t material_receipt_hash;
 } DM2_V1_GdatHudM11Command;
 
 typedef struct DM2_V1_GdatHudM11CommandPlan {
@@ -45,6 +50,44 @@ typedef struct DM2_V1_GdatHudM11CommandPlan {
     uint32_t command_hash;
     DM2_V1_GdatHudM11Command commands[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];
 } DM2_V1_GdatHudM11CommandPlan;
+
+typedef struct {
+    int valid;
+    int no_draw;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint32_t decoded_hash;
+    uint32_t palette_hash;
+    uint16_t destination_rect_id;
+    uint32_t destination_hash;
+    uint32_t identity_hash;
+} DM2_V1_GdatHudSummaryM11Receipt;
+
+typedef struct {
+    int valid;
+    int no_draw;
+    uint16_t scale_x;
+    uint16_t scale_y;
+    uint16_t destination_rect_id;
+    uint32_t summary_identity_hash;
+    uint32_t destination_hash;
+    uint32_t identity_hash;
+} DM2_V1_GdatHudPicstTransformReceipt;
+
+typedef struct {
+    int valid;
+    int drawn;
+    uint16_t destination_rect_id;
+    uint16_t width;
+    uint16_t height;
+    uint32_t decoded_hash;
+    uint32_t palette_hash;
+    uint32_t summary_identity_hash;
+    uint32_t transform_identity_hash;
+    uint32_t destination_hash;
+    uint32_t identity_hash;
+} DM2_V1_GdatHudPicstDrawReceipt;
 
 /* Builds the complete indoor HUD image family from a verified original
  * GRAPHICS.DAT. Every command carries decoded source pixels, its local
@@ -76,5 +119,26 @@ uint32_t dm2_v1_gdat_hud_m11_command_plan_hash(
 
 void dm2_v1_gdat_hud_m11_command_plan_free(
     DM2_V1_GdatHudM11CommandPlan *plan);
+int dm2_v1_gdat_hud_summary_m11_receipt(
+    const DM2_V1_GdatHudM11CommandPlan *plan, int vb_144, int field,
+    DM2_V1_GdatHudSummaryM11Receipt *out_receipt);
+int dm2_v1_gdat_hud_picst_transform_receipt(
+    const DM2_V1_GdatHudSummaryM11Receipt *summary, int source_value,
+    DM2_V1_GdatHudPicstTransformReceipt *out_receipt);
+
+/* Draws only the c_gui_draw.cpp:926-942 SUMMARY_IMAGE branch after its
+ * authenticated QUERY_PICST_IT receipt. The caller owns the indexed target;
+ * partial/unknown clipping and every other transform branch are rejected. */
+int dm2_v1_gdat_hud_picst_draw_indexed(
+    const DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_GdatHudSummaryM11Receipt *summary,
+    const DM2_V1_GdatHudPicstTransformReceipt *transform,
+    int vb_144,
+    int field,
+    uint8_t *target_pixels,
+    int target_width,
+    int target_height,
+    uint8_t out_palette16[16],
+    DM2_V1_GdatHudPicstDrawReceipt *out_receipt);
 
 #endif

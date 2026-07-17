@@ -140,6 +140,28 @@ static void store_raw_next(unsigned char* raw, unsigned short next) {
     raw[1] = (unsigned char)((next >> 8) & 0xFFu);
 }
 
+static void store_raw_group(unsigned char raw[16],
+                            const struct DungeonGroup_Compat* group) {
+    unsigned short bitfield;
+    int slot;
+
+    store_raw_next(raw, group->next);
+    raw[2] = (unsigned char)(group->slot & 0xffu);
+    raw[3] = (unsigned char)((group->slot >> 8) & 0xffu);
+    raw[4] = group->creatureType;
+    raw[5] = group->cells;
+    for (slot = 0; slot < 4; ++slot) {
+        raw[6 + slot * 2] = (unsigned char)(group->health[slot] & 0xffu);
+        raw[7 + slot * 2] = (unsigned char)(group->health[slot] >> 8);
+    }
+    bitfield = (unsigned short)((group->behavior & 0x0fu) |
+                                 ((group->count & 0x03u) << 5) |
+                                 ((group->direction & 0x03u) << 8) |
+                                 ((group->doNotDiscard & 0x01u) << 10));
+    raw[14] = (unsigned char)(bitfield & 0xffu);
+    raw[15] = (unsigned char)(bitfield >> 8);
+}
+
 static unsigned short raw_next_for_thing(const struct DungeonThings_Compat* things,
                                          unsigned short thing) {
     int type = THING_GET_TYPE(thing);
@@ -162,6 +184,10 @@ static int count_square_chain(const struct DungeonThings_Compat* things) {
         thing = next_for_thing(things, thing);
     }
     return count;
+}
+
+static int same_thing_identity(unsigned short left, unsigned short right) {
+    return (left & 0x3fffu) == (right & 0x3fffu);
 }
 
 static void test_red_dragon_steaks_materialize_as_junk(void) {
@@ -301,8 +327,7 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
     groups[0].cells = 2;
     groups[0].count = 0;
     groups[0].health[0] = 0;
-    groupRaw[0][0] = 0xFEu;
-    groupRaw[0][1] = 0xFFu;
+    store_raw_group(groupRaw[0], &groups[0]);
     things.groups = groups;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
@@ -381,7 +406,7 @@ static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void)
     groups[0].cells = 1;
     groups[0].count = 0;
     groups[0].health[0] = 0;
-    store_raw_next(groupRaw[0], existingFloorJunk);
+    store_raw_group(groupRaw[0], &groups[0]);
     things.groups = groups;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
@@ -461,7 +486,7 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
     groups[0].cells = 0;
     groups[0].count = 0;
     groups[0].health[0] = 0;
-    store_raw_next(groupRaw[0], existingFloorJunk);
+    store_raw_group(groupRaw[0], &groups[0]);
     things.groups = groups;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
@@ -478,16 +503,81 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
 
     ASSERT_EQ(things.squareFirstThings[0], carriedTail,
               "second carried object is first after source-order prepends");
-    ASSERT_EQ(raw_next_for_thing(&things, carriedTail), carriedHead,
-              "second carried object links to original carried head");
+    ASSERT_TRUE(same_thing_identity(raw_next_for_thing(&things, carriedTail),
+                                    carriedHead),
+                "second carried object links to original carried head");
     ASSERT_EQ(raw_next_for_thing(&things, carriedHead), existingFloorJunk,
               "carried head links to pre-existing floor object after group unlink");
     ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), THING_ENDOFLIST,
               "pre-existing floor object remains chain tail");
-    ASSERT_EQ(groups[0].slot, THING_NONE,
+    ASSERT_EQ(groups[0].slot, THING_ENDOFLIST,
               "dead mummy carried slot chain is consumed");
     ASSERT_EQ(groups[0].next, THING_NONE,
               "dead mummy group slot is returned to source unused pool");
+}
+
+static void test_killed_all_rejects_drifted_c04_or_wrong_source_square(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char mapTiles[2];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[12];
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[2];
+    unsigned char weaponRaw[8][4];
+    unsigned char armourRaw[8][4];
+    unsigned char junkRaw[12][4];
+    unsigned char groupRaw[1][16];
+    unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
+
+    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
+                    weapons, armours, junks, squareFirstThings,
+                    weaponRaw, armourRaw, junkRaw);
+    memset(groups, 0, sizeof(groups));
+    memset(groupRaw, 0, sizeof(groupRaw));
+    maps[0].width = 2;
+    maps[0].height = 1;
+    mapTiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    mapTiles[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    tiles[0].squareCount = 2;
+    squareFirstThings[0] = groupThing;
+    squareFirstThings[1] = THING_ENDOFLIST;
+    things.squareFirstThingCount = 2;
+    dungeon.header.squareFirstThingCount = 2;
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].slot = THING_ENDOFLIST;
+    groups[0].creatureType = 10; /* Mummy: no generated possession drops. */
+    groups[0].count = 0;
+    groups[0].health[0] = 0;
+    store_raw_group(groupRaw[0], &groups[0]);
+    things.groups = groups;
+    things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    groupRaw[0][4] = DM1_CREATURE_TYPE_RED_DRAGON;
+    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
+                  &state, groupThing, 0, 0, 0),
+              0, "F0190 rejects a C04 creature-type drift before side effects");
+    ASSERT_EQ(squareFirstThings[0], groupThing,
+              "C04 drift leaves the source square chain untouched");
+    ASSERT_EQ(state.world.creatureAICount, 1,
+              "C04 drift leaves active-group ownership intact");
+
+    store_raw_group(groupRaw[0], &groups[0]);
+    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
+                  &state, groupThing, 0, 1, 0),
+              0, "F0190 rejects a group whose source square does not own its Thing");
+    ASSERT_EQ(squareFirstThings[0], groupThing,
+              "wrong source square does not unlink the real group");
+    ASSERT_EQ(state.world.creatureAICount, 1,
+              "wrong source square leaves LoS active-group ownership intact");
 }
 
 int main(void) {
@@ -500,6 +590,7 @@ int main(void) {
     test_dead_group_runtime_materializes_and_removes_group();
     test_dead_trolin_inserts_fixed_drop_into_existing_object_chain();
     test_dead_mummy_preserves_carried_tail_and_floor_chain();
+    test_killed_all_rejects_drifted_c04_or_wrong_source_square();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

@@ -55,7 +55,11 @@ int main(void)
                 receipt.image_field == DM2_GDAT_IMG_MAP_CHIP ||
                 receipt.animation_table_hash == 0u || receipt.material_hash == 0u ||
                 receipt.palette_hash == 0u || receipt.image.raw_hash == 0u ||
-                receipt.image.decoded_hash == 0u) {
+                receipt.image.decoded_hash == 0u ||
+                !receipt.raw_material_bytes ||
+                receipt.raw_material_byte_count != receipt.image.raw_byte_count ||
+                receipt.raw_material_hash == 0u ||
+                receipt.raw_material_receipt_hash == 0u) {
                 fputs("FAIL: dynamic creature receipt lost original GDAT ownership\n", stderr);
                 dm2_v1_boot_cleanup(&profile);
                 return 1;
