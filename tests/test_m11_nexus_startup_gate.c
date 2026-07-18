@@ -422,10 +422,8 @@ static void cleanup_nexus_default_save_dir(const char* home) {
 static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_Manager ui;
     unsigned char face_bytes[48 * 48];
-    unsigned char compact_face[45104];
+    unsigned char compact_face[4096];
     unsigned char short_bytes[16];
-    const Nexus_UI_Surface* placeholder;
-    const Nexus_UI_Surface* compact_surface;
     Nexus_UI_FaceLayout layout;
     Nexus_UI_FaceRecordDecodeInfo decode_info;
     Nexus_UI_FaceCompactRecordDescriptor compact_last;
@@ -433,6 +431,8 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_FacePrs3CaptureTarget capture_target;
     Nexus_UI_FacePrs3CaptureCampaignReceipt capture_campaign;
     unsigned char expanded_face[48 * 48];
+    int compact_size;
+    int compact_cursor;
     int i;
 
     for (i = 0; i < (int)sizeof(face_bytes); ++i) {
@@ -440,16 +440,25 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     }
     memset(compact_face, 0, sizeof(compact_face));
     memcpy(compact_face, "FACE", 4);
-    compact_face[4] = 0x00;
-    compact_face[5] = 0x00;
-    compact_face[6] = 0xb0;
-    compact_face[7] = 0x30;
-    compact_face[8] = 0x00;
-    compact_face[9] = 0x14;
-    compact_face[15] = 0x10;
-    for (i = 32; i < (int)sizeof(compact_face); ++i) {
-        compact_face[i] = (unsigned char)((i % 251) + 1);
+    compact_face[9] = 20;
+    compact_cursor = 56;
+    for (i = 0; i < 20; ++i) {
+        int prs3 = (compact_cursor + 128 + 3) & ~3;
+        memcpy(compact_face + prs3, "PRS3", 4);
+        compact_face[prs3 + 7] = 1;
+        compact_face[prs3 + 10] = 0x0c;
+        compact_face[prs3 + 11] = 0x40;
+        compact_face[prs3 + 15] = 1;
+        compact_face[prs3 + 16] = (unsigned char)(i + 1);
+        compact_cursor = prs3 + 17;
     }
+    compact_face[compact_cursor] = 0;
+    compact_face[compact_cursor + 1] = 0;
+    compact_size = compact_cursor + 2;
+    compact_face[4] = (unsigned char)(compact_size >> 24);
+    compact_face[5] = (unsigned char)(compact_size >> 16);
+    compact_face[6] = (unsigned char)(compact_size >> 8);
+    compact_face[7] = (unsigned char)compact_size;
     memset(short_bytes, 3, sizeof(short_bytes));
     nexus_ui_manager_init(&ui);
     expect_true(nexus_ui_face_full_entry_count((int)sizeof(face_bytes),
@@ -466,7 +475,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                 "Nexus FACE loader rejects raw portrait roster tables");
     memset(&layout, 0, sizeof(layout));
     expect_true(nexus_ui_face_layout_detect(compact_face,
-                                            (int)sizeof(compact_face),
+                                            compact_size,
                                             &layout) &&
                     layout.valid &&
                     layout.header_size == 56 &&
@@ -533,35 +542,14 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                     expanded_face[0] == 0xaa,
                 "Nexus FACE PRS3 frame is recognized but cannot become a partial portrait");
     expect_true(nexus_ui_load_face_record(&ui,
-                                          compact_face + 32 + 23 * 1878,
-                                          1878,
+                                          compact_face + compact_last.prs3_offset,
+                                          17,
                                           23,
                                           48,
                                           48,
-                                          NULL) > 0,
-                "Nexus FACE loader accepts compact source record for final portrait");
-    memset(&decode_info, 0, sizeof(decode_info));
-    memset(expanded_face, 0xaa, sizeof(expanded_face));
-    expect_true(nexus_ui_expand_face_record_48x48(compact_face + 32 + 23 * 1878,
-                                                  1878,
-                                                  expanded_face,
-                                                  (int)sizeof(expanded_face),
-                                                  &decode_info) > 0 &&
-                    decode_info.kind == NEXUS_UI_FACE_RECORD_COMPACT_PADDED &&
-                    decode_info.source_size == 1878 &&
-                    decode_info.copied_pixels == 1878 &&
-                    decode_info.zero_padded_pixels == (48 * 48) - 1878 &&
-                    expanded_face[1877] == compact_face[32 + 24 * 1878 - 1] &&
-                    expanded_face[1878] == 0,
-                "Nexus FACE compact record decode reports copied and padded pixels");
-    compact_surface = &ui.surfaces[NEXUS_SURFACE_FACE0 + 23];
-    expect_true(compact_surface->data != NULL &&
-                    compact_surface->data[0] ==
-                        compact_face[32 + 23 * 1878] &&
-                    compact_surface->data[1877] ==
-                        compact_face[32 + 24 * 1878 - 1] &&
-                    compact_surface->data[1878] == 0,
-                "Nexus FACE compact record is copied and padded without warning fallback");
+                                          NULL) < 0 &&
+                    ui.surfaces[NEXUS_SURFACE_FACE0 + 23].data == NULL,
+                "Nexus FACE PRS3 frame leaves no synthetic portrait surface");
     memset(&decode_info, 0, sizeof(decode_info));
     expect_true(nexus_ui_expand_face_record_48x48(face_bytes,
                                                   (int)sizeof(face_bytes),
@@ -587,17 +575,8 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                     1,
                                     48,
                                     48,
-                                    NULL) == 0,
-                "Nexus FACE loader reports fallback portrait separately");
-    expect_true(nexus_ui_load_face_placeholder(&ui, 23, 48, 48) == 0,
-                "Nexus FACE loader can publish a silent placeholder row");
-    placeholder = &ui.surfaces[NEXUS_SURFACE_FACE0 + 23];
-    expect_true(placeholder->data != NULL &&
-                    placeholder->w == 48 &&
-                    placeholder->h == 48 &&
-                    placeholder->owns_data == 1 &&
-                    placeholder->data[0] == 7,
-                "Nexus FACE placeholder is a deterministic gray portrait");
+                                    NULL) < 0,
+                "Nexus FACE loader rejects a truncated original portrait without a placeholder");
     nexus_ui_manager_free(&ui);
 }
 
@@ -905,6 +884,31 @@ int main(void) {
                                 view.nexusEngine) == 0 &&
                             nexus_v1_startup_surfaces_ready(view.nexusEngine),
                         "real Nexus startup caches full TITLE/WARNING/GAMEOVER/STABG graphics");
+            expect_canonical_face_media_is_blocked(real_dir);
+            if (view.nexusEngine &&
+                !nexus_v1_startup_faces_ready(view.nexusEngine)) {
+                expect_true(nexus_v1_startup_faces_expected_count(view.nexusEngine) ==
+                                view.nexusEngine->champions.champion_count &&
+                                nexus_v1_startup_faces_loaded_count(view.nexusEngine) == 0 &&
+                                nexus_v1_startup_faces_fallback_count(view.nexusEngine) ==
+                                    view.nexusEngine->champions.champion_count,
+                            "real Nexus FACE.BIN decoder gate denies every compact portrait");
+                expect_true(advance_nexus_title_to_frame(
+                                &view,
+                                (unsigned int)nexus_title_boot_start_ready_frames(),
+                                128),
+                            "real Nexus title reaches the compact-FACE readiness gate");
+                expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                                M11_GAME_INPUT_REDRAW &&
+                                view.nexusState.title_active == 1 &&
+                                view.nexusState.startup_save_select_active == 0 &&
+                                view.nexusState.champion_select_active == 0 &&
+                                strstr(view.lastOutcome, "blocked-faces") != NULL,
+                            "real Nexus compact FACE.BIN blocks startup before champion rendering");
+                M11_GameView_Shutdown(&view);
+                nexus_v1_launcher_shutdown();
+                goto real_media_complete;
+            }
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             visual_raster_available =
@@ -1341,6 +1345,7 @@ int main(void) {
         }
     }
 
+real_media_complete:
     if (g_failures) {
         fprintf(stderr, "M11 Nexus startup gate FAILED (%d failures)\n",
                 g_failures);

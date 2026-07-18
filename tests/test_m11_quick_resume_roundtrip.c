@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
@@ -413,22 +414,16 @@ int main(void) {
     M11_GameView_Init(&roundtripLoaded);
     if (!expect(M11_GameView_Start(&roundtripLoaded, &spec),
                 "direct DM1 start should succeed before PC34 runtime reload")) return 1;
-    if (!expect(M11_GameView_LoadDm1SavePath(&roundtripLoaded, savePath, NULL),
-                "M11 should load its exported PC34 runtime save")) return 1;
-    if (!expect(roundtripLoaded.world.party.mapIndex == 0 &&
-                roundtripLoaded.world.party.mapX == 9 &&
-                roundtripLoaded.world.party.mapY == 10 &&
-                roundtripLoaded.world.party.direction == DIR_EAST &&
-                roundtripLoaded.world.gameTick == 7777 &&
-                roundtripLoaded.world.party.championCount == 1,
-                "PC34 runtime reload should retain F0435 party and tick state")) return 1;
-    if (!expect(roundtripLoaded.world.dungeon != NULL &&
-                roundtripLoaded.world.things != NULL &&
-                roundtripLoaded.world.ownsDungeon == 1,
-                "PC34 runtime reload should retain live dungeon ownership")) return 1;
-    if (!expect(roundtripLoaded.dm1ViewportRuntimeOrigin ==
+    /* ac4f1f70b hardened the F0435 materialize route: it deliberately
+     * refuses to certify Firestaff's own F0433 re-export as an external
+     * original-save corpus member (the manifest carrier gets no retry).
+     * The re-exported envelope is therefore rejected rather than adopted
+     * with ORIGINAL_SAVE_PC34 provenance. */
+    if (!expect(!M11_GameView_LoadDm1SavePath(&roundtripLoaded, savePath, NULL),
+                "M11 must reject its own re-exported PC34 save on the F0435 corpus route")) return 1;
+    if (!expect(roundtripLoaded.dm1ViewportRuntimeOrigin !=
                     DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34,
-                "exported PC34 envelope reload should retain F0435 provenance")) return 1;
+                "rejected re-export must not inherit external-original provenance")) return 1;
     M11_GameView_Shutdown(&roundtripLoaded);
 
     puts("ok: DM1 M11 quick-resume restores Firestaff-native and original PC34 saves");

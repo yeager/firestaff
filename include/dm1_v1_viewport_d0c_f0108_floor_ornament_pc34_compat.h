@@ -186,4 +186,8 @@ const char *dm1_v1_viewport_d0c_f0108_floor_ornament_source_evidence_pc34_compat
 }
 #endif
 
+const DM1_V1_D0CF0108FloorOrnamentSpecPc34 * dm1_v1_viewport_d0c_f0108_floor_ornament_spec_pc34_compat(void);
+
+const DM1_V1_D0CF0108FloorOrnamentKappetaalVariantPc34 * dm1_v1_viewport_d0c_f0108_floor_ornament_kappetaal_variant_pc34_compat(void);
+
 #endif

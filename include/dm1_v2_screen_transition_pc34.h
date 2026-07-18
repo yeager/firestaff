@@ -40,4 +40,18 @@ void v2_transition_skip(void);
 }
 #endif
 
+void v2_screen_transition_update(float dt_ms);
+
+float v2_screen_transition_progress(void);
+
+int v2_screen_transition_is_done(void);
+
+void v2_screen_transition_apply(const uint8_t *src, uint8_t *dst, int w, int h);
+
+void v22_screen_fade_update(float dt_ms);
+
+float v22_screen_fade_alpha(void);
+
+int v22_screen_fade_is_done(void);
+
 #endif

@@ -22,6 +22,12 @@ typedef struct redmcsb_f1008_memory_chunk {
  * Returns the unused eligible chunk with the largest total byte count and
  * marks it in use. Equal-sized chunks retain first-list precedence.
  */
+/* ReDMCSB source-named alias for
+ * redmcsb_f1008_get_largest_available_memory_chunk. */
+redmcsb_f1008_memory_chunk * F1008_GetLargestAvailableMemoryChunk(
+    redmcsb_f1008_memory_chunk *first_memory_chunk,
+    int16_t requirements);
+
 redmcsb_f1008_memory_chunk *
 redmcsb_f1008_get_largest_available_memory_chunk(
     redmcsb_f1008_memory_chunk *first_memory_chunk,

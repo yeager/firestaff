@@ -79,7 +79,7 @@ def main() -> int:
     header = HDR.read_text(encoding="utf-8")
     test = TEST.read_text(encoding="utf-8")
     require("Firestaff status hand resolver", source, [
-        "int m11_inventory_resolve_status_hand_slot_box",
+        "int DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat",
         "slotBoxIndex < 0 || slotBoxIndex >= 8",
         "candidateChampionOrdinal != 0",
         "const int championIndex = slotBoxIndex >> 1",
@@ -91,7 +91,7 @@ def main() -> int:
         "CLIKCHAM.C:31-32 status box hand click dispatch",
     ])
     require("Firestaff header", header, [
-        "int m11_inventory_resolve_status_hand_slot_box",
+        "int DM1_V1_Inventory_ResolveStatusHandSlotBoxPc34Compat",
     ])
     require("Firestaff equip-slot test", test, [
         "status slotbox 0 routes champion 0 ready hand",

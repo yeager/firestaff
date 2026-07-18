@@ -20,4 +20,6 @@ int F0483_CACHE_GetNewBlock_Compat(
     struct MemoryCacheUnusedBlock_Compat* splitRemainder,
     struct MemoryCacheAllocatorResult_Compat* outResult);
 
+const char *dm1_memory_pass601_allocator_source_evidence(void);
+
 #endif

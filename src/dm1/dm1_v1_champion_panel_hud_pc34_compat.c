@@ -85,10 +85,17 @@ int DM1_ChampionPanel_BuildPc34BarFillModel(
     if (current < maximum) {
         outModel->blankHeight = outModel->height;
         if (current != 0) {
-            /* ReDMCSB CHAMDRAW.C F0287: 10.10 fixed-point quotient rounds
-             * non-integral partial bars upward. */
-            filledHeight = DM1_ChampionPanel_BarGraphHeight(
-                current, maximum, statIndex == 2);
+            /* ReDMCSB CHAMDRAW.C F0287 PC34 branch (MEDIA720 I34E/I34M,
+             * lines 307-342): blank height shrinks by
+             * max(1, height * current / maximum) with truncating integer
+             * division.  The 10.10 round-up form belongs to the MEDIA009
+             * branch (F0287:141-154) and must not leak into the PC34
+             * split. */
+            filledHeight = (int)(((long)outModel->height * (long)current) /
+                                 (long)maximum);
+            if (filledHeight < 1) {
+                filledHeight = 1;
+            }
             outModel->blankHeight -= filledHeight;
         }
         outModel->emitsBlank = outModel->blankHeight > 0;

@@ -132,6 +132,11 @@ static void seed_runtime_view(M11_GameViewState* state,
     things->containerCount = containerCount;
     things->rawThingData[THING_TYPE_WEAPON] = weaponRaw;
     things->thingCounts[THING_TYPE_WEAPON] = weaponCount;
+    /* 4143a6828 hardened allowed-slots/icon lookups to consume the raw
+     * PC3.4 G0237 rows, which requires the thing store to be marked
+     * loaded (raw[2] subtype 0 already maps to the container-allowed
+     * weapon row 0x0500). */
+    things->loaded = 1;
 
     state->world.dungeon = dungeon;
     state->world.things = things;

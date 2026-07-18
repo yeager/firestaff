@@ -433,4 +433,6 @@ const char *dm1_spell_failure_feedback_source_evidence(void);
 }
 #endif
 
+const char *dm1_spell_pass601_spell_source_evidence(void);
+
 #endif /* FIRESTAFF_DM1_V1_SPELL_CASTING_PC34_COMPAT_H */

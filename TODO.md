@@ -12715,6 +12715,23 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Known Bugs
 
+- 🔧 2026-07-18 Worktree-merge build drift (df88dbda4 + a192cb2b0) repaired:
+  main builds green again end-to-end (`cmake --build build --parallel 10`,
+  100%). Restored clobbered definitions/declarations (DM2 viewport
+  door-frame graphicsset index, Theron `tr_asset_generated_v1_rendering_allowed`
+  + `synthetic_rendering_blocked`, ReDMCSB F1007/F1008/F1017/F1018/F1020/
+  F1025/F1026/F1031 source-named aliases, DM2 V2 HUD runtime
+  `render_with_assets`/`last_path_*` contract, CSBWin saved-skin runtime,
+  DM1 original-save decode receipt, ~40 missing header declarations) and
+  re-linked ~60 test/probe targets against `dm2_v1_asset_loader.c`,
+  `dm2_v1_midi_backend.c` (CoreMIDI), and `firestaff_dm2` from
+  `firestaff_dm2_v2`. ctest baseline after repair: 2446 tests, ~386 failing
+  (~84% pass) — dominated by DM1 Hall-of-Champions portrait-rect runtime
+  probes (real logic diffs, see Jobb E lane below), CSBWin timer/DSA
+  handoff tests, and asset-status zip-cache materialization. These
+  failures predate the repair in the sense that main could not build at
+  all; they are tracked as jobb A–G follow-ups, not new regressions.
+
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists. **2026-06-28 TODO100 skip-safe scaffold landed:** `todo100_dm1_v1_viewport_collision_report_repro_gate` now CTest-gates the open-bug rule, writes `parity-evidence/verification/todo100_dm1_v1_viewport_collision_report_repro_gate/manifest.json` with status `BUG_OPEN_CAPTURE_MANIFEST_MISSING` when no operator capture directory is configured, and records the promotion contract in `parity-evidence/todo100_dm1_v1_viewport_collision_report_repro_gate.md`. This is not a bug closure, not a full collision transcript, and not an original-vs-Firestaff pixel diff; it only makes future unmanifested viewport/collision reports reproducible or explicitly skip-safe.
 
 - 🐛 DM1 v2.9.0/latest macOS release (Mac Mini + MacBook Pro, Apple Silicon/arm64): Dungeon Master title/intro animation can show the wrong palette. Sibling to pass841 (FTL swoosh fix above). v2.7.11 title-palette fixes (`970d5607`, `09091de4`, `38d0b76b`) are present in v2.9.0, so not a recent-source regression. The title path uses `m11_unpack_title_4bpp_to_indexed` correctly. Probes cover the known palette layers on Apple Silicon: pass842 CPU fallback TITLE.DAT palette mapping, pass897 GPU/Metal `M11_Render_PresentIndexedWithSpecialPalette` readback, and the SWSH→GRAPHICS.DAT C001 handoff. 2026-07-13 source correction: M11 now rejects a handled DM1 TITLE receipt unless it matches ReDMCSB `TITLE.C F0437` C12 PRESENTS, C13/C14 zoom/reveal palette selection, and the corresponding VBlank cadence, rebuilding the canonical receipt otherwise. C13/C14 now also latches on the cleared indexed surface before the first zoom VBlank, matching TITLE.C:362-387; the focused fallback gate and `firestaff_m11` build are green. The user MacBook Pro release smoke remains open until a same-state app/release capture identifies the exact failing phase or proves it fixed in current main.

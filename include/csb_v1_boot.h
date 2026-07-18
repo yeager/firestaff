@@ -1497,6 +1497,12 @@ void csb_v1_boot_startup_runtime_visual_capture_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeVisualCaptureReceipt_PC34 *receipt);
 void csb_v1_boot_startup_runtime_route_hardening_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *receipt);
+/* Restored non-static contract (was exported at 4b7aed6da, lost to the
+ * worktree merge drift); the M11 startup host-view probe consumes it. */
+int csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+    const CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *visual_sequence,
+    const CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership,
+    CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *out_receipt);
 void csb_v1_boot_startup_runtime_host_capture_gate_receipt_init_pc34(
     CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *receipt);
 void csb_v1_boot_startup_render_draw_receipt_init_pc34(
@@ -2022,5 +2028,7 @@ int csb_v1_boot_graphics_dungeon_m11_entry_gate(const char *graphics_md5,
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif /* FIRESTAFF_CSB_V1_BOOT_H */

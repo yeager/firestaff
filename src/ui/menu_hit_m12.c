@@ -432,14 +432,33 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                                                        : M12_MENU_INPUT_LEFT);
             return 1;
         case M12_HIT_SETTINGS_ROW:
-        case M12_HIT_SETTINGS_CYCLE:
-            while (state->settingsSelectedIndex != hit.index) {
+        case M12_HIT_SETTINGS_CYCLE: {
+            /* settingsSelectedIndex holds a row id, and the visible row
+             * order per tab is not numerically sorted (the two-column
+             * settings layout groups row ids non-monotonically), so the
+             * step direction must follow the row's position in the
+             * visible list.  A numeric comparison can oscillate forever
+             * between two rows whose id order and visible order disagree. */
+            int rowCount = 0;
+            const int* visibleRows = M12_StartupMenu_GetSettingsRowsForTab(
+                state->settingsTabIndex, &rowCount);
+            int guard = rowCount + 1;
+            while (state->settingsSelectedIndex != hit.index &&
+                   guard-- > 0) {
                 int before = state->settingsSelectedIndex;
-                M12_MenuInput mv = (hit.index > state->settingsSelectedIndex)
+                int curPos = -1;
+                int tgtPos = -1;
+                int i;
+                for (i = 0; i < rowCount; ++i) {
+                    if (visibleRows[i] == state->settingsSelectedIndex) curPos = i;
+                    if (visibleRows[i] == hit.index) tgtPos = i;
+                }
+                M12_MenuInput mv = (tgtPos >= curPos)
                                        ? M12_MENU_INPUT_DOWN
                                        : M12_MENU_INPUT_UP;
                 M12_StartupMenu_HandleInput(state, mv);
                 if (state->settingsSelectedIndex == before) break;
+            }
             }
             if (hit.index == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
                 state->languagePopupOpen = !state->languagePopupOpen;

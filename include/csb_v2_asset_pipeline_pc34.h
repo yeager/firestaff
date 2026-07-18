@@ -286,4 +286,6 @@ const char* csb_v2_shape_source_name(CSB_V22_ShapeSource src);
 }
 #endif
 
+const char* csb_v2_asset_pipeline_source_evidence(void);
+
 #endif /* FIRESTAFF_CSB_V2_ASSET_PIPELINE_PC34_H */

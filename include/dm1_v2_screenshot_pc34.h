@@ -16,4 +16,6 @@ int v2_screenshot_auto_path(char* buf, int bufsize, const char* prefix);
 }
 #endif
 
+int v22_screenshot_process(const uint32_t *rgba, int w, int h, const char *save_dir);
+
 #endif

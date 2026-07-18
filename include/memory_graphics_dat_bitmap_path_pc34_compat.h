@@ -20,4 +20,6 @@ unsigned char* F0489_MEMORY_LoadNativeBitmapByIndex_Compat(
     unsigned char* ownedBitmap,
     struct MemoryGraphicsDatBitmapPathResult_Compat* outResult);
 
+const char *dm1_memory_pass601_bitmap_source_evidence(void);
+
 #endif

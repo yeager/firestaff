@@ -256,4 +256,10 @@ const char *v21_viewport_source_evidence(void);
 }
 #endif
 
+void v21_inscription_hide(void);
+
+int v21_inscription_is_active(void);
+
+void v21_inscription_render_overlay(uint32_t *rgba_buffer, int display_w, int display_h, int scale);
+
 #endif /* FIRESTAFF_DM1_V2_VIEWPORT_RENDERER_PC34_H */

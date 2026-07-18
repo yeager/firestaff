@@ -1489,6 +1489,19 @@ int csb_v1_runtime_f0261_process_tick(
  * Pass 0 to use profile->total_play_ms. */
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms);
 
+/* CSBWin DSA.cpp:3122-3135 + data.cpp:2130-2167 SETSKIN saved-skin
+ * writeback: change one byte in an existing EDT_Skins DB11 EXPOOL
+ * record, preserving its source word-aligned payload extent.
+ * Returns 1 on success (including source-equivalent no-op), 0 when
+ * the write would require allocator/free-list semantics Firestaff
+ * has not source-proven. */
+int csb_v1_runtime_set_csbwin_saved_skin(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int x,
+    int y,
+    uint8_t skin_num);
+
 int csb_v1_runtime_custom_background_skin_grid(
     CSB_V1_RuntimeProfile *profile,
     uint8_t *out_cell_skins,
@@ -2095,5 +2108,7 @@ const char *csb_v1_runtime_source_evidence(void);
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif /* FIRESTAFF_CSB_V1_RUNTIME_PC34_COMPAT_H */

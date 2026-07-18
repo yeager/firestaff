@@ -151,7 +151,7 @@ def verify_firestaff_seam() -> list[str]:
         [
             ("dm icon index", "m11_object_icon_index_for_thing"),
             ("action hand predicate", "championSlot == CHAMPION_SLOT_ACTION_HAND"),
-            ("open chest match", "thing == M11_GameView_GetV1OpenChestThing(state)"),
+            ("open chest match", "thing == DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state)"),
             ("eye press guard", "!state->v1OpenChestOpenedByEye"),
             ("closed icon predicate", "iconIndex == 144"),
             ("open icon return", "return 145"),
@@ -173,17 +173,17 @@ def verify_firestaff_seam() -> list[str]:
         panel_body,
         [
             ("champion slot loop", "for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx)"),
-            ("source slotbox map", "M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot"),
+            ("source slotbox map", "dm1_v1_inventory_source_slot_box_for_champion_slot_pc34"),
             ("thing nonempty gate", "thingId != THING_NONE && thingId != THING_ENDOFLIST"),
             ("dm icon index", "m11_v1_inventory_slot_icon_index_for_thing"),
-            ("source slotbox zone", "M11_GameView_GetV1InventorySourceSlotBoxZone"),
+            ("source slotbox zone", "dm1_v1_inventory_source_slot_box_zone_pc34"),
             ("draw object icon", "m11_draw_dm_object_icon_index"),
         ],
         "Firestaff normal V1 inventory source-slot seam",
     )
-    require_excerpt("src/engine/m11_game_view.c", 21358, 21377, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "M11_GameView_GetV1OpenChestThing", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
-    require_excerpt("src/engine/m11_game_view.c", 25999, 26009, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 26568, 26582, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 35309, 35333, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "DM1_V1_M11Runtime_GetOpenChestThingPc34Compat", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
+    require_excerpt("src/engine/m11_game_view.c", 40308, 40320, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 41054, 41075, ["dm1_v1_inventory_source_slot_box_for_champion_slot_pc34", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
     return [
         f"Firestaff m11_v1_inventory_slot_icon_index_for_thing starts at {FIRESTAFF_SRC}:{line_no(text, helper_start)}",
         *(f"Firestaff action-hand helper {name}: line {line_no(text, helper_start + pos)}" for name, pos in helper_markers),

@@ -102,6 +102,10 @@ static void seed_waterskin_mouth_state(M11_GameViewState* state,
                                        struct DungeonThings_Compat* things,
                                        struct DungeonJunk_Compat* junk) {
     unsigned short waterskinThing = (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+    /* The hardened PC3.4 icon lookup (raw G0237 rows) rejects struct-only
+     * junk mirrors, so the waterskin subtype must also exist as a raw
+     * 4-byte junk record: next LE in bytes 0-1, subtype in byte 2. */
+    static unsigned char rawJunks[4];
     memset(junk, 0, sizeof(*junk));
     junk->next = THING_ENDOFLIST;
     junk->type = 1;
@@ -110,6 +114,13 @@ static void seed_waterskin_mouth_state(M11_GameViewState* state,
     seed_base_inventory_state(state, things);
     things->junks = junk;
     things->junkCount = 1;
+    memset(rawJunks, 0, sizeof(rawJunks));
+    rawJunks[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawJunks[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawJunks[2] = 1;
+    things->loaded = 1;
+    things->rawThingData[THING_TYPE_JUNK] = rawJunks;
+    things->thingCounts[THING_TYPE_JUNK] = 1;
     ASSERT_TRUE(M11_GameView_SetV1LeaderHandObject(state, waterskinThing),
                 "leader hand accepts charged waterskin junk");
 }

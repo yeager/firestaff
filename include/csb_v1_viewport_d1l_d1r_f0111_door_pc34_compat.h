@@ -88,4 +88,30 @@ const char *csb_v1_viewport_d1l_d1r_f0111_door_source_evidence_pc34(void);
 }
 #endif
 
+size_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_count(void);
+
+const CSB_V1_ViewportD1LD1RF0111Route * csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_at(size_t index);
+
+const CSB_V1_ViewportD1LD1RF0111Route * csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_for_square(int view_square);
+
+size_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_step_count(void);
+
+const CSB_V1_ViewportD1LD1RF0111Step * csb_v1_viewport_d1l_d1r_f0111_door_pc34_step_at(size_t route_index, size_t step_index);
+
+int csb_v1_viewport_d1l_d1r_f0111_door_pc34_frame_index_for_state(int door_state);
+
+int csb_v1_viewport_d1l_d1r_f0111_door_pc34_zone_for_state( const CSB_V1_ViewportD1LD1RF0111Route *route, int door_state);
+
+int csb_v1_viewport_d1l_d1r_f0111_door_pc34_horizontal_zone( const CSB_V1_ViewportD1LD1RF0111Route *route, int door_state, int right_half);
+
+int csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit( const uint8_t *source, int source_stride, uint8_t *destination, int destination_stride, int width, int height);
+
+uint32_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash( const CSB_V1_ViewportD1LD1RF0111Route *route, int door_state);
+
+int csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34( const CSB_V1_ViewportD1LD1RF0111Route *d1l_route, const CSB_V1_ViewportD1LD1RF0111Route *d1r_route, int source_graphics_dat_bound, int no_synthetic_pixels, int no_fallback_visuals, int source_graphics_item_index, size_t source_byte_count, uint32_t source_payload_hash, CSB_V1_ViewportD1LD1RF0111RealAssetReceiptPc34 *out_receipt);
+
+const CSB_V1_ViewportD1LD1RF0111Evidence * csb_v1_viewport_d1l_d1r_f0111_door_pc34_evidence(void);
+
+const char *csb_v1_viewport_d1l_d1r_f0111_door_pc34_source_lock_header(void);
+
 #endif

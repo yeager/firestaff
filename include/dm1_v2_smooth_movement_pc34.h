@@ -36,4 +36,18 @@ float v2_smooth_get_rotation(void);
 }
 #endif
 
+void v22_smooth_start_turn(float from_angle, float to_angle, int frames);
+
+int v22_smooth_tick(float *out_x, float *out_y, float *out_angle);
+
+void v22_smooth_start_turn_v1sync(float from_angle, float to_angle);
+
+void v22_smooth_update_from_clock(const V2_AnimClock *clock);
+
+float v22_smooth_get_x(void);
+
+float v22_smooth_get_y(void);
+
+float v22_smooth_get_angle(void);
+
 #endif

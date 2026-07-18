@@ -459,4 +459,5 @@ int firestaff_x68k_media_receipt_self_test(void);
 }
 #endif
 
+
 #endif /* FIRESTAFF_X68K_MEDIA_RECEIPT_H */

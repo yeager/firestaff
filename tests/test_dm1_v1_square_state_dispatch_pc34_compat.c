@@ -2,6 +2,8 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 #include <assert.h>
 #include <string.h>
@@ -194,7 +196,7 @@ int main(void)
     world.partyMapIndex = 0;
     world.party.mapX = 1;
     world.party.mapY = 1;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
@@ -207,7 +209,7 @@ int main(void)
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.direction = 1;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(world.party.mapIndex == 0 && world.party.mapX == 0 &&
@@ -244,7 +246,7 @@ int main(void)
     squareFirstThings[0] = (unsigned short)((1u << 14) |
                                              (THING_TYPE_TEXTSTRING << 10));
 
-    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_SET, 0, 0, 1);
+    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_SET, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
@@ -255,7 +257,7 @@ int main(void)
                                   DM1_EFFECT_SET, 1, 1));
 
     sensors[0].sensorData = 1;
-    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_CLEAR, 0, 0, 1);
+    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_CLEAR, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 0);
@@ -283,7 +285,7 @@ int main(void)
     world.party.mapX = 0;
     world.party.mapY = 1;
     assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
-    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
@@ -305,7 +307,7 @@ int main(void)
     world.party.mapX = 1;
     assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
 
-    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
@@ -316,7 +318,7 @@ int main(void)
     assert(group.creatureType == 0 && group.health[0] > 0);
 
     /* A repeated SET remains silent. */
-    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 3);
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(!has_text_message_emission(&result, 0, 0, 0, 1));

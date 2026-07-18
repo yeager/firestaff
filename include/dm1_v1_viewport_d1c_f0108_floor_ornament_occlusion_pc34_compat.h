@@ -3,4 +3,34 @@
 
 #include "firestaff/dm1/v1/viewport/dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.h"
 
+uint8_t dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_blend_c10_pc34( uint8_t destination_pixel, uint8_t source_pixel);
+
+unsigned int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_decode_ordinal_pc34( unsigned int floor_ornament_ordinal, bool *footprint_flag_set, unsigned int *cleared_ordinal, bool *primary_draws, int *primary_index, bool *recursive_footprints_draw, int *recursive_footprints_index);
+
+bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34( DM1_V1_D1CF0108FloorOrnamentOcclusionContextPc34 context, unsigned int floor_ornament_ordinal);
+
+bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34( DM1_V1_D1CF0108FloorOrnamentOcclusionContextPc34 context, unsigned int floor_ornament_ordinal);
+
+int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34( int coordinate_set, int view_floor);
+
+bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_default_model_builder_pc34( DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 *out_model);
+
+uint32_t dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_hash_model_pc34( const DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 *model);
+
+const DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 * dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_default_model_pc34(void);
+
+uint32_t dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_deterministic_hash_pc34(void);
+
+unsigned int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_count_pc34(void);
+
+const DM1_V1_D1CF0108FloorOrnamentOcclusionStepPc34 * dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_step_at_pc34(size_t index);
+
+const char * dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_disjointness_note_pc34(void);
+
+int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_self_test_pc34(void);
+
+const DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 * dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_last_self_test_result_pc34(void);
+
+const char *dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_source_evidence_pc34(void);
+
 #endif

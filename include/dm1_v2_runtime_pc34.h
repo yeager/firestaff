@@ -35,4 +35,10 @@ int dm1_v2_runtime_apply_command(DM1_V2_RuntimeState* runtime, int command, uint
 }
 #endif
 
+int v21_runtime_is_faithful(void);
+
+void v22_runtime_enhanced_tick(float dt);
+
+int v22_runtime_enhanced_is_active(void);
+
 #endif /* FIRESTAFF_DM1_V2_RUNTIME_PC34_H */

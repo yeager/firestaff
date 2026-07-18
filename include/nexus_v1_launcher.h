@@ -2047,11 +2047,6 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
     const Nexus_V1_StartupHostCallerReceipt *save_host,
     const Nexus_V1_StartupHostCallerReceipt *champion_host,
     Nexus_V1_CompleteSupportReceipt *out_receipt);
-int nexus_v1_launcher_m12_startup_package_from_flags(
-    int supported,
-    int data_ready,
-    int version_ready,
-    Nexus_V1_M12StartupPackageReceipt *out_receipt);
 int nexus_v1_launcher_m12_startup_package_from_data_gate(
     int supported,
     int data_ready,
@@ -2510,5 +2505,6 @@ void nexus_v1_launcher_shutdown(void);
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif /* NEXUS_V1_LAUNCHER_H */

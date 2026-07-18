@@ -1,6 +1,7 @@
 /* DM2 V2 HUD: original GDAT-backed presentation only. */
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v2_hud_widget_bitmap_blit.h"
 #include <string.h>
 
 static DM2_V2_HudOverlay s_hud;
@@ -11,6 +12,32 @@ static DM2_V2_HudGdatFetch s_gdat_fetch;
 static DM2_V2_HudGdatPaletteFetch s_gdat_palette_fetch;
 static void *s_gdat_user;
 static int s_original_data_mounted;
+
+/* Per-slot path-mode record updated by
+ * dm2_v2_hud_runtime_render_with_assets(). Restored after the a192cb2b0
+ * worktree merge kept the public header contract and the runtime-hook
+ * probe but dropped the definitions. Initialised to PROCEDURAL_FALLBACK
+ * so callers observing the array before any asset-aware render still see
+ * the documented default. */
+static DM2_V2_HudRuntimePathMode
+    s_last_path_mode[DM2_V2_HUD_WIDGET_COUNT];
+static DM2_V2_HudWidgetClass
+    s_last_slot_class[DM2_V2_HUD_WIDGET_COUNT];
+static int s_last_path_real;
+static int s_last_path_fallback;
+static int s_last_render_with_assets; /* 1 if render_with_assets() ran */
+
+static void reset_path_record(void)
+{
+    int i;
+    for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        s_last_slot_class[i] = DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
+    }
+    s_last_path_real = 0;
+    s_last_path_fallback = 0;
+    s_last_render_with_assets = 0;
+}
 
 static void ensure_init(void)
 {
@@ -93,12 +120,13 @@ static void render_original_hud(uint8_t *fb, int w, int h)
     }
 }
 
-void dm2_v2_hud_runtime_init(void) { ensure_init(); s_force_active = 0; }
+void dm2_v2_hud_runtime_init(void) { ensure_init(); s_force_active = 0; reset_path_record(); }
 void dm2_v2_hud_runtime_shutdown(void)
 {
     if (s_initialized) dm2_v2_hud_reset(&s_hud);
     s_initialized = 0; s_gate_config = NULL; s_force_active = 0;
     s_gdat_fetch = NULL; s_gdat_palette_fetch = NULL; s_gdat_user = NULL; s_original_data_mounted = 0;
+    reset_path_record();
 }
 void dm2_v2_hud_runtime_set_gate_config(const DM2_V2_PhaseGateConfig *config) { s_gate_config = config; }
 void dm2_v2_hud_runtime_set_gdat_source(DM2_V2_HudGdatFetch fetch,
@@ -122,6 +150,147 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h)
 }
 int dm2_v2_hud_runtime_is_active(void) { return render_allowed() && s_original_data_mounted && s_gdat_fetch && s_gdat_palette_fetch; }
 void dm2_v2_hud_runtime_force_active_for_test(int active) { s_force_active = active ? 1 : 0; }
+
+/* ── Asset-aware render (Phase 3 widget bitmap hook) ─────────────
+ * Restored after the a192cb2b0 worktree merge: the public header and
+ * firestaff_dm2_v2_hud_widget_runtime_hook_probe kept this contract
+ * while the definitions were dropped. Walks the Phase 3 widget slots
+ * the dm2_v2_hud_widget_assets gate classifies, records REAL_BITMAP vs
+ * PROCEDURAL_FALLBACK per slot, and dispatches the procedural render.
+ * REAL slots get a bounded 1x1 blit from
+ * dm2_v2_hud_widget_bitmap_blit_render_slot() when the manifest
+ * source_file resolves, else a 1-pixel anchor stamp. */
+
+/* Anchor pixel positions for the real-bitmap stamp, relative to the
+ * HUD's 320x200 layout. */
+typedef struct {
+    int x;
+    int y;
+} DM2_V2_HudSlotAnchor;
+
+static const DM2_V2_HudSlotAnchor
+    k_real_stamp_anchors[DM2_V2_HUD_WIDGET_COUNT] = {
+    /* INVENTORY_QUICK_VIEW — top-left of HUD, Phase 3 primary */
+    { 80,  4 },
+    /* ACTION_PROMPT — top-right of HUD, Phase 3 primary */
+    { 220, 4 },
+    /* COMPASS_ROSE — top-left of HUD chrome */
+    { 11, 16 },
+    /* DEPTH_INDICATOR — top-right of HUD chrome */
+    { 286, 8 },
+    /* GOLD_COUNTER — bottom-right of HUD chrome */
+    { 286, 178 },
+    /* CHAMPION_BAR_FRAME — top status bar */
+    { 4, 4 },
+    /* ACTION_STRIP_FRAME — bottom action strip */
+    { 16, 172 },
+};
+
+static void dm2_v2_hud_runtime_stamp_real_slot(
+    uint8_t *fb, int w, int h_res, DM2_V2_HudWidgetSlot slot)
+{
+    const DM2_V2_HudSlotAnchor *a;
+    DM2_V2_HudWidgetSlotInfo info;
+
+    if (!fb || w <= 0 || h_res <= 0) return;
+    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) return;
+    a = &k_real_stamp_anchors[slot];
+    if (a->x < 0 || a->x >= w) return;
+    if (a->y < 0 || a->y >= h_res) return;
+
+    /* Bounded-blit first: when the slot is REAL, look up its resolved
+     * manifest source_file and try the synthetic 1x1 RGBA blit. */
+    memset(&info, 0, sizeof(info));
+    if (dm2_v2_hud_widget_assets_get_slot_info(slot, &info) &&
+        info.classification == DM2_V2_HUD_WIDGET_CLASS_REAL &&
+        info.resolved_path[0] != '\0' &&
+        dm2_v2_hud_widget_bitmap_blit_render_slot(
+            &info, fb, w, h_res, a->x, a->y)) {
+        return; /* bounded blit succeeded */
+    }
+
+    /* Fallback: 1-pixel anchor stamp with the HUD opacity so a probe
+     * can still detect that the gate reached the runtime end-to-end. */
+    fb[a->y * w + a->x] = (uint8_t)s_hud.opacity;
+}
+
+void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
+    int i;
+    int render_will_run = 1;
+
+    reset_path_record();
+    s_last_render_with_assets = 1;
+    for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        s_last_slot_class[i] = DM2_V2_HUD_WIDGET_CLASS_MISSING;
+    }
+
+    if (!s_initialized) render_will_run = 0;
+    if (!s_force_active && !s_hud.visible) render_will_run = 0;
+    if (s_hud.opacity == 0) render_will_run = 0;
+    if (!s_force_active) {
+        if (!s_gate_config) render_will_run = 0;
+        else if (!s_gate_config->v2LaunchEnabled) render_will_run = 0;
+        else if (!s_gate_config->v2ProfileEnabled) render_will_run = 0;
+    }
+
+    /* Classify every slot up-front so probe code can read the gate's
+     * verdict regardless of whether we actually rendered. */
+    for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        DM2_V2_HudWidgetClass cls =
+            dm2_v2_hud_widget_assets_classify_slot(
+                (DM2_V2_HudWidgetSlot)i);
+        s_last_slot_class[i] = cls;
+        if (cls == DM2_V2_HUD_WIDGET_CLASS_REAL) {
+            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP;
+            ++s_last_path_real;
+        } else {
+            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+            ++s_last_path_fallback;
+        }
+    }
+
+    if (!render_will_run) {
+        /* V1 chrome owns the framebuffer; the path-mode record is the
+         * only state this function emits. */
+        return;
+    }
+
+    /* Procedural overlay first; REAL-slot stamps land afterwards so the
+     * probe can read them from the framebuffer. */
+    dm2_v2_hud_render(&s_hud, fb, w, h_res);
+
+    for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        if (s_last_path_mode[i] == DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP) {
+            dm2_v2_hud_runtime_stamp_real_slot(
+                fb, w, h_res, (DM2_V2_HudWidgetSlot)i);
+        }
+    }
+}
+
+DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(
+    DM2_V2_HudWidgetSlot slot)
+{
+    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) {
+        return DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+    }
+    return s_last_path_mode[slot];
+}
+
+int dm2_v2_hud_runtime_last_path_counts(int* out_real, int* out_fallback) {
+    if (out_real)     *out_real     = s_last_path_real;
+    if (out_fallback) *out_fallback = s_last_path_fallback;
+    return s_last_path_real + s_last_path_fallback;
+}
+
+DM2_V2_HudWidgetClass dm2_v2_hud_runtime_last_slot_class(
+    DM2_V2_HudWidgetSlot slot)
+{
+    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) {
+        return DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
+    }
+    return s_last_slot_class[slot];
+}
+
 const char *dm2_v2_hud_runtime_source_evidence(void)
 {
     return "DM2 V2 HUD GDAT source-lock\n"

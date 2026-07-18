@@ -252,7 +252,7 @@ def verify_firestaff() -> list[str]:
         slot_body,
         [
             ("original 18x18 slot asset", "static const int SZ_ORIG = 18"),
-            ("normal slot graphic", "M11_GameView_GetV1SlotBoxNormalGraphicId"),
+            ("normal slot graphic", "dm1_v1_graphic_slot_box_normal_pc34"),
             ("occupied branch", "if (thingId != THING_NONE && thingId != THING_ENDOFLIST)"),
             ("dm icon index", "m11_object_icon_index_for_thing"),
             ("dm object icon draw", "m11_draw_dm_object_icon_index"),
@@ -273,17 +273,17 @@ def verify_firestaff() -> list[str]:
         normal_body,
         [
             ("source slotbox loop", "for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)"),
-            ("source slotbox graphic", "M11_GameView_GetV1InventorySourceSlotBoxGraphicId"),
-            ("source slotbox zone", "M11_GameView_GetV1InventorySourceSlotBoxZone"),
+            ("source slotbox graphic", "dm1_v1_graphic_slot_box_normal_pc34"),
+            ("source slotbox zone", "dm1_v1_inventory_source_slot_box_zone_pc34"),
             ("champion slot loop", "for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx)"),
-            ("champion slot to source slotbox", "M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot"),
+            ("champion slot to source slotbox", "dm1_v1_inventory_source_slot_box_for_champion_slot_pc34"),
             ("dm icon index", "m11_v1_inventory_slot_icon_index_for_thing"),
             ("draw into source slot zone", "m11_draw_dm_object_icon_index"),
         ],
         "Firestaff normal V1 inventory source-slot branch",
     )
-    require_excerpt("src/engine/m11_game_view.c", 25792, 25816, ["m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 26340, 26472, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "m11_v1_inventory_slot_icon_index_for_thing", "return;"])
+    require_excerpt("src/engine/m11_game_view.c", 29114, 29140, ["m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 41025, 41200, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "m11_v1_inventory_slot_icon_index_for_thing", "return;"])
 
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",

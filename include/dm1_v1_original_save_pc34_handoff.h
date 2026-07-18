@@ -786,4 +786,6 @@ const char *dm1_v1_original_save_pc34_handoff_source_evidence(void);
 }
 #endif
 
+int dm1_v1_original_save_pc34_handoff_projectile_event_plan( const struct DM1_Event_V1 *src, int source_index, const struct DungeonThings_Compat *things, DM1OriginalSavePC34ProjectileEventPlan *out_plan);
+
 #endif /* DM1_V1_ORIGINAL_SAVE_PC34_HANDOFF_H */

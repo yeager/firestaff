@@ -25,4 +25,6 @@ int F0474_MEMORY_LoadGraphic_CPSDF_Compat(
     struct MemoryGraphicsDatState_Compat* state,
     unsigned char* destination);
 
+const char *dm1_memory_pass601_gfxdat_source_evidence(void);
+
 #endif

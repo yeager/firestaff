@@ -14,4 +14,6 @@ struct NativeBitmapBlock_Compat {
 
 unsigned char* F0489_MEMORY_PrepareNativeBitmapBlock_Compat(struct NativeBitmapBlock_Compat* block, unsigned short bitmapIndex, const struct GraphicWidthHeight_Compat* sizeInfo);
 
+const char *dm1_memory_pass601_block_source_evidence(void);
+
 #endif

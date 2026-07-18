@@ -125,7 +125,8 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_static_object_selector.c")
     add_executable(test_dm2_v1_g1_static_object_selector
         tests/test_dm2_v1_g1_static_object_selector.c
-        src/dm2/dm2_v1_dungeon_loader.c)
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c)
     target_include_directories(test_dm2_v1_g1_static_object_selector PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_g1_static_object_selector PRIVATE
@@ -2328,8 +2329,17 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_midi_backend.c
     src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(APPLE)
+    # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly; keep the
+    # framework dependency on this library so every consumer (app, tests,
+    # probes) links the same real MIDI boundary.
+    target_link_libraries(firestaff_m10 PUBLIC
+        "-framework CoreMIDI"
+        "-framework CoreFoundation")
+endif()
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
     STATICFUNCTION=static
@@ -2424,6 +2434,12 @@ if(DM2_V2_SOURCES)
     # Without this link, Linux/Windows release builds fail with
     # undefined reference errors. Source: dm1v2/dm1_v2_movement_command_adapter_pc34.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 firestaff_v2 m)
+    # dm2_v2_hud_runtime.c (GDAT-backed HUD, post-a192cb2b0) calls
+    # dm2_v1_viewport_build_hud_chrome_plan() and
+    # dm2_v1_viewport_hud_portrait_graphic_index() from the V1 viewport
+    # renderer. Link PUBLIC so HUD probes inherit the contract.
+    # Source: src/dm2/dm2_v1_viewport_renderer.c.
+    target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_dm2)
     # dm2_v2_hud_widget_bitmap_blit.c decodes synthetic 1x1 PNG IDAT
     # chunks via the bundled miniz. Linking PUBLIC so the standalone
     # bitmap-blit probe (and any future real-art blit path) inherit
@@ -3169,7 +3185,32 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
@@ -3201,7 +3242,32 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_hud_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
@@ -3229,7 +3295,32 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_touch_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
@@ -3258,7 +3349,32 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_lighting_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
@@ -3414,7 +3530,32 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_m11_game_loop_wireup_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
@@ -3450,8 +3591,33 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm2/dm2_v2_interaction_feedback.c)
 target_link_libraries(firestaff_dm2_v2_verification_suite_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
@@ -3475,7 +3641,32 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_include_directories(firestaff_dm2_v2_smooth_movement_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -3572,6 +3763,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
         PRIVATE firestaff_v2)
@@ -3921,7 +4118,8 @@ add_executable(firestaff_dm2_v1_creature_combat_probe
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_combat.c
     src/dm2/dm2_v1_drops.c
-    src/dm2/dm2_v1_sound.c)
+    src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c)
 target_include_directories(firestaff_dm2_v1_creature_combat_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_dm2_v1_creature_combat_probe
@@ -4227,6 +4425,30 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -4685,6 +4907,7 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/dm1v2/dm1_v2_modern_assets_pc34.c
     src/dm1v2/dm1_v2_asset_pipeline_pc34.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/theron/theron_v1_dungeon_progression.c
     src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_theron_v2_hud_launch_mode_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -6456,6 +6679,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_move_2fcf_0434.c"
         tests/test_dm2_v1_move_2fcf_0434.c
         src/dm2/dm2_v1_move_2fcf_0434.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_move_2fcf_0434 PRIVATE -Wall -Wextra -O2)
@@ -6646,6 +6870,12 @@ if(BUILD_TESTING)
             src/shared/firestaff_theron_media_classify.c
             src/shared/asset_find_by_hash.c
             src/shared/fs_portable_compat.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
         )
         target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
             firestaff_v2
@@ -10605,6 +10835,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_dungeon_loader_first_map_gate
         tests/test_dm2_v1_dungeon_loader_first_map_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_dungeon_loader_first_map_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10621,6 +10852,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_c_map_tile_access
         tests/test_dm2_v1_c_map_tile_access.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_c_map_tile_access PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10637,6 +10869,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_c_map_tile_access_real_data
         tests/test_dm2_v1_c_map_tile_access_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_c_map_tile_access_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10652,6 +10885,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_runtime_map_validation_real_data
         tests/test_dm2_v1_g1_runtime_map_validation_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_runtime_map_validation_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10667,6 +10901,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_door_runtime_real_data
         tests/test_dm2_v1_g1_direct_door_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_door_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10682,6 +10917,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_actuator_runtime_real_data
         tests/test_dm2_v1_g1_direct_actuator_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_actuator_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10697,6 +10933,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_creature_runtime_real_data
         tests/test_dm2_v1_g1_direct_creature_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_creature_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10712,6 +10949,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_weapon_runtime_real_data
         tests/test_dm2_v1_g1_direct_weapon_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_weapon_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10763,6 +11001,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_root_family_census_real_data
         tests/test_dm2_v1_g1_direct_root_family_census_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_root_family_census_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10778,6 +11017,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_root_record_address_real_data
         tests/test_dm2_v1_g1_direct_root_record_address_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_root_record_address_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10793,6 +11033,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_root_chain_real_data
         tests/test_dm2_v1_g1_direct_root_chain_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_root_chain_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10807,6 +11048,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_scene_classification_real_data
         tests/test_dm2_v1_g1_direct_scene_classification_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_scene_classification_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10821,6 +11063,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_scene_runtime_handoff_real_data
         tests/test_dm2_v1_g1_scene_runtime_handoff_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
     )
     target_include_directories(test_dm2_v1_g1_scene_runtime_handoff_real_data PRIVATE
@@ -10837,6 +11080,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_scene_creature_gdat_real_data
         tests/test_dm2_v1_g1_scene_creature_gdat_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
     )
     target_include_directories(test_dm2_v1_g1_scene_creature_gdat_real_data PRIVATE
@@ -10871,6 +11115,47 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_dynamic_creature_material_plan
         tests/test_dm2_v1_dynamic_creature_material_plan.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_dynamic_creature_material_plan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10887,6 +11172,47 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_teleporter_material_gate
         tests/test_dm2_v1_teleporter_material_gate.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_teleporter_material_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10950,6 +11276,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_null_record_address_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10966,6 +11293,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_null_record_link_gate
         tests/test_dm2_v1_g1_null_record_link_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_null_record_link_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10982,6 +11310,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_record_base_gate
         tests/test_dm2_v1_g1_record_base_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_record_base_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10998,6 +11327,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_record_list_material_gate
         tests/test_dm2_v1_g1_record_list_material_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_record_list_material_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11014,6 +11344,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_creature_material_graph_gate
         tests/test_dm2_v1_g1_creature_material_graph_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_creature_material_graph_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11209,6 +11540,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_actuator_material_graph_gate
         tests/test_dm2_v1_g1_actuator_material_graph_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_actuator_material_graph_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11225,6 +11557,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_text_material_provenance_gate
         tests/test_dm2_v1_g1_text_material_provenance_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_text_material_provenance_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11241,6 +11574,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_text_wall_gfx_runtime
         tests/test_dm2_v1_g1_text_wall_gfx_runtime.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_text_wall_gfx_runtime PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11257,6 +11591,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_text_message_runtime
         tests/test_dm2_v1_g1_text_message_runtime.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_text_message_runtime PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11273,6 +11608,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe
         probes/dm2/firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE
@@ -11327,8 +11663,49 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_world_state_minimap_level_transition.c
         src/dm2/dm2_v1_world_state.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
         src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_world_state_minimap_level_transition PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11356,10 +11733,33 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11384,9 +11784,43 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_weather_seed_regression PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11414,10 +11848,40 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_runtime_handoff_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11700,7 +12164,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_projectile_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11731,7 +12201,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11762,7 +12238,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11790,6 +12272,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_death_drop_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11812,6 +12295,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_gdat_ai_table PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11835,7 +12319,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
-        src/dm2/dm2_v1_sound.c)
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c)
     target_include_directories(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2_v1_creature_death_drop_probe
@@ -11907,6 +12392,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_pressure_plate_pc34_compat.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
     )
     target_include_directories(test_dm2_v1_pressure_plate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11924,6 +12411,8 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_pressure_plate_probe.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
     )
     target_include_directories(firestaff_dm2_v1_pressure_plate_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11944,6 +12433,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_door_button_toggle_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
     )
     target_include_directories(test_dm2_v1_door_button_toggle_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12036,6 +12527,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12059,7 +12551,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(firestaff_dm2_v1_projectile_drain_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12089,7 +12587,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_projectile_step_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12122,7 +12626,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     # Note: dispatch .c compiled in this target with FIRESTAFF_DM2_PROJECTILE_TESTING
     # so test-only symbols (dm2_v1_projectile_test_reset_list, etc.) resolve here.
@@ -12148,6 +12658,7 @@ if(BUILD_TESTING)
     add_executable(probe_dm2_v1_dungeon_loader
         probes/firestaff_dm2_v1_dungeon_parser_probe.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
         src/shared/dungeon_decompressor_ftl.c
     )
@@ -12169,6 +12680,7 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_object_model_probe.c
         src/dm2/dm2_v1_object_model.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
         src/shared/dungeon_decompressor_ftl.c
     )
@@ -12191,8 +12703,49 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_world_state_probe.c
         src/dm2/dm2_v1_world_state.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
         src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(probe_dm2_v1_world_state PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12655,8 +13208,33 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v2_smooth_runtime_binding PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -13954,6 +14532,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
         firestaff_v2
@@ -13984,6 +14568,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE
         firestaff_v2
@@ -14010,6 +14600,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
         firestaff_v2
@@ -14040,6 +14636,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_dm1_zip_required_materialization PRIVATE
         firestaff_v2
@@ -14072,6 +14674,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_csb_archive_required_split PRIVATE
         firestaff_v2
@@ -14101,6 +14709,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_dm2_iso_required_cache_gate PRIVATE
         firestaff_v2
@@ -14127,6 +14741,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
         firestaff_v2
@@ -14144,6 +14764,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
         firestaff_v2
@@ -14169,6 +14795,12 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_boot_profile.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE
         firestaff_v2
@@ -14411,6 +15043,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_arrange_dungeon_receipt
         tests/test_dm2_v1_arrange_dungeon_receipt.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_arrange_dungeon_receipt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14457,6 +15090,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_find_ladder_around PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14474,6 +15108,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_move_075f_1bc2 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14491,6 +15126,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_move_2c1d_028c.c
         src/dm2/dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_move_2c1d_028c PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -15038,6 +15674,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm1_v1_square_state_dispatch_pc34_compat
         tests/test_dm1_v1_square_state_dispatch_pc34_compat.c
+        src/dm1/dm1_v1_f0259_quiver_refill_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_square_state_dispatch_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -17909,6 +18546,8 @@ if(BUILD_TESTING)
         src/theron/theron_v1_world.c
         src/theron/theron_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_theron_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_theron)
     add_executable(test_theron_v22_inplace_draw_pc34
@@ -21681,6 +22320,7 @@ endif()
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
         src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21695,6 +22335,7 @@ endif()
     add_executable(test_dm1_v1_ai_pathfinding_pc34_compat
         tests/test_dm1_v1_ai_pathfinding_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_ai_pathfinding_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21709,6 +22350,7 @@ endif()
     add_executable(test_dm1_v1_ai_perception_target_pc34_compat
         tests/test_dm1_v1_ai_perception_target_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_ai_perception_target_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21723,6 +22365,7 @@ endif()
     add_executable(test_dm1_v1_creature_group_split_gate_pc34_compat
         tests/test_dm1_v1_creature_group_split_gate_pc34_compat.c
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_group_split_gate_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21739,6 +22382,7 @@ endif()
     add_executable(test_dm1_v1_creature_group_split_sequence_pc34_compat
         tests/test_dm1_v1_creature_group_split_sequence_pc34_compat.c
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_group_split_sequence_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -22381,6 +23025,7 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
         src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_action_f0407_tail_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -26477,6 +27122,12 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_bpk_archive.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_data_validator_hash_scan PRIVATE
@@ -26503,6 +27154,12 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_bpk_archive.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_firestaff_asset_pipeline_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_asset_pipeline_hash_scan PRIVATE
@@ -26530,6 +27187,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
     # Local asset_status_m12.c references asset_find_by_md5 etc, which live
@@ -28721,6 +29384,12 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/shared/asset_find_by_hash.c
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_theron_v1_direct_launch_stale_rejection PRIVATE
         firestaff_theron
@@ -28795,6 +29464,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         firestaff_v2
@@ -35243,6 +35918,47 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
     add_executable(test_dm2_v1_scene_light_control
         tests/test_dm2_v1_scene_light_control.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_scene_light_control PRIVATE -Wall -Wextra -O2)
@@ -36586,4 +37302,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dsa_admitted_restored_t
     endif()
     add_test(NAME csb_v1_dsa_admitted_restored_timer_bridge
              COMMAND test_csb_v1_dsa_admitted_restored_timer_bridge)
+endif()
+
+# ── Standalone DM2 MIDI link fix ─────────────────────────────────────
+# Standalone test/probe executables that compile dm2_v1_midi_backend.c
+# directly (not via the firestaff_dm2 library) must link the same native
+# CoreMIDI boundary as the library itself.
+if(APPLE)
+    get_property(_dm2_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(_dm2_t IN LISTS _dm2_all_targets)
+        get_target_property(_dm2_srcs ${_dm2_t} SOURCES)
+        if(_dm2_srcs AND "src/dm2/dm2_v1_midi_backend.c" IN_LIST _dm2_srcs)
+            target_link_libraries(${_dm2_t} PRIVATE
+                "-framework CoreMIDI"
+                "-framework CoreFoundation")
+        endif()
+    endforeach()
 endif()

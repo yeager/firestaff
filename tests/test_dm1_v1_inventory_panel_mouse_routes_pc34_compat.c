@@ -104,6 +104,16 @@ static int g_fail = 0;
                              (msg), e_ ? e_ : "(null)", a_ ? a_ : "(null)"); } \
 } while (0)
 
+static void panel_bind_raw_stores(struct DungeonThings_Compat* things);
+static void panel_sync_weapon_raw(struct DungeonThings_Compat* things,
+                                  int count);
+static void panel_sync_container_raw(struct DungeonThings_Compat* things,
+                                     int count);
+static void panel_sync_junk_raw(struct DungeonThings_Compat* things,
+                                int count);
+static void panel_sync_potion_raw(struct DungeonThings_Compat* things,
+                                  int count);
+
 static void seed_panel_view(M11_GameViewState* state,
                             struct DungeonThings_Compat* things,
                             struct DungeonWeapon_Compat* weapons,
@@ -136,6 +146,88 @@ static void seed_panel_view(M11_GameViewState* state,
     for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
         state->world.party.champions[0].inventory[i] = THING_NONE;
     }
+    panel_bind_raw_stores(things);
+    panel_sync_weapon_raw(things, 2);
+    panel_sync_container_raw(things, 1);
+}
+
+/* 4143a6828 hardened the icon/allowed-slots/next lookups to consume the
+ * raw PC3.4 thing rows, so the synthetic stores must mirror the decoded
+ * records into rawThingData.  Call the matching sync after editing the
+ * decoded arrays. */
+static unsigned char g_panelWeaponRaw[16 * 4];
+static unsigned char g_panelContainerRaw[4 * 8];
+static unsigned char g_panelJunkRaw[16 * 4];
+static unsigned char g_panelPotionRaw[8 * 4];
+
+static void panel_bind_raw_stores(struct DungeonThings_Compat* things) {
+    things->loaded = 1;
+    memset(g_panelWeaponRaw, 0, sizeof(g_panelWeaponRaw));
+    memset(g_panelContainerRaw, 0, sizeof(g_panelContainerRaw));
+    memset(g_panelJunkRaw, 0, sizeof(g_panelJunkRaw));
+    memset(g_panelPotionRaw, 0, sizeof(g_panelPotionRaw));
+    things->rawThingData[THING_TYPE_WEAPON] = g_panelWeaponRaw;
+    things->rawThingData[THING_TYPE_CONTAINER] = g_panelContainerRaw;
+    things->rawThingData[THING_TYPE_JUNK] = g_panelJunkRaw;
+    things->rawThingData[THING_TYPE_POTION] = g_panelPotionRaw;
+}
+
+static void panel_sync_weapon_raw(struct DungeonThings_Compat* things,
+                                  int count) {
+    int i;
+    if (count > 16) count = 16;
+    for (i = 0; i < count; ++i) {
+        unsigned char* raw = g_panelWeaponRaw + i * 4;
+        raw[0] = (unsigned char)(things->weapons[i].next & 0xFFu);
+        raw[1] = (unsigned char)((things->weapons[i].next >> 8) & 0xFFu);
+        raw[2] = (unsigned char)(things->weapons[i].type & 0x7Fu);
+        raw[3] = 0;
+    }
+    things->thingCounts[THING_TYPE_WEAPON] = count;
+}
+
+static void panel_sync_container_raw(struct DungeonThings_Compat* things,
+                                     int count) {
+    int i;
+    if (count > 4) count = 4;
+    for (i = 0; i < count; ++i) {
+        unsigned char* raw = g_panelContainerRaw + i * 8;
+        raw[0] = (unsigned char)(things->containers[i].next & 0xFFu);
+        raw[1] = (unsigned char)((things->containers[i].next >> 8) & 0xFFu);
+        raw[2] = (unsigned char)(things->containers[i].slot & 0xFFu);
+        raw[3] = (unsigned char)((things->containers[i].slot >> 8) & 0xFFu);
+        raw[4] = (unsigned char)((things->containers[i].type & 0x03u) << 1);
+        raw[5] = 0;
+    }
+    things->thingCounts[THING_TYPE_CONTAINER] = count;
+}
+
+static void panel_sync_junk_raw(struct DungeonThings_Compat* things,
+                                int count) {
+    int i;
+    if (count > 16) count = 16;
+    for (i = 0; i < count; ++i) {
+        unsigned char* raw = g_panelJunkRaw + i * 4;
+        raw[0] = (unsigned char)(things->junks[i].next & 0xFFu);
+        raw[1] = (unsigned char)((things->junks[i].next >> 8) & 0xFFu);
+        raw[2] = (unsigned char)(things->junks[i].type & 0x7Fu);
+        raw[3] = 0;
+    }
+    things->thingCounts[THING_TYPE_JUNK] = count;
+}
+
+static void panel_sync_potion_raw(struct DungeonThings_Compat* things,
+                                  int count) {
+    int i;
+    if (count > 8) count = 8;
+    for (i = 0; i < count; ++i) {
+        unsigned char* raw = g_panelPotionRaw + i * 4;
+        raw[0] = (unsigned char)(things->potions[i].next & 0xFFu);
+        raw[1] = (unsigned char)((things->potions[i].next >> 8) & 0xFFu);
+        raw[2] = 0;
+        raw[3] = (unsigned char)(things->potions[i].type & 0x7Fu);
+    }
+    things->thingCounts[THING_TYPE_POTION] = count;
 }
 
 static void seed_keyhole_view(M11_GameViewState* state,
@@ -560,6 +652,7 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     weapons[0].poisoned = 1;
     weapons[0].broken = 1;
     weapons[0].chargeCount = 7;
+    panel_sync_weapon_raw(&things, 2);
     state.v1FoodWaterPanelActive = 1;
     state.v1ObjectDescriptionPanelActive = 0;
     state.v1ObjectDescriptionThing = THING_NONE;
@@ -610,6 +703,7 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     potions[0].power = 80; /* '_' + 2 == 'a' */
     things.potions = potions;
     things.potionCount = 1;
+    panel_sync_potion_raw(&things, 1);
     state.v1ObjectDescriptionPanelActive = 0;
     state.v1ObjectDescriptionThing = THING_NONE;
     state.v1ObjectDescriptionIconIndex = -1;
@@ -791,6 +885,7 @@ static void test_inventory_open_chest_action_hand_icon_swap(void) {
 
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
     containers[0].slot = daggerThing;
+    panel_sync_container_raw(&things, 1);
 
     /* Closed chest -> C144. */
     ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(&state, CHAMPION_SLOT_ACTION_HAND),
@@ -833,6 +928,7 @@ static void test_inventory_open_chest_same_eye_reopen_keeps_open_icon(void) {
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         chestThing;
     containers[0].slot = daggerThing;
+    panel_sync_container_raw(&things, 1);
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
               "normal action-hand open initializes G0426");
@@ -933,8 +1029,12 @@ static void test_inventory_replace_open_action_hand_chest_from_slot_click(void) 
     containers[0].type = 0;
     containers[0].slot = firstChestSlots[0];
     containers[1].type = 0;
+    containers[1].next = THING_ENDOFLIST;
     containers[1].slot = secondChestSlotThing;
     things.containerCount = 2;
+    panel_sync_weapon_raw(&things, 3);
+    panel_sync_junk_raw(&things, 9);
+    panel_sync_container_raw(&things, 2);
 
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         firstChestThing;
@@ -995,6 +1095,7 @@ static void test_inventory_backpack_slot_accepts_non_container_swap(void) {
     weapons[0].next = THING_ENDOFLIST;
     weapons[1].type = 2; /* container-compatible occupant used only as swap payload */
     weapons[1].next = THING_ENDOFLIST;
+    panel_sync_weapon_raw(&things, 2);
     champ = &state.world.party.champions[0];
     champ->inventory[CHAMPION_SLOT_BACKPACK_1] = oldBackpackThing;
 
